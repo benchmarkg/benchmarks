@@ -294,7 +294,10 @@ VERIFY_PATH = re.compile(
 # `cd site && npx playwright test tests/a11y.spec.ts` names site/tests/a11y.spec.ts, not
 # tests/a11y.spec.ts. Resolving it against the repository root is how P2-S8-T03 passed this
 # check while producing a file at a third path that its own verify could never have found.
-CD_SEGMENT = re.compile(r'^\s*cd\s+([A-Za-z0-9_./-]+)\s*$')
+# The leading [`"'] matters: a verify written as "`cd site && ...`" is a segment whose
+# first character is a backtick, and without this the cd is missed and every relative
+# path after it silently resolves against the repository root again.
+CD_SEGMENT = re.compile(r'^[\s`"\']*cd\s+([A-Za-z0-9_./-]+)\s*$')
 
 
 def verify_paths(cmd):
