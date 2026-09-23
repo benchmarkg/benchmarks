@@ -288,8 +288,26 @@ def check_verify():
 VERIFY_PATH = re.compile(
     r'(?<![A-Za-z0-9_/-])'
     r'((?:packages/[A-Za-z0-9_-]+/)?'
-    r'(?:scripts|tools|src|ingest|tests|evals|runner|site/src|site/test)/'
+    r'(?:scripts|tools|src|ingest|tests?|evals|runner|site/src|site/tests?)/'
     r'[A-Za-z0-9_./-]+\.(?:py|ts|mjs|js))\b')
+
+# `cd site && npx playwright test tests/a11y.spec.ts` names site/tests/a11y.spec.ts, not
+# tests/a11y.spec.ts. Resolving it against the repository root is how P2-S8-T03 passed this
+# check while producing a file at a third path that its own verify could never have found.
+CD_SEGMENT = re.compile(r'^\s*cd\s+([A-Za-z0-9_./-]+)\s*$')
+
+
+def verify_paths(cmd):
+    """Yield every path a verify command names, resolved against any `cd` that precedes it."""
+    cwd = ''
+    for segment in re.split(r'&&|\|\||;', cmd or ''):
+        m = CD_SEGMENT.match(segment)
+        if m:
+            target = m.group(1)
+            cwd = '' if target in ('..', '-') else target.strip('/')
+            continue
+        for path in VERIFY_PATH.findall(segment):
+            yield '%s/%s' % (cwd, path) if cwd and not path.startswith(cwd + '/') else path
 
 
 def check_verify_inputs():
@@ -307,7 +325,7 @@ def check_verify_inputs():
 
     for tid in ORDER:
         t = TASKS_BY_ID[tid]
-        for path in sorted(set(VERIFY_PATH.findall(t.get('verify') or ''))):
+        for path in sorted(set(verify_paths(t.get('verify') or ''))):
             owner = creators.get(path)
             if owner is None:
                 fail('verify/unbuilt-script',
