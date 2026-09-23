@@ -1,0 +1,291 @@
+# taxonomy/comparability-profiles.yaml
+#
+# Which condition fields are MATERIAL, resolved from a benchmark's evaluation_method and
+# designed_for_subjects facets. Owned by 04-data-model.md S8.
+#
+# THERE IS NO SUCH NUMBER AS "the count of material fields at schema v1". The material set is
+# per-benchmark-shaped. 04 S8's table is the UNIVERSE of fields material to some benchmark, not
+# a set any single benchmark uses: `shots` is meaningless for a robotics sim benchmark and
+# `simulator_version` is meaningless for MMLU. Any surface needing a denominator reads
+# `fields_material_total` off the resolved profile at render time. A document that names a
+# constant instead has made a category error, and every percentage derived from that constant is
+# wrong for every benchmark whose profile is a different size.
+#
+# The same arithmetic makes condition_completeness per-profile, never global. Epoch's rows
+# average about 0.10 against the six-field llm-static-text profile below, 0.054 against the
+# eleven-field agentic profile and 0.037 against the full material table. Quote the figure with
+# its profile or not at all.
+#
+# Per-benchmark `comparability.material_extra[]` and `material_waived[]` override the resolved
+# set. A WAIVER REQUIRES A REASON STRING and appears in the quality dashboard, because the
+# failure mode here is curators quietly waiving inconvenient fields until the comparability
+# check passes everything.
+#
+# Weights default to 1.0. 04 S8 sets 2.0 for judge_model on a model-graded benchmark and 2.0 for
+# scaffold where the subject is an agent scaffold -- the fields whose absence does the most
+# damage count double.
+#
+# `provider_snapshot` and `provider_snapshot_available` sit on hosted-api ONLY, per the decision
+# in 13-execution-runners.md S4.5: a run against a provider that publishes no dated snapshot
+# records `false` explicitly and that counts as COMPLETE, because the field was answered. A null
+# does not count, because null means nobody looked. The schema penalises unknowns, not absences.
+#
+# UNVERIFIED, AND THE WEAKEST PART OF THIS FILE. The member lists of llm-static-text and agentic
+# are reconstructed from 04 S8's own arithmetic rather than transcribed: it states a six-field
+# and an eleven-field profile and gives per-field Epoch fill rates summing to 0.594, and
+# 0.594/6 = 0.099 against its stated "about 0.10". The six and the eleven are therefore right in
+# SIZE; which fields fill them is inference. Re-derive at the 200-entry checkpoint before any
+# published completeness figure depends on them.
+#
+# Authored by P0-S2-T06 from 04 S8 and 13 S4.5.
+
+version: 0.1.0
+updated: 2026-09-22
+description: >
+  Lookup from an (evaluation_method, subject) pair to the material condition-field set used to
+  compute comparability_key and condition_completeness.
+
+default_weight: 1.0
+
+# A pair not listed below resolves to `fallback`, and the resolution is REPORTED rather than
+# silent: an unlisted pair means the vocabulary grew and this file did not, which is a curation
+# signal, not a default to lean on.
+fallback:
+  material: [subset_used]
+  note: >
+    Subset substitution is the one silent change that matters everywhere, so it is the floor.
+    A benchmark resolving to fallback should be given a real profile before its claims are
+    compared.
+
+profiles:
+  - id: llm-static-text
+    description: >
+      A prompted language model scored against stored answers.
+    material:
+      - shots
+      - chain_of_thought
+      - reasoning_effort
+      - tools_allowed
+      - retries_allowed
+      - subset_used
+    applies_to:
+      - [exact-match, base-model]
+      - [exact-match, instruction-tuned-model]
+      - [exact-match, reasoning-model]
+      - [exact-match, domain-specialist-model]
+      - [symbolic-equivalence, base-model]
+      - [symbolic-equivalence, instruction-tuned-model]
+      - [symbolic-equivalence, reasoning-model]
+      - [symbolic-equivalence, domain-specialist-model]
+      - [multiple-choice, base-model]
+      - [multiple-choice, instruction-tuned-model]
+      - [multiple-choice, reasoning-model]
+      - [multiple-choice, domain-specialist-model]
+      - [constraint-check, base-model]
+      - [constraint-check, instruction-tuned-model]
+      - [constraint-check, reasoning-model]
+      - [constraint-check, domain-specialist-model]
+      - [reference-metric, base-model]
+      - [reference-metric, instruction-tuned-model]
+      - [reference-metric, reasoning-model]
+      - [reference-metric, domain-specialist-model]
+  - id: agentic
+    description: >
+      A system acting over multiple steps, where the harness is part of the apparatus.
+    material:
+      - shots
+      - chain_of_thought
+      - reasoning_effort
+      - tools_allowed
+      - retries_allowed
+      - subset_used
+      - scaffold
+      - harness
+      - selection_strategy
+      - n_samples
+      - sandbox
+    weights:
+      scaffold: 2.0
+    applies_to:
+      - [execution-tests, agent-scaffold]
+      - [execution-tests, multi-agent-system]
+      - [execution-tests, tool-augmented-model]
+      - [execution-tests, full-product-pipeline]
+      - [execution-tests, retrieval-augmented-system]
+      - [constraint-check, agent-scaffold]
+      - [constraint-check, multi-agent-system]
+      - [constraint-check, tool-augmented-model]
+      - [constraint-check, full-product-pipeline]
+      - [constraint-check, retrieval-augmented-system]
+      - [composite, agent-scaffold]
+      - [composite, multi-agent-system]
+      - [composite, tool-augmented-model]
+      - [composite, full-product-pipeline]
+      - [composite, retrieval-augmented-system]
+  - id: model-graded
+    description: >
+      A judge model is part of the apparatus, so its identity and prompt are material.
+    material:
+      - shots
+      - chain_of_thought
+      - reasoning_effort
+      - subset_used
+      - judge_model
+      - judge_model_version
+      - judge_prompt_hash
+      - grading_rubric_ref
+    weights:
+      judge_model: 2.0
+    applies_to:
+      - [model-graded-judge, base-model]
+      - [model-graded-judge, instruction-tuned-model]
+      - [model-graded-judge, reasoning-model]
+      - [model-graded-judge, agent-scaffold]
+      - [model-graded-judge, generative-media-model]
+      - [rubric-graded, base-model]
+      - [rubric-graded, instruction-tuned-model]
+      - [rubric-graded, reasoning-model]
+      - [rubric-graded, agent-scaffold]
+      - [rubric-graded, generative-media-model]
+      - [model-derived-metric, base-model]
+      - [model-derived-metric, instruction-tuned-model]
+      - [model-derived-metric, reasoning-model]
+      - [model-derived-metric, agent-scaffold]
+      - [model-derived-metric, generative-media-model]
+  - id: hosted-api
+    description: >
+      The evaluated artifact is an endpoint rather than an artifact, so the provider snapshot is material.
+    material:
+      - shots
+      - reasoning_effort
+      - tools_allowed
+      - subset_used
+      - provider_snapshot
+      - provider_snapshot_available
+    applies_to:
+      - [exact-match, hosted-inference-endpoint]
+      - [multiple-choice, hosted-inference-endpoint]
+      - [execution-tests, hosted-inference-endpoint]
+      - [model-graded-judge, hosted-inference-endpoint]
+      - [pairwise-preference-elo, hosted-inference-endpoint]
+  - id: simulation
+    description: >
+      The score is defined inside a specific simulator build.
+    material:
+      - simulator
+      - simulator_version
+      - hardware_platform
+      - subset_used
+      - selection_strategy
+      - n_samples
+    applies_to:
+      - [simulation-rollout, rl-policy]
+      - [simulation-rollout, agent-scaffold]
+      - [simulation-rollout, physical-robot-system]
+      - [simulation-rollout, classical-algorithm]
+      - [episodic-return, rl-policy]
+      - [episodic-return, agent-scaffold]
+      - [episodic-return, physical-robot-system]
+      - [episodic-return, classical-algorithm]
+  - id: physical-trial
+    description: >
+      A run happens on hardware at a venue, both of which change the number.
+    material:
+      - hardware_platform
+      - venue
+      - subset_used
+      - n_samples
+    applies_to:
+      - [physical-trial, physical-robot-system]
+      - [physical-trial, rl-policy]
+      - [physical-trial, human-expert]
+      - [physical-trial, human-ai-team]
+  - id: wet-lab
+    description: >
+      Ground truth comes from a bench protocol, which is the condition that matters.
+    material:
+      - assay_protocol
+      - subset_used
+      - eligibility_track
+    applies_to:
+      - [wet-lab-validation, scientific-surrogate-model]
+      - [wet-lab-validation, domain-specialist-model]
+      - [wet-lab-validation, classical-algorithm]
+      - [expert-panel-assessment, scientific-surrogate-model]
+      - [expert-panel-assessment, domain-specialist-model]
+      - [expert-panel-assessment, classical-algorithm]
+  - id: forecasting
+    description: >
+      The horizon and the resolution window decide what the number means.
+    material:
+      - lead_time
+      - resolution_window
+      - subset_used
+      - training_data_policy
+    applies_to:
+      - [prospective-resolution, scientific-surrogate-model]
+      - [prospective-resolution, base-model]
+      - [prospective-resolution, instruction-tuned-model]
+      - [prospective-resolution, human-expert]
+      - [statistical-fit, scientific-surrogate-model]
+      - [statistical-fit, base-model]
+      - [statistical-fit, instruction-tuned-model]
+      - [statistical-fit, human-expert]
+      - [uncertainty-calibration-score, scientific-surrogate-model]
+      - [uncertainty-calibration-score, base-model]
+      - [uncertainty-calibration-score, instruction-tuned-model]
+      - [uncertainty-calibration-score, human-expert]
+  - id: human-judged
+    description: >
+      Human raters are the instrument, and how much help they gave is material.
+    material:
+      - human_in_loop
+      - human_assistance
+      - subset_used
+      - grading_rubric_ref
+    applies_to:
+      - [human-expert-eval, base-model]
+      - [human-expert-eval, instruction-tuned-model]
+      - [human-expert-eval, generative-media-model]
+      - [human-expert-eval, human-expert]
+      - [human-expert-eval, human-nonexpert]
+      - [human-expert-eval, human-ai-team]
+      - [human-crowd-eval, base-model]
+      - [human-crowd-eval, instruction-tuned-model]
+      - [human-crowd-eval, generative-media-model]
+      - [human-crowd-eval, human-expert]
+      - [human-crowd-eval, human-nonexpert]
+      - [human-crowd-eval, human-ai-team]
+      - [ordinal-grading, base-model]
+      - [ordinal-grading, instruction-tuned-model]
+      - [ordinal-grading, generative-media-model]
+      - [ordinal-grading, human-expert]
+      - [ordinal-grading, human-nonexpert]
+      - [ordinal-grading, human-ai-team]
+      - [human-distribution-percentile, base-model]
+      - [human-distribution-percentile, instruction-tuned-model]
+      - [human-distribution-percentile, generative-media-model]
+      - [human-distribution-percentile, human-expert]
+      - [human-distribution-percentile, human-nonexpert]
+      - [human-distribution-percentile, human-ai-team]
+  - id: eligibility-gated
+    description: >
+      The benchmark runs separate tracks by what the entrant was allowed to train on.
+    material:
+      - eligibility_track
+      - training_data_policy
+      - decontamination_applied
+      - subset_used
+    applies_to:
+      - [domain-metric, scientific-surrogate-model]
+      - [domain-metric, reasoning-model]
+      - [domain-metric, classical-algorithm]
+      - [domain-metric, rl-policy]
+      - [formal-proof-check, scientific-surrogate-model]
+      - [formal-proof-check, reasoning-model]
+      - [formal-proof-check, classical-algorithm]
+      - [formal-proof-check, rl-policy]
+      - [tournament-play, scientific-surrogate-model]
+      - [tournament-play, reasoning-model]
+      - [tournament-play, classical-algorithm]
+      - [tournament-play, rl-policy]

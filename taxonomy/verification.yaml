@@ -1,0 +1,93 @@
+# taxonomy/verification.yaml
+#
+# The ResultClaim verification ladder: seven rungs, ordered, owned by 04-data-model.md S7.
+# The rank is stored here once rather than re-argued per claim, and it is rendered as a visible
+# badge everywhere a number appears.
+#
+# DEFAULT SORT IN EVERY COMPARISON VIEW IS RANK FIRST, THEN VALUE. Making the strongest claim
+# also the least verified is common, and the interface should make that visible rather than
+# rewarding it with the top row. After the Epoch ingest roughly 5,048 claims will sit at
+# `self-reported` and 828 at `independent-reproduction`; a value-first sort would bury the good
+# ones.
+#
+# `prospective-experiment` sits ABOVE `held-out-server` deliberately: a held-out test set exists
+# and could in principle leak, whereas a measurement taken after submission cannot have
+# contaminated the submission. It is also the only rung that fits a multi-year wet-lab challenge
+# and it covers the forecasting benchmarks, where the world supplies the answer key.
+#
+# `disputed` IS NOT A RUNG. It is a state, carried by `disputed_by[]` with each entry pointing
+# at a Source and rendered as an overlay on top of whatever rung the claim holds. A
+# held-out-server number can be disputed and so can a self-reported one; modelling dispute as a
+# rung meant a disputed claim silently lost its verification information, which is backwards.
+#
+# THIS IS NOT THE SAME LADDER as `curation.verification_status`, which is owned by
+# 05-repository-and-workflow.md S4 and grades how hard WE looked at a record rather than how the
+# number was produced. 02 S8's SOTA rule names both by rank as well as by name for that reason:
+# an earlier draft chained rungs from both into one "or better" clause and named a value,
+# `curator-verified`, that exists on neither. That rule gates lifecycle: saturated, which gates
+# headroom, which is the only cross-domain axis this project claims.
+#
+# Nor is it `governance.submission_process` in taxonomy/governance.yaml, which shares five of
+# these slugs. That field describes the benchmark's submission PROCESS; this ladder grades an
+# individual CLAIM. A benchmark with a held-out server can still carry a self-reported claim.
+#
+# Authored by P0-S2-T06 from 04 S7.
+
+version: 0.1.0
+updated: 2026-09-22
+description: >
+  The seven-rung ResultClaim verification ladder, ordered by rank. Rank 1 is the weakest.
+  Rungs 4 and above are never machine-assigned by an ingest adapter.
+
+rungs:
+  - rank: 1
+    id: self-reported
+    meaning: >
+      The evaluated party reported it; no independent check.
+    typical_evidence: Launch blog, technical report
+    machine_assignable: true
+  - rank: 2
+    id: maintainer-verified
+    meaning: >
+      The benchmark maintainer confirmed or ran it.
+    typical_evidence: Official leaderboard entry with a review step
+    machine_assignable: true
+  - rank: 3
+    id: independent-reproduction
+    meaning: >
+      A third party re-ran it and published how.
+    typical_evidence: Epoch's public Inspect-AI .eval logs
+    machine_assignable: true
+  - rank: 4
+    id: held-out-server
+    meaning: >
+      Scored against a test set the submitter never saw.
+    typical_evidence: CARLA Leaderboard, Grand Challenge type-2, FrontierMath
+    machine_assignable: false
+  - rank: 5
+    id: prospective-experiment
+    meaning: >
+      Ground truth did not exist at submission and was generated afterwards by the evaluator.
+    typical_evidence: CACHE wet-lab assays, Virtual Cell replicates, ForecastBench resolution
+    machine_assignable: false
+  - rank: 6
+    id: third-party-audited
+    meaning: >
+      Formal audit with published methodology.
+    typical_evidence: A published audit report
+    machine_assignable: false
+  - rank: 7
+    id: sandboxed-rerun
+    meaning: >
+      Re-run by this project's own execution layer.
+    typical_evidence: Deferred; see 13-execution-runners.md
+    machine_assignable: false
+
+# Machine assignment is encoded once in the Epoch adapter rather than per record:
+#   Epoch-run file AND Logs URL contains `-public`  -> independent-reproduction (828 rows),
+#                                                       with the .eval URL in artifact_url
+#   Epoch-run with a `-private` or blank log        -> maintainer-verified (459 rows,
+#                                                       including all of FrontierMath)
+#   everything external                             -> self-reported (5,048 rows)
+# Rungs 4 through 7 are never machine-assigned, which is what `machine_assignable: false` above
+# is for: an adapter that assigns one is a bug, not a judgement call.
