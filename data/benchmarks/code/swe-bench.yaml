@@ -1,0 +1,441 @@
+# data/benchmarks/code/swe-bench.yaml
+#
+# P0-S3-T01. Written from the primary sources below with NO schema in front of the author,
+# on purpose (14-roadmap "Start here", Week 2 item 3). Field names are invented where the
+# entry needed them; P0-S5 reconciles them against the schema. Every field that needed
+# inventing is listed under `_schema_findings` at the bottom, which is the actual product of
+# this task.
+#
+# Vocabulary values are taken from the P0-S2 drafts in taxonomy/, which are themselves still
+# in review. Where applying a term's inclusion test honestly disagrees with the illustrative
+# entry in 02 S12.11, the test wins and the disagreement is recorded, not smoothed over.
+#
+# This file describes the ORIGINAL benchmark: the 2,294-instance test split, which the
+# leaderboard calls "Full" and whose data rows call "Test". Verified, Lite, Multimodal and
+# Multilingual are separate entries that point back here with `variant_of: swe-bench`.
+
+id: swe-bench
+name: SWE-bench
+tagline: 2,294 real GitHub issues from 12 Python repos; a system must patch the repo so the issue's tests pass.
+aliases: [SWE-bench Full, SWE-bench (test split)]
+
+summary: >
+  Each task instance pairs a GitHub issue with the repository at the commit its fixing pull
+  request was based on. The system under test edits the codebase; the edit is applied as a
+  patch and scored by running the tests the real pull request changed from failing to
+  passing, together with tests that passed before and must still pass. The metric is the
+  percentage of instances resolved.
+
+released: 2023-10-10                  # arXiv v1 citation_date; HF dataset created the same day
+release_venue: ICLR 2024 (oral)
+paper:
+  title: "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?"
+  arxiv: "2310.06770"
+  version_read: v3                    # 11 Nov 2024
+  source: src-swebench-arxiv-abs
+homepage: https://www.swebench.com/original.html
+repository: https://github.com/SWE-bench/SWE-bench
+dataset: https://huggingface.co/datasets/princeton-nlp/SWE-bench
+leaderboard: https://www.swebench.com/
+
+# --- Size ---------------------------------------------------------------------------------
+# Numeric fields carry `source` + `quote`. `quote` is a verbatim substring of the source's
+# normalised text extract (HTML stripped, NFC, whitespace collapsed) unless the source is
+# marked `extract: raw`, in which case it is a substring of the raw body.
+
+size:
+  n_items:
+    value: 2294
+    unit: task instances
+    split: test
+    source: src-swebench-original-page
+    quote: "We collect 2,294 task instances by crawling Pull Requests and Issues from 12 popular Python repositories."
+  n_repositories:
+    value: 12
+    source: src-swebench-original-page
+    quote: "from 12 popular Python repositories"
+  other_splits:
+    - split: dev
+      value: 225
+      source: src-swebench-hf-api
+      quote: '"name":"dev","num_bytes":4783179,"num_examples":225'
+    - split: train
+      value: 19008
+      note: >
+        Repositories disjoint from the test split. This is the SWE-bench-train set the paper
+        uses to fine-tune SWE-Llama, not a training split for the evaluated task in the
+        usual sense.
+      source: src-swebench-hf-api
+      quote: '"name":"train","num_bytes":367610377,"num_examples":19008'
+  languages: [Python]
+
+# --- What a task is and how it is scored ----------------------------------------------------
+
+task:
+  input: [issue text, full repository at the pull request's base commit]
+  output: a patch to the repository
+  scoring: >
+    The patch is applied and the instance's FAIL_TO_PASS and PASS_TO_PASS tests are run in
+    that instance's Docker image. Resolved if the patch applies and every test in both lists
+    passes.
+  metric: percent-resolved
+  metric_range: [0, 100]
+  scoring_source: src-swebench-arxiv-html
+  scoring_quote: "If the patch applies successfully and all of these tests pass we consider the proposed solution to have successfully resolved the issue. The metric for our benchmark is the percentage of task instances that are resolved."
+  tests_hidden_from_system: true      # the system sees the issue, not the FAIL_TO_PASS list
+  reference_solution: true            # every instance has the real PR's gold patch
+
+# --- Taxonomy -------------------------------------------------------------------------------
+
+domain:
+  primary: code/repository-scale-se
+  secondary: [code/bug-repair]
+  # agents-tooluse/software-agents is NOT tagged. Its definition is "Agents that complete
+  # software engineering work", and this benchmark's own protocol does not require an agent:
+  # the paper's baselines are single-shot patch generation over retrieved files. Agents
+  # dominate the leaderboard (see observed_subjects), which is a fact about practice. The
+  # Verified entry may legitimately differ, since its Bash Only view is agent-defined.
+
+capability: [context-integration]
+capability_considered_and_rejected:
+  # Recorded because 02 S12.11 tags SWE-bench Verified with all five of these, and under
+  # the P0-S2 inclusion tests none survives for the benchmark as its paper defines it.
+  # Either the tests are too strict or S12.11 describes how the benchmark is used rather
+  # than what it scores. That is a question for the P0-S2 reviewer, not for this entry.
+  - term: long-horizon-execution
+    reason: >
+      OUT clause: "the long sequence is produced in one generation without any environment
+      feedback between steps". The paper's protocol is exactly that. Multi-step episodes
+      come from the scaffolds that submit, not from the benchmark.
+  - term: tool-use
+    reason: The protocol exposes no callable tools; any tools belong to the submitter's scaffold.
+  - term: planning
+    reason: The plan is never scored; only the final patch's test outcomes are.
+  - term: constraint-satisfaction
+    reason: >
+      The definition says "every stated requirement". The deciding tests are hidden from
+      the system, so the requirements are not stated to it; the issue text states them
+      loosely. Closest near-miss.
+  - term: search-exploration
+    reason: No search budget is at stake in the score.
+
+evaluation_method: [execution-tests]
+
+designed_for_subjects: [instruction-tuned-model, retrieval-augmented-system]
+designed_for_subjects_basis: >
+  The paper evaluates prompted models with BM25-retrieved files, and retrieval is inside
+  the scored boundary: its Table 2 shows the resolve rate moving with the retrieval context
+  length.
+observed_subjects:                   # who actually submits, which is not who it was built for
+  values: [agent-scaffold]
+  basis: >
+    Every one of the six highest Full-leaderboard rows (retrieved 2026-09-23) is a named
+    agent system, e.g. "Sonar Foundation Agent + Claude 4.5 Opus".
+  source: src-swebench-leaderboard
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis: '"gated": false on the HF dataset API; test split includes the FAIL_TO_PASS lists.'
+  access_source: src-swebench-hf-api
+  dataset_licence: null               # the HF card declares none; repo code is MIT. Not guessed.
+  code_licence: MIT
+  code_licence_source: src-swebench-gh-api
+  upstream_licences: >
+    The 12 source repositories carry their own licences (paper Table 12, e.g. astropy
+    BSD 3-Clause). Recorded as a pointer, not enumerated.
+  refresh: static
+  refresh_note: >
+    The paper says the collection process "can simply be updated" with post-cutoff PRs.
+    It has not been; the test split is still 2,294. New content ships as named variants
+    instead, which is why this is `static` and not `versioned-releases`.
+  data_provenance: [web-scraped]
+  data_provenance_note: >
+    Issues, gold patches and tests are developer-written artifacts harvested from GitHub,
+    not authored for the benchmark, so `expert-authored` does not apply by its definition.
+  contamination_risk: high
+  contamination_evidence:
+    - source: src-swebench-illusion
+      stance: supports
+      quote: "up to 35% consecutive 5-gram accuracy on SWE-Bench Verified and Full, but only up to 18% for tasks in other benchmarks"
+    - source: src-swebench-arxiv-html
+      stance: against              # the maintainers' own, weaker, earlier check
+      quote: "for most models there’s little difference in performance before or after this date, with the exception of GPT-4"
+  contamination_notes: >
+    Instances come from public repositories with public fix commits, and the set is static.
+    The 2025 memorisation study reports its 5-gram result on "Verified and Full" by name,
+    so it is evidence for this entry and not only for Verified. The paper's own before- and
+    after-2023 split (Table 7) predates the models in question.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_note: >
+    Every instance was kept only if its gold patch turns at least one test from fail to
+    pass, so 100% is achievable by construction on paper. Whether every instance is fair
+    to a system that sees only the issue is exactly what Verified was built to answer. The
+    OpenAI report that makes that argument returned 403 on retrieval, so the claim is not
+    made here.
+
+# --- Lineage: the field 14-roadmap predicted this entry would need ---------------------------
+
+lineage:
+  role: root
+  variants:
+    # Same maintainers, same harness, derived from or extending this test split.
+    - id: swe-bench-lite
+      relation: subset
+      n_items: 300
+      source: src-swebench-lite-page
+      quote: "SWE-bench Lite provides a smaller, carefully selected subset of 300 tasks from the full benchmark"
+    - id: swe-bench-verified
+      relation: human-filtered-subset
+      n_items: 500
+      co_maintainer: OpenAI
+      source: src-swebench-verified-page
+      quote: "SWE-bench Verified is a human-filtered subset of 500 instances from SWE-bench, created in collaboration with OpenAI."
+    - id: swe-bench-multimodal
+      relation: extension          # new instances, new language; not a subset
+      n_items: 480                 # current v2; the paper reported 617
+      source: src-swebench-readme
+      quote: "SWE-bench Multimodal v2 is now fully open source, with 480 tasks available for local evaluation!"
+      n_items_history:
+        - value: 617
+          source: src-swebench-multimodal-arxiv
+          quote: "SWE-bench M features 617 task instances collected from 17 JavaScript libraries"
+    - id: swe-bench-multilingual
+      relation: extension
+      n_items: 300
+      source: src-swebench-leaderboard
+      quote: "Tasks from 42 repositories across 9 programming languages."
+      n_items_note: The count is from the leaderboard card ("300 instances"); the quote is the scope line beside it.
+  forks:
+    # Different maintainers, building on the design. `fork` is not the same as `variant`,
+    # and conflating them is the error 02 S12.11 warns about.
+    - id: swe-bench-pro
+      maintainer: Scale AI
+      source: src-swebench-pro-arxiv
+      quote: "builds upon the best practices of SWE-BENCH [25], but is explicitly designed to capture realistic, complex, enterprise-level problems"
+  views:
+    # Not benchmarks: filters on another board. Recorded so nobody catalogues them as one.
+    - name: Bash Only
+      of: swe-bench-verified
+      source: src-swebench-experiments-readme
+      quote: "Bash Only* view is a filter on the Verified board rather than a board of its own."
+
+# --- Lifecycle and activity -----------------------------------------------------------------
+
+lifecycle: mature
+lifecycle_note: >
+  Not `superseded`: the maintainers still list Full among the official leaderboards, and no
+  source says Verified replaces it. Attention has moved to Verified, but that is an
+  observation, not a citable state.
+activity: leaderboard-live-no-round
+activity_basis:
+  newest_submission: 2025-12-19
+  source: src-swebench-leaderboard
+  quote: '"date": "2025-12-19", "folder": "20251219_sonar-foundation-agent_claude-opus-4-5"'
+  caveat: >
+    The submission guide's headings name "SWE-bench [Lite, Verified, Multilingual]" and do
+    not name Full, but the Full board accepted a row in December 2025. Whether it still
+    accepts rows is unconfirmed; `unknown` would also be defensible.
+maintenance_status: null              # DERIVED by the probe protocol (taxonomy/maintenance.yaml); never hand-set
+maintenance_signals_seen:             # raw inputs for that probe, recorded once by hand
+  repo_pushed_at: 2026-09-18T05:08:56Z
+  repo_archived: false
+  source: src-swebench-gh-api
+
+# --- Governance -----------------------------------------------------------------------------
+
+governance:
+  maintainer: SWE-bench team (Princeton Language and Intelligence; Stanford)
+  maintainer_type: academic-lab
+  submission_process: [self-reported, maintainer-verified]
+  submission_process_note: >
+    Neither term fits alone. Submitters open a PR with predictions, per-instance logs and
+    trajectories, and anyone can re-derive every verdict from those logs, so "nothing in the
+    process checks them" (self-reported) overstates it. The maintainers re-run a random
+    subset only on request, for a checkmark, so maintainer-verified overstates it the other
+    way. The truth is per result, which is why `checked` lives on each result below.
+  submission_source: src-swebench-experiments-readme
+  submission_quote: "We will run your model on a random subset of SWE-bench and verify the results."
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-swebench-readme
+      quote: "We have released [SWE-agent](https://github.com/SWE-agent/SWE-agent), which sets the state-of-the-art on the full SWE-bench test set!"
+    - flag: funded-by-evaluated-party
+      source: src-swebench-leaderboard
+      quote: "Open Philanthropy, AWS, Modal, Andreessen Horowitz, OpenAI, and Anthropic."
+      reviewer_check: >
+        The page says "generous support", not funding of the benchmark specifically. OpenAI
+        and Anthropic models are both on this leaderboard. Flag if support = funding;
+        otherwise drop. Disclosure, not accusation, either way.
+
+# --- Execution ------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_note: >
+    Scoring runs CPU-side in per-instance Docker images and costs little; a run's real cost
+    is inference. Local open-weights runs would be single-gpu or larger, so the tier is a
+    property of the claim as much as of the benchmark.
+  reproducibility_tier: fully-automatable
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: swebench (PyPI), CLI `swebench eval full`
+  harness_source: src-swebench-readme
+  harness_quote: "`DATASET` accepts an alias (`full`, `verified`, `multimodal`, `multilingual`)"
+  harness_gotcha:
+    source: src-swebench-readme
+    quote: "The evaluation harness caches results by `run_id` and `instance_id` only."
+
+# --- Results the benchmark page shows -------------------------------------------------------
+# These are ResultClaims, and in the real tree they go in data/claims/, not here. They are
+# kept here only to show the field the entry needed: whether a third party checked the number,
+# and which scaffold produced it, recorded per result.
+
+results_observed:
+  - label: release baseline
+    system: Claude 2 with BM25 retrieval
+    scaffold: none (single-shot RAG)
+    value: 1.96
+    checked: maintainer-produced
+    source: src-swebench-original-page
+    quote: "our initial Retrieval Augmented Generation (RAG) baseline scored just 1.96%"
+  - label: highest row on the Full board
+    system: Claude 4.5 Opus
+    scaffold: Sonar Foundation Agent
+    value: 52.62
+    date: 2025-12-19
+    checked: false
+    source: src-swebench-leaderboard
+    quote: '"name": "Sonar Foundation Agent + Claude 4.5 Opus", "os_model": false, "os_system": false, "reasoning_effort": null, "resolved": 52.62'
+  - label: highest row checked by the SWE-bench team
+    system: Claude 3.7 Sonnet
+    scaffold: SWE-agent 1.0          # the maintainers' own scaffold; see independence_flags
+    value: 33.83
+    date: 2025-02-27
+    checked: true
+    source: src-swebench-leaderboard
+    quote: '"resolved": 33.83'
+    quote_locator: 'results[name="Test"].results[folder~"20250227"].resolved'
+results_board_summary:
+  rows: 24
+  rows_checked: 13
+  derived: true                       # counted from the embedded JSON, no single quote exists
+  source: src-swebench-leaderboard
+
+# --- Interop identifiers --------------------------------------------------------------------
+
+interop:
+  inspect_evals_id: null              # not checked against inspect_evals; do not guess
+  epoch_benchmark_id: null            # Epoch tracks Verified; whether it tracks Full is unchecked
+  eee_benchmark_name: null
+  huggingface_dataset: princeton-nlp/SWE-bench
+  arxiv: "2310.06770"
+
+# --- Curation -------------------------------------------------------------------------------
+
+curation:
+  verification_status: ai-drafted-unverified
+  drafted_by: agent (P0-S3-T01)
+  drafted_on: 2026-09-23
+  retrieved_on: 2026-09-23
+  unreachable:
+    - url: https://openai.com/index/introducing-swe-bench-verified/
+      http_status: 403
+      consequence: The underspecification claim about the original split is not made.
+  sources:
+    - id: src-swebench-arxiv-abs
+      url: https://arxiv.org/abs/2310.06770
+      kind: paper-abstract
+      text_sha256: e9686b85afcd5b23a014e6dbf5bcc77eb338877b42b1ba5c45a80eab2f9fa684
+    - id: src-swebench-arxiv-html
+      url: https://arxiv.org/html/2310.06770v3
+      kind: paper
+      text_sha256: ad5d759bbe5639f68d90d9e6c8feaeaf703c903f4b532e80c28089e074b3e587
+      extract_warning: MathML is stripped, so numbers typeset as math (e.g. 2,294 in the abstract) vanish from the extract.
+    - id: src-swebench-original-page
+      url: https://www.swebench.com/original.html
+      kind: maintainer-page
+      text_sha256: 154c7e231529380313ef2b8bb535a65c2cc9c66856940b83957f623d4a4914d3
+    - id: src-swebench-lite-page
+      url: https://www.swebench.com/lite.html
+      kind: maintainer-page
+      text_sha256: 89f7f6949bb59ad7a16436ee520f197dd4fabe93c88859f3434a4f2e5c809feb
+    - id: src-swebench-verified-page
+      url: https://www.swebench.com/verified.html
+      kind: maintainer-page
+      text_sha256: d1a16593cd697882518b7eae7ca0519c7fb5b60b7d3170b07cb74b00113b1a8a
+    - id: src-swebench-leaderboard
+      url: https://www.swebench.com/
+      kind: leaderboard
+      extract: raw                    # the rows live in an inline JSON <script>, which the text extract strips
+      text_sha256: 201d0a27ad42d9b6ce2e22c945a45d85e482df2f752bab2b82ab4a165c9cfbbc
+    - id: src-swebench-readme
+      url: https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md
+      kind: repository-readme
+      text_sha256: 0aac5d4f70a03b294c829d43962e3f8d207b2f41e5eac4b1080f23ac842c9646
+    - id: src-swebench-experiments-readme
+      url: https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md
+      kind: submission-policy
+      text_sha256: 0347db532d50ea4e3b3e2caffd9a15b0c70a435bc7f7a8ee099b5a5a0202b9e7
+    - id: src-swebench-hf-api
+      url: https://huggingface.co/api/datasets/princeton-nlp/SWE-bench
+      kind: dataset-metadata
+      text_sha256: 8a12c294637f08981cf2ef305ad9e31f0d11845e231cdfe8ca6e306e6bdee805
+    - id: src-swebench-gh-api
+      url: https://api.github.com/repos/SWE-bench/SWE-bench
+      kind: repository-metadata
+      text_sha256: 67c562f24db81bb61b09a034e0fc196cbb757c019c512794a75a9598093ad3c8
+    - id: src-swebench-illusion
+      url: https://arxiv.org/abs/2506.12286
+      kind: third-party-paper
+      title: "The SWE-Bench Illusion: When State-of-the-Art LLMs Remember Instead of Reason"
+      text_sha256: 2334151d78d52bad2dffc99772b0b52dbdc4f440ec06154098551039dcea64bd
+    - id: src-swebench-pro-arxiv
+      url: https://arxiv.org/abs/2509.16941
+      kind: third-party-paper
+      text_sha256: e07b6ae9c4d2f16af5f448fddb17c6379b5a331444796176568ac67f52d4d5c7
+    - id: src-swebench-multimodal-arxiv
+      url: https://arxiv.org/abs/2410.03859
+      kind: paper-abstract
+      text_sha256: 3340a3e15eac6ce2426cbfe8a059f366f3345e0eade1875472c32974b7b86ee6
+
+# --- What writing this without a schema surfaced (input to P0-S5) ----------------------------
+
+_schema_findings:
+  - field: lineage.{variants,forks,views}
+    need: >
+      Three different relations, not one `variant_of`. A same-maintainer subset (Lite), a
+      same-maintainer extension (Multimodal), an other-maintainer fork (Pro) and a view that
+      is only a filter (Bash Only) must not collapse into one edge.
+  - field: results_observed[].scaffold and [].checked
+    need: >
+      Per-result, not per-benchmark. The top unchecked row (52.62) and the top checked row
+      (33.83) differ by 19 points, and the checked one used the maintainers' own scaffold.
+  - field: governance.submission_process as a list, plus a note
+    need: >
+      Artifact-backed self-reporting with optional maintainer re-runs fits neither
+      `self-reported` nor `maintainer-verified`. Either the field is multi-valued or the
+      vocabulary needs a term such as `artifact-backed`.
+  - field: observed_subjects alongside designed_for_subjects
+    need: >
+      Built for prompted models with retrieval; used almost entirely by agents. Facet 4
+      already names that divergence at claim level; this entry wants it at benchmark level
+      too.
+  - field: capability_considered_and_rejected
+    need: >
+      Near-misses with reasons. Without them, a reviewer cannot tell a thin tag list that was
+      judged from one that was skipped.
+  - field: contamination_evidence[].stance
+    need: Evidence can cut both ways, and the maintainers' own counter-check should be kept.
+  - field: size.n_items with split, and n_items_history on variants
+    need: Counts change between versions (Multimodal 617 to 480); one integer loses that.
+  - field: sources[].extract and quote_locator
+    need: >
+      The quote-substring check fails for any number held in inline JSON, since the
+      normalisation strips <script>. Structured sources need a locator, not a substring. The
+      arXiv HTML extract also loses every number typeset as math.
+  - field: curation.unreachable
+    need: A source that 403s is information; recording it stops the claim being made from memory.
+  - field: dataset_licence vs code_licence vs upstream_licences
+    need: Three different licences with three different answers, one of them null.
