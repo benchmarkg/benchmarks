@@ -170,7 +170,7 @@ So:
    it there, and make every other mention a link rather than a second copy. A restated number is a
    defect even when the two copies currently agree — agreeing copies are a defect waiting to happen,
    not a passing state.
-2. **If a decision changes, write the decision down before editing sixteen files.** Use D1–D4 as the
+2. **If a decision changes, write the decision down before editing nineteen files.** Use D1–D4 as the
    template: what it settles, what it depends on, what it costs, and an explicit
    edits-required-by-file-and-line list. A decision applied straight into the prose leaves nobody
    able to tell later whether an inconsistency was a mistake or an intention.
@@ -220,8 +220,8 @@ the top of that index. Every row carries a recommendation, so nothing in it bloc
 
 **Perishable, and to be re-verified before anyone acts on it.** Every version number, price, rate
 limit, bundle size, free-tier quota, open-issue count, registry "last published" date, file-size
-measurement, licence tag and service status anywhere in these sixteen documents was checked on
-**2026-09-17**. [14-roadmap.md](14-roadmap.md) §"Version pins and third-party facts: as-of date"
+measurement, licence tag and service status anywhere in these nineteen documents was checked on
+**2026-09-17**, except in `17` and `18`, which postdate that sweep. [14-roadmap.md](14-roadmap.md) §"Version pins and third-party facts: as-of date"
 owns that statement for the whole plan and names which document records which class of fact.
 Re-verify all of them at the start of Phase 0, before writing the lockfile; none of them is
 load-bearing on the schedule. Three changed in the nine months before the plan was written — OpenAlex

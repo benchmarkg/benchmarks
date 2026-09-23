@@ -337,8 +337,14 @@ bench schema gen [--check]
 bench check-links [--changed-only] [--archive-missing] [--timeout 20]
 bench archive <src-id…> [--all-missing] [--if-not-archived-within 30d]
 
-# Ingestion
-bench ingest <adapter> [--dry-run] [--since <date>] [--limit N] [--no-network]
+# Ingestion -- 07-ingestion-infrastructure.md S1.6 owns this sub-surface; see the note below
+bench ingest <adapter> [--dry-run] [--since DATE] [--limit N] [--no-network]
+                       [--allow-bulk] [--fixture PATH] [--max-runtime SECONDS] [--max-drafts N]
+bench ingest --all --report-only
+bench ingest replay <adapter> <run-date> [--resolver-snapshot SHA]
+bench ingest recompute <adapter> --from-version X
+bench ingest state <adapter> [--reset-cursor]
+bench ingest unresolved <adapter> [--status open|resolved|wontfix|blocked-upstream]
 bench resolve [--candidates] [--threshold 0.85] [--apply <mapping.yaml>]
 bench promote <path…> --to <verification_status> --evidence <src-id>
 
@@ -375,7 +381,7 @@ bench release --version <x.y.z> [--dry-run]
 | `verify` | Given a commit SHA, rebuild from that commit on a clean tree and assert the artifacts match byte for byte. This is success criterion S6's mechanism and the thing `reproduce.yml` runs on a schedule |
 | `check-links` | HTTP-check every `url` in the touched files; report rot; optionally queue archiving |
 | `archive` | Wayback SPN2 capture (`POST https://web.archive.org/save`, `Authorization: LOW <key>:<secret>`), using `if_not_archived_within` as the idempotency key; existence checks go through the CDX API, never the Availability API, which returned 429 on a single cold request during reconnaissance |
-| `ingest` | Run one source adapter; `--dry-run` prints the diff it would write and exits non-zero on schema drift |
+| `ingest` | Run one source adapter; `--dry-run` prints the diff it would write and exits non-zero on schema drift. **The flag semantics and the five subcommands are owned by [07-ingestion-infrastructure.md](07-ingestion-infrastructure.md) §1.6 and are not restated here** -- `--allow-bulk` is the deliberate override on the 400-draft PR cap, `--fixture` is the offline path every adapter must support, and `replay`/`recompute`/`state`/`unresolved` are the operational surface around a stored cursor. This row and §1.6 disagreed until 2026-09-22: each listed flags the other did not, and neither was a superset |
 | `resolve` | Identity resolution: surface candidate duplicates (same benchmark under two names, near-duplicate claims) for **human** decision. It never merges by itself |
 | `promote` | Raise a record's `verification_status`, recording who, when, and against which evidence |
 | `build` | Emit the shipped JSON artifacts plus SQLite and the derived tables ([08-infrastructure-and-build.md](08-infrastructure-and-build.md) §4.2 owns the artifact set) |

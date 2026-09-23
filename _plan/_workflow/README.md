@@ -33,7 +33,7 @@ _workflow/
 │                 README §3. The plan documents are the current state; these explain
 │                 why that state is what it is
 └── scripts/
-    ├── verify_corpus.py          checks the seventeen documents against each other
+    ├── verify_corpus.py          checks the nineteen documents against each other
     ├── verify_execution.py       checks execution/tasks.yaml
     └── render_execution_plan.py  renders 16-execution-plan.md from the backlog
 ```

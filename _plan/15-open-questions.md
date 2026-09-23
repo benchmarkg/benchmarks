@@ -93,7 +93,7 @@ to check that something was decided, use the table.
 | E3 | Sponsorship and institutional affiliation | Before accepting anything | 2026-09-17 | An offer arrives | Only money that cannot buy inclusion; publish `funding.yaml` |
 | E4 | Publication and outreach at v1; an academic paper? | Before public v1 | 2026-09-21 | The corpus passes 500 entries | Technical report at v1; the D&B paper is a post-v1 question |
 | E5 | What if a competitor relicenses to CC-BY? | Watch continuously | 2026-09-17 | A licence file changes on either site | Ingest them and shift the pitch to conditions and depth |
-| F | Items handed here by other documents | Various | 2026-09-21 | Per row | See [section F](#f-items-handed-here-by-other-documents) |
+| F | Items handed here by other documents | Various | 2026-09-22 | Per row | See [section F](#f-items-handed-here-by-other-documents) |
 
 ---
 
@@ -1851,8 +1851,11 @@ The one thing not to do is to race them on entry count, in either direction.
 
 ## F. Items handed here by other documents
 
-Eight documents end with a list of things they explicitly hand to this register, and until this
-revision none of them were recorded here. They are listed compactly rather than expanded into the
+Ten documents end with a list of things they explicitly hand to this register, and until this
+revision none of them were recorded here. The count was eight until 2026-09-22: `17` §9 and `18` §6
+each carry a "carried forward" table that says in its own opening line that these go to this
+register, and neither had been routed. A handoff both ends agree on and neither performs is the
+quietest way for a decision to go missing. They are listed compactly rather than expanded into the
 four-part form, because each is a narrow technical call whose owning document already carries the
 context — and because a register that expands every handoff into a full entry becomes a document
 nobody finishes. Each row names the owner, so the recommendation can be moved into the owning
@@ -1885,6 +1888,14 @@ document when it is acted on.
 | `13` §10 | Five deferred execution-layer questions — items 1–4 and 6: gate query yield, per-key spend caps, provider ToS for automated benchmarking, Inspect `.eval` schema stability, `maintainer_rerun_policy: unstated` default | All stay with `13`, which is the optional final phase and may never be built. Two are marked **unverified** there and must be confirmed per provider before any run | Phase 7 evidence gate |
 | `11` §8 (Privacy) | Anthropic's data-retention terms for our account tier | **Unverified and unasked.** Confirm before any user query text leaves the browser, and state the answer on the AI-layer methodology page — a project that publishes provenance owes its own users the same | Before the AI layer ships |
 | `13` §10 | Contribute `RunRecord`s upstream to Every Eval Ever? (item 5) | Yes — 8–16 h of serialiser plus a recurring drift check, and it buys the best alliance in the landscape. Decide it *with* them, not at them. Listed separately because `13` §10 carries seven items and this table previously routed only five | After [E4](#e4-publication-and-outreach-at-public-v1-and-do-we-want-an-academic-paper) item 1 |
+| `17` §9 | Package name on PyPI — is `benchindex` available, and does it collide with the project name chosen in [A6](#a6-name-domain-identifier-permanence-and-doi)? | Reserve the name at the same time as the domain, before Phase 0 ends. Availability across PyPI, npm and GitHub is already a stated input to the naming decision, so this is one more surface on an existing check, not a new decision | With A6's four-surface availability check, before Phase 0 ends |
+| `17` §9 | Does the CLI ship the maintenance subcommands to every user, or only inside a checkout? | Hide them outside a checkout, per `17` §2.5. Revisit if contributors report friction | A contributor reports friction |
+| `17` §9 | Minimum supported Python | 3.11 — one below the 3.12 the repository pins, so a consumer on an older cluster image is not excluded. Note this is a *consumer* floor and does not relax the repository's own 3.12 pin, which the Atlas layout's reproducibility depends on ([05](05-repository-and-workflow.md) §3) | Phase 7, when the package is built; or sooner if a dependency raises its floor |
+| `17` §9 | Does the MCP server get its own release cadence? | Yes — separate wheel, separate version. It will change with the MCP spec, which moves faster than the catalogue | Phase 7, at the first MCP server release |
+| `18` §6 | Does GraphQL earn its maintenance, or would a richer REST filter grammar do? | Ship REST first and measure. Build GraphQL only if the join queries in `18` §1 actually appear in logs; the endpoint is easy to add and hard to remove | The join queries appear in request logs |
+| `18` §6 | Who reviews submissions at volume, when maintainer hours are the binding constraint? | The domain reviewer programme in [03-taxonomy-build-process.md](03-taxonomy-build-process.md) §12 is the natural pool, but it was scoped for taxonomy review, not claim review. If submission volume exceeds review capacity, submissions **queue rather than auto-merge**, and the backlog is published. This is the same constraint as [C5](#c5-sustainability-and-the-succession-story) seen from the intake side | Submission volume exceeds review capacity for four consecutive weeks |
+| `18` §6 | Should a trusted-submitter tier exist that skips human review? | Not before there is evidence of a review bottleneck *and* a submitter with a clean record over a stated number of claims. Write the rule before granting the first one, or the first grant becomes the rule | The review bottleneck above is evidenced |
+| `18` §6 | What is the SLA on the hosted API, if any? | **None, stated explicitly.** Best-effort, with the static artifacts named as the supported path for anything that needs reliability. This is [E2](#e2-should-the-index-host-anything)'s no-uptime-obligation rule applied to the API surface, and the API's own page must say so | At API launch, on the API's landing page |
 | `13` §10 | Who runs the runner if the founders stop? (item 7) | `SUCCESSION.md` should say explicitly that the execution layer is **not** part of what a fork inherits. The data is the asset; a runner a fork feels obliged to keep alive makes the fork look harder than it is. MedHELM's spin-out is the working model | With [C5](#c5-sustainability-and-the-succession-story), before public v1 |
 
 ---

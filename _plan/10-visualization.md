@@ -1108,6 +1108,8 @@ layer's permalinks and in other people's papers. They change only with redirects
 /suite/                              V10
 /benchmarks/                         V11 faceted browse
 /browse/{facet}/{term}/              pre-rendered single-facet pages (no-JS path)
+/methodology/                        how every published figure is computed (02 §11 rule 1)
+/trust/                              the staleness, verification and archive record (00 §7.1 S9)
 
 /benchmarks/{id}/                    V6 canonical detail page
 /benchmarks/{id}/v/{version}/        version-pinned detail view
@@ -1120,6 +1122,28 @@ layer's permalinks and in other people's papers. They change only with redirects
 /taxonomy/{facet}/{term}/            term definition, examples, member benchmarks
 /sources/{src-id}/                   a source with its archive link and liveness state
 ```
+
+### The two pages other documents commit us to
+
+`/methodology/` and `/trust/` are not views in the V-numbered sense and were missing from this
+scheme until 2026-09-22, although two other documents make testable commitments about their
+contents. They are listed here because a commitment with no URL is a commitment nobody can check.
+
+**`/methodology/`** carries, at minimum: the `density = n_primary + 0.5 × n_secondary` formula and
+the weighted-benchmark-count label ([02-taxonomy.md](02-taxonomy.md) §11 rule 1, which requires it
+"rendered on the methodology page next to every figure derived from it"); the refusal-to-rank
+statement ([12-analytics-and-trends.md](12-analytics-and-trends.md), "belongs on the methodology
+page verbatim"); the coverage denominators with their sources and uncertainty; and the taxonomy
+definitions. Every figure elsewhere on the site that derives from a published convention links to
+the anchor here that defines it.
+
+**`/trust/`** carries the five quantities success criterion S9 in
+[00-vision-and-scope.md](00-vision-and-scope.md) §7.1 names: the count of entries unverified for
+more than 12 months, the verification mix, mean condition completeness, the failed-archive count
+with reasons, and per-source last-successful-fetch dates. S9 is a *test*, not an aspiration, and
+it cannot pass against a page that does not exist.
+
+Both are static, both render with JavaScript off, and both take the record-page budget below.
 
 ### Filter state encoding
 
@@ -1208,12 +1232,17 @@ somebody checks occasionally.
 | V8 Feed | 0 KB | none | Static | -- |
 | V9 Ecosystem | <= 120 KB | derived/ecosystem.json | SSR SVGs at first paint | Six charts, one ECharts instance each; `ChordChart` dropped in favour of the `HeatmapChart` already imported for V2, so the budget is unchanged or lower -- remeasure in Phase 1 |
 | V10 Suite | <= 80 KB | reuses facets.json + corpus.json | Recompute panels < 50 ms per basket change | -- |
+| Record pages | **0 KB required** | none | Readable with JS off; HTML <= 60 KB | `/orgs/{id}/`, `/systems/{id}/`, `/metrics/{id}/`, `/claims/{claim-id}/`, `/conditions/{cond-id}/`, `/sources/{src-id}/`, `/taxonomy/{facet}/{term}/`, `/browse/{facet}/{term}/`, `/benchmarks/{id}/claims/`, `/benchmarks/{id}/v/{version}/`. Same shape as V6 -- a static record with no island -- so they take V6's budget rather than a separately invented one. The org profile is tables, flags and links; its charts live on V9 |
+| `/methodology/`, `/trust/` | **0 KB required** | `derived/trust.json` for `/trust/` | Readable with JS off | Static prose and tables. Both are commitments made by other documents (`00` §7.1 S9, `02` §11 rule 1) and neither had a route until 2026-09-22 |
 | Semantic tier | +40 KB code | ~4 MB model + vectors, **lazy, opt-in** | 1--2 ms per query | Measured 0.61 ms at 1,500 x 256, the shipped configuration (08 §5.5); 0.75 ms at 384 is the conservative upper bound |
 
 **Three CI gates enforce this rather than trusting discipline:**
 
 1. **Route size gate** -- per-route JS and HTML budgets from the table above; exceeding one fails
-   the build.
+   the build. **It also fails when a route in the URL scheme above maps to no row in that table**,
+   which is the half that was missing: the table is indexed by view and the gate is indexed by
+   route, so ten record routes had no budget and the gate passed over them silently. A gate whose
+   subject list is shorter than the thing it gates is not a gate.
 2. **No-JS render gate** -- every route is rendered with JavaScript disabled and asserted to contain
    its required fallback element (the table, list or SVG). A regression here is a citability
    regression, which is a product regression.

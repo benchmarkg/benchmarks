@@ -428,8 +428,8 @@ would silently break §1.4.
 ### 1.6 The CLI surface
 
 ```
-bench ingest <adapter> [--dry-run] [--since DATE] [--allow-bulk] [--fixture PATH]
-                       [--max-runtime SECONDS] [--max-drafts N]
+bench ingest <adapter> [--dry-run] [--since DATE] [--limit N] [--no-network]
+                       [--allow-bulk] [--fixture PATH] [--max-runtime SECONDS] [--max-drafts N]
 bench ingest --all --report-only
 bench ingest replay <adapter> <run-date> [--resolver-snapshot SHA]
 bench ingest recompute <adapter> --from-version X   # re-normalise already-merged records (§7.2)
@@ -440,6 +440,20 @@ bench ingest unresolved <adapter> [--status open|resolved|wontfix|blocked-upstre
 `bench ingest replay` is the one that pays for itself. When a parser turns out to have been subtly
 wrong for a fortnight, the fix is a re-normalise rather than a re-scrape of a rate-limited source.
 §4.4 covers where the raw bodies live and which sources are not allowed to have them kept.
+
+**This block is the sole declaration of the `bench ingest` surface.**
+[05-repository-and-workflow.md](05-repository-and-workflow.md) §3, which owns the rest of the CLI,
+carries a one-line summary and a pointer here rather than a second copy of these flags. Until
+2026-09-22 it carried a second copy and the two had diverged: §3 listed `--limit` and
+`--no-network`, which this block did not, while this block listed `--allow-bulk`, `--fixture`,
+`--max-runtime`, `--max-drafts` and all five subcommands, which §3 did not. Neither list was a
+superset, and the task that builds the subcommand asks for flags from both.
+
+The four that need a sentence: `--limit N` caps records *processed* and is the fast path for
+developing an adapter against a live source; `--max-drafts N` caps records *written*, which is the
+400-draft PR cap in §12 and is a different number for a different reason. `--no-network` forbids
+the network and fails if an adapter reaches for it, which is what makes the prohibition testable;
+`--fixture PATH` supplies recorded bytes in its place. The two are complementary and CI uses both.
 
 ---
 

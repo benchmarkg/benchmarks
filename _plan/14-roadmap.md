@@ -97,9 +97,21 @@ the four reasons are worth recording so nobody "optimises" them back out:
 
 **This block governs the whole plan, not only this document.** Every version number, price, rate
 limit, bundle size, open-issue count, registry "last published" date, free-tier quota, file-size
-measurement and service status **anywhere in these sixteen documents** was verified on **2026-09-17**
-and is expected to have moved. **Re-verify all of them at the start of Phase 0 before writing the
-lockfile.** None of them is load-bearing on the schedule.
+measurement and service status **anywhere in these nineteen documents** was verified on
+**2026-09-17** and is expected to have moved. **Re-verify all of them at the start of Phase 0
+before writing the lockfile.** None of them is load-bearing on the schedule.
+
+**Two documents are outside that sweep and the difference matters.**
+[17-packages-and-sdk.md](17-packages-and-sdk.md) and
+[18-api-and-submissions.md](18-api-and-submissions.md) were written after 2026-09-17, so nothing in
+them was verified on that date and this block cannot vouch for them. What they assert about third
+parties is small and is named here so it is not mistaken for checked: **`benchindex` availability on
+PyPI** — which `17` §9 already carries as an open question and which is unverified on PyPI, npm and
+GitHub alike; **PyPI Trusted Publishing** as the release mechanism; and the **Python 3.11 consumer
+floor**, which is a choice rather than an observation but depends on the dependency set's own
+floors. `18`'s rate limits, burst sizes and GraphQL point costs are *our* policy, not third-party
+facts, and are not covered by this block at all. Check the three above with the rest at the start of
+Phase 0.
 
 The detail — the figure, its source and its evidence grade — is recorded in the documents that
 derive it, and those are the ones to change when a pin moves:
@@ -121,7 +133,7 @@ per-call prices, and every "last published" date used to reject a library.
 
 A plan whose stated premise is that unsourced confident data destroys trust cannot assert twenty
 perishable third-party facts without saying when it checked them. This block is that statement, and
-it is deliberately the *only* one: sixteen per-document as-of blocks would drift apart within one
+it is deliberately the *only* one: nineteen per-document as-of blocks would drift apart within one
 revision pass, which is the failure this pass exists to repair. Where a specific figure carries more
 risk than the rest, it is marked inline below.
 
