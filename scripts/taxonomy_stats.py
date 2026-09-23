@@ -12,9 +12,12 @@ Checks implemented here, per 05-repository-and-workflow.md S9:
 
   9b  taxonomy stats drift -- the term counts in 02 S14 and the seed table in 02 S3 must
       match taxonomy/*.yaml.
-  9c  vocabulary id uniqueness -- ids unique within a file; in domains.yaml every term with
-      a parent satisfies id == "{parent}/{leaf}" and every leaf is unique across the WHOLE
-      file, not merely within its parent.
+  9c  vocabulary id uniqueness -- ids unique within a (file, field). Four vocabulary files
+      carry more than one field, and 02 S11 rule 11 scopes a value's meaning to its field:
+      execution.yaml legitimately holds `wet-lab` as both a compute_tier and a
+      reproducibility_blocker. A same-id-two-fields pair is permitted and is REPORTED, never
+      silent. In domains.yaml every term with a parent satisfies id == "{parent}/{leaf}" and
+      every leaf is unique across the WHOLE file, not merely within its parent.
   9f  seed-target integrity -- exactly one seed_target per family, none missing or doubled,
       sum == 320, every target >= 12 unless the family is under-surveyed, every core family
       >= 18 and never under-surveyed. Extends to curation_posture, which must agree with
@@ -26,6 +29,7 @@ A check that cannot run yet says so on stdout and is counted as PENDING or SKIPP
 never silently passed: a check nobody has seen fail is not evidence that it passes.
 """
 import argparse
+import io
 import os
 import re
 import sys
@@ -43,6 +47,11 @@ CORE_FLOOR = 18           # 02 S3 floor rule 2
 
 FACET_FILES = ['domains', 'capabilities', 'evaluation-methods', 'subjects',
                'data-properties', 'lifecycle', 'governance', 'execution']
+
+# 05 S9 scopes check 9c to every taxonomy/*.yaml with a terms list, which is more than the
+# eight facet files: ceiling-anchors and maintenance each hold one field of a facet whose other
+# fields live elsewhere, per the layout in 05 S2.
+VOCAB_FILES = FACET_FILES + ['ceiling-anchors', 'maintenance']
 
 # 02 S14 row label -> the facet file that owns it
 S14_FACET = {'Capability': 'capabilities', 'Evaluation method': 'evaluation-methods',
@@ -197,23 +206,75 @@ def parse_02_s14(text):
 
 # ---------------------------------------------------------------- checks
 
-def check_9c_all_facets(r):
-    """9c applies within EVERY taxonomy/*.yaml, not just domains.yaml."""
+ROOT_KEY = re.compile(r'^([A-Za-z_][A-Za-z0-9_-]*):', re.M)
+
+
+def check_no_duplicate_root_key(r):
+    """A duplicate root key in a YAML mapping is silently resolved to the LAST one.
+
+    taxonomy/subjects.yaml carried `terms:` twice and PyYAML kept the second, so 581 lines of
+    a superseded draft sat in the file unread while every count check passed against the half
+    that loaded. Nothing that reads the PARSED document can see this, which is why this check
+    reads the raw text.
+
+    It was found by a mutation test whose mutation landed in the dead half and changed
+    nothing. A check nobody has seen fail is not evidence that it passes -- and neither is a
+    suite that is green against a file it is only half reading.
+    """
     bad = []
     checked = 0
-    for name in FACET_FILES:
+    for fname in sorted(os.listdir(TAXONOMY)):
+        if not fname.endswith('.yaml'):
+            continue
+        checked += 1
+        raw = io.open(os.path.join(TAXONOMY, fname), encoding='utf-8').read()
+        keys = ROOT_KEY.findall(raw)
+        dupe = sorted(set(k for k in keys if keys.count(k) > 1))
+        if dupe:
+            bad.append('%s: %s' % (fname, dupe))
+    if bad:
+        return r.fail('9c no duplicate root key', '; '.join(bad))
+    r.ok('9c no duplicate root key', '%d files, every root key appears once' % checked)
+
+
+def check_9c_all_facets(r):
+    """9c applies within EVERY taxonomy vocabulary file, not just domains.yaml.
+
+    Scoped to (file, field) rather than to the file. Four of these files carry several fields,
+    and 02 S11 rule 11 scopes a value's meaning to its field -- "the field name says which
+    vocabulary a value belongs to". execution.yaml holds `wet-lab` as both a compute_tier and a
+    reproducibility_blocker, which 02 S10's changelog introduces as a deliberate pair.
+
+    Where a file holds one field, or no term declares one, the whole file is a single scope and
+    the behaviour is exactly what it was.
+    """
+    bad, shared, checked = [], [], 0
+    for name in VOCAB_FILES:
         d = load_facet(name)
         terms = (d or {}).get('terms') or []
         if not terms:
             continue
         checked += 1
-        ids = [t['id'] for t in terms]
-        dupe = sorted(set(i for i in ids if ids.count(i) > 1))
-        if dupe:
-            bad.append('%s.yaml: %s' % (name, dupe))
+        groups = {}
+        for t in terms:
+            groups.setdefault(t.get('field') or '', []).append(t['id'])
+        for field, ids in sorted(groups.items()):
+            dupe = sorted(set(i for i in ids if ids.count(i) > 1))
+            if dupe:
+                bad.append('%s.yaml%s: %s'
+                           % (name, ('/' + field) if field else '', dupe))
+        # The same id in two fields of one file is permitted. Report it: a permitted collision
+        # nobody can see is the same failure as an undeclared one.
+        for i in sorted(set(x for ids in groups.values() for x in ids)):
+            fs = sorted(f for f, ids in groups.items() if i in ids)
+            if len(fs) > 1:
+                shared.append('%s %s' % (i, '/'.join(f.split('.')[-1] for f in fs)))
     if bad:
-        return r.fail('9c id uniqueness per file', '; '.join(bad))
-    r.ok('9c id uniqueness per file', '%d populated facet files, no duplicate id' % checked)
+        return r.fail('9c id uniqueness per field', '; '.join(bad))
+    detail = '%d vocabulary files, no duplicate id within a field' % checked
+    if shared:
+        detail += '; cross-field by design: %s' % ', '.join(shared)
+    r.ok('9c id uniqueness per field', detail)
 
 
 def check_9c(r, fams, subs):
@@ -398,6 +459,7 @@ def main():
     print('  documents %s\n' % (PLAN if doc02 else '(not in this tree)'))
 
     r = Result()
+    check_no_duplicate_root_key(r)
     check_9c_all_facets(r)
     check_9c(r, fams, subs)
     check_9f(r, fams, posture_owner)

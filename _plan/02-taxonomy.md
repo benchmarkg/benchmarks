@@ -1759,8 +1759,17 @@ without its conditions. `source` may be null (our own estimate) but `basis` may 
 
 11. **Identifiers are facet-scoped, not globally unique.** A subdomain id is always
     `family/subdomain`, and a subdomain leaf is unique across the whole domain vocabulary, not
-    merely within its family. Every other facet's ids are bare slugs, unique within their facet
-    file. Two facets may share a word — the field name says which vocabulary a value belongs to —
+    merely within its family. Every other facet's ids are bare slugs, unique within **the field
+    vocabulary they belong to** — not merely within the file, because four files carry more than
+    one field. `taxonomy/execution.yaml` holds all four execution fields and legitimately defines
+    `wet-lab` twice, once as a `compute_tier` and once as a `reproducibility_blocker`; §10's
+    changelog introduces the tier as "paired with the `wet-lab` blocker", so the repetition is
+    the design. Every term in a multi-field file therefore carries the `field` it belongs to, and
+    CI check 9c scopes uniqueness to `(file, field)` and **reports** any id shared across two
+    fields rather than passing over it silently. This clause read "unique within their facet
+    file" until 2026-09-22, which contradicted the justification in the next sentence and would
+    have failed the execution vocabulary as specified.
+    Two facets may share a word — the field name says which vocabulary a value belongs to —
     but every such pair is declared in `taxonomy/homographs.yaml` with a rationale, and the
     coverage cell where the two meet is marked as occupied-by-construction rather than counted
     as evidence. Where a term is referenced *outside* a facet-typed field, it is written
