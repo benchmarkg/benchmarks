@@ -35,7 +35,9 @@ _workflow/
 └── scripts/
     ├── verify_corpus.py          checks the nineteen documents against each other
     ├── verify_execution.py       checks execution/tasks.yaml
-    └── render_execution_plan.py  renders 16-execution-plan.md from the backlog
+    ├── render_execution_plan.py  renders 16-execution-plan.md from the backlog
+    └── next_task.py              the execution loop: what to do next, and the only
+                                  safe way to move a task through the ledger
 ```
 
 Everything in `recon/` carries an **as-of date of 2026-09-17** and was perishable when it was
@@ -44,7 +46,7 @@ README §5.
 
 ---
 
-## The three scripts
+## The four scripts
 
 **`verify_corpus.py`** re-derives every vocabulary from `02-taxonomy.md` — the only document that
 owns them — and checks the rest of the corpus against it: family, subdomain, capability and group
@@ -55,11 +57,22 @@ retired field names.
 **`verify_execution.py`** checks the backlog, which fails in ways a prose plan cannot. Each check
 exists for a failure this backlog actually had: a dependency resolving to nothing, a cycle, a task
 waiting on a later phase, two tasks both claiming to create one file, a `verify` command that runs a
-script no earlier task builds, a `seq` that puts a task before its own inputs, and a `verify` that
-cannot fail.
+script no earlier task builds, a `seq` that puts a task before its own inputs, a `verify` that
+cannot fail, and a ledger that claims more than has happened -- a task done, under way or in review
+on inputs that do not allow it, or a done task a person was involved in with no name on it.
 
 **`render_execution_plan.py`** regenerates `16-execution-plan.md` from `execution/tasks.yaml`.
 `--check` fails if the committed document has drifted. Never hand-edit the document; edit the YAML.
+
+**`next_task.py`** is the execution loop. With no arguments it prints the next ready task in full;
+`queue` shows what is in flight, awaiting review, blocked and ready; `start`, `finish`, `approve`,
+`reject`, `block` and `unblock` move a task through the ledger. It exists because the first
+unattended run hit a state the ledger could not express: it drafted seven `agent-draft` tasks,
+committed them as "(DRAFT)" and left them `doing`, since there was no status meaning *finished,
+awaiting a person*. `review` is that status. The tool edits only the ledger lines of the one task it
+touches and refuses any transition the ledger cannot honestly record -- finishing without attesting
+that `verify` passed, signing off without a name, approving a draft before the draft it rests on, or
+starting an `agent` task on an unreviewed input.
 
 Both verifiers are deliberately mechanical. Judgement belongs in review, and a linter that cries
 wolf gets ignored.

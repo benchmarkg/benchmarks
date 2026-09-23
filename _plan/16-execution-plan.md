@@ -19,10 +19,41 @@ it is grouped by stage for reading, and seven tasks sit before something they de
 exists precisely so that grouping and ordering do not have to be the same thing.
 
 For each task in turn: read the documents in `reads`, do the `steps`, then run the `verify`
-command. Set `status: done` only when that command has actually run and passed. Everything else
+command. Mark it finished only when that command has actually run and passed. Everything else
 in the backlog is description; `verify` is the only thing that decides whether a task is
 finished, and a task recorded done without it is worse than a task not started, because nothing
 downstream will re-check it.
+
+### The loop
+
+```
+python _plan/_workflow/scripts/next_task.py              # the next ready task, in full
+python _plan/_workflow/scripts/next_task.py start ID
+    ... read `reads`, do `steps`, run `verify` ...
+python _plan/_workflow/scripts/next_task.py finish ID --verify-passed
+```
+
+Repeat. `next` returns the lowest-`seq` task whose inputs are ready and prints what it reads,
+creates, edits and verifies with. `finish` marks an `agent` task done and moves an `agent-draft`
+to `review` -- **not** done. `queue` shows everything in flight, awaiting review, blocked, and
+ready. The tool edits only the ledger lines of the one task it touches, so every transition is a
+one-line diff.
+
+**When `verify` fails,** fix the work and run it again; do not finish. If it cannot be made to
+pass -- the plan is ambiguous, a source is unreachable, or the task needs something no earlier
+task built -- run `block ID --reason "..."`, say exactly what is missing, and take the next task.
+Three failed attempts is the signal to stop trying. **Never edit a `verify` to make it pass.** A
+failing check is information about the work; a check rewritten until it passes is a false entry
+in the ledger, and every task downstream inherits it.
+
+**When the next task needs a person** (`human`, `human-gate`), an agent does not attempt it.
+`next` skips those tasks and `queue` lists them under *ready for a person*. The person does the
+work and closes it with `approve ID --by NAME`, which records who and when.
+
+**When drafts pile up.** An `agent-draft` may be drafted on inputs that are still in review; an
+`agent` task may not, because nobody reviews agent work and it must never rest on an unreviewed
+draft. So an unattended run keeps moving until everything left waits on a draft, and then `next`
+reports nothing ready and prints the queue. That is the signal to review, not a failure.
 
 ### The four executors
 
@@ -35,11 +66,39 @@ downstream will re-check it.
 
 ### The ledger
 
-`status` is the execution ledger, one of `todo`, `doing`, `blocked`, `done`. It is the only field
-an executor writes. `produces` names the paths a task **creates** -- exactly one task may create
-any given path -- and `modifies` names paths it edits that another task created. A task that only
-edits has an empty `produces`, which is legitimate and common for shared files like the CI
-workflow, which accumulates jobs from tasks across five phases.
+The ledger is the only part of the backlog an executor writes. Change it with `next_task.py`,
+not by hand: the tool refuses any transition the ledger could not honestly record, and
+`verify_execution.py` rejects the same states if they are written some other way.
+
+| `status` | Meaning |
+| --- | --- |
+| `todo` | Not started. |
+| `doing` | An executor has started it. |
+| `review` | `agent-draft` only. The artifact exists and `verify` passed; a person has not yet reviewed it. Without this state a finished draft and a half-written one are indistinguishable -- which is not hypothetical: the first unattended run committed seven drafts as "(DRAFT)" and left them `doing`, because there was nowhere else to put them. |
+| `blocked` | Cannot proceed. `blocked_reason` says why, so someone can unblock it. |
+| `done` | Finished. On any task a person is involved in, `signed_off_by` and `signed_off_on` name who and when; a sign-off without a name is not one. |
+
+What a task's inputs must be:
+
+| To... | Every input must be |
+| --- | --- |
+| finish anything | `done` |
+| start an `agent` task | `done` |
+| start an `agent-draft` task | `done` or `review` |
+
+`produces` names the paths a task **creates** -- exactly one task may create any given path --
+and `modifies` names paths it edits that another task created. A task that only edits has an
+empty `produces`, which is legitimate and common for shared files like the CI workflow, which
+accumulates jobs from tasks across five phases.
+
+### Reviewing
+
+`next_task.py queue` splits the review queue in two: drafts whose inputs are all done, which can
+be approved now, and drafts resting on another unreviewed draft, which must wait for it. Review in
+`seq` order. `approve ID --by NAME` refuses a draft whose inputs are not yet done, so a draft built
+on a draft cannot be signed off first. `reject ID --reason "..."` returns a draft to the agent and
+names every draft already built on top of it; those rest on work that was just thrown out, and
+`verify_execution.py` reports them until they are rejected too or re-reviewed.
 
 ---
 
@@ -1632,7 +1691,10 @@ backlog at least once:
   -- the check against a verification that fails with `command not found`;
 - `seq` is a contiguous 1..N and never places a task before one of its dependencies;
 - no `verify` is a weak one that cannot fail, and an `agent` task either names a runnable command
-  or says why no machine check is possible.
+  or says why no machine check is possible;
+- the ledger claims no more than has happened: no task is done, under way or in review on inputs
+  that do not allow it, `review` is used only by `agent-draft`, every `blocked` task says why, and
+  every done task a person was involved in names that person.
 
 ```
 python _plan/_workflow/scripts/render_execution_plan.py --check

@@ -39,7 +39,8 @@ except ImportError:
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PLAN_DIR = os.path.dirname(os.path.dirname(HERE))
-TASKS = os.path.join(PLAN_DIR, 'execution', 'tasks.yaml')
+# EXECUTION_TASKS_FILE points at another copy, for testing without touching the ledger.
+TASKS = os.environ.get('EXECUTION_TASKS_FILE') or os.path.join(PLAN_DIR, 'execution', 'tasks.yaml')
 
 EXECUTORS = ('agent', 'agent-draft', 'human', 'human-gate')
 
@@ -439,6 +440,67 @@ def check_effort():
 
 # ---------------------------------------------------------------------------
 
+STATUSES = ('todo', 'doing', 'review', 'blocked', 'done')
+HUMAN_INVOLVED = ('agent-draft', 'human', 'human-gate')
+
+
+def check_ledger():
+    """The ledger must not claim more than has happened.
+
+    Added after an unattended run drafted seven agent-draft tasks, committed them as
+    "(DRAFT)" and left them `doing`, because the ledger had no state for "finished,
+    awaiting a person". The difference between a finished draft and a half-written
+    one ended up recorded only in commit messages. `review` is that state, and
+    next_task.py is the tool that moves tasks through it.
+    """
+    for tid, t in TASKS_BY_ID.items():
+        st = t.get('status')
+        ex = t.get('executor')
+        if st not in STATUSES:
+            fail('ledger/unknown-status',
+                 '%s has status %r; allowed: %s' % (tid, st, ', '.join(STATUSES)))
+            continue
+
+        if st == 'review' and ex != 'agent-draft':
+            fail('ledger/review-wrong-executor',
+                 '%s is in review but executor=%s; only agent-draft tasks are '
+                 'reviewed' % (tid, ex))
+
+        if st == 'blocked' and not t.get('blocked_reason'):
+            fail('ledger/blocked-without-reason',
+                 '%s is blocked with no blocked_reason, so nobody can unblock it' % tid)
+
+        if st == 'done' and ex in HUMAN_INVOLVED:
+            if not t.get('signed_off_by') or not t.get('signed_off_on'):
+                fail('ledger/done-without-signoff',
+                     '%s is executor=%s and done, but has no signed_off_by and '
+                     'signed_off_on. A person must be named, or the review gate is '
+                     'decoration' % (tid, ex))
+
+        # What a task's inputs must be, for the state it is in:
+        #   done                    every input done. Nothing is finished on
+        #                           unfinished inputs, which forces review in
+        #                           dependency order.
+        #   agent, doing            every input done. Agent work is never reviewed,
+        #                           so it must never rest on an unreviewed draft.
+        #   agent-draft, doing or   every input done OR in review. Drafting on a
+        #   review                  draft is allowed because a person reviews this
+        #                           one too; the cost is rework if the lower draft
+        #                           is rejected, and next_task.py `queue` shows it.
+        if st in ('doing', 'review', 'done'):
+            ok = ('done', 'review') if (ex == 'agent-draft' and st != 'done') else ('done',)
+            pending = [d for d in (t.get('depends_on') or [])
+                       if d in TASKS_BY_ID and TASKS_BY_ID[d].get('status') not in ok]
+            if pending:
+                fail('ledger/ahead-of-inputs',
+                     '%s is %s but depends on %s, which %s not %s'
+                     % (tid, st,
+                        ', '.join('%s (%s)' % (d, TASKS_BY_ID[d].get('status'))
+                                  for d in pending),
+                        'is' if len(pending) == 1 else 'are',
+                        ' or '.join(ok)))
+
+
 def summary():
     print('verify_execution: %s' % TASKS)
     print('  %d phases, %d stages, %d tasks'
@@ -449,6 +511,10 @@ def summary():
     ex = Counter(t.get('executor') for t in TASKS_BY_ID.values())
     print('  executor split: %s'
           % ', '.join('%s=%d' % (k, ex[k]) for k in EXECUTORS if ex.get(k)))
+
+    stc = Counter(t.get('status') for t in TASKS_BY_ID.values())
+    print('  ledger: %s   (next task: python _plan/_workflow/scripts/next_task.py)'
+          % ', '.join('%s=%d' % (k, stc[k]) for k in STATUSES if stc.get(k)))
 
     touched = set()
     for t in TASKS_BY_ID.values():
@@ -493,6 +559,7 @@ CHECKS = (
     check_shape, check_ids, check_dependencies, check_acyclic,
     check_produces_ownership, check_reads, check_executors, check_verify,
     check_verify_inputs, check_cli_surface, check_seq, check_effort,
+    check_ledger,
 )
 
 

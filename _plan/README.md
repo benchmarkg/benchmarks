@@ -188,9 +188,14 @@ So:
 
    The second checks the backlog, which fails in ways prose cannot: a dependency that resolves to
    nothing, a cycle, a task waiting on a later phase, two tasks that both claim to create one file, a
-   `verify` command that runs a script no earlier task builds, and a `verify` that cannot fail. Both
-   are deliberately mechanical — judgement belongs in review, and a linter that cries wolf gets
-   ignored.
+   `verify` command that runs a script no earlier task builds, a `verify` that cannot fail, and a
+   ledger that claims more than has happened. Both are deliberately mechanical — judgement belongs
+   in review, and a linter that cries wolf gets ignored.
+
+   To **execute** the backlog one task at a time, use `_workflow/scripts/next_task.py`: with no
+   arguments it prints the next ready task in full, and its `start`, `finish`, `approve` and
+   `reject` subcommands are the only safe way to change a task's status.
+   [16-execution-plan.md](16-execution-plan.md) §1 is the protocol.
 4. **Do not hand-edit the generated blocks.** The term lists and counts in
    [02-taxonomy.md](02-taxonomy.md) §§3–10 and §14 are rendered from `taxonomy/*.yaml` and checked
    byte-for-byte in CI. Edit the YAML. The whole of
