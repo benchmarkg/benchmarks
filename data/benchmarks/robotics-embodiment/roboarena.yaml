@@ -1,0 +1,501 @@
+# data/benchmarks/robotics-embodiment/roboarena.yaml
+#
+# P0-S3-T03. Written from the primary sources below with NO schema in front of the author
+# (14-roadmap "Start here", Week 2 item 4). Field names are invented where the entry needed
+# them; P0-S5 reconciles them. `_schema_findings` at the bottom is the product of this task.
+#
+# The site is a single-page app with no server-rendered text. Its prose, its display-name
+# table and its API base URL were read from the published JS bundle; the leaderboard and
+# the evaluation counts from the public API the site itself calls. Both are `extract: raw`.
+#
+# PRIVACY. The public transparency endpoint lists evaluator accounts by e-mail address. This
+# entry uses only aggregate counts from it. No evaluator name or address appears here, and
+# none may be added: 05 S4's "no field without a source" is not a licence to republish
+# personal data that a source happens to expose.
+#
+# 02 S12.2 disagrees with the sources in five places; each is recorded where it bites:
+# submission_process, independence_flags, two secondary domains, and the capability list.
+
+id: roboarena
+name: RoboArena
+tagline: Robot policies ranked from double-blind A/B trials that volunteer labs run on their own tasks and robots.
+platform: DROID
+
+summary: >
+  Submitters host a manipulation policy as a remote policy server. Volunteer evaluators at
+  institutions with a DROID robot are handed two anonymised policies, choose any task and
+  scene they like, run both under the same conditions, and record which they preferred,
+  a 0-100 progress score for each, and a free-text explanation. A Bradley-Terry-style model
+  with ties aggregates the preferences into a relative rating. There is no task list, no
+  fixed test set and no absolute score.
+
+released: 2025-06-22                  # arXiv v1
+paper:
+  title: "RoboArena: Distributed Real-World Evaluation of Generalist Robot Policies"
+  arxiv: "2506.18123"
+  version_read: v2
+  source: src-roboarena-arxiv-abs
+homepage: https://robo-arena.github.io/
+repository: https://github.com/robo-arena/roboarena
+api: https://roboarena-api-domain-name.online/api
+dataset: https://huggingface.co/datasets/RoboArena/DataDump_07-17-2026
+
+self_description:
+  source: src-roboarena-site-bundle
+  quote: "RoboArena is a community-run, real-world benchmark for evaluating generalist robot policies, instantiated currently on the DROID robot platform."
+
+# --- What an "item" is, when there is no task list ---------------------------------------------
+
+task_set:
+  exists: false
+  item_definition: >
+    One A/B evaluation: a pair of policies, one evaluator, one scene and one language
+    instruction chosen by that evaluator, run on that evaluator's robot. Items are not
+    stored in advance and are never repeated.
+  source: src-roboarena-site-bundle
+  quote: "instead of standardizing the set of tasks for which all policies are evaluated, we allow evaluators to pick"
+  constraint:
+    source: src-roboarena-site-bundle
+    quote: "The only requirement is that evaluations are done pairwise, maintaining the same task and environment for the policies in the pair."
+  blinding:
+    source: src-roboarena-site-bundle
+    quote: "Evaluations are double-blind and distributed across institutions."
+  task_distribution_drifts: true
+  task_distribution_quote: "The task distribution can evolve with policy capabilities."
+  task_distribution_source: src-roboarena-site-bundle
+
+feedback_per_item:
+  # Three signals are collected; only one of them drives the leaderboard.
+  signals:
+    - kind: pairwise preference (binary, ties allowed)
+      ranks: true
+    - kind: progress score, 0-100 per policy
+      ranks: false                    # studied in the paper as an alternative ranker, not the official one
+    - kind: free-form language explanation
+      ranks: false                    # used to generate qualitative policy reports
+  source: src-roboarena-arxiv-html
+  quote_note: The paper puts inline math ("∈ [0…100]") mid-sentence; the quote starts after it.
+  quote: "that is proportional to the maximum progress a policy achieved on the task (e.g., 0 for no progress, 100 for successfully executing the task, intermediate values for partial success)"
+
+# --- The metric: relative, pool-dependent, and not quite Elo -----------------------------------
+
+metric:
+  kind: relative-rating
+  absolute_score: false
+  model: Bradley-Terry with Davidson ties
+  model_source: src-roboarena-site-bundle
+  model_quote: "Bradley-Terry Davidson"
+  paper_model_note: >
+    The paper extends Bradley-Terry with latent task buckets fitted by EM, because the task
+    changes between comparisons and a plain BT model assumes it does not. The site's chart
+    is labelled "Elo score"; the fit is not an online Elo update. The rating scale is
+    Elo-like (scores around 1,500-1,800) with a standard deviation per policy.
+  paper_model_source: src-roboarena-arxiv-html
+  paper_model_quote: "assumes that each pairwise comparison in the preference dataset takes place under identical conditions. This assumption is not satisfied in the setting of A/B robot policy evaluations"
+  rating_pool_required: true          # a rating means nothing outside its pool and snapshot
+  snapshot:
+    last_updated: 2026-09-23T18:46:33Z
+    source: src-roboarena-api-leaderboard
+    quote: '"last_updated":"2026-09-23T18:46:33.415445Z"'
+  official_threshold:
+    value: 100
+    unit: A/B evaluations per policy
+    source: src-roboarena-site-bundle
+    quote: "A/B evals per policy are required for the official leaderboard."
+    value_locator: 'bundle constant `Bn=100`, used in the title string above'
+  provisional_rows_on_same_board: true
+  provisional_note: >
+    The API's board mixes official and provisional rows. Its top row (j2-vla, 1788) has 25
+    evaluations and is not official; the top official row (dreaming_zebra, shown as
+    "DreamZero", 1735) has 190. An ingester that takes row 1 records the wrong leader.
+  provisional_source: src-roboarena-site-bundle
+  provisional_quote: "All policies · includes early results with higher uncertainty."
+  ceiling_anchor_type: none-known     # correct, not a gap: a relative rating has no top
+  headroom: null                      # forced by the rating being relative (02 S8 guard 4)
+
+# --- Scale, as of retrieval -------------------------------------------------------------------
+
+scale:
+  at_publication:
+    institutions: 7
+    policies: 7
+    pairwise_comparisons: 612
+    source: src-roboarena-arxiv-html
+    quote: "Through decentralized evaluations of 7 generalist policies across 7 universities and a total of 612 pairwise comparisons"
+  live_2026_09_23:
+    total_ab_evaluations:
+      value: 3994
+      source: src-roboarena-api-transparency
+      quote: '"total_evals":3994'
+    evaluator_organizations:
+      value: 28
+      source: src-roboarena-api-transparency
+      quote: '"evaluator_organization_count":28'
+    policies:
+      value: 24
+      source: src-roboarena-api-transparency
+      quote: '"policy_count":24'
+    official_policies:
+      value: 9
+      derived: true                   # rows with num_evals >= 100 on the API board
+      source: src-roboarena-api-leaderboard
+    tie_rate_percent:
+      value: 14.4
+      source: src-roboarena-api-transparency
+      quote: '"tie_rate":14.4'
+    first_evaluation:
+      value: 2025-04-15
+      source: src-roboarena-api-transparency
+      quote: '"first_eval_at":"2025-04-15'
+    last_evaluation:
+      value: 2026-09-12
+      source: src-roboarena-api-transparency
+      quote: '"last_eval_at":"2026-09-12T02:24:25.225565Z"'
+    policy_servers_up: 5              # of 24; derived from status.is_active on the board
+    policy_servers_up_derived: true
+    evaluator_concentration:
+      largest_org_share_percent: 57.6
+      top3_org_share_percent: 79.8
+      derived: true                   # from per-organisation counts; organisations not named here
+      source: src-roboarena-api-transparency
+      maintainer_publishes_this: true
+      maintainer_quote: "Official leaderboard recomputed with one evaluator organization removed"
+      maintainer_source: src-roboarena-site-bundle
+
+# --- Identity of what is ranked ---------------------------------------------------------------
+
+policy_identity:
+  # Backend ids are not display names, and one of them is actively misleading.
+  aliasing: true
+  source: src-roboarena-site-bundle
+  quote: 'f0={dreaming_zebra:"DreamZero","cosmos3-nano-policy":"balsomsoc","j2-vla":"Spirit v1.6",yckmtchl:"Cosmos3-Nano-Policy"}'
+  trap: >
+    The backend id `cosmos3-nano-policy` displays as "balsomsoc", and the policy displayed
+    as "Cosmos3-Nano-Policy" has the backend id `yckmtchl`. Joining on either string alone
+    attaches a rating to the wrong system. Claims must carry both ids.
+  linked_paper_example:
+    backend_id: dreaming_zebra
+    display_name: DreamZero
+    source: src-dreamzero-arxiv-abs
+    quote: "We introduce DreamZero, a World Action Model (WAM) built upon a pretrained video diffusion backbone."
+  open_source_flag_per_policy: true   # the board carries open_source; the paper planned separate boards
+  open_source_source: src-roboarena-arxiv-html
+  open_source_quote: "We plan to publish separate leaderboards for “all policies” and “open-source policies”"
+
+# --- Taxonomy ---------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/manipulation
+  secondary: [robotics-embodiment/embodied-instruction-following]
+  secondary_basis: >
+    Each A/B item is a scene plus a language instruction, and the policies are
+    language-conditioned.
+  secondary_source: src-roboarena-arxiv-html
+  secondary_quote: "(e.g., a specific scene and language instruction)"
+domain_considered_and_rejected:
+  - term: robotics-embodiment/cross-embodiment-transfer
+    reason: One embodiment only. The paper lists cross-embodiment as future work.
+    source: src-roboarena-arxiv-html
+    quote: "the experimental evaluations in this paper have focused on the DROID platform"
+  - term: robotics-embodiment/sim2real-transfer
+    reason: >
+      Simulated environments exist for debugging before submission, but nothing scores the
+      gap between simulated and real performance.
+
+capability: [sensorimotor-control, grounding]
+capability_basis:
+  sensorimotor-control: Closed-loop control of a real arm; the score depends on the physical outcome.
+  grounding: >
+    Instructions name objects in a scene the evaluator built, and the preference depends on
+    whether the right object was acted on. Weaker than a benchmark that isolates binding;
+    reviewer's call.
+capability_considered_and_rejected:
+  - term: instruction-following
+    reason: >
+      Its IN clause requires that "the benchmark's own source claims instruction following".
+      The sources claim generalist manipulation; compliance is not scored separately from
+      task success.
+  - term: distribution-shift-generalization
+    reason: >
+      IN requires inputs "drawn from a deliberately different distribution" with "the
+      degradation" reported. Scenes are novel but not deliberately shifted, and nothing
+      reports degradation against a training distribution. Closest near-miss.
+  - term: long-horizon-execution
+    reason: Evaluators pick the task; nothing requires ~10 dependent steps, and most reported tasks are single pick-and-place.
+
+evaluation_method: [physical-trial, pairwise-preference-elo]
+evaluation_method_considered_and_rejected:
+  - term: human-expert-eval
+    reason: >
+      Raters are volunteer evaluators with no stated qualification requirement, and the
+      ranked number is a rating fitted to preferences rather than per-output ratings. The
+      human judgement is inside pairwise-preference-elo, not beside it. 02 S12.2 tags both.
+  - term: human-crowd-eval
+    reason: OUT clause, verbatim -- "do NOT tag it where the aggregation is a head-to-head rating system".
+
+designed_for_subjects: [physical-robot-system]
+designed_for_subjects_note: >
+  rl-policy's OUT clause sends a policy running on hardware to physical-robot-system. But
+  here the submitter provides only the policy; the body is the evaluator's, and differs per
+  item. The term's own IN clause says "record the hardware: it is part of the system under
+  test" -- and the hardware is not the submitter's. The subject is really a remotely served
+  policy evaluated on someone else's robot.
+hardware:
+  source: src-roboarena-arxiv-html
+  quote: "which consists of a Franka Panda 7DoF robot arm, a Robotiq 2F-85 parallel-jaw gripper, a ZED-mini stereo wrist camera and one or multiple external ZED 2 stereo cameras"
+subjects_considered_and_rejected:
+  - term: rl-policy
+    reason: Its OUT clause, and most listed policies are VLAs fine-tuned on demonstrations, not RL.
+  - term: hosted-inference-endpoint
+    reason: >
+      Near-miss. Policies are queried as remote servers and the board tracks their uptime,
+      so how a policy is served does affect whether it is evaluated at all. But the rating
+      is about the policy, not the endpoint.
+
+# --- Data -------------------------------------------------------------------------------------
+
+data:
+  access: generated-on-demand
+  access_note: >
+    There is no evaluation set to access. Items exist only when an evaluator runs them.
+    02 S12.2 says fully-open; that describes the evaluation RECORDS, not the items.
+  records_access: fully-open
+  records_source: src-roboarena-hf-api
+  records_quote: '"gated":false'
+  records_licence: MIT
+  records_snapshot: 2026-07-17
+  refresh: rolling-live
+  data_provenance: [evaluator-improvised]   # NOT IN THE VOCABULARY; see _schema_findings
+  data_provenance_note: >
+    Items are authored on the spot by volunteer evaluators in their own scenes.
+    crowd-authored ("non-specialist annotators at scale") and real-world-instrument
+    ("recordings captured from physical sensors") each capture half of it.
+  contamination_risk: low
+  contamination_basis: >
+    An item does not exist until an evaluator builds it, which is what the vocabulary means
+    by contamination-resistant by construction. Not recorded: whether evaluator scenes
+    resemble DROID training scenes, which would be in-distribution rather than contaminated.
+
+# --- Lifecycle and activity -------------------------------------------------------------------
+
+lifecycle: active
+activity: accepting-submissions
+activity_source: src-roboarena-site-bundle
+activity_quote: "The RoboArena benchmark will be running live through Dec 2026, with potential extensions beyond."
+planned_end: 2026-12                  # announced, not a closure; "potential extensions beyond"
+events:
+  - name: CoRL 2025 generalist policy challenge
+    kind: competition-on-the-arena    # a timed ranking run on the live arena, not a separate benchmark
+    source: src-roboarena-site-bundle
+    quote: "We will be hosting a generalist policy development challenge as part of CoRL 2025, using the RoboArena framework."
+maintenance_status: null              # DERIVED; never hand-set
+maintenance_signals_seen:
+  - signal: API leaderboard last_updated 2026-09-23
+    source: src-roboarena-api-leaderboard
+  - signal: repository pushed_at 2026-04-28, not archived
+    source: src-roboarena-gh-api
+  - signal: backend repository pushed_at 2026-02-26
+    source: src-roboarena-backend-gh-api
+  - signal: data dump published 2026-07-17
+    source: src-roboarena-hf-api
+
+# --- Governance -------------------------------------------------------------------------------
+
+governance:
+  maintainer_type: community-collective
+  maintainer_note: >
+    The self-description is "community-run", and evaluation is distributed. But ranking,
+    the backend, the safety screening and the evaluation budget are run centrally by the
+    core team. The evaluator network is distributed; the maintainer is not.
+  maintainer_type_source: src-roboarena-site-bundle
+  submission_process: live-arena
+  submission_process_note: >
+    02 S12.2 says physical-competition, "at a venue on a date". Entrants never ship
+    hardware or travel; they host a server. The CoRL 2025 challenge was a dated event
+    run on the arena, recorded under `events`.
+  admission:
+    safety_screen: >
+      New policy servers pass a format check and a supervised test run before joining the
+      evaluation pool.
+    source: src-roboarena-arxiv-html
+    quote: "Only after a policy passed these tests, we add it to the general pool and distribute it to evaluators."
+  evaluation_budget:
+    source: src-roboarena-site-bundle
+    quote: "You have a weekly budget of policy evaluations, and can get more by contributing evaluations yourself!"
+    comparability_consequence: >
+      A policy's sample size depends on its submitter's budget and contributions, which is
+      why some rows have 6 evaluations and others 1,000.
+  independence_flags: []
+  independence_flags_note: >
+    Empty, not `no-known-conflict`. 02 S12.2 sets maintainer-competes-on-own-benchmark,
+    and no source read here establishes it: the paper's HTML carries no affiliations.
+  reviewer_check:
+    - finding: >
+        The site's recommended starting point is a Physical Intelligence training pipeline,
+        and Physical Intelligence policies (pi0_droid, pi05_droid, pi0_fast_droid) are
+        ranked on the board. Whether any maintainer is affiliated with Physical
+        Intelligence is not established by these sources.
+      source: src-roboarena-site-bundle
+      quote: "Get started with our baseline implementation of the π₀-FAST-DROID training pipeline."
+    - finding: One evaluator organisation contributed 57.6% of all A/B evaluations; the top three, 79.8%.
+      source: src-roboarena-api-transparency
+      note: Derived. The maintainers publish a leave-one-organisation-out rerun themselves.
+  known_limitation:
+    source: src-roboarena-arxiv-html
+    quote: "we have not investigated its robustness to intentionally adversarial evaluators"
+
+# --- Execution: the cost depends on which role you play --------------------------------------
+
+execution:
+  compute_tier_by_role:
+    submitter: null                   # hosting a policy server; GPU class not stated in any source
+    evaluator: physical-hardware
+  compute_tier: physical-hardware
+  compute_note: >
+    A submitter needs no robot; that is the design's point. The tier describes the network,
+    not the entrant.
+  submitter_needs_no_robot:
+    source: src-roboarena-arxiv-html
+    quote: "DROID-RoboArena can enable researchers without access to a physical robot to train and evaluate real-world generalist robot policies"
+  reproducibility_tier: requires-specialized-hardware
+  reproducibility_blockers: [hardware-fleet, human-raters, live-world-state]
+  reproducibility_note: >
+    Rescoring is possible: the evaluation records are open, so the rating can be refitted
+    from the data dump. Rerunning is not: the items were improvised once, on hardware and
+    by people outside anyone's control.
+  harness_availability: reference-implementation-only
+  harness_note: >
+    The repository provides the policy-server interface, a client and simulated
+    pre-submission checks. No harness can produce the official score, which exists only
+    as the output of the live network.
+  harness_source: src-roboarena-readme
+  harness_quote: "(1) serving your policy via a remote policy server, to make it ready for RoboArena evaluation"
+  code_licence: MIT
+  code_licence_source: src-roboarena-gh-api
+
+# --- Results the sources show (ResultClaims in the real tree) --------------------------------
+
+results_observed:
+  - label: top official row
+    backend_id: dreaming_zebra
+    display_name: DreamZero
+    rating: 1735
+    std: 42.6
+    n_evals: 190
+    open_source: true
+    snapshot: 2026-09-23
+    rating_pool: RoboArena all-policies board, 24 policies
+    source: src-roboarena-api-leaderboard
+    quote: '"num_evals":190,"open_source":true,"policy":"dreaming_zebra","score":1735'
+  - label: top row overall, NOT official (below the 100-evaluation threshold)
+    backend_id: j2-vla
+    display_name: Spirit v1.6
+    rating: 1788
+    std: 106.0
+    n_evals: 25
+    official: false
+    snapshot: 2026-09-23
+    source: src-roboarena-api-leaderboard
+    quote: '"num_evals":25,"open_source":true,"policy":"j2-vla","score":1788'
+
+# --- Curation ---------------------------------------------------------------------------------
+
+curation:
+  verification_status: ai-drafted-unverified
+  drafted_by: agent (P0-S3-T03)
+  drafted_on: 2026-09-23
+  retrieved_on: 2026-09-23
+  personal_data_excluded:
+    - source: src-roboarena-api-transparency
+      what: evaluator account labels (e-mail addresses) and per-account counts
+  sources:
+    - id: src-roboarena-arxiv-abs
+      url: https://arxiv.org/abs/2506.18123
+      kind: paper-abstract
+      text_sha256: c8b3ce9cb7d334b806da8d90a03633caa0a5e0a3c76c8298d1c50aa36e138e2d
+    - id: src-roboarena-arxiv-html
+      url: https://arxiv.org/html/2506.18123v2
+      kind: paper
+      text_sha256: 4ccec28ee9776b091848e0a5f8caf30e4d45c1a6c2c8a844517af9c0e63285ae
+    - id: src-roboarena-site-bundle
+      url: https://robo-arena.github.io/assets/index-FWyWX4NQ.js
+      kind: maintainer-site
+      extract: raw                    # the site's text lives only in its JS bundle
+      bundle_hash_changes_on_redeploy: true
+      text_sha256: b5037105a6adf342c512188b463a8ff5be18b6c73017e00b2de0be960b98e9c5
+    - id: src-roboarena-api-leaderboard
+      url: https://roboarena-api-domain-name.online/api/leaderboard
+      kind: leaderboard-api
+      extract: raw
+      text_sha256: 15292c7f5eaf59ac6d838c1ba84ad7d2051861ab331e9661e77a816e5fdb8d01
+    - id: src-roboarena-api-transparency
+      url: https://roboarena-api-domain-name.online/api/transparency_summary
+      kind: leaderboard-api
+      extract: raw
+      contains_personal_data: true    # never archive this body into the public tree
+      text_sha256: 46ca06a8f483043049e9e98d7a2408011520df75533dc7814c8ae1c10387e44b
+    - id: src-roboarena-readme
+      url: https://raw.githubusercontent.com/robo-arena/roboarena/main/README.md
+      kind: repository-readme
+      text_sha256: 6e8b5d2c8a023daf4b526ac8f2535b04ffc8c00ac35e8efec151974c108c059c
+    - id: src-roboarena-gh-api
+      url: https://api.github.com/repos/robo-arena/roboarena
+      kind: repository-metadata
+      text_sha256: 35271d7dccfd7f1c1a6929f981a45211f9b4bf3a4ed3a0221ac2805edb33e19a
+    - id: src-roboarena-backend-gh-api
+      url: https://api.github.com/repos/pranavatreya/roboarena_backend
+      kind: repository-metadata
+      text_sha256: ca0c96ce785f25e70eb333100772563d862a56734388529aacbfa7e239ada326
+    - id: src-roboarena-hf-api
+      url: https://huggingface.co/api/datasets/RoboArena/DataDump_07-17-2026
+      kind: dataset-metadata
+      text_sha256: 68c904177b75e311daf97c8e92916893fdc3fd591137bd68be8a3bde7f294fce
+    - id: src-dreamzero-arxiv-abs
+      url: https://arxiv.org/abs/2602.15922
+      kind: third-party-paper
+      title: World Action Models are Zero-shot Policies
+      text_sha256: 84a0775dd1d561fcf3393ae3932eea9f635a0c44ad7aeaaee169f6baf202d68d
+
+# --- What writing this without a schema surfaced (input to P0-S5) -----------------------------
+
+_schema_findings:
+  - field: task_set.exists = false, with item_definition
+    need: >
+      n_items, splits and a dataset licence all presuppose a task set. Here the item is an
+      event, and the thing with a licence is the log of events.
+  - field: metric.kind relative-rating, rating_pool_required, snapshot, official_threshold
+    need: >
+      A rating is a claim about a pool at a time. The same number means nothing a month
+      later or on another board, and rows under the threshold share the board with rows
+      over it.
+  - field: results_observed[].official
+    need: The top API row is not an official result. Without the flag, ingestion crowns the wrong policy.
+  - field: policy_identity with backend_id AND display_name
+    need: >
+      Anonymised backend ids, display aliases, and one alias that points at another
+      system's name. Claims keyed on a single string will mis-attach.
+  - field: feedback_per_item[] with `ranks`
+    need: Three signals are collected and one ranks. Partial-success data exists and must not be mistaken for the metric.
+  - field: execution.compute_tier_by_role
+    need: >
+      Submitter and evaluator costs differ by class (a server vs a robot). A single tier
+      describes neither entrant.
+  - field: data.access `generated-on-demand` + records_access
+    need: Access to items and access to evaluation records are different facts with different answers.
+  - field: data_provenance value `evaluator-improvised`
+    need: Not in the vocabulary. Items authored live by the evaluating party are neither crowd-authored nor instrument recordings.
+  - field: evaluator_concentration
+    need: >
+      A distributed benchmark's credibility rests on how distributed it actually is. The
+      maintainers publish this; the schema has no place for it.
+  - field: events[] on a live benchmark
+    need: A dated challenge run on the arena is neither an edition nor a separate benchmark.
+  - field: curation.personal_data_excluded and sources[].contains_personal_data
+    need: >
+      The archive-snapshot plan (04, 07) would store this API body verbatim. It holds
+      e-mail addresses. Source archiving needs a PII rule before it archives anything.
+  - field: designed_for_subjects when the submitter does not supply the body
+    need: >
+      physical-robot-system assumes the evaluated system includes its hardware. Here the
+      hardware is the evaluator's and varies per item. Neither subject term fits a
+      remotely served policy on someone else's robot.
