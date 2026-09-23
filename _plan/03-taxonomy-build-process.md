@@ -398,10 +398,11 @@ table above before planning against it: it was derived from the one-line definit
 in `02` §4.2, whereas this section requires **four artifacts per term**, one of which is a near-miss
 with a stated reason. Four minutes does not produce a near-miss for
 `chemistry-materials/crystal-structure-prediction`. The honest reading is that 40-110 h is a floor
-for the Phase-0 spine slice and optimistic for the long tail, and the mitigation is the one
-`02` §14 already specifies: **the 204 subdomain terms are stubbed at Phase 0 with a definition and
-`status: proposed`, and their examples are drawn from catalogued entries later**, because a near-miss
-example for a subdomain requires a corpus that does not yet exist. Do not plan the full 446 into
+for the Phase-0 spine slice and optimistic for the long tail, and the mitigation is the split
+[02-taxonomy.md](02-taxonomy.md) §14 owns: **the 204 subdomain terms get a definition and
+`status: proposed` at Phase 0, and their `examples[]` are drawn from catalogued entries in Phase 1**,
+because a near-miss example for a subdomain requires a corpus that does not yet exist. `02` §14
+carries the hours for each half; this section does not restate them. Do not plan the full 446 into
 Phase 0.
 
 Near-misses deserve the emphasis. Positive examples teach almost nothing -- a curator who is about to

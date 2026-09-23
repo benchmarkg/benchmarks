@@ -369,7 +369,7 @@ numbers without editing the YAML.
 | society-econ-law | 20 | 90 | ~250 | **14** | N | Mixed. Medium — many private/commercial test sets |
 | games-planning | 15 | 60 | ~150 | **12** | N | Ingest-then-verify. Elo and unbounded metrics need special handling more than they need volume |
 | general-intelligence | 12 | 30 | ~60 | **12** † | N | Ingest-then-verify. Low volume, high scrutiny |
-| multimodal | not estimated ‡ | — | — | **12** | N | Hand-curate. Overlaps vision; keep the boundary rule in §11 |
+| multimodal | not estimated ‡ | — | — | **12** | N | Hand-curate. Overlaps vision; §11 rule 12 owns the boundary |
 | mathematics | not estimated ‡ | — | — | **12** | N | Ingest-then-verify. FrontierMath's four variants make the lineage case better than the volume case |
 | reasoning-general | not estimated ‡ | — | — | **12** | N | Ingest-then-verify. Same |
 | engineering-design | not estimated ‡ *(unverified — confirm before relying on this)* | — | — | **12** § | N | Hand-curate. Unknown difficulty; the recon never surveyed it as a family. Phase-0 scoping survey required before curation starts |
@@ -1121,10 +1121,15 @@ Two structural notes belong in `contamination_notes`, not in the enum value:
 
 ### `ceiling_anchor_type` — ten terms
 
-**Renamed from the archive's `human_baseline_type`.** Three of the terms below are not human, and the
-old name made those benchmarks look defective when they are simply not human-referenced. The old
-identifier is forbidden in `data/`, `taxonomy/`, `src/` and `scripts/` and is named here only to
-explain the rename.
+**Renamed from the archive's `human_baseline_type`.** Four of the terms below name an anchor that is
+not a person -- `theoretical-maximum`, `experimental-replicate`, `operational-system` and
+`noise-ceiling` -- and the old name made those benchmarks look defective when they are simply not
+human-referenced. Three of the four were added in this revision and are what forced the rename;
+`theoretical-maximum` predates it and was already mis-named. The count is written out as an
+enumeration rather than a bare numeral because the bare numeral had already drifted: this
+paragraph said "three" while [04-data-model.md](04-data-model.md) §7 said four, and neither said
+which terms it meant. The old identifier is forbidden in `data/`, `taxonomy/`, `src/` and
+`scripts/` and is named here only to explain the rename.
 
 `none-known` · `crowd-average` · `crowd-best` · `expert-average` · `expert-best` ·
 `theoretical-maximum` · `measured-ceiling` · `experimental-replicate` · `operational-system` ·
@@ -1164,7 +1169,7 @@ schema cannot store is exactly the unsourced confident number this project exist
 | **Added `periodic-recompetition`** (refresh) | DCASE, BraTS, NTIRE, LifeCLEF, CASP — annual editions with a fresh evaluation set, which is neither `static` nor `rolling-live` |
 | **Added `experimental-measurement`, `patient-clinical-record`, `unreleasable-confidential`** (data_provenance) | Wet-lab challenges (CACHE, OCx24, CASP); PhysioNet-class clinical records; FrontierMath's and Apollo's private sets. The last is the honest label for structural irreproducibility |
 | **`contamination_risk` evidence rule made blocking** | Constraint 4. The facet most likely to attract opinion is the one where opinion must be a build failure, not a style note |
-| **Renamed `human_baseline_type` → `ceiling_anchor_type`** | Three of the ten anchors are not human. The old name made WeatherBench 2, Brain-Score and the Virtual Cell Challenge look defective for having a correct non-human anchor |
+| **Renamed `human_baseline_type` → `ceiling_anchor_type`** | Four of the ten anchors are not human — `theoretical-maximum`, `experimental-replicate`, `operational-system`, `noise-ceiling`. The old name made WeatherBench 2, Brain-Score and the Virtual Cell Challenge look defective for having a correct non-human anchor |
 | **Added `experimental-replicate`, `operational-system`, `noise-ceiling`** (ceiling_anchor_type) | Virtual Cell Challenge (a real replicate experiment), WeatherBench 2 (ECMWF IFS/ENS), Brain-Score (primate neural noise ceiling) |
 | **Retired: a single open/closed access boolean** | It could express neither "open but not downloadable" nor "deliberately withheld", which between them cover most of medicine and all of biosecurity |
 
@@ -1763,6 +1768,33 @@ without its conditions. `source` may be null (our own estimate) but `basis` may 
     checks 9c–9e in [05-repository-and-workflow.md](05-repository-and-workflow.md) §9. See D3 for
     why the old check 9c — asserting that the capability ids and the subdomain *leaf segments* are
     disjoint — was a category error rather than a failing check.
+
+12. **Multimodal versus vision: the discriminant is what is *scored*, not what is consumed.** A
+    benchmark is `multimodal` when the correspondence *between* modalities is the thing the metric
+    measures. It belongs to the single-modality family — `vision`, `audio-speech`, `language` — when
+    one modality is scored and the others merely condition the input. VBench is `vision`: its sixteen
+    dimensions score the generated video, and the text prompt is a condition, not a referent. GenEval
+    is `multimodal`: it scores whether the generated image satisfies the description, so the metric is
+    defined over the pair. A prompt that only conditions generation never moves a benchmark into
+    `multimodal` — if it did, every text-to-image and text-to-video benchmark would land there and the
+    family would absorb `vision` entirely.
+
+    Both exclusion tests in `taxonomy/domains.yaml` state this rule from their own side, and each
+    family carries the other's canonical case as a `qualifies: false` near-miss, so a curator reading
+    either record meets the boundary without having to find this one.
+
+    **Reconstructed in this revision, not inherited from the archive — ratification required.** §3's
+    `multimodal` row has pointed here for a boundary rule since the allocation table was written, and
+    this section did not contain one; the reference was dangling, and `domains.yaml` could not carry an
+    exclusion test for either family without it. The rule above is reconstructed from how the two
+    families' subdomains actually divide: every one of `multimodal`'s is a cross-modality
+    correspondence task (`visual-qa`, `visual-grounding`, `chart-diagram-understanding`,
+    `video-language`, `audio-language`, `any-to-any-generation`, `cross-modal-retrieval`), while
+    `vision` keeps `image-generation` and
+    `video-generation` despite both being text-conditioned. That split is evidence the rule is the one
+    the vocabulary was built on rather than a new policy, but it was never written down, so it needs
+    sign-off from the reviewer who signs off `multimodal` and an ADR to change once entries are tagged
+    against it.
 
 ### Cross-field consistency
 
@@ -2604,9 +2636,19 @@ nobody predicted.
 | --- | --- | --- | --- | --- |
 | Spine vocabularies: 19 families, 44 capability, 27 evaluation-method, 18 subject | 108 | 6–20 min | **11–36** | **Phase 0**, before curation starts |
 | Remaining facet terms: access, refresh, provenance, contamination, ceiling anchor, lifecycle, activity, maintenance, governance, execution | 121 | 6–20 min | **12–40** | Phase 1, front-loaded |
-| Subdomain terms | 204 | 4–10 min | **14–34** | Phase 1, as the entries that supply the examples land |
+| Subdomain terms — definition and `status: proposed` | 204 | 2–5 min | **7–17** | **Phase 0**, with the stubs. A curator cannot tag into an undefined subdomain without producing the drift §6 of `03` measures |
+| Subdomain terms — `examples[]`, including the near-miss | 204 | 2–5 min | **7–17** | Phase 1, as the entries that supply the examples land |
 | Capability groups (§4.3) | 13 | — | **0** | Already written; D1 supplies the definitions verbatim |
 | **Total** | **446 term records** (= 108 + 121 + 204 + 13, this column) | | **37–110 h** | |
+
+The subdomain row is split in two because the two halves belong to different phases and the single
+row could not say so. A subdomain needs a **definition** before anyone tags into it, or the
+inter-curator agreement measured in [03-taxonomy-build-process.md](03-taxonomy-build-process.md) §6
+is measuring nothing but the curators' private readings of a bare slug. It cannot have **examples**
+before there is a corpus to draw them from, and a near-miss for
+`chemistry-materials/crystal-structure-prediction` in particular requires entries that do not yet
+exist. The total is unchanged; only its distribution across phases is. This moves 7–17 h into
+Phase 0, which [14-roadmap.md](14-roadmap.md) §"Effort sizing" absorbs.
 
 Call it **40–110 person-hours**. Three things follow and all three are for
 [14-roadmap.md](14-roadmap.md) to absorb:
