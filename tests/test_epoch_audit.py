@@ -42,7 +42,7 @@ def test_every_plan_figure_has_a_hand_count():
 
 def test_exit_0_when_everything_matches(capsys):
     assert epoch_audit.main(['--dir', FIXTURE, '--expect', EXPECTED]) == 0
-    assert '29 of 29 figures match' in capsys.readouterr().out
+    assert '30 of 30 figures match' in capsys.readouterr().out
 
 
 def test_exit_1_when_one_row_is_edited(cut, capsys):
@@ -94,3 +94,51 @@ def test_emit_writes_the_derived_figures(tmp_path):
     epoch_audit.main(['--dir', FIXTURE, '--expect', EXPECTED, '--emit', str(out)])
     data = json.loads(out.read_text(encoding='utf-8'))
     assert data['result_rows'] == 12 and data['dir'] == FIXTURE
+
+
+# ---- P3-S2-T01: the header-signature census --------------------------------------------------
+
+def test_pairing_by_normalised_name_and_by_hand():
+    meta = [{'benchmark': b, 'source_file': s} for b, s in (
+        ('GPQA diamond', 'gpqa_diamond.csv'), ('BoolQ', ''), ('BTF-3', ''), ('GDP.pdf', ''),
+        ('CSQA2', ''), ('METR', ''))]
+    on_disk = {'gpqa_diamond.csv', 'bool_q_external.csv', 'btf3_external.csv', 'gdp_pdf_external.csv',
+               'common_sense_qa_2_external.csv', 'stray_external.csv'}
+    pairs = epoch_audit.pair_orphans(meta, on_disk, {'gpqa_diamond.csv'})
+    assert {k: v[0] for k, v in pairs.items()} == {
+        'BoolQ': 'bool_q_external.csv', 'BTF-3': 'btf3_external.csv', 'GDP.pdf': 'gdp_pdf_external.csv',
+        'CSQA2': 'common_sense_qa_2_external.csv'}
+    assert pairs['CSQA2'][1].startswith('hand: ')
+    assert 'METR' not in pairs  # no CSV: the one row the plan's 80-vs-81 comes down to
+
+
+def test_a_csv_claimed_by_two_rows_is_refused():
+    meta = [{'benchmark': 'Foo Bar', 'source_file': ''}, {'benchmark': 'foo-bar', 'source_file': ''}]
+    pairs = epoch_audit.pair_orphans(meta, {'foo_bar_external.csv'}, set())
+    assert list(pairs) == ['Foo Bar']  # first come; the second finds nothing left to take
+
+
+def test_an_orphan_paired_by_name_is_not_a_row_without_csv(cut):
+    with open(cut / 'benchmark_metadata.csv', 'a', encoding='utf-8', newline='') as f:
+        f.write('MMLU,False,,,,,,2020-09-07,\n')
+    got = epoch_audit.derive(str(cut))
+    assert got['benchmarks'] == 4 and got['metadata_without_csv'] == 1  # still only METR
+
+
+def test_check_compares_only_the_census_figures(capsys):
+    assert epoch_audit.main(['--dir', FIXTURE, '--check']) == 1  # a 3-CSV fixture is not the 80-CSV drop
+    lines = [l for l in capsys.readouterr().out.splitlines() if l.startswith(('ok', 'DIFF'))]
+    assert sorted(l.split()[1] for l in lines) == sorted(epoch_audit.CENSUS)
+
+
+def test_census_report_is_deterministic_and_names_non_ascii_headers(cut, tmp_path):
+    with open(cut / 'mmlu_external.csv', encoding='utf-8') as f:
+        body = f.read()
+    (cut / 'mmlu_external.csv').write_text(body.replace('EM,', 'EM 95% CI (±),', 1), encoding='utf-8')
+    a, b = tmp_path / 'a.md', tmp_path / 'b.md'
+    epoch_audit.main(['--dir', str(cut), '--census-report', str(a), '--expect', EXPECTED])
+    epoch_audit.main(['--dir', str(cut), '--census-report', str(b), '--expect', EXPECTED])
+    assert a.read_bytes() == b.read_bytes()
+    text = a.read_text(encoding='utf-8')
+    assert '| `mmlu_external.csv` | `±` U+00B1 | yes | `Â±` |' in text
+    assert '## The 2 header signatures' in text and 'Unpaired rows: `METR`.' in text

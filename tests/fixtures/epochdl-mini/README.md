@@ -34,3 +34,5 @@ Counted by reading the files above, not by running the script:
 - **Distinct `Model version` across result CSVs: 8** (`a_high`, `a_low`, `b`, `c`, `d`, `e`,
   `f`, `g`; the blank one is excluded).
 - **ECI:** 4 rows, 2 benchmarks, 3 models; 3 score rows.
+- **Header signatures: 2.** `gpqa_diamond.csv` and `swe_bench_verified.csv` share one 13-column
+  header; `mmlu_external.csv` has its own 10-column one.

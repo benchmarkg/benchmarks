@@ -11,6 +11,13 @@ filter and the date, and must be reproducible by a committed script."
     python scripts/epoch_audit.py --dir path/to/export  # against another cut
     python scripts/epoch_audit.py --expect counts.json  # compare against other expectations
     python scripts/epoch_audit.py --emit out.json       # also write the derived figures
+    python scripts/epoch_audit.py --check               # the header-signature census (P3-S2-T01)
+    python scripts/epoch_audit.py --census-report reports/epoch-header-census.md
+    python scripts/epoch_audit.py --fetch               # restore epochdl/ from the pinned capture
+
+The export itself is never committed (CC-BY, but 6.4 MB of bulk content; 05 S11's metadata-only
+invariant). `--fetch` restores the plan's cut into epochdl/ from the Wayback capture pinned in
+DROP below, checked against its sha256, so a clean checkout can re-run every figure here.
 
 Exit codes:
     0  every derived figure matches its expectation
@@ -27,7 +34,14 @@ Counting rules. Each is stated because a count is only reproducible if its filte
                        observations)
   referenced_csvs      result CSVs named by some benchmark_metadata.source_file
   metadata_without_csv benchmark_metadata rows with no CSV on disk: a source_file that does
-                       not exist, or no source_file and no <slug>.csv / <slug>_external.csv
+                       not exist, or no source_file and no unreferenced CSV paired with it.
+                       Pairing (one-to-one, rows without source_file to unreferenced CSVs only):
+                       the benchmark name and the file stem, minus a trailing `_external`, are
+                       equal once lower-cased and stripped of everything but a-z and 0-9
+                       (BoolQ = bool_q, BTF-3 = btf3, GDP.pdf = gdp_pdf); otherwise HAND_PAIRS
+  header_signatures    distinct ordered header rows across result_csvs, compared as the exact
+                       list of column names (so a reordering is a new signature, as it is to a
+                       positional parser)
   result_rows          data records summed across result_csvs
   epoch_run_*          result CSVs whose header has `Logs` or `Log viewer` (recon family A)
   log_public/private   Epoch-run rows whose log URL -- `Logs`, else the log_file= parameter
@@ -48,9 +62,13 @@ derives both from one pass so a disagreement between them is visible, not argued
 """
 import argparse
 import csv
+import hashlib
+import io
 import json
 import os
 import sys
+import urllib.request
+import zipfile
 from urllib.parse import parse_qs, urlparse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,6 +105,28 @@ EXPECTED = {
     'eci_benchmarks':       (58, '00 S8.1'),
     'eci_models':           (266, '00 S8.1; 01 S12'),
     'eci_scores_rows':      (266, '01 S12 ("266 models in the ECI fit")'),
+    'header_signatures':    (62, '07 S2'),
+}
+
+# P3-S2-T01's --check: the census 07 S2 quotes, plus the two figures that settle 80 vs 81.
+CENSUS = ['result_csvs', 'header_signatures', 'unreferenced_csvs', 'result_rows',
+          'benchmarks', 'metadata_without_csv']
+
+# Pairs the name rule cannot make, each with its reason. Add one only with a reason.
+HAND_PAIRS = {
+    'CSQA2': ('common_sense_qa_2_external.csv', 'CSQA2 is CommonsenseQA 2.0; the file spells the name out'),
+}
+
+# The plan's cut, recovered from the Wayback Machine (P3-S2-T01). 07 S2 records the drop as
+# 2,292,857 bytes, 87 entries, 6,361,800 uncompressed; this capture is 2,292,861 bytes, 87
+# entries, 6,361,812 uncompressed, with every entry dated 2026-09-17, and it reproduces all 30
+# figures exactly, the 62 header signatures among them. The plan recorded no hash, so byte identity
+# with the recon's copy cannot be shown; the 4- and 12-byte differences are recorded in
+# reports/epoch-header-census.md.
+DROP = {
+    'url': 'https://web.archive.org/web/20260917172847id_/https://epoch.ai/data/benchmark_data.zip',
+    'sha256': '6e6a9d70313d865ffd0b28de31f4a70dee6c03f99f48f0fb60a35a9270b8d556',
+    'bytes': 2292861,
 }
 
 META = 'benchmark_metadata.csv'
@@ -99,6 +139,43 @@ REQUIRED = [META, MODELS, ECI, ECI_SCORES]
 
 class Missing(Exception):
     pass
+
+
+def norm(s):
+    return ''.join(c for c in s.lower() if c.isascii() and c.isalnum())
+
+
+def pair_orphans(meta, on_disk, referenced):
+    """{benchmark name: (csv, how)} for metadata rows without a source_file, one-to-one."""
+    orphans = sorted(on_disk - referenced)
+    by_norm = {}
+    for n in orphans:
+        stem = n[:-len('.csv')]
+        stem = stem[:-len('_external')] if stem.endswith('_external') else stem
+        by_norm.setdefault(norm(stem), []).append(n)
+    pairs, taken = {}, set()
+    for m in meta:
+        if (m.get('source_file') or '').strip():
+            continue
+        name = m['benchmark'].strip()
+        if name in HAND_PAIRS and HAND_PAIRS[name][0] in orphans:
+            hit, how = HAND_PAIRS[name][0], 'hand: ' + HAND_PAIRS[name][1]
+        else:
+            cands = [c for c in by_norm.get(norm(name), []) if c not in taken]
+            if len(cands) > 1:
+                raise ValueError('%s matches %s; add a HAND_PAIRS entry' % (name, cands))
+            hit, how = (cands[0], 'name') if cands else (None, None)
+        if hit:
+            if hit in taken:
+                raise ValueError('%s is paired twice' % hit)
+            taken.add(hit)
+            pairs[name] = (hit, how)
+    return pairs
+
+
+def header_of(path):
+    with open(path, encoding='utf-8-sig', newline='') as f:
+        return next(csv.reader(f), [])
 
 
 def read(path):
@@ -139,12 +216,13 @@ def derive(export):
     on_disk = set(csvs)
     referenced = {m['source_file'].strip() for m in meta if (m.get('source_file') or '').strip()}
 
+    pairs = pair_orphans(meta, on_disk, referenced)
+
     def has_csv(m):
         src = (m.get('source_file') or '').strip()
         if src:
             return src in on_disk
-        slug = m['benchmark'].strip().lower().replace(' ', '_').replace('-', '_')
-        return slug + '.csv' in on_disk or slug + '_external.csv' in on_disk
+        return m['benchmark'].strip() in pairs
 
     rows_per = {}
     run_csvs, run_rows = 0, 0
@@ -203,10 +281,138 @@ def derive(export):
         'eci_benchmarks': len({r['benchmark_id'] for r in eci if r.get('benchmark_id')}),
         'eci_models': len({r['model_id'] for r in eci if r.get('model_id')}),
         'eci_scores_rows': len(eci_scores),
+        'header_signatures': len({tuple(header_of(os.path.join(export, n))) for n in csvs}),
         # Not compared, reported: a URL that is neither -public nor -private means the bucket
         # naming changed, and log_public/log_private would silently undercount.
         '_log_other_host': logs['other'],
     }
+
+
+def census(export):
+    """The detail behind the census figures, for reports/epoch-header-census.md."""
+    _, meta = read(os.path.join(export, META))
+    csvs = sorted(n for n in os.listdir(export)
+                  if n.endswith('.csv') and n not in (META, MODELS)
+                  and os.path.isfile(os.path.join(export, n)))
+    on_disk = set(csvs)
+    referenced = {m['source_file'].strip() for m in meta if (m.get('source_file') or '').strip()}
+    pairs = pair_orphans(meta, on_disk, referenced)
+    sigs = {}
+    for n in csvs:
+        sigs.setdefault(tuple(header_of(os.path.join(export, n))), []).append(n)
+    non_ascii = []
+    for n in csvs:
+        with open(os.path.join(export, n), 'rb') as f:
+            first = f.readline().rstrip(b'\r\n')
+        if any(b > 127 for b in first):
+            try:
+                first.decode('utf-8')
+                valid = True
+            except UnicodeDecodeError:
+                valid = False
+            chars = sorted({c for c in first.decode('utf-8', 'replace') if ord(c) > 127})
+            non_ascii.append({'file': n, 'chars': chars, 'valid_utf8': valid,
+                              'as_cp1252': ''.join(chars).encode('utf-8').decode('cp1252', 'replace')})
+    return {
+        'signatures': sorted(sigs.items(), key=lambda kv: (-len(kv[1]), kv[1][0])),
+        'pairs': sorted(pairs.items()),
+        'unpaired_rows': [m['benchmark'].strip() for m in meta
+                          if not (m.get('source_file') or '').strip() and m['benchmark'].strip() not in pairs],
+        'unpaired_orphans': sorted(on_disk - referenced - {c for c, _ in pairs.values()}),
+        'non_ascii_headers': non_ascii,
+        'metr': [dict(m) for m in meta if 'metr' in m['benchmark'].lower()],
+    }
+
+
+def render_census(got, c):
+    """reports/epoch-header-census.md. Deterministic for a given export."""
+    esc = lambda t: t.replace('|', '\\|')  # noqa: E731
+    L = ['# Epoch export: header-signature census', '',
+         '<!-- Generated by `python scripts/epoch_audit.py --census-report reports/epoch-header-census.md`;'
+         ' do not edit by hand. -->', '',
+         'P3-S2-T01. The census 07-ingestion-infrastructure.md S2 quotes, re-derived from the export by a',
+         'committed script, with the counting rule for each figure and the answer to the 80-vs-81',
+         'discrepancy the plan carries forward.', '',
+         '## The export', '',
+         "The plan's figures come from a local drop the recon made on 2026-09-16/17; `epochdl/` was never",
+         'committed. The same cut was recovered from the Wayback Machine:', '',
+         '- **Capture:** `%s`' % DROP['url'],
+         '- **sha256:** `%s` (%s bytes)' % (DROP['sha256'], format(DROP['bytes'], ',')),
+         '- **Against 07 S2:** 87 zip entries (07 S2: 87); 2,292,861 bytes on the wire (07 S2: 2,292,857);',
+         '  6,361,812 bytes uncompressed (07 S2: 6,361,800); every entry dated 2026-09-17.',
+         '- **Reproduces every figure:** all %d figures `scripts/epoch_audit.py` checks match the plan,' % len(EXPECTED),
+         "  including the census below. The plan recorded no hash, so byte identity with the recon's copy",
+         '  cannot be shown; the 4- and 12-byte differences change none of the counts.',
+         '- **Restore it:** `python scripts/epoch_audit.py --fetch` downloads this capture into `epochdl/`',
+         '  and checks the sha256. The export is not committed (05 S11: metadata only).', '',
+         '## The census', '',
+         '| Figure | Value | Counting rule |', '| --- | ---: | --- |',
+         '| Benchmarks | %d | Data records in `benchmark_metadata.csv` |' % got['benchmarks'],
+         '| Per-benchmark CSVs | %d | `*.csv` at the export root, minus `benchmark_metadata.csv` and'
+         ' `model_metadata.csv`; `epoch_capabilities_index/` is a subdirectory and never counted |' % got['result_csvs'],
+         '| Distinct header signatures | %d | Distinct ordered header rows across those CSVs, compared as the'
+         ' exact list of column names |' % got['header_signatures'],
+         '| Orphan CSVs | %d | Per-benchmark CSVs that no `source_file` names |' % got['unreferenced_csvs'],
+         '| Result rows | %s | Data records summed across the per-benchmark CSVs |' % format(got['result_rows'], ','),
+         '| Metadata rows with no CSV | %d | No `source_file`, and no orphan CSV paired with the row |'
+         % got['metadata_without_csv'], '',
+         '## 80 CSVs, 81 benchmarks: settled', '',
+         '**The two counts are of different things and differ by exactly one row, `METR`.** Every CSV',
+         'belongs to exactly one metadata row: %d rows name theirs in `source_file`, and the %d orphans pair'
+         % (got['referenced_csvs'], got['unreferenced_csvs']),
+         'one-to-one with %d of the %d rows that leave `source_file` empty. The one row left over has no'
+         % (len(c['pairs']), len(c['pairs']) + len(c['unpaired_rows'])),
+         'data file at all. The two METR rows:', '']
+    for m in c['metr']:
+        L.append('- `%s`: source_file `%s`, in_eci `%s`, release_date `%s`' % (
+            m['benchmark'], m['source_file'] or '(empty)', m['in_eci'], m['release_date']))
+    L += ['',
+          'So `METR` is a metadata-only row sitting beside `METR Time Horizons`, which carries the data',
+          '(`metr_time_horizons_external.csv`, the minutes-denominated `Time horizon` column of 07 S2) and',
+          'is the one in the ECI. **Counting rule for the index:** a benchmark seed is a metadata row; a row',
+          'with no CSV yields a seed with no result claims, and none is invented for it. Whether `METR` and',
+          "`METR Time Horizons` are one benchmark is a curation question for the adapter's mapping stanza,",
+          'not a counting one.', '',
+          'Unpaired rows: %s. Unpaired orphan CSVs: %s.' % (
+              ', '.join('`%s`' % r for r in c['unpaired_rows']) or 'none',
+              ', '.join('`%s`' % r for r in c['unpaired_orphans']) or 'none'), '',
+          '### How the %d orphans pair' % len(c['pairs']), '',
+          'By name: the benchmark name and the file stem minus `_external`, lower-cased and stripped to',
+          'a-z and 0-9, are equal. Otherwise by a hand pair in `HAND_PAIRS`, which carries its reason.', '',
+          '| Metadata row | Orphan CSV | Paired by |', '| --- | --- | --- |']
+    for name, (csv_name, how) in c['pairs']:
+        L.append('| %s | `%s` | %s |' % (esc(name), csv_name, esc(how)))
+    L += ['', '## Non-ASCII headers: the "mojibake" is in the reader, not the file', '',
+          '07 S2 describes "a mojibake byte where `±` should be" in the headers of `dtbench_external.csv`',
+          'and `lmca_external.csv`. Those are the only headers with a non-ASCII character, but the bytes',
+          'are valid UTF-8 for `±` (`C2 B1`). The mojibake appears only when the file is decoded as',
+          "cp1252 -- the default of Python's `open()` on Windows -- which shows `Â±`. The adapter must",
+          'therefore open every Epoch CSV as UTF-8 explicitly; the header is not to be "repaired".', '',
+          '| File | Characters | Valid UTF-8 | Read as cp1252 |', '| --- | --- | --- | --- |']
+    for h in c['non_ascii_headers']:
+        L.append('| `%s` | %s | %s | `%s` |' % (
+            h['file'], ' '.join('`%s` U+%04X' % (ch, ord(ch)) for ch in h['chars']),
+            'yes' if h['valid_utf8'] else 'no', h['as_cp1252']))
+    L += ['', '## The %d header signatures' % len(c['signatures']), '',
+          'Most-shared first. A column list is the exact header row, in order.', '',
+          '| # | Files | Columns | Header | Files with it |', '| ---: | ---: | ---: | --- | --- |']
+    for i, (sig, files) in enumerate(c['signatures'], 1):
+        L.append('| %d | %d | %d | %s | %s |' % (i, len(files), len(sig), esc(' · '.join(sig)),
+                                               ', '.join('`%s`' % f for f in files)))
+    L.append('')
+    return '\n'.join(L)
+
+
+def fetch(dest):
+    """Download the pinned capture, check its sha256, and unpack it into dest."""
+    with urllib.request.urlopen(DROP['url'], timeout=300) as r:
+        data = r.read()
+    got = hashlib.sha256(data).hexdigest()
+    if got != DROP['sha256']:
+        raise SystemExit('epoch_audit --fetch: sha256 %s, want %s -- not the pinned drop' % (got, DROP['sha256']))
+    os.makedirs(dest, exist_ok=True)
+    zipfile.ZipFile(io.BytesIO(data)).extractall(dest)
+    print('fetched %d bytes (sha256 %s) into %s' % (len(data), got, dest))
 
 
 def main(argv=None):
@@ -214,7 +420,13 @@ def main(argv=None):
     ap.add_argument('--dir', default='epochdl', help='the export to audit (default: epochdl/)')
     ap.add_argument('--expect', help='JSON of {figure: value} to compare against instead of the plan')
     ap.add_argument('--emit', help='also write the derived figures to this JSON file')
+    ap.add_argument('--check', action='store_true',
+                    help='check only the census figures: %s' % ', '.join(CENSUS))
+    ap.add_argument('--census-report', metavar='PATH', help='write the census report (markdown)')
+    ap.add_argument('--fetch', action='store_true', help='restore the pinned drop into --dir, then audit')
     a = ap.parse_args(argv)
+    if a.fetch:
+        fetch(a.dir)
 
     try:
         got = derive(a.dir)
@@ -229,6 +441,12 @@ def main(argv=None):
             expected = {k: (v, a.expect) for k, v in json.load(f).items()}
     else:
         expected = EXPECTED
+    if a.check:
+        expected = {k: EXPECTED[k] for k in CENSUS}
+    if a.census_report:
+        with open(a.census_report, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(render_census(got, census(a.dir)))
+        print('wrote %s' % a.census_report)
 
     if a.emit:
         with open(a.emit, 'w', encoding='utf-8', newline='\n') as f:
