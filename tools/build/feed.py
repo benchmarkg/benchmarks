@@ -30,7 +30,8 @@ The seven event types, and the exact rule for each:
   source-rot-detected         a Source's `link_status` moved to dead (06 S7.2)
 
 MATERIAL fields: the eight facets of 02 S2 as 04 S3 spells them, plus licence, access and versions,
-which V8 names. Everything else on a Benchmark -- description, tags, links, liveness, curation --
+which V8 names. Every event also carries families[] and organisations[] (see attribute()), which
+the per-domain feeds and the feed page's filters read. Everything else on a Benchmark -- description, tags, links, liveness, curation --
 is cosmetic for the feed's purposes.
 
 Dates. "Sort on the event's own date, never on ingest date": each event carries `date`, taken from
@@ -39,6 +40,12 @@ Source's link-check stamp, the liveness check behind a maintenance verdict -- an
 commit's author date, the moment the change was made. `date_basis` says which. The commit date,
 which for a machine-ingested record IS the ingest date, is kept as `published_on` and never sorted
 on. Order: date descending, then commit order descending, then type and entity id.
+
+Publication. The feed derives from all of history, but it may only announce what the site
+publishes. `publishable` is false when the entity's file no longer exists at HEAD or its current
+curation.verification_status is ai-drafted-unverified (14-roadmap: "Unverified entries excluded
+from the build"; the site build refuses to publish them). The site's feeds read publishable events
+only, so an event reappears the moment its entity is verified -- dated, as ever, by its own date.
 
 Not derivable from git alone: V8's "automatic `saturated`" is computed by the build from claims
 and is never written to data/, so it cannot appear as a lifecycle-change until the build's derived
@@ -72,6 +79,7 @@ MATERIAL = [
     'license', 'versions',                                                          # V8 by name
 ]
 STALE = {'stale', 'abandoned'}
+UNPUBLISHABLE = {'ai-drafted-unverified'}  # 14-roadmap: "Unverified entries excluded from the build"
 FIX = re.compile(r'^fix(\([^)]*\))?!?:', re.I)
 EVENT_TYPES = ('benchmark-added', 'benchmark-updated-material', 'claim-added', 'correction',
                'lifecycle-change', 'deprecation-detected', 'source-rot-detected')
@@ -199,8 +207,53 @@ def own_date(kind, rec, fallback):
     return fallback, 'author-date'
 
 
+def benchmark_index(repo, rev='HEAD'):
+    """{benchmark id: (family, [maintainer org ids])} from the benchmark files at `rev`."""
+    try:
+        paths = git(repo, 'ls-tree', '-r', '--name-only', rev, '--', 'data/benchmarks/').split()
+    except subprocess.CalledProcessError:
+        return {}
+    out = {}
+    for path in paths:
+        m = BENCHMARK.match(path)
+        if not m:
+            continue
+        rec = load(repo, rev, path) or {}
+        maint = get(rec, 'governance.maintainers') or []
+        out[rec.get('id') or m.group('id')] = (m.group('family'), [str(x) for x in maint if x])
+    return out
+
+
+def attribute(ev, rec, index):
+    """families[] and organisations[] for the feed's per-domain feeds and its organisation filter.
+
+    A benchmark event: its own family and governance.maintainers. A claim: its benchmark's family
+    (the `@version` suffix of `benchmark` is dropped) and `reported_by`. A Source: the families of
+    the benchmarks in its `cited_by`. The current tree is the lookup, so a benchmark that moved
+    family is filed where it is now.
+    """
+    rec = rec or {}
+    fams, orgs = set(), set()
+    b = BENCHMARK.match(ev['path'])
+    if b:  # every event on a benchmark file, corrections included, is filed under that benchmark
+        fams.add(b.group('family'))
+        orgs.update(str(x) for x in (get(rec, 'governance.maintainers') or []) if x)
+    refs = []
+    if rec.get('benchmark'):
+        refs.append(str(rec['benchmark']).split('@', 1)[0])
+    refs += [str(x) for x in (rec.get('cited_by') or [])]
+    for ref in refs:
+        if ref in index:
+            fams.add(index[ref][0])
+    if rec.get('reported_by'):
+        orgs.add(str(rec['reported_by']))
+    ev['families'] = sorted(fams)
+    ev['organisations'] = sorted(orgs)
+
+
 def derive(repo=ROOT):
     events = []
+    index = benchmark_index(repo)
     for order, (sha, parent, authored, committed, message) in enumerate(commits(repo)):
         correction = is_correction(message)
 
@@ -211,6 +264,7 @@ def derive(repo=ROOT):
                 'type': kind, 'entity': entity, 'path': path, 'date': iso(when), 'date_basis': basis,
                 'published_on': iso(committed), 'commit': sha, 'order': order,
                 'subject': message.splitlines()[0] if message else '', **extra})
+            attribute(events[-1], rec, index)
 
         for status, old_path, new_path in changes(repo, parent, sha):
             if status == 'D':
@@ -256,6 +310,12 @@ def derive(repo=ROOT):
                 if changed:
                     emit('correction', new.get('id') or os.path.splitext(os.path.basename(new_path))[0],
                          new_path, new, changes=changed)
+    heads = {}
+    for ev in events:
+        if ev['path'] not in heads:
+            rec = load(repo, 'HEAD', ev['path'])
+            heads[ev['path']] = rec is not None and get(rec, 'curation.verification_status') not in UNPUBLISHABLE
+        ev['publishable'] = heads[ev['path']]
     events.sort(key=lambda e: (e['type'], e['entity']))
     events.sort(key=lambda e: (e['date'], e['order']), reverse=True)  # stable: ties keep type, entity order
     return events

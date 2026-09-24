@@ -255,3 +255,43 @@ def test_all_seven_event_types_are_covered():
     for kind in ('benchmark_added', 'material_update', 'claim_added', 'correction', 'lifecycle_change',
                  'deprecation_detected', 'source_rot_detected'):
         assert any(kind in n for n in names), kind
+
+
+def test_events_carry_families_and_organisations_for_the_feeds(repo):
+    write(repo, BENCH, replace(BENCH_V1, 'license: MIT', 'license: MIT\ngovernance: {maintainers: [org-demo-lab]}'))
+    write(repo, 'data/claims/demo-bench/claim-cccc.yaml',
+          'id: claim-cccc\nbenchmark: demo-bench@v1\nreported_by: org-some-lab\ndate_reported: 2026-02-01\n')
+    write(repo, SOURCE, 'id: src-demo\ncited_by: [demo-bench]\nlink_status: live\n')
+    commit(repo, 'add', '2026-03-01T10:00:00Z')
+    write(repo, SOURCE, 'id: src-demo\ncited_by: [demo-bench]\nlink_status: dead\n')
+    commit(repo, 'rot', '2026-03-02T10:00:00Z')
+    by_type = {e['type']: e for e in events(repo)}
+    assert by_type['benchmark-added']['families'] == ['code']
+    assert by_type['benchmark-added']['organisations'] == ['org-demo-lab']
+    assert (by_type['claim-added']['families'], by_type['claim-added']['organisations']) == (['code'], ['org-some-lab'])
+    assert by_type['source-rot-detected']['families'] == ['code']
+
+
+def test_an_unverified_or_deleted_entity_is_not_publishable(repo):
+    write(repo, BENCH, BENCH_V1 + '  verification_status: ai-drafted-unverified\n')
+    write(repo, 'data/claims/demo-bench/claim-dddd.yaml', 'id: claim-dddd\ndate_reported: 2026-02-01\n')
+    commit(repo, 'drafts', '2026-03-01T10:00:00Z')
+    by_type = {e['type']: e for e in events(repo)}
+    assert by_type['benchmark-added']['publishable'] is False  # still a draft at HEAD
+    assert by_type['claim-added']['publishable'] is True
+    write(repo, BENCH, BENCH_V1 + '  verification_status: primary-source-verified\n')
+    git(repo, 'rm', '-q', 'data/claims/demo-bench/claim-dddd.yaml')
+    commit(repo, 'verified; claim withdrawn', '2026-03-02T10:00:00Z')
+    by_type = {e['type']: e for e in events(repo)}
+    assert by_type['benchmark-added']['publishable'] is True  # verification publishes its history
+    assert by_type['claim-added']['publishable'] is False     # gone at HEAD
+
+
+def test_a_correction_on_a_benchmark_is_filed_under_its_family(repo):
+    v1 = replace(BENCH_V1, 'license: MIT', 'license: MIT\ngovernance: {maintainers: [org-demo-lab]}')
+    write(repo, BENCH, v1)
+    commit(repo, 'add', '2026-03-01T10:00:00Z')
+    write(repo, BENCH, replace(v1, 'license: MIT', 'license: Apache-2.0'))
+    commit(repo, 'fix: licence', '2026-03-02T10:00:00Z')
+    [e] = events(repo, 'correction')
+    assert (e['families'], e['organisations']) == (['code'], ['org-demo-lab'])

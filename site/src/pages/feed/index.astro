@@ -1,0 +1,97 @@
+---
+// /feed/ -- V8 Release Feed: a reverse-chronological stream, filterable by domain, organisation
+// and event type. Fully static: every event is in the HTML and the page reads completely with
+// JavaScript off; the filter form is a progressive enhancement that only hides list items.
+// Machine-ingested events are not here -- they are /feed/ingest.xml's (V8 "Failure mode").
+import '../../styles/type.css';
+import { EVENT_LABELS, defaultEvents, domainFamilies, entityPath, summary } from '../../lib/feed';
+
+const events = defaultEvents();
+const families = domainFamilies();
+const orgs = [...new Set(events.flatMap((e) => e.organisations))].sort();
+const types = Object.keys(EVENT_LABELS);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Release feed · Benchmark index</title>
+    <link rel="alternate" type="application/atom+xml" title="Releases and changes" href="/feed.xml" />
+    <link rel="alternate" type="application/feed+json" title="Releases and changes (JSON Feed)" href="/feed.json" />
+    <link rel="alternate" type="application/atom+xml" title="Corrections" href="/feed/corrections.xml" />
+  </head>
+  <body>
+    <main>
+      <h1>Release feed</h1>
+      <p>
+        Every change to the index, derived from its git history, newest first. Subscribe:
+        <a href="/feed.xml">Atom</a> · <a href="/feed.json">JSON Feed</a> ·
+        <a href="/feed/corrections.xml" data-test="corrections-feed">corrections only</a> ·
+        <a href="/feed/ingest.xml">machine-ingested events</a> (kept out of this page and the default feed).
+      </p>
+      <details>
+        <summary>Per-domain feeds</summary>
+        <ul>
+          {families.map((f) => <li><a href={`/feed/${f}.xml`}>{f}</a></li>)}
+        </ul>
+      </details>
+
+      <form id="feed-filters" hidden aria-label="Filter the feed">
+        <label>Domain
+          <select name="family">
+            <option value="">All domains</option>
+            {families.map((f) => <option value={f}>{f}</option>)}
+          </select>
+        </label>
+        <label>Organisation
+          <select name="org">
+            <option value="">All organisations</option>
+            {orgs.map((o) => <option value={o}>{o}</option>)}
+          </select>
+        </label>
+        <label>Event type
+          <select name="type">
+            <option value="">All event types</option>
+            {types.map((t) => <option value={t}>{EVENT_LABELS[t]}</option>)}
+          </select>
+        </label>
+        <output name="count" aria-live="polite"></output>
+      </form>
+
+      {events.length === 0 && <p>No events yet.</p>}
+      <ol id="feed-events" reversed>
+        {events.map((e) => (
+          <li data-event={e.id} data-type={e.type} data-families={e.families.join(' ')} data-orgs={e.organisations.join(' ')}>
+            <time datetime={e.date}>{e.date.slice(0, 10)}</time>
+            <strong>{EVENT_LABELS[e.type] ?? e.type}</strong>
+            <a href={entityPath(e)}><code>{e.entity}</code></a>
+            {e.families.length > 0 && <span class="families">{e.families.join(', ')}</span>}
+            {summary(e) && <span class="summary">{summary(e)}</span>}
+          </li>
+        ))}
+      </ol>
+    </main>
+    <script is:inline>
+      (() => {
+        const form = document.getElementById('feed-filters');
+        const items = [...document.querySelectorAll('#feed-events > li')];
+        const apply = () => {
+          const f = form.family.value, o = form.org.value, t = form.type.value;
+          let shown = 0;
+          for (const li of items) {
+            const ok = (!f || li.dataset.families.split(' ').includes(f)) &&
+                       (!o || li.dataset.orgs.split(' ').includes(o)) &&
+                       (!t || li.dataset.type === t);
+            li.hidden = !ok;
+            shown += ok;
+          }
+          form.count.value = `${shown} of ${items.length} events`;
+        };
+        form.hidden = false;
+        form.addEventListener('change', apply);
+        apply();
+      })();
+    </script>
+  </body>
+</html>
