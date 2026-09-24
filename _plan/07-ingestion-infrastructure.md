@@ -735,7 +735,7 @@ lose for reasons worth recording so nobody relitigates them at month nine.
 | Option | Verdict | Why |
 | --- | --- | --- |
 | **GitHub Actions cron** | **Chosen** | The scraper lives beside the YAML it writes. Runner already has `git`, a token and PR rights. No deploy step, no secret syncing, no separate state store. Free minutes on public repos |
-| Cloudflare Workers cron | Disqualified | Free plan gives **10 ms CPU per cron trigger**, 5 triggers per account, 50 subrequests per invocation; paid gives 30 s for sub-hourly crons `[recon 2026-09-17, vendor docs]`. You cannot parse HELM's 3.93 MB `runs.json` in 10 ms. Workers remain right for the AI layer ([11-ai-features.md](11-ai-features.md)); they are wrong for ingestion |
+| Cloudflare Workers cron | Disqualified | Free plan gives **10 ms CPU per cron trigger**, 5 triggers per account, 50 subrequests per invocation; paid gives 30 s for sub-hourly crons (15 min at an hourly or slower interval) `[checked 2026-09-24, vendor docs]`. You cannot parse HELM's 3.93 MB `runs.json` in 10 ms. Workers remain right for the AI layer ([11-ai-features.md](11-ai-features.md)); they are wrong for ingestion |
 | Small VPS | Disqualified | A machine to patch, monitor and pay for, in a project whose premise is near-zero ops and whose team is 1--2 people part-time. The first unattended `apt upgrade` failure costs more than the whole scraper saved |
 | Run locally | Disqualified as the primary path | Works exactly until the laptop is shut, and the resulting silence is invisible. Keep it as the *development and rescue* path -- every adapter must run identically via `bench ingest <name> --fixture` |
 
@@ -750,38 +750,38 @@ from here on:
 | --- | --- |
 | `[recon 2026-09-17, measured]` | Observed in a live response header or body during the reconnaissance |
 | `[recon 2026-09-17, vendor docs]` | Read off the vendor's own documentation page on that date |
+| `[checked 2026-09-24, vendor docs]` | Re-read off the vendor's documentation on that date, after the recon. The verbatim quote, the URL and a verdict are in `ingest/platform-facts.yaml`, and `python scripts/check_platform_facts.py` keeps that file and these tags in step |
 | `(unverified -- confirm before relying on this)` | Believed true, not checked by us, no source in hand |
 | `**Open, to be settled at <event>**` | **Not a claim about the world at all** -- a decision this project has not yet made. There is no source to have in hand and nobody to confirm with. Never use the unverified marker for one of these: doing so devalues every real provenance marker in the corpus, because a reader who checks one and finds a to-do stops trusting the rest |
 
 ### 3.2 Practical limits, and what to do when a job hits one
 
-- **Job timeout on GitHub-hosted runners** *(unverified -- confirm before relying on this; it is
-  documented as 6 hours per job and 35 days per workflow, but the recon did not re-check it)*. No
-  adapter should come near it. If one does, the fix is not a longer timeout: it is a narrower
+- **Job timeout on GitHub-hosted runners** is 6 hours per job and 35 days per workflow run
+  `[checked 2026-09-24, vendor docs]`. No adapter should come near it. If one does, the fix is not a longer timeout: it is a narrower
   `--since` window plus the `checkpoint()` hook from §1.1, so the next scheduled run resumes rather
   than restarts. arXiv OAI-PMH is the realistic candidate -- one day of `set=cs` is 3.1 MB and
   1,157 records `[recon 2026-09-17, measured]`, so a cold backfill must be windowed by month, not
   attempted in one pass.
-- **Minimum cron interval is 5 minutes** `[recon 2026-09-17, vendor docs]`. Irrelevant: our cadences
+- **Minimum cron interval is 5 minutes** `[checked 2026-09-24, vendor docs]`. Irrelevant: our cadences
   are daily and weekly.
-- **Scheduled runs are delayed under load and queued jobs may be dropped** `[recon 2026-09-17,
-  vendor docs]` -- GitHub says so in those words. Two consequences: never schedule on the hour
+- **Scheduled runs are delayed under load and queued jobs may be dropped**
+  `[checked 2026-09-24, vendor docs]` -- GitHub says so in those words. Two consequences: never schedule on the hour
   (`0 * * * *` is the most contended slot on the platform), and make every run idempotent so a
   dropped run is a non-event rather than a gap. §1.4 is what makes idempotence real.
 - **Scheduled workflows in a public repo auto-disable after 60 days with no repository activity**
-  `[recon 2026-09-17, vendor docs]`. Our scrapers open PRs, which is activity, so this is
+  `[checked 2026-09-24, vendor docs]`. Our scrapers open PRs, which is activity, so this is
   self-sustaining in the normal case -- but the failure mode is circular: if the crons stop, the
   activity stops, which keeps them stopped. The `health-check.yml` canary in §9 exists for this and
   carries a `workflow_dispatch` trigger so a human can restart it in one click.
 - **Token limits.** The ambient `GITHUB_TOKEN` is **1,000 requests/hour per repository**
-  `[recon 2026-09-17, vendor docs]`. For the GitHub-metadata crawl, mint a fine-grained PAT
-  (**5,000/hour** core, **30/minute** search `[recon 2026-09-17, vendor docs]`) and store it as
+  `[checked 2026-09-24, vendor docs]`. For the GitHub-metadata crawl, mint a fine-grained PAT
+  (**5,000/hour** core, **30/minute** search -- 10/minute for code search -- `[checked 2026-09-24, vendor docs]`) and store it as
   `GH_API_TOKEN`. Secondary limits apply regardless: <=100 concurrent requests, <=900 points/minute
-  `[recon 2026-09-17, vendor docs]`. `If-None-Match` 304s do not count against the core limit
-  `[recon 2026-09-17, vendor docs]`, which is the single most important optimisation in the GitHub
+  `[checked 2026-09-24, vendor docs]`. `If-None-Match` 304s do not count against the core limit **when the request carries
+  the token** `[checked 2026-09-24, vendor docs]`, which is the single most important optimisation in the GitHub
   adapter.
 - **Secrets**: `HF_TOKEN` (free tier, doubling the limit from 500 to 1,000 API requests per
-  5-minute window `[recon 2026-09-17, vendor docs]`), `GH_API_TOKEN`, `IA_SPN_KEY`/`IA_SPN_SECRET`
+  5-minute window `[checked 2026-09-24, vendor docs]`), `GH_API_TOKEN`, `IA_SPN_KEY`/`IA_SPN_SECRET`
   for Wayback, `OPENALEX_KEY`, `S2_API_KEY`, and the AI-triage key. All repository secrets, none in
   adapter code, and every adapter must degrade to a soft-fail with a clear message when its secret
   is absent rather than crashing with a traceback that leaks a header.
@@ -895,7 +895,7 @@ otherwise.
 | --- | --- | --- |
 | Epoch ZIP | `If-None-Match` only | **No `Last-Modified` header.** ETag is the only handle |
 | `raw.githubusercontent.com` (LiteLLM) | ETag | Present and verified |
-| GitHub API | `If-None-Match` | 304s do not count against the rate limit `[recon 2026-09-17, vendor docs]` -- essential at 5,000/hr |
+| GitHub API | `If-None-Match` | Authorised 304s do not count against the rate limit `[checked 2026-09-24, vendor docs]` -- essential at 5,000/hr |
 | HuggingFace API | ETag on list endpoints (`W/"64f-OXh…"`), plus short-circuit on `lastModified` in the payload before fetching detail | See §4.3 on the library's sleep behaviour |
 | HELM GCS | Diff the release-prefix object listing (`generation` + `size`) before downloading any 3.93 MB blob | Licence on the data is **unverified** -- see [06-sourcing-and-scraping.md](06-sourcing-and-scraping.md) §3.5 and §12 here |
 | arXiv OAI-PMH | Native `from`/`until` incremental; persist the last successful `until` | `from`/`until` are on **modification** datestamp, so v2 resubmissions of old papers appear in a "today" window |
@@ -938,8 +938,8 @@ material hard constraint 1 forbids, walking straight past the gate built to enfo
 Three rules complete it.
 
 - **Retention: the last 8 runs per adapter**, uploaded with `actions/upload-artifact`. The default
-  artifact retention is 90 days *(unverified -- confirm before relying on this; it is configurable
-  per repository)*, which comfortably covers eight weekly runs and eight daily ones. Beyond that,
+  artifact retention is 90 days `[checked 2026-09-24, vendor docs]`, configurable per repository and per artifact
+  (`retention-days`), which comfortably covers eight weekly runs and eight daily ones. Beyond that,
   replay means re-fetch.
 - **Licence-aware retention.** `raw_retainable = False` on any adapter whose `licence_class` is
   `share-alike`, `non-commercial`, `no-redistribution` or `unlicensed`, and on HELM until its data
@@ -1164,21 +1164,27 @@ load-bearing in a way the first is not:
 
 1. It keeps bot commits attributable and separable in `git log` from human curation, which matters
    when someone forks the dataset and wants to know which records a person actually looked at.
-2. **A pull request created with the ambient `GITHUB_TOKEN` does not trigger other workflows**
-   *(unverified -- confirm before relying on this; it is long-standing documented GitHub Actions
-   behaviour intended to prevent recursive runs)*. Our entire gate story depends on
-   `pr-validate.yml` running **on the bot's PR**, and branch protection requires that check to be
-   green. If the behaviour is as described and we used the ambient token, every bot PR would sit
-   forever with no checks and a greyed-out merge button, and the symptom would look like a branch
-   protection misconfiguration rather than a token choice. Using the PAT avoids it. §9 adds a canary
+2. **A pull request created with the ambient `GITHUB_TOKEN` does not run other workflows
+   unattended** `[checked 2026-09-24, vendor docs]`. This changed after the recon, which had it that such a PR triggers
+   nothing. GitHub now creates the `pull_request` runs (opened, synchronize, reopened) in an
+   *approval-required* state, and a user with write access must start them from an "Approve
+   workflows to run" banner. Our entire gate story depends on `pr-validate.yml` running **on the
+   bot's PR**, unattended, and branch protection requires that check to be green. With the ambient
+   token, every bot PR would wait for a human click before its checks even started: a second
+   approval step on every ingest PR that §3.3's review budget does not have, and one easy to click
+   through without reading. Using the PAT avoids it; GitHub's own docs name a GitHub App
+   installation token or a PAT as the way to run such workflows without approval. §9 adds a canary
    that alerts if any open `ingest:*` PR has zero check runs, so that if the assumption is wrong in
-   either direction we find out in a week rather than a quarter.
+   either direction we find out in a week rather than a quarter. It must count a run waiting for
+   approval as not run, since the docs do not say how such a run appears in the checks API.
 
-Risk, and it is real: **fine-grained PATs expire** (documented maximum one year *(unverified --
-confirm before relying on this)*) **and the expiry presents as a silent authentication failure, not
-an error a human sees.** Put the token's expiry date into the staleness report in §9 so it becomes a
+Risk, and it is real: **fine-grained PATs expire, and on an organisation's repositories they must**
+`[checked 2026-09-24, vendor docs]`. The recon's "documented maximum one year" has changed: a fine-grained PAT may now be
+non-expiring, but an organisation's default maximum-lifetime policy is 366 days, and a token over
+the policy is blocked from the organisation, not warned. **The expiry presents as a silent
+authentication failure, not an error a human sees.** Put the token's expiry date into the staleness report in §9 so it becomes a
 countdown rather than an outage. Migrate to a GitHub App installation (5,000--12,500/hr
-`[recon 2026-09-17, vendor docs]`, no expiry treadmill) if and when the rate limits bite; there is
+`[checked 2026-09-24, vendor docs]`, no expiry treadmill) if and when the rate limits bite; there is
 no reason to pay that setup cost on day one.
 
 ### 6.2 Change classification
@@ -1576,8 +1582,8 @@ our *usage budget* against them, which is this document's to set, plus the enfor
 | --- | --- | --- |
 | Epoch AI | 1 conditional GET/week | ~2.3 MB, usually a 304 |
 | arXiv OAI-PMH | 1 day-window/run, 1 req/3 s | One `set=cs` day = 3.1 MB, 1,157 records `[recon 2026-09-17, measured]` |
-| HuggingFace | ~1 req/s with `HF_TOKEN`, <=2,000 req/run | Under the 1,000-per-5-minute free-token ceiling by ~3x |
-| GitHub API | <=2,000 req/run, `If-None-Match` everywhere | 304s are free; the ambient token's 1,000/hr/repo is not enough |
+| HuggingFace | ~1 req/s with `HF_TOKEN`, <=2,000 req/run | Under the 1,000-per-5-minute free-token ceiling `[checked 2026-09-24, vendor docs]` by ~3x |
+| GitHub API | <=2,000 req/run, `If-None-Match` everywhere | Authorised 304s are free; the ambient token's 1,000/hr/repo `[checked 2026-09-24, vendor docs]` is not enough |
 | OpenAlex | Bulk CC0 snapshot + singleton lookups only. Never poll | Three published numbers disagree (§12). Get a key and measure before sizing anything |
 | Semantic Scholar | <=3,000 lookups/run ≈ 50 min at 1 RPS | Key turnaround time is **unverified** |
 | Wayback SPN2 | <=500 saves/day, `if_not_archived_within=30d` | Use CDX for existence checks; the Availability API 429s on a cold request |

@@ -1166,11 +1166,13 @@ Two figures used later carry the same provenance and the same caveat: the Worker
 free with unlimited minutes for public repositories on standard runners** (private repos:
 2,000 min/mo). Both are recon:tech, 2026-09-17, from vendor documentation.
 
-Two further platform behaviours are recon-sourced and are **(unverified -- confirm before relying on
-this)**, because they are exactly the kind of detail that changes quietly: that `run_worker_first`
-returns **429** on free-tier exhaustion rather than falling back to static, and that **in a public
-repository scheduled workflows are automatically disabled after 60 days without repository
-activity**. Both are designed around in §7.2 and §7.3, and both are on the quarterly re-check list.
+One further platform behaviour is recon-sourced and is **(unverified -- confirm before relying on
+this)**, because it is exactly the kind of detail that changes quietly: that `run_worker_first`
+returns **429** on free-tier exhaustion rather than falling back to static.
+The other recon-sourced behaviour, that **in a public repository scheduled workflows are
+automatically disabled after 60 days without repository activity**, has since been checked
+`[checked 2026-09-24, vendor docs]` (`ingest/platform-facts.yaml`). Both are designed around in
+§7.2 and §7.3, and both are on the quarterly re-check list.
 
 ### 7.2 Recommendation: Cloudflare Workers with static assets, built in GitHub Actions
 
@@ -1253,9 +1255,9 @@ by [05-repository-and-workflow.md](05-repository-and-workflow.md) §6. Three thi
 Two GitHub Actions caveats that must be written down because they silently break hobby projects.
 Scheduled workflows can be delayed or dropped under load, so never schedule on the hour -- use odd
 offsets, and make every job idempotent. And **in a public repository, scheduled workflows are
-automatically disabled when no repository activity has occurred in 60 days** *(unverified -- confirm
-before relying on this)*; the ingestion jobs commit and open PRs, which is self-sustaining, and the
-weekly `deploy.yml` from §6.2 doubles as that activity, but a monthly `workflow_dispatch` canary
+automatically disabled when no repository activity has occurred in 60 days**
+`[checked 2026-09-24, vendor docs]`; the ingestion jobs commit and open PRs, which is
+self-sustaining, and the weekly `deploy.yml` from §6.2 doubles as that activity, but a monthly `workflow_dispatch` canary
 that fails loudly if the cron has not fired is cheap insurance against the exact "the scraper
 quietly stopped six months ago" failure that produced Ecosystem Graphs' twenty-month staleness.
 

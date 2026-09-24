@@ -1,0 +1,188 @@
+# ingest/platform-facts.yaml -- the third-party platform figures Phase 5 rests on (P5-S3-T02).
+#
+# 07-ingestion-infrastructure.md S3.1: "Every number in S3, S4 and S10 is a claim about a third
+# party's service and is expected to rot." Each row here is one such claim, re-read off the vendor's
+# own documentation: what the plan said, what the vendor says now (quoted verbatim, whitespace
+# collapsed), the verdict, the date and the URL. The plan carries `[checked <as_of>, vendor docs]`
+# beside each figure; `python scripts/check_platform_facts.py` keeps the two in step, and
+# `--online` re-fetches every source and reports any quote that is no longer on its page.
+#
+# verdict:
+#   confirmed  the vendor states the figure the plan uses
+#   qualified  true, under a condition the plan did not state (the condition is in `note`)
+#   changed    the vendor now documents something different; the plan text was corrected
+#   refuted    the vendor contradicts the figure and nothing replaces it
+#
+# plan: where the figure is stated. `anchor` is a verbatim, unique substring of the doc; the
+# paragraph (or table row, or list item) that starts there must carry `tag` and must not carry an
+# unverified marker.
+
+facts:
+  - id: cf-workers-cron-cpu
+    claim: "Cloudflare Workers Free gives 10 ms CPU per Cron Trigger, 5 Cron Triggers per account and 50 subrequests per invocation; Paid gives 30 s CPU for sub-hourly crons."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://developers.cloudflare.com/workers/platform/limits/
+    quote:
+      - "CPU time per Cron Trigger 10 ms 30 seconds (< 1 hour interval) 15 min (>= 1 hour interval)"
+      - "Number of Cron Triggers per account 5 250"
+      - "Subrequests per invocation 50 10,000 (up to 10M)"
+    note: "Paid also allows 15 min CPU for crons at an hourly or slower interval, which the plan did not mention. It does not change the decision: ingestion stays on GitHub Actions."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "| Cloudflare Workers cron | Disqualified |", tag: "[checked 2026-09-24, vendor docs]"}
+      - {doc: 14-roadmap.md, anchor: "**10 ms CPU per cron trigger**", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: gha-job-timeout
+    claim: "A job on a GitHub-hosted runner may run for 6 hours; a workflow run for 35 days."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/actions/reference/limits
+    quote:
+      - "Each job in a workflow can run for up to 6 hours of execution time. If a job reaches this limit, the job is terminated and fails."
+      - "If a workflow run reaches this limit, the workflow run is cancelled."
+    note: "The 35-day workflow-run limit is the row the second quote belongs to on the same page."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Job timeout on GitHub-hosted runners**", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: gha-cron-min-interval
+    claim: "The shortest schedule interval is once every 5 minutes."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
+    quote:
+      - "The shortest interval you can run scheduled workflows is once every 5 minutes."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Minimum cron interval is 5 minutes**", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: gha-schedule-delay
+    claim: "Scheduled runs are delayed under load, the top of the hour is the busiest slot, and queued jobs may be dropped."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
+    quote:
+      - "The schedule event can be delayed during periods of high loads of GitHub Actions workflow runs. High load times include the start of every hour. If the load is sufficiently high enough, some queued jobs may be dropped."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Scheduled runs are delayed under load and queued jobs may be dropped**", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: gha-inactivity-disable
+    claim: "In a public repository, scheduled workflows are disabled after 60 days without repository activity."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/disabling-and-enabling-a-workflow
+    quote:
+      - "In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Scheduled workflows in a public repo auto-disable after 60 days", tag: "[checked 2026-09-24, vendor docs]"}
+      - {doc: 08-infrastructure-and-build.md, anchor: "And **in a public repository, scheduled workflows are", tag: "[checked 2026-09-24, vendor docs]"}
+      - {doc: 08-infrastructure-and-build.md, anchor: "The other recon-sourced behaviour, that **in a public", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: github-token-rate
+    claim: "The ambient GITHUB_TOKEN is limited to 1,000 REST requests per hour per repository."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+    quote:
+      - "The rate limit for GITHUB_TOKEN is 1,000 requests per hour per repository."
+    note: "15,000/hour for resources belonging to a GitHub Enterprise Cloud account; not our case."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Token limits.** The ambient `GITHUB_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}
+      - {doc: 07-ingestion-infrastructure.md, anchor: "| GitHub API | <=2,000 req/run,", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: pat-rate
+    claim: "A personal access token gets 5,000 REST requests per hour, and 30 search requests per minute."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+    quote:
+      - "All of these requests count towards your personal rate limit of 5,000 requests per hour."
+    also:
+      - url: https://docs.github.com/en/rest/search/search
+        quote: "For authenticated requests, you can make up to 30 requests per minute for all search endpoints except for the Search code endpoint. The Search code endpoint requires you to authenticate and limits you to 10 requests per minute."
+    note: "Search code is 10/minute, not 30; the GitHub adapter must not assume 30 for code search."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Token limits.** The ambient `GITHUB_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: github-secondary-limits
+    claim: "Secondary limits: no more than 100 concurrent requests and 900 points per minute on REST."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+    quote:
+      - "No more than 100 concurrent requests are allowed."
+      - "No more than 900 points per minute are allowed for REST API endpoints"
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Token limits.** The ambient `GITHUB_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: github-conditional-304
+    claim: "If-None-Match requests answered 304 do not count against the primary rate limit."
+    verdict: qualified
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api
+    quote:
+      - "Making a conditional request does not count against your primary rate limit if a 304 response is returned and the request was made while correctly authorized with an Authorization header."
+    note: "Only an authorised 304 is free. The GitHub adapter must send its token on every conditional request; an anonymous 304 is not documented as free."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Token limits.** The ambient `GITHUB_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}
+      - {doc: 07-ingestion-infrastructure.md, anchor: "| GitHub API | `If-None-Match` |", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: artifact-retention
+    claim: "Workflow artifacts are retained for 90 days by default, configurable per repository."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization
+    quote:
+      - "By default, checks, workflow runs, commit statuses, and the artifacts and log files generated by workflows are retained for 90 days before they are automatically deleted."
+    also:
+      - url: https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow
+        quote: "You can define a custom retention period for individual artifacts created by a workflow. When using a workflow to create a new artifact, you can use retention-days with the upload-artifact action."
+    note: "The same page says that from 2026-10-01 the retention setting also governs checks, workflow runs and commit statuses, which until then are kept 400+ days regardless. Run history older than the retention period will disappear from that date."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Retention: the last 8 runs per adapter**", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: pat-max-lifetime
+    claim: "Fine-grained PATs expire, with a documented maximum lifetime of one year."
+    verdict: changed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+    quote:
+      - "Under Expiration , select an expiration for the token. Infinite lifetimes are allowed but may be blocked by a maximum lifetime policy set by your organization or enterprise owner."
+    also:
+      - url: https://docs.github.com/en/organizations/managing-programmatic-access-to-your-organization/setting-a-personal-access-token-policy-for-your-organization
+        quote: "For fine-grained personal access tokens, the default the maximum lifetime policy for organizations is set to expire within 366 days. Personal access tokens (classic) do not have an expiration requirement. When you set a policy, tokens with non-compliant lifetimes will be blocked from accessing your organization if the token belongs to a member of your organization."
+    note: "A fine-grained PAT may now be non-expiring. On an organisation's repositories the default policy still caps it at 366 days, and a non-compliant token is blocked, not warned. The expiry countdown in 07 S9 stays."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "Risk, and it is real:", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: github-token-pr-triggers
+    claim: "A pull request created with the ambient GITHUB_TOKEN does not trigger other workflows."
+    verdict: changed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/actions/concepts/security/github_token
+    quote:
+      - "When you use the repository's GITHUB_TOKEN to perform tasks, events triggered by the GITHUB_TOKEN will not create a new workflow run, with the following exceptions: workflow_dispatch and repository_dispatch events always create workflow runs. pull_request events with the opened , synchronize , or reopened activity types: when a workflow using GITHUB_TOKEN creates or updates a pull request, the resulting pull_request event creates workflow runs in an approval-required state."
+      - "If you need workflow runs from workflow-created pull requests to execute without requiring approval, use a GitHub App installation access token or a"
+    note: "The runs are now created but wait for a human with write access to approve them. The decision to use a dedicated token stands, since the gates must run unattended, but the failure it prevents is now an approval banner, not a PR with no checks at all."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "2. **A pull request created with the ambient `GITHUB_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: github-app-rate
+    claim: "A GitHub App installation gets 5,000 to 12,500 requests per hour."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api
+    quote:
+      - "Installations that have more than 20 repositories receive another 50 requests per hour for each repository. Installations that are on an organization that have more than 20 users receive another 50 requests per hour for each user. The rate limit cannot increase beyond 12,500 requests per hour."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "Risk, and it is real:", tag: "[checked 2026-09-24, vendor docs]"}
+
+  - id: hf-api-rate
+    claim: "HuggingFace Hub API: 500 calls per 5-minute window anonymous, 1,000 with a free token."
+    verdict: confirmed
+    as_of: 2026-09-24
+    source_url: https://huggingface.co/docs/hub/rate-limits
+    quote:
+      - "Anonymous user (per IP address) 500 * 3,000 * 100 * Free user 1,000 * 5,000 * 200 *"
+    note: "The page dates its table \"September '25\". The anonymous policy was also measured: every response in tests/ingest/fixtures/hf-hub (captured 2026-09-24) carries RateLimit-Policy \"fixed window\";\"api\";q=500;w=300."
+    plan:
+      - {doc: 07-ingestion-infrastructure.md, anchor: "- **Secrets**: `HF_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}
+      - {doc: 07-ingestion-infrastructure.md, anchor: "| HuggingFace | ~1 req/s with `HF_TOKEN`", tag: "[checked 2026-09-24, vendor docs]"}

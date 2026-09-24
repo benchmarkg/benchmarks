@@ -1001,8 +1001,8 @@ the literature.
 ### Deliverables
 
 - **Scrapers run as GitHub Actions cron in the data repo itself.** Cloudflare Workers Free gives
-  **10 ms CPU per cron trigger** *(unverified -- confirm before relying on this; it is the figure
-  that decides the hosting split for scraping)*, which cannot parse a 3.9 MB `runs.json`; a VPS is a
+  **10 ms CPU per cron trigger** `[checked 2026-09-24, vendor docs]` (it is the figure that
+  decides the hosting split for scraping), which cannot parse a 3.9 MB `runs.json`; a VPS is a
   machine a two-person team now has to patch. The runner already has `git`, a token and PR rights,
   and the scraper lives next to the YAML it writes. Full workflow split, crons and state design in
   [07-ingestion-infrastructure.md](07-ingestion-infrastructure.md); never schedule on the hour,
