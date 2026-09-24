@@ -1,0 +1,78 @@
+# .github/workflows/archive-sources.yml -- P1-S2-T08
+#
+# The rolling archival budget of 06-sourcing-and-scraping.md S7.1: at most 500 Wayback captures a
+# night, oldest-unarchived first, resumable from ingest/state/archive.json. The schedule is 05 S9's
+# (`31 3 * * *`, an odd offset). Every run is idempotent -- if_not_archived_within=30d on each
+# capture, CDX before any capture -- so a run GitHub drops or delays costs nothing.
+#
+# Output is a pull request, never a push (07 S6): the archiver rewrites only the archive_* fields
+# of data/sources/** and the state file, and a human merges that like any other data change. The PR
+# is opened with the bot's PAT, not GITHUB_TOKEN, so pr-validate.yml runs on it (07 S6.1).
+#
+# Secrets: IA_SPN_KEY / IA_SPN_SECRET (07 S5). Without them the run degrades to CDX-only and says
+# so. UAIBI_BOT_PAT is the uaibi-bot fine-grained PAT of 07 S6.1 (contents + pull-requests write);
+# the plan names the account but not the secret, so the name is this file's.
+#
+# Actions are pinned by commit SHA (08 S6, "pinned by commit SHA, not tag"); the tag each SHA was
+# resolved from with `git ls-remote` on 2026-09-24 is in the trailing comment.
+
+name: archive-sources
+
+on:
+  schedule:
+    - cron: '31 3 * * *'
+  workflow_dispatch:
+    inputs:
+      max_captures:
+        description: 'Capture budget for this run'
+        default: '500'
+
+concurrency:
+  group: ingest-archive-sources
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install the pinned toolchain
+        run: uv sync --locked --python 3.12
+
+      - name: Archive
+        env:
+          IA_SPN_KEY: ${{ secrets.IA_SPN_KEY }}
+          IA_SPN_SECRET: ${{ secrets.IA_SPN_SECRET }}
+          MAX_CAPTURES: ${{ inputs.max_captures || '500' }}
+        run: uv run --locked python ingest/archive_sources.py --max-captures "$MAX_CAPTURES"
+
+      - name: SLA report
+        # Informational here: the blocking run of this check belongs to pr-validate.yml.
+        run: uv run --locked python scripts/check_archive_coverage.py --max-pending-age 7d || true
+
+      - name: Open or update the archive pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.UAIBI_BOT_PAT }}
+          branch: ingest/archive-sources
+          add-paths: |
+            data/sources/**
+            ingest/state/archive.json
+          commit-message: 'ingest:archive: nightly Wayback captures'
+          title: 'ingest:archive: nightly Wayback captures'
+          labels: ingest:archive
+          body: |
+            Nightly run of `ingest/archive_sources.py` (06 S7.1 rolling budget).
+            Only `archive_*` and `failure_reason` fields of Source records and
+            `ingest/state/archive.json` change. Whether a capture is the right page
+            is a curator's judgement; the run summary is the last entry of `runs`
+            in the state file.
