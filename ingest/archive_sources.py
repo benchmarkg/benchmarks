@@ -15,9 +15,9 @@
     transient error leaves it `pending` with the reason, up to --max-attempts runs, after which it
     is recorded failed too. Nothing is retried forever.
 
-    python ingest/archive_sources.py                 # the nightly run
-    python ingest/archive_sources.py --dry-run       # print the queue and what CDX says; write nothing
-    python ingest/archive_sources.py --max-captures 20
+    python -m ingest.archive_sources                 # the nightly run
+    python -m ingest.archive_sources --dry-run       # print the queue and what CDX says; write nothing
+    python -m ingest.archive_sources --max-captures 20
 
 Credentials. SPN2 refuses anonymous captures (401, observed 2026-09-23). With IA_SPN_KEY and
 IA_SPN_SECRET unset the run degrades, as 07 S5 asks, to CDX-only: it still records any existing
@@ -37,16 +37,22 @@ nightly by a request that keeps failing.
 The HTTP calls live in `Wayback` so that tools/archive.py (P0-S5-T08) can replace them without
 touching the budget, the cursor or the record writer.
 """
-import argparse
-import json
 import os
-import re
 import sys
-import time
-import urllib.error
-import urllib.parse
-import urllib.request
-from datetime import datetime, timedelta, timezone
+
+if __name__ == '__main__' and not __package__:
+    # Run as a file, this directory is sys.path[0], and ingest/http/ would then shadow the standard
+    # library's `http`, which urllib imports. Put the repository root there instead.
+    sys.path[0] = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+import argparse  # noqa: E402
+import json  # noqa: E402
+import re  # noqa: E402
+import time  # noqa: E402
+import urllib.error  # noqa: E402
+import urllib.parse  # noqa: E402
+import urllib.request  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
