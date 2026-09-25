@@ -1,0 +1,128 @@
+# taxonomy/crosswalks/inspect-evals.yaml
+#
+# UK AISI Inspect / inspect_evals -> our fields. Two parts:
+#
+#   registry  the cross-reference (03 S2): inspect_evals is implementation-gated and language-model-
+#             gated, so it is a sanity check on the agent/safety slice and a link out, never a
+#             vocabulary. 02 S10: `inspect_evals_available` is DERIVED from `inspect_evals_id`.
+#   log       an Inspect `.eval` log -> EvalConditions, from 13 S4.4's mapping table. That table is
+#             itself marked unverified: its log-side names come from Inspect's published log
+#             structure as summarised in recon, not from a log this team has parsed, and Inspect's
+#             schema has been moving. Confirm against a pinned inspect-ai version before the
+#             adapter is written.
+#
+# `class` is 13 S4.4's partition: run-fact (parse() answers it from the log only), entry-fact (the
+# curator answers it, never the log), absence-answerable (either, with an explicit companion).
+#
+# Authored by P0-S4-T09 from 02 S10, 03 S2 and 13 S4.4.
+
+crosswalk: inspect-evals
+counterpart: UK AISI inspect_evals and the Inspect .eval log
+counterpart_url: https://github.com/UKGovernmentBEIS/inspect_evals
+counterpart_licence: MIT
+relation: crosswalk
+verified: false
+updated: 2026-09-25
+
+registry:
+  - ours: Benchmark.execution.inspect_evals_id
+    theirs: registry eval name
+    fidelity: one-to-one
+    note: Hand-set and nullable. inspect_evals_available is derived from it (02 S10).
+  - ours: Benchmark.execution.inspect_evals_available
+    theirs: null
+    fidelity: one-to-one
+    note: Derived, never hand-written.
+  - ours: Benchmark.external_ids.inspect_evals
+    theirs: registry eval name
+    fidelity: one-to-one
+    note: The same identifier as execution.inspect_evals_id, held twice by 04 S5. Flagged for P0-S4-T10 to keep one.
+  - ours: Benchmark.execution.runnable_via
+    ours_values: [inspect]
+    theirs: null
+    fidelity: one-to-one
+
+log:
+  - ours: EvalConditions.n_samples
+    theirs: eval.config.epochs
+    class: run-fact
+  - ours: EvalConditions.k
+    theirs: eval.config.epochs
+    class: run-fact
+  - ours: EvalConditions.selection_strategy
+    theirs: eval.config.epochs_reducer
+    class: run-fact
+    note: The pass^k / pass@k distinction lives here.
+  - ours: EvalConditions.message_limit
+    theirs: eval.config.message_limit
+    class: run-fact
+  - ours: EvalConditions.token_limit
+    theirs: eval.config.token_limit
+    class: run-fact
+  - ours: EvalConditions.subset_used
+    theirs: eval.task_args
+    class: run-fact
+    note: Per task, from the task definition, never a guess.
+  - ours: EvalConditions.shots
+    theirs: eval.task_args
+    class: run-fact
+  - ours: EvalConditions.scaffold
+    theirs: plan.steps[].solver
+    class: run-fact
+    note: The solver chain is the scaffold.
+  - ours: EvalConditions.chain_of_thought
+    theirs: plan.steps[].solver
+    class: run-fact
+  - ours: EvalConditions.tools_allowed
+    theirs: plan.steps[].solver
+    class: run-fact
+  - ours: EvalConditions.retries_allowed
+    theirs: plan.steps[].solver
+    class: run-fact
+  - ours: EvalConditions.human_in_loop
+    theirs: plan.steps[].solver
+    class: run-fact
+    note: Structurally false -- the container has no interactive channel and no human solver is recorded.
+  - ours: EvalConditions.sampling.temperature
+    theirs: plan.config.temperature
+    class: run-fact
+  - ours: EvalConditions.sampling.top_p
+    theirs: plan.config.top_p
+    class: run-fact
+  - ours: EvalConditions.max_output_tokens
+    theirs: plan.config.max_tokens
+    class: run-fact
+  - ours: EvalConditions.reasoning_effort
+    theirs: plan.config.reasoning_effort
+    class: run-fact
+  - ours: EvalConditions.sandbox
+    theirs: eval.sandbox
+    class: run-fact
+  - ours: EvalConditions.harness
+    theirs: eval.packages
+    class: run-fact
+  - ours: EvalConditions.judge_model
+    theirs: results.scores[].scorer
+    class: run-fact
+    note: Where the scorer is model-graded.
+  - ours: EvalConditions.provider_snapshot
+    theirs: eval.model_args
+    class: absence-answerable
+    note: provider_snapshot_available false where the provider publishes no dated snapshot (13 S4.5).
+  - ours: EvalConditions.provider_snapshot_available
+    theirs: null
+    class: absence-answerable
+  - ours: EvalConditions.wall_clock_hours
+    theirs: stats.started_at / stats.completed_at
+    class: run-fact
+  - ours: EvalConditions.training_data_policy
+    theirs: null
+    class: entry-fact
+    note: No harness can recover what a model was allowed to train on.
+  - ours: EvalConditions.eligibility_track
+    theirs: null
+    class: entry-fact
+  - ours: EvalConditions.decontamination_applied
+    theirs: null
+    class: entry-fact
+    note: A run fact only where the task itself decontaminates and records it.

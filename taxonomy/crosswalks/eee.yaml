@@ -1,0 +1,187 @@
+# taxonomy/crosswalks/eee.yaml
+#
+# Our fields <-> Every Eval Ever / EvalEval `eval.schema.json`. A CROSSWALK, NOT AN ADOPTION
+# (02 S5 "Crosswalk to Every Eval Ever, HELM and Croissant"): 04 S8 owns our field names and keeps
+# them, and EEE's are recorded beside them, so their next schema version is not our breaking change.
+# Written before the first EvalConditions record exists, on purpose: a one-to-one mapping found
+# after records exist invites a rename, and renaming a condition field invalidates every
+# comparability_key already computed.
+#
+# UNVERIFIED. The EEE paths are recon:landscape's reading of eval.schema.json on 2026-09-17
+# (arXiv 2606.14516), not a re-read of the live schema. Confirm every `theirs` path against the
+# published schema before an adapter depends on it. Where 02 and 04 spell a path differently the
+# row says so.
+#
+# Row shape: `ours` is a dotted field path on the Pydantic models (tests/test_crosswalks.py resolves
+# every one); `ours_values` optionally narrows the row to vocabulary terms of that field; `theirs`
+# is the EEE path, or null where EEE has no slot. `fidelity`: one-to-one | lossy | one-way-hint |
+# unmappable | unconfirmed (a counterpart exists but its path is not yet recorded). The
+# unmappable rows are the proposal to the EvalEval coalition (02 S5): condition and
+# identity facts their schema has no slot for.
+#
+# Authored by P0-S4-T09 from 02 S5, 03 S2 and 04 S8.
+
+crosswalk: eee
+counterpart: Every Eval Ever (EvalEval) eval.schema.json
+counterpart_url: https://arxiv.org/abs/2606.14516
+counterpart_licence: data CC-BY-4.0, code MIT
+relation: crosswalk
+verified: false
+updated: 2026-09-25
+
+rows:
+  # --- conditions: the one-to-one rows (04 S8) ---
+  - ours: EvalConditions.sampling.temperature
+    theirs: generation_config.generation_args.temperature
+    fidelity: one-to-one
+  - ours: EvalConditions.sampling.top_p
+    theirs: generation_config.generation_args.top_p
+    fidelity: one-to-one
+  - ours: EvalConditions.max_output_tokens
+    theirs: generation_config.generation_args.max_tokens
+    fidelity: one-to-one
+  - ours: EvalConditions.tools_allowed
+    theirs: agentic_eval_config.available_tools
+    fidelity: one-to-one
+    note: 04 S8 writes the path without a prefix; 02 S5 places agentic_eval_config under generation_config. Confirm which.
+  - ours: EvalConditions.message_limit
+    theirs: eval_limits.message_limit
+    fidelity: one-to-one
+  - ours: EvalConditions.token_limit
+    theirs: eval_limits.token_limit
+    fidelity: one-to-one
+  - ours: EvalConditions.max_steps
+    theirs: null
+    fidelity: unmappable
+    note: 02 S5 pairs max_steps with eval_limits.message_limit; 04 S8, which governs our side, pairs message_limit with it and leaves max_steps unmatched. Steps and messages are not the same limit.
+  - ours: EvalConditions.sandbox
+    theirs: generation_config.sandbox
+    fidelity: lossy
+    note: We store the sandbox type only; the compose file goes to ResultClaim.artifact_url (04 S8).
+
+  # --- conditions EEE has no slot for ---
+  - ours: EvalConditions.judge_model
+    theirs: null
+    fidelity: unmappable
+    note: The largest single gap. An EEE record cannot say which model produced the score; HELM can (annotator). The first thing to propose upstream (02 S5).
+  - ours: EvalConditions.eligibility_track
+    theirs: null
+    fidelity: unmappable
+    note: Matbench Discovery's compliance tiers constrain the training side, and no result schema has a place for them (02 S12.6).
+  - ours: Benchmark.training_data_eligibility_tiers
+    theirs: null
+    fidelity: unmappable
+
+  # --- metrics (04 S8: ours is a superset) ---
+  - ours: Metric.optimum
+    theirs: metric_config.lower_is_better
+    fidelity: lossy
+    note: A boolean holds max and min; zero and target optima have no counterpart.
+  - ours: Metric.range.min
+    theirs: metric_config.min_score
+    fidelity: one-to-one
+  - ours: Metric.range.max
+    theirs: metric_config.max_score
+    fidelity: one-to-one
+  - ours: Metric.unbounded
+    theirs: metric_config.max_score
+    fidelity: lossy
+    note: Unboundedness is expressible as a null max_score; "headroom is therefore undefined" is not (02 S5).
+  - ours: Metric.value_type
+    theirs: metric_config.score_type
+    fidelity: lossy
+
+  # --- provenance (04 S8: ours splits provenance from verification) ---
+  - ours: ResultClaim.source
+    theirs: source_metadata.name
+    fidelity: lossy
+  - ours: ResultClaim.reported_by
+    theirs: source_metadata.organization
+    fidelity: lossy
+  - ours: ResultClaim.verification
+    theirs: source_metadata.type
+    fidelity: lossy
+  - ours: Benchmark.governance.independence_flags
+    theirs: source_metadata.evaluator_relationship
+    fidelity: lossy
+    note: The one place EEE already models something inside our governance facet, and the natural first field to align (02 S5).
+
+  # --- identity: the join key ---
+  - ours: Benchmark.external_ids.every_eval_ever
+    theirs: evaluation_name
+    fidelity: one-to-one
+    note: The join key. Stored verbatim including case and never normalised; a normalised join key is a silent mis-join (02 S5).
+  - ours: ResultClaim.external_ids.eee_result_id
+    theirs: null
+    fidelity: unconfirmed
+    note: EEE's own result identifier; its field path is not recorded in recon:landscape. Fill `theirs` when the schema is re-read.
+
+  # --- evaluation_method values (02 S5) ---
+  - ours: Benchmark.evaluation_method
+    ours_values: [exact-match, multiple-choice, reference-metric, statistical-fit]
+    theirs: evaluation_results[].metric_config
+    fidelity: lossy
+    note: EEE records the score's shape, not how it was produced; four of our terms collapse onto one bounded numeric score_type.
+  - ours: Benchmark.evaluation_method
+    ours_values: [execution-tests, constraint-check]
+    theirs: generation_config.sandbox
+    fidelity: one-to-one
+    note: A non-null sandbox beside metric_config is the discriminator.
+  - ours: Benchmark.evaluation_method
+    ours_values: [model-graded-judge, rubric-graded, model-derived-metric]
+    theirs: null
+    fidelity: unmappable
+  - ours: Benchmark.evaluation_method
+    ours_values: [episodic-return]
+    theirs: metric_config.max_score
+    fidelity: lossy
+  - ours: Benchmark.evaluation_method
+    ours_values: [pairwise-preference-elo, tournament-play]
+    theirs: null
+    fidelity: lossy
+    note: No slot for rating-pool identity or snapshot date, so an ingested Elo number arrives without what makes it meaningful.
+  - ours: Benchmark.comparability.rating_pool_required
+    theirs: null
+    fidelity: unmappable
+  - ours: Benchmark.evaluation_method
+    ours_values: [wet-lab-validation, physical-trial, expert-panel-assessment, human-distribution-percentile]
+    theirs: null
+    fidelity: unmappable
+    note: EEE assumes a model, a prompt and a scored generation.
+
+  # --- subjects (02 S5) ---
+  - ours: Benchmark.designed_for_subjects
+    ours_values: [agent-scaffold, multi-agent-system, tool-augmented-model]
+    theirs: generation_config.agentic_eval_config
+    fidelity: lossy
+    note: EEE separates agentic from non-agentic, not scaffold from tool-augmented.
+  - ours: Benchmark.designed_for_subjects
+    ours_values: [base-model, instruction-tuned-model, reasoning-model, hosted-inference-endpoint]
+    theirs: model_id
+    fidelity: lossy
+    note: Subject type must be inferred from a model id, the category error 02 S6 names.
+  - ours: Benchmark.designed_for_subjects
+    ours_values: [human-expert, human-nonexpert, human-ai-team, physical-robot-system, rl-policy, classical-algorithm]
+    theirs: null
+    fidelity: unmappable
+
+  # --- execution ---
+  - ours: Benchmark.execution.reproducibility_tier
+    theirs: generation_config.sandbox
+    fidelity: one-way-hint
+    note: A sandbox says a container exists, not whether anyone outside the maintainer can run it. Never an assignment.
+
+  # --- the benchmark entity, which EEE does not have ---
+  - ours: Benchmark.domain.primary
+    theirs: null
+    fidelity: unmappable
+    note: EEE has no benchmark entity. They own the result record; we own the benchmark (02 S5).
+  - ours: Benchmark.data.access
+    theirs: null
+    fidelity: unmappable
+  - ours: Benchmark.data.contamination_risk
+    theirs: null
+    fidelity: unmappable
+  - ours: Benchmark.lifecycle
+    theirs: null
+    fidelity: unmappable
