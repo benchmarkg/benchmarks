@@ -157,3 +157,63 @@ def test_the_gate_is_not_on_the_bench_surface():
     """05 S3's block is the CLI's only specification (the task's step 3)."""
     cli = open(os.path.join(ROOT, 'tools', 'cli.py'), encoding='utf-8').read()
     assert 'runnable' not in cli and 'gate' not in cli
+
+
+# ---- publishing: --write and --check (P8-S1-T07) ------------------------------------------------
+
+PUBLISHED = os.path.join(ROOT, 'docs', 'adoption', 'runnable-gate-2026-09-25.md')
+
+
+def test_the_published_count_reproduces_from_the_committed_query(capsys):
+    """P8-S1-T07's verify: `python scripts/runnable_gate.py --check docs/adoption/runnable-gate-<date>.md`."""
+    assert gate.main(['--check', PUBLISHED]) == 0
+    assert 'reproduces (0 of 3 pass)' in capsys.readouterr().out
+    text = open(PUBLISHED, encoding='utf-8').read()
+    assert 'gives **38–70**. Recommended: **≥ 70**' in text                   # the threshold beside the count
+    assert '**0 of 3** benchmark record(s) pass all five clauses' in text
+
+
+def test_write_then_check_round_trips_and_a_changed_corpus_fails_the_check(tmp_path, capsys):
+    import shutil
+    root = tmp_path / 'corpus'
+    shutil.copytree(FIXTURE, root)
+    doc = tmp_path / 'docs' / 'adoption' / 'runnable-gate-x.md'
+    assert gate.main(['--root', str(root), '--write', str(doc)]) == 0
+    assert gate.main(['--root', str(root), '--check', str(doc)]) == 0
+    assert '**1 of 14**' in doc.read_text(encoding='utf-8')
+    # one more record fails clause 2: the published count no longer reproduces
+    p = root / 'data' / 'benchmarks' / 'fixture' / 'gate-passer.yaml'
+    p.write_text(p.read_text(encoding='utf-8').replace('compute_tier: api-credits-only', 'compute_tier: single-gpu'),
+                 encoding='utf-8')
+    capsys.readouterr()
+    assert gate.main(['--root', str(root), '--check', str(doc)]) == 1
+    err = capsys.readouterr().err
+    assert 'no longer reproduces' in err and '-**1 of 14**' in err and '+**0 of 14**' in err
+
+
+def test_write_replaces_only_the_generated_block(tmp_path):
+    doc = tmp_path / 'gate.md'
+    assert gate.main(['--root', FIXTURE, '--write', str(doc)]) == 0
+    text = doc.read_text(encoding='utf-8')
+    doc.write_text(text.replace('- **Finding:** --', '- **Finding:** sampled 3 of 3; all publish conditions'),
+                   encoding='utf-8')
+    assert gate.main(['--root', FIXTURE, '--write', str(doc)]) == 0             # regenerated
+    assert 'sampled 3 of 3; all publish conditions' in doc.read_text(encoding='utf-8')
+
+
+def test_the_block_is_deterministic():
+    g = fixture_gate()
+    assert gate.published_block(g) == gate.published_block(fixture_gate())
+    assert '2026' not in gate.published_block(g)                               # no date, so it reproduces later
+
+
+def test_check_needs_a_generated_block(tmp_path):
+    doc = tmp_path / 'plain.md'
+    doc.write_text('# no markers here\n', encoding='utf-8')
+    assert gate.main(['--root', FIXTURE, '--check', str(doc)]) == 2
+    assert gate.main(['--root', FIXTURE, '--write', str(doc)]) == 2            # and --write will not clobber it
+
+
+def test_the_clause_5_sample_lists_the_exclusions():
+    block = gate.published_block(fixture_gate())
+    assert '1 record(s) excluded by clause 5 as already covered: `h-covered`.' in block
