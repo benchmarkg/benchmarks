@@ -1,0 +1,36 @@
+# .github/workflows/ingest-lint.yml -- P5-S4-T06
+#
+# 07 S9.2: "Assert structure explicitly; never `.get()` with a default." scripts/check_no_get_default.py
+# makes that mechanical over ingest/, and this job runs it on every pull request and every push to
+# main. It is blocking: no continue-on-error, no `|| true`, and no path filter -- a path-filtered
+# workflow that does not run leaves a required check pending forever, and the scan takes a second.
+# To make it gate merges, add the `structure-lint` check to main's branch protection (a repository
+# setting, not something a workflow file can declare).
+#
+# It lives in its own workflow rather than in pr-validate.yml because that file is P0-S6-T01's to
+# create; when it exists, this job can move there unchanged.
+#
+# Stdlib only, so no toolchain install. Actions are pinned by commit SHA (08 S6); the SHA is the
+# one archive-sources.yml resolved from v7.0.1 on 2026-09-24.
+
+name: ingest-lint
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  structure-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: No .get() with a default under ingest/ (07 S9.2)
+        run: python3 scripts/check_no_get_default.py ingest/

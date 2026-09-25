@@ -93,6 +93,7 @@ USER_AGENT = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks)'
 VOLATILE_FIELDS = ('downloads', 'likes', 'downloadsAllTime', '_id', 'trendingScore')
 MIN_INTERVAL = 1.0      # seconds between requests to the Hub (07 S10: ~1 req/s)
 MAX_REQUESTS = 2000     # per run (07 S10)
+EXIT = {'ok': 0, 'no-change': 0, 'partial': 0, 'capped': 0, 'soft-fail': 1, 'hard-fail': 2}  # by run status
 MAX_PAGES = 50          # per listing; 1,019 Spaces is two pages, so fifty is a loop, not a listing
 CACHE_CAP = 16 << 20    # bytes; a listing body larger than this is not cached
 STATE = os.path.join(ROOT, 'ingest', 'state', 'hf-hub.json')
@@ -407,7 +408,7 @@ class HfHub:
     # One GET. need_body: the caller cannot act on a 304 without the body (a listing), so
     # If-None-Match is sent only when the cache can answer for it.
     def _get(self, url, state, need_body):
-        entry = state['urls'].get(url, {})
+        entry = state['urls'].get(url, {})  # get-default: our own state file; an unfetched URL has no entry
         cached = self.cache.get(url) if need_body else None
         req = {}
         if entry.get('etag') and (cached is not None or not need_body):
@@ -415,7 +416,7 @@ class HfHub:
         if self.requests >= self.max_requests:
             raise Capped('request budget of %d spent' % self.max_requests)
         self.requests += 1
-        resp = self.transport.get(url, req)
+        resp = self.transport.get(url, req)  # get-default: an HTTP GET with request headers, not a lookup
         self.http_codes[resp.status] += 1
         now = iso(self.now())
         if resp.status == 304:
@@ -487,7 +488,8 @@ class HfHub:
         sha = sha256_normalised(doc)
         lm = candidate.hint.get('lastModified')
         entry = {'sha256': sha[:16], **({'lastModified': lm} if lm else {})}  # a Space has no lastModified
-        if state['records'].get(candidate.source_key, {}).get('sha256') == sha[:16]:
+        prev = state['records'].get(candidate.source_key)
+        if prev is not None and prev['sha256'] == sha[:16]:
             state['records'][candidate.source_key] = entry
             self.stats['unchanged'] += 1
             return None
@@ -603,7 +605,7 @@ def main(argv=None):
     if not a.dry_run:
         save_state(state_path, state)
     print(json.dumps(report, indent=2))
-    return {'hard-fail': 2, 'soft-fail': 1}.get(report['status'], 0)
+    return EXIT[report['status']]
 
 
 if __name__ == '__main__':
