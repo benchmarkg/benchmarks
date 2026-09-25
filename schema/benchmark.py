@@ -31,7 +31,9 @@ What it deliberately does not do yet:
     vocabulary-checked.
   - Tier-2 referential checks (a Source or Organization id resolves) and the other tier-3 rules
     (contamination evidence above `medium`, the contested-status pair, ...) are P0-S5-T02 and
-    P0-S4-T08. BenchmarkVersion, Subset, Metric and Baseline are P0-S4-T07; they are plain dicts here.
+    P0-S4-T08. `versions[]`, `subsets[]` and `baselines[]` are the P0-S4-T07 models (schema/entities.py,
+    schema/baseline.py), checked here only for belonging to this benchmark; `metrics` stays as it
+    was until P0-S4-T10, because CASP's entry holds a descriptive dict under that name.
 
 Croissant. Where a schema.org term used by Croissant names the same thing, the field uses that name
 or records the term: `CROISSANT_TERMS` maps field -> term, for the croissant-benchmark extension
@@ -46,6 +48,8 @@ from typing import Annotated, Any, ClassVar, Literal, Union
 from pydantic import (BaseModel, ConfigDict, Field, StringConstraints, ValidationInfo, computed_field,
                       model_validator)
 
+from schema.baseline import Baseline
+from schema.entities import BenchmarkVersion, Subset
 from schema.taxonomy import load_taxonomy
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -370,13 +374,13 @@ class Benchmark(Open):
     license: str | None = None
     license_notes: str | None = None
 
-    versions: list[dict] = Field(default_factory=list)      # BenchmarkVersion, inline (P0-S4-T07)
-    subsets: list[dict] = Field(default_factory=list)       # Subset, inline (P0-S4-T07)
+    versions: list[BenchmarkVersion] = Field(default_factory=list)
+    subsets: list[Subset] = Field(default_factory=list)
     # Metric refs. CASP's entry holds a descriptive dict under this name (docs/schema-field-needs.md,
     # group `metric`: deferred to the Metric entity); accepted until P0-S4-T07/T10 move it there.
     metrics: list[Slug] | dict = Field(default_factory=list)
     leaderboards: list[Annotated[str, StringConstraints(pattern=r'^lb-[a-z0-9-]+$')]] = Field(default_factory=list)
-    baselines: list[dict] = Field(default_factory=list)     # Baseline, inline (P0-S4-T07)
+    baselines: list[Baseline] = Field(default_factory=list)
     lineage: Lineage | None = None
     tags: list[Text] = Field(default_factory=list)
     ingestion: dict | None = None                           # machine-written (04 S9)
@@ -390,6 +394,26 @@ class Benchmark(Open):
             raise ValueError('lifecycle %r is derived (taxonomy/lifecycle.yaml) and may never be hand-set'
                              % data['lifecycle'])
         return data
+
+    @model_validator(mode='after')
+    def _inline_entities(self):
+        tags = [v.version for v in self.versions]
+        if len(set(tags)) != len(tags):
+            raise ValueError('%s: a version tag is listed twice' % self.id)
+        for v in self.versions:
+            for ref in (v.supersedes_version, v.superseded_by):
+                if ref is not None and ref not in tags:
+                    raise ValueError('%s@%s refers to version %s, which is not listed' % (self.id, v.version, ref))
+        ids = {s.id for s in self.subsets}
+        for s in self.subsets:
+            if s.benchmark != self.id:
+                raise ValueError('%s: subset %s belongs to another benchmark' % (self.id, s.id))
+            if s.parent is not None and s.parent not in ids:
+                raise ValueError('%s: subset %s has parent %s, which is not listed' % (self.id, s.id, s.parent))
+        for b in self.baselines:
+            if b.benchmark_version.split('@')[0] != self.id:
+                raise ValueError('%s: baseline %s is on %s' % (self.id, b.id, b.benchmark_version))
+        return self
 
 
 # ---- helpers ----------------------------------------------------------------------------------
