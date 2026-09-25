@@ -56,7 +56,7 @@ import glob
 import os
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Callable
 
 from schema.baseline import Baseline
 from schema.benchmark import Benchmark, load_benchmark
@@ -128,19 +128,8 @@ def rule(rule_id: str, cites: str):
 
 # ---- reading the entries' shapes ---------------------------------------------------------------
 
-def _extra(obj: Any, name: str, default=None):
-    """A field the model accepts without modelling (pending P0-S4-T10): `activity`,
-    `execution.reproducibility_blockers`, `execution.harness_availability`, `curation.notes`."""
-    if obj is None:
-        return default
-    v = getattr(obj, name, None)
-    if v is None and obj.model_extra:
-        v = obj.model_extra.get(name)
-    return default if v is None else v
-
-
 def _blockers(b: Benchmark) -> list[str]:
-    return list(_extra(b.execution, 'reproducibility_blockers', []) or [])
+    return list(b.execution.reproducibility_blockers)
 
 
 def _submission(b: Benchmark) -> list[str]:
@@ -170,7 +159,7 @@ def _benchmark_rule(rule_id, cites):
 
 @_benchmark_rule('lifecycle-triple', '02 S11 legality matrix')
 def _lifecycle_triple(b, corpus, level):
-    lifecycle, activity = b.lifecycle, _extra(b, 'activity')
+    lifecycle, activity = b.lifecycle, b.activity
     maintenance = corpus.derived.get(b.id, {}).get('maintenance_status')  # get-default: a derived value not yet built is not evaluated
     if lifecycle == 'saturated':
         yield 'blocking', 'lifecycle saturated is derived only (02 S8) and may not be hand-set'
@@ -180,7 +169,7 @@ def _lifecycle_triple(b, corpus, level):
         if lifecycle in ('deprecated', 'retracted'):
             yield 'blocking', 'a %s instrument cannot be accepting submissions' % lifecycle
         if maintenance == 'abandoned':
-            if _extra(b.curation, 'notes'):
+            if b.curation.notes:
                 yield 'warning', 'accepting submissions on an abandoned code base (explained in curation.notes)'
             else:
                 yield 'blocking', ('accepting submissions on an abandoned code base: a curator must explain it in '
@@ -239,7 +228,7 @@ def _wet_lab(b, corpus, level):
 
 @_benchmark_rule('no-harness-blocker', '02 S11 implications')
 def _no_harness(b, corpus, level):
-    if _extra(b.execution, 'harness_availability') == 'none' and 'no-reference-implementation' not in _blockers(b):
+    if b.execution.harness_availability == 'none' and 'no-reference-implementation' not in _blockers(b):
         yield 'blocking', 'harness_availability none needs no-reference-implementation in reproducibility_blockers', \
             'execution.reproducibility_blockers += no-reference-implementation'
 
@@ -281,7 +270,7 @@ def _rating_pool(b, corpus, level):
 @_benchmark_rule('independence-evidence', '02 S11 implications')
 def _independence(b, corpus, level):
     for f in b.governance.independence_flags or []:
-        flag, src = (f, None) if isinstance(f, str) else (f.flag, _extra(f, 'source'))
+        flag, src = (f, None) if isinstance(f, str) else (f.flag, f.source)
         if flag != 'no-known-conflict' and not src:
             yield 'blocking', 'independence flag %s needs an evidence Source' % flag
 

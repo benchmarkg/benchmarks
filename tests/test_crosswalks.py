@@ -4,7 +4,7 @@ The verify: "every ours: key resolves to a real field path on the Pydantic model
 JSON Schema, which does not exist until P0-S5-T01), every hf-tags row carries source: hf_space_tag,
 and pwc.yaml contains no free-text field".
 
-`resolve()` walks the models themselves: a dotted path from a root entity (`EvalConditions.sampling.
+`resolve()` (schema/paths.py) walks the models themselves: a dotted path from a root entity (`EvalConditions.sampling.
 temperature`), through nested models, lists and optionals, to a declared or computed field. The
 vocabulary a row names (`ours_values`, `candidates`) is checked against the Literal that field
 carries, which the models build from taxonomy/ at import time.
@@ -12,82 +12,18 @@ carries, which the models build from taxonomy/ at import time.
 import os
 import re
 import sys
-import typing
 
 import pytest
-from pydantic import BaseModel
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from schema.baseline import Baseline  # noqa: E402
-from schema.benchmark import CROISSANT_TERMS, Benchmark  # noqa: E402
-from schema.claim import ResultClaim  # noqa: E402
-from schema.conditions import EvalConditions  # noqa: E402
-from schema.dispute import Dispute  # noqa: E402
-from schema.entities import (Alias, BenchmarkVersion, IngestBatch, Leaderboard, Organization,  # noqa: E402
-                             RatingPool, Subset)
-from schema.metric import Metric  # noqa: E402
-from schema.source import Source  # noqa: E402
-from schema.system import System, SystemVersion  # noqa: E402
+from schema.benchmark import CROISSANT_TERMS  # noqa: E402
+from schema.paths import Unresolved, resolve, vocabulary  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
 
 CROSSWALKS = os.path.join(ROOT, 'taxonomy', 'crosswalks')
 NAMES = ['croissant', 'eee', 'helm', 'hf-tags', 'inspect-evals', 'pwc']
-ENTITIES = {m.__name__: m for m in (Alias, Baseline, Benchmark, BenchmarkVersion, Dispute, EvalConditions,
-                                    IngestBatch, Leaderboard, Metric, Organization, RatingPool, ResultClaim,
-                                    Source, Subset, System, SystemVersion)}
 FAMILIES = {t['id'] for t in read_yaml(os.path.join(ROOT, 'taxonomy', 'domains.yaml'))['terms'] if not t.get('parent')}
-
-
-class Unresolved(LookupError):
-    pass
-
-
-def _args(tp):
-    """Every type inside an annotation: through Optional, Union, list, dict values and Annotated."""
-    origin = typing.get_origin(tp)
-    if origin is typing.Annotated:
-        return _args(typing.get_args(tp)[0])
-    if origin is None:
-        return [tp]
-    if origin is typing.Literal:
-        return [tp]
-    out = []
-    for a in typing.get_args(tp):
-        out += _args(a)
-    return out
-
-
-def resolve(path: str):
-    """The annotation at `path`, or Unresolved naming the first segment that does not exist."""
-    root, *segments = path.split('.')
-    if root not in ENTITIES or not segments:
-        raise Unresolved('%s: no entity %s' % (path, root))
-    models = [ENTITIES[root]]
-    annotation = None
-    for i, seg in enumerate(segments):
-        name = seg[:-2] if seg.endswith('[]') else seg
-        hit = None
-        for m in models:
-            if name in m.model_fields:
-                hit = m.model_fields[name].annotation
-            elif name in m.model_computed_fields:
-                hit = m.model_computed_fields[name].return_type
-            if hit is not None:
-                break
-        if hit is None:
-            raise Unresolved('%s: %s has no field %s' % (path, '.'.join([root] + segments[:i]) or root, name))
-        annotation = hit
-        models = [a for a in _args(hit) if isinstance(a, type) and issubclass(a, BaseModel)]
-        if i < len(segments) - 1 and not models:
-            raise Unresolved('%s: %s is not a nested model' % (path, name))
-    return annotation
-
-
-def vocabulary(annotation) -> set[str] | None:
-    """The Literal values a field accepts, or None when it is not a closed vocabulary."""
-    values = [v for a in _args(annotation) if typing.get_origin(a) is typing.Literal for v in typing.get_args(a)]
-    return set(values) if values else None
 
 
 def load(name):
@@ -127,7 +63,7 @@ def test_resolution_reads_the_pydantic_models_not_a_generated_schema():
 @pytest.mark.parametrize('path', [
     'EvalConditions.shot_count',                 # a misspelling
     'Benchmark.data.licence',                    # 06 S3.2 names it; the model does not have it
-    'Benchmark.external_ids.arxiv',              # likewise
+    'Benchmark.external_ids.doi',                # a key the fixed set does not have
     'Benchmark.name.first',                      # a scalar has no fields
     'HumanBaseline.value',                       # a renamed entity
     'Benchmark',                                 # an entity is not a field

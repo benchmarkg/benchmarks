@@ -19,7 +19,17 @@ Each row carries exactly one status:
 - **unused** -- 04 §5 defines it and none of the three entries used it, or an entry used it for
   something that is not data about the benchmark.
 
-532 distinct field paths appear across the three files: 309 needed, 213 deferred, 10 unused.
+**P0-S4-T10 resolved every row** ([Resolution](#resolution-p0-s4-t10)). Two statuses were added
+by that pass and no row is `unused` any more:
+
+- **resolved** -- was `unused`; removed from the entries or folded into a modelled field.
+- **deferred (full)** -- a 04 §5 field no entry used yet, kept because 04 requires it at `full` and
+  other code or documents read it. Whether any of them should have been deleted instead is the
+  reviewer's call.
+
+532 distinct field paths appeared across the three files at P0-S3-T05: 309 needed, 213 deferred and 10
+unused, the 10 now resolved. The paths are the entries' names at that time; P0-S4-T10 renamed some of
+them, and the Resolution section says where each group now lives.
 Paths are written with `.` between keys and `[]` for a list item.
 
 ## By field group
@@ -59,7 +69,7 @@ Paths are written with `.` between keys and `[]` for a list item.
 | `entrant_classes` | **needed** | `entrant_classes`, `entrant_classes.class`, `entrant_classes.deadline`, `entrant_classes.ranked_separately`, `entrant_classes_history` (5 paths) | casp | **not in 04 §5** | Separately ranked entrant classes (CASP: servers vs human groups), each with its own deadline. |
 | `governance_core` | **needed** | `governance`, `governance.independence_flags`, `governance.maintainer`, `governance.maintainer_type`, `governance.submission_process` (6 paths) | casp, roboarena, swe-bench | `governance.maintainer_type`, `governance.maintainers[]`, `governance.submission_process`, `governance.independence_flags[]` | As specified, with the entries' `maintainer` as `maintainers[]` Organization refs. SWE-bench wants `submission_process` multi-valued or a new `artifact-backed` term. |
 | `governance_extra` | **needed** | `governance.admission`, `governance.evaluation_budget`, `governance.funding`, `governance.independence_policy`, `governance.known_limitation`, `governance.participation` (8 paths) | casp, roboarena | **not in 04 §5** | Funding, admission rules, per-submitter evaluation budgets and independence policy all change how a result may be read. |
-| `reviewer_notes` | **unused** | `governance.reviewer_check` (7 paths) | casp, roboarena, swe-bench | `curation.notes` | Notes addressed to the reviewer of this draft, not facts about the benchmark. Fold into `curation.notes` or drop at approval. |
+| `reviewer_notes` | **resolved** | `governance.reviewer_check` (7 paths) | casp, roboarena, swe-bench | `curation.notes` | Notes addressed to the reviewer of this draft, not facts about the benchmark. Fold into `curation.notes` or drop at approval. |
 | `execution_core` | **needed** | `execution`, `execution.compute_tier`, `execution.reproducibility_tier` (3 paths) | casp, roboarena, swe-bench | `execution.compute_tier`, `execution.reproducibility_tier` | As specified. |
 | `execution_vocab` | **needed** | `execution.harness_availability`, `execution.reproducibility_blockers` (2 paths) | casp, roboarena, swe-bench | **not in 04 §5**; vocabulary `taxonomy/execution.yaml` | `reproducibility_blockers` and `harness_availability` have vocabularies in `execution.yaml` but no field in 04 §5. |
 | `execution_role` | **needed** | `execution.compute_tier_by_role`, `execution.submitter_needs_no_robot` (4 paths) | roboarena | **not in 04 §5** | Cost by role: a RoboArena submitter needs a server, an evaluator a robot. One tier describes neither. |
@@ -74,43 +84,174 @@ Paths are written with `.` between keys and `[]` for a list item.
 | `curation_extra` | **needed** | `curation.not_yet_available`, `curation.personal_data_excluded`, `curation.unreachable` (10 paths) | casp, roboarena, swe-bench | **not in 04 §5** | A source that 403s (`unreachable`), one that will exist but does not yet (`not_yet_available`), and personal data deliberately excluded. Each changes what may be claimed. |
 | `evidence` | **needed** | *(across all blocks)* (95 paths) | casp, roboarena, swe-bench | **not in 04 §5** for Benchmark fields | Per-field `source` + `quote` (or a `quote_locator` where the value sits in structured data). 04 gives ResultClaim field provenance but Benchmark only a flat `curation.sources[]`; the quote-substring validator needs to know which source a number came from. |
 | `field_notes` | **needed** | *(across all blocks)* (28 paths) | casp, roboarena, swe-bench | `curation.notes` | Per-field notes (`*_note`, `*_basis`, `*_caveat`). One `curation.notes` string cannot say which field a note is about. |
-| `meta` | **unused** | `_schema_findings`, `_schema_findings.field`, `_schema_findings.need` (3 paths) | casp, roboarena, swe-bench | — | `_schema_findings`: this task's input, not data. Remove from the entries once P0-S4-T10 reconciles them. |
+| `meta` | **resolved** | `_schema_findings`, `_schema_findings.field`, `_schema_findings.need` (3 paths) | casp, roboarena, swe-bench | — | `_schema_findings`: this task's input, not data. Remove from the entries once P0-S4-T10 reconciles them. |
+
+## Resolution (P0-S4-T10)
+
+Where each group now lives. **Schema field** names real field paths on the Pydantic models, each
+from its root entity, and `tests/schema/test_benchmark_model.py` resolves every one through
+`schema/paths.py`: a `needed` row must name at least one, and every name in any row must resolve.
+
+Two mechanisms carry the cross-cutting groups, rather than a field per case:
+
+- **Annotations** (`evidence`, `field_notes`). A key `<field>_note`, `_notes`, `_caveat`, `_basis`,
+  `_source` or `_quote` beside a modelled `<field>` in the same block is an annotation of that
+  field, and is type-checked: `_source` must be a Source id, `_basis` text or a Basis block, the
+  rest text. It says which field a note or a quote is about, which is what one `curation.notes`
+  string could not, and it lets the quote-substring validator know which source a value came from.
+  An annotation of a field the block does not have is an unknown key and is rejected. Seven entry
+  keys were renamed so each annotates a real field (`contamination_*` became `contamination_risk_*`,
+  `submission_*` became `submission_process_*`, `ceiling_note`, `compute_note`, `reproducibility_note`,
+  `records_*`, `task_distribution_*`).
+- **Deferred keys** (every `deferred` row). A block declares the keys that belong to another entity;
+  they are accepted untyped and `deferred_fields()` lists them, until the owning entity takes them
+  over. Every other unknown key is now rejected, so the entries validate with no unmodelled key.
+
+| Group | Status | Schema field | Resolution |
+| --- | --- | --- | --- |
+| `identity` | needed | `Benchmark.id`, `Benchmark.name`, `Benchmark.aliases` | CASP's `full_name` moved into `aliases`. |
+| `tagline` | needed | `Benchmark.tagline` | As specified. |
+| `summary` | needed | `Benchmark.description` | The entries' `summary` renamed to `description`. |
+| `release` | needed | `Benchmark.released`, `Benchmark.release_venue` | Added. |
+| `paper` | needed | `Benchmark.paper`, `Benchmark.external_ids.arxiv` | Added: `paper` names the Source and the arXiv version read; `external_ids` gains `arxiv`. |
+| `links` | needed | `Benchmark.homepage`, `Benchmark.repository`, `Benchmark.dataset_url`, `Benchmark.leaderboard_url`, `Benchmark.api_url`, `Benchmark.maintainer_url` | Four URL fields added; the entries' `dataset`, `leaderboard`, `api`, `maintainer_site` renamed. `leaderboards[]` stays for Leaderboard record ids. |
+| `self_description` | needed | `Benchmark.self_description` | Added, as a source and quote. |
+| `platform` | needed | `Benchmark.platform`, `Benchmark.hardware` | Added. |
+| `domain` | needed | `Benchmark.domain.primary`, `Benchmark.domain.secondary` | As specified. |
+| `domain_per_edition` | needed | `Benchmark.domain.per_edition` | Added. A per-edition `domain_override` waits for editions to become BenchmarkVersions. |
+| `admissibility` | needed | `Benchmark.learned_entrant_evidence`, `Benchmark.evaluation_target` | As P0-S4-T03 added them. |
+| `tags` | needed | `Benchmark.tags` | As specified. CASP's out-of-vocabulary activity also lands here (below). |
+| `facets` | needed | `Benchmark.capability`, `Benchmark.designed_for_subjects`, `Benchmark.evaluation_method`, `Benchmark.lifecycle` | As specified. |
+| `rejected` | needed | `Benchmark.capability_considered_and_rejected`, `Benchmark.domain_considered_and_rejected`, `Benchmark.evaluation_method_considered_and_rejected`, `Benchmark.designed_for_subjects_considered_and_rejected` | Added. Each term must be a real term of its facet and must not also be assigned. `subjects_considered_and_rejected` renamed to match its facet. |
+| `tag_basis` | needed | `Benchmark.capability_basis` | Added: a map from an assigned capability to its reason, as text or a Basis block. A basis for a term that is not assigned is rejected. |
+| `observed_subjects` | needed | `Benchmark.observed_subjects` | Added. |
+| `activity` | needed | `Benchmark.activity` | Added, typed by the `activity` vocabulary in `taxonomy/lifecycle.yaml`. CASP's `assessment-in-progress` is not in it, so CASP now reads `activity: unknown` with the term in `tags[]` -- the precedent P0-S4-T03 set for RoboArena's `evaluator-improvised` -- until the vocabulary owners decide. |
+| `schedule` | needed | `Benchmark.planned_end`, `Benchmark.events` | Added. |
+| `maintenance_derived` | deferred | `Benchmark.liveness` | `maintenance_signals_seen` is a declared deferred key; the machine-written `liveness` block will carry it. |
+| `data_core` | needed | `Benchmark.data.access`, `Benchmark.data.refresh`, `Benchmark.data.data_provenance`, `Benchmark.data.contamination_risk`, `Benchmark.data.contamination_evidence`, `Benchmark.data.ceiling_anchor_type` | As specified, with a `stance` on each contamination-evidence item. |
+| `data_access_split` | needed | `Benchmark.data.access_by_phase`, `Benchmark.data.records_access`, `Benchmark.data.records_licence`, `Benchmark.data.records_snapshot` | Added. |
+| `ceiling_per_category` | needed | `Benchmark.data.ceiling_by_category` | Added; CASP's `ceiling_basis` renamed. P0-S3-T05 suggested per-subset Baselines, which needs CASP's categories to be Subsets first. |
+| `licences` | needed | `Benchmark.data.dataset_licence`, `Benchmark.data.upstream_licences`, `Benchmark.execution.code_licence` | Added. SWE-bench's `data.code_licence` moved to `execution`, beside RoboArena's, so code licences have one home. |
+| `size` | needed | `Benchmark.data.size.n_items`, `Benchmark.data.size.n_repositories`, `Benchmark.data.size.other_splits`, `Benchmark.data.size.languages` | SWE-bench's `size` moved under `data`, 04 §5's home for it, and its shape replaces 04's `{items, unit}`, which no entry used. This is the one model field P0-S4-T10 deleted. |
+| `scale_publication` | needed | `Benchmark.scale.at_publication` | Added. |
+| `scale_live` | deferred | `Benchmark.scale` | `scale.live_YYYY_MM_DD` is a declared deferred key, for the `metrics/` adoption series. |
+| `task` | needed | `Benchmark.task`, `Benchmark.feedback_per_item` | Added. RoboArena's `task_set` renamed to `task`, with `exists: false`. |
+| `metric` | deferred | `Metric`, `RatingPool.snapshot_date` | RoboArena's `metric` is a declared deferred key; CASP's `metrics` dict is accepted until Metric records exist. |
+| `saturation` | deferred | `Subset` | `saturation_by_category` is a declared deferred key: derived per Subset from claims. |
+| `editions` | deferred | `BenchmarkVersion.version_kind` | A declared deferred key, for BenchmarkVersion with `version_kind: edition`. |
+| `entrant_classes` | needed | `Benchmark.entrant_classes`, `Benchmark.entrant_classes_history` | Added. |
+| `governance_core` | needed | `Benchmark.governance.maintainer`, `Benchmark.governance.maintainer_type`, `Benchmark.governance.maintainers`, `Benchmark.governance.submission_process`, `Benchmark.governance.independence_flags` | `maintainer` kept as a display name beside the `maintainers[]` Organization refs, since no Organization record exists yet; `submission_process` may be a list. |
+| `governance_extra` | needed | `Benchmark.governance.funding`, `Benchmark.governance.participation`, `Benchmark.governance.independence_policy`, `Benchmark.governance.admission`, `Benchmark.governance.evaluation_budget`, `Benchmark.governance.known_limitation` | Added. |
+| `reviewer_notes` | resolved | `Benchmark.curation.notes` | Folded into `curation.notes` verbatim, with source and quote, one paragraph each, for the reviewer who approves the entry to act on or drop. |
+| `execution_core` | needed | `Benchmark.execution.compute_tier`, `Benchmark.execution.reproducibility_tier` | As specified. |
+| `execution_vocab` | needed | `Benchmark.execution.harness_availability`, `Benchmark.execution.reproducibility_blockers` | Added, typed by `taxonomy/execution.yaml`. |
+| `execution_role` | needed | `Benchmark.execution.compute_tier_by_role` | Added. RoboArena's `submitter_needs_no_robot` became its source and quote annotations. |
+| `harness` | needed | `Benchmark.execution.harness`, `Benchmark.execution.harness_gotcha`, `Benchmark.execution.runnable_via`, `Benchmark.execution.inspect_evals_id` | Added `harness` and `harness_gotcha`. |
+| `submission_channel` | needed | `Benchmark.execution.submission_channel` | Added. |
+| `interop` | needed | `Benchmark.external_ids.huggingface`, `Benchmark.external_ids.arxiv`, `Benchmark.external_ids.epoch`, `Benchmark.external_ids.every_eval_ever`, `Benchmark.external_ids.inspect_evals` | SWE-bench's `interop` block became `external_ids`. 04 §5 also defines `execution.inspect_evals_id` for the same identifier; which one survives is the reviewer's call. |
+| `lineage` | needed | `Benchmark.lineage.role`, `Benchmark.lineage.variants`, `Benchmark.lineage.forks`, `Benchmark.lineage.views` | Added: three relations, not one. |
+| `results` | deferred | `ResultClaim`, `System` | `results_board_summary` and `results_observed` are declared deferred keys. |
+| `policy_identity` | deferred | `System`, `Alias.extracts` | A declared deferred key. |
+| `curation_core` | needed | `Benchmark.curation.added_by`, `Benchmark.curation.added_on`, `Benchmark.curation.last_verified`, `Benchmark.curation.verification_status`, `Benchmark.curation.sources` | As specified. |
+| `curation_sources_inline` | deferred | `Source` | An inline source's descriptive keys (`kind`, `url`, `title`, `doi`, `text_sha256`, `extract`, ...) are deferred keys of the inline item; the `Source` record owns them. |
+| `curation_extra` | needed | `Benchmark.curation.not_yet_available`, `Benchmark.curation.unreachable`, `Benchmark.curation.personal_data_excluded` | Added. |
+| `evidence` | needed | `Benchmark.self_description.source`, `Benchmark.governance.funding.quote`, `Benchmark.data.size.n_items.source`, `Benchmark.lineage.variants.quote` | The `_source` / `_quote` annotations, plus a source and quote on every block that states a fact. The names here are representatives. |
+| `field_notes` | needed | `Benchmark.curation.notes`, `Benchmark.data.access_by_phase.note`, `Benchmark.data.size.other_splits.note` | The `_note` / `_notes` / `_caveat` / `_basis` annotations; `curation.notes` stays for notes about the entry as a whole. |
+| `meta` | resolved | — | `_schema_findings` removed from the entries, and carried verbatim below. |
+
+## Findings carried over from `_schema_findings`
+
+Each entry ended with a `_schema_findings` block: what writing it without a schema surfaced. P0-S4-T10
+removed the blocks from the entries, because they are this list's input and not data about the
+benchmark, and carries them here verbatim so none is lost.
+
+### casp
+
+| Field | Need |
+| --- | --- |
+| editions[] with per-edition targets, participation, categories, assessors, status | The claim-bearing unit is the edition. `version` is the wrong model: editions are new test sets, not revisions of one. |
+| sources_disagree + values[] + preferred | The organisers give four participation figures for CASP16 (80,000 / 120,000 / 128,000 / 128,161 models or submissions) and two end dates for CASP17's season on one page. An entry must hold disagreement without picking silently. |
+| activity value `assessment-in-progress` | Not in the vocabulary. Every edition-based benchmark passes through this state and none of the six activity terms describes it. |
+| access_by_phase | One edition moves from held-out to fully open. A single access value is only true for part of its life. |
+| entrant_classes[] with ranked_separately | The plan predicted a separately ranked human category. The sources show a separately ranked server category. Either way it is per-class, with its own deadline. |
+| metrics with more than one ranking authority | The Prediction Center's GDT_TS table and the assessors' nine-measure formula are both official and can disagree. The Metric model needs an `authority` and an edition. |
+| saturation_by_category | Fold prediction is near-solved while complexes and RNA are open, in the same edition. |
+| ceiling per category, with a numeric noise ceiling where the source gives one | Affinity has a stated ceiling (tau ~0.73); monomers have a qualitative one. |
+| reproducibility split into rescoring vs rerunning | Rescoring archived models is automatable; re-running the blind experiment is impossible after the edition. One tier cannot say both. |
+| vocabulary definitions that encode a false premise about CASP | Four P0-S2 drafts assume "no leaderboard" or "humans ranked separately": evaluation-methods expert-panel-assessment (OUT clause), governance assessment-committee ("There is no leaderboard"), subjects human-expert (its CASP example), and 02 S12.1's prose. These are review notes for P0-S2-T02, T03 and T05, not edits this task may make. |
+| results_observed[].entrant_class including `assessor-run baseline` | AlphaFold 3's 0.8 LDDT-PLI beat every entrant but was not an entrant. Without a class it reads as the winner. |
+| curation.not_yet_available | A source that will exist is different from one that 403s; both change what may be claimed. |
+
+### swe-bench
+
+| Field | Need |
+| --- | --- |
+| lineage.{variants,forks,views} | Three different relations, not one `variant_of`. A same-maintainer subset (Lite), a same-maintainer extension (Multimodal), an other-maintainer fork (Pro) and a view that is only a filter (Bash Only) must not collapse into one edge. |
+| results_observed[].scaffold and [].checked | Per-result, not per-benchmark. The top unchecked row (52.62) and the top checked row (33.83) differ by 19 points, and the checked one used the maintainers' own scaffold. |
+| governance.submission_process as a list, plus a note | Artifact-backed self-reporting with optional maintainer re-runs fits neither `self-reported` nor `maintainer-verified`. Either the field is multi-valued or the vocabulary needs a term such as `artifact-backed`. |
+| observed_subjects alongside designed_for_subjects | Built for prompted models with retrieval; used almost entirely by agents. Facet 4 already names that divergence at claim level; this entry wants it at benchmark level too. |
+| capability_considered_and_rejected | Near-misses with reasons. Without them, a reviewer cannot tell a thin tag list that was judged from one that was skipped. |
+| contamination_evidence[].stance | Evidence can cut both ways, and the maintainers' own counter-check should be kept. |
+| size.n_items with split, and n_items_history on variants | Counts change between versions (Multimodal 617 to 480); one integer loses that. |
+| sources[].extract and quote_locator | The quote-substring check fails for any number held in inline JSON, since the normalisation strips <script>. Structured sources need a locator, not a substring. The arXiv HTML extract also loses every number typeset as math. |
+| curation.unreachable | A source that 403s is information; recording it stops the claim being made from memory. |
+| dataset_licence vs code_licence vs upstream_licences | Three different licences with three different answers, one of them null. |
+
+### roboarena
+
+| Field | Need |
+| --- | --- |
+| task_set.exists = false, with item_definition | n_items, splits and a dataset licence all presuppose a task set. Here the item is an event, and the thing with a licence is the log of events. |
+| metric.kind relative-rating, rating_pool_required, snapshot, official_threshold | A rating is a claim about a pool at a time. The same number means nothing a month later or on another board, and rows under the threshold share the board with rows over it. |
+| results_observed[].official | The top API row is not an official result. Without the flag, ingestion crowns the wrong policy. |
+| policy_identity with backend_id AND display_name | Anonymised backend ids, display aliases, and one alias that points at another system's name. Claims keyed on a single string will mis-attach. |
+| feedback_per_item[] with `ranks` | Three signals are collected and one ranks. Partial-success data exists and must not be mistaken for the metric. |
+| execution.compute_tier_by_role | Submitter and evaluator costs differ by class (a server vs a robot). A single tier describes neither entrant. |
+| data.access `generated-on-demand` + records_access | Access to items and access to evaluation records are different facts with different answers. |
+| data_provenance value `evaluator-improvised` | Not in the vocabulary. Items authored live by the evaluating party are neither crowd-authored nor instrument recordings. |
+| evaluator_concentration | A distributed benchmark's credibility rests on how distributed it actually is. The maintainers publish this; the schema has no place for it. |
+| events[] on a live benchmark | A dated challenge run on the arena is neither an edition nor a separate benchmark. |
+| curation.personal_data_excluded and sources[].contains_personal_data | The archive-snapshot plan (04, 07) would store this API body verbatim. It holds e-mail addresses. Source archiving needs a PII rule before it archives anything. |
+| designed_for_subjects when the submitter does not supply the body | physical-robot-system assumes the evaluated system includes its hardware. Here the hardware is the evaluator's and varies per item. Neither subject term fits a remotely served policy on someone else's robot. |
+
 
 ## 04 §5 fields none of the entries used
 
-Every one is **unused** by these three entries. One consequence matters now: no entry declares
+None of the three entries uses any of them. P0-S4-T10 kept every one as **deferred (full)**: 04 §5
+requires them at `full`, and each is read by 04 itself and, for most, by the validators, the
+comparability build or a crosswalk. One consequence matters now: no entry declares
 `reference_conditions`, so every headroom is null. (The admissibility block, 04 §15 item 12, was
 missing from all three when this list was first written; P0-S4-T03 added its two stub fields.)
 
 | 04 §5 field | Status | Note |
 | --- | --- | --- |
-| `external_ids.every_eval_ever` | **unused** | SWE-bench records `interop.eee_benchmark_name`, the join value, but not under this key. |
-| `croissant_url` | **unused** | None of the three sets it; SWE-bench's Hugging Face dataset has one. |
-| `execution_mode` | **unused** | Absent; RoboArena would be `physical-trial`. |
-| `ground_truth_source` | **unused** | Absent; CASP would be `experimental`. |
-| `reproducible_by_third_party` | **unused** | Absent; the entries say it in `reproducibility_note` prose instead. |
-| `data.submission_limit` | **unused** | Absent. RoboArena's per-submitter weekly budget is a close cousin. |
-| `training_data_eligibility_tiers[]` | **unused** | Absent; none of the three has tiers. |
-| `execution.est_runtime_hours` | **unused** | Absent. |
-| `execution.est_cost_usd` | **unused** | Absent. |
-| `execution.est_participant_cost_usd` | **unused** | Absent. |
-| `execution.inspect_evals_available` | **unused** | Derived; correctly absent. |
-| `comparability.profile` | **unused** | Absent; derivable from the facets. |
-| `comparability.material_extra[]` | **unused** | Absent. SWE-bench's scaffold finding is a candidate. |
-| `comparability.material_waived[]` | **unused** | Absent. |
-| `reference_conditions` | **unused** | Absent from all three, so SOTA and headroom are null for each (02 §8). |
-| `aggregation_policy` | **unused** | Absent. CASP (two official rankings) is the case the enum exists for. |
-| `headline_metric` | **unused** | Absent. |
-| `no_legitimate_aggregate` | **unused** | Absent. |
-| `secondary_axes[]` | **unused** | Absent. |
-| `maintenance_status_contested` | **unused** | Absent; nothing is contested. |
-| `contested_source` | **unused** | Absent (conditional). |
-| `contested_statement_date` | **unused** | Absent (conditional). |
-| `subsets[]` | **unused** | Absent. CASP's categories and SWE-bench's splits are candidates. |
-| `baselines[]` | **unused** | Absent; CASP's assessor-run AlphaFold 3 is one, recorded as a result instead. |
-| `ingestion` | **unused** | Machine-written; correctly absent from hand-written entries. |
-| `curation.stewardship` | **unused** | Derived; correctly absent. |
-| `curation.confidence` | **unused** | Absent. |
+| `external_ids.every_eval_ever` | **deferred (full)** | SWE-bench records `interop.eee_benchmark_name`, the join value, but not under this key. |
+| `croissant_url` | **deferred (full)** | None of the three sets it; SWE-bench's Hugging Face dataset has one. |
+| `execution_mode` | **deferred (full)** | Absent; RoboArena would be `physical-trial`. |
+| `ground_truth_source` | **deferred (full)** | Absent; CASP would be `experimental`. |
+| `reproducible_by_third_party` | **deferred (full)** | Absent; the entries say it in `reproducibility_note` prose instead. |
+| `data.submission_limit` | **deferred (full)** | Absent. RoboArena's per-submitter weekly budget is a close cousin. |
+| `training_data_eligibility_tiers[]` | **deferred (full)** | Absent; none of the three has tiers. |
+| `execution.est_runtime_hours` | **deferred (full)** | Absent. |
+| `execution.est_cost_usd` | **deferred (full)** | Absent. |
+| `execution.est_participant_cost_usd` | **deferred (full)** | Absent. |
+| `execution.inspect_evals_available` | **deferred (full)** | Derived; correctly absent. |
+| `comparability.profile` | **deferred (full)** | Absent; derivable from the facets. |
+| `comparability.material_extra[]` | **deferred (full)** | Absent. SWE-bench's scaffold finding is a candidate. |
+| `comparability.material_waived[]` | **deferred (full)** | Absent. |
+| `reference_conditions` | **deferred (full)** | Absent from all three, so SOTA and headroom are null for each (02 §8). |
+| `aggregation_policy` | **deferred (full)** | Absent. CASP (two official rankings) is the case the enum exists for. |
+| `headline_metric` | **deferred (full)** | Absent. |
+| `no_legitimate_aggregate` | **deferred (full)** | Absent. |
+| `secondary_axes[]` | **deferred (full)** | Absent. |
+| `maintenance_status_contested` | **deferred (full)** | Absent; nothing is contested. |
+| `contested_source` | **deferred (full)** | Absent (conditional). |
+| `contested_statement_date` | **deferred (full)** | Absent (conditional). |
+| `subsets[]` | **deferred (full)** | Absent. CASP's categories and SWE-bench's splits are candidates. |
+| `baselines[]` | **deferred (full)** | Absent; CASP's assessor-run AlphaFold 3 is one, recorded as a result instead. |
+| `ingestion` | **deferred (full)** | Machine-written; correctly absent from hand-written entries. |
+| `curation.stewardship` | **deferred (full)** | Derived; correctly absent. |
+| `curation.confidence` | **deferred (full)** | Absent. |
 
 ## Fields 04 does not define
 
@@ -148,9 +289,9 @@ inherits.
 
 | Path | Status | Group | Used by |
 | --- | --- | --- | --- |
-| `_schema_findings` | unused | `meta` | casp, roboarena, swe-bench |
-| `_schema_findings[].field` | unused | `meta` | casp, roboarena, swe-bench |
-| `_schema_findings[].need` | unused | `meta` | casp, roboarena, swe-bench |
+| `_schema_findings` | resolved | `meta` | casp, roboarena, swe-bench |
+| `_schema_findings[].field` | resolved | `meta` | casp, roboarena, swe-bench |
+| `_schema_findings[].need` | resolved | `meta` | casp, roboarena, swe-bench |
 | `activity` | needed | `activity` | casp, roboarena, swe-bench |
 | `activity_basis` | needed | `field_notes` | swe-bench |
 | `activity_basis.caveat` | needed | `field_notes` | swe-bench |
@@ -396,7 +537,7 @@ inherits.
 | `governance.independence_flags` | needed | `governance_core` | casp, roboarena, swe-bench |
 | `governance.independence_flags[].flag` | needed | `governance_core` | swe-bench |
 | `governance.independence_flags[].quote` | needed | `evidence` | swe-bench |
-| `governance.independence_flags[].reviewer_check` | unused | `reviewer_notes` | swe-bench |
+| `governance.independence_flags[].reviewer_check` | resolved | `reviewer_notes` | swe-bench |
 | `governance.independence_flags[].source` | needed | `evidence` | swe-bench |
 | `governance.independence_flags_note` | needed | `field_notes` | casp, roboarena |
 | `governance.independence_policy` | needed | `governance_extra` | casp |
@@ -412,12 +553,12 @@ inherits.
 | `governance.participation` | needed | `governance_extra` | casp |
 | `governance.participation.quote` | needed | `evidence` | casp |
 | `governance.participation.source` | needed | `evidence` | casp |
-| `governance.reviewer_check` | unused | `reviewer_notes` | casp, roboarena |
-| `governance.reviewer_check[].finding` | unused | `reviewer_notes` | casp, roboarena |
-| `governance.reviewer_check[].note` | unused | `reviewer_notes` | roboarena |
-| `governance.reviewer_check[].quote` | unused | `reviewer_notes` | casp, roboarena |
-| `governance.reviewer_check[].source` | unused | `reviewer_notes` | casp, roboarena |
-| `governance.reviewer_check[].why_no_flag` | unused | `reviewer_notes` | casp |
+| `governance.reviewer_check` | resolved | `reviewer_notes` | casp, roboarena |
+| `governance.reviewer_check[].finding` | resolved | `reviewer_notes` | casp, roboarena |
+| `governance.reviewer_check[].note` | resolved | `reviewer_notes` | roboarena |
+| `governance.reviewer_check[].quote` | resolved | `reviewer_notes` | casp, roboarena |
+| `governance.reviewer_check[].source` | resolved | `reviewer_notes` | casp, roboarena |
+| `governance.reviewer_check[].why_no_flag` | resolved | `reviewer_notes` | casp |
 | `governance.submission_process` | needed | `governance_core` | casp, roboarena, swe-bench |
 | `governance.submission_process_note` | needed | `field_notes` | casp, roboarena, swe-bench |
 | `governance.submission_quote` | needed | `evidence` | swe-bench |

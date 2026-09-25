@@ -4,9 +4,14 @@ The verify: "the three P0-S3 entries load, the admissibility block and the execu
 present, a benchmark with no learned_entrant_evidence is rejected, and
 execution.maintainer_rerun_policy rejects a value outside {unrestricted, no-third-party-endpoints,
 contact-first, unstated} while defaulting to unstated when absent".
+
+P0-S4-T10 reconciled the model with the entries: unknown keys are now always rejected, per-field
+annotations are recognised and type-checked, and the blocks that belong to another entity are
+declared as deferred. Its verify: this file still passes after the additions and deletions.
 """
 import glob
 import os
+import re
 import sys
 
 import pytest
@@ -15,7 +20,7 @@ from pydantic import ValidationError
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from schema import benchmark as bm  # noqa: E402
-from schema.benchmark import Benchmark, load_benchmark, unmodelled_fields  # noqa: E402
+from schema.benchmark import Benchmark, annotation_fields, deferred_fields, load_benchmark  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
 
 ENTRIES = sorted(glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True))
@@ -44,9 +49,9 @@ def minimal(**changes):
     return doc
 
 
-def rejects(doc, match=None, **ctx):
+def rejects(doc, match=None):
     with pytest.raises(ValidationError) as e:
-        Benchmark.model_validate(doc, context=ctx or None)
+        Benchmark.model_validate(doc)
     if match:
         assert match in str(e.value), str(e.value)
 
@@ -177,7 +182,8 @@ def test_the_02_s12_handoff_fields():
 
 
 def test_external_ids_is_a_fixed_key_set():
-    rejects(minimal(external_ids={'arxiv': '2310.06770'}), match='Extra inputs')
+    rejects(minimal(external_ids={'doi': '10.1234/x'}), match='Extra inputs')
+    assert Benchmark.model_validate(minimal(external_ids={'arxiv': '2310.06770'})).external_ids.arxiv == '2310.06770'
     assert Benchmark.model_validate(minimal()).external_ids.every_eval_ever is None
 
 
@@ -188,36 +194,99 @@ def test_defaults_match_04_s5():
     assert (b.aliases, b.capability, b.tags, b.comparability.rating_pool_required) == ([], [], [], False)
 
 
-# ---- unknown keys, pending P0-S4-T10 ------------------------------------------------------------
+# ---- unknown keys, annotations and deferred blocks (P0-S4-T10) ---------------------------------
 
-def test_unknown_keys_are_accepted_and_listed():
-    b = Benchmark.model_validate(minimal(summary='x', **{'data.access_note': 'y', 'curation.drafted_note': 'z'}))
-    assert unmodelled_fields(b) == ['curation.drafted_note', 'data.access_note', 'summary']
-
-
-def test_strict_mode_rejects_unknown_keys_including_a_misspelling():
-    rejects(minimal(taglne='a typo'), match='taglne', strict=True)
-    rejects(minimal(**{'data.acess': 'fully-open'}), match='acess', strict=True)
-    Benchmark.model_validate(minimal(), context={'strict': True})
+def test_unknown_keys_are_rejected_including_a_misspelling():
+    rejects(minimal(taglne='a typo'), match='taglne')
+    rejects(minimal(**{'data.acess': 'fully-open'}), match='acess')
+    rejects(minimal(summary='x'), match='summary')                       # the entries' name, now description
+    rejects(minimal(**{'curation.drafted_note': 'z'}), match='drafted_note')
 
 
-def test_every_entry_lists_its_unmodelled_fields():
+def test_an_annotation_is_accepted_only_beside_the_field_it_annotates():
+    b = Benchmark.model_validate(minimal(lifecycle_note='x', **{'data.access_source': 'src-x', 'data.access_note': 'y'}))
+    assert annotation_fields(b) == ['data.access_note', 'data.access_source', 'lifecycle_note']
+    rejects(minimal(lifecyle_note='x'), match='lifecyle_note')                  # annotates no field
+    rejects(minimal(**{'data.contamination_source': 'src-x'}), match='contamination_source')   # the field is contamination_risk
+    rejects(minimal(**{'data.access_source': 'a blog'}), match='annotation')     # not a Source id
+    rejects(minimal(**{'data.access_quote': '  '}), match='annotation')          # empty text
+    Benchmark.model_validate(minimal(activity_basis={'newest_submission': '2025-12-19', 'source': 'src-x'}))
+    rejects(minimal(activity_basis={'newest': '2025-12-19'}), match='annotation')
+
+
+def test_every_entry_loads_with_no_unknown_key():
     for path in ENTRIES:
-        unknown = unmodelled_fields(load_benchmark(path))
-        assert unknown and '_schema_findings' in unknown          # the work T10 inherits
-        with pytest.raises(ValidationError):
-            load_benchmark(path, strict=True)
+        load_benchmark(path)                                              # an unknown key would raise
 
 
-def test_the_entry_shapes_accepted_pending_t10_still_check_their_values():
+def test_every_entry_deferred_key_is_declared_by_its_block():
+    for path in ENTRIES:
+        for d in deferred_fields(load_benchmark(path)):
+            if d.startswith('curation.sources[].'):
+                assert d.split('.')[-1] in bm.InlineSource.DEFERRED, d
+            elif d.startswith('scale.'):
+                assert d.startswith('scale.live_'), d
+            else:
+                assert d in Benchmark.DEFERRED, d
+
+
+def test_the_reconciled_shapes_still_check_their_values():
     ok = minimal(governance={'submission_process': ['self-reported', 'maintainer-verified'],
                              'independence_flags': [{'flag': 'funded-by-evaluated-party', 'source': 'src-x'}]},
                  **{'data.contamination_evidence': [{'source': 'src-x', 'stance': 'supports', 'quote': 'q'}]})
     Benchmark.model_validate(ok)
     rejects(minimal(governance={'submission_process': ['self-reported', 'honour-system']}))
     rejects(minimal(governance={'independence_flags': [{'flag': 'no-such-flag'}]}))
+    rejects(minimal(governance={'independence_flags': [{'flag': 'funded-by-evaluated-party', 'reviewer_check': 'x'}]}))
     rejects(minimal(**{'data.contamination_evidence': [{'source': 'src-x', 'stance': 'maybe'}]}))
     rejects(minimal(**{'curation.sources': [{'url': 'https://example.org'}]}), match='id')
+    rejects(minimal(activity='assessment-in-progress'), match='activity')      # not in taxonomy/lifecycle.yaml
+    rejects(minimal(execution={'reproducibility_blockers': ['blindness']}))
+    rejects(minimal(execution={'harness_availability': 'maybe'}))
+
+
+def test_a_term_is_assigned_or_rejected_never_both():
+    Benchmark.model_validate(minimal(capability=['planning'],
+                                     capability_considered_and_rejected=[{'term': 'tool-use', 'reason': 'No tools.'}]))
+    rejects(minimal(capability=['planning'], capability_considered_and_rejected=[{'term': 'planning', 'reason': 'r'}]),
+            match='both assigned')
+    rejects(minimal(capability_considered_and_rejected=[{'term': 'telepathy', 'reason': 'r'}]), match='not a capability')
+    rejects(minimal(domain_considered_and_rejected=[{'term': 'code/repository-scale-se', 'reason': 'r'}]),
+            match='both assigned')
+    rejects(minimal(designed_for_subjects_considered_and_rejected=[{'term': 'oracle', 'reason': 'r'}]))
+
+
+def test_capability_basis_justifies_only_assigned_terms():
+    Benchmark.model_validate(minimal(capability=['planning'], capability_basis={'planning': 'The task is a plan.'}))
+    Benchmark.model_validate(minimal(capability=['planning'],
+                                     capability_basis={'planning': {'reason': 'r', 'source': 'src-x', 'quote': 'q'}}))
+    rejects(minimal(capability=['planning'], capability_basis={'tool-use': 'r'}), match='not assigned')
+
+
+def test_the_new_blocks_are_closed():
+    rejects(minimal(paper={'title': 'T', 'source': 'src-x', 'doi': '10.1/x'}), match='doi')
+    rejects(minimal(scale={'at_publication': {'source': 'src-x', 'policies': -1}}), match='non-negative')
+    rejects(minimal(scale={'at_publication': {'source': 'src-x', 'policies': 'seven'}}), match='non-negative')
+    Benchmark.model_validate(minimal(scale={'at_publication': {'source': 'src-x', 'policies': 7},
+                                            'live_2026_09_23': {'anything': 'deferred'}}))
+    rejects(minimal(scale={'live_today': {}}), match='live_today')
+    rejects(minimal(entrant_classes=[{'class': 'server'}]), match='ranked_separately')
+    rejects(minimal(planned_end='December 2026'))
+    rejects(minimal(**{'external_ids.arxiv': 'arXiv:2310.06770'}))
+
+
+def test_the_entries_carry_the_reconciled_fields():
+    by = {os.path.basename(p): load_benchmark(p) for p in ENTRIES}
+    swe, casp, robo = by['swe-bench.yaml'], by['casp.yaml'], by['roboarena.yaml']
+    assert swe.external_ids.arxiv == '2310.06770' and swe.data.size.n_items.value == 2294
+    assert swe.execution.code_licence == 'MIT' and swe.lineage.role == 'root' and len(swe.lineage.variants) == 4
+    assert casp.activity == 'unknown' and 'assessment-in-progress' in casp.tags
+    assert 'Critical Assessment of Techniques for Protein Structure Prediction' in casp.aliases
+    assert [c.class_ for c in casp.entrant_classes] == ['server', 'expert']
+    assert robo.task.exists is False
+    assert robo.execution.compute_tier_by_role == {'submitter': None, 'evaluator': 'physical-hardware'}
+    for b in by.values():
+        assert b.description and 'Reviewer check' in (b.curation.notes or '')
 
 
 def test_croissant_terms_name_real_fields():
@@ -235,3 +304,48 @@ def test_the_entries_evidence_quotes_are_in_their_sources():
     for path in ENTRIES:
         for ev in load_benchmark(path).learned_entrant_evidence:
             assert ev.quote and quote_found(ev.quote, extracts[ev.source]), (path, ev.source)
+
+
+# ---- the schema and the field-need list agree (P0-S4-T10's done-when) -----------------------------
+
+FIELD_NEEDS = os.path.join(ROOT, 'docs', 'schema-field-needs.md')
+
+
+def _table(text, heading):
+    body = text.split(heading, 1)[1]
+    body = body.split('\n## ', 1)[0]
+    return [[c.strip() for c in line.strip().strip('|').split('|')]
+            for line in body.splitlines() if line.startswith('| `')]
+
+
+def field_need_resolutions():
+    text = open(FIELD_NEEDS, encoding='utf-8').read()
+    groups = [r[0].strip('`') for r in _table(text, '## By field group')]
+    rows = {r[0].strip('`'): (r[1], re.findall(r'`([A-Z][A-Za-z]+(?:\.[a-z_]+)*)`', r[2])) for r in
+            _table(text, '## Resolution (P0-S4-T10)')}
+    return text, groups, rows
+
+
+def test_every_field_group_has_a_resolution():
+    _, groups, rows = field_need_resolutions()
+    assert groups and sorted(groups) == sorted(rows)
+
+
+def test_every_needed_row_resolves_to_a_schema_field():
+    from schema.paths import resolve
+    _, _, rows = field_need_resolutions()
+    for group, (status, paths) in rows.items():
+        assert status in ('needed', 'deferred', 'resolved'), (group, status)
+        if status == 'needed':
+            assert paths, group
+        for p in paths:
+            if '.' in p:
+                resolve(p)                                  # raises Unresolved if the field is not there
+            else:
+                from schema.paths import ENTITIES
+                assert p in ENTITIES, (group, p)
+
+
+def test_no_unused_row_survives():
+    text, _, _ = field_need_resolutions()
+    assert not re.search(r'^\|[^\n]*\| (\*\*)?unused(\*\*)? \|', text, flags=re.M)
