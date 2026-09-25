@@ -1,13 +1,14 @@
 """The `bench` CLI (05-repository-and-workflow.md S3).
 
     uv run bench --help
+    uv run bench fmt [paths...] [--check]
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
-command line. `schema gen` is P0-S5-T01's and `validate` is P0-S5-T02's.
+command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's and `fmt` P0-S5-T04's (tools/fmt.py).
 """
 from __future__ import annotations
 
@@ -57,6 +58,25 @@ def schema_gen(
         return
     changed = codegen.write(ROOT, j2t)
     typer.echo('schema gen: %d file(s) written' % len(changed) if changed else 'schema gen: up to date')
+
+
+@app.command('fmt')
+def fmt_cmd(
+    paths: Annotated[Optional[list[Path]], typer.Argument(help='Files or directories (default: data/).')] = None,
+    check: Annotated[bool, typer.Option('--check', help='Write nothing; exit 1 if any file would change.')] = False,
+):
+    """Normalise YAML key order, quoting, line width and list style (05 S1; 07 S1.5)."""
+    from tools import fmt
+    changed, errors = fmt.run([str(p) for p in paths] if paths else None, check, ROOT)
+    for rel in changed:
+        typer.echo(('would reformat  %s' if check else 'reformatted  %s') % rel, err=check)
+    for e in errors:
+        typer.echo('error  %s' % e, err=True)
+    if check and changed:
+        typer.echo('fmt --check: %d file(s) would change; run `bench fmt` and commit the result' % len(changed), err=True)
+    elif not changed and not errors:
+        typer.echo('fmt: %s' % ('every file is formatted' if check else 'nothing to change'))
+    raise typer.Exit(1 if errors or (check and changed) else 0)
 
 
 class Tier(str, Enum):

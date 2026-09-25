@@ -187,27 +187,23 @@ def wayback_time(ts):
     return datetime.strptime(ts[:14], '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
 
 
-def yaml_scalar(v):
-    if v is None:
-        return 'null'
-    return "'%s'" % str(v).replace("'", "''")
-
-
 def rewrite(path, updates):
-    """Replace top-level `key: value` lines in place; every key in `updates` must already exist."""
+    """Set top-level keys through the project's one YAML emitter (07 S1.5, tools/fmt.py), so the
+    file stays exactly what `bench fmt` writes and comments survive; every key in `updates` must
+    already exist. (Until P0-S5-T04 this replaced `key: value` lines as text, which left the
+    continuation lines of a wrapped value behind: a two-line failure_reason set to null became
+    the string "null <second line>".)"""
+    from tools import fmt
     with open(path, encoding='utf-8') as f:
-        lines = f.read().split('\n')
-    seen = set()
-    for i, line in enumerate(lines):
-        m = re.match(r'^([a-z_]+):(\s|$)', line)
-        if m and m.group(1) in updates:
-            lines[i] = '%s: %s' % (m.group(1), yaml_scalar(updates[m.group(1)]))
-            seen.add(m.group(1))
-    missing = set(updates) - seen
+        doc = fmt.emitter().load(f)
+    missing = set(updates) - set(doc)
     if missing:
         raise ValueError('%s has no top-level %s' % (path, ', '.join(sorted(missing))))
+    for k, v in updates.items():
+        doc[k] = v
+    text = fmt.format_text(fmt.dumps(doc), fmt.model_for(path.replace(os.sep, '/')), path)
     with open(path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('\n'.join(lines))
+        f.write(text)
 
 
 def load_state(path):
