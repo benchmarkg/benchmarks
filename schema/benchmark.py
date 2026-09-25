@@ -228,8 +228,12 @@ class Governance(Open):
 
 
 class Range(Closed):
+    """02 S10's shape, `{min, max, basis, source}`. `basis` is nullable here because 02 S11's
+    "any range estimate present -> basis non-null" is a tier-3 rule (schema/validators.py)."""
     min: float = Field(ge=0)
     max: float = Field(ge=0)
+    basis: Text | None = None
+    source: SourceId | None = None
 
     @model_validator(mode='after')
     def _ordered(self):
