@@ -1,0 +1,56 @@
+# .github/workflows/schema-codegen.yml -- P0-S5-T01
+#
+# 05 S9 job 5, the codegen drift check: regenerate the JSON Schema from the Pydantic models and the
+# TypeScript types from the JSON Schema, and fail on any diff. It must run on taxonomy/ changes too,
+# because the vocabularies become Literal enums at import time (04 S12, 05 S3), so the path filter
+# names taxonomy/ beside schema/ and the generated artifacts.
+#
+# When P0-S5's pr-validate.yml lands this becomes its job 5; until then it runs on its own.
+#
+# Actions are pinned by commit SHA (08 S6). checkout and setup-uv are the SHAs archive-sources.yml
+# resolved on 2026-09-24; setup-node v7.0.0 (2026-07-14) was resolved through the GitHub API on
+# 2026-09-25.
+
+name: schema-codegen
+
+on:
+  pull_request:
+    paths:
+      - 'schema/**'
+      - 'taxonomy/**'
+      - 'site/src/types/**'
+      - 'site/package.json'
+      - 'site/package-lock.json'
+      - 'tools/cli.py'
+      - 'tools/build/codegen.py'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/schema-codegen.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: json-schema-to-typescript@16.0.0 from the site lockfile
+        working-directory: site
+        run: npm ci --ignore-scripts
+
+      - name: generated JSON Schema and TypeScript match the models and taxonomy/ (05 S3)
+        run: uv run --locked --python 3.12 bench schema gen --check
