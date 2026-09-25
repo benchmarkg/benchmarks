@@ -19,7 +19,9 @@ The rules this model carries, each from 04 S7 unless marked:
   - The `ingestion` block (04 S9, S15 item 7) records how an adapter wrote the claim, and its
     `field_provenance` maps OUR fields to source | derived | absent | curator. It is not the
     snapshot: the snapshot is what upstream said, `field_provenance` is where each of our fields came
-    from. `source_record_id` is a content key; `#row=17` is forbidden (04 S9).
+    from. `source_record_id` is a content key: the upstream columns that identify the record,
+    URL-encoded after the `#` (04 S9, 07 S1.4). A row, line or index ordinal is forbidden in any
+    spelling, because a regenerated export renumbers it when nothing else changed.
   - `verification` is a rung of taxonomy/verification.yaml; `disputed` is a state carried by
     `disputed_by[]`, not a rung (04 S7).
 """
@@ -82,6 +84,31 @@ class Uncertainty(Closed):
         return self
 
 
+# Keys that name a position rather than the record (04 S9: "a content key, not a row ordinal").
+ORDINAL_KEYS = frozenset({'row', 'rows', 'rownum', 'row_num', 'row_number', 'row_index', 'rowid', 'line', 'lines',
+                          'lineno', 'line_number', 'index', 'idx', 'n', 'position', 'pos', 'offset', 'ordinal'})
+_PAIR = re.compile(r'^[A-Za-z0-9_.~%-]+=[^&=\s]*$')
+
+
+def check_source_record_id(sid: str | None) -> None:
+    """Raise ValueError unless `sid` is null or a content key. After a `#`, the discriminators are
+    `key=value` pairs joined by `&`, URL-encoded (so no whitespace), none of them an ordinal."""
+    if sid is None:
+        return
+    if re.search(r'\s', sid):
+        raise ValueError('source_record_id %r contains whitespace; URL-encode the discriminators (04 S9)' % sid)
+    if '#' not in sid:
+        return                                      # an upstream key of its own, e.g. `gpqa-diamond:model`
+    fragment = sid.split('#', 1)[1]
+    pairs = fragment.split('&')
+    if not fragment or not all(_PAIR.match(p) for p in pairs):
+        raise ValueError('source_record_id %r: after `#` come key=value discriminators joined by `&` (04 S9)' % sid)
+    ordinal = sorted({p.split('=', 1)[0] for p in pairs if p.split('=', 1)[0].lower() in ORDINAL_KEYS})
+    if ordinal:
+        raise ValueError('source_record_id %r is a row ordinal (%s); use the columns that identify the record '
+                         '(04 S9)' % (sid, ', '.join(ordinal)))
+
+
 class ProvenanceSnapshot(Closed):
     """04 S7: the upstream record exactly as retrieved. Small by design -- an Epoch row is a few
     hundred bytes."""
@@ -89,6 +116,11 @@ class ProvenanceSnapshot(Closed):
     retrieved_at: datetime
     content_sha256: Sha256
     raw: dict[str, Any]
+
+    @model_validator(mode='after')
+    def _content_key(self):
+        check_source_record_id(self.source_record_id)
+        return self
 
     @model_validator(mode='after')
     def _hash(self):
@@ -122,8 +154,7 @@ class Ingestion(Closed):
 
     @model_validator(mode='after')
     def _content_key(self):
-        if self.source_record_id and re.search(r'#row=\d+', self.source_record_id):
-            raise ValueError('source_record_id %r is a row ordinal; use a content key (04 S9)' % self.source_record_id)
+        check_source_record_id(self.source_record_id)
         return self
 
     @model_validator(mode='after')
