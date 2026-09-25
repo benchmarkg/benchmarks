@@ -40,6 +40,7 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | uv | 05 §3 (named, not versioned) | 0.9.17 (installed here) | **0.12.18** | -- | pypi.org/pypi/uv/json | 2026-09-23 | **moved**; see note 1 |
 | typer | 05 §3 (named, not versioned) | 0.27.2 | 0.27.2 | 2026-08-28 | pypi.org/pypi/typer/json | 2026-09-25 | ok (first pin, P0-S5-T01) |
 | hatchling (build backend) | P0-S5-T01, for the `bench` entry point | 1.32.4 | 1.32.4 | -- | pypi.org/pypi/hatchling/json | 2026-09-25 | ok (first pin) |
+| jsonschema (dev group) | 04 §15 item 21, first P3-S1-T01: validating fixtures against schema/generated/ | 4.26.0 | 4.26.0 (`requires_python >=3.10`) | 2026-01-07 | pypi.org/pypi/jsonschema/json | 2026-09-25 | ok (first pin) |
 
 ## Other pins and third-party facts the plan names
 
