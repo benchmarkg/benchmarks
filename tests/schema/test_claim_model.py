@@ -224,6 +224,37 @@ def test_a_row_ordinal_is_not_a_record_id():
     Ingestion.model_validate(ingestion(source_record_id=None))           # a full-replace source
 
 
+# P5-S2-T08 (07 S1.4, 04 S9): the rule was the one spelling `#row=N`; every other ordinal got through.
+@pytest.mark.parametrize('sid, match', [
+    ('f.csv#line=17', 'row ordinal'),
+    ('f.csv#index=3', 'row ordinal'),
+    ('f.csv#Row=17', 'row ordinal'),
+    ('f.csv#row_number=17', 'row ordinal'),
+    ('f.csv#model=a&row=17', 'row ordinal'),                       # an ordinal among real discriminators
+    ('f.csv#17', 'key=value'),                                      # a bare position
+    ('f.csv#', 'key=value'),
+    ('f.csv#model', 'key=value'),
+    ('f.csv#model=a b&metric=c', 'whitespace'),                     # not URL-encoded
+])
+def test_every_spelling_of_a_position_is_refused(sid, match):
+    with pytest.raises(ValidationError, match=match):
+        Ingestion.model_validate(ingestion(source_record_id=sid))
+    with pytest.raises(ValidationError, match=match):             # the snapshot names the same record
+        ProvenanceSnapshot.model_validate({**snapshot(), 'source_record_id': sid})
+
+
+@pytest.mark.parametrize('sid', [
+    'swe_bench_verified.csv#model_version=glm-5.2_max&score_column=mean_score',   # 07 S1.4's example
+    'swe_bench_verified.csv#model=claude-opus-5&metric=resolve-rate',             # 04 S9's example
+    'f.csv#model=a%20b&metric=c',                                                  # URL-encoded
+    'gpqa-diamond:example-model',                                                  # an upstream key of its own
+    'f.csv#model_id=17',                                                           # a numeric VALUE is fine
+])
+def test_the_source_s_own_discriminators_are_accepted(sid):
+    Ingestion.model_validate(ingestion(source_record_id=sid))
+    ProvenanceSnapshot.model_validate({**snapshot(), 'source_record_id': sid})
+
+
 def test_ingestion_rules():
     with pytest.raises(ValidationError, match='reviewed_by'):
         Ingestion.model_validate(ingestion(review_state='human-reviewed'))
