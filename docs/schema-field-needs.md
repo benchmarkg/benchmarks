@@ -19,7 +19,7 @@ Each row carries exactly one status:
 - **unused** -- 04 §5 defines it and none of the three entries used it, or an entry used it for
   something that is not data about the benchmark.
 
-525 distinct field paths appear across the three files: 301 needed, 214 deferred, 10 unused.
+532 distinct field paths appear across the three files: 309 needed, 213 deferred, 10 unused.
 Paths are written with `.` between keys and `[]` for a list item.
 
 ## By field group
@@ -36,13 +36,15 @@ Paths are written with `.` between keys and `[]` for a list item.
 | `platform` | **needed** | `hardware`, `platform` (2 paths) | roboarena | **not in 04 §5** | RoboArena names its robot platform and hardware bill. There is no field for the physical platform a benchmark runs on. |
 | `domain` | **needed** | `domain`, `domain.primary`, `domain.secondary` (3 paths) | casp, roboarena, swe-bench | `domain.primary`, `domain.secondary[]` | As specified. |
 | `domain_per_edition` | **needed** | `domain.per_edition` (1 path) | casp | `subsets[].domain_override` (§6) | CASP's categories change primary domain. §6's override exists on Subset, not on an edition. |
+| `admissibility` | **needed** | `evaluation_target`, `learned_entrant_evidence`, `learned_entrant_evidence.observed_on`, `learned_entrant_evidence.system` (4 paths) | casp, roboarena, swe-bench | `learned_entrant_evidence[]`, `evaluation_target` | Added to all three entries by P0-S4-T03, with the user's approval, from systems each entry already cited: the admissibility boundary (00 §6 A5) the model enforces. |
+| `tags` | **needed** | `tags` (1 path) | roboarena | `tags[]` | RoboArena holds `evaluator-improvised` here, the escape hatch 02 §11 rule 7 gives an undefined term, since P0-S4-T03 moved it out of `data_provenance`. |
 | `facets` | **needed** | `capability`, `designed_for_subjects`, `evaluation_method`, `lifecycle` (4 paths) | casp, roboarena, swe-bench | `capability[]`, `evaluation_method[]`, `designed_for_subjects[]`, `lifecycle` | As specified. |
 | `rejected` | **needed** | `capability_considered_and_rejected`, `capability_considered_and_rejected.reason`, `capability_considered_and_rejected.term`, `domain_considered_and_rejected`, `domain_considered_and_rejected.reason`, `domain_considered_and_rejected.term` ... (12 paths) | casp, roboarena, swe-bench | **not in 04 §5** | All three record near-miss terms with reasons (`*_considered_and_rejected`). Without them a reviewer cannot tell a judged short list from a skipped one. |
 | `tag_basis` | **needed** | `capability_basis`, `capability_basis.calibration-uncertainty`, `capability_basis.distribution-shift-generalization`, `capability_basis.generation-fidelity`, `capability_basis.grounding`, `capability_basis.sensorimotor-control` ... (11 paths) | casp, roboarena, swe-bench | `curation.notes` (02 §11 rule 2) | Per-tag justifications. 02 §11 rule 2 routes them to `curation.notes`; the entries want them per term, which that single string cannot index. |
 | `observed_subjects` | **needed** | `observed_subjects`, `observed_subjects.values` (2 paths) | swe-bench | **not in 04 §5** | Who actually submits, beside who it was designed for (SWE-bench: built for prompted models, used by agents). |
 | `activity` | **needed** | `activity`, `activity_basis.newest_submission` (2 paths) | casp, roboarena, swe-bench | **not in 04 §5**; vocabulary `taxonomy/lifecycle.yaml` field `activity` | The activity vocabulary exists (six terms) but 04 §5 has no `activity` field. CASP also needs a value the vocabulary lacks: `assessment-in-progress`. |
 | `schedule` | **needed** | `events`, `events.kind`, `events.name`, `planned_end` (4 paths) | roboarena | **not in 04 §5** | `planned_end` and `events[]`: a live benchmark's announced end and a dated challenge run on it, neither an edition nor a separate benchmark. |
-| `maintenance_derived` | **deferred** | `maintenance_signals_seen`, `maintenance_signals_seen.repo_archived`, `maintenance_signals_seen.repo_pushed_at`, `maintenance_signals_seen.signal`, `maintenance_signals_seen.source`, `maintenance_status` (7 paths) | casp, roboarena, swe-bench | `maintenance_status` (derived) and `liveness.*` (machine-written) | Machine-written inputs and a derived verdict. 04 §5's convention is that a derived field may never appear in a hand-written file, so the entries' `maintenance_status: null` lines must be removed, not kept as null. |
+| `maintenance_derived` | **deferred** | `maintenance_signals_seen`, `maintenance_signals_seen.repo_archived`, `maintenance_signals_seen.repo_pushed_at`, `maintenance_signals_seen.signal`, `maintenance_signals_seen.source` (6 paths) | casp, roboarena, swe-bench | `maintenance_status` (derived) and `liveness.*` (machine-written) | Machine-written inputs to a derived verdict. 04 §5 forbids derived fields in a hand-written file, so P0-S4-T03 removed the entries' `maintenance_status: null` lines; the raw signals stay, for the probe protocol. |
 | `data_core` | **needed** | `data`, `data.access`, `data.ceiling_anchor_type`, `data.contamination_evidence`, `data.contamination_risk`, `data.data_provenance` ... (8 paths) | casp, roboarena, swe-bench | `data.access`, `data.refresh`, `data.data_provenance[]`, `data.contamination_risk`, `data.contamination_evidence[]`, `data.ceiling_anchor_type` | As specified. RoboArena uses a provenance value the vocabulary lacks (`evaluator-improvised`); SWE-bench wants a `stance` on each contamination-evidence item. |
 | `data_access_split` | **needed** | `data.access_by_phase`, `data.records_access`, `data.records_licence`, `data.records_snapshot` (6 paths) | casp, roboarena | **not in 04 §5** | Access that changes over an edition's life (`access_by_phase`), and access to the evaluation records as distinct from the items (`records_*`). |
 | `ceiling_per_category` | **needed** | `data.ceiling_basis` (4 paths) | casp | `data.ceiling_anchor_type` (one value); `baselines[]` with a `noise-ceiling` anchor (§7) | CASP needs a ceiling per category, numeric where the source states one (affinity: tau ~0.73) and qualitative elsewhere. One `ceiling_anchor_type` per benchmark cannot hold that; per-subset Baselines can. |
@@ -67,25 +69,23 @@ Paths are written with `.` between keys and `[]` for a list item.
 | `lineage` | **needed** | `lineage`, `lineage.forks`, `lineage.role`, `lineage.variants`, `lineage.views` (15 paths) | swe-bench | `lineage.*` (supersedes, extended_by, subset_of, ...) | SWE-bench needs three relations 04 collapses: same-maintainer variants, other-maintainer forks, and views that are only filters. |
 | `results` | **deferred** | `results_board_summary`, `results_board_summary.derived`, `results_board_summary.rows`, `results_board_summary.rows_checked`, `results_board_summary.source`, `results_observed` ... (30 paths) | casp, roboarena, swe-bench | ResultClaim (§7), System (§7); P0-S4-T05 | Results are claims, not benchmark fields. Findings for ResultClaim: `scaffold`, `checked`/`official`, `entrant_class` (including an assessor-run baseline that must not read as a winner), a rating's pool and snapshot. |
 | `policy_identity` | **deferred** | `policy_identity`, `policy_identity.aliasing`, `policy_identity.linked_paper_example`, `policy_identity.open_source_flag_per_policy`, `policy_identity.open_source_quote`, `policy_identity.open_source_source` ... (13 paths) | roboarena | System (§7) and the alias tables (§10) | Backend ids, display names and an alias that names another system: the System entity and its aliases, not the Benchmark. |
-| `curation_core` | **needed** | `curation`, `curation.drafted_by`, `curation.drafted_on`, `curation.retrieved_on`, `curation.verification_status` (5 paths) | casp, roboarena, swe-bench | `curation.added_by`, `curation.added_on`, `curation.last_verified`, `curation.verification_status`, `curation.sources[]` | As specified: `drafted_by`/`drafted_on`/`retrieved_on` are `added_by`/`added_on`/`last_verified`. |
+| `curation_core` | **needed** | `curation`, `curation.added_by`, `curation.added_on`, `curation.last_verified`, `curation.verification_status` (5 paths) | casp, roboarena, swe-bench | `curation.added_by`, `curation.added_on`, `curation.last_verified`, `curation.verification_status`, `curation.sources[]` | As specified. The entries wrote `drafted_by`/`drafted_on`/`retrieved_on`; P0-S4-T03 renamed them. |
 | `curation_sources_inline` | **deferred** | `curation.sources` (11 paths) | casp, roboarena, swe-bench | the `Source` record (§9; `schema/source.py`) | Inline source descriptions (url, kind, hash, extract mode, personal data) now live in `data/sources/`. `curation.sources[]` becomes a list of Source ids. |
 | `curation_extra` | **needed** | `curation.not_yet_available`, `curation.personal_data_excluded`, `curation.unreachable` (10 paths) | casp, roboarena, swe-bench | **not in 04 §5** | A source that 403s (`unreachable`), one that will exist but does not yet (`not_yet_available`), and personal data deliberately excluded. Each changes what may be claimed. |
-| `evidence` | **needed** | *(across all blocks)* (93 paths) | casp, roboarena, swe-bench | **not in 04 §5** for Benchmark fields | Per-field `source` + `quote` (or a `quote_locator` where the value sits in structured data). 04 gives ResultClaim field provenance but Benchmark only a flat `curation.sources[]`; the quote-substring validator needs to know which source a number came from. |
-| `field_notes` | **needed** | *(across all blocks)* (27 paths) | casp, roboarena, swe-bench | `curation.notes` | Per-field notes (`*_note`, `*_basis`, `*_caveat`). One `curation.notes` string cannot say which field a note is about. |
+| `evidence` | **needed** | *(across all blocks)* (95 paths) | casp, roboarena, swe-bench | **not in 04 §5** for Benchmark fields | Per-field `source` + `quote` (or a `quote_locator` where the value sits in structured data). 04 gives ResultClaim field provenance but Benchmark only a flat `curation.sources[]`; the quote-substring validator needs to know which source a number came from. |
+| `field_notes` | **needed** | *(across all blocks)* (28 paths) | casp, roboarena, swe-bench | `curation.notes` | Per-field notes (`*_note`, `*_basis`, `*_caveat`). One `curation.notes` string cannot say which field a note is about. |
 | `meta` | **unused** | `_schema_findings`, `_schema_findings.field`, `_schema_findings.need` (3 paths) | casp, roboarena, swe-bench | — | `_schema_findings`: this task's input, not data. Remove from the entries once P0-S4-T10 reconciles them. |
 
 ## 04 §5 fields none of the entries used
 
-Every one is **unused** by these three entries. Two consequences matter now: the admissibility
-block, which 04 §15 item 12 makes a prerequisite, is missing from all three, so none of them
-validates as written; and no entry declares `reference_conditions`, so every headroom is null.
+Every one is **unused** by these three entries. One consequence matters now: no entry declares
+`reference_conditions`, so every headroom is null. (The admissibility block, 04 §15 item 12, was
+missing from all three when this list was first written; P0-S4-T03 added its two stub fields.)
 
 | 04 §5 field | Status | Note |
 | --- | --- | --- |
 | `external_ids.every_eval_ever` | **unused** | SWE-bench records `interop.eee_benchmark_name`, the join value, but not under this key. |
 | `croissant_url` | **unused** | None of the three sets it; SWE-bench's Hugging Face dataset has one. |
-| `learned_entrant_evidence[]` | **unused** | **Required at stub** (tier 3, >= 1) and absent from all three. Every entry would fail validation today. |
-| `evaluation_target` | **unused** | Required at stub; absent from all three. |
 | `execution_mode` | **unused** | Absent; RoboArena would be `physical-trial`. |
 | `ground_truth_source` | **unused** | Absent; CASP would be `experimental`. |
 | `reproducible_by_third_party` | **unused** | Absent; the entries say it in `reproducibility_note` prose instead. |
@@ -108,7 +108,6 @@ validates as written; and no entry declares `reference_conditions`, so every hea
 | `contested_statement_date` | **unused** | Absent (conditional). |
 | `subsets[]` | **unused** | Absent. CASP's categories and SWE-bench's splits are candidates. |
 | `baselines[]` | **unused** | Absent; CASP's assessor-run AlphaFold 3 is one, recorded as a result instead. |
-| `tags[]` | **unused** | Absent. |
 | `ingestion` | **unused** | Machine-written; correctly absent from hand-written entries. |
 | `curation.stewardship` | **unused** | Derived; correctly absent. |
 | `curation.confidence` | **unused** | Absent. |
@@ -180,9 +179,10 @@ inherits.
 | `capability_considered_and_rejected[].reason` | needed | `rejected` | casp, roboarena, swe-bench |
 | `capability_considered_and_rejected[].term` | needed | `rejected` | casp, roboarena, swe-bench |
 | `curation` | needed | `curation_core` | casp, roboarena, swe-bench |
-| `curation.drafted_by` | needed | `curation_core` | casp, roboarena, swe-bench |
-| `curation.drafted_on` | needed | `curation_core` | casp, roboarena, swe-bench |
+| `curation.added_by` | needed | `curation_core` | casp, roboarena, swe-bench |
+| `curation.added_on` | needed | `curation_core` | casp, roboarena, swe-bench |
 | `curation.extract_note` | needed | `field_notes` | casp |
+| `curation.last_verified` | needed | `curation_core` | casp, roboarena, swe-bench |
 | `curation.not_yet_available` | needed | `curation_extra` | casp |
 | `curation.not_yet_available[].consequence` | needed | `curation_extra` | casp |
 | `curation.not_yet_available[].expected` | needed | `curation_extra` | casp |
@@ -190,7 +190,6 @@ inherits.
 | `curation.personal_data_excluded` | needed | `curation_extra` | roboarena |
 | `curation.personal_data_excluded[].source` | needed | `evidence` | roboarena |
 | `curation.personal_data_excluded[].what` | needed | `curation_extra` | roboarena |
-| `curation.retrieved_on` | needed | `curation_core` | casp, roboarena, swe-bench |
 | `curation.sources` | deferred | `curation_sources_inline` | casp, roboarena, swe-bench |
 | `curation.sources[].bundle_hash_changes_on_redeploy` | deferred | `curation_sources_inline` | roboarena |
 | `curation.sources[].contains_personal_data` | deferred | `curation_sources_inline` | roboarena |
@@ -342,6 +341,7 @@ inherits.
 | `evaluation_method_considered_and_rejected[].reason` | needed | `rejected` | roboarena |
 | `evaluation_method_considered_and_rejected[].term` | needed | `rejected` | roboarena |
 | `evaluation_method_note` | needed | `tag_basis` | casp |
+| `evaluation_target` | needed | `admissibility` | casp, roboarena, swe-bench |
 | `events` | needed | `schedule` | roboarena |
 | `events[].kind` | needed | `schedule` | roboarena |
 | `events[].name` | needed | `schedule` | roboarena |
@@ -434,6 +434,12 @@ inherits.
 | `interop.huggingface_dataset` | needed | `interop` | swe-bench |
 | `interop.inspect_evals_id` | needed | `interop` | swe-bench |
 | `leaderboard` | needed | `links` | swe-bench |
+| `learned_entrant_evidence` | needed | `admissibility` | casp, roboarena, swe-bench |
+| `learned_entrant_evidence[].note` | needed | `field_notes` | casp |
+| `learned_entrant_evidence[].observed_on` | needed | `admissibility` | casp, roboarena, swe-bench |
+| `learned_entrant_evidence[].quote` | needed | `evidence` | casp, roboarena, swe-bench |
+| `learned_entrant_evidence[].source` | needed | `evidence` | casp, roboarena, swe-bench |
+| `learned_entrant_evidence[].system` | needed | `admissibility` | casp, roboarena, swe-bench |
 | `lifecycle` | needed | `facets` | casp, roboarena, swe-bench |
 | `lifecycle_note` | needed | `field_notes` | swe-bench |
 | `lineage` | needed | `lineage` | swe-bench |
@@ -467,7 +473,6 @@ inherits.
 | `maintenance_signals_seen.source` | deferred | `maintenance_derived` | swe-bench |
 | `maintenance_signals_seen[].signal` | deferred | `maintenance_derived` | casp, roboarena |
 | `maintenance_signals_seen[].source` | deferred | `maintenance_derived` | casp, roboarena |
-| `maintenance_status` | deferred | `maintenance_derived` | casp, roboarena, swe-bench |
 | `metric` | deferred | `metric` | roboarena |
 | `metric.absolute_score` | deferred | `metric` | roboarena |
 | `metric.ceiling_anchor_type` | deferred | `metric` | roboarena |
@@ -650,6 +655,7 @@ inherits.
 | `subjects_considered_and_rejected[].term` | needed | `rejected` | casp, roboarena |
 | `summary` | needed | `summary` | casp, roboarena, swe-bench |
 | `tagline` | needed | `tagline` | casp, roboarena, swe-bench |
+| `tags` | needed | `tags` | roboarena |
 | `task` | needed | `task` | swe-bench |
 | `task.input` | needed | `task` | swe-bench |
 | `task.metric` | deferred | `metric` | swe-bench |
