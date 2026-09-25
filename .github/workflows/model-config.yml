@@ -1,0 +1,41 @@
+# .github/workflows/model-config.yml -- P6-S2-T01
+#
+# 11-ai-features.md S5: "a stale verified_on raises a CI warning." scripts/check_model_config_freshness.py
+# checks config/ai-models.yaml. A malformed row, a price that contradicts the rate card's own
+# arithmetic, or a model 11 S5 names that the config lacks fails the job. A stale row, an
+# unconfirmed rate card, or a model in use near its retirement floor is a warning annotation on
+# the run, not a failure: those are prompts to go and re-read a vendor page, and nothing is wrong
+# with the file until someone does.
+#
+# The weekly schedule is there because staleness accrues with no pull request to notice it. Monday
+# 06:17 UTC, an odd offset (07 S3.2: never on the hour).
+#
+# Actions are pinned by commit SHA (08 S6); the SHAs are the ones archive-sources.yml resolved on
+# 2026-09-24.
+
+name: model-config
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: config/ai-models.yaml is sourced, dated and consistent (11 S5)
+        run: uv run --locked --python 3.12 python scripts/check_model_config_freshness.py

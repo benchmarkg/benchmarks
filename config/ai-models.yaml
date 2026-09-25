@@ -1,0 +1,348 @@
+# config/ai-models.yaml -- model ids, prices, quotas and API facts the AI layer is built on (P6-S2-T01).
+#
+# 11-ai-features.md S5: "They live in one build-time config, config/ai-models.yaml, extended beyond
+# Anthropic to a providers: block covering Cloudflare and any embedding vendor, with a source URL
+# and a verified_on date per row. Every prompt, cost estimator and eval run reads from it; a stale
+# verified_on raises a CI warning." This file is that config; the tables in 11 S5 reproduce it.
+#
+# Rules:
+#   - every row (each entry of `models` and of `facts`) carries `source_url` and `verified_on`;
+#   - prices are USD per million tokens, exactly as the rate card prints them;
+#   - `verified_on` is the day the value was read off the source, not the day the row was edited;
+#   - `python scripts/check_model_config_freshness.py` fails on a malformed row and warns on a
+#     stale one (older than `stale_after_days`), on an unconfirmed rate card, and on a model in use
+#     whose retirement floor is near.
+#
+# The budget in 11 S5 and G5 rests on these numbers, so a person confirms the prices and tier caps
+# against the live rate card and records it under `human_confirmation` (P6-S2-T01 done_when).
+
+schema_version: 1
+stale_after_days: 92          # the quarterly re-check 08 S7 schedules for vendor terms
+
+human_confirmation:
+  # Filled in by the reviewer who re-reads https://platform.claude.com/docs/en/about-claude/pricing
+  # and https://platform.claude.com/docs/en/api/rate-limits and finds every `models` price and the
+  # `anthropic-spend-caps` row still true. Until then the checker warns.
+  prices_and_tier_caps:
+    confirmed_by: null
+    confirmed_on: null
+
+models:
+  # used_by: the 11 S5 "Recommended model per feature" rows that name this model.
+  - id: claude-haiku-4-5
+    snapshot: claude-haiku-4-5-20251001
+    name: Claude Haiku 4.5
+    status: active
+    retirement_not_before: 2026-10-15
+    used_by: [F1, F4, F5, F7]
+    price_usd_per_mtok: {input: 1.00, output: 5.00, cache_write_5m: 1.25, cache_write_1h: 2.00, cache_read: 0.10,
+                         batch_input: 0.50, batch_output: 2.50}
+    min_cacheable_tokens: 4096
+    thinking: extended          # budget_tokens; type "adaptive" returns 400 on this model
+    context_window: 200000
+    max_output_tokens: 64000
+    source_url:
+      - https://platform.claude.com/docs/en/about-claude/pricing
+      - https://platform.claude.com/docs/en/models/overview
+      - https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+      - https://platform.claude.com/docs/en/about-claude/model-deprecations
+    verified_on: 2026-09-24
+    note: >-
+      Active, not deprecated; its tentative retirement date reads "Not sooner than October 15, 2026",
+      and Anthropic gives at least 60 days' notice before retiring a publicly released model. It is
+      the cheapest model in the table and carries F1 on every query, so a deprecation notice is a
+      re-pricing event for the whole budget.
+
+  - id: claude-sonnet-5
+    name: Claude Sonnet 5
+    status: active
+    retirement_not_before: 2027-06-30
+    used_by: [F2, F9, F10, F12]
+    price_usd_per_mtok: {input: 2.00, output: 10.00, cache_write_5m: 2.50, cache_write_1h: 4.00, cache_read: 0.20,
+                         batch_input: 1.00, batch_output: 5.00}
+    min_cacheable_tokens: 1024
+    thinking: adaptive
+    context_window: 1000000
+    max_output_tokens: 128000
+    source_url:
+      - https://platform.claude.com/docs/en/about-claude/pricing
+      - https://platform.claude.com/docs/en/models/overview
+      - https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+      - https://platform.claude.com/docs/en/about-claude/model-deprecations
+    verified_on: 2026-09-24
+
+  - id: claude-opus-5
+    name: Claude Opus 5
+    status: active
+    retirement_not_before: 2027-07-24
+    used_by: [F2-deep, F6, F8, self-eval-judge]
+    price_usd_per_mtok: {input: 5.00, output: 25.00, cache_write_5m: 6.25, cache_write_1h: 10.00, cache_read: 0.50,
+                         batch_input: 2.50, batch_output: 12.50}
+    min_cacheable_tokens: 512
+    thinking: adaptive
+    source_url:
+      - https://platform.claude.com/docs/en/about-claude/pricing
+      - https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+      - https://platform.claude.com/docs/en/about-claude/model-deprecations
+    verified_on: 2026-09-24
+    note: >-
+      Now listed under "Additional models" on the rate card: the current Opus is Opus 5.5, which is
+      cheaper on every line (next row). The plan's choice of Opus 5 is recorded as it stands; moving
+      F2 deep mode, F6, F8 and the judge to Opus 5.5 is a decision for the reviewer, not a transcription.
+
+  - id: claude-opus-5-5
+    name: Claude Opus 5.5
+    status: active
+    retirement_not_before: 2027-09-22
+    used_by: []
+    price_usd_per_mtok: {input: 4.00, output: 20.00, cache_write_5m: 5.00, cache_write_1h: 8.00, cache_read: 0.20,
+                         batch_input: 2.00, batch_output: 10.00}
+    min_cacheable_tokens: 512
+    thinking: adaptive-always-on
+    context_window: 1000000
+    max_output_tokens: 128000
+    source_url:
+      - https://platform.claude.com/docs/en/about-claude/pricing
+      - https://platform.claude.com/docs/en/models/overview
+      - https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+      - https://platform.claude.com/docs/en/about-claude/model-deprecations
+    verified_on: 2026-09-24
+    note: >-
+      Not in 11 S5's table, which predates it. Recorded because the models overview now says "start
+      with Claude Opus 5.5 for most workloads", and its cache read is 0.05x input ($0.20), not 0.1x.
+
+  - id: claude-fable-5-1
+    name: Claude Fable 5.1
+    status: active
+    retirement_not_before: 2027-09-01
+    used_by: []
+    price_usd_per_mtok: {input: 10.00, output: 50.00, cache_write_5m: 12.50, cache_write_1h: 20.00, cache_read: 0.25,
+                         batch_input: 5.00, batch_output: 25.00}
+    min_cacheable_tokens: 512
+    thinking: adaptive-always-on
+    context_window: 1000000
+    max_output_tokens: 128000
+    source_url:
+      - https://platform.claude.com/docs/en/about-claude/pricing
+      - https://platform.claude.com/docs/en/models/overview
+      - https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+      - https://platform.claude.com/docs/en/about-claude/model-deprecations
+    verified_on: 2026-09-24
+    note: Listed in 11 S5's price table; no feature uses it. Cache read is 0.025x input.
+
+facts:
+  # ---- Anthropic: caching, batch, rate limits, spend caps, tokenizer, thinking --------------------
+  - id: anthropic-cache-multipliers
+    group: anthropic
+    value: {cache_write_5m: 1.25x input, cache_write_1h: 2x input, cache_read: 0.1x input,
+            cache_read_exceptions: {claude-fable-5-1: 0.025x, claude-opus-5-5: 0.05x}}
+    quote: "Cache read (hit) 0.1x base input price (0.025x on Claude Fable 5.1 and Claude Mythos 5.1; 0.05x on Claude Opus 5.5)"
+    source_url: https://platform.claude.com/docs/en/about-claude/pricing
+    verified_on: 2026-09-24
+
+  - id: anthropic-cache-breakpoints
+    group: anthropic
+    value: {max_breakpoints: 4, default_ttl_minutes: 5, thinking_or_effort_change_invalidates: true}
+    quote: "You can define up to 4 cache breakpoints (using cache_control parameters) in your prompt."
+    source_url: https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+    verified_on: 2026-09-24
+    note: >-
+      Changing thinking parameters or output_config.effort invalidates cached prefixes. F1 and F2
+      use different effort settings, so they must not share a cached prefix.
+
+  - id: anthropic-batch
+    group: anthropic
+    value: {discount: 50%, stacks_with_caching: true, max_requests: 100000, max_bytes: 256 MB,
+            typical_completion: under 1 hour, expiry_hours: 24, results_retained_days: 29}
+    quote: "A Message Batch is limited to either 100,000 Message requests or 256 MB in size, whichever is reached first."
+    source_url:
+      - https://platform.claude.com/docs/en/build-with-claude/batch-processing
+      - https://platform.claude.com/docs/en/about-claude/pricing
+    verified_on: 2026-09-24
+
+  - id: anthropic-cache-aware-itpm
+    group: anthropic
+    value: {cache_read_counts_toward_itpm: false, cache_write_counts_toward_itpm: true, scope: most models}
+    quote: "cache_read_input_tokens (tokens read from cache) ✗ Do NOT count toward ITPM for most models"
+    source_url: https://platform.claude.com/docs/en/api/rate-limits
+    verified_on: 2026-09-24
+
+  - id: anthropic-spend-caps
+    group: anthropic
+    value: {start_usd_per_month: 500, build_usd_per_month: 1000, scale_usd_per_month: 200000, custom: none}
+    quote: "Usage tier Monthly spend cap Start $500 USD Build $1,000 USD Scale $200,000 USD"
+    source_url: https://platform.claude.com/docs/en/api/rate-limits
+    verified_on: 2026-09-24
+    note: >-
+      Confirms the figures 11 S5 marked unverified. Two behaviours G5's degradation path must handle:
+      the tier cap returns HTTP 429 rate_limit_error with error.details.error_code
+      enforced_spend_limit_reached and no retry-after (retrying fails until the 1st of next month);
+      a self-set spend limit, which G5 sets below the tier cap, returns HTTP 400
+      invalid_request_error, which a "429 or 5xx" check does not catch. New organisations may also
+      start on an Evaluation tier below the standard limits.
+
+  - id: anthropic-tier-rate-limits
+    group: anthropic
+    value:
+      start: {claude-haiku-4-5: {rpm: 1000, itpm: 2000000, otpm: 400000},
+              claude-sonnet-5: {rpm: 1000, itpm: 2000000, otpm: 400000},
+              claude-opus-5: {rpm: 1000, itpm: 2000000, otpm: 400000},
+              claude-opus-5-5: {rpm: 1000, itpm: 2000000, otpm: 400000},
+              claude-fable-5-x: {rpm: 1000, itpm: 500000, otpm: 100000}}
+      build: null
+      scale: {claude-haiku-4-5: {rpm: 10000, itpm: 10000000, otpm: 2000000},
+              claude-sonnet-5: {rpm: 10000, itpm: 10000000, otpm: 2000000},
+              claude-opus-5: {rpm: 10000, itpm: 10000000, otpm: 2000000},
+              claude-opus-5-5: {rpm: 10000, itpm: 10000000, otpm: 2000000},
+              claude-fable-5-x: {rpm: 4000, itpm: 4000000, otpm: 800000}}
+      batch_queue: {start: 200000, build: 300000, scale: 500000, per_batch: 100000}
+    source_url: https://platform.claude.com/docs/en/api/rate-limits
+    verified_on: 2026-09-24
+    note: >-
+      Start matches 11 S5's "1,000 RPM and 2M ITPM". The Build tab's Messages table is loaded
+      client-side and could not be read from the page source; `build` stays null until a person reads
+      it off the rendered page.
+
+  - id: anthropic-tokenizer
+    group: anthropic
+    value: {models: claude 4.7 and later, extra_tokens_vs_previous: approximately 30%}
+    quote: "This tokenizer produces approximately 30% more tokens for the same text. The exact increase depends on the content and workload shape."
+    source_url: https://platform.claude.com/docs/en/about-claude/pricing
+    verified_on: 2026-09-24
+    note: >-
+      Settles 11 S5's "recon says ~30%, bundled reference says ~1x-1.35x": the rate card now says
+      approximately 30%, content-dependent. Haiku 4.5 predates it (older tokenizer). Re-baseline
+      with count_tokens either way.
+
+  - id: anthropic-thinking-modes
+    group: anthropic
+    value: {budget_tokens_on_4_7_and_later: rejected with 400, adaptive_on_haiku_4_5: rejected with 400}
+    quote: "Extended thinking ( thinking.type: \"enabled\" with budget_tokens ) is deprecated on the Claude 4.6 models (requests using it still succeed). Claude 4.7 and later models do not support it and reject requests that use it, returning a 400 error."
+    source_url: https://platform.claude.com/docs/en/build-with-claude/extended-thinking
+    verified_on: 2026-09-24
+
+  # ---- Anthropic: structured outputs (11 S4 step 1 asks for these next to the prices) -----------
+  - id: structured-outputs-supported
+    group: structured-outputs
+    value:
+      - "all basic types: object, array, string, integer, number, boolean, null"
+      - "enum (strings, numbers, bools or nulls only)"
+      - const
+      - "anyOf and allOf (allOf with $ref not supported)"
+      - "$ref, $def and definitions (external $ref not supported)"
+      - default
+      - "required, and additionalProperties: false (must be false on objects)"
+      - "string formats: date-time, time, date, duration, email, hostname, uri, ipv4, ipv6, uuid"
+      - "array minItems of 0 or 1 only"
+      - "simple regex patterns: anchors, * + ? and simple {n,m}, [] . \\d \\w \\s, groups"
+    source_url: https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+    verified_on: 2026-09-24
+
+  - id: structured-outputs-unsupported
+    group: structured-outputs
+    value:
+      - recursive schemas
+      - complex types within enums
+      - external $ref
+      - "numerical constraints: minimum, maximum, multipleOf"
+      - "string constraints: minLength, maxLength"
+      - array constraints beyond minItems of 0 or 1
+      - additionalProperties set to anything other than false
+      - "regex backreferences, lookaround, word boundaries, large {n,m} ranges"
+    quote: "If you use an unsupported feature, you'll receive a 400 error with details."
+    source_url: https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+    verified_on: 2026-09-24
+    note: >-
+      The API rejects an unsupported feature with 400. The Python, TypeScript, Ruby and PHP SDKs
+      instead strip it before sending and validate client-side -- the trap 11 S4 names, still true.
+
+  - id: structured-outputs-behaviour
+    group: structured-outputs
+    value:
+      mechanism: constrained decoding, schema compiled to a grammar
+      enum_casing_guaranteed: false
+      incompatible_with: [citations (400), message prefilling]
+      limits: {strict_tools: 20, optional_parameters: 24, union_type_parameters: 16, compile_timeout_seconds: 180}
+      may_not_match_schema_on: [stop_reason refusal, stop_reason max_tokens]
+    quote: "Structured outputs don't guarantee the capitalization of string enum and const values"
+    source_url: https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+    verified_on: 2026-09-24
+    note: >-
+      Two changes against 11 S4. The docs now state the mechanism ("guarantee schema-compliant
+      responses through constrained decoding"), which 11 S4 said they did not. And enum values may come
+      back differing only in capitalisation, with no error: G1's enum-membership post-validator must
+      compare case-insensitively and map to the canonical value. The 24-optional-parameter limit
+      bounds the FacetQuery schema: make its fields required.
+
+  # ---- Cloudflare -------------------------------------------------------------------------------
+  - id: cloudflare-workers-free
+    group: provider:cloudflare
+    value: {requests_per_day: 100000, resets: 00:00 UTC, over_limit: error 1027, cpu_ms_per_invocation: 10,
+            subrequests_per_invocation: 50, cron_triggers_per_account: 5, cpu_ms_per_cron_trigger: 10}
+    quote: "Accounts on the Workers Free plan have a daily request limit of 100,000 requests, resetting at midnight UTC."
+    source_url:
+      - https://developers.cloudflare.com/workers/platform/limits/
+      - https://developers.cloudflare.com/workers/platform/pricing/
+    verified_on: 2026-09-24
+
+  - id: cloudflare-workers-paid
+    group: provider:cloudflare
+    value: {minimum_usd_per_month: 5, requests_included_per_month: 10000000, usd_per_extra_million_requests: 0.30,
+            cpu_ms_included_per_month: 30000000, usd_per_extra_million_cpu_ms: 0.02,
+            max_cpu_per_invocation: 5 min (default 30 s)}
+    quote: "30 million CPU milliseconds included per month +$0.02 per additional million CPU milliseconds"
+    source_url: https://developers.cloudflare.com/workers/platform/pricing/
+    verified_on: 2026-09-24
+
+  - id: cloudflare-cpu-excludes-io
+    group: provider:cloudflare
+    value: {awaiting_fetch_counts_toward_cpu: false}
+    quote: "Waiting on network requests (such as fetch() calls, KV reads, or database queries) does not count toward CPU time."
+    source_url: https://developers.cloudflare.com/workers/platform/limits/
+    verified_on: 2026-09-24
+    note: A model call's wall-clock wait is not CPU time, so the 10 ms free-tier CPU limit is about our own code only.
+
+  - id: cloudflare-turnstile-free
+    group: provider:cloudflare
+    value: {widgets: 20, hostnames_per_widget: 10, challenges: unlimited, analytics_lookback_days: 7}
+    quote: "Up to 20 widgets"
+    source_url: https://developers.cloudflare.com/turnstile/plans/
+    verified_on: 2026-09-24
+    note: Now confirmed on Cloudflare's own plans page; G5 layer 1 had it from a third-party review.
+
+  - id: cloudflare-rate-limit-binding
+    group: provider:cloudflare
+    value: {period_seconds_allowed: [10, 60], scope: per Cloudflare location, per key, consistency: eventually consistent}
+    quote: "The duration of the rate limit window, in seconds. Must be either 10 or 60 ."
+    source_url: https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
+    verified_on: 2026-09-24
+    note: >-
+      "Rate limits that you define and enforce in your Worker are local to the Cloudflare location that
+      your Worker runs in", and the API is "permissive, eventually consistent, and intentionally
+      designed to not be used as an accurate accounting system" -- which is why G5 makes it layer 2
+      and never the spend cap. G5's per-client "60/hour" ceilings cannot be expressed as a binding
+      period; they need a 60-second limit sized to match, or the Durable Object.
+
+  - id: cloudflare-durable-objects
+    group: provider:cloudflare
+    value:
+      free: {requests_per_day: 100000, duration_gb_s_per_day: 13000, storage_backend: SQLite only}
+      paid: {requests_included_per_month: 1000000, usd_per_extra_million_requests: 0.15,
+             duration_gb_s_included_per_month: 400000, usd_per_extra_million_gb_s: 12.50}
+    quote: "400,000 GB-s / month, + $12.50/million GB-s"
+    source_url: https://developers.cloudflare.com/durable-objects/platform/pricing/
+    verified_on: 2026-09-24
+    note: >-
+      G5 marked Durable Object pricing unverified ("single-digit dollars a month"). At the
+      10,000-queries-a-month planning point, one budget check per model call is about 15,000 requests a month,
+      inside both the free daily allowance and the paid monthly inclusion: $0 beyond the $5 Workers Paid
+      minimum.
+
+  # ---- Embedding vendor -------------------------------------------------------------------------
+  - id: embedding-vendor
+    group: provider:embedding
+    value: none
+    quote: "Embedding the corpus is free under the static-embedding path, since document vectors are computed in Python at build time."
+    source_url: https://github.com/intelligence-benchmark/benchmarks/blob/main/_plan/11-ai-features.md#monthly-budget
+    verified_on: 2026-09-24
+    note: 11 S5 names no hosted embedding vendor; this row exists so that adding one adds a priced row here.
