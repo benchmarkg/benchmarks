@@ -145,11 +145,11 @@ def test_the_threshold_is_derived_from_phase_hours():
 def test_the_committed_corpus():
     """SWE-bench clears the first three clauses and stops, undetermined, at the carve-out: the fact
     is not a schema field yet. RoboArena needs physical hardware, ARC-AGI-3's official scores come from a
-    set only its maintainers run, and CASP's tier is not curated."""
+    set only its maintainers run, so do the Virtual Cell Challenge's, and CASP's tier is not curated."""
     g = gate.run(gate.load(ROOT))
     assert g.count == 0
     steps = {s.clause.number: s for s in g.steps}
-    assert steps[1].failed == ['arc-agi-3', 'roboarena'] and steps[1].undetermined == ['casp']
+    assert steps[1].failed == ['arc-agi-3', 'roboarena', 'virtual-cell-challenge'] and steps[1].undetermined == ['casp']
     assert steps[3].remaining == 1
     assert steps[4].undetermined == ['swe-bench']
 
