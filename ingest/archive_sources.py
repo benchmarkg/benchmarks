@@ -82,6 +82,12 @@ def fmt(t):
     return t.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
+def captured_on(ts):
+    """`archive_captured` is a date in the Source schema (04 S9), not a timestamp: the capture's UTC day.
+    The full instant stays in the archive_url's timestamp."""
+    return wayback_time(ts).date().isoformat()
+
+
 def utcnow():
     return datetime.now(timezone.utc).replace(microsecond=0)
 
@@ -173,7 +179,7 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
         if outcome[0] == 'success':
             ts, original = outcome[1], outcome[2] or r['url']
             finish(key, src, {'archive_url': 'https://web.archive.org/web/%s/%s' % (ts, original),
-                              'archive_captured': fmt(wayback_time(ts)), 'archive_status': 'ok',
+                              'archive_captured': captured_on(ts), 'archive_status': 'ok',
                               'failure_reason': None})
             state['attempts'].pop(sid, None)
             stats['captured'] += 1
@@ -221,7 +227,7 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
                 stats['from_cdx'] += 1
                 log('cdx     %s  %s' % (r['id'], ts))
                 finish(key, src, {'archive_url': 'https://web.archive.org/web/%s/%s' % (ts, original),
-                                  'archive_captured': fmt(wayback_time(ts)), 'archive_status': 'ok',
+                                  'archive_captured': captured_on(ts), 'archive_status': 'ok',
                                   'archive_digest': digest, 'failure_reason': None})
                 continue
             if not wayback.can_capture or dry_run:
