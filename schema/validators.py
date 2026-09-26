@@ -48,6 +48,10 @@ The rules, in the order 02 S11 and 04 S12 give them:
                               example.invalid URL, the bench-new-stub tag -- block until replaced
                               (P0-S5-T03). A scaffold passes tier 1 by construction, so tier 3 is
                               where "never estimate" is enforced
+  quote-substring             14-roadmap Phase 0, 04 S9: every quote is a substring of its source's
+                              committed quote_extract (P0-S5-T06; tools/validate/quotes.py). An
+                              ai-drafted-unverified record warns and offers the null as its fix,
+                              so the field fails and the record does not; a reviewed record blocks
 
 Two of them read DERIVED values the build computes (maintenance_status, headroom). Where the Corpus
 carries no derived value for a benchmark, the part of the rule that needs it is not evaluated, and
@@ -319,6 +323,27 @@ def _stub_placeholder(b, corpus, level):
     if STUB_TAG in b.tags:
         yield 'blocking', ('tagged %s: replace every STUB VALUE the scaffold chose (enums with no null) from a '
                            'cited source, then remove the tag' % STUB_TAG)
+
+
+@_benchmark_rule('quote-substring', '14-roadmap Phase 0; 04 S9; P0-S5-T06')
+def _quote_substring(b, corpus, level):
+    from tools.validate import quotes
+    record = b.model_dump(mode='json', by_alias=True, exclude_computed_fields=True)
+    if not quotes.check(record, corpus.sources):
+        return
+    draft = b.curation.verification_status == 'ai-drafted-unverified'
+    for r in quotes.apply(record, corpus.sources)[1]:
+        where = quotes.dotted(r.quote.at + (r.quote.key,))
+        if r.nulled is None:
+            yield 'blocking', '%s: %s' % (where, r.reason)
+            continue
+        fix = '%s %s, the reason recorded in curation.notes' % (
+            'remove' if isinstance(r.nulled[-1], int) else 'set to null', quotes.dotted(r.nulled))
+        if draft:
+            yield 'warning', '%s: %s; the field is nulled, the record still validates' % (where, r.reason), fix
+        else:
+            yield 'blocking', ('%s: %s; the record is %s, so correct the quote from the source rather than '
+                               'accept the null' % (where, r.reason, b.curation.verification_status)), fix
 
 
 @_benchmark_rule('subset-drops-terms', '02 S11 rule 4')
