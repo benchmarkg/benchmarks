@@ -44,6 +44,10 @@ The rules, in the order 02 S11 and 04 S12 give them:
   ingestion-batch             04 S12: an ingested record's ingestion.batch resolves
   non-doi-archive             04 S12: every non-DOI Source has an archive_url
   retired-id-ledger           05 S9 job 9: no retired id is live again, as a term or a record id
+  stub-placeholder            05 S3: a `bench new` scaffold's placeholders -- a TODO string, an
+                              example.invalid URL, the bench-new-stub tag -- block until replaced
+                              (P0-S5-T03). A scaffold passes tier 1 by construction, so tier 3 is
+                              where "never estimate" is enforced
 
 Two of them read DERIVED values the build computes (maintenance_status, headroom). Where the Corpus
 carries no derived value for a benchmark, the part of the rule that needs it is not evaluated, and
@@ -287,6 +291,34 @@ def _range_basis(b, corpus, level):
         r = getattr(b.execution, name)
         if r is not None and not r.basis:
             yield 'blocking', 'execution.%s is a range estimate with no basis' % name
+
+
+STUB_TAG = 'bench-new-stub'
+PLACEHOLDER_HOST = 'example.invalid'
+
+
+def _placeholders(value, path=''):
+    """Dotted paths of TODO strings and example.invalid URLs anywhere in a dumped record."""
+    if isinstance(value, dict):
+        for k, v in value.items():
+            yield from _placeholders(v, '%s.%s' % (path, k) if path else str(k))
+    elif isinstance(value, list):
+        for v in value:
+            yield from _placeholders(v, path + '[]')
+    elif isinstance(value, str):
+        text = value.strip()
+        if text == 'TODO' or text.startswith('TODO:') or ('//%s' % PLACEHOLDER_HOST) in text:
+            yield path
+
+
+@_benchmark_rule('stub-placeholder', '05 S3 (bench new); P0-S5-T03')
+def _stub_placeholder(b, corpus, level):
+    found = sorted(set(_placeholders(b.model_dump(mode='json', exclude={'tags'}))))
+    if found:
+        yield 'blocking', 'scaffold placeholders remain: %s' % ', '.join(found)
+    if STUB_TAG in b.tags:
+        yield 'blocking', ('tagged %s: replace every STUB VALUE the scaffold chose (enums with no null) from a '
+                           'cited source, then remove the tag' % STUB_TAG)
 
 
 @_benchmark_rule('subset-drops-terms', '02 S11 rule 4')

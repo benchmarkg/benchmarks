@@ -1,6 +1,7 @@
 """The `bench` CLI (05-repository-and-workflow.md S3).
 
     uv run bench --help
+    uv run bench new <entity> --id <id> [--domain <d>] [--from-source <url>] [--template <name>]
     uv run bench fmt [paths...] [--check]
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
@@ -8,7 +9,8 @@
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
-command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's and `fmt` P0-S5-T04's (tools/fmt.py).
+command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py) and
+`new` P0-S5-T03's (tools/authoring/).
 """
 from __future__ import annotations
 
@@ -58,6 +60,37 @@ def schema_gen(
         return
     changed = codegen.write(ROOT, j2t)
     typer.echo('schema gen: %d file(s) written' % len(changed) if changed else 'schema gen: up to date')
+
+
+@app.command('new')
+def new_cmd(
+    entity: Annotated[str, typer.Argument(help='What to scaffold: benchmark or source.')],
+    ident: Annotated[str, typer.Option('--id', help='The new id (05 S2).')],
+    domain: Annotated[Optional[str], typer.Option(
+        '--domain', help='A benchmark\'s domain.primary: a subdomain from taxonomy/domains.yaml.')] = None,
+    from_source: Annotated[Optional[str], typer.Option(
+        '--from-source', help='The source URL; for a benchmark, its homepage, with a Source scaffolded beside it.')] = None,
+    template: Annotated[Optional[str], typer.Option(
+        '--template', help='A template in tools/authoring/templates/ other than <entity>.yaml.')] = None,
+):
+    """Scaffold an entity file from a template, every required field stubbed and commented (05 S3)."""
+    from tools.authoring import new
+    from tools.validate import tiers
+    try:
+        files = new.scaffold(entity, ident, ROOT, domain=domain, from_source=from_source, template=template)
+    except new.NewError as e:
+        typer.echo('new: %s' % e, err=True)
+        raise typer.Exit(2)
+    for f in files:
+        report = tiers.single(os.path.join(ROOT, f.path), 'schema', ROOT)
+        typer.echo('wrote %s -- tier 1: %s' % (f.path, 'ok' if not report.blocking else '%d finding(s)'
+                                                % len(report.blocking)))
+        for finding in report.blocking:
+            typer.echo('  ' + str(finding))
+        if f.path.startswith('data/sources/') and report.blocking:
+            typer.echo('  (a non-DOI Source passes tier 1 once it is archived: `bench archive %s`)' % f.path.rsplit('/', 1)[1][:-5])
+    typer.echo('next: replace every TODO and STUB VALUE from a cited source, then remove the %s tag; '
+               '`bench validate %s` lists what remains' % (new.STUB_TAG, files[0].path))
 
 
 @app.command('fmt')
