@@ -63,14 +63,16 @@ def run_fixture(path):
 
 # ---- the material set resolves per benchmark -----------------------------------------------------
 
-def test_the_three_entries_resolve_to_different_material_sets():
+def test_the_entries_resolve_to_different_material_sets():
     got = {os.path.basename(p): comp.resolve_profile(load_benchmark(p), PROFILES) for p in ENTRIES}
     assert {k: (r.profiles, r.fields_material_total) for k, r in got.items()} == {
         'casp.yaml': (('wet-lab',), 3),
         'roboarena.yaml': (('physical-trial',), 4),
         'swe-bench.yaml': (('agentic',), 11),
+        'weatherbench-2.yaml': (('forecasting', 'eligibility-gated'), 6),
     }
-    assert len({r.material for r in got.values()}) == 3
+    assert len({r.material for r in got.values()}) == 4
+    assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
 
 
 def test_the_material_set_follows_the_facets_not_a_global_list():
@@ -304,7 +306,7 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'casp', 'roboarena', 'swe-bench'}
+    assert set(out['profiles']) == {'casp', 'roboarena', 'swe-bench', 'weatherbench-2'}
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 

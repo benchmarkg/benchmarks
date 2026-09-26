@@ -176,7 +176,7 @@ def test_the_committed_corpus_publishes_no_draft_and_no_draft_source():
     result = artifacts.build(ROOT)
     assert result.errors == []
     drafts = [i for _, i, r in result.excluded if r.startswith(artifacts.DRAFT)]
-    assert sorted(drafts) == ['casp', 'roboarena', 'swe-bench']   # every committed entry is still a draft
+    assert sorted(drafts) == ['casp', 'roboarena', 'swe-bench', 'weatherbench-2']   # every committed entry is still a draft
     assert result.corpus['entities']['benchmark'] == [] and result.corpus['entities']['source'] == []
 
 
