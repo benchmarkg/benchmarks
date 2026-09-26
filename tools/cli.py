@@ -5,12 +5,14 @@
     uv run bench fmt [paths...] [--check]
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
+    uv run bench build [--out build/]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
-command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py) and
-`new` P0-S5-T03's (tools/authoring/).
+command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py),
+`new` P0-S5-T03's (tools/authoring/) and `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
+build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages).
 """
 from __future__ import annotations
 
@@ -153,6 +155,29 @@ def validate(
             typer.echo('not checked: ' + note)
         typer.echo(report.summary())
     raise typer.Exit(report.exit_code)
+
+
+@app.command('build')
+def build_cmd(
+    out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
+):
+    """Emit the shipped JSON artifacts (08 S4.2): today corpus.json and facets.json, drafts excluded."""
+    from tools.build import artifacts
+    result = artifacts.build(ROOT)
+    for e in result.errors:
+        typer.echo('error  %s' % e, err=True)
+    if result.errors:
+        typer.echo('build: %d error(s); nothing written' % len(result.errors), err=True)
+        raise typer.Exit(1)
+    for path in artifacts.write(result, str(out)):
+        typer.echo('wrote %s' % path)
+    counts = result.counts()
+    reasons: dict[str, int] = {}
+    for _, _, reason in result.excluded:
+        reasons[reason] = reasons.get(reason, 0) + 1  # get-default: a first reason starts its count
+    typer.echo('build: published %s; %d subset(s) materialised; excluded %s'
+               % (', '.join('%d %s' % (n, k) for k, n in counts.items()), len(result.corpus['subsets']),
+                  ', '.join('%d (%s)' % (n, r) for r, n in sorted(reasons.items())) or 'nothing'))
 
 
 def main():
