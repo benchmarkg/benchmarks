@@ -1,0 +1,527 @@
+# data/benchmarks/biology-genetics/virtual-cell-challenge.yaml
+#
+# P0-S8-T04. Scaffolded by `bench new benchmark` on 2026-09-26, then filled from the two Cell
+# commentaries (2025 and 2026, abstracts via Europe PMC), Arc Institute's 2026 announcement and 2025
+# wrap-up, and Wayback captures of the challenge site. virtualcellchallenge.org renders client-side:
+# its HTML carries none of the text below, which ships in the site's Next.js script bundles, so the
+# site's three Sources are the archived bundles of the evaluation, data and FAQ pages. Every number
+# carries a quote that the quote-substring validator checks against the Source's committed extract.
+#
+# What this entry is here to stress (14-roadmap Phase 0; 02 S12.10): a scale anchored to the
+# experiment rather than to people. Every metric is placed between two reference points measured on
+# the held-out data -- 0 at the cell-context mean, 1 at a real replicate experiment -- so the ceiling
+# is experimental-replicate, and both anchors are stored as Baseline records (baselines[]).
+#
+# Not quoted, because no archived or DOI source carries it yet: the Challenge rules page (revised
+# 2026-09-16; no capture of its script bundle exists), and cell-eval2's written metric specification
+# (github.com/ArcInstitute/cell-eval2, MIT, no capture). Both wait on archival (IA keys, P5-S3-T01).
+#
+# Premises in 02 S12.10 that did not survive the sources, each recorded where it bites:
+#   1. "training_data_eligibility is 'none'". Training is unrestricted: "Participants may use any
+#      modeling strategy and train their models on any data." What is zero-shot is the data release --
+#      no perturbation response measured in a target cell line is given out. The reference conditions
+#      record `zero-shot-only` in that sense (cond-f63f40db297a's header), not as a training ban.
+#   2. "the six target cell lines are unseen". Six lines, but three are validation and three are the
+#      final test; only the final three are scored for prizes (subsets[]).
+#   3. reproducibility_tier `requires-physical-experiment`. Rerunning the experiment would not
+#      reproduce a score: the lines are anonymised, and the measurements are withheld. Recorded as
+#      not-independently-reproducible, as ARC-AGI-3 is.
+#   4. secondary domains transcriptomics and single-cell-analysis, capabilities
+#      distribution-shift-generalization, quantitative-reasoning and sample-efficiency, and subject
+#      domain-specialist-model fail their own tests and are considered and rejected.
+#   5. compute_tier `multi-gpu-node` is not stated by any source for an entrant's run.
+
+id: virtual-cell-challenge
+name: Virtual Cell Challenge
+aliases:
+  - VCC
+  - Arc Virtual Cell Challenge
+  - Virtual Cell Challenge 2026
+aliases_note: >
+  An annual competition, one edition a year; the edition is the benchmark version ('2025', '2026').
+  taxonomy/domains.yaml and taxonomy/capabilities.yaml cite it as `virtual-cell-challenge-2026`, an id
+  that does not exist; this entry's id follows 02 S12.10 and the task's path.
+tagline: Predict how unseen human cell lines respond to CRISPRi gene knockdowns, scored against a
+  replicate experiment.
+description: >
+  An annual competition run by Arc Institute. In the 2026 edition, entrants predict single-cell gene
+  expression after each of 300 CRISPRi knockdowns in cell lines they have never seen perturbed, given
+  only the unperturbed (non-targeting control) cells of each line and the list of genes to knock down.
+  There is no Challenge training set; entrants may train on any data they have the right to use. Arc
+  measured the responses by Perturb-seq in six cell lines, withholds them as ground truth, and scores
+  submitted predictions on its own server. Six metrics each place a prediction between the cell-context
+  mean (0) and a real replicate experiment (1), and the overall score is their unweighted mean over
+  three cell contexts. The scale is not bounded at 1 and is not a percentage. Known weaknesses the
+  sources name: in 2025 models did not yet consistently beat naive baselines across all metrics, and
+  the 2026 metrics are new and expected to change year to year.
+self_description:
+  source: src-vcc-2026-cell
+  quote: The Virtual Cell Challenge returns in 2026 with a more demanding test of biological
+    generalization
+paper:
+  title: 'Virtual Cell Challenge 2026: Benchmarking zero-shot generalization across cellular contexts'
+  source: src-vcc-2026-cell
+released: 2025-06-01
+released_basis:
+  reason: The 2025 Cell commentary announcing the challenge, in the June 2025 issue (Europe PMC's
+    publication date); the earliest public statement of the benchmark any source here dates.
+  source: src-vcc-2025-cell
+  quote: The Virtual Cell Challenge is being established to catalyze progress toward this goal.
+  caveat: The date is the source record's metadata (Source.published), not a quoted string.
+release_venue: Cell 188(13) (2025); the 2026 edition in Cell 189(19), 5827-5830 (2026)
+release_venue_source: src-vcc-2026-cell
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/perturbation-response-prediction
+  primary_basis:
+    reason: The leaf's definition word for word -- a cell's measured profile under a genetic
+      perturbation it has not been observed under.
+    source: src-vcc-2026-announcement
+    quote: Models must predict CRISPRi knockdown responses in six cell lines they have never seen
+      perturbed, using only the unperturbed state of those cells and a list of genes to knock down.
+  secondary: []
+domain_considered_and_rejected:
+  - term: biology-genetics/transcriptomics
+    reason: 02 S12.10 lists it. The leaf is "inferring a biological state or condition from bulk
+      gene-expression measurements"; here the measurements are single-cell, and the task predicts
+      expression rather than inferring a state from it.
+  - term: biology-genetics/single-cell-analysis
+    reason: 02 S12.10 lists it. The leaf is "turning single-cell measurements into per-cell
+      assignments such as cell type, state or developmental trajectory"; nothing here is assigned to
+      a cell, the output is a predicted expression matrix.
+
+capability:
+  - causal-reasoning
+  - transfer-learning
+capability_basis:
+  causal-reasoning:
+    reason: The inclusion test's second arm -- predicting the effect of an intervention that was not
+      observed -- is the task, and taxonomy/capabilities.yaml names this benchmark as the term's
+      qualifying example.
+    source: src-vcc-2026-announcement
+    quote: The Challenge is designed so that participants see what the new cellular context looks
+      like unperturbed, but never see a perturbation response measured in it.
+  transfer-learning:
+    reason: Entrants train on other contexts and are scored on a deliberately different one, and the
+      transfer is what the score is built to measure. Reviewer check that the design, rather than a
+      reported protocol, satisfies "the transfer itself is reported".
+    source: src-vcc-2026-evaluation
+    quote: measure the capability that transfers, zero-shot, into cell contexts the model has not
+      seen
+capability_considered_and_rejected:
+  # 02 S12.10 tags distribution-shift-generalization, transfer-learning, quantitative-reasoning and
+  # sample-efficiency. Only transfer-learning survives; causal-reasoning is the taxonomy's own example.
+  - term: distribution-shift-generalization
+    reason: The test contexts are deliberately unseen, but the inclusion test also asks that the
+      benchmark "reports the degradation", and nothing is scored in a seen context to degrade from.
+      The move to a new cell line is recorded as transfer-learning. Reviewer check.
+  - term: quantitative-reasoning
+    reason: The output is a predicted count matrix from a learned model, not a number reached by
+      calculation; the term's IN examples are problems with checkable arithmetic.
+  - term: sample-efficiency
+    reason: The exclusion test reads "Do NOT tag this if the budget is unconstrained", and training
+      data is unconstrained here (training_data_policy in the reference conditions).
+
+evaluation_method:
+  - statistical-fit
+  - composite
+evaluation_method_basis:
+  reason: >
+    statistical-fit for the six metrics, each an agreement statistic between predicted and measured
+    expression (a squared error, a normalised absolute error of fold changes, direction agreement, a
+    Jaccard overlap, a rank); composite for the overall score, their unweighted mean, whose constituent
+    method is tagged beside it as the term asks.
+  source: src-vcc-2026-evaluation
+  quote: The overall score is a single unweighted average over the six metrics and the three cell
+    contexts
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: The metrics are specific to single-cell perturbation data, but the term asks for a
+      metric "named and standardised within a discipline"; these are the maintainers' own and new
+      ("These metrics are new and we expect to keep refining them from year to year.",
+      src-vcc-2026-evaluation). Revisit if the field adopts them.
+
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: A virtual cell model stands in for a Perturb-seq experiment and is scored against what the
+    experiment measured, which is the term's inclusion test.
+  source: src-vcc-2025-wrap-up
+  quote: can a computational model stand in for an actual Perturb-seq experiment?
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: 02 S12.10 lists it. The term's exclusion test reads "do NOT tag it where the artifact
+      emulates a physical process, which is `scientific-surrogate-model`", and emulating the
+      experiment is the task.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The 2026 edition is running; final submissions close on 2026-11-05.
+  source: src-vcc-2026-faq
+  quote: Registration opens August 4, 2026, and the Challenge begins August 20, 2026.
+activity: accepting-submissions
+activity_basis:
+  reason: The validation leaderboard takes submissions until the final test set's release on
+    2026-10-22, then final entries are taken until 2026-11-05.
+  source: src-vcc-2026-announcement
+  quote: 'Thursday, November 5: Final submissions due'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: xTrimoSCPerturb (Team BM_xTVC, BioMap Research)
+    source: src-vcc-2025-wrap-up
+    observed_on: 2026-09-26
+    quote: They developed a new single-cell pretrained model using an improved scFoundation
+      architecture
+    note: The 2025 edition's winner, a learned model; the 2026 edition has no results yet that any
+      archived source shows.
+evaluation_target: learned-system
+execution_mode: automated
+execution_mode_note: The entrant's predictions are scored automatically; the wet-lab work produced
+  the ground truth once and is not part of a run.
+ground_truth_source: experimental
+ground_truth_source_basis:
+  reason: Perturb-seq measurements made at Arc for the Challenge.
+  source: src-vcc-2026-evaluation
+  quote: The Virtual Cell Challenge evaluates submitted results from entrants’ models against
+    held-out measurements obtained from Arc Institute’s laboratory testing
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The measurements are withheld, and the cell lines are not named, so neither the score nor
+    the experiment behind it can be rerun outside Arc.
+  source: src-vcc-2026-data-page
+  quote: We do not publish which cell line a context is.
+
+task:
+  exists: true
+  input:
+    - non-targeting control cells of each cell context (18,400 per context, raw counts)
+    - the gene symbols of the 300 CRISPRi knockdowns to predict, the same panel in every context of
+      a round
+  output: >
+    One raw-count expression matrix over 18,533 genes: 400 predicted cells for every perturbation in
+    every context of the round, and no control cells.
+  scoring: >
+    Six metrics per context, each reference-scaled so that the cell-context mean scores 0 and a real
+    replicate experiment scores 1; the overall score is their unweighted mean over the six metrics and
+    the three contexts. The knocked-down gene itself is excluded from all six.
+  tests_hidden_from_system: true
+  source: src-vcc-2026-evaluation
+  quote: A successful model has to infer how a perturbation response transfers across contexts
+    without being given matched perturbation-response data from the Challenge itself.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: >
+    What entrants download is model input, not test data: the control cells and the perturbation list.
+    The 2025 edition's held-out test data were released after it closed ("The full 2025 dataset,
+    including training, validation, and the held-out test perturbations, is now downloadable",
+    src-vcc-2026-announcement); no source says whether 2026's will be.
+  access_basis:
+    reason: The measured responses never leave Arc; entrants upload predictions, which Arc scores.
+    source: src-vcc-2026-announcement
+    quote: Arc’s experimental measurements themselves are withheld and serve as ground truth.
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: One edition a year, each with newly measured cell lines and a new task framing.
+    source: src-vcc-2026-faq
+    quote: The Virtual Cell Challenge will be an annual competition.
+  data_provenance:
+    - experimental-measurement
+  data_provenance_basis:
+    reason: Perturb-seq run at Arc for the Challenge.
+    source: src-vcc-2026-data-page
+    quote: New Challenge Datasets Experimentally Generated at Arc Institute
+  contamination_risk: low
+  contamination_risk_note: >
+    Low for the evaluation content itself: the measurements are new, never released, and final-phase
+    scores are not shown before the close, so the test set cannot be probed through the leaderboard.
+    One question sits outside the definition and goes to a biology reviewer: training on any data is
+    allowed, and the lines are identified to the model only by their unperturbed profiles. If a hidden
+    line can be recognised from its controls and public perturbation data for it exist -- the data page
+    itself recommends a public "Perturb-seq experiments in six different cancer cell lines from
+    different tissues of origin" set -- the zero-shot premise weakens without any leak of Arc's
+    measurements.
+  contamination_evidence:
+    - source: src-vcc-2026-evaluation
+      stance: against
+      quote: final submissions are not shown on the leaderboard, and winners are announced after the
+        Challenge closes.
+  ceiling_anchor_type: experimental-replicate
+  ceiling_anchor_type_basis:
+    reason: >
+      Each metric is scaled against a replicate of the experiment: the held-out data compared with
+      themselves (stored as base-vcc-2026-replicate). The anchor is a landmark and not a maximum --
+      scores above 1 occur and are reported unclipped -- so headroom against it can exceed 1, and a
+      reader must not take 1 as perfection.
+    source: src-vcc-2026-evaluation
+    quote: scale each metric against the experiment itself rather than against perfection, with 0 at
+      the cell context mean and 1 as good as data from a real replicate experiment
+  size:
+    n_items:
+      value: 300
+      unit: CRISPRi knockdowns per cell context (one panel per round)
+      source: src-vcc-2026-evaluation
+      quote: 300 CRISPRi knockdowns
+    other_splits:
+      - value: 6
+        unit: cell lines (three for validation, three for the final test)
+        split: whole 2026 dataset
+        source: src-vcc-2026-data-page
+        quote: six cell lines originating from different tissues
+      - value: 400
+        unit: predicted cells per perturbation per context
+        split: every submission
+        source: src-vcc-2026-evaluation
+        quote: 400 cells for every perturbation
+      - value: 18400
+        unit: non-targeting control cells per context (46 guides at 400 cells)
+        split: model input
+        source: src-vcc-2026-faq
+        quote: 18,400 non-targeting control cells
+      - value: 18533
+        unit: genes on the prediction axis
+        split: every submission
+        source: src-vcc-2026-data-page
+        quote: the 18,533 gene symbols, in the order your matrix must use
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Arc Institute
+  maintainer_basis:
+    reason: Arc hosts the Challenge, generated the data and runs the scoring.
+    source: src-vcc-2026-faq
+    quote: The Virtual Cell Challenge is an annual competition hosted by Arc Institute to encourage
+      advances in predictive cell modeling.
+  maintainer_type: nonprofit
+  maintainer_type_note: Kept from 02 S12.10. No source read here states Arc's legal form; the site
+    names the "Arc Research Institute" as sponsor and administrator. Reviewer check.
+  submission_process: held-out-server
+  submission_process_basis:
+    reason: Entrants run their own models and upload predictions; Arc's server scores them against
+      withheld measurements. Winners' scores are validated and a method description is required, but
+      model code is not.
+    source: src-vcc-2026-faq
+    quote: Participants will run their own models to generate results, and only those results form
+      your entry.
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-vcc-2026-announcement
+      quote: The grand prize is $100,000, with $50,000 and $25,000 for second and third place. The
+        prizes are a mix of cash and NVIDIA Brev credits. The Challenge is sponsored by NVIDIA, 10x
+        Genomics, and Ultima Genomics.
+    - flag: single-evaluator-private-test-set
+      source: src-vcc-2026-announcement
+      quote: Arc’s experimental measurements themselves are withheld and serve as ground truth.
+  independence_flags_note: >
+    NVIDIA also co-developed the 2026 scorer ("NVIDIA's involvement this year extended well beyond
+    sponsorship: their team worked with us directly on accelerating and comparing evaluation metrics for
+    cell-eval.", src-vcc-2026-announcement), which no flag describes. Arc publishes its own model,
+    State, as a starting point that "is not able to win the competition" (src-vcc-2026-evaluation), so
+    maintainer-competes-on-own-benchmark is not adopted.
+  known_limitation:
+    source: src-vcc-2025-wrap-up
+    quote: While the final results of this first effort indicate that perturbation prediction models
+      are not yet consistently outperforming naive baselines across all metrics
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: >
+    Not guessed, where 02 S12.10 has multi-gpu-node. A run is the entrant's own model producing a
+    360,000-cell prediction; no source states what that costs, and the Challenge constrains only the
+    file (a cap on stored entries), not the compute behind it. The scorer is GPU-accelerated, but that
+    is Arc's cost, not the entrant's.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: >
+      The ground truth is withheld and its cell lines unnamed, so no outside party can recompute a
+      score, and rerunning the experiment is not possible without knowing the lines. 02 S12.10's
+      requires-physical-experiment would imply that a wet lab could reproduce it.
+    source: src-vcc-2026-data-page
+    quote: We do not publish which cell line a context is.
+  reproducibility_blockers:
+    - private-test-set
+    - wet-lab
+  harness_availability: official-harness
+  harness: cell-eval2, vcc2026 metric profile (the vcc command-line tool prepares and submits files)
+  harness_source: src-vcc-2026-evaluation
+  harness_quote: The scorer itself — the same code that scores your submissions, on its
+  code_licence: null
+  code_licence_note: cell-eval2's GitHub metadata reports MIT (read 2026-09-26), but the repository
+    has no archive capture, so it is not recorded as a quoted fact.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+comparability:
+  material_waived:
+    - field: lead_time
+      reason: The facet pair statistical-fit x scientific-surrogate-model resolves the forecasting
+        profile, but nothing here is forecast; a knockdown response has no horizon.
+    - field: resolution_window
+      reason: Same resolution as lead_time; nothing resolves later, the measurements exist and are
+        withheld.
+
+reference_conditions: cond-f63f40db297a
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The overall score is the published ranking figure, and the components are shown beside it
+    on the leaderboard.
+  source: src-vcc-2026-faq
+  quote: The overall score is the unweighted mean of the six scaled metrics, averaged across the
+    three cell contexts.
+headline_metric: vcc-2026-score
+no_legitimate_aggregate: false
+
+homepage: https://virtualcellchallenge.org/
+repository: https://github.com/ArcInstitute/cell-eval2
+leaderboard_url: https://virtualcellchallenge.org/leaderboard
+license: null
+license_notes: >
+  No data licence is stated in any source read here. The site states "All Rights Reserved"; the Cell
+  commentaries are CC BY-NC-ND 4.0; trained State checkpoints carry a non-commercial licence.
+
+versions:
+  - version: '2025'
+    label: The inaugural edition, one cell line (H1 hESC)
+    version_kind: edition
+    changes: Predict held-out CRISPRi perturbations within H1 human embryonic stem cells, with a
+      training set from the same line, scored by three metrics (PDS, DES, MAE).
+    breaking: true
+    superseded_by: '2026'
+    frozen: true
+    sources:
+      - src-vcc-2025-wrap-up
+  - version: '2026'
+    label: Zero-shot across cell contexts
+    version_kind: edition
+    released: 2026-08-20
+    changes: No Challenge training set; six new cell lines, three for validation and three for the
+      final test; six reference-scaled metrics replace 2025's three.
+    breaking: true
+    supersedes_version: '2025'
+    frozen: true
+    sources:
+      - src-vcc-2026-announcement
+      - src-vcc-2026-evaluation
+
+subsets:
+  - id: virtual-cell-challenge#validation
+    label: Validation round, cell contexts A, B and C
+    scored_separately: true
+    notes: The live leaderboard's panel, open from 2026-08-20 to 2026-10-22. Not prize-scored.
+  - id: virtual-cell-challenge#final-test
+    label: Final test, cell contexts D, E and F
+    scored_separately: true
+    notes: Released 2026-10-22; the only round that ranks for prizes, with no leaderboard shown
+      until the winners are announced.
+subsets_note: >
+  The two rounds use different cell lines, perturbation panels and reference scales, and the site says
+  their scores are not comparable ("so a validation score and a final score will not be directly
+  comparable in an absolute sense", src-vcc-2026-data-page), which is why subset_used is material.
+  "Final rankings will be based solely on performance on the final test set." (src-vcc-2026-data-page).
+metrics:
+  - vcc-2026-perturbation-discrimination
+  - vcc-2026-expression-accuracy
+  - vcc-2026-de-lfc-accuracy
+  - vcc-2026-de-direction-fidelity
+  - vcc-2026-de-direction-reach
+  - vcc-2026-de-significance-overlap
+metrics_note: >
+  The six scaled metrics, each a separate Metric; the overall score is headline_metric and lists them
+  in must_report_with. Each is recorded in its scaled form, the only one the maintainers average or
+  compare. The 2025 edition's three metrics are not recorded.
+
+baselines:
+  - id: base-vcc-2026-replicate
+    benchmark_version: virtual-cell-challenge@2026
+    kind: experimental-replicate
+    metric: vcc-2026-score
+    value: 1.0
+    is_primary: true
+    source: src-vcc-2026-evaluation
+    notes: >
+      1 by construction: every metric in every context is scaled so that a real replicate experiment
+      scores 1, the replicate "taken as the mean of five disjoint half-splits of the real data"
+      (src-vcc-2026-evaluation). A landmark, not a maximum -- "1 is a landmark, not a ceiling"
+      (src-vcc-2026-faq) -- and a submission can pass it.
+  - id: base-vcc-2026-context-mean
+    benchmark_version: virtual-cell-challenge@2026
+    kind: classical-algorithm
+    metric: vcc-2026-score
+    value: 0.0
+    source: src-vcc-2026-evaluation
+    notes: >
+      The floor: the cell-context mean, one average profile predicted for every perturbation, scores 0
+      on every metric by construction. It is computed from the withheld measurements, so it is a
+      reference point rather than a submission an entrant could make; classical-algorithm is the
+      nearest floor kind (curation.notes). Scores below 0 are ordinary.
+
+lineage:
+  role: root
+
+tags:
+  - perturb-seq
+  - crispri
+  - reference-scaled
+  - prize-competition
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P0-S8-T04)
+  added_on: 2026-09-26
+  last_verified: 2026-09-26
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-vcc-2026-cell
+    - src-vcc-2025-cell
+    - src-vcc-2026-announcement
+    - src-vcc-2025-wrap-up
+    - src-vcc-2026-evaluation
+    - src-vcc-2026-data-page
+    - src-vcc-2026-faq
+  sources_note: >
+    The five web sources are Wayback captures (2026-08-11 to 2026-09-20), each extract built from the
+    capture with its SHA-1 checked against the CDX digest. The site's three are the Next.js bundles
+    that carry each page's text, because the pages' HTML carries none; the data and FAQ bundles match
+    today's live ones except that the FAQ has since added Arc's Stack model beside State. The two Cell
+    commentaries carry DOIs and are not archived: cell.com and ScienceDirect refused automated
+    retrieval (403 and a browser check), so their extracts are the abstracts as Europe PMC serves them.
+  confidence: medium
+  notes: |
+    Reviewer checks (specialist):
+    - Whether the normalisation anchors are described correctly is a biology judgement: 0 is the
+      cell-context mean and 1 a split-half replicate of the held-out data, per metric and per context
+      (data.ceiling_anchor_type_basis, baselines[]).
+    - The contamination question about recognisable cell lines and public same-line data
+      (data.contamination_risk_note).
+    - transfer-learning and the rejection of distribution-shift-generalization (capability).
+    - maintainer_type nonprofit is unquoted (governance.maintainer_type_note).
+
+    Schema findings (none worked around here):
+    1. EvalConditions.training_data_policy's four terms have no definitions. Here `zero-shot-only`
+       means no perturbation response in a target context is released; training on any other data is
+       allowed. Read as a training ban -- 02 S12.10's "none" -- it would be false.
+    2. Baseline.kind has no term for a reference point computed from the ground truth itself (the
+       cell-context mean); classical-algorithm, the nearest floor kind, suggests an entrant-style method.
+    3. A reference-scaled metric whose ceiling anchor is passable has no field saying so: Metric's
+       `unbounded` marks it, which also makes headroom uncomputable, although headroom against the
+       replicate is exactly what the scale is built for.
+    4. The anchors are per metric and per context (six by three per round), measured on the held-out
+       data; Baseline stores one value per (version, metric), so only the overall score's 0 and 1 are
+       stored, and the per-context raw anchors are not.
+    5. taxonomy/domains.yaml and taxonomy/capabilities.yaml cite `virtual-cell-challenge-2026`, which
+       is not an entry id (aliases_note).
+    6. independence_flags has no term for a sponsor that co-develops the scorer (NVIDIA and cell-eval).
+    7. As with Matbench Discovery, statistical-fit x scientific-surrogate-model resolves the
+       forecasting profile, so lead_time and resolution_window arrive as material and are waived.
+    8. A site that renders client-side can only be sourced through its script bundles; Source has no
+       field to say that the extract's bytes are a bundle and not the page at `url`, so the notes say it.
