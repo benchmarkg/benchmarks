@@ -176,8 +176,12 @@ def test_the_committed_corpus_publishes_no_draft_and_no_draft_source():
     result = artifacts.build(ROOT)
     assert result.errors == []
     drafts = [i for _, i, r in result.excluded if r.startswith(artifacts.DRAFT)]
-    assert sorted(drafts) == ['casp', 'roboarena', 'swe-bench', 'weatherbench-2']   # every committed entry is still a draft
-    assert result.corpus['entities']['benchmark'] == [] and result.corpus['entities']['source'] == []
+    assert sorted(drafts) == ['casp', 'matbench-discovery', 'roboarena', 'swe-bench', 'weatherbench-2']   # every committed entry is still a draft
+    assert result.corpus['entities']['benchmark'] == []
+    # Metrics carry no curation block and publish when they load (module docstring), and so do the
+    # Sources they cite -- and nothing else: no draft benchmark's Source reaches the artifact.
+    metric_sources = {s for m in result.corpus['entities']['metric'] for s in m['sources']}
+    assert {s['id'] for s in result.corpus['entities']['source']} == metric_sources
 
 
 def test_a_status_absent_from_the_file_is_the_model_default_and_so_a_draft(tree, tmp_path):

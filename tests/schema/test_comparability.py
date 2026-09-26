@@ -70,9 +70,12 @@ def test_the_entries_resolve_to_different_material_sets():
         'roboarena.yaml': (('physical-trial',), 4),
         'swe-bench.yaml': (('agentic',), 11),
         'weatherbench-2.yaml': (('forecasting', 'eligibility-gated'), 6),
+        'matbench-discovery.yaml': (('forecasting', 'eligibility-gated'), 4),   # lead time and window waived
     }
-    assert len({r.material for r in got.values()}) == 4
+    assert len({r.material for r in got.values()}) == 5
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
+    # the compliance tier is what makes two Matbench Discovery numbers comparable (02 S12.6)
+    assert 'eligibility_track' in got['matbench-discovery.yaml'].material
 
 
 def test_the_material_set_follows_the_facets_not_a_global_list():
@@ -306,7 +309,7 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'casp', 'roboarena', 'swe-bench', 'weatherbench-2'}
+    assert set(out['profiles']) == {'casp', 'matbench-discovery', 'roboarena', 'swe-bench', 'weatherbench-2'}
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 
