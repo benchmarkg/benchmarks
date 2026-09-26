@@ -291,6 +291,15 @@ def test_leaderboard_rules():
     Leaderboard.model_validate(changed(lb, form='assessment-paper', is_live=False))
 
 
+def test_a_leaderboard_names_its_conditions():
+    # ADR-0007: optional, a cond- reference, and nothing else
+    lb = fx('leaderboard-swebench-official.yaml')
+    assert Leaderboard.model_validate(lb).conditions is None
+    assert Leaderboard.model_validate(changed(lb, conditions='cond-0123456789ab')).conditions == 'cond-0123456789ab'
+    rejects(Leaderboard, changed(lb, conditions='verified'))
+    rejects(Leaderboard, changed(lb, eligibility_track='verified'))     # the track lives in EvalConditions
+
+
 def test_a_pool_is_a_pool_at_a_date():
     doc = fx('rating-pool-kaggle-chess.yaml')
     rejects(RatingPool, changed(doc, snapshot_date='2026-06-01'), match='carries its snapshot date')
