@@ -34,8 +34,8 @@ archive_requested_at, failure_reason. `archive_requested_at` is the FIRST reques
 moved forward, or the seven-day SLA that scripts/check_archive_coverage.py enforces could be reset
 nightly by a request that keeps failing.
 
-The HTTP calls live in `Wayback` so that tools/archive.py (P0-S5-T08) can replace them without
-touching the budget, the cursor or the record writer.
+The HTTP calls live in tools/archive.py's `Wayback` (moved there by P0-S5-T08, which wraps it for
+`bench check-links`); this module keeps the budget, the cursor and the record writer.
 """
 import os
 import sys
@@ -49,20 +49,18 @@ import argparse  # noqa: E402
 import json  # noqa: E402
 import re  # noqa: E402
 import time  # noqa: E402
-import urllib.error  # noqa: E402
 import urllib.parse  # noqa: E402
-import urllib.request  # noqa: E402
-from datetime import datetime, timedelta, timezone  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
+if ROOT not in sys.path:
+    sys.path.insert(1, ROOT)
 from check_archive_coverage import first_ingest, load_sources  # noqa: E402
+from tools.archive import WINDOW, StopRun, Wayback, wayback_time  # noqa: E402,F401  (StopRun: callers catch it here)
 
 STATE = os.path.join(ROOT, 'ingest', 'state', 'archive.json')
-USER_AGENT = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks)'
-WINDOW = timedelta(days=30)
 KEEP_RUNS = 30
-MAX_NETWORK_FAILURES = 3   # consecutive, before the run stops rather than hammering a sick host
 JOB_TIMEOUT = 600          # seconds a submitted capture may stay pending before it counts as an error
 FIELDS = ('archive_url', 'archive_captured', 'archive_status', 'archive_digest',
           'archive_requested_at', 'failure_reason')
@@ -80,111 +78,12 @@ PERMANENT = {
 BUDGET = {'error:too-many-daily-captures', 'error:user-session-limit', 'error:too-many-requests'}
 
 
-class StopRun(Exception):
-    """The run cannot continue (budget spent, bad credentials); records are left as they are."""
-
-
 def fmt(t):
     return t.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def utcnow():
     return datetime.now(timezone.utc).replace(microsecond=0)
-
-
-class Wayback:
-    """CDX lookups and SPN2 submissions against web.archive.org, one request at a time."""
-
-    def __init__(self, key=None, secret=None, spacing=1.0):
-        self.key, self.secret, self.spacing = key, secret, spacing
-        self._last = 0.0
-        self._network_failures = 0
-        self.lookup_failed = False  # the last CDX lookup got no answer, as opposed to no capture
-
-    @property
-    def can_capture(self):
-        return bool(self.key and self.secret)
-
-    def _request(self, url, data=None, auth=False):
-        wait = self._last + self.spacing - time.monotonic()
-        if wait > 0:
-            time.sleep(wait)
-        headers = {'User-Agent': USER_AGENT, 'Accept': 'application/json'}
-        if auth:
-            headers['Authorization'] = 'LOW %s:%s' % (self.key, self.secret)
-        body = urllib.parse.urlencode(data).encode() if data is not None else None
-        req = urllib.request.Request(url, data=body, headers=headers)
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                out = r.status, r.read().decode('utf-8', 'replace')
-        except urllib.error.HTTPError as e:
-            out = e.code, e.read().decode('utf-8', 'replace')
-        except (urllib.error.URLError, OSError) as e:  # timeouts, resets, DNS: nothing came back
-            self._network_failures += 1
-            if self._network_failures >= MAX_NETWORK_FAILURES:
-                raise StopRun('web.archive.org unreachable: %d network errors in a row, last %s'
-                              % (self._network_failures, e))
-            return None, str(e)
-        finally:
-            self._last = time.monotonic()
-        self._network_failures = 0
-        return out
-
-    def latest(self, url):
-        """(timestamp, original, digest) of the newest 200 capture, or None."""
-        q = urllib.parse.urlencode({'url': url, 'output': 'json', 'limit': '-1',
-                                    'filter': 'statuscode:200', 'fl': 'timestamp,original,digest'})
-        status, body = self._request('https://web.archive.org/cdx/search/cdx?' + q)
-        self.lookup_failed = status != 200
-        if status == 429:
-            raise StopRun('CDX returned 429')
-        if status != 200:  # unknown, not absent; the capture's own 30d window still deduplicates
-            return None
-        try:
-            rows = json.loads(body) if body.strip() else []
-        except ValueError:
-            return None
-        if len(rows) < 2:  # the first row is the header
-            return None
-        ts, original, digest = rows[-1]
-        return ts, original, digest
-
-    def submit(self, url):
-        """A job id, or ('error', status_ext, message)."""
-        status, body = self._request('https://web.archive.org/save', auth=True, data={
-            'url': url, 'if_not_archived_within': '30d', 'skip_first_archive': '1'})
-        if status is None:
-            return ('error', 'error:network', body)
-        if status == 401:
-            raise StopRun('SPN2 returned 401 with credentials set: check IA_SPN_KEY/IA_SPN_SECRET')
-        if status == 429:
-            raise StopRun('SPN2 returned 429')
-        try:
-            j = json.loads(body)
-        except ValueError:
-            return ('error', 'error:http-%d' % status, body[:200])
-        if j.get('job_id'):
-            return j['job_id']
-        return ('error', j.get('status_ext') or 'error:unknown', j.get('message') or '')
-
-    def poll(self, job_id):
-        """('pending',) | ('success', timestamp, original) | ('error', status_ext, message)."""
-        status, body = self._request('https://web.archive.org/save/status/' + job_id, auth=True)
-        if status != 200:
-            return ('pending',)
-        try:
-            j = json.loads(body)
-        except ValueError:
-            return ('pending',)
-        if j.get('status') == 'success':
-            return ('success', j['timestamp'], j.get('original_url'))
-        if j.get('status') == 'error':
-            return ('error', j.get('status_ext') or 'error:unknown', j.get('message') or '')
-        return ('pending',)
-
-
-def wayback_time(ts):
-    return datetime.strptime(ts[:14], '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
 
 
 def rewrite(path, updates):

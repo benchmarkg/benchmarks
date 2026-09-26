@@ -7,14 +7,15 @@
     uv run bench schema gen [--check]
     uv run bench build [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
+    uv run bench check-links [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
 command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py),
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
-build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages) and `migrate`
-P0-S5-T07's (tools/migrate.py).
+build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages), `migrate`
+P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
 """
 from __future__ import annotations
 
@@ -230,6 +231,29 @@ def migrate_cmd(
     typer.echo('applied %d row(s) to %d file(s); next: `bench validate --tier all`%s' % (
         len(rows), len(written), ', and open the tracking issue listing every affected file (03 S9.1)'
         if m.kind == 'split' else ''))
+
+
+class Format(str, Enum):
+    text = 'text'
+    json = 'json'
+
+
+@app.command('check-links')
+def check_links(
+    changed_only: Annotated[bool, typer.Option(
+        '--changed-only', help='Check only files changed against the merge base with origin/main.')] = False,
+    archive_missing: Annotated[bool, typer.Option(
+        '--archive-missing', help='Look up or request a Wayback capture for every unarchived non-DOI Source, '
+        'and fail while any is unarchived.')] = False,
+    timeout: Annotated[float, typer.Option('--timeout', help='Seconds per request.')] = 20,
+    fmt_: Annotated[Format, typer.Option('--format', help='text or json.')] = Format.text,
+):
+    """HTTP-check every url in data/, classify rot, and optionally queue archiving (05 S3, 06 S7)."""
+    from tools import links
+    report = links.run(ROOT, changed_only, archive_missing, resolver=links.default_resolver(timeout),
+                       wayback=links.default_wayback())
+    typer.echo(links.as_json(report) if fmt_ is Format.json else links.text(report))
+    raise typer.Exit(report['exit_code'])
 
 
 def main():
