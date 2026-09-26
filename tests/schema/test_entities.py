@@ -389,3 +389,17 @@ def test_data_disputes_exists_and_holds_only_valid_disputes():
     assert os.path.isdir(path)
     for p in glob.glob(os.path.join(path, '*.yaml')):
         Dispute.model_validate(read_yaml(p))
+
+
+def test_arc_agi_3s_two_boards_resolve_to_distinct_tracks():
+    # P0-S8-T03's verify: two Leaderboard records whose conditions carry different eligibility_track
+    import glob
+    from schema.conditions import EvalConditions
+    from schema.taxonomy import read_yaml
+    tracks = {}
+    for p in glob.glob(os.path.join(ROOT, 'data', 'leaderboards', 'lb-arc-agi-3-*.yaml')):
+        lb = Leaderboard.model_validate(read_yaml(p))
+        assert lb.benchmarks == ['arc-agi-3'] and lb.conditions is not None
+        c = EvalConditions.model_validate(read_yaml(os.path.join(ROOT, 'data', 'conditions', lb.conditions + '.yaml')))
+        tracks[lb.id] = c.eligibility_track
+    assert tracks == {'lb-arc-agi-3-verified': 'verified', 'lb-arc-agi-3-community': 'community'}
