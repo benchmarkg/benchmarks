@@ -171,24 +171,81 @@ def test_the_published_count_reproduces_from_the_committed_query(capsys):
     text = open(PUBLISHED, encoding='utf-8').read()
     assert 'gives **38–70**. Recommended: **≥ 70**' in text                   # the threshold beside the count
     assert '**0 of 3** benchmark record(s) pass all five clauses' in text
+    # counted at the commit that published it, so entries added since do not unsettle it
+    assert 'at commit `c66ce886270f485fee871c82e754791204f75ed6`' in text
 
 
-def test_write_then_check_round_trips_and_a_changed_corpus_fails_the_check(tmp_path, capsys):
+def _git(repo, *args):
+    import subprocess
+    return subprocess.run(['git', '-c', 'user.name=gate-test', '-c', 'user.email=gate-test@example.invalid', *args],
+                          cwd=repo, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def _repo(tmp_path):
+    """The fixture corpus as a git repository with one commit."""
     import shutil
     root = tmp_path / 'corpus'
     shutil.copytree(FIXTURE, root)
-    doc = tmp_path / 'docs' / 'adoption' / 'runnable-gate-x.md'
-    assert gate.main(['--root', str(root), '--write', str(doc)]) == 0
-    assert gate.main(['--root', str(root), '--check', str(doc)]) == 0
-    assert '**1 of 14**' in doc.read_text(encoding='utf-8')
-    # one more record fails clause 2: the published count no longer reproduces
+    _git(root, 'init', '-q', '-b', 'main')
+    _git(root, 'add', '-A')
+    _git(root, 'commit', '-q', '-m', 'fixture corpus')
+    return root
+
+
+def _fail_the_passer(root):
     p = root / 'data' / 'benchmarks' / 'fixture' / 'gate-passer.yaml'
     p.write_text(p.read_text(encoding='utf-8').replace('compute_tier: api-credits-only', 'compute_tier: single-gpu'),
                  encoding='utf-8')
+
+
+def test_write_then_check_round_trips_and_a_later_corpus_does_not_unsettle_it(tmp_path, capsys):
+    root = _repo(tmp_path)
+    doc = tmp_path / 'docs' / 'adoption' / 'runnable-gate-x.md'
+    assert gate.main(['--root', str(root), '--write', str(doc)]) == 0
+    assert gate.main(['--root', str(root), '--check', str(doc)]) == 0
+    text = doc.read_text(encoding='utf-8')
+    assert '**1 of 14**' in text and 'at commit `%s`' % _git(root, 'rev-parse', 'HEAD') in text
+    # the corpus moves on -- one more record fails clause 2 -- and the published count still reproduces,
+    # because --check recounts at the commit the block names, not over the working tree
+    _fail_the_passer(root)
+    _git(root, 'commit', '-q', '-am', 'the passer now needs a GPU')
+    assert gate.main(['--root', str(root), '--check', str(doc)]) == 0
+    capsys.readouterr()
+    assert gate.main(['--root', str(root)]) == 0                                 # the plain report reads the tree
+    assert 'passing all five: 0' in capsys.readouterr().out
+
+
+def test_a_block_that_no_longer_matches_its_commit_fails_the_check(tmp_path, capsys):
+    root = _repo(tmp_path)
+    doc = tmp_path / 'gate.md'
+    assert gate.main(['--root', str(root), '--write', str(doc)]) == 0
+    doc.write_text(doc.read_text(encoding='utf-8').replace('**1 of 14**', '**2 of 14**'), encoding='utf-8')
     capsys.readouterr()
     assert gate.main(['--root', str(root), '--check', str(doc)]) == 1
     err = capsys.readouterr().err
-    assert 'no longer reproduces' in err and '-**1 of 14**' in err and '+**0 of 14**' in err
+    assert 'no longer reproduces' in err and '-**2 of 14**' in err and '+**1 of 14**' in err
+
+
+def test_write_refuses_an_uncommitted_corpus_and_at_counts_an_older_one(tmp_path):
+    root = _repo(tmp_path)
+    first = _git(root, 'rev-parse', 'HEAD')
+    _fail_the_passer(root)
+    doc = tmp_path / 'gate.md'
+    assert gate.main(['--root', str(root), '--write', str(doc)]) == 2            # dirty: no commit holds this corpus
+    assert not doc.exists()
+    _git(root, 'commit', '-q', '-am', 'the passer now needs a GPU')
+    assert gate.main(['--root', str(root), '--write', str(doc)]) == 0
+    assert '**0 of 14**' in doc.read_text(encoding='utf-8')
+    assert gate.main(['--root', str(root), '--write', str(doc), '--at', first[:8]]) == 0
+    text = doc.read_text(encoding='utf-8')
+    assert '**1 of 14**' in text and 'at commit `%s`' % first in text               # the short id is resolved
+    assert gate.main(['--root', str(root), '--check', str(doc)]) == 0
+
+
+def test_check_refuses_a_block_with_no_commit(tmp_path):
+    doc = tmp_path / 'old.md'
+    doc.write_text(gate.published_block(fixture_gate()), encoding='utf-8')          # published before the pin
+    assert gate.main(['--root', FIXTURE, '--check', str(doc)]) == 2
 
 
 def test_write_replaces_only_the_generated_block(tmp_path):
