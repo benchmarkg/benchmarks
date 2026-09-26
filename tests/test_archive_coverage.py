@@ -156,6 +156,7 @@ def test_a_capture_records_the_url_and_keeps_the_file_layout(tmp_path):
     assert r['archive_status'] == 'ok'
     assert r['archive_url'] == 'https://web.archive.org/web/20261001120000/https://example.org/src-a'
     assert r['archive_requested_at'] == '2026-10-01T12:00:00Z'
+    assert r['archive_captured'] == '2026-10-01'   # a date, as the Source schema requires
     text = p.read_text(encoding='utf-8')
     assert text.startswith('# data/sources/2026/src-a.yaml -- test fixture')
     assert 'a line that must survive the rewrite' in text
@@ -168,6 +169,7 @@ def test_a_recent_cdx_capture_is_used_without_submitting(tmp_path):
     stats, _ = go(tmp_path, wb)
     assert wb.submitted == [] and stats['from_cdx'] == 1
     assert fields(p)['archive_digest'] == 'DIGEST'
+    assert fields(p)['archive_captured'] == '2026-09-20'
 
 
 def test_a_cdx_capture_older_than_30_days_is_not_enough(tmp_path):
