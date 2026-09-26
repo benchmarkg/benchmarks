@@ -1,0 +1,495 @@
+# data/benchmarks/earth-climate/weatherbench-2.yaml
+#
+# P0-S8-T01. Scaffolded by `bench new benchmark` on 2026-09-26, then filled from the WeatherBench 2
+# paper (arXiv 2308.15560v2), the maintainers' site, FAQ, submission guide and data guide, and the
+# code repository. Every number and every non-definitional facet choice carries a quote from its
+# source; the quote-substring validator checks each against the Source's committed extract.
+#
+# What this entry is here to stress (14-roadmap Phase 0; 02 S12.3): a benchmark whose authors say it
+# has no single ranking. `no_legitimate_aggregate` and `aggregation_policy: none-by-design` carry
+# that; lead time lives in EvalConditions (data/conditions/cond-eb116e6670bf.yaml), not in a facet;
+# the ceiling anchor is the operational NWP forecast, not a human.
+#
+# Premises in 02 S12.3 that did not survive the sources, each recorded where it bites:
+#   1. "the 2020 evaluation year is fixed". The paper's protocol is 2020; the site's headline
+#      scorecards are now 2022, with 2020 kept on its own page. Two breaking versions below.
+#   2. lifecycle `mature`. The site keeps adding models, moved its headline year, and the README
+#      points users to a new evaluation code base. `active` is what the sources show.
+#   3. capability `probabilistic-forecasting` and `quantitative-reasoning`, subject
+#      `classical-algorithm`. Each fails its own inclusion test here; taxonomy/subjects.yaml even
+#      names weatherbench-2 as classical-algorithm's near miss. All three are considered and rejected.
+#   4. submission_process `self-reported`. There are two paths, and on one of them the maintainers
+#      score the submitted forecasts themselves.
+#   5. The published JAMES version was unreachable (403); the entry rests on arXiv v2.
+
+id: weatherbench-2
+name: WeatherBench 2
+aliases:
+  - WB2
+  - 'WeatherBench 2: A benchmark for the next generation of data-driven global weather models'
+aliases_note: >
+  The site now titles itself plain "WeatherBench", which is also the name of the 2020 original
+  (Rasp et al.). Not listed as an alias, so a search for it does not silently resolve here; the
+  alias table (04 S10) should record it as a homograph once the original has an entry.
+tagline: Global medium-range weather forecasts, ML and physical, scored against reanalysis by
+  variable and lead time.
+description: >
+  An open evaluation framework, public cloud datasets and a website of scorecards for global
+  medium-range weather forecasting. Forecasts are regridded to a common 1.5 degree grid and scored
+  against ERA5 reanalysis -- operational physical models against their own analysis -- per variable,
+  pressure level, region and lead time, with deterministic metrics (RMSE, ACC, bias, SEEPS) and
+  probabilistic ones (CRPS, spread-skill ratio). Skill is displayed relative to ECMWF's operational
+  IFS HRES and IFS ENS forecasts. The maintainers publish headline scorecards but no single ranking.
+  Weaknesses the paper itself names: ERA5 is a model product, weakest for precipitation; ERA5 initial
+  conditions would not be available to a real-time forecast; and one evaluation year is too small a
+  sample for extreme events.
+self_description:
+  source: src-weatherbench-2-arxiv-html
+  quote: WeatherBench 2 consists of an open-source evaluation framework, publicly available
+    training, ground truth and baseline data as well as a continuously updated website with the
+    latest metrics and state-of-the-art models
+external_ids:
+  arxiv: '2308.15560'
+paper:
+  title: 'WeatherBench 2: A benchmark for the next generation of data-driven global weather models'
+  arxiv: '2308.15560'
+  version_read: v2
+  source: src-weatherbench-2-arxiv-html
+released: 2023-08-29
+released_basis:
+  reason: The arXiv v1 submission date, the earliest public release any source read here dates.
+  source: src-weatherbench-2-arxiv-abs
+  quote: '[v1] Tue, 29 Aug 2023 18:32:08 UTC'
+release_venue: arXiv preprint (physics.ao-ph)
+release_venue_note: >
+  A journal version exists under DOI 10.1029/2023MS004019 (JAMES, per _plan recon); the publisher
+  returned 403 and it was not read. See curation.unreachable.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/weather-forecasting
+  primary_note: >
+    The subdomain's definition ends "scored against observed weather". WeatherBench 2 scores against
+    (re)analysis, which its own FAQ says is not observation (quoted below). The leaf is still the
+    right home; the definition is narrower than the benchmark it was written for, a P0-S2 wording fix.
+  primary_source: src-weatherbench-2-faq
+  primary_quote: These (re-)analysis datasets are the best available guess of the global state of
+    the atmosphere but they are not equivalent to direct observation
+  secondary:
+    - physics/simulation-surrogates
+  secondary_note: >
+    Kept from 02 S12.3. The learned entrants stand in for a numerical weather model, and the scale is
+    skill relative to that model; strictly, the score is against reanalysis, not against the
+    simulator the entrant replaces, which the subdomain's definition says. Reviewer check.
+
+capability:
+  - calibration-uncertainty
+  - distribution-shift-generalization
+  - generation-fidelity
+capability_basis:
+  calibration-uncertainty:
+    reason: The probabilistic scores (CRPS, spread-skill ratio) consume the ensemble or distribution
+      each probabilistic entrant emits, which is the term's inclusion test.
+    source: src-weatherbench-2-faq
+    quote: To achieve good CRPS values, the forecasts have to be reliable, i.e. the forecasted
+      uncertainty has to match the actual uncertainty, and sharp, i.e. a smaller uncertainty is
+      better.
+  distribution-shift-generalization:
+    reason: The scorecards carry operationally initialised versions of ERA5-trained models beside
+      the ERA5-initialised ones, and the paper reports the comparison.
+    source: src-weatherbench-2-arxiv-html
+    quote: This suggests that the distribution shift between ERA5 and the operational IFS analysis
+      is manageable for these AI models.
+    caveat: >
+      The shift is in the initial conditions, and the paper reports it as small. Whether that is a
+      "deliberately different distribution" in the term's sense is a reviewer check.
+  generation-fidelity: >
+    The deterministic scores are distances (RMSE, MAE, bias) from a produced forecast field to the
+    reference field, which is the term's inclusion test verbatim; CASP's entry applies it the same way.
+capability_considered_and_rejected:
+  # 02 S12.3 tags quantitative-reasoning, probabilistic-forecasting, calibration-uncertainty and
+  # distribution-shift-generalization. The first two fail the P0-S2 inclusion tests.
+  - term: probabilistic-forecasting
+    reason: The outcomes already exist. The evaluation years are hindcasts against public
+      reanalysis, and the OUT clause reads "Do NOT tag this if the answer already exists and is
+      merely withheld". Here it is not even withheld. The probabilistic half is
+      calibration-uncertainty.
+    source: src-weatherbench-2-arxiv-html
+    quote: In its initial version WB2 uses the year 2020.
+  - term: quantitative-reasoning
+    reason: The output is a gridded physical field produced by an emulator or a solver, not a number
+      reached by calculation; the term's IN examples are mathematics and physics problems with
+      checkable answers.
+
+evaluation_method:
+  - statistical-fit
+  - domain-metric
+  - uncertainty-calibration-score
+evaluation_method_basis:
+  reason: >
+    statistical-fit for RMSE, ACC and bias (the term's own example is weatherbench-2); domain-metric
+    for SEEPS and CRPS, meteorology's named scores (CRPS is in the term's IN list);
+    uncertainty-calibration-score for the spread-skill ratio, a calibration functional over the
+    emitted ensemble. 02 S12.3 omits the third.
+  source: src-weatherbench-2-faq
+  quote: In a reliable forecast the Ensemble Mean RMSE should match the spread.
+
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis: >
+  The entrants the benchmark exists for are learned weather models standing in for a numerical
+  forecast system, and the scale is skill relative to that system: the term's inclusion test, and
+  weatherbench-2 is the term's own example.
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: >
+      taxonomy/subjects.yaml names weatherbench-2 as this term's near miss: the ECMWF operational
+      forecast is the comparator the field is measured against, not a competing entrant. 02 S12.3
+      tags it. NeuralGCM, which pairs a dynamical-core solver with ML components, is listed as a
+      hybrid, and a learned component rules the term out (quoted).
+    source: src-weatherbench-2-homepage
+    quote: NeuralGCM 0.7° Google Research Hybrid Forecast (deterministic) ERA5 0.7°
+  - term: domain-specialist-model
+    reason: The OUT clause, verbatim -- "do NOT tag it where the artifact emulates a physical
+      process, which is `scientific-surrogate-model`".
+
+lifecycle: active
+lifecycle_note: >
+  02 S12.3 says `mature` ("no expectation of structural change"). The README now asks users to move to
+  a new evaluation code base, WeatherBench-X (execution.harness_note), and the headline year has moved
+  once already. Neither is `superseded`: the benchmark keeps its name, site and data.
+lifecycle_basis:
+  reason: Results are still being produced. The site's headline scorecards moved from the paper's
+    2020 to 2022, and the paper describes the framework as one that will change.
+  source: src-weatherbench-2-homepage
+  quote: Scorecard for upper-level variables for the year 2022.
+activity: leaderboard-live-no-round
+activity_basis:
+  reason: New models are added to the site on request, with no competition round.
+  source: src-weatherbench-2-submit
+  quote: Or you evaluate the forecasts yourself and share your evaluation code and results with us.
+    Then we will update the results on the website.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GraphCast
+    source: src-weatherbench-2-homepage
+    observed_on: 2026-09-26
+    quote: GraphCast Google DeepMind ML-based Forecast (deterministic) ERA5 0.25°
+    note: One row of the participating-models table, which lists the method type of every entrant.
+evaluation_target: learned-system
+evaluation_target_basis:
+  reason: >
+    The physics-based IFS HRES, IFS ENS and ERA5 forecasts sit in the same scorecards, but as the
+    baselines the learned entrants are measured against; the benchmark is built for the learned ones.
+    `mixed` would say the numerical methods are under test.
+  source: src-weatherbench-2-arxiv-html
+  quote: designed with the aim to accelerate progress in data-driven weather modeling
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_basis:
+  reason: >
+    The ground truth is ERA5, a reanalysis: a model run held close to observations by data
+    assimilation. Operational models are scored against their own analysis instead (curation.notes,
+    schema finding 2). Neither `simulation` nor `experimental` is exact; `simulation` is the closer,
+    and the paper says so in as many words.
+  source: src-weatherbench-2-arxiv-html
+  quote: ERA5 is a model simulation which is closer to the truth for some variables than for others.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Scoring a forecast needs only the public ground truth and the public code.
+  source: src-weatherbench-2-arxiv-html
+  quote: All data and code needed for evaluation are publicly available
+
+task:
+  exists: true
+  input: []
+  input_note: >
+    Left empty on purpose: the benchmark fixes the targets, not the inputs, resolution or training
+    data, so it evaluates whole forecast systems (quoted below).
+  output: Global gridded forecasts of the evaluated variables, at stated lead times from each
+    initialisation.
+  scoring: >
+    Forecasts and ground truth are regridded conservatively to 1.5 degrees, then scored per variable,
+    pressure level, region and lead time: RMSE, ACC, bias and SEEPS for deterministic forecasts, CRPS
+    and spread-skill ratio for probabilistic ones. Headline variables are Z500, T850, Q700, WV/WS850,
+    T2M, WS10, MSLP and 24 h precipitation.
+  scoring_source: src-weatherbench-2-arxiv-html
+  scoring_quote: 500hPa Geopotential Z500 RMSE CRPS 850hPa Temperature T850 RMSE CRPS
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The ground truth is public reanalysis for every year, the
+    evaluation years included.
+  item_definition: One score is one (variable, pressure level, region, lead time, metric) cell,
+    averaged over every initialisation in the evaluation year.
+  item_definition_source: src-weatherbench-2-arxiv-html
+  item_definition_quote: Evaluation is done on all 00 and 12 UTC initialization times for 2020
+  source: src-weatherbench-2-arxiv-html
+  quote: While WB2 defines the targets to be evaluated, it leaves the remaining modeling setup open
+    (e.g., which inputs or model resolution to use).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Ground truth, baselines and training data are in a public cloud bucket.
+    source: src-weatherbench-2-arxiv-html
+    quote: publicly available training, ground truth and baseline data
+  refresh: versioned-releases
+  refresh_note: >
+    The version is the evaluation year (versions[] below): the paper scores 2020, the site's headline
+    scorecards 2022. No source states a versioning policy; the paper says only that the period can
+    change (quoted). A score without its evaluation year is not interpretable.
+  refresh_source: src-weatherbench-2-arxiv-html
+  refresh_quote: As WB2 is updated, evaluation can be changed to a more recent or longer period.
+  data_provenance:
+    - simulation-generated
+    - real-world-instrument
+  data_provenance_basis:
+    reason: >
+      Ground truth is reanalysis and analysis: a numerical model's state (simulation-generated)
+      constrained by assimilated direct and remote-sensing observations (real-world-instrument).
+      Neither term alone is true, and no term names a data-assimilation product.
+    source: src-weatherbench-2-arxiv-html
+    quote: ERA5 is a model simulation which is closer to the truth for some variables than for
+      others.
+  contamination_risk: medium
+  contamination_risk_note: >
+    ERA5 is public for every year, the evaluation years included, so nothing but each entrant's own
+    training cut-off keeps the test year out of training. The cited row shows the cut-off is per
+    model: WeatherMesh 4 was trained on years after the one it is scored on, and the site flags it
+    (src-weatherbench-2-homepage: "Trained on future years, see FAQ for details."). That is a route,
+    not a demonstrated leak of the evaluation year itself, so the risk stays `medium` rather than
+    `high`. 02 S12.3 records medium with no source; this one has one.
+  contamination_evidence:
+    - source: src-weatherbench-2-faq
+      stance: supports
+      quote: Note that the model was trained on years 1971-2019 and 2021-2023; and evaluated on
+        2020.
+  ceiling_anchor_type: operational-system
+  ceiling_anchor_type_note: >
+    A reference point more than a cap: the scorecards colour each cell by its percentage difference to
+    IFS HRES, a scale that runs past the anchor in both directions. And the anchor differs by
+    scorecard (ceiling_by_category): IFS HRES for deterministic scores, IFS ENS for probabilistic ones.
+    The Baseline records themselves are P3-S6-T04's.
+  ceiling_anchor_type_basis:
+    reason: The top of the scale is ECMWF's operational forecast, and skill is shown relative to it;
+      a human baseline would be a category error here, as 02 S12.3 says.
+    source: src-weatherbench-2-arxiv-html
+    quote: Our main baseline comes from operational forecasts created with ECMWF’s IFS model, which,
+      measured by standard verification metrics, are typically regarded as the best global,
+      medium-range weather forecasts.
+  ceiling_by_category:
+    - category: deterministic headline scorecards
+      metric: RMSE, relative to IFS HRES
+      source: src-weatherbench-2-homepage
+      quote: The scorecards below show the skill (measured by the global root mean squared error) of
+        different physical and ML-based methods relative to ECMWF's IFS HRES, one of the world's
+        best operational weather models, on a number of key variables.
+    - category: probabilistic headline scorecards
+      metric: CRPS, relative to IFS ENS
+      source: src-weatherbench-2-homepage
+      quote: The scorecard below shows the skill (measured by the continuous ranked probability
+        score = CRPS) of physical and ML-based probabilistic models, relative to ECMWF's IFS ENS
+        model.
+  dataset_licence: per dataset; some permit commercial use, others research use only
+  dataset_licence_note: >
+    Access is open (a public bucket, no registration) but reuse is not uniform: the data
+    guide points to a LICENSE file per dataset, and the IFS ENS data drawn from the TIGGE
+    archive is research-only (src-weatherbench-2-data-guide: "All data from the TIGGE
+    archive can only be used for research purposes."). The per-dataset files were not read.
+  dataset_licence_source: src-weatherbench-2-data-guide
+  dataset_licence_quote: Some datasets allow commercial use. Others only permit research use.
+  size: null
+  size_note: >
+    No item count is curated. The natural unit is the (variable, level, region, lead time, metric)
+    cell over an evaluation year, and no source states how many the scorecards hold.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Google Research
+  maintainer_basis:
+    reason: >
+      The code, site and submission contact are Google's. The paper's authors are from Google
+      Research, Google DeepMind and ECMWF; ECMWF co-authored the protocol but no source shows it
+      maintaining the site or code.
+    source: src-weatherbench-2-repo
+    quote: Copyright 2023 Google LLC
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-verified
+    - self-reported
+  submission_process_note: >
+    Two paths, both on the submission guide. An entrant can hand over forecasts and the maintainers
+    score them ("We will then evaluate the forecast."), which is stronger than `maintainer-verified`
+    describes: the maintainer computes the number, against public ground truth, rather than checking
+    one. Or the entrant scores its own forecasts and shares code and results, which the guide does not
+    say are checked: `self-reported`. Which path a published row took is not shown on the site.
+  submission_process_source: src-weatherbench-2-submit
+  submission_process_quote: We will then evaluate the forecast.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-weatherbench-2-homepage
+      quote: NeuralGCM 0.7° Google Research Hybrid Forecast (deterministic) ERA5 0.7°
+  independence_flags_note: >
+    Google Research maintains the benchmark and its own NeuralGCM and SphericalCNN are entrants. Google
+    DeepMind's GraphCast, GenCast and FGN are entrants too; whether a sister lab in the same company
+    counts as the maintainer is a reviewer check, and the flag does not rest on it.
+  known_limitation:
+    source: src-weatherbench-2-arxiv-html
+    quote: Note that using ERA5 for evaluation and training has some caveats.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: >
+    Not guessed. Scoring an entrant's forecasts is the run a third party repeats, and no source states
+    its cost; the evaluation code is built for distributed runs on large forecast files. Training an
+    entrant is a different order of cost, and the paper's Table 1 lists it per model -- up to
+    256 TPU v5 for three weeks for NeuralGCM (quoted).
+  compute_tier_source: src-weatherbench-2-arxiv-html
+  compute_tier_quote: 3 weeks; 256 TPU v5
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: >
+    For the score: public ground truth, public code, no human or physical step. Regenerating an
+    entrant's forecasts needs that entrant's model, which the benchmark does not require anyone to
+    publish.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: weatherbench2 evaluation scripts (google-research/weatherbench2)
+  harness_note: >
+    The README now directs users to WeatherBench-X, an updated evaluation code base, and the site
+    describes the framework as consisting of it (src-weatherbench-2-homepage: "our recently updated
+    WeatherBench-X evaluation code"). Which code scored a given published row is not stated, and no
+    source read here shows the two produce identical numbers; a claim should name its harness.
+  harness_source: src-weatherbench-2-repo
+  harness_quote: has been released. It provides an updated version of our evaluation code base. We
+    encourage users to switch to the new codebase.
+  code_licence: Apache-2.0
+  code_licence_source: src-weatherbench-2-repo
+  code_licence_quote: Licensed under the Apache License, Version 2.0
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+reference_conditions: cond-eb116e6670bf
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The authors say in as many words that there is no single ranking.
+  source: src-weatherbench-2-arxiv-html
+  quote: Therefore, WB2 should not be seen as a traditional benchmark challenge with a single
+    leaderboard but rather as a tool to compare different approaches on different aspects.
+headline_metric: null
+no_legitimate_aggregate: true
+no_legitimate_aggregate_basis:
+  reason: The site's own answer to "What is the best model currently?".
+  source: src-weatherbench-2-faq
+  quote: WeatherBench provides an objective, open, and reproducible benchmark for weather forecasts
+    across a variety of metrics, rather than determining a single
+secondary_axes: []
+secondary_axes_note: >
+  Empty because the vocabulary is {cost, latency, throughput, energy, reliability}, and the benchmark's
+  real axes -- variable, pressure level, region, lead time, metric -- are none of them. P3-S6-T04 plans
+  to record that grid here; the enum cannot hold it (curation.notes).
+
+homepage: https://sites.research.google/gr/weatherbench/
+homepage_note: The paper links https://sites.research.google/weatherbench, which now redirects here.
+repository: https://github.com/google-research/weatherbench2
+dataset_url: https://weatherbench2.readthedocs.io/en/latest/data-guide.html
+license: Apache-2.0
+license_notes: >
+  The code licence. The paper (arXiv v2) is CC BY 4.0; the datasets carry per-dataset licences, some
+  research-only (data.dataset_licence).
+
+versions:
+  - version: '2020'
+    label: Evaluation year 2020, the paper's protocol
+    version_kind: revision
+    changes: All 00 and 12 UTC initialisations from 2020-01-01 to 2020-12-31, scored at 1.5 degrees.
+      Still published on the site's own "Scorecards 2020" page.
+    breaking: true
+    frozen: true
+    sources:
+      - src-weatherbench-2-arxiv-html
+  - version: '2022'
+    label: Evaluation year 2022, the site's headline scorecards
+    version_kind: revision
+    changes: The headline scorecards scored on 2022. When the switch happened is not stated.
+    breaking: true
+    frozen: true
+    sources:
+      - src-weatherbench-2-homepage
+
+lineage:
+  role: root
+lineage_note: >
+  The paper presents WeatherBench 2 as "an update to" WeatherBench (Rasp et al. 2020). Not recorded as
+  lineage.supersedes, because the original has no entry and tier 2 resolves the reference; add it
+  when WeatherBench is curated.
+
+tags:
+  - scorecards
+  - reanalysis-ground-truth
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P0-S8-T01)
+  added_on: 2026-09-26
+  last_verified: 2026-09-26
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-weatherbench-2-arxiv-html
+    - src-weatherbench-2-arxiv-abs
+    - src-weatherbench-2-homepage
+    - src-weatherbench-2-faq
+    - src-weatherbench-2-submit
+    - src-weatherbench-2-data-guide
+    - src-weatherbench-2-repo
+  sources_note: >
+    The five web sources are Wayback captures, and each extract was built from the capture itself
+    (its SHA-1 checked against the CDX digest), not from the live page, so every quote holds for the
+    snapshot a reader is sent to. The two arXiv sources carry a DOI and are not archived.
+  confidence: medium
+  notes: |
+    Reviewer checks (specialist):
+    - Whether the entry is right about the variable x pressure level x lead time x metric grid is a
+      meteorology judgement; nothing here was checked by anyone who does forecast verification.
+    - distribution-shift-generalization rests on ERA5-initialised vs operationally initialised runs
+      (capability_basis); drop it if that is not a deliberate shift in the term's sense.
+    - physics/simulation-surrogates as a secondary domain (domain.secondary_note).
+    - The independence flag rests on Google Research's own entrants; Google DeepMind's are a separate
+      question (governance.independence_flags_note).
+
+    Schema findings (for P0-S4's successors; none worked around here):
+    1. Evaluation resolution is material and has no EvalConditions field. The maintainers: "Note that
+       absolute values of metrics computed at different resolution are not necessarily comparable (see
+       paper)." (src-weatherbench-2-submit). `resolution_window` is a forecast-resolution date, a
+       different thing. P1-S7-T01 already plans for it: "Record lead time and spatial resolution as
+       first-class conditions." (_plan/execution/tasks.yaml).
+    2. The ground truth an entrant is scored against is material and has no field: "Operational models
+       are evaluated against IFS analysis. All other models evaluated against ERA5."
+       (src-weatherbench-2-homepage). Two claims at the same lead time and metric, one vs analysis and
+       one vs ERA5, would today get the same comparability key.
+    3. reference_conditions is one EvalConditions record, and a grid-valued benchmark has no single
+       reference lead time. cond-eb116e6670bf states the grid instead of a value, so no claim will ever
+       sit exactly at reference conditions, which leaves SOTA and headroom undefined -- the right
+       outcome here (no aggregate by design), reached by accident rather than by rule.
+    4. secondary_axes is an enum of {cost, latency, throughput, energy, reliability}. P3-S6-T04 plans
+       to record the (variable, level, lead time, metric) grid there; it cannot. A `score_axes` field,
+       or reading the grid off the claims' conditions, is the decision to make.
+    5. submission_process has no term for "the maintainer scores submitted predictions against public
+       ground truth" (governance.submission_process_note).
+    6. ceiling_anchor_type is single-valued, and this benchmark anchors deterministic scores on IFS HRES
+       and probabilistic ones on IFS ENS; ceiling_by_category carries the split.
+    7. The earth-climate/weather-forecasting definition says "scored against observed weather";
+       WeatherBench 2 is scored against reanalysis (domain.primary_note).
+  unreachable:
+    - url: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2023MS004019
+      http_status: 403
+      consequence: The journal version (JAMES) was not read; every paper-derived field is from arXiv
+        v2 (2024-01-26) and may differ from the published text.
