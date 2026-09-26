@@ -1,0 +1,506 @@
+# data/benchmarks/chemistry-materials/matbench-discovery.yaml
+#
+# P0-S8-T02. Scaffolded by `bench new benchmark` on 2026-09-26, then filled from the Nature Machine
+# Intelligence paper (2025, open access), its arXiv listing, the Póta et al. thermal-conductivity
+# paper, Wayback captures of the leaderboard's home, discovery, geometry-optimisation, diatomics and
+# contribution pages, and a capture of the code repository. Every number carries a quote that the
+# quote-substring validator checks against the Source's committed extract.
+#
+# What this entry is here to stress (14-roadmap Phase 0; 02 S12.6): comparability on the TRAINING
+# side. The benchmark groups models by what data they were allowed to train on, so a ranking is
+# meaningful only inside a tier. training_data_eligibility_tiers[] records the benchmark's own tiers;
+# the per-claim tier goes in EvalConditions.eligibility_track, which the resolved profile makes
+# material.
+#
+# The live site moves faster than the archive. The newest captures are from 2026-04 to 2026-09 and
+# every fact below is quoted from one of them; three things on today's site (2026-09-26) have no
+# capture and are therefore described but not quoted: the molecular-dynamics task and its CMDS
+# score, the diatomics CDS score, and the per-dataset training filters that replaced the
+# compliant/non-compliant toggle. They wait on archival (IA keys, P5-S3-T01), like P0-S3-T04's pages.
+#
+# Premises in 02 S12.6 that did not survive the sources, each recorded where it bites:
+#   1. "six metrics ... rather than one composite". The leaderboard ranks by a composite, CPS, with
+#      viewer-adjustable weights. The components are separate Metric references and CPS is recorded
+#      as what it is, the official aggregate (headline_metric), never in place of them.
+#   2. The six metrics. Five components are quotable from archived or DOI sources (F1, DAF, hull-
+#      distance MAE, RMSD, κSRME); the MD and diatomics scores are not yet (see above).
+#   3. capability `quantitative-reasoning`, `transfer-learning`, `perception` and secondary domain
+#      `physics/condensed-matter` fail their own tests and are considered and rejected.
+#   4. independence_flags `no-known-conflict`. Not adopted: the search here was not exhaustive, and
+#      it found a question for a reviewer (governance.independence_flags_note).
+
+id: matbench-discovery
+name: Matbench Discovery
+aliases:
+  - A framework to evaluate machine learning crystal stability predictions
+  - Matbench Discovery -- A framework to evaluate machine learning crystal stability predictions
+aliases_note: >
+  Not the same benchmark as Matbench (Dunn et al. 2020), the Materials Project's earlier property-
+  prediction suite; the name is shared, the tasks are not.
+tagline: ML interatomic potentials scored on finding stable crystals, relaxing them and predicting
+  their thermal conductivity.
+description: >
+  A leaderboard and Python package that evaluate machine-learning energy models, mostly universal
+  interatomic potentials, as pre-filters in a high-throughput search for stable inorganic crystals.
+  The core task scores stability predictions on the WBM test set against a fixed DFT convex hull
+  built from the Materials Project; further tasks score geometry optimisation, phonons and lattice
+  thermal conductivity, and diatomic energy curves. Models are grouped by the training data they were
+  allowed to use. The leaderboard sorts by a weighted composite whose weights the viewer can change.
+  Known weaknesses the sources name: regression metrics such as MAE can look good while false
+  positives near the stability threshold stay high, and the reference is PBE DFT, not experiment.
+self_description:
+  source: src-matbench-discovery-arxiv-abs
+  quote: We present Matbench Discovery, an evaluation framework for ML energy models, applied as
+    pre-filters for high-throughput searches of stable inorganic crystals.
+external_ids:
+  arxiv: '2308.14920'
+paper:
+  title: A framework to evaluate machine learning crystal stability predictions
+  arxiv: '2308.14920'
+  source: src-matbench-discovery-nature
+released: 2023-08-28
+released_basis:
+  reason: The arXiv v1 submission date, the earliest public release any source read here dates.
+  source: src-matbench-discovery-arxiv-abs
+  quote: '[v1] Mon, 28 Aug 2023 22:29:57 UTC'
+release_venue: Nature Machine Intelligence 7, 836-847 (2025)
+release_venue_source: src-matbench-discovery-nature
+release_venue_quote: Nature Machine Intelligence volume 7, pages 836–847 (2025)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/crystal-stability-discovery
+  secondary:
+    - chemistry-materials/force-fields-potentials
+  secondary_note: >
+    The geometry-optimisation, phonon and diatomics tasks score the potentials as force fields, not as
+    stability classifiers; each carries its own domain_override in subsets[].
+domain_considered_and_rejected:
+  - term: physics/condensed-matter
+    reason: >
+      02 S12.6 lists it. The physics family's own exclusion reads "Do NOT tag this if the system is a
+      molecule, crystal, catalyst or material, which is `chemistry-materials` even when the method is
+      physics", and it names Matbench Discovery as one of the cases that forced the rule.
+
+capability:
+  - distribution-shift-generalization
+  - generation-fidelity
+capability_basis:
+  distribution-shift-generalization:
+    reason: The test set is built by successive elemental substitutions away from the training
+      distribution, and the paper uses the batches to measure degradation.
+    source: src-matbench-discovery-nature
+    quote: This split of the data into batches of increasing substitution count is a unique and
+      compelling feature of the test set as it allows out-of-distribution testing by examining
+      whether model performance degrades for later batches.
+  generation-fidelity: >
+    The geometry-optimisation task scores the structure a model relaxes to by its distance (RMSD) from
+    the DFT-relaxed reference, which is the term's inclusion test; CASP and WeatherBench 2 apply it
+    the same way.
+capability_considered_and_rejected:
+  # 02 S12.6 tags quantitative-reasoning, distribution-shift-generalization, transfer-learning and
+  # perception. Only the second survives the P0-S2 inclusion tests.
+  - term: quantitative-reasoning
+    reason: The output is an energy or a structure produced by a learned emulator of DFT, not a
+      number reached by calculation; the term's IN examples are mathematics and physics problems
+      with checkable answers.
+  - term: transfer-learning
+    reason: >
+      The IN test needs a benchmark that "trains or validates on one setting and scores on a
+      deliberately different one, and the transfer itself is reported". Matbench Discovery trains
+      nothing and reports no transfer protocol; that one force field is scored on several downstream
+      tasks is use, not transfer. Reviewer check.
+  - term: perception
+    reason: The input is a crystal structure given as coordinates, not "an image, video, audio
+      stream, point cloud or comparable raw signal".
+
+evaluation_method:
+  - domain-metric
+  - statistical-fit
+  - composite
+evaluation_method_basis:
+  reason: >
+    domain-metric for DAF and κSRME, materials-science measures (kappa_SRME is in the term's IN list);
+    statistical-fit for MAE, RMSE and R2 against DFT; composite for CPS, the published weighted
+    combination, whose constituent methods are tagged beside it as the term asks.
+  source: src-matbench-discovery-homepage
+  quote: The CPS (Combined Performance Score) is a metric that weights discovery performance (F1),
+    geometry optimization quality (RMSD), and thermal conductivity prediction accuracy (κSRME).
+
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis: >
+  Interatomic potentials standing in for DFT, scored against DFT: the term's inclusion test, and
+  matbench-discovery is the term's own example.
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: >
+      taxonomy/subjects.yaml names matbench-discovery as this term's example ("Classical potentials and
+      analytical methods are entered alongside learned ones"), and no source read here shows one: every
+      entrant in the paper's model list has learned parameters, the random forest and the Bayesian
+      optimiser's surrogate included. Either the example or this entry is wrong; a P0-S2 reviewer check.
+
+lifecycle: active
+lifecycle_basis:
+  reason: New models are still being added; the newest capture lists entries added in 2026.
+  source: src-matbench-discovery-homepage
+  quote: We welcome new models additions to the leaderboard through GitHub PRs.
+activity: accepting-submissions
+activity_basis:
+  reason: Submissions are pull requests, open at any time.
+  source: src-matbench-discovery-contribute
+  quote: Once tests pass and the PR is merged, your model will be added to the leaderboard!
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: CHGNet
+    source: src-matbench-discovery-nature
+    observed_on: 2026-09-26
+    quote: CHGNet is a UIP for charge-informed atomistic modelling.
+    note: One of the universal interatomic potentials in the paper's model list; UIP is the paper's
+      term for a learned universal interatomic potential.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_basis:
+  reason: The references are DFT (PBE) calculations, a simulation, not experiment.
+  source: src-matbench-discovery-nature
+  quote: Their target values are the PBE formation energies of the corresponding DFT-relaxed
+    structures.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Test set and code are public; a submission is scored from its uploaded predictions.
+  source: src-matbench-discovery-nature
+  quote: is available as an open-source Python package and via GitHub at
+    https://github.com/janosh/matbench-discovery
+
+task:
+  exists: true
+  input:
+    - unrelaxed WBM crystal structure (discovery, geometry optimisation)
+    - PhononDB structure (phonons and thermal conductivity)
+  output: >
+    Per task: a formation energy per atom for each WBM structure (discovery); the relaxed structure
+    (geometry optimisation); lattice thermal conductivity (phonons).
+  scoring: >
+    Discovery: predicted stability is on or below a fixed DFT convex hull built from the Materials
+    Project v2022.10.28 release, scored by F1, DAF, precision and recall, with MAE, RMSE and R2 on the
+    hull distance. Geometry optimisation: RMSD to the DFT-relaxed structure. Phonons: κSRME.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The WBM test set, with its DFT labels, is public on Figshare.
+  source: src-matbench-discovery-discovery-page
+  quote: In Matbench Discovery, the convex hull is always constructed from DFT reference energies,
+    not from the ML model’s predicted energies.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The test set is a public Figshare dataset.
+    source: src-matbench-discovery-nature
+    quote: which is available via Figshare at https://figshare.com/articles/dataset/22715158
+  refresh: rolling-live
+  refresh_note: >
+    Kept from 02 S12.6, with a caveat. The WBM discovery set is fixed; what moves is the leaderboard
+    around it -- tasks added (the diatomics page was still unranked in 2025, molecular dynamics is on
+    the live site only), the composite's make-up, and the evaluation code. The last tagged package
+    release is v1.3.1 (src-matbench-discovery-repo), so the live leaderboard runs ahead of any
+    labelled version. A claim should name the date it was read. Reviewer check.
+  data_provenance:
+    - simulation-generated
+    - synthetic-procedural
+  data_provenance_basis:
+    reason: >
+      The WBM candidates were generated by rule-based elemental substitution of Materials Project
+      structures (synthetic-procedural), then relaxed with DFT for their labels (simulation-generated).
+    source: src-matbench-discovery-nature
+    quote: consists of 257,487 structures generated via chemical similarity-based elemental
+      substitution
+  contamination_risk: medium
+  contamination_risk_note: >
+    The maintainers cleaned the test set against the compliant training data, which is evidence
+    against leakage there. Non-compliant models train on other, larger datasets that the compliance
+    rule does not bound, and no source read here checks them against WBM either way. Hence medium,
+    where 02 S12.6 also has it.
+  contamination_evidence:
+    - source: src-matbench-discovery-nature
+      stance: against
+      quote: To control for the potential adverse effects of leakage between the MP training set and
+        the WBM test set, we cleaned the WBM test set based on protostructure matching.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: >
+    Each component has its own bound (F1 at most 1, κSRME and RMSD at least 0), and DAF's maximum is a
+    property of the test set, 1/prevalence (ceiling_by_category). The reference is PBE DFT, so a
+    perfect score means reproducing DFT, not experiment.
+  ceiling_by_category:
+    - category: discovery, unique-prototype test set
+      value: 6.5
+      metric: discovery-acceleration-factor
+      source: src-matbench-discovery-nature
+      quote: The maximum possible DAF is the inverse of the prevalence, which on our dataset is
+        (33,000/215,000)−1 ≈ 6.5.
+    - category: discovery, unique-prototype test set (leaderboard's figure)
+      value: 6.54
+      metric: discovery-acceleration-factor
+      source: src-matbench-discovery-homepage
+      quote: meaning the max possible DAF is (32.9k / 215k)^−1 ≈ 6.54
+  size:
+    n_items:
+      value: 257487
+      unit: WBM structures, before the paper's cleaning
+      source: src-matbench-discovery-nature
+      quote: consists of 257,487 structures generated via chemical similarity-based elemental
+        substitution
+    other_splits:
+      - value: 215488
+        unit: structures
+        split: unique-prototype test set (the discovery ranking's default)
+        source: src-matbench-discovery-nature
+        quote: leaving 215,488 structures in the unique prototype test set
+      - value: 32942
+        unit: stable structures within the unique-prototype set
+        split: positive class
+        source: src-matbench-discovery-nature
+        quote: In total, 32,942 of 215,488 materials in the WBM unique prototype test set satisfy
+          this criterion.
+      - value: 103
+        unit: crystal structures
+        split: phonons and thermal conductivity (PhononDB PBE)
+        source: src-pota-kappa-arxiv-html
+        quote: We apply our framework to a database of 103 solids
+  size_note: >
+    The live site (not archived) now gives 256,963 WBM structures for the full set, after cleaning;
+    the geometry-optimisation capture says "257k" and that every model was evaluated on at least
+    249k relaxations. The figures are recorded as the paper states them.
+
+training_data_eligibility_tiers:
+  - id: compliant
+    label: Compliant
+    rule: Trained on nothing beyond the Materials Project v2022.10.28 release -- any subset of its
+      relaxation frames, energies, forces and stresses (MPtrj, for example).
+    source: src-matbench-discovery-nature
+  - id: non-compliant
+    label: Non-compliant
+    rule: Trained on any data outside that release, e.g. OMat24, sAlex, Alexandria or GNoME.
+    source: src-matbench-discovery-homepage
+training_data_eligibility_tiers_note: >
+  The leaderboard's views, in the 2026-06 capture: "Compliant models Non-compliant models Energy-only
+  models" (src-matbench-discovery-homepage). Today's live site (2026-09-26, not archived) has replaced
+  the two-tier toggle with per-dataset require/exclude filters and a separate openness class (OSOD,
+  OSCD, CSOD, CSCD), which is a finer vocabulary than these two tiers. A claim's tier belongs in its
+  EvalConditions.eligibility_track; 02 S12's per-claim `training_data_eligibility` field does not exist
+  yet (P3-S1-T01, blocking issue 1).
+training_data_eligibility_tiers_basis:
+  reason: >
+    The paper defines the compliant tier; the leaderboard shows the two tiers as separate views, with
+    a third view, energy-only models, that is a model-type filter rather than a training-data tier and
+    is not recorded here.
+  source: src-matbench-discovery-nature
+  quote: database release as the maximum allowed training set for any compliant model submission.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Janosh Riebesell
+  maintainer_basis:
+    reason: >
+      The site is copyrighted to one person and the code repository is his; it is hosted on a Materials
+      Project domain, but the Materials Project disclaims the ranking (known_limitation).
+    source: src-matbench-discovery-homepage
+    quote: © Janosh Riebesell (2022)
+  maintainer_type: individual
+  submission_process: maintainer-verified
+  submission_process_note: >
+    Entrants share prediction files and open a pull request; the maintainers' tests run and a
+    maintainer merges it. As with WeatherBench 2, the maintainer computes the score from submitted
+    predictions against public labels, which `maintainer-verified` ("checks a submitted result")
+    understates. The live contribution guide (not archived) now describes automated ingestion that
+    scores the uploaded predictions with the maintainers' own code.
+  submission_process_source: src-matbench-discovery-contribute
+  submission_process_quote: You should share your model’s predictions through a cloud storage
+    service (we recommend Figshare)
+  independence_flags: []
+  independence_flags_note: >
+    Deliberately empty rather than 02 S12.6's `no-known-conflict`, which is a statement about a
+    search. The benchmark paper's co-authors include Bowen Deng and Gerbrand Ceder (author list,
+    src-matbench-discovery-arxiv-abs), and CHGNet, an entrant, is Deng et al.'s (src-matbench-discovery-nature:
+    "Deng, B. et al. CHGNet as a pretrained
+    universal neural network potential for charge-informed atomistic modelling."). Whether a paper
+    co-author counts as the maintainer for maintainer-competes-on-own-benchmark is a reviewer check;
+    the maintainer of record builds no ranked model that any source read here shows.
+  known_limitation:
+    source: src-matbench-discovery-homepage
+    quote: A high ranking does not constitute endorsement by the Materials Project.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: >
+    Not guessed. A submission runs the entrant's model over roughly 257k structure relaxations plus the
+    phonon calculations, but no source read here states what that costs, and it varies by model.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: >
+    For the score: public test data, public evaluation code, prediction files kept on Figshare. The
+    live MD task (not archived) also has withheld energy and force labels, used only for maintainer
+    diagnostics outside its score; that does not touch the tasks recorded here.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: matbench-discovery Python package (janosh/matbench-discovery)
+  harness_source: src-matbench-discovery-nature
+  harness_quote: We welcome further model submissions via pull requests.
+  code_licence: MIT
+  code_licence_source: src-matbench-discovery-repo
+  code_licence_quote: MIT license
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  material_waived:
+    - field: lead_time
+      reason: The facet pair statistical-fit x scientific-surrogate-model resolves the forecasting
+        profile, but nothing here is forecast; a formation energy has no horizon.
+    - field: resolution_window
+      reason: Same resolution as lead_time; nothing resolves later, the DFT labels exist now.
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: >
+    The leaderboard sorts by CPS, a weighted composite of three task metrics, and lets the reader
+    change the weights. Official, but not fixed: a CPS value means something only with its weights.
+  source: src-matbench-discovery-homepage
+  quote: CPS Reset F1 50% κSRME 40% RMSD 10%
+headline_metric: matbench-cps
+no_legitimate_aggregate: false
+
+homepage: https://matbench-discovery.materialsproject.org/
+repository: https://github.com/janosh/matbench-discovery
+dataset_url: https://figshare.com/articles/dataset/22715158
+leaderboard_url: https://matbench-discovery.materialsproject.org/
+license: MIT
+license_notes: >
+  The code licence. The paper is CC BY 4.0. Training datasets carry their own licences, several of
+  them non-commercial; the WBM test set's was not read from an archived source.
+
+subsets:
+  - id: matbench-discovery#discovery
+    label: Crystal stability prediction on WBM
+    scored_separately: true
+    metric_override: f1-score
+  - id: matbench-discovery#unique-prototypes
+    label: Unique-prototype test set
+    parent: matbench-discovery#discovery
+    items: 215488
+    scored_separately: true
+    notes: The default discovery view; deduplicated and further from the training data. Items from
+      data.size.
+  - id: matbench-discovery#full-test-set
+    label: Full WBM test set
+    parent: matbench-discovery#discovery
+    scored_separately: true
+    notes: A separate view on the leaderboard; not comparable with unique-prototype scores.
+  - id: matbench-discovery#10k-most-stable
+    label: The 10k structures each model predicts most stable
+    parent: matbench-discovery#discovery
+    scored_separately: true
+    notes: A third view in the 2026-06 capture ("Full Test Set Unique Prototypes 10k Most Stable").
+  - id: matbench-discovery#geo-opt
+    label: Geometry optimisation
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/force-fields-potentials
+    metric_override: structure-rmsd
+  - id: matbench-discovery#phonons
+    label: Phonons and lattice thermal conductivity
+    items: 103
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/force-fields-potentials
+    metric_override: kappa-srme
+  - id: matbench-discovery#diatomics
+    label: Diatomic energy curves
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/force-fields-potentials
+    notes: >
+      Unranked in the only archived copy (2025-05), which carries a correctness disclaimer; today's
+      site ranks it by a CDS score that no archived source defines yet.
+subsets_note: >
+  The tasks are subsets, as the `composite` term asks, and the discovery views are subsets of the
+  discovery task. Molecular dynamics is on today's site only and is not listed. The diatomics
+  disclaimer: "Take the results on this page with a grain of salt." (src-matbench-discovery-
+  diatomics-page).
+metrics:
+  - f1-score
+  - discovery-acceleration-factor
+  - e-above-hull-mae
+  - structure-rmsd
+  - kappa-srme
+metrics_note: >
+  The five component metrics, each a separate Metric; CPS, the composite, is headline_metric and lists
+  its components in must_report_with. The molecular-dynamics (CMDS) and diatomics (CDS) scores on
+  today's site are not recorded: no archived or DOI source defines them yet.
+
+lineage:
+  role: root
+
+tags:
+  - compliance-tiers
+  - dft-reference
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P0-S8-T02)
+  added_on: 2026-09-26
+  last_verified: 2026-09-26
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-matbench-discovery-nature
+    - src-matbench-discovery-arxiv-abs
+    - src-pota-kappa-arxiv-html
+    - src-matbench-discovery-homepage
+    - src-matbench-discovery-discovery-page
+    - src-matbench-discovery-geo-opt-page
+    - src-matbench-discovery-diatomics-page
+    - src-matbench-discovery-contribute
+    - src-matbench-discovery-repo
+  sources_note: >
+    The six web sources are Wayback captures (2025-04 to 2026-06), each extract built from the capture
+    and its SHA-1 checked against the CDX digest; the leaderboard has changed since several of them.
+    The three papers carry DOIs and are not archived.
+  confidence: medium
+  notes: |
+    Reviewer checks (specialist):
+    - Whether the compliance tiers are transcribed correctly is a materials-science judgement: the
+      paper defines "compliant" as training within the MP v2022.10.28 release, and the leaderboard
+      has since moved to per-dataset filters (training_data_eligibility_tiers_note).
+    - classical-algorithm: the taxonomy's own example says this benchmark has non-learned entrants;
+      no source read here shows one.
+    - refresh rolling-live vs versioned-releases (data.refresh_note).
+    - The independence question about the paper's co-authors and CHGNet (governance).
+
+    Schema findings (none worked around here):
+    1. Metric.value_type has no term for a dimensional quantity: MAE in eV/atom and RMSD in Angstrom
+       are recorded as `ratio`, the nearest term.
+    2. A composite with viewer-adjustable weights (CPS) has nowhere to say that its weights are a
+       parameter; Metric.aggregation holds the defaults as text.
+    3. training_data_eligibility_tiers[] is a flat list; the live leaderboard's vocabulary is now a
+       per-dataset filter plus an openness class, which a flat tier list cannot express.
+    4. EligibilityTier has no quote field, so the tier rules are quoted in a
+       training_data_eligibility_tiers_basis annotation instead of on each tier.
+    5. No reference_conditions: the leaderboard mixes tiers by default and names no reference tier,
+       so choosing one (compliant, unique prototypes) would be ours, not the maintainers'. Without one,
+       SOTA and headroom stay undefined, which is what a tier-dependent ranking should produce.
+    6. As with WeatherBench 2, submission_process has no term for "the maintainer scores submitted
+       predictions against public ground truth".
+    7. The comparability profile table keys on facet pairs, and statistical-fit x
+       scientific-surrogate-model is mapped to `forecasting`, so lead_time and resolution_window
+       arrived as material for a crystal benchmark. Waived with reasons (comparability.material_waived);
+       the pair's mapping is the thing to fix in taxonomy/comparability-profiles.yaml.
+    8. Metric has no verification status, so the six agent-drafted Metric records here publish as soon
+       as they load (tools/build/artifacts.py), with their Sources, while this entry stays a draft.
+       Metrics need the draft gate Benchmarks have.
