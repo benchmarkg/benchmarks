@@ -1,0 +1,98 @@
+# .github/workflows/pr-validate.yml -- P0-S6-T01
+#
+# 05 S9's "On every pull request" table, checks 1 to 4, every one blocking:
+#
+#   1  bench fmt --check        kills cosmetic diffs before they become merge conflicts
+#   2  schema validation        tier 1 (Pydantic)
+#   3  referential validation   tier 2: every id referenced exists; no reference into tombstones/
+#   4  semantic validation      tier 3: the cross-field rules (04 S12)
+#
+# Blocking means no continue-on-error, no `|| true` and no path filter: a pull request that touches
+# nothing these checks read still runs them, so a required status check is never left pending.
+# Branch protection is what makes a failing check stop a merge; this file makes the check fail.
+#
+# Scope (05 S3, `--changed-only`). On a pull request, checks 2-4 report only on files changed
+# against the merge base with origin/$GITHUB_BASE_REF -- the whole corpus is still loaded, so a
+# changed file's broken reference into an unchanged one is still caught. On a push to main, and on a
+# manual run, they validate everything. The merge base needs history, hence fetch-depth: 0.
+#
+# Python is the lockfile's: uv.lock says requires-python ==3.12.*, and every `uv run` names 3.12
+# with --locked, so a stale lockfile fails rather than resolving afresh
+# (tests/ci/test_pr_validate_matrix.py holds the two together).
+#
+# Job 5, the codegen drift check, is schema-codegen.yml until it is folded in here.
+#
+# Actions are pinned by commit SHA (08 S6); these are the SHAs archive-sources.yml resolved on
+# 2026-09-24.
+
+name: pr-validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON: '3.12'
+  # --changed-only on a pull request, the full corpus otherwise (05 S3).
+  SCOPE: ${{ github.event_name == 'pull_request' && '--changed-only' || '' }}
+
+jobs:
+  check-1-fmt:
+    name: 1 fmt --check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: bench fmt --check
+        run: uv run --locked --python "$PYTHON" bench fmt --check
+
+  check-2-schema:
+    name: 2 schema validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: bench validate --tier schema
+        run: uv run --locked --python "$PYTHON" bench validate --tier schema $SCOPE
+
+  check-3-ref:
+    name: 3 referential validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: bench validate --tier ref
+        run: uv run --locked --python "$PYTHON" bench validate --tier ref $SCOPE
+
+  check-4-semantic:
+    name: 4 semantic validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: bench validate --tier semantic
+        run: uv run --locked --python "$PYTHON" bench validate --tier semantic $SCOPE
