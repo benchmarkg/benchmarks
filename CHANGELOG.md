@@ -23,6 +23,9 @@ under `## [Unreleased]` in the same pull request, in this form:
 
 ### Added
 
+- `Leaderboard.conditions`, an optional reference to the EvalConditions record holding a board's
+  legality rules and eligibility_track. ADR: adr/0007-leaderboard-conditions.md. Migration:
+  schema/migrations/0007-leaderboard-conditions.py
 - The taxonomy vocabularies at version 0.1.0: capability (44 terms), evaluation method (27), subject
   (18), domain (19 families, 204 subdomains), and the field vocabularies for data properties,
   ceiling anchors, lifecycle, maintenance status, governance and execution. Pre-freeze drafts;
