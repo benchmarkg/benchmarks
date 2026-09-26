@@ -6,13 +6,15 @@
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
     uv run bench build [--out build/]
+    uv run bench migrate <nnnn> [--dry-run|--apply]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
 command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py),
-`new` P0-S5-T03's (tools/authoring/) and `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
-build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages).
+`new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
+build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages) and `migrate`
+P0-S5-T07's (tools/migrate.py).
 """
 from __future__ import annotations
 
@@ -178,6 +180,56 @@ def build_cmd(
     typer.echo('build: published %s; %d subset(s) materialised; excluded %s'
                % (', '.join('%d %s' % (n, k) for k, n in counts.items()), len(result.corpus['subsets']),
                   ', '.join('%d (%s)' % (n, r) for r, n in sorted(reasons.items())) or 'nothing'))
+
+
+@app.command('migrate')
+def migrate_cmd(
+    number: Annotated[str, typer.Argument(help='The migration and its ADR number, e.g. 0027.')],
+    dry_run: Annotated[bool, typer.Option('--dry-run', help='Report the rows it would touch (the default).')] = False,
+    apply: Annotated[bool, typer.Option('--apply', help='Write them; needs adr/<nnnn>-*.md.')] = False,
+):
+    """Run a taxonomy migration from schema/migrations/<nnnn>-<slug>.py across the corpus (03 S9)."""
+    from tools import migrate
+    if dry_run and apply:
+        typer.echo('migrate: --dry-run and --apply are exclusive', err=True)
+        raise typer.Exit(2)
+    try:
+        m = migrate.find(number)
+        rows = m.plan(ROOT)
+        adr = migrate.adr_for(number, ROOT)
+    except migrate.MigrateError as e:
+        typer.echo('migrate: %s' % e, err=True)
+        raise typer.Exit(1)
+    files = sorted({r.path for r in rows})
+    typer.echo('migration %s (%s): %s' % (number, m.kind, m.summary))
+    typer.echo('  script: %s' % os.path.relpath(m.path, ROOT).replace(os.sep, '/'))
+    typer.echo('  adr:    %s' % ('%s (Status: %s)' % (adr, migrate.adr_status(ROOT, adr)) if adr
+                                 else 'none -- --apply refuses until adr/%s-*.md exists' % number))
+    typer.echo('plan: %d row(s) in %d file(s)' % (len(rows), len(files)))
+    for r in rows:
+        typer.echo('  %s  %s: %r -> %r' % (r.path, r.where(), r.old, r.new))
+    if m.kind == 'split':
+        typer.echo('a split: every row writes a publication-blocking sentinel, and --apply needs a human at a '
+                   'terminal (03 S9.1)')
+    if not apply:
+        typer.echo('dry run: nothing written')
+        return
+
+    def confirm(mig, planned):
+        answer = typer.prompt('This split writes %d sentinel(s) that block publication until each entry is '
+                              're-adjudicated against its primary source. Type %s to proceed' % (len(planned), mig.number),
+                              default='', show_default=False)
+        return answer.strip() == mig.number
+    try:
+        written = migrate.apply(m, ROOT, confirm)
+    except (migrate.MigrateError, ValueError) as e:
+        typer.echo('migrate: %s' % e, err=True)
+        raise typer.Exit(1)
+    for rel in written:
+        typer.echo('wrote %s' % rel)
+    typer.echo('applied %d row(s) to %d file(s); next: `bench validate --tier all`%s' % (
+        len(rows), len(written), ', and open the tracking issue listing every affected file (03 S9.1)'
+        if m.kind == 'split' else ''))
 
 
 def main():
