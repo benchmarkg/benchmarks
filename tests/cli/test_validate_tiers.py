@@ -145,23 +145,27 @@ def test_the_committed_corpus_runs_every_tier_and_emits_json():
 
 
 @pytest.mark.xfail(strict=True, reason='P0-S3-T04 is blocked: 23 non-DOI sources have no archive_url and 4 more '
-                   'fail their extract checks; RoboArena lacks comparability.rating_pool_required. Remove this '
-                   'mark when the corpus is clean -- strict, so a clean corpus fails here until it is.')
+                   'fail their extract checks. Remove this mark when the corpus is clean -- strict, so a clean '
+                   'corpus fails here until it is.')
 def test_the_committed_corpus_exits_zero():
     result = runner.invoke(cli.app, ['validate', '--tier', 'all', '--json'])
     assert result.exit_code == 0, [f['entity'] + ': ' + f['rule'] for f in json.loads(result.stdout)['findings']
                                    if f['severity'] == 'blocking']
 
 
-def test_every_committed_corpus_blocker_is_a_known_one():
-    """Until the xfail above is lifted: nothing blocks the committed corpus except P0-S3-T04's draft
-    sources and RoboArena's missing rating_pool_required. A new blocker fails here."""
-    r = tiers.run(ROOT)
-    for f in r.blocking:
-        known = (f.path or '').startswith('data/sources/') and f.rule in ('schema', 'non-doi-archive') \
-            or (f.entity, f.rule) == ('roboarena', 'rating-pool-required')
-        assert known, str(f)
-    assert by_tier(r)[2] == []                            # every reference in the corpus resolves
+def test_no_blocking_finding_outside_the_draft_sources():
+    """The verify's corpus clause as amended 2026-09-25 with the user's approval: the committed corpus
+    reports no blocking finding outside data/sources/, where the remaining ones are P0-S3-T04's draft
+    Source records and clear when it closes. RoboArena's rating_pool_required was the one blocker
+    elsewhere, and was fixed in the same change. A new blocker anywhere fails here."""
+    result = runner.invoke(cli.app, ['validate', '--tier', 'all', '--json'])
+    report = json.loads(result.stdout)
+    blocking = [f for f in report['findings'] if f['severity'] == 'blocking']
+    stray = [f for f in blocking if not (f['path'] or '').startswith('data/sources/')
+             or f['rule'] not in ('schema', 'non-doi-archive')]
+    assert stray == [], stray
+    assert report['exit_code'] == (1 if blocking else 0)
+    assert by_tier(tiers.run(ROOT))[2] == []              # every reference in the corpus resolves
 
 
 # ---- tier 1 -------------------------------------------------------------------------------------
