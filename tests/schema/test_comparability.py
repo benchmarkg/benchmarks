@@ -72,13 +72,16 @@ def test_the_entries_resolve_to_different_material_sets():
         'weatherbench-2.yaml': (('forecasting', 'eligibility-gated'), 6),
         'matbench-discovery.yaml': (('forecasting', 'eligibility-gated'), 4),   # lead time and window waived
         'arc-agi-3.yaml': (('simulation',), 8),                                 # plus three extras, one waiver
+        'virtual-cell-challenge.yaml': (('forecasting',), 2),                  # lead time and window waived
     }
-    assert len({r.material for r in got.values()}) == 6
+    assert len({r.material for r in got.values()}) == 7
     # the board's track and the run's harness both enter ARC-AGI-3's key (02 S12.7)
     assert {'eligibility_track', 'harness'} <= set(got['arc-agi-3.yaml'].material)
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
     # the compliance tier is what makes two Matbench Discovery numbers comparable (02 S12.6)
     assert 'eligibility_track' in got['matbench-discovery.yaml'].material
+    # the round decides what a Virtual Cell Challenge score means: validation and final are not comparable
+    assert got['virtual-cell-challenge.yaml'].material == ('subset_used', 'training_data_policy')
 
 
 def test_the_material_set_follows_the_facets_not_a_global_list():
@@ -312,7 +315,8 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'arc-agi-3', 'casp', 'matbench-discovery', 'roboarena', 'swe-bench', 'weatherbench-2'}
+    assert set(out['profiles']) == {'arc-agi-3', 'casp', 'matbench-discovery', 'roboarena', 'swe-bench',
+                                   'virtual-cell-challenge', 'weatherbench-2'}
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 

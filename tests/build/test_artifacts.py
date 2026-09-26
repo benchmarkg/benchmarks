@@ -176,7 +176,8 @@ def test_the_committed_corpus_publishes_no_draft_and_no_draft_source():
     result = artifacts.build(ROOT)
     assert result.errors == []
     drafts = [i for _, i, r in result.excluded if r.startswith(artifacts.DRAFT)]
-    assert sorted(drafts) == ['arc-agi-3', 'casp', 'matbench-discovery', 'roboarena', 'swe-bench', 'weatherbench-2']   # every committed entry is still a draft
+    assert sorted(drafts) == ['arc-agi-3', 'casp', 'matbench-discovery', 'roboarena', 'swe-bench',
+                              'virtual-cell-challenge', 'weatherbench-2']   # every committed entry is still a draft
     assert result.corpus['entities']['benchmark'] == []
     # Metrics carry no curation block and publish when they load (module docstring), and so do the
     # Sources they cite -- and nothing else: no draft benchmark's Source reaches the artifact.
