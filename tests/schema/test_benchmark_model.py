@@ -66,8 +66,11 @@ def test_the_three_entries_load(path):
     assert b.curation.verification_status == 'ai-drafted-unverified'
 
 
-def test_there_are_three_entries():
-    assert sorted(os.path.basename(p) for p in ENTRIES) == ['casp.yaml', 'roboarena.yaml', 'swe-bench.yaml']
+def test_the_committed_entries():
+    # The three P0-S3 entries plus the P0-S8 stress entries as they land.
+    assert sorted(os.path.basename(p) for p in ENTRIES) == ['arc-agi-3.yaml', 'casp.yaml', 'matbench-discovery.yaml',
+                                                             'roboarena.yaml', 'swe-bench.yaml', 'virtual-cell-challenge.yaml',
+                                                             'weatherbench-2.yaml']
 
 
 def test_the_admissibility_block_is_present():

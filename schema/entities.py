@@ -15,6 +15,8 @@ The rules each carries:
   - Subset: `{benchmark}#{slug}` ids, inheriting every facet from the parent and overriding
     selectively (`domain_override`, `capability_override`, `metric_override`). `parent` allows the
     deeper trees 04 S6 permits (BraTS edition -> sub-challenge -> split).
+  - Leaderboard: `conditions` names the EvalConditions record holding the board's legality rules and
+    eligibility_track (ADR-0007), so two boards with different rules on one benchmark are two records.
   - RatingPool: "a pool is a pool AT A DATE; this is part of its identity" (04 S9). `snapshot_date`
     is required, and the id must carry that date (as YYYY-MM or YYYY-MM-DD). An `anchor` is a member.
   - IngestBatch: the licence and attribution text live here once instead of on every row (04 S9), so
@@ -36,6 +38,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, StringConstraints,
 
 from schema.claim import LicenceClass, Sha256, Url
 from schema.conditions import FIELDS as CONDITION_FIELDS
+from schema.conditions import ConditionsId
 from schema.conditions import REASONING_EFFORTS
 from schema.system import OrgRef, SourceId, SystemRef, Text
 from schema.taxonomy import load_taxonomy
@@ -160,6 +163,9 @@ class Leaderboard(Closed):
     form: Literal['live-table', 'periodic-snapshot', 'assessment-paper', 'none']
     benchmarks: list[Slug] = Field(min_length=1)
     submission_process: SubmissionProcess | None = None
+    # ADR-0007: the conditions a result must meet to be listed -- the board's legality rules, and its
+    # eligibility_track. Two boards on one benchmark with different rules point at different records.
+    conditions: ConditionsId | None = None
     is_live: bool
     last_updated: date | None = None
     archived_snapshots: list[ArchivedSnapshot] = Field(default_factory=list)

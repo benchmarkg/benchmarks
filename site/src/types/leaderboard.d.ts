@@ -25,6 +25,7 @@ export interface Leaderboard {
         | "publication-gated"
       )
     | null;
+  conditions?: string | null;
   is_live: boolean;
   last_updated?: string | null;
   archived_snapshots?: ArchivedSnapshot[];
