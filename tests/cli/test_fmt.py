@@ -50,7 +50,7 @@ def test_check_exits_non_zero_on_the_reordered_fixture():
 
 def test_formatting_twice_changes_nothing_the_second_time(tmp_path):
     shutil.copytree(os.path.join(ROOT, 'data'), tmp_path / 'data')
-    os.makedirs(tmp_path / 'data' / 'metrics')
+    os.makedirs(tmp_path / 'data' / 'metrics', exist_ok=True)       # the corpus has Metric records since P0-S8-T02
     shutil.copy(FIXTURE, tmp_path / 'data' / 'metrics' / 'accuracy.yaml')
     first, errors = fmt.run(root=str(tmp_path))
     assert errors == [] and first == ['data/metrics/accuracy.yaml']   # the committed files are formatted already

@@ -1,0 +1,408 @@
+# data/benchmarks/general-intelligence/arc-agi-3.yaml
+#
+# P0-S8-T03. Scaffolded by `bench new benchmark` on 2026-09-26, then filled from the ARC-AGI-3
+# technical report (arXiv 2603.24621v2), ARC Prize's testing policy, and Wayback captures of the
+# benchmark page, the leaderboard page, the Community Leaderboard and the ARC Prize 2026 overview
+# (all captured 2026-09). Every number carries a quote the quote-substring validator checks.
+#
+# What this entry is here to stress (14-roadmap Phase 0; 02 S12.7): one benchmark, two leaderboards
+# with different legality rules. Each board is a Leaderboard record whose `conditions` (ADR-0007)
+# names an EvalConditions record holding its eligibility_track and the rules that map onto condition
+# fields: data/leaderboards/lb-arc-agi-3-{verified,community}.yaml. The harness a result ran under is
+# a condition of the claim, made material here (comparability.material_extra) so it enters the key.
+#
+# Premises in 02 S12.7 that did not survive the sources, each recorded where it bites:
+#   1. "official" and "community". The report names them so; ARC Prize's policy and site now call the
+#      official board "Verified". The two boards also differ in test set, not only in legality: the
+#      Verified board scores the semi-private set, the Community board the public demo.
+#   2. "official ... unmodified general-purpose API systems". The report (2026-04) says the official
+#      board "will not use a harness"; the policy (2026-09 capture) reports two labelled harnesses,
+#      Standard and Provider Adapter. The rule moved in five months, which is why harness is a claim
+#      condition and not a board fact.
+#   3. reproducibility `fully-automatable` with no blockers. Official scores come from a set only ARC
+#      Prize runs: `not-independently-reproducible`, blocker `private-test-set`.
+#   4. independence `no-known-conflict`. The policy says AI labs fund the foundation, and the
+#      foundation posts its own harnesses on the Community board: two flags, each with evidence.
+#   5. contamination `low`. The policy itself names a leakage route for the semi-private set.
+#   6. capability planning, continual-learning and grounding, domains open-ended-environments and
+#      visual-grounding: each fails its own inclusion test (considered_and_rejected below).
+
+id: arc-agi-3
+name: ARC-AGI-3
+aliases:
+  - 'ARC-AGI-3: A New Challenge for Frontier Agentic Intelligence'
+aliases_note: >
+  Not ARC-AGI-1 or ARC-AGI-2, the static-grid predecessors in the same series, which have their own
+  datasets and scores; a result "on ARC-AGI" without the version is not interpretable.
+tagline: Novel turn-based game environments that agents must explore and learn without instructions,
+  scored against humans.
+description: >
+  An interactive benchmark from the ARC Prize Foundation. Each environment is an abstract turn-based
+  game with several levels and no instructions: the agent must explore, infer the goal, model the
+  dynamics and act. The score, RHAE, compares the actions the agent needed per level with a human
+  baseline, squares the ratio, and averages over environments; 100% means matching the humans'
+  efficiency everywhere. Environments are hand-built and human-calibrated, and split into a public
+  demo, a semi-private set for testing frontier models behind APIs, and a fully private set for the
+  ARC Prize competition. Results are reported on a Verified leaderboard run by the foundation and on a
+  self-reported Community leaderboard, and a model's score depends strongly on the harness around it.
+self_description:
+  source: src-arc-agi-3-report-arxiv
+  quote: We introduce ARC-AGI-3, an interactive benchmark for studying agentic intelligence through
+    novel, abstract, turn-based environments in which agents must explore, infer goals, build
+    internal models of environment dynamics, and plan effective action sequences without explicit
+    instructions.
+external_ids:
+  arxiv: '2603.24621'
+paper:
+  title: 'ARC-AGI-3: A New Challenge for Frontier Agentic Intelligence'
+  arxiv: '2603.24621'
+  version_read: v2
+  source: src-arc-agi-3-report-arxiv
+released: 2026-03-24
+released_basis:
+  reason: The arXiv v1 submission date; the competition opened the next day.
+  source: src-arc-agi-3-arxiv-abs
+  quote: '[v1] Tue, 24 Mar 2026 21:58:16 UTC'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: general-intelligence/novel-task-acquisition
+  secondary:
+    - games-planning/puzzle-games
+    - reasoning-general/abstraction-induction
+domain_considered_and_rejected:
+  - term: games-planning/open-ended-environments
+    reason: >
+      02 S12.7 lists it. Its definition is environments "with no single fixed goal, scored on
+      open-ended achievement"; every ARC-AGI-3 level has a completion state the agent must discover,
+      and the score is efficiency at reaching it. puzzle-games ("an interactive episode against an
+      environment that responds") is the fit.
+  - term: multimodal/visual-grounding
+    reason: 02 S12.7 lists it. Its definition is "locating the image region that a language
+      expression refers to"; ARC-AGI-3 uses no language at all.
+
+capability:
+  - abstraction
+  - search-exploration
+  - sample-efficiency
+capability_basis:
+  abstraction:
+    reason: The agent must find how to see each environment -- its goal and dynamics -- before any
+      action is useful, which is the term's inclusion test; arc-agi is the term's own example.
+    source: src-arc-agi-3-report-arxiv
+    quote: ARC-AGI-3 focuses entirely on evaluating fluid adaptive efficiency on novel tasks, while
+      avoiding language and external knowledge.
+  search-exploration:
+    reason: The score is how few actions the agent spent traversing an unknown environment, which is
+      discovery under a budget.
+    source: src-arc-agi-3-report-arxiv
+    quote: This scoring function is called RHAE (Relative Human Action Efficiency)
+  sample-efficiency:
+    reason: The protocol fixes an interaction budget per level and scores performance within it.
+    source: src-arc-agi-3-report-arxiv
+    quote: we impose an action budget of five times the human-baseline median action count per level
+capability_considered_and_rejected:
+  # 02 S12.7 tags abstraction, search-exploration, planning, continual-learning, sample-efficiency
+  # and grounding. Three fail the P0-S2 inclusion tests.
+  - term: planning
+    reason: The OUT clause -- "Do NOT tag this if the score depends on what a rollout achieved
+      rather than on the plan itself". RHAE counts the actions the rollout actually took.
+  - term: continual-learning
+    reason: The IN test needs a protocol that "scores retention of earlier ones alongside
+      acquisition of later ones"; levels build on each other, but nothing measures retention.
+  - term: grounding
+    reason: Its test is attaching "a linguistic expression" to a referent; the environments carry no
+      language.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: >
+    Outcomes come from running a policy in the game environments. The score is not a plain success
+    rate, as the term's definition has it, but an efficiency-weighted completion score; no term
+    names that, and simulation-rollout is the nearest.
+  source: src-arc-agi-3-report-arxiv
+  quote: This will be a score between 0% and 100%.
+evaluation_method_considered_and_rejected:
+  - term: human-distribution-percentile
+    reason: The human number is one statistic per level (the upper-median best action count) that
+      the score is scaled by, not a place in a measured human distribution.
+
+designed_for_subjects:
+  - reasoning-model
+  - agent-scaffold
+  - human-nonexpert
+designed_for_subjects_basis: >
+  Frontier reasoning models are tested at several reasoning levels, harnesses around them are the
+  Community board's main entrants (arc-agi-3 is agent-scaffold's own example), and untrained humans
+  play the same environments to set the baseline (human-nonexpert's own example).
+designed_for_subjects_considered_and_rejected:
+  - term: tool-augmented-model
+    reason: The OUT clause sends a system that "iterates autonomously towards a goal" to
+      agent-scaffold, and the Verified board enables no tools by default.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The benchmark launched in 2026 and its prize competition is running.
+  source: src-arc-prize-2026
+  quote: November 2, 2026 - Submissions due
+activity: accepting-submissions
+activity_basis:
+  reason: The ARC Prize 2026 competition opened on 2026-03-25 and closes on 2026-11-02; the
+    Community board takes submissions at any time.
+  source: src-arc-prize-2026
+  quote: March 25, 2026 - Competition starts
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Opus 4.6
+    source: src-arc-agi-3-report-arxiv
+    observed_on: 2026-09-26
+    quote: Opus 4.6 scores 0.0% with no harness and 97.1% with the Duke harness
+    note: From the report's harness experiment on one environment variant; a frontier model, run
+      with and without a harness.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The environments' own completion states; the human baseline scales the
+  score but is not ground truth.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The sets behind official scores are held by the maintainers; only the public demo, which
+    they do not report officially, is open.
+  source: src-arc-prize-testing-policy
+  quote: Private Tasks - Tasks that are not publicly available.
+
+task:
+  exists: true
+  input:
+    - frames of an interactive environment, with no instructions
+  output: A sequence of actions, one per turn, until every level is completed or the budget runs
+    out.
+  scoring: RHAE -- per-level human-baseline action count over the agent's, squared, normalised per
+    environment and averaged over environments.
+  tests_hidden_from_system: true
+  source: src-arc-agi-3-report-arxiv
+  quote: The ARC-AGI-3 scoring method seeks to score the test taker by its per-level action
+    efficiency (as compared to a human baseline), normalized per environment, across all
+    environments.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: >
+    Kept from 02 S12.7. The public demo is open; the semi-private set is sent to model providers'
+    APIs under zero-retention agreements, and the fully private set goes only to the competition.
+    There are no "labels": what is held out is the environments themselves.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The series moves to fresh tasks with each version, roughly annually.
+    source: src-arc-prize-testing-policy
+    quote: the release of successive ARC-AGI benchmark versions on a roughly annual basis
+  data_provenance:
+    - expert-authored
+  data_provenance_note: >
+    Hand-built by the foundation's environment designers and calibrated on human players. 02 S12.7
+    also tags synthetic-procedural; no source read here describes a procedural generator.
+  contamination_risk: medium
+  contamination_risk_note: >
+    02 S12.7 says low. The maintainers themselves name a route: semi-private environments are sent to
+    external APIs. They monitor it by the public/semi-private gap and rotate versions. A route, not a
+    demonstrated leak, so medium.
+  contamination_evidence:
+    - source: src-arc-prize-testing-policy
+      stance: supports
+      quote: we acknowledge the possibility of limited leakage over time
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_basis:
+    reason: 100% is matching a human baseline taken from untrained players -- the upper-median best
+      human action count per level.
+    source: src-arc-agi-3-report-arxiv
+    quote: which we define as the upper-median best human action count
+  size:
+    n_items:
+      value: 55
+      unit: environments
+      split: semi-private (the Verified board's set)
+      source: src-arc-agi-3-report-arxiv
+      quote: Semi-Private A private hold out set that is used to test models behind an external API.
+        55
+    other_splits:
+      - value: 25
+        unit: environments
+        split: public demo
+        source: src-arc-agi-3-report-arxiv
+        quote: Public Demo A public demonstration set that shows the format and basic mechanics of
+          ARC-AGI-3 environments. 25
+      - value: 55
+        unit: environments
+        split: fully private (the competition's set)
+        source: src-arc-agi-3-report-arxiv
+        quote: This set is only given to a very limited number of partners. 55
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: ARC Prize Foundation
+  maintainer_basis:
+    reason: The policy describes the foundation's form and funding.
+    source: src-arc-prize-testing-policy
+    quote: The ARC Prize Foundation is a nonprofit organization dedicated to open scientific
+      progress through enduring AI benchmarks.
+  maintainer_type: nonprofit
+  submission_process:
+    - sandboxed-rerun
+    - self-reported
+    - containerized-algorithm-submission
+  submission_process_note: >
+    One per venue. Verified: the foundation runs selected commercial models itself on the semi-private
+    set (sandboxed-rerun is the nearest term; no submission is re-executed, the model is called).
+    Community: self-reported, lightly reviewed. The ARC Prize competition: Kaggle notebooks with no
+    internet, scored on the fully private set. Each Leaderboard record carries its own.
+  submission_process_source: src-arc-agi-3-community-leaderboard
+  submission_process_quote: Scores are self-reported unless noted otherwise.
+  independence_flags:
+    - flag: funded-by-evaluated-party
+      source: src-arc-prize-testing-policy
+      quote: ARC Prize Foundation is a nonprofit funded by donations from individuals, foundations,
+        and AI labs.
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arc-agi-3-community-leaderboard
+      quote: OpenClaw Harness adapted to play ARC-AGI-3 allowed memory and code execution tools.
+  independence_flags_note: >
+    Both flags come with the policy's mitigations beside them: sponsors get no access to private sets
+    and no say over testing or publication, staff with an interest in a lab recuse, and an academic
+    panel reviews the methodology. The foundation's own Community entries (OpenClaw, the Human
+    Intelligence Harness) are reference harnesses, not prize entries. Which labs donate is on the
+    donation page, not read here.
+  independence_policy:
+    source: src-arc-prize-testing-policy
+    quote: Sponsors receive no privileged access to our Private or Semi-Private Evaluation datasets,
+      nor any special influence over the development of our benchmarks, roadmap, or methodologies.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The competition track is different, Kaggle hardware with no internet; the
+    Community board sets no limit.
+  compute_tier_basis:
+    reason: A Verified run is API spend on a frontier model, capped per run.
+    source: src-arc-prize-testing-policy
+    quote: We cap our evaluations at $10,000 USD per run.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_note: >
+    For official scores. A public-demo score is reproducible by anyone with the open harness, but the
+    maintainers will not report public-demo scores officially.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: arc-agi-3-benchmarking (open-source), with a Standard and a Provider Adapter harness
+  harness_source: src-arc-prize-testing-policy
+  harness_quote: ARC-AGI-3 evaluations are run using the open source ARC-AGI-3 Benchmarking
+    repository.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  material_extra:
+    - harness
+    - eligibility_track
+    - reasoning_effort
+  material_waived:
+    - field: hardware_platform
+      reason: The simulation profile's physical platform; the environments are software games with
+        nothing to run on but the harness.
+aggregation_policy: official-aggregate
+aggregation_policy_note: RHAE is the one official score; it averages over environments by
+  definition.
+headline_metric: rhae
+secondary_axes:
+  - cost
+secondary_axes_basis:
+  reason: The leaderboard plots cost per task against the score.
+  source: src-arc-prize-leaderboard
+  quote: The scatter plot above visualizes the critical relationship between cost-per-task and
+    performance - a key measure of efficiency.
+
+homepage: https://arcprize.org/arc-agi/3
+leaderboard_url: https://arcprize.org/arc-agi/3/leaderboard
+maintainer_url: https://arcprize.org/policy
+
+subsets:
+  - id: arc-agi-3#semi-private
+    label: Semi-private evaluation set
+    items: 55
+    scored_separately: true
+    notes: The Verified board's set. Items from data.size.
+  - id: arc-agi-3#public-demo
+    label: Public demo set
+    items: 25
+    scored_separately: true
+    notes: >
+      Open, easier than the private sets, and the Community board's set for ARC-AGI-3. The maintainers:
+      "we will never report public set scores of any system on the official leaderboard"
+      (src-arc-agi-3-report-arxiv).
+  - id: arc-agi-3#fully-private
+    label: Fully private set
+    items: 55
+    scored_separately: true
+    notes: The ARC Prize competition's set, run on Kaggle without internet access.
+metrics:
+  - rhae
+leaderboards:
+  - lb-arc-agi-3-verified
+  - lb-arc-agi-3-community
+
+tags:
+  - two-leaderboards
+  - human-baseline
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P0-S8-T03)
+  added_on: 2026-09-26
+  last_verified: 2026-09-26
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arc-agi-3-report-arxiv
+    - src-arc-agi-3-arxiv-abs
+    - src-arc-prize-testing-policy
+    - src-arc-prize-leaderboard
+    - src-arc-agi-3-community-leaderboard
+    - src-arc-prize-2026
+  sources_note: >
+    The four web sources are Wayback captures from 2026-09, recorded by the rolling archiver, each
+    extract built from the capture itself. The report and its listing carry a DOI. The report's arXiv
+    licence is non-exclusive distribution, so its extract keeps only the cited passages.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - Whether the legality rules are read correctly (the verify's own human judgement): the two
+      boards' conditions records, and the harness rule's move between the report (2026-04, "the
+      official leaderboard will not use a harness to report official scores") and the policy (2026-09,
+      two labelled harnesses).
+    - maintainer-competes-on-own-benchmark rests on reference harnesses the foundation posted to its
+      own Community board; a reviewer may judge that outside the flag's intent.
+    - The Community board spans ARC-AGI-1, -2 and -3; its Leaderboard record lists only arc-agi-3,
+      the one of the three in the corpus.
+
+    Schema findings:
+    1. Leaderboard had no way to say which rules it applies; ADR-0007 adds Leaderboard.conditions, and
+       the two boards here are its first users.
+    2. A board's conditions are a floor, not one run: the Verified board accepts two harnesses, so its
+       record leaves `harness` null, and "harness is one of {standard, provider-adapter}" is not
+       expressible. The claim records carry the harness.
+    3. The facets resolve the `simulation` profile, which makes hardware_platform material and says
+       nothing of harness, eligibility track or reasoning effort. The three are added through
+       comparability.material_extra (the policy re-tests models "at varied reasoning levels"), and
+       hardware_platform is waived with its reason.
+    4. simulation-rollout's definition is "success rate over episodes"; RHAE is an efficiency-weighted
+       completion score, which no evaluation-method term names.
+    5. A board-level cap ($10,000 per run) and an action budget (five times the human median) have no
+       EvalConditions field; cost_usd is a run's cost, not a limit.
