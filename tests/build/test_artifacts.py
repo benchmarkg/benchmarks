@@ -176,13 +176,15 @@ def test_the_committed_corpus_publishes_no_draft_and_no_draft_source():
     result = artifacts.build(ROOT)
     assert result.errors == []
     drafts = [i for _, i, r in result.excluded if r.startswith(artifacts.DRAFT)]
-    assert sorted(drafts) == ['arc-agi-3', 'casp', 'matbench-discovery', 'paperbench', 'roboarena',
-                              'swe-bench', 'virtual-cell-challenge', 'weatherbench-2']   # every committed entry is still a draft
+    assert sorted(drafts) == ['arc-agi-3', 'casp', 'forecastbench', 'matbench-discovery', 'paperbench',
+                              'roboarena', 'swe-bench', 'virtual-cell-challenge', 'weatherbench-2']   # every committed entry is still a draft
     assert result.corpus['entities']['benchmark'] == []
-    # Metrics carry no curation block and publish when they load (module docstring), and so do the
-    # Sources they cite -- and nothing else: no draft benchmark's Source reaches the artifact.
-    metric_sources = {s for m in result.corpus['entities']['metric'] for s in m['sources']}
-    assert {s['id'] for s in result.corpus['entities']['source']} == metric_sources
+    # Metrics, Systems and Organizations carry no curation block and publish when they load (module
+    # docstring), and so do the Sources they cite -- and nothing else: no draft benchmark's Source
+    # reaches the artifact.
+    entities = result.corpus['entities']
+    cited = {s for kind in ('metric', 'system', 'organization') for r in entities[kind] for s in r['sources']}
+    assert {s['id'] for s in entities['source']} == cited
 
 
 def test_a_status_absent_from_the_file_is_the_model_default_and_so_a_draft(tree, tmp_path):
