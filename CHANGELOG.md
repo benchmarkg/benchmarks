@@ -23,6 +23,9 @@ under `## [Unreleased]` in the same pull request, in this form:
 
 ### Added
 
+- `Metric.rubric`, an optional block recording a rubric-graded metric's rubric structure (tree or
+  flat, rubric, leaf and node counts, leaf scoring, node aggregation, leaves per type). ADR:
+  adr/0008-metric-rubric.md. Migration: schema/migrations/0008-metric-rubric.py
 - `Leaderboard.conditions`, an optional reference to the EvalConditions record holding a board's
   legality rules and eligibility_track. ADR: adr/0007-leaderboard-conditions.md. Migration:
   schema/migrations/0007-leaderboard-conditions.py

@@ -19,6 +19,9 @@ The rules this model carries:
     and 07 S3 use for the same number, and its `score_ceiling` in `score_ceiling`. A score ceiling is
     a MEASUREMENT ceiling, not a human baseline, and the two never share a field.
   - `must_report_with` names metrics that may never be shown without this one, and never itself.
+  - `rubric` (ADR-0008) records a rubric-graded metric's structure as data: tree or flat, how many
+    rubrics, leaves and nodes, how a leaf is scored and a parent aggregated, and the leaves per
+    requirement type, which must sum to the leaf count.
 """
 from __future__ import annotations
 
@@ -64,6 +67,43 @@ class Range(Closed):
         return self
 
 
+class RubricLeafType(Closed):
+    type: Annotated[str, StringConstraints(pattern=r'^[a-z0-9]+(-[a-z0-9]+)*$')]
+    count: int = Field(ge=1)
+
+
+class MetricRubric(Closed):
+    """ADR-0008: the structure of the rubric a rubric-graded metric aggregates, as data rather than
+    prose. Counts are over the whole benchmark version (every rubric together). Who applies the rubric
+    is a condition of the run, not of the metric: EvalConditions.judge_model and grading_rubric_ref."""
+    structure: Literal['tree', 'flat']
+    rubric_count: int | None = Field(default=None, ge=1)    # one rubric per item (PaperBench: per paper)
+    leaf_count: int = Field(ge=1)
+    node_count: int | None = Field(default=None, ge=1)
+    leaf_scoring: Literal['binary', 'graded']
+    node_aggregation: Literal['weighted-mean-of-children', 'mean-of-children', 'sum-of-children'] | None = None
+    leaf_types: list[RubricLeafType] = Field(default_factory=list)
+
+    @model_validator(mode='after')
+    def _counts(self):
+        if self.node_count is not None and self.node_count < self.leaf_count:
+            raise ValueError('rubric node_count %d is below its leaf_count %d' % (self.node_count, self.leaf_count))
+        if self.structure == 'flat':
+            if self.node_count not in (None, self.leaf_count):
+                raise ValueError('a flat rubric has no inner nodes: node_count is its leaf_count')
+            if self.node_aggregation is not None:
+                raise ValueError('a flat rubric has no children to aggregate; node_aggregation is for a tree')
+        if self.structure == 'tree' and self.node_aggregation is None:
+            raise ValueError('a tree rubric says how a parent combines its children (node_aggregation)')
+        types = [t.type for t in self.leaf_types]
+        if len(set(types)) != len(types):
+            raise ValueError('a rubric leaf type is listed twice')
+        if self.leaf_types and sum(t.count for t in self.leaf_types) != self.leaf_count:
+            raise ValueError('rubric leaf_types count %d leaves, not the leaf_count %d'
+                             % (sum(t.count for t in self.leaf_types), self.leaf_count))
+        return self
+
+
 class Metric(Closed):
     id: MetricId
     name: Text
@@ -83,6 +123,7 @@ class Metric(Closed):
     requires_pool: bool = False
     headroom_computable: bool = True
     must_report_with: list[MetricId] = Field(default_factory=list)
+    rubric: MetricRubric | None = None         # ADR-0008: a rubric-graded metric's rubric structure
     domains: list[DomainLeaf] = Field(default_factory=list)
     pitfalls: Text | None = None
     sources: list[SourceId] = Field(min_length=1)
