@@ -191,10 +191,32 @@ def test_findings_render_with_severity_rule_and_fix():
 
 def test_the_repository_corpus_loads_and_every_rule_runs():
     c = v.load_corpus()
-    assert set(c.benchmarks) == {'arc-agi-3', 'casp', 'matbench-discovery', 'roboarena', 'swe-bench',
-                                'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(c.benchmarks) == {'arc-agi-3', 'casp', 'matbench-discovery', 'paperbench', 'roboarena',
+                                'swe-bench', 'virtual-cell-challenge', 'weatherbench-2'}
     findings = v.validate(c, 'full')
     assert all(f.rule in v.RULES and f.severity in ('blocking', 'warning') for f in findings)
+
+
+def test_paperbench_fails_tier_3_without_its_judge():
+    """P0-S8-T07's verify: removing judge_model from PaperBench's conditions fails the judge rules --
+    reference-grader on the entry's reference conditions, and judge-model on a claim run under them."""
+    c = v.load_corpus()
+    cond_id = c.benchmarks['paperbench'].reference_conditions
+    claim = ResultClaim.model_validate(merge(BASE['claim'], {
+        'benchmark': 'paperbench@2025-04', 'metric': 'paperbench-replication-score', 'value': 21.0,
+        'eval_conditions': cond_id}))
+    c.claims[claim.id] = claim
+
+    def judged(corpus):
+        return sorted((f.rule, f.severity) for f in v.validate(corpus, 'full')
+                      if f.rule in ('reference-grader', 'judge-model') and f.entity in ('paperbench', claim.id))
+
+    assert judged(c) == []
+    doc = c.conditions[cond_id].model_dump(exclude_none=True)
+    for k in ('judge_model', 'judge_model_version'):              # the version depends on the model
+        doc.pop(k)
+    c.conditions[cond_id] = EvalConditions.model_validate(doc)
+    assert judged(c) == [('judge-model', 'blocking'), ('reference-grader', 'blocking')]
 
 
 def test_the_cli_exits_non_zero_on_a_blocking_finding(tmp_path, capsys):

@@ -21,6 +21,7 @@ export interface Metric {
   requires_pool?: boolean;
   headroom_computable?: boolean;
   must_report_with?: string[];
+  rubric?: MetricRubric | null;
   domains?: (
     | "biology-genetics/protein-structure-prediction"
     | "biology-genetics/nucleic-acid-structure"
@@ -236,4 +237,22 @@ export interface Metric {
 export interface Range {
   min?: number | null;
   max?: number | null;
+}
+/**
+ * ADR-0008: the structure of the rubric a rubric-graded metric aggregates, as data rather than
+ * prose. Counts are over the whole benchmark version (every rubric together). Who applies the rubric
+ * is a condition of the run, not of the metric: EvalConditions.judge_model and grading_rubric_ref.
+ */
+export interface MetricRubric {
+  structure: "tree" | "flat";
+  rubric_count?: number | null;
+  leaf_count: number;
+  node_count?: number | null;
+  leaf_scoring: "binary" | "graded";
+  node_aggregation?: ("weighted-mean-of-children" | "mean-of-children" | "sum-of-children") | null;
+  leaf_types?: RubricLeafType[];
+}
+export interface RubricLeafType {
+  type: string;
+  count: number;
 }

@@ -1,0 +1,451 @@
+# data/benchmarks/agents-tooluse/paperbench.yaml
+#
+# P0-S8-T07. Scaffolded by `bench new benchmark` on 2026-09-27, then filled from the PaperBench paper
+# (arXiv 2504.01848v3, CC BY 4.0) and its arXiv listing. Both carry the arXiv DOI and need no
+# archive capture; the code repository (github.com/openai/preparedness) is not read here, because
+# the Wayback Machine was offline on 2026-09-27 and a non-DOI source needs a capture. Every number
+# carries a quote that the quote-substring validator checks against the Source's committed extract.
+#
+# What this entry is here to stress (14-roadmap Phase 0; 02 S5): a score that is a rubric applied by
+# a model. The rubric is recorded as data on the Metric (Metric.rubric, ADR-0008) -- 20 trees,
+# 8,316 binary leaves -- and the grader is recorded where 04 S8 puts it, as judge_model and
+# judge_model_version in the reference conditions, which the reference-grader rule requires.
+#
+# The task's verify names "the tier-3 judge-model rule". That rule (schema/validators.py) checks
+# claims; the benchmark-level counterpart is `reference-grader`, which reads reference_conditions.
+# This entry has no claims, so it is reference-grader that fails when judge_model is removed
+# (tests/schema/test_semantic_rules.py pins both).
+
+id: paperbench
+name: PaperBench
+aliases:
+  - "PaperBench: Evaluating AI's Ability to Replicate AI Research"
+tagline: AI agents rebuild 20 recent ML papers from scratch, graded against author-approved rubrics
+  by an LLM judge.
+description: >
+  A benchmark from OpenAI in which an AI agent is given an ICML 2024 paper and an addendum of
+  clarifications and must write, from scratch, a repository whose reproduce.sh re-creates the paper's
+  empirical results. The repository is re-run on a fresh GPU machine and graded against a rubric for
+  that paper: a tree of requirements whose leaves are pass/fail criteria (code written, code executed,
+  result matched), weighted and averaged up to a replication score. The rubrics, 20 in all with 8,316
+  leaves, were written with an author of each paper. Grading is done by an LLM judge, whose agreement
+  with human graders is measured on a companion set, JudgeEval. A lighter variant, PaperBench
+  Code-Dev, grades only the code. Known weaknesses the paper names: 20 papers, a judge that is not
+  as accurate as an expert and not deterministic, possible contamination from the papers' public
+  code, and a cost of about $8,000 per full run.
+self_description:
+  source: src-paperbench-arxiv-abs
+  quote: We introduce PaperBench, a benchmark evaluating the ability of AI agents to replicate
+    state-of-the-art AI research.
+external_ids:
+  arxiv: '2504.01848'
+paper:
+  title: 'PaperBench: Evaluating AI’s Ability to Replicate AI Research'
+  arxiv: '2504.01848'
+  version_read: v3
+  source: src-paperbench-arxiv-html
+released: 2025-04-02
+released_basis:
+  reason: The arXiv v1 submission date, the earliest public release any source read here dates.
+  source: src-paperbench-arxiv-abs
+  quote: '[v1] Wed, 2 Apr 2025 15:55:24 UTC'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/long-horizon-autonomy
+  primary_basis:
+    reason: One replication attempt is a single unattended episode of many dependent steps, up to
+      twelve hours for the agent and twelve more for the reproduction run.
+    source: src-paperbench-arxiv-html
+    quote: In general, each replication task is highly challenging and takes human experts several
+      days of work at a minimum.
+  secondary: []
+domain_considered_and_rejected:
+  - term: code/ml-engineering
+    reason: The leaf is scored "on the performance of the model it produces"; PaperBench scores
+      whether the paper's results were reproduced, graded against a rubric, not how good a model the
+      code trains.
+  - term: agents-tooluse/software-agents
+    reason: The leaf's work is done "inside a real repository or toolchain"; here the agent starts
+      from an empty directory and the authors' own repositories are forbidden.
+  - term: agents-tooluse/research-agents
+    reason: That leaf gathers and cites sources to answer an open question; here the paper is given
+      and the output is code and results, not a cited answer.
+
+capability:
+  - long-horizon-execution
+  - autonomy
+  - context-integration
+capability_basis:
+  long-horizon-execution:
+    reason: A submission without a working reproduce.sh loses every Execution and Result Match leaf,
+      so an early failure in the episode forecloses most of the score.
+    source: src-paperbench-arxiv-html
+    quote: Submissions without a reproduce.sh score 0 on all Execution and Result Match nodes.
+  autonomy:
+    reason: The agent works unattended for the whole attempt, and the paper frames the benchmark as
+      a measure of autonomy.
+    source: src-paperbench-arxiv-html
+    quote: Our setup considers AI agents with the ability to write and execute code autonomously.
+  context-integration:
+    reason: The supplied paper and its addendum determine what has to be built, and the rubric
+      scores whether the submission implemented what they describe; the rubric itself is hidden.
+    source: src-paperbench-arxiv-html
+    quote: the candidate is not shown the rubric during its attempt, and must infer what needs to be
+      replicated from the paper
+capability_considered_and_rejected:
+  - term: planning
+    reason: The exclusion test reads "Do NOT tag this if the score depends on what a rollout
+      achieved rather than on the plan itself"; the rubric grades the repository and its results.
+  - term: experimental-design
+    reason: The experiments are the paper's; the exclusion test reads "Do NOT tag this if the
+      protocol is given and only executed".
+  - term: tool-use
+    reason: The agent has shell, Python, browser and file-reader tools, but the score grades the
+      repository, not whether tools were called correctly -- "tools are available but incidental to
+      the score" in the exclusion test.
+  - term: self-correction
+    reason: Revision happens inside the episode but is not scored separately; only the final
+      submission is graded.
+
+evaluation_method:
+  - rubric-graded
+  - model-graded-judge
+evaluation_method_basis:
+  reason: >
+    rubric-graded because named criteria are checked one by one and combined up a weighted tree
+    (taxonomy/evaluation-methods.yaml names paperbench as the term's example); model-graded-judge
+    because the criteria are applied by a judge model, whose model and version the reference
+    conditions record.
+  source: src-paperbench-arxiv-html
+  quote: Leaf nodes are graded for binary pass/fail criteria, and a parent’s score is the weighted
+    average of its children.
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: The submission is executed, but the verdict is the judge's reading of the outputs
+      against the rubric, not the outcome of tests.
+  - term: human-expert-eval
+    reason: Human experts graded only JudgeEval, to check the judge; scores on the benchmark come
+      from the LLM judge.
+
+designed_for_subjects:
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The system under test runs its own tool-use loop and decides when to stop; the paper's
+    results change with the scaffold (BasicAgent against IterativeAgent), so the scaffold is part of
+    what is evaluated.
+  source: src-paperbench-arxiv-html
+  quote: PaperBench is designed to be agnostic to agent scaffolds
+designed_for_subjects_considered_and_rejected:
+  - term: human-expert
+    reason: ML PhDs attempted a subset as a baseline, which is a Baseline record here; the protocol
+      does not admit human entrants.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Kept at active from the paper's framing as a released, open-sourced evaluation. The only
+    sources read are from April 2025, so current use is not observed here. Reviewer check.
+  source: src-paperbench-arxiv-abs
+  quote: We open-source our code
+activity: unknown
+activity_note: There is no leaderboard or submission channel in the paper; results are run and
+  reported by whoever runs the code.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude 3.5 Sonnet (New)
+    source: src-paperbench-arxiv-abs
+    observed_on: 2026-09-27
+    quote: the best-performing tested agent, Claude 3.5 Sonnet (New) with open-source scaffolding,
+      achieves an average replication score of 21.0%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: expert-panel
+ground_truth_source_basis:
+  reason: The rubrics are the ground truth, written with one of each paper's authors; the judge
+    applies them, it does not define them.
+  source: src-paperbench-arxiv-abs
+  quote: Rubrics are co-developed with the author(s) of each ICML paper for accuracy and realism.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The papers are public, the rubrics and code are open-sourced, and grading needs only API
+    access to a judge model; a rerun's grade can still differ, because the judge is not
+    deterministic.
+  source: src-paperbench-arxiv-html
+  quote: our judge is not deterministic due to using non-deterministic model calls.
+
+task:
+  exists: true
+  input:
+    - the paper, as PDF and Markdown
+    - an addendum of clarifications from the paper's authors
+  output: >
+    A code repository with a reproduce.sh at its root that re-creates the paper's empirical results
+    when run on a fresh machine.
+  scoring: >
+    reproduce.sh is run on a fresh Ubuntu 24.04 VM with an A10 GPU, then an LLM judge grades each
+    rubric leaf pass or fail from the files each requirement type allows it to see; parents take the
+    weighted mean of their children, the root is the paper's replication score, and the headline is
+    the mean over the 20 papers. Use of a blacklisted resource (the authors' code, other online
+    replications) disqualifies a run to 0.
+  tests_hidden_from_system: true
+  source: src-paperbench-arxiv-html
+  quote: Our main metric is the average Replication Score across all papers.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The papers are public and the rubrics and code are released; the paper also keeps a
+      held-out set for internal use, which is not part of the benchmark scored here.
+    source: src-paperbench-arxiv-html
+    quote: We release a further two papers from NeurIPS 2024 Workshops as a development set and
+      maintain a held-out set for internal use.
+  refresh: static
+  data_provenance:
+    - expert-authored
+  data_provenance_basis:
+    reason: Each rubric was written by the PaperBench team with one of the paper's original authors,
+      over several weeks per paper.
+    source: src-paperbench-arxiv-html
+    quote: Each rubric was written in collaboration with one of the original authors of each paper
+  contamination_risk: medium
+  contamination_risk_note: >
+    The paper names the route itself: nearly every paper's own code is online, and a model trained on
+    it may have internalised the solution. Browsing to it is blacklisted and monitored (10 of 646 runs
+    were disqualified), but training exposure is not controlled. The authors judged present models
+    "most likely not affected" given the papers' recency, which weakens with each newer model.
+  contamination_evidence:
+    - source: src-paperbench-arxiv-html
+      stance: supports
+      quote: models that are pre-trained on large corpuses may have internalized solutions,
+        resulting in inflated performance on this benchmark.
+  ceiling_anchor_type: expert-best
+  ceiling_anchor_type_basis:
+    reason: >
+      The only measured comparator is the best of three ML-PhD attempts (base-paperbench-human-best-of-3).
+      It is measured on a 3-paper subset, not on all 20 papers, so headroom for a full-benchmark
+      score against it compares different item sets; 100% (a perfect replication) is the scale's
+      theoretical top.
+    source: src-paperbench-arxiv-html
+    quote: On a 3-paper subset, our human baseline of ML PhDs (best of 3 attempts) achieved 41.4%
+      after 48 hours of effort, compared to 26.6% achieved by o1 on the same subset.
+  size:
+    n_items:
+      value: 20
+      unit: ICML 2024 papers, one rubric each
+      source: src-paperbench-arxiv-abs
+      quote: Agents must replicate 20 ICML 2024 Spotlight and Oral papers from scratch
+    other_splits:
+      - value: 8316
+        unit: rubric leaves (individually gradable requirements)
+        split: all 20 rubrics
+        source: src-paperbench-arxiv-html
+        quote: Across the 20 papers in PaperBench there are 8,316 leaf nodes.
+      - value: 2
+        unit: papers (NeurIPS 2024 workshops)
+        split: development set, outside the benchmark
+        source: src-paperbench-arxiv-html
+        quote: We release a further two papers from NeurIPS 2024 Workshops as a development set
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OpenAI
+  maintainer_basis:
+    reason: The paper's authors are OpenAI's.
+    source: src-paperbench-arxiv-html
+    quote: Tejal Patwardhan * OpenAI
+  maintainer_type: industry-lab
+  submission_process: self-reported
+  submission_process_note: No leaderboard or submission route exists in the paper; anyone who runs
+    the code reports their own number, and the rules ask for the setup to be reported with it.
+  submission_process_source: src-paperbench-arxiv-html
+  submission_process_quote: we encourage researchers to report their setups in their results.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-paperbench-arxiv-html
+      quote: OpenAI o1 performs weaker, with a score of 13.2%.
+  independence_flags_note: >
+    OpenAI's own models are among those evaluated, and the default judge is also OpenAI's (o3-mini),
+    which grades OpenAI's and other developers' agents alike; no flag names a judge supplied by an
+    evaluated party. The best-scoring agent in the paper is not OpenAI's.
+  known_limitation:
+    source: src-paperbench-arxiv-html
+    quote: Despite our judge demonstrating good performance in our JudgeEval, it is not as accurate
+      as an expert human judging submissions.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_note: >
+    One A10 GPU per agent container and per reproduction run, plus API credit for the agent and the
+    judge; the rules themselves do not restrict an entrant's compute, so single-gpu is the paper's
+    setup rather than a limit.
+  compute_tier_source: src-paperbench-arxiv-html
+  compute_tier_quote: we run each agent in an Ubuntu 24.04 Docker container that has access to a
+    single A10 GPU.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Automatable end to end, but not bit-reproducible, because the judge's
+    model calls are not deterministic.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: PaperBench code (openai/preparedness), with nanoeval orchestration and the SimpleJudge
+    grader
+  harness_source: src-paperbench-arxiv-abs
+  harness_quote: We open-source our code
+  est_runtime_hours:
+    min: 12
+    max: 24
+    basis: The paper's setup per paper, run in parallel across papers -- an agent rollout capped at
+      12 hours, then a reproduce.sh run capped at 12 hours (agent scripts averaged 5.5 minutes).
+    source: src-paperbench-arxiv-html
+  est_runtime_hours_source: src-paperbench-arxiv-html
+  est_runtime_hours_quote: In our experiments, we capped the runtime of reproduce.sh at 12 hours
+  est_cost_usd:
+    min: 8000
+    max: 9320
+    basis: The paper's estimate for one o1 IterativeAgent run over the 20 papers ($8,000 in API
+      credit) plus grading at about $66 per paper with the o3-mini judge ($1,320).
+    source: src-paperbench-arxiv-html
+  est_cost_usd_source: src-paperbench-arxiv-html
+  est_cost_usd_quote: For the 20 papers, this sums to $8000 USD per eval run. Grading costs an
+    additional $66 USD per paper on average with o3-mini SimpleJudge.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+# material_extra: the scaffold changes the number as much as the model does -- o1 scores 13.2% with
+# BasicAgent and 24.4% with IterativeAgent (src-paperbench-arxiv-html, Tables 4 and 5). The
+# reproduction hardware is fixed by the protocol (one A10), and a claim on other hardware is a
+# different condition. The agent's time limit (12 hours; 36 in one extended run) is material too
+# but has no EvalConditions field (curation.notes, schema finding 1).
+comparability:
+  material_extra:
+    - scaffold
+    - hardware_platform
+  material_waived:
+    - field: shots
+      reason: An agent works from the paper and addendum in its directory; there are no in-context
+        examples to count.
+    - field: chain_of_thought
+      reason: A multi-hour tool-use episode, not a single prompted answer; whether the model reasons
+        visibly is not a condition the protocol sets or reports.
+
+reference_conditions: cond-a20a5ce6abf5
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline, the mean replication score over the papers; each paper's score is itself the
+    rubric tree's weighted aggregate.
+  source: src-paperbench-arxiv-html
+  quote: Our main metric is the average Replication Score across all papers.
+headline_metric: paperbench-replication-score
+no_legitimate_aggregate: false
+
+homepage: https://arxiv.org/abs/2504.01848
+repository: https://github.com/openai/preparedness
+license: null
+license_notes: >
+  The paper is CC BY 4.0. The code's licence is not recorded: the repository has no capture here.
+
+versions:
+  - version: 2025-04
+    label: The paper's release, 20 ICML 2024 papers
+    version_kind: revision
+    released: 2025-04-02
+    changes: The benchmark as published in arXiv 2504.01848 (v1 to v3 within the week).
+    frozen: true
+    sources:
+      - src-paperbench-arxiv-abs
+
+subsets:
+  - id: paperbench#code-dev
+    label: PaperBench Code-Dev
+    scored_separately: true
+    notes: >
+      Grades only the Code Development leaves and skips the reproduction step, so no GPU is needed and
+      grading costs about 85% less. Weakly correlated with the full benchmark (the paper gives Pearson
+      r = 0.48 for o1), so a Code-Dev score is not a PaperBench score.
+  - id: paperbench#human-baseline-3
+    label: The 3-paper subset of the human comparison
+    items: 3
+    scored_separately: true
+    notes: The subset on which the ML-PhD baseline and o1 are compared; a fourth paper was attempted
+      by humans for 24 hours only and is excluded from it.
+subsets_note: >
+  Code-Dev is a variant grading a subset of every rubric's leaves, recorded as a subset because it
+  shares the papers and rubrics. The paper states it: "PaperBench Code-Dev reduces the evaluation task
+  to only code development, skipping the focus on executing the code to verify that results are
+  reproduced." (src-paperbench-arxiv-html). The two-paper development set and the internal held-out
+  set are not subsets of the benchmark and are not listed.
+metrics:
+  - paperbench-replication-score
+metrics_note: One metric; its rubric structure is recorded on the Metric itself (Metric.rubric,
+  ADR-0008).
+
+baselines:
+  - id: base-paperbench-human-best-of-3
+    benchmark_version: paperbench@2025-04
+    kind: human-expert-best
+    metric: paperbench-replication-score
+    value: 41.4
+    n_humans: 8
+    population: ML PhD students and graduates, screened by CV and a technical test; best of three
+      independent attempts per paper
+    time_limit: 48 hours of tracked work (a four-week part-time window)
+    is_primary: true
+    source: src-paperbench-arxiv-html
+    notes: >
+      On the 3-paper subset (paperbench#human-baseline-3), not on all 20 papers; Baseline has no
+      subset field, so the subset is stated here (curation.notes). Eight participants were recruited
+      for a 4-paper design. The same subset scores o1 at 26.6%.
+
+lineage:
+  role: root
+
+tags:
+  - ml-research-replication
+  - llm-judge
+  - frontier-safety-eval
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P0-S8-T07)
+  added_on: 2026-09-27
+  last_verified: 2026-09-27
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-paperbench-arxiv-html
+    - src-paperbench-arxiv-abs
+  sources_note: >
+    Both are arXiv (v3) and carry the arXiv DOI, so neither needs a capture. The HTML full text
+    normalises to 106 KB, over the 64 KB extract cap, so its extract keeps the cited passages. The
+    code repository, where the rubrics and judge live, is not read: the Wayback Machine was offline on
+    2026-09-27.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - Whether the rubric structure is faithfully modelled (Metric.rubric on
+      paperbench-replication-score): 20 trees, 8,316 leaves, 11,218 nodes, binary leaves, weighted
+      mean of children; leaf counts per type are sums of the paper's Table 7.
+    - capability context-integration, and the rejection of tool-use (capability).
+    - lifecycle active is not observed beyond April 2025 (lifecycle_basis).
+    - ground_truth_source expert-panel for author-approved rubrics applied by a model.
+
+    Schema findings (none worked around here):
+    1. EvalConditions has no field for the agent's wall-clock time limit, which the paper shows is
+       material (o1 at 24.4% in 12 hours, 26.0% in 36); max_steps, message_limit and token_limit do
+       not cover it.
+    2. Baseline has no subset field: the human baseline is on 3 of 20 papers, and headroom against it
+       for a full-benchmark score compares different item sets.
+    3. The verify's "tier-3 judge-model rule" is claim-level; the benchmark-level check is
+       reference-grader. Both require a named judge; only reference-grader can fire on an entry
+       with no claims.
+    4. independence_flags has no term for a judge model supplied by an evaluated party.
+    5. The per-type leaf totals (3,674 / 4,076 / 566) and the node total (11,218) are sums of the
+       paper's tables, not quoted figures; Metric carries no quote fields, so they are unquoted by
+       construction.
