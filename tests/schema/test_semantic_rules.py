@@ -191,8 +191,8 @@ def test_findings_render_with_severity_rule_and_fix():
 
 def test_the_repository_corpus_loads_and_every_rule_runs():
     c = v.load_corpus()
-    assert set(c.benchmarks) == {'arc-agi-3', 'casp', 'matbench-discovery', 'paperbench', 'roboarena',
-                                'swe-bench', 'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(c.benchmarks) == {'arc-agi-3', 'casp', 'forecastbench', 'matbench-discovery', 'paperbench',
+                                'roboarena', 'swe-bench', 'virtual-cell-challenge', 'weatherbench-2'}
     findings = v.validate(c, 'full')
     assert all(f.rule in v.RULES and f.severity in ('blocking', 'warning') for f in findings)
 
@@ -217,6 +217,22 @@ def test_paperbench_fails_tier_3_without_its_judge():
         doc.pop(k)
     c.conditions[cond_id] = EvalConditions.model_validate(doc)
     assert judged(c) == [('judge-model', 'blocking'), ('reference-grader', 'blocking')]
+
+
+def test_forecastbench_carries_every_resolution_state_and_two_human_tiers():
+    """P0-S8-T06's verify: resolution_status takes all three values on real claims, and Baseline
+    records at two tiers resolve -- superforecasters and the public, on each version."""
+    c = v.load_corpus()
+    claims = [x for x in c.claims.values() if x.benchmark.split('@')[0] == 'forecastbench']
+    assert sorted(x.resolution_status for x in claims) == ['partial', 'pending', 'resolved']
+    assert all((x.value is None) == (x.resolution_status == 'pending') for x in claims)
+    assert all((x.resolved_as_of is None) == (x.resolution_status == 'pending') for x in claims)
+    tiers = {}
+    for b in c.benchmarks['forecastbench'].baselines:
+        tiers.setdefault(b.benchmark_version, set()).add(b.kind)
+    assert tiers == {'forecastbench@2024': {'human-expert-average', 'human-crowd-average'},
+                     'forecastbench@2025-10': {'human-expert-average', 'human-crowd-average'}}
+    assert not [f for f in v.validate(c, 'full') if f.entity == 'forecastbench' or f.entity in {x.id for x in claims}]
 
 
 def test_the_cli_exits_non_zero_on_a_blocking_finding(tmp_path, capsys):
