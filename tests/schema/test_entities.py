@@ -190,6 +190,35 @@ def test_metric_rules():
     rejects(Metric, changed(doc, domains=['biology-genetics']))                   # a family, not a leaf
 
 
+PAPERBENCH_RUBRIC = {'structure': 'tree', 'rubric_count': 20, 'leaf_count': 8316, 'node_count': 11218,
+                     'leaf_scoring': 'binary', 'node_aggregation': 'weighted-mean-of-children',
+                     'leaf_types': [{'type': 'code-development', 'count': 3674},
+                                    {'type': 'execution', 'count': 4076},
+                                    {'type': 'result-match', 'count': 566}]}
+
+
+def test_a_metric_records_its_rubric_as_data():
+    """ADR-0008: PaperBench's rubric -- 20 trees, 8,316 leaves in three requirement types -- is fields."""
+    m = Metric.model_validate(changed(fx('metric-gdt-ts.yaml'), rubric=PAPERBENCH_RUBRIC))
+    assert (m.rubric.leaf_count, m.rubric.node_count, m.rubric.rubric_count) == (8316, 11218, 20)
+    assert [t.count for t in m.rubric.leaf_types] == [3674, 4076, 566]
+    assert Metric.model_validate(fx('metric-gdt-ts.yaml')).rubric is None           # optional
+
+
+@pytest.mark.parametrize('change, match', [
+    ({'leaf_types': [{'type': 'code-development', 'count': 3674}]}, 'not the leaf_count'),
+    ({'node_count': 8000}, 'below its leaf_count'),
+    ({'node_aggregation': None}, 'node_aggregation'),
+    ({'structure': 'flat', 'node_count': None, 'leaf_types': []}, 'no children to aggregate'),
+    ({'leaf_types': [{'type': 'execution', 'count': 4158}, {'type': 'execution', 'count': 4158}]}, 'listed twice'),
+    ({'leaf_count': 0}, None),
+    ({'leaf_scoring': 'likert'}, None),
+    ({'grader': 'o3-mini'}, None),                    # the grader is a condition of the run, not the metric
+])
+def test_rubric_rules(change, match):
+    rejects(Metric, changed(fx('metric-gdt-ts.yaml'), rubric={**PAPERBENCH_RUBRIC, **change}), match=match)
+
+
 # ---- Baseline -------------------------------------------------------------------------------------
 
 def test_baseline_kinds_are_nine_ceilings_and_three_floors():
