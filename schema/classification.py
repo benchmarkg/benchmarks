@@ -23,10 +23,12 @@ Any assignment may also cite a `failure`: a collision, or an escape hatch taken 
 assigned, is logged without abstaining.
 
 A failure record, taxonomy/_failures/<yyyy-mm-dd>-<benchmark>-<nnn>.yaml, is 03 S3.3's block. It
-adds two optional fields: `terms[]` names the terms a collision or a two-primaries case is between,
-and `classification` names the record that cites it. What the files must agree on is checked in
+adds optional fields: `terms[]` names the terms a collision or a two-primaries case is between,
+`classification` names the record that cites it, and triage (P1-S1-T06) adds `route` (ROUTES) and,
+for a failure an ADR decides, `adr`, the ADR's path. What the files must agree on is checked in
 tools/validate/classifications.py: the entry is in the stress corpus; a cited failure exists and
-names the same benchmark and field; and no failure goes uncited.
+names the same benchmark and field; no failure goes uncited; a blocking failure is routed to an ADR;
+and the ADR it names exists and names it back.
 
 What cannot be checked offline is that each quote is in its source. The source is a live URL, not a
 committed Source record with an extract. The classifying agent checks every quote against the text it
@@ -48,6 +50,7 @@ Url = Annotated[str, StringConstraints(pattern=r'^https?://\S+$')]
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 FailureId = Annotated[str, StringConstraints(pattern=r'^\d{4}-\d{2}-\d{2}-[a-z0-9][a-z0-9-]*-\d{3}$')]
 SemVer = Annotated[str, StringConstraints(pattern=r'^\d+\.\d+\.\d+$')]
+AdrPath = Annotated[str, StringConstraints(pattern=r'^adr/\d{4}-[a-z0-9][a-z0-9-]*\.md$')]
 
 
 def _terms(t) -> tuple[str, ...]:
@@ -82,6 +85,9 @@ EPISTEMIC = {'data.contamination_risk': {'unknown'}, 'activity': {'unknown'},
 NEVER_HAND_SET = {('lifecycle', t) for (f, t) in B._DERIVED_TERMS if f == 'lifecycle'}
 FAILURE_KINDS = ('missing-term', 'collision', 'two-primaries', 'undefined-boundary', 'escape-hatch-used',
                  'source-silent')
+# Where triage (P1-S1-T06; 03 S3.3) sends a failure: an ADR decides it, homographs.yaml declares it (a
+# collision whose terms sit in different facet files), or the Stage 4 revision batches it.
+ROUTES = ('adr', 'homograph', 'stage-4')
 
 
 class Strict(BaseModel):
@@ -168,6 +174,8 @@ class FailureRecord(Strict):
     blocking: bool
     terms: list[Text] = Field(default_factory=list)
     classification: Slug | None = None
+    route: Literal[ROUTES] | None = None  # type: ignore[valid-type]
+    adr: AdrPath | None = None
 
     @model_validator(mode='after')
     def _facet_is_a_field(self):
@@ -175,6 +183,10 @@ class FailureRecord(Strict):
             raise ValueError('facet %r is not a classified field (%s)' % (self.facet, ', '.join(FIELDS)))
         if self.kind in ('collision', 'two-primaries') and len(self.terms) < 2:
             raise ValueError('a %s names the terms it is between in `terms` (at least two)' % self.kind)
+        if (self.route == 'adr') != (self.adr is not None):
+            raise ValueError('`adr` names the ADR exactly when `route` is adr')
+        if self.route == 'homograph' and self.kind != 'collision':
+            raise ValueError('only a collision routes to homographs.yaml')
         return self
 
 
