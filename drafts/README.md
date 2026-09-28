@@ -8,6 +8,9 @@ only when you name it: `bench validate drafts/`.
   ai-drafted-unverified` and a `provenance` block, and it is validated by `schema/draft.py`.
 - `sources/<src-id>.yaml` holds the snapshot of the page the draft was made from. Every quote in the
   draft is checked against it.
+  - When `data/sources/` already holds a source for the URL, with a committed snapshot, no new file
+    is written. The copilot drafts from that committed snapshot, checks every quote against it, and
+    never fetches the live page. `--fresh-snapshot` takes a new snapshot instead.
 
 ## Making a draft
 
@@ -33,6 +36,17 @@ The script, not the model, decided what stayed. A value survived only if:
 - its quote is in the snapshot, and the value is inside its quote;
 - any number in a written sentence also appears in its quote;
 - a vocabulary value is a real term.
+
+A rejected value never fails the whole draft. That field is set to null, and the rejection goes in
+`provenance.rejected`, with:
+
+- the value that was offered;
+- the text it claimed as its quote;
+- the reason it was refused;
+- the stage: `vet` when it failed against the text the drafter was shown, `snapshot` when it failed
+  against the stored source afterwards.
+
+A rejected value is a lead, not a fact. Check it against the source like any other field.
 
 To review:
 
