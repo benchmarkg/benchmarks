@@ -3,7 +3,7 @@ id: bench
 corpus_item: 42
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2506.07982
   abs: https://arxiv.org/abs/2506.07982
@@ -17,7 +17,8 @@ facets:
     - value: agents-tooluse/tool-api-calling
       source: paper
       quote: The agent have access to a set of tools that interact with a database
-      failure: 2026-09-28-bench-001
+      note: Under 0.9.0 a simulated user, even one with tools of its own, is part of the environment, so one agent calling
+        domain APIs is tool-api-calling and the dual-control setting is secondary (bench is the example).
   domain.secondary:
     - value: agents-tooluse/multi-agent-coordination
       source: abs
@@ -31,8 +32,8 @@ facets:
       source: paper
       quote: solve constraint satisfaction tasks, where constraints stem from a combination of a domain policy that
         the agent must follow
-      note: The sentence describes the retail and airline domains, which tau2-bench carries over from tau-bench.
-      failure: 2026-09-28-bench-002
+      note: The sentence describes the retail and airline domains, which tau2-bench carries over from tau-bench. The
+        paper's unnamed reasoning claim is recorded in notes, as ADR-0020 directs.
     - value: collaboration
       source: paper
       quote: how well it can communicate and collaborate with the user at solving the issue
@@ -48,28 +49,28 @@ facets:
       note: 'The headline metric is pass^k: the share of tasks solved in all k trials. The leaderboard asks for
         "at least 4 trials per domain".'
   evaluation_method:
-    - value: exact-match
+    - value: environment-state-check
       source: evaluation
       quote: compared (by hash) to the predicted environment's DB end state
-      failure: 2026-09-28-bench-003
+      note: Gold actions are replayed on a fresh environment and its DB end state is compared with the one the agent
+        produced; telecom's assertion functions check the final world state. bench is the 0.9.0 example.
     - value: constraint-check
-      source: paper
-      quote: In telecom, only assertion functions are used to evaluate task success.
-      note: The retail and airline reward multiplies the DB check by a check that every required string appears in
-        the agent's messages ("Does every string in `communicate_info` appear in the agent's messages?").
+      source: evaluation
+      quote: A list of strings the agent must say to the user (substring match).
+      note: The retail and airline reward multiplies the DB check by a check that every communicate_info string appears
+        in the agent's messages, a battery on the agent's output rather than on the environment.
   designed_for_subjects:
     - value: agent-scaffold
       source: submission
       quote: Replacing or augmenting that benchmark-side scaffold with a planner, router, additional agent, custom
         tool, or modified control flow makes the submission custom.
-      failure: 2026-09-28-bench-004
-    - value: multi-agent-system
-      source: abs
-      quote: A novel Telecom dual-control domain modeled as a Dec-POMDP, where both agent and user make use of tools
-        to act in a shared, dynamic environment
-      note: Tagged on the taxonomy's own tau2-bench example ("A simulated user is a second participant whose
-        behaviour shapes the outcome").
-      failure: 2026-09-28-bench-005
+      note: For custom submissions, which replace the benchmark-side scaffold.
+    - value: model-in-benchmark-harness
+      source: submission
+      quote: A standard text submission evaluates a general-purpose LLM through the default τ-bench agent scaffold,
+        with the standard tool set and prompts.
+      note: Nearly every text row is such a run; bench is the 0.9.0 example. multi-agent-system is no longer tagged,
+        because the simulated user is supplied identically to every entrant (bench is its near miss).
   data.access:
     - value: fully-open
       source: evaluation
@@ -101,19 +102,25 @@ facets:
         repository also ships "Train/test task splits for all domains" for RL training. No source measures
         contamination.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: Telecom tasks are verified solvable by replaying their solution functions ("Task correctness is
-        automatically verified"), but no source reports a human or oracle score as the top of the scale. This
-        follows swe-bench-verified.
+    - value: measured-ceiling
+      source: paper
+      quote: Task correctness is automatically verified by checking if the final state
+      note: Telecom tasks are verified solvable by applying their solution functions and checking every assertion, and
+        the retail and airline targets are derived by replaying gold actions. Under 0.9.0 an oracle or gold solution run
+        against the checks is measured-ceiling, as swe-bench-verified now reads.
   lifecycle:
-    - value: active
-      source: manifest
-      quote: gpt-live-1-diamond-alpha_openai_2026-09-09
-      failure: 2026-09-28-bench-006
+    - value: superseded
+      source: home
+      quote: τ³-bench is here!
+      note: The entry is tau2-bench as published in June 2025. The repository now presents tau3-bench, with 75+ task fixes
+        and a grading change that makes earlier results not comparable. Under 0.9.0 an entry takes its own layer's standing,
+        so the version is superseded while the family stays active (rows dated up to 2026-09-09).
   activity:
-    - value: accepting-submissions
+    - value: closed
       source: submission
-      quote: Submit your agent results to the τ-bench leaderboard at
+      quote: Older submissions from previous benchmark versions
+      note: Submissions are taken only on the latest version, and rows from earlier versions move to legacy_submissions.
+        Under 0.9.0 an edition or version entry whose own intake is frozen is closed even while its family takes entries.
   governance.maintainer_type:
     - value: industry-lab
       source: paper
@@ -124,7 +131,11 @@ facets:
       quote: Trajectory data available for review
       note: Voice interaction metrics are "recomputed by maintainers from the submitted trajectories during
         review".
-      failure: 2026-09-28-bench-007
+    - value: maintainer-run
+      source: manifest
+      quote: claude-opus-4-5_sierra_2026-02-26
+      note: Most current rows carry the _sierra_ suffix, runs Sierra made of other vendors' models, and Sierra runs voice
+        evaluations itself.
     - value: self-reported
       source: submission
       quote: are marked with a caution icon and may have
@@ -160,4 +171,14 @@ notes: 'The corpus id is bench, a known corpus defect. The entry is tau2-bench (
   domains remain, with "75+ task fixes". Classified from the tau2 paper for construction and from the live
   repository for governance and activity. HAL (holistic-agent-leaderboard-hal) runs the original TAU-bench
   Airline, a member of this family. The taxonomy examples for this entry use the ref tau2-bench. long-horizon-execution
-  and memory-retention, which those examples tag, are not tagged, because no tau2 source claims either.'
+  and memory-retention, which those examples tag, are not tagged, because no tau2 source claims either. The paper
+  also claims a reasoning component, how well the agent can reason over and apply the domain guidelines, that names
+  no form of reasoning; ADR-0020 rejects a general reasoning term, so it is recorded here and not tagged.'
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, capability, evaluation_method, designed_for_subjects, data.ceiling_anchor_type,
+      lifecycle, activity, governance.submission_process]
+    note: Re-adjudicated against 0.9.0; seven failures settle, lifecycle moves to superseded under the entry-as-catalogued
+      rule, and the hosted user-simulator blocker (008) stays open.

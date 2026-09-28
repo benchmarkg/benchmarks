@@ -3,7 +3,7 @@ id: minif2f-minif2f-dafny
 corpus_item: 4
 curator: agent (P1-S1-T03)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2109.00110
   abs: https://arxiv.org/abs/2109.00110
@@ -16,7 +16,8 @@ facets:
       source: paper
       quote: miniF2F is a dataset of manually formalized statements of Olympiad type problems, aligned in Lean,
         Metamath, and Isabelle
-      failure: 2026-09-28-minif2f-minif2f-dafny-001
+      note: The Dafny half fills lemma bodies that Dafny's verifier accepts; 0.9.0's term covers an auto-active
+        program verifier, and the proved properties are mathematical.
   domain.secondary:
     - value: mathematics/competition-math
       source: home
@@ -34,20 +35,24 @@ facets:
     - value: formal-proof-check
       source: paper
       quote: as it is end-to-end verifiable, cross-platform and spans a wide range of difficulty
-      failure: 2026-09-28-minif2f-minif2f-dafny-002
+      note: For Dafny, the SMT-backed verifier's verdict and the spec-preservation check are one machine-checked
+        verdict under 0.9.0's inclusion test.
   designed_for_subjects:
-    - value: domain-specialist-model
+    - value: task-specific-supervised-model
       source: paper
       quote: a language model based on GPT-3 which has been finetuned for theorem proving
+      failure: 2026-09-28-minif2f-minif2f-dafny-007
     - value: classical-algorithm
       source: dafnypaper
       quote: We find that Dafny’s automation alone solves 39-44% of problems with empty proofs
       note: The Dafny verifier with empty proofs, and the Lean tidy baseline in the original paper, compete as
         non-learned entrants.
-    - value: instruction-tuned-model
+    - value: model-in-benchmark-harness
       source: dafnypaper
-      quote: We evaluate 8 off-the-shelf LLMs on proof generation
-      failure: 2026-09-28-minif2f-minif2f-dafny-003
+      quote: we extract error traces from Dafny’s output and append them to the error correction prompt (B.2)
+        and the conversation history for iterative refinement.
+      note: The Dafny harness drives each of 8 off-the-shelf LLMs through the same repair loop (N=4 attempts,
+        E=3 error corrections) via AWS Bedrock.
   data.access:
     - value: fully-open
       source: home
@@ -63,8 +68,12 @@ facets:
     - value: expert-authored
       source: paper
       quote: The statements in miniF2F are all manually formalized
-      note: The authors formalized the statements themselves. The Dafny statements were translated from the
-        Lean set ("translated from the Lean miniF2F benchmark"), and the method of translation is not stated.
+      note: The authors formalized the statements themselves.
+    - value: inherited-from-constituents
+      source: dafnypaper
+      quote: translated from the Lean miniF2F benchmark
+      note: The Dafny half reuses the 488 miniF2F statements, reformatted as Dafny lemmas; the method of
+        translation is not stated.
   data.contamination_risk:
     - value: medium
       source: home
@@ -73,31 +82,35 @@ facets:
       note: The public, static statements have been on GitHub since 2021 and ship with ground-truth proofs,
         which is a plausible but unevidenced route. No source assesses it.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: No human score is reported. The Dafny empty-proof baseline (38.9%) is a floor, not a ceiling, and
-        the original paper speaks of difficulty "for both humans and machines" without measuring either.
+    - value: theoretical-maximum
+      source: dafnypaper
+      quote: The best model we test, Claude Opus 4.6, achieves 62.7% cumulative pass@4 on the full test set
+      note: The headline is the fraction of statements proved, bounded at 100%. No human score is reported, and
+        the Dafny empty-proof baseline (38.9%) is a floor, not a ceiling.
   lifecycle:
     - value: active
       source: dafnypaper
       quote: The best model we test, Claude Opus 4.6, achieves 62.7% cumulative pass@4 on the full test set
-      failure: 2026-09-28-minif2f-minif2f-dafny-004
+      note: A family entry is active while any member produces results (0.9.0 active test). The original v1
+        repository's own standing belongs on its child record.
   activity:
-    - value: null
+    - value: no-submission-channel
       source: home
       quote: There is no obligation tied with the use and reporting of a result based on miniF2F.
-      failure: 2026-09-28-minif2f-minif2f-dafny-005
+      note: Neither component has a leaderboard or submission route; the Dafny harness stores results locally
+        ("Results are stored in `results/{model_id}/{test|valid}/results.json`").
   governance.maintainer_type:
     - value: industry-lab
-      source: paper
-      quote: 'Affiliation: OpenAI'
-      note: 'The Dafny port is by Amazon Web Services and University of Cambridge authors ("Affiliation:
-        Amazon Web Services, London, UK"), also an industry lab.'
+      source: home
+      quote: git clone https://github.com/openai/miniF2F
+      note: The benchmark as distributed sits in OpenAI's GitHub organisation. The Dafny port sits in the
+        dafny-lang organisation, and its authors are at Amazon Web Services and Cambridge.
   governance.submission_process:
-    - value: self-reported
+    - value: literature-only
       source: home
       quote: There is no obligation tied with the use and reporting of a result based on miniF2F.
-      note: There is no leaderboard. Results are reported in the reporters' own papers, and nothing checks
-        them. Proofs can be contributed back by pull request.
+      note: There is no leaderboard or results channel. Beyond the release papers' baselines, results appear
+        in the reporters' own papers. Proofs, not results, can be contributed back by pull request.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
@@ -106,10 +119,11 @@ facets:
         Nova Premier through AWS Bedrock ("Nova Premier"), but the fetched sources do not state that the
         port's AWS authors evaluate it, so no second flag is set.
   execution.compute_tier:
-    - value: null
+    - value: api-credits-only
       source: dafnyrepo
       quote: AWS Bedrock API Access
-      failure: 2026-09-28-minif2f-minif2f-dafny-006
+      note: The official Dafny harness calls models through Bedrock, and the verifier runs on CPU. A local GPU
+        for a fine-tuned prover is the entrant's choice.
   execution.reproducibility_tier:
     - value: fully-automatable
       source: dafnyrepo
@@ -124,5 +138,13 @@ facets:
 notes: The corpus flags this as a composite entry. The original miniF2F (OpenAI; v1 frozen August 2021;
   repository archived according to the corpus flag, which the fetched README does not state) and MINIF2F-DAFNY
   (AWS, 2025-2026) are separate artefacts with separate papers. Every field that depends on currency or tooling
-  splits between them (failures 004 and 006). Dafny is an auto-active program verifier rather than a proof
-  assistant, which the domain and evaluation-method definitions do not anticipate (failures 001 and 002).
+  splits between them; 0.9.0's family and precedence rules settle lifecycle and compute_tier. Dafny is an
+  auto-active program verifier, which 0.9.0's formal-theorem-proving and formal-proof-check tests now name.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, evaluation_method, designed_for_subjects, data.data_provenance,
+      data.ceiling_anchor_type, lifecycle, activity, governance.maintainer_type,
+      governance.submission_process, execution.compute_tier]
+    note: Re-adjudicated against 0.9.0.

@@ -3,7 +3,7 @@ id: osworld-2-0
 corpus_item: 41
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2606.29537
   abs: https://arxiv.org/abs/2606.29537
@@ -15,7 +15,8 @@ facets:
       source: abs
       quote: We introduce OSWorld 2.0, a benchmark of 108 long-horizon computer-use workflows across everyday and
         professional tasks
-      failure: 2026-09-28-osworld-2-0-001
+      note: Under 0.9.0 the interface is primary and the horizon secondary (computer-use-gui's tie-break, with osworld-2-0
+        as its example).
   domain.secondary:
     - value: agents-tooluse/long-horizon-autonomy
       source: paper
@@ -45,11 +46,12 @@ facets:
       note: The safety checks (planted-credential leaks, disk usage and similar side effects) are reported next to
         the task score, not folded into it.
   evaluation_method:
-    - value: constraint-check
+    - value: environment-state-check
       source: paper
       quote: We prioritize functional evaluation whenever possible, using checks over concrete environment states
         and output artifacts.
-      failure: 2026-09-28-osworld-2-0-003
+      note: About 27 checks per task inspect VM files, mocked-website databases and exported documents in the final
+        environment state, with credit per checkpoint; osworld-2-0 is the 0.9.0 example.
     - value: model-graded-judge
       source: paper
       quote: Overall, model-based evaluation contributes 11.53% of the total score, and no task relies on it for
@@ -66,7 +68,15 @@ facets:
     - value: agent-scaffold
       source: repo
       quote: Correctly implement the agent interface and import your customized version in the `run.py`
-      failure: 2026-09-28-osworld-2-0-002
+      note: Public evaluations take the entrant's own agent code. human-expert is not tagged, against the taxonomy example
+        (failure 008).
+      failure: 2026-09-28-osworld-2-0-008
+    - value: model-in-benchmark-harness
+      source: paper
+      quote: Claude models act through the native claude_computer_use tool, while the remaining models emit pyautogui
+        code actions.
+      note: Every number in the paper comes from a model inside the maintainers' fixed agent configurations, with a 500-step
+        budget and their runner scripts. A benchmark with both views carries both terms (0.9.0).
   data.access:
     - value: gated-registration
       source: repo
@@ -81,11 +91,13 @@ facets:
       note: The releases so far are osworld-v2-2026.06.24 (the paper), osworld-v2-2026.08.08 and osworld-v2.1
         (2026-09-16).
   data.data_provenance:
-    - value: expert-authored
+    - value: crowd-authored
       source: paper
       quote: The bulk of OSWorld 2.0 tasks were produced by a small group of internally trained annotators who
         worked end-to-end on the tasks they proposed
-      failure: 2026-09-28-osworld-2-0-004
+      note: The annotators first learned the target domain from tutorials, documentation and experiment. Under 0.9.0
+        the authors' prior domain skill decides, not the source's 'expert-style annotation', and osworld-2-0 is the
+        crowd-authored example.
   data.contamination_risk:
     - value: medium
       source: paper
@@ -94,11 +106,12 @@ facets:
       note: The task classes are gated ("This reduces benchmark leakage"), but the gate approves automatically and
         the trajectories are public. No source assesses contamination.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: Two annotators re-solve every task to check solvability, and each task carries a skilled-human
-        completion time (median about 1.6 hours), but no source reports a human score. The taxonomy example that
-        tags human-expert for osworld-2-0 cites a 72.4% human baseline. That is OSWorld 1.0's figure, and it does
-        not appear in any OSWorld 2.0 source.
+    - value: measured-ceiling
+      source: paper
+      quote: For task validity, we verify that each task is solvable from the instruction and environment as written
+      note: Two independent annotators complete every task end to end to confirm it is solvable, which 0.9.0's measured-ceiling
+        test names (human validation that every item is solvable). No human score is reported; the 72.4% human baseline
+        in the taxonomy example is OSWorld 1.0's figure.
   lifecycle:
     - value: active
       source: repo
@@ -120,16 +133,28 @@ facets:
     - value: sandboxed-rerun
       source: repo
       quote: to run your agent code on our side and have us report the results.
-      failure: 2026-09-28-osworld-2-0-005
+    - value: open-source-gated
+      source: repo
+      quote: You need to upload and allow us to disclose your agent implementation under the OSWorld framework
+      note: Disclosing the agent implementation is a condition of a verified-leaderboard result; osworld-2-0 is the 0.9.0
+        example.
+    - value: maintainer-run
+      source: paper
+      quote: 'We evaluate seven computer-use model families: Claude Opus 4.8, Claude Opus 4.7, Claude Sonnet 4.6 [Anthropic,
+        2026c], GPT-5.5, Qwen 3.7-Plus, MiniMax M3, and Kimi 2.6.'
+      note: The maintainers chose these models, ran them in their own agent configurations and publish them on the site's
+        leaderboard.
     - value: maintainer-verified
       source: repo
       quote: Alternatively, if you are from a trusted institution, you can share your monitoring data and
         trajectories with us.
   governance.independence_flags:
-    - value: null
+    - value: grader-from-evaluated-party
       source: paper
-      quote: The following advisors provided guidance throughout the project via regular project meetings, paper
-        writing, and project design discussions.
+      quote: Model-based evaluation and the human-in-the-loop user simulator both use Claude Sonnet 4.6
+      note: The judge that scores 11.53% of the total is Claude Sonnet 4.6, which is also an evaluated model, and Claude
+        models are ranked. The advisers from Alibaba Qwen, whose Qwen 3.7-Plus is evaluated, took part in design, which
+        no 0.9.0 flag names (failure 006, evaluated-party-in-design deferred).
       failure: 2026-09-28-osworld-2-0-006
   execution.compute_tier:
     - value: api-credits-only
@@ -144,12 +169,9 @@ facets:
       quote: For a reproducible evaluation, use the OSWorld-V2 code, Hugging Face Python task files, Hugging Face
         task assets, and mocked website deployment from the same release.
   execution.reproducibility_blockers:
-    - value: specific-simulator-build
+    - value: null
       source: paper
-      quote: results should only be compared within the same official benchmark release
-      note: A score is defined only inside one release manifest, which pins the task, website, code and
-        provider-image tags. The environment is a VM with mocked websites rather than a physics simulator, the
-        boundary medagentbench-v2-001 raised.
+      quote: Model-based evaluation and the human-in-the-loop user simulator both use Claude Sonnet 4.6
       failure: 2026-09-28-osworld-2-0-007
   execution.harness_availability:
     - value: official-harness
@@ -160,4 +182,14 @@ notes: 'Classified as the corpus defines it: OSWorld 2.0, the June 2026 paper an
   2.1 (2026-09-16) is a bug-fix release of the same benchmark and family, and the repository keeps the 2.0
   releases active. OSWorld 1.0 (now osworld-v1.xlang.ai) is the same family and was not used. The taxonomy''s
   osworld-2-0 examples describe OSWorld 1.0 in places: the 72.4% human baseline, and "an early misclick is
-  unrecoverable".'
+  unrecoverable". In 0.9.0 the release pin ("results should only be compared within the same official benchmark release")
+  is carried by data.refresh, not by specific-simulator-build, because a VM with mocked websites is a stateful software
+  environment rather than a simulator (environment-state-check against simulation-rollout).'
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, evaluation_method, designed_for_subjects, data.data_provenance, data.ceiling_anchor_type,
+      governance.submission_process, governance.independence_flags, execution.reproducibility_blockers]
+    note: Re-adjudicated against 0.9.0; five failures settle, the blockers field now abstains on the deferred hosted-judge
+      gap, and a new record logs the stale human-expert example.

@@ -3,7 +3,7 @@ id: balrog
 corpus_item: 74
 curator: agent (P1-S1-T05)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2411.13543
   abs: https://arxiv.org/abs/2411.13543
@@ -14,11 +14,13 @@ sources:
   subcommits: https://api.github.com/repos/balrog-ai/experiments/commits
 facets:
   domain.primary:
-    - value: null
+    - value: games-planning/multi-game-suites
       source: abs
       quote: Our benchmark incorporates a range of existing reinforcement learning environments with varying levels
         of difficulty
-      failure: 2026-09-28-balrog-001
+      note: Six RL environments (BabyAI, Crafter, TextWorld, Baba Is AI, MiniHack, NetHack) averaged into one progress
+        score. Puzzle and open-ended environments each hold only part of it, and the breadth is inside games-planning
+        (ADR-0016; balrog is the term's example).
   domain.secondary:
     - value: games-planning/puzzle-games
       source: paper
@@ -32,12 +34,15 @@ facets:
     - value: planning
       source: home
       quote: testing their ability to plan, reason spatially, and explore in dynamic environments
-      failure: 2026-09-28-balrog-002
+      note: Each episode is played against an explicit goal or objective, and the source claims planning, so 0.9.0's
+        planning inclusion test counts the executed action sequence as the plan and its outcome as scoring it.
     - value: long-horizon-execution
       source: repo
       quote: BALROG is a novel benchmark evaluating agentic LLM and VLM capabilities on long-horizon interactive
         tasks using reinforcement learning environments.
-      failure: 2026-09-28-balrog-003
+      note: Episodes run from about 10 to 10^4-10^5 dependent actions with environment feedback, and a death or a failed
+        step makes full success unattainable. 0.9.0's inclusion test says partial credit for progress (Crafter, TextWorld,
+        NetHack) does not disqualify a benchmark.
     - value: spatial-reasoning
       source: abs
       quote: Real-world tasks require handling intricate interactions, advanced spatial reasoning, long-term planning,
@@ -50,13 +55,21 @@ facets:
       source: paper
       quote: For environments like MiniHack, BabyAI, and Baba Is AI, each episode is scored as either 0 or 100
         based on task completion.
-      failure: 2026-09-28-balrog-004
+      note: The other three environments score bounded progress ('a real number between 0 and 100, representing the
+        proportion of achievements toward the maximum score'; NetHack's data-informed progression metric). 0.9.0 redefines
+        simulation-rollout as a bounded outcome, success or partial credit, so one term carries both; the per-environment
+        formulas go on the Metric.
   designed_for_subjects:
     - value: agent-scaffold
       source: paper
       quote: Submissions may propose novel inference-time prompting strategies for improving the reasoning, planning,
         or in-context learning capability of an existing model.
-      failure: 2026-09-28-balrog-005
+      note: The 'Agentic Strategies' submissions.
+    - value: model-in-benchmark-harness
+      source: paper
+      quote: By default, these models will be evaluated zero-shot.
+      note: The 'New Models' submissions and most leaderboard rows are LLMs or VLMs evaluated zero-shot inside BALROG's
+        own naive agent (agent.type=naive), which 0.9.0's model-in-benchmark-harness names ('BALROG's naive agent').
   data.access:
     - value: generated-on-demand
       source: paper
@@ -99,11 +112,14 @@ facets:
       quote: If you would like to submit your model to the leaderboard, please check the submission page.
       note: The site also says "The leaderboard is updated once a week on Monday."
   governance.maintainer_type:
-    - value: academic-lab
-      source: paper
-      quote: 'Affiliation: AI Centre, University College London'
-      note: The corpus flags "maintainer not stated beyond author list". The first author and the correspondence
-        address are at UCL; the site also lists Oxford, NYU and IDEAS NCBR.
+    - value: community-collective
+      source: submit
+      quote: All official submissions to the BALROG leaderboard are maintained at BALROG/experiments
+      note: The code, the experiments repository and the site sit in the shared balrog-ai organisation, and the authors
+        come from UCL's AI Centre, IDEAS NCBR, Oxford, NYU and the University of Warsaw. No source states a single institution
+        or a legal form as the holder (the corpus flags "maintainer not stated beyond author list"). 0.9.0's holder rule
+        rules out academic-lab on the authors' affiliations alone, and the site's UCL correspondence address is a contact,
+        not a holder.
   governance.submission_process:
     - value: self-reported
       source: submit
@@ -118,12 +134,16 @@ facets:
     - value: funded-by-evaluated-party
       source: paper
       quote: We thank the Gemini Academic Program and Divy Thakkar for their support.
-      failure: 2026-09-28-balrog-006
+      note: Gemini models are evaluated on the leaderboard. The kind of support is unstated, but 0.9.0 counts in-kind
+        support from an evaluated party (API access or credits, compute) as funding as well as money, so either reading
+        gives the flag. One author also lists an Anthropic affiliation and Claude models are evaluated, which no flag
+        covers.
   execution.compute_tier:
     - value: api-credits-only
       source: repo
       quote: We support how of the box clients for OpenAI, Anthropic and Google Gemini APIs.
-      failure: 2026-09-28-balrog-007
+      note: The environments are lightweight simulators that run on CPU, and the leaderboard accepts API-served models,
+        so a local vLLM path is the entrant's choice (0.9.0 compute precedence; ADR-0020 names balrog).
   execution.reproducibility_tier:
     - value: automatable-with-simulator
       source: paper
@@ -134,5 +154,13 @@ facets:
       source: evaldoc
       quote: The following are various options you can use to evaluate your agents on BALROG.
 notes: BALROG wraps six existing reinforcement-learning environments in a language interface and averages their
-  progress scores, which is why no games-planning subdomain holds it (failure 001). The leaderboard has LLM, VLM
+  progress scores, which is why it takes games-planning/multi-game-suites (ADR-0016). The leaderboard has LLM, VLM
   and Agent modes; the paper's own results are zero-shot runs of the benchmark's naive agent.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, capability, evaluation_method, designed_for_subjects, governance.maintainer_type,
+      governance.independence_flags, execution.compute_tier]
+    note: Re-adjudicated against 0.9.0; the primary is games-planning/multi-game-suites, the naive-agent rows take
+      model-in-benchmark-harness, and the holder rule makes the maintainer community-collective.

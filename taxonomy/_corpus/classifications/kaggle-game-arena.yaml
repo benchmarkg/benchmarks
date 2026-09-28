@@ -3,7 +3,7 @@ id: kaggle-game-arena
 corpus_item: 73
 curator: agent (P1-S1-T05)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   primary: https://blog.google/innovation-and-ai/products/kaggle-game-arena/
   update: https://blog.google/innovation-and-ai/models-and-research/google-deepmind/kaggle-game-arena-updates/
@@ -11,11 +11,14 @@ sources:
   kapi: https://www.kaggle.com/api/i/benchmarks.BenchmarkService/GetBenchmark
 facets:
   domain.primary:
-    - value: null
+    - value: games-planning/multi-game-suites
       source: update
       quote: 'Chess relies on reasoning. Werewolf relies on social deduction. Poker introduces a new dimension:
         risk management.'
-      failure: 2026-09-28-kaggle-game-arena-001
+      note: The platform's claim is breadth across game types within games-planning, the boards span board games, imperfect-information
+        card games and social deduction, and the arena has no score across boards (ADR-0016; the term's example). The
+        majority clause of the term's tests points to board-games by board count, which the failure records.
+      failure: 2026-09-28-kaggle-game-arena-008
   domain.secondary:
     - value: games-planning/board-games
       source: update
@@ -34,14 +37,15 @@ facets:
       source: primary
       quote: They force models to demonstrate many skills including strategic reasoning, long-term planning and
         dynamic adaptation against an intelligent opponent
-      failure: 2026-09-28-kaggle-game-arena-002
+      note: Each game is an interactive episode against an explicit objective, so 0.9.0's planning inclusion test counts
+        the move sequence as the plan and the result against opponents as scoring it (kaggle-game-arena is the example).
     - value: collaboration
       source: kapi
       quote: communication, collaboration, and persuasion-based skills
-      note: This is the Werewolf board's own description; Word Association is described as "a cooperative game".
-        The taxonomy's collaboration example rejects Game Arena as a near miss because objectives are opposed,
-        which held for chess and poker but not for the team games added since. communication is not tagged,
-        because Werewolf scores the team's win, which its EXC excludes.
+      note: This is the Werewolf board's own description; Word Association is described as "a cooperative game". The
+        team's win is scored, which 0.9.0's mixed-motive tie-break admits (kaggle-game-arena is now the example on
+        collaboration); the chess and poker boards alone would not qualify. communication is not tagged, because Werewolf
+        scores the team's win, which its EXC excludes.
   evaluation_method:
     - value: tournament-play
       source: primary
@@ -53,7 +57,12 @@ facets:
     - value: multi-agent-system
       source: home
       quote: a Kaggle-hosted platform where LLMs compete in games against each other
-      failure: 2026-09-28-kaggle-game-arena-003
+      note: Models play each other, and the rating depends on the roster (the term's example).
+    - value: model-in-benchmark-harness
+      source: home
+      quote: The harness orchestrates the game environment with model calling and parsing.
+      note: The entrant in each seat is a model inside the maintainers' fixed harness, prompt templates, samplers and
+        move parsers, applied identically to every model; the Kaggle API lists the candidates as model versions.
   data.access:
     - value: generated-on-demand
       source: primary
@@ -64,12 +73,16 @@ facets:
     - value: rolling-live
       source: primary
       quote: The goal is to build an ever-expanding benchmark that grows in difficulty as models face tougher competition.
-      failure: 2026-09-28-kaggle-game-arena-004
+      note: Boards and entrants keep being added, so a published Elo is meaningful only against the roster when it was
+        read. Per-board version labels (chess-text v2) do not pin the rating pool, and 0.9.0's pin test gives rolling-live
+        (kaggle-game-arena is the example).
   data.data_provenance:
-    - value: simulation-generated
+    - value: synthetic-procedural
       source: home
       quote: The state of a game is tracked by OpenSpiel.
-      failure: 2026-09-28-kaggle-game-arena-005
+      note: The positions come from a rules engine as the entrants play each other. 0.9.0 makes a game or rules engine
+        synthetic-procedural, not simulation-generated (kaggle-game-arena is the example on the first and the near miss
+        on the second), as 02 S12.5 records.
   data.contamination_risk:
     - value: medium
       source: kapi
@@ -78,11 +91,10 @@ facets:
         human openings", so trained-on game records are a plausible route. The blog argues games resist memorisation
         but does not assess it.
   data.ceiling_anchor_type:
-    - value: null
-      source: primary
-      quote: Specialized engines like Stockfish and general game playing AI models like AlphaZero have been able
-        to play games at a superhuman level for many years and would beat every frontier model without a doubt.
-      failure: 2026-09-28-kaggle-game-arena-006
+    - value: none-known
+      note: The boards publish Elo ratings fitted to all-play-all results among the entrants, a pool-relative scale with
+        no top. The superhuman engines the blog names ('would beat every frontier model without a doubt') are not entrants
+        or anchors on any board. 0.9.0 reads a rating fitted to a pool as none-known, with requires_pool on the Metric.
   lifecycle:
     - value: active
       source: kapi
@@ -90,10 +102,13 @@ facets:
       note: This is the Go board, the newest of 19 published Game Arena boards; 14 boards record an update on
         2026-09-17.
   activity:
-    - value: leaderboard-live-no-round
-      source: primary
-      quote: We plan to run more tournaments in the future on a regular basis, more on that soon.
-      failure: 2026-09-28-kaggle-game-arena-007
+    - value: no-submission-channel
+      source: update
+      quote: To track how these model capabilities are evolving, we have updated the leaderboard to include the
+        latest generation of models.
+      note: The boards are live, but the maintainers choose the models and run every match, and no source gives anyone
+        else a way to enter. 0.9.0 reads a live board that only the maintainer updates as no-submission-channel
+        (kaggle-game-arena is the near miss on leaderboard-live-no-round). Tournaments are planned 'on a regular basis'.
   governance.maintainer_type:
     - value: industry-lab
       source: update
@@ -105,6 +120,11 @@ facets:
       quote: It allows for head-to-head comparison of frontier systems in environments with clear winning conditions.
       note: No fetched source says whether outside parties can enter a model; the Kaggle competitions behind each
         board (competitionId) refuse anonymous reads.
+    - value: maintainer-run
+      source: update
+      quote: To track how these model capabilities are evolving, we have updated the leaderboard to include the
+        latest generation of models.
+      note: The maintainers select the models, run every match and publish the ratings on the boards they keep.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: update
@@ -137,4 +157,12 @@ notes: 'The kaggle.com/game-arena page is a script-rendered shell (the kaggle ke
   paging ListBenchmarks for type GAME and owner kaggle (chess-text, chess-text-openings, poker-heads-up, werewolf,
   go, four-in-a-row, bargaining, word-association and others); it gives board descriptions, publish and update
   times, child metrics and harness links, but not leaderboard rows. The corpus describes chess, Werewolf and poker;
-  by 2026-09 the arena spans 19 games across four subdomains, which is failure 001.'
+  by 2026-09 the arena spans 19 games across four subdomains (see domain.primary).'
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, capability, designed_for_subjects, data.refresh, data.data_provenance,
+      data.ceiling_anchor_type, activity, governance.submission_process]
+    note: Re-adjudicated against 0.9.0; the primary is games-planning/multi-game-suites (ADR-0016), with the majority
+      clause's contrary reading logged, and the activity moves to no-submission-channel.

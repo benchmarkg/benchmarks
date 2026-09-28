@@ -3,7 +3,7 @@ id: rexrank
 corpus_item: 33
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2411.15122
   abs: https://arxiv.org/abs/2411.15122
@@ -31,8 +31,8 @@ facets:
       source: paper
       quote: RadGraph-F1 is a metric for radiology report evaluation. It computes the overlap in clinical entities
         and relations that RadGraph [11] extracts from candidate and reference reports.
-      note: communication is not tagged despite the capabilities.yaml example; see the failure.
-      failure: 2026-09-28-rexrank-001
+      note: communication is not tagged; 0.9.0 makes rexrank its near miss, because every metric compares the report
+        with a reference and no recipient's understanding is scored.
     - value: generation-fidelity
       source: paper
       quote: It evaluates the quality of generated text by comparing n-gram precision between the candidate and
@@ -53,8 +53,8 @@ facets:
       quote: It computes the cosine similarity between the indicator vectors of 14 pathologies that the CheXbert
         automatic labeler extracts from model-generated and groundtruth radiology reports.
       note: SembScore (CheXbert), RadGraph-F1 (RadGraph), BERTScore and RaTEScore are computed by scoring models;
-        the paper names implementations but not checkpoint versions.
-      failure: 2026-09-28-rexrank-002
+        the paper names implementations but not checkpoint versions. Under 0.9.0 a field-standard metric computed
+        by a model (RadGraph-F1, SembScore) is model-derived-metric, not domain-metric.
     - value: model-graded-judge
       source: paper
       quote: GREEN (Generative Radiology Report Evaluation and Error Notation) is an LLM-based metric for evaluating
@@ -65,8 +65,8 @@ facets:
       source: paper
       quote: RadCliQ is a composite metric designed for evaluating radiology report generation, combining BLEU,
         BERTScore, SembScore, and RadGraph-F1 to provide a comprehensive assessment of generated reports.
-      note: The paper names RadCliQ-v1 the primary metric ("We default use RadCliQ-v1 as the primary metric").
-      failure: 2026-09-28-rexrank-003
+      note: The paper names RadCliQ-v1 the primary metric ("We default use RadCliQ-v1 as the primary metric"); 0.9.0
+        makes rexrank a qualifying example of composite.
   designed_for_subjects:
     - value: domain-specialist-model
       source: paper
@@ -78,13 +78,16 @@ facets:
     - value: private-test-server
       source: home
       quote: In ReXrank, we use additional private test set ReXGradient, 10,000 studies for benchmarking.
-      failure: 2026-09-28-rexrank-004
+      note: The headline mixes the public MIMIC-CXR, IU-Xray and CheXpert Plus splits with the maintainer-held ReXGradient
+        set; under 0.9.0's mixed-headline rule the most restrictive set decides.
   data.refresh:
-    - value: static
-      source: paper
-      quote: For public datasets, we utilize the official test splits of MIMIC-CXR (2,347 studies) and IU-Xray (590
-        studies), along with CheXpert Plus’s validation set (200 studies) as no test split is available.
-      failure: 2026-09-28-rexrank-005
+    - value: rolling-live
+      source: home
+      quote: Findings Findings + Impression Rank Model CRIMSON 1/RadCliQ-v1 BLEU BertScore SembScore RadGraph RaTEScore
+        GREEN
+      note: The test items are fixed, but the live table's metric battery differs from the paper's (CRIMSON added,
+        FineRadScore dropped) with no version label. 0.9.0 counts the scoring function as content, so an unlabelled
+        change to the metric battery is rolling-live.
   data.data_provenance:
     - value: real-world-instrument
       source: paper
@@ -96,6 +99,12 @@ facets:
       quote: 'report: Radiologist’s findings and impressions'
       note: The references are the clinical radiology reports written for these studies. The sources do not say
         whether they are identifiable; MIMIC-CXR is distributed under PhysioNet credentialed access.
+    - value: inherited-from-constituents
+      source: paper
+      quote: For public datasets, we utilize the official test splits of MIMIC-CXR (2,347 studies) and IU-Xray (590
+        studies), along with CheXpert Plus’s validation set (200 studies) as no test split is available.
+      note: Three of the four test sets are published datasets reused by their official splits; ReXGradient is the
+        benchmark's own addition.
   data.contamination_risk:
     - value: medium
       source: paper
@@ -128,7 +137,11 @@ facets:
       quote: 'Inference Script: The model should support the following command:'
       note: Entrants email a model description, environment file and inference script; the maintainers run it
         on the test sets and publish the scores.
-      failure: 2026-09-28-rexrank-006
+    - value: maintainer-run
+      source: paper
+      quote: In our evaluation, we utilized the publicly available checkpoint from Huggingface
+      note: The paper's baseline rows were never submitted; the maintainers downloaded public checkpoints (and called
+        GPT-4V through its API) and ran them, and they keep the ranking.
   governance.independence_flags:
     - value: single-evaluator-private-test-set
       source: home
@@ -138,7 +151,11 @@ facets:
       quote: MedVersa Harvard
       note: MedVersa, listed under the maintainer's institution, is among the top-ranked models, and its checkpoint
         is hosted at huggingface.co/hyzhou/MedVersa; Hong-Yu Zhou is a ReXrank author.
-      failure: 2026-09-28-rexrank-007
+    - value: grader-from-evaluated-party
+      source: paper
+      quote: For evaluation, we employ GPT-4o as the LLM
+      note: FineRadScore's judge is GPT-4o, while the GPT-4V entrant was run as the API model "gpt4o05132024", so an
+        OpenAI model grades an OpenAI entrant in the paper's published results.
   execution.compute_tier:
     - value: provided-allocation
       source: paper
@@ -167,5 +184,13 @@ facets:
         the end-to-end leaderboard pipeline is not published. RadGraph needs PhysioNet credentialed access.
 notes: The guideline source is the site's submission page and metrics is the maintainer lab's metric repository,
   both fetched for this record. The paper (v2, 12 Aug 2026) describes eight metrics including FineRadScore; the
-  live site shows a different set including CRIMSON (failure 005). The site also hosts ReXrankCT, ReXGroundingCT
+  live site shows a different set including CRIMSON (data.refresh). The site also hosts ReXrankCT, ReXGroundingCT
   and ReX-MLE, which are separate benchmarks and not classified here.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [capability, evaluation_method, data.access, data.refresh, data.data_provenance, governance.submission_process,
+      governance.independence_flags]
+    note: Re-adjudicated against 0.9.0; the added maintainer-run, grader-from-evaluated-party and inherited-from-constituents
+      terms and the clarified scoring-as-content rule settle all seven Stage 3 failures.
