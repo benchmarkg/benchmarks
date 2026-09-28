@@ -123,6 +123,19 @@ def test_a_failure_record_is_03s_block():
         FailureRecord.model_validate(failure(kind='mood'))
 
 
+def test_triage_fields_go_together():
+    FailureRecord.model_validate(failure(route='stage-4'))
+    FailureRecord.model_validate(failure(route='adr', adr='adr/0014-scientific-prediction-capability.md'))
+    with pytest.raises(ValidationError, match='exactly when'):
+        FailureRecord.model_validate(failure(route='adr'))
+    with pytest.raises(ValidationError, match='exactly when'):
+        FailureRecord.model_validate(failure(route='stage-4', adr='adr/0014-x.md'))
+    with pytest.raises(ValidationError, match='only a collision'):
+        FailureRecord.model_validate(failure(route='homograph'))
+    with pytest.raises(ValidationError):
+        FailureRecord.model_validate(failure(route='adr', adr='docs/0014-x.md'))
+
+
 # ---- the cross-record rules, over a fixture tree -----------------------------------------------------
 
 def tree(tmp_path, records, failures):
@@ -140,6 +153,10 @@ def tree(tmp_path, records, failures):
     for name, f in failures.items():
         (root / 'taxonomy' / '_failures' / ('%s.yaml' % name)).write_text(dump(f), encoding='utf-8')
     return root
+
+
+def warnings(report):
+    return sorted({f.rule for f in report.findings if f.severity == 'warning'})
 
 
 def rules(root):
@@ -217,6 +234,39 @@ def test_the_committed_records_are_the_whole_corpus_in_order():
 def test_the_pass_was_adversarial_enough():
     """03 S3.3: fewer than ten failures means the sample should be widened, not the taxonomy declared correct."""
     assert len(glob.glob(os.path.join(FAILS, '*.yaml'))) >= 10
+
+
+def test_a_blocking_failure_needs_an_adr_that_names_it(tmp_path):
+    fid = '2026-09-28-mmlu-pro-003'
+    found, _ = rules(tree(tmp_path / 'a', [record()], {fid: failure(blocking=True)}))
+    assert found == ['blocking-adr']
+    routed = failure(blocking=True, route='adr', adr='adr/0099-a-decision.md')
+    found, _ = rules(tree(tmp_path / 'b', [record()], {fid: routed}))
+    assert found == ['adr-ref']                                       # the ADR does not exist
+    root = tree(tmp_path / 'c', [record()], {fid: routed})
+    (root / 'adr').mkdir()
+    (root / 'adr' / '0099-a-decision.md').write_text('# ADR-0099\n\nNames no failure.\n', encoding='utf-8')
+    found, _ = rules(root)
+    assert found == ['adr-ref']                                       # it exists but does not name the failure
+    (root / 'adr' / '0099-a-decision.md').write_text('## Evidence\n\n- taxonomy/_failures/%s.yaml\n' % fid,
+                                                     encoding='utf-8')
+    found, report = rules(root)
+    assert found == [] and warnings(report) == []
+
+
+def test_an_untriaged_failure_is_a_warning_not_a_block(tmp_path):
+    found, report = rules(tree(tmp_path, [record()], {'2026-09-28-mmlu-pro-003': failure()}))
+    assert found == [] and warnings(report) == ['failure-triaged']
+
+
+def test_the_committed_log_is_triaged_and_the_revision_list_is_current():
+    """P1-S1-T06's DONE WHEN: no blocking failure record lacks an ADR reference."""
+    from scripts import failure_triage
+    assert failure_triage.main(['--check']) == 0
+    for p in glob.glob(os.path.join(FAILS, '*.yaml')):
+        f = FailureRecord.model_validate(read_yaml(p))
+        assert f.route is not None, p
+        assert not f.blocking or f.adr, p
 
 
 def test_a_proposed_term_is_not_read_as_an_entity_reference(tmp_path):
