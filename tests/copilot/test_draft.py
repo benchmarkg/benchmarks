@@ -30,6 +30,7 @@ TODAY = datetime.date(2026, 9, 28)
 
 
 def draft(tmp_path, drafter=None, url=FIXTURE, **kw):
+    kw.setdefault('fresh', True)             # a new snapshot: test_quote_enforcement.py covers the archived one
     return D.run(url, str(tmp_path / 'drafts'), drafter or D.ExtractiveDrafter(), today=TODAY, curator='tester', **kw)
 
 
@@ -85,7 +86,7 @@ def test_the_replay_answer_keeps_what_its_quotes_carry_and_nulls_the_five_faults
     assert 'number(s) 3' in notes['task.scoring']
     assert 'repo-level-coding' not in r.bench['capability'] and ('capability', 'context-integration') in ev
     assert 'not word for word' in notes['governance.maintainer']
-    assert notes['data.access'] == 'the drafter gave a value but called it absent'
+    assert notes['data.access'] == 'value rejected: the drafter gave a value but called it absent'
     assert 'access' not in r.bench.get('data', {})
     assert r.bench['data']['size']['n_items'] == {'value': 2294, 'unit': 'software engineering problems',
                                                   'source': 'src-arxiv-2310-06770',

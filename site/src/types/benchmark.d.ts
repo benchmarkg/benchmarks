@@ -1818,7 +1818,8 @@ export interface PersonalDataExcluded {
  * verified_by, verified_at, fields_verified}`". The first three are stamped by the curation copilot
  * (tools/copilot/draft.py); the last three are the human gate, and `fields_verified` is what the
  * public UI publishes ("Human-checked: licence, size; auto-drafted: description"). `fields` is the
- * per-field evidence the reviewer ticks against; `injection_flag` is the model's report that the
+ * per-field evidence the reviewer ticks against; `rejected` the values code refused, with the quote
+ * each claimed and why it failed; `injection_flag` is the model's report that the
  * source held text addressed to an AI system (11 S G2), which is flagged, never obeyed.
  */
 export interface Provenance {
@@ -1833,6 +1834,7 @@ export interface Provenance {
   verified_at?: string | null;
   fields_verified?: string[];
   fields?: FieldEvidence[];
+  rejected?: Rejection[];
   injection_flag?: boolean | null;
   injection_note?: string | null;
 }
@@ -1849,4 +1851,27 @@ export interface FieldEvidence {
   source?: string | null;
   quote?: string | null;
   note?: string | null;
+}
+/**
+ * A value the copilot's drafter offered and code refused (P1-S2-T02; 14-roadmap Phase 0: "A quote
+ * that does not match fails validation and the field is set to `null`"). Kept so the reviewer sees
+ * what was claimed and why it did not stand. `claimed` is the text offered as the quote, verbatim;
+ * it is not named `quote`, because it is precisely the text the snapshot does not support, and the
+ * quote-substring check (tools/validate/quotes.py) reads every `quote` key. `stage` is where it was
+ * refused: `vet`, against the text the drafter was shown, or `snapshot`, against the stored Source's
+ * quote_extract after the draft was assembled.
+ */
+export interface Rejection {
+  field: string;
+  term?: string | null;
+  value?:
+    | string
+    | number
+    | {
+        [k: string]: unknown;
+      }
+    | null;
+  claimed?: string | null;
+  reason: string;
+  stage: "vet" | "snapshot";
 }

@@ -11,10 +11,15 @@ on the site.
 
 The pipeline, and where each rule of S F6 and S G2 is enforced:
 
-  1. fetch     the URL (an arXiv PDF is read as its abstract page; a GitHub repository as its README;
-               any other PDF needs `pdftotext` on PATH, and without it the run stops rather than
-               drafting from nothing). A local file is a saved page; its URL is the page's canonical
-               link, or --source-url.
+  0. archive   if data/sources/ already holds a Source for the URL, with a committed quote_extract,
+               that snapshot IS the document: the live page is not fetched, the model is shown the
+               snapshot, and every quote is checked against it (P1-S2-T02; 14-roadmap Phase 0, "not
+               the live page, the snapshot, so the check is reproducible at any commit"). The draft
+               cites that Source and no new one is written. --fresh-snapshot overrides this.
+  1. fetch     otherwise, the URL (an arXiv PDF is read as its abstract page; a GitHub repository as
+               its README; any other PDF needs `pdftotext` on PATH, and without it the run stops rather
+               than drafting from nothing). A local file is a saved page; its URL is the page's
+               canonical link, or --source-url.
   2. snapshot  G2's ingest sanitising: comments, scripts, styles and hidden elements (`hidden`,
                `display:none`, `visibility:hidden`, `aria-hidden`) are dropped, zero-width and bidi
                control characters are stripped, links are kept as `text [url]` so a URL can be
@@ -36,12 +41,18 @@ The pipeline, and where each rule of S F6 and S G2 is enforced:
                quote, a count's number is inside its quote, every number in a prose value is inside
                its quote, and an enum or term is in the vocabulary. Anything else becomes null with
                confidence `absent` and the reason in the evidence note: "Fields with no supporting
-               quote are pre-set to `null`, never guessed."
-  5. write     drafts/benchmarks/<id>.yaml (schema/draft.py's BenchmarkDraft, with
+               quote are pre-set to `null`, never guessed." The refused value, the quote it claimed
+               and the reason go into `provenance.rejected` (stage `vet`), so the reviewer sees what
+               was claimed.
+  5. enforce   the assembled draft goes through the tier-3 quote-substring check against the STORED
+               Source (tools/validate/quotes.py): the committed record, or the SourceDraft about to be
+               written. A quote it does not contain nulls that field and only that field, with a
+               rejection at stage `snapshot`; the record as a whole never fails on a quote (`enforce`).
+  6. write     drafts/benchmarks/<id>.yaml (schema/draft.py's BenchmarkDraft, with
                `curation.verification_status: ai-drafted-unverified` and the provenance block
                {drafted_by, prompt_version, source_urls, verified_by, verified_at, fields_verified})
-               and drafts/sources/<src-id>.yaml (the snapshot). Both are validated, and every quote is
-               re-checked against the snapshot, before either is written. The output directory must
+               and, for a new snapshot, drafts/sources/<src-id>.yaml. Both are validated before either
+               is written; a model failure there is a bug, and stops the run. The output directory must
                be a directory named drafts, outside data/: the copilot has no code path into data/
                (G2, G4). It replaces an earlier draft of the same id only when that draft came from
                the same source and nobody has started verifying it.
@@ -590,12 +601,30 @@ def _why_not(path: str, kind: str, value: Any, quote: str, snap: Snapshot) -> st
     return 'unknown field kind %s' % kind
 
 
-def vet(answer: dict, snap: Snapshot) -> list[Vetted]:
-    """Every drafted field, kept or nulled by code. The model's claim to confidence is kept only for
-    values that pass; everything else is absent, with the reason."""
+def _offered(value: Any) -> Any:
+    """A refused value as the rejection records it: short, and never a structure of unbounded size."""
+    if value is None or isinstance(value, (bool, int, float)):
+        return value
+    if isinstance(value, dict) and set(value) <= {'count', 'unit'}:
+        return {k: (_clean(v, CAPS['unit']) if isinstance(v, str) else v) for k, v in value.items()}
+    return _clean(value if isinstance(value, str) else json.dumps(value, sort_keys=True), CAPS['verbatim'])
+
+
+def rejection(path: str, term: Any, value: Any, claimed: str | None, reason: str, stage: str) -> dict:
+    row = {'field': path, 'term': None if term is None else _clean(str(term), CAPS['verbatim']) or '(empty)',
+           'value': _offered(value), 'claimed': claimed, 'reason': _clean(reason, CAPS['note']), 'stage': stage}
+    return {k: v for k, v in row.items() if v is not None}
+
+
+def vet(answer: dict, snap: Snapshot) -> tuple[list[Vetted], list[dict]]:
+    """Every drafted field, kept or nulled by code, and every refused value as a rejection. A value
+    stands only on a quote found in `snap`, the text that is or becomes the Source's quote_extract:
+    the archived snapshot, never the live page (14-roadmap Phase 0). The model's claim to confidence
+    is kept only for values that pass; everything else is absent, with the reason."""
     got = answer.get('fields') if isinstance(answer, dict) else None
     got = got if isinstance(got, dict) else {}
     out: list[Vetted] = []
+    refused: list[dict] = []
     for path, kind in DRAFT_FIELDS.items():
         a = got.get(path) if isinstance(got.get(path), dict) else {}
         if kind == 'terms':
@@ -609,24 +638,26 @@ def vet(answer: dict, snap: Snapshot) -> list[Vetted]:
                     seen.add(term)
                     kept.append(Vetted(path, None, term, 'high' if item.get('confidence') == 'high' else 'low', quote))
                 elif why:
-                    notes.append('%s dropped: %s' % (term, why))
+                    notes.append('%s rejected: %s' % (term, why))
+                    refused.append(rejection(path, term, None, quote, why, 'vet'))
             out += kept or [Vetted(path, note=_clean('; '.join(notes), CAPS['note']) or 'no term was supported')]
             continue
         value, quote = a.get('value'), _clean(a.get('quote'), CAPS['quote'])
         if isinstance(value, str):
             value = _clean(value, PROSE_CAP.get(path, CAPS['verbatim']))
-        if value is None or a.get('confidence') == 'absent':
-            out.append(Vetted(path, note='the source does not state it' if value is None else
-                              'the drafter gave a value but called it absent'))
+        if value is None:
+            out.append(Vetted(path, note='the source does not state it'))
             continue
-        why = 'no quote' if not quote else _why_not(path, kind, value, quote, snap)
+        why = 'the drafter gave a value but called it absent' if a.get('confidence') == 'absent' else \
+            'no quote' if not quote else _why_not(path, kind, value, quote, snap)
         if why:
-            out.append(Vetted(path, note=_clean('value dropped: %s' % why, CAPS['note'])))
+            out.append(Vetted(path, note=_clean('value rejected: %s' % why, CAPS['note'])))
+            refused.append(rejection(path, None, value, quote, why, 'vet'))
             continue
         if kind == 'count':
             value = {'count': value['count'], 'unit': _clean(value['unit'], CAPS['unit'])}
         out.append(Vetted(path, value, None, 'high' if a.get('confidence') == 'high' else 'low', quote))
-    return out
+    return out, refused
 
 
 # ---- 5. assemble and write ----------------------------------------------------------------------
@@ -699,7 +730,8 @@ def _set(d: dict, path: str, value: Any):
 
 
 def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_id: str, drafter: Drafter,
-             version: str, today: _dt.date, curator: str) -> dict:
+             version: str, today: _dt.date, curator: str, refused: list[dict] | None = None,
+             snapshot_note: str | None = None) -> dict:
     by = {v.field: [x for x in vetted if x.field == v.field] for v in vetted}
     rec: dict = {'id': bench_id}
     for path, kind in DRAFT_FIELDS.items():
@@ -724,9 +756,9 @@ def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_i
     ordered['curation'] = {
         'added_by': curator, 'added_on': today.isoformat(), 'last_verified': None,
         'verification_status': 'ai-drafted-unverified', 'sources': [sid], 'confidence': 'low',
-        'notes': 'Drafted by the F6 curation copilot; drafter: %s. Nobody has opened the source yet: check each '
-                 'field against its quote in provenance.fields, tick it into fields_verified, then promote.'
-                 % drafter.label,
+        'notes': 'Drafted by the F6 curation copilot; drafter: %s. %sNobody has opened the source yet: check '
+                 'each field against its quote in provenance.fields, tick it into fields_verified, then promote.'
+                 % (drafter.label, snapshot_note + ' ' if snapshot_note else ''),
     }
     flag = answer.get('injection_flag') if isinstance(answer, dict) else None
     fields = []
@@ -737,24 +769,100 @@ def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_i
     ordered['provenance'] = {k: x for k, x in {
         'drafted_by': drafter.label, 'drafted_on': today.isoformat(), 'prompt_version': version,
         'source_urls': [doc.url], 'verified_by': None, 'verified_at': None, 'fields_verified': [],
-        'fields': fields, 'injection_flag': flag if isinstance(flag, bool) else None,
+        'fields': fields, 'rejected': list(refused or []), 'injection_flag': flag if isinstance(flag, bool) else None,
         'injection_note': _clean(answer.get('injection_note'), CAPS['note']) if flag else None,
     }.items() if x is not None or k in ('verified_by', 'verified_at')}
     return ordered
 
 
-def check(bench: dict, source: dict) -> list[str]:
-    """Every problem that would stop the draft being written: the two models, and every quote against
-    the snapshot (tools/validate/quotes.py, the tier-3 check)."""
-    from pydantic import ValidationError
+BLOCKS = {('learned_entrant_evidence',): 'learned_entrant_evidence', ('data', 'size', 'n_items'): 'data.size.n_items'}
+
+
+def _unset(rec: dict, path: str):
+    """Remove the value at a dotted path, then every enclosing block left holding nothing but its source."""
+    parts = path.split('.')
+    chain = [rec]
+    for p in parts[:-1]:
+        if not isinstance(chain[-1].get(p), dict):
+            return
+        chain.append(chain[-1][p])
+    chain[-1].pop(parts[-1], None)
+    for i in range(len(parts) - 1, 0, -1):
+        if set(chain[i]) <= {'source'}:
+            chain[i - 1].pop(parts[i - 1], None)
+
+
+def enforce(bench: dict, sources: dict[str, dict]) -> list[dict]:
+    """The quote-substring check against the STORED Source (tools/validate/quotes.py, the tier-3 rule),
+    run on the assembled draft. A quote its source's quote_extract does not contain nulls that field
+    and only that field: the value leaves the body, its evidence becomes absent, and a rejection with
+    stage `snapshot` records what was claimed. The record as a whole never fails (P1-S2-T02 step 2).
+    Returns the rejections added; `bench` is changed in place."""
     from tools.validate import quotes
+    prov = bench['provenance']
+    failing: dict[tuple, str] = {}
+    for q, why in quotes.check(bench, sources):
+        if q.at[:2] == ('provenance', 'fields'):
+            row = prov['fields'][q.at[2]]
+            failing.setdefault((row['field'], row.get('term')), why)
+        elif q.at[:1] in BLOCKS or q.at[:3] in BLOCKS:
+            path = BLOCKS.get(q.at[:1]) or BLOCKS[q.at[:3]]
+            failing.setdefault((path, None), why)
+        else:
+            raise CopilotError('%s holds a quote the copilot did not draft' % quotes.dotted(q.at + (q.key,)))
+    added = []
+    for (path, term), why in failing.items():
+        row = next(r for r in prov['fields'] if r['field'] == path and r.get('term') == term)
+        value = None
+        if term is not None:
+            body = bench
+            for p in path.split('.')[:-1]:
+                body = body.get(p, {})
+            terms = [t for t in body.get(path.split('.')[-1], []) if t != term]
+            _unset(bench, path) if not terms else body.__setitem__(path.split('.')[-1], terms)
+        else:
+            value = body_at(bench, path)
+            _unset(bench, path)
+        added.append(rejection(path, term, _plain_value(value), row.get('quote'), why, 'snapshot'))
+        prov['fields'].remove(row)
+        if not any(r['field'] == path for r in prov['fields']):
+            prov['fields'].append({'field': path, 'confidence': 'absent',
+                                   'note': _clean('value rejected: %s' % why, CAPS['note'])})
+    order = list(DRAFT_FIELDS)
+    prov['fields'].sort(key=lambda r: order.index(r['field']))
+    prov['rejected'] = prov.get('rejected', []) + added
+    return added
+
+
+def body_at(rec: dict, path: str) -> Any:
+    for p in path.split('.'):
+        if not isinstance(rec, dict):
+            return None
+        rec = rec.get(p)
+    return rec
+
+
+def _plain_value(value: Any) -> Any:
+    """A drafted block as its offered value: the count and unit, or the entrant's name."""
+    if isinstance(value, dict) and 'value' in value:
+        return {'count': value['value'], 'unit': value.get('unit')}
+    if isinstance(value, list) and value and isinstance(value[0], dict):
+        return value[0].get('system')
+    return value
+
+
+def check(bench: dict, source: dict | None) -> list[str]:
+    """Every problem that would stop the draft being written: the models. Quotes are not problems
+    here; `enforce` has already nulled every one its source does not contain."""
+    from pydantic import ValidationError
     problems = []
     for model, rec in ((BenchmarkDraft, bench), (SourceDraft, source)):
+        if rec is None:
+            continue
         try:
             model.model_validate(rec)
         except ValidationError as e:
             problems += ['%s: %s' % (model.__name__, ' '.join(str(e).split()))]
-    problems += ['%s: %s' % (quotes.dotted(q.at + (q.key,)), why) for q, why in quotes.check(bench, {source['id']: source})]
     return problems
 
 
@@ -763,7 +871,7 @@ HEADER = {
                    '#\n'
                    '# ai-drafted-unverified: never built, never published, never citable (05 S4; 11 S G4).\n'
                    '# Every populated field has a verbatim quote in provenance.fields, checked against the\n'
-                   '# snapshot in drafts/sources/%s.yaml.\n'
+                   '# snapshot in %s.\n'
                    '# Every field the source did not support is null. Check each field against its quote\n'
                    '# before promoting the entry into data/.\n'),
     'sources': ('# drafts/sources/%s.yaml -- the snapshot a draft\'s quotes are checked against (04 S9),\n'
@@ -804,12 +912,58 @@ def _blocked(path: str, urls: list[str]) -> str | None:
     return None
 
 
+def _norm_url(url: str) -> str:
+    p = urllib.parse.urlsplit(url.strip())
+    scheme = 'https' if p.scheme.lower() in ('http', 'https') else p.scheme.lower()
+    return urllib.parse.urlunsplit((scheme, p.netloc.lower().removeprefix('www.'), p.path.rstrip('/'), p.query, ''))
+
+
+URL_LINE = re.compile(r'^url:\s*[\'"]?(\S+?)[\'"]?\s*$', re.M)
+
+
+def archived_source(url: str, root: str = ROOT) -> tuple[str, dict] | None:
+    """The data/sources/ record for this URL, if the repository already holds one: (path, record).
+    Its committed quote_extract is the archived snapshot (tools/validate/quotes.py), and it, not the
+    live page, is what a draft of that source is quoted against (14-roadmap Phase 0: "not the live
+    page, the snapshot, so the check is reproducible at any commit")."""
+    import glob
+    from schema.taxonomy import read_yaml
+    want = _norm_url(url)
+    for path in sorted(glob.glob(os.path.join(root, 'data', 'sources', '**', '*.yaml'), recursive=True)):
+        with open(path, encoding='utf-8') as fh:
+            m = URL_LINE.search(fh.read())
+        if m and _norm_url(m.group(1)) == want:
+            rec = read_yaml(path)
+            if isinstance(rec, dict) and isinstance(rec.get('id'), str):
+                return os.path.relpath(path, root).replace(os.sep, '/'), rec
+    return None
+
+
+def predicted_url(url: str) -> str | None:
+    """The URL fetch() would record, where it follows from the input alone (no network)."""
+    m = ARXIV.match(url)
+    if m:
+        return 'https://arxiv.org/abs/%s' % m.group(1)
+    g = GITHUB.match(url)
+    if g:
+        return 'https://raw.githubusercontent.com/%s/%s/HEAD/README.md' % (g.group(1), g.group(2))
+    return url if re.match(r'^https?://', url) else None
+
+
+def from_archive(path: str, rec: dict) -> tuple[Fetched, Snapshot]:
+    extract = rec['quote_extract']
+    doc = Fetched(rec['url'], '', 'text', rec.get('type') or 'documentation', len(extract.encode('utf-8')),
+                  str(rec.get('fetched_at') or ''), 'the committed snapshot in %s' % path)
+    return doc, Snapshot(normalise(extract), rec.get('title'))
+
+
 @dataclass
 class Result:
     bench_path: str
     source_path: str
     bench: dict
     source: dict
+    archived: bool = False
 
     @property
     def populated(self) -> list[str]:
@@ -817,42 +971,63 @@ class Result:
 
 
 def run(url: str, out: str, drafter: Drafter, source_url: str | None = None, bench_id: str | None = None,
-        today: _dt.date | None = None, root: str = ROOT, curator: str | None = None) -> Result:
+        today: _dt.date | None = None, root: str = ROOT, curator: str | None = None, fresh: bool = False) -> Result:
+    """Draft one entry. Unless `fresh`, a URL the repository already holds a Source for is drafted from
+    that Source's committed snapshot, and the live page is not fetched at all."""
     today = today or _dt.date.today()
     target = out_dir(out, root)
-    doc = fetch(url, source_url)
-    snap = snapshot(doc)
+    doc, held, note = None, None, None
+    guess = source_url or predicted_url(url)
+    if not fresh and guess:
+        held = archived_source(guess, root)
+    if held is None:
+        doc = fetch(url, source_url)
+        if not fresh:
+            held = archived_source(doc.url, root)
+    if held is not None and not held[1].get('quote_extract'):
+        note = ('%s holds %s for this URL with no quote_extract, which may be cited, not quoted (04 S9); a new '
+                'snapshot was taken.' % (held[0], held[1]['id']))
+        held = None
+        doc = doc or fetch(url, source_url)
+    if held is not None:
+        doc, snap = from_archive(*held)
+        note = 'Quotes are checked against the committed snapshot of %s (%s), not the live page.' % (held[1]['id'], held[0])
+    else:
+        snap = snapshot(doc)
     if not snap.text:
         raise CopilotError('%s has no readable text; nothing to draft from' % url)
     system, schema = system_prompt(os.path.join(root, 'taxonomy')), output_schema()
     version = prompt_version(system, schema)
     answer = drafter.answer(snap, doc, system, schema)
-    vetted = vet(answer, snap)
+    vetted, refused = vet(answer, snap)
     name = next((v.value for v in vetted if v.field == 'name' and v.value), None)
     bench_id = bench_id or slug(name or _fallback_name(doc, snap), 63)
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{1,62}', bench_id):
         raise CopilotError('%r is not a benchmark id (05 S2); pass --id' % bench_id)
-    sid = source_id(doc)
+    sid = held[1]['id'] if held else source_id(doc)
     if curator is None:
         from tools.authoring.new import added_by
         curator = added_by(root)
-    bench = assemble(vetted, answer, doc, sid, bench_id, drafter, version, today, curator)
-    source = source_record(doc, snap, sid, bench_id, drafter.label, today)
-    problems = check(bench, source)
+    bench = assemble(vetted, answer, doc, sid, bench_id, drafter, version, today, curator, refused, note)
+    source = held[1] if held else source_record(doc, snap, sid, bench_id, drafter.label, today)
+    enforce(bench, {sid: source})
+    problems = check(bench, None if held else source)
     if problems:
         raise CopilotError('the draft failed its own checks, so nothing was written:\n  ' + '\n  '.join(problems))
     bpath = os.path.join(target, 'benchmarks', bench_id + '.yaml')
-    spath = os.path.join(target, 'sources', sid + '.yaml')
+    spath = os.path.join(root, held[0]) if held else os.path.join(target, 'sources', sid + '.yaml')
     why = _blocked(bpath, bench['provenance']['source_urls'])
     if why:
         raise CopilotError(why)
-    texts = {bpath: render('benchmarks', bench, bench_id, today.isoformat(), sid),
-             spath: render('sources', source, sid, today.isoformat())}
+    shown = held[0] if held else 'drafts/sources/%s.yaml' % sid
+    texts = {bpath: render('benchmarks', bench, bench_id, today.isoformat(), shown)}
+    if not held:
+        texts[spath] = render('sources', source, sid, today.isoformat())
     for path, text in texts.items():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w', encoding='utf-8', newline='\n') as fh:
             fh.write(text)
-    return Result(bpath, spath, bench, source)
+    return Result(bpath, spath, bench, source, held is not None)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -863,18 +1038,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument('--response', help='a saved answer, for --drafter replay')
     ap.add_argument('--source-url', help='the URL a saved page came from, when it has no canonical link')
     ap.add_argument('--id', dest='bench_id', help='the benchmark id, when the draft\'s name does not give it')
+    ap.add_argument('--fresh-snapshot', action='store_true',
+                    help='take a new snapshot even when data/sources/ already holds one for this URL')
     ap.add_argument('--today', type=_dt.date.fromisoformat, help=argparse.SUPPRESS)
     a = ap.parse_args(argv)
     try:
         drafter = drafter_for(a.drafter, a.response)
-        r = run(a.url, a.out, drafter, a.source_url, a.bench_id, a.today)
+        r = run(a.url, a.out, drafter, a.source_url, a.bench_id, a.today, fresh=a.fresh_snapshot)
     except (CopilotError, OSError, subprocess.CalledProcessError) as e:
         print('copilot: %s' % e, file=sys.stderr)
         return 1
     absent = len(DRAFT_FIELDS) - len(r.populated)
     from tools.validate.tiers import relative
-    print('wrote %s (%d fields quoted, %d absent) and %s' % (relative(r.bench_path, os.getcwd()), len(r.populated),
-                                                            absent, relative(r.source_path, os.getcwd())))
+    print('wrote %s (%d fields quoted, %d absent, %d values rejected); %s %s' % (
+        relative(r.bench_path, os.getcwd()), len(r.populated), absent, len(r.bench['provenance']['rejected']),
+        'quoted against the committed snapshot' if r.archived else 'and', relative(r.source_path, os.getcwd())))
     if r.bench['provenance'].get('injection_flag'):
         print('copilot: the model flagged text addressed to an AI system in the source: %s'
               % r.bench['provenance'].get('injection_note'), file=sys.stderr)
