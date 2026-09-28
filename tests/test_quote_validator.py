@@ -241,6 +241,73 @@ def test_tier_3_blocks_a_quote_that_cannot_be_nulled(corpus):
     assert f.blocks and 'cannot be nulled' in f.message
 
 
+# ---- the fabricated-quote fixture (P0-S9-T04; 14-roadmap Phase 0 exit criterion 5) ---------------
+
+FIXTURE = os.path.join(ROOT, 'tests', 'fixtures', 'fabricated_quote.yaml')
+
+
+def _fixture():
+    from schema.taxonomy import read_yaml
+    fx = read_yaml(FIXTURE)
+    return fx, tuple(fx['fabricated'].split('.')), {fx['source']['id']: fx['source']}
+
+
+def _at(record, path):
+    for p in path:
+        record = record[p]
+    return record
+
+
+def test_the_fixture_is_well_formed_and_holds_exactly_one_fabricated_quote():
+    from schema.source import Source
+    fx, path, sources = _fixture()
+    Source.model_validate(fx['source'])                               # tier 1 on its own
+    assert valid(fx['benchmark'])                                     # and so is the record it supports
+    [(q, why)] = quotes.check(fx['benchmark'], sources)
+    assert q.at == path and q.key == 'quote' and fx['reason'] in why
+    assert _at(fx['benchmark'], path)['quote'] not in fx['source']['quote_extract']
+
+
+def test_exit_criterion_5_the_fabricated_quote_nulls_its_field_and_the_record_still_validates():
+    """Explicitly null-not-fail: the fabricated quote's field becomes null with the reason recorded,
+    the genuine quote beside it survives, and the record as a whole passes tier 1."""
+    fx, path, sources = _fixture()
+    fixed, [res] = quotes.apply(fx['benchmark'], sources)
+    assert res.nulled == path and fx['reason'] in res.reason
+    assert _at(fixed, path[:-1])[path[-1]] is None                    # nulled, not deleted, not raised
+    assert '%s set to null: the quote is %s' % (fx['fabricated'], fx['reason']) in fixed['curation']['notes']
+    assert fixed['data']['size']['n_items'] == fx['benchmark']['data']['size']['n_items']
+    assert valid(fixed)                                               # null, not a failed record
+    assert quotes.check(fixed, sources) == []                         # and nothing unquoted remains
+
+
+def test_exit_criterion_5_through_bench_validate(tmp_path):
+    """The same fixture on disk: tier 1 passes both records, the fabricated quote is a tier-3 warning
+    offering the null, nothing blocks, and applying the offered null leaves a clean record."""
+    from ruamel.yaml import YAML
+    fx, path, _ = _fixture()
+    root = tmp_path / 'root'
+    (root / 'data' / 'benchmarks' / 'code').mkdir(parents=True)
+    (root / 'data' / 'sources' / '2026').mkdir(parents=True)
+    yaml = YAML()
+
+    def run(benchmark):
+        with open(root / 'data' / 'sources' / '2026' / (fx['source']['id'] + '.yaml'), 'w', encoding='utf-8') as fh:
+            yaml.dump(fx['source'], fh)
+        with open(root / 'data' / 'benchmarks' / 'code' / 'fixture-bench.yaml', 'w', encoding='utf-8') as fh:
+            yaml.dump(benchmark, fh)
+        return tiers.run(str(root), 'all')
+
+    report = run(fx['benchmark'])
+    assert [f for f in report.findings if f.tier == 1] == [] and report.blocking == [] and report.exit_code == 0
+    [f] = _quote_findings(report)
+    assert f.tier == 3 and f.severity == 'warning' and not f.blocks
+    assert fx['fabricated'] + '_quote' not in f.message and fx['fabricated'] + '.quote' in f.message
+    assert f.auto_fix == 'set to null %s, the reason recorded in curation.notes' % fx['fabricated']
+    fixed, _ = quotes.apply(fx['benchmark'], {fx['source']['id']: fx['source']})
+    assert _quote_findings(run(fixed)) == []
+
+
 def test_the_committed_entries_quotes_all_match_their_snapshots():
     report = tiers.run(ROOT, 'semantic')
     assert _quote_findings(report) == []
