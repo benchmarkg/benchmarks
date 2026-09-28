@@ -13,7 +13,10 @@ The exit code is 1 when a reported tier-1, -2 or -3 finding is blocking, and 0 o
 cannot change it: its findings carry severity `quality`, which `Report.exit_code` does not count, so
 a dashboard signal can never turn into a red X (04 S12, "Tier 4 is deliberately non-blocking").
 
-Scope. By default every entity file under data/ (and vendor/**/claims/) is checked. Tiers 2 and 3
+Scope. By default every entity file under data/ (and vendor/**/claims/) is checked, and so are the
+Stage-3 records of 03 S3.3 (P1-S1-T03): taxonomy/_corpus/classifications/*.yaml and
+taxonomy/_failures/*.yaml, whose models are schema/classification.py's and whose cross-record rules
+are tools/validate/classifications.py's (tiers 2 and 3). They are validated and never built. Tiers 2 and 3
 always read the whole corpus, because a reference or a cross-record rule cannot be judged from one
 file; `paths` and `--changed-only` narrow what is REPORTED, not what is read:
 
@@ -49,6 +52,7 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 
 from schema import validators as semantic
+from tools.validate import classifications
 from schema.baseline import BaselineFile
 from schema.benchmark import Benchmark
 from schema.claim import ResultClaim
@@ -57,6 +61,7 @@ from schema.dispute import Dispute
 from schema.entities import AliasFile, IngestBatch, Leaderboard, Organization, RatingPool
 from schema.metric import Metric
 from schema.source import Source
+from schema.classification import FAILURE_NAME, Classification, FailureRecord
 from schema.system import System
 from schema.taxonomy import RetiredIdFile, load_taxonomy, read_yaml
 
@@ -93,7 +98,10 @@ KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2)
     'data/disputes/': Kind('dispute', Dispute),
     'data/_ingest/batches/': Kind('batch', IngestBatch),
     'data/aliases/': Kind('aliases', AliasFile, many=True),
+    'taxonomy/_corpus/classifications/': Kind('classification', Classification),    # 03 S3.3 (P1-S1-T03)
+    'taxonomy/_failures/': Kind('failure', FailureRecord),
 }
+TAXONOMY_RECORDS = ('taxonomy/_corpus/classifications/', 'taxonomy/_failures/')
 VENDOR_CLAIM = Kind('claim', ResultClaim)
 UNMODELLED = ('data/surveys/', 'data/tombstones/', 'data/_discovery/', 'data/_analysis/')
 
@@ -219,7 +227,7 @@ def anchor(rel: str) -> str:
     """The path from its data/ or vendor/ segment on, so a fixture tree outside the repository is
     classified the way the same file inside it would be."""
     rel = _posix(rel)
-    for seg in ('data/', 'vendor/'):
+    for seg in ('data/', 'vendor/', 'taxonomy/'):
         if rel.startswith(seg):
             return rel
         i = rel.rfind('/' + seg)
@@ -295,6 +303,13 @@ def _placement(rec: Record) -> list[Finding]:
             bv = b.get('benchmark_version') if isinstance(b, dict) else None
             if isinstance(bv, str) and bv.split('@')[0] != rec.stem:
                 bad('data/baselines/%s.yaml holds a baseline on %s' % (rec.stem, bv))
+    if rec.kind.name == 'failure' and raw is not None:
+        m = FAILURE_NAME.match(rec.stem)
+        if not m:
+            bad('a failure record is taxonomy/_failures/<yyyy-mm-dd>-<benchmark>-<nnn>.yaml (03 S3.3)')
+        elif m.group(1) != str(raw.get('date')) or m.group(2) != raw.get('benchmark'):
+            bad('%s.yaml is named for %s on %s, but holds %s on %s' % (
+                rec.stem, m.group(2), m.group(1), raw.get('benchmark'), raw.get('date')))
     if rec.kind.name == 'aliases':
         if rec.stem not in ALIAS_FILES:
             bad('alias files are data/aliases/{%s}.yaml' % ','.join(sorted(ALIAS_FILES)))
@@ -310,6 +325,8 @@ def discover(root: str) -> list[str]:
     """Every entity file the corpus holds, root-relative. drafts/ is never read (05 S9 check 9i)."""
     found = glob.glob(os.path.join(root, 'data', '**', '*.yaml'), recursive=True)
     found += glob.glob(os.path.join(root, 'vendor', '**', 'claims', '**', '*.yaml'), recursive=True)
+    for d in TAXONOMY_RECORDS:                  # Stage-3 records (03 S3.3): validated, never built
+        found += glob.glob(os.path.join(root, *d.strip('/').split('/'), '*.yaml'))
     return sorted({_posix(os.path.relpath(p, root)) for p in found})
 
 
@@ -498,6 +515,8 @@ def ref_tier(records: list[Record], ix: Index, taxonomy: dict) -> list[Finding]:
         if not r.parsed or r.kind is None:
             continue
         seen = set()
+        if r.kind.name in ('classification', 'failure'):     # Stage-3 records cite terms and URLs, never
+            continue                                          # entities: `pool-relative-ranking` is a proposed term
         refs = [(w, kind, v) for w, v, kind in _walk_prefixed(r.raw, '')] + list(_typed_refs(r))
         for where, kind, value in refs:
             why = _resolve(ix, kind, value)
@@ -686,6 +705,7 @@ def run(root: str = ROOT, tiers='all', paths: list[str] | None = None, changed_o
         findings += semantic_tier(corpus, tier=2, only=['retired-id-ledger'])
     if 3 in selected:
         findings += semantic_tier(corpus)
+    findings += classifications.check(records, root, tuple(t for t in selected if t in (2, 3)))
     if 4 in selected:
         findings += quality_tier(corpus, taxonomy, today)
     scope, n = 'all', len(records)
