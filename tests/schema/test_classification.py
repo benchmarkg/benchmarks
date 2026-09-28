@@ -1,9 +1,10 @@
 """schema/classification.py and tools/validate/classifications.py: the Stage-3 records (P1-S1-T03; 03 S3.3).
 
 The tasks' VERIFY: `bench validate taxonomy/_corpus/classifications/ --tier all` over at least 30
-records (P1-S1-T03), then 60 (P1-S1-T04). DONE WHEN: "30 classification records validate and every
-abstention has a matching failure record", then "60 classification records validate in total". Each
-rule below is shown failing its own case, and the committed records are shown passing.
+records (P1-S1-T03), then 60 (P1-S1-T04), then all 90 (P1-S1-T05). DONE WHEN: "30 classification
+records validate and every abstention has a matching failure record", then "60 classification records
+validate in total", then "All 90 classified; at least 10 failure records exist". Each rule below is
+shown failing its own case, and the committed records are shown passing.
 """
 import copy
 import glob
@@ -196,7 +197,7 @@ def test_a_record_file_is_named_for_its_id(tmp_path):
 
 def test_the_committed_records_validate_and_every_abstention_is_logged():
     files = sorted(glob.glob(os.path.join(CLS, '*.yaml')))
-    assert len(files) >= 60
+    assert len(files) == 90
     report = tiers.run(ROOT, 'all', paths=['taxonomy/_corpus/classifications', 'taxonomy/_failures'])
     assert [str(f) for f in report.blocking] == []
     fails = {os.path.basename(p)[:-5] for p in glob.glob(os.path.join(FAILS, '*.yaml'))}
@@ -208,9 +209,14 @@ def test_the_committed_records_validate_and_every_abstention_is_logged():
             assert any(f == field and fid in fails for f, fid in m.failures()), (m.id, field)
 
 
-def test_the_committed_records_are_items_1_to_60_in_corpus_order():
+def test_the_committed_records_are_the_whole_corpus_in_order():
     items = sorted(read_yaml(p)['corpus_item'] for p in glob.glob(os.path.join(CLS, '*.yaml')))
-    assert items[:60] == list(range(1, 61))
+    assert items == list(range(1, 91))
+
+
+def test_the_pass_was_adversarial_enough():
+    """03 S3.3: fewer than ten failures means the sample should be widened, not the taxonomy declared correct."""
+    assert len(glob.glob(os.path.join(FAILS, '*.yaml'))) >= 10
 
 
 def test_a_proposed_term_is_not_read_as_an_entity_reference(tmp_path):
