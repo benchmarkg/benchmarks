@@ -282,7 +282,9 @@ def test_a_tombstone_resolves_only_with_a_redirect(tmp_path):
 
 def test_a_retired_id_reused_as_a_record_fails_tier_2(tmp_path):
     root = tree(tmp_path)
-    shutil.copytree(os.path.join(ROOT, 'taxonomy'), os.path.join(root, 'taxonomy'))
+    # The vocabulary only: the Stage-3 records cite adr/, which this tree does not carry.
+    shutil.copytree(os.path.join(ROOT, 'taxonomy'), os.path.join(root, 'taxonomy'),
+                    ignore=shutil.ignore_patterns('_corpus', '_failures'))
     retired = tiers.read_yaml(os.path.join(root, 'taxonomy', 'retired-ids.yaml'))
     retired['retired'] = (retired['retired'] or []) + [{
         'id': 'accuracy', 'retired_on': '2026-09-01', 'reason': 'a test retirement', 'replaced_by': None}]

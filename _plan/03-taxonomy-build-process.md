@@ -219,7 +219,10 @@ one list of assignments each. An assignment is one of three things:
 - no failure goes uncited.
 
 A failure record may add `terms[]`, the terms a collision is between, and `classification`, the record
-that cites it.
+that cites it. Triage (P1-S1-T06) adds `route`, which is `adr`, `homograph` or `stage-4`, and for a
+failure an ADR decides, `adr`, the path of that ADR. `scripts/failure_triage.py` derives both from the
+ADRs' Evidence sections and generates the Stage 4 revision list,
+`taxonomy/_failures/stage-4-revision-list.md`, from the records it routes to `stage-4`.
 
 A `blocking: true` failure means the taxonomy cannot freeze until an ADR resolves it. Everything else
 is batched into the Stage 4 revision. A `collision` record whose two terms sit in *different* facet
