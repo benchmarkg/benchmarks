@@ -7,8 +7,8 @@
 
 facet: subject
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   What kind of thing the benchmark was designed to evaluate. Populates
   `designed_for_subjects[]`. Drives comparability refusal and claim validation: a claim whose
@@ -33,7 +33,12 @@ description: >
 # null, condition_completeness drops and the comparison view separates the claim from the
 # bare-model claims rather than ranking them together.
 #
-# `source: own` marks the four terms 02 S6's changelog records as added here.
+# `source: own` marks the four terms 02 S6's changelog records as added here, and the three
+# Stage 4 (P1-S1-T07) added from the Stage-3 failure log: model-in-benchmark-harness (a model
+# inside the benchmark's own fixed loop), task-specific-supervised-model (a model trained for
+# one general-purpose task) and attack-or-intervention-method (a procedure applied to other
+# models). The field describes the ENTRANT: a counterpart the benchmark supplies identically
+# to everyone is part of the environment, not of the subject.
 
 terms:
   - id: base-model
@@ -73,7 +78,8 @@ terms:
       On a Benchmark, tag this if the protocol expects a compliant assistant. On a ResultClaim,
       tag it if a single model answered with no harness, no tools and no retries.
     exclusion_test: >
-      Do NOT tag this if a harness drove the model across turns, which is `agent-scaffold`, and
+      Do NOT tag this if a harness drove the model across turns -- `agent-scaffold` where the
+      entrant supplied the harness, `model-in-benchmark-harness` where the benchmark did -- and
       do NOT tag it where tools were available, which is `tool-augmented-model`.
     examples:
       - ref: ifeval
@@ -90,13 +96,17 @@ terms:
           NEAR MISS. Reported per model name throughout, but essentially every competitive
           result comes from a scaffold that edits, runs tests and retries. The leaderboard row
           names the model; the subject is the scaffold.
-    see_also: [base-model, agent-scaffold, tool-augmented-model, reasoning-model]
+    see_also: [base-model, agent-scaffold, tool-augmented-model, reasoning-model, model-in-benchmark-harness]
     not_to_be_confused_with:
       - term: agent-scaffold
         distinction: >
           This is the most common and most misleading category error on public leaderboards, and
           it is asymmetric: the scaffold is almost always better, is almost always shipped by
           the party with an incentive to publish, and is almost never described.
+      - term: model-in-benchmark-harness
+        distinction: >
+          A model the benchmark drives through its own multi-turn loop is not prompted directly,
+          even though only the model varies between rows; that is `model-in-benchmark-harness`.
 
   - id: reasoning-model
     label: Reasoning model
@@ -142,9 +152,10 @@ terms:
       bare models and most of its interesting claims are tool-augmented, which is the divergence
       this facet exists to record.
     exclusion_test: >
-      Do NOT tag this if the system iterates autonomously towards a goal, which is
-      `agent-scaffold`, and do NOT tag it where tools were offered but the protocol scores an
-      answer produced without them.
+      Do NOT tag this if the system iterates autonomously towards a goal -- `agent-scaffold`
+      where the entrant supplies the loop, `model-in-benchmark-harness` where the benchmark
+      does -- and do NOT tag it where tools were offered but the protocol scores an answer
+      produced without them.
     examples:
       - ref: critpt
         qualifies: true
@@ -156,17 +167,27 @@ terms:
         why: >
           Analysis requires executing notebook steps, but the protocol directs the work rather
           than leaving the loop to the system.
-      - ref: tau2-bench
+      - ref: bench
         qualifies: false
         why: >
-          NEAR MISS. Tool calls throughout, but the system runs its own multi-turn loop against
-          a policy, which is `agent-scaffold`.
-    see_also: [instruction-tuned-model, agent-scaffold, retrieval-augmented-system]
+          NEAR MISS. Tool calls throughout, but a multi-turn loop runs against a policy: the
+          default tau-bench agent is `model-in-benchmark-harness`, and a custom one is
+          `agent-scaffold`.
+    see_also: [instruction-tuned-model, agent-scaffold, retrieval-augmented-system, model-in-benchmark-harness]
     not_to_be_confused_with:
       - term: agent-scaffold
         distinction: >
           The discriminant is who decides when the work is finished. Tools without a loop are
           augmentation; a loop is a scaffold.
+      - term: model-in-benchmark-harness
+        distinction: >
+          When the benchmark's own loop lets the model choose what to run next and when to
+          submit, as FrontierMath's Python loop does, the subject is
+          `model-in-benchmark-harness`, not a directed tool exchange.
+      - term: retrieval-augmented-system
+        distinction: >
+          A search tool the model chooses to call is tool augmentation; a retriever built into
+          the entrant that feeds the model on every item is `retrieval-augmented-system`.
 
   - id: domain-specialist-model
     label: Domain-specialist model
@@ -175,27 +196,133 @@ terms:
     definition: >
       A model post-trained or built for one field, evaluated on that field.
     inclusion_test: >
-      Tag this if the artifact was specialised for a discipline and the benchmark is designed to
-      test that specialisation.
+      Tag this if the artifact was specialised for a discipline -- pretrained on its data,
+      post-trained or fine-tuned on its tasks, or trained from scratch for a task the discipline
+      defines -- and the benchmark is designed to test that specialisation. A discipline here is
+      a scientific, clinical or engineering-design field: the physics, chemistry-materials,
+      biology-genetics, medicine-health, earth-climate and engineering-design domain families.
     exclusion_test: >
-      Do NOT tag this if a general model is merely evaluated on domain content, and do NOT tag
-      it where the artifact emulates a physical process, which is `scientific-surrogate-model`.
+      Do NOT tag this if a general model is merely evaluated on domain content without
+      adaptation, because the tag describes the model the benchmark is designed for and not its
+      subject matter; do NOT tag it where the artifact emulates a process in place of a
+      simulation or measurement, which is `scientific-surrogate-model`; and do NOT tag it where
+      the task is a general perception, language or audio task with no discipline, such as
+      object detection, speech recognition or translation, which is
+      `task-specific-supervised-model`.
     examples:
+      - ref: rexrank
+        qualifies: true
+        why: >
+          Most entrants are radiology-specific report generators such as MedVersa, CheXagent and
+          MAIRA-2, with general models appearing as comparators.
+      - ref: bend
+        qualifies: true
+        why: >
+          Built to evaluate DNA language models, pretrained on genomes and probed on biologically
+          defined tasks.
+      - ref: geo-bench-2
+        qualifies: true
+        why: >
+          Earth-observation foundation models and general vision backbones are each fine-tuned on
+          the Earth-observation datasets; the fine-tuning is the specialisation tested.
       - ref: medhelm
-        qualifies: true
+        qualifies: false
         why: >
-          Clinical tasks designed to test models built for medicine, not general models
-          incidentally answering clinical questions.
+          NEAR MISS. Clinical tasks throughout, but the paper evaluates nine general frontier
+          models and no medical one. Medicine is the benchmark's domain, not its designed-for
+          model, which is `instruction-tuned-model`.
       - ref: healthbench
-        qualifies: true
+        qualifies: false
         why: >
-          Constructed with physicians to test clinical competence specifically.
+          NEAR MISS. Built with physicians to test clinical competence, but built for and
+          reported on general frontier assistants, which is `instruction-tuned-model`.
       - ref: gpqa-diamond
         qualifies: false
         why: >
           NEAR MISS. Graduate-level domain content across biology, physics and chemistry, but
           designed for general models; specialisation is not what it tests.
-    see_also: [scientific-surrogate-model, instruction-tuned-model]
+    see_also: [scientific-surrogate-model, instruction-tuned-model, task-specific-supervised-model]
+    not_to_be_confused_with:
+      - term: task-specific-supervised-model
+        distinction: >
+          The discriminant is what the model is specialised to. A model trained for a task that a
+          scientific, clinical or engineering-design discipline defines (tumour segmentation,
+          protein function) is this term; one trained for a general perception, language or
+          audio task (object detection, speech recognition, translation) is
+          `task-specific-supervised-model`. Ten Stage-3 records forced this term onto the second
+          kind.
+
+  - id: task-specific-supervised-model
+    label: Task-specific supervised model
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      A model trained or fine-tuned with supervision for one general-purpose task, evaluated as
+      the trained artifact rather than by prompting.
+    inclusion_test: >
+      Tag this if the intended entrants are built for a task -- trained from scratch or
+      fine-tuned on labelled data, usually the benchmark's own training split -- such as object
+      detectors, speech recognisers, speaker-verification systems, translation systems and
+      image-restoration networks, and are scored as trained rather than instructed. Where the
+      benchmark ranks a fitting procedure that is refitted on each dataset (symbolic regression,
+      AutoML suites), the procedure and the model it fits are one entrant and take this term. A
+      model trained for another task and scored as it stands, such as an ImageNet classifier
+      scored against neural recordings, also qualifies.
+    exclusion_test: >
+      Do NOT tag this if the entrant is a general model prompted or instructed to perform the
+      task, which is `instruction-tuned-model` or `base-model`; do NOT tag it where the task
+      belongs to a scientific, clinical or engineering-design discipline, which is
+      `domain-specialist-model`; and do NOT tag it where a learned controller is scored by
+      acting in an environment, which is `rl-policy`. A learned planner scored open-loop on
+      logged data, without acting, is this term.
+    examples:
+      - ref: coco
+        qualifies: true
+        why: >
+          Entrants are object detectors, usually trained on COCO's own train split and submitted
+          to the test-dev server.
+      - ref: open-asr-leaderboard
+        qualifies: true
+        why: >
+          Most entrants are purpose-built speech recognisers: Conformer, Whisper-family and
+          wav2vec2 encoders with CTC, transducer or LLM decoders.
+      - ref: srbench-2-0
+        qualifies: true
+        why: >
+          Fourteen symbolic-regression algorithms and seven ML regressors are each fitted afresh
+          on every dataset's training split; the ranked entrant is the fitting method.
+      - ref: brain-score
+        qualifies: true
+        why: >
+          ImageNet-trained CNNs and vision transformers are scored as they stand against neural
+          and behavioural recordings.
+      - ref: camelyon17
+        qualifies: false
+        why: >
+          NEAR MISS. Entrants are CNN pipelines trained on the challenge data, but the task is
+          defined by histopathology, a clinical discipline, which is `domain-specialist-model`.
+      - ref: video-mme-v2
+        qualifies: false
+        why: >
+          NEAR MISS. A perception task, but designed for general multimodal models prompted with
+          each question, which is `instruction-tuned-model`.
+    see_also: [domain-specialist-model, instruction-tuned-model, rl-policy, generative-media-model, classical-algorithm]
+    not_to_be_confused_with:
+      - term: domain-specialist-model
+        distinction: >
+          A task-trained model whose task a scientific, clinical or engineering-design discipline
+          defines is `domain-specialist-model`; one trained for a general perception, language
+          or audio task is this term.
+      - term: generative-media-model
+        distinction: >
+          Restoration and super-resolution networks output images but are trained to reproduce
+          a reference, so they are this term; a model that generates new media from a prompt or
+          condition is `generative-media-model`.
+      - term: rl-policy
+        distinction: >
+          A learned controller scored by acting in an environment is `rl-policy`; one scored
+          open-loop on logged data, as NAVSIM's planners are, is this term.
 
   - id: generative-media-model
     label: Generative media model
@@ -208,8 +335,10 @@ terms:
       Tag this if the artifact under evaluation generates media and the score is a property of
       the generated media.
     exclusion_test: >
-      Do NOT tag this if media is an input rather than the output, and do NOT tag it where a
-      model scores someone else's media.
+      Do NOT tag this if media is an input rather than the output, do NOT tag it where a model
+      scores someone else's media, and do NOT tag it where a network is trained to reconstruct a
+      reference image, as in restoration or super-resolution, which is
+      `task-specific-supervised-model`.
     examples:
       - ref: vbench
         qualifies: true
@@ -224,7 +353,12 @@ terms:
         why: >
           NEAR MISS. Entirely visual, but the model consumes images and emits boxes and masks;
           nothing is generated.
-    see_also: [scientific-surrogate-model]
+    see_also: [scientific-surrogate-model, task-specific-supervised-model]
+    not_to_be_confused_with:
+      - term: task-specific-supervised-model
+        distinction: >
+          A network trained to reproduce a reference image (denoising, super-resolution) is
+          `task-specific-supervised-model`, even though it outputs images.
 
   - id: scientific-surrogate-model
     label: Scientific surrogate model
@@ -232,14 +366,17 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      A learned model that emulates a physical or chemical process in place of a simulation or
-      measurement.
+      A learned model that emulates a physical, chemical or biological process in place of a
+      simulation or measurement.
     inclusion_test: >
-      Tag this if the artifact stands in for a solver, potential or forecast system, and is
-      scored against what that process would have produced.
+      Tag this if the artifact stands in for a solver, potential, forecast system or laboratory
+      assay, and is scored against what that process would have produced.
     exclusion_test: >
-      Do NOT tag this if the model answers questions about science in language, and do NOT tag
-      it where the artifact is a classical solver rather than a learned one.
+      Do NOT tag this if the model answers questions about science in language, do NOT tag it
+      where the artifact is a classical solver rather than a learned one, and do NOT tag it
+      where a general model of sequences or images is scored against measurements it was not
+      trained to emulate, which is `domain-specialist-model` or
+      `task-specific-supervised-model`.
     examples:
       - ref: matbench-discovery
         qualifies: true
@@ -249,6 +386,11 @@ terms:
         qualifies: true
         why: >
           Evaluates weather emulators against the operational forecast they replace.
+      - ref: virtual-cell-challenge-2026
+        qualifies: true
+        why: >
+          Entrants predict the post-perturbation expression profiles an assay would measure,
+          standing in for the assay itself.
       - ref: critpt
         qualifies: false
         why: >
@@ -269,10 +411,13 @@ terms:
       A system in which a retrieval component and a model are evaluated together.
     inclusion_test: >
       Tag this if retrieval is inside the boundary of what is scored, so a change to the index
-      changes the result.
+      changes the result, and retrieval is a built-in component of the entrant rather than a
+      tool the model chooses to call.
     exclusion_test: >
       Do NOT tag this if retrieved material is supplied by the protocol identically to every
-      entrant, and do NOT tag it where retrieval is one tool among many in an autonomous loop.
+      entrant, do NOT tag it where retrieval is one tool among many in an autonomous loop, and
+      do NOT tag it where a model decides for itself when to call a single search tool, which
+      is `tool-augmented-model`.
     examples:
       - ref: lab-bench
         qualifies: true
@@ -285,6 +430,12 @@ terms:
           NEAR MISS. Data must be located and used, but the supplied notebook environment is
           identical for every entrant, so retrieval is part of the protocol rather than of the
           system.
+      - ref: gpqa-diamond
+        qualifies: false
+        why: >
+          NEAR MISS. The open-book setting gives the model an internet search tool, but the model
+          chooses its own queries in a single directed exchange, which is
+          `tool-augmented-model`.
     see_also: [tool-augmented-model, agent-scaffold]
 
   - id: agent-scaffold
@@ -295,19 +446,19 @@ terms:
       A harness wrapping one or more models with an autonomous loop, memory, retries or tool
       orchestration.
     inclusion_test: >
-      Tag this if the system decides for itself what to do next and when to stop. On a
-      ResultClaim, tag it whenever a harness drove the run, even where the leaderboard row names
-      only a model.
+      Tag this if the system decides for itself what to do next and when to stop, and the
+      entrant supplies or modifies the loop. On a ResultClaim, tag it whenever a harness the
+      entrant chose drove the run, even where the leaderboard row names only a model.
     exclusion_test: >
       Do NOT tag this if the loop is the benchmark's own driver applied identically to all
-      entrants, and do NOT tag it where several independent agents negotiate, which is
-      `multi-agent-system`.
+      entrants, which is `model-in-benchmark-harness`, and do NOT tag it where several
+      independent agents negotiate, which is `multi-agent-system`.
     examples:
       - ref: osworld-2-0
         qualifies: true
         why: >
-          Dozens of interdependent GUI actions against live application state, with the system
-          choosing each one.
+          Public evaluations take the entrant's own agent code, which chooses each of dozens of
+          interdependent GUI actions against live application state.
       - ref: terminal-bench
         qualifies: true
         why: >
@@ -323,7 +474,7 @@ terms:
         why: >
           NEAR MISS. Frequently run inside agent harnesses, but the benchmark is designed for
           direct prompting and its human baseline assumes it.
-    see_also: [instruction-tuned-model, multi-agent-system, tool-augmented-model]
+    see_also: [instruction-tuned-model, multi-agent-system, tool-augmented-model, model-in-benchmark-harness]
     not_to_be_confused_with:
       - term: instruction-tuned-model
         distinction: >
@@ -331,6 +482,74 @@ terms:
           condition_completeness drops and the comparison view separates the claim from
           bare-model claims rather than ranking them together. That mechanism is why this
           boundary is worth enforcing.
+      - term: model-in-benchmark-harness
+        distinction: >
+          Fifteen Stage-3 records hit this boundary, and the test is whose loop it is. If the
+          benchmark supplies the loop, prompts and tools identically to every entrant and only
+          the model varies, the subject is `model-in-benchmark-harness`; if the entrant brings
+          or changes the loop, it is this term. A benchmark with both views carries both.
+
+  - id: model-in-benchmark-harness
+    label: Model in benchmark harness
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      A model driven by the benchmark's own fixed agent loop, prompts and tools, applied
+      identically to every entrant so that only the model varies.
+    inclusion_test: >
+      Tag this if the protocol, or one view of it, runs every entrant inside a maintainer-supplied
+      multi-turn loop -- mini-SWE-agent in SWE-bench's bash-only view, Terminus 2, the default
+      tau-bench agent, BALROG's naive agent -- and the row names only the model. Record the
+      harness and its version in the conditions, because the number belongs to the model inside
+      that harness; where the models are addressed as served endpoints, tag
+      `hosted-inference-endpoint` as well.
+    exclusion_test: >
+      Do NOT tag this if the entrant supplies or modifies the loop, which is `agent-scaffold`,
+      and do NOT tag it where the benchmark prompts the model once with no loop, which is
+      `instruction-tuned-model`, or offers tools in a directed exchange that the protocol rather
+      than the model ends, which is `tool-augmented-model`.
+    examples:
+      - ref: terminal-bench-2-0
+        qualifies: true
+        why: >
+          The paper's model comparisons run every model inside Terminus 2, the maintainers'
+          neutral testbed; third-party agents such as Codex CLI are `agent-scaffold`.
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          The Bash Only view evaluates every model with mini-SWE-agent in a minimal bash
+          environment, for an apples-to-apples comparison of models.
+      - ref: bench
+        qualifies: true
+        why: >
+          A standard submission runs a general LLM through the default tau-bench agent scaffold
+          with the standard tools and prompts.
+      - ref: mle-bench
+        qualifies: false
+        why: >
+          NEAR MISS. Long agentic runs, but the benchmark makes no assumption about the agent and
+          entrants bring their own, which is `agent-scaffold`.
+      - ref: gpqa-diamond
+        qualifies: false
+        why: >
+          NEAR MISS. Designed for general models, but evaluated by single-turn prompting with no
+          loop, which is `instruction-tuned-model`.
+    see_also: [agent-scaffold, instruction-tuned-model, tool-augmented-model, hosted-inference-endpoint]
+    not_to_be_confused_with:
+      - term: agent-scaffold
+        distinction: >
+          The benchmark's loop is this term; the entrant's loop is `agent-scaffold`. Ranking the
+          two together compares models with systems, which is the category error this facet
+          exists to catch.
+      - term: instruction-tuned-model
+        distinction: >
+          Only the model varies in both, but here a harness drives it across turns, so the result
+          is a property of model and harness together.
+      - term: tool-augmented-model
+        distinction: >
+          If the model decides what to run next and when to submit inside the benchmark's loop,
+          it is this term, even where the loop offers a single tool.
 
   - id: multi-agent-system
     label: Multi-agent system
@@ -342,17 +561,25 @@ terms:
       Tag this if more than one autonomous agent participates and the interaction between them
       affects the score.
     exclusion_test: >
-      Do NOT tag this if one agent calls sub-models as tools, and do NOT tag it where the second
-      party is a scripted environment.
+      Do NOT tag this if one agent calls sub-models as tools, do NOT tag it where the second
+      party is a scripted environment, and do NOT tag it where the other agents are supplied by
+      the benchmark identically to every entrant, such as a simulated user: they are part of the
+      environment, and the field describes the entrant.
     examples:
-      - ref: tau2-bench
-        qualifies: true
-        why: >
-          A simulated user is a second participant whose behaviour shapes the outcome.
       - ref: kaggle-game-arena
         qualifies: true
         why: >
           Models play each other, and the rating depends on the roster.
+      - ref: melting-pot
+        qualifies: true
+        why: >
+          The entrant is a multi-agent learning algorithm, and its focal population of agents is
+          scored on its joint per-capita return.
+      - ref: bench
+        qualifies: false
+        why: >
+          NEAR MISS. A simulated LLM user shapes the outcome, but the benchmark supplies it
+          identically to every entrant, and the entrant is a single agent.
       - ref: osworld-2-0
         qualifies: false
         why: >
@@ -442,11 +669,14 @@ terms:
       On a Benchmark, tag this if the environment is designed for trained policies. On a
       ResultClaim, tag it only if the evaluated artifact was trained on that environment --
       several RL benchmarks now receive prompted-language-agent claims, which are
-      agent-scaffold, not rl-policy.
+      agent-scaffold, not rl-policy. The policy and the learning procedure that produces it are
+      one entrant: a benchmark that ranks lifelong or sample-efficient learning procedures by the
+      policies they yield is still this term.
     exclusion_test: >
       Do NOT tag this if a language model is prompted to act without being trained on the
-      environment, and do NOT tag it where the policy runs on hardware, which is
-      `physical-robot-system`.
+      environment, do NOT tag it where the policy runs on hardware, which is
+      `physical-robot-system`, and do NOT tag it where a learned planner is scored open-loop on
+      logged data without acting, which is `task-specific-supervised-model`.
     examples:
       - ref: mujoco-gymnasium
         qualifies: true
@@ -456,25 +686,41 @@ terms:
         qualifies: true
         why: >
           Policies trained under a fixed interaction budget.
+      - ref: libero
+        qualifies: true
+        why: >
+          Ranks lifelong-learning procedures (sequential finetuning, ER, EWC, PackNet) by the
+          simulated policies they train through a task sequence.
       - ref: craftax
         qualifies: false
         why: >
           NEAR MISS. An RL environment, but increasingly evaluated with prompted language
           agents, so the subject depends on the claim rather than the benchmark.
-    see_also: [physical-robot-system, agent-scaffold]
+      - ref: navsim-v2
+        qualifies: false
+        why: >
+          NEAR MISS. Learned driving planners, but scored open-loop on logs without acting in an
+          environment, which is `task-specific-supervised-model`.
+    see_also: [physical-robot-system, agent-scaffold, task-specific-supervised-model]
 
   - id: classical-algorithm
     label: Classical algorithm
     status: active
     introduced_in: 1.0.0
     definition: >
-      A non-learned method -- a solver, heuristic or analytical procedure -- evaluated on the
-      same task as learned systems.
+      A non-learned method -- a solver, heuristic or analytical procedure -- evaluated as an
+      entrant or a baseline on the benchmark's task.
     inclusion_test: >
-      Tag this if the entrant contains no learned component and is included for comparison.
+      Tag this if the entrant contains no learned component, whether it competes for the ranking
+      or is included as a baseline. Hand-designed methods keep this term when they contain
+      constants fitted once to data, as an empirical docking scoring function does, or rules and
+      frequencies tabulated from training data, as a template-based expert system does.
     exclusion_test: >
-      Do NOT tag this if the method has learned parameters, and do NOT tag it where a classical
-      system provides the ground truth rather than competing.
+      Do NOT tag this if a trained model -- a neural network, a tree ensemble, or a search that
+      fits a model's structure to each dataset, as symbolic regression does -- produces the
+      method's output, and do NOT tag it where a classical system provides the ground truth
+      rather than competing. A classical baseline that also anchors a scorecard is still an
+      entrant when its own forecasts are scored against the ground truth like any other.
     examples:
       - ref: matbench-discovery
         qualifies: true
@@ -484,12 +730,70 @@ terms:
         qualifies: true
         why: >
           Non-learned baselines compete directly in the same table.
+      - ref: posebusters
+        qualifies: true
+        why: >
+          AutoDock Vina and CCDC Gold are compared with deep-learning docking; the regression
+          fitted into Vina's scoring function does not make it learned.
       - ref: weatherbench-2
+        qualifies: true
+        why: >
+          The IFS HRES and IFS ENS forecasts are listed as physics-based rows and scored beside
+          the ML models; the scorecard being expressed relative to IFS HRES does not make it the
+          ground truth.
+      - ref: fusion-equilibrium-challenge
         qualifies: false
         why: >
-          NEAR MISS. The ECMWF operational forecast is present throughout, but as the comparator
-          the field is measured against rather than as a competing entrant.
-    see_also: [scientific-surrogate-model]
+          NEAR MISS. EFIT, a classical reconstruction code, is present throughout, but its output
+          is the reference every entrant is scored against rather than a competing entrant.
+    see_also: [scientific-surrogate-model, task-specific-supervised-model]
+
+  - id: attack-or-intervention-method
+    label: Attack or intervention method
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      A procedure applied to other models -- an attack, a defence, or an unlearning or editing
+      method -- and ranked by its effect on them.
+    inclusion_test: >
+      Tag this if the benchmark ranks procedures applied to a fixed set of target models,
+      scoring each by what it does to them: attack success, hazardous knowledge removed,
+      capability retained. Where the benchmark also ranks the target models, tag their own
+      subject term as well.
+    exclusion_test: >
+      Do NOT tag this if the procedure performs the task itself as a harness around a model,
+      which is `agent-scaffold`, and do NOT tag it where the benchmark applies a fixed set of
+      attacks and ranks only the models, which is the models' own term with
+      `adversarial-red-team` as the method.
+    examples:
+      - ref: harmbench
+        qualifies: true
+        why: >
+          One stated use is evaluating red-teaming methods against a set of LLMs: GCG, PAIR, TAP
+          and others are scored by attack success rate on each target model.
+      - ref: wmdp
+        qualifies: true
+        why: >
+          RMU is compared with LLMU, SCRUB and SSD, each applied to the same base models and
+          scored on the unlearned model's WMDP and MMLU accuracy.
+      - ref: agentharm
+        qualifies: true
+        why: >
+          Built to evaluate attacks and defences for LLM agents; runs of the same models vary the
+          attack (none, a forced tool call, a jailbreak template).
+      - ref: ailuminate-v1-1
+        qualifies: false
+        why: >
+          NEAR MISS. Guardrails and output filters are graded, but inside a served system that is
+          itself ranked, which is `hosted-inference-endpoint`; no procedure is ranked across
+          models.
+    see_also: [agent-scaffold, classical-algorithm, instruction-tuned-model]
+    not_to_be_confused_with:
+      - term: agent-scaffold
+        distinction: >
+          A scaffold wraps a model to do the task; an attack or intervention is applied to a
+          model to change what it does, and is ranked across the models it is applied to.
 
   - id: physical-robot-system
     label: Physical robot system
@@ -499,19 +803,30 @@ terms:
       A complete robot -- policy, body and sensors -- evaluated on real hardware.
     inclusion_test: >
       Tag this if the scored run happened on a physical machine, and record the hardware: it is
-      part of the system under test.
+      part of the system under test. Where the evaluator owns the hardware and gives every
+      entrant the same body and sensors, the term still applies and the entrant is the policy
+      running on it; standardised hardware makes entrants comparable, it does not take the run
+      off hardware.
     exclusion_test: >
       Do NOT tag this if the evaluation is simulated however faithfully, and do NOT tag it where
-      hardware only collected the dataset.
+      hardware only collected the dataset or ran a one-off validation experiment outside the
+      benchmark's scored protocol.
     examples:
       - ref: a2rl-drone-championship
         qualifies: true
         why: >
           Fully physical racing; the airframe is inside the evaluated system.
-      - ref: robotwin-2-0
+      - ref: roboarena
         qualifies: true
         why: >
-          The AgileX hardware track evaluates real arms, separately from the simulated track.
+          Entrant policies run on the evaluators' standardised DROID arms; the shared body is
+          recorded as the hardware, and the policy is what varies.
+      - ref: robotwin-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The paper reports real-arm runs on four tasks, but they validate the data
+          generator; the benchmark's protocol and leaderboard, AgileX embodiment included, are
+          simulated, which is `rl-policy`.
       - ref: libero
         qualifies: false
         why: >
@@ -526,30 +841,48 @@ terms:
     definition: >
       Credentialed humans evaluated on the same task as machine entrants.
     inclusion_test: >
-      On a Benchmark, tag this if the protocol admits human entrants. On a ResultClaim, tag it
-      if the scored run was performed by credentialed humans -- CASP ranks human-expert groups
-      in a separate category from automated servers, so the same method appears twice with
-      different numbers.
+      On a Benchmark, tag this if the protocol admits human entrants who work unaided. On a
+      ResultClaim, tag it if the scored run was performed by humans credentialed in the
+      benchmark's domain. People who built or validated the items may be tagged when they also
+      sat the task under the protocol; say so in the notes, because their exposure to the items
+      makes theirs a construction-staff baseline.
     exclusion_test: >
-      Do NOT tag this if humans only authored or graded the benchmark, and do NOT tag it where a
-      human worked alongside a system, which is `human-ai-team`.
+      Do NOT tag this if humans only authored or graded the benchmark, do NOT tag it where a
+      human worked alongside a system, which is `human-ai-team`, and do NOT tag it where the
+      humans' credentials are in a field other than the benchmark's own, which is
+      `human-nonexpert`.
     examples:
-      - ref: casp16
-        qualifies: true
-        why: >
-          Human-expert groups are ranked in a separate category from automated servers, so the
-          same method can appear twice with different numbers.
       - ref: osworld-2-0
         qualifies: true
         why: >
           A stated human baseline of 72.4% is a scored human result, and the top 2026 runs at
           73.1 to 82.6% have inverted the gap.
+      - ref: paperbench
+        qualifies: true
+        why: >
+          Eight ML PhDs attempted the replications and were graded under the same rubric as the
+          agents.
+      - ref: casp16
+        qualifies: false
+        why: >
+          NEAR MISS. The top groups are called human expert predictors, but they sample models
+          with automated tools such as the AlphaFold 3 server and curate them by hand, which is
+          `human-ai-team`.
       - ref: healthbench
         qualifies: false
         why: >
           NEAR MISS. Built with 262 board-certified physicians, but they authored the rubric
           rather than sitting the benchmark.
     see_also: [human-nonexpert, human-ai-team]
+    not_to_be_confused_with:
+      - term: human-ai-team
+        distinction: >
+          An entrant category labelled human that admits undisclosed machine assistance is
+          `human-ai-team`; this term needs a protocol in which the humans work unaided.
+      - term: human-nonexpert
+        distinction: >
+          Expertise is judged against the benchmark's own domain. A PhD answering outside their
+          field is `human-nonexpert`.
 
   - id: human-nonexpert
     label: Human non-expert
@@ -558,16 +891,23 @@ terms:
     definition: >
       Humans without domain credentials evaluated on the same task as machine entrants.
     inclusion_test: >
-      Tag this if untrained humans produced scored results under the benchmark's protocol.
+      Tag this if humans without credentials in the benchmark's domain produced scored results
+      under the benchmark's protocol, including credentialed people answering outside their own
+      field.
     exclusion_test: >
       Do NOT tag this if crowd workers rated outputs rather than attempting the task, and do NOT
-      tag it where a qualification screen was applied.
+      tag it where a screen for expertise in the benchmark's own domain was applied.
     examples:
       - ref: arc-agi-3
         qualifies: true
         why: >
           Human solve rates from untrained participants are published as the reference the
           benchmark is calibrated against.
+      - ref: gpqa-diamond
+        qualifies: true
+        why: >
+          The highly skilled non-expert validators hold or pursue PhDs in other domains and reach
+          34%, which is the benchmark's defining comparison.
       - ref: minerl-basalt
         qualifies: false
         why: >
@@ -582,18 +922,22 @@ terms:
     definition: >
       A human and a system working together, evaluated as one entrant.
     inclusion_test: >
-      On a Benchmark, tag this if the protocol admits joint entrants. On a ResultClaim, tag it
-      if a human was in the loop -- without human_in_loop in the conditions and this term on the
-      claim, a human-assisted row and an automated row are indistinguishable.
+      On a Benchmark, tag this if the protocol admits joint entrants, including an entrant
+      category labelled human whose members may use automated tools without saying how. On a
+      ResultClaim, tag it if a human was in the loop -- without human_in_loop in the conditions
+      and this term on the claim, a human-assisted row and an automated row are
+      indistinguishable.
     exclusion_test: >
       Do NOT tag this if a human only configured or prompted the system before an unattended
-      run, and do NOT tag it where human and machine entrants are scored separately.
+      run, and do NOT tag it where human entrants and machine entrants each work alone and are
+      merely scored side by side.
     examples:
       - ref: casp16
         qualifies: true
         why: >
-          Human-in-the-loop groups are a distinct entrant category; without that flag their rows
-          are indistinguishable from automated servers.
+          The human groups sample models with automated tools such as the AlphaFold 3 server and
+          curate them by hand; without this flag their rows are indistinguishable from the
+          automated servers.
       - ref: cache
         qualifies: true
         why: >
@@ -605,3 +949,8 @@ terms:
           NEAR MISS. Expert humans and systems both appear, but they are graded as separate
           entrants rather than as a joint one.
     see_also: [human-expert, multi-agent-system]
+    not_to_be_confused_with:
+      - term: human-expert
+        distinction: >
+          Where a protocol labels a category human but admits machine help, as CASP's human
+          groups do, this term governs; `human-expert` needs humans working unaided.

@@ -7,8 +7,8 @@
 
 facet: evaluation_method
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   How the benchmark arrives at a score: the scoring protocol rather than the subject matter.
   Drives comparability warnings and trust badges, because two numbers produced by different
@@ -31,6 +31,13 @@ description: >
 # Two not_to_be_confused_with pairs are pre-emptive: 03 S3.3 predicts Stage-3 failures
 # concentrated in this facet on composite and pass/fail-battery metrics, so constraint-check
 # and composite each carry a block naming the other before the first collision is logged.
+#
+# Stage 4 (P1-S1-T07) added four terms, also `source: own`, each forced by failures from at
+# least two stress-corpus benchmarks: numeric-tolerance-match, environment-state-check,
+# classification-metric and entrant-relative-ranking. It redefined simulation-rollout (bounded
+# partial credit, not only success rate) and uncertainty-calibration-score (proper scoring
+# rules over an emitted distribution), and wrote tie-breaks for the collisions the Stage-3
+# log recorded twice or more.
 
 terms:
   - id: exact-match
@@ -41,10 +48,13 @@ terms:
       The score is string or value equality against a stored reference answer.
     inclusion_test: >
       Tag this if a response is marked correct only when it equals the reference exactly, after
-      at most whitespace or case normalisation.
+      at most whitespace or case normalisation. Plain accuracy over such per-item verdicts,
+      including accuracy against a fixed label set, stays here.
     exclusion_test: >
       Do NOT tag this if equivalence is decided by a computer-algebra system or a proof checker,
-      and do NOT tag it where partial credit is available.
+      and do NOT tag it where partial credit is available. A numeric answer accepted within a
+      tolerance is `numeric-tolerance-match`, and a statistic computed over the whole set of
+      predicted labels, such as F1, AUROC, MCC or kappa, is `classification-metric`.
     examples:
       - ref: frontiermath
         qualifies: true
@@ -55,12 +65,66 @@ terms:
         why: >
           NEAR MISS. Answers are checked automatically, but by symbolic equivalence -- two
           different strings can both be right, which is `symbolic-equivalence`.
-    see_also: [symbolic-equivalence, multiple-choice]
+    see_also: [symbolic-equivalence, multiple-choice, numeric-tolerance-match, classification-metric]
     not_to_be_confused_with:
       - term: symbolic-equivalence
         distinction: >
           Exact match compares strings; symbolic equivalence compares meanings. `x+x` and `2*x`
           are equal to one and not to the other.
+      - term: numeric-tolerance-match
+        distinction: >
+          Exact match accepts only the reference after trivial normalisation; a tolerance match
+          accepts any value inside a stated band. The band is part of the result: widening it
+          raises the score with no change to any answer.
+      - term: classification-metric
+        distinction: >
+          Exact match gives each item a verdict and averages them. A classification metric is
+          computed over the whole set of predictions and gives credit no single item carries.
+          Plain accuracy stays here; F1, AUROC, MCC and kappa are `classification-metric`.
+
+  - id: numeric-tolerance-match
+    label: Numeric tolerance match
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      The score is whether a numeric answer lies within a stated tolerance of a reference value.
+    inclusion_test: >
+      Tag this if each numeric answer is marked correct when it falls inside an absolute,
+      relative or unit-conversion tolerance of the reference, whether a program or a person
+      applies the tolerance, and record the tolerance rule: it decides what counts as right.
+    exclusion_test: >
+      Do NOT tag this if the answer must equal the reference after at most whitespace or case
+      normalisation, which is `exact-match`, and do NOT tag it where the reported number is an
+      error statistic aggregated over all predictions, which is `statistical-fit`.
+    examples:
+      - ref: critpt
+        qualifies: true
+        why: >
+          Numerical answers, the most common format, are graded against expert-provided
+          tolerance ranges that account for each problem's physical or numerical sensitivity.
+      - ref: financebench
+        qualifies: true
+        why: >
+          Answers are checked by hand against a short gold answer, allowing a unit slip
+          (billions for millions) and very small rounding errors.
+      - ref: omol25
+        qualifies: false
+        why: >
+          NEAR MISS. Numeric predictions against reference values, but the score is the per-atom
+          mean absolute error over the whole set, which is `statistical-fit`.
+      - ref: frontiermath-tiers-erd-s
+        qualifies: false
+        why: >
+          NEAR MISS. Answers are numbers, but an integer answer must match exactly and other
+          answers are checked by SymPy, which is `exact-match` and `symbolic-equivalence`.
+    see_also: [exact-match, statistical-fit, symbolic-equivalence]
+    not_to_be_confused_with:
+      - term: exact-match
+        distinction: >
+          A tolerance match accepts a band around the reference; exact match accepts the
+          reference only. Two Stage-3 records (CritPt, FinanceBench) forced exact-match or a
+          human-rating term onto tolerance grading because no term named it.
 
   - id: symbolic-equivalence
     label: Symbolic equivalence
@@ -71,21 +135,24 @@ terms:
       The score is computer-algebra equivalence to a reference expression, rather than string
       equality.
     inclusion_test: >
-      Tag this if two differently-written answers can both be scored correct because a CAS or
-      proof assistant judges them equivalent.
+      Tag this if two differently-written answers can both be scored correct because a
+      computer-algebra system judges them equivalent.
     exclusion_test: >
       Do NOT tag this if the checker compares strings, and do NOT tag it where a full
-      machine-checked proof is required rather than an equivalence.
+      machine-checked proof is required rather than an equivalence: a proof assistant accepting
+      a derivation is `formal-proof-check`, even when the statement proved is an equality.
     examples:
       - ref: srbench
         qualifies: true
         why: >
           The symbolic solution rate is exact equivalence to the ground-truth equation, not
           numerical closeness.
-      - ref: frontiermath
+      - ref: frontiermath-tiers-erd-s
         qualifies: true
         why: >
-          The Erdos track requires Lean-verified solutions, so equivalence is machine-decided.
+          Tiers 1-4 check that the difference between the submitted and the reference answer
+          simplifies to 0 in SymPy. The Erdos track's Lean-checked proofs are
+          `formal-proof-check`, not this term.
       - ref: mmlu-pro
         qualifies: false
         why: >
@@ -96,7 +163,8 @@ terms:
       - term: formal-proof-check
         distinction: >
           Equivalence decides whether two answers mean the same thing; proof checking decides
-          whether a derivation is valid.
+          whether a derivation is valid. A benchmark that does both, as FrontierMath's tiers and
+          its Erdos track do, carries both terms, each for its own track.
 
   - id: multiple-choice
     label: Multiple choice
@@ -151,7 +219,7 @@ terms:
         why: >
           NEAR MISS. Programmatic pass/fail checks, but they validate a structure rather than
           execute behaviour; that is `constraint-check`.
-    see_also: [constraint-check, formal-proof-check]
+    see_also: [constraint-check, formal-proof-check, environment-state-check]
     not_to_be_confused_with:
       - term: constraint-check
         distinction: >
@@ -165,23 +233,31 @@ terms:
     definition: >
       The score is whether a machine-checkable proof is accepted by a proof assistant.
     inclusion_test: >
-      Tag this if a proof assistant such as Lean, Coq or Isabelle accepts or rejects the
-      submission, and that verdict is the score.
+      Tag this if a proof assistant or program verifier -- Lean, Coq, Isabelle, or an
+      SMT-backed verifier such as Dafny that discharges proof obligations -- accepts or rejects
+      the submission, and that verdict is the score. A check that the submission kept the
+      original specification is part of the same verdict.
     exclusion_test: >
-      Do NOT tag this if a CAS decides equivalence without a proof object, and do NOT tag it
-      where a human referee judges a proof.
+      Do NOT tag this if a CAS decides equivalence without a proof object, do NOT tag it where a
+      human referee judges a proof, and do NOT tag it where a programmatic battery validates a
+      structure with no proof obligation, which is `constraint-check`.
     examples:
       - ref: frontiermath
         qualifies: true
         why: >
           The Erdos track requires solutions a proof assistant accepts; this is the highest
           verifiability available.
+      - ref: minif2f-minif2f-dafny
+        qualifies: true
+        why: >
+          The Dafny verifier discharges each proof obligation and a spec check confirms the
+          statement was not weakened; together they are one machine-checked verdict.
       - ref: srbench
         qualifies: false
         why: >
           NEAR MISS. Symbolic and machine-decided, but equivalence is checked rather than a
           derivation verified.
-    see_also: [symbolic-equivalence, execution-tests]
+    see_also: [symbolic-equivalence, execution-tests, constraint-check]
 
   - id: constraint-check
     label: Constraint check
@@ -193,9 +269,10 @@ terms:
       Tag this if a checker asserts a set of properties on the output and any failure
       invalidates it.
     exclusion_test: >
-      Do NOT tag this if the artifact must be executed to be judged, and do NOT tag the
-      composite metric that a battery is folded into -- tag both terms on the benchmark and let
-      `composite` carry the aggregation.
+      Do NOT tag this if the artifact must be executed to be judged, do NOT tag it where the
+      checked object is the state an agent episode left in a stateful software environment,
+      which is `environment-state-check`, and do NOT tag the composite metric that a battery is
+      folded into -- tag both terms on the benchmark and let `composite` carry the aggregation.
     examples:
       - ref: posebusters
         qualifies: true
@@ -211,7 +288,12 @@ terms:
         why: >
           NEAR MISS. Programmatic and pass/fail, but the verdict comes from running tests, which
           is `execution-tests`.
-    see_also: [execution-tests, composite]
+      - ref: webarena
+        qualifies: false
+        why: >
+          NEAR MISS. Programs validate each task, but what they inspect is the websites'
+          databases after the agent's episode, which is `environment-state-check`.
+    see_also: [execution-tests, composite, environment-state-check]
     not_to_be_confused_with:
       - term: composite
         distinction: >
@@ -219,19 +301,89 @@ terms:
           carries BOTH terms: `constraint-check` for the battery and `composite` for the
           aggregation. Recording only the aggregate loses the fact that any single violation is
           disqualifying.
+      - term: environment-state-check
+        distinction: >
+          A constraint check validates an output's properties; an environment state check
+          validates the state of an environment the agent acted on. Seven Stage-3 records forced
+          this term onto agent benchmarks because no term named the environment as the checked
+          object.
+
+  - id: environment-state-check
+    label: Environment state check
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      The score is a programmatic check of the state that an agent episode leaves in a stateful
+      software environment.
+    inclusion_test: >
+      Tag this if, after the episode, a program inspects what the agent changed -- databases,
+      files, a virtual machine, mocked services, or the tool calls it issued -- and decides task
+      success or per-checkpoint credit, so that any trajectory reaching the required state
+      passes. Where the checked state is an attacker's goal, tag `adversarial-red-team` as well
+      for the attack-success aggregate.
+    exclusion_test: >
+      Do NOT tag this if only a returned answer or a produced artifact is checked, which is
+      `exact-match`, `constraint-check` or `execution-tests`, and do NOT tag it where the
+      environment is a physics or game simulator for a control policy, which is
+      `simulation-rollout`. When tests run in the agent's container, tag `execution-tests` if
+      they exercise code the agent wrote and this term if they inspect state it changed.
+    examples:
+      - ref: webarena
+        qualifies: true
+        why: >
+          Reward functions inspect the self-hosted e-commerce, forum, GitLab and CMS databases
+          after the episode, not the agent's answer.
+      - ref: bench
+        qualifies: true
+        why: >
+          Gold actions are replayed on a fresh environment, and its database end state is
+          compared by hash with the one the agent produced.
+      - ref: osworld-2-0
+        qualifies: true
+        why: >
+          About 27 checks per task inspect VM files, mocked-website databases and exported
+          documents in the final environment state, with credit per checkpoint.
+      - ref: 2026-behavior-challenge
+        qualifies: false
+        why: >
+          NEAR MISS. Goal predicates are checked on an episode's end state, but the environment
+          is a physics simulator for embodied manipulation, which is `simulation-rollout`.
+      - ref: swe-bench-verified
+        qualifies: false
+        why: >
+          NEAR MISS. The agent changes a repository, but the verdict comes from running tests
+          against the code it wrote, which is `execution-tests`.
+    see_also: [constraint-check, execution-tests, simulation-rollout, adversarial-red-team]
+    not_to_be_confused_with:
+      - term: constraint-check
+        distinction: >
+          Constraint check validates an output; this term validates the environment the agent
+          left behind, and admits per-checkpoint credit where a constraint check does not.
+      - term: simulation-rollout
+        distinction: >
+          Both score an episode. A simulator of physical or game dynamics driven by a control
+          policy is `simulation-rollout`; a stateful software environment (websites, a desktop,
+          an EHR server) checked by a program is this term.
 
   - id: simulation-rollout
     label: Simulation rollout
     status: active
     introduced_in: 1.0.0
     definition: >
-      The score is success rate over episodes run in a simulator.
+      The score is a bounded outcome, success or partial credit, of episodes run in a simulator.
     inclusion_test: >
-      Tag this if outcomes are produced by running a policy in a simulated environment, and
-      record the simulator and its build -- the score is only defined inside one.
+      Tag this if outcomes are produced by running a policy or agent in a simulated physical or
+      game environment and each episode is scored on a bounded scale -- success or failure, the
+      fraction of goal predicates met, route completion discounted by infractions, or efficiency
+      against a baseline under a cap. Record the simulator and its build, and the per-episode
+      formula on the Metric: the score is only defined inside one build, and the formula changes
+      what is measured.
     exclusion_test: >
-      Do NOT tag this if the episode runs on real hardware, and do NOT tag it where the reported
-      quantity is unbounded cumulative reward rather than a success rate.
+      Do NOT tag this if the episode runs on real hardware, do NOT tag it where the reported
+      quantity is unbounded cumulative reward, which is `episodic-return`, and do NOT tag it
+      where the environment is a stateful software system checked by a program, which is
+      `environment-state-check`.
     examples:
       - ref: libero
         qualifies: true
@@ -242,17 +394,26 @@ terms:
         qualifies: true
         why: >
           Achievement success rates measured inside a specific environment version.
+      - ref: carla-leaderboard-2-0
+        qualifies: true
+        why: >
+          The driving score multiplies route completion by an infraction penalty. It is bounded
+          but is not a success rate, and the formula on the Metric records which it is.
       - ref: mujoco-gymnasium
         qualifies: false
         why: >
           NEAR MISS. Entirely simulated, but the reported quantity is unbounded cumulative
           return, which is `episodic-return`.
-    see_also: [episodic-return, physical-trial]
+    see_also: [episodic-return, physical-trial, environment-state-check]
     not_to_be_confused_with:
       - term: physical-trial
         distinction: >
           The discriminant is whether the episode ran on hardware. A simulated result and a
           hardware result are not comparable and must not share a method term.
+      - term: environment-state-check
+        distinction: >
+          A simulated physical or game environment driven by a policy is this term; a stateful
+          software environment whose end state a program inspects is `environment-state-check`.
 
   - id: episodic-return
     label: Episodic return
@@ -266,7 +427,9 @@ terms:
       for these and they can never be marked saturated.
     exclusion_test: >
       Do NOT tag this if the episode is scored as success or failure, and do NOT tag it where
-      returns are normalised against a stated ceiling.
+      returns are rescaled against a maximum that cannot be exceeded. Normalising against a
+      reference constant that agents do exceed, such as a human-normalised Atari score, leaves
+      the metric unbounded, and the term still applies.
     examples:
       - ref: mujoco-gymnasium
         qualifies: true
@@ -293,18 +456,25 @@ terms:
     inclusion_test: >
       Tag this if the reported outcome was produced by a physical system acting in the world.
     exclusion_test: >
-      Do NOT tag this if the result is simulated however faithfully, and do NOT tag it where
-      hardware is used only to collect the dataset.
+      Do NOT tag this if the result is simulated however faithfully, do NOT tag it where hardware
+      is used only to collect the dataset, and do NOT tag it where hardware runs are a one-off
+      experiment in the release paper rather than a scored track of the benchmark.
     examples:
       - ref: a2rl-drone-championship
         qualifies: true
         why: >
           Lap times from fully physical racing; no simulated leg is in the scored protocol.
-      - ref: robotwin-2-0
+      - ref: roboarena
         qualifies: true
         why: >
-          The AgileX hardware track produces results on real arms, separately from its simulated
-          track.
+          Policies are run on real DROID robot hardware, and the outcomes of those trials are
+          what the ranking is built from.
+      - ref: robotwin-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The paper reports real-arm runs on four tasks, but they validate the data
+          generator; the benchmark protocol and its leaderboard, AgileX embodiment included, are
+          simulated, which is `simulation-rollout`.
       - ref: simplerenv
         qualifies: false
         why: >
@@ -321,8 +491,10 @@ terms:
     inclusion_test: >
       Tag this if predictions are taken to a laboratory and the measured outcome is the score.
     exclusion_test: >
-      Do NOT tag this if predictions are compared against previously measured data, and do NOT
-      tag it where the experiment is simulated.
+      Do NOT tag this if predictions are compared against previously measured data, do NOT tag
+      it where the experiment is simulated, and do NOT tag it where an experiment run after the
+      deadline measures every candidate regardless of the predictions, which is
+      `prospective-resolution`.
     examples:
       - ref: cache
         qualifies: true
@@ -348,10 +520,12 @@ terms:
     definition: >
       The score is an automatic similarity measure against one or more reference texts.
     inclusion_test: >
-      Tag this if BLEU, ROUGE, COMET, perplexity or a relative is the reported number.
+      Tag this if BLEU, ROUGE, chrF, TER, word error rate, perplexity or a relative computed by a
+      fixed formula is the reported number.
     exclusion_test: >
-      Do NOT tag this if the similarity is computed by a learned scoring model, and do NOT tag
-      it where the metric is specific to a scientific domain.
+      Do NOT tag this if the similarity is computed by a learned scoring model -- COMET, BLEURT,
+      MetricX and BERTScore are `model-derived-metric` even though they compare against
+      references -- and do NOT tag it where the metric is specific to a scientific domain.
     examples:
       - ref: open-asr-leaderboard
         qualifies: true
@@ -368,7 +542,8 @@ terms:
       - term: model-derived-metric
         distinction: >
           If another model computes the score, the scoring model's version is part of the result
-          and the term is `model-derived-metric`.
+          and the term is `model-derived-metric`, whether or not the model also reads a
+          reference. The COMET family is the case that met both tests (IWSLT, WMT).
 
   - id: domain-metric
     label: Domain metric
@@ -377,11 +552,15 @@ terms:
     definition: >
       The score is a measure defined by and specific to a scientific or engineering field.
     inclusion_test: >
-      Tag this if the metric is named and standardised within a discipline -- GDT-TS, lDDT,
-      DockQ, mAP, FID, CRPS, IoU, kappa_SRME -- and is defined per Metric entity.
+      Tag this if the metric is named and standardised within a discipline and has no meaning
+      outside it -- GDT-TS, lDDT, DockQ, mAP, IoU, Dice, kappa_SRME -- and is defined per Metric
+      entity.
     exclusion_test: >
-      Do NOT tag this if the metric is a general-purpose error statistic, and do NOT tag the
-      aggregation when several such metrics are combined.
+      Do NOT tag this if the metric is a general-purpose statistic such as RMSE, correlation, F1
+      or AUROC, even where a field's agencies standardise how it is computed, do NOT tag it where
+      a model computes the number, which is `model-derived-metric`, and do NOT tag it where the
+      metric scores an emitted distribution, which is `uncertainty-calibration-score`. Do NOT
+      tag the aggregation when several such metrics are combined.
     examples:
       - ref: casp16
         qualifies: true
@@ -392,12 +571,36 @@ terms:
         qualifies: true
         why: >
           kappa_SRME and phonon metrics are defined within materials science.
+      - ref: coco
+        qualifies: true
+        why: >
+          AP averaged over ten IoU thresholds and 80 categories is one detection metric, which is
+          why `composite` does not apply.
       - ref: open-asr-leaderboard
         qualifies: false
         why: >
           NEAR MISS. Standard within speech, but word error rate is a general edit-distance
           statistic against references, which is `reference-metric`.
-    see_also: [reference-metric, statistical-fit, composite]
+    see_also: [reference-metric, statistical-fit, composite, classification-metric]
+    not_to_be_confused_with:
+      - term: statistical-fit
+        distinction: >
+          A general statistic stays `statistical-fit` when a field standardises how it is
+          computed: WeatherBench 2's RMSE and ACC follow WMO and ECMWF definitions and are still
+          statistical fits. This term is for measures with no meaning outside the discipline.
+      - term: model-derived-metric
+        distinction: >
+          A field-standard metric computed by a model -- FID from an Inception network,
+          RadGraph-F1 and SembScore from learned labellers -- is `model-derived-metric`, because
+          the scoring model's version is part of the result.
+      - term: uncertainty-calibration-score
+        distinction: >
+          CRPS and its skill score are standard in forecasting, but they score an emitted
+          ensemble or distribution, so they are `uncertainty-calibration-score`, not this term.
+      - term: classification-metric
+        distinction: >
+          Standard use within a field does not make a general statistic a domain metric: AUROC
+          in pathology is still `classification-metric`.
 
   - id: model-derived-metric
     label: Model-derived metric
@@ -408,11 +611,16 @@ terms:
       The score is computed by another model -- a detector, an encoder or a fine-tuned
       classifier -- that is not acting as a judge.
     inclusion_test: >
-      Tag this if a model produces the number, and record the scoring model's version: it is
-      part of the result.
+      Tag this if a fixed, released scoring model produces the number -- a detector, a learned
+      reference-based metric such as COMET, the Inception network behind FID, a labeller such as
+      CheXbert, or a guard classifier with a fixed label set -- and record the scoring model's
+      version: it is part of the result. For the same number this term governs over
+      `domain-metric` and `reference-metric`.
     exclusion_test: >
-      Do NOT tag this if the model issues a verdict on quality, which is `model-graded-judge`,
-      and do NOT tag it where the metric is a fixed formula.
+      Do NOT tag this if a general-purpose model is prompted to issue a verdict, which is
+      `model-graded-judge`, do NOT tag it where the metric is a fixed formula, and do NOT tag it
+      where the mapping model is a regression fitted afresh to each submission as part of the
+      metric; the final statistic then carries the method.
     examples:
       - ref: geneval
         qualifies: true
@@ -423,18 +631,39 @@ terms:
         qualifies: true
         why: >
           Scores come from learned encoders rather than from a formula.
+      - ref: harmbench
+        qualifies: true
+        why: >
+          A released Llama 2 13B classifier, fine-tuned to label each completion a success or
+          not, decides attack success; the checkpoint is part of the result.
       - ref: healthbench
         qualifies: false
         why: >
           NEAR MISS. Frequently graded by a model, but against a physician-authored rubric, and
           the rubric structure is what `rubric-graded` preserves.
-    see_also: [model-graded-judge, rubric-graded, reference-metric]
+      - ref: brain-score
+        qualifies: false
+        why: >
+          NEAR MISS. Neural Predictivity depends on a PLS mapping, but the mapping is fitted
+          afresh for each submitted model, so no fixed scoring model exists; the final Pearson r
+          is `statistical-fit`.
+    see_also: [model-graded-judge, rubric-graded, reference-metric, domain-metric]
     not_to_be_confused_with:
       - term: model-graded-judge
         distinction: >
-          A judge issues a verdict on quality; a derived metric computes a quantity. The
-          distinction matters because an EEE record cannot express either, which 02 S5 calls the
-          largest single gap in that schema.
+          A judge decides; a derived metric measures. A guard classifier fine-tuned to a fixed
+          label set and released as a checkpoint is this term even though it outputs yes or no;
+          a general model prompted with a grading instruction is a judge. Both require the
+          scoring model's version, and neither has any slot in Every Eval Ever's schema -- 02 S5
+          calls that the largest single gap in that schema.
+      - term: reference-metric
+        distinction: >
+          A learned metric that reads a reference (COMET, BLEURT, MetricX) is this term, not
+          `reference-metric`: the scoring model's version is part of the result.
+      - term: domain-metric
+        distinction: >
+          A field-standard metric computed by a model (FID, RadGraph-F1, SembScore) is this term;
+          `domain-metric` is for field-specific measures computed by a formula.
 
   - id: statistical-fit
     label: Statistical fit
@@ -443,11 +672,14 @@ terms:
     definition: >
       The score is error against ground-truth measurements.
     inclusion_test: >
-      Tag this if the number is RMSE, correlation, anomaly correlation, Spearman rho or a
-      comparable goodness-of-fit statistic.
+      Tag this if the number is RMSE, MAE, correlation, anomaly correlation, Spearman rho or a
+      comparable goodness-of-fit statistic on continuous values, including where a field's
+      agencies fix how it is computed, as for RMSE and ACC under WMO and ECMWF definitions.
     exclusion_test: >
-      Do NOT tag this if the statistic is standardised within a discipline under its own name,
-      and do NOT tag it where the quantity scored is calibration rather than accuracy.
+      Do NOT tag this if the statistic is defined only within one discipline under its own name,
+      which is `domain-metric`, do NOT tag it where the quantity scored is calibration rather
+      than accuracy, and do NOT tag it where the statistic is computed from predicted class
+      labels, which is `classification-metric` even when it is a correlation such as MCC.
     examples:
       - ref: proteingym
         qualifies: true
@@ -462,7 +694,81 @@ terms:
         why: >
           NEAR MISS. A physics regression setting, but the metric is interval coverage and
           width, which is `uncertainty-calibration-score`.
-    see_also: [domain-metric, uncertainty-calibration-score]
+    see_also: [domain-metric, uncertainty-calibration-score, classification-metric]
+    not_to_be_confused_with:
+      - term: domain-metric
+        distinction: >
+          A general statistic is this term even where a discipline fixes how it is computed;
+          `domain-metric` is for measures with no meaning outside their discipline.
+      - term: classification-metric
+        distinction: >
+          Both can be correlations. MCC and kappa compare predicted with true labels and are
+          `classification-metric`; Pearson and Spearman over continuous measurements are this
+          term.
+
+  - id: classification-metric
+    label: Classification metric
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      The score is a general-purpose statistic computed from predicted labels, scores or
+      clusters against a labelled key.
+    inclusion_test: >
+      Tag this if the reported number is F1, precision, recall, sensitivity or specificity,
+      AUROC, AUPRC, the Matthews correlation coefficient, Cohen's kappa, balanced or
+      macro-averaged accuracy, or a clustering index such as the adjusted Rand index: a
+      statistic of the whole confusion matrix or score ranking whose formula is the same in
+      every field.
+    exclusion_test: >
+      Do NOT tag this if each item is simply right or wrong and the score is their mean, which is
+      `exact-match` or `multiple-choice`, and do NOT tag it where the statistic is named and
+      defined only within a discipline, such as mAP over IoU thresholds, Dice or FROC
+      sensitivity, which is `domain-metric`. Labels decide against `statistical-fit`: a
+      correlation between predicted and true classes is this term, one between continuous values
+      is not.
+    examples:
+      - ref: bend
+        qualifies: true
+        why: >
+          Gene finding is scored by multi-class MCC and the other tasks by AUROC and AUPRC
+          against labels.
+      - ref: camelyon17
+        qualifies: true
+        why: >
+          The only ranking metric is quadratic weighted kappa between predicted and reference
+          pN-stages.
+      - ref: matbench-discovery
+        qualifies: true
+        why: >
+          The paper ranks models by F1 for stable versus unstable classification, and F1 carries
+          half of the leaderboard's CPS.
+      - ref: tanks-and-temples
+        qualifies: false
+        why: >
+          NEAR MISS. Reports an F-score, but of precision and recall of point-to-point distances
+          at a scene-specific threshold, a 3D-reconstruction measure that is `domain-metric`.
+      - ref: luna16
+        qualifies: false
+        why: >
+          NEAR MISS. Built on sensitivity, but the score averages it over seven false-positive
+          rates per scan, the FROC competition metric of nodule detection, which is
+          `domain-metric`.
+    see_also: [exact-match, statistical-fit, domain-metric, multiple-choice]
+    not_to_be_confused_with:
+      - term: exact-match
+        distinction: >
+          Plain accuracy, a mean of per-item verdicts, is `exact-match`. A statistic computed
+          over the whole set of predictions, such as F1, AUROC, MCC or kappa, is this term.
+      - term: statistical-fit
+        distinction: >
+          Two Stage-3 records (BEND, CAMELYON17) forced `statistical-fit` onto MCC and kappa.
+          The discriminant is whether the compared values are class labels (this term) or
+          continuous measurements (`statistical-fit`).
+      - term: domain-metric
+        distinction: >
+          A general statistic used as standard in a field is still this term; `domain-metric`
+          is for measures defined only within their discipline.
 
   - id: uncertainty-calibration-score
     label: Uncertainty calibration score
@@ -470,13 +776,18 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      The metric is a calibration functional rather than an accuracy.
+      The metric scores an emitted confidence, interval or distribution rather than a point
+      answer.
     inclusion_test: >
-      Tag this if the scoring function consumes an emitted confidence, interval or distribution
-      and scores its coverage, sharpness or calibration error.
+      Tag this if the scoring function consumes an emitted confidence, interval, probability or
+      ensemble and scores its coverage, sharpness or calibration error, or applies a proper
+      scoring rule to it -- CRPS and its skill score, the Brier score, the log score -- even
+      where a discipline has standardised the rule under its own name.
     exclusion_test: >
-      Do NOT tag this if accuracy is scored on hard items, and do NOT tag it where the
-      probability concerns a future event, which is `prospective-resolution`.
+      Do NOT tag this if accuracy is scored on hard answers with no emitted uncertainty, and do
+      NOT tag it where an ensemble is reduced to its mean before scoring, which is
+      `statistical-fit`. A probability about a future event keeps this term for how it is
+      scored, and takes `prospective-resolution` as well for when its truth exists.
     examples:
       - ref: fair-universe-higgsml-uncertainty
         qualifies: true
@@ -486,12 +797,29 @@ terms:
         qualifies: true
         why: >
           Publishes calibration error as a first-class number alongside accuracy.
+      - ref: weatherbench-2
+        qualifies: true
+        why: >
+          CRPS over ensemble members is the probabilistic headline, and it is this term rather
+          than `domain-metric`.
       - ref: forecastbench
+        qualifies: true
+        why: >
+          Each forecast is scored with the Brier score, a strictly proper rule on the emitted
+          probability; `prospective-resolution` is tagged beside it because the questions
+          resolve after the forecast.
+      - ref: the-well
         qualifies: false
         why: >
-          NEAR MISS. Brier scores are probabilistic, but the truth value does not exist at
-          submission, which is `prospective-resolution`.
-    see_also: [statistical-fit, prospective-resolution]
+          NEAR MISS. Forecasts of physical fields, but the predicted fields are scored by VRMSE
+          and no distribution is scored, which is `statistical-fit`.
+    see_also: [statistical-fit, prospective-resolution, domain-metric]
+    not_to_be_confused_with:
+      - term: domain-metric
+        distinction: >
+          CRPS is named and standardised in forecasting, which made it meet both tests
+          (WeatherBench 2, ChaosBench). A rule that scores an emitted distribution is this term;
+          `domain-metric` is for discipline-specific measures of a point prediction.
 
   - id: human-distribution-percentile
     label: Human distribution percentile
@@ -513,10 +841,11 @@ terms:
           Bronze, silver and gold thresholds come from the actual Kaggle leaderboards for each
           competition.
       - ref: gdpval
-        qualifies: true
+        qualifies: false
         why: >
-          Deliverables are graded against blinded expert work, placing the system in a human
-          field.
+          NEAR MISS. Graders compare the model's deliverable with the one deliverable written by
+          the task's author, so the comparator is a single expert rather than a measured human
+          distribution; the headline is a win rate against that deliverable.
       - ref: atari-100k
         qualifies: false
         why: >
@@ -534,16 +863,19 @@ terms:
       Tag this if qualified experts score outputs one by one and their ratings are the result.
     exclusion_test: >
       Do NOT tag this if raters are untrained, and do NOT tag it where a committee issues one
-      collective judgement rather than per-output ratings.
+      collective judgement rather than per-output ratings; a committee's collective score for
+      each participant is still `expert-panel-assessment`.
     examples:
       - ref: gdpval
         qualifies: true
         why: >
           Blinded pairwise grading by occupational experts across 44 occupations.
       - ref: healthbench
-        qualifies: true
+        qualifies: false
         why: >
-          Physician authorship and physician grading sit behind the rubric criteria.
+          NEAR MISS. Physicians wrote the criteria and graded responses only to check the model
+          grader's agreement with them; the reported score comes from the model grader, which is
+          `rubric-graded` and `model-graded-judge`.
       - ref: casp16
         qualifies: false
         why: >
@@ -558,7 +890,9 @@ terms:
     definition: >
       Non-expert human raters score outputs.
     inclusion_test: >
-      Tag this if raters are recruited without a domain qualification requirement.
+      Tag this if raters are recruited without a domain qualification requirement. A screen on
+      platform performance or language fluency, as on a paid crowd platform, is not a domain
+      qualification; raters recruited for a professional credential are `human-expert-eval`.
     exclusion_test: >
       Do NOT tag this if raters are credentialed domain experts, and do NOT tag it where the
       aggregation is a head-to-head rating system.
@@ -582,7 +916,8 @@ terms:
     definition: >
       An assessor committee produces a published judgement rather than a leaderboard.
     inclusion_test: >
-      Tag this if the authoritative output is an assessment written by a named committee.
+      Tag this if the authoritative output is an assessment written by a named committee,
+      including a committee that assigns each participant one collective score.
     exclusion_test: >
       Do NOT tag this if experts rate outputs individually into a score, and do NOT tag it where
       a leaderboard is the published artifact.
@@ -645,11 +980,14 @@ terms:
     definition: >
       A judge model issues a verdict on the output.
     inclusion_test: >
-      Tag this if a model decides quality or correctness, and record the judge model and version
-      as required fields.
+      Tag this if a model prompted with a grading instruction decides quality or correctness,
+      and record the judge model and version as required fields. Where the maintainer withholds
+      the judge's identity, the term still applies and the withholding goes in the notes.
     exclusion_test: >
-      Do NOT tag this if the model computes a quantity rather than a verdict, and do NOT tag it
-      where a rubric structures the judgement without a model applying it.
+      Do NOT tag this if the model computes a quantity rather than a verdict, do NOT tag it where
+      the scorer is a released classifier fine-tuned to a fixed label set, which is
+      `model-derived-metric`, and do NOT tag it where a rubric structures the judgement without
+      a model applying it.
     examples:
       - ref: healthbench
         qualifies: true
@@ -665,9 +1003,11 @@ terms:
     not_to_be_confused_with:
       - term: model-derived-metric
         distinction: >
-          A judge decides; a derived metric measures. Both require the scoring model's version,
-          and neither has any slot in Every Eval Ever's schema -- 02 S5 calls that the largest
-          single gap and the first thing to propose upstream.
+          A judge decides; a derived metric measures. A general model prompted to grade is a
+          judge; a guard classifier fine-tuned to a fixed label set and released as a checkpoint
+          (HarmBench's) is a derived metric, even though its output is a verdict. Both require
+          the scoring model's version, and neither has any slot in Every Eval Ever's schema --
+          02 S5 calls that the largest single gap and the first thing to propose upstream.
 
   - id: pairwise-preference-elo
     label: Pairwise preference Elo
@@ -679,8 +1019,10 @@ terms:
       Tag this if the number is a rating fitted to pairwise outcomes, and record the rating-pool
       identity and snapshot date -- both are part of the result.
     exclusion_test: >
-      Do NOT tag this if outcomes come from direct play rather than preference votes, and do NOT
-      tag it where preferences are reported as win rates against one fixed opponent.
+      Do NOT tag this if outcomes come from direct play rather than preference votes, do NOT tag
+      it where preferences are reported as win rates against one fixed opponent, and do NOT tag
+      it where the pairwise comparison is of ordinary scores with no vote, which is
+      `entrant-relative-ranking`.
     examples:
       - ref: lmarena
         qualifies: true
@@ -692,12 +1034,17 @@ terms:
         why: >
           NEAR MISS. Also produces Elo, but from games played between models rather than from
           preference votes, which is `tournament-play`.
-    see_also: [tournament-play, human-crowd-eval]
+    see_also: [tournament-play, human-crowd-eval, entrant-relative-ranking]
     not_to_be_confused_with:
       - term: tournament-play
         distinction: >
           Both yield pool-dependent ratings. The discriminant is whether the outcome came from a
           judged preference or from play.
+      - term: entrant-relative-ranking
+        distinction: >
+          Both are pool-relative. A rating fitted to A/B preference votes is this term; a rank,
+          win rate or scale computed from ordinary scores against the rest of the pool, with no
+          votes, is `entrant-relative-ranking`.
 
   - id: tournament-play
     label: Tournament play
@@ -727,7 +1074,12 @@ terms:
         why: >
           NEAR MISS. Pool-dependent ratings, but produced by human preference votes rather than
           by play, which is `pairwise-preference-elo`.
-    see_also: [pairwise-preference-elo]
+    see_also: [pairwise-preference-elo, entrant-relative-ranking]
+    not_to_be_confused_with:
+      - term: entrant-relative-ranking
+        distinction: >
+          Both depend on who else entered. Here entrants meet in play; `entrant-relative-ranking`
+          ranks entrants that never interact, from scores each earned on its own.
 
   - id: adversarial-red-team
     label: Adversarial red team
@@ -757,7 +1109,7 @@ terms:
         why: >
           NEAR MISS. Hard held-out conditions, but naturally occurring rather than adversarially
           selected.
-    see_also: [constraint-check]
+    see_also: [constraint-check, environment-state-check]
 
   - id: ordinal-grading
     label: Ordinal grading
@@ -793,11 +1145,17 @@ terms:
     definition: >
       Ground truth does not exist at submission and resolves later.
     inclusion_test: >
-      Tag this if the correct answer becomes known only after predictions are locked, and pair
-      it with a resolution status on the claim.
+      Tag this if the correct answer becomes known only after predictions are locked, because
+      the world resolves it -- an event occurs, an annotation is curated, or an experiment run
+      independently of the predictions reports -- and pair it with a resolution status on the
+      claim. On a benchmark, tag it only if the protocol guarantees this for its targets, not
+      where some targets may already be known and merely unreleased.
     exclusion_test: >
-      Do NOT tag this if the answer exists and is merely withheld from entrants, and do NOT tag
-      it where a laboratory assay is run on the submission itself.
+      Do NOT tag this if the answer exists and is merely withheld from entrants, do NOT tag it
+      where a laboratory assay is run on the submission itself, which is `wet-lab-validation`,
+      and do NOT tag it where what happens after the deadline is only the grading of the
+      submissions, such as a post-deadline human evaluation, which is the grading method's own
+      term.
     examples:
       - ref: forecastbench
         qualifies: true
@@ -814,7 +1172,79 @@ terms:
         why: >
           NEAR MISS. Answers are withheld from entrants, but they exist at submission time; a
           held-out key is not a future event.
+      - ref: wmt25-general-mt-shared-task
+        qualifies: false
+        why: >
+          NEAR MISS. Human references do not exist at submission, but what follows the deadline
+          is human evaluation of the submissions, which is `human-expert-eval`, not an event
+          resolving in the world.
     see_also: [uncertainty-calibration-score, wet-lab-validation]
+
+  - id: entrant-relative-ranking
+    label: Entrant-relative ranking
+    status: active
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      The headline number ranks or rescales each entrant against the other entrants in the
+      evaluated pool, so it changes when the pool changes.
+    inclusion_test: >
+      Tag this if the published figure is a rank aggregation, a win rate against every other
+      entrant, a Z-score against the field, or a scale fitted jointly across entrants, so that
+      adding or removing one entrant moves the others' numbers with no change to their outputs.
+      Record the pool and its snapshot date, and tag the methods that produced the underlying
+      scores as well.
+    exclusion_test: >
+      Do NOT tag this if the rating is fitted to preference votes, which is
+      `pairwise-preference-elo`, or to games between entrants, which is `tournament-play`, and
+      do NOT tag it where scores are normalised against fixed baselines or controls that do not
+      change with the entrants.
+    examples:
+      - ref: medhelm
+        qualifies: true
+        why: >
+          The headline win rate compares each model with every other on 35 benchmarks, so adding
+          a model moves every win rate.
+      - ref: brats-2026-cluster
+        qualifies: true
+        why: >
+          Final position comes from case-wise cumulative rankings across metrics with pairwise
+          permutation tests, so a team's rank depends on who else entered.
+      - ref: casp16-na-rna-puzzles-joint-assessment
+        qualifies: true
+        why: >
+          The ranking sums weighted Z-scores of TM-score, GDT_TS and lDDT, computed against the
+          mean and spread of every group's top model.
+      - ref: epoch-capabilities-index
+        qualifies: true
+        why: >
+          A capability scale is fitted jointly to a model-by-benchmark table, and values shift as
+          models and benchmarks are added even when a model's own data do not change.
+      - ref: open-problems-in-single-cell-analysis
+        qualifies: false
+        why: >
+          NEAR MISS. Scores are rescaled before ranking, but against fixed control methods that
+          are the same for every entrant, so adding an entrant moves no one else's score.
+      - ref: lmarena
+        qualifies: false
+        why: >
+          NEAR MISS. Pool-relative, but the rating is fitted to human preference votes, which is
+          `pairwise-preference-elo`.
+    see_also: [composite, pairwise-preference-elo, tournament-play]
+    not_to_be_confused_with:
+      - term: composite
+        distinction: >
+          `composite` records that sub-scores from different methods are combined; this term
+          records that the result is relative to the pool. Both apply where both hold, as in
+          MedHELM and BraTS, and neither implies the other.
+      - term: pairwise-preference-elo
+        distinction: >
+          A rating fitted to preference votes is `pairwise-preference-elo`. A win rate or rank
+          computed from scores each entrant earned on its own is this term.
+      - term: tournament-play
+        distinction: >
+          Entrants that meet in play are `tournament-play`. Entrants that never interact, ranked
+          against each other after the fact, are this term.
 
   - id: composite
     label: Composite
@@ -823,32 +1253,39 @@ terms:
     definition: >
       The headline number aggregates sub-scores produced by different methods.
     inclusion_test: >
-      Tag this if the published figure is a weighted or averaged combination, and tag the
-      constituent methods on the benchmark as well.
+      Tag this if the published figure is a weighted or averaged combination of sub-scores that
+      different methods produced, and tag the constituent methods on the benchmark as well.
     exclusion_test: >
-      Do NOT tag this if one metric is averaged over its own parameter sweep under a single
-      method, and do NOT use it as a catch-all for benchmarks with several tracks -- model those
-      as subsets.
+      Do NOT tag this if every constituent shares one method -- one metric averaged over its own
+      parameter sweep, such as IoU thresholds, categories, or datasets and tasks scored the same
+      way -- and do NOT use it as a catch-all for benchmarks with several tracks: model those as
+      subsets. Where the combination is also relative to the entrant pool, tag
+      `entrant-relative-ranking` beside it.
     examples:
       - ref: navsim
         qualifies: true
         why: >
           EPDMS is a weighted product of roughly ten sub-criteria spanning different scoring
           methods.
-      - ref: coco
+      - ref: rexrank
         qualifies: true
         why: >
-          AP averages over IoU thresholds .50:.05:.95, combining into one published figure.
-      - ref: rexrank
+          The primary metric, RadCliQ-v1, combines BLEU, BERTScore, SembScore and RadGraph-F1 --
+          a reference metric and model-derived metrics -- into the one figure that ranks models.
+      - ref: coco
         qualifies: false
         why: >
-          NEAR MISS. Eight metrics reported together, but deliberately with no published
-          aggregate -- that is a no-legitimate-aggregate vector, not a composite.
-    see_also: [constraint-check, domain-metric]
+          NEAR MISS. AP is averaged over ten IoU thresholds and 80 categories, but that is one
+          metric averaged over its own sweep, which is `domain-metric`.
+    see_also: [constraint-check, domain-metric, entrant-relative-ranking]
     not_to_be_confused_with:
       - term: constraint-check
         distinction: >
           03 S3.3 predicts failures concentrated on exactly this pair. A pass/fail battery
           folded into a headline number carries both terms; recording only `composite` loses
           that any single violation is disqualifying.
-
+      - term: entrant-relative-ranking
+        distinction: >
+          This term records that different methods are combined; `entrant-relative-ranking`
+          records that the result depends on who else entered. A rank aggregation across
+          metrics of different methods is both.

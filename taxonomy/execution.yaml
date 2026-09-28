@@ -7,8 +7,8 @@
 
 facet: execution
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   What it costs to run the benchmark and how reproducible a run is: compute tier,
   reproducibility tier, the blockers that explain the tier, and harness availability. Drives
@@ -35,6 +35,22 @@ description: >
 # `inspect-evals-port` is NOT in harness_availability. It duplicated the separate
 # inspect_evals_id field, so the enum and the id could disagree with nothing to catch it;
 # inspect_evals_available is now derived from `inspect_evals_id != null`.
+#
+# P1-S1-T07 (Stage 4, v0.9.0) added no term here and stated two precedence rules, each in the
+# tests of the terms it touches:
+#   compute_tier         -- one official score for one new system (training it is not part of
+#                           the run). A requirement the protocol imposes on every run outranks
+#                           the cost of serving the system under test; when only that serving
+#                           cost is left, api-credits-only applies if the official leaderboard
+#                           accepts API-served systems. Role splits go to compute_tier_by_role.
+#   reproducibility_tier -- the headline official score, reproduced from scratch; the most
+#                           restrictive tier any part of it needs decides, in the order
+#                           not-independently-reproducible, requires-physical-experiment,
+#                           requires-specialized-hardware, requires-human-raters,
+#                           automatable-with-simulator, fully-automatable.
+# The proposed blocker hosted-judge-dependency was deferred rather than added: 02 S11 blocks
+# every blocker but licence-restriction beside fully-automatable, so the term would put most
+# judge-scored benchmarks into a tier none of them is in. It needs an ADR amending that rule.
 
 terms:
 
@@ -54,7 +70,56 @@ terms:
     introduced_in: 1.0.0
     definition: >
       A full run needs one accelerator.
-    examples: []
+    inclusion_test: >
+      Tag this if the protocol requires one accelerator for every official run, such as a
+      mandated GPU machine or a GPU-based scorer, or if the official leaderboard accepts only
+      locally run systems and the maintainer's reference run uses one accelerator. A mandated
+      GPU outranks API spend on the system under test.
+    exclusion_test: >
+      Do NOT tag this if the only GPU cost is serving the system under test and the leaderboard
+      accepts API-served systems (api-credits-only), or if a simulator is required
+      (simulator-required takes precedence, and the GPU goes in the notes). Do NOT tag it for a
+      GPU needed only to train the entrant.
+    examples:
+      - ref: mle-bench
+        qualifies: true
+        why: >
+          The protocol fixes the agent's machine ('Compute: 36 vCPUs with 440GB RAM and one 24GB
+          A10 GPU'), whatever model drives the agent, so it outranks the API spend.
+      - ref: paperbench
+        qualifies: true
+        why: >
+          The reproduction step runs 'in a fresh VM running an Ubuntu 24.04 image with access to
+          an A10 GPU' for every paper, although API credits dominate the reported spend.
+      - ref: vbench-2-0
+        qualifies: true
+        why: >
+          Scoring needs at least one GPU ('Evaluate 18 dimensions sequentially on a single GPU')
+          whatever generator is entered. Sampling the videos is the entrant's cost.
+      - ref: libero
+        qualifies: false
+        why: >
+          NEAR MISS. The paper used 'a single Nvidia A100 GPU or a single Nvidia A40 GPU', but a
+          run needs the Robosuite/MuJoCo simulator, which takes precedence (simulator-required).
+      - ref: video-mme-v2
+        qualifies: false
+        why: >
+          NEAR MISS. Local weights need one or more GPUs, but the leaderboard includes API models
+          run 'against OpenAI-compatible model endpoints', so it is api-credits-only.
+    not_to_be_confused_with:
+      - term: api-credits-only
+        distinction: >
+          A GPU needed only to serve local weights of the system under test is the entrant's
+          choice and leaves `api-credits-only` when the leaderboard accepts API systems. A GPU
+          the protocol mandates for every run is `single-gpu`.
+      - term: simulator-required
+        distinction: >
+          When a simulator is required, `simulator-required` takes precedence over the
+          accelerator it runs on.
+      - term: multi-gpu-node
+        distinction: >
+          The accelerator count that decides is the protocol's requirement or the maintainer's
+          reference run, not the largest model an entrant might serve.
   - id: multi-gpu-node
     label: Multi-GPU node
     field: execution.compute_tier
@@ -62,7 +127,40 @@ terms:
     introduced_in: 1.0.0
     definition: >
       A full run needs several accelerators in one machine.
-    examples: []
+    inclusion_test: >
+      Tag this if the protocol requires several accelerators in one machine for every official
+      run, or if the official leaderboard accepts only locally run systems and the maintainer's
+      reference run uses one such node.
+    exclusion_test: >
+      Do NOT tag this for the largest entrant's serving cost when the leaderboard accepts
+      API-served systems (api-credits-only), for compute used to train the entrant, when a
+      simulator is required (simulator-required), or when the organisers supply the node
+      (provided-allocation).
+    examples:
+      - ref: legalbench-vals-legal-bench
+        qualifies: false
+        why: >
+          NEAR MISS. The paper ran open models on 'two-GPU GCP 40GB A100s', but commercial models
+          ran through APIs, so the API path decides (api-credits-only).
+      - ref: fair-universe-higgsml-uncertainty-challenge
+        qualifies: false
+        why: >
+          NEAR MISS. Official inference ran on one Perlmutter node with four A100s, but the
+          organisers supplied it, so it is provided-allocation.
+      - ref: robotwin-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. VLA fine-tuning ran on 4 to 8 GPUs, but that is training, and every
+          evaluation needs the simulator (simulator-required).
+    not_to_be_confused_with:
+      - term: api-credits-only
+        distinction: >
+          Serving a large open model on a multi-GPU node is one entrant's choice. If the
+          leaderboard accepts API-served systems, the field is `api-credits-only`.
+      - term: single-gpu
+        distinction: >
+          The protocol's requirement or the maintainer's reference run decides the accelerator
+          count, not the range of entrants' model sizes.
   - id: cluster
     label: Cluster
     field: execution.compute_tier
@@ -77,8 +175,55 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The cost of a run is third-party inference spend rather than hardware.
-    examples: []
+      The cost of an official run is third-party inference spend, for the system under test or
+      for models inside the evaluation, rather than hardware the benchmark requires.
+    inclusion_test: >
+      Tag this if the official leaderboard accepts systems served through a third-party API and
+      the protocol imposes nothing beyond ordinary CPU besides inference spend. The field
+      describes producing one official score for one new system, not training it, so the cost of
+      serving local weights on GPUs is the entrant's choice and does not displace this tag. For
+      an index, that one score means obtaining its constituents' results.
+    exclusion_test: >
+      Do NOT tag this if the protocol itself requires hardware beyond ordinary CPU for every run,
+      such as a mandated GPU machine (single-gpu), a simulator (simulator-required) or physical
+      hardware. Do NOT tag it when the official run takes place on compute the organisers supply
+      (provided-allocation).
+    examples:
+      - ref: mmlu-pro
+        qualifies: true
+        why: >
+          The paper runs closed models through APIs and open models on A100s, and the README ships
+          both paths. The GPU path is the entrant's choice, so the API path decides.
+      - ref: arc-agi-3
+        qualifies: true
+        why: >
+          The official leaderboard is for API systems, at 'tens of thousands of dollars in API
+          costs'. The Kaggle prize track's organiser hardware serves another board, and 02 S12.7
+          records api-credits-only.
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          Grading runs locally in Docker on CPU, and the maintainers' cloud grading through sb-cli
+          is recommended but optional, so inference spend is the cost (02 S12.11).
+      - ref: mle-bench
+        qualifies: false
+        why: >
+          NEAR MISS. The leaderboard rows are frontier API models, but the protocol gives every
+          agent 'one 24GB A10 GPU', so the tier is single-gpu.
+    not_to_be_confused_with:
+      - term: single-gpu
+        distinction: >
+          If the system under test can be served through an API and the protocol mandates no
+          hardware, the tier is `api-credits-only`, whatever GPUs local weights would need. A
+          GPU the protocol mandates is `single-gpu`.
+      - term: multi-gpu-node
+        distinction: >
+          A multi-GPU node that only the largest open entrants need does not displace
+          `api-credits-only`.
+      - term: provided-allocation
+        distinction: >
+          Organiser compute that is optional, or that serves only a secondary board, does not
+          make the tier `provided-allocation`. The headline board's cost decides.
   - id: simulator-required
     label: Simulator required
     field: execution.compute_tier
@@ -86,7 +231,46 @@ terms:
     introduced_in: 1.0.0
     definition: >
       A run needs a simulation environment, which is a dependency and a cost of its own.
-    examples: []
+    inclusion_test: >
+      Tag this if every official run needs a specific simulation environment, whatever system is
+      entered. It takes precedence over the accelerator the simulator or policy runs on
+      (single-gpu, multi-gpu-node), which goes in the notes and est_runtime_hours, because no
+      other field names the dependency.
+    exclusion_test: >
+      Do NOT tag this if the official run takes place on compute the organisers supply
+      (provided-allocation takes precedence, and the simulator is recorded by the
+      specific-simulator-build blocker). Do NOT tag it for a rules engine of a game played
+      through an API (api-credits-only).
+    examples:
+      - ref: 2026-behavior-challenge
+        qualifies: true
+        why: >
+          A run needs OmniGibson on Isaac Sim at a pinned tag. The rule that the model 'should
+          run on a single 24GB VRAM GPU' goes in the notes.
+      - ref: libero
+        qualifies: true
+        why: >
+          A run needs the Robosuite/MuJoCo simulator, and the single A100 or A40 goes in the
+          notes.
+      - ref: melting-pot
+        qualifies: true
+        why: >
+          A run needs the DeepMind Lab2D simulator. Training the population that is entered is
+          not part of the run.
+      - ref: carla-leaderboard-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. A run needs CARLA 0.9.14, but official submissions are evaluated on an AWS
+          instance the organisers offer 'for free', so it is provided-allocation.
+    not_to_be_confused_with:
+      - term: single-gpu
+        distinction: >
+          The simulator dependency takes precedence over the accelerator count, which goes in
+          the notes.
+      - term: provided-allocation
+        distinction: >
+          When the organisers run the official evaluation on their own compute,
+          `provided-allocation` takes precedence, and the simulator build is a blocker.
   - id: physical-hardware
     label: Physical hardware
     field: execution.compute_tier
@@ -94,7 +278,30 @@ terms:
     introduced_in: 1.0.0
     definition: >
       A run needs real robots, instruments or devices rather than only computation.
-    examples: []
+    inclusion_test: >
+      Tag this if producing an official score needs real robots, instruments or devices,
+      whoever supplies them. When roles differ, as when an entrant serves a policy and an
+      evaluator runs it on a robot, the field takes the requirement of producing the result, and
+      compute_tier_by_role records each role.
+    exclusion_test: >
+      Do NOT tag this if the hardware must be shipped with a team to a venue on a fixed date
+      (physical-venue-entry), or if the physical work is laboratory bench work (wet-lab).
+    examples:
+      - ref: roboarena
+        qualifies: true
+        why: >
+          Evaluators run policies on DROID robots, while an entrant needs only a served policy.
+          The result needs the robot, as 02 S12.2 records, and compute_tier_by_role holds both
+          roles.
+      - ref: open-x-embodiment
+        qualifies: true
+        why: >
+          The evaluation is '3600 evaluation trials across 6 different robots'.
+      - ref: a2rl-drone-championship
+        qualifies: false
+        why: >
+          NEAR MISS. Entrants need a drone, but they bring it and a team to a race at a venue on
+          a fixed date, which is physical-venue-entry.
   - id: physical-venue-entry
     label: Physical venue entry
     field: execution.compute_tier
@@ -120,7 +327,33 @@ terms:
     definition: >
       Entrants pay for physical materials to be bought or produced, so the barrier to entry is a
       materials budget rather than compute.
-    examples: []
+    inclusion_test: >
+      Tag this if entrants pay for the physical materials their entry is scored on, such as
+      compounds bought and then assayed. It takes precedence over wet-lab when the organisers
+      assay what the entrants paid for, because the materials budget is the barrier to entry;
+      the bench work is then recorded by the wet-lab blocker and requires-physical-experiment.
+    exclusion_test: >
+      Do NOT tag this if the organisers or third parties bear the cost of the materials and the
+      bench work (wet-lab), or if the entrant's cost is travel and venue entry
+      (physical-venue-entry).
+    examples:
+      - ref: cache-challenges
+        qualifies: true
+        why: >
+          'Compounds from de novo design methods will be procured by participants', and in DREAM
+          x CACHE each invited participant 'will each purchase 50 compounds in-stock at Enamine'.
+          02 S12.4 records this term.
+      - ref: casp17
+        qualifies: false
+        why: >
+          NEAR MISS. Each edition needs new experimental structures from outside groups, but
+          entrants pay for no materials, so it is wet-lab.
+    not_to_be_confused_with:
+      - term: wet-lab
+        distinction: >
+          When entrants pay for the materials the organisers assay, the tier is
+          `participant-funded-procurement` and the assay is a blocker. `wet-lab` is for bench
+          work no entrant pays for.
   - id: human-panel
     label: Human panel
     field: execution.compute_tier
@@ -137,7 +370,44 @@ terms:
     definition: >
       The organisers supply the compute, which inverts the usual cost model and makes the
       benchmark materially more accessible.
-    examples: []
+    inclusion_test: >
+      Tag this if the official score is produced by running the entrant's submission on compute
+      the organisers supply, at no cost to the entrant. It takes precedence over the tier that
+      compute belongs to and over a simulator dependency, because it inverts who pays.
+    exclusion_test: >
+      Do NOT tag this if organiser-hosted scoring is optional beside a local path that produces
+      the official score (tag the local path's tier), or if the organisers' hardware serves only
+      a secondary board while the entrant pays for the headline one.
+    examples:
+      - ref: fair-universe-higgsml-uncertainty-challenge
+        qualifies: true
+        why: >
+          'Participants' submissions will be run on either the Perlmutter supercomputer at NERSC
+          or an alternative workstation at LBNL', as 02 S10 records.
+      - ref: brats-2026-cluster
+        qualifies: true
+        why: >
+          Validation and final ranking run 'using the organizers' infrastructure (i.e.,
+          Synapse.org - SAGE Bionetworks)'. Training is the participants' own cost.
+      - ref: carla-leaderboard-2-0
+        qualifies: true
+        why: >
+          'Each submission will be evaluated in AWS using a g5.12xlarge instance', offered for
+          free, which outranks the CARLA simulator dependency.
+      - ref: swe-bench-verified
+        qualifies: false
+        why: >
+          NEAR MISS. The maintainers' sb-cli grades runs on their cloud, but it is recommended,
+          not required, and grading also runs locally, so it is api-credits-only.
+    not_to_be_confused_with:
+      - term: api-credits-only
+        distinction: >
+          Organiser compute that is optional, or that serves only a secondary board, leaves the
+          headline board's tier in place.
+      - term: simulator-required
+        distinction: >
+          When the organisers run the official evaluation, `provided-allocation` takes
+          precedence over the simulator it needs.
 
   # --- execution.reproducibility_tier -- 6 terms ---
   - id: fully-automatable
@@ -147,7 +417,50 @@ terms:
     introduced_in: 1.0.0
     definition: >
       An independent party can reproduce a run end to end with no human or physical step.
-    examples: []
+    inclusion_test: >
+      Tag this if an independent party can produce the headline official score for a new system
+      end to end, running and scoring it, with no human, physical, simulator-build or
+      maintainer-only step anywhere in that score.
+    exclusion_test: >
+      Do NOT tag this if any part of the headline score needs human graders, physical hardware,
+      a specific simulator or a set only the maintainer holds, even when that part is a minority
+      of tasks, because the most restrictive requirement decides (02 S11 also blocks this tier
+      beside any blocker except licence-restriction). Do NOT tag it because a public set is
+      calibrated to match a withheld one, or because a published number can be re-fitted from
+      released outputs.
+    examples:
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          The instances are public and the swebench package re-derives every verdict from the
+          test output, as 02 S12.11 records.
+      - ref: chaosbench
+        qualifies: true
+        why: >
+          The data is public and the repository ships the evaluation scripts, with no human or
+          physical step.
+      - ref: legalbench-vals-legal-bench
+        qualifies: false
+        why: >
+          NEAR MISS. About 155 of the 162 tasks are scored automatically, but 'A small number of
+          LegalBench tasks (~7) require manual evaluation' by a law-trained grader, so a full run
+          is requires-human-raters.
+      - ref: arc-agi-2
+        qualifies: false
+        why: >
+          NEAR MISS. The public evaluation set is calibrated to be comparable ('<1pp expected'),
+          but the official Private Evaluation score is produced only by the Foundation on Kaggle
+          (not-independently-reproducible).
+    not_to_be_confused_with:
+      - term: not-independently-reproducible
+        distinction: >
+          If any part of the headline score depends on a set, scorer or user base only the
+          maintainer holds, the tier is `not-independently-reproducible`, however much of the
+          rest is public.
+      - term: requires-human-raters
+        distinction: >
+          Human grading of even a few tasks in the headline score makes the tier
+          `requires-human-raters`.
   - id: automatable-with-simulator
     label: Automatable with a simulator
     field: execution.reproducibility_tier
@@ -163,7 +476,29 @@ terms:
     introduced_in: 1.0.0
     definition: >
       Reproduction requires hardware that is not generally available.
-    examples: []
+    inclusion_test: >
+      Tag this if reproducing the headline score needs hardware that is not generally
+      available, such as a robot fleet or quantum devices, and nothing only the maintainer holds
+      is needed. It takes precedence over requires-human-raters when a run needs both.
+    exclusion_test: >
+      Do NOT tag this if the hardware is a GPU machine or cluster that can be rented, whose cost
+      the compute-scale blocker records. Do NOT tag it if the result depends on something only
+      the maintainer holds (not-independently-reproducible).
+    examples:
+      - ref: roboarena
+        qualifies: true
+        why: >
+          A ranking needs a fleet of DROID robots and human evaluators, and the hardware is the
+          more restrictive requirement (02 S12.2).
+      - ref: open-x-embodiment
+        qualifies: true
+        why: >
+          Evaluation is by real-robot trials across six robot types.
+      - ref: paperbench
+        qualifies: false
+        why: >
+          NEAR MISS. Reproduction needs an A10 GPU VM for up to 12 hours per paper, but that is
+          rentable hardware, and the cost is the compute-scale blocker.
   - id: requires-human-raters
     label: Requires human raters
     field: execution.reproducibility_tier
@@ -171,7 +506,39 @@ terms:
     introduced_in: 1.0.0
     definition: >
       Reproduction requires recruiting and paying human judges.
-    examples: []
+    inclusion_test: >
+      Tag this if any part of the headline score needs human judges to be recruited, even for a
+      minority of tasks, and nothing more restrictive applies.
+    exclusion_test: >
+      Do NOT tag this if a hardware fleet is also required (requires-specialized-hardware), or if
+      only the maintainer holds the items or the rater base that produces the score
+      (not-independently-reproducible).
+    examples:
+      - ref: legalbench-vals-legal-bench
+        qualifies: true
+        why: >
+          The rule-application tasks and rule_qa are graded by hand, by 'a law-trained
+          individual' using a released gradebook.
+      - ref: financebench
+        qualifies: true
+        why: >
+          No automatic scorer is published, and each model's responses were 'labelled by one of
+          the research team'.
+      - ref: roboarena
+        qualifies: false
+        why: >
+          NEAR MISS. Human evaluators give the preference labels, but a run also needs a DROID
+          robot fleet, which is more restrictive (requires-specialized-hardware).
+    not_to_be_confused_with:
+      - term: fully-automatable
+        distinction: >
+          A benchmark whose automatic part is large is still `requires-human-raters` if any
+          task in the headline score is graded by hand.
+      - term: not-independently-reproducible
+        distinction: >
+          Raters anyone can recruit make it `requires-human-raters`. A rater base only the
+          maintainer has, such as an arena's own user stream, makes it
+          `not-independently-reproducible`.
   - id: requires-physical-experiment
     label: Requires a physical experiment
     field: execution.reproducibility_tier
@@ -187,7 +554,47 @@ terms:
     introduced_in: 1.0.0
     definition: >
       No party outside the maintainer can reproduce the result at all.
-    examples: []
+    inclusion_test: >
+      Tag this if some part of the headline score can be produced only by the maintainer,
+      because it holds the evaluation set, the scorer or the user base that produces it, even
+      when other parts are public or a calibrated public sibling set exists. It is the most
+      restrictive tier and takes precedence over every other.
+    exclusion_test: >
+      Do NOT tag this merely because nobody, the maintainer included, can repeat a past run's
+      conditions exactly, as with a live world or improvised trials; tag the tier a fresh run
+      needs and add the live-world-state blocker. Do NOT tag it for a component outside the
+      headline score, such as a private set used only to check overfitting.
+    examples:
+      - ref: frontiermath-tiers-erd-s
+        qualifies: true
+        why: >
+          The Tiers 1-4 problems are unpublished and evaluated only by Epoch, and the open Erdős
+          component does not lift the headline score out of this tier.
+      - ref: arc-agi-2
+        qualifies: true
+        why: >
+          An official Private Evaluation score can only be produced by the Foundation on Kaggle,
+          whatever the calibration of the public set.
+      - ref: medhelm
+        qualifies: true
+        why: >
+          The full 35-benchmark score needs 14 private internal clinical datasets that only
+          'Authorized org members' can run.
+      - ref: roboarena
+        qualifies: false
+        why: >
+          NEAR MISS. Tasks and scenes are never repeated, so even the maintainer cannot rerun an
+          evaluation, but anyone with DROID robots and evaluators can run a fresh one
+          (requires-specialized-hardware, with live-world-state).
+    not_to_be_confused_with:
+      - term: fully-automatable
+        distinction: >
+          A public component or a calibrated public sibling set does not make the headline
+          `fully-automatable` while part of it needs the maintainer.
+      - term: requires-human-raters
+        distinction: >
+          Raters anyone can recruit are `requires-human-raters`. A rater base only the
+          maintainer has is `not-independently-reproducible`.
 
   # --- execution.reproducibility_blockers -- 10 terms ---
   - id: private-test-set
@@ -245,9 +652,37 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The task is defined against a world that keeps moving, so the same run cannot be repeated
-      against the same conditions.
-    examples: []
+      The task is defined against conditions that keep moving or occur only once, so the same
+      run cannot be repeated against the same conditions.
+    inclusion_test: >
+      Tag this if a run is scored against conditions nobody can recreate: live websites or
+      markets, questions that resolve after the run, a moving rating pool, improvised real-world
+      trials, or a one-off physical event such as a race on a given day against a given field.
+    exclusion_test: >
+      Do NOT tag this if the conditions are a fixed environment that is merely stochastic, such
+      as a nondeterministic simulator (specific-simulator-build, with a note), or if only the
+      data is private (private-test-set).
+    examples:
+      - ref: roboarena
+        qualifies: true
+        why: >
+          Evaluators choose tasks and scenes freely and never repeat them, as 02 S12.2 records.
+      - ref: forecastbench
+        qualifies: true
+        why: >
+          A forecast is defined by the information environment on its due date, and once
+          questions resolve a re-run system can look the answer up.
+      - ref: a2rl-drone-championship
+        qualifies: true
+        why: >
+          The result is a race on a given day, at a given venue, against a given field of rival
+          drones and human pilots.
+      - ref: 2026-behavior-challenge
+        qualifies: false
+        why: >
+          NEAR MISS. Rollouts differ between runs because 'the simulator can be
+          nondeterministic', but the environment is a pinned build, so the blocker is
+          specific-simulator-build.
   - id: compute-scale
     label: Compute scale
     field: execution.reproducibility_blockers
@@ -281,8 +716,43 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The maintainer publishes a runnable harness that produces the official score.
-    examples: []
+      The maintainer publishes, or designates by name and version, a runnable harness that
+      produces the official score.
+    inclusion_test: >
+      Tag this if runnable code that produces the official score is published by the maintainer,
+      or is a third-party harness that the maintainer names, with a pinned version, as the
+      official scoring path.
+    exclusion_test: >
+      Do NOT tag this if the published code only demonstrates the method, runs baselines or acts
+      as a submission client while the official score is computed elsewhere
+      (reference-implementation-only). Do NOT tag it if the official score is a human or hosted
+      evaluation that no published code reproduces.
+    examples:
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          The swebench package grades runs and 're-derives every verdict from the test output'.
+      - ref: terminal-bench-2-0
+        qualifies: true
+        why: >
+          The harness is Harbor ('uv run harbor run --dataset terminal-bench@2.0').
+      - ref: wmdp
+        qualifies: true
+        why: >
+          The paper names its scoring path ('For evaluation, we use lm-evaluation-harness
+          v0.4.2'), a designated third-party harness pinned to a version.
+      - ref: gpqa-diamond
+        qualifies: false
+        why: >
+          NEAR MISS. The repository implements the paper's OpenAI baselines ('Currently only
+          gpt-3.5-turbo-16k-0613 and gpt-4 have been implemented'), which is not an official
+          scoring harness (reference-implementation-only).
+    not_to_be_confused_with:
+      - term: reference-implementation-only
+        distinction: >
+          A third-party harness the maintainer designates by name and version is
+          `official-harness`. Code that only shows the method or how to take part is
+          `reference-implementation-only`.
   - id: reference-implementation-only
     label: Reference implementation only
     field: execution.harness_availability
@@ -290,12 +760,76 @@ terms:
     introduced_in: 1.0.0
     definition: >
       Code exists that demonstrates the method but is not an official scoring harness.
-    examples: []
+    inclusion_test: >
+      Tag this if published code demonstrates the method or how to take part, such as
+      baselines, a submission client, a policy-server interface or a human testing interface,
+      but does not itself produce the official score.
+    exclusion_test: >
+      Do NOT tag this if the code, or a harness the maintainer designates by name and version,
+      produces the official score (official-harness). Do NOT tag it if nothing runnable is
+      published and the only access is a hosted service (none).
+    examples:
+      - ref: roboarena
+        qualifies: true
+        why: >
+          The repository ships a policy-server interface and a client, while the official rating
+          is fitted centrally to preference votes. 02 S12.2 records this term.
+      - ref: arc-agi-2
+        qualifies: true
+        why: >
+          The repository holds the task data and points to a human testing interface, while
+          official scores are produced inside Kaggle's sandbox.
+      - ref: wmt25-general-mt-shared-task
+        qualifies: true
+        why: >
+          Code is published for collecting translations, verifying submissions and computing the
+          automatic metrics, and the official score is a human evaluation.
+      - ref: gdpval
+        qualifies: false
+        why: >
+          NEAR MISS. Anyone can get a proxy score from the hosted grader at evals.openai.com, but
+          a hosted service is not published code, so the value is none.
+    not_to_be_confused_with:
+      - term: official-harness
+        distinction: >
+          Code that does not produce the official score is `reference-implementation-only`, even
+          when it is the maintainer's own.
+      - term: none
+        distinction: >
+          A submission client, interface or baseline is code, so it is
+          `reference-implementation-only`. A hosted service with no published code is `none`.
   - id: none
     label: None
     field: execution.harness_availability
     status: active
     introduced_in: 1.0.0
     definition: >
-      No runnable code is published for this benchmark at all.
-    examples: []
+      No runnable code for taking part in or scoring the benchmark is published, even where a
+      hosted scoring service exists.
+    inclusion_test: >
+      Tag this if no runnable code is published for running or scoring the benchmark. A hosted
+      grading or submission service offered in place of code does not count, and it is recorded
+      in execution.submission_channel.
+    exclusion_test: >
+      Do NOT tag this if any published code demonstrates the method or how to take part
+      (reference-implementation-only).
+    examples:
+      - ref: gdpval
+        qualifies: true
+        why: >
+          No sampling or grading code is released, and the experimental automated grader is a
+          hosted service.
+      - ref: financebench
+        qualifies: true
+        why: >
+          No evaluation or scoring code is published in the repository or on the dataset card.
+      - ref: roboarena
+        qualifies: false
+        why: >
+          NEAR MISS. No code produces the official rating, but a policy-server interface and a
+          client are published (reference-implementation-only).
+    not_to_be_confused_with:
+      - term: reference-implementation-only
+        distinction: >
+          Any published code for taking part makes it `reference-implementation-only`. Only a
+          hosted service, or nothing, is `none`.

@@ -7,8 +7,8 @@
 
 facet: data_properties
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   Access, refresh cadence, provenance, contamination posture and ceiling anchor. Five
   independent fields sharing one file, each term carrying the field it belongs to. Drives
@@ -26,6 +26,19 @@ description: >
 # failure here: `high` and `confirmed` require at least one contamination_evidence entry
 # pointing at a Source, and CI blocks without one. `unknown` is a statement about our
 # knowledge and must never be read as `low`.
+#
+# P1-S1-T07 (Stage 4, v0.9.0): every term the Stage 3 failure log had to disambiguate now
+# carries an inclusion and an exclusion test, examples with a near miss, and a
+# not_to_be_confused_with entry for each pair that collided in two or more records. Three
+# fields are single-valued over layered benchmarks, and each states one precedence rule in
+# its terms' tests:
+#   access         -- the evaluation data behind the headline score; withholding before a
+#                     gate on released data; the most restrictive set in a mixed headline.
+#   refresh        -- the family (02 S11 rule 5) and the set behind the headline score;
+#                     "content" is the items, the task list and the scoring function.
+#   contamination  -- the content the benchmark scores and publishes, after the maintainer's
+#                     own mitigation; one evidenced split is enough for `high`.
+# Two provenance terms were added: curated-public-database and inherited-from-constituents.
 
 terms:
 
@@ -38,15 +51,116 @@ terms:
     definition: >
       Every split, including the evaluation labels, is publicly downloadable without
       registration or agreement.
-    examples: []
+    inclusion_test: >
+      Tag this if the evaluation data behind the headline score, labels included, can be
+      downloaded by anyone without an account or an agreement from at least one official copy.
+      A password printed in the official README, or a request not to republish items, is an
+      anti-contamination device rather than a gate and does not stop this tag. For a
+      blind-prediction round whose ground truth does not exist or is embargoed while entries
+      are collected, judge the data once the round has closed and the ground truth is released.
+      For a family whose editions are distributed differently, the current edition decides.
+    exclusion_test: >
+      Do NOT tag this if any evaluation set that the headline score is computed on is withheld,
+      held by the maintainer or reachable only after registration. When the headline mixes an
+      open set with a withheld one, the withheld set decides. Do NOT tag it for a public sample
+      when the headline score is computed on a larger unreleased set.
+    examples:
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          The Hugging Face dataset is ungated and exposes all 500 instances with their gold and
+          test patches.
+      - ref: wmdp
+        qualifies: true
+        why: >
+          The 3,668 questions are ungated on Hugging Face. The zip mirrors are password
+          protected, but the README prints the passwords, so they are an anti-contamination
+          device and not a gate.
+      - ref: gdpval
+        qualifies: true
+        why: >
+          The paper's headline figures are computed on the 220-task gold subset, which is public
+          with prompts, reference files, expert deliverables and rubrics. The unreleased full set
+          is not what the headline is computed on.
+      - ref: open-asr-leaderboard
+        qualifies: false
+        why: >
+          NEAR MISS. Every public test set downloads freely, but since July 2026 the default
+          average has included the maintainers' private sets ('Private data used in default
+          average'), so the headline cannot be computed from open data. That is
+          private-test-server.
+    not_to_be_confused_with:
+      - term: private-test-server
+        distinction: >
+          `fully-open` means an independent party can compute the headline score from downloaded
+          data. If any evaluation set in that score never leaves the maintainer,
+          `private-test-server` applies, even when the other sets are open.
+      - term: gated-registration
+        distinction: >
+          A registration or click-through gate on every official copy is `gated-registration`.
+          One ungated official copy, or a gate that is only a printed password or a no-reveal
+          request, leaves the data `fully-open`.
+      - term: train-open-test-held-out
+        distinction: >
+          `fully-open` needs the evaluation labels released. If they are withheld,
+          `train-open-test-held-out` applies, even when the training data and other splits are
+          open.
+      - term: proprietary-closed
+        distinction: >
+          A public sample beside an unreleased remainder is `fully-open` only when the headline
+          score is computed on the sample. `proprietary-closed` needs commercial withholding
+          with no public access path at any tier.
   - id: train-open-test-held-out
     label: Train open, test held out
     field: data.access
     status: active
     introduced_in: 1.0.0
     definition: >
-      Training material is public while the evaluation labels are withheld by the maintainer.
-    examples: []
+      The evaluation inputs or the training material are released while the evaluation labels
+      are withheld by the maintainer, whatever gate the released material sits behind.
+    inclusion_test: >
+      Tag this if the labels or answers of the evaluation set behind the headline score are
+      withheld while its inputs or the training material are released, so the entrant runs the
+      system and submits outputs or code for scoring. It takes precedence over a gate on the
+      released material: when the data sits behind registration or an approval-and-signature
+      agreement and the test labels are withheld, tag this and record the gate in the notes.
+    exclusion_test: >
+      Do NOT tag this if the evaluation items themselves, and not only their labels, never
+      leave the maintainer (private-test-server). Do NOT tag it when the evaluation labels are
+      released, whatever gate they sit behind.
+    examples:
+      - ref: docvqa-robust-reading-competition
+        qualifies: true
+        why: >
+          Test answers are withheld ('Not available in test set') while the test images and
+          questions are distributed. The RRC account needed for the download section is a
+          lesser layer and goes in the notes.
+      - ref: omol25
+        qualifies: true
+        why: >
+          All training and validation splits are public and test scores come only from the
+          leaderboard, which scores uploaded prediction files. The gate on the Hugging Face
+          repository is a lesser layer.
+      - ref: carla-leaderboard-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The training and validation routes are public, but 'The routes used for
+          the online evaluation are secret' and run only in the organisers' AWS instance. The
+          items never leave the maintainer, which is private-test-server.
+    not_to_be_confused_with:
+      - term: private-test-server
+        distinction: >
+          Released evaluation inputs with withheld labels are `train-open-test-held-out`.
+          Evaluation items that never leave the maintainer are `private-test-server`.
+      - term: gated-registration
+        distinction: >
+          Withholding the evaluation labels takes precedence over a gate on the released data.
+          `gated-registration` applies only when the evaluation labels themselves are released
+          behind the gate.
+      - term: fully-open
+        distinction: >
+          Open training data does not make a benchmark `fully-open` while its evaluation labels
+          are withheld.
   - id: gated-registration
     label: Gated by registration
     field: data.access
@@ -55,7 +169,44 @@ terms:
     definition: >
       The data is public but reachable only after creating an account or accepting click-through
       terms.
-    examples: []
+    inclusion_test: >
+      Tag this if the evaluation data behind the headline score, labels included, is released,
+      but every official copy needs an account, a form or click-through acceptance of terms. For
+      a competition with no distributable data, tag it when anyone who registers is admitted.
+    exclusion_test: >
+      Do NOT tag this if the evaluation labels are withheld (train-open-test-held-out or
+      private-test-server take precedence, and the gate goes in the notes). Do NOT tag it if one
+      official copy is reachable without registration, or if the only obstacle is a printed
+      password or a no-reveal request (fully-open), or if access needs the maintainer's
+      approval of verified credentials and a signed agreement (credentialed-dua).
+    examples:
+      - ref: mle-bench
+        qualifies: true
+        why: >
+          Data comes through the Kaggle API, which needs an account and acceptance of each
+          competition's rules, and the test labels are then built locally from what it
+          releases.
+      - ref: osworld-2-0
+        qualifies: true
+        why: >
+          The task classes and complete assets sit on gated Hugging Face datasets whose gate is
+          click-through.
+      - ref: gpqa-diamond
+        qualifies: false
+        why: >
+          NEAR MISS. The Hugging Face copy is gated, but the official GitHub zip needs only the
+          password the README prints. A printed password is an anti-contamination device, and
+          the least restrictive official copy decides, so the data is fully-open.
+    not_to_be_confused_with:
+      - term: fully-open
+        distinction: >
+          The least restrictive official copy decides. A gate on one copy while another is
+          ungated, or a password printed beside the download, leaves the data `fully-open`.
+      - term: train-open-test-held-out
+        distinction: >
+          A registration gate on released data is recorded as this term only when nothing is
+          withheld. Withheld evaluation labels take precedence and make it
+          `train-open-test-held-out`.
   - id: credentialed-dua
     label: Credentialed data-use agreement
     field: data.access
@@ -71,9 +222,53 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The evaluation set never leaves the maintainer and scoring happens on a server the
-      participant submits to.
-    examples: []
+      The evaluation set never leaves the maintainer, and a score is produced only by the
+      maintainer running or scoring the entrant's system on it, whether through a submission
+      server or on request.
+    inclusion_test: >
+      Tag this if the evaluation items behind the headline score, and not only their labels,
+      are held by the maintainer and scored only on the maintainer's side: through a submission
+      server, a container the organisers run, or an evaluation the maintainer runs itself or on
+      request. Tag it also when the headline score combines open sets with such a held set,
+      because the headline cannot be computed without it. Sharing the set privately with vetted
+      parties, case by case, creates no public access path and does not change this tag.
+    exclusion_test: >
+      Do NOT tag this if the evaluation inputs are released and only their labels are withheld
+      (train-open-test-held-out). Do NOT tag it for a held set used only to check for
+      overfitting, on which no published score is computed, or for a set withheld because its
+      release would carry misuse risk (restricted-dual-use).
+    examples:
+      - ref: carla-leaderboard-2-0
+        qualifies: true
+        why: >
+          The evaluation routes are secret, and every submission is run in the organisers' AWS
+          instance.
+      - ref: brain-score
+        qualifies: true
+        why: >
+          Only a limited set of public benchmarks runs locally ('To score a model on all
+          benchmarks, submit it via the brain-score.org website'), and the headline average needs
+          the ones held on the maintainers' servers.
+      - ref: frontiermath-tiers-erd-s
+        qualifies: true
+        why: >
+          Tiers 1-4 are unpublished problems that Epoch evaluates itself, and outside teams must
+          reach out. There is no submission server, but the set never leaves the maintainer.
+      - ref: humanity-s-last-exam
+        qualifies: false
+        why: >
+          NEAR MISS. A private held-out set exists, but it only checks overfitting ('we do not
+          report any model performance metrics on the private held-out set'), so the public set
+          behind the headline decides.
+    not_to_be_confused_with:
+      - term: train-open-test-held-out
+        distinction: >
+          `private-test-server` keeps the evaluation items with the maintainer.
+          `train-open-test-held-out` releases them and withholds only their labels.
+      - term: fully-open
+        distinction: >
+          A headline that mixes open sets with a maintainer-held set is `private-test-server`,
+          because nobody outside can compute it from downloaded data.
   - id: invitation-only
     label: Invitation only
     field: data.access
@@ -82,7 +277,26 @@ terms:
     definition: >
       Participation is limited to teams the organisers invite, so the field of entrants is
       closed by decision rather than by capability.
-    examples: []
+    inclusion_test: >
+      Tag this if the organisers decide who may enter, by invitation or by selecting among
+      applicants, so the field of entrants is closed by decision. For a competition with no
+      distributable data, such as a physical race, this is the access state when entry is by
+      selection.
+    exclusion_test: >
+      Do NOT tag this if anyone who registers is admitted (gated-registration for a
+      competition with no distributable data), or if the selection governs access to data
+      rather than entry to the evaluation (credentialed-dua).
+    examples:
+      - ref: a2rl-drone-championship
+        qualifies: true
+        why: >
+          02 S7 records the championship's 14 invited teams. There is no dataset, and entry is by
+          an application that asks for a demonstration autonomous flight video.
+      - ref: lifeclef-2026
+        qualifies: false
+        why: >
+          NEAR MISS. Entrants fill in a CLEF form and accept Kaggle's competition rules, but
+          anyone who registers may compete, so the field of entrants is not closed by decision.
   - id: restricted-dual-use
     label: Restricted for dual-use reasons
     field: data.access
@@ -108,7 +322,31 @@ terms:
     definition: >
       Evaluation items are produced fresh per run rather than drawn from a fixed stored set,
       which makes the benchmark contamination-resistant by construction.
-    examples: []
+    inclusion_test: >
+      Tag this only if a program or model produces the scored items afresh for each run or
+      match, such as a procedural generator or a game engine in which entrants play each other,
+      so no fixed item set exists to be obtained.
+    exclusion_test: >
+      Do NOT tag this for items that people improvise live, such as an arena's user prompts or
+      an evaluator's chosen robot task. There is no generator and no resistance by construction,
+      and the access state is that of the record of those items. Do NOT tag it when items are
+      resampled at each evaluation from a fixed pool.
+    examples:
+      - ref: kaggle-game-arena
+        qualifies: true
+        why: >
+          Positions arise from live play between entrants, with no stored item set. The
+          completed games are published afterwards as replay datasets.
+      - ref: metriq-qed-c
+        qualifies: true
+        why: >
+          Benchmark circuits are generated per job from versioned parameter schemas.
+      - ref: lmarena
+        qualifies: false
+        why: >
+          NEAR MISS. There is no stored item set, but the prompts are written by the public, not
+          by a generator, and the maintainer shares conversation data with some model
+          providers, so the resistance is not by construction.
 
   # --- data.refresh -- 7 terms ---
   - id: static
@@ -117,25 +355,160 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The benchmark has one fixed content set that does not change after release.
-    examples: []
+      The benchmark's content, meaning its items, task list and scoring function, is one fixed
+      set that has not changed since release.
+    inclusion_test: >
+      Tag this if nothing that fixes what a score means has changed since release. Items
+      resampled at evaluation time from a fixed pool, and a generator shipped beside a fixed
+      canonical set but not used to add evaluation items, leave the content static.
+    exclusion_test: >
+      Do NOT tag this if the items, tasks or scoring changed after release, even to correct
+      errors: a dated, announced revision makes it versioned-releases, and unannounced changes
+      against a live leaderboard make it rolling-live. Do NOT tag it for one edition of a
+      recurring series, because the field describes the family (periodic-recompetition).
+    examples:
+      - ref: uspto-50k
+        qualifies: true
+        why: >
+          One split, released with the code in November 2017 and unchanged since.
+      - ref: libero
+        qualifies: true
+        why: >
+          The benchmark is four fixed task suites (130 tasks). The procedural generator that
+          'can in principle generate infinitely many tasks' is not used to add evaluation tasks.
+      - ref: wmdp
+        qualifies: false
+        why: >
+          NEAR MISS. The questions were modified in place on 2024-03-08 and 2024-04-23, and both
+          changes were announced with their dates, so the set is versioned-releases.
+      - ref: casp16-na-rna-puzzles-joint-assessment
+        qualifies: false
+        why: >
+          NEAR MISS. The 42 CASP16 nucleic-acid targets are frozen, but the entry is an edition
+          of CASP, which runs every two years with fresh targets (periodic-recompetition).
+    not_to_be_confused_with:
+      - term: versioned-releases
+        distinction: >
+          `static` admits no change after release. A dated, announced revision, even an erratum,
+          is `versioned-releases`.
+      - term: periodic-recompetition
+        distinction: >
+          A frozen edition of a recurring series takes its family's `periodic-recompetition`.
+          `static` is for a benchmark with one content set and no editions.
+      - term: continuously-generated
+        distinction: >
+          Resampling items from a fixed pool, or a generator that is not used to add evaluation
+          items, leaves the content `static`. `continuously-generated` needs new items
+          synthesised into the evaluation.
   - id: versioned-releases
     label: Versioned releases
     field: data.refresh
     status: active
     introduced_in: 1.0.0
     definition: >
-      Content changes only in discrete, labelled versions that a claim can be pinned to.
-    examples: []
+      Content changes only in discrete revisions, each identified by a version label or a dated
+      announcement, that a claim can be pinned to.
+    inclusion_test: >
+      Tag this if every change to the items, tasks or scoring since release is carried by a
+      labelled version or a dated maintainer announcement, so a claim can name the state it was
+      measured on. A scoring change under a new version label counts, and so does a dated
+      erratum. It also applies when the headline scores come from a labelled dataset or devkit
+      version that competition rounds sit beside.
+    exclusion_test: >
+      Do NOT tag this if changes reach the live leaderboard between labels or without any pin
+      (rolling-live), or if the headline scores are rankings of recurring editions each with new
+      evaluation data (periodic-recompetition, with the version labels on the claims). Do NOT
+      tag it for a task set that someone other than the maintainer derived from the benchmark,
+      which is a separate entry linked by `variant_of`.
+    examples:
+      - ref: carla-leaderboard-2-0
+        qualifies: true
+        why: >
+          Leaderboard 2.1 changed the infraction score from exponential to linear under a new
+          version label while the routes stayed fixed.
+      - ref: navsim-v2
+        qualifies: true
+        why: >
+          The devkit and data change in labelled versions (v2.0 to v2.2), and the corpus entry's
+          leaderboard is the public navhard_two_stage split. The yearly challenges sit beside it.
+      - ref: wmdp
+        qualifies: true
+        why: >
+          Two in-place revisions were each announced with a date ('The modified version is now
+          uploaded on all mirrors'), which pins a claim to the state it was measured on.
+      - ref: matbench-discovery
+        qualifies: false
+        why: >
+          NEAR MISS. The package has labelled releases up to v1.3.1, but tasks were added and the
+          headline metric changed from F1 to CPS on the live site outside any version, so it is
+          rolling-live.
+    not_to_be_confused_with:
+      - term: rolling-live
+        distinction: >
+          If every change is carried by a version label or a dated announcement, it is
+          `versioned-releases`. If content also changes between labels, it is `rolling-live`.
+      - term: static
+        distinction: >
+          Any post-release change, including a correction, rules out `static`. A dated
+          announcement is enough of a pin for `versioned-releases`.
+      - term: periodic-recompetition
+        distinction: >
+          The set behind the headline score decides. A labelled dataset with competition rounds
+          beside it is `versioned-releases`. Rankings produced per edition on new evaluation data
+          are `periodic-recompetition`.
+      - term: continuously-reexecuted
+        distinction: >
+          Labelled task versions do not pin a result that the maintainer's pipeline recomputes.
+          That is `continuously-reexecuted`.
   - id: rolling-live
     label: Rolling live
     field: data.refresh
     status: active
     introduced_in: 1.0.0
     definition: >
-      Items are added or replaced continuously against a live leaderboard, so the content behind
-      a score depends on when it was measured.
-    examples: []
+      The content behind a live leaderboard, meaning its items, tasks, scoring or rating pool,
+      changes continuously or between labels, so what a score means depends on when it was
+      measured.
+    inclusion_test: >
+      Tag this if the leaderboard's items, tasks, scoring or rating pool change without each
+      change being carried by a labelled version or a dated announcement that a claim can cite,
+      so a score needs its measurement date to be read. It takes precedence over
+      versioned-releases when labelled versions exist but content also changes between them.
+    exclusion_test: >
+      Do NOT tag this if every change is carried by a version label or a dated announcement
+      (versioned-releases), if each competition edition brings a new set
+      (periodic-recompetition), or if the items are posed before their answers exist
+      (resolves-over-time takes precedence). A named frozen set beside a rolling fork is a
+      separate entry, not a layer of this one.
+    examples:
+      - ref: kaggle-game-arena
+        qualifies: true
+        why: >
+          A published Elo is meaningful only against the roster of entrants when it was read,
+          and boards and entrants keep being added.
+      - ref: matbench-discovery
+        qualifies: true
+        why: >
+          The WBM test set is fixed, but tasks were added and the headline metric changed on the
+          live site after the last labelled release, as 02 S12.6 records.
+      - ref: brain-score
+        qualifies: true
+        why: >
+          Benchmarks keep being added to the live leaderboard, dated from 2024-12 to 2026-09-09.
+      - ref: humanity-s-last-exam
+        qualifies: false
+        why: >
+          NEAR MISS. HLE-Rolling is replaced continuously, but the entry is the finalised
+          2,500-question set, which is pinned. The rolling fork is a separate variant.
+    not_to_be_confused_with:
+      - term: versioned-releases
+        distinction: >
+          Labelled versions do not make a benchmark `versioned-releases` if content also changes
+          between them on the live leaderboard. That is `rolling-live`.
+      - term: static
+        distinction: >
+          A fixed test set inside a leaderboard whose tasks or metric keep changing is
+          `rolling-live`, because the score depends on the date.
   - id: continuously-generated
     label: Continuously generated
     field: data.refresh
@@ -144,25 +517,122 @@ terms:
     definition: >
       New items are synthesised on an ongoing basis from a generator rather than curated in
       batches.
-    examples: []
+    inclusion_test: >
+      Tag this if a generator synthesises the evaluation items on an ongoing basis, per run or
+      on a schedule, rather than a curated batch fixing them.
+    exclusion_test: >
+      Do NOT tag this if the scored content is a fixed pool from which items are resampled at
+      each evaluation (static or versioned-releases), or if a generator exists but is not used
+      to add evaluation items. Do NOT tag it if the generated items are posed before their
+      answers exist (resolves-over-time takes precedence).
+    examples:
+      - ref: balrog
+        qualifies: true
+        why: >
+          The six environments' procedural generators produce the episodes a run is scored on.
+      - ref: fair-universe-higgsml-uncertainty-challenge
+        qualifies: false
+        why: >
+          NEAR MISS. Pseudo-experiments are drawn afresh for each evaluation, but from fixed
+          pools of 280M public and 120M private simulated events, so the content is fixed.
+      - ref: forecastbench
+        qualifies: false
+        why: >
+          NEAR MISS. Questions are generated every night from time series using templates, but
+          they have no answer when posed, and resolves-over-time takes precedence.
+    not_to_be_confused_with:
+      - term: static
+        distinction: >
+          Resampling from a fixed pool, or a generator that sits unused beside a fixed set, is
+          `static`. This term needs new items synthesised into the evaluation.
   - id: periodic-recompetition
     label: Periodic recompetition
     field: data.refresh
     status: active
     introduced_in: 1.0.0
     definition: >
-      The benchmark runs as recurring editions, each with a fresh evaluation set, which is
-      neither static nor rolling.
-    examples: []
+      The benchmark runs as recurring editions whose rankings are produced on evaluation data
+      new to each edition, which is neither static nor rolling.
+    inclusion_test: >
+      Tag this if the headline scores are rankings of recurring, dated competition editions and
+      each edition brings new evaluation data at the family level, even when some of its tasks
+      reuse an earlier set or the task line-up changes. The field describes the family (02 S11
+      rule 5), so an entry that is one edition of such a series takes this term too. For a live
+      physical competition, each edition's trials are new by construction.
+    exclusion_test: >
+      Do NOT tag this if every edition re-ranks entrants on one fixed test set (versioned-releases
+      or static), or if the headline scores come from a labelled dataset version that
+      competition rounds sit beside (versioned-releases). Do NOT tag it when items are posed
+      before their answers exist (resolves-over-time takes precedence).
+    examples:
+      - ref: ntire
+        qualifies: true
+        why: >
+          02 S7 names NTIRE. The challenge line-up changes almost entirely each year, and the
+          tracks that reuse DIV2K's test split do not change the family's cadence.
+      - ref: brats-2026-cluster
+        qualifies: true
+        why: >
+          Annual editions with fresh evaluation data for most tasks. BraTS-METS reusing its 2025
+          dataset does not change the family's value.
+      - ref: casp16-na-rna-puzzles-joint-assessment
+        qualifies: true
+        why: >
+          One completed round of CASP, which runs every two years with fresh targets, and an
+          edition takes its family's value.
+      - ref: coco
+        qualifies: false
+        why: >
+          NEAR MISS. COCO held yearly challenges, but the 2017-2020 challenges reused the
+          test-challenge split rather than fresh sets, so it is versioned-releases.
+    not_to_be_confused_with:
+      - term: static
+        distinction: >
+          One frozen edition of a recurring series is `periodic-recompetition` at family level.
+          Editions that all reuse one fixed test set are not.
+      - term: versioned-releases
+        distinction: >
+          The set behind the headline score decides. Per-edition rankings on new data are this
+          term, and a labelled dataset with rounds beside it is `versioned-releases`.
+      - term: resolves-over-time
+        distinction: >
+          Editions whose items are posed before their answers exist are `resolves-over-time`,
+          and the edition cadence goes in the notes.
   - id: continuously-reexecuted
     label: Continuously re-executed
     field: data.refresh
     status: active
     introduced_in: 1.0.0
     definition: >
-      There is no frozen version because results are recomputed whenever the maintainer pipeline
-      re-runs, so a stored claim without a pipeline commit is unanchored.
-    examples: []
+      Results are recomputed whenever the maintainer's pipeline re-runs, so a stored claim
+      without a pipeline commit is unanchored, whether or not the tasks also carry version
+      labels.
+    inclusion_test: >
+      Tag this if the maintainer re-runs the methods and re-scores the leaderboard automatically
+      as code, data or methods change, even where the task definitions carry labelled versions.
+      It takes precedence over versioned-releases, because a label does not pin a re-executed
+      result.
+    exclusion_test: >
+      Do NOT tag this if results are fixed once submitted or released and only the content
+      changes (versioned-releases or rolling-live), or if re-running happens only when a new
+      version is released.
+    examples:
+      - ref: open-problems-in-single-cell-analysis
+        qualifies: true
+        why: >
+          Methods 'are ranked and re-run automatically as the field evolves' on continuous
+          leaderboards, although tasks carry release labels (Label Projection v1.0.0 to
+          2.1.0-rc). 02 S7 names it.
+      - ref: helm-capabilities
+        qualifies: false
+        why: >
+          NEAR MISS. HELM publishes numbered releases (v1.0.0 to v1.15.0) that add models, and a
+          result is fixed within its release, so it is versioned-releases.
+    not_to_be_confused_with:
+      - term: versioned-releases
+        distinction: >
+          A re-executed leaderboard is `continuously-reexecuted` even when its tasks have
+          labelled versions, because the result moves with the pipeline.
   - id: resolves-over-time
     label: Resolves over time
     field: data.refresh
@@ -171,25 +641,121 @@ terms:
     definition: >
       Items are posed before their answers exist and are scored as reality resolves them,
       pairing with the claim-level resolution_status field.
-    examples: []
+    inclusion_test: >
+      Tag this if items are posed before their answers exist and are scored as reality resolves
+      them. It takes precedence over periodic-recompetition, continuously-generated and
+      rolling-live when those also hold, because it is the property that makes a pending score
+      provisional, and the edition or generation cadence goes in the notes.
+    exclusion_test: >
+      Do NOT tag this if the answers exist when the items are posed but are withheld or
+      embargoed until a round closes, as in a blind round whose reference structures are already
+      solved (periodic-recompetition).
+    examples:
+      - ref: cafa
+        qualifies: true
+        why: >
+          Benchmark proteins lack experimental annotation at the deadline and are scored as it
+          accrues. The CAFA editions are the cadence, recorded in the notes.
+      - ref: forecastbench
+        qualifies: true
+        why: >
+          Questions 'have no known answer at the time of submission'. Their nightly generation
+          and fortnightly sampling go in the notes.
+      - ref: casp17
+        qualifies: false
+        why: >
+          NEAR MISS. Predictions are collected before the reference structures are public, but
+          the structures exist and are held back by their depositors, so it is
+          periodic-recompetition.
+    not_to_be_confused_with:
+      - term: periodic-recompetition
+        distinction: >
+          If the answers do not yet exist, it is `resolves-over-time` even when the benchmark
+          runs in editions. If they exist but are embargoed, it is `periodic-recompetition`.
 
-  # --- data.data_provenance -- 11 terms ---
+  # --- data.data_provenance -- 13 terms ---
   - id: expert-authored
     label: Expert authored
     field: data.data_provenance
     status: active
     introduced_in: 1.0.0
     definition: >
-      Items were written by domain experts recruited for their subject knowledge.
-    examples: []
+      Items were written by people with specialist knowledge of the domain the items test,
+      whether recruited, employed or contributing openly.
+    inclusion_test: >
+      Tag this if the authors held the specialist skill the items test before writing them, as
+      the sources describe them, including practising specialists who self-selected through
+      open contribution. The discriminant is the authors' prior skill, not how they were
+      recruited.
+    exclusion_test: >
+      Do NOT tag this if the authors acquired the domain knowledge for the task, such as
+      annotators trained from tutorials and documentation (crowd-authored). Do NOT tag it if
+      experts only reviewed or filtered items that came from elsewhere.
+    examples:
+      - ref: terminal-bench-2-0
+        qualifies: true
+        why: >
+          93 contributors created the tasks through open-source contribution, and they are
+          practising engineers and researchers. Self-selection does not make them a crowd,
+          although the paper calls it crowd-sourcing.
+      - ref: gpqa-diamond
+        qualifies: true
+        why: >
+          Domain experts wrote the questions, and other experts validated them.
+      - ref: osworld-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The paper calls it 'expert-style annotation', but about 90% of tasks came
+          from in-house annotators who 'first learned the target domain by watching tutorials on
+          YouTube', so the authors are crowd-authored.
+      - ref: swe-bench-verified
+        qualifies: false
+        why: >
+          NEAR MISS. Human annotators reviewed existing GitHub instances rather than writing
+          them, so the items are web-scraped.
+    not_to_be_confused_with:
+      - term: crowd-authored
+        distinction: >
+          The authors' domain skill before the task decides, not how they were recruited.
+          Specialists contributing openly are `expert-authored`. Annotators who learned the
+          domain for the task are `crowd-authored`, even as a small in-house team.
   - id: crowd-authored
     label: Crowd authored
     field: data.data_provenance
     status: active
     introduced_in: 1.0.0
     definition: >
-      Items were written by non-specialist annotators at scale.
-    examples: []
+      Items were written by annotators without prior specialist knowledge of the domain the
+      items test, however they were recruited or trained.
+    inclusion_test: >
+      Tag this if the item authors are non-specialists as the sources describe them, including
+      crowdworkers, members of the public and in-house annotators who learned the domain for the
+      task.
+    exclusion_test: >
+      Do NOT tag this if the authors are practising specialists in the domain, however they were
+      recruited, including open-source contributors with the skill the items test
+      (expert-authored). Do NOT tag it for people who only rate or vote on outputs rather than
+      writing items.
+    examples:
+      - ref: lmarena
+        qualifies: true
+        why: >
+          The prompts are written by members of the public using the arena.
+      - ref: osworld-2-0
+        qualifies: true
+        why: >
+          Most tasks came from a small in-house team that learned the software from tutorials,
+          documentation and experiment.
+      - ref: terminal-bench-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The paper says tasks were 'crowd-sourced', but the contributors are
+          practising engineers and researchers, so the items are expert-authored.
+    not_to_be_confused_with:
+      - term: expert-authored
+        distinction: >
+          A source calling its process crowd-sourcing does not decide. Contributors who already
+          practise the domain are `expert-authored`.
   - id: exam-derived
     label: Exam derived
     field: data.data_provenance
@@ -213,7 +779,35 @@ terms:
     introduced_in: 1.0.0
     definition: >
       Items were produced by a rule-based or procedural generator with no model in the loop.
-    examples: []
+    inclusion_test: >
+      Tag this if the items are produced by a rule-based generator or engine with no learned
+      model in the loop, including a game engine that produces the positions entrants play
+      through.
+    exclusion_test: >
+      Do NOT tag this for a physics or environment simulator (simulation-generated). Do NOT tag
+      it for real records re-assembled into cases by a rule, where the records' own provenance
+      is what is tagged.
+    examples:
+      - ref: kaggle-game-arena
+        qualifies: true
+        why: >
+          The positions come from a rules engine (OpenSpiel) as entrants play each other, which
+          is how 02 S12.5 records it.
+      - ref: metriq-qed-c
+        qualifies: true
+        why: >
+          The circuits are procedurally generated from parameter schemas.
+      - ref: camelyon17
+        qualifies: false
+        why: >
+          NEAR MISS. Each patient is assembled by rule from five real slides and staged by a
+          simplified pN rule, but nothing is generated. The slides' provenance
+          (real-world-instrument, expert-authored) is what is tagged.
+    not_to_be_confused_with:
+      - term: simulation-generated
+        distinction: >
+          A rules engine that enumerates legal states, such as a board-game engine, is
+          `synthetic-procedural`. A physics or environment simulator is `simulation-generated`.
   - id: model-generated
     label: Model generated
     field: data.data_provenance
@@ -230,7 +824,43 @@ terms:
     introduced_in: 1.0.0
     definition: >
       Items are recordings captured from physical sensors or instruments in the world.
-    examples: []
+    inclusion_test: >
+      Tag this if the scored items or their ground truth are recordings of the world as found,
+      captured by sensors, cameras or instruments, including the recorded trials of a live
+      physical evaluation. An observation-constrained model product, such as a reanalysis, a
+      data-assimilation product or a physics-based reconstruction fitted to measurements, takes
+      this term and simulation-generated together.
+    exclusion_test: >
+      Do NOT tag this if the recording is the measured outcome of an experiment designed to
+      produce the ground truth, such as neural responses to controlled stimuli or an assay
+      readout (experimental-measurement).
+    examples:
+      - ref: tanks-and-temples
+        qualifies: true
+        why: >
+          The inputs are video from Sony and DJI cameras, and the ground truth is industrial
+          laser scans.
+      - ref: weatherbench-2
+        qualifies: true
+        why: >
+          ERA5 is produced by '4D-Var data assimilation which uses a wide range of direct and
+          remote sensing observations', so it takes this term together with
+          simulation-generated, as 02 S12.3 records.
+      - ref: brain-score
+        qualifies: false
+        why: >
+          NEAR MISS. The ground truth is recordings from arrays implanted in macaque V4 and IT,
+          but they record responses to images in a designed experiment, which is
+          experimental-measurement.
+    not_to_be_confused_with:
+      - term: simulation-generated
+        distinction: >
+          A reanalysis or other observation-constrained model state is both terms at once, and
+          the field is multi-valued so that it can say so. Neither term alone describes it.
+      - term: experimental-measurement
+        distinction: >
+          Capture of the world as found is `real-world-instrument`. An instrument recording the
+          outcome of a designed experiment is `experimental-measurement`.
   - id: simulation-generated
     label: Simulation generated
     field: data.data_provenance
@@ -238,15 +868,89 @@ terms:
     introduced_in: 1.0.0
     definition: >
       Items come from a physics or environment simulator rather than from capture or authoring.
-    examples: []
+    inclusion_test: >
+      Tag this if items or ground truth come from running a physics or environment simulator or
+      a physics-based numerical code, such as DFT labels, a climate model's output or a driving
+      simulator's scenarios. Tag an observation-constrained product, such as a reanalysis, data
+      assimilation or a reconstruction code fitted to measurements, as this term and
+      real-world-instrument together.
+    exclusion_test: >
+      Do NOT tag this for a rules engine that only enumerates legal states, such as a board-game
+      engine (synthetic-procedural). Do NOT tag it for the outputs of a trained machine-learning
+      model (model-generated).
+    examples:
+      - ref: open-catalyst-oc20-oc22
+        qualifies: true
+        why: >
+          Every label is a DFT calculation.
+      - ref: chaosbench
+        qualifies: true
+        why: >
+          The inputs and ground truth are ERA5, ORAS5 and ERA5-Land reanalyses, which combine
+          'physics and observations for correction', so this term and real-world-instrument
+          both apply.
+      - ref: fusion-equilibrium-challenge
+        qualifies: true
+        why: >
+          The ground truth is EFIT's equilibrium reconstruction, a physics code fitted to each
+          shot's magnetic measurements, so it takes this term beside real-world-instrument.
+      - ref: kaggle-game-arena
+        qualifies: false
+        why: >
+          NEAR MISS. OpenSpiel tracks the game state, but a rules engine is not a physics or
+          environment simulator, so it is synthetic-procedural.
+    not_to_be_confused_with:
+      - term: real-world-instrument
+        distinction: >
+          A model state constrained by observations (a reanalysis, data assimilation, a
+          measurement-fitted reconstruction) takes both terms. A free-running simulation takes
+          this one only.
+      - term: synthetic-procedural
+        distinction: >
+          A game or rules engine is `synthetic-procedural`. This term needs a physics or
+          environment simulation.
   - id: experimental-measurement
     label: Experimental measurement
     field: data.data_provenance
     status: active
     introduced_in: 1.0.0
     definition: >
-      Ground truth was produced by running a physical experiment, as wet-lab challenges do.
-    examples: []
+      Ground truth was produced by a physical experiment, whether run for the benchmark or
+      reported by the study that ran it.
+    inclusion_test: >
+      Tag this if the ground truth is the measured outcome of a designed physical experiment,
+      such as an assay, a solved structure, or neural recordings of responses to controlled
+      stimuli. It applies whether the experiment was run for the benchmark or earlier, and it
+      takes precedence over real-world-instrument when the instrument records an experiment's
+      outcome.
+    exclusion_test: >
+      Do NOT tag this for curated annotations, clinical assertions or statistics that summarise
+      evidence rather than report a measurement (curated-public-database). Do NOT tag it for
+      recordings of the world as found (real-world-instrument).
+    examples:
+      - ref: casp17
+        qualifies: true
+        why: >
+          The reference structures are solved by crystallography, cryo-EM or NMR.
+      - ref: brain-score
+        qualifies: true
+        why: >
+          Recordings from arrays implanted in macaque V4 and IT, taken while the animals viewed
+          images.
+      - ref: cy-bench
+        qualifies: false
+        why: >
+          NEAR MISS. The yield targets are official statistics from national statistics offices,
+          which are records rather than an experiment's measurement (curated-public-database).
+    not_to_be_confused_with:
+      - term: real-world-instrument
+        distinction: >
+          An instrument recording a designed experiment's outcome is `experimental-measurement`.
+          Capture of the world as found is `real-world-instrument`.
+      - term: curated-public-database
+        distinction: >
+          A raw measurement is `experimental-measurement` whoever ran it. A curated annotation or
+          assertion that summarises evidence is `curated-public-database`.
   - id: patient-clinical-record
     label: Patient clinical record
     field: data.data_provenance
@@ -266,6 +970,106 @@ terms:
       results structurally irreproducible and should be visible next to every number drawn from
       them.
     examples: []
+  - id: curated-public-database
+    label: Curated public database
+    field: data.data_provenance
+    status: active
+    introduced_in: 1.0.0
+    definition: >
+      Items or labels are drawn from a curated public archive of records, such as a scientific
+      database, an extraction from patents or literature, or official statistics, that was
+      compiled for purposes other than the benchmark.
+    inclusion_test: >
+      Tag this if the benchmark builds its items or labels by selecting, filtering or splitting
+      records from a curated archive that it did not create and that was not itself published as
+      an evaluation dataset, such as ClinVar or UniProt annotations, GEO or CELLxGENE datasets, a
+      patent-reaction extraction or national statistics.
+    exclusion_test: >
+      Do NOT tag this if the source was published as a machine-learning dataset or benchmark and
+      is reused whole or subsampled (inherited-from-constituents), if the archive is harvested
+      web content rather than a curated scientific or official archive (web-scraped), or if the
+      benchmark's own experiment produced the data (experimental-measurement).
+    examples:
+      - ref: proteingym
+        qualifies: true
+        why: >
+          The clinical labels come from ClinVar, 'an extensive, public database ... that
+          collects and annotates reports'. The DMS assays beside them are
+          experimental-measurement.
+      - ref: uspto-50k
+        qualifies: true
+        why: >
+          Reactions text-mined from US patents were atom-mapped and classed by Schneider et al.
+          and then filtered and split by Liu et al.
+      - ref: cy-bench
+        qualifies: true
+        why: >
+          The yield targets are official statistics from national statistics offices, some
+          through curated harmonisations.
+      - ref: geo-bench-2
+        qualifies: false
+        why: >
+          NEAR MISS. Every label comes from elsewhere, but the sources are 19 published Earth
+          observation datasets reused and reformatted, which is inherited-from-constituents.
+    not_to_be_confused_with:
+      - term: inherited-from-constituents
+        distinction: >
+          A curated archive of records that was not an evaluation dataset is
+          `curated-public-database`. Reusing published datasets or benchmarks is
+          `inherited-from-constituents`.
+      - term: web-scraped
+        distinction: >
+          A curated scientific or official archive is `curated-public-database`. Content
+          harvested from the open web is `web-scraped`.
+      - term: experimental-measurement
+        distinction: >
+          Curated annotations and assertions are this term. Raw experimental readouts are
+          `experimental-measurement`, and a benchmark with both takes both.
+  - id: inherited-from-constituents
+    label: Inherited from constituent datasets
+    field: data.data_provenance
+    status: active
+    introduced_in: 1.0.0
+    definition: >
+      Items are taken from existing datasets or benchmarks, reused whole or subsampled, so each
+      constituent's own provenance applies to them.
+    inclusion_test: >
+      Tag this if the benchmark's items are those of datasets or benchmarks published before it,
+      selected, subsampled or reformatted rather than created, with each constituent's own
+      sources documenting its provenance. Tag other provenance terms beside it only for what the
+      benchmark's own sources state, such as the modality of the reused data or items it wrote
+      itself.
+    exclusion_test: >
+      Do NOT tag this if the benchmark builds items from a curated archive of records that was
+      not itself an evaluation or training dataset (curated-public-database). Do NOT tag it for
+      items the benchmark authored itself, which take their own term.
+    examples:
+      - ref: holistic-agent-leaderboard-hal
+        qualifies: true
+        why: >
+          Every task comes from a constituent benchmark ('Benchmarks specify task data'), whose
+          provenance is documented in its own paper.
+      - ref: helm-capabilities
+        qualifies: true
+        why: >
+          Each capability uses 'a scenario out of the available scenarios in the existing
+          literature', downsampled to 1,000 instances.
+      - ref: geo-bench-2
+        qualifies: true
+        why: >
+          19 of 35 candidate public Earth observation datasets are selected, subsampled and
+          reformatted, and each keeps its own labels.
+      - ref: proteingym
+        qualifies: false
+        why: >
+          NEAR MISS. The clinical labels are reused, but they come from ClinVar, a curated archive
+          of submitted reports, not from a published evaluation dataset
+          (curated-public-database).
+    not_to_be_confused_with:
+      - term: curated-public-database
+        distinction: >
+          Reusing items that were already a dataset or benchmark is this term. Building items
+          from records in an archive is `curated-public-database`.
 
   # --- data.contamination_risk -- 5 terms ---
   - id: low
@@ -276,7 +1080,49 @@ terms:
     definition: >
       No plausible route by which the evaluation content entered training data is known, and the
       benchmark's structure works against one.
-    examples: []
+    inclusion_test: >
+      Tag this if the structure excludes a training route to the scored content, such as answers
+      that did not exist at submission, a live physical trial, a set never exposed, or a filter
+      that keeps only items released after an entrant's training cutoff, and no evidenced route
+      remains open in what is scored. Tag it also when a route was evidenced and then closed by
+      the maintainer before scoring, with the evidence and the fix in contamination_notes. The
+      structure is the evidence and is stated in contamination_notes (02 S7).
+    exclusion_test: >
+      Do NOT tag this if nobody has considered the question and the structure does not settle it
+      (unknown), or if the scored content is public and a route is merely plausible (medium). Do
+      NOT tag it while an evidenced route remains open in a split the benchmark still scores
+      (high).
+    examples:
+      - ref: casp16-na-rna-puzzles-joint-assessment
+        qualifies: true
+        why: >
+          The protocol is blind. The one documented leak, a group that 'had experimental data on
+          the target', was excluded by the assessors, so no open route remains in what is scored.
+      - ref: cafa
+        qualifies: true
+        why: >
+          Benchmark proteins lack experimental annotation at the deadline, and annotations found
+          to be public before it were deleted by the organisers.
+      - ref: a2rl-drone-championship
+        qualifies: true
+        why: >
+          A live race on a physical track has no stored item set for training data to contain,
+          as 02 S12.2 reads RoboArena's live trials.
+      - ref: posebusters
+        qualifies: false
+        why: >
+          NEAR MISS. The PoseBusters set holds only complexes released after PDBbind 2020, but
+          the paper also scores the Astex Diverse set and shows 47 of its 81 complexes inside
+          PDBbind 2020, so the benchmark is high with that evidence.
+    not_to_be_confused_with:
+      - term: high
+        distinction: >
+          A route evidenced and closed before scoring leaves the value `low`. A route evidenced in
+          a split the benchmark still scores makes it `high`.
+      - term: unknown
+        distinction: >
+          `low` rests on a structure that excludes a route and says so in the notes. `unknown`
+          means nobody has assessed it and the structure does not decide.
   - id: medium
     label: Medium
     field: data.contamination_risk
@@ -285,7 +1131,37 @@ terms:
     definition: >
       A contamination route is plausible but unevidenced, which is the honest default for a
       public static set of any age.
-    examples: []
+    inclusion_test: >
+      Tag this if the scored content is public or reachable by entrants and a route into training
+      data is plausible, but no source evidences one for a split the benchmark scores. A route
+      evidenced only for one entrant, such as a model trained on the evaluation period, does not
+      raise the benchmark above medium and is recorded on that entrant's claims.
+    exclusion_test: >
+      Do NOT tag this if a source evidences a route into content the benchmark still scores
+      (high), or if the structure excludes a route (low).
+    examples:
+      - ref: weatherbench-2
+        qualifies: true
+        why: >
+          The evaluation years are public ERA5 data. The one evidenced route, WeatherMesh 4
+          'Trained on future years', concerns one entrant and belongs on its claims.
+      - ref: matbench-discovery
+        qualifies: true
+        why: >
+          The evidenced MP-to-WBM leakage was cleaned by protostructure matching, and the overlap
+          of the non-compliant training sets is plausible but unassessed.
+      - ref: luna16
+        qualifies: false
+        why: >
+          NEAR MISS. The data is public, but the source states that 'the evaluation of the
+          algorithms is performed on the same data set' used for training, which is an evidenced
+          route (high).
+    not_to_be_confused_with:
+      - term: high
+        distinction: >
+          An evidenced route in a scored split is `high`. An evidenced route in one entrant's
+          training data belongs on that entrant's claims and leaves the benchmark at `medium` or
+          lower.
   - id: high
     label: High
     field: data.contamination_risk
@@ -294,7 +1170,43 @@ terms:
     definition: >
       A specific contamination route is evidenced, and the entry may not carry this value
       without at least one contamination_evidence source.
-    examples: []
+    inclusion_test: >
+      Tag this if at least one contamination_evidence source evidences a specific route into
+      content the benchmark still scores and publishes, including a protocol that evaluates on
+      the very data it releases for training. One contaminated split the benchmark scores is
+      enough, and contamination_notes names the split (02 S11).
+    exclusion_test: >
+      Do NOT tag this without a contamination_evidence source, which is blocking (02 S11). Do NOT
+      tag it for a route the maintainer closed before scoring (low or medium, with the evidence
+      in the notes), or for a route evidenced only for one entrant's training data (that
+      entrant's claims).
+    examples:
+      - ref: luna16
+        qualifies: true
+        why: >
+          'This data set can be used for training of the systems and the evaluation of the
+          algorithms is performed on the same data set', and the paper concedes the positive
+          bias. The paper is the evidence.
+      - ref: posebusters
+        qualifies: true
+        why: >
+          The paper shows 47 of the Astex Diverse set's 81 complexes in the PDBbind 2020 General
+          Set, and the notes name that split.
+      - ref: runs-n-poses
+        qualifies: false
+        why: >
+          NEAR MISS. The route for a model trained after 30 September 2021 is stated, but the
+          protocol filters the evaluated systems by each entrant's training cutoff, so the route
+          is closed by construction (low).
+    not_to_be_confused_with:
+      - term: low
+        distinction: >
+          Evidence of a route that the maintainer then closed supports `low` with notes, not
+          `high`.
+      - term: medium
+        distinction: >
+          `high` needs the evidenced route to reach content the benchmark scores. A plausible
+          route, or one evidenced only for a single entrant, is `medium`.
   - id: confirmed
     label: Confirmed
     field: data.contamination_risk
