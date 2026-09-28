@@ -6,12 +6,20 @@ schema/classification.py checks each file on its own at tier 1. These rules read
                                  and its corpus_item is that entry's position
           failure-ref            every failure a record cites exists, names the record's benchmark and
                                  the field that cites it
+          adr-ref                a failure routed to an ADR names a file in adr/ that exists and names
+                                 the failure back, so the decision and its evidence cannot drift apart
+                                 (P1-S1-T06)
   tier 3  abstention-logged      every abstention has its failure record: the task's DONE WHEN, "every
                                  abstention has a matching failure record"; tier 1 already requires the
                                  id, and failure-ref that it resolves
           failure-uncited        a failure for a classified benchmark is cited by that classification, so
                                  the log and the records cannot drift apart. A failure for a benchmark with
                                  no classification record (a later `bench tag-gap`, 05 S3) is not in scope
+          blocking-adr           a blocking failure is routed to an ADR: 03 S8.3 handles blocking failures
+                                 immediately, and P1-S1-T06's DONE WHEN is "No blocking failure record
+                                 lacks an ADR reference"
+          failure-triaged        (warning) a failure carries a route (adr, homograph or stage-4), so a
+                                 newly logged failure is visible until it is triaged
 """
 from __future__ import annotations
 
@@ -64,6 +72,25 @@ def check(records, root: str, tiers=(2, 3)) -> list:
                 if not any(fields == field and fid in fails for fields, fid in m.failures()):
                     out.append(Finding(3, 'abstention-logged', 'blocking', m.id, r.path,
                                        'facets.%s abstains with no failure record in taxonomy/_failures/' % field))
+    for fid, f in sorted(fails.items()):
+        m = f.model
+        if 2 in tiers and m.adr is not None:
+            path = os.path.join(root, m.adr)
+            try:
+                text = open(path, encoding='utf-8').read()
+            except OSError:
+                out.append(Finding(2, 'adr-ref', 'blocking', fid, f.path, 'routed to %s, which does not exist' % m.adr))
+            else:
+                if fid not in text:
+                    out.append(Finding(2, 'adr-ref', 'blocking', fid, f.path,
+                                       'routed to %s, whose text does not name %s' % (m.adr, fid)))
+        if 3 in tiers:
+            if m.blocking and m.route != 'adr':
+                out.append(Finding(3, 'blocking-adr', 'blocking', fid, f.path,
+                                   'a blocking failure with no ADR: set `route: adr` and `adr: adr/NNNN-....md`'))
+            elif m.route is None:
+                out.append(Finding(3, 'failure-triaged', 'warning', fid, f.path,
+                                   'not yet triaged: set `route` to adr, homograph or stage-4 (03 S3.3)'))
     if 3 in tiers:
         classified = {r.model.id for r in cls}
         for fid, f in sorted(fails.items()):
