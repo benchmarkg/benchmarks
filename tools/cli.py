@@ -16,6 +16,8 @@ command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
 build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
+`build` also regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
+(P2-S2-T01, tools/build/tokens.py).
 """
 from __future__ import annotations
 
@@ -164,8 +166,8 @@ def validate(
 def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
 ):
-    """Emit the shipped JSON artifacts (08 S4.2): today corpus.json and facets.json, drafts excluded."""
-    from tools.build import artifacts
+    """Emit the shipped JSON artifacts (08 S4.2), drafts excluded, and regenerate the design tokens (09 S13)."""
+    from tools.build import artifacts, tokens
     result = artifacts.build(ROOT)
     for e in result.errors:
         typer.echo('error  %s' % e, err=True)
@@ -174,6 +176,14 @@ def build_cmd(
         raise typer.Exit(1)
     for path in artifacts.write(result, str(out)):
         typer.echo('wrote %s' % path)
+    try:
+        # committed files: `git diff` after a build is the drift check. A data-only tree (a test
+        # corpus, a fork of data/) has no design/ and gets no tokens.
+        for path in tokens.write(ROOT) if os.path.exists(os.path.join(ROOT, tokens.TOKENS)) else []:
+            typer.echo('wrote %s' % path)
+    except tokens.TokenError as e:
+        typer.echo('error  %s' % e, err=True)
+        raise typer.Exit(1)
     counts = result.counts()
     reasons: dict[str, int] = {}
     for _, _, reason in result.excluded:

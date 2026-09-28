@@ -1,0 +1,351 @@
+# design/tokens.yaml
+#
+# The single source of the site's colour (09-design-system.md S4.1 rule 3, S13). tools/build/tokens.py
+# generates site/src/styles/tokens.css and site/src/lib/tokens.json from this file on every
+# `bench build`; neither generated file is edited by hand. A new colour needs a new token here and a
+# reason in the commit message (09 S13).
+#
+# LIGHT is 09 S4.5 transcribed verbatim: every value, every S4.5 comment (as `note:`), in S4.5's
+# order. The generated CSS collapses runs of spaces inside oklch(), and nothing else differs.
+#
+# DARK is authored per role, not inverted (09 S9). A value marked `dark_from: 09 S9` is the spec's
+# representative dark value, copied verbatim; every other dark value was authored by P2-S2-T01, and
+# ALL dark values need a human review before they publish (the task's done-when). The rules the
+# authored values follow:
+#   - large dark fills (the -bg tints, the ramps) carry LESS chroma than their light twins, so they
+#     do not vibrate; text and small marks (alert, caution, affirm, link-visited) carry about the
+#     same or more, lightened until they clear their S4.6 contrast floor on the dark --c-bg;
+#   - the three ordered ramps run dark-to-bright (more value = brighter), re-authored stop by stop;
+#   - authored values stay inside sRGB, so the hex in tokens.json is the colour that was authored.
+#     Eleven of the spec's own values do not, and are kept verbatim with `in_gamut: false` in
+#     tokens.json (their hex is the CSS Color 4 gamut-mapped colour, the nearest an sRGB
+#     screen shows): light --c-link --c-focus --c-select-bg --c-alert-bg --c-caution
+#     --c-caution-bg --c-emphasis-bg --c-verif-7, and dark (S9's) --c-link --c-focus --seq-head-6.
+#
+# Colours are OKLCH triples written "L% C H" exactly as they appear inside oklch() in the CSS.
+#
+# Contrast (WCAG 2.x, computed at authoring time with tools/build/tokens.py's sRGB mapping; the
+# blocking gate is scripts/check_contrast.py, P2-S2-T02). The dark set clears every S4.6 floor
+# except the two border tokens, which fail it in the SPEC'S OWN values in both themes. Six light
+# S4.5 values fall below the floor their role or their own comment states, and are transcribed
+# anyway because the light set is the spec's, not this task's to change:
+#     --c-border        vs --c-bg      light 1.39  dark 1.42   (comment claims 3:1, SC 1.4.11)
+#     --c-border-strong vs --c-bg      light 2.24  dark 2.30
+#     --c-emphasis      vs --c-ink-faint  light 1.94  (S4.5/S4.6: >= 3:1; dark 3.10)
+#     --c-absent-hatch  vs --c-bg      light 1.81  (S4.6: the hatch against its ground, 3:1; dark 3.53)
+#     --c-absent-rule   vs --c-bg      light 2.59  (dark 4.54)
+#     --c-verif-1       vs --c-bg      light 2.59  (S4.6: meter segments, 3:1; dark 3.11)
+# And the light verification ramp's adjacent steps are 0.05 L for rungs 1-4, under check C's 0.055
+# floor; 09 S4.2 exempts that ramp from the range assertion only, not the step one. The dark ramp is
+# stepped at 0.06. These are for P2-S2-T02/T03 to fail on and a person to resolve, not for this file
+# to paper over.
+
+version: 0.1.0
+updated: 2026-09-28
+
+# ---------------------------------------------------------------------------------------------------
+# Thresholds the gates read (09 S4.2: "Thresholds live in tokens.yaml under a thresholds: key rather
+# than as constants in the script -- a number in a script is a number nobody can find").
+thresholds:
+  delta_e_floor:
+    value: 15
+    metric: CAM02-UCS delta-E
+    status: uncalibrated
+    note: >
+      09 S4.2: "empirical and uncalibrated: start there, calibrate against real renders in Phase 2,
+      and record the result in tokens.yaml". The calibration task replaces this with its value, date
+      and rationale.
+  lightness_floor: 0.10          # OKLCH L; group D's second alternative
+  greyscale_y_ratio_floor: 1.4   # CIE Y ratio; group F
+  ramp:
+    min_adjacent_step: 0.055     # OKLCH L; group C. Adjacent-stop delta-E is never asserted (09 S4.2)
+    min_range: 0.45              # OKLCH L, first stop to last; group C
+  categorical_max_members: 6     # group B
+  contrast:                      # WCAG 2.2, 09 S4.6
+    text: 4.5                    # SC 1.4.3: body, chip, table cell, badge label, axis tick label
+    large_text: 3.0              # SC 1.4.3: >= 24px, or >= 18.66px bold
+    non_text: 3.0                # SC 1.4.11: borders, marks, meter segments, focus rings, the hatch
+  cvd:                           # the four simulations check_palette.py runs, both themes
+    - deuteranopia
+    - deuteranomaly-50
+    - protanopia
+    - tritanopia
+
+# ---------------------------------------------------------------------------------------------------
+# The tokens, in S4.5's order. A group either lists `tokens:` or authors a `ramp:` (ordered stops,
+# named <prefix>-<n>), or both. `ref:` makes a token an alias (var(--other)) in both themes.
+groups:
+  - id: neutrals
+    title: 'neutrals: surface and ink'
+    tokens:
+      c-bg:
+        light: '99.0% 0.003 250'
+        dark: '16.0% 0.012 250'
+        dark_from: 09 S9
+        dark_note: 'not #000 — pure black haloes under light text'
+      c-surface:
+        light: '97.4% 0.005 250'
+        dark: '20.0% 0.014 250'
+        dark_from: 09 S9
+      c-surface-sunken:
+        light: '95.2% 0.006 250'
+        dark: '13.5% 0.010 250'
+        dark_from: 09 S9
+      c-border:
+        light: '88.0% 0.008 250'
+        dark: '30.0% 0.016 250'
+        dark_from: 09 S9
+        note: '3:1 vs --c-bg: non-text contrast, SC 1.4.11'
+      c-border-strong:
+        light: '74.0% 0.010 250'
+        dark: '42.0% 0.018 250'
+        dark_from: 09 S9
+      c-ink:
+        light: '22.0% 0.012 250'
+        dark: '92.0% 0.008 250'
+        dark_from: 09 S9
+        note: '≥ 12:1 on --c-bg'
+        dark_note: 'not #fff'
+      c-ink-muted:
+        light: '46.0% 0.012 250'
+        dark: '72.0% 0.012 250'
+        dark_from: 09 S9
+        note: '≥ 4.5:1 on --c-bg — smallest body text OK'
+      c-ink-faint:
+        light: '62.0% 0.010 250'
+        dark: '55.0% 0.012 250'
+        dark_from: 09 S9
+        note: '≥ 3:1 — NON-TEXT and large text only'
+
+  - id: interaction
+    title: interaction
+    tokens:
+      c-link:
+        light: '45.0% 0.15  250'
+        dark: '78.0% 0.13  250'
+        dark_from: 09 S9
+      c-link-visited:
+        light: '42.0% 0.12  300'
+        dark: '74.0% 0.11  300'
+        dark_note: 'authored: 8.1:1 on --c-bg; 0.12 L below --c-emphasis, which shares its hue'
+      c-focus:
+        light: '55.0% 0.19  255'
+        dark: '80.0% 0.16  255'
+        dark_from: 09 S9
+        note: '≥ 3:1 vs bg AND vs the focused element'
+      c-select-bg:
+        light: '93.0% 0.05  250'
+        dark: '30.0% 0.06  250'
+        dark_note: 'authored: --c-ink on it 10.8:1'
+
+  - id: semantic
+    title: semantic states
+    tokens:
+      c-alert:
+        light: '52.0% 0.17   25'
+        dark: '70.0% 0.16   25'
+        note: contaminated / retracted / hard error
+        dark_note: 'authored: 6.8:1 on --c-bg, 5.7:1 on --c-alert-bg'
+      c-alert-bg:
+        light: '96.0% 0.03   25'
+        dark: '25.0% 0.05   25'
+      c-caution:
+        light: '58.0% 0.13   75'
+        dark: '78.0% 0.13   75'
+        note: comparability warning, staleness
+        dark_note: 'authored: 9.5:1 on --c-bg'
+      c-caution-bg:
+        light: '96.5% 0.035  75'
+        dark: '25.0% 0.04   75'
+      c-affirm:
+        light: '48.0% 0.11  150'
+        dark: '74.0% 0.13  150'
+        note: 'used sparingly: verified, archived, passing'
+        dark_note: 'authored: 8.9:1 on --c-bg'
+
+  - id: verification
+    title: verification ladder (7 ordered steps)
+    ramp:
+      prefix: c-verif
+      start: 1
+      # The ORDER is generated: step n is the rung of rank n in this file, and the build refuses a
+      # ramp whose length differs from the ladder's (09 S4.3). Only the lightness ramp is ours.
+      order_from: taxonomy/verification.yaml
+      primary_channel: count
+      exempt_from:
+        range: >
+          09 S4.2 group C: the ramp spans 0.33 L, under the 0.45 floor, and that is exactly why
+          09 S4.3 makes the seven-segment glyph its primary channel. Its colour job is secondary;
+          do not "fix" it by stretching the ramp.
+      light:
+        - '70% 0.020 250'
+        - '65% 0.035 250'
+        - '60% 0.050 250'
+        - '55% 0.070 250'
+        - '49% 0.090 250'
+        - '43% 0.105 250'
+        - '37% 0.120 250'
+      dark:                      # authored: dark-to-bright, 0.06 L steps; the top stop at sRGB's chroma limit
+        - '49% 0.020 250'
+        - '55% 0.035 250'
+        - '61% 0.050 250'
+        - '67% 0.060 250'
+        - '73% 0.068 250'
+        - '79% 0.072 250'
+        - '85% 0.075 250'
+    tokens:
+      c-verif-disputed:
+        ref: c-alert
+        note: 'not a rung: an overlay glyph on any rung (09 S4.3)'
+
+  - id: headroom
+    title: 'sequential: headroom consumed (warm)'
+    ramp:
+      prefix: seq-head
+      start: 0
+      light:
+        - '96% 0.030 85'
+        - '90% 0.060 80'
+        - '83% 0.095 74'
+        - '75% 0.125 66'
+        - '66% 0.145 55'
+        - '55% 0.150 42'
+        - '43% 0.140 32'
+      dark:                      # stops 0 and 6 are 09 S9's; 1-5 authored, L and hue interpolated between them
+        - '26% 0.030 85'
+        - '36% 0.050 81'
+        - '46% 0.070 77'
+        - '56% 0.090 73'
+        - '66% 0.110 68'
+        - '77% 0.130 64'
+        - '88% 0.150 60'
+
+  - id: coverage
+    title: 'sequential: coverage density (cool)'
+    ramp:
+      prefix: seq-cov
+      start: 0
+      light:
+        - '96% 0.012 235'
+        - '90% 0.030 235'
+        - '82% 0.050 235'
+        - '72% 0.070 238'
+        - '61% 0.085 242'
+        - '49% 0.095 246'
+        - '37% 0.090 250'
+      dark:                      # authored: dark-to-bright, light's hue per stop, less chroma for large fills
+        - '26% 0.012 235'
+        - '36% 0.025 235'
+        - '46% 0.040 235'
+        - '56% 0.055 238'
+        - '66% 0.065 242'
+        - '76% 0.070 246'
+        - '86% 0.070 250'
+
+  - id: absence
+    title: absence
+    tokens:
+      c-absent-ink:
+        ref: c-ink-faint
+      c-absent-hatch:
+        light: '80% 0.008 250'
+        dark: '52% 0.010 250'
+        dark_note: 'authored: 3.5:1 on --c-bg, 3.3:1 on --c-surface (SC 1.4.11)'
+      c-absent-rule:
+        light: '70% 0.010 250'
+        dark: '58% 0.012 250'
+
+  - id: emphasis
+    title: 'emphasis: one selected family/row/cluster at a time'
+    tokens:
+      c-emphasis:
+        light: '48.0% 0.16 300'
+        dark: '86.0% 0.080 300'
+        note: '≥ 3:1 vs --c-bg AND vs --c-ink-faint (SC 1.4.11)'
+        dark_note: >-
+          authored from the contrast floor, not by hand (09 S4.5): 3.1:1 vs --c-ink-faint, 12.4:1 vs
+          --c-bg; S4.5's ~78% would give 2.4:1 against the faint ink
+      c-emphasis-bg:
+        light: '95.0% 0.035 300'
+        dark: '27.0% 0.05 300'
+        note: row-tint only where no density fill is present
+
+prohibited_namespace: |
+  There is no --c-dom-* / --c-family-* / --c-group-* token and there must
+  not be one. Domain family is encoded by position, label and band; see
+  09 S4.2. tools/build/tokens.py refuses one, and scripts/check_palette.py
+  fails the build if this namespace returns.
+
+# ---------------------------------------------------------------------------------------------------
+# categorical_sets: sets of tokens a reader tells apart by colour as unordered categories (group B:
+# at most 6 members, each with a non-empty redundant_channel, pairwise delta-E >= the floor within
+# the set). Ordered ramps are not categorical and are checked by group C instead. Domain family is
+# not a set and never will be (09 S4.2).
+categorical_sets:
+  semantic-states:
+    basis: 09 S4.3 (lifecycle, only three states coloured) and S4.5
+    members:
+      - token: c-alert
+        means: contaminated / retracted / hard error
+        redundant_channel: glyph      # warning glyph + required evidence link (09 S4.3)
+      - token: c-caution
+        means: comparability warning, staleness
+        redundant_channel: glyph      # <ComparabilityBanner>, <Staleness> carry a glyph and a sentence
+      - token: c-affirm
+        means: verified, archived, passing
+        redundant_channel: label
+
+# absence_states: the coverage-matrix states that are told apart by pattern, not colour (09 S4.4).
+# Group F reads the pattern each declares; the 45-degree hatch belongs to zero coverage and nothing else.
+absence_states:
+  zero-benchmarks:
+    token: c-absent-hatch
+    pattern: hatch-45             # 45 degree 2px lines, plus a "0" label
+  not-applicable:
+    token: c-absent-rule
+    pattern: dotted-border        # no fill, "n/a"
+  not-yet-curated:
+    token: c-absent-rule
+    pattern: slash                # diagonal slash, plus "?"
+  unknown-headroom:
+    token: c-absent-ink
+    pattern: label                # ceiling_anchor_type none-known: the absent token, never 0 (09 S4.4)
+
+# co_occurrence: which meaning-groups share a viewport (group D). Every pair of tokens from two
+# DIFFERENT meaning-groups in one view must be >= delta_e_floor, or >= lightness_floor apart in OKLCH
+# L, or pattern-distinguished. A meaning names tokens, or a ramp by its group id.
+co_occurrence:
+  meanings:
+    verification: {ramp: verification}
+    disputed: {tokens: [c-verif-disputed]}
+    headroom: {ramp: headroom}
+    coverage: {ramp: coverage}
+    alert: {tokens: [c-alert, c-alert-bg]}
+    caution: {tokens: [c-caution, c-caution-bg]}
+    affirm: {tokens: [c-affirm]}
+    link: {tokens: [c-link, c-focus, c-select-bg]}
+    visited: {tokens: [c-link-visited]}
+    emphasis: {tokens: [c-emphasis, c-emphasis-bg]}
+    absence: {tokens: [c-absent-hatch, c-absent-rule, c-absent-ink], pattern_distinguished: true}
+  views:
+    coverage-matrix:
+      basis: 09 S4.4 (the density ramp is the only colour in the plot area) and S4.2 (d)
+      meanings: [coverage, absence, emphasis, link]
+    saturation-wall:
+      basis: 09 S4.2 (the warm headroom ramp on the Saturation Wall) and S4.3 (saturated = top headroom stop)
+      meanings: [headroom, absence, alert, caution, verification, disputed, emphasis, link]
+    atlas:
+      basis: 09 S4.2 (size, headroom fill, alert-coloured contaminated/retracted nodes, one emphasis)
+      meanings: [headroom, absence, alert, emphasis]
+    benchmark-detail:
+      basis: 09 S4.3 and S6 (verification badges, lifecycle chips, citations and links on one page)
+      meanings: [verification, disputed, headroom, absence, alert, caution, affirm, link, visited]
+    comparison-table:
+      basis: 09 S4.3 (rank-first sort with a badge on every number) and S4.2 (d) row emphasis
+      meanings: [verification, disputed, headroom, absence, alert, caution, affirm, link, visited, emphasis]
+  named_pairs:
+    - pair: [c-emphasis, c-link-visited]
+      basis: >
+        09 S4.5: emphasis at hue ~300 collides with --c-link-visited (violet ~300) at similar lightness,
+        so the pair is asserted explicitly. If it fails calibration, move emphasis to ~330 rather than
+        moving any ordered ramp.
