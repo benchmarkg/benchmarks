@@ -647,7 +647,16 @@ class Rejection(Closed):
     value: Union[str, int, float, dict, None] = None
     claimed: Text | None = None
     reason: Text
-    stage: Literal['vet', 'snapshot']
+    stage: Literal['schema', 'vet', 'snapshot']
+
+
+class InjectionSpan(Closed):
+    """Instruction-shaped text the copilot cut from the source before any drafter saw it (P1-S2-T03;
+    11 S G2). `rule` names the pattern that matched; `text` is the span, capped, kept so the reviewer
+    can see what was removed and judge a false positive (a paper ABOUT prompt injection quotes such
+    sentences as examples). It is not named `quote`: it is never evidence."""
+    rule: Text
+    text: Text
 
 
 class Provenance(Closed):
@@ -656,7 +665,9 @@ class Provenance(Closed):
     (tools/copilot/draft.py); the last three are the human gate, and `fields_verified` is what the
     public UI publishes ("Human-checked: licence, size; auto-drafted: description"). `fields` is the
     per-field evidence the reviewer ticks against; `rejected` the values code refused, with the quote
-    each claimed and why it failed; `injection_flag` is the model's report that the
+    each claimed and why it failed; `schema_violations` the parts of the drafter's answer that did not
+    fit the output schema and were ignored; `injection_spans` the instruction-shaped text code cut
+    from the source before drafting; `injection_flag` is the model's report that the
     source held text addressed to an AI system (11 S G2), which is flagged, never obeyed."""
     drafted_by: Text
     drafted_on: date
@@ -667,6 +678,8 @@ class Provenance(Closed):
     fields_verified: list[Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')]] = Field(default_factory=list)
     fields: list[FieldEvidence] = Field(default_factory=list)
     rejected: list[Rejection] = Field(default_factory=list)
+    schema_violations: list[Text] = Field(default_factory=list)
+    injection_spans: list[InjectionSpan] = Field(default_factory=list)
     injection_flag: bool | None = None
     injection_note: Text | None = None
 

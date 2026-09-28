@@ -1819,7 +1819,9 @@ export interface PersonalDataExcluded {
  * (tools/copilot/draft.py); the last three are the human gate, and `fields_verified` is what the
  * public UI publishes ("Human-checked: licence, size; auto-drafted: description"). `fields` is the
  * per-field evidence the reviewer ticks against; `rejected` the values code refused, with the quote
- * each claimed and why it failed; `injection_flag` is the model's report that the
+ * each claimed and why it failed; `schema_violations` the parts of the drafter's answer that did not
+ * fit the output schema and were ignored; `injection_spans` the instruction-shaped text code cut
+ * from the source before drafting; `injection_flag` is the model's report that the
  * source held text addressed to an AI system (11 S G2), which is flagged, never obeyed.
  */
 export interface Provenance {
@@ -1835,6 +1837,8 @@ export interface Provenance {
   fields_verified?: string[];
   fields?: FieldEvidence[];
   rejected?: Rejection[];
+  schema_violations?: string[];
+  injection_spans?: InjectionSpan[];
   injection_flag?: boolean | null;
   injection_note?: string | null;
 }
@@ -1873,5 +1877,15 @@ export interface Rejection {
     | null;
   claimed?: string | null;
   reason: string;
-  stage: "vet" | "snapshot";
+  stage: "schema" | "vet" | "snapshot";
+}
+/**
+ * Instruction-shaped text the copilot cut from the source before any drafter saw it (P1-S2-T03;
+ * 11 S G2). `rule` names the pattern that matched; `text` is the span, capped, kept so the reviewer
+ * can see what was removed and judge a false positive (a paper ABOUT prompt injection quotes such
+ * sentences as examples). It is not named `quote`: it is never evidence.
+ */
+export interface InjectionSpan {
+  rule: string;
+  text: string;
 }
