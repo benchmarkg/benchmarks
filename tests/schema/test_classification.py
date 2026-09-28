@@ -1,8 +1,9 @@
 """schema/classification.py and tools/validate/classifications.py: the Stage-3 records (P1-S1-T03; 03 S3.3).
 
-The task's VERIFY: `bench validate taxonomy/_corpus/classifications/ --tier all` over at least 30
-records. DONE WHEN: "30 classification records validate and every abstention has a matching failure
-record". Each rule below is shown failing its own case, and the committed records are shown passing.
+The tasks' VERIFY: `bench validate taxonomy/_corpus/classifications/ --tier all` over at least 30
+records (P1-S1-T03), then 60 (P1-S1-T04). DONE WHEN: "30 classification records validate and every
+abstention has a matching failure record", then "60 classification records validate in total". Each
+rule below is shown failing its own case, and the committed records are shown passing.
 """
 import copy
 import glob
@@ -195,7 +196,7 @@ def test_a_record_file_is_named_for_its_id(tmp_path):
 
 def test_the_committed_records_validate_and_every_abstention_is_logged():
     files = sorted(glob.glob(os.path.join(CLS, '*.yaml')))
-    assert len(files) >= 30
+    assert len(files) >= 60
     report = tiers.run(ROOT, 'all', paths=['taxonomy/_corpus/classifications', 'taxonomy/_failures'])
     assert [str(f) for f in report.blocking] == []
     fails = {os.path.basename(p)[:-5] for p in glob.glob(os.path.join(FAILS, '*.yaml'))}
@@ -207,9 +208,9 @@ def test_the_committed_records_validate_and_every_abstention_is_logged():
             assert any(f == field and fid in fails for f, fid in m.failures()), (m.id, field)
 
 
-def test_the_committed_records_are_items_1_to_30():
+def test_the_committed_records_are_items_1_to_60_in_corpus_order():
     items = sorted(read_yaml(p)['corpus_item'] for p in glob.glob(os.path.join(CLS, '*.yaml')))
-    assert items[:30] == list(range(1, 31))
+    assert items[:60] == list(range(1, 61))
 
 
 def test_a_proposed_term_is_not_read_as_an_entity_reference(tmp_path):
