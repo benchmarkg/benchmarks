@@ -37,7 +37,7 @@ class FakeResolver:
         self.requests += 1
         self.asked.append(url)
         r = self.answers.get(url, OK)  # get-default: an unlisted URL is a live one
-        return Response(r.status, r.final or url, r.redirects, r.error)
+        return Response(r.status, r.final or url, r.redirects, r.error, r.body, r.content_type, r.complete)
 
 
 class FakeWayback:
@@ -306,8 +306,33 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._reply(503 if Handler.flaky['n'] == 1 else 200)
         elif self.path == '/norange':
             self._reply(416 if self.headers.get('Range') else 200)
+        elif self.path in PAGES:
+            self._reply(200, {'Content-Type': 'text/html; charset=utf-8'}, PAGES[self.path])
+        elif self.path == '/big':                   # honours the Range, so the head is all a ranged GET sees
+            if self.headers.get('Range'):
+                self._reply(206, {'Content-Type': 'text/html', 'Content-Range': 'bytes 0-32767/%d' % len(BIG)},
+                            BIG[:32768])
+            else:
+                self._reply(200, {'Content-Type': 'text/html'}, BIG)
         else:
             self._reply(404)
+
+
+SHELL = (b'<!doctype html><html><head><title>App</title><script type="module" src="/a.js"></script>'
+         b'<script>' + b'var x=1;' * 400 + b'</script></head><body><div id="root"></div></body></html>')
+PAGE = (b'<!doctype html><html><head><title>A benchmark</title></head><body><header><a href="/">Home</a>'
+        b'</header><main><p>' + b'This benchmark measures something real, and says so at length. ' * 40 +
+        b'</p></main></body></html>')
+PAGES = {
+    '/page': PAGE,
+    '/shell': SHELL,
+    '/tiny': b'<html><body><p>Coming soon</p></body></html>',
+    '/soft404': PAGE.replace(b'<title>A benchmark</title>', b'<title>Page Not Found</title>'),
+    '/refresh': b'<html><head><meta http-equiv="refresh" content="0; URL=\'/page\'" /></head><body></body></html>',
+    '/splash': b'<html><head><meta http-equiv="refresh" content="0; url=/tiny"></head></html>',
+}
+BIG = (b'<html><head><title>Big</title></head><body><div>' + b'<span>short</span>' * 2500 + b'<p>' +
+       b'long enough text for a real page ' * 20 + b'</p></div><div>and a second root</div></body></html>')
 
 
 @pytest.fixture(scope='module')
@@ -346,3 +371,100 @@ def test_the_resolver_reports_a_refused_connection(server):
     s.close()
     r = links.Resolver(timeout=5, spacing=0, retry_after=0).get('http://127.0.0.1:%d/' % port)
     assert r.status is None and r.error and links.classify('http://127.0.0.1/', r)[0] == 'dead'
+
+
+# ---- the soft-404 heuristics (P1-S1-T02; 06 S7.2) ------------------------------------------------
+
+def html(body, complete=True, status=200, ctype='text/html'):
+    return Response(status, 'https://a.example.org/', body=body, content_type=ctype, complete=complete)
+
+
+@pytest.mark.parametrize('response, expect', [
+    (html(PAGE), 'ok'),
+    (html(SHELL), 'suspect'),                                             # a single root div, no text
+    (html(b'<html><body><p>Coming soon</p></body></html>'), 'suspect'),   # under 2,048 bytes stripped
+    (html(PAGE.replace(b'A benchmark', b'404 - Not Found')), 'suspect'),  # the title says so
+    (html(PAGE.replace(b'A benchmark', b'Error 404')), 'suspect'),
+    (html(PAGE.replace(b'A benchmark', b'[2404.07917] DesignQA')), 'ok'),  # an arXiv id is not a 404
+    (html(b'{"data": []}', ctype='application/json'), 'ok'),              # not a page: not judged
+    (html(b'%PDF-1.7 ...', ctype='application/pdf'), 'ok'),
+    (html(b'<p>tiny</p>', ctype=None), 'suspect'),                        # no Content-Type, but markup
+    (html(SHELL[:3000], complete=False), 'undecided'),                    # the head alone cannot tell
+    (html(PAGE[:3000], complete=False), 'ok'),                            # it can here: long text seen
+    (Response(200, ''), 'ok'),                                            # no body kept: nothing to judge
+])
+def test_soft404(response, expect):
+    assert links.soft404(response)[0] == expect
+
+
+def test_a_page_with_several_root_elements_and_short_text_is_not_a_shell():
+    body = b'<html><body><nav>' + b'<a>x</a>' * 400 + b'</nav><main><h1>Title</h1></main></body></html>'
+    assert links.soft404(html(body)) == ('ok', None)
+
+
+def test_a_suspect_page_is_never_live_and_fails_the_run(corpus):
+    report, _, _ = go(corpus, FakeResolver({'https://bench.example.org/': html(SHELL)}))
+    assert cls(report, 'https://bench.example.org/') == 'suspect'
+    assert report['counts']['suspect'] == 1 and report['exit_code'] == 1
+    assert 'SPA shell' in [r for r in report['links'] if r['class'] == 'suspect'][0]['detail']
+
+
+def test_a_suspect_page_is_not_cached(corpus):
+    answers = {'https://bench.example.org/': html(SHELL)}
+    go(corpus, FakeResolver(answers))
+    _, second, _ = go(corpus, FakeResolver(answers))
+    assert 'https://bench.example.org/' in second.asked
+
+
+def test_a_verdict_cached_before_the_heuristics_is_checked_again(corpus):
+    cache = corpus.parent / 'links.json'
+    cache.write_text(json.dumps({'version': 1, 'captures': {}, 'resolved': {
+        'https://bench.example.org/': {'class': 'live', 'detail': 'HTTP 200', 'status': 200,
+                                       'final': 'https://bench.example.org/', 'at': '2026-09-25T00:00:00Z'}}}))
+    report, resolver, _ = go(corpus, FakeResolver({'https://bench.example.org/': html(SHELL)}))
+    assert 'https://bench.example.org/' in resolver.asked
+    assert cls(report, 'https://bench.example.org/') == 'suspect'
+    go(corpus)                                          # live now, and stamped with the heuristics
+    _, third, _ = go(corpus)
+    assert 'https://bench.example.org/' not in third.asked
+
+
+@pytest.mark.parametrize('path, expect, hops', [
+    ('/page', 'live', 0),
+    ('/shell', 'suspect', 0),
+    ('/tiny', 'suspect', 0),
+    ('/soft404', 'suspect', 0),
+    ('/refresh', 'redirected', 1),                   # a meta refresh is a redirect done in markup
+    ('/splash', 'suspect', 1),                       # and where it lands is judged like any page
+    ('/big', 'live', 0),                             # the ranged head cannot tell, so the page is fetched whole
+])
+def test_the_resolver_applies_the_heuristics_to_what_the_server_sends(server, path, expect, hops):
+    Handler.seen.clear()
+    r = links.Resolver(timeout=5, spacing=0, retry_after=0).get(server + path)
+    assert links.classify(server + path, r)[0] == expect and len(r.redirects) == hops
+    assert all(method == 'GET' for method, _, _ in Handler.seen)
+    if path == '/big':
+        assert [rng for _, p, rng in Handler.seen if p == '/big'] == [links.RANGE, None]
+
+
+# ---- PATH: files outside data/ (P1-S1-T02's `bench check-links taxonomy/_corpus/stress-corpus.yaml`) ----
+
+def test_paths_check_the_named_files_instead_of_data(corpus):
+    write(corpus, 'taxonomy/_corpus/some-corpus.yaml', {'entries': [
+        {'id': 'x', 'url': 'https://x.example.org/', 'primary_paper': {'url': 'https://arxiv.org/abs/1'}}]})
+    report, resolver, _ = go(corpus, paths=['taxonomy/_corpus/some-corpus.yaml'])
+    assert report['files'] == 1
+    assert sorted(r['url'] for r in report['links']) == ['https://arxiv.org/abs/1', 'https://x.example.org/']
+    assert 'https://bench.example.org/' not in resolver.asked
+    dirs, _, _ = go(corpus, paths=['taxonomy'])
+    assert dirs['files'] == 1
+
+
+def test_the_cli_takes_a_path_and_refuses_a_missing_one(cli_env):
+    corpus, fakes = cli_env
+    write(corpus, 'taxonomy/_corpus/some-corpus.yaml', {'entries': [{'id': 'x', 'url': 'https://x.example.org/'}]})
+    fakes['resolver'].answers['https://x.example.org/'] = html(SHELL)
+    result = runner.invoke(cli.app, ['check-links', 'taxonomy/_corpus/some-corpus.yaml'])
+    assert result.exit_code == 1 and 'suspect' in result.output and '1 file(s)' in result.output
+    missing = runner.invoke(cli.app, ['check-links', 'taxonomy/nope.yaml'])
+    assert missing.exit_code == 2

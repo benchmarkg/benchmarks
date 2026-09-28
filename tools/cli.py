@@ -7,7 +7,7 @@
     uv run bench schema gen [--check]
     uv run bench build [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
-    uv run bench check-links [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
+    uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
@@ -240,6 +240,8 @@ class Format(str, Enum):
 
 @app.command('check-links')
 def check_links(
+    paths: Annotated[Optional[list[Path]], typer.Argument(
+        help='YAML files or directories to check, inside data/ or not (default: every file under data/).')] = None,
     changed_only: Annotated[bool, typer.Option(
         '--changed-only', help='Check only files changed against the merge base with origin/main.')] = False,
     archive_missing: Annotated[bool, typer.Option(
@@ -248,10 +250,15 @@ def check_links(
     timeout: Annotated[float, typer.Option('--timeout', help='Seconds per request.')] = 20,
     fmt_: Annotated[Format, typer.Option('--format', help='text or json.')] = Format.text,
 ):
-    """HTTP-check every url in data/, classify rot, and optionally queue archiving (05 S3, 06 S7)."""
+    """HTTP-check every url in data/ (or in PATH), classify rot, and optionally queue archiving (05 S3, 06 S7)."""
     from tools import links
-    report = links.run(ROOT, changed_only, archive_missing, resolver=links.default_resolver(timeout),
-                       wayback=links.default_wayback())
+    try:
+        named = [str(p) for p in paths] if paths else None
+        report = links.run(ROOT, changed_only, archive_missing, resolver=links.default_resolver(timeout),
+                           wayback=links.default_wayback(), paths=named)
+    except FileNotFoundError as e:
+        typer.echo('check-links: no such file or directory: %s' % e, err=True)
+        raise typer.Exit(2)
     typer.echo(links.as_json(report) if fmt_ is Format.json else links.text(report))
     raise typer.Exit(report['exit_code'])
 
