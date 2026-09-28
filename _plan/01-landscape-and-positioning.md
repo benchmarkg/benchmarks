@@ -37,8 +37,8 @@ premise survived so long unexamined.
 
 | Project | Launched | Scale | Access | Licence | Overlap band (§4) |
 | --- | --- | --- | --- | --- | --- |
-| **BenchmarkList** (benchmarklist.com) | 2026-07-15 | 2,545 benchmarks, 1,604 providers, 24,074 models | No API, no bulk download, no repository | **None stated** | **High** |
-| **Benchmark Radar** (benchmark-radar.org, arXiv 2609.11115) | 2026-09-10 | 14,810 raw records; ~1,283 curated source records, 12,916 numeric observations across 790 records | GitHub Pages, ZIP, HF dataset, RSS, CLI | Code MIT, **content CC BY-NC-SA 4.0** | **High** |
+| **BenchmarkList** (benchmarklist.com) | 2026-07-15 | 2,545 benchmarks, 1,604 providers, 24,074 models | No API, no bulk download, no repository | **None stated** | **Moderate** (measured, §4) |
+| **Benchmark Radar** (benchmark-radar.org, arXiv 2609.11115) | 2026-09-10 | 14,810 raw records; ~1,283 curated source records, 12,916 numeric observations across 790 records | GitHub Pages, ZIP, HF dataset, RSS, CLI | Code MIT, **content CC BY-NC-SA 4.0** | **Low to moderate** (measured, §4) |
 | **Every Eval Ever / EvalEval** (arXiv 2606.14516) | 2026-06-12 | 22,235 models, 2,273 benchmarks, 31 evaluation formats | HF `evaleval/EEE_datastore`, GitHub, `validate` CLI | **Data CC BY 4.0, code MIT** | **Complementary** |
 
 BenchmarkList is genuinely cross-domain -- verified entries include Open Catalyst OC22 (78 models,
@@ -509,8 +509,8 @@ retained below as a prior and labelled as such, and the operative column is the 
 
 | Service | Band | Analyst prior (2026-09-17, judgement not measurement) | What the band means here |
 | --- | --- | --- | --- |
-| BenchmarkList | **High** | ~75% | Same ambition, cross-domain, two months ahead. Assume most of our seed appears there in some form |
-| Benchmark Radar | **High** | ~70% | High on entity, low on field -- a discovery firehose with ~1,283 curated |
+| BenchmarkList | **Moderate** -- measured 24/50 = 48%, 95% interval 35-61% (2026-09-27, below) | ~75% | Same ambition, cross-domain, two months ahead. Roughly half our sampled seed is there; outside the Core families it is most of it |
+| Benchmark Radar | **Low to moderate** -- measured 13/50 = 26%, 95% interval 16-40% (2026-09-27, below) | ~70% | A discovery firehose whose benchmark catalogue (1,298 pages) is LLM-centric; in the Core families it carries almost nothing |
 | Every Eval Ever | **Complementary** | ~45% | Different entity type entirely; the intersection is benchmark *names*, not benchmark records |
 | Epoch AI | **Moderate** | ~40% on data model, 0% on scope | Restated as: high field overlap on the 81 benchmarks it carries, near-zero entity overlap outside language and agents |
 | Artificial Analysis | **Moderate** | ~35% | Entity overlap limited to the ~30 evals it runs |
@@ -524,6 +524,33 @@ retained below as a prior and labelled as such, and the operative column is the 
 **Scheduled as a Phase 0 task**: `scripts/overlap_sample.py` draws the 50 families, records each
 lookup as a URL and a boolean with a date, writes `data/_analysis/overlap-<service>-<date>.yaml`,
 and publishes the proportion with its 95% interval. Until that runs, this document prints bands.
+
+**Measured, 2026-09-27 (P0-S10-T01), for BenchmarkList and Benchmark Radar.** Both High bands
+were the analyst prior, and both were too high. The sample is 50 families drawn with seed 320 from a
+239-family frame and stratified by the §3 seed allocation of [02-taxonomy.md](02-taxonomy.md). The
+320-entry seed is an allocation, not a list, so the frame is the named field-defining families the
+repository already holds: the domain recon, Epoch's list for the five unsized LLM families, and the
+engineering-design survey. Each lookup went through the service's own search: BenchmarkList's public
+find-benchmarks operation and Benchmark Radar's benchmark-catalogue search. The rows, the frame hash
+and the method are in `data/_analysis/overlap-benchmarklist-2026-09.yaml` and
+`overlap-benchmark-radar-2026-09.yaml`.
+
+| Service | Present | Proportion, 95% Wilson interval | Seven Core families (23 drawn) | Other twelve (27 drawn) |
+| --- | --- | --- | --- | --- |
+| BenchmarkList | 24/50 | 48% (35-61%) | 7/23 = 30% (16-51%) | 17/27 = 63% (44-78%) |
+| Benchmark Radar | 13/50 | 26% (16-40%) | 2/23 = 9% (2-27%) | 11/27 = 41% (25-59%) |
+
+What this changes, and what it does not. Both prior point figures fall outside their measured
+intervals, so "assume most of our seed appears there" is withdrawn for both services. The
+split is the finding: in the seven Core families, Benchmark Radar carries almost none of the sample
+and BenchmarkList under a third. That is differentiator 1 (§1) measured instead of asserted. Outside
+the Core, BenchmarkList carries most of the sample, as the prior said. Radar's figure counts
+benchmark pages, not its 14,810-item discovery feed, which is items rather than entries. Field
+overlap (above) was not measured. **The figures are pending review.** A reviewer re-runs a seeded 10
+of the 50 and records the answers in each file's `review` block, and the run is void if any answer
+disagrees (`python scripts/overlap_sample.py --summary` then prints VOID in place of a proportion).
+One fact the recon of 2026-09-17 had wrong: BenchmarkList now publishes a read-only public API
+(`benchmarklist.com/llms.txt`, `/api/v1/`), so the "No API" in the §1 table is stale.
 The cost of getting this wrong is not academic: the overlap number is the single most quotable
 figure in the whole positioning, and a two-person project that publishes a fabricated 75% has
 handed every critic the only argument they need.
@@ -532,14 +559,17 @@ handed every critic the only argument they need.
 
 ## 5. Overlap analysis and precise boundaries
 
-Ranked by band and then by the analyst prior. Each boundary is stated operationally -- what we do
+Ranked by band and then by the analyst prior, except that BenchmarkList and Benchmark Radar keep
+the first two rows after the §4 measurement lowered their bands: they remain the two services
+with this project's own ambition, and the measurement bears on how much of the seed they carry,
+not on where the boundary with them lies. Each boundary is stated operationally -- what we do
 and what we explicitly do not do -- because "we are more comprehensive" is not a boundary, it is a
 slogan.
 
 | # | Service | Band | Boundary |
 | --- | --- | --- | --- |
-| 1 | **BenchmarkList** | High | They own a closed, daily-scraped cross-domain database with a cross-benchmark alignment index. We own the open one. Never compete on raw count; compete on **provenance, licence and forkability**: every field in our YAML carries `source_url`, `retrieved_at` and `verified_by`; the whole index is CC-BY at a commit hash with a DOI. We explicitly refuse the Rosetta Stone alignment -- that is the single-number ranking we reject, and it is the sharpest philosophical contrast available. We do not scrape them. |
-| 2 | **Benchmark Radar** | High | They own **discovery** -- 37 firehose sources, 14,810 raw records, daily. We own **curation** -- fewer entries, each hand-verified, each with structured eval conditions and a domain taxonomy. Their CC BY-NC-SA content licence blocks exactly the institutional adopters we need, so **we do not ingest their content** and CC-BY is the wedge. Cross-reference by URL at the benchmark level, subject to the extraction rule in §14. |
+| 1 | **BenchmarkList** | Moderate (measured, §4) | They own a closed, daily-scraped cross-domain database with a cross-benchmark alignment index. We own the open one. Never compete on raw count; compete on **provenance, licence and forkability**: every field in our YAML carries `source_url`, `retrieved_at` and `verified_by`; the whole index is CC-BY at a commit hash with a DOI. We explicitly refuse the Rosetta Stone alignment -- that is the single-number ranking we reject, and it is the sharpest philosophical contrast available. We do not scrape them. |
+| 2 | **Benchmark Radar** | Low to moderate (measured, §4) | They own **discovery** -- 37 firehose sources, 14,810 raw records, daily. We own **curation** -- fewer entries, each hand-verified, each with structured eval conditions and a domain taxonomy. Their CC BY-NC-SA content licence blocks exactly the institutional adopters we need, so **we do not ingest their content** and CC-BY is the wedge. Cross-reference by URL at the benchmark level, subject to the extraction rule in §14. |
 | 3 | **Every Eval Ever / EvalEval** | Complementary | **We own the benchmark entity; they own the result record.** We adopt their `eval.schema.json` field names for the conditions we share (`generation_args`, `agentic_eval_config.available_tools`, `sandbox`, `metric_config`) so a result validated against EEE joins our benchmark record on a stable ID, and we propose ourselves explicitly as the benchmark-registry counterpart to their result-registry. This is the highest-leverage single relationship in the landscape. |
 | 4 | **Epoch AI** | Moderate | They go deep on 81 language/agent benchmarks with their own runs; we go broad across every domain with zero runs. We **never re-derive their numbers** -- we ingest them under CC-BY with attribution, badged as machine-ingested. We cede authoritative frontier-LLM capability trends and ECI to Epoch and link out. We adopt and generalise their `superseded_by` column into a full lineage model. Positioning: *Epoch tells you how good models are on 81 frontier benchmarks; we tell you which several thousand benchmarks exist, in every field, and whether their numbers are comparable at all.* |
 | 5 | **Artificial Analysis** | Moderate | They run and sell evals; we catalogue and never run. Their terms require attribution at all tiers and bar redistribution without a commercial contract, so: **link and cite, never mirror**. Settled: **we take no API dependency on them at all** -- they are a `Leaderboard` entity with manually dated standings snapshots, which makes the conflicting free-tier rate limit (100 req/24h on one page, 1,000/day on another; UNVERIFIED) irrelevant rather than a thing to resolve. |
