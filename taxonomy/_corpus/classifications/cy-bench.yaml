@@ -3,7 +3,7 @@ id: cy-bench
 corpus_item: 58
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://essd.copernicus.org/articles/18/3997/2026/
   home: https://github.com/WUR-AI/AgML-CY-Bench
@@ -16,10 +16,12 @@ facets:
         crop growing countries and underrepresented countries of the world for maize and wheat.
   domain.secondary: []
   capability:
-    - value: null
+    - value: scientific-prediction
       source: home
       quote: By forecasting, we mean prediction is made ahead of harvest.
-      failure: 2026-09-28-cy-bench-001
+      note: Systems predict end-of-season crop yield, a state of an agricultural Earth system, from weather, soil and
+        vegetation measurements, scored against official yield statistics under leave-one-year-out validation
+        (ADR-0014). Every evaluated year's statistics exist, so this is not probabilistic-forecasting.
   evaluation_method:
     - value: statistical-fit
       source: paper
@@ -47,9 +49,18 @@ facets:
     - value: real-world-instrument
       source: paper
       quote: utilizing gap-filled and smoothed MODIS and VIIRS datasets
-      note: The satellite predictors (fPAR, NDVI) are instrument products. The weather predictors (AgERA5) and soil moisture
-        (GLDAS) are reanalysis and land-surface-model products.
-      failure: 2026-09-28-cy-bench-002
+      note: The satellite predictors (fPAR, NDVI) are instrument products.
+    - value: simulation-generated
+      source: paper
+      quote: AgERA5 offers agrometeorological indicators from 1979 to the present, derived from ERA5 reanalysis
+      note: The weather predictors (AgERA5) and soil moisture (GLDAS, a land data assimilation system) are
+        observation-constrained model products, which 0.9.0 records as this term beside real-world-instrument.
+    - value: curated-public-database
+      source: paper
+      quote: Crop yield statistics for sub-national administrative levels are obtained from national statistics offices
+        or regional agencies
+      note: The yield targets are official statistics, some through curated harmonisations (the term's own cy-bench
+        example).
   data.contamination_risk:
     - value: medium
       source: paper
@@ -58,32 +69,42 @@ facets:
       note: Leave-one-year-out validation is designed against spatial-temporal leakage within a split. The yield statistics
         themselves are public national records. No contamination evidence is reported.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: The paper says the benchmark is meant "to support comparative evaluation of modeling approaches ... rather than
-        to define an upper bound on achievable yield prediction accuracy", and it notes that no protocol exists for the
-        uncertainty of the reported yields themselves.
+    - value: theoretical-maximum
+      source: paper
+      quote: 'Our library computes the following evaluation metrics: normalized root mean squared error (NRMSE; i.e., the
+        root mean squared error normalized by the average yield of the test set), mean absolute percentage error (MAPE),
+        and R-squared (R2).'
+      note: NRMSE and MAPE are bounded at zero error and R2 at 1, and no measured anchor is published; the paper says it
+        does not "define an upper bound on achievable yield prediction accuracy". 0.9.0's none-known exclusion sends a
+        bounded metric with no measured anchor here.
   lifecycle:
-    - value: null
+    - value: proposed
       source: paper
       quote: While these results are only illustrative, a full comparison of methods, including systematic benchmarking
         and analysis of findings relative to existing datasets will be addressed in a dedicated follow-up study.
-      failure: 2026-09-28-cy-bench-003
+      note: The only results are the maintainers' illustrative release baselines, and the maintainers say systematic
+        benchmarking has not begun and the leaderboard is not yet built, which 0.9.0's active exclusion calls proposed.
   activity:
-    - value: leaderboard-live-no-round
+    - value: accepting-submissions
       source: contributing
       quote: When you have such models tested and ready to be included in CY-Bench, we would appreciate your contributions.
-      note: The README's leaderboard is the maintainers' baseline tables, and the contributing guide says "We are still
-        working on putting the leaderboard in GitHub."
+      note: The contribution route is open now and CY-Bench has never run in rounds, so 0.9.0's leaderboard-live-no-round
+        exclusion sends it here. The contributing guide also says "We are still working on putting the leaderboard in
+        GitHub."
   governance.maintainer_type:
     - value: academic-lab
       source: paper
       quote: Artificial Intelligence Group, Wageningen University and Research
-      failure: 2026-09-28-cy-bench-004
+      note: The repository sits in the WUR-AI organisation, and project administration, software and funding are at
+        Wageningen's AI group, although the AgML community conceived the benchmark. 0.9.0's holder rule gives
+        academic-lab (the term's own cy-bench example).
   governance.submission_process:
-    - value: null
+    - value: maintainer-verified
       source: contributing
-      quote: After your model runs and produces results, please send an email to AgML list email
-      failure: 2026-09-28-cy-bench-005
+      quote: When you have finished making changes, create a pull request and request review from at least one reviewer.
+      note: A contributor sends model code with self-computed results ('After your model runs and produces results,
+        please send an email to AgML list email'), and code pull requests are reviewed. Whether the maintainers re-run
+        is unstated, so the stated review decides (the term's own cy-bench example).
   governance.independence_flags:
     - value: no-known-conflict
       source: paper
@@ -94,8 +115,9 @@ facets:
     - value: single-gpu
       source: home
       quote: If run sequentially in a single capable GPU, the whole benchmark should take 50-60 hours to complete.
-      note: The reference environment lists 256GB RAM and 2TB disk; the maintainers ran countries in parallel on a GPU
-        cluster.
+      note: The protocol fits each entrant per country and crop under leave-one-year-out validation, so fitting is part
+        of producing the score. The reference environment lists 256GB RAM and 2TB disk; the maintainers ran countries in
+        parallel on a GPU cluster.
   execution.reproducibility_tier:
     - value: fully-automatable
       source: paper
@@ -109,3 +131,12 @@ facets:
 notes: The ESSD article (published 11 Jun 2026, corpus flag) and the GitHub README are the primary sources, with the
   contributing guide for the submission route. The paper names cybench.agml.org as an overview page, which was not
   fetched.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [capability, data.data_provenance, data.ceiling_anchor_type, lifecycle, activity, governance.maintainer_type, governance.submission_process]
+    note: Re-adjudicated against 0.9.0; scientific-prediction, curated-public-database and the revised proposed,
+          holder and maintainer-verified tests settle all five Stage 3 failures, including the blocking capability
+          record. The reanalysis predictors add simulation-generated, the ceiling moves to theoretical-maximum and
+          activity to accepting-submissions.

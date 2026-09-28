@@ -3,7 +3,7 @@ id: holistic-agent-leaderboard-hal
 corpus_item: 47
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2510.11977
   abs: https://arxiv.org/abs/2510.11977
@@ -11,11 +11,12 @@ sources:
   repo: https://github.com/princeton-pli/hal-harness
 facets:
   domain.primary:
-    - value: null
+    - value: agents-tooluse/agent-evaluation-suites
       source: abs
       quote: We validate the harness by conducting 21,730 agent rollouts across 9 models and 9 benchmarks in coding,
         web navigation, science, and customer service
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-001
+      note: Nine separate boards, no aggregate, every one scoring what an agent achieved, and no one subdomain holds
+        most of them (ADR-0016; the term's own example). The subdomains the boards fall in are secondary.
   domain.secondary:
     - value: agents-tooluse/web-navigation
       source: home
@@ -36,7 +37,7 @@ facets:
     - value: null
       source: home
       quote: The standardized, cost-aware, and third-party leaderboard for evaluating agents.
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-002
+      failure: 2026-09-28-holistic-agent-leaderboard-hal-010
   evaluation_method:
     - value: execution-tests
       source: paper
@@ -44,13 +45,18 @@ facets:
       note: HAL runs each constituent benchmark's own scorer, so its methods are inherited. This quote is USACO.
         SWE-bench Verified Mini and SciCode are also scored by tests. The other constituents' scorers are not
         described in the fetched sources. HAL adds a cost axis and a Pareto frontier
-        to every board (failure 002).
+        to every board, which ADR-0020 records in the benchmark field secondary_axes, not in a method.
   designed_for_subjects:
     - value: agent-scaffold
       source: paper
       quote: This contract supports both task-specific scaffolds (which may operate within benchmark-defined
         environments) and generalist scaffolds that can be run across benchmarks.
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-003
+      note: For rows whose scaffold is the entrant's own (Browser-Use, SWE-Agent, SeeAct).
+    - value: model-in-benchmark-harness
+      source: paper
+      quote: The HAL Generalist Agent is built on top of smolagents CodeAgent with a LiteLLMModel backend.
+      note: The maintainers' neutral scaffold runs every model it evaluates with the same loop, tools and 200-step
+        limit, so those rows vary only the model.
     - value: full-product-pipeline
       source: home
       quote: Running Opus 4.5 with an updated scaffold that uses Claude Code drastically outperforms the CORE-Agent
@@ -67,8 +73,11 @@ facets:
     - value: null
       failure: 2026-09-28-holistic-agent-leaderboard-hal-004
   data.data_provenance:
-    - value: null
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-005
+    - value: inherited-from-constituents
+      source: paper
+      quote: Benchmarks specify task data, any required files or runtime constraints, and the scoring procedure.
+      note: HAL authors no items; every task is a constituent benchmark's, whose own paper documents its provenance
+        (the term's own example).
   data.contamination_risk:
     - value: medium
       source: home
@@ -76,10 +85,12 @@ facets:
       note: The constituents are public sets, and the paper documents agents "searching for the benchmark on
         HuggingFace instead of solving a task". That is answer lookup at run time, not a training route.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: HAL states no ceiling of its own, and each board inherits its constituent's scale. The home page
-        declares one board solved by manual rescoring ("We have now declared CORE-Bench solved"), which is not an
-        anchor.
+    - value: theoretical-maximum
+      source: home
+      quote: We have now declared CORE-Bench solved.
+      note: Every board ranks by task accuracy, bounded at 100%, and HAL's sources publish no human or measured
+        ceiling, so 0.9.0's none-known exclusion sends a bounded metric with no measured anchor here. Constituents'
+        own human baselines live in their own sources and would go to ceiling_by_category.
   lifecycle:
     - value: null
       source: repo
@@ -89,16 +100,23 @@ facets:
     - value: closed
       source: repo
       quote: HAL is no longer accepting new result submissions through this harness.
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-007
+      note: The maintainers call it a pause with no reopening date ('We will have more to share soon'), which
+        closed's 0.9.0 tests cover, with HAL as the example.
   governance.maintainer_type:
     - value: academic-lab
       source: home
       quote: By the SAgE team at Princeton University
   governance.submission_process:
-    - value: null
+    - value: maintainer-run
+      source: paper
+      quote: We conduct 21,730 agent rollouts spanning 9 benchmarks and 9 models, costing about $40,000 in compute
+      note: Most rows are the maintainers' own runs of models and scaffolds they chose.
+    - value: self-reported
       source: repo
       quote: Simple upload of agent traces to HuggingFace Hub via `hal-upload` CLI
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-008
+      note: Outside developers ran the harness themselves, uploaded the encrypted traces and opened a pull request
+        ('Active PRs for new leaderboard results are being retired'). No source states a check of those results;
+        the one stated manual rescoring is of the CORE-Bench board as a whole.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
@@ -107,7 +125,7 @@ facets:
     - value: funded-by-evaluated-party
       source: home
       quote: We are grateful to OpenAI and Google for providing API credits to evaluate their models.
-      failure: 2026-09-28-holistic-agent-leaderboard-hal-009
+      note: In-kind API credits from evaluated parties count as funding under 0.9.0 (the term's own example).
   execution.compute_tier:
     - value: api-credits-only
       source: abs
@@ -119,6 +137,9 @@ facets:
       source: repo
       quote: This repository provides a standardized evaluation harness for reproducible agent evaluations across
         various benchmarks.
+      note: A fresh run needs no human, physical or maintainer-only step, so the precedence rule gives this tier plus
+        live-world-state for the live-web boards; the tier's own exclusion forbids that pairing (failure 011).
+      failure: 2026-09-28-holistic-agent-leaderboard-hal-011
   execution.reproducibility_blockers:
     - value: live-world-state
       source: paper
@@ -135,5 +156,15 @@ notes: 'The corpus flags HAL as a meta-leaderboard that aggregates other benchma
   50-task subset in the swe-bench-verified family, and TAU-bench Airline is in the tau-bench family of corpus
   entry bench. The paper notes it uses "the original TAU-bench, though the newer τ2 Bench" exists. HAL adds a
   standard harness, cost accounting and log analysis, not tasks. Its results are third-party re-evaluations of
-  those families, and the record classifies what HAL itself contributes. It inherits the rest (failures 001 and
-  005).'
+  those families, and the record classifies what HAL itself contributes. It inherits the rest, which 0.9.0
+  expresses as agents-tooluse/agent-evaluation-suites and inherited-from-constituents (ADR-0016, ADR-0020).'
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, capability, designed_for_subjects, data.data_provenance, data.ceiling_anchor_type, activity, governance.submission_process, governance.independence_flags, execution.reproducibility_tier]
+    note: Re-adjudicated against 0.9.0; agent-evaluation-suites, inherited-from-constituents, model-in-benchmark-
+          harness, maintainer-run and the clarified closed and funded-by-evaluated-party tests settle seven Stage 3
+          failures. Capability abstains on a new source-silent record, the ceiling moves to theoretical-maximum
+          under none-known's revised exclusion, lifecycle stays open (paused is deferred), and the tier carries the
+          blocker/tier contradiction as a new failure.

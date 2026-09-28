@@ -3,7 +3,7 @@ id: agentharm
 corpus_item: 67
 curator: agent (P1-S1-T05)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2410.09024
   abs: https://arxiv.org/abs/2410.09024
@@ -36,28 +36,46 @@ facets:
       quote: if a function that sends money is called with the right credit card number
       note: The harm score checks whether the right tools were called with the right arguments.
   evaluation_method:
-    - value: rubric-graded
+    - value: environment-state-check
       source: paper
       quote: the harm score is computed according to a grading rubric that consists of multiple manually written
         conditions, where only some of them involve an LLM to judge the semantics of a specific part of an output
-      failure: 2026-09-28-agentharm-003
+      note: Most conditions are programmatic checks on the tool calls the agent issued ('if a function that sends money
+        is called with the right credit card number'), with partial credit when some pass, which 0.9.0's environment-state-check
+        admits (agentharm is one of its seven records). rubric-graded is dropped by its exclusion for programmatic assertions.
+    - value: adversarial-red-team
+      source: abs
+      quote: simple universal jailbreak templates can be adapted to effectively jailbreak agents
+      note: The main results report the harm score under a forced tool call and a template attack beside the no-attack
+        condition ('Stronger attacks raise harm scores'); the checked state is the attacker's goal, which environment-state-check's
+        inclusion test pairs with this term.
     - value: model-graded-judge
       source: home
       quote: The default MODEL_SEMANTIC_JUDGE used for detecting refusals and as a semantic judge for grading specific
         parts of agents' outputs is gpt-4o-2024-08-06
       note: 'Judge model and version: gpt-4o-2024-08-06, for the refusal judge and for the semantic sub-criteria.'
   designed_for_subjects:
-    - value: null
+    - value: model-in-benchmark-harness
       source: paper
       quote: We use synthetic tools for all tasks, implemented using Inspect
-      failure: 2026-09-28-agentharm-004
-  data.access:
-    - value: fully-open
+      note: Every reported run is a provider model inside AgentHarm's own Inspect agent loop and tools, varied only by
+        the attack; the harness and its version belong in the conditions.
+    - value: attack-or-intervention-method
       source: abs
-      quote: we publicly release AgentHarm
-      note: The released splits download without registration, under an MIT licence with a clause restricting use
-        to safety and security work. Part of the scored material is withheld (failure 001).
-      failure: 2026-09-28-agentharm-001
+      quote: To enable simple and reliable evaluation of attacks and defenses for LLM-based agents
+      note: Runs of the same models vary the attack (none, a forced tool call, a jailbreak template), so attacks and defences
+        are ranked by their effect on the target agents (agentharm is the term's example).
+  data.access:
+    - value: private-test-server
+      source: home
+      quote: 'Note: At the moment, we release 44 out of 66 public test base behaviors (176 augmented ones) and 8 out of
+        11 validation base behaviors (32 augmented ones).'
+      note: The paper's headline results are on the full public test set, of which the released copy is a subset, and
+        the private split ('30% of the tasks withheld') is evaluated 'on our own deployment of frontier LLMs on Azure'.
+        The headline cannot be computed from downloadable data, so the released sample does not make it fully-open (0.9.0
+        headline and public-sample rules). restricted-dual-use is not tagged, because the only stated reason for withholding
+        is contamination, not misuse risk. The released splits download without registration, under an MIT licence with
+        a clause restricting use to safety and security work.
   data.refresh:
     - value: null
       source: home
@@ -76,31 +94,50 @@ facets:
         "AgentHarm is not contaminated" rests on the 30% private split, which third parties cannot score. No evidence
         of contamination of the public splits is reported.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: No human or oracle score is reported, and "perfectly successful runs may sometimes score less than 100%".
-        A lower harm score is safer, and the benign variant's score serves only as a per-model capability reference.
+    - value: theoretical-maximum
+      source: paper
+      quote: the inherent open-endedness of certain grading criteria means that perfectly successful runs may sometimes
+        score less than 100%.
+      note: The harm score and the refusal rate are percentages, bounded at both ends, and no human, oracle or system
+        ceiling is reported. The safe optimum is a harm score of 0% (full refusal), which is the metric's own bound; the
+        benign variant's score is only a per-model capability reference. 0.9.0 excludes none-known for a metric with a
+        defined bound at its optimum.
   lifecycle:
     - value: null
       failure: 2026-09-28-agentharm-005
   activity:
-    - value: null
-      failure: 2026-09-28-agentharm-006
+    - value: no-submission-channel
+      source: home
+      quote: 'Note: This dataset is to be loaded using the codebase in Inspect Evals.'
+      note: A download-and-run benchmark with no leaderboard, server or submission route; the dataset card offers setup,
+        run commands and 'inspect view' for logs, and the private split is reserved for the maintainers' own evaluations.
   governance.maintainer_type:
     - value: government-agency
       source: home
       quote: Follow UK AI Security Institute
       note: The dataset sits in the UK AI Security Institute's Hugging Face organisation, and its codebase is the
-        Inspect Evals implementation, maintained there by a UK AISI account.
-      failure: 2026-09-28-agentharm-007
+        Inspect Evals implementation, maintained there by a UK AISI account. The holder decides, not the authors' employer
+        (nine of fourteen authors are at Gray Swan AI); agentharm is the example on government-agency.
   governance.submission_process:
-    - value: null
-      failure: 2026-09-28-agentharm-008
+    - value: literature-only
+      source: paper
+      quote: We plan to use these tasks to evaluate new models that can be run without server-side logging.
+      note: The only maintainer results are the release paper's, no ranking or results table is kept, and the dataset
+        card carries no results; third parties run the Inspect Evals implementation and report in their own work. The
+        planned private-split evaluations have not produced a kept ranking on any fetched page, so maintainer-run is
+        not tagged.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
       quote: We use the rule-based jailbreak template from Andriushchenko et al. (2025)
       note: The template attack is the first author's own method, adapted for agents, and it is the attack the main
         results evaluate.
+    - value: grader-from-evaluated-party
+      source: home
+      quote: The default MODEL_SEMANTIC_JUDGE used for detecting refusals and as a semantic judge for grading specific
+        parts of agents' outputs is gpt-4o-2024-08-06
+      note: The refusal judge and the semantic sub-criteria are graded by OpenAI's GPT-4o, and GPT-4o is among the evaluated
+        agents (Table 9 reports it with and without the template attack).
   execution.compute_tier:
     - value: api-credits-only
       source: paper
@@ -108,12 +145,12 @@ facets:
         70%-90% input tokens)
       note: The paper prices a run at about $1-$4 for GPT-4o, plus under $0.5 of semantic-judge calls.
   execution.reproducibility_tier:
-    - value: fully-automatable
+    - value: not-independently-reproducible
       source: paper
-      quote: The main evaluations in this paper on the behaviors from the public test set take around 10 minutes to
-        run
-      note: This holds for the released splits. The paper's numbers themselves cannot be reproduced exactly, because
-        only 44 of the 66 public test base behaviors are released and the template attack is not published.
+      quote: evaluate it on our own deployment of frontier LLMs on Azure
+      note: The headline public-test results need the 22 unreleased base behaviors, and the private split is run only
+        by the maintainers, so part of the headline can be produced only by them (0.9.0 most-restrictive rule). A run on
+        the released splits is automatic ('take around 10 minutes to run'), but it is a sample, not the headline.
   execution.reproducibility_blockers:
     - value: private-test-set
       source: paper
@@ -131,6 +168,15 @@ notes: AgentHarm is one benchmark, with harmful, benign and chat-only subsets of
   lives inside Inspect Evals (corpus entry inspect-evals), and the dataset card says it "is to be loaded using the
   codebase in Inspect Evals". The corpus flags the partial release (44 of 66 public test base behaviors). The record
   classifies the benchmark as the paper defines it (440 behaviors in validation, public test and private test splits)
-  and marks where the release differs (failures 001 and 002). data.access is not restricted-dual-use. The paper gives
+  and marks where the release differs (the data.access note and failure 002). data.access is not restricted-dual-use. The paper gives
   contamination as the reason for the private split, and no source gives a reason for holding back part of the public
   split.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [evaluation_method, designed_for_subjects, data.access, data.ceiling_anchor_type, activity,
+      governance.maintainer_type, governance.submission_process, governance.independence_flags,
+      execution.reproducibility_tier]
+    note: Re-adjudicated against 0.9.0; the headline rule makes the access private-test-server and the tier
+      not-independently-reproducible, and the new method, subject, activity and submission terms fill the old gaps.
