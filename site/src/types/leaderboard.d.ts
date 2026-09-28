@@ -23,6 +23,10 @@ export interface Leaderboard {
         | "live-arena"
         | "physical-competition"
         | "publication-gated"
+        | "maintainer-run"
+        | "literature-only"
+        | "open-source-gated"
+        | "maintainer-scored-predictions"
       )
     | null;
   conditions?: string | null;

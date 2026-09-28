@@ -147,7 +147,7 @@ def test_the_vocabulary_is_read_at_import_time():
     from schema.taxonomy import load_taxonomy
     models, _ = load_taxonomy(os.path.join(ROOT, 'taxonomy'))
     assert set(bm.Capability.__args__) == {t.id for t in models['capabilities.yaml'].terms}
-    assert len(bm.DomainLeaf.__args__) == 204
+    assert len(bm.DomainLeaf.__args__) == sum(t.parent is not None for t in models['domains.yaml'].terms)
 
 
 @pytest.mark.parametrize('doc, what', [

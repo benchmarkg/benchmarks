@@ -7,8 +7,8 @@
 
 facet: capability
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   The underlying ability a benchmark is designed to isolate, independent of the domain it is
   situated in. Crossed with Domain, this facet produces the coverage matrix, which is why its
@@ -373,10 +373,17 @@ terms:
         qualifies: true
         why: >
           Grid transformations turn on spatial relations that are never stated.
-      - ref: geo-bench-2
+      - ref: balrog
         qualifies: true
         why: >
-          Geospatial questions whose answers depend on inferred spatial relations.
+          The source claims "advanced spatial reasoning", and every environment has a navigation
+          component whose progress depends on spatial relations the agent must infer.
+      - ref: geo-bench-2
+        qualifies: false
+        why: >
+          NEAR MISS. Geospatial throughout, but the tasks are classification, segmentation,
+          regression and detection scored on what is recovered from the imagery, which is
+          `perception`. No question turns on an inferred spatial relation.
       - ref: scannetpp
         qualifies: false
         why: >
@@ -467,7 +474,9 @@ terms:
       on the resulting physical behaviour.
     exclusion_test: >
       Do NOT tag this if the environment is symbolic with no body, and do NOT tag it where a
-      trajectory is produced open-loop and never executed.
+      trajectory is produced open-loop and never executed. Where the entrant supplies only a
+      planned trajectory and the benchmark's own fixed controller tracks it in a non-reactive
+      simulation, the scored object is the plan: tag `planning`, not this term.
     examples:
       - ref: humanoidbench
         qualifies: true
@@ -499,16 +508,23 @@ terms:
       Do NOT tag this if the task is recovering structure from a signal with no symbol to bind,
       and do NOT tag it for text-only reference resolution.
     examples:
-      - ref: osworld-2-0
+      - ref: dcase-2026
         qualifies: true
         why: >
-          Instructions name interface elements that must be located in live application state
-          before acting.
+          Task 6, audio moment retrieval, scores whether a text query was attached to the right
+          stretch of a long recording (recall at an IoU threshold).
       - ref: libero
-        qualifies: true
+        qualifies: false
         why: >
-          Language-conditioned manipulation in which the instruction's nouns must attach to
-          objects in the scene.
+          NEAR MISS. Language-conditioned manipulation, but the score is task success and the
+          sources never claim grounding; the instruction is only the task specification, encoded
+          by a pretrained text model.
+      - ref: osworld-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. Instructions name interface elements in live application state, but no
+          source claims grounding, and the abstract places agent failure elsewhere, "rather than
+          stumbling on basic GUI control".
       - ref: coco
         qualifies: false
         why: >
@@ -531,11 +547,14 @@ terms:
       sequence.
     inclusion_test: >
       Tag this if the benchmark scores the plan -- its validity, cost or optimality -- whether
-      or not it is then executed.
+      or not it is then executed. In an interactive episode against an explicit goal or
+      objective, such as a game or puzzle environment, the executed action sequence is the plan,
+      and its cost or its outcome counts as scoring it, provided the source claims planning.
     exclusion_test: >
-      Do NOT tag this if the score depends on what a rollout achieved rather than on the plan
-      itself, and do NOT tag it where the sequence is produced in one generation with no goal
-      state to satisfy.
+      Do NOT tag this if the score is the quality of an artifact the rollout produced -- a
+      patch, a document, a final answer -- rather than of the action sequence itself, and do
+      NOT tag it where the sequence is produced in one generation with no goal state to
+      satisfy.
     examples:
       - ref: planbench
         qualifies: true
@@ -544,12 +563,19 @@ terms:
       - ref: kaggle-game-arena
         qualifies: true
         why: >
-          Move selection under an explicit objective, scored by outcome against opponents.
+          The platform claims "strategic reasoning, long-term planning", and each game is an
+          interactive episode against an explicit objective, so the move sequence is the plan
+          and the result against opponents scores it.
+      - ref: navsim-v2
+        qualifies: true
+        why: >
+          The entrant outputs a trajectory that the benchmark's own controller tracks in a
+          non-reactive simulation, so the scored object is the planned trajectory.
       - ref: swe-bench-verified
         qualifies: false
         why: >
           NEAR MISS. Solving an issue requires a plan, but the score is whether the tests pass
-          after the patch, which measures the rollout, not the plan.
+          on the resulting patch, which judges the artifact, not the action sequence.
     see_also: [search-exploration, long-horizon-execution]
     not_to_be_confused_with:
       - term: long-horizon-execution
@@ -569,7 +595,9 @@ terms:
       generated itself earlier in the episode.
     inclusion_test: >
       Tag this if a single scored episode contains at least ~10 dependent actions AND failure at
-      an intermediate step makes the final score unattainable.
+      an intermediate step makes full success on the episode unattainable. Partial credit for
+      progress does not disqualify a benchmark: the test is whether full success can still be
+      reached after the error, not whether the score falls to zero.
     exclusion_test: >
       Do NOT tag this if the benchmark is scored per-item on independent items, however many
       items there are, or if the long sequence is produced in one generation without any
@@ -578,13 +606,19 @@ terms:
       - ref: osworld-2-0
         qualifies: true
         why: >
-          A single GUI task runs for dozens of interdependent actions against live application
-          state; an early misclick is unrecoverable.
-      - ref: tau2-bench
+          One scored workflow averages hundreds of tool calls against live application state,
+          and the primary binary metric fails the task when any checkpoint is missed.
+      - ref: terminal-bench-2-0
         qualifies: true
         why: >
-          Multi-turn tool-and-user interaction under a domain policy; the pass^k metric exists
-          precisely because execution reliability over the whole episode is what is measured.
+          A single task can take hundreds of dependent shell actions with environment feedback
+          between them, and the tests score only the final container state.
+      - ref: tau2-bench
+        qualifies: false
+        why: >
+          NEAR MISS. Long multi-turn episodes with tools and a user, but no tau2 source claims
+          long-horizon execution, and pass^k measures agreement across repeated trials rather
+          than survival through one episode.
       - ref: humanitys-last-exam
         qualifies: false
         why: >
@@ -654,11 +688,12 @@ terms:
         qualifies: true
         why: >
           Real-world building energy optimisation scored as a control objective.
-      - ref: open-catalyst
-        qualifies: true
+      - ref: open-catalyst-oc20-oc22
+        qualifies: false
         why: >
-          Ranks systems by the quality of the energies and forces they predict for catalyst
-          search.
+          NEAR MISS. Built to serve catalyst search, but systems are ranked on how closely their
+          predicted energies, forces and relaxed structures match DFT, which is accuracy against
+          a key. That is `scientific-prediction`.
       - ref: posebusters
         qualifies: false
         why: >
@@ -731,6 +766,41 @@ terms:
           so nothing about candidate generation is measured.
     see_also: [experimental-design, abductive-reasoning, creativity-novelty]
 
+  # ADR-0014 (P1-S1-T07). Group: causal-and-experimental-inference.
+  - id: scientific-prediction
+    label: Scientific prediction
+    status: active
+    introduced_in: 1.0.0
+    definition: >
+      Predicting a property, structure or state of a physical, chemical, biological or Earth system
+      from its description or from measurements of it.
+    inclusion_test: >
+      Tag this if the benchmark's own claim is that systems predict such a quantity, structure or
+      state, and the score compares the prediction with experimental measurement, observation or a
+      reference computation.
+    exclusion_test: >
+      Do NOT tag this if the answer is recalled rather than predicted (`knowledge-recall`), if the
+      truth does not yet exist and probabilities are scored on resolution (`probabilistic-forecasting`),
+      or if the benchmark claims a reasoning competence and scientific content is only its subject
+      matter, as in exam-style question answering.
+    examples:
+      - ref: cafa
+        qualifies: true
+        why: Protein function predicted from sequence and scored against annotations that appear later.
+      - ref: the-well
+        qualifies: true
+        why: The next state of a simulated physical field, scored against the simulator.
+      - ref: gpqa-diamond
+        qualifies: false
+        why: >
+          NEAR MISS. Science questions, but the claim is expert-level reasoning over them, answered
+          by selection; no system predicts a property of a physical system.
+      - ref: forecastbench
+        qualifies: false
+        why: NEAR MISS. Predictions of events that have not happened, scored on resolution; that is
+          `probabilistic-forecasting`.
+    see_also: [probabilistic-forecasting, calibration-uncertainty, knowledge-recall]
+
   - id: generation-fidelity
     label: Generation fidelity
     status: active
@@ -739,15 +809,24 @@ terms:
       How closely generated output matches a reference or a stated specification.
     inclusion_test: >
       Tag this if the score compares the produced artifact against a target by similarity,
-      distance or human preference for faithfulness.
+      distance or human preference for faithfulness. The target may be a reference output or the
+      source whose content the output must preserve, as when human annotators grade a
+      translation for errors against the source text.
     exclusion_test: >
       Do NOT tag this if the output is judged for being new rather than for matching, and do NOT
-      tag it where a single discrete answer is checked against a key.
+      tag it where a single discrete answer is checked against a key. Do NOT tag it for a
+      predicted property, structure or state of a physical system scored against measurement or
+      reference computation, which is `scientific-prediction`.
     examples:
       - ref: ntire
         qualifies: true
         why: >
           Restoration and enhancement tracks scored by fidelity to a reference image.
+      - ref: wmt25-general-mt-shared-task
+        qualifies: true
+        why: >
+          Human ESA and MQM annotators mark translation errors against the source document, so
+          the score is faithfulness to the source's meaning, with no reference needed.
       - ref: cadeval
         qualifies: true
         why: >
@@ -913,11 +992,16 @@ terms:
       merely because the input is long -- length is a property of the prompt, not evidence that
       anything had to be retained.
     examples:
-      - ref: tau2-bench
+      - ref: arc-agi-3
         qualifies: true
         why: >
-          Multi-turn interaction under a domain policy stated once at the start and scored many
-          turns later.
+          Later levels of an environment are built to require concepts learned in earlier ones,
+          so what the agent retained across levels decides whether it can finish.
+      - ref: tau2-bench
+        qualifies: false
+        why: >
+          NEAR MISS. A domain policy is stated once and applies many turns later, but no tau2
+          source claims retention, and 02 S11 rule 2 forbids inferring it from the protocol.
       - ref: agentclinic
         qualifies: true
         why: >
@@ -990,10 +1074,17 @@ terms:
         qualifies: true
         why: >
           The 100k-step budget is the benchmark; performance at that budget is the entire claim.
-      - ref: proteingym
+      - ref: arc-agi-3
         qualifies: true
         why: >
-          Low-shot regimes are a scored condition across deep mutational scanning assays.
+          An action budget of five times the human-baseline median is imposed per level, and
+          the score is action efficiency against that baseline.
+      - ref: proteingym
+        qualifies: false
+        why: >
+          NEAR MISS. Few-shot fitness prediction is discussed, but the paper sets "using only a
+          handful of proteins" aside as a task "this study does not delve into"; no low-shot
+          budget is scored.
       - ref: mmlu-pro
         qualifies: false
         why: >
@@ -1014,11 +1105,16 @@ terms:
       Do NOT tag this if all tasks are available at once, and do NOT tag it where only final
       performance is reported.
     examples:
-      - ref: open-x-embodiment
+      - ref: libero
         qualifies: true
         why: >
-          Competence is accumulated across embodiments and datasets, with retention across them
-          at stake.
+          Tasks arrive in sequence, and negative backward transfer (NBT) on earlier tasks is
+          scored alongside forward transfer (FWT) to new ones.
+      - ref: dcase-2026
+        qualifies: true
+        why: >
+          Task 7 reveals three domains in sequence and ranks systems by accuracy averaged over
+          all three, so forgetting an earlier domain costs score.
       - ref: craftax
         qualifies: true
         why: >
@@ -1038,21 +1134,34 @@ terms:
     definition: >
       Holding up when the input distribution changes from the one the system was fitted to.
     inclusion_test: >
-      Tag this if the benchmark evaluates on inputs drawn from a deliberately different
-      distribution and reports the degradation.
+      Tag this if the benchmark evaluates on inputs drawn deliberately from a distribution the
+      system was not fitted to -- a held-out site, population, device, recording condition or
+      cell line -- and reports the score on those inputs as a condition of its own, with or
+      without an in-distribution score beside it. When the scored task and its label set are
+      unchanged and only the inputs move, tag this and not `transfer-learning`, even where the
+      source calls the move transfer, adaptation or an unseen task.
     exclusion_test: >
-      Do NOT tag this if the change is adversarially constructed, and do NOT tag it where the
-      task itself changes rather than the inputs.
+      Do NOT tag this if the change is adversarially constructed, if the test split differs
+      from training only by random or balanced sampling, or where the task itself changes
+      rather than the inputs -- a new label set, objective or embodiment -- which is
+      `transfer-learning`.
     examples:
-      - ref: geo-bench-2
+      - ref: fusion-equilibrium-challenge
         qualifies: true
         why: >
-          Held-out regions and sensors constitute a deliberate distributional move.
+          Challenge 2 trains on one tokamak and scores zero-shot on another with the task
+          unchanged, reporting the fraction of performance kept. The source says "transfer",
+          but only the inputs moved.
       - ref: birdclef-plus
         qualifies: true
         why: >
           Soundscapes from unseen recording conditions move the distribution while the
           classification task is unchanged.
+      - ref: geo-bench-2
+        qualifies: false
+        why: >
+          NEAR MISS. Nineteen Earth-observation datasets, but split with geographic balance
+          rather than held out by region or sensor, and no score on shifted inputs is reported.
       - ref: procgen
         qualifies: false
         why: >
@@ -1064,6 +1173,13 @@ terms:
         distinction: >
           Shift is naturally occurring or by design; adversarial robustness concerns an attacker
           choosing the worst case.
+      - term: transfer-learning
+        distinction: >
+          The discriminant is what moves. If the task and its label set stay fixed and only the
+          inputs change (a new site, population, machine, disease or cell line), it is
+          distribution shift; if the task, objective or embodiment changes and the transfer is
+          reported, it is transfer learning. The source's own word "transfer" does not decide
+          it.
 
   - id: compositional-generalization
     label: Compositional generalization
@@ -1074,7 +1190,9 @@ terms:
       Recombining known primitives in arrangements that were never observed together.
     inclusion_test: >
       Tag this if every primitive in the held-out items appeared in training or in the prompt,
-      and only their arrangement is new.
+      and only their arrangement is new. Where the source does not enumerate its primitives, tag
+      this only if it claims that held-out items combine rules or concepts already shown, and
+      not where it says they introduce new mechanics.
     exclusion_test: >
       Do NOT tag this if the held-out items introduce new primitives, and do NOT tag it for
       ordinary distribution shift where the change is in input statistics rather than in
@@ -1106,29 +1224,46 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      Carrying competence acquired on one task or distribution to a different one.
+      Carrying competence acquired on one task, embodiment or environment to a different one.
     inclusion_test: >
       Tag this if the benchmark trains or validates on one setting and scores on a deliberately
-      different one, and the transfer itself is reported.
+      different task, objective, embodiment or environment -- such as new tasks after earlier
+      ones, or simulation to the real robot -- and the transfer itself is reported.
     exclusion_test: >
       Do NOT tag this if train and test differ only by sampling, and do NOT tag it where the
-      change is degradation under perturbation rather than a move to a new task.
+      change is degradation under perturbation rather than a move to a new task. If the task
+      and its label set are unchanged and only the population, site, device or recording
+      conditions differ, tag `distribution-shift-generalization` instead, whatever the source
+      calls the move.
     examples:
       - ref: simplerenv
         qualifies: true
         why: >
           Built so simulated outcomes correlate with real-robot outcomes; the transfer is the
           reported quantity.
-      - ref: open-x-embodiment
+      - ref: libero
         qualifies: true
         why: >
-          Cross-embodiment transfer is the stated object of study.
+          Built to study "knowledge transfer" in lifelong learning, with forward transfer to
+          each new task reported as a metric of its own.
+      - ref: brats-2026-cluster
+        qualifies: false
+        why: >
+          NEAR MISS. The source calls new tumour entities "unseen tasks", but segmentation with
+          the same label schema is unchanged and only the patient population moves, which is
+          `distribution-shift-generalization`.
       - ref: procgen
         qualifies: false
         why: >
           NEAR MISS. Held-out levels differ from training levels, but within one task and one
           primitive set, which is `compositional-generalization`.
     see_also: [sample-efficiency, distribution-shift-generalization]
+    not_to_be_confused_with:
+      - term: distribution-shift-generalization
+        distinction: >
+          The discriminant is what moves. A fixed task and label set with new inputs is
+          distribution shift; a new task, objective or embodiment with the transfer reported is
+          transfer learning. The source's own word "transfer" does not decide it.
 
   - id: adversarial-robustness
     label: Adversarial robustness
@@ -1143,20 +1278,20 @@ terms:
       Do NOT tag this if the difficult inputs are naturally occurring, and do NOT tag it where
       the failure sought is inconsistency across identical repeated trials.
     examples:
-      - ref: inspect-evals
+      - ref: agentdojo
         qualifies: true
         why: >
-          Implements jailbreak-robustness and prompt-injection evaluations with adversarially
-          chosen inputs.
+          Attacks are injected into tool outputs, and the score is how often the agent still
+          resists them.
       - ref: helm-safety
         qualifies: true
         why: >
           Scores resistance under adversarial prompting as a distinct condition.
-      - ref: geo-bench-2
+      - ref: fusion-equilibrium-challenge
         qualifies: false
         why: >
-          NEAR MISS. Hard held-out conditions, but they occur naturally rather than being
-          selected to defeat the system.
+          NEAR MISS. A hard zero-shot move to a different machine, but the shift occurs by
+          design of the challenge rather than being selected to defeat the system.
     see_also: [distribution-shift-generalization, harm-avoidance, reliability-consistency]
 
   - id: calibration-uncertainty
@@ -1241,11 +1376,21 @@ terms:
         qualifies: true
         why: >
           pass^k is the fraction of tasks solved in ALL k trials; it is the canonical case.
-      - ref: carla-leaderboard-2-0
+      - ref: critpt
         qualifies: true
         why: >
-          Route completion across repeated runs on secret routes exposes run-to-run variance
-          directly.
+          A problem counts as consistently solved only if at least four of five runs give the
+          correct final answer, and that rate is reported as the reliability metric.
+      - ref: carla-leaderboard-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. Routes are repeated "for statistical purposes", but the ranking score is the
+          arithmetic mean over them; standard deviations are published and not ranked.
+      - ref: video-mme-v2
+        qualifies: false
+        why: >
+          NEAR MISS. Groups of related questions are scored for consistency, but the questions
+          within a group differ, and this term requires the identical task repeated.
       - ref: humanitys-last-exam
         qualifies: false
         why: >
@@ -1271,16 +1416,17 @@ terms:
       Do NOT tag this if revision is driven by an external oracle telling it what is wrong, and
       do NOT tag it where only the final answer after unlimited attempts is scored.
     examples:
-      - ref: swe-bench-verified
-        qualifies: true
-        why: >
-          Agentic scaffolds run tests, read failures and repair their own patches within the
-          episode.
       - ref: terminal-bench
         qualifies: true
         why: >
           Command failures are observable to the agent and recovery within the episode is what
           separates runs.
+      - ref: swe-bench-verified
+        qualifies: false
+        why: >
+          NEAR MISS. Agentic scaffolds run tests and repair their own patches, but that is a
+          property of the scaffold; no source claims self-correction, and only the final patch
+          is scored.
       - ref: frontiermath
         qualifies: false
         why: >
@@ -1300,7 +1446,10 @@ terms:
       they reach together.
     exclusion_test: >
       Do NOT tag this if the other party is a scripted environment with no objective, and do NOT
-      tag it for adversarial settings where the objectives are opposed.
+      tag it for adversarial settings where the objectives are opposed. A mixed-motive setting,
+      neither purely cooperative nor purely competitive, qualifies when the source claims
+      cooperation and the score includes an outcome the actors reach together; a zero-sum game,
+      where one actor's gain is another's loss, does not.
     examples:
       - ref: tau2-bench
         qualifies: true
@@ -1312,10 +1461,16 @@ terms:
           A clinical episode conducted with a simulated patient whose cooperation shapes what
           can be learned.
       - ref: kaggle-game-arena
+        qualifies: true
+        why: >
+          The Werewolf board is described as testing "communication, collaboration, and
+          persuasion-based skills" and scores the team's win. The chess and poker boards alone
+          would not qualify, because their objectives are opposed.
+      - ref: lmarena
         qualifies: false
         why: >
-          NEAR MISS. Multiple agents, but their objectives are opposed; this is competition, not
-          collaboration.
+          NEAR MISS. Two models answer each prompt and a person judges them, but the models are
+          compared, not working together, and the score is which one is preferred.
     see_also: [communication, honesty]
 
   - id: communication
@@ -1331,16 +1486,23 @@ terms:
       Do NOT tag this if the output is scored against a reference text, and do NOT tag it where
       the joint objective rather than the transfer is what is measured.
     examples:
+      - ref: tau2-bench
+        qualifies: true
+        why: >
+          In the telecom domain the simulated user must act on its own phone, so the score
+          depends on what the user did after the agent's instructions.
       - ref: healthbench
-        qualifies: true
+        qualifies: false
         why: >
-          Physician-authored rubrics score whether the reply communicates to the patient, not
-          only whether it is correct.
+          NEAR MISS. A communication-quality axis grades structure, concision and vocabulary
+          suited to the user, but a model grader judges the message itself and no recipient
+          takes part.
       - ref: rexrank
-        qualifies: true
+        qualifies: false
         why: >
-          A radiology report succeeds when a clinician can act on it; the eight metrics probe
-          that rather than string overlap.
+          NEAR MISS. Radiology reports are written for clinicians, but every metric compares the
+          generated report with a reference report; no clinician reads it and no downstream
+          action is scored.
       - ref: open-asr-leaderboard
         qualifies: false
         why: >
@@ -1361,10 +1523,11 @@ terms:
       Do NOT tag this under the plain-English reading of the slug: this term does NOT mean an
       agent's awareness of its own task state, which is `context-integration`.
     examples:
-      - ref: inspect-evals
+      - ref: apollo-research-scheming-suite
         qualifies: true
         why: >
-          Implements evaluation-awareness and sandbagging evaluations directly.
+          A model counts as behaviourally scheming if it behaves significantly differently
+          depending on whether it believes it is deployed or tested.
       - ref: helm-safety
         qualifies: true
         why: >
@@ -1398,11 +1561,11 @@ terms:
       Do NOT tag this if being wrong is the only failure mode measured, and do NOT tag it where
       the assertion is a numeric confidence.
     examples:
-      - ref: inspect-evals
+      - ref: apollo-research-scheming-suite
         qualifies: true
         why: >
-          Implements honesty and truthfulness evaluations in which confident fabrication scores
-          worse than abstention.
+          Follow-up interviews score whether the model truthfully reports its own earlier
+          actions, separately from whether it took them.
       - ref: healthbench
         qualifies: true
         why: >
@@ -1437,11 +1600,11 @@ terms:
         qualifies: true
         why: >
           Scores harmless completion across a defined harm taxonomy.
-      - ref: inspect-evals
+      - ref: agentharm
         qualifies: true
         why: >
-          Carries refusal and agentic-harm evaluations in which the absence of the harmful
-          action is the score.
+          Refusal of harmful multi-step agent tasks under a direct request, with no attack, is
+          scored for every model.
       - ref: humanitys-last-exam
         qualifies: false
         why: >
@@ -1467,11 +1630,17 @@ terms:
       Do NOT tag this if a human is in the loop by design, and do NOT tag it merely because an
       episode is long.
     examples:
-      - ref: gdpval
+      - ref: mle-bench
         qualifies: true
         why: >
-          1,320 tasks across 44 occupations completed end to end and graded blind against expert
-          deliverables.
+          Agents run unattended in a container for up to 24 hours, and the logs are checked for
+          outside help such as calls to another model.
+      - ref: gdpval
+        qualifies: false
+        why: >
+          NEAR MISS. Long professional tasks graded blind against expert deliverables, but the
+          source calls them "precisely-specified and one-shot, not interactive" and claims no
+          autonomy.
       - ref: remote-labor-index
         qualifies: true
         why: >

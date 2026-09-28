@@ -7,6 +7,7 @@
 - **Change type:** add (03 §8.1: MINOR, no migration, two reviewers)
 - **Supersedes:** --
 - **Superseded by:** --
+- **Applied:** taxonomy 0.9.0, P1-S1-T07. P1-S1-T08 re-classifies the fields it touches
 
 ## Context
 
