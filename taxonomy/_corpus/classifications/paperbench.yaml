@@ -3,7 +3,7 @@ id: paperbench
 corpus_item: 44
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2504.01848
   abs: https://arxiv.org/abs/2504.01848
@@ -15,7 +15,9 @@ facets:
       source: abs
       quote: Agents must replicate 20 ICML 2024 Spotlight and Oral papers from scratch, including understanding paper
         contributions, developing a codebase, and successfully executing experiments.
-      failure: 2026-09-28-paperbench-001
+      note: 'The task is replicating ML research papers: agents build and run a codebase that a rubric grades. ADR-0020
+        defers a code/research-replication subdomain as one benchmark and rules that code/ml-engineering with this note
+        stands.'
   domain.secondary:
     - value: agents-tooluse/long-horizon-autonomy
       source: paper
@@ -25,7 +27,7 @@ facets:
     - value: autonomy
       source: paper
       quote: PaperBench can be used as a measure of model autonomy in OpenAI
-      failure: 2026-09-28-paperbench-002
+      note: The research-engineering competence itself is carried by the domain (code/ml-engineering), as ADR-0020 rules.
     - value: context-integration
       source: abs
       quote: including understanding paper contributions, developing a codebase, and successfully executing
@@ -48,7 +50,12 @@ facets:
     - value: agent-scaffold
       source: readme
       quote: 'You may use a custom solver: set `paperbench.solver` to point to your custom solver class.'
-      failure: 2026-09-28-paperbench-003
+      note: For custom solvers, which the README invites.
+    - value: model-in-benchmark-harness
+      source: readme
+      quote: IterativeAgent o1-high (36h limit)
+      note: Every leaderboard row is a model inside one of the maintainers' two agents (BasicAgent, IterativeAgent), which
+        0.9.0 names model-in-benchmark-harness.
     - value: human-expert
       source: readme
       quote: If you have already run your agent or you are a human and have submissions ready to be graded
@@ -66,11 +73,11 @@ facets:
     - value: expert-authored
       source: paper
       quote: Each rubric was written in collaboration with one of the original authors of each paper
-    - value: web-scraped
+    - value: curated-public-database
       source: abs
       quote: Agents must replicate 20 ICML 2024 Spotlight and Oral papers from scratch
-      note: The task inputs are published papers, selected rather than written for the benchmark. The grading keys
-        are the expert rubrics.
+      note: The task inputs are papers selected from the ICML 2024 proceedings, a curated scientific archive compiled
+        for other purposes, which 0.9.0 separates from web-scraped content. The grading keys are the expert rubrics.
   data.contamination_risk:
     - value: medium
       source: paper
@@ -89,32 +96,44 @@ facets:
     - value: null
       failure: 2026-09-28-paperbench-005
   activity:
-    - value: null
-      failure: 2026-09-28-paperbench-006
+    - value: no-submission-channel
+      source: readme
+      quote: If you have already run your agent or you are a human and have submissions ready to be graded
+      note: The README's leaderboard holds only the maintainers' own runs, and outside users grade their own submissions
+        locally; no route onto the table exists. 0.9.0's no-submission-channel covers a maintainer-run benchmark that
+        nobody else can enter.
   governance.maintainer_type:
     - value: industry-lab
       source: paper
       quote: Amelia Glaese Tejal Patwardhan * OpenAI
   governance.submission_process:
-    - value: null
-      failure: 2026-09-28-paperbench-007
+    - value: maintainer-run
+      source: readme
+      quote: IterativeAgent o1-high (36h limit)
+      note: The README keeps a leaderboard table of the maintainers' own runs; paperbench is the 0.9.0 near miss on
+        literature-only for this reason.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: readme
       quote: IterativeAgent o1-high (36h limit)
       note: OpenAI's o1 in the maintainers' own IterativeAgent tops the maintainer-run leaderboard.
-      failure: 2026-09-28-paperbench-008
-  execution.compute_tier:
-    - value: api-credits-only
+    - value: grader-from-evaluated-party
       source: paper
-      quote: We estimate that on average it costs $400 in API credits to run an o1 IterativeAgent 12-hour rollout on
-        a single paper in PaperBench.
-      failure: 2026-09-28-paperbench-009
+      quote: Grading costs an additional $66 USD per paper on average with o3-mini SimpleJudge.
+      note: The official grader is OpenAI's o3-mini, and it grades Claude, Gemini and DeepSeek submissions as well as
+        OpenAI's. Tagged beside maintainer-competes-on-own-benchmark, as 0.9.0 directs when both hold.
+  execution.compute_tier:
+    - value: single-gpu
+      source: paper
+      quote: we copy its submission to a fresh VM running an Ubuntu 24.04 image with access to an A10 GPU
+      note: The reproduction step runs on an A10 GPU VM for every paper, which the protocol mandates; under 0.9.0 a mandated
+        GPU outranks the API spend ($400 per paper for an o1 rollout), and paperbench is the example.
   execution.reproducibility_tier:
     - value: fully-automatable
       source: readme
       quote: is executed in a fresh second container with GPU access so that results from executing the codebase
         are obtained
+      failure: 2026-09-28-paperbench-011
   execution.reproducibility_blockers:
     - value: compute-scale
       source: paper
@@ -131,3 +150,12 @@ notes: 'Classified as the corpus defines it: PaperBench, arXiv 2504.01848, now i
   leaves and skips reproduction, is a track of the same family, and it is not classified separately. The
   corpus flags the LLM judge. The paper validates it on its own JudgeEval, and the record carries both rubric-graded
   and model-graded-judge.'
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, capability, designed_for_subjects, data.data_provenance, activity,
+      governance.submission_process, governance.independence_flags, execution.compute_tier,
+      execution.reproducibility_tier]
+    note: Re-adjudicated against 0.9.0; seven failures settle, refresh, lifecycle and the hosted-judge blocker stay open,
+      and a new record logs the fully-automatable plus compute-scale pair that 02 S11 blocks.

@@ -3,7 +3,7 @@ id: healthbench
 corpus_item: 27
 curator: agent (P1-S1-T03)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2505.08775
   abs: https://arxiv.org/abs/2505.08775
@@ -11,11 +11,10 @@ sources:
   readme: https://raw.githubusercontent.com/openai/simple-evals/main/healthbench_eval.py
 facets:
   domain.primary:
-    - value: medicine-health/clinical-dialogue
-      source: abs
-      quote: HealthBench consists of 5,000 multi-turn conversations between a model and an individual user or healthcare
-        professional.
-      failure: 2026-09-28-healthbench-001
+    - value: null
+      source: paper
+      quote: Given a conversation, the task for an LLM is to respond to the last user message.
+      failure: 2026-09-28-healthbench-012
   domain.secondary:
     - value: medicine-health/medical-safety
       source: abs
@@ -30,8 +29,8 @@ facets:
       source: paper
       quote: Rubric criteria can range from specific facts that should be mentioned in the response (e.g., what
         medications to take and at what dosage)
-      note: communication is not tagged despite the capabilities.yaml example; see the failure.
-      failure: 2026-09-28-healthbench-002
+      note: communication is not tagged; healthbench is its 0.9.0 near miss, because a model grader judges the message
+        itself and no recipient takes part.
     - value: instruction-following
       source: paper
       quote: This axis evaluates whether the model adheres to instructions while still prioritizing safety.
@@ -54,8 +53,8 @@ facets:
       source: paper
       quote: We then get the total points for a given example by summing the point values for criteria met, including
         points for positive criteria and penalties for negative points.
-      note: human-expert-eval is not tagged despite the evaluation-methods.yaml example; see the failure.
-      failure: 2026-09-28-healthbench-003
+      note: human-expert-eval is not tagged; healthbench is its 0.9.0 near miss, because physicians only meta-evaluated
+        the model grader.
     - value: model-graded-judge
       source: paper
       quote: To score a model response, a model-based grader goes through each rubric criterion independently and
@@ -65,7 +64,8 @@ facets:
     - value: instruction-tuned-model
       source: paper
       quote: Given a conversation, the task for an LLM is to respond to the last user message.
-      failure: 2026-09-28-healthbench-004
+      note: Built for and reported on general frontier assistants; healthbench is domain-specialist-model's 0.9.0 near
+        miss.
   data.access:
     - value: fully-open
       source: paper
@@ -91,32 +91,44 @@ facets:
       note: The set is public and the maintainers treat leakage as a live route (canary string, private held-out
         set), with no evidence of contamination reported.
   data.ceiling_anchor_type:
-    - value: null
+    - value: expert-average
       source: paper
       quote: we asked physicians to write responses to HealthBench examples with and without reference responses
         from models, and found that models outperformed the unassisted expert baseline
-      failure: 2026-09-28-healthbench-006
+      note: Physicians' responses were graded like model responses. 0.9.0 keeps an exceeded expert anchor as the anchor,
+        with headroom computed unclamped; healthbench is the example.
   lifecycle:
-    - value: null
+    - value: mature
+      source: home
+      quote: The repo will continue to host reference implementations for **HealthBench**, **BrowseComp**, and
+        **SimpleQA**.
+      note: The maintainer stopped adding results in July 2025 while it keeps hosting the benchmark, which ADR-0019's
+        mature covers, with the ending recorded in activity.
+  activity:
+    - value: closed
       source: home
       quote: '`simple-evals` will no longer be updated for new models or benchmark results.'
-      failure: 2026-09-28-healthbench-007
-  activity:
-    - value: null
-      failure: 2026-09-28-healthbench-008
+      note: A formal stop to adding results is closed under ADR-0019, not no-submission-channel.
   governance.maintainer_type:
     - value: industry-lab
       source: home
       quote: We are open sourcing it so we can be transparent about the accuracy numbers we're publishing alongside
         our latest models.
   governance.submission_process:
-    - value: null
-      failure: 2026-09-28-healthbench-009
+    - value: maintainer-run
+      source: paper
+      quote: Using HealthBench, we evaluate a range of state-of-the-art LLMs.
+      note: OpenAI chose and ran every reported model, competitors' included, and published the results in the paper
+        and the simple-evals results table; nobody submits.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
       quote: In recent months, OpenAI’s frontier models have improved by 28% on HealthBench.
-      failure: 2026-09-28-healthbench-010
+    - value: grader-from-evaluated-party
+      source: readme
+      quote: grading_sampler = ChatCompletionSampler( model="gpt-4.1-2025-04-14",
+      note: The grader is the maintainer's own model, and it scores Claude, Gemini, Grok and Llama responses as well as
+        OpenAI's.
   execution.compute_tier:
     - value: api-credits-only
       source: readme
@@ -135,5 +147,12 @@ facets:
       quote: 'To run HealthBench, HealthBench Consensus, or HealthBench Hard, use the simple-evals script:'
 notes: The record classifies HealthBench as released (5,000 examples); HealthBench Consensus and HealthBench Hard
   are subsets in the same family and harness. The source key "readme" is the healthbench_eval.py reference implementation,
-  as recorded in src/index.json. Three of the failures (002-004) are taxonomy examples that contradict their own
-  inclusion or exclusion tests.
+  as recorded in src/index.json. Three Stage 3 failures (002-004) were taxonomy examples that contradicted their
+  tests; 0.9.0 turned all three into near misses.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, capability, evaluation_method, designed_for_subjects, data.ceiling_anchor_type,
+      lifecycle, activity, governance.submission_process, governance.independence_flags]
+    note: Re-adjudicated against 0.9.0; the forced clinical-dialogue primary is replaced by an abstention.

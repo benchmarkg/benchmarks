@@ -3,7 +3,7 @@ id: open-asr-leaderboard
 corpus_item: 77
 curator: agent (P1-S1-T05)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2510.06961
   abs: https://arxiv.org/abs/2510.06961
@@ -28,9 +28,8 @@ facets:
       source: home
       quote: The leaderboard is a Gradio Space that allows users to compare the accuracy of ASR models on a variety
         of datasets.
-      note: Transcription accuracy (WER) over raw audio. The co-reported speed axis (RTFx) has no capability term;
-        see the failure.
-      failure: 2026-09-28-open-asr-leaderboard-001
+      note: Transcription accuracy (WER) over raw audio. The co-reported speed axis (RTFx) is not a capability; 02 S4.4
+        records it in the benchmark field secondary_axes (ADR-0020 rejects inference-efficiency).
   evaluation_method:
     - value: reference-metric
       source: paper
@@ -39,31 +38,33 @@ facets:
       note: WER after a Whisper-style text normaliser; Hindi is scored against reference lattices with the voi-oiwer
         package. RTFx is reported beside WER but does not rank.
   designed_for_subjects:
-    - value: domain-specialist-model
+    - value: task-specific-supervised-model
       source: paper
       quote: The evaluated decoder architectures include transformer-based, CTC (Connectionist Temporal Classification),
         Recurrent Neural Network Transducer (RNN-T), Token-and-Duration Transducer (TDT) [29], and LLM (Large Language
         Model)-based approaches.
-      failure: 2026-09-28-open-asr-leaderboard-002
+      note: Purpose-built speech recognisers scored as trained; speech recognition is a general audio task, not a
+        discipline. Prompted audio LLMs also appear on the board, but the leaderboard is built for recognisers.
     - value: full-product-pipeline
       source: paper
       quote: seven commercial APIs (AssemblyAI, Aqua Voice, Google, ElevenLabs, Rev AI, Speechmatics, Zoom)
       note: API systems enter as served products (for example ElevenLabs Scribe v2, Zoom Scribe v1) whose components
         are not documented.
   data.access:
-    - value: fully-open
-      source: paper
-      quote: The datasets themselves are hosted on the Hugging Face Hub
-      note: All twelve-plus public test sets are downloadable. The Private Data tab (Appen, DataoceanAI, Voice Arena)
-        is never released; see the failure.
-      failure: 2026-09-28-open-asr-leaderboard-003
+    - value: private-test-server
+      source: init
+      quote: Private data used in default average.
+      note: Every public test set downloads freely, but since 24 July 2026 the default average includes the Appen,
+        DataoceanAI and Voice Arena sets that only the maintainers hold and score. Under 0.9.0's mixed-headline rule
+        the withheld set decides.
   data.refresh:
     - value: versioned-releases
       source: init
       quote: Add versioning for seeing past results.
-      note: Dated versions (24-07-2026 to 25-09-2026 in init.py) pin each results CSV to a commit. Datasets are
-        still added and removed between versions; see the failure.
-      failure: 2026-09-28-open-asr-leaderboard-004
+      note: Every change to the test sets is carried by a dated changelog entry (from the 20 May 2026 removal of
+        TED-LIUM v3 onward), and since 24 June 2026 each version pins the results CSV to a dataset commit; the paper's
+        Table 3 is itself a dated state. New models change no content, because WER is not a pool rating. 0.9.0's pin
+        test gives versioned-releases.
   data.data_provenance:
     - value: real-world-instrument
       source: constants
@@ -71,7 +72,11 @@ facets:
         single-speaker chunks
       note: Every test set is recorded speech (audiobooks, meetings, earnings calls, European Parliament, conversations)
         with human transcripts, taken from existing public corpora or supplied by data vendors.
-      failure: 2026-09-28-open-asr-leaderboard-005
+    - value: inherited-from-constituents
+      source: constants
+      quote: The "Leaderboard" tab, namely short-form English, uses the test split of the following datasets.
+      note: The public tracks reuse the test splits of existing corpora (AMI, Earnings22, GigaSpeech, LibriSpeech,
+        SPGISpeech, VoxPopuli, FLEURS, MLS, CoVoST-2, CORAAL), whose own papers document their provenance.
   data.contamination_risk:
     - value: medium
       source: paper
@@ -97,10 +102,10 @@ facets:
         (PR) on GitHub!
   governance.maintainer_type:
     - value: industry-lab
-      source: paper
-      quote: 1 Hugging Face, Inc., France
-      note: Maintained by Hugging Face staff (hf-audio); co-authors come from NVIDIA, Cambridge, Mistral AI and
-        OpenAI, and models are contributed by PR.
+      source: constants
+      quote: refer to the [Open ASR GitHub repository](https://github.com/huggingface/open_asr_leaderboard#evaluate-a-model)
+      note: The holder of the repository and the Space is Hugging Face (huggingface, hf-audio); co-authors come from
+        NVIDIA, Cambridge, Mistral AI and OpenAI, and models are contributed by PR.
   governance.submission_process:
     - value: containerized-algorithm-submission
       source: home
@@ -113,6 +118,8 @@ facets:
         the leaderboard.
       note: Since 2026 the maintainers re-run each model on HF Jobs on one H200, and compute the private-set scores
         themselves ("We will verify the results on the public sets and compute the metrics on the private ones").
+        Under 0.9.0's tie-break the submitted scripts re-run on the public sets are sandboxed-rerun, and the Docker
+        images run on private sets the entrant never sees are containerized-algorithm-submission.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
@@ -126,14 +133,15 @@ facets:
       source: home
       quote: 'Example costs for a full run over the main public datasets for English short-form:'
       note: Official runs use one H200 (141 GB) on HF Jobs, $2.92 to $5.58 per model for the English short-form
-        sets. API entrants cost API spend instead.
+        sets. API entrants cost API spend instead; see the failure.
+      failure: 2026-09-28-open-asr-leaderboard-007
   execution.reproducibility_tier:
-    - value: fully-automatable
-      source: home
-      quote: 'to guarantee reproducibility: every run executes a Docker image on the same hardware, to minimize
-        environment and driver differences.'
-      note: For the public sets. The Private Data columns, part of the default average since 24 July 2026, cannot
-        be reproduced outside the maintainer (data.access failure).
+    - value: not-independently-reproducible
+      source: init
+      quote: Private data used in default average.
+      note: The public sets are fully automatable ('every run executes a Docker image on the same hardware'), but
+        the default average needs the private sets only the maintainers hold, and under 0.9.0 the most restrictive
+        part of the headline decides.
   execution.reproducibility_blockers:
     - value: private-test-set
       source: constants
@@ -146,3 +154,11 @@ notes: The corpus url is the evaluation repository because the Space is a script
   app files (constants.py, init.py) were fetched through the Hugging Face raw-file API for this record, with the
   maintainers' private-data blog post and the repository's pull-request template. The leaderboard has three public
   tracks (English short-form, multilingual, English long-form) and a Private Data tab, classified as one benchmark.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [capability, designed_for_subjects, data.access, data.refresh, data.data_provenance,
+      governance.maintainer_type, governance.submission_process, execution.compute_tier,
+      execution.reproducibility_tier]
+    note: Re-adjudicated against 0.9.0; the private sets in the default average now decide access and reproducibility.

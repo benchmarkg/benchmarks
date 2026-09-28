@@ -3,7 +3,7 @@ id: camelyon17
 corpus_item: 32
 curator: agent (P1-S1-T04)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   epmc: https://www.ebi.ac.uk/europepmc/webservices/rest/search?format=json&resultType=core&query=DOI:10.1109/TMI.2018.2867350
   home: https://camelyon17.grand-challenge.org/
@@ -18,21 +18,26 @@ facets:
     - value: medicine-health/medical-imaging-diagnostic
       source: evaluation
       quote: The task in this challenge is to determine a pN-stage for every patient in the test dataset.
-      note: The scored output is a pathologic staging category, a diagnostic conclusion against a pathologist-supervised
-        reference, so the vision/medical-imaging-cv test ("a vision metric rather than a clinical outcome") does
-        not pull it away.
-  domain.secondary: []
+      note: The scored output is a pathologic staging category against a pathologist-supervised reference. Under
+        0.9.0 the claim decides, not the metric, so vision/medical-imaging-cv does not pull it away and the vision
+        task goes to secondary.
+  domain.secondary:
+    - value: vision/classification
+      source: background
+      quote: The aim of CAMELYON17 is to evaluate new and existing algorithms for automated detection and classification
+        of breast cancer metastases in whole-slide images of histological lymph node sections.
+      note: The vision task behind the clinical primary; the scored output is a category per patient.
   capability:
     - value: perception
       source: background
       quote: The aim of CAMELYON17 is to evaluate new and existing algorithms for automated detection and classification
         of breast cancer metastases in whole-slide images of histological lymph node sections.
   evaluation_method:
-    - value: statistical-fit
+    - value: classification-metric
       source: evaluation
       quote: For the evaluation of the results we use five class quadratic weighted kappa where the classes are
         the pN-stages.
-      failure: 2026-09-28-camelyon17-001
+      note: Cohen's kappa between predicted and reference pN-stage labels is a classification metric under 0.9.0.
   designed_for_subjects:
     - value: domain-specialist-model
       source: epmc
@@ -59,10 +64,6 @@ facets:
     - value: expert-authored
       source: data
       quote: All ground truth annotations were carefully prepared under supervision of expert pathologists.
-    - value: synthetic-procedural
-      source: evaluation
-      quote: So in this challenge we forged artificial patients.
-      failure: 2026-09-28-camelyon17-002
   data.contamination_risk:
     - value: medium
       source: data
@@ -71,10 +72,13 @@ facets:
       note: The test labels are withheld, but the test slides have been public since March 2017, so a route through
         semi-supervised or transductive use of the test images is plausible. No source assesses it.
   data.ceiling_anchor_type:
-    - value: none-known
-      note: Kappa is bounded at 1, but no fetched source states an anchor or reports pathologist agreement on the
-        pN-stage task; the full TMI paper is not open access. The abstract reports only that simple combinations
-        of top algorithms reach 0.93.
+    - value: theoretical-maximum
+      source: evaluation
+      quote: For the evaluation of the results we use five class quadratic weighted kappa where the classes are
+        the pN-stages.
+      note: Kappa is bounded at 1 (perfect agreement), and no fetched source reports a measured anchor such as pathologist
+        agreement on the pN-stage task. Under 0.9.0 a bounded headline metric with no measured anchor is theoretical-maximum,
+        not none-known. The 0.93 of combined top algorithms is an ensemble of entrants, not an anchor.
   lifecycle:
     - value: null
       source: lbdata
@@ -127,4 +131,11 @@ notes: The primary paper (IEEE TMI) is not open access; its PubMed page is a 170
   represented by its Europe PMC record (title, authors, abstract). The Rules, Organisers and Background pages were
   fetched for this record. The leaderboard page renders by script; the lbdata source is its DataTables endpoint,
   flattened to text, which reported 121 entries but served only 10 rows. The pN-stage task scores artificial patients
-  assembled from mixed real slides (failure 002).
+  assembled from mixed real slides; under 0.9.0 they take the slides' provenance (the synthetic-procedural near miss).
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, domain.secondary, evaluation_method, data.data_provenance, data.ceiling_anchor_type]
+    note: Re-adjudicated against 0.9.0; classification-metric and the synthetic-procedural exclusion close both escape
+      hatches, and the three source-silent gaps remain.

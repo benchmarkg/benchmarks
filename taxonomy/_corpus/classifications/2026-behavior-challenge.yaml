@@ -3,7 +3,7 @@ id: 2026-behavior-challenge
 corpus_item: 11
 curator: agent (P1-S1-T03)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2403.09227
   abs: https://arxiv.org/abs/2403.09227
@@ -26,25 +26,35 @@ facets:
       source: home
       quote: Agents must search across rooms, manipulate many objects, handle object state changes, and satisfy
         symbolic BDDL goal conditions after several minutes of autonomous execution.
-      failure: 2026-09-28-2026-behavior-challenge-001
+      note: An unrecovered intermediate failure makes full success on the episode unattainable, and 0.9.0's
+        inclusion test says BDDL partial credit for progress does not disqualify the benchmark.
   evaluation_method:
     - value: simulation-rollout
       source: rules
       quote: Partial successes = (Number of goal BDDL predicates satisfied at episode end) / (Total number
         of goal predicates).
-      failure: 2026-09-28-2026-behavior-challenge-002
+      note: 0.9.0 redefines the term as a bounded outcome, success or partial credit, and names the fraction of
+        goal predicates met. The simulator build is OmniGibson v3.9.3.
   designed_for_subjects:
     - value: rl-policy
       source: rules
       quote: There are no restrictions on the type of policy used. Methods such as IL, RL, or TAMP are all
         allowed.
-      failure: 2026-09-28-2026-behavior-challenge-003
-  data.access:
-    - value: train-open-test-held-out
+      note: The learned entrants (IL, RL, and the VLA baselines pi0.5 and GR00T N1.7).
+    - value: classical-algorithm
       source: rules
-      quote: Indices 0-19 are public test instances; indices 20-39 are hidden instances reserved for final
-        evaluation.
-      failure: 2026-09-28-2026-behavior-challenge-004
+      quote: There are no restrictions on the type of policy used. Methods such as IL, RL, or TAMP are all
+        allowed.
+      note: TAMP entrants with no learned component compete for the ranking, which 0.9.0's classical-algorithm
+        admits.
+  data.access:
+    - value: private-test-server
+      source: rules
+      quote: After we freeze the leaderboard upon submission deadline, we will evaluate the top-5 solutions on
+        the leaderboard using these instances.
+      note: The final ranking uses hidden instances that never leave the organisers, who run the submitted
+        policies on them. The public instances and demonstrations do not decide, because the headline takes
+        its most restrictive set (0.9.0 precedence rule).
   data.refresh:
     - value: periodic-recompetition
       source: home
@@ -70,14 +80,21 @@ facets:
       note: GPT-3 contributed object-state annotations that the task definitions are built on, not the task
         items themselves.
   data.contamination_risk:
-    - value: unknown
-      note: No source assesses contamination. The hidden instances 20-39 and edition-specific new scenes work
-        against leakage, but nobody has assessed it.
-  data.ceiling_anchor_type:
-    - value: null
+    - value: low
       source: rules
-      quote: Secondary metrics will be normalized using human averages from 200 demonstrations per task.
-      failure: 2026-09-28-2026-behavior-challenge-005
+      quote: Indices 0-19 are public test instances; indices 20-39 are hidden instances reserved for final
+        evaluation.
+      note: The final ranking is scored on instances never exposed, which excludes a training route by
+        structure (0.9.0 low inclusion test). Public demonstrations of the same tasks are the intended
+        training data, not leakage of the scored instances.
+  data.ceiling_anchor_type:
+    - value: theoretical-maximum
+      source: rules
+      quote: 'Partial successes = (Number of goal BDDL predicates satisfied at episode end) / (Total number
+        of goal predicates).'
+      note: The ranking metric is bounded at 1. The human averages that normalise the secondary efficiency
+        metrics ("normalized using human averages from 200 demonstrations per task") go to
+        ceiling_by_category.
   lifecycle:
     - value: active
       source: home
@@ -108,18 +125,22 @@ facets:
     - value: simulator-required
       source: rules
       quote: Run challenge evaluation from the v3.9.3 tag of BEHAVIOR-1K, not the older v3.9.0 tag.
-      failure: 2026-09-28-2026-behavior-challenge-008
+      note: The simulator takes precedence over the accelerator; the rule that the model 'should run on a
+        single 24GB VRAM GPU' goes here.
   execution.reproducibility_tier:
-    - value: automatable-with-simulator
+    - value: not-independently-reproducible
       source: rules
-      quote: We provide OmniGibson/omnigibson/eval/eval.py as the command-line entry point for running websocket-based
-        evaluations.
+      quote: We will hold out 10 more instances for final evaluation.
+      note: The final ranking is produced only by the organisers on held-out instances. Leaderboard numbers on
+        public instances would be automatable-with-simulator, but the most restrictive part of the headline
+        decides (0.9.0).
   execution.reproducibility_blockers:
     - value: specific-simulator-build
       source: rules
       quote: The challenge evaluator and dataset interfaces in v3.9.3 include the latest compatibility fixes
         that the organizers will use for evaluation.
-      failure: 2026-09-28-2026-behavior-challenge-009
+      note: Rollouts are not bit-reproducible within the build ("the simulator can be nondeterministic"), which
+        0.9.0 records as this blocker plus a note.
     - value: private-test-set
       source: rules
       quote: We will hold out 10 more instances for final evaluation.
@@ -133,5 +154,14 @@ notes: >-
   activities, 50 scenes), of which the challenge uses 100 tasks in 7 scenes, so the provenance values come
   from the parent benchmark. domain.secondary is left empty although the home page names 'dexterous bimanual
   manipulation': the embodiment is not fixed ('Participants may use the default R1Pro robot or provide their
-  own'), so bimanual-manipulation's test (a task one arm cannot complete) is not shown. The Hugging Face
+  own'), and the claim is household tasks in house-scale scenes, which 0.9.0's bimanual-manipulation
+  exclusion sends to mobile-manipulation (this entry is its near miss). The Hugging Face
   leaderboard Space returned only a shell and is not cited.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [capability, evaluation_method, designed_for_subjects, data.access, data.contamination_risk,
+      data.ceiling_anchor_type, execution.compute_tier, execution.reproducibility_tier,
+      execution.reproducibility_blockers]
+    note: Re-adjudicated against 0.9.0; access and tier follow the final ranking on held-out instances.

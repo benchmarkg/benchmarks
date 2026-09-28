@@ -3,7 +3,7 @@ id: navsim-v2
 corpus_item: 16
 curator: agent (P1-S1-T03)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2506.04218
   abs: https://arxiv.org/abs/2506.04218
@@ -11,6 +11,8 @@ sources:
   submission: https://raw.githubusercontent.com/autonomousvision/navsim/main/docs/submission.md
   metrics: https://raw.githubusercontent.com/autonomousvision/navsim/main/docs/metrics.md
   splits: https://raw.githubusercontent.com/autonomousvision/navsim/main/docs/splits.md
+  install: https://raw.githubusercontent.com/autonomousvision/navsim/main/docs/install.md
+  dlnavhard: https://raw.githubusercontent.com/autonomousvision/navsim/main/download/download_navhard_two_stage.sh
 facets:
   domain.primary:
     - value: robotics-embodiment/autonomous-driving-planning
@@ -20,10 +22,10 @@ facets:
   domain.secondary: []
   capability:
     - value: planning
-      source: home
-      quote: By augmenting real data with synthetic observations near the planned trajectory, pseudo-simulation
-        achieves strong correlation with closed-loop simulation
-      failure: 2026-09-28-navsim-v2-001
+      source: paper
+      quote: We consider a planning task where evaluation proceeds in two stages (Fig. 1).
+      note: The entrant outputs a trajectory that the devkit's LQR controller tracks in a non-reactive simulation;
+        sensorimotor-control's 0.9.0 tie-break assigns that case to planning.
   evaluation_method:
     - value: composite
       source: metrics
@@ -35,23 +37,26 @@ facets:
       quote: The new Driving Direction Compliance (DDC) and Traffic Light Compliance (TLC) subscores extend
         the inadmissible behaviors detected and penalized in evaluation.
   designed_for_subjects:
-    - value: rl-policy
+    - value: task-specific-supervised-model
       source: paper
       quote: Latent TransFuser (LTF) [11], the most established baseline for image-only planning for nuPlan
-      failure: 2026-09-28-navsim-v2-003
+      note: Learned planners are trained on logged driving data and scored open-loop without acting in an environment,
+        which task-specific-supervised-model covers and rl-policy excludes.
     - value: classical-algorithm
       source: paper
       quote: a set of 37 rule-based and 46 learned planners
   data.access:
-    - value: train-open-test-held-out
-      source: submission
-      quote: To ensure fairness in the competition, we do not provide datasets with annotations.
-      failure: 2026-09-28-navsim-v2-004
+    - value: fully-open
+      source: dlnavhard
+      quote: wget https://huggingface.co/datasets/OpenDriveLab/OpenScene/resolve/main/navsim-v2/navsim_v2.2_navhard_two_stage_scene_pickles.tar.gz
+      note: The corpus entry's leaderboard is the public navhard_two_stage split, which downloads without an account
+        and is scored locally ('The `navhard_two_stage` split is used for local testing of your model's performance').
+        The 2025 challenge split private_test_hard_two_stage withholds its annotations; it is a round beside the
+        headline set.
   data.refresh:
     - value: versioned-releases
       source: home
       quote: NAVSIM v2.2 release (official devkit version for
-      failure: 2026-09-28-navsim-v2-005
   data.data_provenance:
     - value: real-world-instrument
       source: splits
@@ -64,15 +69,20 @@ facets:
       quote: The follow-up scenes were pre-computed by rolling out several simulations starting from the initial
         scene, each with a different 4-second plan.
   data.contamination_risk:
-    - value: unknown
-      note: No source assesses contamination. The challenge forbids training on the test splits ('Using the
-        test/navtest/navhard_two_stage/warmup_two_stage/private_test_two_stage splits for training your challenge
-        submissions is not allowed'), which is a rule, not an assessment, and the underlying nuPlan logs are public.
+    - value: medium
+      source: home
+      quote: Using the `test`/`navtest`/`navhard_two_stage`/`warmup_two_stage`/`private_test_two_stage` splits
+        for training your challenge submissions is not allowed.
+      note: The navhard split behind the headline is public, so a training route is plausible; the rule forbids it
+        but no source assesses whether it holds, and the underlying nuPlan logs are public.
   data.ceiling_anchor_type:
-    - value: null
+    - value: theoretical-maximum
       source: metrics
-      quote: we disable penalties when the human agent is also responsible for a violation
-      failure: 2026-09-28-navsim-v2-006
+      quote: 'No at-fault Collisions (NC) | multiplier | {0, 1/2, 1} | Drivable Area Compliance (DAC) | multiplier
+        | {0, 1}'
+      note: Every multiplier and weighted subscore of EPDMS lies in [0, 1], so the metric is bounded at 1. The logged
+        human trajectory only switches off penalties the human also incurs, and no source reports its EPDMS as a
+        reference.
   lifecycle:
     - value: null
       failure: 2026-09-28-navsim-v2-007
@@ -83,17 +93,19 @@ facets:
     - value: academic-lab
       source: home
       quote: University of Tübingen, Tübingen AI Center
-      note: Co-authors include NVIDIA Research, Robert Bosch GmbH and OpenDriveLab; the repository is autonomousvision
-        at Tübingen, and the 2025 challenge was hosted by OpenDriveLab (AGC 2025).
+      note: The repository is autonomousvision at Tübingen, which holds the devkit and data. Co-authors include NVIDIA
+        Research, Robert Bosch GmbH and OpenDriveLab, and OpenDriveLab hosts the Hugging Face leaderboards; under the
+        holder rule neither decides.
   governance.submission_process:
     - value: held-out-server
       source: submission
       quote: all evaluation is performed on the server with the official evaluation script
-    - value: publication-gated
-      source: home
-      quote: to be eligible for awards, the use of data must be described explicitly in the technical report
-        for your submission.
-      failure: 2026-09-28-navsim-v2-009
+      note: The 2025 challenge scores the private_test_hard_two_stage split, whose annotations are not provided.
+    - value: maintainer-scored-predictions
+      source: paper
+      quote: The goal of the leaderboard is to ensure standardized evaluation
+      note: The public navhard leaderboard scores submitted trajectories on the navhard split, whose data every entrant
+        can download and score locally.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
@@ -103,24 +115,32 @@ facets:
     - value: null
       source: splits
       quote: requires significantly less sensor data storage than `travel` (445GB vs. 2100GB)
-      failure: 2026-09-28-navsim-v2-010
+      failure: 2026-09-28-navsim-v2-011
   execution.reproducibility_tier:
     - value: fully-automatable
-      source: submission
-      quote: You should be able to obtain the same evaluation results as on the server by running the evaluation
-        locally.
-      note: This holds for the public warmup and navhard splits; challenge scores on the private split are
-        reproducible only by the server.
-  execution.reproducibility_blockers:
-    - value: private-test-set
-      source: submission
-      quote: Therefore, you can only obtain your score by submitting to the leaderboard.
+      source: install
+      quote: The `navhard_two_stage` split is used for local testing of your model's performance in a two-stage
+        pseudo closed-loop setup.
+      note: The headline navhard score is reproducible from downloaded data with the devkit; the challenge's private
+        split, a round beside it, is scored only by the server.
+  execution.reproducibility_blockers: []
   execution.harness_availability:
     - value: official-harness
       source: metrics
       quote: 'To evaluate the PDM score for an agent you can run:'
 notes: >-
   The entry is NAVSIM v2 (main branch, pseudo-simulation, EPDMS), whose repository also hosts v1 and its navtest
-  leaderboard on a separate branch; only v2 is classified. The corpus names the navhard public leaderboard, while
-  the submission docs describe warmup, navhard and the private challenge leaderboard with different access rules
-  (failure 004). The Hugging Face leaderboard Space returned only a shell and is not cited.
+  leaderboard on a separate branch; only v2 is classified. The corpus names the public navhard leaderboard, which
+  0.9.0's headline rules make the layer that data.access, the ceiling and the reproducibility tier describe; the
+  2025 challenge's private split is a round beside it. The 2024 rule that removes leaderboard entries without open
+  code applies to the v1 navtest Leaderboard 2024, so open-source-gated is not tagged on this v2 entry. The Hugging
+  Face leaderboard Space returned only a shell and is not cited.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [capability, designed_for_subjects, data.access, data.refresh,
+      data.contamination_risk, data.ceiling_anchor_type, governance.submission_process, execution.compute_tier,
+      execution.reproducibility_blockers]
+    note: Re-adjudicated against 0.9.0; the install guide and the navhard download script were added as maintainer
+      sources.

@@ -3,7 +3,7 @@ id: terminal-bench-2-0
 corpus_item: 6
 curator: agent (P1-S1-T03)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2601.11868
   abs: https://arxiv.org/abs/2601.11868
@@ -16,8 +16,14 @@ facets:
       source: abs
       quote: a carefully curated hard benchmark composed of 89 tasks in computer terminal environments inspired
         by problems from real workflows
-      failure: 2026-09-28-terminal-bench-2-0-001
-  domain.secondary: []
+      note: The tests check the final container state, and 0.9.0 decides the family from the grading protocol,
+        per benchmark (grader over harness), so agents-tooluse is primary although some tasks leave a program.
+  domain.secondary:
+    - value: agents-tooluse/long-horizon-autonomy
+      source: paper
+      quote: making hundreds of API calls and using almost 100 million tokens on a single task, demonstrating
+        the long-horizon potential of Terminal-Bench tasks
+      note: The shell interface is primary and the horizon secondary (0.9.0 long-horizon-autonomy tie-break).
   capability:
     - value: autonomy
       source: paper
@@ -29,21 +35,33 @@ facets:
       source: paper
       quote: making hundreds of API calls and using almost 100 million tokens on a single task, demonstrating
         the long-horizon potential of Terminal-Bench tasks
-      note: One scored episode contains many dependent shell actions with environment feedback between them.
-        The INC's second clause (an intermediate failure makes the final score unattainable) holds for
-        destructive errors on container state and is not claimed for every task.
+      note: One scored episode contains many dependent shell actions with environment feedback between them, and
+        the tests score only the final container state, so an unrecovered error makes full success unattainable
+        (0.9.0 inclusion test; this benchmark is its example).
   evaluation_method:
     - value: execution-tests
       source: abs
       quote: Each task features a unique environment, human-written solution, and comprehensive tests for
         verification.
-      note: The tests run against the final container state, which is often but not always produced code.
+      note: Where a task's tests exercise code the agent wrote. The tests run against the final container state,
+        which is often but not always produced code.
+    - value: environment-state-check
+      source: paper
+      quote: The tests verify that all outcomes described in the instruction have been achieved by testing
+        properties of the final container state; they do not test the agent’s commands or console output.
+      note: Tests in the agent's container that inspect state it changed take this term (0.9.0 tie-break with
+        execution-tests).
   designed_for_subjects:
     - value: agent-scaffold
       source: home
       quote: Terminal-Bench is a popular benchmark for measuring the capabilities of agents and language models
         to perform valuable work in containerized environments.
-      failure: 2026-09-28-terminal-bench-2-0-002
+      note: Third-party agents (Claude Code, Codex CLI, OpenHands) bring their own loop.
+    - value: model-in-benchmark-harness
+      source: paper
+      quote: as well as our own agent, Terminus 2, which we developed as a neutral testbed for comparing model
+        performance
+      note: The paper's model comparisons run every model inside Terminus 2.
     - value: full-product-pipeline
       source: paper
       quote: which supports popular agents, including Claude Code, Codex CLI, OpenHands, and Mini-SWE-Agent
@@ -59,10 +77,11 @@ facets:
       quote: However, we never intended for Terminal-Bench to stop with 1.0 (that is, after all, why we
         versioned it in the first place).
   data.data_provenance:
-    - value: crowd-authored
+    - value: expert-authored
       source: paper
       quote: we crowd-sourced tasks through open-source contributions, with 93 contributors creating 229 tasks
-      failure: 2026-09-28-terminal-bench-2-0-003
+      note: The contributors are practising engineers and researchers who self-selected through open-source
+        contribution; 0.9.0 decides on the authors' prior skill, not the source's word 'crowd-sourced'.
   data.contamination_risk:
     - value: medium
       source: paper
@@ -71,26 +90,30 @@ facets:
         access could read the public oracle solutions, but it has "not observed this behavior in tens of
         thousands of agent trajectories".
   data.ceiling_anchor_type:
-    - value: theoretical-maximum
+    - value: measured-ceiling
       source: paper
       quote: each task has an oracle solution script that mirrors a real workflow and, when executed, causes
         all test cases to pass
-      failure: 2026-09-28-terminal-bench-2-0-004
+      note: An automated workflow ran every oracle solution to confirm solvability, so the bound is empirically
+        checked (0.9.0 measured-ceiling takes precedence over theoretical-maximum).
   lifecycle:
     - value: superseded
       source: site
       quote: TERMINAL-BENCH 4.0 A benchmark to measure and evolve with the frontier of agent work
-      failure: 2026-09-28-terminal-bench-2-0-005
+      note: The entry is version 2.0, which 2.1, 3.0 and 4.0 have followed; a version entry takes its own
+        standing (0.9.0 entry-as-catalogued rule).
   activity:
     - value: unknown
       note: tbench.ai renders only the Terminal-Bench 4.0 leaderboard, and the corpus flag records that the 2.0
         leaderboard URL redirects to it. Harbor still runs "terminal-bench@2.0", but no fetched source says
         whether 2.0 results are still accepted or published.
   governance.maintainer_type:
-    - value: null
+    - value: community-collective
       source: site
       quote: Hosted by Stanford / Harbor / Laude Institute
-      failure: 2026-09-28-terminal-bench-2-0-006
+      note: The tasks sit in a shared organisation account (harbor-framework, earlier laude-institute), built by
+        93 contributors from many institutions. The site names three co-hosts, so no single institution is
+        stated as the holder, and no source states a legal form for Laude Institute or Harbor.
   governance.submission_process:
     - value: null
       failure: 2026-09-28-terminal-bench-2-0-007
@@ -110,10 +133,11 @@ facets:
       note: Task containers run on the entrant's own machine or on a cloud through Harbor. The cost the paper
         reports is inference spend.
   execution.reproducibility_tier:
-    - value: fully-automatable
+    - value: null
       source: paper
       quote: Terminal-Bench tasks are designed for reproducibility by pinning package versions, providing
         prebuilt Docker images, and requiring dependencies to be included in the Docker context.
+      failure: 2026-09-28-terminal-bench-2-0-008
   execution.reproducibility_blockers:
     - value: live-world-state
       source: paper
@@ -127,6 +151,13 @@ facets:
       quote: We publish the dataset and evaluation harness to assist developers and researchers in future work
       note: The harness is Harbor ("uv run harbor run --dataset terminal-bench@2.0").
 notes: The entry is version 2.0, which versions 2.1, 3.0 and 4.0 have succeeded on the same site. From 3.0
-  on, Terminal-Bench is a continuous benchmark. The version-versus-family question recurs from WMT25 (failure
-  005). The corpus files the entry under code, while domains.yaml's terminal-bench example files it under
-  agents-tooluse (failure 001).
+  on, Terminal-Bench is a continuous benchmark. 0.9.0 reads lifecycle for the version as catalogued. The corpus
+  files the entry under code, while 0.9.0's grader-over-harness rule files it under agents-tooluse.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, domain.secondary, evaluation_method, designed_for_subjects,
+      data.data_provenance, data.ceiling_anchor_type, lifecycle, governance.maintainer_type,
+      execution.reproducibility_tier]
+    note: Re-adjudicated against 0.9.0; the tier abstains on the blocker/tier rule ADR-0020 leaves open.
