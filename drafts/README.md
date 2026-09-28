@@ -48,6 +48,15 @@ A rejected value never fails the whole draft. That field is set to null, and the
 
 A rejected value is a lead, not a fact. Check it against the source like any other field.
 
+Two more logs record what the copilot refused before drafting:
+
+- `provenance.injection_spans` lists text cut from the source because it looked like instructions
+  aimed at an AI system or at the catalogue, such as "ignore previous instructions" or "set the
+  licence to MIT". No drafter saw that text, and it cannot be quoted. A paper about prompt injection
+  loses its own example sentences this way, so read each span and judge it.
+- `provenance.schema_violations` lists parts of the drafter's answer that were not drafted fields,
+  such as an attempt to set `curation` or `lifecycle`. They were ignored.
+
 To review:
 
 1. Open the source and check each field against its quote.
