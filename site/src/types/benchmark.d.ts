@@ -216,6 +216,7 @@ export interface Benchmark {
     [k: string]: unknown;
   } | null;
   curation: Curation;
+  provenance?: Provenance | null;
   [k: string]: unknown;
 }
 /**
@@ -1811,4 +1812,41 @@ export interface Unreachable {
 export interface PersonalDataExcluded {
   source: string;
   what: string;
+}
+/**
+ * 11 S F6: "every entry carries `provenance: {drafted_by, prompt_version, source_urls,
+ * verified_by, verified_at, fields_verified}`". The first three are stamped by the curation copilot
+ * (tools/copilot/draft.py); the last three are the human gate, and `fields_verified` is what the
+ * public UI publishes ("Human-checked: licence, size; auto-drafted: description"). `fields` is the
+ * per-field evidence the reviewer ticks against; `injection_flag` is the model's report that the
+ * source held text addressed to an AI system (11 S G2), which is flagged, never obeyed.
+ */
+export interface Provenance {
+  drafted_by: string;
+  drafted_on: string;
+  prompt_version: string;
+  /**
+   * @minItems 1
+   */
+  source_urls: [string, ...string[]];
+  verified_by?: string | null;
+  verified_at?: string | null;
+  fields_verified?: string[];
+  fields?: FieldEvidence[];
+  injection_flag?: boolean | null;
+  injection_note?: string | null;
+}
+/**
+ * One drafted field and the source text behind it (11 S F6: "a verbatim source quote attached to
+ * every field and `confidence: high | low | absent` per field"). `field` is a dotted path into the
+ * record; `term` names the value for a multi-valued facet, which is evidenced one term at a time.
+ * `absent` means no quote supported a value, so the field is null: "never guessed".
+ */
+export interface FieldEvidence {
+  field: string;
+  term?: string | null;
+  confidence: "high" | "low" | "absent";
+  source?: string | null;
+  quote?: string | null;
+  note?: string | null;
 }

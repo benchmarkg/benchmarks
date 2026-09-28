@@ -34,6 +34,11 @@ second record say nothing; tier 4 runs on the record. What it could not check is
 A file that fails tier 1 is still read for tier 2 -- its references are in its YAML whether or not
 its model accepts it -- but it is left out of the tier-3 corpus, which holds validated models only.
 
+drafts/ (P1-S2-T01; 11 S F6) is never part of the corpus and is read only when a path names it:
+`bench validate drafts/`. Tier 1 is schema/draft.py's BenchmarkDraft and SourceDraft; tier 2
+resolves each draft's references against the corpus and the draft sources; tier 3 is the
+quote-substring check alone (`draft_tiers`).
+
 Files under data/surveys/, data/tombstones/, data/_discovery/ and data/_analysis/ have no entity
 model yet and are listed as `unmodelled`; tombstones are read by tier 2 for their redirects. Any
 other file under data/ that no kind claims is a tier-1 failure: it is in a place 05 S2 has no
@@ -62,6 +67,7 @@ from schema.entities import AliasFile, IngestBatch, Leaderboard, Organization, R
 from schema.metric import Metric
 from schema.source import Source
 from schema.classification import FAILURE_NAME, Classification, FailureRecord
+from schema.draft import BenchmarkDraft, SourceDraft
 from schema.system import System
 from schema.taxonomy import RetiredIdFile, load_taxonomy, read_yaml
 
@@ -100,7 +106,10 @@ KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2)
     'data/aliases/': Kind('aliases', AliasFile, many=True),
     'taxonomy/_corpus/classifications/': Kind('classification', Classification),    # 03 S3.3 (P1-S1-T03)
     'taxonomy/_failures/': Kind('failure', FailureRecord),
+    'drafts/benchmarks/': Kind('benchmark-draft', BenchmarkDraft),                   # 11 S F6 (P1-S2-T01)
+    'drafts/sources/': Kind('source-draft', SourceDraft),
 }
+DRAFTS = 'drafts/'
 TAXONOMY_RECORDS = ('taxonomy/_corpus/classifications/', 'taxonomy/_failures/')
 VENDOR_CLAIM = Kind('claim', ResultClaim)
 UNMODELLED = ('data/surveys/', 'data/tombstones/', 'data/_discovery/', 'data/_analysis/')
@@ -227,7 +236,7 @@ def anchor(rel: str) -> str:
     """The path from its data/ or vendor/ segment on, so a fixture tree outside the repository is
     classified the way the same file inside it would be."""
     rel = _posix(rel)
-    for seg in ('data/', 'vendor/', 'taxonomy/'):
+    for seg in ('data/', 'vendor/', 'taxonomy/', DRAFTS):
         if rel.startswith(seg):
             return rel
         i = rel.rfind('/' + seg)
@@ -298,6 +307,8 @@ def _placement(rec: Record) -> list[Finding]:
             bad('a claim lives at data/claims/%s/ (or data/claims/_ingested/<source>/%s/)' % (bench, bench))
     if rec.kind.name == 'source' and (len(parts) != 4 or not re.fullmatch(r'\d{4}', parts[2])):
         bad('a source lives at data/sources/<yyyy>/<id>.yaml')
+    if rec.kind.name in ('benchmark-draft', 'source-draft') and len(parts) != 3:
+        bad('a draft lives at drafts/%s/<id>.yaml' % parts[1])
     if rec.kind.name == 'baselines' and isinstance(rec.raw, list):
         for b in rec.raw:
             bv = b.get('benchmark_version') if isinstance(b, dict) else None
@@ -333,6 +344,67 @@ def discover(root: str) -> list[str]:
 def load(root: str) -> list[Record]:
     """The corpus: every discovered file, through tier 1."""
     return [_read(os.path.join(root, rel), rel) for rel in discover(root)]
+
+
+# ---- drafts/ ------------------------------------------------------------------------------------
+
+def draft_files(root: str, paths: list[str] | None) -> list[str]:
+    """The draft files the named paths cover, root-relative. Drafts are read only when named: they are
+    never part of the corpus (05 S9 check 9i), so `bench validate` alone does not see them, and
+    `bench validate drafts/` does."""
+    found = set()
+    for p in paths or []:
+        rel = relative(p, root).rstrip('/')
+        if not anchor(rel + '/').startswith(DRAFTS) and not anchor(rel).startswith(DRAFTS):
+            continue
+        full = os.path.join(root, rel) if not os.path.isabs(rel) else rel
+        hits = [full] if os.path.isfile(full) else glob.glob(os.path.join(full, '**', '*.yaml'), recursive=True)
+        found |= {relative(h, root) for h in hits if h.endswith('.yaml')}
+    return sorted(found)
+
+
+def draft_tiers(drafts: list[Record], records: list[Record], taxonomy: dict, selected) -> list[Finding]:
+    """Tiers 2 and 3 for drafts, which are not corpus records. Tier 2: every reference resolves, a
+    src- id to a draft source or a data/ source; a draft of an id data/ already holds is a proposed
+    revision, and is said so. Tier 3: the quote-substring check (14-roadmap Phase 0), against the
+    draft sources and data/ sources. At `ai-drafted-unverified` a mismatch warns and offers the null,
+    exactly as it does for a draft in data/ (schema/validators.py, rule quote-substring). The corpus
+    rules do not run: they read fields a draft leaves null."""
+    out: list[Finding] = []
+    ix = index([r for r in records if r.kind is not None])
+    own = {r.id for r in drafts if r.parsed and r.kind is not None and r.kind.name == 'source-draft'}
+    sources = {r.id: r.raw for r in records + drafts
+               if r.parsed and r.kind is not None and r.kind.name in ('source', 'source-draft') and isinstance(r.raw, dict)}
+    if 2 in selected:
+        seen: dict[tuple, str] = {}
+        for r in drafts:
+            if not r.parsed or r.kind is None:
+                continue
+            key = (r.kind.name, r.id)
+            if key in seen:
+                out.append(Finding(2, 'duplicate-id', 'blocking', r.id, r.path, 'the draft id is also held by %s' % seen[key]))
+            seen.setdefault(key, r.path)
+            live = 'benchmark' if r.kind.name == 'benchmark-draft' else 'source'
+            if ix.has(live, r.id):
+                out.append(Finding(2, 'draft-of-existing', 'warning', r.id, r.path,
+                                   '%s already holds %s: this draft is a proposed revision, to be merged by hand'
+                                   % (', '.join(ix.ids[live][r.id]), r.id)))
+            for where, value, kind in _walk_prefixed(r.raw, ''):
+                why = None if kind == 'source' and value in own else _resolve(ix, kind, value)
+                if why:
+                    out.append(Finding(2, 'dangling-ref', 'blocking', r.id, r.path, '%s: %s' % (where, why)))
+            out += _taxonomy_refs(r, taxonomy)
+    if 3 in selected:
+        from tools.validate import quotes
+        for r in drafts:
+            if r.model is None or r.kind.name != 'benchmark-draft':
+                continue
+            record = r.model.model_dump(mode='json', by_alias=True, exclude_computed_fields=True)
+            for q, why in quotes.check(record, sources):
+                out.append(Finding(3, 'quote-substring', 'warning', r.id, r.path,
+                                   '%s: %s' % (quotes.dotted(q.at + (q.key,)), why),
+                                   'set %s to null and its evidence to absent' % quotes.dotted(q.field)))
+    return out
 
 
 # ---- tier 2: references -------------------------------------------------------------------------
@@ -547,7 +619,7 @@ def _taxonomy(root: str) -> dict:
 def _taxonomy_refs(r: Record, taxonomy: dict) -> list[Finding]:
     """04 S12 tier 2: domain values resolve to a term that HAS a parent (families are navigational,
     not assignable), and capability values to bare ids in capabilities.yaml."""
-    if r.kind is None or r.kind.name != 'benchmark' or not isinstance(r.raw, dict):
+    if r.kind is None or r.kind.name not in ('benchmark', 'benchmark-draft') or not isinstance(r.raw, dict):
         return []
     out = []
     domain = r.raw.get('domain')
@@ -695,10 +767,12 @@ def run(root: str = ROOT, tiers='all', paths: list[str] | None = None, changed_o
     selected = _select(tiers)
     today = today or _dt.date.today()
     records = load(root)
+    drafts = [_read(os.path.join(root, rel), rel) for rel in draft_files(root, paths)]
     taxonomy = _taxonomy(root)
     findings: list[Finding] = []
     if 1 in selected:
-        findings += [f for r in records for f in r.schema_findings]
+        findings += [f for r in records + drafts for f in r.schema_findings]
+    findings += draft_tiers(drafts, records, taxonomy, selected)
     corpus = corpus_of(records, taxonomy)
     if 2 in selected:
         findings += ref_tier(records, index(records), taxonomy)
@@ -715,7 +789,7 @@ def run(root: str = ROOT, tiers='all', paths: list[str] | None = None, changed_o
         if not wanted & {'', '.'}:                              # naming the root itself scopes nothing out
             ids = {os.path.basename(p).rsplit('.', 1)[0] for p in wanted if p.endswith('.yaml')}
             findings = [f for f in findings if _in_scope(f, wanted, ids)]
-            n = sum(1 for r in records if any(r.path == p or r.path.startswith(p + '/') for p in wanted))
+            n = sum(1 for r in records + drafts if any(r.path == p or r.path.startswith(p + '/') for p in wanted))
         scope = 'changed-only' if changed_only else 'paths'
     return Report(selected, scope, n, findings, sorted(r.path for r in records if r.unmodelled))
 
