@@ -334,7 +334,7 @@ bench claim --benchmark <ref> --system <ref> --metric <id> --value <v> --source 
 # Validation
 bench validate [paths…] [--tier schema|ref|semantic|quality|all] [--changed-only] [--single] [--json]
 bench schema gen [--check]
-bench check-links [--changed-only] [--archive-missing] [--timeout 20]
+bench check-links [PATH…] [--changed-only] [--archive-missing] [--timeout 20]
 bench archive <src-id…> [--all-missing] [--if-not-archived-within 30d]
 
 # Ingestion -- 07-ingestion-infrastructure.md S1.6 owns this sub-surface; see the note below
@@ -379,7 +379,7 @@ bench release --version <x.y.z> [--dry-run]
 | `tag-gap` | Record, in one command, that a curator could not express something in the current vocabulary. It writes a `taxonomy/_failures/` entry. This exists because the unmet-term rate is only real if logging costs nothing |
 | `gaps` | Emit `build/derived/gaps.json` over the coarse 19 × 13 grid with every input factor exposed. `--reviewed-only` and `--min-confidence` are what make success criterion S3 in [00-vision-and-scope.md](00-vision-and-scope.md) §7.1 a runnable test rather than an aspiration. The fine grid is available for internal inspection and **may never publish a gap claim** |
 | `verify` | Given a commit SHA, rebuild from that commit on a clean tree and assert the artifacts match byte for byte. This is success criterion S6's mechanism and the thing `reproduce.yml` runs on a schedule |
-| `check-links` | HTTP-check every `url` in the touched files; report rot; optionally queue archiving |
+| `check-links` | HTTP-check every `url` in the touched files (or in the named PATHs, inside data/ or not); report rot, a 2xx that fails the 06 §7.2 soft-404 heuristics counting as `suspect` and failing the check; optionally queue archiving |
 | `archive` | Wayback SPN2 capture (`POST https://web.archive.org/save`, `Authorization: LOW <key>:<secret>`), using `if_not_archived_within` as the idempotency key; existence checks go through the CDX API, never the Availability API, which returned 429 on a single cold request during reconnaissance |
 | `ingest` | Run one source adapter; `--dry-run` prints the diff it would write and exits non-zero on schema drift. **The flag semantics and the five subcommands are owned by [07-ingestion-infrastructure.md](07-ingestion-infrastructure.md) §1.6 and are not restated here** -- `--allow-bulk` is the deliberate override on the 400-draft PR cap, `--fixture` is the offline path every adapter must support, and `replay`/`recompute`/`state`/`unresolved` are the operational surface around a stored cursor. This row and §1.6 disagreed until 2026-09-22: each listed flags the other did not, and neither was a superset |
 | `resolve` | Identity resolution: surface candidate duplicates (same benchmark under two names, near-duplicate claims) for **human** decision. It never merges by itself |
