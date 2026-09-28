@@ -23,7 +23,9 @@ DRAFT_FIELDS is that field set, and it is a contract, checked here and not only 
      row per term, or one `absent` row when it is empty), so `confidence` is stated for every field;
   3. a populated field's row carries a source and a verbatim quote, and an `absent` row's field is
      null: "a quote on every populated field" is a property of every valid draft;
-  4. every evidence source is one of the draft's `curation.sources`.
+  4. every evidence source is one of the draft's `curation.sources`;
+  5. every value the copilot refused is in `provenance.rejected`, with the quote it claimed and the
+     reason (P1-S2-T02), and a refused single-valued field is null: a rejection is never beside a value.
 
 That the quote is a substring of the source's snapshot needs the SourceDraft, so it is tier 3's
 quote-substring rule (tools/validate/tiers.py runs it over drafts/), not this model's. The copilot
@@ -190,6 +192,14 @@ class BenchmarkDraft(Benchmark):
             inline = value[0] if kind == 'entrant' and value else value if kind == 'count' else None
             if inline is not None and (inline.source, inline.quote) != (e.source, e.quote):
                 raise ValueError('%s: the block\'s source and quote differ from its evidence row' % path)
+        for r in self.provenance.rejected:
+            if r.field not in DRAFT_FIELDS:
+                raise ValueError('provenance.rejected: %s is not a drafted field' % r.field)
+            if DRAFT_FIELDS[r.field] != 'terms' and rows[r.field][0].confidence != 'absent':
+                raise ValueError('provenance.rejected: %s was rejected, so its value is null and its evidence '
+                                 'absent (a single-valued field has one offered value)' % r.field)
+            if DRAFT_FIELDS[r.field] == 'terms' and r.term is None:
+                raise ValueError('provenance.rejected: a rejection on %s names the term refused' % r.field)
         return self
 
     @staticmethod
