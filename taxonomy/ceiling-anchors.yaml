@@ -20,11 +20,21 @@
 #
 # Authored by P0-S2-T05 from 02 S7. Definitions only: 02 S11 rule 8 lets `examples: []`
 # warn rather than fail while VERSION < 1.0.0, and the example pass is P1-S14-T06's.
+#
+# P1-S1-T07 (Stage 4, v0.9.0) added no term here, deliberately: a new ceiling term needs a
+# matching Baseline.kind on the other side of the mapping above, and 02 S7 forbids a
+# headroom vocabulary the schema cannot store. The Stage 3 gaps are closed by one rule,
+# stated in the tests of the terms it touches: the field records the anchor of the
+# HEADLINE metric that the benchmark's own sources read scores against, even after systems
+# exceed it; whether headroom is computable is the Metric's business (optimum, unbounded,
+# requires_pool, headroom_computable) and 02 S11's. A scale that cannot have an anchor
+# (a pool-relative rating, an unbounded metric, a chance-level target) is `none-known`,
+# and the reason is carried by the Metric and by a Baseline's value_absent_reason.
 
 facet: ceiling_anchor_type
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   What the top of a benchmark's scale is anchored to. Required for headroom computation;
   its absence is itself informative and must be rendered as such rather than silently
@@ -39,17 +49,92 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      No ceiling anchor has been established for this benchmark, so headroom cannot be computed
-      and its absence must be shown rather than rendered as a blank.
-    examples: []
+      No anchor for the best end of the headline metric has been established, either because
+      none has been measured or because the scale cannot have one, so headroom cannot be
+      computed and its absence must be shown rather than rendered as a blank.
+    inclusion_test: >
+      Tag this if the benchmark's sources publish no reference for the best end of the headline
+      metric, including where no anchor can exist: a rating fitted to a pool (Elo,
+      Bradley-Terry), a score normalised to the best of a pool of entrants or reference models,
+      an unbounded metric such as PSNR, or a lower-is-better target equal to chance. Why it is
+      absent is recorded on the Metric (unbounded, requires_pool, optimum) and on a Baseline's
+      value_absent_reason, not by a separate term.
+    exclusion_test: >
+      Do NOT tag this if the sources publish a human score, an operational system or a measured
+      ceiling that scores are read against, even when systems now exceed it or it marks parity
+      rather than a maximum (tag its type). Do NOT tag it if the headline metric has a defined
+      bound at its optimum and no measured anchor (theoretical-maximum). Anchors of secondary
+      metrics or other tracks go to ceiling_by_category and do not change this value.
+    examples:
+      - ref: lmarena
+        qualifies: true
+        why: >
+          The headline is a Bradley-Terry rating fitted to pairwise votes, which has no top. 02
+          S12.2 reads RoboArena's rating the same way.
+      - ref: scannet
+        qualifies: true
+        why: >
+          The NVS leaderboards rank by PSNR, which has no finite top, and no human or measured
+          ceiling is reported.
+      - ref: geo-bench-2
+        qualifies: true
+        why: >
+          Capability scores are min-max normalised 'with the worst and best result for a given
+          dataset as the reference points' of a fixed model pool, which a new model can exceed.
+      - ref: healthbench
+        qualifies: false
+        why: >
+          NEAR MISS. Frontier models outperform the unassisted physician baseline, but the paper
+          publishes it as the reference that model scores are read against, so it is
+          expert-average.
+    not_to_be_confused_with:
+      - term: theoretical-maximum
+        distinction: >
+          An unbounded or pool-relative headline metric is `none-known`. A metric with a defined
+          bound at its optimum and no measured anchor is `theoretical-maximum`.
+      - term: expert-average
+        distinction: >
+          A published human reference stays the anchor after systems pass it, so it is never
+          `none-known`. Headroom against it is computed unclamped (12 S3.1).
   - id: crowd-average
     label: Crowd average
     field: data.ceiling_anchor_type
     status: active
     introduced_in: 1.0.0
     definition: >
-      The top of the scale is the mean performance of non-specialist human annotators.
-    examples: []
+      The top of the scale is the mean, or another central statistic, of the measured
+      performance of non-specialist humans.
+    inclusion_test: >
+      Tag this if the sources read scores against a mean, median or other central statistic of
+      non-specialist humans' measured performance, including a median over those who completed
+      a task. When the sources give several crowd statistics, the one the headline reads against
+      decides, and the others are further Baseline records.
+    exclusion_test: >
+      Do NOT tag this if the humans were recruited for specialist knowledge the tasks require
+      (expert-average), or if the statistic is the best single person's score (crowd-best).
+    examples:
+      - ref: arc-agi-3
+        qualifies: true
+        why: >
+          'A 100% score means AI agents can beat every game as efficiently as humans', against the
+          upper-median member of the public among those who completed a level. 02 S12.7 records
+          crowd-average.
+      - ref: arc-agi-2
+        qualifies: true
+        why: >
+          'Average human performance on these tasks in our test sample was 66%', from members of
+          the public. The pooled 'solved by at least 2 humans' coverage is a second Baseline
+          record.
+      - ref: webarena
+        qualifies: false
+        why: >
+          NEAR MISS. The 78.24% anchor comes from 'five computer science graduate students',
+          chosen because the tasks need domain knowledge they had, so it is expert-average.
+    not_to_be_confused_with:
+      - term: expert-average
+        distinction: >
+          The raters' recruitment for the knowledge the tasks need decides. General users are
+          `crowd-average`, and raters chosen for task-specific knowledge are `expert-average`.
   - id: crowd-best
     label: Crowd best
     field: data.ceiling_anchor_type
@@ -64,8 +149,54 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The top of the scale is the mean performance of qualified domain experts.
-    examples: []
+      The top of the scale is the mean, or another central statistic, of the measured
+      performance of qualified domain experts.
+    inclusion_test: >
+      Tag this if the sources read scores against the measured performance of qualified experts
+      as a group, including professionals scored under the same protocol as systems, an anchor
+      systems have since exceeded, or an expert reference that marks parity on a win-rate scale.
+      Headroom against an exceeded anchor is computed unclamped (12 S3.1).
+    exclusion_test: >
+      Do NOT tag this if the expert behaviour is built into the scoring function rather than
+      reported as a score, such as a logged expert trajectory that switches penalties off. Do NOT
+      tag it if the anchor is the agreement between expert annotations of the reference labels
+      (noise-ceiling).
+    examples:
+      - ref: healthbench
+        qualifies: true
+        why: >
+          Physicians' responses were graded like model responses, and 'models outperformed the
+          unassisted expert baseline'. The baseline stays the anchor.
+      - ref: wmt25-general-mt-shared-task
+        qualifies: true
+        why: >
+          Professional human references are scored by the same ESA protocol as systems and
+          ranked with them, although systems beat them on some language pairs.
+      - ref: gpqa-diamond
+        qualifies: true
+        why: >
+          Expert validator accuracy on Diamond is reported as 81.3%. Its selection skew is
+          recorded on the Baseline record, not by another type.
+      - ref: navsim-v2
+        qualifies: false
+        why: >
+          NEAR MISS. The logged human trajectory switches off penalties the human also incurs,
+          but no source reports its EPDMS as a reference, so the anchor is the metric's bound
+          (theoretical-maximum).
+      - ref: brats-2026-cluster
+        qualifies: false
+        why: >
+          NEAR MISS. The anchor is 'the threshold of human expert inter-/intra-rater variability'
+          of the reference annotations, which is noise-ceiling.
+    not_to_be_confused_with:
+      - term: noise-ceiling
+        distinction: >
+          Experts performing the task and scored like systems are `expert-average`. Agreement
+          between experts' repeated annotations of the reference labels is `noise-ceiling`.
+      - term: crowd-average
+        distinction: >
+          Raters recruited for specialist knowledge the tasks need are `expert-average`. General
+          users are `crowd-average`.
   - id: expert-best
     label: Expert best
     field: data.ceiling_anchor_type
@@ -80,8 +211,54 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The top of the scale is the metric's own upper bound rather than any measured performance.
-    examples: []
+      The best end of the scale is the headline metric's own bound at its optimum, rather than
+      any measured performance.
+    inclusion_test: >
+      Tag this if the headline metric is bounded at its optimum, such as 1.0, 100% or zero error,
+      and no source publishes a measured human, system or data ceiling that scores are read
+      against. It applies when the ground truth is an incumbent code's output, because matching
+      the reference labels is then the bound itself. Anchors of secondary metrics go to
+      ceiling_by_category.
+    exclusion_test: >
+      Do NOT tag this if an empirical check, such as an oracle solution run or human validation,
+      establishes the achievable score (measured-ceiling), or if an incumbent system is scored
+      as a comparator against independent ground truth (operational-system). Do NOT tag it if
+      the headline metric is unbounded or pool-relative (none-known).
+    examples:
+      - ref: vbench-2-0
+        qualifies: true
+        why: >
+          Dimension scores are proportions, and the Total Score averages them, so 100% is the
+          top of the scale.
+      - ref: fusion-equilibrium-challenge
+        qualifies: true
+        why: >
+          S_model is 'one number in [0, 1]', and EFIT's reconstruction is the ground truth
+          itself, so reaching the bound means matching the incumbent's labels.
+      - ref: 2026-behavior-challenge
+        qualifies: true
+        why: >
+          The ranking metric, the task success score Q, is bounded at 1. The human averages
+          normalise only the secondary efficiency metrics and go to ceiling_by_category.
+      - ref: terminal-bench-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. 100% is the metric's bound, but an automated workflow ran every task's
+          oracle solution and confirmed it is reachable, which is measured-ceiling.
+    not_to_be_confused_with:
+      - term: measured-ceiling
+        distinction: >
+          A bound that an empirical check has confirmed reachable is `measured-ceiling`, even
+          when it equals the metric's maximum. An unchecked bound is `theoretical-maximum`.
+      - term: operational-system
+        distinction: >
+          When the incumbent's output is the ground truth, the anchor is the bound
+          (`theoretical-maximum`). When the incumbent is scored against independent ground
+          truth, it is `operational-system`.
+      - term: none-known
+        distinction: >
+          `theoretical-maximum` needs a defined bound at the metric's optimum. An unbounded or
+          pool-relative headline metric is `none-known`.
   - id: measured-ceiling
     label: Measured ceiling
     field: data.ceiling_anchor_type
@@ -90,7 +267,37 @@ terms:
     definition: >
       The top of the scale is an empirically measured limit on achievable performance given the
       data, rather than a bound derived from the metric.
-    examples: []
+    inclusion_test: >
+      Tag this if an empirical check establishes the achievable score on the data: an oracle or
+      gold solution run against the tests, human validation that every item is solvable, or a
+      measured bound below the metric's maximum. It takes precedence over theoretical-maximum
+      when the checked limit equals the bound.
+    exclusion_test: >
+      Do NOT tag this for a score normalised to the best agent of a reference pool, which is not
+      a limit on what is achievable (none-known). Do NOT tag it where no check was run
+      (theoretical-maximum).
+    examples:
+      - ref: terminal-bench-2-0
+        qualifies: true
+        why: >
+          Every task ships an oracle solution that 'causes all test cases to pass', and an
+          automated workflow ran each one to confirm solvability.
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          Annotators checked that each instance is solvable, and its gold patch passes its tests.
+          02 S12.11 records measured-ceiling.
+      - ref: melting-pot
+        qualifies: false
+        why: >
+          NEAR MISS. The exploiter trained on each test scenario is 'a rough estimate of the
+          upper ... bounds', but published scores are normalised to the best agent in the pool
+          and can exceed it, which is a pool-relative scale (none-known).
+    not_to_be_confused_with:
+      - term: theoretical-maximum
+        distinction: >
+          A reachable score confirmed by running solutions is `measured-ceiling`. The metric's
+          own bound, unchecked, is `theoretical-maximum`.
   - id: experimental-replicate
     label: Experimental replicate
     field: data.ceiling_anchor_type
@@ -106,9 +313,43 @@ terms:
     status: active
     introduced_in: 1.0.0
     definition: >
-      The top of the scale is an incumbent production system, for which asking after a human
-      baseline would be a category error.
-    examples: []
+      The anchor is an incumbent production system scored as a comparator against the same
+      ground truth, for which asking after a human baseline would be a category error.
+    inclusion_test: >
+      Tag this if the sources read scores against an incumbent system in operational use, scored
+      like an entrant against ground truth it did not produce, including when entrants now beat
+      it. Headroom is then computed unclamped (12 S3.1).
+    exclusion_test: >
+      Do NOT tag this if the incumbent's output is itself the ground truth (theoretical-maximum,
+      since matching it is the bound). Do NOT tag it if the reference is a published research
+      model or a designated control method rather than a system in operational use.
+    examples:
+      - ref: weatherbench-2
+        qualifies: true
+        why: >
+          Headline scorecards express every model's skill 'relative to ECMWF's IFS HRES', an
+          incumbent evaluated as a comparator, and the paper reports that Pangu-Weather and
+          GraphCast outperform it on many metrics.
+      - ref: chaosbench
+        qualifies: true
+        why: >
+          The ECMWF ensemble forecast is the best system measured and the stated goal-post,
+          evaluated as a baseline like the entrants.
+      - ref: fusion-equilibrium-challenge
+        qualifies: false
+        why: >
+          NEAR MISS. EFIT is the incumbent production code, but its reconstruction is the ground
+          truth, so a perfect score is the metric's bound (theoretical-maximum).
+      - ref: bend
+        qualifies: false
+        why: >
+          NEAR MISS. The anchors are task-specific published research models (AUGUSTUS,
+          Enformer, Basset, DeepSEA), not systems in operational use.
+    not_to_be_confused_with:
+      - term: theoretical-maximum
+        distinction: >
+          An incumbent scored against independent ground truth is `operational-system`. An
+          incumbent whose output is the ground truth makes the anchor `theoretical-maximum`.
   - id: noise-ceiling
     label: Noise ceiling
     field: data.ceiling_anchor_type
@@ -117,4 +358,32 @@ terms:
     definition: >
       The top of the scale is the reliability limit of the measurement itself, above which any
       gain would be fitting noise.
-    examples: []
+    inclusion_test: >
+      Tag this if the anchor is the reliability of the reference measurement itself, such as
+      test-retest or split-half agreement of recordings, or the inter- and intra-rater
+      variability of the expert annotations that serve as ground truth.
+    exclusion_test: >
+      Do NOT tag this if experts perform the task and are scored like systems against a
+      reference they did not produce (expert-average). Do NOT tag it if the agreement figure
+      concerns raters of system outputs rather than the reference labels.
+    examples:
+      - ref: brain-score
+        qualifies: true
+        why: >
+          Scores are normalised by the noise ceiling of the primate neural recordings, as 02 S7
+          records.
+      - ref: brats-2026-cluster
+        qualifies: true
+        why: >
+          The anchor is expert inter- and intra-rater variability of the reference annotations,
+          'as determined in an extensive re-annotation study for BraTS 2025'.
+      - ref: medhelm
+        qualifies: false
+        why: >
+          NEAR MISS. The clinician-clinician ICC of 0.43 measures agreement among raters of model
+          responses, not the reliability of the reference, so it is no anchor.
+    not_to_be_confused_with:
+      - term: expert-average
+        distinction: >
+          Agreement between repeated expert annotations of the reference is `noise-ceiling`.
+          Expert performance on the task, scored like a system's, is `expert-average`.

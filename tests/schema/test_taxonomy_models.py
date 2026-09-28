@@ -57,12 +57,21 @@ def test_every_taxonomy_file_loads_into_its_model():
     assert sorted(models) == on_disk == sorted(tx.FILES)
     for name, obj in models.items():
         assert isinstance(obj, tx.FILES[name][0]), name
-    # The counts 02 S14 fixes, read back through the models.
-    assert len(models['capabilities.yaml'].terms) == 44
-    assert len(models['evaluation-methods.yaml'].terms) == 27
-    assert len(models['subjects.yaml'].terms) == 18
+    # The counts 02 S14 fixes, read back through the models. 02 S14 is generated from the YAML by
+    # scripts/taxonomy_stats.py (check 9b), so the test reads the table rather than repeating it.
+    s14 = _s14()
+    assert len(models['capabilities.yaml'].terms) == s14['Capability']
+    assert len(models['evaluation-methods.yaml'].terms) == s14['Evaluation method']
+    assert len(models['subjects.yaml'].terms) == s14['Subject under test']
     doms = models['domains.yaml'].terms
-    assert (sum(t.parent is None for t in doms), sum(t.parent is not None for t in doms)) == (19, 204)
+    assert (sum(t.parent is None for t in doms), sum(t.parent is not None for t in doms)) == s14['Domain']
+
+
+def _s14():
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(TAXONOMY), 'scripts'))
+    import taxonomy_stats
+    return taxonomy_stats.parse_02_s14(taxonomy_stats.plan_doc('02-taxonomy.md'))
 
 
 def test_the_misspelled_key_fixture_fails():

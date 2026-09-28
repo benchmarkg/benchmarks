@@ -156,7 +156,7 @@ nothing gets added, followed by 20 months of no commits.
 | # | Facet | Cardinality | Required at | Primarily drives |
 | --- | --- | --- | --- | --- |
 | 1 | **Domain** | 1 primary + n secondary | stub | Browse spine, Atlas clusters, coverage matrix rows |
-| 2 | **Capability** | multi-valued, plus a derived 13-group rollup (§4.3) | full | Coverage matrix columns |
+| 2 | **Capability** | multi-valued, plus a derived <!-- gen: n(G) -->13<!-- /gen -->-group rollup (§4.3) | full | Coverage matrix columns |
 | 3 | **Evaluation method** | multi-valued | full | Comparability warnings, trust badges |
 | 4 | **Subject under test** | multi-valued (designed-for) | full | Comparability refusal, claim validation |
 | 5 | **Data properties** | 5 independent fields | full | Contamination signalling, headroom availability |
@@ -287,25 +287,21 @@ navigational node and is **not** assignable to `domain.primary` or `domain.secon
 Domain is a two-level facet, so it has two legitimate sizes and the convention has to travel with
 the number:
 
-- **204 `(family, subdomain)` pairs.** This is the navigational spine and the row axis of the
+- **<!-- gen: n(S) -->209<!-- /gen --> `(family, subdomain)` pairs.** This is the navigational spine and the row axis of the
   coverage matrix. A pair is a position a user can browse to and a row a gap claim can be made
   about.
-- **204 distinct leaf slugs**, after D3.5's rename of `games-planning/puzzle-solving` to
+- **<!-- gen: n(L) -->209<!-- /gen --> distinct leaf slugs**, after D3.5's rename of `games-planning/puzzle-solving` to
   `games-planning/puzzle-games`. Before that rename there were 203, because one slug sat under two
   families; D3.5 exists to make the two counts equal so that nobody has to remember which one a
   given sentence means.
 
-**Nineteen families, 204 subdomains.** Per-family subdomain counts, which sum to 204: language 11,
-mathematics 7, code 9, reasoning-general 10, vision 16, audio-speech 10, multimodal 7,
-robotics-embodiment 15, physics 10, chemistry-materials 12, biology-genetics 18, medicine-health 12,
-earth-climate 8, games-planning 9, agents-tooluse 10, safety-alignment 16, general-intelligence 7,
-society-econ-law 11, engineering-design 6.
+**<!-- gen: W(F) -->Nineteen<!-- /gen --> families, <!-- gen: n(S) -->209<!-- /gen --> subdomains.** Per-family subdomain counts, which sum to <!-- gen: n(S) -->209<!-- /gen -->: language <!-- gen: sub('language') -->11<!-- /gen -->, mathematics <!-- gen: sub('mathematics') -->7<!-- /gen -->, code <!-- gen: sub('code') -->9<!-- /gen -->, reasoning-general <!-- gen: sub('reasoning-general') -->10<!-- /gen -->, vision <!-- gen: sub('vision') -->16<!-- /gen -->, audio-speech <!-- gen: sub('audio-speech') -->10<!-- /gen -->, multimodal <!-- gen: sub('multimodal') -->7<!-- /gen -->, robotics-embodiment <!-- gen: sub('robotics-embodiment') -->15<!-- /gen -->, physics <!-- gen: sub('physics') -->10<!-- /gen -->, chemistry-materials <!-- gen: sub('chemistry-materials') -->12<!-- /gen -->, biology-genetics <!-- gen: sub('biology-genetics') -->18<!-- /gen -->, medicine-health <!-- gen: sub('medicine-health') -->13<!-- /gen -->, earth-climate <!-- gen: sub('earth-climate') -->8<!-- /gen -->, games-planning <!-- gen: sub('games-planning') -->10<!-- /gen -->, agents-tooluse <!-- gen: sub('agents-tooluse') -->11<!-- /gen -->, safety-alignment <!-- gen: sub('safety-alignment') -->16<!-- /gen -->, general-intelligence <!-- gen: sub('general-intelligence') -->9<!-- /gen -->, society-econ-law <!-- gen: sub('society-econ-law') -->11<!-- /gen -->, engineering-design <!-- gen: sub('engineering-design') -->6<!-- /gen -->.
 
-The fine coverage grid is therefore **204 × 44 = 8,976 cells** — on pairs, which is the right
+The fine coverage grid is therefore **<!-- gen: n(S) -->209<!-- /gen --> × <!-- gen: n(C) -->45<!-- /gen --> = <!-- gen: n(S*C) -->9,405<!-- /gen --> cells** — on pairs, which is the right
 convention because `reasoning-general/puzzle-solving` and `games-planning/puzzle-games` are
 different browse positions and a gap in one is not a gap in the other. On bare distinct slugs it is
-the same 8,976 after the rename. The coarse grid, which is the only grid permitted to publish gap
-claims, is 19 × 13 = 247 cells (§4.3, and
+the same <!-- gen: n(L*C) -->9,405<!-- /gen --> after the rename. The coarse grid, which is the only grid permitted to publish gap
+claims, is <!-- gen: n(F) -->19<!-- /gen --> × <!-- gen: n(G) -->13<!-- /gen --> = <!-- gen: n(F*G) -->247<!-- /gen --> cells (§4.3, and
 [12-analytics-and-trends.md](12-analytics-and-trends.md) for what is published from it).
 
 ### Domain changelog against the archive
@@ -441,13 +437,9 @@ a dated survey note. The Domain facet needs the same treatment and the archive g
 is a real gap because Domain is the navigational spine and a subdomain page is the first thing a
 specialist clicks.
 
-The arithmetic. **320 seed entries over 204 `(family, subdomain)` pairs is a mean of 1.57 primary
+The arithmetic. **<!-- gen: n(SEED) -->320<!-- /gen --> seed entries over <!-- gen: n(S) -->209<!-- /gen --> `(family, subdomain)` pairs is a mean of <!-- gen: r2(SEED/S) -->1.53<!-- /gen --> primary
 entries per subdomain**, and the distribution will be far worse than the mean because benchmark
-attention is concentrated. The thinnest rows by construction are safety-alignment (18 entries over
-16 subdomains, 1.13), reasoning-general (12 over 10, 1.20), language and society-econ-law (14 over
-11, 1.27), games-planning (12 over 9, 1.33) and vision (22 over 16, 1.38); the fattest are
-earth-climate (18 over 8, 2.25), agents-tooluse (20 over 10, 2.00) and engineering-design (12 over
-6, 2.00). Under a Poisson null at λ = 1.57, 21% of subdomain pages — about 43 of 204 — would be
+attention is concentrated. <!-- gen: density_sentence() -->The thinnest rows by construction are safety-alignment (18 entries over 16 subdomains, 1.13), games-planning and reasoning-general (12 over 10, 1.20), language and society-econ-law (14 over 11, 1.27) and general-intelligence (12 over 9, 1.33); the fattest are earth-climate (18 over 8, 2.25), engineering-design (12 over 6, 2.00) and agents-tooluse (20 over 11, 1.82).<!-- /gen --> Under a Poisson null at λ = <!-- gen: r2(SEED/S) -->1.53<!-- /gen -->, <!-- gen: pct(exp(-SEED/S)) -->22<!-- /gen -->% of subdomain pages — about <!-- gen: n(float(r2(exp(-SEED/S))) * S + 0.5) -->46<!-- /gen --> of <!-- gen: n(S) -->209<!-- /gen --> — would be
 empty even with perfectly even curation; the true figure will be higher, and 40–50% is the working
 estimate *(derived from an assumed concentration, not measured — confirm against the seed corpus at
 the 100-entry checkpoint)*. A specialist clicking `biology-genetics/phylogenetics`, which the
@@ -486,7 +478,7 @@ unfalsifiable.
 
 ### 4.1 The terms
 
-**Forty-four terms.**
+**<!-- gen: W(C) -->Forty-five<!-- /gen --> terms.**
 
 `knowledge-recall` · `factual-precision` · `deductive-reasoning` · `inductive-reasoning` ·
 `abductive-reasoning` · `causal-reasoning` · `analogical-reasoning` · `abstraction` ·
@@ -510,7 +502,7 @@ that the row is empty, and neither can produce a gap finding. This is the **taut
 and it is the reason the pairs are marked rather than tolerated silently — the brightest square in
 the reasoning row would otherwise sit on it, and a specialist who clicks in, sees that, and
 concludes the matrix is an artefact of naming would be right about that square. Check 9e marks them
-and the fine-grid view excludes them from gap ranking. Four cells of 8,976, and none at all in the
+and the fine-grid view excludes them from gap ranking. <!-- gen: W(H) -->Four<!-- /gen --> cells of <!-- gen: n(S*C) -->9,405<!-- /gen -->, and none at all in the
 coarse grid, which is the only grid that publishes gap claims. See D3.
 
 ### 4.2 Disambiguation notes for the terms most likely to blur
@@ -558,9 +550,9 @@ taxonomy nobody can read is a taxonomy nobody can apply consistently.
 Settled by **D1**, 2026-09-21. **This section is the canonical enumeration**; every other document
 refers to it rather than restating the member lists.
 
-**Thirteen capability groups**, a strict partition of all 44 capability terms, each term in exactly
-one group. The coarse coverage grid is therefore **19 domain families × 13 capability groups = 247
-cells**, against the fine grid's 204 × 44 = 8,976. The coarse grid is the only grid permitted to
+**<!-- gen: W(G) -->Thirteen<!-- /gen --> capability groups**, a strict partition of all <!-- gen: n(C) -->45<!-- /gen --> capability terms, each term in exactly
+one group. The coarse coverage grid is therefore **<!-- gen: n(F) -->19<!-- /gen --> domain families × <!-- gen: n(G) -->13<!-- /gen --> capability groups = <!-- gen: n(F*G) -->247<!-- /gen -->
+cells**, against the fine grid's <!-- gen: n(S) -->209<!-- /gen --> × <!-- gen: n(C) -->45<!-- /gen --> = <!-- gen: n(S*C) -->9,405<!-- /gen -->. The coarse grid is the only grid permitted to
 publish gap claims ([12-analytics-and-trends.md](12-analytics-and-trends.md)); the fine grid is
 exploration-only behind a null-model banner.
 
@@ -573,12 +565,13 @@ the affected columns with no change to any benchmark record — which is why
 `capability_groups.yaml` is versioned, its version is recorded in `build/derived/manifest.json`, and
 moving a term between groups requires an ADR (§11 rule 9).
 
+<!-- gen: groups_table() -->
 | # | id | label | n | member terms |
 | --- | --- | --- | --- | --- |
 | 1 | `knowledge-and-memory` | Knowledge & memory | 4 | `knowledge-recall` · `factual-precision` · `memory-retention` · `context-integration` |
 | 2 | `formal-quantitative-reasoning` | Formal & quantitative | 3 | `deductive-reasoning` · `quantitative-reasoning` · `constraint-satisfaction` |
 | 3 | `abstraction-and-analogy` | Abstraction & analogy | 4 | `abstraction` · `inductive-reasoning` · `analogical-reasoning` · `compositional-generalization` |
-| 4 | `causal-and-experimental-inference` | Causal & experimental | 4 | `abductive-reasoning` · `causal-reasoning` · `hypothesis-generation` · `experimental-design` |
+| 4 | `causal-and-experimental-inference` | Causal & experimental | 5 | `abductive-reasoning` · `causal-reasoning` · `hypothesis-generation` · `experimental-design` · `scientific-prediction` |
 | 5 | `perception-space-time` | Signal, space & time | 4 | `perception` · `grounding` · `spatial-reasoning` · `temporal-reasoning` |
 | 6 | `planning-and-search` | Planning & search | 3 | `planning` · `search-exploration` · `optimization` |
 | 7 | `action-and-execution` | Action & execution | 3 | `sensorimotor-control` · `tool-use` · `long-horizon-execution` |
@@ -588,6 +581,7 @@ moving a term between groups requires an ADR (§11 rule 9).
 | 11 | `robustness-and-stability` | Shift & robustness | 3 | `distribution-shift-generalization` · `adversarial-robustness` · `reliability-consistency` |
 | 12 | `uncertainty-and-self-monitoring` | Uncertainty handling | 3 | `calibration-uncertainty` · `probabilistic-forecasting` · `self-correction` |
 | 13 | `autonomy-and-oversight` | Autonomy & oversight | 3 | `autonomy` · `self-improvement` · `situational-awareness` |
+<!-- /gen -->
 
 #### Definitions
 
@@ -803,7 +797,7 @@ groups:
 
 Thirteen is the largest count at which every column is a construct a specialist would accept, no
 column is a grab-bag, and all four gap claims the plan has already committed to publishing stay
-expressible on the coarse axis. The 3-member floor caps the count at 14 (44 / 3 = 14.67); 13 is 14
+expressible on the coarse axis. At D1's 44 terms the 3-member floor capped the count at 14 (44 / 3 = 14.67); 13 is 14
 minus the one split D1 refused — separating `knowledge-recall` + `factual-precision` from
 `memory-retention` + `context-integration`, rejected because it yields two 2-member columns that
 read as curation artefacts at seed rather than as findings. Neither 12 (a number nobody had derived)
@@ -866,7 +860,7 @@ much weight a number deserves before they look at the number. A benchmark may ca
 benchmark has multiple tracks with materially different methods, model them as subsets rather than
 flattening ([04-data-model.md](04-data-model.md)).
 
-**Twenty-seven terms.**
+**<!-- gen: W(M) -->Thirty-one<!-- /gen --> terms.**
 
 | Term | Notes |
 | --- | --- |
@@ -985,7 +979,7 @@ them and joins on `evaluation_name`."
 
 *What kind of thing is being evaluated.*
 
-**Eighteen terms.**
+**<!-- gen: W(U) -->Twenty-one<!-- /gen --> terms.**
 
 `base-model` · `instruction-tuned-model` · `reasoning-model` · `tool-augmented-model` ·
 `domain-specialist-model` · `generative-media-model` · `scientific-surrogate-model` ·
@@ -1090,7 +1084,7 @@ page and dated, not copied from here.
   `resolution_status: pending | partial | resolved`.
 - `periodic-recompetition` is DCASE (new eval set every year), BraTS, NTIRE, LifeCLEF and CASP.
 
-### `data_provenance` — eleven terms
+### `data_provenance` — thirteen terms
 
 `expert-authored` · `crowd-authored` · `exam-derived` · `web-scraped` · `synthetic-procedural` ·
 `model-generated` · `real-world-instrument` · `simulation-generated` · `experimental-measurement` ·
@@ -1274,7 +1268,7 @@ lifecycle state flags the instability; the actual version break is modelled as
 `contamination_risk`. See the cross-field consistency rules in §11 for which of the two fields is
 authoritative.
 
-### `activity` — the competition's operational state (six terms)
+### `activity` — the competition's operational state (eight terms)
 
 `accepting-submissions` · `round-scheduled` · `between-rounds` · `leaderboard-live-no-round` ·
 `closed` · `unknown`
@@ -1470,7 +1464,7 @@ ecosystem analysis in [12-analytics-and-trends.md](12-analytics-and-trends.md) p
 origin by going stale. A stale academic benchmark is `maintainer_type: academic-lab` with
 `maintenance_status: stale`, which is both more informative and more accurate.
 
-### `submission_process` — ten terms
+### `submission_process` — fourteen terms
 
 `self-reported` · `maintainer-verified` · `sandboxed-rerun` · `held-out-server` ·
 `containerized-algorithm-submission` · `assessment-committee` · `third-party-audited` ·
@@ -1485,7 +1479,7 @@ origin by going stale. A stale academic benchmark is `maintainer_type: academic-
   A publication requirement on eligibility is a real access condition and nowhere else in the schema
   expresses it.
 
-### `independence_flags` — multi-valued, evidence-linked, eight terms
+### `independence_flags` — multi-valued, evidence-linked, nine terms
 
 `no-known-conflict` · `maintainer-competes-on-own-benchmark` · `funded-by-evaluated-party` ·
 `prize-sponsored-by-industry` · `evaluator-sells-evaluations` · `single-evaluator-private-test-set` ·
@@ -2597,23 +2591,23 @@ retyping a total is how a wrong one survives.
 
 | Facet | Field | Terms | Required at | Derived? |
 | --- | --- | --- | --- | --- |
-| 1 Domain | `domain.primary` / `.secondary[]` | 19 families / 204 `(family, subdomain)` pairs | stub | no |
-| 2 Capability | `capability[]` | 44 | full | no |
+| 1 Domain | `domain.primary` / `.secondary[]` | 19 families / 209 `(family, subdomain)` pairs | stub | no |
+| 2 Capability | `capability[]` | 45 | full | no |
 | | *capability group rollup* (§4.3) | 13 | — | **yes**, a partition of `capability[]`; never hand-tagged |
-| 3 Evaluation method | `evaluation_method[]` | 27 | full | no |
-| 4 Subject under test | `designed_for_subjects[]` | 18 | full | no |
+| 3 Evaluation method | `evaluation_method[]` | 31 | full | no |
+| 4 Subject under test | `designed_for_subjects[]` | 21 | full | no |
 | 5 Data properties | `data.access` | 9 | full | no |
 | | `data.refresh` | 7 | full | no |
-| | `data.data_provenance[]` | 11 | full | no |
+| | `data.data_provenance[]` | 13 | full | no |
 | | `data.contamination_risk` | 5 | full | no (evidence required above `medium`) |
 | | `data.ceiling_anchor_type` | 10 | full | no |
 | 6 Lifecycle | `lifecycle` | 10 | stub | partly (`saturated` only, per §8) |
-| | `activity` | 6 | full | no |
+| | `activity` | 8 | full | no |
 | | `maintenance_status` | 5 | — | **yes**, from the §8 probe protocol |
 | | `maintenance_status_contested` | boolean, not a vocabulary | — | no (hand-set, source required) |
 | 7 Governance | `governance.maintainer_type` | 9 | full | no |
-| | `governance.submission_process` | 10 | full | no |
-| | `governance.independence_flags[]` | 8 | full | no (evidence required) |
+| | `governance.submission_process` | 14 | full | no |
+| | `governance.independence_flags[]` | 9 | full | no (evidence required) |
 | 8 Execution | `execution.compute_tier` | 12 | full | no |
 | | `execution.reproducibility_tier` | 6 | full | no |
 | | `execution.reproducibility_blockers[]` | 10 | full | no |
@@ -2634,8 +2628,8 @@ Two deletions since the previous revision, both because a value was in the wrong
 ### The definition-authoring pass, sized
 
 §11 rule 8 requires `id`, `label`, `definition` and two or more `examples[]` on every term. Nobody
-had costed that, and it is not small: with 204 subdomain terms and 229 non-subdomain hand-tagged
-terms (the 19 families plus the 210 facet terms in the table above), the rule demands over four
+had costed that, and it is not small: with <!-- gen: n(S) -->209<!-- /gen --> subdomain terms and <!-- gen: n(F+C+M+U+X) -->246<!-- /gen --> non-subdomain hand-tagged
+terms (the <!-- gen: n(F) -->19<!-- /gen --> families plus the <!-- gen: n(C+M+U+X) -->227<!-- /gen --> facet terms in the table above), the rule demands over four
 hundred definitions and over eight hundred examples. Rule 8 now breaks the circular dependency —
 `examples: []` warns rather than fails while `taxonomy/VERSION < 1.0.0` — but the writing still has
 to happen, and a plan that leaves it unsized is a plan whose first milestone slips for a reason
@@ -2643,12 +2637,12 @@ nobody predicted.
 
 | Pass | Terms | Rate | Hours | Phase |
 | --- | --- | --- | --- | --- |
-| Spine vocabularies: 19 families, 44 capability, 27 evaluation-method, 18 subject | 108 | 6–20 min | **11–36** | **Phase 0**, before curation starts |
-| Remaining facet terms: access, refresh, provenance, contamination, ceiling anchor, lifecycle, activity, maintenance, governance, execution | 121 | 6–20 min | **12–40** | Phase 1, front-loaded |
-| Subdomain terms — definition and `status: proposed` | 204 | 2–5 min | **7–17** | **Phase 0**, with the stubs. A curator cannot tag into an undefined subdomain without producing the drift §6 of `03` measures |
-| Subdomain terms — `examples[]`, including the near-miss | 204 | 2–5 min | **7–17** | Phase 1, as the entries that supply the examples land |
-| Capability groups (§4.3) | 13 | — | **0** | Already written; D1 supplies the definitions verbatim |
-| **Total** | **446 term records** (= 108 + 121 + 204 + 13, this column) | | **37–110 h** | |
+| Spine vocabularies: <!-- gen: n(F) -->19<!-- /gen --> families, <!-- gen: n(C) -->45<!-- /gen --> capability, <!-- gen: n(M) -->31<!-- /gen --> evaluation-method, <!-- gen: n(U) -->21<!-- /gen --> subject | <!-- gen: n(F+C+M+U) -->116<!-- /gen --> | 6–20 min | **<!-- gen: hrs(F+C+M+U, 6) -->12<!-- /gen -->–<!-- gen: hrs(F+C+M+U, 20) -->39<!-- /gen -->** | **Phase 0**, before curation starts |
+| Remaining facet terms: access, refresh, provenance, contamination, ceiling anchor, lifecycle, activity, maintenance, governance, execution | <!-- gen: n(X) -->130<!-- /gen --> | 6–20 min | **<!-- gen: hrs(X, 6) -->13<!-- /gen -->–<!-- gen: hrs(X, 20) -->43<!-- /gen -->** | Phase 1, front-loaded |
+| Subdomain terms — definition and `status: proposed` | <!-- gen: n(S) -->209<!-- /gen --> | 2–5 min | **<!-- gen: hrs(S, 2) -->7<!-- /gen -->–<!-- gen: hrs(S, 5) -->17<!-- /gen -->** | **Phase 0**, with the stubs. A curator cannot tag into an undefined subdomain without producing the drift §6 of `03` measures |
+| Subdomain terms — `examples[]`, including the near-miss | <!-- gen: n(S) -->209<!-- /gen --> | 2–5 min | **<!-- gen: hrs(S, 2) -->7<!-- /gen -->–<!-- gen: hrs(S, 5) -->17<!-- /gen -->** | Phase 1, as the entries that supply the examples land |
+| Capability groups (§4.3) | <!-- gen: n(G) -->13<!-- /gen --> | — | **0** | Already written; D1 supplies the definitions verbatim |
+| **Total** | **<!-- gen: n(F+C+M+U+X+S+G) -->468<!-- /gen --> term records** (= <!-- gen: n(F+C+M+U) -->116<!-- /gen --> + <!-- gen: n(X) -->130<!-- /gen --> + <!-- gen: n(S) -->209<!-- /gen --> + <!-- gen: n(G) -->13<!-- /gen -->, this column) | | **<!-- gen: int(hrs(F+C+M+U, 6)) + int(hrs(X, 6)) + 2 * int(hrs(S, 2)) -->39<!-- /gen -->–<!-- gen: int(hrs(F+C+M+U, 20)) + int(hrs(X, 20)) + 2 * int(hrs(S, 5)) -->116<!-- /gen --> h** | |
 
 The subdomain row is split in two because the two halves belong to different phases and the single
 row could not say so. A subdomain needs a **definition** before anyone tags into it, or the

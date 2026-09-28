@@ -7,8 +7,8 @@
 
 facet: domain
 facet_kind: navigational
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   The navigational spine. Two levels, `family/subdomain`: a benchmark carries exactly one
   primary domain and any number of secondary domains. A bare family is a navigational node
@@ -29,9 +29,11 @@ terms:
       Tag this as PRIMARY if the scored quantity concerns proteins, nucleic acids, cells,
       organisms or neural activity.
     exclusion_test: >
-      Do NOT tag this if the subject is a small molecule evaluated as a drug candidate, which is
-      `chemistry-materials/drug-discovery-admet`, and do NOT tag it where the endpoint is a
-      clinical outcome, which is `medicine-health`.
+      Do NOT tag this if a small molecule is scored for its own properties (ADMET, reactivity,
+      synthesis), or nominated compounds are scored by what a wet-lab assay returns, which is
+      `chemistry-materials`, and do NOT tag it where the endpoint is a clinical outcome, which is
+      `medicine-health`. A small molecule scored for how it binds a protein, as a bound pose or a
+      predicted affinity, stays here: the protein makes it biology, even for a drug candidate.
     examples:
       - ref: casp16
         qualifies: true
@@ -50,6 +52,12 @@ terms:
         why: >
           NEAR MISS. Biomedical throughout, but the endpoint is clinical conversation quality,
           which is `medicine-health`.
+    not_to_be_confused_with:
+      - term: chemistry-materials
+        distinction: >
+          Both families claim a protein-small-molecule complex. The scored quantity decides: a
+          bound pose or a binding affinity is biology-genetics; the molecule's own properties, or
+          compounds nominated and then assayed, are chemistry-materials.
     seed_target: 25
     core: true
     coverage_status: surveyed
@@ -121,8 +129,40 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Predicting the joint structure of a protein together with a bound small molecule.
-    examples: []
+      Predicting the bound structure of a protein and a small molecule, either jointly or by
+      placing the ligand into a given protein structure.
+    inclusion_test: >
+      Tag this as PRIMARY if the scored quantity is the pose of a small molecule bound to a
+      protein, whether the protein is predicted with it (co-folding) or given (re-docking), and
+      whatever the method. The entry stays in biology-genetics even where the corpus files it
+      under chemistry-materials, because the pose is a property of the protein complex.
+    exclusion_test: >
+      Do NOT tag this if nominated compounds are scored by what an assay returns
+      (`chemistry-materials/experimental-hit-finding`), if only binding strength is predicted
+      with no structure (`drug-target-interaction`), or if the partner is another protein
+      (`protein-protein-interaction`) or a nucleic acid (`nucleic-acid-structure`).
+    examples:
+      - ref: runs-n-poses
+        qualifies: true
+        why: >
+          Co-folding predictions for 2,073 protein-ligand systems, scored for pose success
+          against the deposited structures.
+      - ref: posebusters
+        qualifies: true
+        why: >
+          Re-docks each cognate ligand into its receptor's crystal structure and scores the pose;
+          docking with the protein given is inside this term.
+      - ref: cache-challenges
+        qualifies: false
+        why: >
+          NEAR MISS. Small molecules against a protein target, but they are scored by what the
+          binding assay returns, which is `chemistry-materials/experimental-hit-finding`.
+    not_to_be_confused_with:
+      - term: chemistry-materials
+        distinction: >
+          A small molecule scored for its bound pose is here; chemistry-materials takes the
+          molecule's own properties and assay-scored hit-finding. Both family exclusion tests
+          draw this line, so it does not rest on where the subdomain happens to sit.
   - id: biology-genetics/genomics-variant-effect
     label: Genomics variant effect
     parent: biology-genetics
@@ -158,9 +198,27 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Turning single-cell measurements into per-cell assignments such as cell type, state or
-      developmental trajectory.
-    examples: []
+      Turning single-cell or spatially resolved omics measurements into cell-level results,
+      whether assignments, integrated embeddings, denoised profiles or inferred interactions.
+    inclusion_test: >
+      Tag this as PRIMARY if the tasks take single-cell or spatial omics measurements as input
+      and most of them score cell-level results: labels, trajectories, batch integration,
+      denoising, modality prediction, spatial deconvolution or cell-cell communication.
+    exclusion_test: >
+      Do NOT tag this if most tasks predict responses to perturbations the cells were not
+      observed under (`perturbation-response-prediction`), or if the input is bulk expression
+      (`transcriptomics`).
+    examples:
+      - ref: open-problems-in-single-cell-analysis
+        qualifies: true
+        why: >
+          13 tasks over single-cell and spatial data, from label projection to denoising and
+          spatial decomposition; perturbation prediction is one task and goes to secondary.
+      - ref: virtual-cell-challenge-2026
+        qualifies: false
+        why: >
+          NEAR MISS. Single-cell readouts throughout, but the task is predicting knockdown
+          responses in unseen cell lines, which is `perturbation-response-prediction`.
   - id: biology-genetics/perturbation-response-prediction
     label: Perturbation response prediction
     parent: biology-genetics
@@ -180,6 +238,12 @@ terms:
     definition: >
       Predicting whether a compound binds a specified biological target and how strongly.
     examples: []
+    not_to_be_confused_with:
+      - term: chemistry-materials/drug-discovery-admet
+        distinction: >
+          Binding a specified target is this term even when the compound is a drug candidate;
+          what the body does to the compound once it is there is ADMET. Compounds nominated and
+          then assayed for binding are `chemistry-materials/experimental-hit-finding`.
   - id: biology-genetics/systems-biology
     label: Systems biology
     parent: biology-genetics
@@ -297,8 +361,29 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Manipulation requiring two coordinated arms on a task that one arm cannot complete.
-    examples: []
+      Manipulation benchmarks built around two coordinated arms, on tasks designed for a
+      dual-arm embodiment.
+    inclusion_test: >
+      Tag this as PRIMARY if the benchmark's own claim is coordinated two-arm manipulation and
+      its tasks are specified and scored on dual-arm embodiments. Decide for the benchmark, not
+      task by task: a suite built for two arms stays here although some of its tasks one arm
+      could complete.
+    exclusion_test: >
+      Do NOT tag this if the embodiment is a single arm or is left to the entrant, or if two
+      arms are incidental to a claim about another setting, such as long-horizon household work
+      (`mobile-manipulation`).
+    examples:
+      - ref: robotwin-2-0
+        qualifies: true
+        why: >
+          Over 50 dual-arm collaborative tasks evaluated on dual-arm embodiments, although a few
+          task names describe one-arm actions.
+      - ref: 2026-behavior-challenge
+        qualifies: false
+        why: >
+          NEAR MISS. The home page names dexterous bimanual manipulation, but entrants may bring
+          their own robot and the claim is household tasks in house-scale scenes, which is
+          `mobile-manipulation`.
   - id: robotics-embodiment/locomotion
     label: Locomotion
     parent: robotics-embodiment
@@ -434,16 +519,21 @@ terms:
       question answered about an image, an expression grounded in a scene, a caption retrieved
       for a photo -- which is `multimodal`. A text prompt that merely conditions generation does
       not make a benchmark multimodal; the discriminant is whether crossing between the
-      modalities is what is scored.
+      modalities is what is scored. Do NOT tag it as primary either where overhead imagery is
+      labelled with Earth-system quantities (`earth-climate/remote-sensing`), or where medical
+      images carry clinically defined targets against a clinician reference standard
+      (`medicine-health`), although the metric is a vision metric; the vision task subdomain is
+      then secondary.
     examples:
       - ref: coco
         qualifies: true
         why: >
           Detection and segmentation scored directly against image content.
-      - ref: scannetpp
+      - ref: scannet
         qualifies: true
         why: >
-          Dense 3D scene understanding scored as reconstruction and segmentation quality.
+          ScanNet++: novel views scored against held-out DSLR photographs, and 3D semantic and
+          instance labels scored on the laser-scan mesh.
       - ref: vbench
         qualifies: true
         why: >
@@ -486,6 +576,17 @@ terms:
     definition: >
       Assigning a category label to every pixel or region of an image.
     examples: []
+    not_to_be_confused_with:
+      - term: earth-climate/remote-sensing
+        distinction: >
+          Same operation, different subject. Per-pixel labels of an Earth-system quantity (water,
+          land cover, crops, ice) on satellite or airborne imagery are remote sensing, with this
+          term secondary; segmentation is primary only when the benchmark's claim is the vision
+          method and the labels are generic objects.
+      - term: medicine-health/medical-imaging-segmentation
+        distinction: >
+          Masks of clinically defined structures against clinician reference annotations are
+          medical-imaging-segmentation, with this term secondary where it is recorded at all.
   - id: vision/video-understanding
     label: Video understanding
     parent: vision
@@ -495,6 +596,13 @@ terms:
     definition: >
       Recognising actions, events or content across the temporal extent of a video.
     examples: []
+    not_to_be_confused_with:
+      - term: multimodal/video-language
+        distinction: >
+          A video benchmark posed as question answering scores the answer's correspondence to
+          the video, which is video-language (02 S11 rule 12), even when it calls itself video
+          understanding. This term holds benchmarks scored on labels or temporal segments with
+          no language to correspond to, such as action recognition and temporal localisation.
   - id: vision/3d-reconstruction
     label: 3D reconstruction
     parent: vision
@@ -594,6 +702,13 @@ terms:
     definition: >
       Producing a video, scored on properties of the generated video itself.
     examples: []
+    not_to_be_confused_with:
+      - term: multimodal/any-to-any-generation
+        distinction: >
+          When some scored dimensions check the video against its prompt and others score the
+          video alone, the benchmark's headline claim decides: fidelity of the generated video
+          is this term, with any-to-any-generation secondary; adherence to the prompt as the
+          headline is any-to-any-generation, with this term secondary.
   - id: vision/document-understanding
     label: Document understanding
     parent: vision
@@ -603,6 +718,13 @@ terms:
     definition: >
       Extracting structure and content from document images such as forms, tables and reports.
     examples: []
+    not_to_be_confused_with:
+      - term: multimodal/visual-qa
+        distinction: >
+          The format of the item decides, as for any image (02 S11 rule 12). A document-image
+          benchmark posed as questions is visual-qa, with this term secondary; this term holds
+          document benchmarks scored on the extracted structure or content itself, such as
+          layout analysis, key-value extraction and table structure recognition.
   - id: vision/ocr-handwriting
     label: OCR and handwriting
     parent: vision
@@ -619,15 +741,41 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Computer-vision methods evaluated on medical images where the score is a vision metric
-      rather than a clinical outcome.
-    examples: []
+      Computer-vision methods evaluated on medical images, where the benchmark's claim is the
+      method rather than a clinical task.
+    inclusion_test: >
+      Tag this as PRIMARY if the benchmark's own claim is a vision method (robustness,
+      pretraining, generalisation across sites or scanners) and medical images are its test
+      domain, with no clinical task claimed for the result.
+    exclusion_test: >
+      Do NOT tag this if the targets are clinically defined (lesions, organs, findings,
+      diagnoses) and clinicians set the reference standard, which is `medicine-health` whatever
+      the metric. Dice and FROC are vision metrics, so the metric never decides.
+    examples:
+      - ref: brats-2026-cluster
+        qualifies: false
+        why: >
+          NEAR MISS. Scored by Dice and surface distance, but on clinically defined tumour
+          sub-regions against expert masks, which is
+          `medicine-health/medical-imaging-segmentation`.
+      - ref: luna16
+        qualifies: false
+        why: >
+          NEAR MISS. A false-positive track invites image-classification teams, but the task is
+          nodule detection for lung cancer screening against a radiologist reference standard,
+          which is `medicine-health/medical-imaging-diagnostic`.
     not_to_be_confused_with:
       - term: medicine-health/medical-imaging-diagnostic
         distinction: >
-          The discriminant is what the score means. A vision metric on medical images is
-          vision/medical-imaging-cv; a score against a clinical reference standard, where the
-          output is a diagnosis, is medicine-health/medical-imaging-diagnostic.
+          The discriminant is the benchmark's claim, not its metric. A clinical task scored
+          against a clinical reference standard is medicine-health/medical-imaging-diagnostic
+          even when the metric is a vision metric; a vision method tested on medical images is
+          vision/medical-imaging-cv.
+      - term: medicine-health/medical-imaging-segmentation
+        distinction: >
+          Masks of clinically defined structures against clinician annotations are
+          medical-imaging-segmentation, although Dice is a vision metric; this term takes a
+          segmentation benchmark only when its claim is the method.
 
   # -------------------------------------------------------------- agents-tooluse
   - id: agents-tooluse
@@ -640,10 +788,15 @@ terms:
       Benchmarks whose subject is a system acting autonomously through tools or interfaces.
     inclusion_test: >
       Tag this as PRIMARY if the scored quantity is what an autonomous loop achieved using
-      tools, APIs, a browser or an operating system.
+      tools, APIs, a browser or an operating system, and the grader checks the state it left or
+      the result it returned.
     exclusion_test: >
       Do NOT tag this if the environment is a game, which is `games-planning`, and do NOT tag it
-      where the scored artifact is software rather than the act of operating a machine.
+      where the grader scores software the agent wrote -- tests run against a patch or program,
+      or the performance of a model or analysis it built -- which is `code`, with this family's
+      subdomain as secondary. Decide from the benchmark's grading protocol, not task by task:
+      when the grader checks a machine's end state (files, services, configuration), this
+      family is primary even where some tasks leave a program behind.
     examples:
       - ref: osworld-2-0
         qualifies: true
@@ -663,6 +816,13 @@ terms:
         why: >
           NEAR MISS. Solved almost entirely by agents, but the scored artifact is a patch judged
           by tests, which is `code`.
+    not_to_be_confused_with:
+      - term: code
+        distinction: >
+          An agentic harness does not decide the family; the grader does. Tests or a held-out
+          score applied to software the agent wrote (a patch, a trained model's predictions) make
+          it `code`; a check of the machine or environment state it left makes it
+          agents-tooluse.
     seed_target: 20
     core: false
     coverage_status: surveyed
@@ -686,7 +846,31 @@ terms:
     definition: >
       Completing tasks by operating a graphical user interface through synthetic mouse and
       keyboard input.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if the agent operates desktop applications through a graphical
+      interface, observing the screen and acting by mouse and keyboard, and the grader checks
+      the resulting application or file state. Episode length does not move it: a long-horizon
+      GUI benchmark stays here, with `long-horizon-autonomy` as secondary.
+    exclusion_test: >
+      Do NOT tag this if the tasks are confined to web sites in a browser (`web-navigation`), or
+      if the agent acts through a shell or an API with no graphical interface
+      (`operating-system-tasks`, `tool-api-calling`).
+    examples:
+      - ref: osworld-2-0
+        qualifies: true
+        why: >
+          108 long-horizon workflows operated through screenshots and mouse and keyboard actions;
+          the horizon goes to `long-horizon-autonomy` as secondary.
+      - ref: webarena
+        qualifies: false
+        why: >
+          NEAR MISS. Long-horizon tasks acted out on rendered pages, but confined to self-hosted
+          web sites, which is `web-navigation`.
+    not_to_be_confused_with:
+      - term: agents-tooluse/long-horizon-autonomy
+        distinction: >
+          This term names an interface; long-horizon-autonomy names a property of the episode
+          that any interface can have. The interface is primary and the horizon secondary.
   - id: agents-tooluse/tool-api-calling
     label: Tool and API calling
     parent: agents-tooluse
@@ -695,7 +879,43 @@ terms:
     source: own
     definition: >
       Selecting and invoking external functions or APIs correctly to satisfy a request.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if a single agent under evaluation is scored on selecting and invoking
+      functions or APIs correctly against a backend, including when a simulated user converses
+      with it or acts on the shared state with tools of its own.
+    exclusion_test: >
+      Do NOT tag this if several agents under evaluation must divide work or reach agreement
+      (`multi-agent-coordination`), if the calls do clinical work against a health record
+      system (`medicine-health/clinical-agent-workflows`), or if the headline is resistance to
+      instructions injected into tool outputs (`safety-alignment/prompt-injection`).
+    examples:
+      - ref: bench
+        qualifies: true
+        why: >
+          tau2-bench: one agent calls domain APIs under a policy while a simulated user acts on
+          the same environment; the dual-control setting goes to `multi-agent-coordination` as
+          secondary.
+      - ref: medagentbench-v2
+        qualifies: false
+        why: >
+          NEAR MISS. API calls against a FHIR record throughout, but the tasks are clinical work,
+          which is `medicine-health/clinical-agent-workflows`.
+      - ref: agentdojo
+        qualifies: false
+        why: >
+          NEAR MISS. 97 tool-use tasks with a utility score, but the title and the attack
+          framework make security against injection the claim, which is
+          `safety-alignment/prompt-injection`; this term is secondary.
+    not_to_be_confused_with:
+      - term: agents-tooluse/multi-agent-coordination
+        distinction: >
+          A simulated user, even one with tools of its own, is part of the environment.
+          Coordination needs several agents under evaluation, or a score that is the
+          coordination itself.
+      - term: safety-alignment/prompt-injection
+        distinction: >
+          Utility and attack success reported side by side on the same tool-use tasks go by the
+          benchmark's claim: security is prompt-injection, with this term secondary.
   - id: agents-tooluse/multi-agent-coordination
     label: Multi agent coordination
     parent: agents-tooluse
@@ -705,6 +925,12 @@ terms:
     definition: >
       Tasks that require several agents to divide work, communicate or reach agreement.
     examples: []
+    not_to_be_confused_with:
+      - term: agents-tooluse/tool-api-calling
+        distinction: >
+          One agent under evaluation facing a simulated user is tool-api-calling, whatever tools
+          the simulated user holds; this term needs the coordination between evaluated agents to
+          be what is scored.
   - id: agents-tooluse/long-horizon-autonomy
     label: Long horizon autonomy
     parent: agents-tooluse
@@ -715,6 +941,13 @@ terms:
       Tasks requiring many dependent steps across an extended episode without human
       intervention.
     examples: []
+    not_to_be_confused_with:
+      - term: agents-tooluse/computer-use-gui
+        distinction: >
+          Long horizon is a property of the episode, not an interface or a task. When an
+          interface or task subdomain describes the benchmark (GUI, web, shell, ML engineering),
+          that subdomain is primary and this term secondary; this term is primary only when none
+          does.
   - id: agents-tooluse/research-agents
     label: Research agents
     parent: agents-tooluse
@@ -733,7 +966,32 @@ terms:
     source: own
     definition: >
       Agents that complete software engineering work inside a real repository or toolchain.
-    examples: []
+    inclusion_test: >
+      Tag this if an autonomous agent does software-engineering work inside a real repository or
+      toolchain, navigating files and running builds and tests itself. Tag it as PRIMARY only
+      when the grader checks the toolchain's or environment's end state; when tests judge the
+      code the agent wrote, `code` is primary and this term is secondary (02 S12.11).
+    exclusion_test: >
+      Do NOT tag this if the work is not software engineering -- operating a shell or desktop to
+      a target state is `operating-system-tasks` or `computer-use-gui` -- or if the system
+      returns code without acting in a repository or toolchain.
+    examples:
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          SECONDARY. Coding agents resolve real issues inside real repositories, but the patch is
+          judged by tests, so `code/repository-scale-se` is primary.
+      - ref: terminal-bench-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. Agents work in a shell and some tasks are debugging or security fixes, but
+          the tasks range over bringing a container to a target state, which is
+          `operating-system-tasks`.
+    not_to_be_confused_with:
+      - term: code/repository-scale-se
+        distinction: >
+          Repository-scale SE names the code change; this term names the agent making it. When
+          tests judge the patch, repository-scale-se is primary and this term secondary.
   - id: agents-tooluse/negotiation
     label: Negotiation
     parent: agents-tooluse
@@ -762,6 +1020,39 @@ terms:
     definition: >
       Tasks scored on finding, exploiting or defending against security vulnerabilities.
     examples: []
+  - id: agents-tooluse/agent-evaluation-suites
+    label: Agent evaluation suites
+    parent: agents-tooluse
+    status: proposed
+    introduced_in: 1.0.0
+    source: own
+    # ADR-0016: a suite row of the coverage matrix counts suites, not task coverage. The gap
+    # ranking reads a cell here as "is there a suite", never as coverage of the field.
+    definition: >
+      Suites whose scored tasks span several of the agents-tooluse family's subdomains,
+      reported per task or as one aggregate, where the suite's own claim is coverage within
+      the family.
+    inclusion_test: >
+      Tag this as PRIMARY if the tasks span two or more of the agents-tooluse family's
+      subdomains, no one subdomain holds most of them, and the benchmark's own claim is breadth
+      within the family. Record the subdomains the tasks fall in as secondary.
+    exclusion_test: >
+      Do NOT tag this if one subdomain holds most of the tasks (tag that subdomain primary and
+      the others secondary), or if the suite spans several families, which is
+      `general-intelligence`.
+    examples:
+      - ref: holistic-agent-leaderboard-hal
+        qualifies: true
+        why: >
+          Nine existing agent benchmarks across web navigation, tool calling, research agents
+          and coding, on separate boards with no aggregate. Every board scores what an agent
+          achieved, so the breadth is inside the family; the coding boards add `code`
+          secondaries.
+      - ref: webarena
+        qualifies: false
+        why: >
+          NEAR MISS. Several self-hosted sites and task types, but every task is web navigation,
+          so `web-navigation` holds the whole benchmark.
 
   # -------------------------------------------------------------- chemistry-materials
   - id: chemistry-materials
@@ -779,7 +1070,11 @@ terms:
       Do NOT tag this if the subject is a physical process rather than a substance, which is
       `physics`. The family is named for both communities deliberately: method does not decide
       the home, subject does, so a DFT-grounded materials benchmark is chemistry-materials and a
-      quantum-simulation benchmark is physics.
+      quantum-simulation benchmark is physics. Do NOT tag it either where a small molecule is
+      scored for how it binds a protein, as a bound pose or a predicted affinity, which is
+      `biology-genetics` (`protein-ligand-cofolding`, `drug-target-interaction`). Compounds
+      nominated and then assayed stay here, in `experimental-hit-finding`, because the
+      experiment on the compound is the ground truth.
     examples:
       - ref: matbench-discovery
         qualifies: true
@@ -799,6 +1094,23 @@ terms:
         why: >
           NEAR MISS. Research-level science, but the subject is physics reasoning rather than
           matter.
+      - ref: runs-n-poses
+        qualifies: false
+        why: >
+          NEAR MISS. The corpus files it here and the ligands are drug-like, but the scored
+          quantity is the ligand's pose in its protein pocket, which is
+          `biology-genetics/protein-ligand-cofolding`.
+    not_to_be_confused_with:
+      - term: biology-genetics
+        distinction: >
+          A small molecule scored for how it binds a protein, as a pose or an affinity, is
+          biology-genetics even when it is a drug candidate. This family takes the molecule's
+          own properties, and compounds nominated and then assayed.
+      - term: biology-genetics/protein-ligand-cofolding
+        distinction: >
+          A protein-small-molecule complex scored as a bound pose is biology-genetics. This
+          family takes the molecule's own properties, and compounds nominated and then assayed
+          for binding (`experimental-hit-finding`).
     seed_target: 20
     core: true
     coverage_status: surveyed
@@ -955,7 +1267,10 @@ terms:
     exclusion_test: >
       Do NOT tag this if the subject is biological mechanism without a clinical endpoint, which
       is `biology-genetics`, and do NOT tag it where medical images are used to test general
-      vision methods.
+      vision methods, which is `vision/medical-imaging-cv`. The benchmark's claim decides that
+      line, not its metric: where the targets are clinically defined (lesions, organs,
+      findings, diagnoses) and clinicians set the reference standard, this family is primary
+      even when the metric is Dice or FROC, and the vision subdomain is secondary.
     examples:
       - ref: healthbench
         qualifies: true
@@ -1010,14 +1325,40 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Reaching a diagnostic conclusion from medical images, scored against a clinical reference
-      standard.
-    examples: []
+      Detecting clinical findings in, or reaching a diagnostic conclusion from, medical images,
+      scored against a clinical reference standard.
+    inclusion_test: >
+      Tag this as PRIMARY if the system detects findings (nodules, metastases, lesions) or
+      assigns a diagnosis or stage from medical images, and a reference standard set by
+      clinicians scores it, whatever the metric (FROC, AUC, kappa).
+    exclusion_test: >
+      Do NOT tag this if regions are delineated and scored as masks
+      (`medical-imaging-segmentation`), if the output is a free-text report
+      (`radiology-report-generation`), or if the benchmark's claim is a vision method that uses
+      medical images as its test domain (`vision/medical-imaging-cv`).
+    examples:
+      - ref: camelyon17
+        qualifies: true
+        why: >
+          Metastasis detection in lymph-node slides, scored as a patient-level pN stage against a
+          pathologist-supervised reference.
+      - ref: luna16
+        qualifies: true
+        why: >
+          Pulmonary nodule detection in chest CT, scored by FROC against nodules marked by
+          radiologists. A nodule is a finding rather than a diagnosis, and findings are inside
+          this term.
+      - ref: rexrank
+        qualifies: false
+        why: >
+          NEAR MISS. Chest X-ray interpretation, but the output is a written report, which is
+          `radiology-report-generation`.
     not_to_be_confused_with:
       - term: vision/medical-imaging-cv
         distinction: >
-          Same rule from the clinical side: if the benchmark would still make sense with the
-          clinical interpretation stripped out, it is a vision benchmark.
+          Same rule from the clinical side: the claim decides, not the metric. A clinical task
+          against a clinician reference standard is this term even when scored by a vision
+          metric; it is a vision benchmark only when its claim is the method.
   - id: medicine-health/medical-imaging-segmentation
     label: Medical imaging segmentation
     parent: medicine-health
@@ -1026,13 +1367,37 @@ terms:
     source: own
     definition: >
       Delineating anatomical or pathological regions in medical images.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if the system delineates clinically defined anatomical or
+      pathological regions in medical images and is scored as masks (Dice, surface distance)
+      against clinician reference annotations. Dice is a vision metric, and it does not move
+      the benchmark to `vision`.
+    exclusion_test: >
+      Do NOT tag this if findings are scored as locations or labels rather than masks
+      (`medical-imaging-diagnostic`), or if the benchmark's claim is a segmentation method that
+      uses medical images as its test domain (`vision/medical-imaging-cv`).
+    examples:
+      - ref: brats-2026-cluster
+        qualifies: true
+        why: >
+          Tumour sub-region masks in brain MRI against expert annotations; the metric is Dice,
+          but the structures and the reference standard are clinical.
+      - ref: luna16
+        qualifies: false
+        why: >
+          NEAR MISS. Clinical CT with a radiologist reference standard, but nodules are scored as
+          points by FROC, not delineated, which is `medical-imaging-diagnostic`.
     not_to_be_confused_with:
       - term: vision/segmentation
         distinction: >
           Kept separate because the clinical structures, the annotation protocol and the
           evaluation metrics are medical rather than general-purpose, not because the operation
           differs.
+      - term: vision/medical-imaging-cv
+        distinction: >
+          Both name segmentation of medical images. Clinically defined structures against
+          clinician annotations are this term; vision/medical-imaging-cv takes a benchmark only
+          when its claim is the method.
   - id: medicine-health/radiology-report-generation
     label: Radiology report generation
     parent: medicine-health
@@ -1097,6 +1462,38 @@ terms:
       Tasks concerning psychological assessment or support, scored against
       mental-health-specific criteria.
     examples: []
+  - id: medicine-health/clinical-task-suites
+    label: Clinical task suites
+    parent: medicine-health
+    status: proposed
+    introduced_in: 1.0.0
+    source: own
+    # ADR-0016: a suite row of the coverage matrix counts suites, not task coverage. The gap
+    # ranking reads a cell here as "is there a suite", never as coverage of the field.
+    definition: >
+      Suites whose scored tasks span several of the medicine-health family's subdomains,
+      reported per task or as one aggregate, where the suite's own claim is coverage within
+      the family.
+    inclusion_test: >
+      Tag this as PRIMARY if the tasks span two or more of the medicine-health family's
+      subdomains, no one subdomain holds most of them, and the benchmark's own claim is breadth
+      within the family. Record the subdomains the tasks fall in as secondary.
+    exclusion_test: >
+      Do NOT tag this if one subdomain holds most of the tasks (tag that subdomain primary and
+      the others secondary), or if the suite spans several families, which is
+      `general-intelligence`.
+    examples:
+      - ref: medhelm
+        qualifies: true
+        why: >
+          35 benchmarks across five clinician-validated categories, from decision support to
+          note generation and administration, claiming complete coverage of its taxonomy.
+      - ref: healthbench
+        qualifies: false
+        why: >
+          NEAR MISS. Rubric criteria span seven themes, from emergency referral to global
+          health, but every item is one task, a reply to a health conversation, so it is not a
+          suite of tasks.
 
   # -------------------------------------------------------------- audio-speech
   - id: audio-speech
@@ -1257,7 +1654,12 @@ terms:
     exclusion_test: >
       Do NOT tag this if the subject is a generic vision task that happens to use satellite
       imagery, and do NOT tag it where the physical process is studied outside an Earth-system
-      context, which is `physics`.
+      context, which is `physics`. A vision task is generic when the benchmark's claim is the
+      vision method and its labels are objects that merely appear in overhead imagery
+      (buildings, vehicles, animals). Where the labels are Earth-system quantities (land cover,
+      surface water, crops, biomass, ice), or the benchmark presents itself as Earth
+      observation, this family is primary and the vision task subdomain is secondary, however
+      standard the vision task.
     examples:
       - ref: weatherbench-2
         qualifies: true
@@ -1289,7 +1691,36 @@ terms:
     source: own
     definition: >
       Predicting atmospheric state at a stated lead time, scored against observed weather.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if forecasts of the atmosphere, or of the coupled Earth system, are
+      issued from initial conditions at stated lead times up to the subseasonal-to-seasonal
+      range and scored against observations or reanalysis. Record the lead-time range in the
+      entry, not in the domain.
+    exclusion_test: >
+      Do NOT tag this if the horizon is multi-year or longer under stated emissions or forcing
+      scenarios (`climate-projection`), or if weather variables are only predictors for another
+      target, such as crop yield (`agriculture`).
+    examples:
+      - ref: weatherbench-2
+        qualifies: true
+        why: >
+          Medium-range global forecasts scored against operational analysis.
+      - ref: chaosbench
+        qualifies: true
+        why: >
+          Forecasts at 1 to 44 days, the subseasonal-to-seasonal range, including ocean, sea-ice
+          and land targets, with no forcing scenarios.
+      - ref: cy-bench
+        qualifies: false
+        why: >
+          NEAR MISS. Weather series are among its predictors and it forecasts ahead of harvest,
+          but the scored target is crop yield, which is `agriculture`.
+    not_to_be_confused_with:
+      - term: earth-climate/climate-projection
+        distinction: >
+          Initial conditions and a lead time make a forecast; forcing scenarios over long
+          horizons make a projection. Subseasonal-to-seasonal prediction has no scenarios, so it
+          is forecasting.
   - id: earth-climate/climate-projection
     label: Climate projection
     parent: earth-climate
@@ -1308,7 +1739,39 @@ terms:
     source: own
     definition: >
       Extracting land, ocean or atmospheric information from satellite or airborne imagery.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if a model extracts information from satellite or airborne imagery
+      and either the labels are Earth-system quantities (land cover, surface water, crops,
+      biomass, ice) or the benchmark presents itself as Earth observation; record the vision
+      task (segmentation, classification, detection) as secondary. Mapping a hazard already
+      visible in the image, such as flood extent, is this term, not `hazard-prediction`.
+    exclusion_test: >
+      Do NOT tag this if the imagery is only a predictor for another Earth-system target, such
+      as crop yield (`agriculture`), if the task forecasts an event before it happens
+      (`hazard-prediction`), or if the benchmark's claim is a vision method and its labels are
+      generic objects seen from above (`vision`).
+    examples:
+      - ref: geo-bench-2
+        qualifies: true
+        why: >
+          Geospatial foundation models on 19 Earth-observation datasets. Some labels are generic
+          objects (buildings, cattle), but the benchmark presents itself as Earth observation,
+          and the vision tasks go to secondary.
+      - ref: sen1floods11
+        qualifies: true
+        why: >
+          Surface water segmented in Sentinel-1 SAR chips; the operation is generic
+          segmentation, but the label is a land-surface state.
+      - ref: cy-bench
+        qualifies: false
+        why: >
+          NEAR MISS. Remote-sensing predictors feed it, but the scored target is crop yield,
+          which is `agriculture`.
+    not_to_be_confused_with:
+      - term: vision/segmentation
+        distinction: >
+          Per-pixel labels of an Earth-system quantity on overhead imagery are this term, with
+          segmentation secondary, although the operation and the metric are generic.
   - id: earth-climate/geospatial-reasoning
     label: Geospatial reasoning
     parent: earth-climate
@@ -1335,8 +1798,34 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Measuring or predicting species distribution, abundance or ecosystem condition.
-    examples: []
+      Identifying species, or measuring or predicting their distribution and abundance, or the
+      condition of an ecosystem.
+    inclusion_test: >
+      Tag this as PRIMARY if the benchmark's own claim is biodiversity or ecosystem monitoring,
+      whatever modality its tasks use (images, sound, text); record the method subdomains
+      (`vision/classification`, `audio-speech/bioacoustics`, `language/information-extraction`)
+      as secondary.
+    exclusion_test: >
+      Do NOT tag this as primary if the benchmark is one method task whose claim is that method,
+      such as species calls in soundscapes scored as an audio task (`audio-speech/bioacoustics`,
+      with this term secondary), or if the target is agricultural output (`agriculture`).
+    examples:
+      - ref: lifeclef-2026
+        qualifies: true
+        why: >
+          Five biodiversity challenges across images, soundscapes and web text under one claim,
+          biodiversity informatics; each task scores identification.
+      - ref: cy-bench
+        qualifies: false
+        why: >
+          NEAR MISS. Land and crop monitoring over many regions, but the target is crop yield,
+          which is `agriculture`.
+    not_to_be_confused_with:
+      - term: audio-speech/bioacoustics
+        distinction: >
+          A single species-call task scored as audio is bioacoustics, with this term secondary; a
+          multi-modality suite whose claim is biodiversity is this term, with bioacoustics
+          secondary.
   - id: earth-climate/agriculture
     label: Agriculture
     parent: earth-climate
@@ -1403,6 +1892,13 @@ terms:
       Learned models that stand in for an expensive physical simulation, scored against the
       simulator they replace.
     examples: []
+    not_to_be_confused_with:
+      - term: physics/fluid-dynamics
+        distinction: >
+          This term names a method; fluid-dynamics names a subject. A surrogate benchmark whose
+          claim spans several physical systems is this term, with the subject subdomains
+          secondary; a benchmark with one physical system as its subject takes that subject's
+          subdomain, whatever the method.
   - id: physics/fluid-dynamics
     label: Fluid dynamics
     parent: physics
@@ -1412,6 +1908,12 @@ terms:
     definition: >
       Predicting fluid flow fields or quantities derived from them.
     examples: []
+    not_to_be_confused_with:
+      - term: physics/simulation-surrogates
+        distinction: >
+          Fluid flow as the one subject is this term, whatever the method. A surrogate benchmark
+          spanning several physical systems, most of them fluids, is simulation-surrogates, with
+          this term secondary.
   - id: physics/particle-physics
     label: Particle physics
     parent: physics
@@ -1501,13 +2003,16 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Benchmarks whose subject is whether a system behaves acceptably rather than capably.
+      Benchmarks whose subject is whether a system behaves acceptably, or whether it has
+      capabilities that would make it hazardous.
     inclusion_test: >
       Tag this as PRIMARY if the scored quantity is refusal, robustness to attack, honesty,
-      bias, or a frontier-risk property.
+      bias, or a frontier-risk property. Hazardous knowledge or skill that the benchmark claims
+      to measure as a risk is a frontier-risk property, even when it is scored as accuracy.
     exclusion_test: >
-      Do NOT tag this if harmful content appears but nothing about conduct is scored, and do NOT
-      tag it where the failure measured is ordinary inaccuracy.
+      Do NOT tag this if harmful content appears but the benchmark claims to measure neither
+      conduct nor a hazardous capability, and do NOT tag it where the failure measured is
+      ordinary inaccuracy.
     examples:
       - ref: helm-safety
         qualifies: true
@@ -1517,11 +2022,16 @@ terms:
         qualifies: true
         why: >
           Attack success rate, with a denominator that moves as new attacks are published.
-      - ref: humanitys-last-exam
+      - ref: wmdp
+        qualifies: true
+        why: >
+          Scores only multiple-choice accuracy, but on hazardous biosecurity, cybersecurity and
+          chemical knowledge that it measures as a risk, which is a frontier-risk property.
+      - ref: humanity-s-last-exam
         qualifies: false
         why: >
-          NEAR MISS. Includes hazardous subject matter, but scores only whether answers are
-          correct.
+          NEAR MISS. Includes hazardous subject matter, but its claim is breadth of academic
+          knowledge, scored as correct answers, and no hazard is what it sets out to measure.
     seed_target: 18
     core: false
     coverage_status: surveyed
@@ -1583,7 +2093,32 @@ terms:
     definition: >
       Measuring resistance to instructions embedded in untrusted content the system is asked to
       process.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if the benchmark scores whether a system follows instructions planted
+      in content it processes (tool outputs, documents, web pages) and its own claim is
+      security, even when a benign utility score is reported beside the attack score on the
+      same tasks.
+    exclusion_test: >
+      Do NOT tag this if the harmful instruction comes from the user rather than from processed
+      content (`jailbreak-robustness`, `agentic-harm`), or if injection is a minor axis of a
+      benchmark whose claim is tool use, which takes its `agents-tooluse` subdomain.
+    examples:
+      - ref: agentdojo
+        qualifies: true
+        why: >
+          Utility on 97 tool-use tasks and attack success on 629 injection cases, under a title
+          and framework that make security the claim; `tool-api-calling` is secondary.
+      - ref: agentharm
+        qualifies: false
+        why: >
+          NEAR MISS. Tool-using agents facing jailbreak prompts, but the harmful request comes
+          from the user, which is `agentic-harm`.
+    not_to_be_confused_with:
+      - term: agents-tooluse/tool-api-calling
+        distinction: >
+          When a benchmark reports utility and attack success side by side on the same tool-use
+          tasks, its own claim decides: security as the claim is this term, with tool-api-calling
+          secondary; tool use as the claim is tool-api-calling, with this term secondary.
   - id: safety-alignment/bias-fairness
     label: Bias fairness
     parent: safety-alignment
@@ -1612,6 +2147,12 @@ terms:
       Measuring whether targeted knowledge has actually been removed, a setting in which a lower
       score is the safer one.
     examples: []
+    not_to_be_confused_with:
+      - term: safety-alignment/dangerous-capability-evals
+        distinction: >
+          One question set can serve both roles, with opposite score directions. It takes this
+          term as primary only when its leaderboard ranks removal methods; when it ranks models
+          as released, dangerous-capability-evals is primary and this term secondary.
   - id: safety-alignment/dangerous-capability-evals
     label: Dangerous capability evaluations
     parent: safety-alignment
@@ -1622,6 +2163,12 @@ terms:
       Measuring whether a system possesses capabilities that would be dangerous in the wrong
       hands.
     examples: []
+    not_to_be_confused_with:
+      - term: safety-alignment/unlearning-knowledge-removal
+        distinction: >
+          A hazardous-knowledge set that doubles as an unlearning target is this term when it
+          ranks models as released, with unlearning secondary. The primary tells a reader which
+          direction of the score is the safer one.
   - id: safety-alignment/deception-scheming
     label: Deception scheming
     parent: safety-alignment
@@ -1710,11 +2257,16 @@ terms:
     definition: >
       Benchmarks whose scored artifact is software.
     inclusion_test: >
-      Tag this as PRIMARY if what is submitted is code and correctness is judged by running,
-      testing or verifying it.
+      Tag this as PRIMARY if the entrant's task is to author software and the grader judges it
+      by running, testing or verifying that software, or by scoring what the software computes,
+      such as a trained model's predictions or an analysis result.
     exclusion_test: >
       Do NOT tag this if code is the means to a result in another field, and do NOT tag it where
-      the subject is operating a computer rather than authoring software.
+      the subject is operating a computer rather than authoring software: a grader that checks
+      the end state of a machine the entrant operated makes it `agents-tooluse`, even where some
+      tasks leave a program behind. An agentic harness does not move a benchmark out of this
+      family; when tests judge a patch, this family is primary and
+      `agents-tooluse/software-agents` is secondary (02 S12.11).
     examples:
       - ref: swe-bench-verified
         qualifies: true
@@ -1725,6 +2277,17 @@ terms:
         why: >
           NEAR MISS. Commands and scripts throughout, but the task is operating a machine to an
           end state, which is `agents-tooluse`.
+      - ref: mle-bench
+        qualifies: true
+        why: >
+          Agents write and run ML pipelines, and the grader scores the predictions file the
+          resulting model produces; the software's output is what is scored.
+    not_to_be_confused_with:
+      - term: agents-tooluse
+        distinction: >
+          The grader decides the family, not the harness. Software the entrant wrote, judged by
+          tests or by what it computes, is `code`; the state a machine was left in is
+          agents-tooluse.
     seed_target: 16
     core: false
     coverage_status: surveyed
@@ -1750,6 +2313,11 @@ terms:
       Making a correct change inside a real repository, where finding where to change it is part
       of the task.
     examples: []
+    not_to_be_confused_with:
+      - term: agents-tooluse/software-agents
+        distinction: >
+          When the change is judged by tests, this term is primary even if every entrant is an
+          agent; software-agents records the agentic mode as secondary.
   - id: code/bug-repair
     label: Bug repair
     parent: code
@@ -1793,6 +2361,12 @@ terms:
     definition: >
       Producing or checking formal proofs of program properties.
     examples: []
+    not_to_be_confused_with:
+      - term: mathematics/formal-theorem-proving
+        distinction: >
+          The subject of the proof decides, not the tool. A property of a program is this term;
+          a mathematical statement proved in a program verifier such as Dafny is
+          formal-theorem-proving.
   - id: code/ml-engineering
     label: ML engineering
     parent: code
@@ -1979,7 +2553,10 @@ terms:
     exclusion_test: >
       Do NOT tag this if the benchmark measures a general competence using economic content as
       material, and do NOT tag it where the subject is autonomous operation rather than the
-      economic value of the output.
+      economic value of the output. Forecasting questions that resolve against real-world
+      events are the exception: they stay here, in `forecasting-prediction-markets`, whatever
+      their topic and however general the competence claimed (02 S12.8), because no other
+      family has a home for prospective forecasting.
     examples:
       - ref: gdpval
         qualifies: true
@@ -2219,7 +2796,10 @@ terms:
       opponent that responds.
     exclusion_test: >
       Do NOT tag this if a problem is posed and one solution submitted, which is
-      `reasoning-general/puzzle-solving`; the discriminant is the protocol, not the topic.
+      `reasoning-general/puzzle-solving`; the discriminant is the protocol, not the topic. Do
+      NOT tag it as primary either where the benchmark's own claim is acquisition of tasks it
+      was not built for, with games as the vehicle, which is `general-intelligence`; the game
+      subdomain is then secondary (02 S12.7).
     examples:
       - ref: kaggle-game-arena
         qualifies: true
@@ -2290,6 +2870,11 @@ terms:
           See the same rule from the other side: an environment that responds to each action
           makes it a game, a fixed problem statement with one submitted answer makes it
           reasoning.
+      - term: general-intelligence/novel-task-acquisition
+        distinction: >
+          Both can hold interactive puzzles. When the benchmark's own claim is acquiring tasks
+          the system has never seen, with goals it is not told, the claim wins and this term is
+          secondary.
   - id: games-planning/open-ended-environments
     label: Open ended environments
     parent: games-planning
@@ -2328,6 +2913,44 @@ terms:
       Games whose difficulty comes from social dynamics such as alliance, betrayal or
       persuasion.
     examples: []
+  - id: games-planning/multi-game-suites
+    label: Multi-game suites
+    parent: games-planning
+    status: proposed
+    introduced_in: 1.0.0
+    source: own
+    # ADR-0016: a suite row of the coverage matrix counts suites, not task coverage. The gap
+    # ranking reads a cell here as "is there a suite", never as coverage of the field. Arenas
+    # and environment suites share this term; `evaluation_method` (`tournament-play` for an
+    # arena) says which, not the domain.
+    definition: >
+      Suites whose scored tasks span several of the games-planning family's subdomains,
+      reported per task or as one aggregate, where the suite's own claim is coverage within
+      the family.
+    inclusion_test: >
+      Tag this as PRIMARY if the tasks span two or more of the games-planning family's
+      subdomains, no one subdomain holds most of them, and the benchmark's own claim is breadth
+      within the family. Record the subdomains the tasks fall in as secondary.
+    exclusion_test: >
+      Do NOT tag this if one subdomain holds most of the tasks (tag that subdomain primary and
+      the others secondary), or if the suite spans several families, which is
+      `general-intelligence`.
+    examples:
+      - ref: kaggle-game-arena
+        qualifies: true
+        why: >
+          19 boards across board games, imperfect-information card games, social deduction and
+          bargaining, played against other entrants.
+      - ref: balrog
+        qualifies: true
+        why: >
+          Six RL environments, from BabyAI to NetHack, averaged into one progress score; puzzle
+          and open-ended environments each hold only part of it.
+      - ref: atari-100k
+        qualifies: false
+        why: >
+          NEAR MISS. Many games in one suite, but every one is an Atari video game, so
+          `video-games` holds the whole benchmark.
 
   # -------------------------------------------------------------- general-intelligence
   - id: general-intelligence
@@ -2341,10 +2964,16 @@ terms:
       competence in one.
     inclusion_test: >
       Tag this as PRIMARY if the benchmark's own claim is coverage of many fields, or
-      acquisition of tasks it was not built for.
+      acquisition of tasks it was not built for. When the benchmark also passes another
+      family's protocol test, such as play in an interactive game environment, the claim
+      decides: tag this family primary and record the other family's subdomain as secondary.
     exclusion_test: >
-      Do NOT tag this if the benchmark is broad but its claim is about one competence, and do
-      NOT use this family as a home for benchmarks that were hard to place.
+      Do NOT tag this if the benchmark is broad but its claim is about one competence, or if its
+      breadth lies inside one family, which takes that family's subdomains (including a suite
+      subdomain where ADR-0016 has added one). Do NOT tag it where every scored item needs an
+      image and the benchmark's changes concern the image-text relation, which is `multimodal`
+      however many subjects it spans (ADR-0015). And do NOT use this family as a home for
+      benchmarks that were hard to place.
     examples:
       - ref: arc-agi
         qualifies: true
@@ -2376,7 +3005,32 @@ terms:
     source: own
     definition: >
       Inferring an abstract rule from a handful of examples and applying it to new cases.
-    examples: []
+    inclusion_test: >
+      Tag this as PRIMARY if each item gives a few demonstrations of an unstated rule, the
+      system must apply the rule to new inputs, and the benchmark's own claim is general or
+      fluid intelligence, on tasks built so that prior task-specific knowledge does not help.
+    exclusion_test: >
+      Do NOT tag this if rule induction is studied as a reasoning form in its own right
+      (`reasoning-general/abstraction-induction`), or if the system must discover the task and
+      its goal by acting in an environment that responds (`novel-task-acquisition`).
+    examples:
+      - ref: arc-agi-2
+        qualifies: true
+        why: >
+          Infer the rule from a few grid examples and apply it to unseen test grids; the claim
+          is general fluid intelligence.
+      - ref: arc-agi-3
+        qualifies: false
+        why: >
+          NEAR MISS. Same series and claim, but the agent must learn interactive environments
+          whose goals it is never told, which is `novel-task-acquisition`.
+    not_to_be_confused_with:
+      - term: reasoning-general/abstraction-induction
+        distinction: >
+          Both infer a rule from instances. The claim separates them: general or fluid
+          intelligence, on tasks built to defeat prior knowledge, is this term; rule induction
+          studied as a reasoning form is abstraction-induction. ARC-AGI-2 meets both definitions
+          and takes this one.
   - id: general-intelligence/novel-task-acquisition
     label: Novel task acquisition
     parent: general-intelligence
@@ -2387,6 +3041,11 @@ terms:
       Learning to perform a task the system has never seen, within the evaluation episode
       itself.
     examples: []
+    not_to_be_confused_with:
+      - term: games-planning/puzzle-games
+        distinction: >
+          An interactive puzzle environment passes both families' tests. The claim decides:
+          acquiring unseen tasks is this term, with the game subdomain secondary (02 S12.7).
   - id: general-intelligence/human-comparison-batteries
     label: Human comparison batteries
     parent: general-intelligence
@@ -2397,6 +3056,36 @@ terms:
       Broad batteries built specifically to compare system performance against measured human
       performance.
     examples: []
+  - id: general-intelligence/multi-subject-knowledge-exams
+    label: Multi-subject knowledge exams
+    parent: general-intelligence
+    status: proposed
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      Closed-ended question sets drawn from exams, textbooks or expert-written questions across
+      many academic subjects, scored on the answers alone.
+    inclusion_test: >
+      Tag this as PRIMARY if the benchmark's own claim is breadth of subject knowledge or
+      expertise, its items are closed-ended questions, and no single subject holds most of them.
+    exclusion_test: >
+      Do NOT tag this if one subject holds most of the items (that subject's family is primary),
+      if measured human performance is the benchmark's purpose (`human-comparison-batteries`),
+      or if the headline number aggregates heterogeneous task formats (`agi-composite-suites`).
+    examples:
+      - ref: mmlu-pro
+        qualifies: true
+        why: >
+          Ten-option questions across 14 subjects; breadth is the whole claim.
+      - ref: humanity-s-last-exam
+        qualifies: true
+        why: >
+          Closed-ended questions across over a hundred subjects, with no human solve rate.
+      - ref: helm-capabilities
+        qualifies: false
+        why: >
+          NEAR MISS. Includes MMLU-Pro and GPQA, but aggregates five heterogeneous scenarios into
+          one mean; that is `agi-composite-suites`.
   - id: general-intelligence/meta-learning
     label: Meta learning
     parent: general-intelligence
@@ -2441,6 +3130,34 @@ terms:
       Composite suites that aggregate many heterogeneous tasks into a single general-capability
       score.
     examples: []
+  - id: general-intelligence/open-preference-arenas
+    label: Open preference arenas
+    parent: general-intelligence
+    status: proposed
+    introduced_in: 1.0.0
+    source: own
+    definition: >
+      Open platforms where people submit their own prompts and choose between anonymised system
+      outputs, and systems are ranked by a rating model over the votes, across many uses.
+    inclusion_test: >
+      Tag this as PRIMARY if prompts come from the public rather than a fixed item set, the score
+      is a rating fitted to human pairwise votes, and the arena's own claim is general
+      usefulness across many uses or modalities.
+    exclusion_test: >
+      Do NOT tag this if the arena is confined to one field or task (a robotics, coding or
+      text-to-speech arena takes that field's subdomain, as RoboArena does), or if the judges are
+      a model rather than people (`model-graded-judge` on the arena's own domain).
+    examples:
+      - ref: lmarena
+        qualifies: true
+        why: >
+          Public prompts, anonymous pairwise votes and ratings across text, vision and
+          generation arenas.
+      - ref: roboarena
+        qualifies: false
+        why: >
+          NEAR MISS. Pairwise human preference over rollouts, but confined to robot
+          manipulation.
 
   # -------------------------------------------------------------- mathematics
   - id: mathematics
@@ -2499,9 +3216,34 @@ terms:
     introduced_in: 1.0.0
     source: own
     definition: >
-      Producing a proof in a formal system that a proof assistant accepts.
-    examples: []
+      Producing a proof in a formal system that a proof assistant or automated verifier
+      accepts.
+    inclusion_test: >
+      Tag this as PRIMARY if the system must produce a machine-checked proof of a mathematical
+      statement, whether the checker is an interactive proof assistant (Lean, Isabelle) or an
+      auto-active program verifier (Dafny).
+    exclusion_test: >
+      Do NOT tag this if the proved property belongs to a program rather than to a mathematical
+      statement (`code/program-verification`), if a supplied proof is only judged
+      (`proof-verification`), or if answers are checked as values or expressions
+      (`competition-math`, `research-level-math`).
+    examples:
+      - ref: minif2f-minif2f-dafny
+        qualifies: true
+        why: >
+          Olympiad statements proved in Lean, Isabelle and other assistants, and, in the Dafny
+          half, by filling lemma bodies that Dafny's verifier accepts; the properties are
+          mathematical either way.
+      - ref: frontiermath-tiers-erd-s
+        qualifies: false
+        why: >
+          NEAR MISS. Its Erdos track needs verified Lean proofs, recorded as secondary, but Tiers
+          1 to 4 check answers as values, which is `research-level-math`.
     not_to_be_confused_with:
+      - term: code/program-verification
+        distinction: >
+          The subject of the proof decides, not the tool. A mathematical statement proved in a
+          program verifier is this term; a property of a program is program-verification.
       - term: mathematics/proof-verification
         distinction: >
           If the system is handed a candidate proof and asked whether it holds, it is
@@ -2597,6 +3339,17 @@ terms:
       Answering questions about an image where the answer depends jointly on the question and
       the image.
     examples: []
+    not_to_be_confused_with:
+      - term: vision/document-understanding
+        distinction: >
+          A document-image benchmark posed as questions is this term, with
+          document-understanding secondary; document-understanding keeps benchmarks scored on
+          extracted structure or content, such as layout and key-value extraction.
+      - term: general-intelligence/multi-subject-knowledge-exams
+        distinction: >
+          A multi-subject exam in which every scored item needs the image, with text-answerable
+          items filtered out, is this term. An exam in which images are a minority of the items
+          is multi-subject-knowledge-exams, with this term secondary (ADR-0015).
   - id: multimodal/visual-grounding
     label: Visual grounding
     parent: multimodal
@@ -2626,6 +3379,12 @@ terms:
       Tasks pairing video with language in which the correspondence between the two is what is
       scored.
     examples: []
+    not_to_be_confused_with:
+      - term: vision/video-understanding
+        distinction: >
+          Question answering about a video is this term even when the benchmark calls itself
+          video understanding; vision/video-understanding keeps benchmarks scored on labels or
+          temporal segments with no language to correspond to.
   - id: multimodal/audio-language
     label: Audio language
     parent: multimodal
@@ -2646,6 +3405,12 @@ terms:
       Generating output in one modality from input in another, scored on whether the output
       corresponds to the input.
     examples: []
+    not_to_be_confused_with:
+      - term: vision/video-generation
+        distinction: >
+          A text-to-video benchmark that scores prompt adherence on some dimensions and the video
+          alone on others goes by its headline claim: prompt adherence is this term, fidelity of
+          the video is vision/video-generation, and the other is secondary.
   - id: multimodal/cross-modal-retrieval
     label: Cross modal retrieval
     parent: multimodal
@@ -2671,7 +3436,9 @@ terms:
       deduction, causality, planning, theory of mind -- as the object of study.
     exclusion_test: >
       Do NOT tag this if the reasoning is applied to a field that has its own family, and do NOT
-      tag it where breadth across many subjects is the point, which is `general-intelligence`.
+      tag it where breadth across many subjects is the point, or where the benchmark's own claim
+      is general or fluid intelligence on tasks built so that prior knowledge does not help,
+      both of which are `general-intelligence`.
     examples:
       - ref: planbench
         qualifies: true
@@ -2725,6 +3492,12 @@ terms:
     definition: >
       Inferring a general rule from instances and then stating or applying it.
     examples: []
+    not_to_be_confused_with:
+      - term: general-intelligence/abstraction-generalization
+        distinction: >
+          If the benchmark's own claim is general or fluid intelligence rather than rule
+          induction as a reasoning form, it is general-intelligence/abstraction-generalization,
+          as ARC-AGI-2 is.
   - id: reasoning-general/temporal-reasoning
     label: Temporal reasoning
     parent: reasoning-general

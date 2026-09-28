@@ -7,8 +7,8 @@
 
 facet: lifecycle
 facet_kind: flat
-version: 0.1.0
-updated: 2026-09-22
+version: 0.9.0
+updated: 2026-09-28
 description: >
   Where the benchmark sits in its own life: lifecycle stage, activity, maintenance status and
   the contested flag. Drives the saturation wall and dead-benchmark signalling. `saturated` is
@@ -17,6 +17,20 @@ description: >
 # Authored by P0-S2-T05 from 02 S7-S10, which is the canonical enumeration.
 # Definitions only: 02 S11 rule 8 lets `examples: []` warn rather than fail while
 # taxonomy/VERSION < 1.0.0, and the example pass is P1-S14-T06's.
+#
+# Stage 4 revision (P1-S1-T07). The terms the Stage 3 failure log showed to collide, or to
+# be missing, now carry inclusion and exclusion tests, examples and not_to_be_confused_with
+# blocks, and two activity terms are added. The `dormant` and `mature` definitions carry
+# ADR-0019's clarification, restated as one sentence each.
+#
+# Two precedence rules, stated in the tests of the terms concerned:
+#   - Layer. lifecycle and activity describe the entry as catalogued. An edition or version
+#     entry takes its own standing, not its family's (02 S11 rule 5), and a family entry is
+#     active while any member is still producing results.
+#   - Instrument, not originator. lifecycle reads the instrument's use; the originators'
+#     inactivity (a last commit, an archived repository) is maintenance_status evidence. A
+#     formally ended competition keeps the instrument's lifecycle, and its ending goes to
+#     activity (ADR-0019).
 #
 # Two fields share this file -- lifecycle and activity -- so every term carries the
 # `field` it belongs to. The third field of Facet 6, maintenance_status, is in
@@ -50,7 +64,57 @@ terms:
     introduced_in: 1.0.0
     definition: >
       The benchmark is in current use and results are still being produced against it.
-    examples: []
+    inclusion_test: >
+      Tag this if results are still being produced against the instrument the entry names, by
+      its maintainer or by anyone else. lifecycle describes the entry as catalogued: an edition
+      or version entry takes its own standing, not its family's, and a family entry is active
+      while any member is still producing results. A community standard whose originators have
+      stopped touching it is active while it is still used, and their inactivity is
+      `maintenance_status` evidence.
+    exclusion_test: >
+      Do NOT tag this for an edition or version that a later one has replaced for its purpose,
+      even while the family is active (`superseded`); where the maintainer is correcting or
+      reissuing the content the entry names (`under-revision`); where no new results are being
+      produced but the instrument stays established and available, including a record its
+      maintainer has frozen (`mature`); or where the only results are the maintainers' own
+      release baselines and they state that benchmarking use has not begun (`proposed`).
+    examples:
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          A continuously open leaderboard that is still taking submissions.
+      - ref: open-catalyst-oc20-oc22
+        qualifies: true
+        why: >
+          The family entry is active through OC20, whose leaderboard carries a 2026-03-18 row,
+          although OC22's legacy board stops in 2024.
+      - ref: terminal-bench-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The Terminal-Bench family is active, but the entry is version 2.0, which
+          2.1, 3.0 and 4.0 have followed. That is `superseded`.
+      - ref: mle-bench
+        qualifies: false
+        why: >
+          NEAR MISS. Leaderboard rows are dated up to 2026-03-06, but the maintainer is batching
+          task fixes into an upcoming v2 release. That is `under-revision`.
+    not_to_be_confused_with:
+      - term: superseded
+        distinction: >
+          A family can be active while the edition or version an entry names is superseded;
+          the entry takes its own layer's standing.
+      - term: dormant
+        distinction: >
+          A benchmark still used as a standard is active even when its originators have gone
+          quiet; that silence is `maintenance_status` evidence, not `dormant`.
+      - term: mature
+        distinction: >
+          `active` is results still being produced; `mature` is an established instrument whose
+          record has settled or been frozen while it stays available and in use.
+      - term: under-revision
+        distinction: >
+          An announced correction or reissue of the content in progress makes it
+          `under-revision`, even while results are still being produced.
   - id: mature
     label: Mature
     field: lifecycle
@@ -58,8 +122,57 @@ terms:
     introduced_in: 1.0.0
     definition: >
       The benchmark is established and stable, with a settled result record and no expectation
-      of structural change.
-    examples: []
+      of structural change, including an instrument whose maintainer has ended its competition
+      or frozen its leaderboard while it remains available and in use.
+    inclusion_test: >
+      Tag this if the instrument is established, available and in use, its result record has
+      settled, and nothing announced will change its structure, including when the maintainer
+      has ended the competition, entered maintenance mode or frozen the leaderboard. Record that
+      ending in `activity`: `closed`, or `leaderboard-live-no-round` where a permanent phase
+      stays open (ADR-0019).
+    exclusion_test: >
+      Do NOT tag this where results are still being produced in the ordinary way (`active`),
+      where the maintainer has signalled a structural change or a successor, such as a
+      leaderboard paused pending one, where a later edition has replaced the entry
+      (`superseded`), or where nobody maintains it and it has gone unused for long enough
+      (`dormant`).
+    examples:
+      - ref: helm-capabilities
+        qualifies: true
+        why: >
+          HELM entered maintenance mode on 2026-06-01 with no new evaluations added, while the
+          instrument stays available; activity is `closed` (ADR-0019).
+      - ref: medhelm
+        qualifies: true
+        why: >
+          The same maintenance mode freezes the result record of an instrument that remains
+          available (ADR-0019).
+      - ref: holistic-agent-leaderboard-hal
+        qualifies: false
+        why: >
+          NEAR MISS. The results stay public, but the maintainers paused the leaderboard with
+          'We will have more to share soon', so structural change is expected (ADR-0019).
+      - ref: casp16-na-rna-puzzles-joint-assessment
+        qualifies: false
+        why: >
+          NEAR MISS. The edition's record is settled, but CASP17 has taken over the category as
+          its next edition. That is `superseded`.
+    not_to_be_confused_with:
+      - term: active
+        distinction: >
+          `mature` is a settled or frozen record on an instrument still in use; while results
+          are still being produced in the ordinary way the benchmark is `active`.
+      - term: dormant
+        distinction: >
+          A maintainer freeze or a formally ended competition is `mature` with the ending in
+          `activity`; `dormant` is disuse that nobody declared.
+      - term: superseded
+        distinction: >
+          A settled edition that a later edition has replaced is `superseded`, not `mature`.
+      - term: deprecated
+        distinction: >
+          `deprecated` needs the maintainer to advise against use; a frozen or finished
+          instrument without that advice is `mature`.
   - id: saturated
     label: Saturated
     field: lifecycle
@@ -83,7 +196,35 @@ terms:
     definition: >
       The maintainer is correcting or reissuing the benchmark content, so a score reported
       without a version is not interpretable.
-    examples: []
+    inclusion_test: >
+      Tag this if the maintainer has announced corrections to, or a reissue of, the content the
+      entry names and that work is in progress, such as batched task fixes for an upcoming
+      release or errata being applied. It takes precedence over `active`, because an
+      unversioned score is then uninterpretable.
+    exclusion_test: >
+      Do NOT tag this where new variants are released beside a finalised set that is not itself
+      being edited (the set keeps its own standing, and the variants are their own entries), or
+      where only the evaluation code base is replaced while the content carries over.
+    examples:
+      - ref: mle-bench
+        qualifies: true
+        why: >
+          Fixes to known task defects are batched 'in the upcoming v2 release of MLE-bench'.
+      - ref: humanity-s-last-exam
+        qualifies: false
+        why: >
+          NEAR MISS. HLE-Rolling and HLE-Diamond reissue the content, but the finalised
+          2,500-question set the entry names is not being edited. That is `active`.
+      - ref: weatherbench-2
+        qualifies: false
+        why: >
+          NEAR MISS. WeatherBench-X replaces the evaluation code, not the content, and the
+          scorecards carry over. That is `active`.
+    not_to_be_confused_with:
+      - term: active
+        distinction: >
+          Results still being produced do not remove `under-revision`; an announced correction
+          of the entry's content in progress takes precedence.
   - id: contaminated
     label: Contaminated
     field: lifecycle
@@ -101,7 +242,56 @@ terms:
     definition: >
       A later benchmark has replaced this one for its purpose, though the original remains
       coherent.
-    examples: []
+    inclusion_test: >
+      Tag this if a later benchmark, or a later edition or version of the same family, has
+      replaced the instrument the entry names for its purpose. lifecycle describes the entry as
+      catalogued: an edition or version entry is superseded when its successor takes over, even
+      while the family is active, and the family's standing belongs on the family record.
+    exclusion_test: >
+      Do NOT tag this where only the code base is replaced while the data and scores carry
+      over, where only the competition was replaced while the instrument's own leaderboard stays
+      in use (record the ending in `activity` and keep the instrument's standing), or on a
+      family entry whose current edition is in use (`active`).
+    examples:
+      - ref: wmt25-general-mt-shared-task
+        qualifies: true
+        why: >
+          WMT26 has replaced the WMT25 edition for its purpose. The family is active, but the
+          entry is the edition.
+      - ref: terminal-bench-2-0
+        qualifies: true
+        why: >
+          tbench.ai headlines 4.0, after 2.1 and 3.0, and the entry is version 2.0.
+      - ref: srbench-2-0
+        qualifies: true
+        why: >
+          The site tells new papers to 'use this roster and these results rather than the 2021
+          tables below'.
+      - ref: casp16-na-rna-puzzles-joint-assessment
+        qualifies: true
+        why: >
+          The CASP16 NA round is finished and assessed, and the category continues in CASP17; a
+          later edition replaces a completed one.
+      - ref: weatherbench-2
+        qualifies: false
+        why: >
+          NEAR MISS. WeatherBench-X replaces the evaluation code, but the scorecards, ground
+          truth and data guide carry over, and the scores are claimed current.
+      - ref: coco
+        qualifies: false
+        why: >
+          NEAR MISS. The maintainers pointed the annual challenge to LVIS, but the test-dev
+          server keeps a live 'Current' phase. The competition's ending goes to `activity`, and
+          the instrument keeps its own standing.
+    not_to_be_confused_with:
+      - term: active
+        distinction: >
+          The entry's own layer decides: an edition or version that a successor has replaced is
+          `superseded`, whatever the family's standing.
+      - term: mature
+        distinction: >
+          A settled record is `mature` only while no later edition or benchmark has taken over
+          its purpose.
   - id: deprecated
     label: Deprecated
     field: lifecycle
@@ -110,7 +300,40 @@ terms:
     definition: >
       The maintainer has advised against further use without necessarily withdrawing the
       material.
-    examples: []
+    inclusion_test: >
+      Tag this only if the maintainer advises against further use of the benchmark itself,
+      whether or not the material stays available.
+    exclusion_test: >
+      Do NOT tag this for an end-of-maintenance notice that gives no advice against use (that
+      is `maintenance_status` evidence), for a 'deprecated' label on a replaced server, library
+      or code base rather than on the benchmark, or for a paused leaderboard whose maintainers
+      point users to its results. A deprecated benchmark cannot be `accepting-submissions`
+      (02 S11).
+    examples:
+      - ref: tanks-and-temples
+        qualifies: false
+        why: >
+          NEAR MISS. 'This project will no longer be maintained by Intel', but the notice does
+          not advise against using the benchmark.
+      - ref: coco
+        qualifies: false
+        why: >
+          NEAR MISS. The old detection server is titled '(deprecated)', but the label is on a
+          replaced server, not on the benchmark.
+      - ref: holistic-agent-leaderboard-hal
+        qualifies: false
+        why: >
+          NEAR MISS. The harness repository is archived, but the maintainers point users to the
+          results rather than away from them.
+    not_to_be_confused_with:
+      - term: dormant
+        distinction: >
+          `deprecated` needs advice against use; a benchmark nobody maintains, without that
+          advice, is at most `dormant`.
+      - term: mature
+        distinction: >
+          A maintainer who freezes or finishes a benchmark without advising against it leaves
+          it `mature`.
   - id: retracted
     label: Retracted
     field: lifecycle
@@ -127,10 +350,53 @@ terms:
     introduced_in: 1.0.0
     definition: >
       The benchmark is neither maintained nor formally ended, and no activity has been observed
-      for long enough that it should not be read as current.
-    examples: []
+      for long enough that it should not be read as current; a formally ended competition
+      series is not dormant, because its ending is recorded in `activity` and `lifecycle` keeps
+      the instrument's standing.
+    inclusion_test: >
+      Tag this if nobody maintains the benchmark, nothing formally ended it, and no results have
+      been produced against the instrument for long enough that it should not be read as
+      current.
+    exclusion_test: >
+      Do NOT tag this on the originators' inactivity alone (a last commit, an archived
+      repository, a deprecated library): that is `maintenance_status` evidence, and a community
+      standard still in use is `active` or `mature`. Where the sources show only that
+      inactivity and are silent on current use, leave the field null and log it. Do NOT tag it
+      for a formally ended series or a maintainer freeze (keep the instrument's standing and
+      record the ending in `activity`), for a pause the maintainer has announced, or while the
+      benchmark is `accepting-submissions`, which 02 S11 blocks.
+    examples:
+      - ref: uspto-50k
+        qualifies: false
+        why: >
+          NEAR MISS. The repository's last commit is 2018-03-30, but the split is the field's
+          standard single-step retrosynthesis benchmark and results are still produced against
+          it. The originators' inactivity is `maintenance_status` evidence.
+      - ref: atari-100k
+        qualifies: false
+        why: >
+          NEAR MISS. The code sits in an archived, deprecated library, but the 100K regime
+          remains the standard sample-efficiency protocol.
+      - ref: voxsrc-retired-2023
+        qualifies: false
+        why: >
+          NEAR MISS. 'The series of VoxSRC challenges has now officially finished', but a formal
+          ending is recorded in `activity` (ADR-0019).
+    not_to_be_confused_with:
+      - term: active
+        distinction: >
+          `dormant` is about the instrument's use, not its originators' repository; a standard
+          still used is `active` however stale its code.
+      - term: mature
+        distinction: >
+          A declared ending or freeze keeps `mature` (or `active`) with the ending in `activity`;
+          `dormant` is undeclared disuse.
+      - term: deprecated
+        distinction: >
+          `dormant` involves no advice against use; a maintainer who advises against use makes
+          it `deprecated`.
 
-  # --- activity -- 6 terms ---
+  # --- activity -- 8 terms ---
   - id: accepting-submissions
     label: Accepting submissions
     field: activity
@@ -138,7 +404,46 @@ terms:
     introduced_in: 1.0.0
     definition: >
       The benchmark is open to new submissions right now.
-    examples: []
+    inclusion_test: >
+      Tag this if a route for entering results or systems is open now and either the benchmark
+      has never run in rounds (a continuously open leaderboard) or one of its rounds is open
+      now.
+    exclusion_test: >
+      Do NOT tag this where a standing leaderboard takes entries while no round of a benchmark
+      that runs rounds is open (`leaderboard-live-no-round`), where only registration for a
+      future round or physical event is open (`between-rounds` or `round-scheduled`), where a
+      round has closed and its results are pending (`results-pending`), or for an edition entry
+      whose own intake is frozen inside an open family (`closed`).
+    examples:
+      - ref: swe-bench-verified
+        qualifies: true
+        why: >
+          A continuously open leaderboard with no rounds, now taking submissions from academic
+          teams and research institutions.
+      - ref: simulacrabench
+        qualifies: true
+        why: >
+          A round is open now, with one leaderboard submission per team per day.
+      - ref: robotwin-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The leaderboard takes entries now, but the benchmark has run CVPR challenge
+          rounds and none is running. That is `leaderboard-live-no-round`.
+      - ref: a2rl-drone-championship
+        qualifies: false
+        why: >
+          NEAR MISS. A registration form for Race 3 is live, but registering for a physical race
+          is not submitting a result. That is `between-rounds`.
+    not_to_be_confused_with:
+      - term: leaderboard-live-no-round
+        distinction: >
+          For a benchmark that runs rounds, a standing leaderboard open between them is
+          `leaderboard-live-no-round`; `accepting-submissions` is an open round, or a leaderboard
+          that never had rounds.
+      - term: between-rounds
+        distinction: >
+          Open registration for a future round or event is not an open submission route; it is
+          `between-rounds` unless the round has a date (`round-scheduled`).
   - id: round-scheduled
     label: Round scheduled
     field: activity
@@ -154,7 +459,42 @@ terms:
     introduced_in: 1.0.0
     definition: >
       The benchmark runs in editions and is currently between two of them.
-    examples: []
+    inclusion_test: >
+      Tag this if the benchmark runs in editions, the last round's results are out, no round is
+      open, no standing leaderboard accepts results, and the next round has no announced date.
+    exclusion_test: >
+      Do NOT tag this where a standing leaderboard accepts results between editions
+      (`leaderboard-live-no-round`), where the next round has an announced date
+      (`round-scheduled`), or where a round has closed but its results are not yet published
+      (`results-pending`).
+    examples:
+      - ref: a2rl-drone-championship
+        qualifies: true
+        why: >
+          Season 2 has finished, and Race 3 registration is open with no date given.
+      - ref: dcase-2026
+        qualifies: true
+        why: >
+          The 2026 results were published on 30 June, and no further round is open.
+      - ref: casp17
+        qualifies: false
+        why: >
+          NEAR MISS. 'CASP17 prediction season is over', but 'The assessors are currently
+          working on the assessment of submitted models'. That is `results-pending`.
+      - ref: carla-leaderboard-2-0
+        qualifies: false
+        why: >
+          NEAR MISS. The annual challenge did not run in 2025, but the leaderboard still takes
+          'currently 20 submissions' a month. That is `leaderboard-live-no-round`.
+    not_to_be_confused_with:
+      - term: accepting-submissions
+        distinction: >
+          Registration for a future round is not an open submission route, so a benchmark whose
+          only open form is registration is still `between-rounds`.
+      - term: results-pending
+        distinction: >
+          `between-rounds` starts when a round's results are published; before that, a closed
+          round is `results-pending`.
   - id: leaderboard-live-no-round
     label: Leaderboard live, no round
     field: activity
@@ -163,7 +503,46 @@ terms:
     definition: >
       The leaderboard remains open and accepts results while no formal competition round is
       running, which is a common state that would otherwise be indistinguishable from dormancy.
-    examples: []
+    inclusion_test: >
+      Tag this if a benchmark that runs or has run competition rounds keeps a standing
+      leaderboard that accepts results from outside the maintainer while no round is open. For
+      such a benchmark this takes precedence over `accepting-submissions` and
+      `between-rounds`.
+    exclusion_test: >
+      Do NOT tag this for a leaderboard that has never run in rounds (`accepting-submissions`),
+      or for a live leaderboard that only the maintainer updates, with no route for others to
+      enter (`no-submission-channel`).
+    examples:
+      - ref: carla-leaderboard-2-0
+        qualifies: true
+        why: >
+          The 2025 challenge did not run, and the leaderboard gives 'currently 20 submissions' a
+          month.
+      - ref: robotwin-2-0
+        qualifies: true
+        why: >
+          Entries are taken by contacting the project lead, while the CVPR 2025 challenge rounds
+          sit on archived branches.
+      - ref: voxsrc-retired-2023
+        qualifies: true
+        why: >
+          The series has officially finished, but the permanent evaluation phase 'Ends Never'
+          (ADR-0019).
+      - ref: kaggle-game-arena
+        qualifies: false
+        why: >
+          NEAR MISS. The boards are live between tournaments, but the maintainers choose the
+          models and run every match, and no source gives anyone else a way to enter. That is
+          `no-submission-channel`.
+    not_to_be_confused_with:
+      - term: accepting-submissions
+        distinction: >
+          Both take entries now; `leaderboard-live-no-round` is the more specific state and wins
+          for a benchmark that runs rounds and has none open.
+      - term: no-submission-channel
+        distinction: >
+          `leaderboard-live-no-round` needs outsiders to be able to enter; a live board that
+          only the maintainer updates is `no-submission-channel`.
   - id: closed
     label: Closed
     field: activity
@@ -171,7 +550,57 @@ terms:
     introduced_in: 1.0.0
     definition: >
       The benchmark no longer accepts submissions of any kind.
-    examples: []
+    inclusion_test: >
+      Tag this if a route for entering results or systems existed and none is open now, whether
+      the maintainer calls the stop permanent or a pause with no reopening date, or if the
+      maintainer has formally stopped adding results through a concluded series, maintenance
+      mode or a frozen results record (ADR-0019). An edition entry whose own intake is frozen
+      is closed even while its family takes entries. Put a pause's stated plans in a note.
+    exclusion_test: >
+      Do NOT tag this for a benchmark that never had a route for outside results and whose
+      maintainer has not formally stopped adding them (`no-submission-channel`), for a round
+      that has closed with its results pending (`results-pending`), for the gap between two
+      editions of a benchmark that recurs (`between-rounds`), or for a competition that ended
+      while a permanent phase stays open (`leaderboard-live-no-round`).
+    examples:
+      - ref: mle-bench
+        qualifies: true
+        why: >
+          'We are currently not taking any new submissions to the leaderboard while we develop
+          an improved process'. The pause has no date, and its plans go in a note.
+      - ref: holistic-agent-leaderboard-hal
+        qualifies: true
+        why: >
+          'HAL is no longer accepting new result submissions through this harness'. The pause
+          is recorded here, not as a lifecycle state.
+      - ref: helm-capabilities
+        qualifies: true
+        why: >
+          Maintenance mode adds no new evaluations to the leaderboards (ADR-0019).
+      - ref: srbench-2-0
+        qualifies: true
+        why: >
+          The v2.0 edition's result tables are frozen, while the family stages new methods for
+          its next update.
+      - ref: bend
+        qualifies: false
+        why: >
+          NEAR MISS. BEND takes no submissions, but it never had a route to take them. That is
+          `no-submission-channel`.
+      - ref: casp17
+        qualifies: false
+        why: >
+          NEAR MISS. The prediction season is over, but the assessment is under way. That is
+          `results-pending`.
+    not_to_be_confused_with:
+      - term: no-submission-channel
+        distinction: >
+          `closed` needs a route that existed and shut, or a formal stop to adding results;
+          a benchmark that never had a route is `no-submission-channel`.
+      - term: results-pending
+        distinction: >
+          A round closed to entry whose results are still to come is `results-pending`, not
+          `closed`.
   - id: unknown
     label: Unknown
     field: activity
@@ -180,4 +609,131 @@ terms:
     definition: >
       The operational state has not been established, which is a statement about our observation
       rather than about the benchmark.
-    examples: []
+    inclusion_test: >
+      Tag this only if the sources that would show the operational state could not be read or
+      say nothing about it, such as a script-rendered site or a leaderboard page that does not
+      say whether it takes entries.
+    exclusion_test: >
+      Do NOT tag this where the sources show that there is no leaderboard, server or submission
+      route (`no-submission-channel`); an observed absence is a known state.
+    examples:
+      - ref: harmbench
+        qualifies: true
+        why: >
+          harmbench.org serves an empty root div, so a leaderboard there, if any, could not be
+          read.
+      - ref: wmdp
+        qualifies: true
+        why: >
+          wmdp.ai is a JavaScript application whose served HTML is empty.
+      - ref: the-well
+        qualifies: false
+        why: >
+          NEAR MISS. The Well has no leaderboard, server or submission route, and the sources
+          show it. That is `no-submission-channel`.
+    not_to_be_confused_with:
+      - term: no-submission-channel
+        distinction: >
+          `unknown` is an unobserved state; a benchmark the sources show to have no channel is
+          `no-submission-channel`.
+  - id: no-submission-channel
+    label: No submission channel
+    field: activity
+    status: active
+    introduced_in: 1.0.0
+    definition: >
+      The benchmark has no route by which anyone other than its maintainer can enter a result
+      or a system, and it never had one.
+    inclusion_test: >
+      Tag this if the sources show that the benchmark has no leaderboard, server or submission
+      route open to outsiders and never had one: a download-and-run benchmark whose results
+      appear in its users' papers, or a maintainer-run benchmark that nobody else can enter. A
+      private scoring service or an on-request evaluation that publishes nothing is not a
+      submission channel.
+    exclusion_test: >
+      Do NOT tag this where a route existed and has shut, or the maintainer has formally stopped
+      adding results (`closed`, ADR-0019); where the sources are unreadable or silent
+      (`unknown`); or where outsiders can enter a standing leaderboard (`accepting-submissions`
+      or `leaderboard-live-no-round`).
+    examples:
+      - ref: bend
+        qualifies: true
+        why: >
+          A download-and-run framework with no leaderboard, whose users publish their own
+          numbers in their own papers.
+      - ref: libero
+        qualifies: true
+        why: >
+          Users download the tasks, run the evaluation script and publish in their own papers.
+      - ref: frontiermath-tiers-erd-s
+        qualifies: true
+        why: >
+          Epoch runs every evaluation and publishes the results, and outside parties do not
+          submit.
+      - ref: gdpval
+        qualifies: true
+        why: >
+          Outsiders get a grading service that returns a score and publishes nothing, which is
+          not a channel onto any board.
+      - ref: mle-bench
+        qualifies: false
+        why: >
+          NEAR MISS. MLE-bench takes no submissions now, but it had a leaderboard channel and
+          paused it. That is `closed`.
+      - ref: helm-capabilities
+        qualifies: false
+        why: >
+          NEAR MISS. Nobody outside submits results, but the maintainer formally stopped adding
+          them in maintenance mode. That is `closed` (ADR-0019).
+    not_to_be_confused_with:
+      - term: closed
+        distinction: >
+          `closed` is a route that shut or a formal stop to results; `no-submission-channel` is
+          a benchmark that never had a route.
+      - term: unknown
+        distinction: >
+          An observed absence of any channel is `no-submission-channel`; `unknown` is reserved
+          for a state the sources do not show.
+      - term: leaderboard-live-no-round
+        distinction: >
+          A live leaderboard only the maintainer updates is `no-submission-channel`;
+          `leaderboard-live-no-round` needs outsiders to be able to enter.
+  - id: results-pending
+    label: Round closed, results pending
+    field: activity
+    status: active
+    introduced_in: 1.0.0
+    definition: >
+      A round has closed to submissions and its results have not yet been published.
+    inclusion_test: >
+      Tag this if the current round's submission deadline has passed and the organisers are
+      scoring, assessing or running the entries, with the results not yet released.
+    exclusion_test: >
+      Do NOT tag this once the round's results are published (`between-rounds`, or `closed` if
+      no further round is expected), or while submissions are still open
+      (`accepting-submissions`).
+    examples:
+      - ref: casp17
+        qualifies: true
+        why: >
+          'CASP17 prediction season is over' and 'The assessors are currently working on the
+          assessment of submitted models', with results due before the conference.
+      - ref: brats-2026-cluster
+        qualifies: true
+        why: >
+          The 31 July 2026 container deadline has passed, the organisers are running the
+          containers on hidden test data, and rankings are due on 1 October 2026.
+      - ref: dcase-2026
+        qualifies: false
+        why: >
+          NEAR MISS. The organisers scored outputs after the 15 June deadline, but published the
+          results on 30 June, so the round is over. That is `between-rounds`.
+    not_to_be_confused_with:
+      - term: between-rounds
+        distinction: >
+          `results-pending` runs from a round's deadline to its results; `between-rounds` starts
+          when the results are published.
+      - term: closed
+        distinction: >
+          A round closed to entry in a benchmark that recurs, with results still to come, is
+          `results-pending`; `closed` means no route is open and none is pending.
