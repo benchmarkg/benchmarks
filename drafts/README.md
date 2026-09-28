@@ -1,0 +1,46 @@
+# drafts/
+
+AI-drafted catalogue entries, before a human has checked them (05 §2, §4; 11 §F6, §G4). Nothing here
+is built, published or citable. `bench build` never reads this directory, and `bench validate` reads it
+only when you name it: `bench validate drafts/`.
+
+- `benchmarks/<id>.yaml` holds one draft entry. It has `curation.verification_status:
+  ai-drafted-unverified` and a `provenance` block, and it is validated by `schema/draft.py`.
+- `sources/<src-id>.yaml` holds the snapshot of the page the draft was made from. Every quote in the
+  draft is checked against it.
+
+## Making a draft
+
+    uv run python -m tools.copilot.draft --url https://arxiv.org/abs/2310.06770 --out drafts/
+
+- **What `--url` accepts:** an arXiv URL (a PDF or HTML link is read as its abstract page), a GitHub
+  repository (read as its README), another PDF (this needs `pdftotext`), or a saved page.
+- **With `ANTHROPIC_API_KEY` set,** the draft is made by the F6 model named in
+  `config/ai-models.yaml`.
+- **Without the key,** a pattern-only drafter fills a few fields (the arXiv id, the paper title, a
+  "we introduce X" name, a licence phrase) and leaves every other field null. It calls no model.
+
+## Reviewing a draft
+
+`provenance.fields` has one row per drafted field. Each row gives:
+
+- the field's confidence: `high`, `low` or `absent`;
+- for a populated field, the verbatim quote behind it;
+- for an `absent` field, the reason no value was kept.
+
+The script, not the model, decided what stayed. A value survived only if:
+
+- its quote is in the snapshot, and the value is inside its quote;
+- any number in a written sentence also appears in its quote;
+- a vocabulary value is a real term.
+
+To review:
+
+1. Open the source and check each field against its quote.
+2. Add each checked field to `provenance.fields_verified`, and set `verified_by` and `verified_at`.
+3. Fill what the draft left null from the source, or leave it null.
+4. Move the entry to `data/benchmarks/<family>/` and the source to `data/sources/<yyyy>/`, and have
+   the source archived.
+5. Raise `curation.verification_status` to what you actually did (05 §4).
+
+The copilot will not overwrite a draft once `verified_by` or `fields_verified` is set.
