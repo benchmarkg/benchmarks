@@ -634,12 +634,29 @@ class FieldEvidence(Closed):
         return self
 
 
+class Rejection(Closed):
+    """A value the copilot's drafter offered and code refused (P1-S2-T02; 14-roadmap Phase 0: "A quote
+    that does not match fails validation and the field is set to `null`"). Kept so the reviewer sees
+    what was claimed and why it did not stand. `claimed` is the text offered as the quote, verbatim;
+    it is not named `quote`, because it is precisely the text the snapshot does not support, and the
+    quote-substring check (tools/validate/quotes.py) reads every `quote` key. `stage` is where it was
+    refused: `vet`, against the text the drafter was shown, or `snapshot`, against the stored Source's
+    quote_extract after the draft was assembled."""
+    field: Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')]
+    term: Text | None = None
+    value: Union[str, int, float, dict, None] = None
+    claimed: Text | None = None
+    reason: Text
+    stage: Literal['vet', 'snapshot']
+
+
 class Provenance(Closed):
     """11 S F6: "every entry carries `provenance: {drafted_by, prompt_version, source_urls,
     verified_by, verified_at, fields_verified}`". The first three are stamped by the curation copilot
     (tools/copilot/draft.py); the last three are the human gate, and `fields_verified` is what the
     public UI publishes ("Human-checked: licence, size; auto-drafted: description"). `fields` is the
-    per-field evidence the reviewer ticks against; `injection_flag` is the model's report that the
+    per-field evidence the reviewer ticks against; `rejected` the values code refused, with the quote
+    each claimed and why it failed; `injection_flag` is the model's report that the
     source held text addressed to an AI system (11 S G2), which is flagged, never obeyed."""
     drafted_by: Text
     drafted_on: date
@@ -649,6 +666,7 @@ class Provenance(Closed):
     verified_at: date | None = None
     fields_verified: list[Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')]] = Field(default_factory=list)
     fields: list[FieldEvidence] = Field(default_factory=list)
+    rejected: list[Rejection] = Field(default_factory=list)
     injection_flag: bool | None = None
     injection_note: Text | None = None
 
