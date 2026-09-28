@@ -185,6 +185,9 @@ uaibi/
 ├── drafts/                        # AI-drafted entries at curation.verification_status:
 │                                  # ai-drafted-unverified, before a human has looked. Never built,
 │                                  # never published, never citable. CI check 9i (§9)
+│   ├── benchmarks/<id>.yaml       # a draft entry (schema/draft.py BenchmarkDraft), written by the
+│   │                              # F6 copilot, tools/copilot/draft.py (11 §F6)
+│   └── sources/<src-id>.yaml      # the snapshot its quotes are checked against; archived on promotion
 │
 ├── design/                        # tokens.yaml and the design-system source. See 09 §13
 │

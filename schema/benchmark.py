@@ -611,6 +611,59 @@ class Curation(Block):
         return [s if isinstance(s, str) else s.id for s in self.sources]
 
 
+class FieldEvidence(Closed):
+    """One drafted field and the source text behind it (11 S F6: "a verbatim source quote attached to
+    every field and `confidence: high | low | absent` per field"). `field` is a dotted path into the
+    record; `term` names the value for a multi-valued facet, which is evidenced one term at a time.
+    `absent` means no quote supported a value, so the field is null: "never guessed"."""
+    field: Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')]
+    term: Text | None = None
+    confidence: Literal['high', 'low', 'absent']
+    source: SourceId | None = None
+    quote: Text | None = None
+    note: Text | None = None
+
+    @model_validator(mode='after')
+    def _quoted(self):
+        quoted = self.source is not None and self.quote is not None
+        if self.confidence == 'absent' and (self.source or self.quote or self.term):
+            raise ValueError('%s: confidence absent carries no term, source or quote' % self.field)
+        if self.confidence != 'absent' and not quoted:
+            raise ValueError('%s: confidence %s needs the source and the verbatim quote behind it'
+                             % (self.field, self.confidence))
+        return self
+
+
+class Provenance(Closed):
+    """11 S F6: "every entry carries `provenance: {drafted_by, prompt_version, source_urls,
+    verified_by, verified_at, fields_verified}`". The first three are stamped by the curation copilot
+    (tools/copilot/draft.py); the last three are the human gate, and `fields_verified` is what the
+    public UI publishes ("Human-checked: licence, size; auto-drafted: description"). `fields` is the
+    per-field evidence the reviewer ticks against; `injection_flag` is the model's report that the
+    source held text addressed to an AI system (11 S G2), which is flagged, never obeyed."""
+    drafted_by: Text
+    drafted_on: date
+    prompt_version: Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9.-]*$')]
+    source_urls: list[Url] = Field(min_length=1)
+    verified_by: Text | None = None
+    verified_at: date | None = None
+    fields_verified: list[Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')]] = Field(default_factory=list)
+    fields: list[FieldEvidence] = Field(default_factory=list)
+    injection_flag: bool | None = None
+    injection_note: Text | None = None
+
+    @model_validator(mode='after')
+    def _gate(self):
+        if (self.verified_by is None) != (self.verified_at is None):
+            raise ValueError('provenance: verified_by and verified_at are set together')
+        if self.fields_verified and self.verified_by is None:
+            raise ValueError('provenance: fields_verified names fields, but nobody is recorded as verifying them')
+        unknown = sorted(set(self.fields_verified) - {e.field for e in self.fields}) if self.fields else []
+        if unknown:
+            raise ValueError('provenance: fields_verified names fields with no evidence row: %s' % ', '.join(unknown))
+        return self
+
+
 # ---- the entity -------------------------------------------------------------------------------
 
 class Benchmark(Block):
@@ -706,6 +759,7 @@ class Benchmark(Block):
     tags: list[Text] = Field(default_factory=list)
     ingestion: dict | None = None                           # machine-written (04 S9)
     curation: Curation
+    provenance: Provenance | None = None                    # 11 S F6: set when the copilot drafted the entry
 
     @model_validator(mode='before')
     @classmethod
