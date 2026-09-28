@@ -208,6 +208,22 @@ class FieldTerm(BaseTerm):
     field: Annotated[str, StringConstraints(pattern=FIELD_RE)]
     derived: bool = False
     derivation: Text | None = None
+    # Optional here, because a field vocabulary is definition-only (02 S11 rule 8). A term the Stage 4
+    # revision had to disambiguate (P1-S1-T07) carries both tests, phrased as a spine term's are.
+    inclusion_test: Text | None = None
+    exclusion_test: Text | None = None
+    not_to_be_confused_with: list[Confusion] = Field(default_factory=list)
+
+    @model_validator(mode='after')
+    def _tests_come_in_pairs(self):
+        if (self.inclusion_test is None) != (self.exclusion_test is None):
+            raise ValueError('%s: a field term states both an inclusion_test and an exclusion_test, or neither'
+                             % self.id)
+        if self.inclusion_test and not re.search(r'\btag\b.*\b(?:if|when|only)\b', self.inclusion_test, re.I | re.S):
+            raise ValueError('%s: inclusion_test must be an operational "tag this if ..." (03 S5)' % self.id)
+        if self.exclusion_test and not re.search(r'\bnot\s+tag\b', self.exclusion_test, re.I):
+            raise ValueError('%s: exclusion_test must be an operational "do NOT tag this if ..." (03 S5)' % self.id)
+        return self
 
     @model_validator(mode='after')
     def _derivation_stated(self):
