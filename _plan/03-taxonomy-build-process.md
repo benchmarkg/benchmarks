@@ -203,6 +203,24 @@ proposed_term: null           # optional; a suggestion, not a decision
 blocking: true                # true => v1 cannot freeze until this is resolved
 ```
 
+The classification record is one file per entry, `taxonomy/_corpus/classifications/<entry-id>.yaml`,
+with the shape `schema/classification.py` defines (P1-S1-T03). All nineteen facet fields are present,
+one list of assignments each. An assignment is one of three things:
+
+- a term, with the `source` and a verbatim `quote` that support it (rule 1);
+- one of the three terms that state what is known rather than what a source says (`unknown`, and
+  `none-known` for the ceiling anchor), with a `note`;
+- an abstention, `value: null`, naming the failure record that explains it (rule 2).
+
+`bench validate` checks both kinds of file, and the three cross-record rules below:
+
+- the entry is in the corpus;
+- every cited failure exists and is about the same benchmark and field;
+- no failure goes uncited.
+
+A failure record may add `terms[]`, the terms a collision is between, and `classification`, the record
+that cites it.
+
 A `blocking: true` failure means the taxonomy cannot freeze until an ADR resolves it. Everything else
 is batched into the Stage 4 revision. A `collision` record whose two terms sit in *different* facet
 files is not a defect. It is a homograph candidate, and it routes to `taxonomy/homographs.yaml` for a
