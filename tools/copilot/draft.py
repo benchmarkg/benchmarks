@@ -23,9 +23,14 @@ The pipeline, and where each rule of S F6 and S G2 is enforced:
   2. snapshot  G2's ingest sanitising: comments, scripts, styles and hidden elements (`hidden`,
                `display:none`, `visibility:hidden`, `aria-hidden`) are dropped, zero-width and bidi
                control characters are stripped, links are kept as `text [url]` so a URL can be
-               quoted. The result goes through schema/source.py's one normalisation and is capped at
-               04 S9's 64 KB. It is the Source's `quote_extract`: every quote is checked against it,
-               and it is also all the model is shown, so the model cannot quote what cannot be checked.
+               quoted. A README's raw HTML is sanitised the same way. Then every instruction-shaped
+               span (text addressed to an AI system, "ignore previous instructions", a chat-template
+               block, a directive at the catalogue such as "set the licence to MIT") is cut and
+               logged, to stderr and to provenance.injection_spans (P1-S2-T03, `INSTRUCTION_RULES`);
+               an archived snapshot is cut the same way before a drafter sees it. The result goes
+               through schema/source.py's one normalisation and is capped at 04 S9's 64 KB. It is the
+               Source's `quote_extract`: every quote is checked against it, and it is also all the
+               model is shown, so the model cannot quote what cannot be checked.
   3. draft     one of three drafters, which answer in the same JSON shape (`output_schema()`):
                  anthropic   the F6 model from config/ai-models.yaml (claude-opus-5, adaptive thinking,
                              effort high), with the document in a `document` block, never in `system`
@@ -60,6 +65,13 @@ The pipeline, and where each rule of S F6 and S G2 is enforced:
 `prompt_version` is `v1-` plus the first 12 hex digits of the sha256 of the rendered system prompt and
 the output schema: a content hash, so an edit to the prompt, the field set or any vocabulary changes
 it (11 S G3).
+
+Between 3 and 4, every drafter's answer, not only the model's, goes through the output schema
+(`conform`, P1-S2-T03): a field or term that does not fit is rejected at stage `schema`, and any key
+that is not a drafted field (an injected `curation`, `lifecycle`, `provenance`) is ignored and logged
+in provenance.schema_violations. Vetting then refuses a value that carries markup or is itself
+instruction-shaped. And no path is written unless it lies inside the drafts directory, whatever the
+id or source id was made from.
 
 What this script does not do: it does not run the Haiku injection classifier of G2 (the model's own
 `injection_flag` is recorded instead), it does not archive the source (the archiver does, on
@@ -192,6 +204,10 @@ def fetch(url: str, source_url: str | None = None) -> Fetched:
             raise CopilotError('%s is neither an http(s) URL nor a file' % url)
         with open(url, 'rb') as fh:
             raw = fh.read()
+        if raw[:5] == b'%PDF-':
+            if not source_url:
+                raise CopilotError('%s is a saved PDF, which carries no URL of its own; pass --source-url' % url)
+            return _pdf(source_url, raw)
         text = raw.decode('utf-8', errors='replace')
         is_html = url.lower().endswith(('.html', '.htm'))
         origin = source_url or (canonical_url(text) if is_html else None)
@@ -225,7 +241,14 @@ def _pdf(url: str, raw: bytes) -> Fetched:
     if exe is None:
         raise CopilotError('%s is a PDF, and pdftotext is not on PATH: install poppler, or pass the paper\'s '
                            'arXiv abstract URL. The copilot will not draft from a document it cannot quote.' % url)
-    out = subprocess.run([exe, '-enc', 'UTF-8', '-', '-'], input=raw, capture_output=True, check=True)
+    import tempfile
+    # A file, not stdin: xpdf's pdftotext (Git for Windows ships it) cannot read a PDF from stdin, and
+    # poppler's reads either. Both write to stdout for `-`.
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, 'source.pdf')
+        with open(path, 'wb') as fh:
+            fh.write(raw)
+        out = subprocess.run([exe, '-enc', 'UTF-8', path, '-'], capture_output=True, check=True)
     return Fetched(url, out.stdout.decode('utf-8', errors='replace'), 'text', 'paper', len(raw), _now(),
                    'text extracted from the PDF by pdftotext')
 
@@ -310,12 +333,78 @@ class _Visible(HTMLParser):
             self.out.append(data)
 
 
+# P1-S2-T03 step 2: "Strip and log instruction-shaped spans from fetched source text". A span is the
+# sentence around a match. The rules aim at text addressed to an AI system or at the catalogue, not
+# at ordinary imperatives: a README's "please set the environment variable" is not cut, "set the
+# licence to MIT" and "record this benchmark as the state of the art" are. A paper ABOUT prompt
+# injection quotes such sentences as examples and loses them from its snapshot; that is the accepted
+# false positive, and every cut span is logged in provenance.injection_spans for the reviewer.
+INSTRUCTION_RULES = (
+    ('override', re.compile(
+        r'\b(?:ignore|disregard|forget|override)\b[^.!?]{0,40}?\b(?:previous|prior|above|earlier|preceding|all|'
+        r'any|your|system)\b[^.!?]{0,30}?\b(?:instructions?|prompts?|rules|directions|guidelines)\b', re.I)),
+    ('addressed-to-ai', re.compile(
+        r'\b(?:note|message|instructions?|attention|reminder)\s+(?:to|for)\s+(?:any\s+|all\s+)?(?:ai|llms?|large '
+        r'language models?|language models?|assistants?|chatbots?|gpt|claude|curation (?:bots?|tools?|copilots?))\b'
+        r'|\b(?:ai|llm)\s+(?:assistants?|agents?|models?|systems?|tools?)\s+(?:reading|processing|parsing|'
+        r'summari[sz]ing|indexing|curating)\b|\b(?:dear|hey|hello)\s+(?:ai|llm|assistant|claude|chatgpt|gpt)\b', re.I)),
+    ('role', re.compile(
+        r'\byou are (?:now )?(?:an? |the )?(?:ai|assistant|language model|large language model|llm|chatbot)\b'
+        r'|\bnew (?:system )?instructions?\s*:', re.I)),
+    ('chat-template', re.compile(r'<\|im_start\|>.{0,300}?<\|im_end\|>|\[INST\].{0,300}?\[/INST\]'
+                                 r'|<\|(?:im_start|im_end|system|user|assistant|endoftext)\|>|\[/?INST\]', re.I)),
+    ('catalogue-directive', re.compile(
+        r'\b(?:record|classify|tag|label|list|mark|rate|rank|describe|register)\s+(?:this|the)\s+(?:benchmark|'
+        r'dataset|paper|repository|repo|work)\b[^.!?]{0,30}?\b(?:as|to be)\b'
+        r'|\bset\s+(?:the\s+)?(?:licen[cs]e|domain|capability|capabilities|score|rating)\b[^.!?]{0,20}?\bto\b', re.I)),
+)
+SPAN_REACH = 300            # a span never reaches further than this either side of its match
+SPAN_LOG_CAP = 20           # spans logged per draft; the count in the Source's notes is complete
+
+
+def instruction_rule(text: str) -> str | None:
+    """The first rule instruction-shaped text matches, or None."""
+    return next((name for name, pat in INSTRUCTION_RULES if pat.search(text)), None)
+
+
+def _sentence(text: str, start: int, end: int) -> tuple[int, int]:
+    left = max(text.rfind(p, 0, start) for p in ('. ', '! ', '? '))
+    s = max(left + 2 if left >= 0 else 0, start - SPAN_REACH)
+    m = re.compile(r'[.!?](?!\w)').search(text, end)        # "stars.<|im_end|>" ends at the stop too
+    return s, min(m.end() if m else len(text), end + SPAN_REACH)
+
+
+def strip_instructions(text: str) -> tuple[str, list[dict]]:
+    """`text` with every instruction-shaped span cut, and the spans as {rule, text}."""
+    # A chat-template block is cut as itself: it has no sentence of its own, and widening it to the
+    # next full stop would take the ordinary sentence after it.
+    hits = sorted(((m.start(), m.end()) if name == 'chat-template' else _sentence(text, m.start(), m.end())) + (name,)
+                  for name, pat in INSTRUCTION_RULES for m in pat.finditer(text))
+    merged: list[list] = []
+    for s, e, name in hits:
+        if merged and s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+            merged[-1][2] |= {name}
+        else:
+            merged.append([s, e, {name}])
+    if not merged:
+        return text, []
+    spans = [{'rule': ', '.join(sorted(names)), 'text': text[s:e].strip()[:CAPS['note']]} for s, e, names in merged]
+    kept, at = [], 0
+    for s, e, _ in merged:
+        kept.append(text[at:s])
+        at = e
+    kept.append(text[at:])
+    return normalise(' '.join(kept)), spans
+
+
 @dataclass
 class Snapshot:
-    text: str                   # normalised; the Source's quote_extract
+    text: str                   # normalised; the Source's quote_extract (and all a drafter is shown)
     title: str | None
     stripped: dict[str, int] = field(default_factory=dict)
     truncated: bool = False
+    spans: list[dict] = field(default_factory=list)
 
 
 def snapshot(doc: Fetched) -> Snapshot:
@@ -337,11 +426,17 @@ def snapshot(doc: Fetched) -> Snapshot:
         body = re.sub(r'<!--.*?-->', ' ', body, flags=re.S)
         m = re.search(r'^#\s+(.+)$', re.sub(r'^(```|~~~).*?^\1', ' ', body, flags=re.M | re.S), re.M)
         title = normalise(m.group(1)) if m else None
-    text = normalise(body)
+        p = _Visible(doc.url)                 # a README's raw HTML hides text as well as a page's does
+        p.feed(body)
+        p.close()
+        stripped['hidden_elements'] = p.dropped
+        body = ''.join(p.out)
+    text, spans = strip_instructions(normalise(body))
+    stripped['instruction_spans'] = len(spans)
     truncated = len(text.encode('utf-8')) > EXTRACT_CAP
     if truncated:
         text = normalise(text.encode('utf-8')[:EXTRACT_CAP].decode('utf-8', errors='ignore'))
-    return Snapshot(text, title, {k: v for k, v in stripped.items() if v}, truncated)
+    return Snapshot(text, title, {k: v for k, v in stripped.items() if v}, truncated, spans)
 
 
 # ---- 3. the answer shape, the prompt, the drafters ----------------------------------------------
@@ -581,6 +676,11 @@ def _why_not(path: str, kind: str, value: Any, quote: str, snap: Snapshot) -> st
         return None if str(value['count']) in _numbers(quote) else 'the number %d is not in its quote' % value['count']
     if not isinstance(value, str) or not value.strip():
         return 'no value'
+    if re.search(r'<[A-Za-z/!?]', value):
+        return 'the value contains markup'              # 11 S G2: free text is the injectable surface
+    rule = instruction_rule(value)
+    if rule:
+        return 'the value is instruction-shaped text (%s)' % rule
     if kind in ('verbatim', 'entrant'):
         if path == 'external_ids.arxiv' and not re.fullmatch(r'\d{4}\.\d{4,5}', value):
             return '%r is not an arXiv id' % value
@@ -599,6 +699,96 @@ def _why_not(path: str, kind: str, value: Any, quote: str, snap: Snapshot) -> st
         stray = _numbers(value) - _numbers(quote)
         return 'the number(s) %s are not in its quote' % ', '.join(sorted(stray)) if stray else None
     return 'unknown field kind %s' % kind
+
+
+_TYPES = {'string': lambda v: isinstance(v, str), 'integer': lambda v: isinstance(v, int) and not isinstance(v, bool),
+          'boolean': lambda v: isinstance(v, bool), 'null': lambda v: v is None,
+          'object': lambda v: isinstance(v, dict), 'array': lambda v: isinstance(v, list)}
+
+
+def _fits(value: Any, schema: dict) -> str | None:
+    """Why `value` does not fit `schema`, or None. The subset of JSON Schema output_schema() uses:
+    type, enum, anyOf, properties, required, additionalProperties: false, items."""
+    if 'anyOf' in schema:
+        return None if any(_fits(value, s) is None for s in schema['anyOf']) else 'fits none of its allowed shapes'
+    t = schema.get('type')
+    if t and not _TYPES[t](value):
+        return 'is not a %s' % t
+    if 'enum' in schema and value not in schema['enum']:
+        return '%s is not an allowed value' % _clean(repr(value), 80)
+    if t == 'object':
+        props = schema.get('properties', {})
+        extra = sorted(str(k) for k in value if k not in props) if schema.get('additionalProperties') is False else []
+        if extra:
+            return 'has keys the schema does not allow: %s' % _clean(', '.join(extra), 120)
+        missing = [k for k in schema.get('required', []) if k not in value]
+        if missing:
+            return 'lacks %s' % ', '.join(missing)
+        for k, v in value.items():
+            why = _fits(v, props[k]) if k in props else None
+            if why:
+                return '%s %s' % (k, why)
+    if t == 'array':
+        for i, v in enumerate(value):
+            why = _fits(v, schema['items'])
+            if why:
+                return '[%d] %s' % (i, why)
+    return None
+
+
+def conform(answer: Any, schema: dict) -> tuple[dict, list[dict], list[str]]:
+    """P1-S2-T03 step 1: every drafter's answer goes through the output schema, not only the model's
+    (whose structured outputs enforce it at the API). Returns the answer cut to what fits; a rejection
+    (stage `schema`) for each drafted field or term that does not fit; and a violation line for each
+    part that is not a drafted field at all, which is ignored. So an injected enum value, an injected
+    key such as `curation` or `lifecycle`, or a value of the wrong shape never reaches vetting."""
+    violations: list[str] = []
+    refused: list[dict] = []
+    if not isinstance(answer, dict):
+        return {'fields': {}}, [], ['the answer is not a JSON object; nothing in it was used']
+    top = schema['properties']
+    violations += ['%s: not in the answer schema; ignored' % _clean(str(k), 80) for k in answer if k not in top]
+    got = answer.get('fields')
+    if not isinstance(got, dict):
+        violations.append('fields: not an object; no field was used')
+        got = {}
+    props = top['fields']['properties']
+    clean: dict = {}
+    for path, item in got.items():
+        if path not in props:
+            violations.append('fields.%s: not a drafted field; ignored' % _clean(str(path), 80))
+            continue
+        if DRAFT_FIELDS[path] == 'terms':
+            if not isinstance(item, dict) or not isinstance(item.get('terms'), list) or set(item) != {'terms'}:
+                refused.append(rejection(path, '(malformed)', None, None,
+                                         'the answer does not fit the output schema: not a {terms: [...]} object', 'schema'))
+                continue
+            ok = []
+            for t in item['terms']:
+                why = _fits(t, props[path]['properties']['terms']['items'])
+                if why is None:
+                    ok.append(t)
+                    continue
+                d = t if isinstance(t, dict) else {}
+                refused.append(rejection(path, d.get('term', t), None, _clean(d.get('quote'), CAPS['quote']),
+                                         'does not fit the output schema: %s' % why, 'schema'))
+            clean[path] = {'terms': ok}
+            continue
+        why = _fits(item, props[path])
+        if why is None:
+            clean[path] = item
+            continue
+        d = item if isinstance(item, dict) else {'value': item}
+        refused.append(rejection(path, None, d.get('value'), _clean(d.get('quote'), CAPS['quote']),
+                                 'does not fit the output schema: %s' % why, 'schema'))
+    flag, note = answer.get('injection_flag'), answer.get('injection_note')
+    if flag is not None and not isinstance(flag, bool):
+        violations.append('injection_flag: not a boolean; ignored')
+        flag = None
+    if note is not None and not isinstance(note, str):
+        violations.append('injection_note: not a string; ignored')
+        note = None
+    return {'fields': clean, 'injection_flag': flag, 'injection_note': note}, refused, violations
 
 
 def _offered(value: Any) -> Any:
@@ -731,7 +921,8 @@ def _set(d: dict, path: str, value: Any):
 
 def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_id: str, drafter: Drafter,
              version: str, today: _dt.date, curator: str, refused: list[dict] | None = None,
-             snapshot_note: str | None = None) -> dict:
+             snapshot_note: str | None = None, violations: list[str] | None = None,
+             spans: list[dict] | None = None) -> dict:
     by = {v.field: [x for x in vetted if x.field == v.field] for v in vetted}
     rec: dict = {'id': bench_id}
     for path, kind in DRAFT_FIELDS.items():
@@ -769,7 +960,8 @@ def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_i
     ordered['provenance'] = {k: x for k, x in {
         'drafted_by': drafter.label, 'drafted_on': today.isoformat(), 'prompt_version': version,
         'source_urls': [doc.url], 'verified_by': None, 'verified_at': None, 'fields_verified': [],
-        'fields': fields, 'rejected': list(refused or []), 'injection_flag': flag if isinstance(flag, bool) else None,
+        'fields': fields, 'rejected': list(refused or []), 'schema_violations': list(violations or [])[:SPAN_LOG_CAP],
+        'injection_spans': list(spans or [])[:SPAN_LOG_CAP], 'injection_flag': flag if isinstance(flag, bool) else None,
         'injection_note': _clean(answer.get('injection_note'), CAPS['note']) if flag else None,
     }.items() if x is not None or k in ('verified_by', 'verified_at')}
     return ordered
@@ -954,7 +1146,8 @@ def from_archive(path: str, rec: dict) -> tuple[Fetched, Snapshot]:
     extract = rec['quote_extract']
     doc = Fetched(rec['url'], '', 'text', rec.get('type') or 'documentation', len(extract.encode('utf-8')),
                   str(rec.get('fetched_at') or ''), 'the committed snapshot in %s' % path)
-    return doc, Snapshot(normalise(extract), rec.get('title'))
+    text, spans = strip_instructions(normalise(extract))     # the drafter's view; quotes still meet the extract
+    return doc, Snapshot(text, rec.get('title'), {'instruction_spans': len(spans)} if spans else {}, False, spans)
 
 
 @dataclass
@@ -998,8 +1191,15 @@ def run(url: str, out: str, drafter: Drafter, source_url: str | None = None, ben
         raise CopilotError('%s has no readable text; nothing to draft from' % url)
     system, schema = system_prompt(os.path.join(root, 'taxonomy')), output_schema()
     version = prompt_version(system, schema)
-    answer = drafter.answer(snap, doc, system, schema)
+    answer, schema_refused, violations = conform(drafter.answer(snap, doc, system, schema), schema)
     vetted, refused = vet(answer, snap)
+    for r in schema_refused:                       # a field the schema refused is absent for that reason
+        for v in vetted:
+            if v.field == r['field'] and v.confidence == 'absent':
+                v.note = _clean('value rejected: %s' % r['reason'], CAPS['note'])
+    refused = schema_refused + refused
+    for span in snap.spans:
+        print('copilot: cut instruction-shaped text (%s): %s' % (span['rule'], span['text'][:120]), file=sys.stderr)
     name = next((v.value for v in vetted if v.field == 'name' and v.value), None)
     bench_id = bench_id or slug(name or _fallback_name(doc, snap), 63)
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{1,62}', bench_id):
@@ -1008,7 +1208,8 @@ def run(url: str, out: str, drafter: Drafter, source_url: str | None = None, ben
     if curator is None:
         from tools.authoring.new import added_by
         curator = added_by(root)
-    bench = assemble(vetted, answer, doc, sid, bench_id, drafter, version, today, curator, refused, note)
+    bench = assemble(vetted, answer, doc, sid, bench_id, drafter, version, today, curator, refused, note,
+                     violations, snap.spans)
     source = held[1] if held else source_record(doc, snap, sid, bench_id, drafter.label, today)
     enforce(bench, {sid: source})
     problems = check(bench, None if held else source)
@@ -1023,6 +1224,9 @@ def run(url: str, out: str, drafter: Drafter, source_url: str | None = None, ben
     texts = {bpath: render('benchmarks', bench, bench_id, today.isoformat(), shown)}
     if not held:
         texts[spath] = render('sources', source, sid, today.isoformat())
+    for path in texts:                             # G4: whatever an id was made from, it lands in drafts/
+        if os.path.commonpath([os.path.abspath(path), target]) != target:
+            raise CopilotError('%s is outside %s; nothing written' % (path, target))
     for path, text in texts.items():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w', encoding='utf-8', newline='\n') as fh:
