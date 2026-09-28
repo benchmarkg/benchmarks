@@ -25,10 +25,11 @@ assigned, is logged without abstaining.
 A failure record, taxonomy/_failures/<yyyy-mm-dd>-<benchmark>-<nnn>.yaml, is 03 S3.3's block. It
 adds optional fields: `terms[]` names the terms a collision or a two-primaries case is between,
 `classification` names the record that cites it, and triage (P1-S1-T06) adds `route` (ROUTES) and,
-for a failure an ADR decides, `adr`, the ADR's path. What the files must agree on is checked in
+for a failure an ADR decides, `adr`, the ADR's path. A re-run (P1-S1-T08) adds `resolved` to a
+failure that no longer applies, and `revisions[]` to a record it changed. What the files must agree on is checked in
 tools/validate/classifications.py: the entry is in the stress corpus; a cited failure exists and
-names the same benchmark and field; no failure goes uncited; a blocking failure is routed to an ADR;
-and the ADR it names exists and names it back.
+names the same benchmark and field; no open failure goes uncited, and no resolved one is still cited;
+a blocking failure is routed to an ADR; and the ADR it names exists and names it back.
 
 What cannot be checked offline is that each quote is in its source. The source is a live URL, not a
 committed Source record with an extract. The classifying agent checks every quote against the text it
@@ -102,15 +103,34 @@ class Assignment(Strict):
     failure: FailureId | None = None
 
 
+class Revision(Strict):
+    """One re-run of a record against a later taxonomy version (P1-S1-T08; 03 S6.3)."""
+    by: Text
+    on: date
+    taxonomy_version: SemVer
+    fields: list[Text] = Field(default_factory=list)  # the fields whose assignments changed; [] if none did
+    note: Text | None = None
+
+
+class Resolution(Strict):
+    """How a failure stopped applying: the vocabulary changed, the record was re-classified, or an
+    ADR ruled the case out. The record stays in the log (03 S3.3: it is permanent)."""
+    by: Text
+    on: date
+    taxonomy_version: SemVer
+    how: Text
+
+
 class Classification(Strict):
     id: Slug                                    # the stress-corpus entry id; the file is <id>.yaml
     corpus_item: int = Field(ge=1)              # the entry's 1-based position in the corpus
     curator: Text
     classified_on: date
-    taxonomy_version: SemVer
+    taxonomy_version: SemVer                    # the version the record now conforms to
     sources: dict[Key, Url] = Field(min_length=1)
     facets: dict[str, list[Assignment]]
     notes: Text | None = None
+    revisions: list[Revision] = Field(default_factory=list)
 
     @model_validator(mode='after')
     def _every_field_filled_or_abstained(self):
@@ -176,6 +196,7 @@ class FailureRecord(Strict):
     classification: Slug | None = None
     route: Literal[ROUTES] | None = None  # type: ignore[valid-type]
     adr: AdrPath | None = None
+    resolved: Resolution | None = None
 
     @model_validator(mode='after')
     def _facet_is_a_field(self):

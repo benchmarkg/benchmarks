@@ -3,7 +3,7 @@ id: gdpval
 corpus_item: 82
 curator: agent (P1-S1-T05)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2510.04374
   abs: https://arxiv.org/abs/2510.04374
@@ -21,15 +21,17 @@ facets:
       quote: Each task also requires parsing through up to 17 reference files in the gold subset, and 38 in the
         full set.
       note: The paper also shows that performance falls when context is withheld ("model performance degrades with
-        less context"). autonomy is not tagged despite the capabilities.yaml example; see the failure.
-      failure: 2026-09-28-gdpval-001
+        less context"). autonomy is not tagged, and 0.9.0 makes gdpval autonomy's near miss. The benchmark's central
+        claim, professional-quality work product, has no capability term and is carried by the domain
+        (economically-valuable-work).
   evaluation_method:
     - value: human-expert-eval
       source: paper
       quote: we conducted blinded expert pairwise comparisons, where experts in the relevant occupation were presented
         with a request and reference files and asked to rank two or more unlabeled work deliverables.
-      note: human-distribution-percentile is not tagged despite the evaluation-methods.yaml example; see the failure.
-      failure: 2026-09-28-gdpval-002
+      note: The headline is a win rate against the one deliverable written by each task's author. 0.9.0 makes gdpval
+        human-distribution-percentile's near miss (a single expert deliverable), and ADR-0020 leaves the win-rate
+        form to the Metric's notes.
     - value: model-graded-judge
       source: paper
       quote: For the gold subset, we trained an experimental grading model to perform pairwise comparisons in the
@@ -37,11 +39,13 @@ facets:
       note: 'Judge model: "Our automated grader, based on GPT-5-high"; no version string is given. The paper calls
         it experimental and recommends human grading, and it cannot grade 12 of the 220 tasks.'
   designed_for_subjects:
-    - value: agent-scaffold
+    - value: model-in-benchmark-harness
       source: paper
-      quote: Here is the prompt we give the agent to elicit capabilities
-      note: OpenAI models ran with "the web search tool and the code interpreter tool, with background sampling"
-        in a container, and the scaffolding experiment adds best-of-N with a GPT-5 judge.
+      quote: For the OpenAI models, we enabled the web search tool and the code interpreter tool, with background
+        sampling.
+      note: The maintainer, not an entrant, supplies the loop, tools, container and prompt ('Here is the prompt we
+        give the agent to elicit capabilities'), and the rows name only the model. 0.9.0's agent-scaffold needs an
+        entrant-supplied loop. The scaffolding experiment (best-of-N with a GPT-5 judge) is the maintainer's own.
     - value: full-product-pipeline
       source: paper
       quote: We sampled Claude via the UI to enable the maximum GDPval-relevant features.
@@ -53,7 +57,7 @@ facets:
       quote: we open-source a gold subset of 220 tasks and provide a public automated grading service at evals.openai.com
       note: The released gold subset includes the prompts, reference files, the expert deliverables and rubrics (the
         dataset card's deliverable_files and rubric_json columns). The other 1,100 tasks of the full set are not released.
-      failure: 2026-09-28-gdpval-003
+        0.9.0's fully-open test counts a public sample when the headline is computed on it, and gdpval is its example.
   data.refresh:
     - value: versioned-releases
       source: paper
@@ -76,30 +80,45 @@ facets:
         The Hugging Face page also lists third-party models "trained or fine-tuned on openai/gdpval". That list is Hugging
         Face's own metadata, and no source reports contamination of any evaluated model.
   data.ceiling_anchor_type:
-    - value: null
+    - value: expert-average
       source: paper
-      quote: 'No “upper limit”: Unlike metrics that could saturate quickly, our primary metric is win rate, which allows
-        for continuous evaluation.'
-      failure: 2026-09-28-gdpval-004
+      quote: 'Figure 5: On human pairwise comparisons, models are beginning to approach parity with industry experts
+        on the GDPval gold subset.'
+      note: Scores are read against the expert deliverables, and 50% marks parity with them. 0.9.0's expert-average
+        includes 'an expert reference that marks parity on a win-rate scale'. The paper's 'No upper limit' refers to
+        saturation, not to the absence of a reference.
   lifecycle:
     - value: null
       failure: 2026-09-28-gdpval-005
   activity:
-    - value: null
-      failure: 2026-09-28-gdpval-006
+    - value: no-submission-channel
+      source: paper
+      quote: we make an experimental automated grader publicly available at evals.openai.com
+      note: OpenAI ran every reported model itself, and no board takes outside entries. The grading service returns
+        a score and publishes nothing, which 0.9.0 says is not a channel (gdpval is the term's example).
   governance.maintainer_type:
     - value: industry-lab
-      source: paper
-      quote: Amelia Glaese Jerry Tworek OpenAI
+      source: home
+      quote: openai/gdpval · Datasets at Hugging Face
+      note: The dataset sits in OpenAI's organisation namespace, and every author is at OpenAI.
   governance.submission_process:
-    - value: null
-      failure: 2026-09-28-gdpval-007
+    - value: literature-only
+      source: paper
+      quote: We evaluated GPT-4o, o4-mini, o3, GPT-5, Claude Opus 4.1, Gemini 2.5 Pro, and Grok 4 using blind pairwise
+        comparisons by professional industry experts
+      note: The only maintainer results are the release paper's, and no source shows a ranking or results table
+        that the maintainer keeps. The hosted grader scores uploads privately and is no route onto a ranking.
   governance.independence_flags:
     - value: maintainer-competes-on-own-benchmark
       source: paper
       quote: 'Figure 6: Performance of OpenAI frontier models increased roughly linearly over time on the GDPval gold
         subset.'
-      failure: 2026-09-28-gdpval-008
+    - value: grader-from-evaluated-party
+      source: paper
+      quote: Our automated grader, based on GPT-5-high, shows lower correlation with human expert graders when assessing
+        outputs from capable OpenAI models.
+      note: The public automated grader is built on the maintainer's own evaluated model and scores its competitors,
+        and the paper measures its bias itself. ADR-0020 lists gdpval for this flag.
   execution.compute_tier:
     - value: human-panel
       source: paper
@@ -123,8 +142,17 @@ facets:
     - value: none
       source: paper
       quote: we make an experimental automated grader publicly available at evals.openai.com
-      failure: 2026-09-28-gdpval-009
+      note: No sampling or grading code is released. 0.9.0's none covers a hosted service offered in place of code,
+        which belongs in execution.submission_channel (gdpval is the example).
 notes: The record classifies the entry as the corpus defines it, the open 220-task gold subset on Hugging Face with
   its paper. The headline results in the paper are also on the gold subset. The OpenAI blog post answered HTTP 403,
   and evals.openai.com returned an empty application shell, so neither is a source. Everything about the grading
   service comes from the paper.
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [capability, evaluation_method, designed_for_subjects, data.access, data.ceiling_anchor_type,
+      activity, governance.maintainer_type, governance.submission_process, governance.independence_flags,
+      execution.harness_availability]
+    note: Re-adjudicated against 0.9.0; the fixed examples, the no-channel terms and the new grader flag apply.

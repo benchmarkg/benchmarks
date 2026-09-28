@@ -269,6 +269,41 @@ def test_the_committed_log_is_triaged_and_the_revision_list_is_current():
         assert not f.blocking or f.adr, p
 
 
+def test_the_rerun_left_no_escape_hatch_and_every_in_scope_record_at_0_9():
+    """P1-S1-T08's DONE WHEN: every escape-hatch failure is resolved; the re-run covers every in-scope entry."""
+    for p in glob.glob(os.path.join(FAILS, '*.yaml')):
+        f = FailureRecord.model_validate(read_yaml(p))
+        assert f.kind != 'escape-hatch-used' or f.resolved is not None, p
+    corpus = read_yaml(os.path.join(ROOT, 'taxonomy', '_corpus', 'stress-corpus.yaml'))['entries']
+    out_of_scope = {e['id'] for e in corpus if any(str(fl).startswith('out-of-scope:') for fl in e.get('flags') or [])}
+    assert out_of_scope == {'metriq-qed-c', 'inspect-evals', 'open-x-embodiment'}
+    for p in glob.glob(os.path.join(CLS, '*.yaml')):
+        m = Classification.model_validate(read_yaml(p))
+        if m.id not in out_of_scope:
+            assert m.taxonomy_version == '0.9.0' and m.revisions, m.id
+
+
+RESOLVED = {'by': 'someone', 'on': '2026-09-28', 'taxonomy_version': '0.9.0', 'how': 'a term now covers it'}
+
+
+def test_a_resolved_failure_may_go_uncited_but_may_not_be_cited(tmp_path):
+    """P1-S1-T08: a failure a re-run settles stays in the log, marked `resolved`, and nothing rests on it."""
+    clean = record()
+    clean['facets']['data.refresh'] = [{'value': 'static', 'source': 'paper', 'quote': 'q'}]
+    found, _ = rules(tree(tmp_path / 'a', [clean], {'2026-09-28-mmlu-pro-003': failure(resolved=RESOLVED)}))
+    assert found == []
+    found, _ = rules(tree(tmp_path / 'b', [record()], {'2026-09-28-mmlu-pro-003': failure(resolved=RESOLVED)}))
+    assert found == ['failure-ref']
+
+
+def test_a_revision_is_recorded_on_the_record():
+    r = record(taxonomy_version='0.9.0', revisions=[{'by': 'someone', 'on': '2026-09-28', 'taxonomy_version': '0.9.0',
+                                                     'fields': ['capability']}])
+    assert Classification.model_validate(r).revisions[0].fields == ['capability']
+    with pytest.raises(ValidationError):
+        Classification.model_validate(record(revisions=[{'by': 'someone', 'on': '2026-09-28'}]))
+
+
 def test_a_proposed_term_is_not_read_as_an_entity_reference(tmp_path):
     found, _ = rules(tree(tmp_path, [record()], {'2026-09-28-mmlu-pro-003': failure(proposed_term='pool-relative-ranking')}))
     assert found == []

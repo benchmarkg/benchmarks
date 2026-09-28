@@ -3,7 +3,7 @@ id: forecastbench
 corpus_item: 84
 curator: agent (P1-S1-T05)
 classified_on: 2026-09-28
-taxonomy_version: 0.1.0
+taxonomy_version: 0.9.0
 sources:
   paper: https://arxiv.org/html/2409.19839
   abs: https://arxiv.org/abs/2409.19839
@@ -19,7 +19,8 @@ facets:
       source: about
       quote: We evaluate LLMs by regularly asking them to make probabilistic forecasts about future events, thereby
         creating a contamination-free benchmark.
-      failure: 2026-09-28-forecastbench-001
+      note: 0.9.0's society-econ-law exclusion keeps forecasting that resolves against real-world events in this subdomain
+        whatever its topic and however general the competence claimed (02 S12.8).
   domain.secondary:
     - value: society-econ-law/finance-forecasting
       source: paper
@@ -41,7 +42,17 @@ facets:
       note: The paper scored unresolved market questions against the platform crowd forecast, and that stopped.
         The preliminary leaderboard still ranks early on "all resolved dataset questions", so a published rank carries
         a resolution status.
-      failure: 2026-09-28-forecastbench-002
+    - value: uncertainty-calibration-score
+      source: paper
+      quote: Brier scores are strictly proper, incentivizing truthful reporting from participants.
+      note: Each emitted probability is scored with the Brier score. 0.9.0 has a probability about a future event
+        carry both this term (how it is scored) and prospective-resolution (when its truth exists).
+    - value: entrant-relative-ranking
+      source: leaderboards
+      quote: To enable fair ranking across forecasters despite non-overlapping question sets, we use a two-way fixed-effects
+        model that adjusts for question difficulty
+      note: The difficulty adjustment is fitted jointly across all forecasters, so an entrant's Brier Index moves as
+        the pool changes. The pool and snapshot date belong on each claim.
   designed_for_subjects:
     - value: instruction-tuned-model
       source: leaderboards
@@ -72,7 +83,9 @@ facets:
     - value: resolves-over-time
       source: paper
       quote: As they resolve, we update a public leaderboard to show participant performance.
-      failure: 2026-09-28-forecastbench-003
+      note: 0.9.0 gives resolves-over-time precedence over continuously-generated and rolling-live. The cadences go
+        here, as the term asks. Dataset questions are generated every night from time series, and a new question set
+        is sampled every two weeks against a leaderboard updated nightly.
   data.data_provenance:
     - value: web-scraped
       source: paper
@@ -83,6 +96,11 @@ facets:
       quote: With these sources, we can generate questions using a fixed question template
       note: Dataset questions are generated from time series (ACLED, DBnomics, FRED, Wikipedia, Yahoo! Finance). gpt-4o-mini
         only categorises and filters questions, so model-generated is not tagged.
+    - value: curated-public-database
+      source: paper
+      quote: We create dataset questions from well-established and well-maintained datasets that track real-world events
+      note: The dataset questions and their resolutions come from curated archives compiled for other purposes (ACLED's
+        conflict database, FRED and DBnomics statistics).
   data.contamination_risk:
     - value: low
       source: paper
@@ -91,11 +109,13 @@ facets:
       note: The one route left is live look-up of market prices during the 24-hour window. That is run-time leakage,
         not training contamination, and the question set supplies the crowd forecast as a freeze value in any case.
   data.ceiling_anchor_type:
-    - value: null
-      source: leaderboards
-      quote: Human comparison groups (highlighted in red) were last surveyed in July 2024 and therefore answered a different
-        set of questions than models evaluated after that date.
-      failure: 2026-09-28-forecastbench-004
+    - value: expert-average
+      source: about
+      quote: AI models have likely reached parity with superforecasters on ForecastBench 2026-07-16
+      note: The anchor is the 'Superforecaster median forecast', a group of 39 superforecasters scored like an entrant.
+        It stays the anchor after the frontier reaches it, with headroom unclamped (12 S3.1). The group was 'last surveyed
+        in July 2024', which the Baseline record carries. 02 S12.8 records expert-best; see the failure.
+      failure: 2026-09-28-forecastbench-007
   lifecycle:
     - value: active
       source: about
@@ -103,11 +123,10 @@ facets:
       note: The home page also announces "Kalshi added as question source 2026-08-19", and the submission wiki was
         edited on Sep 23, 2026.
   activity:
-    - value: accepting-submissions
-      source: leaderboards
-      quote: The tournament leaderboard captures the frontier of LLM forecasting ability and is open to external submissions.
-      note: A new round opens every two weeks, and each round's forecasts are due within 24 hours of the question set's
-        release.
+    - value: null
+      source: submit
+      quote: Upload your Forecast Set by 23:59:59 UTC on the forecast due date
+      failure: 2026-09-28-forecastbench-008
   governance.maintainer_type:
     - value: nonprofit
       source: about
@@ -117,7 +136,12 @@ facets:
     - value: held-out-server
       source: submit
       quote: Upload your forecast set to your GCP bucket folder.
-      failure: 2026-09-28-forecastbench-005
+      note: The tournament board. Forecasts are locked by a timestamped deadline and scored as questions resolve, and
+        0.9.0's held-out-server counts outcomes that do not exist at submission (forecastbench is its example).
+    - value: maintainer-run
+      source: leaderboards
+      quote: The baseline leaderboard is run solely by the ForecastBench team.
+      note: The baseline board ranks models the maintainer chose and ran out of the box.
   governance.independence_flags:
     - value: no-known-conflict
       source: about
@@ -153,10 +177,17 @@ facets:
         LLM and human forecasts, computing difficulty-adjusted Brier scores, and maintaining the leaderboard.
 notes: 'Stress test (item 84). Both flagged values pass their tests. data.refresh resolves-over-time and evaluation_method
   prospective-resolution both hold: the answer "becomes known only after predictions are locked" once the wiki confirms
-  that unresolved market questions are no longer scored against the crowd proxy. What breaks sits next to them. The
-  refresh field cannot also record the biweekly generated rounds (003). The method field records when ground truth
-  exists, but not the scoring rule or the pool-relative difficulty adjustment (002). The human anchor is an aggregate
-  from 2024 that the frontier has now reached (004). Reproducibility splits between re-scoring and re-forecasting (006).
+  that unresolved market questions are no longer scored against the crowd proxy. Under 0.9.0 the biweekly generated
+  rounds sit in the refresh notes, and the scoring rule and the pool-relative difficulty adjustment have method terms.
+  What still breaks: the human anchor is an aggregate from 2024 that the frontier has now reached, and 02 S12.8 and
+  the tests name different terms for it (007); reproducibility splits between re-scoring and re-forecasting (006).
   The corpus flag is confirmed: the difficulty-adjusted Brier score is described in the technical report (docs, "Last
   updated: 3 Oct 2025") and on the leaderboards page, not in the paper. Combination questions, which are in the paper,
   were dropped for rounds from 2025-10-26.'
+revisions:
+  - by: agent (P1-S1-T08)
+    on: 2026-09-28
+    taxonomy_version: 0.9.0
+    fields: [domain.primary, evaluation_method, data.refresh, data.data_provenance,
+      data.ceiling_anchor_type, activity, governance.submission_process]
+    note: Re-adjudicated against 0.9.0; the scoring rule and pool adjustment now have terms, and the rounds sit under resolves-over-time.
