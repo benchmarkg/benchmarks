@@ -52,8 +52,9 @@ outcome worth remembering are kept for the 30-day window, so a re-run inside it 
 a dead link is never cached, because a link that died should be re-checked the next time, not a
 month later.
 
-06 S7.2's `changed` class and its body-digest comparison belong to the scheduled link-rot job (08
-S3.5: Phase 5), not to this check. Cache entries written before the heuristics existed carry no
+06 S7.2's `changed` class and its body-digest comparison belong to the scheduled link-rot job,
+tools/check_links.py (P5-S8-T01), which reuses this module's fetch and heuristics and writes its
+verdicts into the records; this check writes nothing. Cache entries written before the heuristics existed carry no
 `heuristics` stamp and are re-checked rather than trusted.
 """
 from __future__ import annotations
