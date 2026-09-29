@@ -155,7 +155,10 @@ uaibi/
 │   ├── benchmarks/_stubs/<id>.yaml    # unfaceted Epoch stubs (schema/stub.py; 07 §2.4), never published;
 │   │                                  # emitted by scripts/emit_epoch_stubs.py from the id allocation
 │   ├── systems/<org-slug>/<id>.yaml
+│   ├── systems/_stubs/<id>.yaml       # unreviewed Epoch registry stubs (schema/stub.py; P3-S3-T04),
+│   │                                  # never published; emitted by scripts/emit_epoch_entities.py
 │   ├── organizations/<id>.yaml
+│   ├── organizations/_stubs/<id>.yaml # the same, for the organisations Epoch names
 │   ├── metrics/<id>.yaml
 │   ├── leaderboards/<id>.yaml
 │   ├── conditions/<cond-id>.yaml          # EvalConditions — shareable, referenced by claims
@@ -173,6 +176,8 @@ uaibi/
 │   ├── _ingest/batches/<id>.yaml          # IngestBatch records. 04 §9 owns the entity and this path;
 │   │                                      # `ingest/manifests/` below is the adapter's own run log,
 │   │                                      # which is a different thing and is NOT citable
+│   ├── _ingest/unresolved/<adapter>/<date>.yaml   # Unresolved records, one list per batch (04 §10);
+│   │                                      # schema/entities.py UnresolvedFile (P3-S3-T04)
 │   ├── _discovery/                        # Unresolved discovery candidates awaiting triage (06 §5)
 │   └── _analysis/                         # One-off measurement outputs, e.g.
 │                                          # overlap-<service>-<date>.yaml (01 §4). NOT part of the
