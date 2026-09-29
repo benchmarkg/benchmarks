@@ -49,7 +49,7 @@ TAG = re.compile(r'\[(?:recon|checked) \d{4}-\d{2}-\d{2}, (?:measured|vendor doc
 # Where a paragraph, list item or table row that starts at an anchor ends.
 END = re.compile(r'\n\s*\n|\n- |\n\d+\. |\n\| |\n#')
 SECTIONS = [('07-ingestion-infrastructure.md', '### 3.2 ', '### 3.3 ')]
-UA = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks; team@particle6.com)'
+UA = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks; team@particle6.com)'
 
 
 def load(path):

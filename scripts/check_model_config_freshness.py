@@ -33,7 +33,7 @@ PLAN_11 = os.path.join(ROOT, '_plan', '11-ai-features.md')
 PRICES = ('input', 'output', 'cache_write_5m', 'cache_write_1h', 'cache_read', 'batch_input', 'batch_output')
 STATUSES = {'active', 'deprecated', 'retired'}
 RETIREMENT_WINDOW = 90  # days
-UA = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks; team@particle6.com)'
+UA = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks; team@particle6.com)'
 
 
 def load(path):

@@ -27,7 +27,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
-USER_AGENT = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks; team@particle6.com)'
+USER_AGENT = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks; team@particle6.com)'
 WINDOW = timedelta(days=30)
 MAX_NETWORK_FAILURES = 3   # consecutive, before the run stops rather than hammering a sick host
 
