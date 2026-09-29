@@ -21,6 +21,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, ROOT)
 from schema.source import EXTRACT_CAP, Source, extract_sha256, fold, normalise, quote_found  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
+from schema.stub import curated_benchmark_files  # noqa: E402
 
 FIXTURE = os.path.join(ROOT, 'tests', 'schema', 'fixtures', 'mixed-whitespace.html')
 
@@ -236,7 +237,7 @@ def test_every_committed_quote_is_found_in_its_source():
                 yield from pairs(v)
 
     checked, missing = 0, []
-    for path in glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True):
+    for path in curated_benchmark_files(ROOT):
         for src, quote in pairs(read_yaml(path)):
             checked += 1
             if not extracts.get(src) or not quote_found(quote, extracts[src]):

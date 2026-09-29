@@ -198,7 +198,8 @@ def compute_for_claim(claim: ResultClaim, resolution: Resolution, conditions: Ev
 def build(root: str = ROOT) -> dict:
     pf = load_profiles(os.path.join(root, 'taxonomy', 'comparability-profiles.yaml'))
     benchmarks = {}
-    for path in sorted(glob.glob(os.path.join(root, 'data', 'benchmarks', '**', '*.yaml'), recursive=True)):
+    from schema.stub import curated_benchmark_files
+    for path in curated_benchmark_files(root):              # stubs have no comparability profile (P3-S2-T07)
         b = load_benchmark(path)
         benchmarks[b.id] = resolve_profile(b, pf)
     conditions = {}
