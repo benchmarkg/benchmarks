@@ -1,23 +1,38 @@
 # taxonomy/crosswalks/hf-tags.yaml
 #
 # HuggingFace Space tag namespaces -> our fields. HINTS, NEVER GROUND TRUTH (03 S2, 06 S3.2): the
-# tags are self-declared by Space authors and sparsely applied -- 128 of a 1,000-Space sample
-# carried any `test:*` tag, 12.8% (06 S3.2 owns the census; cite it rather than restate it). Every
-# row therefore carries `source: hf_space_tag`, the provenance stamp a suggestion arrives with, and
-# lands as a `_suggested` value for a curator to confirm (02 S11 rule 3: no facet value is written
-# to data/ by a machine).
+# tags are self-declared by Space authors and sparsely applied (the `caveats` block below). Every
+# suggested row therefore carries `source: hf_space_tag`, the provenance stamp a suggestion arrives
+# with, and lands as a `_suggested` entry on a data/_discovery/ candidate for a curator to confirm
+# (06 S1.1; 02 S11 rule 3: no facet value is written to data/ by a machine).
+#
+# Nothing here maps directly onto a field. `use` takes three values, and none of them is a write:
+#   suggested   a `_suggested` entry (06 S1.1), stamped `source: hf_space_tag` and `caveat: hf-tag-density`
+#   match-only  a join key: it finds which Benchmark a Space is about and is never written (as pwc.yaml's)
+#   drop        carried nowhere; `drop_reason` says why
+#
+# `namespaces` declares every namespace observed in the Spaces listing and the fields it may hint at;
+# `rows` are the values 06 S3.2 measured, and the values of the committed fixture with a clear
+# candidate. A value of a declared namespace with no row is still a hint -- the tag verbatim, no
+# candidate -- so a curator sees it (`unlisted: hint-without-candidate`). A namespace not declared
+# here is reported, never guessed at: 06 S3.2's rule is that a renamed namespace stops the adapter
+# rather than falling back to free-text matching.
 #
 # `candidates` lists the terms of the `ours` field a tag points towards; a curator picks one or
 # none. `value_kind: domain-family` marks a row whose candidate is a domain FAMILY: a family is
-# navigational, never assignable (02 S3), so it narrows the curator's choice of leaf.
+# navigational, never assignable (02 S3), so it narrows the curator's choice of leaf. A language row
+# has `value` instead: the language name the hint carries, after `normalise.language`.
 #
-# `count` is the tag's frequency in 06 S3.2's 1,000-Space sample of 2026-09-17. Normalise case
-# before matching: `language:english` and `language:English` both occur.
+# Two counts per row. `count` is the tag's frequency in 06 S3.2's 1,000-Space sample of 2026-09-17,
+# transcribed (null where 06 does not report the value). `count_fixture` is its frequency in
+# tests/ingest/fixtures/hf-hub/spaces-leaderboard.json, the 1,000 Spaces captured on 2026-09-24;
+# tests/test_crosswalks.py recounts both. They differ by a few because the listing moved in a week.
 #
 # The meaning of `judge:auto` is read from the tag's name and 06's mapping, not from HF's own
 # documentation (verified: false). Confirm it before the adapter trusts the candidate.
 #
-# Authored by P0-S4-T09 from 03 S2 and 06 S3.2.
+# Authored by P0-S4-T09 from 03 S2 and 06 S3.2; completed by P5-S1-T01 (modality:, language:,
+# domain:, arxiv:, region: and the free tags; the caveat and the language rule).
 
 crosswalk: hf-tags
 counterpart: HuggingFace Hub Space tags (leaderboard namespaces)
@@ -25,7 +40,82 @@ counterpart_url: https://huggingface.co/spaces?filter=leaderboard
 counterpart_licence: per-artifact
 relation: hint
 verified: false
-updated: 2026-09-25
+updated: 2026-09-29
+
+caveats:
+  hf-tag-density:
+    # 06 S3.2 owns this figure; it is carried on every hint so that a curator reading one sees how
+    # thin the signal is. The density of the other namespaces is lower still.
+    namespace: test
+    tagged: 128
+    sampled: 1000
+    density: 0.128
+    measured_on: 2026-09-17
+    cite: 06-sourcing-and-scraping.md S3.2
+
+normalise:
+  language:
+    # `language:english` (29) and `language:English` (22) are one language (06 S3.2). The rule, in
+    # order: split the value on commas (`English, Hindi` is two); trim; casefold; map through
+    # `aliases`; drop anything in `not_a_language`; emit the English name in title case, the
+    # spelling data/ uses (data/benchmarks/code/swe-bench.yaml: `Python`).
+    split_on: ','
+    case: casefold
+    aliases:
+      日本語: japanese
+      pl: polish
+    not_a_language: [code]     # `language:code` names programming, which is eval:code's hint
+    emit: title
+
+namespaces:
+  test:
+    use: suggested
+    ours: [Benchmark.data.access]
+    unlisted: hint-without-candidate
+  submission:
+    use: suggested
+    ours: [Leaderboard.submission_process]
+    unlisted: hint-without-candidate
+  judge:
+    use: suggested
+    ours: [EvalConditions.judge_model, Benchmark.evaluation_method]
+    unlisted: hint-without-candidate
+  eval:
+    use: suggested
+    ours: [Benchmark.domain.primary, Benchmark.capability]
+    unlisted: hint-without-candidate
+  modality:
+    # There is no Benchmark modality field: modality is carried by the domain families (vision,
+    # audio-speech, multimodal), so a modality tag hints at a family or at nothing.
+    use: suggested
+    ours: [Benchmark.domain.primary]
+    unlisted: hint-without-candidate
+  language:
+    use: suggested
+    ours: [Benchmark.data.size.languages]
+    normalise: language
+    unlisted: hint-by-rule        # every value becomes a hint through normalise.language
+  domain:
+    use: suggested
+    ours: [Benchmark.domain.primary]
+    unlisted: hint-without-candidate
+  arxiv:
+    # The Space links a paper; that paper is usually, not always, the benchmark's own. It finds the
+    # Benchmark (07's dedup keys) and is never written: external_ids.arxiv comes from the dataset
+    # tag or the paper itself (06 S3.2's dataset-side rows).
+    use: match-only
+    ours: [Benchmark.external_ids.arxiv]
+  region:
+    use: drop
+    drop_reason: hosting-region    # `region:us` is on every Space in the listing; it is HF's, not the author's
+  _free:
+    # Tags with no namespace. 496 distinct values in the fixture, most of them framework or topic
+    # words; a row below is a hint, anything else is dropped (an uncontrolled vocabulary would turn a
+    # high-precision seed list into a low-precision one, 06 S3.2).
+    use: suggested
+    ours: [Benchmark.domain.primary, Benchmark.evaluation_method, Leaderboard.submission_process]
+    unlisted: drop
+    drop: [leaderboard, benchmark, evaluation, gradio, docker, static]   # the filter, a truism, or the SDK
 
 rows:
   # --- test: -> data.access (06: "as a _suggested hint, never directly") ---
@@ -33,58 +123,122 @@ rows:
     ours: Benchmark.data.access
     candidates: [fully-open]
     count: 110
+    count_fixture: 110
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
   - tag: "test:private"
     ours: Benchmark.data.access
     candidates: [private-test-server, train-open-test-held-out]
     count: 18
+    count_fixture: 18
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "test:mix"
+    ours: Benchmark.data.access
+    candidates: [train-open-test-held-out]
+    count: null
+    count_fixture: 1
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+    note: Read as some splits public and some held out; the fixture's one Space does not say which.
 
   # --- submission: -> Leaderboard.submission_process (06 S3.2) ---
   - tag: "submission:manual"
     ours: Leaderboard.submission_process
     candidates: [self-reported, maintainer-verified]
     count: 39
+    count_fixture: 38
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
     note: A manual route says who enters a result, not who checks it; both readings occur.
   - tag: "submission:automatic"
     ours: Leaderboard.submission_process
     candidates: [sandboxed-rerun]
     count: 27
+    count_fixture: 27
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
   - tag: "submission:semiautomatic"
     ours: Leaderboard.submission_process
     candidates: [maintainer-verified, sandboxed-rerun]
     count: 10
+    count_fixture: 10
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
 
   # --- judge: -> judge_model presence and kind (06 S3.2), and the method it implies ---
   - tag: "judge:auto"
     ours: EvalConditions.judge_model
     count: 73
+    count_fixture: 73
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
     note: A judge exists; its kind is not said.
   - tag: "judge:auto"
     ours: Benchmark.evaluation_method
     candidates: [model-graded-judge]
     count: 73
+    count_fixture: 73
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
   - tag: "judge:function"
     ours: Benchmark.evaluation_method
     candidates: [exact-match, execution-tests, reference-metric]
     count: 17
+    count_fixture: 16
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
     note: A scoring function, so no judge_model.
   - tag: "judge:vlm-judge"
     ours: EvalConditions.judge_model
     count: 4
+    count_fixture: 0
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
     note: The judge is a vision-language model.
   - tag: "judge:vlm-judge"
     ours: Benchmark.evaluation_method
     candidates: [model-graded-judge]
     count: 4
+    count_fixture: 0
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "judge:model"
+    ours: EvalConditions.judge_model
+    count: null
+    count_fixture: 2
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+    note: The same reading as judge:auto, in the words of two Spaces that do not use auto.
+  - tag: "judge:model"
+    ours: Benchmark.evaluation_method
+    candidates: [model-graded-judge]
+    count: null
+    count_fixture: 2
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "judge:humans"
+    ours: Benchmark.evaluation_method
+    candidates: [human-crowd-eval, human-expert-eval]
+    count: null
+    count_fixture: 1
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+    note: Whether the humans are crowd or expert is not said; judge_model would be `human`, from the page.
 
   # --- eval: -> facet hints (06 S3.2) ---
   - tag: "eval:code"
@@ -92,21 +246,192 @@ rows:
     candidates: [code]
     value_kind: domain-family
     count: 76
+    count_fixture: 76
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
   - tag: "eval:math"
     ours: Benchmark.domain.primary
     candidates: [mathematics]
     value_kind: domain-family
     count: 30
+    count_fixture: 30
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
   - tag: "eval:safety"
     ours: Benchmark.domain.primary
     candidates: [safety-alignment]
     value_kind: domain-family
     count: 15
+    count_fixture: 15
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
   - tag: "eval:generation"
     ours: Benchmark.capability
     candidates: [generation-fidelity]
     count: 47
+    count_fixture: 48
+    use: suggested
     source: hf_space_tag
+    caveat: hf-tag-density
+
+  # --- modality: -> a domain family, or nothing (06 S3.2) ---
+  - tag: "modality:text"
+    ours: Benchmark.domain.primary
+    candidates: []
+    count: 79
+    count_fixture: 79
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+    note: Text is the modality of every language-model leaderboard; it narrows no domain, so no candidate.
+  - tag: "modality:image"
+    ours: Benchmark.domain.primary
+    candidates: [vision]
+    value_kind: domain-family
+    count: null
+    count_fixture: 3
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "modality:audio"
+    ours: Benchmark.domain.primary
+    candidates: [audio-speech]
+    value_kind: domain-family
+    count: null
+    count_fixture: 1
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+
+  # --- language: -> data.size.languages, through normalise.language (06 S3.2) ---
+  - tag: "language:english"
+    ours: Benchmark.data.size.languages
+    value: English
+    count: 29
+    count_variants: {"language:English": 22}
+    count_fixture: 53
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "language:polish"
+    ours: Benchmark.data.size.languages
+    value: Polish
+    count: 6
+    count_fixture: 8
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "language:japanese"
+    ours: Benchmark.data.size.languages
+    value: Japanese
+    count: 4
+    count_fixture: 10
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "language:korean"
+    ours: Benchmark.data.size.languages
+    value: Korean
+    count: 4
+    count_fixture: 2
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+
+  # --- domain: -> Benchmark.domain.primary (06 S3.2) ---
+  - tag: "domain:financial"
+    ours: Benchmark.domain.primary
+    candidates: [society-econ-law/financial-analysis, society-econ-law/finance-forecasting]
+    count: 10
+    count_fixture: 10
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "domain:legal"
+    ours: Benchmark.domain.primary
+    candidates: [society-econ-law/legal-reasoning, society-econ-law/legal-document]
+    count: null
+    count_fixture: 2
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "domain:medical"
+    ours: Benchmark.domain.primary
+    candidates: [medicine-health]
+    value_kind: domain-family
+    count: null
+    count_fixture: 1
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+
+  # --- arxiv: -> a match key, never written ---
+  - tag: "arxiv:*"
+    ours: Benchmark.external_ids.arxiv
+    count: null
+    count_fixture: 3
+    use: match-only
+    source: hf_space_tag
+
+  # --- free tags (06 S3.2's list) -> facet hints ---
+  - tag: "asr"
+    ours: Benchmark.domain.primary
+    candidates: [audio-speech/speech-recognition]
+    count: 13
+    count_fixture: 12
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "arena"
+    ours: Benchmark.evaluation_method
+    candidates: [pairwise-preference-elo]
+    count: 7
+    count_fixture: 7
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "arena"
+    ours: Leaderboard.submission_process
+    candidates: [live-arena]
+    count: 7
+    count_fixture: 7
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "agents"
+    ours: Benchmark.domain.primary
+    candidates: [agents-tooluse]
+    value_kind: domain-family
+    count: 7
+    count_fixture: 7
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "ocr"
+    ours: Benchmark.domain.primary
+    candidates: [vision/ocr-handwriting, vision/document-understanding]
+    count: 7
+    count_fixture: 7
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "chemistry"
+    ours: Benchmark.domain.primary
+    candidates: [chemistry-materials]
+    value_kind: domain-family
+    count: 5
+    count_fixture: 5
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
+  - tag: "rag"
+    ours: Benchmark.domain.primary
+    candidates: [language/retrieval-qa]
+    count: 4
+    count_fixture: 4
+    use: suggested
+    source: hf_space_tag
+    caveat: hf-tag-density
