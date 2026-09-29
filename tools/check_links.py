@@ -4,6 +4,7 @@
     python -m tools.check_links                      # this week's slice; writes the Source records
     python -m tools.check_links --dry-run            # classify the slice; write nothing
     python -m tools.check_links --all                # every Source, a manual sweep
+    python -m tools.check_links --unarchived         # every non-DOI Source with no capture (P5-S8-T02)
     python -m tools.check_links --summary out.md     # also write the pull request's body
     python -m tools.check_links --accept SRC_ID      # a curator accepts a page that changed
 
@@ -50,6 +51,10 @@ Sources -- N the Sources outside ingest/no-collect.yaml -- never-checked first, 
 link_checked_at, ties by id. Thirteen weekly runs cover the corpus; a Source added mid-quarter
 jumps the queue. A no-collect host is not fetched at all (06 S7.3: "honouring a no-collect request
 means stopping").
+
+--unarchived checks, outside the rotation, every non-DOI Source with no archive_url: the only Sources
+whose death loses the citation, and so the ones 14's Phase 5 exit criterion 3 ("zero dead
+unarchived source links") counts. scripts/count_unarchived.py reads what it writes.
 """
 from __future__ import annotations
 
@@ -208,14 +213,24 @@ def write(root: str, rel: str, updates: dict) -> None:
 
 # ---- the run ------------------------------------------------------------------------------------
 
+def unarchived(rec: dict) -> bool:
+    """A non-DOI Source with no capture on its record."""
+    return not rec.get('doi') and not rec.get('archive_url')     # get-default: both absent means neither
+
+
 def run(root: str = ROOT, resolver=None, wayback=None, now: datetime | None = None, every: bool = False,
-        dry_run: bool = False, limit: int | None = None) -> dict:
+        dry_run: bool = False, limit: int | None = None, only_unarchived: bool = False) -> dict:
     now = now or links.utcnow()
     resolver = resolver or links.default_resolver(20)
     wayback = wayback or links.default_wayback()
     blocked = no_collect(root)
-    items = [it for it in load(root) if links._host(it[1]['url']) not in blocked]
+    everything = load(root)
+    items = [it for it in everything if links._host(it[1]['url']) not in blocked]
+    skipped = len(everything) - len(items)
     size = len(items) if every else slice_size(len(items))
+    if only_unarchived:
+        items = [it for it in items if unarchived(it[1])]
+        size = len(items)
     chosen = rotation(items, limit if limit is not None else size)
 
     rows, events = [], []
@@ -236,7 +251,7 @@ def run(root: str = ROOT, resolver=None, wayback=None, now: datetime | None = No
 
     counts = {o: sum(1 for r in rows if r['outcome'] == o) for o in OUTCOMES}
     return {'at': archive._iso(now), 'corpus': len(items), 'slice': size, 'checked': rows, 'counts': counts,
-            'events': events, 'skipped_no_collect': len(load(root)) - len(items), 'dry_run': dry_run,
+            'events': events, 'skipped_no_collect': skipped, 'dry_run': dry_run,
             'requests': resolver.requests}
 
 
@@ -315,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog='python -m tools.check_links', description=__doc__.split('\n\n')[0])
     ap.add_argument('--all', action='store_true', help='check every Source, not this week\'s slice')
     ap.add_argument('--dry-run', action='store_true', help='classify; write nothing and request no capture')
+    ap.add_argument('--unarchived', action='store_true', help='check every non-DOI Source with no capture')
     ap.add_argument('--limit', type=int, help='check at most this many Sources')
     ap.add_argument('--summary', help='write the pull request body (markdown) here')
     ap.add_argument('--accept', metavar='SRC_ID', help='accept the changed page of this Source')
@@ -324,7 +340,8 @@ def main(argv: list[str] | None = None) -> int:
         got = accept(ROOT, a.accept)
         print('accepted %s: %s' % (a.accept, ', '.join(sorted(k for k in got if k != 'path'))))
         return 0
-    report = run(ROOT, resolver=links.default_resolver(a.timeout), every=a.all, dry_run=a.dry_run, limit=a.limit)
+    report = run(ROOT, resolver=links.default_resolver(a.timeout), every=a.all, dry_run=a.dry_run, limit=a.limit,
+                 only_unarchived=a.unarchived)
     print(text(report))
     if a.summary:
         with open(a.summary, 'w', encoding='utf-8', newline='\n') as fh:

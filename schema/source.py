@@ -94,6 +94,31 @@ SourceType = Literal['paper', 'preprint', 'repository', 'leaderboard-page', 'dat
 ArchiveStatus = Literal['ok', 'pending', 'failed', 'not-required']
 LicenceClass = Literal['permissive-attribution', 'share-alike', 'non-commercial', 'no-redistribution', 'unlicensed']
 Provenance = Literal['primary', 'pwc-archive', 'hf_space_tag', 'vendor-doc', 'secondary']
+# A Source's own reliability as a citation, weakest first (P5-S8-T02; 06 S3.18 and S7.3: "an
+# un-archivable source is a fact about that source's reliability and should lower its verification
+# level"; 00 S5.1: it "lowers that source's own reliability rather than stopping a contribution").
+# It is NOT the ResultClaim ladder of taxonomy/verification.yaml, which grades how a number was
+# produced; it grades whether the page a claim cites can still be read.
+#   lost          link_status dead and no capture: the citation points at nothing (14's Phase 5 exit
+#                 criterion 3 is that none exists)
+#   unarchivable  archive_status failed: Save Page Now refused it, or it was dead before anyone captured it
+#   pending       no capture yet, one requested or due (06 S7.1's seven-day SLA)
+#   archived      a capture on the record, or a DOI, which needs none (04 S12)
+# It is a function of the record rather than a model field: it is derived, never hand-set, so a
+# failed capture lowers it without anyone remembering to, and it reads a raw record because the
+# three lower rungs are exactly the records the model's strict tier-1 archive rule refuses.
+RELIABILITY = ('lost', 'unarchivable', 'pending', 'archived')
+Reliability = Literal['lost', 'unarchivable', 'pending', 'archived']
+
+
+def reliability(record: dict) -> Reliability:
+    """RELIABILITY for a Source record (a mapping, as read from data/sources/)."""
+    doi, url, status = record.get('doi'), record.get('archive_url'), record.get('archive_status')  # get-default: absent is null
+    if record.get('link_status') == 'dead' and not url and not doi:                               # get-default: unchecked is not dead
+        return 'lost'
+    if status == 'failed':
+        return 'unarchivable'
+    return 'archived' if url or doi or status == 'not-required' else 'pending'
 
 
 class Source(BaseModel):

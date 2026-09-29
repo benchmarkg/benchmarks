@@ -9,6 +9,10 @@
 # of data/sources/** and the state file, and a human merges that like any other data change. The PR
 # is opened with the bot's PAT, not GITHUB_TOKEN, so pr-validate.yml runs on it (07 S6.1).
 #
+# After the captures, scripts/count_unarchived.py reports what is still uncaptured against the
+# budget (P5-S8-T02). A capture SPN2 refuses is recorded `failed` with its reason, which lowers the
+# Source's reliability (schema.source.reliability) rather than blocking anything.
+#
 # Secrets: IA_SPN_KEY / IA_SPN_SECRET (07 S5). Without them the run degrades to CDX-only and says
 # so. UAIBI_BOT_PAT is the uaibi-bot fine-grained PAT of 07 S6.1 (contents + pull-requests write);
 # the plan names the account but not the secret, so the name is this file's.
@@ -58,6 +62,14 @@ jobs:
       - name: SLA report
         # Informational here: the blocking run of this check belongs to pr-validate.yml.
         run: uv run --locked python scripts/check_archive_coverage.py --max-pending-age 7d || true
+
+      - name: Unarchived count
+        # P5-S8-T02: the backlog against this run's budget, oldest first, and any dead uncaptured
+        # Source (14 Phase 5 exit criterion 3). Informational: a dead link is a curator's to resolve,
+        # and failing here would stop the pull request that carries tonight's captures.
+        env:
+          MAX_CAPTURES: ${{ inputs.max_captures || '500' }}
+        run: uv run --locked python scripts/count_unarchived.py --budget "$MAX_CAPTURES" || true
 
       - name: Open or update the archive pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
