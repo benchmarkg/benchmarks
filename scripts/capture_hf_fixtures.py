@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'tests', 'ingest', 'fixtures', 'hf-hub')
-UA = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks)'
+UA = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks)'
 FIXTURES = [
     ('spaces-leaderboard.json', 'https://huggingface.co/api/spaces?filter=leaderboard&limit=1000'),
     ('datasets-benchmark-official.json', 'https://huggingface.co/api/datasets?filter=benchmark:official'),
