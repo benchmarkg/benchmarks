@@ -204,7 +204,9 @@ def test_run_reports_a_refusal_and_writes_nothing(tmp_path, monkeypatch):
 # ---- the archiver shares the emitter ------------------------------------------------------------
 
 def test_the_archiver_rewrite_leaves_a_formatted_file_and_clears_a_wrapped_value(tmp_path):
-    src = os.path.join(ROOT, 'data', 'sources', '2026', 'src-swebench-readme.yaml')
+    # The record as it stood before the archiver captured it (2026-09-29): pending, with a failure_reason
+    # that wraps over two lines. A frozen copy, because the live record has since been archived.
+    src = os.path.join(ROOT, 'tests', 'fixtures', 'archiver', 'src-swebench-readme.pending.yaml')
     p = tmp_path / 'data' / 'sources' / '2026' / 'src-swebench-readme.yaml'
     p.parent.mkdir(parents=True)
     shutil.copy(src, p)
