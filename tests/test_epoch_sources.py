@@ -57,7 +57,10 @@ def test_the_scaffolded_records_are_shaped_for_the_archiver():
             assert r['url'] == 'https://arxiv.org/abs/%s' % r['doi'].split('arXiv.')[1]
             Source.model_validate(r)                                  # a DOI Source needs no capture (04 S12)
         elif r['archive_url']:
-            assert r['archive_status'] == 'ok' and r['archive_captured'] and r['archive_digest']
+            # archive_digest comes from CDX, which indexes a Save Page Now capture hours after it is
+            # made, so a fresh capture may not have one yet; tools/check_links.py skips its CDX
+            # signal until it does.
+            assert r['archive_status'] == 'ok' and r['archive_captured']
             assert r['archive_url'].startswith('https://web.archive.org/web/')
             Source.model_validate(r)
         else:
