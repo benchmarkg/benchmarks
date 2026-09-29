@@ -56,7 +56,6 @@ vocabulary term that no longer exists in taxonomy/, or a --check file with no ge
 from __future__ import annotations
 
 import argparse
-import glob
 import json
 import io
 import math
@@ -221,9 +220,10 @@ def run(records: dict[str, dict], threshold: int | None = None, vocab: dict | No
 
 
 def load(root: str) -> dict[str, dict]:
+    from schema.stub import curated_benchmark_files
     from schema.taxonomy import read_yaml
     out = {}
-    for path in sorted(glob.glob(os.path.join(root, 'data', 'benchmarks', '**', '*.yaml'), recursive=True)):
+    for path in curated_benchmark_files(root):              # stubs are unfaceted: nothing to gate (P3-S2-T07)
         doc = read_yaml(path)
         if not isinstance(doc, dict):
             raise ValueError('%s is not a mapping' % path)

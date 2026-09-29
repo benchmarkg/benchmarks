@@ -359,7 +359,8 @@ def _today() -> str:
 
 def corpus_records(paths: list[str]) -> list[Record]:
     from schema.taxonomy import read_yaml
-    files = sorted(glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True))
+    from schema.stub import curated_benchmark_files
+    files = curated_benchmark_files(ROOT)                   # stubs are proposals; pass _stubs/ as a path to compare them
     for p in paths:
         files += sorted(glob.glob(os.path.join(p, '**', '*.yaml'), recursive=True)) if os.path.isdir(p) else [p]
     out = []
