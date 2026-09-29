@@ -36,6 +36,7 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+from schema.stub import curated_benchmark_files  # noqa: E402
 GENERATED = os.path.join(ROOT, 'schema', 'generated')
 SCHEMAS = {os.path.basename(p)[:-len('.schema.json')]: json.load(open(p, encoding='utf-8'))
            for p in glob.glob(os.path.join(GENERATED, '*.schema.json'))}
@@ -338,7 +339,7 @@ def _json(x):
 def stress_entries() -> dict:
     from schema.taxonomy import read_yaml
     found = {}
-    for p in sorted(glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True)):
+    for p in curated_benchmark_files(ROOT):
         doc = read_yaml(p)
         names = [doc.get('name', '')] + list(doc.get('aliases') or [])  # get-default: a stub may lack a name; it matches nothing
         for s in STRESS:

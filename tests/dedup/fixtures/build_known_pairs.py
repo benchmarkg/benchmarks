@@ -47,6 +47,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
 sys.path.insert(0, ROOT)
 from schema.taxonomy import read_yaml  # noqa: E402
+from schema.stub import curated_benchmark_files  # noqa: E402
 
 OUT = os.path.join(HERE, 'known-pairs.yaml')
 FETCHED_ON = '2026-09-28'
@@ -158,8 +159,7 @@ def build():
                            [paper['title']] if paper.get('title') else [], 'taxonomy/_corpus/stress-corpus.yaml')
         domain[rid] = e['domain_family']
         texts[rid] = ' '.join([e.get('description') or ''] + list(e.get('flags') or []))
-    for path in sorted(os.path.join(d, f) for d, _, fs in os.walk(os.path.join(ROOT, 'data', 'benchmarks'))
-                       for f in fs if f.endswith('.yaml')):
+    for path in curated_benchmark_files(ROOT):          # the curated entries; stubs are not `data:` records
         b = read_yaml(path)
         rid = 'data:' + b['id']
         paper = b.get('paper') or {}

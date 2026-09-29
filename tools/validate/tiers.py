@@ -68,6 +68,7 @@ from schema.metric import Metric
 from schema.source import Source
 from schema.classification import FAILURE_NAME, Classification, FailureRecord
 from schema.draft import BenchmarkDraft, SourceDraft
+from schema.stub import AllocationFile, BenchmarkStub
 from schema.system import System
 from schema.taxonomy import RetiredIdFile, load_taxonomy, read_yaml
 
@@ -90,7 +91,8 @@ class Kind:
     many: bool = False                  # the file holds a list of records, not one entity with an id
 
 
-KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2)
+KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2); the first prefix that matches wins
+    'data/benchmarks/_stubs/': Kind('benchmark-stub', BenchmarkStub),                # 07 S2.4 (P3-S2-T07)
     'data/benchmarks/': Kind('benchmark', Benchmark),
     'data/systems/': Kind('system', System),
     'data/organizations/': Kind('organization', Organization),
@@ -110,6 +112,7 @@ KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2)
     'drafts/sources/': Kind('source-draft', SourceDraft),
 }
 DRAFTS = 'drafts/'
+ALLOCATION = 'ingest/mappings/epoch/_id_allocation.yaml'   # the Epoch id decisions the stubs are held to
 TAXONOMY_RECORDS = ('taxonomy/_corpus/classifications/', 'taxonomy/_failures/')
 VENDOR_CLAIM = Kind('claim', ResultClaim)
 UNMODELLED = ('data/surveys/', 'data/tombstones/', 'data/_discovery/', 'data/_analysis/')
@@ -307,6 +310,8 @@ def _placement(rec: Record) -> list[Finding]:
             bad('a claim lives at data/claims/%s/ (or data/claims/_ingested/<source>/%s/)' % (bench, bench))
     if rec.kind.name == 'source' and (len(parts) != 4 or not re.fullmatch(r'\d{4}', parts[2])):
         bad('a source lives at data/sources/<yyyy>/<id>.yaml')
+    if rec.kind.name == 'benchmark-stub' and len(parts) != 4:
+        bad('a stub lives at data/benchmarks/_stubs/<id>.yaml')
     if rec.kind.name in ('benchmark-draft', 'source-draft') and len(parts) != 3:
         bad('a draft lives at drafts/%s/<id>.yaml' % parts[1])
     if rec.kind.name == 'baselines' and isinstance(rec.raw, list):
@@ -637,6 +642,55 @@ def _taxonomy_refs(r: Record, taxonomy: dict) -> list[Finding]:
     return out
 
 
+# ---- stubs and the id allocation (P3-S2-T07; 04 S3, 07 S2.4) ----------------------------------
+
+def stub_tier(records: list[Record], root: str) -> list[Finding]:
+    """data/benchmarks/_stubs/ against ingest/mappings/epoch/_id_allocation.yaml. Tier 2, blocking: a
+    stub never shadows a curated benchmark, and stubs and allocation agree row for row. Tier 4, a
+    quality signal: an id the allocation still only proposes (no `ratified_by`). 04 S3 makes
+    allocation a human act, and this is where the missing human shows; it is not a broken reference,
+    so it stays out of tier 2."""
+    out: list[Finding] = []
+    stubs = {r.id: r for r in records if r.kind is not None and r.kind.name == 'benchmark-stub' and r.model is not None}
+    curated = {r.id for r in records if r.kind is not None and r.kind.name == 'benchmark' and r.parsed}
+    for sid in sorted(set(stubs) & curated):
+        out.append(Finding(2, 'stub-shadows-benchmark', 'blocking', sid, stubs[sid].path,
+                           'a curated data/benchmarks/ entry already holds this id; promote, do not stub twice'))
+    path = os.path.join(root, ALLOCATION)
+    if not os.path.exists(path):
+        for sid, r in sorted(stubs.items()):
+            out.append(Finding(2, 'stub-allocation', 'blocking', sid, r.path, 'no %s allocates this id' % ALLOCATION))
+        return out
+    try:
+        alloc = AllocationFile.model_validate(read_yaml(path))
+    except Exception as e:                                   # a ValidationError, or one of ruamel's several types
+        return out + [Finding(2, 'stub-allocation', 'blocking', 'epoch-allocation', ALLOCATION,
+                              ' '.join(str(e).split())[:400])]
+    rows: dict[str, list] = {}
+    for a in alloc.allocations:
+        rows.setdefault(a.benchmark, []).append(a)
+        if a.existing and a.benchmark not in curated:
+            out.append(Finding(2, 'stub-allocation', 'blocking', a.benchmark, ALLOCATION,
+                               '%r is allocated to %s as an existing entry, and no data/benchmarks/ file holds it'
+                               % (a.epoch, a.benchmark)))
+        if not a.existing and a.benchmark not in stubs:
+            out.append(Finding(2, 'stub-allocation', 'blocking', a.benchmark, ALLOCATION,
+                               '%r is allocated to new id %s, and no stub holds it' % (a.epoch, a.benchmark)))
+    for sid, r in sorted(stubs.items()):
+        mine_rows = rows.get(sid, [])                # get-default: a stub no row allocates has none
+        mine = {a.epoch: (a.version, a.subset) for a in mine_rows if not a.existing}
+        held = {e.benchmark: (e.version, e.subset) for e in r.model.epoch}
+        if mine != held:
+            out.append(Finding(2, 'stub-allocation', 'blocking', sid, r.path,
+                               "the stub's Epoch rows %s are not the allocation's %s" % (sorted(held), sorted(mine))))
+        pending = sorted(a.epoch for a in mine_rows if a.ratified_by is None)
+        if pending:
+            out.append(Finding(4, 'stub-unratified', 'quality', sid, r.path,
+                               'id proposed for %s, not yet ratified by a person (04 S3)'
+                               % ', '.join(repr(p) for p in pending)))
+    return out
+
+
 # ---- tier 3: the semantic rules -----------------------------------------------------------------
 
 def corpus_of(records: list[Record], taxonomy: dict) -> semantic.Corpus:
@@ -776,12 +830,16 @@ def run(root: str = ROOT, tiers='all', paths: list[str] | None = None, changed_o
     corpus = corpus_of(records, taxonomy)
     if 2 in selected:
         findings += ref_tier(records, index(records), taxonomy)
+    stubs = stub_tier(records, root) if 2 in selected or 4 in selected else []
+    if 2 in selected:
+        findings += [f for f in stubs if f.tier == 2]
         findings += semantic_tier(corpus, tier=2, only=['retired-id-ledger'])
     if 3 in selected:
         findings += semantic_tier(corpus)
     findings += classifications.check(records, root, tuple(t for t in selected if t in (2, 3)))
     if 4 in selected:
         findings += quality_tier(corpus, taxonomy, today)
+        findings += [f for f in stubs if f.tier == 4]
     scope, n = 'all', len(records)
     if paths is not None or changed_only:
         wanted = set(changed_files(root)) if changed_only else set()

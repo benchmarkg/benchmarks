@@ -18,6 +18,7 @@ from schema.baseline import CEILING_ANCHOR, FLOOR_KINDS, Baseline, BaselineFile 
 from schema.benchmark import Benchmark, load_benchmark  # noqa: E402
 from schema.claim import ResultClaim  # noqa: E402
 from schema.conditions import EvalConditions  # noqa: E402
+from schema.stub import curated_benchmark_files  # noqa: E402
 from schema.dispute import Dispute, claim_is_disputed  # noqa: E402
 from schema.entities import (Alias, AliasFile, BenchmarkVersion, IngestBatch, Leaderboard, Organization,  # noqa: E402
                              RatingPool, Subset)
@@ -105,7 +106,7 @@ def _first(pattern):
 
 ENTITY_GRAPH = {        # the boxes of 04 S2's diagram -> (model, a fixture)
     'Organization': (Organization, lambda: fx('organization-princeton-nlp.yaml')),
-    'Benchmark': (Benchmark, lambda: _first('data/benchmarks/**/*.yaml')),
+    'Benchmark': (Benchmark, lambda: read_yaml(curated_benchmark_files(ROOT)[0])),
     'BenchmarkVersion': (BenchmarkVersion, lambda: fx('benchmark-version-swe-bench-verified.yaml')),
     'Leaderboard': (Leaderboard, lambda: fx('leaderboard-swebench-official.yaml')),
     'Subset': (Subset, lambda: fx('subset-mmlu-college-chemistry.yaml')),
@@ -287,7 +288,7 @@ def test_inline_versions_subsets_and_baselines_are_the_new_models():
         baselines=[fx('baselines-swe-bench.yaml')[0]]))
     assert isinstance(b.versions[1], BenchmarkVersion) and isinstance(b.subsets[0], Subset)
     assert isinstance(b.baselines[0], Baseline)
-    for path in glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True):
+    for path in curated_benchmark_files(ROOT):
         load_benchmark(path)                                                     # the entries still load
 
 

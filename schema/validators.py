@@ -509,7 +509,8 @@ def load_corpus(root: str = ROOT) -> Corpus:
     def each(pattern):
         return sorted(glob.glob(os.path.join(root, pattern), recursive=True))
 
-    for p in each('data/benchmarks/**/*.yaml'):
+    from schema.stub import curated_benchmark_files
+    for p in curated_benchmark_files(root):                  # data/benchmarks/_stubs/ is not Benchmark (P3-S2-T07)
         b = load_benchmark(p)
         c.benchmarks[b.id], c.paths[b.id] = b, _rel(root, p)
     for p in each('data/conditions/**/*.yaml'):
