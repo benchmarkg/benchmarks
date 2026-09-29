@@ -509,7 +509,7 @@ def load_corpus(root: str = ROOT) -> Corpus:
     def each(pattern):
         return sorted(glob.glob(os.path.join(root, pattern), recursive=True))
 
-    from schema.stub import curated_benchmark_files
+    from schema.stub import curated_benchmark_files, curated_files
     for p in curated_benchmark_files(root):                  # data/benchmarks/_stubs/ is not Benchmark (P3-S2-T07)
         b = load_benchmark(p)
         c.benchmarks[b.id], c.paths[b.id] = b, _rel(root, p)
@@ -519,7 +519,7 @@ def load_corpus(root: str = ROOT) -> Corpus:
     for p in each('data/claims/**/*.yaml') + each('vendor/**/claims/**/*.yaml'):
         x = ResultClaim.model_validate(read_yaml(p))
         c.claims[x.id], c.paths[x.id] = x, _rel(root, p)
-    for p in each('data/systems/**/*.yaml'):
+    for p in curated_files(root, 'systems'):                 # data/systems/_stubs/ is not System (P3-S3-T04)
         x = System.model_validate(read_yaml(p))
         c.systems[x.id], c.paths[x.id] = x, _rel(root, p)
     for p in each('data/metrics/**/*.yaml'):

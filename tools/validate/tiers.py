@@ -63,12 +63,12 @@ from schema.benchmark import Benchmark
 from schema.claim import ResultClaim
 from schema.conditions import EvalConditions
 from schema.dispute import Dispute
-from schema.entities import AliasFile, IngestBatch, Leaderboard, Organization, RatingPool
+from schema.entities import AliasFile, IngestBatch, Leaderboard, Organization, RatingPool, UnresolvedFile
 from schema.metric import Metric
 from schema.source import Source
 from schema.classification import FAILURE_NAME, Classification, FailureRecord
 from schema.draft import BenchmarkDraft, SourceDraft
-from schema.stub import AllocationFile, BenchmarkStub
+from schema.stub import AllocationFile, BenchmarkStub, OrganizationStub, SystemStub
 from schema.system import System
 from schema.taxonomy import RetiredIdFile, load_taxonomy, read_yaml
 
@@ -93,6 +93,8 @@ class Kind:
 
 KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2); the first prefix that matches wins
     'data/benchmarks/_stubs/': Kind('benchmark-stub', BenchmarkStub),                # 07 S2.4 (P3-S2-T07)
+    'data/systems/_stubs/': Kind('system-stub', SystemStub),                         # 04 S7 (P3-S3-T04)
+    'data/organizations/_stubs/': Kind('organization-stub', OrganizationStub),
     'data/benchmarks/': Kind('benchmark', Benchmark),
     'data/systems/': Kind('system', System),
     'data/organizations/': Kind('organization', Organization),
@@ -105,6 +107,7 @@ KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2); 
     'data/claims/': Kind('claim', ResultClaim),
     'data/disputes/': Kind('dispute', Dispute),
     'data/_ingest/batches/': Kind('batch', IngestBatch),
+    'data/_ingest/unresolved/': Kind('unresolved', UnresolvedFile, many=True),       # 04 S10 (P3-S3-T04)
     'data/aliases/': Kind('aliases', AliasFile, many=True),
     'taxonomy/_corpus/classifications/': Kind('classification', Classification),    # 03 S3.3 (P1-S1-T03)
     'taxonomy/_failures/': Kind('failure', FailureRecord),
@@ -310,8 +313,8 @@ def _placement(rec: Record) -> list[Finding]:
             bad('a claim lives at data/claims/%s/ (or data/claims/_ingested/<source>/%s/)' % (bench, bench))
     if rec.kind.name == 'source' and (len(parts) != 4 or not re.fullmatch(r'\d{4}', parts[2])):
         bad('a source lives at data/sources/<yyyy>/<id>.yaml')
-    if rec.kind.name == 'benchmark-stub' and len(parts) != 4:
-        bad('a stub lives at data/benchmarks/_stubs/<id>.yaml')
+    if rec.kind.name.endswith('-stub') and len(parts) != 4:
+        bad('a stub lives at data/%s/_stubs/<id>.yaml' % parts[1])
     if rec.kind.name in ('benchmark-draft', 'source-draft') and len(parts) != 3:
         bad('a draft lives at drafts/%s/<id>.yaml' % parts[1])
     if rec.kind.name == 'baselines' and isinstance(rec.raw, list):
@@ -559,8 +562,9 @@ def _typed_refs(r: Record):
                 yield 'resolves_to', kind, ident
 
 
-def _resolve(ix: Index, kind: str, value: str) -> str | None:
-    """None when `value` resolves, else why not."""
+def _resolve(ix: Index, kind: str, value: str, from_stub: bool = False) -> str | None:
+    """None when `value` resolves, else why not. A stub may point at another stub (P3-S3-T04: a system
+    stub names organisation stubs); a curated record may not, because the build never publishes a stub."""
     if kind.startswith('subset:'):
         bench = kind.split(':', 1)[1]
         declared = ix.subsets.get(bench) or set()
@@ -572,6 +576,8 @@ def _resolve(ix: Index, kind: str, value: str) -> str | None:
     if kind == 'benchmark' and not version and ident in ix.declared:
         return None                     # a variant or fork declared inline in its root's lineage
     if not ix.has(kind, ident):
+        if ix.has(kind + '-stub', ident):
+            return None if from_stub else '%s is only an unpublished %s stub; promote it first' % (ident, kind)
         return 'no %s record %s' % (kind, ident)
     if version:
         declared = ix.versions.get(ident if kind == 'benchmark' else '%s:%s' % (kind, ident)) or set()
@@ -596,7 +602,7 @@ def ref_tier(records: list[Record], ix: Index, taxonomy: dict) -> list[Finding]:
             continue                                          # entities: `pool-relative-ranking` is a proposed term
         refs = [(w, kind, v) for w, v, kind in _walk_prefixed(r.raw, '')] + list(_typed_refs(r))
         for where, kind, value in refs:
-            why = _resolve(ix, kind, value)
+            why = _resolve(ix, kind, value, from_stub=r.kind.name.endswith('-stub'))
             if why and (where, value) not in seen:
                 seen.add((where, value))
                 out.append(Finding(2, 'dangling-ref', 'blocking', r.id, r.path, '%s: %s' % (where, why),
@@ -656,6 +662,19 @@ def stub_tier(records: list[Record], root: str) -> list[Finding]:
     for sid in sorted(set(stubs) & curated):
         out.append(Finding(2, 'stub-shadows-benchmark', 'blocking', sid, stubs[sid].path,
                            'a curated data/benchmarks/ entry already holds this id; promote, do not stub twice'))
+    for kind in ('system', 'organization'):                  # P3-S3-T04: the same rule, and the identity review
+        held = {r.id for r in records if r.kind is not None and r.kind.name == kind and r.parsed}
+        for r in records:
+            if r.kind is None or r.kind.name != kind + '-stub' or r.model is None:
+                continue
+            if r.id in held:
+                out.append(Finding(2, 'stub-shadows-' + kind, 'blocking', r.id, r.path,
+                                   'a curated data/%ss/ entry already holds this id; promote, do not stub twice'
+                                   % kind))
+            if r.model.identity.reviewed_by is None:
+                out.append(Finding(4, 'stub-identity-unreviewed', 'quality', r.id, r.path,
+                                   "no person has yet confirmed this file is one %s (the task's per-file review)"
+                                   % kind))
     path = os.path.join(root, ALLOCATION)
     if not os.path.exists(path):
         for sid, r in sorted(stubs.items()):

@@ -13,8 +13,9 @@ What gets published. 05 S4: "Entries at this level are NOT published." So:
     read from the raw file so that a draft which fails tier 1 is left out rather than failing the
     build; `bench validate` is where a broken draft blocks. A published record that fails tier 1
     fails the build: the build never ships a record its own models refuse.
-  - A stub (data/benchmarks/_stubs/, P3-S2-T07) is never published: 07 S2.4 withholds it "until a
-    human assigns domain facets", and it is reported as excluded, whether or not it loads.
+  - A stub (data/{benchmarks,systems,organizations}/_stubs/, P3-S2-T07 and P3-S3-T04) is never
+    published: 07 S2.4 withholds it "until a human assigns domain facets", a system or organisation
+    stub lacks what 04 S7 requires, and each is reported as excluded, whether or not it loads.
   - Systems, Organizations and Metrics carry no curation block, so each is published when it loads.
   - A Source is published when a published record cites it -- the corpus is closed under source
     references, and a Source nothing published cites has no reader in the artifact. A cited Source
@@ -171,8 +172,8 @@ def build(root: str = ROOT) -> Build:
 
     for r in tiers.load(root):
         kind = r.kind.name if r.kind else None
-        if kind == 'benchmark-stub':                 # 07 S2.4: withheld until a human assigns domain facets
-            out.excluded.append((r.path, r.id, STUB))
+        if kind and kind.endswith('-stub'):          # 07 S2.4, 04 S7: withheld until a curator fills them in
+            out.excluded.append((r.path, r.id, STUB if kind == 'benchmark-stub' else 'unreviewed %s' % kind))
             continue
         if kind not in CORPUS_KINDS:
             continue
