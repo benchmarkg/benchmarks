@@ -89,7 +89,7 @@ from ingest.http.backoff import Response  # noqa: E402
 NAME = 'hf-hub'
 VERSION = '0.1.0'
 API = 'https://huggingface.co/api'
-USER_AGENT = 'UAIBI/0.1 (+https://github.com/intelligence-benchmark/benchmarks; team@particle6.com)'
+USER_AGENT = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks; team@particle6.com)'
 VOLATILE_FIELDS = ('downloads', 'likes', 'downloadsAllTime', '_id', 'trendingScore')
 MIN_INTERVAL = 1.0      # seconds between requests to the Hub (07 S10: ~1 req/s)
 MAX_REQUESTS = 2000     # per run (07 S10)
