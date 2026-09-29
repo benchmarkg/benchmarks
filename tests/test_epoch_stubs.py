@@ -60,7 +60,8 @@ def test_the_named_traps_are_allocated_as_04_s3_reads_them():
     assert a['ARC AI2'].benchmark != a['ARC-AGI'].benchmark and 'arc-agi' not in a['ARC AI2'].benchmark
     assert (a['OSWorld 2.0'].benchmark, a['OSWorld 2.0'].version) == ('osworld', '2.0')
     assert a['OSWorld'].benchmark == 'osworld' and a['OSWorld'].version is None
-    assert a['METR'].benchmark == a['METR Time Horizons'].benchmark == 'metr-time-horizons'
+    # P3-S3-T06: "METR and METR Time Horizons stay distinct"; 07 S5.4: "Prefix containment is not identity"
+    assert (a['METR'].benchmark, a['METR Time Horizons'].benchmark) == ('metr', 'metr-time-horizons')
     assert a['SWE-Bench verified'].benchmark == 'swe-bench-verified'       # the id swe-bench.yaml's lineage declares
     assert a['ForecastBench'].existing and a['ForecastBench'].benchmark == 'forecastbench'
 
@@ -79,7 +80,7 @@ def test_the_stubs_are_exactly_the_emitters_output():
         with open(os.path.join(ROOT, rel), encoding='utf-8') as fh:
             assert fh.read() == text, rel
     new = {a.benchmark for a in ALLOC.allocations if not a.existing}
-    assert len(files) == len(new) == 75
+    assert len(files) == len(new) == 76
 
 
 @pytest.mark.parametrize('name', STUB_FILES)

@@ -29,6 +29,7 @@ The rules each carries:
 from __future__ import annotations
 
 import datetime as _dt
+import hashlib
 import os
 import re
 from datetime import date, datetime
@@ -247,6 +248,42 @@ class IngestBatch(Closed):
     counts: dict[Annotated[str, StringConstraints(pattern=r'^[a-z_]+$')], Annotated[int, Field(ge=0)]]
     target_tree: Annotated[str, StringConstraints(pattern=r'^data/[a-z0-9_./-]+/$')]
     notes: str | None = None
+
+
+# ---- 07 S1 / 04 S10: Unresolved -----------------------------------------------------------------
+
+class UnresolvedRecord(Closed):
+    """07 S1's `Unresolved`: "Something the adapter saw, partly understood, and refuses to guess about."
+    Written to data/_ingest/unresolved/{adapter}/{date}.yaml (04 S10), one list per batch. The
+    fingerprint is 07's: the first 16 hex of sha256("source_key|field|observed"), stable across runs, and
+    what the lifecycle ledger (07 S5.5, P3-S3-T07) keys on."""
+    source_key: Text
+    field: Text
+    observed: str                                  # verbatim; may be empty (a blank upstream row)
+    reason: Literal['no-match', 'ambiguous-match', 'unparseable', 'out-of-band', 'policy']
+    suggestions: list[tuple[str, float]] = Field(default_factory=list)
+    human_task: Text
+    fingerprint: Annotated[str, StringConstraints(pattern=r'^[0-9a-f]{16}$')]
+
+    @model_validator(mode='after')
+    def _fingerprint(self):
+        key = '%s|%s|%s' % (self.source_key, self.field, self.observed)
+        want = hashlib.sha256(key.encode('utf-8')).hexdigest()[:16]
+        if self.fingerprint != want:
+            raise ValueError('%s: fingerprint %s is not sha256(source_key|field|observed)[:16] = %s'
+                             % (self.source_key, self.fingerprint, want))
+        return self
+
+
+class UnresolvedFile(RootModel[list[UnresolvedRecord]]):
+    """data/_ingest/unresolved/{adapter}/{date}.yaml: one batch's unresolved records."""
+
+    @model_validator(mode='after')
+    def _unique(self):
+        prints = [r.fingerprint for r in self.root]
+        if len(set(prints)) != len(prints):
+            raise ValueError('an unresolved record is listed twice in one batch')
+        return self
 
 
 # ---- 04 S10: Alias ------------------------------------------------------------------------------
