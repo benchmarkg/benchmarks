@@ -80,9 +80,127 @@ def test_every_hf_tags_row_carries_source_hf_space_tag():
 
 def test_hf_tags_cover_the_four_namespaces():
     namespaces = {r['tag'].split(':')[0] for r in rows('hf-tags')}
-    assert namespaces == {'test', 'submission', 'judge', 'eval'}
+    assert {'test', 'submission', 'judge', 'eval'} <= namespaces
     for r in rows('hf-tags'):
-        assert re.fullmatch(r'(test|submission|judge|eval):[a-z-]+', r['tag']), r['tag']
+        assert re.fullmatch(r'([a-z]+:)?([a-z-]+|\*)', r['tag']), r['tag']
+
+
+# ---- hf-tags: every observed namespace, and nothing written directly (P5-S1-T01) ---------------
+
+SPACES = os.path.join(ROOT, 'tests', 'ingest', 'fixtures', 'hf-hub', 'spaces-leaderboard.json')
+HF_USES = {'suggested', 'match-only', 'drop'}          # there is no direct write
+
+
+def namespace(tag: str) -> str:
+    return tag.split(':', 1)[0] if ':' in tag else '_free'
+
+
+def fixture_tags() -> list[list[str]]:
+    import json
+    with open(SPACES, encoding='utf-8') as fh:
+        return [s['tags'] for s in json.load(fh)]
+
+
+def normalise_language(value: str, rule: dict) -> list[str]:
+    """normalise.language as hf-tags.yaml states it -- the reference the adapter (P5-S1-T04) matches."""
+    out = []
+    for part in value.split(rule['split_on']):
+        v = part.strip().casefold()
+        v = rule['aliases'].get(v, v)                # get-default: most values have no alias
+        if v and v not in rule['not_a_language']:
+            out.append(v.title())
+    return out
+
+
+def test_every_observed_namespace_is_declared():
+    declared = load('hf-tags')['namespaces']
+    seen = {namespace(t) for tags in fixture_tags() for t in tags}
+    assert seen <= set(declared), seen - set(declared)
+    for ns in ('test', 'submission', 'judge', 'eval', 'modality', 'language', 'domain'):   # 06 S3.2's table
+        assert ns in declared, ns
+
+
+def test_every_namespace_maps_to_a_field_or_is_dropped():
+    for ns, d in load('hf-tags')['namespaces'].items():
+        assert d['use'] in HF_USES, ns
+        if d['use'] == 'drop':
+            assert d['drop_reason'] and 'ours' not in d, ns
+        else:
+            assert d['ours'], ns
+            for path in d['ours']:
+                resolve(path)
+
+
+def test_nothing_maps_directly_onto_a_facet():
+    doc = load('hf-tags')
+    for r in doc['rows']:
+        d = doc['namespaces'][namespace(r['tag'])]
+        assert r['use'] == d['use'] and r['use'] in HF_USES - {'drop'}, r
+        assert r['ours'] in d['ours'], r
+        if r['use'] == 'suggested':                  # a hint, stamped and caveated (06 S1.1, S3.2)
+            assert r['source'] == 'hf_space_tag' and r['caveat'] in doc['caveats'], r
+        else:                                        # a join key is an identifier, never a facet
+            assert not r['ours'].split('.')[1] in ('domain', 'capability', 'evaluation_method', 'data',
+                                                   'lifecycle', 'governance', 'execution'), r
+            assert vocabulary(resolve(r['ours'])) is None, r
+
+
+def test_the_caveat_is_06s_measured_density():
+    c = load('hf-tags')['caveats']['hf-tag-density']
+    assert (c['namespace'], c['tagged'], c['sampled'], c['density']) == ('test', 128, 1000, 0.128)
+
+
+def test_counts_are_06s_table_transcribed():
+    with open(os.path.join(ROOT, '_plan', '06-sourcing-and-scraping.md'), encoding='utf-8') as fh:
+        text = fh.read()
+    section = text[text.index('### 3.2 HuggingFace Hub'):text.index('### 3.3 GitHub')]
+    measured = {}
+    for line in section.splitlines():
+        m = re.match(r'^\| (`([a-z]+):`|free tags) \| (.*) \|$', line)
+        if m:
+            for value, n in re.findall(r'`([^`]+)` \((\d+)', m.group(3)):
+                measured[('%s:%s' % (m.group(2), value)) if m.group(2) else value] = int(n)
+    assert len(measured) == 26
+    got = {r['tag']: r['count'] for r in rows('hf-tags') if r['count'] is not None}
+    dropped = set(load('hf-tags')['namespaces']['_free']['drop'])
+    assert got == {t: n for t, n in measured.items() if t not in dropped}
+    assert {'benchmark', 'evaluation'} <= dropped and not dropped & set(got)   # measured, and dropped by name
+    english = next(r for r in rows('hf-tags') if r['tag'] == 'language:english')
+    assert english['count_variants'] == {'language:English': int(re.search(
+        r'`english` \(\d+, plus (\d+) under a cased variant', section).group(1))}
+
+
+def test_count_fixture_is_the_committed_fixtures():
+    doc = load('hf-tags')
+    spaces = fixture_tags()
+    rule = doc['normalise']['language']
+    for r in doc['rows']:
+        if r['tag'] == 'arxiv:*':
+            n = sum(t.startswith('arxiv:') for tags in spaces for t in tags)
+        elif namespace(r['tag']) == 'language':
+            n = sum(r['value'] in normalise_language(t.split(':', 1)[1], rule)
+                    for tags in spaces for t in tags if t.startswith('language:'))
+        else:
+            n = sum(r['tag'] in tags for tags in spaces)
+        assert r['count_fixture'] == n, (r['tag'], r['count_fixture'], n)
+
+
+def test_the_language_rule_folds_every_cased_variant():
+    doc = load('hf-tags')
+    rule = doc['normalise']['language']
+    assert normalise_language('english', rule) == normalise_language('English', rule) == ['English']
+    assert normalise_language('日本語', rule) == normalise_language('Japanese', rule) == ['Japanese']
+    assert normalise_language('English, Hindi', rule) == ['English', 'Hindi']
+    assert normalise_language('pl', rule) == ['Polish'] and normalise_language('code', rule) == []
+    values = {t.split(':', 1)[1] for tags in fixture_tags() for t in tags if t.startswith('language:')}
+    folded = {}
+    for v in values:
+        for name in normalise_language(v, rule):
+            folded.setdefault(name.casefold(), set()).add(name)
+    assert all(len(names) == 1 for names in folded.values())       # one spelling per language
+    for r in doc['rows']:
+        if namespace(r['tag']) == 'language':
+            assert normalise_language(r['tag'].split(':', 1)[1], rule) == [r['value']], r
 
 
 FREE_TEXT_KEYS = {'note', 'notes', 'description', 'definition', 'label', 'text', 'comment', 'rationale', 'summary'}
