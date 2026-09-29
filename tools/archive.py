@@ -93,10 +93,11 @@ class Wayback:
         ts, original, digest = rows[-1]
         return ts, original, digest
 
-    def submit(self, url):
-        """A job id, or ('error', status_ext, message)."""
+    def submit(self, url, within='30d'):
+        """A job id, or ('error', status_ext, message). `within` is SPN2's if_not_archived_within: 30d
+        everywhere but the link-rot re-check, which re-captures a page it saw change (06 S7.2)."""
         status, body = self._request('https://web.archive.org/save', auth=True, data={
-            'url': url, 'if_not_archived_within': '30d', 'skip_first_archive': '1'})
+            'url': url, 'if_not_archived_within': within, 'skip_first_archive': '1'})
         if status is None:
             return ('error', 'error:network', body)
         if status == 401:
