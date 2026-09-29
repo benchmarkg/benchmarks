@@ -22,8 +22,9 @@ sys.path.insert(0, ROOT)
 from schema import benchmark as bm  # noqa: E402
 from schema.benchmark import Benchmark, annotation_fields, deferred_fields, load_benchmark  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
+from schema.stub import curated_benchmark_files  # noqa: E402
 
-ENTRIES = sorted(glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True))
+ENTRIES = curated_benchmark_files(ROOT)                   # data/benchmarks/_stubs/ holds BenchmarkStub, not Benchmark
 
 
 def minimal(**changes):

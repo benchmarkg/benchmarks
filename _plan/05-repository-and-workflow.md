@@ -152,6 +152,8 @@ uaibi/
 │
 ├── data/                          # The citable core. CC-BY-4.0. One entity per file.
 │   ├── benchmarks/<domain-family>/<id>.yaml
+│   ├── benchmarks/_stubs/<id>.yaml    # unfaceted Epoch stubs (schema/stub.py; 07 §2.4), never published;
+│   │                                  # emitted by scripts/emit_epoch_stubs.py from the id allocation
 │   ├── systems/<org-slug>/<id>.yaml
 │   ├── organizations/<id>.yaml
 │   ├── metrics/<id>.yaml
@@ -204,6 +206,7 @@ uaibi/
 │
 ├── ingest/                        # Scraper adapters and their state. See 06 and 07.
 │   ├── adapters/<source>.py       # One module per source; declares licence, rate limit, robots policy
+│   ├── mappings/epoch/_id_allocation.yaml   # Epoch string -> permanent id, each a human decision (04 §3)
 │   ├── state/<source>.json        # {etag, last_modified, sha256, last_fetched, last_changed} — committed
 │   ├── runs/<source>/<date>.json  # {status, http_codes, records_seen, records_changed, errors[]} — committed
 │   ├── manifests/<source>-<date>.yaml   # The adapter's own run log. NOT the IngestBatch record,

@@ -24,6 +24,7 @@ sys.path.insert(0, ROOT)
 from schema.benchmark import Benchmark, load_benchmark  # noqa: E402
 from schema.conditions import COMPANIONS, FIELDS, EvalConditions, parse_reasoning_effort  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
+from schema.stub import curated_benchmark_files  # noqa: E402
 
 spec = importlib.util.spec_from_file_location('comparability', os.path.join(ROOT, 'tools', 'build', 'comparability.py'))
 comp = importlib.util.module_from_spec(spec)
@@ -31,7 +32,7 @@ sys.modules['comparability'] = comp            # dataclasses look their module u
 spec.loader.exec_module(comp)
 
 FIXTURES = sorted(glob.glob(os.path.join(os.path.dirname(__file__), 'fixtures', 'comparability', '*.yaml')))
-ENTRIES = sorted(glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '**', '*.yaml'), recursive=True))
+ENTRIES = curated_benchmark_files(ROOT)                   # data/benchmarks/_stubs/ holds BenchmarkStub, not Benchmark
 PROFILES = comp.load_profiles()
 
 
