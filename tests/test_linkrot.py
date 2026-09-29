@@ -321,3 +321,16 @@ def test_the_summary_leads_with_the_data_integrity_event(tmp_path):
     body = C.summary(report)
     assert 'Data-integrity events' in body and 'src-example-bench-leaderboard' in body and '--accept' in body
     assert 'check_links: 1 of 1' in C.text(report)
+
+
+def test_unarchived_checks_every_uncaptured_non_doi_source_outside_the_rotation(tmp_path):
+    source(tmp_path, 'src-kept', 'https://bench.example.org/kept')
+    source(tmp_path, 'src-bare', 'https://bench.example.org/bare', archive_url='null', archive_captured='null',
+           archive_status='pending', archive_digest='null')
+    table = {'https://bench.example.org/bare': (404, None, None, None)}
+    r = C.run(str(tmp_path), resolver=Resolver(table), wayback=Wayback(), now=NOW, only_unarchived=True)
+    assert [row['id'] for row in r['checked']] == ['src-bare'] and r['counts']['dead'] == 1
+    from schema.source import reliability
+    rec = reread(os.path.join(tmp_path, 'data', 'sources', '2026', 'src-bare.yaml'))
+    assert rec['link_status'] == 'dead' and 'no capture on the record' in rec['link_detail']
+    assert reliability(rec) == 'lost'                                  # what scripts/count_unarchived.py counts
