@@ -141,6 +141,16 @@ class Source(BaseModel):
     contains_personal_data: bool | None = None
     drafted_by: Text | None = None
 
+    # The link-rot re-check (06 S7.2; P5-S8-T01, tools/check_links.py writes them). `body_sha256` is
+    # the accepted digest of the page -- the first check's, or the one a curator accepted after a
+    # `changed` -- and a check never moves it; `link_changed_sha256` is what the page reads now when
+    # it differs, kept until a curator accepts or rejects it.
+    link_status: Literal['live', 'changed', 'suspect', 'dead'] | None = None
+    link_checked_at: datetime | None = None
+    link_detail: Text | None = None
+    body_sha256: Sha256 | None = None
+    link_changed_sha256: Sha256 | None = None
+
     QUOTE_FIELDS: ClassVar[tuple[str, ...]] = (
         'licence_class', 'licence_checked_on', 'archive_url', 'archive_digest', 'content_sha256', 'quote_extract')
 
@@ -156,6 +166,14 @@ class Source(BaseModel):
             raise ValueError('%s: an archive_url with archive_status %s' % (self.id, self.archive_status))
         if self.archive_status == 'failed' and not self.failure_reason:
             raise ValueError('%s: a failed capture states its failure_reason (06 S7.3)' % self.id)
+        return self
+
+    @model_validator(mode='after')
+    def _link(self):
+        if (self.link_status is None) != (self.link_checked_at is None):
+            raise ValueError('%s: link_status and link_checked_at are set together' % self.id)
+        if (self.link_status == 'changed') != (self.link_changed_sha256 is not None):
+            raise ValueError('%s: link_changed_sha256 is set exactly when link_status is changed' % self.id)
         return self
 
     @model_validator(mode='after')

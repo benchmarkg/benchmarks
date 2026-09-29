@@ -53,4 +53,9 @@ export interface Source {
   licence_basis?: string | null;
   contains_personal_data?: boolean | null;
   drafted_by?: string | null;
+  link_status?: ("live" | "changed" | "suspect" | "dead") | null;
+  link_checked_at?: string | null;
+  link_detail?: string | null;
+  body_sha256?: string | null;
+  link_changed_sha256?: string | null;
 }
