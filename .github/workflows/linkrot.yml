@@ -1,0 +1,72 @@
+# .github/workflows/linkrot.yml -- P5-S8-T01
+#
+# The link-rot re-check of 06-sourcing-and-scraping.md S7.2, weekly (08 S10's `linkrot.yml`):
+# `python -m tools.check_links` checks this week's slice of data/sources/, sized so that the whole
+# corpus is covered each quarter (ceil(N x 7 / 91), never-checked and oldest first), and writes
+# link_status / link_checked_at / link_detail / body_sha256 / link_changed_sha256 into the records.
+# The cron is an odd offset (05 S9); every run is idempotent, so a dropped run costs a week's slice.
+#
+# Output is a pull request, never a push (07 S6). A `changed` page -- a leaderboard rewritten under
+# its citations -- is a data-integrity event: the PR body lists it first, the record keeps its
+# accepted baseline, and a curator accepts it with `python -m tools.check_links --accept <id>`.
+#
+# The schedule is inert until the repository variable LINKROT_SCHEDULE is set to `on`: Actions were
+# switched off for this repository on 2026-09-25, and a new workflow file is enabled on arrival.
+# A manual `workflow_dispatch` always runs.
+#
+# Secrets as archive-sources.yml: IA_SPN_KEY / IA_SPN_SECRET for the re-capture of a changed page
+# (without them the run records `no-credentials` and captures nothing), UAIBI_BOT_PAT for the PR.
+# Actions are pinned by commit SHA (08 S6), the same SHAs archive-sources.yml resolved on 2026-09-24.
+
+name: linkrot
+
+on:
+  schedule:
+    - cron: '43 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      all:
+        description: 'Check every Source, not this week''s slice'
+        type: boolean
+        default: false
+
+concurrency:
+  group: linkrot
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  linkrot:
+    if: github.event_name == 'workflow_dispatch' || vars.LINKROT_SCHEDULE == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install the pinned toolchain
+        run: uv sync --locked --python 3.12
+
+      - name: Re-check this week's slice
+        env:
+          IA_SPN_KEY: ${{ secrets.IA_SPN_KEY }}
+          IA_SPN_SECRET: ${{ secrets.IA_SPN_SECRET }}
+          ALL: ${{ inputs.all && '--all' || '' }}
+        run: uv run --locked python -m tools.check_links $ALL --summary "$RUNNER_TEMP/linkrot.md"
+
+      - name: Open or update the link-rot pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.UAIBI_BOT_PAT }}
+          branch: ingest/linkrot
+          add-paths: |
+            data/sources/**
+          commit-message: 'ingest:linkrot: weekly link-rot re-check'
+          title: 'ingest:linkrot: weekly link-rot re-check'
+          labels: ingest:linkrot
+          body-path: ${{ runner.temp }}/linkrot.md
