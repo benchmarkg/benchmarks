@@ -201,6 +201,7 @@ KNOWN = {
     'extract not normalised (P0-S3-T04 draft: re-normalise on unblocking)': 'quote_extract is not in normalised form',
     'content_sha256 of a different text (P0-S3-T04 draft)': 'content_sha256 is not the sha256',
 }
+ARCHIVE_ONLY = KNOWN['no archive_url (P0-S3-T04 blocked: Wayback SPN needs IA keys)']
 KNOWN_IDS = {
     'src-roboarena-api-transparency',  # withheld
 }
@@ -217,7 +218,14 @@ def test_committed_sources_fail_only_for_known_reasons():
             Source.model_validate(doc)
         except ValidationError as e:
             drafted = str(doc.get('drafted_by', '')).endswith('(P0-S3-T04)')
+            # P3-S4-T05's Epoch link records wait on the same IA keys, or failed with a recorded reason
+            # (06 S7.1's softened rule, which scripts/check_archive_coverage.py enforces), and for that only
+            awaiting = str(doc.get('drafted_by', '')).endswith('(P3-S4-T05)') and (
+                doc.get('archive_status') == 'pending'
+                or (doc.get('archive_status') == 'failed' and doc.get('failure_reason')))
             for err in e.errors():
+                if awaiting and ARCHIVE_ONLY in err['msg']:
+                    continue
                 if not (drafted or doc['id'] in KNOWN_IDS) or not any(k in err['msg'] for k in KNOWN.values()):
                     unexplained.append('%s: %s' % (os.path.basename(path), err['msg']))
     assert unexplained == []
