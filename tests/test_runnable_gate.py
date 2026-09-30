@@ -173,7 +173,7 @@ def test_the_published_count_reproduces_from_the_committed_query(capsys):
     assert 'gives **38–70**. Recommended: **≥ 70**' in text                   # the threshold beside the count
     assert '**0 of 3** benchmark record(s) pass all five clauses' in text
     # counted at the commit that published it, so entries added since do not unsettle it
-    assert 'at commit `c66ce886270f485fee871c82e754791204f75ed6`' in text
+    assert 'at commit `cea7624220bf795e1b010220aa7bca1cac9aedcc`' in text
 
 
 def _git(repo, *args):

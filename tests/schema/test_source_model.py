@@ -176,6 +176,19 @@ def test_content_sha256_must_hash_the_extract():
         Source.model_validate(source(content_sha256=None))
 
 
+def test_a_redacted_extract_carries_its_own_hash():
+    # content_sha256 stays the fetched body's; quote_extract_sha256 is the stored extract's
+    redacted = normalise('Contact [email redacted] for 2,294 task instances.')
+    body = dict(content_sha256='1' * 64, quote_extract=redacted, quote_extract_mode='full', quote_extract_redactions=1)
+    Source.model_validate(source(**body, quote_extract_sha256=extract_sha256(redacted)))
+    with pytest.raises(ValidationError, match='needs its own quote_extract_sha256'):
+        Source.model_validate(source(**body))
+    with pytest.raises(ValidationError, match='quote_extract_sha256 does not match'):
+        Source.model_validate(source(**body, quote_extract_sha256='0' * 64))
+    with pytest.raises(ValidationError, match='content_sha256 is not the sha256'):
+        Source.model_validate(source(**dict(body, quote_extract_redactions=0)))
+
+
 def test_a_paywalled_source_is_cited_not_quoted():
     Source.model_validate(source(doi='10.1000/paywalled', archive_url=None, archive_captured=None,
                                  archive_status='not-required', quote_extract=None, content_sha256=None))
@@ -198,8 +211,6 @@ def test_archive_status_agrees_with_archive_url():
 KNOWN = {
     'no archive_url (P0-S3-T04 blocked: Wayback SPN needs IA keys)': 'a non-DOI source needs an archive_url',
     'archive_status withheld (P0-S3-T04: personal-data ruling pending)': "Input should be 'ok', 'pending'",
-    'extract not normalised (P0-S3-T04 draft: re-normalise on unblocking)': 'quote_extract is not in normalised form',
-    'content_sha256 of a different text (P0-S3-T04 draft)': 'content_sha256 is not the sha256',
 }
 ARCHIVE_ONLY = KNOWN['no archive_url (P0-S3-T04 blocked: Wayback SPN needs IA keys)']
 KNOWN_IDS = {
