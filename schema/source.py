@@ -216,7 +216,12 @@ class Source(BaseModel):
             raise ValueError('%s: quote_extract is not in normalised form -- store normalise(text) (04 S9)' % self.id)
         if self.content_sha256 is None:
             raise ValueError('%s: a quote_extract needs its content_sha256 (04 S9)' % self.id)
-        if self.quote_extract_mode in (None, 'full') and self.content_sha256 != extract_sha256(q):
+        if self.quote_extract_redactions:
+            # A redacted extract is no longer the fetched text: content_sha256 stays the body's hash,
+            # and the extract carries its own, as a windows extract does.
+            if self.quote_extract_sha256 is None:
+                raise ValueError('%s: a redacted quote_extract needs its own quote_extract_sha256' % self.id)
+        elif self.quote_extract_mode in (None, 'full') and self.content_sha256 != extract_sha256(q):
             raise ValueError('%s: content_sha256 is not the sha256 of the normalised extract (04 S9)' % self.id)
         if self.quote_extract_sha256 is not None and self.quote_extract_sha256 != extract_sha256(q):
             raise ValueError('%s: quote_extract_sha256 does not match the extract' % self.id)

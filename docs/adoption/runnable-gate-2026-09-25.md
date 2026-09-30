@@ -27,7 +27,7 @@ the top of the band (13 §3.2).
 
 ### The count
 
-Counted over `data/benchmarks/` at commit `c66ce886270f485fee871c82e754791204f75ed6`; `--check` recounts from that commit.
+Counted over `data/benchmarks/` at commit `cea7624220bf795e1b010220aa7bca1cac9aedcc`; `--check` recounts from that commit.
 
 **0 of 3** benchmark record(s) pass all five clauses: none. Against the recommended ≥ 70: **not met**.
 
