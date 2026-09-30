@@ -4,14 +4,17 @@ This file covers three things and no more (05-repository-and-workflow.md §8): h
 vulnerability, what the issue-intake bot may and may not do, and where to send a removal or
 personal-data request.
 
-**Contact:** [contact address]. We acknowledge within **5 working days** and give a substantive
+**Contact:** GitHub's private vulnerability reporting, on this repository's
+[Security tab](https://github.com/benchmarkg/benchmarks/security/advisories/new). A report there is
+seen only by the maintainers. We acknowledge within **5 working days** and give a substantive
 response within **20**.
 
 ## Reporting a vulnerability
 
-Report a vulnerability in the site, the build, the ingestion jobs or the bot to the contact address
-above, not in a public issue. We follow a **90-day coordinated-disclosure window**: we fix, or say
-publicly why we will not, within 90 days of your report, and we credit you unless you ask us not to.
+Report a vulnerability in the site, the build, the ingestion jobs or the bot through the private
+report above, not in a public issue. We follow a **90-day coordinated-disclosure window**: we fix,
+or say publicly why we will not, within 90 days of your report, and we credit you unless you ask us
+not to.
 
 ## The issue-intake bot
 
@@ -44,5 +47,6 @@ The positions on removal, correction and personal data are set out in
 - Git history is not rewritten, because rewriting it breaks every commit hash anyone has cited. A
   contributor who asks to be de-identified going forward is.
 
-Send a request to the contact address above. Every removal or erasure request and its outcome is
+Send a request through the private report above, and say it is a removal or personal-data request.
+Every removal or erasure request and its outcome is
 recorded in `data/disputes/`, with the requester's identity redacted where they ask.
