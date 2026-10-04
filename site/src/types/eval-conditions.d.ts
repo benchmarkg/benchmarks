@@ -57,6 +57,7 @@ export interface EvalConditions {
   resolution_window?: string | null;
   eligibility_track?: string | null;
   training_data_policy?: ("open" | "restricted-list" | "zero-shot-only" | "undeclared") | null;
+  training_data_eligibility?: string | null;
   decontamination_applied?: boolean | null;
   subset_used?: string | null;
   hardware?: string | null;

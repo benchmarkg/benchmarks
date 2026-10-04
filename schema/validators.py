@@ -36,6 +36,8 @@ The rules, in the order 02 S11 and 04 S12 give them:
   range-basis                 any range estimate -> basis
   subset-drops-terms          02 S11 rule 4: a subset override with fewer terms than its parent (warning)
   judge-model                 04 S12: a claim on a model-graded-judge benchmark has a judge_model
+  training-tier-declared      02 S12: a claim's declared training_data_eligibility is one of its
+                              benchmark's training_data_eligibility_tiers[] ids
   value-in-range              04 S12: a claim's value lies within its metric's range
   claim-after-release         04 S12: a claim is not dated before its system's release
   one-primary-baseline        04 S12: exactly one is_primary per (benchmark_version, metric), across
@@ -405,7 +407,21 @@ def _after_release(c: ResultClaim, corpus: Corpus):
         yield 'blocking', 'date_reported %s is before %s was released (%s)' % (c.date_reported, c.system, released)
 
 
+def _training_tier(c: ResultClaim, corpus: Corpus):
+    cond = corpus.conditions.get(c.eval_conditions) if c.eval_conditions else None
+    tier = cond.training_data_eligibility if cond is not None else None
+    b = corpus.benchmarks.get(c.benchmark.split('@')[0])
+    if tier is None or b is None:
+        return
+    tiers = [t.id for t in b.training_data_eligibility_tiers]
+    if tier not in tiers:
+        yield 'blocking', ('training_data_eligibility %s is not one of the training_data_eligibility_tiers of %s (%s)'
+                           % (tier, b.id, ', '.join(tiers) or 'it declares none'))
+
+
 RULES['judge-model'] = Rule('judge-model', '04 S12 tier 3', _claim_findings('judge-model', _judge_model))
+RULES['training-tier-declared'] = Rule('training-tier-declared', '02 S12; 04 S15 item 16',
+                                       _claim_findings('training-tier-declared', _training_tier))
 RULES['value-in-range'] = Rule('value-in-range', '04 S12 tier 3', _claim_findings('value-in-range', _value_in_range))
 RULES['claim-after-release'] = Rule('claim-after-release', '04 S12 tier 3',
                                     _claim_findings('claim-after-release', _after_release))
