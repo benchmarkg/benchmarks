@@ -9,6 +9,7 @@
     uv run bench migrate <nnnn> [--dry-run|--apply]
     uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
     uv run bench ingest <adapter> --dry-run [--limit N] [--no-network] [--allow-bulk] [--fixture PATH]
+    uv run bench report completeness|conflicts|quality [--format md|json|csv] [--out PATH]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
@@ -17,7 +18,9 @@ command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
 build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
-`ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface). `build` also regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
+`ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
+P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on). `build` also
+regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
 (P2-S2-T01, tools/build/tokens.py).
 """
 from __future__ import annotations
@@ -281,6 +284,37 @@ def check_links(
         raise typer.Exit(2)
     typer.echo(links.as_json(report) if fmt_ is Format.json else links.text(report))
     raise typer.Exit(report['exit_code'])
+
+
+class ReportName(str, Enum):
+    completeness = 'completeness'
+    conflicts = 'conflicts'
+    quality = 'quality'
+
+
+class ReportFormat(str, Enum):
+    md = 'md'
+    json = 'json'
+    csv = 'csv'
+
+
+@app.command('report')
+def report_cmd(
+    name: Annotated[ReportName, typer.Argument(help='The report: completeness, conflicts or quality.')],
+    fmt_: Annotated[ReportFormat, typer.Option('--format', help='md, json or csv.')] = ReportFormat.md,
+    out: Annotated[Optional[Path], typer.Option('--out', help='Write here instead of stdout.')] = None,
+):
+    """A report over the repository (05 S3). Deterministic: a re-run gives the same bytes."""
+    import importlib
+
+    from tools import report
+    text = report.render(importlib.import_module('tools.report.%s' % name.value).build(ROOT), fmt_.value)
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding='utf-8', newline='\n')
+        typer.echo('report: wrote %s' % out)
+    else:
+        typer.echo(text, nl=False)
 
 
 def main():
