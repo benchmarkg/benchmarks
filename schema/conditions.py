@@ -34,6 +34,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 from schema.system import SourceId, SystemRef, Text
 
 ConditionsId = Annotated[str, StringConstraints(pattern=r'^cond-[0-9a-f]{12}$')]
+Slug = Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9-]{1,62}$')]
 PromptHash = Annotated[str, StringConstraints(pattern=r'^sha256:[0-9a-f]{64}$')]
 
 REASONING_EFFORTS = ('none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max')
@@ -128,6 +129,10 @@ class EvalConditions(Closed):
     # --- eligibility
     eligibility_track: Text | None = None
     training_data_policy: TrainingDataPolicy | None = None
+    # 02 S12: the training-data tier this run declared, an id in its benchmark's
+    # training_data_eligibility_tiers[] (tier 3, training-tier-declared). eligibility_track is the
+    # board a result is listed on (ARC-AGI-3 official vs community), which is not always a data rule.
+    training_data_eligibility: Slug | None = None
     decontamination_applied: bool | None = None
     subset_used: Text | None = None
 

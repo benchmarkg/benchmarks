@@ -70,8 +70,8 @@ def test_the_entries_resolve_to_different_material_sets():
         'casp.yaml': (('wet-lab',), 3),
         'roboarena.yaml': (('physical-trial',), 4),
         'swe-bench.yaml': (('agentic',), 11),
-        'weatherbench-2.yaml': (('forecasting', 'eligibility-gated'), 6),
-        'matbench-discovery.yaml': (('forecasting', 'eligibility-gated'), 4),   # lead time and window waived
+        'weatherbench-2.yaml': (('forecasting', 'eligibility-gated'), 7),
+        'matbench-discovery.yaml': (('forecasting', 'eligibility-gated'), 5),   # lead time and window waived
         'arc-agi-3.yaml': (('simulation',), 8),                                 # plus three extras, one waiver
         'virtual-cell-challenge.yaml': (('forecasting',), 2),                  # lead time and window waived
         'paperbench.yaml': (('model-graded',), 8),                             # plus two extras, two waivers
@@ -82,7 +82,7 @@ def test_the_entries_resolve_to_different_material_sets():
     assert {'eligibility_track', 'harness'} <= set(got['arc-agi-3.yaml'].material)
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
     # the compliance tier is what makes two Matbench Discovery numbers comparable (02 S12.6)
-    assert 'eligibility_track' in got['matbench-discovery.yaml'].material
+    assert {'eligibility_track', 'training_data_eligibility'} <= set(got['matbench-discovery.yaml'].material)
     # the round decides what a Virtual Cell Challenge score means: validation and final are not comparable
     assert got['virtual-cell-challenge.yaml'].material == ('subset_used', 'training_data_policy')
     # the judge is part of PaperBench's apparatus, and so is the agent's scaffold (02 S5)
