@@ -2,20 +2,24 @@
 
     bench ingest epoch --dry-run --no-network --limit 50     # the local epochdl/ snapshot, 50 candidates
     bench ingest epoch --dry-run --fixture tests/fixtures/epoch
+    bench ingest openalex --dry-run --limit 20                # live; OPENALEX_API_KEY from the environment
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
---limit, --no-network, --allow-bulk and --fixture -- for the one adapter there is, and prints 07 S6.2's
-change-class summary. The replay, recompute, state and unresolved subcommands, --since, --max-runtime
-and --max-drafts arrive with the tasks that build what they drive.
+--limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
+openalex, P4-S2-T06), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
+they drive.
 
-Where the bytes come from. --fixture replays a recorded response (ingest/http/fixture.py). Without it,
---no-network reads the unpacked snapshot at epochdl/ (07 S2: the bundle "is also already on disk at
-epochdl/, so it can be developed entirely offline"). A live fetch is not built in phase 0 (07 S11.3,
-"--fixture only"), so a run that is allowed the network says so and stops.
+Where the bytes come from. --fixture replays recorded responses (ingest/http/fixture.py). Without it,
+epoch's --no-network reads the unpacked snapshot at epochdl/ (07 S2: the bundle "is also already on disk
+at epochdl/, so it can be developed entirely offline"); epoch's live fetch is not built in phase 0 (07
+S11.3, "--fixture only"). openalex calls the live API unless --fixture is given, and has no local copy, so
+--no-network without a fixture stops.
 
 Exit codes: 0 a clean run (including no-change); 1 a hard fail -- schema drift, or a draft that does not
 validate as its entity; 2 a run this phase cannot do (no --dry-run, no offline source); 3 capped, over 07
-S8.1's per-type caps without --allow-bulk.
+S8.1's per-type caps without --allow-bulk; 4 a soft fail -- a 429, the daily budget spent -- which the next
+run resumes.
 """
 from __future__ import annotations
 
@@ -25,8 +29,8 @@ from typing import Annotated, Optional
 import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ADAPTERS = ('epoch',)
-EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3}
+ADAPTERS = ('epoch', 'openalex')
+EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
 def _source(fixture: Optional[str], no_network: bool, root: str):
@@ -58,7 +62,30 @@ def summary(report: dict) -> list[str]:
         lines.append('  %-13s %d' % (c, report['drafts'][c]))
     lines.append('  unresolved    %d' % report['unresolved'])
     lines += ['  error: %s' % e for e in report['errors']]
+    lines += ['  proposal: %s' % p for p in report.get('proposals', [])]           # get-default: epoch has none
+    allowance = report.get('allowance')                                               # get-default: epoch has none
+    if allowance:
+        lines.append('  allowance     %s' % ', '.join('%s=%s' % kv for kv in sorted(allowance.items())))
     return lines
+
+
+def _openalex(limit: Optional[int], no_network: bool, fixture: Optional[str]):
+    from ingest.adapters import openalex
+    if fixture:
+        from ingest.http.fixture import FixtureTransport
+        transport, where = FixtureTransport(fixture), 'fixture %s' % fixture
+    elif no_network:
+        typer.echo('ingest: openalex has no local copy to read; --no-network needs --fixture PATH', err=True)
+        raise typer.Exit(2)
+    else:
+        key = openalex.key_from_env()
+        transport = openalex.NetworkTransport(key)
+        where = 'api.openalex.org (%s)' % ('OPENALEX_API_KEY set' if key else 'no key: the smaller, unauthenticated budget')
+    report = openalex.run(transport, limit=limit)
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    raise typer.Exit(EXIT[report['status']])
 
 
 def ingest(
@@ -79,6 +106,8 @@ def ingest(
         typer.echo('ingest: writing drafts needs the differ and the resolver (P3-S3), which are not built; '
                    'run with --dry-run', err=True)
         raise typer.Exit(2)
+    if adapter == 'openalex':
+        _openalex(limit, no_network, fixture)
     from ingest.adapters import epoch
     try:
         bundle, where = _source(fixture, no_network, ROOT)
