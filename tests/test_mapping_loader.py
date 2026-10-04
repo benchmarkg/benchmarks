@@ -155,5 +155,5 @@ def test_load_all_skips_the_allocation_and_keys_by_source_key(tmp_path):
 
 
 def test_the_committed_epoch_mappings_all_load():
-    # today only the id allocation, which is not a stanza; P3-S2-T03 and T04 add the ~80 stanzas
+    # P3-S2-T03's 59 stanzas (T04 adds the 21 orphans); the id allocation beside them is not a stanza
     m.load_all('epoch')
