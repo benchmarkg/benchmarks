@@ -42,7 +42,10 @@ The rules, in the order 02 S11 and 04 S12 give them:
                               data/baselines/ and every benchmark's inline baselines together
   licence-placement           04 S9/S12: a record's licence class decides where it may live
   ingestion-batch             04 S12: an ingested record's ingestion.batch resolves
-  non-doi-archive             04 S12: every non-DOI Source has an archive_url
+  non-doi-archive             04 S12 as 06 S7.1 softens it: every non-DOI Source has an archive_url,
+                              is pending with archive_requested_at inside the seven-day SLA, or
+                              failed with its reason (schema/archive_sla.py, which
+                              scripts/check_archive_coverage.py reports with)
   retired-id-ledger           05 S9 job 9: no retired id is live again, as a term or a record id
   stub-placeholder            05 S3: a `bench new` scaffold's placeholders -- a TODO string, an
                               example.invalid URL, the bench-new-stub tag -- block until replaced
@@ -64,8 +67,10 @@ import glob
 import os
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Callable
 
+from schema.archive_sla import classify as archive_class
 from schema.baseline import Baseline
 from schema.benchmark import Benchmark, load_benchmark
 from schema.claim import ResultClaim
@@ -115,6 +120,7 @@ class Corpus:
     derived: dict[str, dict] = field(default_factory=dict)
     retired: set[str] = field(default_factory=set)
     live_terms: set[str] = field(default_factory=set)
+    now: datetime | None = None                                      # the SLA clock; None is the time of the run
 
 
 RULES: dict[str, 'Rule'] = {}
@@ -467,10 +473,15 @@ def _ingestion_batch(corpus: Corpus, level: str):
             if c.ingestion is not None and c.ingestion.batch not in corpus.batches]
 
 
-@rule('non-doi-archive', '04 S9, S12 tier 3')
+@rule('non-doi-archive', '04 S9, S12 tier 3; 06 S7.1')
 def _non_doi_archive(corpus: Corpus, level: str):
-    return [Finding('non-doi-archive', 'blocking', sid, 'a non-DOI Source needs an archive_url')
-            for sid, s in sorted(corpus.sources.items()) if not s.get('doi') and not s.get('archive_url')]
+    now = corpus.now or datetime.now(timezone.utc)
+    out = []
+    for sid, s in sorted(corpus.sources.items()):
+        cls, detail, _ = archive_class(s, now, strict=True)
+        if cls == 'VIOLATION':
+            out.append(Finding('non-doi-archive', 'blocking', sid, 'a non-DOI Source needs an archive_url: %s' % detail))
+    return out
 
 
 @rule('retired-id-ledger', '05 S9 job 9; 03 S9.2')

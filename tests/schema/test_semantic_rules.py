@@ -19,6 +19,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from schema import validators as v  # noqa: E402
+from schema.archive_sla import parse_time  # noqa: E402
 from schema.baseline import Baseline  # noqa: E402
 from schema.benchmark import Benchmark  # noqa: E402
 from schema.claim import ResultClaim  # noqa: E402
@@ -100,6 +101,7 @@ def corpus(case) -> v.Corpus:
     c.derived = case.get('derived', {})
     c.retired = set(case.get('retired', []))
     c.live_terms = set(case.get('live_terms', []))
+    c.now = parse_time(case['now']) if 'now' in case else None
     return c
 
 
