@@ -85,17 +85,12 @@ def build(*, adapter: str, adapter_version: str, run_started: datetime, source: 
 
 
 def write(doc: dict, root: str = ROOT) -> str:
-    """Write through the project's one YAML emitter (tools/fmt.py), so `bench fmt` has nothing to say."""
-    from tools import fmt
+    """Write through ingest/emit.py, the adapters' side of the one YAML emitter (07 S1.5)."""
+    from ingest import emit
     rel = '%s/%s.yaml' % (BATCHES, doc['id'])
-    path = os.path.join(root, *rel.split('/'))
-    if os.path.exists(path):
+    if os.path.exists(os.path.join(root, *rel.split('/'))):
         raise FileExistsError('%s exists: a batch id is never reused' % rel)
-    text = fmt.format_text(fmt.dumps(doc), fmt.model_for(rel), rel)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('# %s -- written by ingest/batch.py (04 S9)\n' % rel + text)
-    return rel
+    return emit.write(doc, rel, root, header='%s -- written by ingest/batch.py (04 S9)' % rel)
 
 
 # ---- Epoch ----------------------------------------------------------------------------------------
