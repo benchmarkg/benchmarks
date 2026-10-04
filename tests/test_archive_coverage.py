@@ -109,19 +109,25 @@ def test_cli_exit_codes(tmp_path, capsys):
 class FakeWayback:
     """cdx: url -> timestamp; results: url -> list of outcomes returned by successive polls."""
 
-    def __init__(self, can_capture=True, cdx=None, submit=None, results=None):
+    def __init__(self, can_capture=True, cdx=None, submit=None, results=None, any_status=None):
         self.can_capture = can_capture
         self.cdx = cdx or {}
+        self.any_status = any_status or {}   # url -> (timestamp, statuscode): CDX with no status filter
         self.submit_result = submit or {}
         self.results = results or {}
-        self.submitted, self.looked_up = [], []
+        self.submitted, self.looked_up, self.forced = [], [], []
+
+    def newest(self, url):
+        return self.any_status.get(url)
 
     def latest(self, url):
         self.looked_up.append(url)
         ts = self.cdx.get(url)
         return (ts, url, 'DIGEST') if ts else None
 
-    def submit(self, url):
+    def submit(self, url, force_get=False):
+        if force_get:
+            self.forced.append(url)
         if url in self.submit_result:
             r = self.submit_result[url]
             if isinstance(r, Exception):
@@ -235,6 +241,80 @@ def test_a_permanent_refusal_fails_at_once(tmp_path):
     go(tmp_path, wb)
     r = fields(p)
     assert r['archive_status'] == 'failed' and 'error:blocked-url' in r['failure_reason']
+
+
+SAME = ('error', 'error:unknown', 'The same snapshot had been made 63 hours, 32 minutes ago. You can make '
+        'new capture of this URL after 720 hours.')
+
+
+def test_a_url_that_now_redirects_fails_at_once_naming_where_it_went(tmp_path):
+    # SPN2's "same snapshot" with no 200 capture in CDX: Wayback holds a 3xx capture, the URL moved
+    p = write(tmp_path, 'src-a')
+    url, to = 'https://example.org/src-a', 'https://example.org/?version=2.0'
+    wb = FakeWayback(submit={url: SAME}, any_status={url: ('20260927080000', '308')})
+    asked = []
+    stats, state = go(tmp_path, wb, locate=lambda u: asked.append(u) or (308, to))
+    r = fields(p)
+    assert r['archive_status'] == 'failed' and stats['failed'] == 1 and 'src-a' not in state['attempts']
+    assert 'redirects to %s (HTTP 308)' % to in r['failure_reason']
+    assert '20260927080000' in r['failure_reason'] and 're-points the Source' in r['failure_reason']
+    assert asked == [url]                                             # one request to the Source's host
+
+
+def test_a_same_snapshot_refusal_without_a_redirect_capture_stays_transient(tmp_path):
+    p = write(tmp_path, 'src-a')
+    url = 'https://example.org/src-a'
+    for newest in (None, ('20260927080000', '200')):
+        wb = FakeWayback(submit={url: SAME}, any_status={url: newest} if newest else {})
+        go(tmp_path, wb, locate=lambda u: pytest.fail('no redirect, so no live request'))
+        assert fields(p)['archive_status'] == 'pending'
+
+
+def test_a_sub_resource_failure_retries_with_force_get(tmp_path):
+    p = write(tmp_path, 'src-a')
+    url = 'https://example.org/src-a'
+    favicon = ('error', 'error:bad-gateway', 'The target server returned a bad gateway error for '
+               'https://example.org/favicon.ico. (HTTP status=502)')
+    state = arch.load_state(str(tmp_path / 'state.json'))
+    first = FakeWayback(results={url: [favicon]})
+    go(tmp_path, first, state=state)
+    assert fields(p)['archive_status'] == 'pending' and first.forced == []
+    second = FakeWayback()
+    go(tmp_path, second, state=state)
+    assert second.forced == [url] and fields(p)['archive_status'] == 'ok'
+
+
+def test_an_error_about_the_page_itself_does_not_force_get():
+    url = 'https://example.org/api/leaderboard'
+    assert not arch.sub_resource('error:bad-gateway ... error for %s. (HTTP status=502)' % url, url)
+    assert not arch.sub_resource('error:job-failed Job failed.', url) and not arch.sub_resource(None, url)
+    assert arch.sub_resource('error:bad-gateway ... error for https://example.org/favicon.ico.', url)
+
+
+def test_location_reads_a_redirect_without_following_it():
+    import http.server
+    import threading
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == '/moved':
+                self.send_response(308)
+                self.send_header('Location', '/?version=2.0')
+            else:
+                self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *_):
+            pass
+
+    srv = http.server.HTTPServer(('127.0.0.1', 0), Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = 'http://127.0.0.1:%d' % srv.server_port
+    try:
+        assert arch.location(base + '/moved') == (308, base + '/?version=2.0')   # relative Location resolved
+        assert arch.location(base + '/here') is None
+    finally:
+        srv.shutdown()
 
 
 def test_the_first_request_stamp_is_not_moved_forward(tmp_path):
