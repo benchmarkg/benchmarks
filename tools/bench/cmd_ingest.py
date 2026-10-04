@@ -3,18 +3,20 @@
     bench ingest epoch --dry-run --no-network --limit 50     # the local epochdl/ snapshot, 50 candidates
     bench ingest epoch --dry-run --fixture tests/fixtures/epoch
     bench ingest openalex --dry-run --limit 20                # live; OPENALEX_API_KEY from the environment
+    bench ingest semantic-scholar --dry-run --limit 20        # live; SEMANTIC_SCHOLAR_API_KEY and OPENALEX_API_KEY
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
 --limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
-openalex, P4-S2-T06), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10), and prints 07 S6.2's change-class summary. The replay, recompute, state and
 unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
 they drive.
 
 Where the bytes come from. --fixture replays recorded responses (ingest/http/fixture.py). Without it,
 epoch's --no-network reads the unpacked snapshot at epochdl/ (07 S2: the bundle "is also already on disk
 at epochdl/, so it can be developed entirely offline"); epoch's live fetch is not built in phase 0 (07
-S11.3, "--fixture only"). openalex calls the live API unless --fixture is given, and has no local copy, so
---no-network without a fixture stops.
+S11.3, "--fixture only"). openalex and semantic-scholar call the live APIs unless --fixture is given, and
+have no local copy, so --no-network without a fixture stops. semantic-scholar's fixture directory holds one
+subdirectory per API, semantic-scholar/ and openalex/.
 
 Exit codes: 0 a clean run (including no-change); 1 a hard fail -- schema drift, or a draft that does not
 validate as its entity; 2 a run this phase cannot do (no --dry-run, no offline source); 3 capped, over 07
@@ -29,7 +31,7 @@ from typing import Annotated, Optional
 import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ADAPTERS = ('epoch', 'openalex')
+ADAPTERS = ('epoch', 'openalex', 'semantic-scholar')
 EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
@@ -88,6 +90,29 @@ def _openalex(limit: Optional[int], no_network: bool, fixture: Optional[str]):
     raise typer.Exit(EXIT[report['status']])
 
 
+def _semantic_scholar(limit: Optional[int], no_network: bool, fixture: Optional[str]):
+    from ingest.adapters import openalex, semantic_scholar
+    if fixture:
+        from ingest.http.fixture import FixtureTransport
+        s2t = FixtureTransport(os.path.join(fixture, 'semantic-scholar'))
+        oat = FixtureTransport(os.path.join(fixture, 'openalex'))
+        where = 'fixture %s' % fixture
+    elif no_network:
+        typer.echo('ingest: semantic-scholar has no local copy to read; --no-network needs --fixture PATH', err=True)
+        raise typer.Exit(2)
+    else:
+        s2key, oakey = semantic_scholar.key_from_env(), openalex.key_from_env()
+        s2t, oat = semantic_scholar.NetworkTransport(s2key), openalex.NetworkTransport(oakey)
+        where = 'api.semanticscholar.org (%s) and api.openalex.org (%s)' % (
+            'SEMANTIC_SCHOLAR_API_KEY set' if s2key else 'no key: the shared, contended pool',
+            'OPENALEX_API_KEY set' if oakey else 'no key')
+    report = semantic_scholar.run(s2t, oat, limit=limit)
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    raise typer.Exit(EXIT[report['status']])
+
+
 def ingest(
     adapter: Annotated[str, typer.Argument(help='The adapter to run: %s.' % ', '.join(ADAPTERS))],
     dry_run: Annotated[bool, typer.Option('--dry-run', help='Fetch, normalise and report; write nothing.')] = False,
@@ -108,6 +133,8 @@ def ingest(
         raise typer.Exit(2)
     if adapter == 'openalex':
         _openalex(limit, no_network, fixture)
+    if adapter == 'semantic-scholar':
+        _semantic_scholar(limit, no_network, fixture)
     from ingest.adapters import epoch
     try:
         bundle, where = _source(fixture, no_network, ROOT)
