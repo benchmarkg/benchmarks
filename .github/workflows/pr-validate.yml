@@ -22,8 +22,13 @@
 #
 # Job 5, the codegen drift check, is schema-codegen.yml until it is folded in here.
 #
+# single-source (P4-S5-T06; 12 S6, 06 S3.10) builds the site and runs scripts/check_single_source.py
+# over it: no single-aggregator citation figure renders without its "unverified" marker, and no
+# OpenAlex citation count is a headline number. The build needs the whole history (tools/build/feed.py
+# walks it) and the locked Python (BENCH_PYTHON), hence fetch-depth: 0 and `uv sync` before it.
+#
 # Actions are pinned by commit SHA (08 S6); these are the SHAs archive-sources.yml resolved on
-# 2026-09-24.
+# 2026-09-24, and setup-node's is schema-codegen.yml's (resolved 2026-09-25).
 
 name: pr-validate
 
@@ -96,3 +101,29 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: bench validate --tier semantic
         run: uv run --locked --python "$PYTHON" bench validate --tier semantic $SCOPE
+
+  single-source:
+    name: single-source marker on the built site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: the locked Python environment, for the build's feed step
+        run: uv sync --locked --python "$PYTHON"
+      - name: site dependencies from the lockfile
+        working-directory: site
+        run: npm ci --ignore-scripts
+      - name: astro build
+        working-directory: site
+        env:
+          BENCH_PYTHON: ${{ github.workspace }}/.venv/bin/python
+        run: npx astro build
+      - name: check_single_source.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_single_source.py
