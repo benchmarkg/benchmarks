@@ -19,11 +19,15 @@ Three kinds of item are not plain field assertions, and each is stated where it 
     derivation from liveness) belong to the tasks that build them; this file asserts the schema
     they need.
 
-What is missing is not added here (the task's step 3). Two gaps are recorded as strict xfails, so
-they fail loudly the day the gap closes and the mark must be removed:
+What is missing is not added here (the task's step 3). A gap is recorded as a strict xfail, so it
+fails loudly the day the gap closes and the mark must be removed:
 
-  - item 16: `EvalConditions.training_data_eligibility` is not in the schema;
-  - item 21: seven of the ten stress entries (P0-S8) do not exist yet.
+  - item 21: not every one of the ten stress entries (P0-S8) exists yet.
+
+Item 16's `EvalConditions.training_data_eligibility`, the blocking issue this task raised, landed
+with the tier-3 rule training-tier-declared (02 S12): the tier a run declares, checked against its
+benchmark's training_data_eligibility_tiers[]. It is distinct from 04 S8's eligibility_track, the
+board a result is listed on.
 """
 import datetime
 import glob
@@ -279,9 +283,6 @@ def test_item_16_the_02_s12_handoff_fields():
     assert 'gap_placeholder' in Term.model_fields                        # on the taxonomy term record
 
 
-@pytest.mark.xfail(strict=True, reason='04 S15 item 16 / 02 S12 handoff: EvalConditions.training_data_eligibility '
-                   'is not in the schema. Blocking issue raised by P3-S1-T01; not added here (step 3). Remove this '
-                   'mark when the field lands.')
 def test_item_16_eval_conditions_training_data_eligibility():
     assert_fields('eval-conditions', 'training_data_eligibility')
 
@@ -367,9 +368,9 @@ def test_item_21_the_generated_schema_rejects_a_broken_entry():
     assert list(Draft202012Validator(SCHEMAS['benchmark']).iter_errors(broken))
 
 
-@pytest.mark.xfail(strict=True, reason='04 S15 item 21: seven of the ten stress entries do not exist yet (P0-S8-T01..T07, '
-                   'then P0-S9-T01 wires them as CI fixtures). Blocking issue raised by P3-S1-T01. Remove this mark '
-                   'when all ten are in data/benchmarks/.')
+@pytest.mark.xfail(strict=True, reason='04 S15 item 21: nine of the ten stress entries exist; Kaggle Game Arena '
+                   '(P0-S8-T05) is blocked, and P0-S9-T01 then wires all ten as CI fixtures. Blocking issue raised by '
+                   'P3-S1-T01. Remove this mark when all ten are in data/benchmarks/.')
 def test_item_21_all_ten_stress_entries_exist():
     missing = [s for s in STRESS if s not in stress_entries()]
     assert not missing, 'stress entries not yet curated: %s' % ', '.join(missing)
