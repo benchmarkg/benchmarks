@@ -160,6 +160,142 @@ def counts(bundle: ZipBundle) -> dict[str, int]:
     return out
 
 
+def bundle_from_directory(path: str) -> ZipBundle:
+    """A bundle from an unpacked copy on disk (epochdl/, 07 S2: "already on disk ... so it can be
+    developed entirely offline"). Zipped in memory in sorted order with a fixed timestamp, so the same
+    files give the same sha256; it has no ETag, because nothing served it."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
+        for d, _, names in sorted(os.walk(path)):
+            for n in sorted(names):
+                full = os.path.join(d, n)
+                info = zipfile.ZipInfo(os.path.relpath(full, path).replace(os.sep, '/'), (2026, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                with open(full, 'rb') as f:
+                    z.writestr(info, f.read())
+    return ZipBundle(buf.getvalue())
+
+
+# ---- one run (P3-S1-T06; 07 S1.6, S6.2, S8.1) ------------------------------------------------------
+
+# 07 S8.1's ceilings: drafts of one entity type past these need --allow-bulk (the first Epoch run is
+# the deliberate exception: 6,598 claims, by hand, once).
+CAPS = {'claim': 200, 'benchmark': 25, 'system': 100, 'organization': 25, 'metric': 20, 'source': 200,
+        'conditions': 200}
+# What the engine reads from the two metadata files. A missing file, a missing column or zero rows is
+# schema drift (06 S3.2 "When it breaks"): a hard fail, never a quiet empty run.
+REQUIRED = {'benchmark_metadata.csv': ('benchmark', 'source_file', 'score_column', 'scale'),
+            'model_metadata.csv': ('model_version', 'model_group')}
+CHANGE_CLASSES = ('new', 'field-change', 'result-change', 'gone', 'metrics-only', 'no-change')
+
+
+class SchemaDrift(Exception):
+    """The bundle is not shaped the way the engine reads it."""
+
+
+def check_drift(bundle: ZipBundle) -> None:
+    for name, columns in REQUIRED.items():
+        if name not in bundle.names():
+            raise SchemaDrift('%s is missing from the bundle' % name)
+        headers, rows = bundle.read_csv(name)
+        missing = [c for c in columns if c not in headers]
+        if missing:
+            raise SchemaDrift('%s has no %s column (headers: %s)' % (name, ', '.join(missing), ', '.join(headers)))
+        if not rows:
+            raise SchemaDrift('%s has no rows' % name)
+
+
+def candidates(bundle: ZipBundle):
+    """07 S2.2's enumerate(): one Candidate per metadata row, one per per-benchmark CSV (orphans too)."""
+    from ingest.adapters.base import Candidate
+    for row in bundle.read_csv('benchmark_metadata.csv')[1]:
+        yield Candidate('bench:%s' % row['benchmark'], 'benchmark', 'https://epoch.ai/benchmarks',
+                        dict(row, snapshot=bundle.sha256))
+    for stem in bundle.per_benchmark_csvs():
+        yield Candidate('csv:%s' % stem, 'claim', None, {'snapshot': bundle.sha256})
+
+
+def normalise(candidate, bundle: ZipBundle):
+    """(drafts, unresolved) for one candidate -- phase 0's, before the mapping stanzas (P3-S2) and the
+    resolver (P3-S3) exist. A benchmark row is already allocated an id in
+    ingest/mappings/epoch/_id_allocation.yaml (P3-S2-T07), so it drafts nothing. A per-benchmark CSV
+    has no mapping stanza yet, so it is Unresolved, exactly as 07 S2.2's normalise() treats a CSV
+    with no mapping: a person writes the stanza; nothing assumes a scale."""
+    from ingest.adapters.base import Unresolved
+    if candidate.kind != 'claim':
+        return [], []
+    stem = candidate.source_key.split(':', 1)[1]
+    headers, rows = bundle.read_csv(stem + '.csv')
+    return [], [Unresolved(
+        source_key=candidate.source_key, field='*', observed='%d rows, headers=%r' % (len(rows), headers),
+        reason='no-match',
+        human_task='Write ingest/mappings/epoch/%s.yaml: score column, unit, scale, metric ref, '
+                   'uncertainty column. Do NOT assume scale=1.0.' % stem)]
+
+
+def validate_draft(draft) -> str | None:
+    """Why `draft` would not load as its entity, or None. A draft that fails is a hard fail (07 S8)."""
+    from pydantic import ValidationError
+
+    from schema.claim import ResultClaim
+    from schema.entities import Organization
+    from schema.metric import Metric
+    from schema.system import System
+    models = {'claim': ResultClaim, 'system': System, 'organization': Organization, 'metric': Metric}
+    model = models.get(draft.entity_type)  # get-default: an entity type with no model here is not checked here
+    if model is None:
+        return None
+    try:
+        model.model_validate(draft.payload)
+    except ValidationError as e:
+        return '%s %s: %s' % (draft.entity_type, draft.entity_id or '(unminted)', ' '.join(str(e).split())[:300])
+    return None
+
+
+def run(bundle: ZipBundle | None, *, limit: int | None = None, allow_bulk: bool = False,
+        normaliser=None, now=utcnow) -> dict:
+    """One run over a fetched bundle (None: a 304, nothing changed). Returns the run report: status,
+    candidates seen, drafts by change class, unresolved, cap and validation errors. Writes nothing.
+    `normaliser` defaults to this module's normalise(), looked up at call time."""
+    normaliser = normaliser or normalise
+    started = now()
+    report = {'adapter': NAME, 'adapter_version': VERSION, 'started_at': iso(started), 'status': 'ok',
+              'candidates_seen': 0, 'drafts': {c: 0 for c in CHANGE_CLASSES}, 'drafts_by_type': {},
+              'unresolved': 0, 'errors': [], 'snapshot': bundle.snapshot(started) if bundle else None}
+    if bundle is None:
+        report['status'] = 'no-change'
+        report['finished_at'] = iso(now())
+        return report
+    try:
+        check_drift(bundle)
+    except SchemaDrift as e:
+        report.update(status='hard-fail', errors=['schema drift: %s' % e], finished_at=iso(now()))
+        return report
+    for i, cand in enumerate(candidates(bundle)):
+        if limit is not None and i >= limit:
+            break
+        report['candidates_seen'] += 1
+        drafts, unresolved = normaliser(cand, bundle)
+        report['unresolved'] += len(unresolved)
+        for d in drafts:
+            report['drafts'][d.change_class] += 1
+            report['drafts_by_type'][d.entity_type] = report['drafts_by_type'].get(d.entity_type, 0) + 1  # get-default: a count starts at 0
+            why = validate_draft(d)
+            if why:
+                report['errors'].append('invalid draft: %s' % why)
+    over = {t: n for t, n in report['drafts_by_type'].items() if n > CAPS.get(t, 0)}  # get-default: an uncapped type has cap 0
+    if report['errors']:
+        report['status'] = 'hard-fail'
+    elif over and not allow_bulk:
+        report['status'] = 'capped'
+        report['errors'].append('over the 07 S8.1 caps without --allow-bulk: %s' % ', '.join(
+            '%s %d > %d' % (t, n, CAPS.get(t, 0)) for t, n in sorted(over.items())))  # get-default: an uncapped type has cap 0
+    elif not any(report['drafts'].values()):
+        report['status'] = 'no-change'
+    report['finished_at'] = iso(now())
+    return report
+
+
 # ---- state (07 S4 layer 2) ------------------------------------------------------------------------
 
 def load_state(path: str) -> dict:
