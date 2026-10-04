@@ -76,8 +76,16 @@ class Wayback:
 
     def latest(self, url):
         """(timestamp, original, digest) of the newest 200 capture, or None."""
-        q = urllib.parse.urlencode({'url': url, 'output': 'json', 'limit': '-1',
-                                    'filter': 'statuscode:200', 'fl': 'timestamp,original,digest'})
+        return self._newest(url, {'filter': 'statuscode:200', 'fl': 'timestamp,original,digest'})
+
+    def newest(self, url):
+        """(timestamp, statuscode) of the newest capture of any status, or None. SPN2's "same snapshot
+        had been made" refers to captures like these: a 3xx one, which latest() does not count, means
+        the URL now redirects."""
+        return self._newest(url, {'fl': 'timestamp,statuscode'})
+
+    def _newest(self, url, params):
+        q = urllib.parse.urlencode(dict({'url': url, 'output': 'json', 'limit': '-1'}, **params))
         status, body = self._request('https://web.archive.org/cdx/search/cdx?' + q)
         self.lookup_failed = status != 200
         if status == 429:
@@ -90,14 +98,17 @@ class Wayback:
             return None
         if len(rows) < 2:  # the first row is the header
             return None
-        ts, original, digest = rows[-1]
-        return ts, original, digest
+        return tuple(rows[-1])
 
-    def submit(self, url, within='30d'):
+    def submit(self, url, within='30d', force_get=False):
         """A job id, or ('error', status_ext, message). `within` is SPN2's if_not_archived_within: 30d
-        everywhere but the link-rot re-check, which re-captures a page it saw change (06 S7.2)."""
-        status, body = self._request('https://web.archive.org/save', auth=True, data={
-            'url': url, 'if_not_archived_within': within, 'skip_first_archive': '1'})
+        everywhere but the link-rot re-check, which re-captures a page it saw change (06 S7.2).
+        `force_get` captures with a plain GET instead of SPN2's headless browser, whose fetches of a
+        page's sub-resources (a favicon) can fail a capture of a page that answers fine."""
+        data = {'url': url, 'if_not_archived_within': within, 'skip_first_archive': '1'}
+        if force_get:
+            data['force_get'] = '1'
+        status, body = self._request('https://web.archive.org/save', auth=True, data=data)
         if status is None:
             return ('error', 'error:network', body)
         if status == 401:
@@ -126,6 +137,26 @@ class Wayback:
         if j.get('status') == 'error':
             return ('error', j.get('status_ext') or 'error:unknown', j.get('message') or '')
         return ('pending',)
+
+
+class _NoFollow(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def location(url, timeout=30):
+    """(status, Location) when `url` answers a redirect, else None: one GET that follows nothing.
+    It asks the Source's own host, not web.archive.org, once, when SPN2 says the URL was captured
+    recently but CDX holds no 200 capture of it."""
+    req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
+    try:
+        urllib.request.build_opener(_NoFollow).open(req, timeout=timeout).close()
+    except urllib.error.HTTPError as e:
+        if 300 <= e.code < 400 and e.headers.get('Location'):
+            return e.code, urllib.parse.urljoin(url, e.headers['Location'])
+    except (urllib.error.URLError, OSError):
+        pass
+    return None
 
 
 def wayback_time(ts):

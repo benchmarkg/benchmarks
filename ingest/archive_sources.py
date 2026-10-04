@@ -13,7 +13,13 @@
   - one request per Source, never per field;
   - a Source SPN2 refuses is recorded `archive_status: failed` with its reason (S7.3), and a
     transient error leaves it `pending` with the reason, up to --max-attempts runs, after which it
-    is recorded failed too. Nothing is retried forever.
+    is recorded failed too. Nothing is retried forever;
+  - two refusals are read for what they mean. "The same snapshot had been made N hours ago" with no
+    200 capture in CDX means the URL now redirects (Wayback holds a 3xx capture of it): retrying
+    cannot help, so it is recorded failed at once with where it redirects to, for a curator to
+    re-point the Source. An error that names a URL other than the Source's (SPN2's headless browser
+    failing on the page's favicon) means the page itself answered, so the next attempt captures
+    with force_get, a plain GET.
 
     python -m ingest.archive_sources                 # the nightly run
     python -m ingest.archive_sources --dry-run       # print the queue and what CDX says; write nothing
@@ -57,7 +63,7 @@ sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 if ROOT not in sys.path:
     sys.path.insert(1, ROOT)
 from check_archive_coverage import first_ingest, load_sources  # noqa: E402
-from tools.archive import WINDOW, StopRun, Wayback, wayback_time  # noqa: E402,F401  (StopRun: callers catch it here)
+from tools.archive import WINDOW, StopRun, Wayback, location, wayback_time  # noqa: E402,F401  (StopRun: callers catch it here)
 
 STATE = os.path.join(ROOT, 'ingest', 'state', 'archive.json')
 KEEP_RUNS = 30
@@ -72,8 +78,10 @@ PERMANENT = {
     'error:filesize-limit', 'error:ftp-access-denied', 'error:invalid-host-resolution',
     'error:invalid-url-syntax', 'error:method-not-allowed', 'error:network-authentication-required',
     'error:no-access', 'error:not-found', 'error:not-implemented', 'error:too-many-redirects',
-    'error:unauthorized',
+    'error:unauthorized', 'error:redirect',
 }
+SAME_SNAPSHOT = 'The same snapshot had been made'
+_URL = re.compile(r'https?://[^\s"<>]+')
 # These mean our budget is spent, so the run stops and nobody's attempt count moves.
 BUDGET = {'error:too-many-daily-captures', 'error:user-session-limit', 'error:too-many-requests'}
 
@@ -86,6 +94,13 @@ def captured_on(ts):
     """`archive_captured` is a date in the Source schema (04 S9), not a timestamp: the capture's UTC day.
     The full instant stays in the archive_url's timestamp."""
     return wayback_time(ts).date().isoformat()
+
+
+def sub_resource(error, url):
+    """True when an SPN2 error names a URL other than the one captured: a sub-resource failed, not
+    the page, and force_get (no headless browser) avoids fetching it."""
+    named = [u.rstrip('.,;:)') for u in _URL.findall(error or '')]
+    return any(u != url for u in named)
 
 
 def utcnow():
@@ -155,7 +170,7 @@ def queue(sources, cursor, no_collect):
 
 def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
         no_collect=frozenset(), dry_run=False, now=utcnow, poll_every=5.0, log=print,
-        persist=lambda: None):
+        persist=lambda: None, locate=location):
     """One run. `persist` is called after every settled Source, so a killed job loses at most one."""
     stats = {'started': fmt(now()), 'queued': 0, 'from_cdx': 0, 'captured': 0, 'failed': 0,
              'pending': 0, 'submitted': 0, 'mode': 'capture' if wayback.can_capture else 'cdx-only',
@@ -174,6 +189,17 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
 
     open_jobs = []  # (key, src, job_id, monotonic submit time)
 
+    def redirected(url):
+        """Why SPN2's "same snapshot" refusal is final, or None when it is not about a redirect."""
+        hit = wayback.newest(url)
+        if not hit or not str(hit[1]).startswith('3'):
+            return None
+        to = locate(url)
+        where = 'to %s (HTTP %s)' % (to[1], to[0]) if to else '(the live URL no longer says where)'
+        return ('the URL redirects %s, and the newest Wayback capture of it (%s) is an HTTP %s redirect, so '
+                'there is no page at this URL to capture; a curator re-points the Source (06 S7.3)'
+                % (where, hit[0], hit[1]))
+
     def settle(key, src, outcome):
         r, sid = src.record, src.record['id']
         if outcome[0] == 'success':
@@ -188,6 +214,9 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
         ext, msg = outcome[1], outcome[2]
         if ext in BUDGET:
             raise StopRun('SPN2 %s: %s' % (ext, msg))
+        moved = SAME_SNAPSHOT in (msg or '') and redirected(r['url'])
+        if moved:
+            ext, msg = 'error:redirect', moved
         att = state['attempts'].setdefault(sid, {'count': 0})
         att['count'] += 1
         att['last_error'] = '%s %s' % (ext, msg)
@@ -238,7 +267,11 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
                 stats['stopped'] = 'budget: %d captures' % max_captures
                 break
             drain(in_flight - 1)
-            job = wayback.submit(r['url'])  # a StopRun here leaves the record untouched
+            plain = sub_resource((state['attempts'].get(r['id']) or {}).get('last_error'), r['url'])
+            if plain:
+                log('force_get %s  (the last attempt failed on a sub-resource)' % r['id'])
+            # a StopRun here leaves the record untouched
+            job = wayback.submit(r['url'], force_get=True) if plain else wayback.submit(r['url'])
             if isinstance(job, tuple) and job[1] in BUDGET:
                 raise StopRun('SPN2 %s: %s' % (job[1], job[2]))
             stats['submitted'] += 1
