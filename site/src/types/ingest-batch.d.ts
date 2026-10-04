@@ -12,7 +12,7 @@ export interface IngestBatch {
   counts: {
     /**
      * This interface was referenced by `undefined`'s JSON-Schema definition
-     * via the `patternProperty` "^[a-z_]+$".
+     * via the `patternProperty` "^[a-z][a-z0-9_]*$".
      */
     [k: string]: number;
   };

@@ -49,7 +49,7 @@ def test_a_first_fetch_records_the_etag_and_the_snapshot_handle():
     assert bundle.sha256 == hashlib.sha256(body).hexdigest() == META['body_sha256']
     assert bundle.bytes == len(body) == META['body_bytes']
     assert state['etags'][epoch.ZIP_URL] == bundle.etag == '"f1x7ure0e7a9000000000000000000a1"'
-    assert state['snapshot'] == {'name': 'Epoch AI benchmark data', 'url': epoch.ZIP_URL,
+    assert state['snapshot'] == {'name': 'Epoch AI -- Capabilities & Benchmarking', 'url': epoch.ZIP_URL,
                                  'retrieved_at': '2026-10-04T12:00:00Z', 'http_etag': bundle.etag,
                                  'artefact_sha256': bundle.sha256, 'artefact_bytes': bundle.bytes}
     assert state['last_status'] == 200
@@ -143,7 +143,7 @@ def test_a_cell_that_is_not_utf8_is_an_error_not_a_guess():
 def test_the_cli_runs_offline_and_writes_its_state(tmp_path, capsys):
     state = str(tmp_path / 'epoch.json')
     assert epoch.main(['--fixture', FIX, '--state', state]) == 0
-    assert '1423 bytes' in capsys.readouterr().out
+    assert '%d bytes' % META['body_bytes'] in capsys.readouterr().out
     assert epoch.main(['--fixture', FIX, '--state', state]) == 0
     out = capsys.readouterr().out
     assert '304' in out and 'nothing parsed' in out

@@ -245,7 +245,9 @@ class IngestBatch(Closed):
     source: BatchSource
     licence: BatchLicence
     resolver_snapshot_sha256: Sha256
-    counts: dict[Annotated[str, StringConstraints(pattern=r'^[a-z_]+$')], Annotated[int, Field(ge=0)]]
+    # Keys may carry digits after the first letter, so a per-file count can be named for its file
+    # (P3-S1-T04: Epoch's stems include frontiermath_tier_4 and otis_mock_aime_2024_2025).
+    counts: dict[Annotated[str, StringConstraints(pattern=r'^[a-z][a-z0-9_]*$')], Annotated[int, Field(ge=0)]]
     target_tree: Annotated[str, StringConstraints(pattern=r'^data/[a-z0-9_./-]+/$')]
     notes: str | None = None
 

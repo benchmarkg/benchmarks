@@ -34,6 +34,7 @@ import hashlib  # noqa: E402
 import io  # noqa: E402
 import json  # noqa: E402
 import posixpath  # noqa: E402
+import re  # noqa: E402
 import zipfile  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
@@ -44,8 +45,6 @@ VERSION = '0.1.0'
 ZIP_URL = 'https://epoch.ai/data/benchmark_data.zip'
 LICENCE = 'CC-BY-4.0'
 LICENCE_CLASS = 'permissive-attribution'
-ATTRIBUTION = ("Epoch AI, 'Capabilities & Benchmarking'. Published online at epoch.ai. "
-               "Retrieved from 'https://epoch.ai/benchmarks' [online resource].")
 METADATA_CSVS = frozenset({'benchmark_metadata.csv', 'model_metadata.csv'})
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STATE = os.path.join(ROOT, 'ingest', 'state', 'epoch.json')
@@ -107,8 +106,8 @@ class ZipBundle:
     def snapshot(self, retrieved_at: datetime | str, url: str = ZIP_URL) -> dict:
         """The IngestBatch `source` block (04 S9) that cites this copy."""
         at = retrieved_at if isinstance(retrieved_at, str) else iso(retrieved_at)
-        return {'name': 'Epoch AI benchmark data', 'url': url, 'retrieved_at': at, 'http_etag': self.etag,
-                'artefact_sha256': self.sha256, 'artefact_bytes': self.bytes}
+        return {'name': 'Epoch AI -- Capabilities & Benchmarking', 'url': url, 'retrieved_at': at,
+                'http_etag': self.etag, 'artefact_sha256': self.sha256, 'artefact_bytes': self.bytes}
 
 
 def fetch_bundle(transport, state: dict, now=utcnow) -> ZipBundle | None:
@@ -133,6 +132,32 @@ def fetch_bundle(transport, state: dict, now=utcnow) -> ZipBundle | None:
         etags.pop(ZIP_URL, None)        # no validator to send next time; the next run fetches in full
     state['snapshot'] = bundle.snapshot(at)
     return bundle
+
+
+# ---- what an IngestBatch says about this bundle (P3-S1-T04) ----------------------------------------
+
+_CITATION = re.compile(r'^#+\s*Citation\s*\n+```[^\n]*\n(.*?)\n```', re.M | re.S)
+
+
+def attribution(bundle: ZipBundle) -> str:
+    """The credit line the bundle's own README asks for, verbatim: its "Citation" block. 07 S2.2's
+    copy straightens the quotes; the README's are curly, and the README is the source. A README with no
+    citation block is an error, never a fallback to a remembered string."""
+    m = _CITATION.search(bundle.read_text('README.md'))
+    if not m or not m.group(1).strip():
+        raise BundleError('README.md has no Citation block to take the attribution from')
+    return m.group(1).strip()
+
+
+def counts(bundle: ZipBundle) -> dict[str, int]:
+    """An IngestBatch's counts for this bundle: what the metadata files hold, how many per-benchmark
+    CSVs there are, and each one's row count as rows_<file stem>."""
+    out = {'files_seen': len(bundle.names()), 'per_benchmark_csvs': len(bundle.per_benchmark_csvs()),
+           'benchmarks_seen': len(bundle.read_csv('benchmark_metadata.csv')[1]),
+           'model_rows_seen': len(bundle.read_csv('model_metadata.csv')[1])}
+    for stem in bundle.per_benchmark_csvs():
+        out['rows_' + stem] = len(bundle.read_csv(stem + '.csv')[1])
+    return out
 
 
 # ---- state (07 S4 layer 2) ------------------------------------------------------------------------
