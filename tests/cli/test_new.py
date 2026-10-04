@@ -201,8 +201,9 @@ def test_from_source_makes_the_homepage_and_scaffolds_the_source(root):
     src_path = root / 'data' / 'sources' / str(year) / 'src-fixture-y-homepage.yaml'
     src = YAML(typ='safe').load(src_path.read_text(encoding='utf-8'))
     assert src['url'] == 'https://example.org/fixture-y' and src['archive_status'] == 'pending'
-    # a non-DOI Source fails tier 1 until it is archived, and bench new says so rather than hiding it
-    assert 'archive_url' in result.output and 'bench archive src-fixture-y-homepage' in result.output
+    # a pending non-DOI Source passes tier 1 but owes an archive_url within seven days (06 S7.1), and
+    # bench new says so rather than hiding it
+    assert 'archive_url within seven days' in result.output and 'bench archive src-fixture-y-homepage' in result.output
 
 
 def test_bench_new_source(root):

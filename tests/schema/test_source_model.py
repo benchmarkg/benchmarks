@@ -1,7 +1,10 @@
 """Tests for schema/source.py (P0-S4-T04; 04-data-model.md S9).
 
 The verify: "the five quote-substrate fields exist, a non-DOI source with no archive_url is rejected,
-and the normaliser is idempotent over a fixture with mixed whitespace and HTML". The fixture is
+and the normaliser is idempotent over a fixture with mixed whitespace and HTML". 06 S7.1 softens the
+second clause: a non-DOI source with no archive_url is rejected unless it says why -- pending, failed
+with its reason, or not-required and unquoted -- and the seven-day deadline on pending is tier 3's
+(tests/schema/fixtures/semantic/non-doi-archive.yaml). The fixture is
 tests/schema/fixtures/mixed-whitespace.html (CRLF, tabs, a no-break space, a comment, entities,
 escaped markup, a decomposed accent, a bare `<`, and a <script> holding JSON).
 
@@ -59,8 +62,21 @@ def test_the_quote_substrate_fields_exist():
 
 
 def test_a_non_doi_source_with_no_archive_url_is_rejected():
+    bare = dict(archive_url=None, archive_captured=None, archive_digest=None)
     with pytest.raises(ValidationError, match='non-DOI source needs an archive_url'):
-        Source.model_validate(source(archive_url=None, archive_captured=None, archive_status='pending'))
+        Source.model_validate(source(**bare))                                    # archive_status ok
+    with pytest.raises(ValidationError, match='non-DOI source needs an archive_url'):
+        Source.model_validate(source(**bare, archive_status='not-required'))      # it carries a quote_extract
+
+
+def test_a_non_doi_source_with_no_archive_url_may_say_why():
+    # 06 S7.1: pending (the deadline is tier 3's), failed with its reason, or not-required and unquoted
+    bare = dict(archive_url=None, archive_captured=None, archive_digest=None)
+    Source.model_validate(source(**bare, archive_status='pending', archive_requested_at='2026-10-01T00:00:00Z'))
+    Source.model_validate(source(**bare, archive_status='failed', failure_reason='Save Page Now error:blocked-url'))
+    Source.model_validate(source(**bare, archive_status='not-required', quote_extract=None, content_sha256=None))
+    with pytest.raises(ValidationError, match='states its failure_reason'):
+        Source.model_validate(source(**bare, archive_status='failed'))
 
 
 def test_a_doi_source_needs_no_archive_url():
@@ -205,14 +221,12 @@ def test_archive_status_agrees_with_archive_url():
 
 # ---- the committed data -------------------------------------------------------------------------
 
-# Records in data/sources that do not validate today, each for a reason already reported. P0-S3-T04
-# is blocked on Wayback keys (no archive_url) and its records are in review. A new record failing
-# for any reason, or one of these failing for a new reason, fails this test.
+# Records in data/sources that do not validate today, each for a reason already reported (P0-S3-T04's
+# records are in review). A new record failing for any reason, or one of these failing for a new
+# reason, fails this test.
 KNOWN = {
-    'no archive_url (P0-S3-T04 blocked: Wayback SPN needs IA keys)': 'a non-DOI source needs an archive_url',
     'archive_status withheld (P0-S3-T04: personal-data ruling pending)': "Input should be 'ok', 'pending'",
 }
-ARCHIVE_ONLY = KNOWN['no archive_url (P0-S3-T04 blocked: Wayback SPN needs IA keys)']
 KNOWN_IDS = {
     'src-roboarena-api-transparency',  # withheld
 }
@@ -229,14 +243,7 @@ def test_committed_sources_fail_only_for_known_reasons():
             Source.model_validate(doc)
         except ValidationError as e:
             drafted = str(doc.get('drafted_by', '')).endswith('(P0-S3-T04)')
-            # P3-S4-T05's Epoch link records wait on the same IA keys, or failed with a recorded reason
-            # (06 S7.1's softened rule, which scripts/check_archive_coverage.py enforces), and for that only
-            awaiting = str(doc.get('drafted_by', '')).endswith('(P3-S4-T05)') and (
-                doc.get('archive_status') == 'pending'
-                or (doc.get('archive_status') == 'failed' and doc.get('failure_reason')))
             for err in e.errors():
-                if awaiting and ARCHIVE_ONLY in err['msg']:
-                    continue
                 if not (drafted or doc['id'] in KNOWN_IDS) or not any(k in err['msg'] for k in KNOWN.values()):
                     unexplained.append('%s: %s' % (os.path.basename(path), err['msg']))
     assert unexplained == []

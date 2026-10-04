@@ -181,10 +181,14 @@ class Source(BaseModel):
 
     @model_validator(mode='after')
     def _archive(self):
-        # 04 S12 tier 3: "every non-DOI Source has an archive_url" (and P0-S4-T04 step 3).
-        if self.doi is None and not self.archive_url:
-            raise ValueError('%s: a non-DOI source needs an archive_url (04 S12 tier 3); archive_status %s'
-                             % (self.id, self.archive_status))
+        # 04 S12 tier 3 as 06 S7.1 softens it: a non-DOI Source with no archive_url says why -- pending,
+        # failed with its reason, or not-required and never quoted (04 S9's paywall case). The seven-day
+        # deadline on pending needs a clock, so it is tier 3's (schema/archive_sla.py), not the model's.
+        if self.doi is None and not self.archive_url and not (
+                self.archive_status in ('pending', 'failed')
+                or (self.archive_status == 'not-required' and self.quote_extract is None)):
+            raise ValueError('%s: a non-DOI source needs an archive_url, or archive_status pending or failed '
+                             '(06 S7.1, 04 S12 tier 3); archive_status %s' % (self.id, self.archive_status))
         if self.archive_status == 'ok' and not (self.archive_url and self.archive_captured):
             raise ValueError('%s: archive_status ok needs archive_url and archive_captured' % self.id)
         if self.archive_url and self.archive_status in ('pending', 'failed'):

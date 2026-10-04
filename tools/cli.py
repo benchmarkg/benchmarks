@@ -94,8 +94,13 @@ def new_cmd(
                                                 % len(report.blocking)))
         for finding in report.blocking:
             typer.echo('  ' + str(finding))
-        if f.path.startswith('data/sources/') and report.blocking:
-            typer.echo('  (a non-DOI Source passes tier 1 once it is archived: `bench archive %s`)' % f.path.rsplit('/', 1)[1][:-5])
+        if f.path.startswith('data/sources/'):
+            from schema.taxonomy import read_yaml
+            rec = read_yaml(os.path.join(ROOT, f.path))
+            if not rec.get('doi') and not rec.get('archive_url'):
+                # 06 S7.1: pending passes tier 1, and tier 3 blocks it seven days after the request
+                typer.echo('  (a non-DOI Source needs an archive_url within seven days (06 S7.1): `bench archive %s`)'
+                           % f.path.rsplit('/', 1)[1][:-5])
     typer.echo('next: replace every TODO and STUB VALUE from a cited source, then remove the %s tag; '
                '`bench validate %s` lists what remains' % (new.STUB_TAG, files[0].path))
 
