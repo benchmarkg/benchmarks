@@ -78,11 +78,11 @@ import urllib.error  # noqa: E402
 import urllib.parse  # noqa: E402
 import urllib.request  # noqa: E402
 from collections import Counter  # noqa: E402
-from dataclasses import dataclass, field  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 from email.utils import parsedate_to_datetime  # noqa: E402
-from typing import Any, Sequence  # noqa: E402
 
+from ingest.adapters.base import Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
 from ingest.http import backoff, ratelimit  # noqa: E402
 from ingest.http.backoff import Response  # noqa: E402
 
@@ -122,32 +122,6 @@ LISTINGS = (
     Listing('datasets-benchmark-official', API + '/datasets?filter=benchmark:official', 'benchmark', 'dataset',
             DATASET_KEYS, 'https://huggingface.co/datasets/'),
 )
-
-
-@dataclass(frozen=True)
-class Candidate:
-    """07 S1.1. One thing the source claims exists; no payload fetched yet."""
-    source_key: str
-    kind: str
-    url: str | None
-    hint: dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class Payload:
-    """07 S1.1. `doc` is the parsed body, so normalise() never re-parses."""
-    candidate: Candidate
-    body: bytes
-    content_type: str
-    http_status: int
-    fetched_at: datetime
-    etag: str | None
-    last_modified: str | None
-    sha256_normalised: str
-    from_cache: bool
-    headers: Sequence[str] | None = None
-    rows: Sequence[dict[str, str]] | None = None
-    doc: Any | None = None
 
 
 class SchemaDrift(Exception):
