@@ -8,6 +8,7 @@
     uv run bench build [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
     uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
+    uv run bench ingest <adapter> --dry-run [--limit N] [--no-network] [--allow-bulk] [--fixture PATH]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
@@ -16,7 +17,7 @@ command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; the minimal
 build, without 05 S3's --derived, --embed and --atlas, which arrive with their stages), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
-`build` also regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
+`ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface). `build` also regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
 (P2-S2-T01, tools/build/tokens.py).
 """
 from __future__ import annotations
@@ -40,6 +41,10 @@ app = typer.Typer(no_args_is_help=True, add_completion=False,
                   help='The benchmark catalogue toolchain (05 S3).')
 schema_app = typer.Typer(no_args_is_help=True, help='The canonical schema and its generated artifacts.')
 app.add_typer(schema_app, name='schema')
+
+from tools.bench.cmd_ingest import ingest as _ingest  # noqa: E402
+
+app.command('ingest')(_ingest)
 
 
 @schema_app.callback()
