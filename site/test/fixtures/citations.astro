@@ -1,0 +1,43 @@
+---
+// site/test/fixtures/citations.astro -- P4-S5-T06. Not a page of the site: astro.config.mjs injects it only
+// when UAIBI_SITE_FIXTURES names it, and tests/test_check_single_source.py builds it into a temporary
+// directory and runs scripts/check_single_source.py over the result.
+//
+// The six figures are the adapter's own output over tests/fixtures/citations (citation-figures.json, written
+// by semantic_scholar.run on 2026-10-04's recorded responses): three disagree by more than 2x, three are
+// single-source. Two more are made up here for the cases those six lack.
+import CitationCount from '../../src/components/CitationCount.astro';
+import type { CitationFigure } from '../../src/lib/citations';
+import recorded from './citation-figures.json';
+
+const figures = recorded as CitationFigure[];
+const base = { sources: [], observed_on: '2026-10-04', identity_conflicts: [] };
+const agreeing: CitationFigure = {
+  ...base, arxiv: '0000.00001', counts: { semantic_scholar: 120, openalex: 100 },
+  records: { semantic_scholar: 'p', openalex: 'W1' }, corroborating: ['semantic_scholar', 'openalex'],
+  value: 120, single_source: false, ratio: 1.2, disagreement: false,
+};
+const openalexOnly: CitationFigure = {
+  ...base, arxiv: '0000.00002', counts: { semantic_scholar: null, openalex: 40 },
+  records: { semantic_scholar: null, openalex: 'W2' }, corroborating: ['openalex'],
+  value: 40, single_source: true, ratio: null, disagreement: false,
+};
+const headline = figures.find((f) => f.arxiv === '1910.10683')!;
+const mode = process.env.UAIBI_SITE_FIXTURES;
+---
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Citation figures (test fixture)</title></head>
+  <body>
+    <main>
+      {mode === 'citations-openalex-headline'
+        ? <h1>Most cited: <CitationCount figure={openalexOnly} headline /></h1>
+        : <h1>T5: <CitationCount figure={headline} headline /></h1>}
+      <ul>
+        {figures.map((f) => <li>arXiv {f.arxiv}: <CitationCount figure={f} /></li>)}
+        <li>agreeing: <CitationCount figure={agreeing} /></li>
+        <li>OpenAlex only: <CitationCount figure={openalexOnly} /></li>
+      </ul>
+    </main>
+  </body>
+</html>

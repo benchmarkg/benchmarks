@@ -112,6 +112,15 @@ def test_benchmark_added_is_dated_by_the_record_not_the_commit(repo):
     assert e['published_on'] == '2026-03-01T10:00:00Z'
 
 
+def test_a_file_under_data_that_is_not_a_record_is_never_parsed(repo):
+    # data/disputes/README.md (e8bf092) is Markdown whose prose is not YAML; parsing it broke every
+    # `astro build` from 2026-09-25 until P4-S5-T06 found it
+    write(repo, 'data/disputes/README.md', "# Disputes\n\nA dispute renders with both positions visible: the claim's figure with its source: the dispute's.\n")
+    write(repo, BENCH, BENCH_V1)
+    commit(repo, 'add demo-bench and a README', '2026-03-01T10:00:00Z')
+    assert [e['type'] for e in events(repo)] == ['benchmark-added']
+
+
 def test_a_cosmetic_diff_produces_no_material_update_event(repo):
     write(repo, BENCH, BENCH_V1)
     commit(repo, 'add', '2026-03-01T10:00:00Z')

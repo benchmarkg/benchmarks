@@ -1,0 +1,48 @@
+---
+// site/src/components/SingleSourceMarker.astro -- P4-S5-T06 (12 S6; 10 "Design stance" rule 1).
+//
+// The visible "unverified, single source" marker. CitationCount.astro attaches it to every figure only one
+// aggregator supports, and to every figure whose two aggregators are more than 2x apart; nothing else should
+// need to use it directly. It carries meaning in its text and its glyph, never in colour alone (10, "Design
+// stance"), and names the aggregator(s) behind the figure, so the provenance is at the point of the number.
+// scripts/check_single_source.py looks for data-marker="unverified" inside every such figure.
+import { AGGREGATOR_NAMES, type Aggregator, type MarkerReason } from '../lib/citations';
+
+interface Props {
+  reason: MarkerReason;
+  aggregators: Aggregator[];
+}
+
+const { reason, aggregators } = Astro.props;
+const names = aggregators.map((a) => AGGREGATOR_NAMES[a]).join(' and ');
+const label = reason === 'single-source' ? 'unverified, single source' : 'unverified, sources disagree';
+const detail = reason === 'single-source'
+  ? `Only ${names} supports this count; no second aggregator corroborates it.`
+  : `${names} report counts more than 2x apart; neither is taken as correct.`;
+---
+<span class="unverified" data-marker="unverified" data-reason={reason} title={detail}><span class="glyph" aria-hidden="true">◇</span> {label}<span class="visually-hidden">: {detail}</span></span>
+
+<style>
+  .unverified {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25em;
+    padding: 0 0.4em;
+    border: 1px dashed var(--c-caution, currentColor);
+    border-radius: 2px;
+    background: var(--c-caution-bg, transparent);
+    font-size: 0.8125em;
+    white-space: nowrap;
+  }
+  .glyph {
+    font-weight: 700;
+  }
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

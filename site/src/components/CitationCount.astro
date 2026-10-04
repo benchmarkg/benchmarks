@@ -1,0 +1,39 @@
+---
+// site/src/components/CitationCount.astro -- P4-S5-T06 (12 S6, 06 S3.10-3.11).
+//
+// The one way a citation count renders. It writes the figure's provenance as data-* attributes and attaches
+// SingleSourceMarker.astro itself whenever markerReason() says the figure is unverified, so a page cannot
+// render a single-aggregator count without the marker by forgetting it. With `headline`, it refuses at build
+// time a figure whose value is OpenAlex's (06 S3.10: never a headline influence number).
+// scripts/check_single_source.py reads these attributes back out of the built site.
+import SingleSourceMarker from './SingleSourceMarker.astro';
+import { formatCount, markerReason, mayHeadline, valueSource, type CitationFigure } from '../lib/citations';
+
+interface Props {
+  figure: CitationFigure;
+  headline?: boolean;
+}
+
+const { figure, headline = false } = Astro.props;
+const reason = markerReason(figure);
+const source = valueSource(figure);
+if (headline && !mayHeadline(figure)) {
+  throw new Error(`arXiv ${figure.arxiv}: an OpenAlex citation count cannot be a headline number (06 S3.10)`);
+}
+---
+<span
+  class="citation-count"
+  data-citation-figure={figure.arxiv}
+  data-single-source={String(figure.single_source)}
+  data-disagreement={String(figure.disagreement)}
+  data-value-source={source}
+  data-aggregators={figure.corroborating.join(' ')}
+  data-observed-on={figure.observed_on}
+  data-headline={headline ? 'true' : undefined}
+><span class="n">{formatCount(figure.value)}</span> citations{reason && <> <SingleSourceMarker reason={reason} aggregators={figure.corroborating} /></>}</span>
+
+<style>
+  .n {
+    font-variant-numeric: tabular-nums;
+  }
+</style>

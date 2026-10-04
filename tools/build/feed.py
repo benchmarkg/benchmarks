@@ -267,13 +267,13 @@ def derive(repo=ROOT):
             attribute(events[-1], rec, index)
 
         for status, old_path, new_path in changes(repo, parent, sha):
-            if status == 'D':
+            b, c, s = BENCHMARK.match(new_path), CLAIM.match(new_path), SOURCE.match(new_path)
+            if status == 'D' or not (b or c or s):      # only records are events: never parse a README as YAML
                 continue
             new = load(repo, sha, new_path)
             old = load(repo, parent, old_path) if status in 'MR' else None
             if new is None:
                 continue
-            b, c, s = BENCHMARK.match(new_path), CLAIM.match(new_path), SOURCE.match(new_path)
             if b:
                 entity = new.get('id') or b.group('id')
                 if status == 'A':
