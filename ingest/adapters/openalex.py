@@ -39,7 +39,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ingest.adapters.base import Draft, Unresolved
-from ingest.http.backoff import Response, retry
+from ingest.http.backoff import Response, SoftFail, retry
 from ingest.resolve import normalise
 
 NAME = 'openalex'
@@ -51,6 +51,7 @@ MIN_INTERVAL = 0.2          # seconds between requests: polite, and far inside a
 PER_PAGE = 5
 # Only the fields this adapter reads: the same 10 credits, a fraction of the bytes
 SELECT = 'id,display_name,display_name_alternatives,display_name_acronyms,ror,ids,country_code'
+WORK_SELECT = 'id,doi,display_name,cited_by_count'   # what the citation cross-check reads (P4-S2-T10)
 CHANGE_CLASSES = ('new', 'field-change', 'result-change', 'gone', 'metrics-only', 'no-change')
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _COUNTRY_TAIL = re.compile(r'\s*\([^()]*\)\s*$')
@@ -86,6 +87,18 @@ def institutions_url(name: str) -> str:
     """The one list call per organisation (10 credits): institutions whose display name matches."""
     return '%s/institutions?%s' % (API, urllib.parse.urlencode(
         {'filter': 'display_name.search:%s' % name.replace(',', ' '), 'per-page': PER_PAGE, 'select': SELECT}))
+
+
+def work_url(doi: str) -> str:
+    """A work by DOI: a singleton lookup, 0 credits (measured 2026-10-04). Its title is read only to catch a
+    record that is not the paper (W4387561453), and its count only beside a second aggregator's (06 S3.10)."""
+    return '%s/works/doi:%s?%s' % (API, doi, urllib.parse.urlencode({'select': WORK_SELECT}))
+
+
+def allowance(r) -> dict:
+    """The X-RateLimit-* headers of a response: the meter, recorded on every run."""
+    pairs = r.headers.items() if hasattr(r.headers, 'items') else r.headers
+    return {k: v for k, v in pairs if k.lower().startswith('x-ratelimit')}
 
 
 def candidates(root: str = ROOT):
@@ -171,12 +184,18 @@ def run(transport, *, limit: int | None = None, root: str = ROOT, now=lambda: da
         if limit is not None and i >= limit:
             break
         report['candidates_seen'] += 1
-        r = transport.get(institutions_url(name), {})  # get-default: an HTTP GET with request headers, not a lookup
-        report['allowance'] = {k: v for k, v in (r.headers.items() if hasattr(r.headers, 'items') else r.headers)
-                               if k.lower().startswith('x-ratelimit')}
+        try:
+            r = transport.get(institutions_url(name), {})  # get-default: an HTTP GET with request headers, not a lookup
+        except SoftFail as e:                              # the retry layer gave up on a 429 or 5xx
+            r = e.response
+        report['allowance'] = allowance(r)
         if r.status == 429:
             report['status'] = 'soft-fail'
             report['errors'].append('429 from OpenAlex: the daily budget is spent; the next run resumes (06 S3.10)')
+            break
+        if 500 <= r.status <= 599:
+            report['status'] = 'soft-fail'
+            report['errors'].append('HTTP %d from OpenAlex after retries; the next run resumes' % r.status)
             break
         if r.status != 200:
             report['status'] = 'hard-fail'
