@@ -19,6 +19,13 @@
 Neither key is needed for conditions (1) and (3), which read this repository, or for DataCite,
 which needs no key.
 
+**The OpenAlex allowance, measured with the key on 2026-10-04** (P4-S2-T06; 06 §3.10 had three
+conflicting figures): `X-RateLimit-Limit` 10,000 credits a day, `X-RateLimit-Limit-USD` 1. A singleton
+lookup by id cost 0; a filtered list call and a search call each cost 10 credits ($0.001), so search is
+not dearer than a list. That is about 1,000 list or search calls a day, beside free id lookups. Every
+`bench ingest openalex` run reports the `X-RateLimit-*` headers it last saw, so a change in the meter
+shows up on the next run.
+
 The task's verification names the repository `<org>/uaibi`; the repository is `benchmarkg/benchmarks`:
 
 ```
