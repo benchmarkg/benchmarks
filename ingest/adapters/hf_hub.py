@@ -84,6 +84,8 @@ from email.utils import parsedate_to_datetime  # noqa: E402
 
 from ingest.adapters.base import Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
 from ingest.http import backoff, ratelimit  # noqa: E402
+from ingest.http.fixture import (FixtureMiss, FixtureTransport, NetworkForbidden, NoNetwork,  # noqa: E402,F401
+                                 header, header_values)
 from ingest.http.backoff import Response  # noqa: E402
 
 NAME = 'hf-hub'
@@ -128,29 +130,11 @@ class SchemaDrift(Exception):
     """06 S3.2 "When it breaks": zero rows, or a record missing a mapped key. A hard fail."""
 
 
-class FixtureMiss(Exception):
-    """The fixture set holds no response for this URL."""
-
-
-class NetworkForbidden(Exception):
-    """--no-network, and something reached for the network."""
-
-
 class Capped(Exception):
     """The run's request budget is spent."""
 
 
 # ---- headers ----------------------------------------------------------------------------------
-
-def header_values(headers, name):
-    items = headers.items() if hasattr(headers, 'items') else headers
-    return [v for k, v in items if k.lower() == name.lower()]
-
-
-def header(headers, name):
-    vals = header_values(headers, name)
-    return vals[0] if vals else None
-
 
 _PARAM = re.compile(r';\s*([^\s=;,]+)\s*(?:=\s*("([^"]*)"|[^;,]*))?')
 
@@ -169,16 +153,6 @@ def next_link(headers, base):
                 if 'next' in rel.lower().split():
                     return urllib.parse.urljoin(base, m.group(1).strip())
     return None
-
-
-def etag_matches(if_none_match, etag):
-    """RFC 9110 S13.1.2: If-None-Match uses the weak comparison -- W/ is ignored on both sides."""
-    if not if_none_match or not etag:
-        return False
-    if if_none_match.strip() == '*':
-        return True
-    weak = lambda t: t.strip()[2:] if t.strip().startswith('W/') else t.strip()  # noqa: E731
-    return any(weak(t) == weak(etag) for t in re.findall(r'(?:W/)?"[^"]*"', if_none_match))
 
 
 def response_date(headers, fallback):
@@ -205,37 +179,6 @@ def sha256_normalised(doc):
 
 
 # ---- transports -------------------------------------------------------------------------------
-
-class FixtureTransport:
-    """Recorded responses, keyed by the URL each `.headers.json` names. No network code at all."""
-
-    def __init__(self, directory):
-        self.index = {}
-        for n in sorted(os.listdir(directory)):
-            if n.endswith('.headers.json'):
-                with open(os.path.join(directory, n), encoding='utf-8') as f:
-                    meta = json.load(f)
-                self.index[meta['url']] = (os.path.join(directory, n[:-len('.headers.json')]), meta)
-        if not self.index:
-            raise FileNotFoundError('no <name>.headers.json fixtures in %s' % directory)
-        self.requests = []
-
-    def get(self, url, headers):
-        self.requests.append((url, dict(headers)))
-        if url not in self.index:
-            raise FixtureMiss(url)
-        path, meta = self.index[url]
-        if etag_matches(header(headers, 'If-None-Match'), header(meta['headers'], 'ETag')):
-            kept = [(k, v) for k, v in meta['headers'] if k.lower() not in ('content-length', 'content-type')]
-            return Response(304, kept, b'')
-        with open(path, 'rb') as f:
-            return Response(meta['status'], meta['headers'], f.read())
-
-
-class NoNetwork:
-    def get(self, url, headers):
-        raise NetworkForbidden(url)
-
 
 class NetworkTransport:
     """GET over urllib, under 07 S4.2's retry policy and the Hub's own RateLimit headers."""
