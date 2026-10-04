@@ -1,0 +1,357 @@
+# data/benchmarks/games-planning/kaggle-game-arena.yaml
+#
+# P0-S8-T05. Scaffolded by `bench new benchmark` on 2026-10-04, then filled from the Game Arena
+# technical report (arXiv 2609.31473v1, 2026-09-25, CC BY 4.0). Every number carries a quote the
+# quote-substring validator checks against that Source's committed extract. The report carries a DOI,
+# so nothing here waits on a Wayback capture; Kaggle's own pages render their standings client-side
+# and were never a quotable source (the task's 2026-09-27 block).
+#
+# What this entry is here to stress (14-roadmap Phase 0; 02 S12.5): a rating that is unbounded and
+# pool-dependent. A model's number moves when a different model joins the pool, so a result means
+# nothing without the pool's identity and snapshot date: comparability.rating_pool_required, the
+# RatingPool data/rating-pools/pool-kaggle-game-arena-chess-2026-09.yaml (eleven members, the
+# lowest-rated anchored at 0), and the metric game-arena-elo (unbounded, requires_pool, no headroom).
+#
+# Premises in 02 S12.5 that did not survive the sources, each recorded where it bites:
+#   1. evaluation_method pairwise-preference-elo. Its exclusion test: "Do NOT tag this if outcomes
+#      come from direct play rather than preference votes". Chess here is direct play; tournament-play
+#      alone carries the pool rule.
+#   2. designed_for_subjects reasoning-model, instruction-tuned-model and agent-scaffold. Every model
+#      runs inside the maintainers' own harness at provider defaults: model-in-benchmark-harness.
+#   3. capability search-exploration, constraint-satisfaction and long-horizon-execution. Each fails
+#      its own inclusion test (capability_considered_and_rejected).
+#   4. activity accepting-submissions ("invitational roster"). The maintainers choose the roster; no
+#      source read here describes a route for anyone else to enter.
+#   5. reproducibility fully-automatable with blocker live-world-state. Tier 3 forbids that blocker
+#      beside fully-automatable, as ForecastBench found; the moving pool is in the tier's note.
+#   6. maintenance_status actively-maintained is derived, never hand-set; it is left to the build.
+
+id: kaggle-game-arena
+name: Kaggle Game Arena — Chess
+aliases:
+  - Kaggle Game Arena
+  - Game Arena
+  - 'Game Arena: Strategic LLM Evaluation in Competitive Environments'
+aliases_note: >
+  Game Arena is a platform with three pilot games: Chess, Poker and Werewolf. This entry is its Chess
+  benchmark, in both of the modes the report scores, Chess Text and Chess Opening (subsets). Poker
+  (BB/100) and Werewolf (a game-theoretic rating) have their own metrics and are not catalogued here.
+tagline: Language models play each other at chess, all against all, and are rated by the results.
+description: >
+  A chess benchmark for language models from Google DeepMind and Kaggle. Every pair of models plays 40
+  games, 20 with each colour, under FIDE rules; each turn the model receives the position and the move
+  history as text and must return one legal move, with three retries before an illegal move loses the
+  game. Ratings are Elo-scaled Bradley-Terry fits to all the pairwise results, anchored so the
+  lowest-rated model is 0, so a rating only means something inside its pool at its date. A second
+  mode, Chess Opening, starts every game from one of 20 popular openings. Models are reached through
+  public APIs at their providers' default settings.
+self_description:
+  source: src-game-arena-arxiv-html
+  quote: We introduce Kaggle Game Arena, an open and ever-expanding platform to evaluate large
+    language models (LLMs) through competitive games.
+external_ids:
+  arxiv: '2609.31473'
+paper:
+  title: 'Game Arena: Strategic LLM Evaluation in Competitive Environments'
+  arxiv: '2609.31473'
+  version_read: v1
+  source: src-game-arena-arxiv-html
+released: null
+released_note: The report (2026-09-25) is not the platform's launch, and no source read here dates
+  the launch, so this is left null rather than set to the report's date.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: games-planning/board-games
+  secondary:
+    - reasoning-general/planning
+domain_basis:
+  reason: Chess is a perfect-information board game, and the report names planning as the game's
+    primary demand. 02 S12.5 notes that reasoning-general/planning beside capability planning is one
+    of the tautological-diagonal cells (02 S4.1), excluded from gap ranking rather than counted.
+  source: src-game-arena-arxiv-html
+  quote: Primary cognitive demand Planning, search
+capability:
+  - planning
+capability_basis:
+  planning:
+    reason: >
+      planning's IN test covers an interactive episode against an explicit objective, such as a game,
+      where the executed action sequence is the plan and its outcome scores it. A game of chess is
+      that episode, and a model's rating is fitted to the outcomes of its games.
+    source: src-game-arena-arxiv-html
+    quote: For Chess, model strength is quantified via Elo-style ratings derived from the
+      Bradley–Terry model
+capability_considered_and_rejected:
+  # 02 S12.5 tags planning, search-exploration, constraint-satisfaction and long-horizon-execution.
+  - term: search-exploration
+    reason: Its IN test rewards how an option space was traversed -- coverage, sample count,
+      discovery under a budget. The rating scores who won; nothing scores how a model searched.
+  - term: constraint-satisfaction
+    reason: Legality is enforced and an illegal move retried, but legality is a precondition of
+      play, not the score, and the report does not call the task constraint satisfaction (the IN
+      test's tie break is the source's own claim).
+  - term: long-horizon-execution
+    reason: The definition needs a system that must "retain and act on state it generated itself
+      earlier in the episode". The harness hands the model the whole position and move history every
+      turn (task.input), so nothing has to be retained.
+
+evaluation_method:
+  - tournament-play
+evaluation_method_basis:
+  reason: Models play each other directly in a full round robin, and the result is a rating derived
+    from those games -- tournament-play's IN test.
+  source: src-game-arena-arxiv-html
+  quote: Each pair of models plays 40 games while maintaining color balance (20 games with white
+    pieces and 20 games with black pieces)
+evaluation_method_considered_and_rejected:
+  - term: pairwise-preference-elo
+    reason: 02 S12.5 tags it. Its exclusion test -- "Do NOT tag this if outcomes come from direct
+      play rather than preference votes". The rating is Elo-scaled, but the outcomes are won and
+      lost games, not votes. tournament-play carries the same rating-pool requirement (tier 3,
+      rating-pool-required).
+
+designed_for_subjects:
+  - model-in-benchmark-harness
+designed_for_subjects_basis: >
+  Every model is driven by the maintainers' own harness -- position in, one move out, three retries --
+  applied identically to every entrant, and the rating names only the model: the term's IN test. The
+  report's model notes: public API endpoints, default sampling and generation limits, no tools.
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: 02 S12.5 tags it. The term needs a reasoning-effort setting that is a condition of the
+      result; every model runs at its provider's defaults, so no effort setting is varied or
+      recorded. Reasoning models are in the pool (o3, Grok 4.1 Fast Reasoning), which is not the
+      test.
+  - term: instruction-tuned-model
+    reason: 02 S12.5 tags it. Its exclusion test sends a model a harness drives across turns to
+      model-in-benchmark-harness.
+  - term: agent-scaffold
+    reason: 02 S12.5 tags it. Its exclusion test -- the loop is "the benchmark's own driver applied
+      identically to all entrants".
+
+lifecycle: active
+lifecycle_basis:
+  reason: The report (2026-09-25) presents full round-robin results and describes a platform built
+    for continuous evaluation as models arrive.
+  source: src-game-arena-arxiv-html
+  quote: The dynamic nature of Game Arena mitigates performance saturation and enables continuous
+    benchmarking as the model landscape evolves.
+activity: no-submission-channel
+activity_basis:
+  reason: >
+    02 S12.5 says accepting-submissions ("invitational roster"), which concedes the point: the
+    maintainers choose which models play, and no source read here describes a route by which anyone
+    else enters a model. no-submission-channel's IN test names "a maintainer-run benchmark that nobody
+    else can enter". A reviewer who knows of an entry route on Kaggle's site should change this.
+  source: src-game-arena-arxiv-html
+  quote: we limit model selection to the top 10 models from five frontier labs (as of February 2026)
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Gemini 3 Pro Preview
+    source: src-game-arena-arxiv-html
+    observed_on: 2026-10-04
+    quote: Gemini 3 Pro Preview (Game Arena Elo 1325)
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The game's outcome under FIDE rules, as OpenSpiel tracks it -- a win, loss
+  or draw, not a reference answer.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The harness and the full game records are released, and the models are public APIs. A
+    third party can run a fresh tournament; it cannot recreate the report's pool once a member is
+    retired.
+  source: src-game-arena-arxiv-html
+  quote: We release the harness and datasets containing full game trajectories to support
+    reproducible benchmarking
+
+task:
+  exists: true
+  input:
+    - the current position in Forsyth-Edwards Notation and the full move history in PGN
+  output: One move in standard algebraic notation; an illegal move is refused, with no hint, and may
+    be retried three times before the game is lost.
+  scoring: Wins, draws (0.5) and losses across the full round robin, fitted with a Bradley-Terry
+    model and reported as Elo-scaled ratings with the lowest-rated model at 0.
+  tests_hidden_from_system: false
+  source: src-game-arena-arxiv-html
+  quote: In each turn, the model receives the current position in Forsyth-Edwards Notation (FEN) and
+    a complete move history in PGN format, and the model is required to return a single valid move
+    in standard algebraic notation (SAN).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: generated-on-demand
+  access_basis:
+    reason: The scored items are games, produced afresh in every match by models playing each other
+      in a game engine -- the term's own example. There is no item set to obtain.
+    source: src-game-arena-arxiv-html
+    quote: validates moves, updates the state, and determines termination conditions
+  refresh: rolling-live
+  refresh_basis:
+    reason: The pool changes as models arrive and retire, with no version label a claim could cite,
+      so a rating needs its pool and date to be read.
+    source: src-game-arena-arxiv-html
+    quote: new models are introduced frequently, while older models may be retired or become
+      unavailable
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: >
+    The positions arise from play in a rule engine (OpenSpiel), with no learned model generating them;
+    the entrants' moves are the evaluation, not its data. Chess Opening's 20 starting positions are
+    the most popular two-move openings in the Lichess database.
+  contamination_risk: low
+  contamination_risk_note: >
+    Games are played, not retrieved: a model cannot have trained on a game that had not been played.
+    The Chess Opening variant starts from public openings, which shapes the first moves only; the
+    report itself observes that the models all favour one opening in Chess Text and introduced the
+    variant to test adaptability. Recorded, not escalated.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_basis:
+    reason: A Bradley-Terry rating anchored to the weakest model in the pool has no best end. The
+      report's Stockfish calibration maps ratings onto an engine scale approximately, and the report
+      says it is less reliable outside the engine's range; it is not an anchor scores are read
+      against.
+    source: src-game-arena-arxiv-html
+    quote: Since Elo is identifiable only up to an additive constant, we anchor the scale by setting
+      the lowest-rated model to 0.
+  size: null
+  size_note: >
+    No fixed set: every pair of models plays 40 games. The report gives no total game count for chess,
+    and none is computed here (05 S4: never estimate).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Google DeepMind, Kaggle and the Google Cloud Office of the CTO
+  maintainer_basis:
+    reason: The report's authorship section names the three; all are part of Google. Google DeepMind
+      built the tournament infrastructure and Kaggle hosts the platform.
+    source: src-game-arena-arxiv-html
+    quote: was developed as a collaboration between Google DeepMind (GDM), Kaggle, and the Google
+      Cloud Office of the CTO (OCTO)
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-run
+    - live-arena
+  submission_process_note: >
+    maintainer-run: the maintainers decide which models play, run every game themselves and publish
+    the ratings. live-arena, 02 S12.5's term: results emerge from head-to-head play among the entrants
+    rather than from a fixed scored set.
+  submission_process_source: src-game-arena-arxiv-html
+  submission_process_quote: we limit model selection to the top 10 models from five frontier labs
+    (as of February 2026)
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-game-arena-arxiv-html
+      quote: Gemini 3 Pro Preview and Gemini 3 Flash Preview (Google)
+  independence_flags_note: >
+    Google DeepMind builds the tournament and Google's Gemini models play in it; in the report's pool
+    they are the top two. Nothing read here suggests the games were run unevenly -- every pair plays
+    the same 40 games under the same harness -- but the flag is a structural fact, not an accusation.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Every model is called through its provider's public API; the game engine needs only a
+      CPU.
+    source: src-game-arena-arxiv-html
+    quote: All models are accessed through public API endpoints using each provider’s default
+      sampling settings and generation limits, without fine-tuning, tool augmentation, or retrieval.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: >
+    A fresh tournament is automatable end to end with the released harness. The report's own pool is
+    not repeatable once a member model is retired -- a moving rating pool is `live-world-state` by
+    that term's IN test -- but tier 3 forbids that blocker beside fully-automatable (02 S12.5 sets
+    both; curation.notes).
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: game_arena (github.com/google-deepmind/game_arena), on OpenSpiel
+  harness_source: src-game-arena-arxiv-html
+  harness_quote: github.com/google-deepmind/game_arena
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # No profile resolves: model-in-benchmark-harness is in no profile's applies_to, and tournament-play
+  # pairs only with surrogate, reasoning, classical and RL subjects (curation.notes, finding 4). These
+  # are the conditions the report holds fixed and a rerun could change: the harness and its retry
+  # allowance ("the allotted limit of three retries"), the model snapshot, and the reasoning effort,
+  # which the report leaves at each provider's default.
+  # The scale is anchored to the pool's weakest member and fitted to the pool's games ("we anchor the
+  # scale by setting the lowest-rated model to 0", src-game-arena-arxiv-html), so a rating from another
+  # pool, or this pool at another date, is not on the same axis. Comparability has no basis field.
+  material_extra:
+    - harness
+    - retries_allowed
+    - provider_snapshot
+    - reasoning_effort
+  rating_pool_required: true
+aggregation_policy: none-by-design
+aggregation_policy_note: The report gives each mode its own rating and plans, but has not built, a
+  consolidated rating across games; Chess Text and Chess Opening are rated separately.
+headline_metric: game-arena-elo
+
+homepage: https://www.kaggle.com/game-arena
+maintainer_url: https://github.com/google-deepmind/game_arena
+
+subsets:
+  - id: kaggle-game-arena#chess-text
+    label: Chess Text
+    scored_separately: true
+    notes: Free-form games from the standard starting position. The report's headline chess ratings.
+  - id: kaggle-game-arena#chess-opening
+    label: Chess Opening
+    scored_separately: true
+    notes: Each game starts from one of the 20 most popular two-move openings in the Lichess
+      database; everything else is as Chess Text. Rated separately, over the same eleven models.
+metrics:
+  - game-arena-elo
+
+tags:
+  - rating-pool
+  - round-robin
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P0-S8-T05)
+  added_on: 2026-10-04
+  last_verified: 2026-10-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-game-arena-arxiv-html
+  sources_note: >
+    One Source, the technical report's HTML rendering (CC BY 4.0, a DOI, so not archived). Its extract
+    keeps windows around the cited passages, because the full text is over 04 S9's 64 KB cap. Kaggle's
+    leaderboard pages render client-side and were not read.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - activity no-submission-channel against 02 S12.5's accepting-submissions: whether Kaggle offers
+      labs a route to enter a model.
+    - The RatingPool's snapshot_date is the report's date (2026-09-25); the report says the models
+      were chosen "as of February 2026" and does not date the games.
+    - The eleven member Systems are promoted from P3-S3-T04's Epoch stubs, thinly (04 S7), each
+      citing this report for its membership.
+
+    Schema findings:
+    1. live-world-state beside fully-automatable: the not-independently-reproducible exclusion test
+       says to tag the tier a fresh run needs and add live-world-state, and tier 3's fully-automatable
+       rule forbids exactly that. ForecastBench hit the same contradiction.
+    2. A RatingPool has no subset: Chess Text and Chess Opening are rated separately over the same
+       eleven models, so one pool record serves both, and a claim's subset says which ratings it holds.
+    3. The ratings are Elo-scaled Bradley-Terry fits; rating_system takes one value and is recorded
+       as bradley-terry, with the Elo scaling in the metric's definition.
+    4. No comparability profile resolves for tournament-play x model-in-benchmark-harness: the second
+       term is in no profile's applies_to at all, so its material set is subset_used alone. Four
+       fields are added through comparability.material_extra.
