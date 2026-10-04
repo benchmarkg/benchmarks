@@ -19,7 +19,10 @@ ETAG = '"f1x7ure0e7a9000000000000000000a1"'
 STAMP = (2026, 9, 16, 0, 0, 0)
 
 FILES = [
-    ('README.md', '## Licensing\nSynthetic test data in the layout of Epoch AI\'s bundle; no real results.\n'),
+    # The citation block is where Epoch's README carries its attribution text (P3-S1-T04 copies it verbatim)
+    ('README.md', '## Licensing\nSynthetic test data in the layout of Epoch AI\'s bundle; no real results.\n\n'
+                  '### Citation\n```\nExample Lab, ‘Example Benchmarks’. Retrieved from '
+                  '‘https://example.org/benchmarks’ [online resource].\n```\n'),
     ('benchmark_metadata.csv',
      'benchmark,in_eci,source_file,score_column,scale,random_baseline,score_ceiling,release_date,superseded_by\n'
      'Example Bench,True,example_bench.csv,Best score (across scorers),1.0,0.25,1.0,2026-01-01,\n'
