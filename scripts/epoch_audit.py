@@ -14,6 +14,7 @@ filter and the date, and must be reproducible by a committed script."
     python scripts/epoch_audit.py --check               # the header-signature census (P3-S2-T01)
     python scripts/epoch_audit.py --census-report reports/epoch-header-census.md
     python scripts/epoch_audit.py --fetch               # restore epochdl/ from the pinned capture
+    python scripts/epoch_audit.py --stanzas             # a valid mapping stanza per covered file (P3-S2-T03)
 
 The export itself is never committed (CC-BY, but 6.4 MB of bulk content; 05 S11's metadata-only
 invariant). `--fetch` restores the plan's cut into epochdl/ from the Wayback capture pinned in
@@ -415,6 +416,38 @@ def fetch(dest):
     print('fetched %d bytes (sha256 %s) into %s' % (len(data), got, dest))
 
 
+def check_stanzas(export, mappings=None):
+    """P3-S2-T03's verify: every per-benchmark CSV a metadata row names (`source_file`) has a stanza at
+    ingest/mappings/epoch/<stem>.yaml that loads (ingest/mappings/schema.py) and whose score_column is a
+    real header in that file. Whether it is the RIGHT column is a person's review, recorded per stanza as
+    reviewed_by, and is reported here, not asserted. Returns (problems, report lines)."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, root)
+    from ingest.mappings.schema import MappingError, load_mapping
+    mappings = mappings or os.path.join(root, 'ingest', 'mappings')
+    _, meta = read(os.path.join(export, META))
+    covered = sorted({m['source_file'].strip() for m in meta
+                      if (m.get('source_file') or '').strip()
+                      and os.path.isfile(os.path.join(export, m['source_file'].strip()))})
+    problems, reviewed = [], 0
+    for name in covered:
+        stem = name[:-len('.csv')]
+        try:
+            s = load_mapping('epoch', 'csv:' + stem, mappings)
+        except MappingError as e:
+            problems.append('%s: the stanza does not load: %s' % (name, e))
+            continue
+        if s is None:
+            problems.append('%s: no stanza at ingest/mappings/epoch/%s.yaml' % (name, stem))
+            continue
+        if s.score_column not in header_of(os.path.join(export, name)):
+            problems.append('%s: score_column %r is not a header in the file' % (name, s.score_column))
+        reviewed += bool(s.reviewed_by)
+    lines = ['%d covered file(s): %d with a valid stanza, %d reviewed (reviewed_by set)'
+             % (len(covered), len(covered) - len(problems), reviewed)]
+    return problems, lines
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     ap.add_argument('--dir', default='epochdl', help='the export to audit (default: epochdl/)')
@@ -424,6 +457,8 @@ def main(argv=None):
                     help='check only the census figures: %s' % ', '.join(CENSUS))
     ap.add_argument('--census-report', metavar='PATH', help='write the census report (markdown)')
     ap.add_argument('--fetch', action='store_true', help='restore the pinned drop into --dir, then audit')
+    ap.add_argument('--stanzas', action='store_true',
+                    help='check only that every covered file has a valid stanza naming a real column')
     a = ap.parse_args(argv)
     if a.fetch:
         fetch(a.dir)
@@ -435,6 +470,14 @@ def main(argv=None):
         print('  00 S8.1 and 01 S12 record that epochdl/ is not in the working tree; point --dir'
               ' at a copy of the 2026-09-16 export to re-derive the plan\'s figures.', file=sys.stderr)
         return 2
+
+    if a.stanzas:
+        problems, lines = check_stanzas(a.dir)
+        for p in problems:
+            print('FAIL %s' % p)
+        for line in lines:
+            print(line)
+        return 1 if problems else 0
 
     if a.expect:
         with open(a.expect, encoding='utf-8') as f:
