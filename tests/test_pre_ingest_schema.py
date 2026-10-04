@@ -19,12 +19,9 @@ Three kinds of item are not plain field assertions, and each is stated where it 
     derivation from liveness) belong to the tasks that build them; this file asserts the schema
     they need.
 
-What is missing is not added here (the task's step 3). A gap is recorded as a strict xfail, so it
-fails loudly the day the gap closes and the mark must be removed:
-
-  - item 21: not every one of the ten stress entries (P0-S8) exists yet.
-
-Item 16's `EvalConditions.training_data_eligibility`, the blocking issue this task raised, landed
+What was missing was not added here (the task's step 3); each gap was a strict xfail until it closed.
+Both have: item 21's ten stress entries are all in data/benchmarks/ since Kaggle Game Arena
+(P0-S8-T05), and item 16's `EvalConditions.training_data_eligibility`, the blocking issue this task raised, landed
 with the tier-3 rule training-tier-declared (02 S12): the tier a run declares, checked against its
 benchmark's training_data_eligibility_tiers[]. It is distinct from 04 S8's eligibility_track, the
 board a result is listed on.
@@ -368,9 +365,6 @@ def test_item_21_the_generated_schema_rejects_a_broken_entry():
     assert list(Draft202012Validator(SCHEMAS['benchmark']).iter_errors(broken))
 
 
-@pytest.mark.xfail(strict=True, reason='04 S15 item 21: nine of the ten stress entries exist; Kaggle Game Arena '
-                   '(P0-S8-T05) is blocked, and P0-S9-T01 then wires all ten as CI fixtures. Blocking issue raised by '
-                   'P3-S1-T01. Remove this mark when all ten are in data/benchmarks/.')
 def test_item_21_all_ten_stress_entries_exist():
     missing = [s for s in STRESS if s not in stress_entries()]
     assert not missing, 'stress entries not yet curated: %s' % ', '.join(missing)
