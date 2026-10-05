@@ -37,6 +37,9 @@ def load(path):
 
 
 SYSTEMS = {os.path.basename(p)[:-5]: load(p) for p in stub_files(ROOT, 'systems')}
+# Stubs a curator has promoted (data/systems/<id>.yaml) keep an imputed figure and its flag (P3-S5-T04's
+# gpt-4-turbo-apr-2024); the imputation must stay visible whichever file holds the system.
+CURATED = {os.path.basename(p)[:-5]: load(p) for p in glob.glob(os.path.join(ROOT, 'data', 'systems', '*.yaml'))}
 
 
 # ---- the committed corpus -------------------------------------------------------------------------
@@ -46,6 +49,8 @@ def test_every_row_whose_notes_say_imputed_carries_estimated_true():
     registry = {r['model_version']: r for r in csv.DictReader(open(os.path.join(E.EPOCH, 'model_metadata.csv'),
                                                                    encoding='utf-8')) if r['model_version']}
     by_group = {g: s for s in SYSTEMS.values() for g in s['epoch']['model_groups']}
+    by_group.update({s['external_ids']['epoch_model_group']: s for s in CURATED.values()
+                     if (s.get('external_ids') or {}).get('epoch_model_group')})          # get-default: optional
     checked = 0
     for path in sorted(glob.glob(os.path.join(E.EPOCH, '*.csv'))):
         with open(path, encoding='utf-8', errors='replace', newline='') as fh:
@@ -76,11 +81,14 @@ def test_the_committed_stubs_are_exactly_the_emitters_output():
 
 
 def test_the_five_imputed_groups_are_flagged_and_their_figures_come_from_the_notes():
-    imputed = {sid: s for sid, s in SYSTEMS.items() if 'imput' in (s['training_compute_notes'] or '').lower()}
+    everything = {**SYSTEMS, **CURATED}
+    imputed = {sid: s for sid, s in everything.items() if 'imput' in (s.get('training_compute_notes') or '').lower()}  # get-default: thin promotions have none
     assert sorted(imputed) == ['gemini-1-5-pro-feb-2024', 'gemini-1-5-pro-may-2024', 'gemini-1-5-pro-sept-2024',
                                'gpt-4-turbo-apr-2024', 'gpt-4-turbo-nov-2023']
-    for s in imputed.values():
-        assert s['training_compute_estimated'] is True and s['training_compute_from'] == 'notes'
+    assert 'gpt-4-turbo-apr-2024' in CURATED                                    # promoted, flag kept
+    for sid, s in imputed.items():
+        assert s['training_compute_estimated'] is True
+        assert sid in CURATED or s['training_compute_from'] == 'notes'
     assert {s['training_compute_flop'] for s in imputed.values()} == {1.58e25, 2.2e25}
     # nothing else is marked estimated: whether Epoch's other figures were disclosed is the curator's call
     assert not [sid for sid, s in SYSTEMS.items() if s['training_compute_estimated'] and sid not in imputed]

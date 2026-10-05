@@ -193,8 +193,8 @@ def test_findings_render_with_severity_rule_and_fix():
 
 def test_the_repository_corpus_loads_and_every_rule_runs():
     c = v.load_corpus()
-    assert set(c.benchmarks) == {'arc-agi-3', 'casp', 'forecastbench', 'kaggle-game-arena', 'matbench-discovery',
-                                'mmlu', 'paperbench', 'roboarena', 'swe-bench', 'swe-bench-verified', 'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(c.benchmarks) == {'arc-agi-3', 'casp', 'critpt', 'forecastbench', 'kaggle-game-arena', 'matbench-discovery',
+                                'mmlu', 'paperbench', 'roboarena', 'scicode', 'swe-bench', 'swe-bench-verified', 'virtual-cell-challenge', 'weatherbench-2'}
     findings = v.validate(c, 'full')
     assert all(f.rule in v.RULES and f.severity in ('blocking', 'warning') for f in findings)
 
