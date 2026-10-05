@@ -25,9 +25,10 @@ STANZAS = load_all('epoch')
 
 
 def test_59_committed_stanzas_load_and_none_assumes_its_scale():
-    assert len(STANZAS) == 59
-    assert all(s.scale_source == 'benchmark_metadata.csv' for s in STANZAS.values())
-    assert sorted({s.scale for s in STANZAS.values()}) == [0.01, 0.1, 1.0]
+    # the 59 covered files take Epoch's scale; the 21 orphans (P3-S2-T04, tests/test_orphan_stanzas.py) a URL's
+    covered = [s for s in STANZAS.values() if s.scale_source == 'benchmark_metadata.csv']
+    assert len(STANZAS) == 80 and len(covered) == 59
+    assert sorted({s.scale for s in covered}) == [0.01, 0.1, 1.0]
 
 
 def test_every_stanza_is_a_draft_until_a_person_reviews_it():
