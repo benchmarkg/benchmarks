@@ -288,6 +288,54 @@ class UnresolvedFile(RootModel[list[UnresolvedRecord]]):
         return self
 
 
+UNRESOLVED_STATUSES = ('open', 'resolved', 'wontfix', 'blocked-upstream', 'superseded')
+
+
+class UnresolvedStatus(Closed):
+    """One row of 07 S5.5's status ledger, data/_ingest/unresolved/{adapter}/status.yaml: what became of an
+    Unresolved item across runs. 07's example row has no source_key; it is optional here, and where it is
+    given the fingerprint is checked against it, as UnresolvedRecord's is. A row that is suppressed from the
+    PR body (wontfix, blocked-upstream) must say why: 07's "re-check when the paper appears" is the note."""
+    fingerprint: Annotated[str, StringConstraints(pattern=r'^[0-9a-f]{16}$')]
+    source_key: Text | None = None
+    observed: str
+    field: Text
+    status: Literal[UNRESOLVED_STATUSES]  # type: ignore[valid-type]
+    first_seen: date
+    last_seen: date
+    occurrences: Annotated[int, Field(ge=1)]
+    note: Text | None = None
+    decided_by: Text | None = None
+    decided_on: date | None = None
+
+    @model_validator(mode='after')
+    def _coherent(self):
+        if self.source_key is not None:
+            key = '%s|%s|%s' % (self.source_key, self.field, self.observed)
+            want = hashlib.sha256(key.encode('utf-8')).hexdigest()[:16]
+            if self.fingerprint != want:
+                raise ValueError('%s: fingerprint %s is not sha256(source_key|field|observed)[:16] = %s'
+                                 % (self.source_key, self.fingerprint, want))
+        if self.last_seen < self.first_seen:
+            raise ValueError('%s: last_seen %s is before first_seen %s' % (self.fingerprint, self.last_seen, self.first_seen))
+        if self.status in ('wontfix', 'blocked-upstream') and not self.note:
+            raise ValueError('%s: a %s item says why in `note`; it is suppressed from the PR body' % (self.fingerprint, self.status))
+        if self.status != 'open' and self.decided_on is None:
+            raise ValueError('%s: a %s item has a decided_on date' % (self.fingerprint, self.status))
+        return self
+
+
+class UnresolvedStatusFile(RootModel[list[UnresolvedStatus]]):
+    """data/_ingest/unresolved/{adapter}/status.yaml: one row per fingerprint, ever (07 S5.5)."""
+
+    @model_validator(mode='after')
+    def _unique(self):
+        prints = [r.fingerprint for r in self.root]
+        if len(set(prints)) != len(prints):
+            raise ValueError('a fingerprint has two rows in the status ledger')
+        return self
+
+
 # ---- 04 S10: Alias ------------------------------------------------------------------------------
 
 ENTITY_KINDS = ('system', 'benchmark', 'organization')

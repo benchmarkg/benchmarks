@@ -186,7 +186,7 @@ def test_the_real_snapshot_gives_04_s7s_counts():
     for name in sorted(os.listdir(EPOCHDL)):
         if not name.endswith('.csv') or name in ('benchmark_metadata.csv', 'model_metadata.csv'):
             continue
-        s = stanzas.get('csv:' + name[:-4])                # get-default: an orphan file has no stanza (P3-S2-T04)
+        s = stanzas.get('csv:' + name[:-4])                # get-default: a file with no stanza is counted as unmatched
         with open(os.path.join(EPOCHDL, name), encoding='utf-8', newline='') as fh:
             rows = list(csv.DictReader(fh))
         if s is None:
@@ -196,7 +196,10 @@ def test_the_real_snapshot_gives_04_s7s_counts():
         assessed += [v.assess(s.family, row[col] if col else None, h) for row in rows]
     t = v.tally(assessed, unmatched)
     assert t['rows'] == 6598
-    # 04 S7: 828 public, 459 private + ~263 blank; this snapshot has 258 blank. Every external row self-reported.
-    assert t['rules']['epoch-run-public'] == 828 and t['rules']['epoch-run-private-or-absent'] == 459 + 258
+    # 04 S7: 828 public, 459 private + ~263 blank; this snapshot has 258 blank, plus the 5 rows of the orphan
+    # frontiermath_erdos (an Epoch-run file, mapped by P3-S2-T04), whose Logs are all empty. Every external row
+    # self-reported, and since P3-S2-T04 every file has a stanza.
+    assert unmatched == 0
+    assert t['rules']['epoch-run-public'] == 828 and t['rules']['epoch-run-private-or-absent'] == 459 + 258 + 5
     assert t['rules']['epoch-run-unreachable'] == 0 and t['verification']['self-reported'] == t['rules']['external']
     assert len(probe.asked) == len(set(probe.asked)) == 828    # one HEAD per public transcript, none for the rest

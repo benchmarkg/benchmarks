@@ -14,7 +14,7 @@ filter and the date, and must be reproducible by a committed script."
     python scripts/epoch_audit.py --check               # the header-signature census (P3-S2-T01)
     python scripts/epoch_audit.py --census-report reports/epoch-header-census.md
     python scripts/epoch_audit.py --fetch               # restore epochdl/ from the pinned capture
-    python scripts/epoch_audit.py --stanzas             # a valid mapping stanza per covered file (P3-S2-T03)
+    python scripts/epoch_audit.py --stanzas             # a valid stanza per covered file (P3-S2-T03) and orphan (P3-S2-T04)
 
 The export itself is never committed (CC-BY, but 6.4 MB of bulk content; 05 S11's metadata-only
 invariant). `--fetch` restores the plan's cut into epochdl/ from the Wayback capture pinned in
@@ -445,6 +445,48 @@ def check_stanzas(export, mappings=None):
         reviewed += bool(s.reviewed_by)
     lines = ['%d covered file(s): %d with a valid stanza, %d reviewed (reviewed_by set)'
              % (len(covered), len(covered) - len(problems), reviewed)]
+    orphan_problems, orphan_lines = check_orphans(export, mappings, meta)
+    return problems + orphan_problems, lines + orphan_lines
+
+
+def check_orphans(export, mappings, meta, ledger=None):
+    """P3-S2-T04's verify: each result CSV no metadata row names is either hand-mapped -- a stanza whose
+    scale_source is the URL the unit was read from, since the metadata row has no score_column and its
+    scale is the 1.0 07 S8 forbids trusting -- or listed blocked-upstream, with a note, in the status
+    ledger (07 S5.5). Anything else is unmapped: the coverage hole 14-roadmap Phase 3 refuses."""
+    from ingest.mappings.schema import METADATA, MappingError, load_mapping
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ledger = ledger or os.path.join(root, 'data', '_ingest', 'unresolved', 'epoch', 'status.yaml')
+    blocked = set()
+    if os.path.exists(ledger):
+        from ruamel.yaml import YAML
+        from schema.entities import UnresolvedStatusFile
+        with open(ledger, encoding='utf-8') as f:
+            rows = UnresolvedStatusFile.model_validate(YAML(typ='safe', pure=True).load(f) or []).root
+        blocked = {r.source_key for r in rows if r.status == 'blocked-upstream' and r.source_key}
+    named = {(m.get('source_file') or '').strip() for m in meta}
+    orphans = sorted(n for n in os.listdir(export) if n.endswith('.csv') and n not in named
+                     and n not in (META, MODELS))
+    problems, mapped = [], 0
+    for name in orphans:
+        stem = name[:-len('.csv')]
+        try:
+            s = load_mapping('epoch', 'csv:' + stem, mappings)
+        except MappingError as e:
+            problems.append('%s: the stanza does not load: %s' % (name, e))
+            continue
+        if s is None:
+            if 'csv:' + stem not in blocked:
+                problems.append('%s: an orphan with no stanza and no blocked-upstream row in the status ledger' % name)
+            continue
+        if s.scale_source == METADATA:
+            problems.append('%s: an orphan\'s scale cannot come from %s; give the URL it was read from' % (name, METADATA))
+        if s.score_column not in header_of(os.path.join(export, name)):
+            problems.append('%s: score_column %r is not a header in the file' % (name, s.score_column))
+        mapped += 1
+    unmapped = sum(1 for p in problems if 'no stanza and no blocked-upstream' in p)
+    lines = ['%d orphan file(s): %d hand-mapped, %d blocked-upstream, %d unmapped'
+             % (len(orphans), mapped, sum(1 for n in orphans if 'csv:' + n[:-4] in blocked), unmapped)]
     return problems, lines
 
 

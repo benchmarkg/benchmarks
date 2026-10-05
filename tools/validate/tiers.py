@@ -63,7 +63,8 @@ from schema.benchmark import Benchmark
 from schema.claim import ResultClaim
 from schema.conditions import EvalConditions
 from schema.dispute import Dispute
-from schema.entities import AliasFile, IngestBatch, Leaderboard, Organization, RatingPool, UnresolvedFile
+from schema.entities import (AliasFile, IngestBatch, Leaderboard, Organization, RatingPool, UnresolvedFile,
+                             UnresolvedStatusFile)
 from schema.metric import Metric
 from schema.source import Source
 from schema.classification import FAILURE_NAME, Classification, FailureRecord
@@ -118,6 +119,7 @@ DRAFTS = 'drafts/'
 ALLOCATION = 'ingest/mappings/epoch/_id_allocation.yaml'   # the Epoch id decisions the stubs are held to
 TAXONOMY_RECORDS = ('taxonomy/_corpus/classifications/', 'taxonomy/_failures/')
 VENDOR_CLAIM = Kind('claim', ResultClaim)
+UNRESOLVED_STATUS = Kind('unresolved-status', UnresolvedStatusFile, many=True)   # 07 S5.5 (P3-S2-T04)
 UNMODELLED = ('data/surveys/', 'data/tombstones/', 'data/_discovery/', 'data/_analysis/')
 
 # Prefixed ids are references wherever they appear as a whole string value (the record's own
@@ -254,6 +256,8 @@ def anchor(rel: str) -> str:
 def kind_of(anchored: str) -> Kind | None:
     if anchored.startswith('vendor/') and '/claims/' in anchored:
         return VENDOR_CLAIM
+    if anchored.startswith('data/_ingest/unresolved/') and anchored.endswith('/status.yaml'):
+        return UNRESOLVED_STATUS            # the lifecycle ledger beside the batches, not a batch
     for prefix, k in KINDS.items():
         if anchored.startswith(prefix):
             return k
