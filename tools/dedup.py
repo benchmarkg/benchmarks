@@ -8,7 +8,9 @@ above a threshold, shared URL host plus path -- then model adjudication on only 
 borderline pairs, returning `same | variant-of | distinct` with a reason." This module is the cheap
 first stage. It never merges anything: a candidate is a pair for a person (or, later, the adjudicating
 model) to look at, because SWE-bench, SWE-bench Verified and SWE-bench Pro are different benchmarks and
-lineage is one of the project's differentiators. A pair is a candidate when any one signal fires:
+lineage is one of the project's differentiators. A pair whose lineage already relates them (one record's
+`lineage` names the other: subset_of, variants, forks, supersedes, ...) has been adjudicated by a curator and
+is never proposed. Any other pair is a candidate when any one signal fires:
 
   alias      a normalised name or alias of one record equals a normalised name or alias of the other
              (the alias table: each record's `aliases`, and data/aliases/benchmarks.yaml once it exists);
@@ -74,6 +76,7 @@ class Record:
     aliases: list[str] = field(default_factory=list)
     urls: list[str] = field(default_factory=list)
     titles: list[str] = field(default_factory=list)      # a paper or page title: identity text, not prose
+    related: set[str] = field(default_factory=set)       # ids this record's lineage names (already adjudicated)
 
     @classmethod
     def of(cls, d: dict) -> 'Record':
@@ -94,7 +97,22 @@ def from_benchmark(raw: dict, rid: str | None = None) -> Record:
     urls = [raw.get(k) for k in ('homepage', 'repository', 'leaderboard_url', 'dataset_url')]
     paper = raw.get('paper') if isinstance(raw.get('paper'), dict) else {}
     return Record(rid or raw['id'], raw.get('name') or raw['id'], [a for a in raw.get('aliases') or [] if a],
-                  [u for u in urls if u], [paper['title']] if paper.get('title') else [])
+                  [u for u in urls if u], [paper['title']] if paper.get('title') else [], lineage_ids(raw))
+
+
+LINEAGE_ONE = ('subset_of', 'decontaminates')
+LINEAGE_MANY = ('supersedes', 'superseded_by', 'extended_by')
+LINEAGE_ENTRIES = ('variants', 'forks')
+
+
+def lineage_ids(raw: dict) -> set[str]:
+    """The benchmark ids a record's lineage declares. A declared edge is a curator's answer to the question a
+    candidate asks -- 11 S F7's `variant-of` -- so the pair is not proposed again."""
+    lin = raw.get('lineage') if isinstance(raw.get('lineage'), dict) else {}
+    out = {lin[k] for k in LINEAGE_ONE if isinstance(lin.get(k), str)}       # get-default: optional fields
+    out |= {x for k in LINEAGE_MANY for x in (lin.get(k) or []) if isinstance(x, str)}     # get-default: as above
+    out |= {e['id'] for k in LINEAGE_ENTRIES for e in (lin.get(k) or []) if isinstance(e, dict) and e.get('id')}  # get-default
+    return out
 
 
 # ---- the signals --------------------------------------------------------------------------------
@@ -239,6 +257,8 @@ def candidates(records: list[Record], cfg: dict) -> list[tuple[Scored, list[str]
     vectors = Vectors(records)
     out = []
     for a, b in combinations(records, 2):
+        if b.id in a.related or a.id in b.related:          # lineage already says what the pair is
+            continue
         s = score(a, b, vectors)
         fired = s.fires(cfg)
         if fired:
