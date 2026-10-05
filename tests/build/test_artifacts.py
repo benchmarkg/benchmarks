@@ -177,7 +177,7 @@ def test_the_committed_corpus_publishes_no_draft_and_no_draft_source():
     assert result.errors == []
     drafts = [i for _, i, r in result.excluded if r.startswith(artifacts.DRAFT)]
     assert sorted(drafts) == ['arc-agi-3', 'casp', 'forecastbench', 'kaggle-game-arena', 'matbench-discovery', 'mmlu',
-                              'paperbench', 'roboarena', 'swe-bench', 'virtual-cell-challenge', 'weatherbench-2']   # every committed entry is still a draft
+                              'paperbench', 'roboarena', 'swe-bench', 'swe-bench-verified', 'virtual-cell-challenge', 'weatherbench-2']   # every committed entry is still a draft
     assert result.corpus['entities']['benchmark'] == []
     # Metrics, Systems and Organizations carry no curation block and publish when they load (module
     # docstring), and so do the Sources they cite -- and nothing else: no draft benchmark's Source

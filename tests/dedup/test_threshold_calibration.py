@@ -94,10 +94,14 @@ def test_editions_share_a_stem_and_look_alikes_do_not():
 
 def test_candidates_are_proposals_never_merges():
     records = D.corpus_records([])
-    assert D.candidates(records, CFG) == []               # the curated entries are nine different benchmarks
+    # The curated entries are different benchmarks; swe-bench and swe-bench-verified look alike (url, name) but
+    # swe-bench-verified's lineage says it is swe-bench's subset, a curator's answer, so they are not proposed.
+    assert D.candidates(records, CFG) == []
+    assert D.from_benchmark({'id': 'swe-bench-verified', 'lineage': {'subset_of': 'swe-bench'}}).related == {'swe-bench'}
     verified = D.Record('drafts/benchmarks/swe-bench-verified.yaml', 'SWE-bench Verified',
                         urls=['https://www.swebench.com/verified.html'])
-    got = D.candidates(records + [verified], CFG)
-    assert [(s.a, s.b) for s, _ in got] == [('swe-bench', 'drafts/benchmarks/swe-bench-verified.yaml')]
-    assert set(got[0][1]) == {'url', 'name'}
+    got = D.candidates(records + [verified], CFG)          # a draft has no lineage: proposed beside both
+    assert sorted((s.a, s.b) for s, _ in got) == [('swe-bench', 'drafts/benchmarks/swe-bench-verified.yaml'),
+                                                  ('swe-bench-verified', 'drafts/benchmarks/swe-bench-verified.yaml')]
+    assert all({'url', 'name'} <= set(fired) for _, fired in got)
     assert len(D.corpus_records([])) == len(records)      # nothing was written or merged
