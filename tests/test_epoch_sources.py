@@ -66,8 +66,13 @@ def test_the_scaffolded_records_are_shaped_for_the_archiver():
         else:
             assert r['archive_status'] in ('pending', 'failed')     # the archiver's to finish
             assert r['archive_status'] == 'pending' or r['failure_reason']
-        assert r['licence_class'] == 'unlicensed' and 'not checked' in r['licence_basis']
-        assert r['quote_extract'] is None                             # nothing fetched, so nothing quotable
+        if r['quote_extract'] is None:
+            assert r['licence_class'] == 'unlicensed' and 'not checked' in r['licence_basis']
+        else:
+            # Scaffolded here, then read by a curator (P3-S5-T02's six arXiv papers): the licence was
+            # checked and an extract taken, and the record must still be a valid Source.
+            assert 'not checked' not in r['licence_basis'] and r['content_sha256']
+            Source.model_validate(r)
 
 
 @pytest.mark.parametrize('url, sid, kind', [

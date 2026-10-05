@@ -77,8 +77,9 @@ def test_the_entries_resolve_to_different_material_sets():
         'paperbench.yaml': (('model-graded',), 8),                             # plus two extras, two waivers
         'forecastbench.yaml': (('forecasting',), 4),
         'kaggle-game-arena.yaml': ((), 5),                                    # no profile resolves; four extras
+        'mmlu.yaml': (('llm-static-text',), 8),                                # plus harness and selection_strategy
     }
-    assert len({r.material for r in got.values()}) == 10
+    assert len({r.material for r in got.values()}) == 11
     # the board's track and the run's harness both enter ARC-AGI-3's key (02 S12.7)
     assert {'eligibility_track', 'harness'} <= set(got['arc-agi-3.yaml'].material)
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
@@ -321,8 +322,8 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'arc-agi-3', 'casp', 'forecastbench', 'kaggle-game-arena', 'matbench-discovery', 'paperbench', 'roboarena',
-                                   'swe-bench', 'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(out['profiles']) == {'arc-agi-3', 'casp', 'forecastbench', 'kaggle-game-arena', 'matbench-discovery', 'mmlu', 'paperbench',
+                                   'roboarena', 'swe-bench', 'virtual-cell-challenge', 'weatherbench-2'}
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 

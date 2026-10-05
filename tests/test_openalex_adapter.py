@@ -22,6 +22,18 @@ FIX = os.path.join(ROOT, 'tests', 'fixtures', 'openalex')
 runner = CliRunner()
 
 
+# The organisations the fixture recorded. Candidates come from data/organizations/, which grows (P3-S5-T02
+# promoted six), so the replay is pinned to these: a newly promoted organisation is not a fixture miss.
+RECORDED = {n.split('-', 1)[1][:-len('.json')] for n in os.listdir(FIX)
+            if n.endswith('.json') and not n.endswith('.headers.json') and n[:2].isdigit()}
+
+
+@pytest.fixture(autouse=True)
+def recorded_only(monkeypatch):
+    real = oa.candidates
+    monkeypatch.setattr(oa, 'candidates', lambda root=oa.ROOT: (c for c in real(root) if c[0] in RECORDED))
+
+
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch):
     def refuse(*a, **k):
