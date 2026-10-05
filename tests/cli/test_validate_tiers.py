@@ -78,7 +78,17 @@ def test_tier_4_never_changes_the_exit_code(tmp_path, overlay):
     assert tiers.run(root, 'quality', today=TODAY).exit_code == 0
 
 
-def test_the_tier_4_fixture_reports_signals_and_exits_zero(tmp_path):
+class _PinnedDate(datetime.date):
+    @classmethod
+    def today(cls):
+        return TODAY
+
+
+def test_the_tier_4_fixture_reports_signals_and_exits_zero(tmp_path, monkeypatch):
+    # `bench validate` takes no date, so the module's clock is pinned: the fixture's liveness.last_checked
+    # (2026-09-20) is past LIVENESS_STALE_DAYS from 2026-10-05, and a real clock fails this test by the calendar.
+    monkeypatch.setattr(tiers, '_dt', type('_dt', (), {'date': _PinnedDate, 'datetime': datetime.datetime,
+                                                       'timedelta': datetime.timedelta}))
     r = tiers.run(tree(tmp_path, 'tier4'), today=TODAY)
     assert {f.rule for f in r.findings} == {'tagline-length', 'last-verified-stale'}
     assert all(f.tier == 4 and f.severity == 'quality' and not f.blocks for f in r.findings)
@@ -195,7 +205,7 @@ def test_a_file_no_kind_claims_fails_tier_1_and_an_unmodelled_one_is_listed(tmp_
     root = tree(tmp_path)
     write(root, 'data/stray/thing.yaml', 'id: thing\n')
     write(root, 'data/surveys/code/repository-scale-se.yaml', 'survey: {}\n')
-    r = tiers.run(root)
+    r = tiers.run(root, today=TODAY)
     assert [(f.rule, f.path) for f in r.findings] == [('unknown-path', 'data/stray/thing.yaml')]
     assert r.unmodelled == ['data/surveys/code/repository-scale-se.yaml']
 
