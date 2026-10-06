@@ -11,8 +11,10 @@ and the capability-group partition assertion (9g).
 
 Checks implemented here, per 05-repository-and-workflow.md S9:
 
-  9b  taxonomy stats drift -- the term counts in 02 S14 and the seed table in 02 S3 must
-      match taxonomy/*.yaml.
+  9b  taxonomy stats drift -- the term counts in 02 S14 and the allocation table in 02 S3 must
+      match taxonomy/*.yaml. The S3 table is a generated block (allocation_table(), from domains.yaml
+      and domain-expectations.yaml), so a hand-edit to any of its cells fails like any generated value;
+      the hand-written notes table beside it must have exactly one row per family.
   9c  vocabulary id uniqueness -- ids unique within a (file, field). Four vocabulary files
       carry more than one field, and 02 S11 rule 11 scopes a value's meaning to its field:
       execution.yaml legitimately holds `wet-lab` as both a compute_tier and a
@@ -120,16 +122,41 @@ def domain_terms():
 
 # ---------------------------------------------------------------- rendering
 
-def render_seed_table(fams):
-    """The columns of 02 S3's table that taxonomy/domains.yaml owns."""
+def expectations():
+    """family -> its taxonomy/domain-expectations.yaml row (the recon's Tier-1 estimate, or unsized)."""
+    d = load_facet('domain-expectations') or {}
+    return {e['family']: e for e in d.get('expectations') or []}
+
+
+S3_HEADER = '| Family | Subdomains | Tier-1 (field-defining) | Seed target | Core? | Coverage | Posture |'
+S3_NOTES_HEADER = '| Family | Tier-2 (worth an entry) | Ceiling | The curation difficulty that sets the posture |'
+
+
+def render_seed_table(fams, subs=None, exp=None):
+    """02 S3's allocation table, every cell from the YAML (P1-S1-T09): one row per family, by seed target then id.
+
+    Subdomains is the family's subdomain count in domains.yaml; Tier-1 is domain-expectations.yaml's estimate,
+    or `not estimated \u2021` for a family nobody sized -- never a number the YAML does not hold; Seed target,
+    Core?, Coverage and Posture are the family's own fields. \u2020 marks every seed target equal to its Tier-1
+    estimate, computed rather than typed (02 S3's \u2020 note). The recon's Tier-2 and Ceiling estimates and the
+    prose behind each posture are in no YAML, so they stay in the hand-written table that follows this one."""
+    subs = subs if subs is not None else domain_terms()[1]
+    exp = exp if exp is not None else expectations()
     rows = sorted(fams, key=lambda f: (-f['seed_target'], f['id']))
-    out = ['| Family | Seed target | Core? | Posture |', '| --- | --- | --- | --- |']
+    n_sub = {f['id']: sum(1 for s in subs if s['parent'] == f['id']) for f in fams}
+    out = [S3_HEADER, '| --- | --- | --- | --- | --- | --- | --- |']
     for f in rows:
-        out.append('| %s | **%d** | %s | %s |' % (
-            f['id'], f['seed_target'], '**Y**' if f['core'] else 'N', f['curation_posture']))
-    out.append('| **Total** | **%d** | **%d in Core** | |' % (
-        sum(f['seed_target'] for f in rows),
-        sum(f['seed_target'] for f in rows if f['core'])))
+        e = exp.get(f['id'])                     # get-default: a family with no expectation row is unsized
+        sized = e is not None and e['sized']
+        tier1 = str(e['tier1_expectation']) if sized else 'not estimated \u2021'
+        dagger = ' \u2020' if sized and e['tier1_expectation'] == f['seed_target'] else ''
+        out.append('| %s | %d | %s | **%d**%s | %s | %s | `%s` |' % (
+            f['id'], n_sub[f['id']], tier1, f['seed_target'], dagger, '**Y**' if f['core'] else 'N',
+            f['coverage_status'], f['curation_posture']))
+    sized = [exp[f['id']] for f in rows if f['id'] in exp and exp[f['id']]['sized']]
+    out.append('| **Total** | **%d** | **%d across %d estimated rows** | **%d** | **%d in Core** | | |' % (
+        sum(n_sub.values()), sum(e['tier1_expectation'] for e in sized), len(sized),
+        sum(f['seed_target'] for f in rows), sum(f['seed_target'] for f in rows if f['core'])))
     return '\n'.join(out)
 
 
@@ -162,25 +189,36 @@ def plan_doc(name):
 POSTURE_RE = re.compile(r'\b(hand-curate|mixed|ingest-then-verify)\b', re.I)
 
 
+def _table_after(text, header):
+    """The family rows of the markdown table whose header line is `header`: family -> its cells."""
+    at = text.find(header)
+    if at < 0:
+        return {}
+    out = {}
+    for line in text[at:].split('\n')[2:]:
+        if not line.startswith('| '):
+            break
+        cells = [c.strip() for c in line.strip().strip('|').split('|')]
+        if re.match(r'^[a-z][a-z-]+$', cells[0]):
+            out[cells[0]] = cells
+    return out
+
+
 def parse_02_s3(text):
     """family -> (seed_target, core, posture) from 02 S3's allocation table."""
     out = {}
-    for line in text.split('\n'):
-        if not line.startswith('| ') or line.startswith('| ---'):
-            continue
-        cells = [c.strip() for c in line.strip().strip('|').split('|')]
-        if len(cells) != 7:
-            continue
-        fam = cells[0]
-        if not re.match(r'^[a-z][a-z-]+$', fam):
-            continue
-        m = re.search(r'\*\*(\d+)\*\*', cells[4])
-        if not m:
-            continue
-        core = cells[5].replace('*', '').strip().upper() == 'Y'
+    for fam, cells in _table_after(text, S3_HEADER).items():
+        m = re.search(r'\*\*(\d+)\*\*', cells[3])
         pm = POSTURE_RE.search(cells[6])
-        out[fam] = (int(m.group(1)), core, pm.group(1).lower() if pm else None)
+        if m:
+            out[fam] = (int(m.group(1)), cells[4].replace('*', '').strip().upper() == 'Y',
+                        pm.group(1).lower() if pm else None)
     return out
+
+
+def parse_02_s3_notes(text):
+    """The families of 02 S3's hand-written notes table (Tier-2, Ceiling, the difficulty prose)."""
+    return set(_table_after(text, S3_NOTES_HEADER))
 
 
 def parse_01_s10(text):
@@ -571,6 +609,10 @@ def quantities():
     def hrs(terms, minutes):
         return str(_half_up(terms * minutes / 60))
 
+    def allocation_table():
+        """02 S3's allocation table as a generated block (P1-S1-T09): a hand-edit to any cell fails 9b."""
+        return '\n' + render_seed_table(fams, subs) + '\n'
+
     def groups_table():
         rows = ['| # | id | label | n | member terms |', '| --- | --- | --- | --- | --- |']
         for i, g in enumerate(groups, 1):
@@ -605,7 +647,7 @@ def quantities():
                 M=load('evaluation-methods'), U=load('subjects'), X=sum(load(f) for f in field_files),
                 H=homographs, SEED=sum(seed_of.values()), sub=sub_of.__getitem__, seed=seed_of.__getitem__,
                 exp=math.exp, int=int, float=float, n=n, w=w, W=W, r1=r1, r2=r2, pct=pct, hrs=hrs,
-                groups_table=groups_table, density_sentence=density_sentence)
+                groups_table=groups_table, density_sentence=density_sentence, allocation_table=allocation_table)
 
 
 def sync_markers(text, q=None):
@@ -650,9 +692,15 @@ def check_9b_seed(r, fams, doc02):
     extra = sorted(set(declared) - set(f['id'] for f in fams))
     if extra:
         drift.append('in 02 S3 but not in the YAML: %s' % extra)
+    notes, ids = parse_02_s3_notes(doc02), set(f['id'] for f in fams)
+    if ids - notes:
+        drift.append('the 02 S3 notes table has no row for %s' % sorted(ids - notes))
+    if notes - ids:
+        drift.append('the 02 S3 notes table has a row for %s, which is not a family' % sorted(notes - ids))
     if drift:
         return r.fail('9b seed table vs 02 S3', '; '.join(drift))
-    r.ok('9b seed table vs 02 S3', '%d families agree on seed, core and posture' % len(declared))
+    r.ok('9b seed table vs 02 S3', '%d families agree on seed, core and posture; the notes table has a row for each'
+         % len(declared))
 
 
 def check_9b_counts(r, fams, subs, doc02):
