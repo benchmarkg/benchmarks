@@ -1,0 +1,128 @@
+---
+// site/src/components/ValueCell.astro -- P2-S2-T06 (09 S6.5). A result value with its provenance: the value in
+// tabular figures, its VerificationBadge inline, its ConditionMeter beneath. The whole cell is a <button> opening a
+// native popover="auto" with the source and its archive link, the reporter, the date, the full EvalConditions
+// record (an unrecorded field shows as unknown) and a permalink to the claim's YAML at the commit SHA.
+//
+// The popover is the platform's: Escape and a click outside dismiss it without moving focus, and it stays until
+// dismissed (SC 1.4.13). Where CSS anchor positioning exists it sits under the cell; elsewhere the browser
+// centres it. There is no script at all: a JS fallback for positioning would put JavaScript on every detail page,
+// whose budget is 0 KB (14 Phase 2 exit).
+//
+// NEVER: render the value without the badge and the meter, at any breakpoint, in any density. There is no compact
+// mode -- passing one throws -- and if space is short the value wraps; provenance is not cut.
+import Absent from './Absent.astro';
+import ConditionMeter from './ConditionMeter.astro';
+import SourceCitation from './SourceCitation.astro';
+import VerificationBadge from './VerificationBadge.astro';
+import { blobAt, sha } from '../lib/repo';
+import { formatValue } from '../lib/vocab';
+
+interface Source {
+  source_id: string;
+  title: string;
+  publisher: string;
+  url: string;
+  archive_url: string | null;
+  retrieved_at: string;
+  source_type: string;
+  link_only?: boolean;
+}
+interface Props {
+  value: number | string;
+  metric_id: string;
+  unit: string;
+  verification: string;
+  disputed?: boolean;
+  disputed_by?: string[];
+  condition_completeness: number;
+  fields_specified: number;
+  fields_material_total: number;
+  claim_id: string;
+  comparability_key: string;
+  uncertainty?: number | string | null;
+  source: Source;
+  reporter: string;
+  date_reported: string;
+  conditions: Record<string, string | number | boolean | null>;
+  commit_sha: string;
+  yaml_path: string;
+}
+
+const p = Astro.props;
+for (const banned of ['compact', 'density', 'hide_provenance']) {
+  if (banned in p) throw new Error(`ValueCell ${p.claim_id}: no ${banned} mode (09 S6.5: provenance is never cut)`);
+}
+if (p.value == null) throw new Error(`ValueCell ${p.claim_id}: no value; a missing result is <Absent>, not a ValueCell`);
+const id = `prov-${p.claim_id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+const anchor = `--${id}`;
+const unknown = Object.entries(p.conditions).filter(([, v]) => v == null).map(([k]) => k);
+---
+<span class="value-cell" data-claim={p.claim_id} data-metric={p.metric_id} data-comparability-key={p.comparability_key}>
+  <button type="button" class="cell" popovertarget={id} style={`anchor-name: ${anchor}`}>
+    <span class="value">{formatValue(p.value)}{p.uncertainty != null && <span class="unc"> ±{formatValue(p.uncertainty)}</span>}<span class="unit"> {p.unit}</span></span>
+    <VerificationBadge verification={p.verification} disputed={p.disputed} disputed_by={p.disputed_by} compact link_disputes={false} />
+    <ConditionMeter condition_completeness={p.condition_completeness} fields_specified={p.fields_specified} fields_material_total={p.fields_material_total} unknown_fields={unknown} />
+    <span class="visually-hidden">: show provenance</span>
+  </button>
+  <div popover="auto" id={id} class="provenance" style={`position-anchor: ${anchor}`}>
+    <p><SourceCitation {...p.source} /></p>
+    <p>Reported by {p.reporter} on <time datetime={p.date_reported}>{p.date_reported}</time>.</p>
+    {p.disputed && <p class="disputes">Disputed: {(p.disputed_by ?? []).map((d) => <a href={`/disputes/${d}/`}><code>{d}</code></a>)}</p>}
+    <table>
+      <caption>Evaluation conditions ({p.fields_specified} of {p.fields_material_total} material fields specified)</caption>
+      <tbody>
+        {Object.entries(p.conditions).map(([field, v]) => (
+          <tr><th scope="row"><code>{field}</code></th><td>{v != null ? String(v) : <Absent state="unknown" />}</td></tr>
+        ))}
+      </tbody>
+    </table>
+    <p><a href={blobAt(sha(p.commit_sha), p.yaml_path)}>Permalink to <code>{p.claim_id}</code> at <code>{p.commit_sha.slice(0, 12)}</code></a></p>
+  </div>
+</span>
+
+<style>
+  .cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-05);
+    padding: var(--sp-1);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--c-ink);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .cell:hover {
+    border-color: var(--c-border-strong);
+  }
+  .value {
+    font-variant-numeric: tabular-nums slashed-zero;
+    overflow-wrap: anywhere;
+  }
+  .unc,
+  .unit {
+    color: var(--c-ink-muted);
+  }
+  .provenance {
+    max-inline-size: min(32rem, 90vw);
+    padding: var(--sp-3);
+    border: 1px solid var(--c-border-strong);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font-size: var(--fs-sm);
+  }
+  @supports (anchor-name: --a) {
+    .provenance {
+      margin: 0;
+      inset: auto;
+      position-area: bottom span-right;
+    }
+  }
+  .provenance th {
+    text-align: start;
+    padding-inline-end: var(--sp-2);
+  }
+</style>

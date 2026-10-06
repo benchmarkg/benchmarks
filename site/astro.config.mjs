@@ -3,17 +3,19 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import { fileURLToPath } from 'node:url';
 
-// Test-only pages, never in a normal build: UAIBI_SITE_FIXTURES names which (P4-S5-T06). The page lives in
-// test/fixtures/, outside src/pages/, so only this hook can route it.
+// Test-only pages, never in a normal build: UAIBI_SITE_FIXTURES names which (P4-S5-T06), comma-separated for more
+// than one (P2-S2-T07's and T06's Playwright build routes theme,components). Each page lives in test/fixtures/,
+// outside src/pages/, so only this hook can route it.
 const FIXTURES = {
   citations: './test/fixtures/citations.astro',
   'citations-openalex-headline': './test/fixtures/citations.astro',
   theme: './test/fixtures/theme.astro',
+  components: './test/fixtures/components.astro',
 };
 
 function fixturePages(name) {
   return {
-    name: 'uaibi-fixture-pages',
+    name: 'uaibi-fixture-page-' + name,
     hooks: {
       'astro:config:setup': ({ injectRoute }) => {
         injectRoute({ pattern: '/_fixtures/' + name, entrypoint: fileURLToPath(new URL(FIXTURES[name], import.meta.url)) });
@@ -22,9 +24,11 @@ function fixturePages(name) {
   };
 }
 
-const fixture = process.env.UAIBI_SITE_FIXTURES;
-if (fixture && !(fixture in FIXTURES)) {
-  throw new Error(`UAIBI_SITE_FIXTURES=${fixture}: no such fixture (have: ${Object.keys(FIXTURES).join(', ')})`);
+const fixtures = (process.env.UAIBI_SITE_FIXTURES || '').split(',').map((f) => f.trim()).filter(Boolean);
+for (const fixture of fixtures) {
+  if (!(fixture in FIXTURES)) {
+    throw new Error(`UAIBI_SITE_FIXTURES=${fixture}: no such fixture (have: ${Object.keys(FIXTURES).join(', ')})`);
+  }
 }
 
 export default defineConfig({
@@ -39,5 +43,5 @@ export default defineConfig({
   // the build from moving a CSS file across drives, which fails (EXDEV) when --outDir is on another volume.
   build: { inlineStylesheets: 'auto' },
   vite: { build: { assetsInlineLimit: 14 * 1024 } },
-  integrations: [react(), ...(fixture ? [fixturePages(fixture)] : [])],
+  integrations: [react(), ...fixtures.map(fixturePages)],
 });

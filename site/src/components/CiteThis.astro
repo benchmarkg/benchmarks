@@ -1,0 +1,78 @@
+---
+// site/src/components/CiteThis.astro -- P2-S2-T06 (09 S6.13). A bordered block at the foot of every entry page and
+// analysis view: BibTeX, APA, a permalink at the commit SHA, and the raw YAML at that SHA. A component, not a footer
+// string, because citability is a differentiator and has to look like a feature. Until a release DOI is minted the
+// DOI line says so in the absent token; the permalink stands in.
+import Absent from './Absent.astro';
+import { blobAt, rawAt, sha } from '../lib/repo';
+
+interface Props {
+  entity_id: string;
+  title: string;
+  commit_sha: string;
+  release_doi: string | null;
+  retrieved_at: string;
+  yaml_path: string;
+}
+
+const { entity_id, title, commit_sha, release_doi, retrieved_at, yaml_path } = Astro.props;
+const at = sha(commit_sha);
+const permalink = blobAt(at, yaml_path);
+const year = retrieved_at.slice(0, 4);
+const key = `uaibi-${entity_id}-${at.slice(0, 7)}`.replace(/[^a-zA-Z0-9-]/g, '-');
+const bibtex = [
+  `@misc{${key},`,
+  `  title = {${title}},`,
+  '  author = {{Benchmark index contributors}},',
+  `  year = {${year}},`,
+  `  howpublished = {\\url{${permalink}}},`,
+  ...(release_doi != null ? [`  doi = {${release_doi}},`] : []),
+  `  note = {Entry ${entity_id} at commit ${at}, retrieved ${retrieved_at}}`,
+  '}',
+].join('\n');
+const apa = `Benchmark index contributors. (${year}). ${title} [Data set entry ${entity_id}]. `
+  + (release_doi != null ? `https://doi.org/${release_doi}` : permalink);
+---
+<section class="cite" data-cite={entity_id}>
+  <h2>Cite this</h2>
+  <dl>
+    <dt>Permalink at <code>{at.slice(0, 12)}</code></dt>
+    <dd><a href={permalink}>{permalink}</a></dd>
+    <dt>Raw YAML</dt>
+    <dd><a href={rawAt(at, yaml_path)}><code>{yaml_path}</code></a></dd>
+    <dt>Release DOI</dt>
+    <dd>{release_doi != null ? <a href={`https://doi.org/${release_doi}`}>{release_doi}</a> : <Absent state="not-applicable" reason="no release DOI minted yet" />}</dd>
+    <dt>APA</dt>
+    <dd><p class="apa">{apa}</p></dd>
+    <dt>BibTeX</dt>
+    <dd><pre><code>{bibtex}</code></pre></dd>
+  </dl>
+</section>
+
+<style>
+  .cite {
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--c-border-strong);
+    background: var(--c-surface);
+  }
+  h2 {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-base);
+  }
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+  dd {
+    margin: 0 0 var(--sp-2);
+    overflow-wrap: anywhere;
+  }
+  pre {
+    margin: 0;
+    overflow-x: auto;
+    font-size: var(--fs-xs);
+  }
+  .apa {
+    margin: 0;
+  }
+</style>

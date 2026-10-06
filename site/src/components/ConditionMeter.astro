@@ -1,0 +1,59 @@
+---
+// site/src/components/ConditionMeter.astro -- P2-S2-T06 (09 S6.4). How many of this benchmark's material condition
+// fields a claim specifies: a discrete meter, one segment per material field (fields_material_total, read at render
+// time, never a constant), filled for exactly fields_specified. Above twelve fields it is a fraction label, so a
+// wide profile is not an unreadable comb. Expect it near-empty on the bulk-ingested rows: that is the intent.
+//
+// NEVER: round up (the fill is the count, and a completeness that disagrees with the counts throws); hide itself
+// when completeness is low; colour low completeness as an error (only ink and border tokens, never alert/caution).
+interface Props {
+  condition_completeness: number;
+  fields_specified: number;
+  fields_material_total: number;
+  unknown_fields?: string[];
+}
+
+const MAX_SEGMENTS = 12;
+const { condition_completeness: c, fields_specified: s, fields_material_total: t, unknown_fields = [] } = Astro.props;
+if (!Number.isInteger(s) || !Number.isInteger(t) || t < 1 || s < 0 || s > t) {
+  throw new Error(`ConditionMeter: ${s} of ${t} is not a count of material fields`);
+}
+if (Math.abs(c - s / t) > 0.005) {
+  throw new Error(`ConditionMeter: condition_completeness ${c} is not ${s}/${t} (09 S6.4: never round up)`);
+}
+const readout = `${s} of ${t} material condition fields specified`;
+const unknown = unknown_fields.length > 0 ? `; unknown: ${unknown_fields.join(', ')}` : '';
+---
+<span class="meter" data-meter data-specified={s} data-total={t}>
+  {t <= MAX_SEGMENTS
+    ? <span class="segments" aria-hidden="true">{Array.from({ length: t }, (_, i) => <i class={i < s ? 'on' : 'off'} />)}</span>
+    : <span class="fraction" aria-hidden="true">{s}/{t}</span>}
+  <span class="visually-hidden">{readout}{unknown}</span>
+</span>
+
+<style>
+  .meter {
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--fs-2xs);
+  }
+  .segments {
+    display: inline-flex;
+    gap: 1px;
+  }
+  .segments i {
+    inline-size: 0.375rem;
+    block-size: 0.375rem;
+    border: 1px solid var(--c-ink-muted);
+  }
+  .segments i.on {
+    background: var(--c-ink-muted);
+  }
+  .segments i.off {
+    background: transparent;
+    border-color: var(--c-border-strong);
+  }
+  .fraction {
+    color: var(--c-ink-muted);
+  }
+</style>

@@ -1,0 +1,126 @@
+---
+// site/src/components/BenchmarkCard.astro -- P2-S2-T06 (09 S6.1). The unit of every list, grid and search result:
+// identity and shape. Name; the family label in Plex Sans Condensed then the subdomain, on one line, with no domain
+// swatch (09 S4.2); the tagline clamped to two lines; a chip row (up to three capabilities and the lifecycle); a
+// headroom bar; a footer with the claim count and Staleness. Sized by its container, never the viewport: a card in
+// a 20rem rail, a 3-across grid and a full-width list are the same component.
+//
+// NEVER: a headroom bar when ceiling_anchor_type is none-known (the absent token and its reason instead); a metric
+// value on a card -- a number without room for its provenance. Passing a value, score or result throws.
+import Absent from './Absent.astro';
+import FacetChips from './FacetChips.astro';
+import Staleness from './Staleness.astro';
+import { term } from '../lib/vocab';
+
+interface Props {
+  id: string;
+  name: string;
+  tagline: string;
+  primary_domain: string;
+  capabilities: string[];
+  lifecycle: string;
+  year_released: number;
+  ceiling_anchor_type: string | null;
+  headroom_consumed: number | null;
+  claim_count: number;
+  last_verified_at: string | null;
+  href?: string;
+  today?: Date;
+}
+
+const p = Astro.props;
+for (const banned of ['value', 'score', 'result', 'metric_value', 'top_score']) {
+  if (banned in p) throw new Error(`BenchmarkCard ${p.id}: no ${banned} on a card (09 S6.1: cards carry identity and shape)`);
+}
+if (p.capabilities.length > 3) throw new Error(`BenchmarkCard ${p.id}: ${p.capabilities.length} capabilities; a card shows up to 3`);
+const [family, sub] = p.primary_domain.split('/');
+const familyLabel = term('domain', family).label;
+const subLabel = sub != null ? term('domain', p.primary_domain).label : null;
+const noCeiling = p.ceiling_anchor_type === 'none-known';
+const chips = [...p.capabilities.map((c) => ({ facet: 'capability', term_id: c })), { facet: 'lifecycle', term_id: p.lifecycle }];
+---
+<article class="card" data-benchmark={p.id}>
+  <div class="body">
+    <h3 class="name"><a href={p.href ?? `/benchmarks/${p.id}/`}>{p.name}</a></h3>
+    <p class="domain"><span class="family">{familyLabel}</span>{subLabel != null && <span class="sub"> · {subLabel}</span>} <span class="year">{p.year_released}</span></p>
+    <p class="tagline">{p.tagline}</p>
+    <FacetChips chips={chips} />
+  </div>
+  <div class="headroom" data-headroom>
+    {noCeiling
+      ? <Absent state="not-applicable" reason="no known ceiling, so no headroom" />
+      : p.headroom_consumed != null
+        ? <span class="bar" data-headroom-bar style={`--v: ${p.headroom_consumed}`}><span class="visually-hidden">Headroom consumed: {p.headroom_consumed}</span></span>
+        : <Absent state="not-recorded" reason="headroom" />}
+  </div>
+  <footer class="foot">
+    <span class="claims">{p.claim_count} claims</span>
+    <Staleness last_verified_at={p.last_verified_at} entity_kind="benchmark" today={p.today} />
+  </footer>
+</article>
+
+<style>
+  .card {
+    container-type: inline-size;
+    display: grid;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    border: 1px solid var(--c-border);
+    background: var(--c-surface);
+  }
+  @container (inline-size > 24rem) {
+    .card {
+      grid-template-columns: 1fr 8rem;
+    }
+    .foot {
+      grid-column: 1 / -1;
+    }
+  }
+  .name {
+    margin: 0;
+    font-size: var(--fs-md);
+    font-weight: 600;
+  }
+  .domain {
+    margin: 0;
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+  .family {
+    font-family: var(--font-cond);
+  }
+  .year {
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .tagline {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--c-ink-muted);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .headroom {
+    align-self: center;
+    justify-self: end;
+  }
+  .bar {
+    display: block;
+    inline-size: 6rem;
+    block-size: 0.5rem;
+    border: 1px solid var(--c-border-strong);
+    background: linear-gradient(to right, var(--seq-head-4) calc(var(--v) * 100%), transparent 0);
+  }
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+  .claims {
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+</style>

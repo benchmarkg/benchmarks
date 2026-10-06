@@ -1,0 +1,88 @@
+---
+// site/src/components/ChartFigure.astro -- P2-S2-T06 (09 S6.12). A chart and its data table from one object.
+//
+// Server-rendered DOM order: <figure> -> <figcaption> -> <table>. With JavaScript off the table is the page. On
+// hydration the script inserts the chart BEFORE the table (aria-hidden: the table is the accessible form) and wraps
+// the table in <details><summary>Show data table (N rows)</summary>. The chart follows the theme through
+// echarts-theme.ts's mountChart. An absent cell is <Absent>, never blank and never a zero.
+//
+// NEVER: rely on aria-label on an SVG, or on ECharts' own aria option (off in chartOption; issue #19191).
+import Absent from './Absent.astro';
+import { check, type ChartData, type ChartSpec } from '../lib/chart';
+import { formatValue } from '../lib/vocab';
+
+interface Props {
+  data: ChartData;
+  chart: ChartSpec;
+}
+
+const { data, chart } = Astro.props;
+check(data, chart);
+---
+<figure class="chart-figure" data-chart-figure={JSON.stringify({ data, chart })}>
+  <figcaption>{data.caption}{data.units != null && <span class="units"> ({data.units})</span>}{data.notes != null && <span class="notes"> {data.notes}</span>}</figcaption>
+  <table>
+    <thead><tr>{data.columns.map((c) => <th scope="col">{c.label}{c.unit != null && <span class="unit"> ({c.unit})</span>}</th>)}</tr></thead>
+    <tbody>
+      {data.rows.map((r) => (
+        <tr>{data.columns.map((c) => <td>{r[c.key] != null ? (typeof r[c.key] === 'number' ? formatValue(r[c.key] as number) : r[c.key]) : <Absent state="not-reported" />}</td>)}</tr>
+      ))}
+    </tbody>
+  </table>
+</figure>
+
+<script>
+  import * as echarts from 'echarts/core';
+  import { BarChart, LineChart } from 'echarts/charts';
+  import { GridComponent } from 'echarts/components';
+  import { SVGRenderer } from 'echarts/renderers';
+  import { chartOption } from '../lib/chart';
+  import { mountChart } from '../lib/echarts-theme';
+
+  echarts.use([BarChart, LineChart, GridComponent, SVGRenderer]);
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-chart-figure]')) {
+    const { data, chart } = JSON.parse(fig.dataset.chartFigure ?? '{}');
+    const table = fig.querySelector('table');
+    if (!table) continue;
+    const box = document.createElement('div');
+    box.className = 'chart';
+    box.setAttribute('aria-hidden', 'true');
+    fig.insertBefore(box, table);
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = `Show data table (${data.rows.length} rows)`;
+    fig.insertBefore(details, table);
+    details.append(summary, table);
+    mountChart(box, chartOption(data, chart), echarts);
+  }
+</script>
+
+<style>
+  .chart-figure {
+    margin: 0;
+    container-type: inline-size;
+  }
+  .chart-figure :global(.chart) {
+    inline-size: 100%;
+    aspect-ratio: 2 / 1;
+    color: var(--c-ink-muted);
+  }
+  figcaption {
+    font-size: var(--fs-sm);
+    margin-block-end: var(--sp-2);
+  }
+  .notes,
+  .units,
+  .unit {
+    color: var(--c-ink-muted);
+  }
+  table {
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    padding: var(--sp-1) var(--sp-3) var(--sp-1) 0;
+    text-align: start;
+  }
+</style>

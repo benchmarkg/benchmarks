@@ -1,0 +1,73 @@
+---
+// site/src/components/ComparabilityBanner.astro -- P2-S2-T06 (09 S6.8). Above a view whose claims span more than one
+// comparability key: a --c-caution banner naming exactly which material fields differ, as a table (field, then the
+// value in each condition set), and the two ways on -- restrict to one condition set (with the claims that drops),
+// or proceed with every affected cell flagged. There is no third option that silently proceeds.
+//
+// NEVER: editorialise -- the wording is this component's, fixed, and states what differs, never which set is
+// better; use --c-alert -- non-comparability is a fact about the data, not an error by the user.
+import Absent from './Absent.astro';
+
+interface Diff {
+  field: string;
+  values: (string | number | null)[];
+}
+interface Props {
+  keys: string[];
+  set_labels: string[];
+  diff: Diff[];
+  restrict_href: string;
+  restrict_drops: number;
+  proceed_href: string;
+}
+
+const { keys, set_labels, diff, restrict_href, restrict_drops, proceed_href } = Astro.props;
+if (keys.length < 2) throw new Error('ComparabilityBanner: one comparability key in scope is comparable; there is no banner');
+if (diff.length === 0) throw new Error('ComparabilityBanner: the keys differ but no field is named (09 S6.8: name exactly which)');
+for (const d of diff) {
+  if (d.values.length !== set_labels.length) throw new Error(`ComparabilityBanner: ${d.field} has ${d.values.length} values for ${set_labels.length} sets`);
+}
+---
+<section class="banner" data-comparability role="region" aria-labelledby="comparability-heading">
+  <h2 id="comparability-heading"><span aria-hidden="true">≠</span> These results were produced under {keys.length} different condition sets</h2>
+  <p>They differ in {diff.length} material {diff.length === 1 ? 'field' : 'fields'}:</p>
+  <table>
+    <thead><tr><th scope="col">Field</th>{set_labels.map((l) => <th scope="col">{l}</th>)}</tr></thead>
+    <tbody>
+      {diff.map((d) => <tr><th scope="row"><code>{d.field}</code></th>{d.values.map((v) => <td>{v != null ? String(v) : <Absent state="unknown" />}</td>)}</tr>)}
+    </tbody>
+  </table>
+  <p class="actions">
+    <a href={restrict_href} data-action="restrict">Restrict to one condition set ({restrict_drops} {restrict_drops === 1 ? 'claim' : 'claims'} dropped)</a>
+    <a href={proceed_href} data-action="proceed">Proceed with every affected cell flagged</a>
+  </p>
+</section>
+
+<style>
+  .banner {
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--c-caution);
+    border-inline-start-width: 0.25rem;
+    background: var(--c-caution-bg);
+    color: var(--c-ink);
+  }
+  h2 {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-base);
+  }
+  table {
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th,
+  td {
+    padding: var(--sp-1) var(--sp-3) var(--sp-1) 0;
+    text-align: start;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+    margin-block-end: 0;
+  }
+</style>

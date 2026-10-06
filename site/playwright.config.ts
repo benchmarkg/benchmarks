@@ -3,8 +3,8 @@
 //   cd site && npx playwright test tests/theme.spec.ts
 //
 // @playwright/test is the repository root's (package.json, pinned there); Node resolves it up the tree. The
-// server is the site built with UAIBI_SITE_FIXTURES=theme, which routes test/fixtures/theme.astro at
-// /_fixtures/theme (astro.config.mjs), previewed on 4322 so it never collides with the root e2e suite's 4321.
+// server is the site built with UAIBI_SITE_FIXTURES=theme,components, which routes test/fixtures/theme.astro and
+// test/fixtures/components.astro at /_fixtures/<name> (astro.config.mjs), previewed on 4322 so it never collides with the root e2e suite's 4321.
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -18,7 +18,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 180_000,
     env: {
-      UAIBI_SITE_FIXTURES: 'theme',
+      UAIBI_SITE_FIXTURES: 'theme,components',
       ASTRO_TELEMETRY_DISABLED: '1',
       // Astro 7's preview detaches into a background daemon when it detects a coding agent; keep it in the
       // foreground where Playwright can stop it (the root playwright.config.ts explains the same setting).

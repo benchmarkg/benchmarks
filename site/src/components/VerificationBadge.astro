@@ -1,0 +1,72 @@
+---
+// site/src/components/VerificationBadge.astro -- P2-S2-T06 (09 S6.3, S4.3). The verification level: a seven-segment
+// glyph, one segment per rung of taxonomy/verification.yaml, filled to this rank, plus the level's name. `compact`
+// (table cells, --fs-2xs) shows the 2-letter code instead; the full name is always in the accessible text, never
+// in a title attribute alone. `disputed` overlays a warning glyph and links each dispute; `link_disputes={false}`
+// keeps the glyph and drops the links, for a badge inside a <button> (ValueCell lists them in its popover).
+//
+// NEVER: render without a level. There is no "unknown verification": an unrecorded one throws (a schema
+// violation, not a rendering case), and so does a disputed claim that names no dispute.
+import { RUNGS, RUNG_CODES, rank, rungName } from '../lib/vocab';
+
+interface Props {
+  verification: string;
+  disputed?: boolean;
+  disputed_by?: string[];
+  compact?: boolean;
+  link_disputes?: boolean;
+}
+
+const { verification, disputed = false, disputed_by = [], compact = false, link_disputes = true } = Astro.props;
+const r = rank(verification);
+if (disputed && disputed_by.length === 0) {
+  throw new Error('VerificationBadge: disputed with no disputed_by (09 S6.3: the overlay links to its disputes)');
+}
+const name = rungName(verification);
+const fill = `background: var(--c-verif-${r})`;
+---
+<span class="badge" data-verification={verification} data-rank={r} data-disputed={disputed ? 'true' : undefined}>
+  <span class="segments" aria-hidden="true">{RUNGS.map((_, i) => <i class={i < r ? 'on' : 'off'} style={i < r ? fill : undefined} />)}</span>
+  {compact ? <span class="code" aria-hidden="true">{RUNG_CODES[verification]}</span> : <span class="name" aria-hidden="true">{name}</span>}
+  <span class="visually-hidden">Verification: {name}, level {r} of {RUNGS.length}{disputed ? ', disputed' : ''}</span>
+  {disputed && (
+    <span class="disputed"><span aria-hidden="true">⚠</span>{link_disputes
+      ? disputed_by.map((d, i) => <a href={`/disputes/${d}/`}>{i === 0 ? 'disputed' : `dispute ${i + 1}`}<span class="visually-hidden"> ({d})</span></a>)
+      : <span aria-hidden="true">disputed</span>}</span>
+  )}
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+  }
+  .segments {
+    display: inline-flex;
+    gap: 1px;
+  }
+  .segments i {
+    inline-size: 0.25rem;
+    block-size: 0.6875rem;
+    border: 1px solid var(--c-verif-7);
+  }
+  .segments i.off {
+    background: transparent;
+    border-color: var(--c-border-strong);
+  }
+  .code {
+    font-size: var(--fs-2xs);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .disputed {
+    display: inline-flex;
+    gap: var(--sp-1);
+    color: var(--c-alert);
+  }
+  .disputed a {
+    color: var(--c-alert);
+  }
+</style>
