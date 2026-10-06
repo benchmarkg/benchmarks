@@ -22,7 +22,8 @@ P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, to
 P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on). `build` also
 regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
 (P2-S2-T01, tools/build/tokens.py), and site/src/lib/taxonomy.json from taxonomy/ (P2-S2-T06,
-tools/build/site_taxonomy.py).
+tools/build/site_taxonomy.py). `promote`, `resolve` and `tag-gap` are P1-S2-T10's (tools/promote.py,
+tools/resolve.py, tools/tag_gap.py).
 """
 from __future__ import annotations
 
@@ -319,6 +320,81 @@ def report_cmd(
         typer.echo('report: wrote %s' % out)
     else:
         typer.echo(text, nl=False)
+
+
+@app.command('promote')
+def promote_cmd(
+    paths: Annotated[list[Path], typer.Argument(help='The records to promote, under data/.')],
+    to: Annotated[str, typer.Option('--to', help="The rung to raise them to, on 05 S4's ladder.")],
+    evidence: Annotated[list[str], typer.Option('--evidence', help='A cited Source id; repeat for several.')],
+    by: Annotated[str, typer.Option('--by', help='Who is promoting: not the record\'s author.')],
+    reviewer: Annotated[Optional[str], typer.Option(
+        '--reviewer', help='The expert or maintainer who signed off (expert-reviewed, maintainer-confirmed).')] = None,
+    note: Annotated[Optional[str], typer.Option('--note', help='A line for the promotion record.')] = None,
+):
+    """Raise curation.verification_status, recording who, when and against which evidence (05 S3)."""
+    from tools import promote
+    try:
+        written = promote.promote([str(p) for p in paths], to, evidence, by, reviewer, note, ROOT)
+    except promote.PromotionError as e:
+        typer.echo('promote: refused: %s' % e, err=True)
+        raise typer.Exit(1)
+    for w in written:
+        typer.echo('wrote %s' % w)
+
+
+@app.command('resolve')
+def resolve_cmd(
+    paths: Annotated[Optional[list[Path]], typer.Argument(help='Drafts or other entries to compare as well.')] = None,
+    candidates: Annotated[bool, typer.Option('--candidates', help='List the candidate pairs (the default).')] = True,
+    threshold: Annotated[Optional[float], typer.Option(
+        '--threshold', help='The cosine threshold; default the calibrated one in config/dedup.yaml.')] = None,
+    pairs: Annotated[Optional[Path], typer.Option('--pairs', help='A pair file to give verdicts on instead.')] = None,
+    as_json: Annotated[bool, typer.Option('--json', help='JSON, one object per pair.')] = False,
+):
+    """Identity resolution: same, variant-of or distinct for each pair, with its score. It never merges (05 S3)."""
+    from tools import resolve
+    try:
+        cfg = resolve.config(threshold)
+    except ValueError as e:
+        typer.echo('resolve: %s' % e, err=True)
+        raise typer.Exit(2)
+    verdicts = resolve.resolve_pairs(str(pairs), cfg) if pairs else \
+        resolve.resolve_corpus([str(p) for p in paths or []], cfg)
+    if as_json:
+        typer.echo(json.dumps([dict(v.__dict__, signals=list(v.signals)) for v in verdicts], indent=1))
+    else:
+        for v in verdicts:
+            typer.echo('%-10s %s  <->  %s   cosine %.2f  name %.2f  [%s]%s' % (
+                v.verdict, v.a, v.b, v.cosine, v.name, ', '.join(v.signals) or 'no signal',
+                '' if v.label is None else '   label %s%s' % (v.label, '' if v.agrees else '  (DISAGREES)')))
+    if pairs:
+        a = resolve.agreement(verdicts)
+        typer.echo('resolve: %d of %d labelled pairs agree at cosine %.2f' % (a['agree'], a['pairs'], cfg['cosine_threshold']),
+                   err=as_json)
+    else:
+        typer.echo('resolve: %d candidate pair(s) at cosine %.2f; nothing written' % (len(verdicts), cfg['cosine_threshold']),
+                   err=as_json)
+
+
+@app.command('tag-gap')
+def tag_gap_cmd(
+    benchmark: Annotated[str, typer.Option('--benchmark', help='The benchmark id.')],
+    facet: Annotated[str, typer.Option('--facet', help='The facet the source does not answer, e.g. data.access.')],
+    note: Annotated[str, typer.Option('--note', help='What could not be expressed, and why.')],
+    by: Annotated[str, typer.Option('--by', help='Who is logging it.')],
+    kind: Annotated[str, typer.Option('--kind', help='source-silent (default), missing-term, ...')] = 'source-silent',
+    blocking: Annotated[bool, typer.Option('--blocking', help='The gap blocks classifying the entry.')] = False,
+    proposed_term: Annotated[Optional[str], typer.Option('--proposed-term')] = None,
+):
+    """Log a facet the vocabulary or the source could not answer, as a taxonomy/_failures/ entry (05 S3)."""
+    from tools import tag_gap
+    try:
+        rel = tag_gap.tag_gap(benchmark, facet, note, by, kind, blocking, proposed_term, root=ROOT)
+    except tag_gap.TagGapError as e:
+        typer.echo('tag-gap: refused: %s' % e, err=True)
+        raise typer.Exit(1)
+    typer.echo('wrote %s' % rel)
 
 
 def main():

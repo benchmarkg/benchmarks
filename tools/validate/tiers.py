@@ -68,6 +68,7 @@ from schema.entities import (AliasFile, IngestBatch, Leaderboard, Organization, 
 from schema.metric import Metric
 from schema.source import Source
 from schema.classification import FAILURE_NAME, Classification, FailureRecord
+from schema.curation import PROMOTION_NAME, Promotion
 from schema.draft import BenchmarkDraft, SourceDraft
 from schema.stub import AllocationFile, BenchmarkStub, OrganizationStub, SystemStub
 from schema.system import System
@@ -110,6 +111,7 @@ KINDS: dict[str, Kind] = {                # anchored directory -> kind (05 S2); 
     'data/_ingest/batches/': Kind('batch', IngestBatch),
     'data/_ingest/unresolved/': Kind('unresolved', UnresolvedFile, many=True),       # 04 S10 (P3-S3-T04)
     'data/aliases/': Kind('aliases', AliasFile, many=True),
+    'data/_curation/promotions/': Kind('promotion', Promotion),                       # 05 S3 bench promote (P1-S2-T10)
     'taxonomy/_corpus/classifications/': Kind('classification', Classification),    # 03 S3.3 (P1-S1-T03)
     'taxonomy/_failures/': Kind('failure', FailureRecord),
     'drafts/benchmarks/': Kind('benchmark-draft', BenchmarkDraft),                   # 11 S F6 (P1-S2-T01)
@@ -333,6 +335,13 @@ def _placement(rec: Record) -> list[Finding]:
         elif m.group(1) != str(raw.get('date')) or m.group(2) != raw.get('benchmark'):
             bad('%s.yaml is named for %s on %s, but holds %s on %s' % (
                 rec.stem, m.group(2), m.group(1), raw.get('benchmark'), raw.get('date')))
+    if rec.kind.name == 'promotion' and raw is not None:
+        m = PROMOTION_NAME.match(rec.stem)
+        if not m:
+            bad('a promotion record is data/_curation/promotions/<yyyy-mm-dd>-<entity id>-<nnn>.yaml (05 S3)')
+        elif m.group(1) != str(raw.get('on')) or m.group(2) != raw.get('entity_id'):
+            bad('%s.yaml is named for %s on %s, but holds %s on %s' % (
+                rec.stem, m.group(2), m.group(1), raw.get('entity_id'), raw.get('on')))
     if rec.kind.name == 'aliases':
         if rec.stem not in ALIAS_FILES:
             bad('alias files are data/aliases/{%s}.yaml' % ','.join(sorted(ALIAS_FILES)))
