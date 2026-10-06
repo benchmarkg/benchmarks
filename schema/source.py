@@ -91,7 +91,9 @@ Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 SourceType = Literal['paper', 'preprint', 'repository', 'leaderboard-page', 'dataset-card', 'blog-post',
                      'documentation', 'dataset-export', 'personal-communication', 'regulatory-document']
-ArchiveStatus = Literal['ok', 'pending', 'failed', 'not-required']
+# withheld (P0-S3-T04, ruled 2026-10-05): deliberately not captured because the body holds personal data, which a
+# public Wayback capture would publish for good. It needs contains_personal_data true and a failure_reason.
+ArchiveStatus = Literal['ok', 'pending', 'failed', 'not-required', 'withheld']
 LicenceClass = Literal['permissive-attribution', 'share-alike', 'non-commercial', 'no-redistribution', 'unlicensed']
 Provenance = Literal['primary', 'pwc-archive', 'hf_space_tag', 'vendor-doc', 'secondary']
 # A Source's own reliability as a citation, weakest first (P5-S8-T02; 06 S3.18 and S7.3: "an
@@ -101,7 +103,8 @@ Provenance = Literal['primary', 'pwc-archive', 'hf_space_tag', 'vendor-doc', 'se
 # produced; it grades whether the page a claim cites can still be read.
 #   lost          link_status dead and no capture: the citation points at nothing (14's Phase 5 exit
 #                 criterion 3 is that none exists)
-#   unarchivable  archive_status failed: Save Page Now refused it, or it was dead before anyone captured it
+#   unarchivable  archive_status failed: Save Page Now refused it, or it was dead before anyone captured it;
+#                 or withheld: not captured on purpose, because the page holds personal data
 #   pending       no capture yet, one requested or due (06 S7.1's seven-day SLA)
 #   archived      a capture on the record, or a DOI, which needs none (04 S12)
 # It is a function of the record rather than a model field: it is derived, never hand-set, so a
@@ -116,7 +119,7 @@ def reliability(record: dict) -> Reliability:
     doi, url, status = record.get('doi'), record.get('archive_url'), record.get('archive_status')  # get-default: absent is null
     if record.get('link_status') == 'dead' and not url and not doi:                               # get-default: unchecked is not dead
         return 'lost'
-    if status == 'failed':
+    if status in ('failed', 'withheld'):
         return 'unarchivable'
     return 'archived' if url or doi or status == 'not-required' else 'pending'
 
@@ -188,10 +191,14 @@ class Source(BaseModel):
         # failed with its reason, or not-required and never quoted (04 S9's paywall case). The seven-day
         # deadline on pending needs a clock, so it is tier 3's (schema/archive_sla.py), not the model's.
         if self.doi is None and not self.archive_url and not (
-                self.archive_status in ('pending', 'failed')
+                self.archive_status in ('pending', 'failed', 'withheld')
                 or (self.archive_status == 'not-required' and self.quote_extract is None)):
-            raise ValueError('%s: a non-DOI source needs an archive_url, or archive_status pending or failed '
-                             '(06 S7.1, 04 S12 tier 3); archive_status %s' % (self.id, self.archive_status))
+            raise ValueError('%s: a non-DOI source needs an archive_url, or archive_status pending, failed or '
+                             'withheld (06 S7.1, 04 S12 tier 3); archive_status %s' % (self.id, self.archive_status))
+        if self.archive_status == 'withheld' and not (self.contains_personal_data is True and self.failure_reason
+                                                      and not self.archive_url):
+            raise ValueError('%s: withheld is for a body holding personal data: it needs contains_personal_data '
+                             'true, a failure_reason, and no archive_url' % self.id)
         if self.archive_status == 'ok' and not (self.archive_url and self.archive_captured):
             raise ValueError('%s: archive_status ok needs archive_url and archive_captured' % self.id)
         if self.archive_url and self.archive_status in ('pending', 'failed'):

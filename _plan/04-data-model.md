@@ -1292,7 +1292,7 @@ accessed: 2026-09-16         # when a human read it
 fetched_at: 2026-09-16T11:02:00Z   # when a machine last retrieved the bytes; distinct from `accessed`
 archive_url: https://web.archive.org/web/20260916110200/https://arxiv.org/abs/2310.06770
 archive_captured: 2026-09-16
-archive_status: ok           # ok | pending | failed | not-required
+archive_status: ok           # ok | pending | failed | not-required | withheld (personal data; P0-S3-T04)
 archive_digest: "3I42H3S6NNFQ2..."  # the Wayback CDX digest, for link-rot comparison
 content_sha256: "9f2c...",   # sha256 of the normalised extract below
 quote_extract: |             # normalised text, capped at 64 KB, METADATA NOT CONTENT

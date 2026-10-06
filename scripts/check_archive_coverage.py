@@ -25,10 +25,11 @@ Per non-DOI Source, first match wins:
 First ingest is the earliest of fetched_at, accessed and archive_requested_at: fetched_at alone
 moves forward on every re-fetch and would let a Source age forever without ever falling due.
 
-A status outside 04 S9's vocabulary (ok | pending | failed | not-required) is a WARNING when it
-carries a failure_reason, because it is a recorded decision not to archive, and a VIOLATION
-under --strict. `withheld`, written by P0-S3-T04 for a body that lists personal e-mail
-addresses, is the one case today; it needs either a vocabulary entry or a ruling.
+`withheld` is the personal-data exemption (ruled 2026-10-05, P0-S3-T04): a body that lists people's
+e-mail addresses is not captured, because a Wayback copy would publish them for good. It passes when
+the record says contains_personal_data: true and gives its failure_reason, and is a VIOLATION
+otherwise. Any other status outside the vocabulary (ok | pending | failed | not-required | withheld)
+is a WARNING when it carries a failure_reason, and a VIOLATION under --strict.
 
 Exit 0 when there are no violations, 1 otherwise; the oldest violation is printed first.
 """

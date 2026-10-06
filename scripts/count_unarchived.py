@@ -7,7 +7,8 @@
 
 A Source is unarchived when it has no DOI and no archive_url: a DOI needs no capture (04 S12), and
 `archive_status: not-required` on a non-DOI Source (04 S9's paywall case, citable but never quoted)
-is listed apart as exempt, not counted. Each unarchived Source is shown with its reliability
+and `withheld` (a body holding personal data, never captured on purpose; P0-S3-T04) are listed apart as
+exempt, not counted. Each unarchived Source is shown with its reliability
 (schema.source.reliability) and its age from first ingest, oldest first -- the order the nightly
 archiver (ingest/archive_sources.py) works in, so the head of this list is what tonight's run
 reaches first and anything still at the head after a week has missed 06 S7.1's seven-day SLA.
@@ -56,7 +57,7 @@ def survey(root=ROOT, now=None):
                'link_status': r.get('link_status'), 'first_ingest': born.strftime('%Y-%m-%d') if born else None,  # get-default: never link-checked
                'age_days': (now - born).days if now and born else None,
                'failure_reason': r.get('failure_reason')}                                             # get-default: only a failure has one
-        (exempt if r.get('archive_status') == 'not-required' else unarchived).append(row)                 # get-default: the same
+        (exempt if r.get('archive_status') in ('not-required', 'withheld') else unarchived).append(row)                 # get-default: the same
     unarchived.sort(key=lambda x: (x['first_ingest'] or '0000', x['id']))     # undated first: they are the oldest unknowns
     return {'unarchived': unarchived, 'exempt': exempt,
             'lost': [x for x in unarchived if x['reliability'] == 'lost'],
@@ -91,7 +92,7 @@ def main(argv=None):
         print('... and %d more' % (n - a.limit))
     by = {k: sum(1 for x in got['unarchived'] if x['reliability'] == k) for k in ('lost', 'unarchivable', 'pending')}
     print('count_unarchived: %d non-DOI Source(s) with no capture (budget %d%s): %d lost, %d unarchivable, %d pending; '
-          '%d never link-checked; %d exempt (not-required)'
+          '%d never link-checked; %d exempt (not-required or withheld)'
           % (n, a.budget, ', OVER' if over else '', by['lost'], by['unarchivable'], by['pending'],
              len(got['unchecked']), len(got['exempt'])))
     if lost:

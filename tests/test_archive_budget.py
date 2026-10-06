@@ -194,6 +194,7 @@ def test_a_transient_failure_gives_up_after_max_attempts_with_the_reason(tmp_pat
     ({'archive_status': 'not-required'}, 'archived'),
     ({'archive_status': 'pending'}, 'pending'),
     ({'archive_status': 'failed', 'failure_reason': 'x'}, 'unarchivable'),
+    ({'archive_status': 'withheld', 'failure_reason': 'x', 'contains_personal_data': True}, 'unarchivable'),
     ({'archive_status': 'failed', 'failure_reason': 'x', 'link_status': 'dead'}, 'lost'),
     ({'archive_status': 'pending', 'link_status': 'dead'}, 'lost'),
     ({'archive_url': 'https://web.archive.org/web/2026/x', 'archive_status': 'ok', 'link_status': 'dead'}, 'archived'),
