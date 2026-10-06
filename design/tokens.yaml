@@ -39,7 +39,8 @@
 # floor; 09 S4.2 exempts that ramp from the range assertion only, not the step one. The dark ramp is
 # stepped at 0.06. These are for P2-S2-T02/T03 to fail on and a person to resolve, not for this file
 # to paper over. Since P2-S2-T02 the eight contrast failures are recorded in contrast_waivers (at the
-# end of this file), which the gate holds to their measured values until a person re-authors them.
+# end of this file), which the gate holds to their measured values until a person re-authors them;
+# since P2-S2-T03 the two ramp-step failures are in palette_waivers the same way.
 
 version: 0.1.0
 updated: 2026-09-28
@@ -55,9 +56,16 @@ thresholds:
     note: >
       09 S4.2: "empirical and uncalibrated: start there, calibrate against real renders in Phase 2,
       and record the result in tokens.yaml". The calibration task replaces this with its value, date
-      and rationale.
+      and rationale. Until then scripts/check_palette.py reports group B's delta-E and group D's failures
+      without failing the build (the maintainer's call, 2026-10-06), and they block once this changes.
   lightness_floor: 0.10          # OKLCH L; group D's second alternative
-  greyscale_y_ratio_floor: 1.4   # CIE Y ratio; group F
+  greyscale_y_ratio_floor:       # group F: (Y1 + 0.05) / (Y2 + 0.05), CIE Y as WCAG computes it
+    value: 1.4
+    status: uncalibrated
+    note: >
+      09 S4.2 group F. Like delta_e_floor, check_palette.py reports group F's pair failures without
+      failing the build while this says uncalibrated (the maintainer's call, 2026-10-06); P2-S2-T08
+      calibrates both against real renders.
   ramp:
     min_adjacent_step: 0.055     # OKLCH L; group C. Adjacent-stop delta-E is never asserted (09 S4.2)
     min_range: 0.45              # OKLCH L, first stop to last; group C
@@ -317,17 +325,19 @@ absence_states:
 # L, or pattern-distinguished. A meaning names tokens, or a ramp by its group id.
 co_occurrence:
   meanings:
-    verification: {ramp: verification}
-    disputed: {tokens: [c-verif-disputed]}
+    # pattern_distinguished: the meaning always renders with a non-colour channel 09 specifies, so
+    # group D and F count any pair with it as told apart by that channel, not by colour.
+    verification: {ramp: verification, pattern_distinguished: true, channel: 'count: the seven-segment glyph (09 S4.3)'}
+    disputed: {tokens: [c-verif-disputed], pattern_distinguished: true, channel: 'glyph: an overlay on any rung (09 S4.3)'}
     headroom: {ramp: headroom}
     coverage: {ramp: coverage}
-    alert: {tokens: [c-alert, c-alert-bg]}
-    caution: {tokens: [c-caution, c-caution-bg]}
-    affirm: {tokens: [c-affirm]}
+    alert: {tokens: [c-alert, c-alert-bg], pattern_distinguished: true, channel: 'glyph: warning glyph and evidence link (09 S4.3)'}
+    caution: {tokens: [c-caution, c-caution-bg], pattern_distinguished: true, channel: 'glyph: the banner glyph and sentence (09 S6)'}
+    affirm: {tokens: [c-affirm], pattern_distinguished: true, channel: 'label: verified / archived / passing in words (09 S4.5)'}
     link: {tokens: [c-link, c-focus, c-select-bg]}
     visited: {tokens: [c-link-visited]}
     emphasis: {tokens: [c-emphasis, c-emphasis-bg]}
-    absence: {tokens: [c-absent-hatch, c-absent-rule, c-absent-ink], pattern_distinguished: true}
+    absence: {tokens: [c-absent-hatch, c-absent-rule, c-absent-ink], pattern_distinguished: true, channel: 'pattern (09 S4.4)'}
   views:
     coverage-matrix:
       basis: 09 S4.4 (the density ramp is the only colour in the plot area) and S4.2 (d)
@@ -436,3 +446,14 @@ contrast_waivers:
   - {fg: c-absent-hatch, on: c-bg, theme: light, measured: 1.81, reason: '09 S4.5 value'}
   - {fg: c-absent-rule, on: c-bg, theme: light, measured: 2.59, reason: '09 S4.5 value'}
   - {fg: c-verif-1, on: c-bg, theme: light, measured: 2.59, reason: '09 S4.5 value; re-stepping the ramp is P2-S2-T03 group C work too'}
+
+# palette_waivers: known failures of check_palette.py's blocking groups, accepted 2026-10-06 (the
+# maintainer's call) until a person re-authors the values. Like contrast_waivers: a waived failure
+# prints WAIVED; the build fails if it measures worse than `measured` (the worst over normal vision and
+# the four CVD simulations), if it no longer fails (delete it), or if it names no such ramp. Group C
+# reads perceived lightness after each simulation, so a ramp can pass in normal vision and fail in one.
+palette_waivers:
+  - {group: C, ramp: verification, theme: light, assertion: min_adjacent_step, measured: 0.046,
+     reason: '09 S4.5 value: 0.05 L steps for rungs 1-4 (0.046 under protanopia); the 0.055 floor needs a re-stepped ramp'}
+  - {group: C, ramp: coverage, theme: light, assertion: min_adjacent_step, measured: 0.054,
+     reason: '09 S4.5 value: 0.054 L between two stops under protanopia only; 0.055 in normal vision'}
