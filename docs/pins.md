@@ -43,6 +43,8 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | jsonschema (dev group) | 04 §15 item 21, first P3-S1-T01: validating fixtures against schema/generated/ | 4.26.0 | 4.26.0 (`requires_python >=3.10`) | 2026-01-07 | pypi.org/pypi/jsonschema/json | 2026-09-25 | ok (first pin) |
 | rapidfuzz | 07 §5.3 (named, not versioned), first P3-S3-T03: the fuzzy name term of match_confidence | 3.14.6 | 3.14.6 (`requires_python >=3.11`) | 2026-08-30 | pypi.org/pypi/rapidfuzz/json | 2026-10-06 | ok (first pin; recorded late, pinned 2026-10-05) |
 | pyyaml (dev group) | first P3-S3-T07: the workflow script next_task.py, so tests/test_next_task_ahead.py runs here | 6.0.3 | 6.0.3 (`requires_python >=3.8`) | 2025-09-25 | pypi.org/pypi/pyyaml/json | 2026-10-06 | ok (first pin) |
+| colorspacious (dev group) | 09 §4.2 (named, not versioned), first P2-S2-T03: CVD simulation and CAM02-UCS ΔE in scripts/check_palette.py | 1.1.2 | 1.1.2 (needs only numpy; MIT) | 2018-04-08 | pypi.org/pypi/colorspacious/json | 2026-10-06 | ok (first pin); the last release is from 2018, checked working against numpy 2.5.3 here |
+| numpy (dev group) | colorspacious's dependency, P2-S2-T03 | 2.5.3 | see the numpy row above | -- | -- | 2026-10-06 | ok (same pin as the atlas extra) |
 
 ## Other pins and third-party facts the plan names
 
