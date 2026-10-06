@@ -53,6 +53,7 @@ export interface Source {
   licence_basis?: string | null;
   contains_personal_data?: boolean | null;
   drafted_by?: string | null;
+  repointed_from?: string | null;
   link_status?: ("live" | "changed" | "suspect" | "dead") | null;
   link_checked_at?: string | null;
   link_detail?: string | null;

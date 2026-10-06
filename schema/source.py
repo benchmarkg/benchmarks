@@ -165,6 +165,9 @@ class Source(BaseModel):
     licence_basis: Text | None = None
     contains_personal_data: bool | None = None
     drafted_by: Text | None = None
+    # A dead URL a curator replaced with a live copy of the same document (P5-S8-T02). The id, derived from
+    # the original link, stays; this says which link it was, so a scaffold that meets it again knows the record.
+    repointed_from: Url | None = None
 
     # The link-rot re-check (06 S7.2; P5-S8-T01, tools/check_links.py writes them). `body_sha256` is
     # the accepted digest of the page -- the first check's, or the one a curator accepted after a
