@@ -1,0 +1,61 @@
+---
+// site/src/components/SourceCitation.astro -- P2-S2-T06 (09 S6.6). A source: its title as the link, publisher and
+// retrieval date muted, and a separate small archive link. With no archive_url it says "not archived", visibly, in
+// the absent token: unarchived sources are a known decay risk and one of the project's own quality metrics.
+// `link_only` (Artificial Analysis: attribution permitted, redistribution barred) renders the citation and the link
+// and never an excerpted value.
+//
+// NEVER: render a link without retrieved_at (it throws); present the archive link as the primary source, or a
+// primary source as archived when it is not; carry an excerpt in link_only mode (it throws).
+//
+// "not archived" is a status of the source, not one of 09 S11.2's four phrases for a missing value, so it is
+// written out here in the absent token's ink and glyph rather than through <Absent>.
+
+interface Props {
+  source_id: string;
+  title: string;
+  publisher: string;
+  url: string;
+  archive_url: string | null;
+  retrieved_at: string;
+  source_type: string;
+  link_only?: boolean;
+  excerpt?: string;
+}
+
+const { source_id, title, publisher, url, archive_url, retrieved_at, source_type, link_only = false, excerpt } = Astro.props;
+if (!retrieved_at) throw new Error(`SourceCitation ${source_id}: no retrieved_at (09 S6.6: never a link without one)`);
+if (link_only && excerpt != null) {
+  throw new Error(`SourceCitation ${source_id}: link_only forbids an excerpt (09 S6.6: attribution, not redistribution)`);
+}
+---
+<cite class="source" data-source={source_id} data-source-type={source_type} data-link-only={link_only ? 'true' : undefined}>
+  <a class="primary" href={url}>{title}</a>
+  <span class="meta">{publisher}, retrieved <time datetime={retrieved_at}>{retrieved_at.slice(0, 10)}</time></span>
+  {archive_url != null
+    ? <a class="archive" href={archive_url}><span aria-hidden="true">⧉</span> archive<span class="visually-hidden"> copy of {title}</span></a>
+    : <span class="not-archived" data-archive="none"><span aria-hidden="true">∅</span> not archived</span>}
+  {!link_only && excerpt != null && <q class="excerpt">{excerpt}</q>}
+</cite>
+
+<style>
+  .source {
+    font-style: normal;
+  }
+  .meta,
+  .archive {
+    margin-inline-start: var(--sp-2);
+    color: var(--c-ink-muted);
+    font-size: var(--fs-xs);
+  }
+  .not-archived {
+    margin-inline-start: var(--sp-2);
+    color: var(--c-absent-ink);
+    font-size: var(--fs-xs);
+  }
+  .excerpt {
+    display: block;
+    margin-block-start: var(--sp-1);
+    color: var(--c-ink-muted);
+  }
+</style>

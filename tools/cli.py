@@ -21,7 +21,8 @@ P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, to
 `ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
 P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on). `build` also
 regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
-(P2-S2-T01, tools/build/tokens.py).
+(P2-S2-T01, tools/build/tokens.py), and site/src/lib/taxonomy.json from taxonomy/ (P2-S2-T06,
+tools/build/site_taxonomy.py).
 """
 from __future__ import annotations
 
@@ -180,7 +181,7 @@ def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
 ):
     """Emit the shipped JSON artifacts (08 S4.2), drafts excluded, and regenerate the design tokens (09 S13)."""
-    from tools.build import artifacts, tokens
+    from tools.build import artifacts, site_taxonomy, tokens
     result = artifacts.build(ROOT)
     for e in result.errors:
         typer.echo('error  %s' % e, err=True)
@@ -193,6 +194,9 @@ def build_cmd(
         # committed files: `git diff` after a build is the drift check. A data-only tree (a test
         # corpus, a fork of data/) has no design/ and gets no tokens.
         for path in tokens.write(ROOT) if os.path.exists(os.path.join(ROOT, tokens.TOKENS)) else []:
+            typer.echo('wrote %s' % path)
+        # the taxonomy terms the site's components resolve (P2-S2-T06), committed on the same terms
+        for path in site_taxonomy.write(ROOT) if os.path.isdir(os.path.join(ROOT, 'site')) else []:
             typer.echo('wrote %s' % path)
     except tokens.TokenError as e:
         typer.echo('error  %s' % e, err=True)

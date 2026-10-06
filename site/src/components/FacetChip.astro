@@ -1,0 +1,56 @@
+---
+// site/src/components/FacetChip.astro -- P2-S2-T06 (09 S6.2). One taxonomy term as a chip: static, a filter link
+// (filter-available) or an applied filter (filter-active: a filled ground AND a × affordance; the fill alone is not
+// the signal). At least 24px tall (SC 2.5.8), 28px at coarse pointers; a 3px radius, not a pill. FacetChips.astro
+// lays a row of them out, at most six before "+N more".
+//
+// NEVER: invent a term. The label comes from taxonomy/ (site/src/lib/taxonomy.json); a term_id that does not resolve
+// throws, so a stale chip fails the build.
+import { term } from '../lib/vocab';
+
+interface Props {
+  facet: string;
+  term_id: string;
+  state?: 'static' | 'filter-available' | 'filter-active';
+  count?: number;
+  href?: string;
+}
+
+const { facet, term_id, state = 'static', count, href } = Astro.props;
+const { label } = term(facet, term_id);
+if (state !== 'static' && href == null) throw new Error(`FacetChip ${facet}:${term_id}: a ${state} chip needs its href`);
+const Tag = state === 'static' ? 'span' : 'a';
+---
+<Tag class="chip" data-facet={facet} data-term={term_id} data-state={state} href={state === 'static' ? undefined : href} aria-current={state === 'filter-active' ? 'true' : undefined}>{label}{count != null && <span class="count">{count}</span>}{state === 'filter-active' && <span class="remove" aria-hidden="true">×</span>}{state === 'filter-active' && <span class="visually-hidden"> (remove filter)</span>}</Tag>
+
+<style>
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    min-block-size: 1.5rem;
+    padding-inline: var(--sp-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    color: var(--c-ink);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-dense);
+    text-decoration: none;
+  }
+  @media (pointer: coarse) {
+    .chip {
+      min-block-size: 1.75rem;
+    }
+  }
+  .chip[data-state='filter-active'] {
+    background: var(--c-select-bg);
+    border-color: var(--c-link);
+  }
+  .count {
+    color: var(--c-ink-muted);
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .remove {
+    font-weight: 700;
+  }
+</style>

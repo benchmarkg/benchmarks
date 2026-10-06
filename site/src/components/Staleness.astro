@@ -1,0 +1,53 @@
+---
+// site/src/components/Staleness.astro -- P2-S2-T06 (09 S6.7). How long since a person last verified this entity: a
+// dot plus words, in four bands (fresh < 90 days, ageing 90-365, stale > 365, unverified since creation), always
+// with the absolute ISO date; the day count is secondary (09 S11.4). Visible by default on entry pages.
+//
+// NEVER: hide when stale; compute freshness from a file's git mtime (it takes last_verified_at, a curation fact,
+// and nothing else). `today` exists for tests; a page leaves it to the build date.
+import { BAND_LABEL, band, daysSince } from '../lib/vocab';
+
+interface Props {
+  last_verified_at: string | null;
+  entity_kind: string;
+  upstream_last_changed_at?: string | null;
+  today?: Date;
+}
+
+const { last_verified_at, entity_kind, upstream_last_changed_at = null, today = new Date() } = Astro.props;
+const b = band(last_verified_at, today);
+const upstreamNewer = upstream_last_changed_at != null && last_verified_at != null
+  && Date.parse(upstream_last_changed_at) > Date.parse(last_verified_at);
+---
+<span class="staleness" data-band={b} data-entity-kind={entity_kind}>
+  <span class="dot" aria-hidden="true">●</span>
+  {last_verified_at != null
+    ? <span>{BAND_LABEL[b]}: verified <time datetime={last_verified_at}>{last_verified_at.slice(0, 10)}</time> <span class="days">({daysSince(last_verified_at, today)} days)</span></span>
+    : <span>{BAND_LABEL[b]}</span>}
+  {upstreamNewer && upstream_last_changed_at != null && (
+    <span class="upstream">; upstream changed <time datetime={upstream_last_changed_at}>{upstream_last_changed_at.slice(0, 10)}</time></span>
+  )}
+</span>
+
+<style>
+  .staleness {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+  .dot {
+    margin-inline-end: var(--sp-1);
+  }
+  [data-band='fresh'] .dot {
+    color: var(--c-affirm);
+  }
+  [data-band='ageing'] .dot {
+    color: var(--c-ink-faint);
+  }
+  [data-band='stale'] .dot,
+  [data-band='unverified-since-creation'] .dot {
+    color: var(--c-caution);
+  }
+  .days {
+    color: var(--c-ink-faint);
+  }
+</style>

@@ -1,0 +1,91 @@
+---
+// site/src/components/EmptyState.astro -- P2-S2-T06 (09 S6.10, S11.5). What a view shows when it has nothing: at
+// most three sentences -- what happened, what it means, one action -- written here per context, never passed in.
+//
+//   search          no benchmark matches the query
+//   filter          the applied filters exclude everything: they are listed as removable chips, and the single
+//                   most-constraining one (the filter whose removal returns the most results) is offered to drop
+//   domain-page     nothing is curated in this domain yet
+//   coverage-cell   no benchmark measures a capability in a domain. This is not an error, it is the answer, and
+//                   it renders as a finding with the domain's curation-coverage caveat and the nearest partial matches
+//
+// NEVER: apologise, use an illustration, or say "Oops".
+import FacetChips from './FacetChips.astro';
+import { term } from '../lib/vocab';
+
+interface Filter {
+  facet: string;
+  term_id: string;
+  remove_href: string;
+  results_without: number;
+}
+interface Nearest {
+  id: string;
+  name: string;
+  href: string;
+}
+interface Props {
+  context: 'search' | 'filter' | 'domain-page' | 'coverage-cell';
+  query?: string;
+  applied_filters?: Filter[];
+  domain?: string;
+  capability?: string;
+  caveat?: string;
+  suggestions?: Nearest[];
+}
+
+const { context, query, applied_filters = [], domain, capability, caveat, suggestions = [] } = Astro.props;
+const need = (v: unknown, what: string) => {
+  if (v == null) throw new Error(`EmptyState ${context}: needs ${what}`);
+};
+let drop: Filter | undefined;
+if (context === 'search') need(query, 'query');
+if (context === 'filter') {
+  if (applied_filters.length === 0) throw new Error('EmptyState filter: an empty result with no filter is not a filter empty-state');
+  drop = applied_filters.reduce((a, b) => (b.results_without > a.results_without ? b : a));
+}
+if (context === 'domain-page' || context === 'coverage-cell') need(domain, 'domain');
+if (context === 'coverage-cell') need(capability, 'capability');
+const domainLabel = domain != null ? term('domain', domain).label : null;
+const capabilityLabel = capability != null ? term('capability', capability).label : null;
+---
+<div class="empty" data-empty={context}>
+  {context === 'search' && (
+    <p>No benchmark matches “{query}”. The index searches names, aliases and taglines. Try a broader term.</p>
+  )}
+  {context === 'filter' && drop != null && (
+    <>
+      <p>No benchmark matches all {applied_filters.length} filters. Each filter narrows the results further.
+        <a href={drop.remove_href}>Remove {term(drop.facet, drop.term_id).label}</a> to see {drop.results_without}.</p>
+      <FacetChips chips={applied_filters.map((f) => ({ facet: f.facet, term_id: f.term_id, state: 'filter-active', href: f.remove_href }))} />
+    </>
+  )}
+  {context === 'domain-page' && (
+    <p>No benchmark in {domainLabel} is curated yet. The domain is in the taxonomy, so the gap is a finding.
+      <a href="/contribute/">Suggest a benchmark for it</a>.</p>
+  )}
+  {context === 'coverage-cell' && (
+    <>
+      <p class="finding">No benchmark in the index measures <code>{capability}</code> ({capabilityLabel}) in <code>{domain}</code> ({domainLabel}).</p>
+      {caveat != null && <p class="caveat">{caveat}</p>}
+      {suggestions.length > 0 && (
+        <p class="nearest">Nearest partial matches: {suggestions.map((s, i) => <>{i > 0 && ', '}<a href={s.href}>{s.name}</a></>)}.</p>
+      )}
+    </>
+  )}
+</div>
+
+<style>
+  .empty {
+    max-inline-size: 68ch;
+    color: var(--c-ink);
+  }
+  .empty p {
+    margin: 0 0 var(--sp-2);
+  }
+  .caveat,
+  .nearest {
+    color: var(--c-ink-muted);
+    font-size: var(--fs-sm);
+  }
+</style>
