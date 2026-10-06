@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const FIXTURES = {
   citations: './test/fixtures/citations.astro',
   'citations-openalex-headline': './test/fixtures/citations.astro',
+  theme: './test/fixtures/theme.astro',
 };
 
 function fixturePages(name) {
@@ -32,5 +33,11 @@ export default defineConfig({
   // provenance badge on this site is exactly that shape (08 S5.1, 10 Technology decisions), so
   // this stays literally `true`; test/config.test.mjs fails on anything else.
   compressHTML: true,
+  // 09 S12.3: CSS is "inlined in <head> while it fits within the first TCP congestion window (~14 KB), linked
+  // beyond that". Astro inlines a stylesheet under vite's assetsInlineLimit ('auto'), 4 KB by default, which the
+  // tokens and type stack together (Base.astro, ~5.5 KB) already exceed; 14 KB is the spec's line. It also keeps
+  // the build from moving a CSS file across drives, which fails (EXDEV) when --outDir is on another volume.
+  build: { inlineStylesheets: 'auto' },
+  vite: { build: { assetsInlineLimit: 14 * 1024 } },
   integrations: [react(), ...(fixture ? [fixturePages(fixture)] : [])],
 });

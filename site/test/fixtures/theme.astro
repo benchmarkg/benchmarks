@@ -1,0 +1,50 @@
+---
+// site/test/fixtures/theme.astro -- P2-S2-T07. The page tests/theme.spec.ts drives: the Base layout (its
+// pre-paint script and toggle) and one ECharts chart, server-rendered in the neutral theme and hydrated in the
+// page's. Routed at /_fixtures/theme only when UAIBI_SITE_FIXTURES=theme (astro.config.mjs), never in a
+// normal build.
+import * as echarts from 'echarts/core';
+import { BarChart } from 'echarts/charts';
+import { GridComponent } from 'echarts/components';
+import { SVGRenderer } from 'echarts/renderers';
+import Base from '../../src/layouts/Base.astro';
+import { renderNeutralSvg } from '../../src/lib/echarts-theme';
+
+echarts.use([BarChart, GridComponent, SVGRenderer]);
+const option = {
+  xAxis: { type: 'category', data: ['self-reported', 'maintainer-verified', 'independent-reproduction'] },
+  yAxis: { type: 'value' },
+  series: [{ type: 'bar', data: [5048, 722, 828] }],
+};
+const svg = renderNeutralSvg(echarts, option, 480, 240);
+---
+<Base title="Theme fixture">
+  <main>
+    <h1>Theme fixture</h1>
+    <figure>
+      <div class="chart" data-chart data-option={JSON.stringify(option)} set:html={svg} />
+      <figcaption>Rows by verification rule (fixture data)</figcaption>
+    </figure>
+  </main>
+</Base>
+
+<script>
+  import * as echarts from 'echarts/core';
+  import { BarChart } from 'echarts/charts';
+  import { GridComponent } from 'echarts/components';
+  import { SVGRenderer } from 'echarts/renderers';
+  import { mountChart } from '../../src/lib/echarts-theme';
+
+  echarts.use([BarChart, GridComponent, SVGRenderer]);
+  for (const el of document.querySelectorAll<HTMLElement>('[data-chart]')) {
+    mountChart(el, JSON.parse(el.dataset.option ?? '{}'), echarts);
+  }
+</script>
+
+<style>
+  .chart {
+    inline-size: 30rem;
+    aspect-ratio: 2 / 1;
+    color: var(--c-ink-muted);
+  }
+</style>
