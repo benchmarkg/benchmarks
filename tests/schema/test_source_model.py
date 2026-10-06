@@ -79,6 +79,15 @@ def test_a_non_doi_source_with_no_archive_url_may_say_why():
         Source.model_validate(source(**bare, archive_status='failed'))
 
 
+def test_withheld_is_only_for_a_body_holding_personal_data():
+    # P0-S3-T04, ruled 2026-10-05: a page listing people's e-mail addresses is not captured, on purpose
+    bare = dict(archive_url=None, archive_captured=None, archive_digest=None, archive_status='withheld')
+    Source.model_validate(source(**bare, contains_personal_data=True, failure_reason='lists e-mail addresses'))
+    for missing in (dict(failure_reason='lists e-mail addresses'), dict(contains_personal_data=True)):
+        with pytest.raises(ValidationError, match='withheld is for a body holding personal data'):
+            Source.model_validate(source(**bare, **missing))
+
+
 def test_a_doi_source_needs_no_archive_url():
     Source.model_validate(source(doi='10.48550/arXiv.2310.06770', archive_url=None, archive_captured=None,
                                  archive_status='not-required'))

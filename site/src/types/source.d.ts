@@ -33,7 +33,7 @@ export interface Source {
   fetched_at?: string | null;
   archive_url?: string | null;
   archive_captured?: string | null;
-  archive_status: "ok" | "pending" | "failed" | "not-required";
+  archive_status: "ok" | "pending" | "failed" | "not-required" | "withheld";
   archive_digest?: string | null;
   content_sha256?: string | null;
   quote_extract?: string | null;

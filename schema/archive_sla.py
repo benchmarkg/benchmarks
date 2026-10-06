@@ -10,7 +10,7 @@ Standard library only: the script's verify runs it under a bare interpreter (P1-
 import re
 from datetime import datetime, timedelta, timezone
 
-STATUSES = ('ok', 'pending', 'failed', 'not-required')
+STATUSES = ('ok', 'pending', 'failed', 'not-required', 'withheld')
 SLA = timedelta(days=7)
 
 
@@ -50,6 +50,10 @@ def classify(r, now, sla=SLA, strict=False):
         return 'ok', '', None
     if status == 'failed':
         return ('failed', reason, None) if reason else ('VIOLATION', 'failed with no failure_reason', None)
+    if status == 'withheld':        # the personal-data exemption (P0-S3-T04, ruled 2026-10-05)
+        if r.get('contains_personal_data') is True and reason:                        # get-default: absent is not true
+            return 'withheld', reason, None
+        return 'VIOLATION', 'withheld needs contains_personal_data true and a failure_reason', None
     if status == 'pending' and r.get('archive_requested_at'):
         age = now - parse_time(r['archive_requested_at'])
         if age <= sla:

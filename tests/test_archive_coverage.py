@@ -79,15 +79,19 @@ def rec(**kw):
     (rec(), 'new'),  # fetched three days ago, never tried
     (rec(fetched_at='2026-09-01T00:00:00Z'), 'VIOLATION'),
     (rec(fetched_at=None), 'VIOLATION'),
-    (rec(archive_status='withheld', failure_reason='personal data'), 'WARNING'),
-    (rec(archive_status='withheld'), 'VIOLATION'),
+    # the personal-data exemption (P0-S3-T04, ruled 2026-10-05): it must say so, and why
+    (rec(archive_status='withheld', failure_reason='lists e-mails', contains_personal_data=True), 'withheld'),
+    (rec(archive_status='withheld', failure_reason='lists e-mails'), 'VIOLATION'),
+    (rec(archive_status='withheld', contains_personal_data=True), 'VIOLATION'),
+    (rec(archive_status='deferred', failure_reason='a recorded decision'), 'WARNING'),   # outside the vocabulary
+    (rec(archive_status='deferred'), 'VIOLATION'),
 ])
 def test_classify(r, want):
     assert cov.classify(r, NOW, SLA)[0] == want
 
 
 def test_strict_turns_an_unknown_status_into_a_violation():
-    assert cov.classify(rec(archive_status='withheld', failure_reason='pd'), NOW, SLA, strict=True)[0] == 'VIOLATION'
+    assert cov.classify(rec(archive_status='deferred', failure_reason='pd'), NOW, SLA, strict=True)[0] == 'VIOLATION'
 
 
 def test_a_refetch_does_not_reset_the_clock():
