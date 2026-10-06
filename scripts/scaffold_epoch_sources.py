@@ -126,13 +126,13 @@ def cited_by(root: str, epoch: str) -> dict[str, list[str]]:
     return out
 
 
-def held(root: str) -> dict[str, str]:
-    """id -> url of every data/sources/ record."""
+def held(root: str, field: str = 'url') -> dict[str, str]:
+    """id -> url (or another URL field) of every data/sources/ record."""
     out = {}
     for path in glob.glob(os.path.join(root, 'data', 'sources', '**', '*.yaml'), recursive=True):
         rec = _load(path)
         if isinstance(rec, dict) and isinstance(rec.get('id'), str):   # get-default: tier 1 reports a bad one
-            out[rec['id']] = rec.get('url')                            # get-default: the same
+            out[rec['id']] = rec.get(field)                            # get-default: the same
     return out
 
 
@@ -168,7 +168,7 @@ def record(spellings: list[str], e: dict, citers: dict[str, list[str]]) -> dict:
 def plan(epoch: str = EPOCH, root: str = ROOT) -> dict[str, str]:
     """{path relative to root: file text} for every link no data/sources/ record holds."""
     ids = held(root)
-    urls = set(ids.values())
+    urls = set(ids.values()) | {u for u in held(root, 'repointed_from').values() if u}   # a re-pointed link is held
     citers = cited_by(root, epoch)
     groups: dict[str, dict] = {}                 # one Source per id: spellings differing in scheme, www or
     for url, e in links(epoch).items():          # trailing punctuation are one target

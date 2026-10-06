@@ -91,3 +91,11 @@ def test_the_id_and_type_rules(url, sid, kind):
 def test_a_long_url_is_cut_and_keeps_a_hash():
     sid = S.source_id('https://example.org/' + 'a-very-long-path-segment/' * 6)
     assert len(sid) <= 64 and sid.startswith('src-example-org-') and len(sid.rsplit('-', 1)[1]) == 8
+
+
+def test_a_re_pointed_record_keeps_its_id_and_is_held_by_its_old_link():
+    # P5-S8-T02: Epoch's InternLM link is dead; the record now points at the same report on GitHub, and the
+    # scaffold still recognises it by the link it was made from, so it neither re-scaffolds nor refuses
+    rec = OURS['src-static-aminer-cn-upload-pdf-127-1564-656-6481884993-ac1c33bd']
+    assert rec['repointed_from'] in S.links() and rec['url'] != rec['repointed_from']
+    assert S.source_id(rec['repointed_from']) == rec['id'] and rec['archive_status'] == 'ok'
