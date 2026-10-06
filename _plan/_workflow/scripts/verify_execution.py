@@ -461,10 +461,12 @@ def check_ledger():
                  '%s has status %r; allowed: %s' % (tid, st, ', '.join(STATUSES)))
             continue
 
-        if st == 'review' and ex != 'agent-draft':
+        # an agent task started with next_task.py `start --ahead-of-review` is reviewed too (2026-10-05)
+        ahead = ex == 'agent' and str(t.get('review_note') or '').startswith('started ahead of review on ')
+        if st == 'review' and ex != 'agent-draft' and not ahead:
             fail('ledger/review-wrong-executor',
-                 '%s is in review but executor=%s; only agent-draft tasks are '
-                 'reviewed' % (tid, ex))
+                 '%s is in review but executor=%s; only agent-draft tasks, and agent tasks started '
+                 'ahead of review, are reviewed' % (tid, ex))
 
         if st == 'blocked' and not t.get('blocked_reason'):
             fail('ledger/blocked-without-reason',
@@ -487,8 +489,12 @@ def check_ledger():
         #   review                  draft is allowed because a person reviews this
         #                           one too; the cost is rework if the lower draft
         #                           is rejected, and next_task.py `queue` shows it.
+        #   agent started ahead     every input done OR in review, as for a draft: the
+        #   of review, doing or     maintainer asked for it (2026-10-05), so next_task.py
+        #   review                  `start --ahead-of-review` records the drafts in
+        #                           review_note and the task finishes to review, not done.
         if st in ('doing', 'review', 'done'):
-            ok = ('done', 'review') if (ex == 'agent-draft' and st != 'done') else ('done',)
+            ok = ('done', 'review') if ((ex == 'agent-draft' or ahead) and st != 'done') else ('done',)
             pending = [d for d in (t.get('depends_on') or [])
                        if d in TASKS_BY_ID and TASKS_BY_ID[d].get('status') not in ok]
             if pending:
