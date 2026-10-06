@@ -93,7 +93,7 @@ def ledger():
 
 
 def test_the_ledger_has_one_resolved_row_per_orphan_naming_its_stanza():
-    rows = ledger()
+    rows = [r for r in ledger() if (r.source_key or '').startswith('csv:')]     # the ledger holds other items too
     assert {r.source_key for r in rows} == {'csv:' + o for o in ORPHANS}
     assert all(r.status == 'resolved' and r.field == '*' for r in rows)
     assert all('ingest/mappings/epoch/%s.yaml' % r.source_key[4:] in r.note for r in rows)
@@ -144,7 +144,7 @@ def test_each_ledger_row_is_the_adapters_own_unresolved_item():
         for o in ORPHANS:
             z.write(os.path.join(EPOCHDL, o + '.csv'), o + '.csv')
     bundle = ZipBundle(buf.getvalue())
-    for r in ledger():
+    for r in (r for r in ledger() if (r.source_key or "").startswith("csv:")):   # the orphan rows
         _, [u] = normalise(Candidate(r.source_key, 'claim', None, {}), bundle)
         assert (u.fingerprint, u.observed) == (r.fingerprint, r.observed), r.source_key
 

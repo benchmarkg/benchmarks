@@ -359,6 +359,14 @@ def need(t, *allowed):
                  % (t['id'], t['status'], ' or '.join(allowed)))
 
 
+AHEAD = 'started ahead of review on '
+
+
+def started_ahead(t):
+    """An agent task started with --ahead-of-review: it rests on unreviewed drafts, so it is reviewed too."""
+    return str(t.get('review_note') or '').startswith(AHEAD)
+
+
 def cmd_start(tasks, args):
     t = tasks[args.id]
     need(t, 'todo')
@@ -366,12 +374,22 @@ def cmd_start(tasks, args):
         sys.exit('next_task: %s is executor=%s -- a person does this. Use `block %s '
                  '--reason ...` to park it, or `approve` once it is done.'
                  % (t['id'], t['executor'], t['id']))
-    w = waiting_on(t, tasks)
+    # --ahead-of-review: an agent task may rest on drafts still in review (never on unfinished work) when
+    # the maintainer has asked for it. Because nobody reviews agent work, such a task finishes to review,
+    # not done, and the drafts it rests on are recorded so the reviewer can see them.
+    ahead = getattr(args, 'ahead_of_review', False) and t['executor'] == 'agent'
+    w = waiting_on(t, tasks, ok=('done', 'review') if ahead else None)
     if w:
         sys.exit('next_task: %s is not ready; it waits on %s'
                  % (t['id'], ', '.join('%s (%s)' % (d, tasks[d]['status']) for d in w)))
-    set_ledger(t['id'], status='doing')
-    print('%s -> doing' % t['id'])
+    drafts = unreviewed_inputs(t, tasks) if ahead else []
+    if drafts:
+        set_ledger(t['id'], status='doing', review_note=AHEAD + ', '.join(drafts))
+        print('%s -> doing, ahead of review: it rests on %s and will finish to review'
+              % (t['id'], ', '.join(drafts)))
+    else:
+        set_ledger(t['id'], status='doing')
+        print('%s -> doing' % t['id'])
     return 0
 
 
@@ -381,7 +399,11 @@ def cmd_finish(tasks, args):
     if not args.verify_passed:
         sys.exit('next_task: run the task\'s verify first, then pass --verify-passed.\n'
                  '  verify: %s' % str(t['verify']).strip())
-    if t['executor'] == 'agent':
+    if t['executor'] == 'agent' and started_ahead(t):
+        set_ledger(t['id'], status='review', blocked_reason=None)
+        print('%s -> review (it was started ahead of review). It is NOT done until a person runs: '
+              'approve %s --by NAME' % (t['id'], t['id']))
+    elif t['executor'] == 'agent':
         set_ledger(t['id'], status='done', review_note=None, blocked_reason=None)
         print('%s -> done' % t['id'])
     elif t['executor'] == 'agent-draft':
@@ -396,9 +418,9 @@ def cmd_finish(tasks, args):
 
 def cmd_approve(tasks, args):
     t = tasks[args.id]
-    if t['executor'] == 'agent':
+    if t['executor'] == 'agent' and not started_ahead(t):
         sys.exit('next_task: %s is executor=agent and needs no sign-off; use finish' % t['id'])
-    if t['executor'] == 'agent-draft':
+    if t['executor'] in ('agent-draft', 'agent'):
         need(t, 'review')
     else:
         need(t, 'todo', 'blocked', 'doing')
@@ -421,7 +443,9 @@ def cmd_approve(tasks, args):
 def cmd_reject(tasks, args):
     t = tasks[args.id]
     need(t, 'review')
-    set_ledger(t['id'], status='doing', review_note=args.reason)
+    # a task started ahead of review keeps its marker, so it finishes to review again, never to done
+    note = '%s; rejected: %s' % (t['review_note'], args.reason) if started_ahead(t) else args.reason
+    set_ledger(t['id'], status='doing', review_note=note)
     print('%s -> doing, returned to the agent: %s' % (t['id'], args.reason))
     hit = downstream_drafts(t['id'], tasks)
     if hit:
@@ -472,6 +496,9 @@ def main():
     for name in ('start', 'unblock'):
         p = sub.add_parser(name)
         p.add_argument('id')
+        if name == 'start':
+            p.add_argument('--ahead-of-review', action='store_true',
+                           help='agent task: rest on drafts still in review; it then finishes to review')
 
     p = sub.add_parser('finish', help='agent: doing -> done; agent-draft: doing -> review')
     p.add_argument('id')
