@@ -40,7 +40,7 @@ CONFIDENCE = {'high': 1.0, 'medium': 0.8, 'low': 0.5}
 PROVIDER_PREFIXES = (
     (re.compile(r'^accounts/([a-z0-9-]+)/models/'), None),          # accounts/<org>/models/ -> org-<org>
     (re.compile(r'^chutes/'), 'org-chutes'),
-    (re.compile(r'^zai-org/'), 'org-zai'),
+    (re.compile(r'^zai-org/'), 'org-z-ai'),                    # the organisation's id (data/organizations/_stubs/)
     (re.compile(r'^together/'), 'org-together'),
 )
 PROVIDER_SUFFIXES = {'Fireworks': 'org-fireworks', 'Novita': 'org-novita', 'Together': 'org-together'}
@@ -61,6 +61,7 @@ class Resolution:
     raw: str
     entity: str | None                    # 'system:gpt-6-astra', or None
     version: str | None = None            # a SystemVersion of that entity, where the string names one
+    subset: str | None = None             # a benchmark subset ref (`gpqa#diamond`), where an alias names one
     confidence: str | None = None         # high | medium | low
     step: int | None = None               # 1, 2 or 3; 4 when the match came after the structured parse
     extracts: dict = field(default_factory=dict)      # routed parts: serving_provider, eval_conditions.*
@@ -110,7 +111,11 @@ class Index:
         from schema.entities import AliasFile
         from schema.taxonomy import read_yaml
         entries = []
-        for p in sorted(glob.glob(os.path.join(root, 'data', kind + 's', '*.yaml'))):
+        # benchmarks live under data/benchmarks/<domain>/, the other kinds flat; _stubs/ is never a target
+        pattern = ('*', '*.yaml') if kind == 'benchmark' else ('*.yaml',)
+        paths = [p for p in glob.glob(os.path.join(root, 'data', kind + 's', *pattern))
+                 if os.sep + '_stubs' + os.sep not in p]
+        for p in sorted(paths):
             d = read_yaml(p)
             entries.append(Entry(
                 d['id'], d.get('name') or '', tuple(d.get('aliases') or ()),             # get-default: optional fields
@@ -140,7 +145,7 @@ class Index:
         for a in self.alias_records:
             if a.alias == s:
                 ident = a.entity[1]
-                return ident, self._version_in(ident, s), a.confidence, 2, dict(a.extracts)
+                return ident, a.version or self._version_in(ident, s), a.confidence, 2, dict(a.extracts)
         hit = self._one(self._norm.get(normalise(s), set()))    # get-default: no label, no hit
         if hit:
             return hit[0], hit[1], 'high', 3, {}
@@ -157,17 +162,23 @@ class Index:
 
     # ---- the procedure --------------------------------------------------------------------------------
 
+    def subset_of(self, s: str) -> str | None:
+        """The subset an alias for exactly `s` names (07 S5.4: `GPQA diamond` is gpqa#diamond, not a new
+        benchmark), or None."""
+        return next((a.subset for a in self.alias_records if a.alias == s), None)
+
     def resolve(self, raw: str) -> Resolution:
         got = self.match(raw)
         if got:
             ident, version, conf, step, extracts = got
-            return Resolution(raw, '%s:%s' % (self.kind, ident), version, conf, step, extracts, raw)
+            return Resolution(raw, '%s:%s' % (self.kind, ident), version, self.subset_of(raw), conf, step,
+                              extracts, raw)
         residue, routed, date = parse(raw)
         got = self.match(residue) if residue != raw else None
         if got:
             ident, version, conf, _, extracts = got
             # a stripped date tail is the version the string names, unless the match already named one
-            return Resolution(raw, '%s:%s' % (self.kind, ident), version or date, conf, 4,
+            return Resolution(raw, '%s:%s' % (self.kind, ident), version or date, self.subset_of(residue), conf, 4,
                               {**routed, **extracts}, residue)
         return Resolution(raw, None, extracts=routed, residue=residue, unresolved=self._unresolved(raw, residue))
 

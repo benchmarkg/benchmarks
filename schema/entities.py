@@ -339,26 +339,55 @@ class UnresolvedStatusFile(RootModel[list[UnresolvedStatus]]):
 # ---- 04 S10: Alias ------------------------------------------------------------------------------
 
 ENTITY_KINDS = ('system', 'benchmark', 'organization')
-_EXTRACT_TARGETS = {'serving_provider'} | {'eval_conditions.' + f for f in CONDITION_FIELDS}
+# benchmark.data.access (P3-S3-T06): 07 S5.4's FrontierMath-Tiers-1-3-v2-Private carries "four facts in one
+# string", and the fourth -- the item set is held privately -- is the benchmark's data.access, not a claim
+# condition. Only a benchmark alias may route it.
+ACCESS_EXTRACT = 'benchmark.data.access'
+_EXTRACT_TARGETS = {'serving_provider', ACCESS_EXTRACT} | {'eval_conditions.' + f for f in CONDITION_FIELDS}
 
 
 class Alias(Closed):
+    """One verbatim string and what it names (04 S10). A benchmark alias may name a version and a subset as
+    well (`benchmark:frontiermath@v2#tier-4`, `benchmark:gpqa#diamond`; P3-S3-T06): 07 S5.4's subset strings
+    resolve to the subset, never to a new benchmark."""
     alias: Annotated[str, StringConstraints(min_length=1)]      # verbatim, whitespace and all
-    resolves_to: Annotated[str, StringConstraints(pattern=r'^(system|benchmark|organization):[a-z0-9][a-z0-9.-]*$')]
+    resolves_to: Annotated[str, StringConstraints(
+        pattern=r'^(system|benchmark|organization):[a-z0-9][a-z0-9.-]*(@[a-z0-9][a-z0-9._-]*)?(#[a-z0-9][a-z0-9._-]*)?$')]
     extracts: dict[str, Any] = Field(default_factory=dict)
     kind: Literal['exact', 'spelling', 'provider-endpoint', 'legacy-name', 'typo']
     confidence: Literal['high', 'medium', 'low']
     decided_by: Text
     decided_on: date
     source: SourceId | None = None
+    rationale: Text | None = None    # why the string names this and not its look-alike (07 S5.4; P3-S3-T06)
 
     @property
     def entity(self) -> tuple[str, str]:
+        """(kind, bare id): the version and subset are separate properties."""
         kind, _, ident = self.resolves_to.partition(':')
-        return kind, ident
+        return kind, ident.split('#', 1)[0].split('@', 1)[0]
+
+    @property
+    def version(self) -> str | None:
+        ref = self.resolves_to.split('#', 1)[0]
+        return ref.split('@', 1)[1] if '@' in ref else None
+
+    @property
+    def subset(self) -> str | None:
+        """The subset ref as the rest of the corpus writes it (`gpqa#diamond`), or None."""
+        return '%s#%s' % (self.entity[1], self.resolves_to.split('#', 1)[1]) if '#' in self.resolves_to else None
 
     @model_validator(mode='after')
     def _extracts(self):
+        if self.entity[0] != 'benchmark' and (self.version or self.subset):
+            raise ValueError('alias %r: only a benchmark alias names a version or a subset' % self.alias)
+        access = self.extracts.get(ACCESS_EXTRACT)
+        if ACCESS_EXTRACT in self.extracts:
+            from schema.benchmark import _FIELDS
+            if self.entity[0] != 'benchmark':
+                raise ValueError('alias %r: only a benchmark alias routes %s' % (self.alias, ACCESS_EXTRACT))
+            if access not in _FIELDS['data.access']:
+                raise ValueError('alias %r: %s %r is not a data.access term' % (self.alias, ACCESS_EXTRACT, access))
         stray = sorted(set(self.extracts) - _EXTRACT_TARGETS)
         if stray:
             raise ValueError('alias %r extracts to fields that do not exist: %s' % (self.alias, ', '.join(stray)))

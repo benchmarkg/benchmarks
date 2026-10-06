@@ -563,7 +563,10 @@ def _typed_refs(r: Record):
             target = a.get('resolves_to')
             if isinstance(target, str) and ':' in target:
                 kind, _, ident = target.partition(':')
-                yield 'resolves_to', kind, ident
+                ref, _, subset = ident.partition('#')        # benchmark:frontiermath@v2#tier-4 (P3-S3-T06)
+                yield 'resolves_to', kind, ref
+                if subset:
+                    yield 'resolves_to', 'subset:' + ref.split('@', 1)[0], '%s#%s' % (ref.split('@', 1)[0], subset)
 
 
 def _resolve(ix: Index, kind: str, value: str, from_stub: bool = False) -> str | None:
@@ -606,7 +609,9 @@ def ref_tier(records: list[Record], ix: Index, taxonomy: dict) -> list[Finding]:
             continue                                          # entities: `pool-relative-ranking` is a proposed term
         refs = [(w, kind, v) for w, v, kind in _walk_prefixed(r.raw, '')] + list(_typed_refs(r))
         for where, kind, value in refs:
-            why = _resolve(ix, kind, value, from_stub=r.kind.name.endswith('-stub'))
+            # An alias may name a stub, as a stub may (P3-S3-T06): it is a crosswalk decision, never published,
+            # and a claim drafted through it still cannot point at the stub until the stub is promoted.
+            why = _resolve(ix, kind, value, from_stub=r.kind.name.endswith('-stub') or r.kind.name == 'aliases')
             if why and (where, value) not in seen:
                 seen.add((where, value))
                 out.append(Finding(2, 'dangling-ref', 'blocking', r.id, r.path, '%s: %s' % (where, why),
