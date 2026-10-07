@@ -1,4 +1,4 @@
-"""The adapter contract's data types: 07-ingestion-infrastructure.md S1.1 (P3-S1-T02).
+"""The adapter contract: 07-ingestion-infrastructure.md S1.1-S1.2 (data types P3-S1-T02; the ABC P5-S1-T08).
 
 Five frozen dataclasses an adapter passes around:
 
@@ -13,15 +13,35 @@ Five frozen dataclasses an adapter passes around:
 stage can change what an earlier stage handed it. A field holding a list or dict is still a mutable
 object, so freezing stops reassignment, not mutation in place: build the list before constructing.
 
-There is deliberately no Adapter ABC and no runner here. 07 S11.3: phase 0 of ingestion is "a single
-script ... no cron, no canary, no replay, no PR bot, no ABC", and "the Adapter ABC gets extracted when
-the third adapter is written". P5-S1-T08 owns that extraction and adds it to this file.
+It also holds the two base classes every adapter derives from. They were extracted once two adapters
+existed to extract them from (07 S11.5 step 3: "Extract the Adapter ABC here, with adapters #1 and #2
+refactored onto it"):
+
+    Adapter             discover(), fetch(), normalise(); checkpoint() and finalise() have defaults
+    BulkArchiveAdapter  one bundle fetch, then N logical records (07 S1.2): fetch_bundle() is the only
+                        method that touches the network, and fetch() slices the bundle it returned
+
+ingest/adapters/epoch.py is a BulkArchiveAdapter, ingest/adapters/hf_hub.py an Adapter. A concrete
+adapter that leaves out one of 07 S1.1's declarations -- its name, version, licence, licence class,
+attribution or seed yield band -- is refused when its class is defined, not when a run first needs the
+value. So is one that would retain the raw body of a source whose licence forbids it (07 S4.4).
+
+What the ABC does not hold yet: the runner (P5-S2), the state layer and its checkpoint file (P5-S2-T02),
+and `politeness`, the per-host policy (P5-S2-T01). Until those exist, checkpoint() and finalise() work
+on the in-memory state the caller saves, and `politeness` is None.
+
+Two asks from ADR-0022 (Proposed) were weighed here. `Draft.ingestion` is now optional: a record a
+person submitted is curated, not ingested, and has no ingestion block (04 S9). `Payload` keeps 07 S1.1's
+fields in 07 S1.1's order: splitting its HTTP fields into a subclass changes the positional order every
+caller builds it with, so it waits until the ADR is accepted and the intake bot needs it.
 """
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Sequence
+from abc import ABC, abstractmethod
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -94,7 +114,7 @@ class Draft:
     path: Path
     payload: dict[str, Any]
     change_class: ChangeClass
-    ingestion: dict[str, Any]             # the `ingestion` block, owned by 04 S9
+    ingestion: dict[str, Any] | None      # the `ingestion` block, owned by 04 S9; None for a curated record
     confidence: float                     # 0..1; written to ingestion.extraction_confidence
     labels: list[str] = field(default_factory=list)   # PR labels this draft demands
 
@@ -116,3 +136,106 @@ class RunReport:
     resolver_snapshot_sha256: str
     errors: list[str]
     notes: list[str]
+
+
+# ---- the Adapter ABC (P5-S1-T08; 07 S1.1, S1.2) --------------------------------------------------------
+
+LICENCE_CLASSES = ('permissive-attribution', 'share-alike', 'non-commercial', 'no-redistribution', 'unlicensed')
+# 07 S4.4: "raw_retainable = False on any adapter whose licence_class is share-alike, non-commercial,
+# no-redistribution or unlicensed".
+NOT_RETAINABLE = frozenset(LICENCE_CLASSES[1:])
+DECLARED = ('name', 'version', 'licence', 'licence_class', 'attribution', 'expected_yield')
+
+
+def _abstract(cls) -> bool:
+    """Whether `cls` still has an abstract method. ABCMeta sets __abstractmethods__ only after
+    __init_subclass__ has run, so it is read off the attributes themselves."""
+    return any(getattr(getattr(cls, n, None), '__isabstractmethod__', False) for n in dir(cls))
+
+
+class AdapterDeclarationError(TypeError):
+    """A concrete adapter class without one of 07 S1.1's declarations, or with an unlawful one."""
+
+
+class Adapter(ABC):
+    """One source. 07 S1.1's interface: discover() what exists, fetch() it conditionally, normalise() it
+    into drafts and Unresolved records, checkpoint() a long run, finalise() a finished one."""
+
+    name: str                             # "epoch", "hf-hub", "arxiv-oai", ...
+    version: str                          # bump on ANY change to normalise(); stamped per record
+    licence: str                          # SPDX id or URL. An adapter with none is refused.
+    licence_class: str                    # 04 S9 firewall: one of LICENCE_CLASSES
+    attribution: str                      # the exact credit line this source requires
+    expected_yield: tuple[int, int]       # seed band for a new adapter; adaptive after 8 runs (07 S9)
+    politeness: Any = None                # the per-host policy, enforced by the fetcher (P5-S2-T01)
+    volatile_fields: Sequence[str] = ()   # stripped before hashing (07 S1.5)
+    raw_retainable: bool = True           # False when the licence bars us keeping the body (07 S4.4)
+    caps: Mapping[str, int] = MappingProxyType({})   # per-entity-type draft caps; defaults in 07 S8
+
+    def __init_subclass__(cls, **kw):
+        super().__init_subclass__(**kw)
+        if _abstract(cls):
+            return
+        missing = [a for a in DECLARED if not hasattr(cls, a)]
+        if missing:
+            raise AdapterDeclarationError('%s does not declare %s (07 S1.1)' % (cls.__name__, ', '.join(missing)))
+        if not cls.licence:
+            raise AdapterDeclarationError('%s declares no licence; an adapter with none is refused (07 S1.1)'
+                                          % cls.__name__)
+        if cls.licence_class not in LICENCE_CLASSES:
+            raise AdapterDeclarationError('%s: licence_class %r is not one of %s (04 S9)'
+                                          % (cls.__name__, cls.licence_class, ', '.join(LICENCE_CLASSES)))
+        if cls.raw_retainable and cls.licence_class in NOT_RETAINABLE:
+            raise AdapterDeclarationError('%s: a %s source may not retain its raw body (07 S4.4); set '
+                                          'raw_retainable = False' % (cls.__name__, cls.licence_class))
+        low, high = cls.expected_yield
+        if not 0 <= low <= high:
+            raise AdapterDeclarationError('%s: expected_yield %r is not a band' % (cls.__name__, cls.expected_yield))
+
+    @abstractmethod
+    def discover(self, state: dict) -> Iterator[Candidate]:
+        """Enumerate what the source says exists, using the persisted cursor."""
+
+    @abstractmethod
+    def fetch(self, candidate: Candidate, state: dict) -> Payload | None:
+        """None on a 304 or an unchanged hash."""
+
+    @abstractmethod
+    def normalise(self, payload: Payload, resolver: Any) -> tuple[list[Draft], list[Unresolved]]:
+        """A pure function of (payload, resolver snapshot): no network, no clock, no randomness."""
+
+    def checkpoint(self, state: dict, cursor: dict[str, Any]) -> None:
+        """Keep a mid-run cursor in the state, which the caller persists. P5-S2-T02's runner calls this
+        every 200 candidates and at 80% of --max-runtime, and writes ingest/state/<name>.json."""
+        state['checkpoint'] = dict(cursor)
+
+    def finalise(self, state: dict, report: RunReport | dict) -> None:
+        """A finished run leaves no checkpoint to resume from. Writing ingest/runs/<name>/<date>.json is
+        the runner's (P5-S2-T02)."""
+        state['checkpoint'] = None
+
+
+class BulkArchiveAdapter(Adapter):
+    """One bundle fetch, then N logical records (07 S1.2). fetch() is implemented here, once, and
+    touches no network: it slices the bundle discover() fetched. `--fixture` therefore swaps one call,
+    fetch_bundle(), and the whole adapter runs offline."""
+
+    bundle: Any = None
+
+    @abstractmethod
+    def fetch_bundle(self, state: dict) -> Any:
+        """One conditional GET or clone: a bundle with payload_for(candidate), or None on a 304 or an
+        unchanged content hash. The only method of a bundle adapter that touches the network."""
+
+    @abstractmethod
+    def enumerate(self, bundle: Any) -> Iterator[Candidate]:
+        """The logical records inside the bundle. Each source_key must be unique."""
+
+    def discover(self, state: dict) -> Iterator[Candidate]:
+        self.bundle = self.fetch_bundle(state)
+        if self.bundle is None:
+            return iter(())
+        return self.enumerate(self.bundle)
+
+    def fetch(self, candidate: Candidate, state: dict | None = None) -> Payload | None:
+        return self.bundle.payload_for(candidate)

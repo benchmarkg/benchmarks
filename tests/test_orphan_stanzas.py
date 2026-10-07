@@ -145,7 +145,7 @@ def test_each_ledger_row_is_the_adapters_own_unresolved_item():
             z.write(os.path.join(EPOCHDL, o + '.csv'), o + '.csv')
     bundle = ZipBundle(buf.getvalue())
     for r in (r for r in ledger() if (r.source_key or "").startswith("csv:")):   # the orphan rows
-        _, [u] = normalise(Candidate(r.source_key, 'claim', None, {}), bundle)
+        _, [u] = normalise(bundle.payload_for(Candidate(r.source_key, 'claim', None, {})))
         assert (u.fingerprint, u.observed) == (r.fingerprint, r.observed), r.source_key
 
 
