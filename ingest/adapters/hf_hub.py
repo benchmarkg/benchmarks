@@ -51,7 +51,8 @@ it no Space could ever hash as unchanged.
 
 State is mutated in memory as candidates are fetched. Whoever consumes the payloads saves it, so a
 crash between fetch and write can never mark a record as seen. normalise() (P5-S1-T04, below) turns a
-payload into a discovery candidate, but nothing writes those yet, so the CLI saves to
+payload into a discovery candidate, and cycle() and write() (P5-S1-T06) diff and write those, but the CLI
+does not call them yet -- writing data/_discovery/ is the runner's, under the bot account -- so it saves to
 ingest/raw/hf-hub[-fixture]/state.json, which is
 gitignored, and never to the committed ingest/state/hf-hub.json unless --state names it: a live run
 today would otherwise record ETags and hashes for payloads no draft was ever written from, and the
@@ -255,13 +256,16 @@ class RequestCache:
 
 def new_state():
     """07 S4's shape. `records` is this adapter's per-candidate memory: the listing lastModified the
-    detail short-circuit compares, and the first 16 hex of the last payload's normalised hash."""
+    detail short-circuit compares, and the first 16 hex of the last payload's normalised hash.
+    `absences` is 07 S7.3's consecutive-absence counter, by source key; `last_complete` is when a run
+    last enumerated every listing to its final page, the only kind of run that may count an absence."""
     return {
         'adapter': NAME, 'adapter_version': VERSION,
         'last_run': None, 'last_success': None, 'last_change': None, 'consecutive_failures': 0,
         'cursor': {'type': 'link-next+etag',
                    'note': 'listings are re-enumerated each run; Link rel=next pages them, ETags make them cheap'},
         'checkpoint': None, 'urls': {}, 'records': {}, 'yield_history': [],
+        'absences': {}, 'last_complete': None,
     }
 
 
@@ -323,6 +327,7 @@ class HfHub:
         self.stats = Counter()
         self.fixture_missing = []
         self.notes = []
+        self.incomplete = False   # a listing was not enumerated to its last page: no absence may be counted
 
     # One GET. need_body: the caller cannot act on a 304 without the body (a listing), so
     # If-None-Match is sent only when the cache can answer for it.
@@ -366,6 +371,7 @@ class HfHub:
             url, page, visited = listing.url, 0, set()
             while url:
                 if url in visited or page >= MAX_PAGES:
+                    self.incomplete = True
                     self.notes.append('%s: pagination stopped at page %d (%s)'
                                       % (listing.name, page, 'cursor loop' if url in visited else 'page cap'))
                     break
@@ -376,6 +382,7 @@ class HfHub:
                     if page == 0:
                         raise
                     self.fixture_missing.append(url)
+                    self.incomplete = True
                     self.notes.append('%s: the fixture set ends after page %d' % (listing.name, page))
                     break
                 doc = check_listing(json.loads(body.decode('utf-8')), listing, first_page=page == 0)
@@ -683,11 +690,46 @@ def normalise(payload, resolvers, xwalk):
     return [draft], unresolved
 
 
+GONE_AFTER = 2   # 07 S7.3: "At two consecutive absences, the runner ... classifies it gone"
+
+
+def _listed_again(state, key):
+    """A key counted absent before is listed again: its count is cleared. One absence was a glitch; at two
+    its record was marked gone, so its state record is dropped and the payload is fetched and re-emitted."""
+    n = state['absences'].pop(key, 0)                       # get-default: a key never absent has no count
+    rec = state['records'].get(key)                        # get-default: a key never fetched has no record
+    if n >= GONE_AFTER:
+        state['records'].pop(key, None)
+        return True
+    if rec is not None:
+        rec.pop('last_seen', None)
+    return False
+
+
+def _count_absences(state, previously, listed):
+    """07 S7.3 rule 1: a key present before and missing now increments its counter; nothing else happens.
+    The first absence notes when the key was last listed, which the gone record will carry. Returns
+    (absent keys, keys reaching GONE_AFTER on this run)."""
+    absent, gone = sorted(previously - listed), []
+    for key in absent:
+        n = state['absences'][key] = state['absences'].get(key, 0) + 1   # get-default: a first absence
+        if n == 1 and state['last_complete']:
+            state['records'][key]['last_seen'] = state['last_complete'][:10]
+        if n == GONE_AFTER:
+            gone.append(key)
+    return absent, gone
+
+
 def run(adapter, state, limit=None):
     """discover() then fetch() for each candidate; returns (report, payloads). State is updated in
-    memory, including the run bookkeeping; saving it is the caller's decision."""
+    memory, including the run bookkeeping; saving it is the caller's decision.
+
+    Absences (07 S7.3) are counted only after a complete enumeration: every listing read to its last
+    page, no --limit, no failure. A partial, capped or failed run, or one that met the fixture set's
+    edge, cannot tell a deleted record from one it never reached."""
     started = adapter.now()
     payloads, errors, seen, status = [], [], 0, None
+    previously, listed, back = set(state['records']), set(), []
     try:
         for c in adapter.discover(state):
             if limit is not None and seen >= limit:
@@ -695,6 +737,9 @@ def run(adapter, state, limit=None):
                 status = 'partial'
                 break
             seen += 1
+            listed.add(c.source_key)
+            if _listed_again(state, c.source_key):
+                back.append(c.source_key)
             p = adapter.fetch(c, state)
             if p is not None:
                 payloads.append(p)
@@ -704,8 +749,12 @@ def run(adapter, state, limit=None):
         status, errors = 'capped', [str(e)]
     except (backoff.SoftFail, urllib.error.URLError, TimeoutError, ConnectionError) as e:
         status, errors = 'soft-fail', ['%s: %s' % (type(e).__name__, e)]
+    complete = status is None and not adapter.incomplete
+    absent, gone = _count_absences(state, previously, listed) if complete else ([], [])
     status = status or ('ok' if payloads else 'no-change')
     finished = adapter.now()
+    if complete:
+        state['last_complete'] = iso(finished)
     state['last_run'] = iso(finished)
     if status in ('ok', 'no-change', 'partial', 'capped'):
         state['last_success'] = iso(finished)
@@ -724,9 +773,129 @@ def run(adapter, state, limit=None):
         'payloads_from_cache': adapter.stats['payloads_from_cache'],
         'short_circuited': adapter.stats['short_circuited'], 'not_modified': adapter.stats['not_modified'],
         'unchanged': adapter.stats['unchanged'], 'duplicates': adapter.stats['duplicates'],
-        'fixture_missing': len(adapter.fixture_missing), 'errors': errors, 'notes': adapter.notes,
+        'fixture_missing': len(adapter.fixture_missing), 'complete': complete, 'absent': absent, 'gone': gone,
+        'listed_again': back, 'errors': errors, 'notes': adapter.notes,
     }
     return report, payloads
+
+
+# ---- one run end to end: normalise, then diff against the tree (P5-S1-T06; 07 S1.4, S6.2, S7.3) --------
+#
+# 07 S1.4's four-run matrix needs a differ, and the shared one is P5-S2-T04's (ingest/runner/differ.py).
+# Until the runner is extracted (07 S11.3: adapter #1 "hits it by hand") this is hf-hub's: a discovery
+# candidate's path comes from the source's own key, so pass 1 (the filename) is the whole join, and the
+# lineage key is the source key. What it decides, per candidate:
+#
+#   no file at the path                 the draft as normalise() classed it (new; field-change if it resolved)
+#   a file, same content                no-change: dropped, nothing written -- a no-op run is a zero-line diff
+#   a file, different content           field-change, written over it, keeping what is not the adapter's
+#   two consecutive absences            gone: the file's ingestion.last_seen_upstream set to the last date
+#                                        the key was listed; the record is never deleted (07 S7.3)
+#
+# "Same content" ignores the stamps that say when, not what (discovered_at, fetched_at, the batch,
+# ingested_at, last_seen_upstream). Without that, a run that lost its state file would re-fetch every
+# payload and rewrite every candidate because the date moved: the corpus-wide diff 07 S1.4 exists to
+# prevent. hf-hub drafts carry no numeric result, so 07 S6.2's result-change never arises here: an edited
+# value is a field-change.
+
+OWN_KEYS = ('candidate_id', 'discovered_via', 'discovered_at', 'identity', '_suggested', 'ingestion')
+STAMPS = frozenset({'discovered_at', 'fetched_at', 'batch', 'ingested_at', 'last_seen_upstream'})
+
+
+def document(draft):
+    """The file a draft is written as: its record, then its ingestion block (04 S9)."""
+    return dict(draft.payload, ingestion=draft.ingestion)
+
+
+def _content(doc):
+    if isinstance(doc, dict):
+        return {k: _content(v) for k, v in doc.items() if k not in STAMPS}
+    if isinstance(doc, list):
+        return [_content(v) for v in doc]
+    return doc
+
+
+def _merge(new, old):
+    """`new` written over `old`, in old's key order: the adapter's own keys from new, anything else (a
+    curator's `triage`, 06 S1.1) kept from old, and discovered_at never moved."""
+    out = {k: (new[k] if k in OWN_KEYS else old[k]) for k in old if k in new or k not in OWN_KEYS}
+    out.update({k: v for k, v in new.items() if k not in out})
+    if 'discovered_at' in old:
+        out['discovered_at'] = old['discovered_at']
+    return out
+
+
+def _read(root, rel):
+    import yaml
+    path = os.path.join(root, *rel.split('/'))
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+
+def _redraft(draft, doc, change_class, labels=None):
+    from dataclasses import replace
+    return replace(draft, payload={k: v for k, v in doc.items() if k != 'ingestion'}, ingestion=doc['ingestion'],
+                   change_class=change_class, labels=labels or draft.labels)
+
+
+def diff(drafts, report, state, root=ROOT):
+    """(drafts to write, counts by change class) for one run's drafts against the tree at `root`."""
+    from ingest.adapters.base import Draft
+    out, counts, back = [], Counter(), set(report['listed_again'])
+    for d in drafts:
+        rel = d.path.as_posix()
+        old = _read(root, rel)
+        if old is None:
+            out.append(d)
+        else:
+            new = _merge(document(d), old)
+            if _content(new) == _content(old) and d.ingestion['source_record_id'] not in back:
+                counts['no-change'] += 1
+                continue
+            out.append(_redraft(d, new, 'field-change'))
+        counts[out[-1].change_class] += 1
+    for key in report['gone']:
+        rel = '%s/%s.yaml' % (DISCOVERY, candidate_id(key))
+        old = _read(root, rel)
+        if old is None:                     # never written: nothing of ours to mark
+            continue
+        seen = state['records'][key].get('last_seen') or old['ingestion']['last_seen_upstream']  # get-default: set at the first absence when a complete run preceded it
+        resolved = old['identity'].get('resolves_to')                                          # get-default: as normalise() writes it
+        out.append(Draft(entity_type='leaderboard' if key.startswith('space:') else 'benchmark',
+                         entity_id=resolved.split(':', 1)[1] if resolved else None, path=Path(rel),
+                         payload={k: v for k, v in old.items() if k != 'ingestion'},
+                         change_class='gone', ingestion=dict(old['ingestion'], last_seen_upstream=seen),
+                         confidence=1.0, labels=['source:hf-hub', 'discovery', 'ingest:gone', 'needs-scrutiny']))
+        counts['gone'] += 1
+    return out, counts
+
+
+def cycle(adapter, state, resolvers, xwalk, root=ROOT, limit=None):
+    """One run end to end: run(), normalise() each payload, diff() against `root`. Returns
+    (report, drafts to write, unresolved). Writes nothing; write() does, and saving state stays the
+    caller's, after the drafts are written (a crash between them must not mark a record as seen)."""
+    report, payloads = run(adapter, state, limit=limit)
+    drafts, unresolved = [], []
+    for p in payloads:
+        d, u = normalise(p, resolvers, xwalk)
+        drafts += d
+        unresolved += u
+    drafts, counts = diff(drafts, report, state, root)
+    report['drafts'] = {k: counts[k] for k in sorted(counts)}
+    report['unresolved'] = len(unresolved)
+    if report['status'] == 'ok' and not drafts:
+        report['status'] = 'no-change'
+    elif report['status'] == 'no-change' and drafts:
+        report['status'] = 'ok'
+    return report, drafts, unresolved
+
+
+def write(drafts, root=ROOT):
+    """Each draft at its path through ingest/emit.py, 07 S1.5's one YAML writer. Returns the paths."""
+    from ingest import emit
+    return [emit.write(document(d), d.path.as_posix(), root, replace=True) for d in drafts]
 
 
 def main(argv=None):
