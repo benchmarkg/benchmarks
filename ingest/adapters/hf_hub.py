@@ -50,8 +50,9 @@ trendingScore, which both captured listings carry and which moves at least as of
 it no Space could ever hash as unchanged.
 
 State is mutated in memory as candidates are fetched. Whoever consumes the payloads saves it, so a
-crash between fetch and write can never mark a record as seen. Nothing consumes them yet --
-normalise() is P5-S1-T04's -- so the CLI saves to ingest/raw/hf-hub[-fixture]/state.json, which is
+crash between fetch and write can never mark a record as seen. normalise() (P5-S1-T04, below) turns a
+payload into a discovery candidate, but nothing writes those yet, so the CLI saves to
+ingest/raw/hf-hub[-fixture]/state.json, which is
 gitignored, and never to the committed ingest/state/hf-hub.json unless --state names it: a live run
 today would otherwise record ETags and hashes for payloads no draft was ever written from, and the
 first real run would then see nothing to do.
@@ -81,6 +82,7 @@ from collections import Counter  # noqa: E402
 from dataclasses import dataclass  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 from email.utils import parsedate_to_datetime  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 from ingest.adapters.base import Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
 from ingest.http import backoff, ratelimit  # noqa: E402
@@ -395,6 +397,16 @@ class HfHub:
                 url = next_link(headers, url)
                 page += 1
 
+    def normalise(self, payload, resolvers, xwalk=None):
+        """07 S1.1's normalise(payload, resolver): the module function, with the committed crosswalk."""
+        return normalise(payload, resolvers, xwalk if xwalk is not None else self.crosswalk)
+
+    @property
+    def crosswalk(self):
+        if getattr(self, '_crosswalk', None) is None:
+            self._crosswalk = load_crosswalk()
+        return self._crosswalk
+
     def fetch(self, candidate, state):
         """A Payload, or None when nothing changed: short-circuited, 304, or an unchanged hash."""
         if candidate.source_key.startswith('space:'):
@@ -449,6 +461,226 @@ class HfHub:
         self._stamp(state, url, sha256_normalised(doc))
         return self._payload(candidate, state, doc, body, resp.status, response_date(headers, self.now()),
                              header(headers, 'ETag'), header(headers, 'Last-Modified'), False)
+
+
+# ---- normalise (P5-S1-T04; 07 S1.1, S1.5; 06 S1.1, S3.2) ---------------------------------------
+#
+# 07 S1.1: normalise() is "a pure function of (payload, resolver snapshot). No network, no clock, no
+# randomness." The timestamp arrives on the Payload, the entity lookup on the resolver, and the
+# crosswalk is a committed file read once and passed in. Two calls on the same inputs return equal
+# results, and tests/ingest/test_hf_hub_normalise.py runs it with the clock, the network and the
+# random module made to raise.
+#
+# What it writes. One discovery candidate per payload, at data/_discovery/hf-hub/<candidate_id>.yaml
+# in 06 S1.1's shape, and never a field of data/benchmarks/: 02 S11 rule 3, "no facet value is written
+# to data/ by a machine". Facts the source states verbatim (ids, URLs, the licence tag, arXiv ids, the
+# Papers with Code id) go in `identity`, as join keys. Everything interpretive -- every facet, access,
+# lifecycle, submission process, judge -- is a `_suggested` entry carrying the tag it came from, its
+# candidates and the 12.8% tag-density caveat, for a curator to confirm or discard.
+#
+# Spaces are mapped through taxonomy/crosswalks/hf-tags.yaml. Datasets are mapped by 06 S3.2's
+# dataset-side rows (license:, arxiv:, paperswithcode_id, gated, disabled, the Croissant URL); the
+# crosswalk is a Space-tag crosswalk, and its namespaces are not applied to dataset tags. Dropped, per
+# 06 S3.2: siblings (file lists), and the counters (downloads, likes), which are the metrics/ series's
+# and not a candidate's. A Space tag in a namespace the crosswalk does not declare is an Unresolved
+# (06 S3.2: a renamed namespace "must stop rather than fall back to free-text matching"), never a hint.
+#
+# Resolution. A dataset id is looked up as a Benchmark (external_ids.huggingface is step 1 of
+# ingest/resolve.py), a Space id as a Leaderboard. An id nothing resolves is an Unresolved, and its
+# candidate's entity_id stays None: the adapter never mints an entity (04 S10, 07 S1.1).
+
+CROSSWALK = os.path.join(ROOT, 'taxonomy', 'crosswalks', 'hf-tags.yaml')
+DISCOVERY = 'data/_discovery/hf-hub'
+SPACE_TAG = 'hf_space_tag'
+DATASET_FIELD = 'hf_dataset_metadata'
+FREE = '_free'
+
+# 06 S9.3: "Carry each dataset's own license: tag through into our record." Its class, by the HF tag,
+# for the 04 S9 firewall. Anything not listed is `unlicensed`, so 06 S1.2's veto applies until a person
+# classes it: a guessed class would let a restrictive licence through.
+LICENCE_CLASSES = {
+    'permissive-attribution': ('mit', 'apache-2.0', 'bsd', 'bsd-2-clause', 'bsd-3-clause', 'cc-by-4.0',
+                               'cc-by-3.0', 'cc-by-2.0', 'cc0-1.0', 'odc-by', 'pddl', 'unlicense'),
+    'share-alike': ('cc-by-sa-4.0', 'cc-by-sa-3.0', 'odbl', 'gpl-3.0', 'gpl-2.0', 'lgpl-3.0', 'agpl-3.0'),
+    'non-commercial': ('cc-by-nc-4.0', 'cc-by-nc-sa-4.0', 'cc-by-nc-nd-4.0', 'cc-by-nc-2.0', 'cc-by-nc-3.0',
+                       'cc-by-nc-sa-3.0'),
+    'no-redistribution': ('cc-by-nd-4.0',),
+}
+LICENCE_CLASS_OF = {tag: cls for cls, tags in LICENCE_CLASSES.items() for tag in tags}
+
+# 06 S3.2's dataset flags, mapped onto the vocabulary terms that exist (data.access has no
+# `credentialed`, lifecycle no `withdrawn`; these are the nearest, and a curator chooses).
+GATED_CANDIDATES = ['gated-registration', 'credentialed-dua']
+DISABLED_CANDIDATES = ['retracted', 'deprecated']
+
+
+def load_crosswalk(path=CROSSWALK):
+    """taxonomy/crosswalks/hf-tags.yaml, read once and passed to normalise(), which reads no file."""
+    import yaml
+    with open(path, encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+
+def _slug(text):
+    return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
+
+
+def candidate_id(source_key):
+    """Deterministic, from the source's own key: `space:open-llm/board` -> cand-hf-space-open-llm-board.
+    A discovery candidate's id, not an entity id: an entity is named by a person on promotion."""
+    kind, ident = source_key.split(':', 1)
+    return 'cand-hf-%s-%s' % (kind, _slug(ident.replace('/', '--')))
+
+
+def languages(value, rule):
+    """The crosswalk's `normalise.language`: split, trim, casefold, alias, drop non-languages, title."""
+    out = []
+    for part in value.split(rule['split_on']):
+        v = part.strip().casefold()
+        v = rule['aliases'].get(v, v)                       # get-default: an unaliased value is itself
+        if v and v not in rule['not_a_language']:
+            out.append(v.title() if rule['emit'] == 'title' else v)
+    return out
+
+
+def _field(ours):
+    """`Benchmark.domain.primary` -> (`Benchmark`, `domain.primary`)."""
+    entity, _, path = ours.partition('.')
+    return entity, path
+
+
+def space_hints(tags, xwalk):
+    """(suggestions, arxiv ids, undeclared namespaces) for one Space's tags, through the crosswalk."""
+    rows = {}
+    for r in xwalk['rows']:
+        rows.setdefault(r['tag'], []).append(r)
+    namespaces, caveat = xwalk['namespaces'], xwalk['caveats']['hf-tag-density']
+    out, arxiv, undeclared = [], [], []
+    for tag in tags:
+        ns, val = tag.split(':', 1) if ':' in tag else (FREE, tag)
+        spec = namespaces.get(ns)                           # get-default: an undeclared namespace is reported below
+        if spec is None:
+            undeclared.append(tag)
+            continue
+        if spec['use'] == 'drop':
+            continue
+        if spec['use'] == 'match-only':
+            if ns == 'arxiv':
+                arxiv.append(val)
+            continue
+        hit = rows.get(tag) or rows.get('%s:*' % ns) or []  # get-default: no row is the unlisted case below
+        if not hit:
+            if ns == FREE and (spec['unlisted'] == 'drop' or tag in spec['drop']):
+                continue
+            if spec['unlisted'] == 'hint-by-rule':
+                hit = [{'ours': o, 'value': v} for o in spec['ours'] for v in languages(val, xwalk['normalise'][spec['normalise']])]
+            else:                                           # hint-without-candidate: the tag verbatim
+                hit = [{'ours': o, 'candidates': []} for o in spec['ours']]
+        for r in hit:
+            entity, path = _field(r['ours'])
+            s = {'field': path, 'entity': entity, 'tag': tag}
+            if 'value' in r:
+                s['value'] = r['value']
+            else:
+                s['candidates'] = list(r.get('candidates') or [])   # get-default: a row may name none
+            if r.get('value_kind'):                                  # get-default: optional on a row
+                s['value_kind'] = r['value_kind']
+            s.update({'source': SPACE_TAG, 'caveat': 'hf-tag-density', 'density': caveat['density']})
+            out.append(s)
+    return out, arxiv, undeclared
+
+
+def dataset_facts(doc):
+    """(identity facts, suggestions) from a dataset detail payload, by 06 S3.2's dataset-side rows."""
+    tags = doc['tags']
+    licence = sorted({t.split(':', 1)[1] for t in tags if t.startswith('license:')})
+    facts = {
+        'arxiv_ids': sorted({t.split(':', 1)[1] for t in tags if t.startswith('arxiv:')}),
+        'licence': licence,                                  # verbatim; 06 S9.3
+        'papers_with_code': doc.get('paperswithcode_id'),    # get-default: absent on most datasets
+    }
+    hints = []
+    if doc['gated']:
+        hints.append({'field': 'data.access', 'entity': 'Benchmark', 'observed': 'gated: %s' % doc['gated'],
+                      'candidates': list(GATED_CANDIDATES), 'source': DATASET_FIELD})
+    if doc['disabled']:
+        hints.append({'field': 'lifecycle', 'entity': 'Benchmark', 'observed': 'disabled: true',
+                      'candidates': list(DISABLED_CANDIDATES), 'source': DATASET_FIELD})
+    card = doc.get('cardData') or {}                         # get-default: a dataset may have no card
+    if isinstance(card, dict) and card.get('pretty_name'):  # get-default: as above
+        hints.append({'field': 'name', 'entity': 'Benchmark', 'value': str(card['pretty_name']),
+                      'source': DATASET_FIELD, 'note': '06 S3.2: cardData is author prose, suggested only'})
+    return facts, hints
+
+
+def licence_class(licences):
+    """The firewall class of a record's licence tags: the most restrictive one, or `unlicensed`."""
+    order = ['permissive-attribution', 'share-alike', 'non-commercial', 'no-redistribution', 'unlicensed']
+    classes = [LICENCE_CLASS_OF.get(l.casefold(), 'unlicensed') for l in licences] or ['unlicensed']  # get-default: unknown is unlicensed
+    return max(classes, key=order.index)
+
+
+def normalise(payload, resolvers, xwalk):
+    """(drafts, unresolved) for one Payload. Pure: no clock, no network, no randomness, no file read.
+
+    `resolvers` maps an entity kind ('benchmark', 'leaderboard') to an object whose resolve(raw)
+    returns something with an `entity` ('kind:id' or None), as ingest/resolve.py's Index does."""
+    from ingest.adapters.base import Draft, Unresolved
+    c, doc = payload.candidate, payload.doc
+    kind, ident = c.source_key.split(':', 1)
+    if doc is None or doc.get('id') != ident:
+        raise SchemaDrift('%s: the payload names %r' % (c.source_key, None if doc is None else doc.get('id')))
+    fetched = iso(payload.fetched_at)
+    unresolved, identity = [], {'hf_id': ident, 'url': c.url}
+    if kind == 'space':
+        hints, arxiv, undeclared = space_hints(doc['tags'], xwalk)
+        identity['arxiv_ids'] = sorted(set(arxiv))
+        target, licences = 'leaderboard', []
+        for tag in undeclared:
+            unresolved.append(Unresolved(
+                source_key=c.source_key, field='tags', observed=tag, reason='out-of-band',
+                human_task='Space tag %r is in a namespace taxonomy/crosswalks/hf-tags.yaml does not declare. '
+                           'Declare the namespace (with a row if it maps) or mark it drop; the adapter does not '
+                           'guess at an undeclared namespace (06 S3.2).' % tag))
+    else:
+        facts, hints = dataset_facts(doc)
+        identity.update(facts)
+        identity['croissant_url'] = c.hint.get('croissant_url')        # get-default: a dataset hint carries it
+        target, licences = 'benchmark', facts['licence']
+    for h in hints:
+        h.update({'adapter': NAME, 'adapter_version': VERSION, 'source_url': c.url, 'fetched_at': fetched})
+
+    resolver = resolvers.get(target)                                    # get-default: a kind with no resolver resolves nothing
+    hit = resolver.resolve(ident).entity if resolver is not None else None
+    if hit is None:
+        unresolved.append(Unresolved(
+            source_key=c.source_key, field='id', observed=ident, reason='no-match',
+            human_task='No %s resolves %r. If it is one we hold, add the id to its external_ids (a dataset: '
+                       'external_ids.huggingface) or an alias in data/aliases/; if it is new, promote the '
+                       'discovery candidate. Nothing was created (04 S10).' % (target, ident)))
+    cid = candidate_id(c.source_key)
+    record = {
+        'candidate_id': cid,
+        'discovered_via': NAME,
+        'discovered_at': fetched,
+        'identity': dict(identity, resolves_to=hit),
+        '_suggested': hints,
+    }
+    ingestion = {
+        'batch': 'ingest-%s-%s' % (NAME, payload.fetched_at.strftime('%Y%m%d')),
+        'source_adapter': NAME, 'adapter_version': VERSION,
+        'source_record_id': c.source_key, 'last_seen_upstream': payload.fetched_at.date().isoformat(),
+        'source_url': c.url, 'source_licence': ', '.join(licences) or 'unstated',
+        'licence_class': licence_class(licences),
+        'source_attribution': 'Hugging Face Hub, %s' % c.url,
+        'ingested_at': fetched, 'sha256_normalised': payload.sha256_normalised,
+    }
+    draft = Draft(entity_type=target, entity_id=hit.split(':', 1)[1] if hit else None,
+                  path=Path(DISCOVERY) / (cid + '.yaml'), payload=record,
+                  change_class='field-change' if hit else 'new', ingestion=ingestion,
+                  confidence=1.0,          # identity is copied verbatim; every interpretive value is a suggestion
+                  labels=['source:hf-hub', 'discovery'])
+    return [draft], unresolved
 
 
 def run(adapter, state, limit=None):
