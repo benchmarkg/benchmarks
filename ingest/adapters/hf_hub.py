@@ -58,8 +58,8 @@ gitignored, and never to the committed ingest/state/hf-hub.json unless --state n
 today would otherwise record ETags and hashes for payloads no draft was ever written from, and the
 first real run would then see nothing to do.
 
-Candidate and Payload are 07 S1.1's shapes, declared here until ingest/adapters/base.py exists
-(P3-S1-T02); P5-S1-T08 moves this adapter onto the shared Adapter class.
+HfHub is 07 S1.1's Adapter (P5-S1-T08): API-shaped, so discover() pages the listings and fetch() is
+one conditional request per candidate, where a bundle adapter would slice an archive.
 """
 import os
 import sys
@@ -85,7 +85,7 @@ from datetime import datetime, timezone  # noqa: E402
 from email.utils import parsedate_to_datetime  # noqa: E402
 from pathlib import Path  # noqa: E402
 
-from ingest.adapters.base import Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
+from ingest.adapters.base import Adapter, Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
 from ingest.http import backoff, ratelimit  # noqa: E402
 from ingest.http.fixture import (FixtureMiss, FixtureTransport, NetworkForbidden, NoNetwork,  # noqa: E402,F401
                                  header, header_values)
@@ -316,8 +316,17 @@ def check_listing(doc, listing, first_page):
     return doc
 
 
-class HfHub:
+class HfHub(Adapter):
     name, version, volatile_fields = NAME, VERSION, VOLATILE_FIELDS
+    # 06 S2: the Hub's metadata licence is "per-artifact; API access permissive", and 06 S9.3 carries each
+    # dataset's own license: tag into its record. So the adapter declares no blanket licence of its own:
+    # its class is the firewall's conservative default, each record's ingestion.licence_class is its own
+    # tag's (licence_class(), below), and the raw body is not retained (07 S4.4).
+    licence = 'https://huggingface.co/terms-of-service'
+    licence_class = 'unlicensed'
+    raw_retainable = False
+    attribution = 'Hugging Face Hub (huggingface.co); each record credits its own Space or dataset URL'
+    expected_yield = (512, 2048)          # 07 S9's seed band: 1,019 candidates x [0.5, 2.0]
 
     def __init__(self, transport, cache, max_requests=MAX_REQUESTS, now=None):
         self.transport, self.cache, self.max_requests = transport, cache, max_requests
@@ -404,9 +413,11 @@ class HfHub:
                 url = next_link(headers, url)
                 page += 1
 
-    def normalise(self, payload, resolvers, xwalk=None):
-        """07 S1.1's normalise(payload, resolver): the module function, with the committed crosswalk."""
-        return normalise(payload, resolvers, xwalk if xwalk is not None else self.crosswalk)
+    def normalise(self, payload, resolver, xwalk=None):
+        """07 S1.1's normalise(payload, resolver): the module function, with the committed crosswalk. The
+        resolver is {kind: ingest.resolve.Index}, a Benchmark and a Leaderboard index, until P5-S2-T03's
+        single Resolver exists."""
+        return normalise(payload, resolver, xwalk if xwalk is not None else self.crosswalk)
 
     @property
     def crosswalk(self):

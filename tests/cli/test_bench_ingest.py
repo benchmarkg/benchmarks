@@ -44,9 +44,9 @@ def ingest(*args):
 
 
 def drafting(payloads, change_class='new'):
-    """A normaliser that turns every claim candidate into these claim drafts."""
-    def normalise(candidate, bundle):
-        if candidate.kind != 'claim':
+    """A normaliser that turns every claim payload into these claim drafts."""
+    def normalise(payload, resolver=None):
+        if payload.candidate.kind != 'claim':
             return [], []
         return [Draft('claim', None, Path('data/claims/_ingested/epoch/'), p, change_class, {}, 1.0)
                 for p in payloads], []
@@ -67,7 +67,7 @@ def test_an_unmapped_csv_is_unresolved_never_a_guessed_claim():
     assert report['unresolved'] == 2 and sum(report['drafts'].values()) == 0
     b = epoch.ZipBundle(open(os.path.join(FIX, 'benchmark_data.zip'), 'rb').read())
     cand = next(c for c in epoch.candidates(b) if c.kind == 'claim')
-    _, [u] = epoch.normalise(cand, b)
+    _, [u] = epoch.normalise(b.payload_for(cand))
     assert u.reason == 'no-match' and 'Do NOT assume scale=1.0' in u.human_task
 
 
