@@ -23,6 +23,15 @@ Steps 5 and 6 -- fuzzy proposals that are never auto-accepted, and the unresolve
 task -- are not here. What is here declines to guess: a residue that still ends in an underscore token
 step 4 does not know (07 S5.2's `claude-opus-4-6_120K`: a context window or a thinking budget?) is an
 Unresolved even when the part before it names a system, which is offered as a suggestion only.
+
+A frozen snapshot (07 S1.3; P5-S1-T06). freeze() serialises the indexes a run resolves against, with the
+commit they were built from and a sha256 of their content; thaw() rebuilds them and refuses a snapshot
+whose content no longer matches its hash. A fixture set keeps one beside it, so its drafts stay
+byte-identical while data/ moves on:
+
+    python -m ingest.resolve --freeze benchmark leaderboard --out tests/ingest/fixtures/hf-hub/resolver-snapshot.json
+
+P5-S2-T03's runner resolver (ingest/runner/resolver.py) extends this to every kind and the lineage index.
 """
 from __future__ import annotations
 
@@ -204,6 +213,67 @@ class Index:
         r = self.resolve(raw)
         return (r.entity.split(':', 1)[1] if r.entity else None), r.score
 
+    # ---- a frozen snapshot (07 S1.3) -------------------------------------------------------------------
+
+    def snapshot(self) -> dict:
+        """Everything this index matches on, as plain JSON-ready data: from_snapshot() rebuilds it."""
+        return {
+            'entries': [{'id': e.id, 'name': e.name, 'aliases': list(e.aliases), 'external_ids': list(e.external_ids),
+                         'versions': [list(v) for v in e.versions]} for e in sorted(self.entries.values(),
+                                                                                     key=lambda e: e.id)],
+            'aliases': [a.model_dump(mode='json', exclude_defaults=True) for a in self.alias_records],
+        }
+
+    @classmethod
+    def from_snapshot(cls, kind: str, doc: dict) -> 'Index':
+        from schema.entities import AliasFile
+        entries = [Entry(e['id'], e['name'], tuple(e['aliases']), tuple(e['external_ids']),
+                         tuple(tuple(v) for v in e['versions'])) for e in doc['entries']]
+        return cls(kind, entries, AliasFile.model_validate(doc['aliases']).root)
+
+
+def _canonical(doc) -> str:
+    import json
+    return json.dumps(doc, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+
+
+def freeze(kinds, root: str = ROOT, commit: str | None = None) -> dict:
+    """07 S1.3's frozen resolver, for the kinds given: each Index's snapshot, the commit it was built
+    from, and the sha256 of the indexes' canonical JSON, which is what a run records. A fixture set
+    freezes one beside itself so its drafts stay byte-identical while data/ moves on."""
+    import hashlib
+    indexes = {k: Index.load(k, root).snapshot() for k in sorted(kinds)}
+    return {'built_from_commit': commit, 'sha256': hashlib.sha256(_canonical(indexes).encode('utf-8')).hexdigest(),
+            'indexes': indexes}
+
+
+def thaw(doc: dict) -> dict:
+    """{kind: Index} from a frozen snapshot; a snapshot whose content does not match its sha256 is refused."""
+    import hashlib
+    if hashlib.sha256(_canonical(doc['indexes']).encode('utf-8')).hexdigest() != doc['sha256']:
+        raise ValueError('the resolver snapshot does not match its recorded sha256; refreeze it, do not edit it')
+    return {k: Index.from_snapshot(k, v) for k, v in doc['indexes'].items()}
+
+
+def main(argv=None) -> int:
+    import argparse
+    import json
+    import subprocess
+    p = argparse.ArgumentParser(description='Freeze a resolver snapshot (07 S1.3).')
+    p.add_argument('--freeze', nargs='+', required=True, metavar='KIND', help='entity kinds, e.g. benchmark leaderboard')
+    p.add_argument('--out', required=True, help='the snapshot file to write')
+    p.add_argument('--root', default=ROOT)
+    a = p.parse_args(argv)
+    commit = subprocess.run(['git', '-C', a.root, 'rev-parse', 'HEAD'], capture_output=True, text=True,
+                            check=False).stdout.strip()
+    doc = freeze(a.freeze, a.root, commit or None)
+    with open(a.out, 'w', encoding='utf-8', newline='\n') as f:
+        json.dump(doc, f, indent=1, sort_keys=True, ensure_ascii=False)
+        f.write('\n')
+    print('%s: %s, sha256 %s' % (a.out, ', '.join('%d %s' % (len(v['entries']), k) for k, v in doc['indexes'].items()),
+                                doc['sha256']))
+    return 0
+
 
 def parse(raw: str) -> tuple[str, dict, str | None]:
     """04 S10 step 4's strips, in its fixed order: (residue, routed extracts, date tail or None)."""
@@ -229,3 +299,8 @@ def parse(raw: str) -> tuple[str, dict, str | None]:
         date = m.group(1)
         s = s[:m.start()]
     return s, routed, date
+
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main())
