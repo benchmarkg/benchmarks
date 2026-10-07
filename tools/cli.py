@@ -395,6 +395,33 @@ def resolve_cmd(
                    err=as_json)
 
 
+@app.command('gaps')
+def gaps_cmd(
+    grid: Annotated[str, typer.Option('--grid', help='coarse (19 x 13, the default) or fine (refused in Phase 1).')] = 'coarse',
+    reviewed_only: Annotated[bool, typer.Option(
+        '--reviewed-only', help='Only families a reviewer has signed (reviewer_signoff other than none).')] = False,
+    fmt_: Annotated[str, typer.Option('--format', help='md or json.')] = 'md',
+):
+    """The coverage grid gap claims are read from: non-empty coarse cells, each with its entry count, its terms
+    and both axes' vocabulary (12 S5.1; P1-S2-T11). The gap score and what may be published are Phase 4's."""
+    from tools.build import gaps
+    if fmt_ not in ('md', 'json'):
+        typer.echo('gaps: --format is md or json, not %r' % fmt_, err=True)
+        raise typer.Exit(2)
+    try:
+        doc = gaps.emit(grid, ROOT, reviewed_only)
+    except gaps.GridRefused as e:
+        typer.echo('gaps: refused: %s' % e, err=True)
+        raise typer.Exit(2)
+    except ValueError as e:
+        typer.echo('gaps: %s' % e, err=True)
+        raise typer.Exit(2)
+    if fmt_ == 'json':
+        typer.echo(json.dumps(doc, indent=1, ensure_ascii=False))
+    else:
+        typer.echo(gaps.markdown(doc), nl=False)
+
+
 @app.command('tag-gap')
 def tag_gap_cmd(
     benchmark: Annotated[str, typer.Option('--benchmark', help='The benchmark id.')],
