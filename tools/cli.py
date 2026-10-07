@@ -351,8 +351,26 @@ def resolve_cmd(
         '--threshold', help='The cosine threshold; default the calibrated one in config/dedup.yaml.')] = None,
     pairs: Annotated[Optional[Path], typer.Option('--pairs', help='A pair file to give verdicts on instead.')] = None,
     as_json: Annotated[bool, typer.Option('--json', help='JSON, one object per pair.')] = False,
+    systems: Annotated[bool, typer.Option(
+        '--systems', help="Report Epoch's model_version strings that data/aliases/systems.yaml does not resolve.")] = False,
 ):
-    """Identity resolution: same, variant-of or distinct for each pair, with its score. It never merges (05 S3)."""
+    """Identity resolution: same, variant-of or distinct for each pair, with its score. It never merges (05 S3).
+
+    With --systems, the System crosswalk instead (P3-S3-T05; 07 S5.1): every distinct Epoch `Model version`
+    string is resolved when the alias table holds it verbatim. Exit 1 while any is unresolved, 2 without the
+    export."""
+    if systems:
+        from ingest import crosswalk
+        try:
+            left = crosswalk.unresolved(crosswalk.EPOCH, crosswalk.ROOT)
+        except crosswalk.Missing as e:
+            typer.echo('resolve: %s' % e, err=True)
+            raise typer.Exit(2)
+        for v in left:
+            typer.echo('unresolved  %s' % v)
+        typer.echo('resolve: %d unresolved model_version string(s); proposals in %s' % (len(left), crosswalk.BATCH),
+                   err=True)
+        raise typer.Exit(1 if left else 0)
     from tools import resolve
     try:
         cfg = resolve.config(threshold)
