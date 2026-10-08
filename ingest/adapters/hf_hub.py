@@ -86,6 +86,7 @@ from email.utils import parsedate_to_datetime  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 from ingest.adapters.base import Adapter, Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
+from ingest.gates import drift  # noqa: E402
 from ingest.http import backoff, ratelimit  # noqa: E402
 from ingest.runner import state as runner_state  # noqa: E402
 from ingest.http.fixture import (FixtureMiss, FixtureTransport, NetworkForbidden, NoNetwork,  # noqa: E402,F401
@@ -130,8 +131,9 @@ LISTINGS = (
 )
 
 
-class SchemaDrift(Exception):
-    """06 S3.2 "When it breaks": zero rows, or a record missing a mapped key. A hard fail."""
+# 06 S3.2 "When it breaks": zero rows, a record missing a mapped key, a renamed tag namespace. A hard fail
+# that commits nothing and opens adapter-broken -- ingest/gates/drift.py's contract (P5-S4-T05).
+SchemaDrift = drift.DriftError
 
 
 class Capped(Exception):
@@ -263,7 +265,7 @@ def new_state():
     return runner_state.new(NAME, VERSION, cursor={
         'type': 'link-next+etag',
         'note': 'listings are re-enumerated each run; Link rel=next pages them, ETags make them cheap'},
-        records={}, last_complete=None)
+        records={}, last_complete=None, namespace_counts={})
 
 
 def load_state(path):
@@ -281,17 +283,12 @@ def iso(dt):
 
 # ---- the adapter ------------------------------------------------------------------------------
 
-def check_listing(doc, listing, first_page):
-    if not isinstance(doc, list):
-        raise SchemaDrift('%s: expected a JSON array, got %s' % (listing.name, type(doc).__name__))
-    if first_page and not doc:
-        raise SchemaDrift('%s returned zero rows: schema drift, not an empty result' % listing.name)
-    for r in doc:
-        missing = listing.required - set(r) if isinstance(r, dict) else listing.required
-        if missing:
-            raise SchemaDrift('%s record %s lacks %s' % (listing.name, r.get('id') if isinstance(r, dict) else r,
-                                                         sorted(missing)))
-    return doc
+def check_listing(doc, listing, first_page, previous=None):
+    """One listing page against its declared structure (ingest/gates/drift.py): every record carries the
+    listing's required keys, and a first page is never empty -- both filters return hundreds, so zero is
+    drift on any run, and on a run after one that returned rows the error says how many it used to."""
+    expect = drift.Expect(listing.name, listing.required, min_rows=1 if first_page else 0)
+    return drift.rows(expect, doc, previous if first_page else None)
 
 
 class HfHub(Adapter):
@@ -352,13 +349,39 @@ class HfHub(Adapter):
             entry['last_changed'] = entry['last_fetched']
 
     def discover(self, state):
-        """Every Space on the leaderboard listing and every benchmark:official dataset, in order."""
+        """Every Space on the leaderboard listing and every benchmark:official dataset, in order.
+
+        Every listing is fetched and checked for drift before the first candidate is handed out (P5-S4-T05):
+        a drifted datasets listing found after a thousand Spaces had been processed would leave a partial
+        run behind it, and drift must commit nothing."""
+        pages = self._listings(state)
         seen = set()
+        for listing, url, rec, from_cache, fetched_at in pages:
+            key = '%s:%s' % (listing.prefix, rec['id'])
+            if key in seen:  # a cursor over a moving sort can repeat an entry
+                self.stats['duplicates'] += 1
+                continue
+            seen.add(key)
+            hint = {'listing': listing.name, 'page_url': url, 'record': rec, 'from_cache': from_cache,
+                    'fetched_at': fetched_at, 'lastModified': rec.get('lastModified')}
+            if listing.prefix == 'dataset':
+                quoted = urllib.parse.quote(rec['id'], safe='/')
+                hint['detail_url'] = '%s/datasets/%s?full=true' % (API, quoted)
+                hint['croissant_url'] = '%s/datasets/%s/croissant' % (API, quoted)
+            yield Candidate(key, listing.kind, listing.site + rec['id'], hint)
+
+    def _listings(self, state):
+        """[(listing, page url, record, from_cache, fetched_at)] for every page of every listing, each checked:
+        its structure page by page, its row count against the last run's, and -- for the Spaces listing --
+        that no tag namespace has vanished since last run (a rename: drift, never a fallback)."""
+        out = []
         for listing in LISTINGS:
+            first, before = listing.url, len(out)
+            complete = True
             url, page, visited = listing.url, 0, set()
             while url:
                 if url in visited or page >= MAX_PAGES:
-                    self.incomplete = True
+                    self.incomplete, complete = True, False
                     self.notes.append('%s: pagination stopped at page %d (%s)'
                                       % (listing.name, page, 'cursor loop' if url in visited else 'page cap'))
                     break
@@ -369,27 +392,29 @@ class HfHub(Adapter):
                     if page == 0:
                         raise
                     self.fixture_missing.append(url)
-                    self.incomplete = True
+                    self.incomplete, complete = True, False
                     self.notes.append('%s: the fixture set ends after page %d' % (listing.name, page))
                     break
-                doc = check_listing(json.loads(body.decode('utf-8')), listing, first_page=page == 0)
+                previous = state['urls'].get(first, {}).get('rows')   # get-default: a listing never counted has no history
+                doc = check_listing(json.loads(body.decode('utf-8')), listing, first_page=page == 0, previous=previous)
                 self._stamp(state, url, sha256_normalised(doc))
                 fetched_at = response_date(resp.headers, self.now())
-                for rec in doc:
-                    key = '%s:%s' % (listing.prefix, rec['id'])
-                    if key in seen:  # a cursor over a moving sort can repeat an entry
-                        self.stats['duplicates'] += 1
-                        continue
-                    seen.add(key)
-                    hint = {'listing': listing.name, 'page_url': url, 'record': rec, 'from_cache': from_cache,
-                            'fetched_at': fetched_at, 'lastModified': rec.get('lastModified')}
-                    if listing.prefix == 'dataset':
-                        quoted = urllib.parse.quote(rec['id'], safe='/')
-                        hint['detail_url'] = '%s/datasets/%s?full=true' % (API, quoted)
-                        hint['croissant_url'] = '%s/datasets/%s/croissant' % (API, quoted)
-                    yield Candidate(key, listing.kind, listing.site + rec['id'], hint)
+                out += [(listing, url, rec, from_cache, fetched_at) for rec in doc]
                 url = next_link(headers, url)
                 page += 1
+            records = [rec for _, _, rec, _, _ in out[before:]]
+            state['urls'][first]['rows'] = len(records)
+            if listing.prefix == 'space':
+                self._namespaces(state, listing, records, complete)
+        return out
+
+    def _namespaces(self, state, listing, records, complete):
+        """06 S3.2: a renamed tag namespace stops the run. Counted only over a complete listing, both runs."""
+        declared = {ns for ns in self.crosswalk['namespaces'] if ns != FREE}
+        now = drift.namespace_counts((r['tags'] for r in records), declared)
+        if complete:
+            drift.namespaces(now, state['namespace_counts'].get(listing.name), listing.name)  # get-default: a first complete run has nothing to compare
+            state['namespace_counts'][listing.name] = dict(sorted(now.items()))
 
     def normalise(self, payload, resolver, xwalk=None):
         """07 S1.1's normalise(payload, resolver): the module function, with the committed crosswalk. The
@@ -732,7 +757,10 @@ def run(adapter, state, limit=None):
             p = adapter.fetch(c, state)
             if p is not None:
                 payloads.append(p)
-    except (SchemaDrift, FixtureMiss, NetworkForbidden) as e:
+    except SchemaDrift as e:
+        status, errors = 'hard-fail', ['%s: %s' % (type(e).__name__, e)]
+        adapter.notes.append('adapter-broken: %s' % drift.issue(NAME, e.message)['title'])
+    except (FixtureMiss, NetworkForbidden) as e:
         status, errors = 'hard-fail', ['%s: %s' % (type(e).__name__, e)]
     except Capped as e:
         status, errors = 'capped', [str(e)]

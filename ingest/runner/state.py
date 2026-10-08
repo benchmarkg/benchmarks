@@ -223,6 +223,10 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
         state.clear()
         state.update(failed)
         report.update(status='hard-fail', errors=['%s: %s' % (type(e).__name__, e)], finished_at=iso(now()))
+        from ingest.gates import drift
+        if isinstance(e, drift.DriftError):        # 07 S9.2: drift opens adapter-broken, and commits nothing
+            report['alerts'].append('adapter-broken')
+            report['issue'] = drift.issue(adapter.name, e.message, report['started_at'])
         _log(adapter, report, tally, resolver, started, now(), log_root)
         return report
 
