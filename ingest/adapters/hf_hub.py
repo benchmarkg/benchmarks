@@ -87,6 +87,7 @@ from pathlib import Path  # noqa: E402
 
 from ingest.adapters.base import Adapter, Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
 from ingest.http import backoff, ratelimit  # noqa: E402
+from ingest.runner import state as runner_state  # noqa: E402
 from ingest.http.fixture import (FixtureMiss, FixtureTransport, NetworkForbidden, NoNetwork,  # noqa: E402,F401
                                  header, header_values)
 from ingest.http.backoff import Response  # noqa: E402
@@ -255,46 +256,23 @@ class RequestCache:
 # ---- layer 2: the state file ------------------------------------------------------------------
 
 def new_state():
-    """07 S4's shape. `records` is this adapter's per-candidate memory: the listing lastModified the
-    detail short-circuit compares, and the first 16 hex of the last payload's normalised hash.
-    `absences` is 07 S7.3's consecutive-absence counter, by source key; `last_complete` is when a run
-    last enumerated every listing to its final page, the only kind of run that may count an absence."""
-    return {
-        'adapter': NAME, 'adapter_version': VERSION,
-        'last_run': None, 'last_success': None, 'last_change': None, 'consecutive_failures': 0,
-        'cursor': {'type': 'link-next+etag',
-                   'note': 'listings are re-enumerated each run; Link rel=next pages them, ETags make them cheap'},
-        'checkpoint': None, 'urls': {}, 'records': {}, 'yield_history': [],
-        'absences': {}, 'last_complete': None,
-    }
+    """07 S4's shape (ingest/runner/state.py), plus this adapter's own: `records` is its per-candidate
+    memory, the listing lastModified the detail short-circuit compares and the first 16 hex of the last
+    payload's normalised hash; `last_complete` is when a run last enumerated every listing to its final
+    page, the only kind of run that may count an absence (07 S7.3)."""
+    return runner_state.new(NAME, VERSION, cursor={
+        'type': 'link-next+etag',
+        'note': 'listings are re-enumerated each run; Link rel=next pages them, ETags make them cheap'},
+        records={}, last_complete=None)
 
 
 def load_state(path):
-    if not os.path.exists(path):
-        return new_state()
-    with open(path, encoding='utf-8') as f:
-        state = json.load(f)
-    for k, v in new_state().items():
-        state.setdefault(k, v)
-    return state
+    return runner_state.load(path, new_state())
 
 
 def save_state(path, state):
-    """Sorted, with `records` one line per candidate, so a run's state diff reads as the list of
-    records whose payload changed. Still plain JSON; load_state() reads it back unchanged."""
-    records = sorted(state['records'].items())
-    text = json.dumps(dict(state, urls=dict(sorted(state['urls'].items())), records={}),
-                      indent=2, ensure_ascii=False)
-    if records:
-        lines = ',\n'.join('    %s: %s' % (json.dumps(k, ensure_ascii=False),
-                                            json.dumps(v, ensure_ascii=False, sort_keys=True))
-                           for k, v in records)
-        text = text.replace('"records": {}', '"records": {\n%s\n  }' % lines, 1)
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    tmp = path + '.tmp'
-    with open(tmp, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(text + '\n')
-    os.replace(tmp, path)
+    """ingest/runner/state.py's save(): sorted, atomic, `records` one line per candidate."""
+    runner_state.save(path, state)
 
 
 def iso(dt):

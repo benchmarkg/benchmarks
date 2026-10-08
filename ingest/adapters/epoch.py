@@ -309,6 +309,10 @@ class Epoch(BulkArchiveAdapter):
             return bundle
         if self.transport is None:
             raise FetchError('this Epoch adapter was given neither a transport nor a directory to fetch from')
+        if state.get('checkpoint'):           # get-default: a phase-0 state file has no checkpoint key
+            # A partial run stopped inside this bundle: its ETag would answer 304 and the resume would
+            # find nothing to finish. An unfinished bundle is fetched whole (ingest/runner/state.py).
+            state.setdefault('etags', {}).pop(ZIP_URL, None)
         return fetch_bundle(self.transport, state, self.now)
 
     def enumerate(self, bundle: ZipBundle):
