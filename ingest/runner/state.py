@@ -137,11 +137,15 @@ def problems(state: dict) -> list[str]:
 # ---- one run, checkpointed (07 S1.1, S3.2) ------------------------------------------------------------------
 
 def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtime: float | None = None,
-        every: int = CHECKPOINT_EVERY, clock=time.monotonic, now=None) -> dict:
+        every: int = CHECKPOINT_EVERY, clock=time.monotonic, now=None, log_root: str | None = None) -> dict:
     """discover(), fetch() and normalise() every candidate, checkpointing as 07 S1.1 says, and save the
     state at `path`. `sink(drafts, unresolved)` receives each batch before the state that covers it is
     written. Returns the run report: status (ok, no-change, partial or hard-fail), whether to open a PR,
-    candidates seen and processed, how many were passed over on a resume, checkpoints taken, errors."""
+    candidates seen and processed, how many were passed over on a resume, checkpoints taken, errors.
+
+    With `log_root`, every run -- a no-change run and a failed one included -- also writes 07 S1.1's
+    RunReport to <log_root>/ingest/runs/<adapter>/<date>.json (ingest/runner/report.py), and the report's
+    `log` names the file."""
     now = now or (lambda: datetime.now(timezone.utc))
     sink = sink or (lambda drafts, unresolved: None)
     started, t0 = now(), clock()
@@ -149,12 +153,16 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
     report = {'adapter': adapter.name, 'adapter_version': adapter.version, 'started_at': iso(started),
               'status': None, 'open_pr': False, 'candidates_seen': 0, 'processed': 0, 'passed_over': 0,
               'resumed_from': resume['after'] if resume else None, 'checkpoints': 0, 'drafts': 0,
-              'unresolved': 0, 'errors': [], 'notes': []}
+              'unresolved': 0, 'errors': [], 'notes': [], 'log': None}
     pending, pending_u = [], []
+    tally = {'fetched': 0, 'from_cache': 0, 'classes': {}, 'unresolved': []}
     done = resume['done'] if resume else 0
     run_started = resume['run_started'] if resume else iso(started)
 
     def flush():
+        for d in pending:
+            tally['classes'][d.change_class] = tally['classes'].get(d.change_class, 0) + 1  # get-default: a first draft of its class
+        tally['unresolved'] += pending_u
         sink(list(pending), list(pending_u))
         report['drafts'] += len(pending)
         report['unresolved'] += len(pending_u)
@@ -171,6 +179,8 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
         nonlocal done
         p = adapter.fetch(c, state)
         if p is not None:
+            tally['fetched'] += 1
+            tally['from_cache'] += bool(p.from_cache)
             d, u = adapter.normalise(p, resolver)
             pending.extend(d)
             pending_u.extend(u)
@@ -210,6 +220,7 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
         state.clear()
         state.update(failed)
         report.update(status='hard-fail', errors=['%s: %s' % (type(e).__name__, e)], finished_at=iso(now()))
+        _log(adapter, report, tally, resolver, started, now(), log_root)
         return report
 
     flush()
@@ -225,4 +236,22 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
         state['yield_history'] = (state['yield_history'] + [done])[-YIELD_RUNS:]
     report['finished_at'] = iso(finished)
     save(path, state)
+    _log(adapter, report, tally, resolver, started, finished, log_root)
     return report
+
+
+def _log(adapter, report, tally, resolver, started, finished, log_root):
+    """07 S9 mechanism 1: the run's RunReport, committed whatever happened. A hard fail logs the drafts it
+    had already handed the sink -- the ones before its last checkpoint -- because those were written."""
+    if log_root is None:
+        return
+    from ingest.runner import report as R
+    run_day = finished.astimezone(timezone.utc).date()
+    new, carried = R.unresolved_counts(adapter.name, tally['unresolved'], run_day, log_root)
+    codes = getattr(adapter, 'http_codes', None) or {}
+    rr = R.build(adapter=adapter.name, adapter_version=adapter.version, started_at=started, finished_at=finished,
+                 status=report['status'], http_codes=dict(codes), candidates_seen=report['candidates_seen'],
+                 payloads_fetched=tally['fetched'], payloads_from_cache=tally['from_cache'],
+                 drafts=tally['classes'], unresolved_new=new, unresolved_carried=carried,
+                 resolver_snapshot_sha256=R.resolver_sha256(resolver), errors=report['errors'], notes=report['notes'])
+    report['log'] = R.write(rr, log_root)
