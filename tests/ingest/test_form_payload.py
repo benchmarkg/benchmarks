@@ -10,7 +10,7 @@ contract before P5-S1-T08 extracts the Adapter ABC, not the intake bot (P2-S6-T0
   1. Construct a FormPayload from an issue-form submission: a `new-benchmark.yml` issue body exactly as
      GitHub renders a form (`### <label>`, the answer, `_No response_` for a blank, `- [X]` for a box).
   2. Pass it through a normalise() with 07 S1.1's signature and purity, and through the existing gates
-     (ingest/gates.py) unchanged.
+     (ingest/gates/) unchanged.
   3. Assert what holds and what does not, both ways, so the ADR's verdict is a test result.
 
 The verdict the assertions below pin:

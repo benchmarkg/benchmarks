@@ -303,7 +303,7 @@ class HfHub(Adapter):
     licence = 'https://huggingface.co/terms-of-service'
     licence_class = 'unlicensed'
     raw_retainable = False
-    attribution = 'Hugging Face Hub (huggingface.co); each record credits its own Space or dataset URL'
+    attribution = 'Hugging Face Hub'      # each record's credit is this, then its own Space or dataset URL
     expected_yield = (512, 2048)          # 07 S9's seed band: 1,019 candidates x [0.5, 2.0]
 
     def __init__(self, transport, cache, max_requests=MAX_REQUESTS, now=None):

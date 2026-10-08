@@ -39,6 +39,9 @@ import re  # noqa: E402
 import zipfile  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 
+from collections import Counter  # noqa: E402
+
+from ingest import gates  # noqa: E402
 from ingest.adapters.base import BulkArchiveAdapter, Candidate, Payload, Unresolved  # noqa: E402
 from ingest.http.fixture import FixtureMiss, FixtureTransport, header  # noqa: E402
 
@@ -208,8 +211,7 @@ def bundle_from_directory(path: str) -> ZipBundle:
 
 # 07 S8.1's ceilings: drafts of one entity type past these need --allow-bulk (the first Epoch run is
 # the deliberate exception: 6,598 claims, by hand, once).
-CAPS = {'claim': 200, 'benchmark': 25, 'system': 100, 'organization': 25, 'metric': 20, 'source': 200,
-        'conditions': 200}
+CAPS = gates.CAP_ROWS      # 07 S8.1's (floor, ceiling) per entity type, applied by ingest/gates (P5-S2-T05)
 # What the engine reads from the two metadata files. A missing file, a missing column or zero rows is
 # schema drift (06 S3.2 "When it breaks"): a hard fail, never a quiet empty run.
 REQUIRED = {'benchmark_metadata.csv': ('benchmark', 'source_file', 'score_column', 'scale'),
@@ -262,21 +264,12 @@ def normalise(payload: Payload, resolver=None):
 
 
 def validate_draft(draft) -> str | None:
-    """Why `draft` would not load as its entity, or None. A draft that fails is a hard fail (07 S8)."""
-    from pydantic import ValidationError
-
-    from schema.claim import ResultClaim
-    from schema.entities import Organization
-    from schema.metric import Metric
-    from schema.system import System
-    models = {'claim': ResultClaim, 'system': System, 'organization': Organization, 'metric': Metric}
-    model = models.get(draft.entity_type)  # get-default: an entity type with no model here is not checked here
-    if model is None:
-        return None
+    """Why `draft` would not load as its entity, or None: ingest/gates' schema gate, which holds a draft to
+    the model its path names, as `bench validate` holds the file. A draft that fails is a hard fail (07 S8)."""
     try:
-        model.model_validate(draft.payload)
-    except ValidationError as e:
-        return '%s %s: %s' % (draft.entity_type, draft.entity_id or '(unminted)', ' '.join(str(e).split())[:300])
+        gates.schema(gates.document(draft), draft.path.as_posix())
+    except gates.GateError as e:
+        return '%s %s: %s' % (draft.entity_type, draft.entity_id or '(unminted)', str(e).split(': ', 2)[-1][:300])
     return None
 
 
@@ -323,7 +316,7 @@ class Epoch(BulkArchiveAdapter):
 
 
 def run(bundle: ZipBundle | None, *, limit: int | None = None, allow_bulk: bool = False,
-        normaliser=None, resolver=None, now=utcnow) -> dict:
+        normaliser=None, resolver=None, now=utcnow, root: str = ROOT) -> dict:
     """One run over a fetched bundle (None: a 304, nothing changed): enumerate(), fetch() and
     normalise() through the Epoch adapter. Returns the run report: status, candidates seen, drafts by
     change class, unresolved, cap and validation errors. Writes nothing. `normaliser(payload, resolver)`
@@ -357,13 +350,17 @@ def run(bundle: ZipBundle | None, *, limit: int | None = None, allow_bulk: bool 
             why = validate_draft(d)
             if why:
                 report['errors'].append('invalid draft: %s' % why)
-    over = {t: n for t, n in report['drafts_by_type'].items() if n > CAPS.get(t, 0)}  # get-default: an uncapped type has cap 0
+    over = []
+    if report['drafts_by_type'] and not report['errors']:
+        try:
+            over = gates.caps(Counter(report['drafts_by_type']), gates.Tree(root).counts(), allow_bulk)
+        except gates.GateError as e:
+            over = [str(e)]
     if report['errors']:
         report['status'] = 'hard-fail'
-    elif over and not allow_bulk:
+    elif over:
         report['status'] = 'capped'
-        report['errors'].append('over the 07 S8.1 caps without --allow-bulk: %s' % ', '.join(
-            '%s %d > %d' % (t, n, CAPS.get(t, 0)) for t, n in sorted(over.items())))  # get-default: an uncapped type has cap 0
+        report['errors'].append('over the 07 S8.1 caps without --allow-bulk: %s' % ', '.join(over))
     elif not any(report['drafts'].values()):
         report['status'] = 'no-change'
     report['finished_at'] = iso(now())
