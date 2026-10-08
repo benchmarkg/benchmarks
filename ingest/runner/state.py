@@ -18,7 +18,8 @@ The shape (07 S4), every key always present so a reader never guesses:
     urls                              url -> {etag, last_modified, sha256_normalised, bytes, last_fetched,
                                       last_changed}
     absences                          source key -> consecutive absences (07 S7.3)
-    yield_history                     candidates seen by the last 8 complete runs (07 S9's adaptive band)
+    yield_history                     candidates seen by the last 8 complete runs (07 S9's adaptive band;
+                                      ingest/runner/bands.py decides what enters it)
 
 An adapter may keep more (hf-hub's `records`, Epoch's `etags`); load() keeps whatever it finds.
 
@@ -48,6 +49,8 @@ import json
 import os
 import time
 from datetime import datetime, timezone
+
+from ingest.runner import bands
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STATE_DIR = os.path.join(ROOT, 'ingest', 'state')
@@ -153,7 +156,7 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
     report = {'adapter': adapter.name, 'adapter_version': adapter.version, 'started_at': iso(started),
               'status': None, 'open_pr': False, 'candidates_seen': 0, 'processed': 0, 'passed_over': 0,
               'resumed_from': resume['after'] if resume else None, 'checkpoints': 0, 'drafts': 0,
-              'unresolved': 0, 'errors': [], 'notes': [], 'log': None}
+              'unresolved': 0, 'errors': [], 'notes': [], 'log': None, 'yield': None, 'alerts': []}
     pending, pending_u = [], []
     tally = {'fetched': 0, 'from_cache': 0, 'classes': {}, 'unresolved': []}
     done = resume['done'] if resume else 0
@@ -233,7 +236,13 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
         adapter.finalise(state, report)
         report['status'] = 'ok' if report['drafts'] else 'no-change'
         report['open_pr'] = bool(report['drafts'])
-        state['yield_history'] = (state['yield_history'] + [done])[-YIELD_RUNS:]
+        verdict = bands.check(done, state['yield_history'], adapter.expected_yield)   # 07 S9 (P5-S4-T02)
+        bands.record(state, verdict)
+        report['yield'] = verdict.as_dict()
+        if verdict.note():
+            report['notes'].append(verdict.note())
+        if verdict.alert:
+            report['alerts'].append('zero-yield')
     report['finished_at'] = iso(finished)
     save(path, state)
     _log(adapter, report, tally, resolver, started, finished, log_root)
