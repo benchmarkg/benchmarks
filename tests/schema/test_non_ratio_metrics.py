@@ -3,7 +3,7 @@
 DONE WHEN: "Each of the four metrics validates and none can accept a numeric claim without declaring its
 bound, so the metric-definition gate can pass." 07 S8's gate: the metric declares "either a `range`, or
 `unbounded: true` with a `value_type`, or `value_type: qualitative`". The gate itself is P3-S2-T06's
-(ingest/gates.py); `declares_bound` below is its condition, stated once here so these records are held to
+(ingest/gates/numeric.py); `declares_bound` below is its condition, stated once here so these records are held to
 it before that code exists.
 
 Dollars, minutes and Elo are the three 07 S8 names ("must be modelled before they are ingested, not

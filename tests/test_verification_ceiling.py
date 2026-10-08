@@ -2,7 +2,7 @@
 
 The done-when: "A future adapter cannot promote itself above rung 3, a record with a row-ordinal
 source_record_id is rejected, and no draft can carry a derived field." Each is held below against
-ingest/gates.py, with the rest of each gate's rule.
+ingest/gates/record.py, with the rest of each gate's rule.
 """
 import os
 import sys

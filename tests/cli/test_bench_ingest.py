@@ -108,7 +108,9 @@ def test_over_the_caps_needs_allow_bulk(monkeypatch):
     many = [dict(CLAIM, id='claim-%012x' % i) for i in range(101)]               # 2 CSVs x 101 = 202 > 200
     monkeypatch.setattr(epoch, 'normalise', drafting(many))
     r = ingest('--dry-run', '--fixture', FIX)
-    assert r.exit_code == 3 and 'capped' in r.output and 'claim 202 > 200' in r.output
+    # 07 S8.1: max(floor 50, min(ceiling 200, 0.25 x the claims the tree holds)) -- the floor, at this size
+    cap = epoch.gates.cap_for('claim', epoch.gates.Tree(ROOT).counts()['claim'])
+    assert r.exit_code == 3 and 'capped' in r.output and 'claim 202 > %d' % cap in r.output
     r = ingest('--dry-run', '--fixture', FIX, '--allow-bulk')
     assert r.exit_code == 0 and '  new           202' in r.output
 
