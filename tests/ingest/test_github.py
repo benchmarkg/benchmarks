@@ -42,7 +42,12 @@ def adapter(transport=None):
 
 
 def docs(report):
-    return {d['repository'].rsplit('/', 1)[1]: d for d in report['documents']}
+    """{repo name: the candidate's identity, plus its suggestions by field}."""
+    out = {}
+    for d in report['documents']:
+        out[d['identity']['repository'].rsplit('/', 1)[1]] = dict(
+            d['identity'], suggested={s['field']: s['value'] for s in d['_suggested']})
+    return out
 
 
 @pytest.fixture()
@@ -74,8 +79,8 @@ def test_06_s3_3s_mapping(first):
     report, _, _ = first
     a, b = docs(report)['alpha'], docs(report)['bravo']
     assert a['benchmarks'] == ['alpha', 'alpha-lite']
-    assert a['facts'] == {'code_licence': 'MIT', 'homepage': 'https://alpha.example.org'}
-    assert a['_suggested'] == {'released': '2024-02-03', 'topics': ['benchmark', 'llm']}
+    assert (a['code_licence'], a['homepage']) == ('MIT', 'https://alpha.example.org')
+    assert a['suggested'] == {'released': '2024-02-03', 'topics': ['benchmark', 'llm']}
     assert a['liveness'] == {'pushed_at': '2026-10-01T09:00:00Z', 'archived': False, 'disabled': False}
     assert a['adoption'] == {'stargazers_count': 420, 'forks_count': 12, 'subscribers_count': 3}
     assert a['citation_cff']['title'] == 'Alpha Bench' and a['citation_cff']['doi'] == '10.5555/alpha.2025'
@@ -86,8 +91,8 @@ def test_06_s3_3s_mapping(first):
 
 def test_no_licence_is_a_value_and_an_empty_homepage_is_none(first):
     b = docs(first[0])['bravo']
-    assert 'code_licence' in b['facts'] and b['facts']['code_licence'] is None
-    assert b['facts']['homepage'] is None and b['citation_cff'] is None and b['release_tags'] == []
+    assert 'code_licence' in b and b['code_licence'] is None
+    assert b['homepage'] is None and b['citation_cff'] is None and b['release_tags'] == []
 
 
 def test_readme_and_release_note_prose_are_never_requested_or_kept(first):
@@ -105,8 +110,12 @@ def test_drafts_are_review_documents_under_the_discovery_tree(first):
         p = a.fetch(c, state)
         drafts += a.normalise(p)[0] if p else []
     assert sorted(str(d.path).replace(os.sep, '/') for d in drafts) == [
-        'data/_discovery/github/fixture-org__alpha.yaml', 'data/_discovery/github/fixture-org__bravo.yaml']
+        'data/_discovery/github/cand-gh-fixture-org--alpha.yaml', 'data/_discovery/github/cand-gh-fixture-org--bravo.yaml']
     assert all(d.change_class == 'new' and d.ingestion['adapter'] == 'github' and d.entity_id is None for d in drafts)
+    from ingest.gates import checks
+    for d in drafts:                                     # 06 S1.1's shape, and 07 S8's metadata-only limit
+        checks.schema(d.payload, str(d.path))
+        checks.metadata_only(d.payload, str(d.path))
 
 
 def test_normalise_is_a_pure_function_of_the_payload():
@@ -205,7 +214,7 @@ def test_a_counters_only_change_is_metrics_only():
 def test_a_licence_change_is_a_field_change():
     report, _ = run_twice(repo_body(license={'spdx_id': 'Apache-2.0'}))
     assert report['drafts']['field-change'] == 1
-    assert report['documents'][0]['facts']['code_licence'] == 'Apache-2.0'
+    assert report['documents'][0]['identity']['code_licence'] == 'Apache-2.0'
 
 
 def test_citation_cff_is_read_again_only_when_its_blob_sha_changes():

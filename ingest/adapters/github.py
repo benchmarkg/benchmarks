@@ -19,18 +19,20 @@ every repository without one: a 404 carries no ETag, so it can never 304. A run 
 repository fetches nothing for it. README prose is never requested: 06
 S3.3 stores README-derived facts, never README text, because the prose is unlicensed by default.
 
-What it maps (06 S3.3's table), into one review document per repository under data/_discovery/github/:
+What it maps (06 S3.3's table), into one discovery candidate per repository under data/_discovery/github/, in
+06 S1.1's shape (candidate_id, discovered_via, discovered_at, identity, _suggested as a list) -- the shape the
+gates hold that tree to:
 
-    license.spdx_id        facts.code_licence     `null` is a value: the repo declares no licence
-    homepage               facts.homepage
-    created_at             _suggested.released    a candidate only: a repo predates a release as often as not
-    topics[]               _suggested.topics      facet hints
-    CITATION.cff           citation_cff           its URL, blob sha, and the title, DOI, version and date it states
-    release tags           release_tags           tag, date, URL; release-note prose is dropped
-    pushed_at, archived    liveness               the observable behind lifecycle review (P5-S7-T01 records it)
+    license.spdx_id        identity.code_licence   `null` is a value: the repo declares no licence
+    homepage               identity.homepage
+    CITATION.cff           identity.citation_cff   its URL, blob sha, and the title, DOI, version and date it states
+    release tags           identity.release_tags   tag, date, URL; release-note prose is dropped
+    pushed_at, archived    identity.liveness       the observable behind lifecycle review (P5-S7-T01 records it)
     stargazers_count,
     forks_count,
-    subscribers_count      adoption               the metrics/ series, snapshotted weekly, never star history
+    subscribers_count      identity.adoption       the metrics/ series, snapshotted weekly, never star history
+    created_at             _suggested released     a candidate only: a repo predates a release as often as not
+    topics[]               _suggested topics       facet hints
 
 Change classes. volatile_fields (07 S1.5: "pushed_at on list endpoints, stargazers_count, forks_count", and
 subscribers_count, which moves the same way) are stripped before hashing, so a repository whose only change is
@@ -322,21 +324,42 @@ def normalise(payload: Payload) -> tuple[list[Draft], list[Unresolved]]:
     previous = doc['_previous_sha256']
     change = 'new' if previous is None else 'metrics-only' if previous == payload.sha256_normalised else 'field-change'
     homepage = repo['homepage'] or None                   # '' is GitHub's way of saying none
+    fetched = payload.fetched_at.strftime('%Y-%m-%dT%H:%M:%SZ')
+    source_url = '%s/repos/%s' % (API, key)
+
+    def suggest(field, value, rationale):
+        return {'field': field, 'value': value, 'adapter': NAME, 'adapter_version': VERSION, 'source_url': source_url,
+                'fetched_at': fetched, 'confidence': 0.3, 'rationale': rationale}
     body = {
-        'repository': c.url,
-        'benchmarks': list(c.hint['benchmarks']),
-        'facts': {'code_licence': repo['license'], 'homepage': homepage},
-        '_suggested': {'released': (repo['created_at'] or '')[:10] or None, 'topics': repo['topics']},
-        'citation_cff': doc['citation_cff'],
-        'release_tags': doc['releases'],
-        'liveness': {'pushed_at': repo['pushed_at'], 'archived': repo['archived'], 'disabled': repo['disabled']},
-        'adoption': {k: repo[k] for k in ('stargazers_count', 'forks_count', 'subscribers_count')},
+        'candidate_id': candidate_id(key),
+        'discovered_via': NAME,
+        'discovered_at': fetched,
+        'identity': {
+            'repository': c.url,
+            'benchmarks': list(c.hint['benchmarks']),
+            'code_licence': repo['license'],
+            'homepage': homepage,
+            'citation_cff': doc['citation_cff'],
+            'release_tags': doc['releases'],
+            'liveness': {'pushed_at': repo['pushed_at'], 'archived': repo['archived'], 'disabled': repo['disabled']},
+            'adoption': {k: repo[k] for k in ('stargazers_count', 'forks_count', 'subscribers_count')},
+        },
+        '_suggested': [
+            suggest('released', (repo['created_at'] or '')[:10] or None,
+                    '06 S3.3: created_at is a release-date candidate only; a repo predates a release as often as not'),
+            suggest('topics', repo['topics'], '06 S3.3: topics are facet hints'),
+        ],
     }
-    ingestion = {'adapter': NAME, 'adapter_version': VERSION, 'source_url': '%s/repos/%s' % (API, key),
-                 'fetched_at': payload.fetched_at.strftime('%Y-%m-%dT%H:%M:%SZ'),
+    ingestion = {'adapter': NAME, 'adapter_version': VERSION, 'source_url': source_url, 'fetched_at': fetched,
                  'sha256_normalised': payload.sha256_normalised}
-    path = Path(DISCOVERY) / ('%s.yaml' % key.replace('/', '__'))
+    path = Path(DISCOVERY) / ('%s.yaml' % body['candidate_id'])
     return [Draft('benchmark', None, path, body, change, ingestion, 1.0, labels=['ingest:github'])], []
+
+
+def candidate_id(key: str) -> str:
+    """SWE-bench/SWE-bench -> cand-gh-swe-bench--swe-bench: a discovery candidate's id, not an entity id."""
+    owner, repo = key.lower().split('/', 1)
+    return 'cand-gh-%s--%s' % (re.sub(r'[^a-z0-9]+', '-', owner).strip('-'), re.sub(r'[^a-z0-9]+', '-', repo).strip('-'))
 
 
 # ---- one dry run ------------------------------------------------------------------------------------------------
@@ -374,7 +397,7 @@ def run(adapter: GitHub, state: dict | None = None, *, limit: int | None = None)
                                         **d.payload})
             if d.change_class != 'metrics-only':
                 report['proposals'].append('%s (%s): %s, licence %s' % (cand.source_key, ', '.join(cand.hint['benchmarks']),
-                                                                        d.change_class, d.payload['facts']['code_licence']))
+                                                                        d.change_class, d.payload['identity']['code_licence']))
         for u in unresolved:
             report['unresolved'] += 1
             report['lifecycle_reviews'].append(u.human_task)
