@@ -58,6 +58,8 @@ class Wayback:
             headers['Authorization'] = 'LOW %s:%s' % (self.key, self.secret)
         body = urllib.parse.urlencode(data).encode() if data is not None else None
         req = urllib.request.Request(url, data=body, headers=headers)
+        from ingest.http.policy import refuse
+        refuse(url)                                      # # 07 S10.1: no-collect and forbidden hold for every code path
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
                 out = r.status, r.read().decode('utf-8', 'replace')
@@ -149,6 +151,8 @@ def location(url, timeout=30):
     It asks the Source's own host, not web.archive.org, once, when SPN2 says the URL was captured
     recently but CDX holds no 200 capture of it."""
     req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
+    from ingest.http.policy import refuse
+    refuse(url)                                          # 07 S10.1: no-collect and forbidden hold for every code path
     try:
         urllib.request.build_opener(_NoFollow).open(req, timeout=timeout).close()
     except urllib.error.HTTPError as e:

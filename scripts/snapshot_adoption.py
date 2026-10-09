@@ -54,6 +54,8 @@ def hf_dataset(b: dict) -> str | None:
 
 def fetch_json(url: str, headers: dict) -> tuple[int, dict | None]:
     req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT, 'Accept': 'application/json', **headers})
+    from ingest.http.policy import refuse
+    refuse(url)                                          # # 07 S10.1: no-collect and forbidden hold for every code path
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
             return r.status, json.loads(r.read())

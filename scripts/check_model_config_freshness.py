@@ -28,6 +28,7 @@ import urllib.request
 from datetime import date, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 CONFIG = os.path.join(ROOT, 'config', 'ai-models.yaml')
 PLAN_11 = os.path.join(ROOT, '_plan', '11-ai-features.md')
 PRICES = ('input', 'output', 'cache_write_5m', 'cache_write_1h', 'cache_read', 'batch_input', 'batch_output')
@@ -178,6 +179,8 @@ def online(cfg):
             if u not in cache:
                 try:
                     req = urllib.request.Request(u, headers={'User-Agent': UA})
+                    from ingest.http.policy import refuse
+                    refuse(u)                            # # 07 S10.1: no-collect and forbidden hold for every code path
                     with urllib.request.urlopen(req, timeout=60) as resp:
                         raw = resp.read().decode('utf-8', 'replace')
                     raw = re.sub(r'<script.*?</script>|<style.*?</style>', ' ', raw, flags=re.S | re.I)

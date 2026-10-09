@@ -343,6 +343,8 @@ class Http:
             time.sleep(wait)
         try:
             req = urllib.request.Request(url, headers={'User-Agent': self.ua, 'Accept': 'application/json'})
+            from ingest.http.policy import refuse
+            refuse(url)                                  # # 07 S10.1: no-collect and forbidden hold for every code path
             with urllib.request.urlopen(req, timeout=self.timeout) as r:
                 return json.load(r)
         finally:

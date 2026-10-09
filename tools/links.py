@@ -216,6 +216,8 @@ class Resolver:
         if ranged:
             headers['Range'] = RANGE
         self.requests += 1
+        from ingest.http.policy import refuse
+        refuse(url)                                      # # 07 S10.1: no-collect and forbidden hold for every code path
         try:
             with self._opener.open(urllib.request.Request(url, headers=headers), timeout=self.timeout) as r:
                 body = r.read(limit)

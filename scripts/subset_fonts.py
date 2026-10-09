@@ -45,6 +45,7 @@ from fontTools.ttLib import TTFont
 from fontTools.varLib import instancer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 OUT = os.path.join(ROOT, 'site', 'public', 'fonts')
 
 TARBALLS = {
@@ -75,6 +76,8 @@ NAMED = '∅→±≥≤×▲▼−·§'  # 09 S12.1
 
 def fetch(name):
     url, integrity = TARBALLS[name]
+    from ingest.http.policy import refuse
+    refuse(url)                                          # # 07 S10.1: no-collect and forbidden hold for every code path
     with urllib.request.urlopen(url, timeout=120) as r:
         data = r.read()
     got = 'sha512-' + base64.b64encode(hashlib.sha512(data).digest()).decode()
