@@ -5,10 +5,11 @@
     bench ingest openalex --dry-run --limit 20                # live; OPENALEX_API_KEY from the environment
     bench ingest semantic-scholar --dry-run --limit 20        # live; SEMANTIC_SCHOLAR_API_KEY and OPENALEX_API_KEY
     bench ingest github --dry-run                             # live; GH_API_TOKEN from the environment
+    bench ingest arxiv-oai --dry-run --since 2026-10-06       # live: set=cs from that date to today
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
 --limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
-openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since), and prints 07 S6.2's change-class summary. The replay, recompute, state and
 unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
 they drive.
 
@@ -32,7 +33,7 @@ from typing import Annotated, Optional
 import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github')
+ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github', 'arxiv-oai')
 EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
@@ -133,6 +134,34 @@ def _github(limit: Optional[int], no_network: bool, fixture: Optional[str]):
     raise typer.Exit(EXIT[report['status']])
 
 
+def _arxiv(limit: Optional[int], no_network: bool, fixture: Optional[str], since: Optional[str]):
+    from datetime import date, datetime, timezone
+
+    from ingest.adapters import arxiv_oai
+    start = date.fromisoformat(since) if since else None
+    if fixture:
+        from ingest.http.fixture import FixtureTransport
+        if start is None:
+            typer.echo('ingest: an arxiv-oai fixture holds one recorded window; name its day with --since', err=True)
+            raise typer.Exit(2)
+        transport, until, where = FixtureTransport(fixture), start, 'fixture %s' % fixture
+    elif no_network:
+        typer.echo('ingest: arxiv-oai has no local copy to read; --no-network needs --fixture PATH', err=True)
+        raise typer.Exit(2)
+    else:
+        transport, until = arxiv_oai.NetworkTransport(), datetime.now(timezone.utc).date()
+        where = 'oaipmh.arxiv.org set=cs, %s to %s' % (start or until, until)
+    state = arxiv_oai.new_state()
+    if start is not None and (start == until or fixture):
+        state['last_until'] = start.isoformat()          # one window, not a month-by-month backfill
+    report = arxiv_oai.run(arxiv_oai.ArxivOai(transport, until, backfill_from=start), state, limit=limit)
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    typer.echo('  records       %s' % ', '.join('%s=%d' % kv for kv in report['records'].items()))
+    raise typer.Exit(EXIT[report['status']])
+
+
 def ingest(
     adapter: Annotated[str, typer.Argument(help='The adapter to run: %s.' % ', '.join(ADAPTERS))],
     dry_run: Annotated[bool, typer.Option('--dry-run', help='Fetch, normalise and report; write nothing.')] = False,
@@ -142,6 +171,7 @@ def ingest(
     allow_bulk: Annotated[bool, typer.Option(
         '--allow-bulk', help="Let one run exceed 07 S8.1's per-type caps (the first Epoch run).")] = False,
     fixture: Annotated[Optional[str], typer.Option('--fixture', help='Recorded responses in place of the network.')] = None,
+    since: Annotated[Optional[str], typer.Option('--since', help='arxiv-oai: harvest from this date (YYYY-MM-DD).')] = None,
 ):
     """Run an ingestion adapter (07 S1.6). Phase 0: --dry-run only, offline only."""
     if adapter not in ADAPTERS:
@@ -157,6 +187,11 @@ def ingest(
         _semantic_scholar(limit, no_network, fixture)
     if adapter == 'github':
         _github(limit, no_network, fixture)
+    if adapter == 'arxiv-oai':
+        _arxiv(limit, no_network, fixture, since)
+    if since:
+        typer.echo('ingest: --since belongs to arxiv-oai', err=True)
+        raise typer.Exit(2)
     from ingest.adapters import epoch
     try:
         bundle, where = _source(fixture, no_network, ROOT)
