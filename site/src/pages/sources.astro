@@ -1,0 +1,92 @@
+---
+// site/src/pages/sources.astro -- P5-S7-T03. The public /sources page (06 S3.0, 07 S9.1).
+//
+// 06 S3.0: "A public /sources page is generated from the same data: one row per source, its licence, its
+// attribution, its last successful fetch and its current status", with the SLO "stated plainly and published on
+// that page". Every value here is read from build/derived/ingest-health.json (src/lib/ingestHealth.ts); the SLO
+// sentence included, so the words on the page are the words the build carries, never a second copy.
+import Base from '../layouts/Base.astro';
+import Absent from '../components/Absent.astro';
+import SourceFreshness from '../components/SourceFreshness.astro';
+import { STATUS_LABEL, ingestHealth } from '../lib/ingestHealth';
+
+const health = ingestHealth();
+---
+<Base title="Sources">
+  <main>
+    <h1>Sources</h1>
+    <p>
+      Every source the index ingests from, and how healthy each one is right now. We publish our own rot: when an
+      adapter breaks, it shows here, not only in an issue tracker.
+    </p>
+
+    <section aria-labelledby="slo">
+      <h2 id="slo">Our service level</h2>
+      <p class="slo" data-test="slo">{health.slo[0].toUpperCase() + health.slo.slice(1)}</p>
+    </section>
+
+    <section aria-labelledby="health">
+      <h2 id="health">Health of each source, as of <time datetime={health.as_of}>{health.as_of}</time></h2>
+      {health.sources.map((s) => <SourceFreshness source={s} />)}
+    </section>
+
+    <div class="scroll">
+    <table data-test="sources">
+      <thead>
+        <tr>
+          <th scope="col">Source</th>
+          <th scope="col">Licence</th>
+          <th scope="col">Attribution</th>
+          <th scope="col">Last successful fetch</th>
+          <th scope="col">Content last changed</th>
+          <th scope="col">Records</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {health.sources.map((s) => (
+          <tr data-adapter={s.adapter} data-status={s.adapter_status}>
+            <th scope="row">{s.adapter}{s.tier != null && <span class="tier"> (Tier {s.tier})</span>}</th>
+            <td>{s.licence != null ? s.licence : <Absent state="not-recorded" />} <span class="class">{s.licence_class}</span></td>
+            <td>{s.attribution != null ? s.attribution : <Absent state="not-recorded" reason={s.attribution_note ?? undefined} />}</td>
+            <td>{s.last_successful_fetch != null
+              ? <time datetime={s.last_successful_fetch}>{s.last_successful_fetch.slice(0, 10)}</time>
+              : <Absent state="not-recorded" />}</td>
+            <td>{s.last_content_change != null
+              ? <time datetime={s.last_content_change}>{s.last_content_change.slice(0, 10)}</time>
+              : <Absent state="not-recorded" />}</td>
+            <td>{s.record_count}</td>
+            <td>{STATUS_LABEL[s.adapter_status]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .scroll {
+    overflow-x: auto;
+  }
+  .slo {
+    font-weight: 600;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--fs-xs);
+  }
+  th,
+  td {
+    text-align: start;
+    padding: var(--sp-1) var(--sp-2);
+    border-block-end: 1px solid var(--c-border);
+    vertical-align: top;
+  }
+  .tier,
+  .class,
+  .note {
+    color: var(--c-ink-faint);
+  }
+</style>

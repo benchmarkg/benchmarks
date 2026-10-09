@@ -234,6 +234,7 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
     finished = now()
     state['last_run'] = state['last_success'] = iso(finished)
     state['consecutive_failures'] = 0
+    _credit(adapter, state)
     if report['drafts']:
         state['last_change'] = iso(finished)
     if report['status'] != 'partial':
@@ -251,6 +252,19 @@ def run(adapter, state: dict, path: str, *, resolver=None, sink=None, max_runtim
     save(path, state)
     _log(adapter, report, tally, resolver, started, finished, log_root)
     return report
+
+
+def _credit(adapter, state):
+    """Record the licence class and the credit line a successful run worked under, for the build to publish
+    (07 S9.1: the build reads them from ingest/state/*.json). An adapter whose credit comes from the source
+    itself (Epoch's bundle README) has none to give on a 304 run, and keeps what the last fetch recorded."""
+    state['licence_class'] = adapter.licence_class
+    try:
+        credit = adapter.attribution
+    except Exception:  # noqa: BLE001 -- a credit read from a bundle not fetched this run: keep the last one
+        return
+    if credit:
+        state['attribution'] = credit
 
 
 def _log(adapter, report, tally, resolver, started, finished, log_root):
