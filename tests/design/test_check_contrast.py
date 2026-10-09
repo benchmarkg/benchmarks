@@ -59,7 +59,7 @@ def test_the_real_tokens_pass_with_only_the_eight_recorded_waivers():
 def test_every_declared_pair_is_checked_in_both_themes_against_its_kinds_floor():
     results, _ = C.check(spec())
     declared = C.pairs(SPEC, T.resolve(SPEC))
-    assert len(declared) == 40 and len(results) == 80
+    assert len(declared) == 48 and len(results) == 96          # 40 of 09 S4.6's, 8 of the freshness badge's (05 S7)
     assert {(r.fg, r.on, r.kind) for r in results if r.theme == 'light'} == set(declared)
     assert {(r.fg, r.on, r.kind) for r in results if r.theme == 'dark'} == set(declared)
     floors = SPEC['thresholds']['contrast']

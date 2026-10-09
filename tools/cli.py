@@ -16,7 +16,8 @@ this surface, they never invent on it" -- and each subcommand arrives with the t
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
 command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py),
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
-build/derived/ingest-health.json, P5-S7-T03's; --embed and --atlas arrive with their stages), `migrate`
+build/derived/ingest-health.json, P5-S7-T03's, and freshness.json, P5-S7-T04's; --embed and --atlas arrive
+with their stages), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
 `ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
 P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on). `build` also
@@ -180,7 +181,7 @@ def validate(
 @app.command('build')
 def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
-    derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json.')] = False,
+    derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json and freshness.json.')] = False,
 ):
     """Emit the shipped JSON artifacts (08 S4.2), drafts excluded, and regenerate the design tokens (09 S13)."""
     from tools.build import artifacts, site_taxonomy, tokens
@@ -196,6 +197,9 @@ def build_cmd(
         # 07 S9.1: every source's health, read from ingest/state/ and the run logs (P5-S7-T03)
         from tools.build import ingest_health
         typer.echo('wrote %s' % ingest_health.write(ROOT, str(out / 'derived' / 'ingest-health.json')))
+        # 05 S7 and 06 S3.0: every entry's freshness badge and its live sources' freshness (P5-S7-T04)
+        from tools.build import freshness
+        typer.echo('wrote %s' % freshness.write(ROOT, str(out / 'derived' / 'freshness.json')))
     try:
         # committed files: `git diff` after a build is the drift check. A data-only tree (a test
         # corpus, a fork of data/) has no design/ and gets no tokens.

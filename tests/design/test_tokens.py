@@ -26,6 +26,9 @@ from tools.build import tokens as T  # noqa: E402
 
 SPEC = os.path.join(ROOT, '_plan', '09-design-system.md')
 DECL = re.compile(r'--([a-z0-9-]+):\s*(oklch\(([^)]*)\)|var\(--([a-z0-9-]+)\))')
+# Groups a later task added beyond 09 S4.5's block, each with the section that asked for it: their values are not
+# 09 S4.5's to transcribe, and the verbatim test holds everything else to it.
+BEYOND_S4_5 = {'freshness': '05 S7 and 06 S3.0 (P5-S7-T04)'}
 
 
 def spec_block(heading: str) -> str:
@@ -65,7 +68,11 @@ def test_the_committed_files_are_the_generators_output():
 
 def test_the_light_set_is_09_s4_5_value_for_value(built):
     css, _ = built
-    assert declarations(light_block(css)) == declarations(spec_block('### 4.5 The token set'))
+    beyond = {tid for g in T.resolve(T.load_yaml(os.path.join(ROOT, T.TOKENS)), ROOT) if g['id'] in BEYOND_S4_5
+              for tid in (r['id'] for r in g['rows'])}
+    light = {k: v for k, v in declarations(light_block(css)).items() if k not in beyond}
+    assert light == declarations(spec_block('### 4.5 The token set'))
+    assert beyond and not beyond & set(declarations(spec_block('### 4.5 The token set')))
 
 
 def test_the_dark_set_carries_every_09_s9_representative_value(built):
