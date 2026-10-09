@@ -61,9 +61,16 @@ STATUSES = ('ok', 'degraded', 'broken', 'retired', 'not-yet-run')
 
 def adapters() -> list:
     """Every concrete Adapter class the codebase holds, by name."""
+    import importlib
     import inspect
+    import pkgutil
 
-    from ingest.adapters import base, epoch, hf_hub  # noqa: F401 -- importing registers the subclasses
+    from ingest import adapters
+    from ingest.adapters import base
+    # Importing registers the subclasses: every module in the package, so the list never depends on what some
+    # other caller happened to import first.
+    for m in pkgutil.iter_modules(adapters.__path__):
+        importlib.import_module('ingest.adapters.%s' % m.name)
     found, todo = {}, list(base.Adapter.__subclasses__())
     while todo:
         cls = todo.pop()
