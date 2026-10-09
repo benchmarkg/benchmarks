@@ -219,20 +219,25 @@ REQUIRED = {'benchmark_metadata.csv': ('benchmark', 'source_file', 'score_column
 CHANGE_CLASSES = ('new', 'field-change', 'result-change', 'gone', 'metrics-only', 'no-change')
 
 
-class SchemaDrift(Exception):
-    """The bundle is not shaped the way the engine reads it."""
+# The bundle is not shaped the way the engine reads it: ingest/gates/drift.py's hard fail (P5-S4-T05).
+SchemaDrift = gates.drift.DriftError
+# 07 S9.2 rule 1, declared: each metadata file's required columns, and at least one row.
+EXPECT = {name: gates.drift.Expect(name, frozenset(cols), min_rows=1) for name, cols in REQUIRED.items()}
 
 
 def check_drift(bundle: ZipBundle) -> None:
-    for name, columns in REQUIRED.items():
+    """06 S3.1: "A 404 or a changed ZIP structure is a hard failure". Each metadata file is present, has its
+    columns and at least one row, and the bundle still holds per-benchmark CSVs at its top level."""
+    for name, expect in EXPECT.items():
         if name not in bundle.names():
             raise SchemaDrift('%s is missing from the bundle' % name)
         headers, rows = bundle.read_csv(name)
-        missing = [c for c in columns if c not in headers]
+        missing = [c for c in REQUIRED[name] if c not in headers]
         if missing:
             raise SchemaDrift('%s has no %s column (headers: %s)' % (name, ', '.join(missing), ', '.join(headers)))
-        if not rows:
-            raise SchemaDrift('%s has no rows' % name)
+        gates.drift.rows(expect, rows)
+    if not bundle.per_benchmark_csvs():
+        raise SchemaDrift('the bundle holds no per-benchmark CSV at its top level: its structure changed')
 
 
 def candidates(bundle: ZipBundle):
@@ -333,7 +338,8 @@ def run(bundle: ZipBundle | None, *, limit: int | None = None, allow_bulk: bool 
     try:
         check_drift(bundle)
     except SchemaDrift as e:
-        report.update(status='hard-fail', errors=['schema drift: %s' % e], finished_at=iso(now()))
+        report.update(status='hard-fail', errors=['schema drift: %s' % e.message], finished_at=iso(now()),
+                      issue=gates.drift.issue(NAME, e.message, report['started_at']))
         return report
     if bundle.retrieved_at is None:
         bundle.retrieved_at = started         # a bundle read from disk was retrieved when the run read it

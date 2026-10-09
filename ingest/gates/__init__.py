@@ -45,7 +45,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from ingest.adapters.base import Unresolved
-from ingest.gates import checks
+from ingest.gates import checks, drift  # noqa: F401  (drift: the schema-drift contract, P5-S4-T05)
 from ingest.gates._common import ROOT, GateError
 from ingest.gates.checks import (CAP_ROWS, MAX_PROSE, Tree, attribution, cap_for, caps, licence_firewall,  # noqa: F401
                                  metadata_only, metadata_only_files, raw_retention, referential, round_trip,
