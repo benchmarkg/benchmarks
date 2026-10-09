@@ -26,6 +26,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 OUT = os.path.join(ROOT, 'tests', 'ingest', 'fixtures', 'hf-hub')
 UA = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks)'
 FIXTURES = [
@@ -41,6 +42,8 @@ def main():
     for name, url in FIXTURES:
         req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'application/json'})
         fetched_at = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        from ingest.http.policy import refuse
+        refuse(url)                                      # # 07 S10.1: no-collect and forbidden hold for every code path
         with urllib.request.urlopen(req, timeout=120) as r:
             body = r.read()
             meta = {'url': url, 'method': 'GET', 'fetched_at': fetched_at, 'status': r.status,

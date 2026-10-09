@@ -87,7 +87,7 @@ from pathlib import Path  # noqa: E402
 
 from ingest.adapters.base import Adapter, Candidate, Payload  # noqa: E402,F401  (07 S1.1's types; tests import them from here)
 from ingest.gates import drift  # noqa: E402
-from ingest.http import backoff, ratelimit  # noqa: E402
+from ingest.http import backoff, policy, ratelimit  # noqa: E402
 from ingest.runner import state as runner_state  # noqa: E402
 from ingest.http.fixture import (FixtureMiss, FixtureTransport, NetworkForbidden, NoNetwork,  # noqa: E402,F401
                                  header, header_values)
@@ -190,12 +190,14 @@ class NetworkTransport:
     """GET over urllib, under 07 S4.2's retry policy and the Hub's own RateLimit headers."""
 
     def __init__(self, token=None, min_interval=MIN_INTERVAL, timeout=60,
-                 clock=time.monotonic, wall=time.time, sleep=time.sleep):
+                 clock=time.monotonic, wall=time.time, sleep=time.sleep, gate=None):
         self.token, self.min_interval, self.timeout = token, min_interval, timeout
         self.clock, self.wall, self.sleep = clock, wall, sleep
+        self.gate = gate or policy.gate()                # 07 S10.1: ingest/policy.yaml, robots.txt, no-collect
         self._not_before = 0.0
 
     def _once(self, url, headers):
+        self.gate.admit(url)
         wait = self._not_before - self.clock()
         if wait > 0:
             self.sleep(wait)

@@ -1,0 +1,113 @@
+# ingest/policy.yaml -- P5-S2-T01 (07 S10.1; 06 S9.6)
+#
+# The single source of the fetcher's politeness. ingest/http/policy.py reads it at start-up and every live
+# network transport under ingest/ asks it before each request (`Gate.admit`). In order, the gate:
+#
+#   1. refuses a host on `no_collect` (and its subdomains), outright and unconditionally (06 S9.6);
+#   2. refuses a URL matching `forbidden`, whatever the host's robots.txt says today (07 S10.1: "It must be
+#      structurally impossible for any code path to reach" these three);
+#   3. refuses a host with no entry under `hosts` (07 S10.1: "the fetcher refuses to issue a request for a
+#      host with no policy entry"), and a host whose run budget is spent (`max_requests: 0` is "Zero. Link
+#      out only", 07 S10);
+#   4. fetches that host's robots.txt once per run, caches it, and refuses what it disallows for us;
+#   5. waits for the host's token bucket: `rate` tokens a second, `burst` at most. A burst of 1 is strict
+#      pacing -- one request, then 1/rate seconds -- which is "sequential within a source" (06 S9.6).
+#
+# Code outside ingest/ that opens a URL (tools/, scripts/: link-rot checks, archiving, the copilot's source
+# fetch) is held to 1 and 2 through `policy.refuse()`; tests/ingest/test_policy.py fails any function that
+# opens a URL without asking.
+#
+# The numbers are 06 S9.6's policy and 07 S10's per-run budget. A host is matched exactly: list a
+# subdomain on its own line. A new adapter adds its host here in the same PR, with its basis.
+
+version: 1
+user_agent: 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks)'   # 06 S9.6: one identifying UA on every request
+robots_token: UAIBI                                                  # the product token robots.txt groups are matched on
+
+hosts:
+  epoch.ai:
+    rate: 0.1             # one request per 10 s
+    burst: 1
+    max_requests: 10      # 07 S10: "1 conditional GET/week", plus its robots.txt
+    basis: 07 S10 (Epoch AI), 06 S3.1
+  epoch-benchmarks-production-public.s3.us-east-2.amazonaws.com:
+    rate: 0.5
+    burst: 1
+    basis: 07 S2.3 (one cached HEAD per public Inspect log; ingest/verification.py's EPOCH_LOG_HOSTS)
+  epoch-benchmarks-staging-public.s3.us-east-2.amazonaws.com:
+    rate: 0.5
+    burst: 1
+    basis: as the production bucket
+  huggingface.co:
+    rate: 1.0             # ~1 req/s with HF_TOKEN
+    burst: 1
+    max_requests: 2000
+    basis: 06 S9.6, 07 S10 (HuggingFace)
+  export.arxiv.org:
+    rate: 0.3333          # 1 req / 3 s for the API
+    burst: 1
+    basis: 06 S9.6, 07 S10 (arXiv OAI-PMH)
+  arxiv.org:
+    rate: 0.0667          # 1 / 15 s for any arxiv.org HTML
+    burst: 1
+    basis: 06 S9.6
+  api.github.com:
+    rate: 1.0             # a one-second floor, If-None-Match everywhere
+    burst: 1
+    max_requests: 2000
+    basis: 06 S9.6, 07 S10 (GitHub API)
+  api.openalex.org:
+    rate: 5.0             # singleton lookups only, never a poll (ingest/adapters/openalex.py's MIN_INTERVAL 0.2 s)
+    burst: 1
+    basis: 07 S10 (OpenAlex), 06 S3.10
+  api.semanticscholar.org:
+    rate: 0.95            # the keyed limit is 1 RPS on all endpoints
+    burst: 1
+    max_requests: 3000
+    basis: 07 S10 (Semantic Scholar), 06 S3.11
+  web.archive.org:
+    rate: 0.5
+    burst: 1
+    max_requests: 500     # SPN2: <=500 saves/day
+    basis: 07 S10 (Wayback SPN2)
+  grand-challenge.org:
+    rate: 0.5             # 1 req / 2 s, deliberately over-throttled
+    burst: 1
+    basis: 06 S9.6, 07 S10 (Grand Challenge / Codabench / EvalAI)
+  www.codabench.org:
+    rate: 0.5
+    burst: 1
+    basis: as grand-challenge.org
+  eval.ai:
+    rate: 0.5
+    burst: 1
+    basis: as grand-challenge.org
+  predictioncenter.org:
+    rate: 0.5             # "Being the project that took down the CASP server is a reputational injury"
+    burst: 1
+    basis: 06 S9.6
+  artificialanalysis.ai:
+    rate: 0.1
+    burst: 1
+    max_requests: 0       # "Zero. Link out only": redistribution contractually barred
+    basis: 07 S10 (Artificial Analysis), 06 S8
+
+# Refused for every host and every code path, before robots.txt is read (a robots.txt that fails to load or
+# changes tomorrow must not open them). Patterns use robots.txt syntax (RFC 9309): `*` is any run of
+# characters, a trailing `$` anchors the end, and the match is from the start of the path. `host` matches
+# the host and every subdomain of it.
+forbidden:
+  - host: drivendata.org
+    path: /*/leaderboard_partial
+    basis: '07 S10.1, 06 S9.6: DrivenData''s robots.txt excludes it'
+  - host: epoch.ai
+    path: /inspect-viewer/
+    basis: '07 S10.1: Epoch''s robots.txt excludes it'
+  - host: epoch.ai
+    path: /frontiermath/tiers-1-4/benchmark-problems
+    basis: '07 S10.1: excluded by Epoch "to avoid contaminating training datasets", our own ethic pointed back at us'
+
+# 06 S9.6: "We will honour any maintainer's request to stop collecting from their site ... compliance is
+# immediate and unconditional." One entry per request: the host (its subdomains are refused too), the date
+# the request arrived, and where it is recorded. Never removed except at the maintainer's own request.
+no_collect: []

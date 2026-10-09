@@ -39,6 +39,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ingest.adapters.base import Draft, Unresolved
+from ingest.http import policy
 from ingest.http.backoff import Response, SoftFail, retry
 from ingest.resolve import normalise
 
@@ -60,11 +61,13 @@ _COUNTRY_TAIL = re.compile(r'\s*\([^()]*\)\s*$')
 class NetworkTransport:
     """GET over urllib with 07 S4.2's retry policy. The API key is appended here, and only here."""
 
-    def __init__(self, key: str | None = None, timeout: int = 60, clock=time.monotonic, sleep=time.sleep):
+    def __init__(self, key: str | None = None, timeout: int = 60, clock=time.monotonic, sleep=time.sleep, gate=None):
         self.key, self.timeout, self.clock, self.sleep = key, timeout, clock, sleep
+        self.gate = gate or policy.gate()                # 07 S10.1: ingest/policy.yaml, robots.txt, no-collect
         self._not_before = 0.0
 
     def _once(self, url, headers):
+        self.gate.admit(url)                             # the URL without its key: keys never reach a log
         wait = self._not_before - self.clock()
         if wait > 0:
             self.sleep(wait)

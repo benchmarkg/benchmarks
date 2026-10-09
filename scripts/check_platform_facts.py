@@ -31,6 +31,7 @@ import urllib.request
 from datetime import date, timedelta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
 FACTS = os.path.join(ROOT, 'ingest', 'platform-facts.yaml')
 PLAN = os.path.join(ROOT, '_plan')
 VERDICTS = {'confirmed', 'qualified', 'changed', 'refuted'}
@@ -148,6 +149,8 @@ def check(facts, docs, today):
 
 def page_text(url):
     req = urllib.request.Request(url, headers={'User-Agent': UA})
+    from ingest.http.policy import refuse
+    refuse(url)                                          # # 07 S10.1: no-collect and forbidden hold for every code path
     with urllib.request.urlopen(req, timeout=60) as r:
         raw = r.read().decode('utf-8', 'replace')
     raw = re.sub(r'<script.*?</script>|<style.*?</style>', ' ', raw, flags=re.S | re.I)

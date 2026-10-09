@@ -88,7 +88,13 @@ class Assessment:
 # ---- the HEAD ---------------------------------------------------------------------------------------------
 
 def head(url: str, timeout: int = 30) -> tuple[int | None, str]:
-    """(status or None, detail) for one HEAD; a network failure is (None, its reason), never an exception."""
+    """(status or None, detail) for one HEAD; a network failure is (None, its reason), never an exception.
+    A URL the fetcher's policy refuses (07 S10.1) is (None, the refusal), and is never requested."""
+    from ingest.http import policy
+    try:
+        policy.admit(url)
+    except policy.PolicyRefusal as e:
+        return None, 'refused by ingest/policy.yaml: %s' % type(e).__name__
     req = urllib.request.Request(url, method='HEAD', headers={'User-Agent': USER_AGENT})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:

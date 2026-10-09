@@ -53,6 +53,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
 from ingest.adapters import openalex
+from ingest.http import policy
 from ingest.http.backoff import Response, SoftFail, retry
 from ingest.resolve import normalise
 
@@ -72,11 +73,13 @@ _ARXIV_DOI = re.compile(r'10\.48550/arxiv\.(\d{4}\.\d{4,5})', re.I)
 class NetworkTransport:
     """GET over urllib with 07 S4.2's retry policy, one request a second. The key goes in a header, here only."""
 
-    def __init__(self, key: str | None = None, timeout: int = 60, clock=time.monotonic, sleep=time.sleep):
+    def __init__(self, key: str | None = None, timeout: int = 60, clock=time.monotonic, sleep=time.sleep, gate=None):
         self.key, self.timeout, self.clock, self.sleep = key, timeout, clock, sleep
+        self.gate = gate or policy.gate()                # 07 S10.1: ingest/policy.yaml, robots.txt, no-collect
         self._not_before = 0.0
 
     def _once(self, url, headers):
+        self.gate.admit(url)
         wait = self._not_before - self.clock()
         if wait > 0:
             self.sleep(wait)

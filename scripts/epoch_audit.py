@@ -406,6 +406,8 @@ def render_census(got, c):
 
 def fetch(dest):
     """Download the pinned capture, check its sha256, and unpack it into dest."""
+    from ingest.http.policy import refuse
+    refuse(DROP['url'])                                  # # 07 S10.1: no-collect and forbidden hold for every code path
     with urllib.request.urlopen(DROP['url'], timeout=300) as r:
         data = r.read()
     got = hashlib.sha256(data).hexdigest()

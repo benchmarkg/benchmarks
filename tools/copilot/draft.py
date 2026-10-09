@@ -179,6 +179,8 @@ GITHUB = re.compile(r'^https?://(?:www\.)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z
 
 def _get(url: str) -> tuple[bytes, str]:
     req = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
+    from ingest.http.policy import refuse
+    refuse(url)                                          # # 07 S10.1: no-collect and forbidden hold for every code path
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read(), r.headers.get('Content-Type', '')
 
@@ -559,6 +561,8 @@ class AnthropicDrafter(Drafter):
     def _post(self, body: dict) -> dict:
         req = urllib.request.Request(API_URL, data=json.dumps(body).encode('utf-8'), method='POST', headers={
             'x-api-key': self.key, 'anthropic-version': API_VERSION, 'content-type': 'application/json'})
+        from ingest.http.policy import refuse
+        refuse(API_URL)                                  # # 07 S10.1: no-collect and forbidden hold for every code path
         with urllib.request.urlopen(req, timeout=900) as r:
             return json.loads(r.read().decode('utf-8'))
 
