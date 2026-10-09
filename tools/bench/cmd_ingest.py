@@ -6,10 +6,11 @@
     bench ingest semantic-scholar --dry-run --limit 20        # live; SEMANTIC_SCHOLAR_API_KEY and OPENALEX_API_KEY
     bench ingest github --dry-run                             # live; GH_API_TOKEN from the environment
     bench ingest arxiv-oai --dry-run --since 2026-10-06       # live: set=cs from that date to today
+    bench ingest swe-bench --dry-run                          # live: the leaderboard page, one conditional GET
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
 --limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
-openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since; swe-bench, P5-S6-T03), and prints 07 S6.2's change-class summary. The replay, recompute, state and
 unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
 they drive.
 
@@ -33,7 +34,7 @@ from typing import Annotated, Optional
 import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github', 'arxiv-oai')
+ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github', 'arxiv-oai', 'swe-bench')
 EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
@@ -162,6 +163,31 @@ def _arxiv(limit: Optional[int], no_network: bool, fixture: Optional[str], since
     raise typer.Exit(EXIT[report['status']])
 
 
+def _swebench(no_network: bool, fixture: Optional[str]):
+    from ingest.adapters import swebench
+    if fixture:
+        from ingest.http.fixture import FixtureTransport
+        transport, where = FixtureTransport(fixture), 'fixture %s' % fixture
+    elif no_network:
+        typer.echo('ingest: swe-bench has no local copy to read (its page may not be kept, 07 S4.4); '
+                   '--no-network needs --fixture PATH', err=True)
+        raise typer.Exit(2)
+    else:
+        transport, where = swebench.NetworkTransport(), swebench.PAGE_URL
+    report = swebench.run(swebench.SweBench(transport), swebench.new_state())
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    if report['counts']:
+        typer.echo('  results       %s (%d)' % (', '.join('%s=%d' % kv for kv in report['counts'].items()),
+                                                sum(report['counts'].values())))
+    if report['unresolved_by_field']:
+        typer.echo('  unresolved by %s' % ', '.join('%s=%d' % kv for kv in sorted(report['unresolved_by_field'].items())))
+    for a in report['anomalies']:
+        typer.echo('  ANOMALY: %s (needs-scrutiny; nothing is gone)' % a)
+    raise typer.Exit(EXIT[report['status']])
+
+
 def ingest(
     adapter: Annotated[str, typer.Argument(help='The adapter to run: %s.' % ', '.join(ADAPTERS))],
     dry_run: Annotated[bool, typer.Option('--dry-run', help='Fetch, normalise and report; write nothing.')] = False,
@@ -189,6 +215,8 @@ def ingest(
         _github(limit, no_network, fixture)
     if adapter == 'arxiv-oai':
         _arxiv(limit, no_network, fixture, since)
+    if adapter == 'swe-bench' and not since:
+        _swebench(no_network, fixture)
     if since:
         typer.echo('ingest: --since belongs to arxiv-oai', err=True)
         raise typer.Exit(2)

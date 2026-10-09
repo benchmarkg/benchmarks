@@ -93,7 +93,8 @@ def test_the_three_exclusions_are_in_the_file_and_the_no_collect_list_exists():
     pol = P.Policy.load()
     assert {(r.host, r.path) for r in pol.forbidden} == {
         ('drivendata.org', '/*/leaderboard_partial'), ('epoch.ai', '/inspect-viewer/'),
-        ('epoch.ai', '/frontiermath/tiers-1-4/benchmark-problems')}
+        ('epoch.ai', '/frontiermath/tiers-1-4/benchmark-problems'),
+        ('swe-bench-submissions.s3.amazonaws.com', '/')}      # 06 S3.7: link, never fetch (P5-S6-T03)
     assert pol.no_collect == ()
 
 
