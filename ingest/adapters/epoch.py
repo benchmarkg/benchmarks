@@ -285,6 +285,7 @@ class Epoch(BulkArchiveAdapter):
 
     name, version, licence, licence_class = NAME, VERSION, LICENCE, LICENCE_CLASS
     expected_yield = (41, 162)            # 07 S9's seed band: 81 benchmarks x [0.5, 2.0]
+    tier, source_id = 1, 'src-epoch-benchmark-data'   # 06 S8.1 Tier 1; data/sources/2026/
     volatile_fields = ()                  # 07 S1.5: the ZIP is byte-stable between publications
     caps = CAPS
 

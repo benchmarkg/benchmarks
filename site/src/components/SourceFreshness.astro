@@ -1,0 +1,58 @@
+---
+// site/src/components/SourceFreshness.astro -- P5-S7-T03 (07 S9.1). One source's freshness strip: its status as a
+// dot plus words, when it last fetched successfully (an absolute ISO date, the day count secondary, as
+// Staleness.astro does), when its content last changed, and the SLO badge its records carry. The /sources page
+// renders one per source; the provenance page takes the same component when it is built.
+//
+// NEVER: show a source as fine when it has never run, or hide a stale or retired badge.
+import Absent from './Absent.astro';
+import type { SourceHealth } from '../lib/ingestHealth';
+import { STATUS_LABEL } from '../lib/ingestHealth';
+
+interface Props {
+  source: SourceHealth;
+}
+
+const { source: s } = Astro.props;
+const day = (iso: string | null) => (iso ? iso.slice(0, 10) : null);
+---
+<p class="freshness" data-adapter={s.adapter} data-status={s.adapter_status} data-badge={s.badge != null ? s.badge : undefined}>
+  <span class="dot" aria-hidden="true">●</span>
+  <strong>{s.adapter}</strong>: {STATUS_LABEL[s.adapter_status]}.
+  {s.last_successful_fetch != null
+    ? <span>Last successful fetch <time datetime={s.last_successful_fetch}>{day(s.last_successful_fetch)}</time>{s.days_since_success != null && <span class="days"> ({s.days_since_success} days)</span>}{s.fetch_basis != null && <span class="basis">, from the {s.fetch_basis}</span>}.</span>
+    : <span>Last successful fetch: <Absent state="not-recorded" />.</span>}
+  <span> Content last changed: {s.last_content_change != null
+    ? <time datetime={s.last_content_change}>{day(s.last_content_change)}</time>
+    : <Absent state="not-recorded" />}.</span>
+  {s.badge === 'stale' && <em class="badge" data-test="badge-stale"> Records from this source are badged stale.</em>}
+  {s.badge === 'source-retired' && <em class="badge" data-test="badge-retired"> Source retired: records keep their last-known values.</em>}
+</p>
+
+<style>
+  .freshness {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+  .dot {
+    margin-inline-end: var(--sp-1);
+  }
+  [data-status='ok'] .dot {
+    color: var(--c-affirm);
+  }
+  [data-status='degraded'] .dot,
+  [data-status='not-yet-run'] .dot {
+    color: var(--c-caution);
+  }
+  [data-status='broken'] .dot,
+  [data-status='retired'] .dot {
+    color: var(--c-alert);
+  }
+  .days,
+  .basis {
+    color: var(--c-ink-faint);
+  }
+  .badge {
+    color: var(--c-alert);
+  }
+</style>

@@ -171,6 +171,9 @@ class Adapter(ABC):
     volatile_fields: Sequence[str] = ()   # stripped before hashing (07 S1.5)
     raw_retainable: bool = True           # False when the licence bars us keeping the body (07 S4.4)
     caps: Mapping[str, int] = MappingProxyType({})   # per-entity-type draft caps; defaults in 07 S8
+    tier: int | None = None               # 06 S8's tier: the SLO's stale window (06 S3.0; P5-S7-T03)
+    source_id: str | None = None          # the Source record its licence is read from (04 S9), where one exists
+    retired: bool = False                 # 06 S3.0: a retired adapter's records carry a permanent badge
 
     def __init_subclass__(cls, **kw):
         super().__init_subclass__(**kw)

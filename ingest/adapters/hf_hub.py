@@ -302,6 +302,7 @@ class HfHub(Adapter):
     raw_retainable = False
     attribution = 'Hugging Face Hub'      # each record's credit is this, then its own Space or dataset URL
     expected_yield = (512, 2048)          # 07 S9's seed band: 1,019 candidates x [0.5, 2.0]
+    tier = 1                              # 06 S8.1 Tier 1; no Source record yet, so the licence is declared here
 
     def __init__(self, transport, cache, max_requests=MAX_REQUESTS, now=None):
         self.transport, self.cache, self.max_requests = transport, cache, max_requests
