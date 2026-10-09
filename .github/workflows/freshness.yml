@@ -1,0 +1,79 @@
+# .github/workflows/freshness.yml -- P5-S7-T05
+#
+# The weekly re-verification issue of 05 S7: every Monday at 08:07 UTC, `bench report staleness --issue`
+# renders the prioritised queue (priority = staleness_days x volatility_weight x attention_weight; the
+# critical entries -- more than 730 days on an active benchmark -- listed first) and this job keeps ONE
+# rolling issue labelled `reverification` up to date with it: it edits the open one, or opens one if none
+# is open. When the queue has a critical entry the issue also carries `staleness-critical`, so "an issue
+# opens automatically" for one (05 S7) without a second issue per entry every week.
+#
+# The cron is an odd offset (05 S9). The issue body names the analytics month it weighed attention by,
+# so a week's ordering can be explained from the issue alone.
+#
+# The schedule is inert until the repository variable FRESHNESS_SCHEDULE is set to `on`: Actions were
+# switched off for this repository on 2026-09-25, and a new workflow file is enabled on arrival.
+# A manual `workflow_dispatch` always runs. It reads the repository and writes only issues, so the job's
+# own GITHUB_TOKEN with `issues: write` is enough; no bot PAT is needed.
+# Actions are pinned by commit SHA (08 S6), the same SHAs linkrot.yml uses.
+
+name: freshness
+
+on:
+  schedule:
+    - cron: '7 8 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: freshness
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  reverification:
+    if: github.event_name == 'workflow_dispatch' || vars.FRESHNESS_SCHEDULE == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - name: Install the pinned toolchain
+        run: uv sync --locked --python 3.12
+
+      - name: Render the queue
+        run: |
+          uv run --locked bench report staleness --issue --out "$RUNNER_TEMP/reverification.md"
+          uv run --locked bench report staleness --format json --out "$RUNNER_TEMP/reverification.json"
+          uv run --locked bench report staleness --critical --format json --out "$RUNNER_TEMP/critical.json"
+
+      - name: Open or update the re-verification issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          as_of=$(jq -r '.summary.as_of' "$RUNNER_TEMP/reverification.json")
+          critical=$(jq -r '.summary.critical' "$RUNNER_TEMP/critical.json")
+          title="Re-verification queue, as of $as_of"
+          gh label create reverification --repo "$REPO" --color 0E8A16 --force \
+            --description 'The weekly re-verification queue (05 S7)'
+          gh label create staleness-critical --repo "$REPO" --color B60205 --force \
+            --description 'An active entry not verified in over 730 days (05 S7)'
+          number=$(gh issue list --repo "$REPO" --label reverification --state open --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            number=$(gh issue create --repo "$REPO" --title "$title" --label reverification \
+              --body-file "$RUNNER_TEMP/reverification.md" | sed 's#.*/##')
+          else
+            gh issue edit "$number" --repo "$REPO" --title "$title" --body-file "$RUNNER_TEMP/reverification.md"
+          fi
+          if [ "$critical" -gt 0 ]; then
+            gh issue edit "$number" --repo "$REPO" --add-label staleness-critical
+          else
+            gh issue edit "$number" --repo "$REPO" --remove-label staleness-critical || true
+          fi

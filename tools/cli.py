@@ -20,7 +20,8 @@ build/derived/ingest-health.json, P5-S7-T03's, and freshness.json, P5-S7-T04's; 
 with their stages), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
 `ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
-P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on). `build` also
+P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on; `staleness`, the
+re-verification queue, is P5-S7-T05's). `build` also
 regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
 (P2-S2-T01, tools/build/tokens.py), and site/src/lib/taxonomy.json from taxonomy/ (P2-S2-T06,
 tools/build/site_taxonomy.py). `promote`, `resolve` and `tag-gap` are P1-S2-T10's (tools/promote.py,
@@ -304,6 +305,12 @@ class ReportName(str, Enum):
     completeness = 'completeness'
     conflicts = 'conflicts'
     quality = 'quality'
+    staleness = 'staleness'
+
+
+# A report whose module is not named after it: 05 S7's re-verification queue is `bench report staleness`
+# (P5-S7-T05), and 07 S9's adapter table joins the same report with P5-S4-T03.
+REPORT_MODULES = {'staleness': 'reverification'}
 
 
 class ReportFormat(str, Enum):
@@ -314,15 +321,29 @@ class ReportFormat(str, Enum):
 
 @app.command('report')
 def report_cmd(
-    name: Annotated[ReportName, typer.Argument(help='The report: completeness, conflicts or quality.')],
+    name: Annotated[ReportName, typer.Argument(help='The report: completeness, conflicts, quality or staleness.')],
     fmt_: Annotated[ReportFormat, typer.Option('--format', help='md, json or csv.')] = ReportFormat.md,
     out: Annotated[Optional[Path], typer.Option('--out', help='Write here instead of stdout.')] = None,
+    root: Annotated[Optional[Path], typer.Option('--root', help='Report over this tree (a fixture corpus) instead.')] = None,
+    critical: Annotated[bool, typer.Option('--critical', help='staleness: only entries past 730 days on an active benchmark (05 S7).')] = False,
+    as_of: Annotated[Optional[str], typer.Option('--as-of', help="staleness: count days to YYYY-MM-DD; default the data commit's date.")] = None,
+    issue: Annotated[bool, typer.Option('--issue', help='staleness: write the weekly re-verification issue body instead.')] = False,
 ):
     """A report over the repository (05 S3). Deterministic: a re-run gives the same bytes."""
     import importlib
+    from datetime import date
 
     from tools import report
-    text = report.render(importlib.import_module('tools.report.%s' % name.value).build(ROOT), fmt_.value)
+    tree = str(root.resolve()) if root else ROOT
+    mod = importlib.import_module('tools.report.%s' % REPORT_MODULES.get(name.value, name.value))  # get-default: most modules are named after their report
+    if name is ReportName.staleness:
+        built = mod.build(tree, date.fromisoformat(as_of) if as_of else None, critical=critical)
+        text = mod.issue_body(built) if issue else report.render(built, fmt_.value)
+    else:
+        if critical or as_of or issue:
+            typer.echo('report: --critical, --as-of and --issue belong to staleness', err=True)
+            raise typer.Exit(2)
+        text = report.render(mod.build(tree), fmt_.value)
     if out:
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(text, encoding='utf-8', newline='\n')
