@@ -4,10 +4,11 @@
     bench ingest epoch --dry-run --fixture tests/fixtures/epoch
     bench ingest openalex --dry-run --limit 20                # live; OPENALEX_API_KEY from the environment
     bench ingest semantic-scholar --dry-run --limit 20        # live; SEMANTIC_SCHOLAR_API_KEY and OPENALEX_API_KEY
+    bench ingest github --dry-run                             # live; GH_API_TOKEN from the environment
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
 --limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
-openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01), and prints 07 S6.2's change-class summary. The replay, recompute, state and
 unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
 they drive.
 
@@ -31,7 +32,7 @@ from typing import Annotated, Optional
 import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ADAPTERS = ('epoch', 'openalex', 'semantic-scholar')
+ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github')
 EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
@@ -113,6 +114,25 @@ def _semantic_scholar(limit: Optional[int], no_network: bool, fixture: Optional[
     raise typer.Exit(EXIT[report['status']])
 
 
+def _github(limit: Optional[int], no_network: bool, fixture: Optional[str]):
+    from ingest.adapters import github
+    if fixture:
+        from ingest.http.fixture import FixtureTransport
+        transport, where = FixtureTransport(fixture), 'fixture %s' % fixture
+    elif no_network:
+        typer.echo('ingest: github has no local copy to read; --no-network needs --fixture PATH', err=True)
+        raise typer.Exit(2)
+    else:
+        token = github.token_from_env()
+        transport = github.NetworkTransport(token)
+        where = 'api.github.com (%s)' % ('GH_API_TOKEN set' if token else 'no token: 60 requests an hour')
+    report = github.run(github.GitHub(transport), limit=limit)
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    raise typer.Exit(EXIT[report['status']])
+
+
 def ingest(
     adapter: Annotated[str, typer.Argument(help='The adapter to run: %s.' % ', '.join(ADAPTERS))],
     dry_run: Annotated[bool, typer.Option('--dry-run', help='Fetch, normalise and report; write nothing.')] = False,
@@ -135,6 +155,8 @@ def ingest(
         _openalex(limit, no_network, fixture)
     if adapter == 'semantic-scholar':
         _semantic_scholar(limit, no_network, fixture)
+    if adapter == 'github':
+        _github(limit, no_network, fixture)
     from ingest.adapters import epoch
     try:
         bundle, where = _source(fixture, no_network, ROOT)

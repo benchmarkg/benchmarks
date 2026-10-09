@@ -26,9 +26,10 @@ adapter that leaves out one of 07 S1.1's declarations -- its name, version, lice
 attribution or seed yield band -- is refused when its class is defined, not when a run first needs the
 value. So is one that would retain the raw body of a source whose licence forbids it (07 S4.4).
 
-What the ABC does not hold yet: the runner (P5-S2), the state layer and its checkpoint file (P5-S2-T02),
-and `politeness`, the per-host policy (P5-S2-T01). Until those exist, checkpoint() and finalise() work
-on the in-memory state the caller saves, and `politeness` is None.
+What the ABC does not hold: the runner and the state file (ingest/runner/, P5-S2-T02), which call
+checkpoint() and finalise() on the state they persist; and the per-host policy, which is ingest/policy.yaml
+enforced by every live transport's gate (ingest/http/policy.py, P5-S2-T01) -- 07 S10.1: "a property of the
+HTTP client, not of the adapter" -- so `politeness` stays None.
 
 Two asks from ADR-0022 (Proposed) were weighed here. `Draft.ingestion` is now optional: a record a
 person submitted is curated, not ingested, and has no ingestion block (04 S9). `Payload` keeps 07 S1.1's
@@ -167,7 +168,7 @@ class Adapter(ABC):
     licence_class: str                    # 04 S9 firewall: one of LICENCE_CLASSES
     attribution: str                      # the exact credit line this source requires
     expected_yield: tuple[int, int]       # seed band for a new adapter; adaptive after 8 runs (07 S9)
-    politeness: Any = None                # the per-host policy, enforced by the fetcher (P5-S2-T01)
+    politeness: Any = None                # unused: the fetcher's gate enforces ingest/policy.yaml (P5-S2-T01)
     volatile_fields: Sequence[str] = ()   # stripped before hashing (07 S1.5)
     raw_retainable: bool = True           # False when the licence bars us keeping the body (07 S4.4)
     caps: Mapping[str, int] = MappingProxyType({})   # per-entity-type draft caps; defaults in 07 S8
