@@ -1,0 +1,63 @@
+---
+// site/src/pages/freshness.astro -- P5-S7-T04. Every published entry and how recently a person verified it (05 S7),
+// in the default sort: anything not verified in over a year is demoted below every fresher entry.
+//
+// 05 S7: "The build computes staleness and the site displays it on every entry". The detail and browse pages
+// take the same <FreshnessBadge> and the same demotion (lib/freshness.ts's demote) when they are built; until
+// then this page is where every entry's badge is public. Every value and threshold is read from
+// build/derived/freshness.json, never retyped here.
+import Base from '../layouts/Base.astro';
+import FreshnessBadge from '../components/FreshnessBadge.astro';
+import { freshness, inDefaultOrder } from '../lib/freshness';
+
+const doc = freshness();
+const t = doc.thresholds;
+const rows = inDefaultOrder(doc);
+const count = (state: string) => rows.filter((e) => e.state === state).length;
+---
+<Base title="Freshness">
+  <main>
+    <h1>How recently each entry was verified</h1>
+    <p>
+      An entry's verification date is when a person last opened its cited sources and confirmed its fields, not
+      when a file was last edited. Entries last verified {t.amber_from_days} to {t.red_after_days} days ago carry
+      an amber badge; past {t.red_after_days} days a red one, and they sort below every fresher entry. An entry
+      whose only live source has not refreshed in over {t.source_refresh_days} days says that too.
+    </p>
+    <p data-test="counts">
+      As of <time datetime={doc.as_of}>{doc.as_of}</time>: {rows.length} entries; {count('neutral')} verified
+      within {t.amber_from_days} days, {count('amber')} amber, {count('red')} red.
+    </p>
+
+    <ol class="entries" data-test="entries">
+      {rows.map((e) => (
+        <li data-entry={e.id} data-state={e.state}>
+          <span class="name">{e.name}</span> <span class="kind">{e.kind}</span>
+          <FreshnessBadge entry={e} thresholds={t} />
+        </li>
+      ))}
+    </ol>
+  </main>
+</Base>
+
+<style>
+  .entries {
+    list-style: none;
+    padding: 0;
+  }
+  .entries li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-3);
+    align-items: baseline;
+    padding: var(--sp-2) 0;
+    border-block-end: 1px solid var(--c-border);
+  }
+  .name {
+    font-weight: 600;
+  }
+  .kind {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+</style>

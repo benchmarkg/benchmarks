@@ -1,0 +1,89 @@
+---
+// site/src/components/FreshnessBadge.astro -- P5-S7-T04 (05 S7, 06 S3.0). One entry's freshness, as the build
+// derived it (tools/build/freshness.py): when a person last verified it, always as an absolute ISO date with the
+// day count secondary (09 S11.4), in 05 S7's three treatments --
+//   neutral   under 180 days: plain muted text, no badge;
+//   amber     180-365 days: an outlined amber badge;
+//   red       over a year (or never): a filled red badge, "not verified in over a year".
+// Then, for an entry resting on a live source (06 S3.0), the source's freshness: a line when none of its live
+// sources has refreshed within the window, and the source's SLO badge (stale, retired) when it carries one.
+//
+// The state and the thresholds come from the artifact; this component applies no threshold of its own. Colour is
+// never the only channel (09 S4.6): each state says its age in words, and the two badges differ in shape.
+//
+// NEVER: hide the badge when stale; compute the age here (it takes the build's state, not a date and a clock).
+import type { EntryFreshness, Thresholds } from '../lib/freshness';
+
+interface Props {
+  entry: EntryFreshness;
+  thresholds: Thresholds;
+}
+
+const { entry: e, thresholds: t } = Astro.props;
+const sf = e.source_freshness;
+const stale = sf != null ? sf.sources.filter((s) => s.days_since_refresh == null || s.days_since_refresh > t.source_refresh_days) : [];
+---
+<span class="freshness" data-entry={e.id} data-state={e.state} data-demoted={e.demoted ? 'true' : undefined}>
+  {e.state === 'red' && e.last_verified == null && (
+    <span class="badge" data-test="badge-red">Never verified by a person</span>
+  )}
+  {e.state === 'red' && e.last_verified != null && (
+    <span class="badge" data-test="badge-red">Not verified in over a year: last verified <time datetime={e.last_verified}>{e.last_verified}</time> <span class="days">({e.days_since_verified} days)</span></span>
+  )}
+  {e.state === 'amber' && e.last_verified != null && (
+    <span class="badge" data-test="badge-amber">Last verified <time datetime={e.last_verified}>{e.last_verified}</time> <span class="days">({e.days_since_verified} days)</span></span>
+  )}
+  {e.state === 'neutral' && e.last_verified != null && (
+    <span class="plain">Last verified <time datetime={e.last_verified}>{e.last_verified}</time> <span class="days">({e.days_since_verified} days)</span></span>
+  )}
+  {sf != null && sf.badged && (
+    <span class="source" data-test="badge-source">
+      Source data not refreshed in over {t.source_refresh_days} days:
+      {stale.map((s, i) => (
+        <span>{i > 0 && '; '}<code>{s.source}</code> {s.last_successful_fetch != null
+          ? <span>last fetched <time datetime={s.last_successful_fetch}>{s.last_successful_fetch.slice(0, 10)}</time> <span class="days">({s.days_since_refresh} days)</span></span>
+          : <span>never fetched</span>}</span>
+      ))}.
+    </span>
+  )}
+  {sf != null && sf.slo_badges.includes('stale') && (
+    <span class="source" data-test="badge-slo-stale">Its source's adapter is broken past the published service level: badged stale.</span>
+  )}
+  {sf != null && sf.slo_badges.includes('source-retired') && (
+    <span class="source" data-test="badge-slo-retired">Source retired: these values are its last known.</span>
+  )}
+</span>
+
+<style>
+  .freshness {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-2);
+    align-items: baseline;
+    font-size: var(--fs-xs);
+  }
+  .plain {
+    color: var(--c-freshness-neutral);
+  }
+  .badge {
+    padding: 0 var(--sp-1);
+    border: 1px solid currentColor;
+    border-radius: 2px;
+  }
+  [data-state='amber'] .badge {
+    color: var(--c-freshness-amber);
+    background: var(--c-freshness-amber-bg);
+  }
+  [data-state='red'] .badge {
+    color: var(--c-freshness-red);
+    background: var(--c-freshness-red-bg);
+    border-width: 2px;
+    font-weight: 600;
+  }
+  .days {
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .source {
+    color: var(--c-freshness-neutral);
+  }
+</style>
