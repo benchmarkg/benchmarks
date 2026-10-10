@@ -94,3 +94,32 @@ facets, so the copilot arm measures a weak copilot.
   keeps script and style text, so a windowed extract around a quote can be all CSS. I stripped `<script>`
   and `<style>` before normalising and said so in the Source's notes. The project's normaliser has no such
   mode, so this Source's `content_sha256` is not reproducible by `normalise(raw)`.
+
+## 4. oc20 (chemistry-materials; copilot off; 10.8 min)
+
+- **The leaderboard moved, and the project's own site still points to the old one.** The EvalAI challenge
+  ended on 2026-01-31, with every phase inactive. FAIR Chemistry's Hugging Face board now scores OC20.
+  opencatalystproject.org's leaderboard page still links "the OC20 evaluation server". Only the API record
+  and a Gradio app's text module showed this, because both boards render by script. This is the second entry
+  out of four whose submission channel moved hosts (COCO: CodaLab to LISN).
+- **Family or member.** Stage 3 classified "Open Catalyst (OC20/OC22)" as one corpus item. OC20 and OC22 have
+  separate tasks, splits and boards, so the entry is OC20 alone, with a different id from the Stage 3 record
+  (`open-catalyst-oc20-oc22`). Nothing links the two. The project-level grouping (Open Catalyst: OC20, OC22,
+  OpenDAC) has no home; `lineage` may hold it, and P1-S3-T04 should say whether it should.
+- **No field for the paper's journal DOI.** `external_ids` is a closed set, and `paper` holds an arXiv id only.
+  OC20's paper is published in ACS Catalysis, and the DOI went into `released_note`.
+- **Challenge-year test sets.** EvalAI held dated test-challenge splits (2021, 2022, and a 2023
+  adsorption-energy set) beside the fixed test splits. Choosing between `versioned-releases` and `static`
+  depends on whether those count as the benchmark's content. Recorded as a reviewer check.
+- **Independence could not be read.** The maintainers build models for these tasks (UMA has an "oc20" head).
+  Whether those models are ranked on the board decides `maintainer-competes-on-own-benchmark`, and the board
+  renders by script. Left empty with a note. "Not assessed" and "none" look the same in `[]`. That is the
+  third entry where `independence_flags: []` carries a note to say which one it means.
+- **Two personal identifiers next to cited facts again.** The organiser's account name sits in EvalAI's
+  record beside the dates, and a maintainer's e-mail sits in the board's submission notes. Narrow windows
+  were needed for both.
+- **Archiving the home page took longer than writing the entry.** Wayback already held a capture from
+  2026-10-02. CDX answers intermittently (200, a 503 "Temporarily Offline" page, 200, a 60 s timeout, on
+  four lookups of the URL), so the archiver missed it, and SPN2 refused the new capture as a duplicate four
+  times. The timer was stopped before the tooling work. The archiver now asks CDX once more on a 5xx (a
+  separate commit). The capture was recorded with the archiver's own writer, from a CDX answer read by hand.
