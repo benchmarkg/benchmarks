@@ -118,15 +118,20 @@ def lineage_ids(raw: dict) -> set[str]:
 # ---- the signals --------------------------------------------------------------------------------
 
 def normalise_name(s: str) -> str:
-    """Casefolded, accents and punctuation removed, whitespace collapsed: 'SWE-Bench  Pro' -> 'swe bench pro'."""
+    """Casefolded, accents and punctuation removed, whitespace collapsed: 'SWE-Bench  Pro' -> 'swe bench pro'.
+    Letters of every script are kept: dropping non-Latin ones made 'τ-bench' the bare token 'bench', which the
+    name signal then matched against 'SWE-bench' (P1-S3-T02's τ-bench entry, 2026-10-10)."""
     s = unicodedata.normalize('NFKD', s)
     s = ''.join(c for c in s if not unicodedata.combining(c)).casefold()
-    return ' '.join(re.sub(r'[^0-9a-z]+', ' ', s).split())
+    return ' '.join(re.sub(r'[\W_]+', ' ', s).split())
+
+
+LETTER, DIGIT = r'[^\W\d_]', r'\d'
 
 
 def tokens(s: str) -> set[str]:
-    """Name tokens, split where letters meet digits: 'CASP14' -> {'casp', '14'}."""
-    return set(re.sub(r'(?<=[a-z])(?=[0-9])|(?<=[0-9])(?=[a-z])', ' ', normalise_name(s)).split())
+    """Name tokens, split where letters meet digits: 'CASP14' -> {'casp', '14'}, 'τ2' -> {'τ', '2'}."""
+    return set(re.sub(r'(?<=%s)(?=%s)|(?<=%s)(?=%s)' % (LETTER, DIGIT, DIGIT, LETTER), ' ', normalise_name(s)).split())
 
 
 VERSION = re.compile(r'^(?:v?\d+|\d+(?:st|nd|rd|th))$')
