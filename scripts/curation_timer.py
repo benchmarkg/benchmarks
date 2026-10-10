@@ -12,6 +12,8 @@ above 60 minutes. This script is the stopwatch and the arithmetic; it does not e
     python scripts/curation_timer.py cancel               # drops the open timer, records nothing
     python scripts/curation_timer.py status
     python scripts/curation_timer.py --report [--json]    # median, quartiles, copilot split
+    python scripts/curation_timer.py --report --assert-n 20                  # exit 1 below 20 timed entries
+    python scripts/curation_timer.py --report --checkpoint metrics/checkpoint-20.json   # P1-S3-T03's file
     python scripts/curation_timer.py --self-test
 
 The timed window. `start` goes before the first source is opened and `stop` after the entry's
@@ -38,12 +40,33 @@ median per arm and the ratio of the on-median to the off-median; below 1.0 the c
 faster. The split is printed with the curators each arm contains, because the checkpoint's
 comparison is only valid for the same curator.
 
-Exit codes: 0 ok; 1 a ledger line is malformed, or a command is used out of order (stop with no
-open timer, start with one open); 2 the ledger is empty, so there is no median to report.
+The speedup and its spread (P1-S3-T03: "with its spread, not a point claim"). The speedup is the
+off-median over the on-median, so 2.0 is the roadmap's "roughly halves the work" and below 1.0 the
+copilot is slower. Three spreads are reported beside it, all deterministic:
+
+  - pairs. The checkpoint interleaves the arms, so the ledger's records, in start order, pair up.
+    Pairing (1,2), (3,4), ... gives one per-pair speedup per pair; when the alternation always starts
+    with the same arm, every pair puts that arm first, and a learning curve then favours the other.
+    Pairing (2,3), (4,5), ... puts the other arm first. Both pairings are reported (median, quartiles,
+    min, max), and their difference is the order bias the interleaving was meant to cancel.
+  - bootstrap. The ratio of arm medians over 10,000 resamples of each arm with replacement, seed fixed,
+    as the 5th and 95th percentiles: a 90% interval.
+  - position trend. The least-squares slope of minutes on position in the ledger, in minutes per entry:
+    the learning curve itself, which neither arm's median shows.
+
+--checkpoint OUT writes those numbers as JSON for the ADR and the re-cut (P1-S3-T06, T07), with the
+ledger's sha256 so a later reader can tell which ledger they came from. median_minutes_per_entry and
+copilot_speedup are rounded to two decimals, so a document can quote them exactly.
+
+Exit codes: 0 ok; 1 a ledger line is malformed, a command is used out of order (stop with no open
+timer, start with one open), or --assert-n finds fewer timed entries; 2 the ledger is empty, so
+there is no median to report.
 """
 import argparse
+import hashlib
 import json
 import os
+import random
 import statistics
 import sys
 import tempfile
@@ -54,6 +77,8 @@ LEDGER = os.path.join(ROOT, 'metrics', 'curation-rate.jsonl')
 STATE = os.path.join(ROOT, 'metrics', '.curation-timer.json')
 TIMESTAMP = '%Y-%m-%dT%H:%M:%SZ'
 RULE_A_MINUTES = 60  # 14-roadmap.md Stopping rules (a)
+BOOTSTRAP_RESAMPLES = 10000
+BOOTSTRAP_SEED = 20261010  # fixed, so the interval is the same on every run
 
 
 class LedgerError(Exception):
@@ -174,6 +199,95 @@ def report(records):
     }
 
 
+def summary(xs):
+    """n, median, quartiles, min and max of a list, or None for an empty one."""
+    if not xs:
+        return None
+    q1, med, q3 = quartiles(xs)
+    return {'n': len(xs), 'median': med, 'q1': q1, 'q3': q3, 'min': min(xs), 'max': max(xs)}
+
+
+def rounded(d, places=3):
+    """A summary with its floats rounded for reading; None stays None."""
+    return {k: round(v, places) if isinstance(v, float) else v for k, v in d.items()} if d else d
+
+
+def pair_speedups(records, offset):
+    """off/on minutes for each adjacent pair of opposite arms, pairing from `offset` (0 or 1), in start order."""
+    rs = sorted(records, key=lambda r: r['start'])
+    out = []
+    for k in range(offset, len(rs) - 1, 2):
+        a, b = rs[k], rs[k + 1]
+        if a['copilot'] == b['copilot']:
+            continue
+        on, off = (a, b) if a['copilot'] else (b, a)
+        out.append(off['minutes'] / on['minutes'])
+    return out
+
+
+def bootstrap_speedup(records, resamples=BOOTSTRAP_RESAMPLES, seed=BOOTSTRAP_SEED):
+    """(5th, 95th) percentile of off-median / on-median over resamples of each arm, or None."""
+    on = [r['minutes'] for r in records if r['copilot']]
+    off = [r['minutes'] for r in records if not r['copilot']]
+    if not on or not off:
+        return None
+    rng = random.Random(seed)
+    xs = sorted(statistics.median(rng.choices(off, k=len(off))) / statistics.median(rng.choices(on, k=len(on)))
+                for _ in range(resamples))
+    return xs[int(0.05 * resamples)], xs[int(0.95 * resamples) - 1]
+
+
+def position_slope(records):
+    """Least-squares slope of minutes on position (1..n) in start order: minutes per entry."""
+    ys = [r['minutes'] for r in sorted(records, key=lambda r: r['start'])]
+    n = len(ys)
+    if n < 2:
+        return None
+    xs = range(1, n + 1)
+    mx, my = (n + 1) / 2, sum(ys) / n
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+
+
+def ledger_name(ledger):
+    """The ledger's path relative to the repository, or as given when it lies outside it (another drive)."""
+    try:
+        rel = os.path.relpath(ledger, ROOT)
+    except ValueError:
+        return ledger.replace(os.sep, '/')
+    return ledger.replace(os.sep, '/') if rel.startswith('..') else rel.replace(os.sep, '/')
+
+
+def checkpoint(records, ledger):
+    """P1-S3-T03's machine-readable numbers: the median, the speedup, and the speedup's spread."""
+    rep = report(records)
+    on, off = rep['copilot']['on']['median'], rep['copilot']['off']['median']
+    with open(ledger, 'rb') as f:
+        sha = hashlib.sha256(f.read()).hexdigest()
+    boot = bootstrap_speedup(records)
+    slope = position_slope(records)
+    return {
+        'n': rep['n'],
+        'curators': sorted({r['curator'] for r in records}),
+        'median_minutes_per_entry': round(rep['median'], 2),
+        'quartiles_minutes': [round(rep['q1'], 2), round(rep['q3'], 2)],
+        'copilot_speedup': round(off / on, 2) if on and off else None,
+        'copilot_speedup_definition': ('median minutes without the copilot / median minutes with it; 2.0 halves '
+                                       'the work, below 1.0 the copilot is slower'),
+        'arms': {name: {'n': a['n'], 'median_minutes': round(a['median'], 2) if a['median'] is not None else None}
+                 for name, a in rep['copilot'].items()},
+        'copilot_speedup_spread': {
+            'pairs_from_first': rounded(summary(pair_speedups(records, 0))),
+            'pairs_from_second': rounded(summary(pair_speedups(records, 1))),
+            'bootstrap_90': [round(x, 3) for x in boot] if boot else None,
+            'bootstrap': {'resamples': BOOTSTRAP_RESAMPLES, 'seed': BOOTSTRAP_SEED},
+        },
+        'position_trend_minutes_per_entry': round(slope, 3) if slope is not None else None,
+        'rule_a_fires': rep['rule_a_fires'],
+        'ledger': ledger_name(ledger),
+        'ledger_sha256': sha,
+    }
+
+
 def render(rep):
     lines = ['entries timed   %d' % rep['n'],
              'median          %.2f min' % rep['median'],
@@ -225,6 +339,8 @@ def main(argv=None, ledger=LEDGER, state=STATE, out=None):
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0], parents=[common])
     p.add_argument('--report', action='store_true', help='print median, quartiles and the copilot split')
     p.add_argument('--json', action='store_true', help='with --report, print JSON')
+    p.add_argument('--assert-n', type=int, help='with --report, exit 1 below this many timed entries')
+    p.add_argument('--checkpoint', metavar='OUT', help='with --report, write the checkpoint numbers as JSON to OUT')
     p.add_argument('--self-test', action='store_true')
     sub = p.add_subparsers(dest='cmd')
     s = sub.add_parser('start')
@@ -241,11 +357,20 @@ def main(argv=None, ledger=LEDGER, state=STATE, out=None):
         if a.self_test:
             return self_test()
         if a.report:
-            rep = report(load(a.ledger))
+            records = load(a.ledger)
+            rep = report(records)
             if rep is None:
                 print('no timed entries in %s' % a.ledger, file=out)
                 return 2
             print(json.dumps(rep, indent=2) if a.json else render(rep), file=out)
+            if a.checkpoint:
+                with open(a.checkpoint, 'w', encoding='utf-8', newline='\n') as f:
+                    json.dump(checkpoint(records, a.ledger), f, indent=2)
+                    f.write('\n')
+                print('wrote %s' % a.checkpoint, file=out)
+            if a.assert_n is not None and rep['n'] < a.assert_n:
+                print('error: %d timed entries, asserted at least %d' % (rep['n'], a.assert_n), file=sys.stderr)
+                return 1
             return 0
         if a.cmd == 'start':
             rec = start(a.entry_id, a.curator, a.copilot == 'on', state=state)
