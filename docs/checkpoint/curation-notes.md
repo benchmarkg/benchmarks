@@ -166,3 +166,25 @@ facets, so the copilot arm measures a weak copilot.
 - **The README carried the licences per component** (code MIT, data CC-BY-4.0) in one table. `code_licence`
   and `dataset_licence` took them directly, with quotes. This is the first entry where both licence fields
   are filled from one quotable source.
+
+## 7. the-well (physics; copilot on; 5.4 min)
+
+- **The vocabulary and the schema disagree on an unknown lifecycle.** dormant's exclusion test says "Where
+  the sources show only that inactivity and are silent on current use, leave the field null and log it."
+  The schema refuses null, and `lifecycle` defaults to `active`. `unknown` exists in lifecycle.yaml but
+  only `activity` accepts it. So the entry says `active`, with a basis that says it was not observed. This
+  is a schema defect for P1-S3-T04, and the most important one so far: a curator who omits the field gets
+  `active` silently.
+- **"Is anyone still using it?" is a literature search.** For a benchmark with no board, current use is
+  shown only by others' papers. One arXiv API query did not find one. The project has no tool for "papers
+  that report results on X". Ingestion (P5) may supply it later through claims, and until then lifecycle
+  is guessed for every board-less benchmark.
+- **A leaf I nearly missed again.** I first wrote `physics/fluid-dynamics` and then found
+  `physics/simulation-surrogates`, which is exactly this benchmark. Picking a domain leaf means scanning
+  228 ids, and the right one is easy to miss when the family has a natural "topic" leaf beside a "method"
+  leaf. COCO's captioning was the same mistake.
+- **Contact lines in a new form.** The README's contact line is `{rohana,mmccabe}@...`, which the extract
+  builder's e-mail pattern does not match. A forbid-list on `@` caught it. The project's own personal-data
+  check should be tested on brace-grouped addresses.
+- **The copilot gave four fields** (title, arXiv id, date, repository), all correct and all the cheapest
+  ones.
