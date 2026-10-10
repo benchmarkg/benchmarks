@@ -427,3 +427,17 @@ The alternation continues: odd entries with the copilot, even without.
 - **A rule I did not know about.** `harness_availability: none` must come with the `no-reference-implementation`
   blocker, and the validator offered the fix. This was the first cross-field rule met through an error rather
   than read in advance.
+
+## 18. legalbench (society-econ-law; copilot off; 3.7 min)
+
+- **A minority of hand-graded tasks sets the tier.** Rule-application answers were graded by a law-trained reader.
+  The tier rule ("the most restrictive requirement decides, even when that part is a minority of tasks") makes
+  LegalBench `requires-human-raters`, while both third-party boards (Vals AI, HELM Lite) run only the
+  automatically scored tasks. The tier describes the benchmark as designed, and the number everyone quotes
+  comes from a subset that is fully automatable.
+- **Licences per task.** LegalBench is "a mix of created and transformed datasets", each under its creator's
+  licence. `dataset_licence` is one value, so it stays null, with the per-task rule in `upstream_licences`.
+- **Stage 3 combined the benchmark with a third party's board** ("legalbench-vals-legal-bench"), the fourth
+  combined corpus item met. Here the third party is evidence of use, not part of the benchmark.
+- **Vals AI's page as liveness again** (after MedQA). A third-party board's "Updated" date has been the most
+  direct current-use evidence for two entries. Liveness checks could read such boards.
