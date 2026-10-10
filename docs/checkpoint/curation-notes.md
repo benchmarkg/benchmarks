@@ -412,3 +412,18 @@ The alternation continues: odd entries with the copilot, even without.
   flagged.
 - **Low contamination for the right reason.** Scored episodes are generated from seeds at evaluation and do not
   exist beforehand. Of sixteen entries, this is the first `low` that the structure settles outright.
+
+## 17. folio (reasoning-general; copilot on; 6.0 min)
+
+- **A promised leaderboard that never came.** Since 2022 the README has said "A leaderboard will be releeased soon
+  to obtain your results on the unreleased test set." The test split was never released and no server exists, so
+  the designed headline cannot be produced, and every published number is on the public validation split. The
+  schema can say `private-test-set` and `not-independently-reproducible`. It cannot say "the field reports a
+  different split from the one the benchmark designates". `comparability.subset_used` carries it per claim, and
+  the entry needs it as a fact.
+- **Two licences for one dataset.** GitHub says CC-BY-SA-4.0 (v0.0), and Hugging Face says MIT (v2). Neither
+  licence text was read. `dataset_licence` is one value; the entry records the GitHub one and notes the
+  conflict.
+- **A rule I did not know about.** `harness_availability: none` must come with the `no-reference-implementation`
+  blocker, and the validator offered the fix. This was the first cross-field rule met through an error rather
+  than read in advance.
