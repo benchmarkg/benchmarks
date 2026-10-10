@@ -304,3 +304,16 @@ def test_a_correction_on_a_benchmark_is_filed_under_its_family(repo):
     commit(repo, 'fix: licence', '2026-03-02T10:00:00Z')
     [e] = events(repo, 'correction')
     assert (e['families'], e['organisations']) == (['code'], ['org-demo-lab'])
+
+
+def test_stdout_is_utf8_whatever_the_console_code_page(repo):
+    # The site reads feed.py's stdout as UTF-8. Written as str, a Windows console's cp1252 could not encode an
+    # event's subject -- the commit message 'checkpoint entry 13, τ-bench' -- and the site build failed
+    # (P1-S3-T02, 2026-10-10).
+    write(repo, BENCH, BENCH_V1)
+    commit(repo, 'add τ-bench', '2026-03-01T10:00:00Z')
+    import sys
+    r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'build', 'feed.py'), '--repo', str(repo)],
+                       capture_output=True, env=dict(os.environ, PYTHONIOENCODING='cp1252'))
+    assert r.returncode == 0, r.stderr.decode('utf-8', 'replace')
+    assert 'τ-bench' in r.stdout.decode('utf-8')
