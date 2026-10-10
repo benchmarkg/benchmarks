@@ -11,10 +11,12 @@
     bench ingest mteb-results --dry-run --fixture tests/ingest/fixtures/harness
     bench ingest lmarena --dry-run                            # live: the Hub dataset's latest parquets
     bench ingest helm --dry-run                               # live: the bucket's listings, then changed run_specs.json
+    bench ingest openrouter --dry-run                         # live: the model list, resolved exactly
+    bench ingest litellm --dry-run                            # live: the price file, held under the licence veto
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
 --limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
-openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since; swe-bench, P5-S6-T03; lm-eval-harness and mteb-results, the shallow clones, P5-S5-T02; lmarena, P5-S6-T02; helm, P5-S6-T05), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since; swe-bench, P5-S6-T03; lm-eval-harness and mteb-results, the shallow clones, P5-S5-T02; lmarena, P5-S6-T02; helm, P5-S6-T05; openrouter and litellm, P5-S6-T07), and prints 07 S6.2's change-class summary. The replay, recompute, state and
 unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
 they drive.
 
@@ -39,7 +41,7 @@ import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github', 'arxiv-oai', 'swe-bench', 'lm-eval-harness', 'mteb-results',
-            'lmarena', 'helm')
+            'lmarena', 'helm', 'openrouter', 'litellm')
 EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
@@ -261,6 +263,30 @@ def _helm(no_network: bool, fixture: Optional[str]):
     raise typer.Exit(EXIT[report['status']])
 
 
+def _enrichment(name: str, no_network: bool, fixture: Optional[str]):
+    from ingest.adapters import litellm, openrouter
+    mod, cls = (openrouter, openrouter.OpenRouter) if name == 'openrouter' else (litellm, litellm.LiteLLM)
+    if fixture:
+        from ingest.http.fixture import FixtureTransport
+        transport, where = FixtureTransport(fixture), 'fixture %s' % fixture
+    elif no_network:
+        typer.echo('ingest: %s has no local copy to read; --no-network needs --fixture PATH' % name, err=True)
+        raise typer.Exit(2)
+    else:
+        transport, where = openrouter.NetworkTransport(), mod.URL
+    report = mod.run(cls(transport), mod.new_state())
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    typer.echo('  matched       %d exactly' % report['matched'])
+    if name == 'litellm' and report['status'] == 'ok':
+        h = report['held']
+        typer.echo('  held          %d observations, %d human tasks: %s' % (h['observations'], h['unresolved'], h['reason']))
+    for a in report.get('anomalies', []):                                             # get-default: litellm has none
+        typer.echo('  ANOMALY: %s (needs-scrutiny; nothing is gone)' % a)
+    raise typer.Exit(EXIT[report['status']])
+
+
 def ingest(
     adapter: Annotated[str, typer.Argument(help='The adapter to run: %s.' % ', '.join(ADAPTERS))],
     dry_run: Annotated[bool, typer.Option('--dry-run', help='Fetch, normalise and report; write nothing.')] = False,
@@ -296,6 +322,8 @@ def ingest(
         _lmarena(no_network, fixture)
     if adapter == 'helm' and not since:
         _helm(no_network, fixture)
+    if adapter in ('openrouter', 'litellm') and not since:
+        _enrichment(adapter, no_network, fixture)
     if since:
         typer.echo('ingest: --since belongs to arxiv-oai', err=True)
         raise typer.Exit(2)

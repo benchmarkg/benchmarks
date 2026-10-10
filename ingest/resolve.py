@@ -171,6 +171,20 @@ class Index:
 
     # ---- the procedure --------------------------------------------------------------------------------
 
+    def exact(self, s: str) -> Resolution | None:
+        """Steps 1 and 2 only: an external id or an alias record that is exactly `s`, as a dictionary lookup --
+        no normalising, no structured parse. The system-enrichment feeds resolve this way (P5-S6-T07): a model
+        list names thousands of slugs, and a near miss there is a different model, not a spelling."""
+        hit = self._one(self._external.get(s, set()))           # get-default: no identifier, no hit
+        if hit:
+            return Resolution(s, '%s:%s' % (self.kind, hit[0]), hit[1], None, 'high', 1, {}, s)
+        for a in self.alias_records:
+            if a.alias == s:
+                ident = a.entity[1]
+                return Resolution(s, '%s:%s' % (self.kind, ident), a.version or self._version_in(ident, s), a.subset,
+                                  a.confidence, 2, dict(a.extracts), s)
+        return None
+
     def subset_of(self, s: str) -> str | None:
         """The subset an alias for exactly `s` names (07 S5.4: `GPQA diamond` is gpqa#diamond, not a new
         benchmark), or None."""
