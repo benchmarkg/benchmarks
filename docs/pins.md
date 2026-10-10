@@ -37,6 +37,7 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | numpy | 08 §5.3 ("pin exactly", no version given) | 2.5.3 | 2.5.3 (`requires_python >=3.12`) | 2026-09-06 | pypi.org/pypi/numpy/json | 2026-09-23 | ok (first pin); see note 4 |
 | ruamel.yaml | 04 §12 (named, not versioned) | 0.19.1 | 0.19.1 | 2026-01-02 | pypi.org/pypi/ruamel.yaml/json | 2026-09-23 | ok (first pin) |
 | pytest (dev group) | every `uv run pytest` verify, first P4-S4-T05 | 9.1.1 | 9.1.1 (`requires_python >=3.10`) | 2026-06-19 | pypi.org/pypi/pytest/json | 2026-09-24 | ok (first pin) |
+| anthropic (`triage` extra) | 06 §5.2, 11 §5 (the SDK; named, not versioned) | 1.11.0 | **1.13.0** | 2026-10-09 | pypi.org/pypi/anthropic/json | 2026-10-10 | **moved** (first pin): 1.11.0, published 2026-09-30, over 1.13.0 and 1.12.x, each under three days old when pinned |
 | uv | 05 §3 (named, not versioned) | 0.9.17 (installed here) | **0.12.18** | -- | pypi.org/pypi/uv/json | 2026-09-23 | **moved**; see note 1 |
 | typer | 05 §3 (named, not versioned) | 0.27.2 | 0.27.2 | 2026-08-28 | pypi.org/pypi/typer/json | 2026-09-25 | ok (first pin, P0-S5-T01) |
 | hatchling (build backend) | P0-S5-T01, for the `bench` entry point | 1.32.4 | 1.32.4 | -- | pypi.org/pypi/hatchling/json | 2026-09-25 | ok (first pin) |
