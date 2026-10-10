@@ -92,6 +92,13 @@ def test_editions_share_a_stem_and_look_alikes_do_not():
     assert not D.same_stem(r('MMLU-Pro'), r('MMMU-Pro')) and not D.same_stem(r('DCASE 2026'), r('LifeCLEF 2026'))
 
 
+def test_letters_of_every_script_are_name_tokens():
+    # 'τ-bench' once tokenised to the bare {'bench'} (only a-z was kept), and the name signal then proposed it as
+    # SWE-bench's duplicate at Jaccard 1/2. Greek letters are tokens, and they split from digits like Latin ones.
+    assert D.tokens('τ-bench') == {'τ', 'bench'} and D.tokens('τ²-bench') == {'τ', '2', 'bench'}
+    assert D.name_jaccard(D.Record('t', 'τ-bench'), D.Record('s', 'SWE-bench')) == 1 / 3
+
+
 def test_candidates_are_proposals_never_merges():
     records = D.corpus_records([])
     # The curated entries are different benchmarks; swe-bench and swe-bench-verified look alike (url, name) but
