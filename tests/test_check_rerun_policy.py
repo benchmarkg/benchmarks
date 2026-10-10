@@ -49,9 +49,30 @@ TABLE = ('# Maintainer correspondence\n\n| benchmark | answer | date | responder
 
 
 def test_a_clean_gate_passing_set_exits_zero(gate, capsys):
-    assert C.main(gate(['open-bench', 'quiet-bench', 'bare-bench'])) == 0
+    assert C.main(gate(['open-bench'])) == 0
     out = capsys.readouterr().out
-    assert 'no breach' in out and 'unstated                   2' in out
+    assert 'no breach' in out and 'unrestricted               1' in out and 'mode block' in out
+
+
+def test_under_adr_0023s_block_mode_unstated_blocks_the_run(gate, capsys):
+    assert C.main(gate(['open-bench', 'quiet-bench', 'bare-bench'])) == 1
+    out = capsys.readouterr().out
+    assert 'BREACH  bare-bench is unstated' in out and 'BREACH  quiet-bench is unstated' in out
+
+
+def test_under_hidden_only_unstated_blocks_only_a_withheld_component(gate, capsys, monkeypatch):
+    held = dict(CORPUS, hidden_bench={'id': 'hidden-bench', 'execution': {}, 'data': {'access': 'private-test-server'}},
+                labels_bench={'id': 'labels-bench', 'execution': {}, 'ground_truth_source': 'held-out-labels'})
+    args = gate(['quiet-bench', 'bare-bench'])
+    assert C.main(args + ['--mode', 'hidden-only']) == 0
+    monkeypatch.setattr(runnable_gate, 'load', lambda root: {**held, 'hidden-bench': held['hidden_bench'],
+                                                             'labels-bench': held['labels_bench']})
+    monkeypatch.setattr(runnable_gate, 'run', lambda records, *a, **k: runnable_gate.Gate(
+        len(records), [], ['quiet-bench', 'hidden-bench', 'labels-bench']))
+    assert C.main(['--gate-passing', '--mode', 'hidden-only']) == 1
+    out = capsys.readouterr().out
+    assert 'hidden-bench is unstated and shows data.access private-test-server' in out
+    assert 'labels-bench is unstated and shows ground_truth_source held-out-labels' in out and 'quiet-bench is' not in out
 
 
 def test_no_third_party_endpoints_in_the_gate_passing_set_exits_non_zero(gate, capsys):
@@ -88,6 +109,9 @@ def test_every_unstated_benchmark_is_listed_for_the_adr():
     assert a.unstated == ['bare-bench', 'quiet-bench']
     text = C.block(a, 0, len(CORPUS), None)
     assert '- `bare-bench`' in text and '- `quiet-bench`' in text and text.startswith(C.BEGIN)
+    assert 'Mode: **block**' in text
+    with pytest.raises(ValueError, match='mode'):
+        C.audit(CORPUS, [], {}, 'x', mode='allow')
 
 
 def test_the_committed_audit_reproduces():
