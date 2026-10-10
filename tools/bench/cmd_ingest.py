@@ -7,10 +7,12 @@
     bench ingest github --dry-run                             # live; GH_API_TOKEN from the environment
     bench ingest arxiv-oai --dry-run --since 2026-10-06       # live: set=cs from that date to today
     bench ingest swe-bench --dry-run                          # live: the leaderboard page, one conditional GET
+    bench ingest lm-eval-harness --dry-run                    # live: a depth-1 fetch of the pinned commit
+    bench ingest mteb-results --dry-run --fixture tests/ingest/fixtures/harness
 
 07 S1.6 is the sole declaration of the surface. This module wires the flags phase 0 needs -- --dry-run,
 --limit, --no-network, --allow-bulk and --fixture -- for the adapters there are (epoch, P3-S1-T06;
-openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since; swe-bench, P5-S6-T03), and prints 07 S6.2's change-class summary. The replay, recompute, state and
+openalex, P4-S2-T06; semantic-scholar, the citation cross-check, P4-S2-T10; github, P5-S5-T01; arxiv-oai, P5-S5-T04, with --since; swe-bench, P5-S6-T03; lm-eval-harness and mteb-results, the shallow clones, P5-S5-T02), and prints 07 S6.2's change-class summary. The replay, recompute, state and
 unresolved subcommands, --since, --max-runtime and --max-drafts arrive with the tasks that build what
 they drive.
 
@@ -34,7 +36,7 @@ from typing import Annotated, Optional
 import typer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github', 'arxiv-oai', 'swe-bench')
+ADAPTERS = ('epoch', 'openalex', 'semantic-scholar', 'github', 'arxiv-oai', 'swe-bench', 'lm-eval-harness', 'mteb-results')
 EXIT = {'ok': 0, 'no-change': 0, 'hard-fail': 1, 'capped': 3, 'soft-fail': 4}
 
 
@@ -188,6 +190,30 @@ def _swebench(no_network: bool, fixture: Optional[str]):
     raise typer.Exit(EXIT[report['status']])
 
 
+def _clone(name: str, limit: Optional[int], no_network: bool, fixture: Optional[str]):
+    import tempfile
+
+    from ingest.adapters import github_clones as G
+    if not fixture and no_network:
+        typer.echo('ingest: %s has no local copy to read; --no-network needs --fixture PATH' % name, err=True)
+        raise typer.Exit(2)
+    with tempfile.TemporaryDirectory() as work:
+        if fixture:
+            source = G.fixture_source(os.path.join(fixture, G.FIXTURE_DIRS[name]), work)
+            where = 'fixture %s' % os.path.join(fixture, G.FIXTURE_DIRS[name])
+        else:
+            source, where = None, '%s at %s (depth 1)' % (G.PINS[name].url, G.PINS[name].pin[:12])
+        report = G.run(G.ADAPTERS[name](source), G.new_state(), limit=limit)
+    typer.echo('reading %s' % where)
+    for line in summary(report):
+        typer.echo(line)
+    if report['counts']:
+        typer.echo('  tree          %s' % ', '.join('%s=%d' % kv for kv in report['counts'].items()))
+    if report['snapshot']:
+        typer.echo('  commit        %s' % report['snapshot']['commit'])
+    raise typer.Exit(EXIT[report['status']])
+
+
 def ingest(
     adapter: Annotated[str, typer.Argument(help='The adapter to run: %s.' % ', '.join(ADAPTERS))],
     dry_run: Annotated[bool, typer.Option('--dry-run', help='Fetch, normalise and report; write nothing.')] = False,
@@ -217,6 +243,8 @@ def ingest(
         _arxiv(limit, no_network, fixture, since)
     if adapter == 'swe-bench' and not since:
         _swebench(no_network, fixture)
+    if adapter in ('lm-eval-harness', 'mteb-results') and not since:
+        _clone(adapter, limit, no_network, fixture)
     if since:
         typer.echo('ingest: --since belongs to arxiv-oai', err=True)
         raise typer.Exit(2)

@@ -48,7 +48,7 @@ def test_the_slo_published_is_06_s3_0s_word_for_word():
 def test_every_adapter_the_code_holds_has_a_row_with_every_field():
     doc = H.build(ROOT, AS_OF)
     assert doc['artifact'] == 'ingest-health' and doc['slo'] == H.SLO and doc['as_of'] == '2026-10-09'
-    assert [r['adapter'] for r in doc['sources']] == sorted(c.name for c in H.adapters()) == ['arxiv-oai', 'epoch', 'github', 'hf-hub', 'swe-bench']
+    assert [r['adapter'] for r in doc['sources']] == sorted(c.name for c in H.adapters()) == ['arxiv-oai', 'epoch', 'github', 'hf-hub', 'lm-eval-harness', 'mteb-results', 'swe-bench']
     for r in doc['sources']:
         for key in ('licence', 'licence_class', 'attribution', 'last_successful_fetch', 'last_content_change',
                     'record_count', 'adapter_status', 'badge'):
