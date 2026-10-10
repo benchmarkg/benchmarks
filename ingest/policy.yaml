@@ -43,6 +43,26 @@ hosts:
     burst: 1
     max_requests: 2000
     basis: 06 S9.6, 07 S10 (HuggingFace)
+  us.aws.cdn.hf.co:
+    rate: 1.0             # the Hub's CDN, where a dataset file's resolve URL redirects; the LMArena adapter asks
+    burst: 1              # the gate about it before following the 302 itself
+    max_requests: 100
+    basis: 06 S3.6 (LMArena's parquet via the Hub), 06 S9.6; robots.txt 404 (2026-10-10)
+  storage.googleapis.com:
+    rate: 1.0             # HELM's public bucket (crfm-helm-public): JSON listings, then changed run_specs.json only
+    burst: 1
+    max_requests: 200     # ~26 suites x (releases + objects listing) + the changed downloads
+    basis: 06 S3.5 (HELM), 06 S9.6; robots.txt 404 (2026-10-10)
+  openrouter.ai:
+    rate: 0.5             # one model-list GET a run (06 S3.16); robots.txt allows / but /seo/
+    burst: 1
+    max_requests: 5
+    basis: 06 S3.16 (OpenRouter), 06 S9.6
+  raw.githubusercontent.com:
+    rate: 0.5             # LiteLLM's price file, one conditional GET a run (06 S3.16); robots.txt 404
+    burst: 1
+    max_requests: 5
+    basis: 06 S3.16 (LiteLLM), 06 S9.6
   export.arxiv.org:
     rate: 0.3333          # 1 req / 3 s for the API
     burst: 1
@@ -60,6 +80,11 @@ hosts:
     burst: 1
     max_requests: 2000
     basis: 06 S9.6, 07 S10 (GitHub API)
+  github.com:
+    rate: 0.2             # git smart HTTP only: info/refs and git-upload-pack, two requests a fetch
+    burst: 1
+    max_requests: 12      # three fetches a run (the harness; MTEB's tree, then its LICENSE blob) and robots.txt
+    basis: 06 S3.3 (the shallow clones), 06 S9.6; robots.txt disallows /*.git$, tarballs and archives, not the endpoints
   api.openalex.org:
     rate: 5.0             # singleton lookups only, never a poll (ingest/adapters/openalex.py's MIN_INTERVAL 0.2 s)
     burst: 1

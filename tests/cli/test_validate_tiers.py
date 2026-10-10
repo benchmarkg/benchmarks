@@ -154,10 +154,8 @@ def test_the_committed_corpus_runs_every_tier_and_emits_json():
         assert set(f) == {'tier', 'tier_name', 'rule', 'severity', 'entity', 'path', 'message', 'auto_fix', 'related'}
 
 
-@pytest.mark.xfail(strict=True, reason='P0-S3-T04 is blocked: 23 non-DOI sources have no archive_url and 4 more '
-                   'fail their extract checks. Remove this mark when the corpus is clean -- strict, so a clean '
-                   'corpus fails here until it is.')
 def test_the_committed_corpus_exits_zero():
+    # A strict xfail until 2026-10-10, when P0-S3-T04's last Source records were archived with the IA keys.
     result = runner.invoke(cli.app, ['validate', '--tier', 'all', '--json'])
     assert result.exit_code == 0, [f['entity'] + ': ' + f['rule'] for f in json.loads(result.stdout)['findings']
                                    if f['severity'] == 'blocking']

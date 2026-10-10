@@ -5,7 +5,7 @@ blocking, and `gh workflow run pr-validate.yml` passes on main while failing a b
 deliberately broken enum value". The first half is the structural tests below. The second half runs
 on GitHub; what can be checked here is the same thing in miniature -- each job's own command, read
 out of the workflow, run against a throwaway git repository whose main is clean and whose branch
-breaks an enum -- plus a strict xfail recording that the real main does not pass yet.
+breaks an enum -- plus a test that the real main passes checks 2 to 4.
 """
 import os
 import re
@@ -171,11 +171,8 @@ def test_a_break_already_on_main_is_left_to_mains_full_run(wf, repo):
     assert [f.path for f in _validate_jobs(wf, repo, 'push')['check-2-schema']] == [BENCH]
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "The real main does not pass checks 2 and 4 yet: P0-S3-T04's draft Source records are unarchived "
-    "(no Wayback keys) and fail tier 1 and tier 3's non-doi-archive rule. When they are archived this "
-    "passes, and strict=True turns that into a failure so the xfail is removed."))
 def test_the_repository_main_passes_checks_2_to_4(wf):
+    # A strict xfail until 2026-10-10, when the last of P0-S3-T04's Source records was archived with the IA keys.
     for n in (2, 3, 4):
         key, body = job(wf, n)
         [cmd] = [r for r in runs(body) if 'bench validate' in r]
