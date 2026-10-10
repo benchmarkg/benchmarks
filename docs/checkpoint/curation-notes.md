@@ -311,3 +311,203 @@ The findings that recur, most consequential first:
   named only the key.
 - **The family again.** MMMU-Pro and Video-MMMU sit on MMMU's site and README. Stage 3 classified MMMU-Pro, not
   MMMU. The entry is MMMU alone, so the family has no record yet.
+
+# Entries 11-20 (P1-S3-T02)
+
+Same curator ("agent (P1-S3-T02)" in the timing ledger, the same agent as entries 1-10), and the same protocol.
+The alternation continues: odd entries with the copilot, even without.
+
+## 11. flores (language; copilot on; 8.7 min)
+
+- **A gated dataset card hides the facts it would state.** FLORES+ is distributed through a Hugging Face
+  dataset with automatic gating. Reading the card means accepting its terms with the user's account, and that
+  was not done. The public API record gave the gate, the licence (CC-BY-SA-4.0), the splits and the last
+  change. A JSON record is now the Source for `data.access` and `dataset_licence`.
+- **A family with three editions and a change of hands.** FLORES-101 and FLORES-200 came from Meta AI.
+  FLORES+ is OLDI's, a community initiative that takes new languages. One entry carries all three, and
+  `governance.maintainer` names the current holder only. It is the fourth hand-over in eleven entries.
+- **The hidden test split disappeared.** FLORES-101 kept its test split for an evaluation server. FLORES+
+  publishes dev and devtest only, so devtest became the de facto test. `access` and `ground_truth_source`
+  describe the family. Neither can say "the split results are reported on changed from held-out to public".
+- **Names next to the cited sentence.** OLDI's home page lists its organisers right after the sentence on
+  FLORES+, so the window had to shrink to three characters. That is the extract builder's sixth
+  personal-data case.
+
+## 12. humaneval (code; copilot off; 4.7 min)
+
+- **No capability for writing programs.** The capability vocabulary has reasoning, knowledge, perception and
+  agency terms but nothing for "produce a correct program from a specification". HumanEval's capability is
+  left empty and the gap is logged (`2026-10-10-humaneval-001`). Every function-synthesis benchmark will hit
+  it. The SWE-bench entries used `context-integration`, which fits repository-scale work but not a
+  self-contained function.
+- **"Body" is the reference solution, and it is published.** The paper lists each problem's "function
+  signature, docstring, body, and several unit tests". The released file therefore contains the answers,
+  and contamination is `high` on the paper's own words, the same reading as miniF2F's published proofs.
+- **`base-model` is right for the design and wrong for the use.** The harness's stop sequences show the
+  protocol is raw continuation. Most results since 2023 are from instruction-tuned models through variant
+  prompts. This is the third entry where designed and used subjects differ.
+- **A forbid-list that blocked a metric name.** Forbidding `@` (added for brace-form addresses) caught "pass@k".
+  A text filter for personal data needs real address patterns, not a character.
+
+## 13. tau-bench (agents-tooluse; copilot on; 6.2 min)
+
+- **Three versions in two repositories.** τ-bench's own repository says its tasks are outdated and points to
+  tau2-bench, which now holds τ³-bench. The maintainers publish a grading change with "results produced with
+  tau2-bench < 1.0.1 are not comparable with >= 1.0.1". One family entry with `versioned-releases` fits, and
+  `harness` as a comparability field carries the version. The repository move is only in notes.
+- **The simulated user changes the score and has no field.** Every run pairs the agent with a user played by
+  an LLM (`--user-llm`). The comparability conditions have `judge_model`, but the simulator is not a judge.
+  Stage 3's eight `hosted-judge-dependency` proposals cover the reproducibility side (a hosted model in the
+  loop). The comparability side has no proposal yet.
+- **The subject terms already name this benchmark.** `model-in-benchmark-harness` cites "the default tau-bench
+  agent" as its own example, so standard and custom tracks map to two terms directly. The vocabulary was
+  written against the stress corpus, and entries from that corpus are faster to tag.
+- **`reliability-consistency` has a clear test** (pass^k). It is the first entry where a capability is
+  decided by the metric's definition alone.
+
+## 14. climatebench (earth-climate; copilot off; 5.6 min)
+
+- **The publisher refused the paper.** JAMES (Wiley) answered 403 to a scripted request for the open-access
+  PDF. Crossref's record carries the abstract, the CC-BY licence and the date, so a registry record is the
+  paper's Source. Anything beyond the abstract came from the README and the data record.
+- **A successor announced a week ago.** ClimateBench v2 (arXiv, 2026-10-03, same first author) takes in v1's
+  emulation task as one of its tiers, with a different design. Calling v1 "superseded" a week after v2's
+  preprint is premature, and calling it "active" ignores v2. The vocabulary has no "successor announced"
+  state; `under-revision` is for the content the entry names being reissued, which this is not quite.
+- **The forecasting profile again.** The same waiver pair (lead_time, resolution_window) is needed for the
+  fifth time. The rule should not fire on simulation surrogates.
+- **ORCID and affiliation beside the creator's name.** The Zenodo record puts the creator's name, ORCID and
+  affiliation in one JSON object, so the maintainer quote needed an 8-character window and a forbid on
+  "orcid".
+- **One person's account.** The repository and the data record belong to one researcher, so
+  `maintainer_type: individual`. That is the key-person risk the term exists for, even for a benchmark with
+  an institutional paper.
+
+## 15. circuitnet (engineering-design; copilot on; 6.1 min)
+
+- **A dataset with tasks, not a benchmark with a board.** CircuitNet calls itself a dataset. It earns a
+  benchmark entry because its tasks have fixed metrics and learned entrants. The line between "dataset" and
+  "benchmark" is the admissibility test (A5), and it was easy to apply here.
+- **`scientific-prediction` stretched to engineering.** Its definition names physical, chemical, biological
+  and Earth systems. Predicting a chip layout's congestion or IR drop is predicting a physical system's state,
+  but an engineered one. The capability vocabulary has nothing for "predict a design's downstream property",
+  so the stretch is flagged in the basis rather than logged.
+- **Metric per task, borrowed from prior methods.** CircuitNet scores each task with "the same evaluation
+  metrics as in the original studies". `evaluation_method` takes the union, and the per-task metrics would
+  belong on Metric entities and subsets.
+- **No fixed split in the sources.** The code's configuration chooses the split, and neither the paper nor
+  the README states it. `contamination_risk` stays unknown for want of a scored split.
+
+## 16. nle (games-planning; copilot off; 4.3 min)
+
+- **The second move to a personal account and back to an organisation.** facebookresearch/nle is archived and
+  says "find NLE at its new home" in one person's account, which GitHub now redirects to the NetHack-LE
+  organisation. It is the sixth hand-over in sixteen entries. `governance.maintainer` names the current holder,
+  and the history is a note.
+- **The vocabulary names this benchmark in its examples.** `episodic-return` cites "NetHack in-game score", and
+  `rl-policy`'s test already covers prompted language agents scored in RL environments. As with τ-bench, the
+  stress corpus shaped the terms, and entries from it go faster.
+- **A competition run on the environment.** The 2021 NetHack Challenge used NLE, with its own rules and board. It
+  is an `Event` or its own entry, and the line between the two is not obvious to a curator. It was left out and
+  flagged.
+- **Low contamination for the right reason.** Scored episodes are generated from seeds at evaluation and do not
+  exist beforehand. Of sixteen entries, this is the first `low` that the structure settles outright.
+
+## 17. folio (reasoning-general; copilot on; 6.0 min)
+
+- **A promised leaderboard that never came.** Since 2022 the README has said "A leaderboard will be releeased soon
+  to obtain your results on the unreleased test set." The test split was never released and no server exists, so
+  the designed headline cannot be produced, and every published number is on the public validation split. The
+  schema can say `private-test-set` and `not-independently-reproducible`. It cannot say "the field reports a
+  different split from the one the benchmark designates". `comparability.subset_used` carries it per claim, and
+  the entry needs it as a fact.
+- **Two licences for one dataset.** GitHub says CC-BY-SA-4.0 (v0.0), and Hugging Face says MIT (v2). Neither
+  licence text was read. `dataset_licence` is one value; the entry records the GitHub one and notes the
+  conflict.
+- **A rule I did not know about.** `harness_availability: none` must come with the `no-reference-implementation`
+  blocker, and the validator offered the fix. This was the first cross-field rule met through an error rather
+  than read in advance.
+
+## 18. legalbench (society-econ-law; copilot off; 3.7 min)
+
+- **A minority of hand-graded tasks sets the tier.** Rule-application answers were graded by a law-trained reader.
+  The tier rule ("the most restrictive requirement decides, even when that part is a minority of tasks") makes
+  LegalBench `requires-human-raters`, while both third-party boards (Vals AI, HELM Lite) run only the
+  automatically scored tasks. The tier describes the benchmark as designed, and the number everyone quotes
+  comes from a subset that is fully automatable.
+- **Licences per task.** LegalBench is "a mix of created and transformed datasets", each under its creator's
+  licence. `dataset_licence` is one value, so it stays null, with the per-task rule in `upstream_licences`.
+- **Stage 3 combined the benchmark with a third party's board** ("legalbench-vals-legal-bench"), the fourth
+  combined corpus item met. Here the third party is evidence of use, not part of the benchmark.
+- **Vals AI's page as liveness again** (after MedQA). A third-party board's "Updated" date has been the most
+  direct current-use evidence for two entries. Liveness checks could read such boards.
+
+## 19. calvin (robotics-embodiment; copilot on; 5.1 min)
+
+- **A leaderboard with no stated way onto it.** The site's table lists published methods by split and sensors, and
+  nothing says whether rows come from the maintainers reading papers or from authors asking. `activity: unknown`
+  and `submission_process: []` both say "not stated". This is the fourth benchmark (after HarmBench, FLORES and
+  the empty lists noted before) where an empty or unknown value carries a different meaning from "none".
+- **Angle brackets are tags to the normaliser.** The README's command line `--dataset_path <PATH/TO/DATASET>`
+  loses the placeholder when the text is normalised, so a quote containing it can never match. A curator has to
+  know to avoid such quotes, and the normaliser's HTML stripping is right for HTML but runs on Markdown too.
+- **A personal repository on a university site.** The code is in the first author's account, and the
+  leaderboard is on the department's host. `individual` and `academic-lab` each fit one half.
+- **Near the ceiling on one split.** ABCD to D reaches an average of 4.67 of 5. Saturation is derived and needs
+  claims, so the observation goes in the notes.
+
+## 20. pdebench (physics; copilot off; 6.4 min)
+
+- **The extract builder had an offset bug, found here.** It located quotes in a casefolded copy of the text.
+  casefold() lengthens some characters (the ligature "ﬁ" folds to "fi"), so in a long, ligature-heavy paper the
+  window landed far from the quote, and the builder's own containment check stopped it. Earlier extracts passed
+  that check, so every committed quote is in its extract. Their windows may sit off-centre. The fix maps
+  folded offsets back to the original text. About two minutes of this entry's time is that debugging.
+- **The forecasting-profile waiver for the seventh time** (simulation surrogate, statistical fit).
+- **A README that names its maintainers with their addresses on the next line.** The quote for maintainership
+  had to move to another line, as for SUPERB, MMMU and The Well.
+
+## Entries 11-20 at a glance (written after entry 20)
+
+| # | entry | family | copilot | minutes |
+| --- | --- | --- | --- | --- |
+| 11 | flores | language | on | 8.7 |
+| 12 | humaneval | code | off | 4.7 |
+| 13 | tau-bench | agents-tooluse | on | 6.2 |
+| 14 | climatebench | earth-climate | off | 5.6 |
+| 15 | circuitnet | engineering-design | on | 6.1 |
+| 16 | nle | games-planning | off | 4.3 |
+| 17 | folio | reasoning-general | on | 6.0 |
+| 18 | legalbench | society-econ-law | off | 3.7 |
+| 19 | calvin | robotics-embodiment | on | 5.1 |
+| 20 | pdebench | physics | off | 6.4 |
+
+Over all twenty: median 6.0 minutes; with the copilot 6.1 (n = 10), without 5.3 (n = 10). The copilot arm is
+slower in both halves (7.3 vs 6.1, then 6.1 vs 4.7), and every copilot entry includes a copilot run of 10-30
+seconds and a draft to delete. The extractive drafter saves nothing measurable. The caveats at the top
+still apply: the curator is an agent, and the drafter is not an LLM.
+
+Twenty entries cover eighteen families. Robotics (LIBERO, CALVIN) and physics (The Well, PDEBench) each have
+two, as P1-S3-T02's step 3 asks.
+
+New in 11-20, beyond the list at the top:
+
+- **Gated dataset cards** (FLORES+, FOLIO v2) hide facts behind terms the curator should not accept on the user's
+  behalf. The public API records carried the gate and the licence.
+- **Designated split versus reported split** (FOLIO: the test split was never released, and everyone reports on
+  validation). Combined with MedQA's and LIBERO's designed-versus-used splits, "protocol as used" is now the
+  most frequent gap in the schema.
+- **No capability for program synthesis** (HumanEval, logged).
+- **A successor announced a week before curation** (ClimateBench v2). The vocabulary has no "successor
+  announced" state.
+- **A simulated user's model changes the score** (τ-bench) and has no comparability field.
+- **Hand-graded minority tasks set the tier** (LegalBench), while the boards that run it use only the automatic
+  tasks.
+- **Two licences for one dataset** (FOLIO), and per-task licences (LegalBench), against a one-value
+  `dataset_licence`.
+- **Profiles that do not resolve.** τ-bench (environment-state-check, model-in-benchmark-harness) resolves no
+  comparability profile, although SWE-bench's `agentic` profile is meant for the same kind of run, and HumanEval
+  and FLORES resolve none either. Their conditions come only from `material_extra`. The profile rules miss
+  agentic tool-use and reference-metric benchmarks (found when the corpus tests were updated).
+- **The extract builder's two bugs** (casefold offsets, and markup stripping on Markdown) argue for the project's
+  own extract tool, so curators do not each write one.

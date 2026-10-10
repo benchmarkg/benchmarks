@@ -1,0 +1,249 @@
+# data/benchmarks/agents-tooluse/tau-bench.yaml
+#
+# P1-S3-T02, checkpoint entry 13 of 20 (copilot on: the F6 copilot's extractive drafter gave the title, arXiv id
+# and release date). Filled from the τ-bench paper, arXiv 2406.12045 read as its v1 PDF, and its abstract page;
+# the READMEs of the original repository and of tau2-bench, which now holds τ³-bench; and tau2-bench's
+# leaderboard submission guide. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# The family entry: τ-bench (2024; airline and retail), τ²-bench (2025; telecom, dual control) and τ³-bench
+# (2026; banking_knowledge, voice, 75+ task fixes) are versions of one benchmark in one lineage of repositories.
+# The original repository now says its tasks are outdated and points to τ³-bench.
+
+id: tau-bench
+name: τ-bench
+aliases:
+  - tau-bench
+  - τ²-bench
+  - τ³-bench
+tagline: Agents serve an LLM-simulated customer through domain APIs under written policies, scored
+  on the final database state.
+description: >
+  A simulation framework in which a language agent, given domain tools and a written policy, serves a
+  user simulated by a language model through a conversation. Each task is judged by whether the backend
+  database ends in the annotated goal state. pass^k, the chance that all k independent trials of a task
+  succeed, scores reliability. Domains have grown from airline and retail (τ-bench) to telecom (τ²-bench)
+  and a knowledge-retrieval banking domain with a voice full-duplex mode (τ³-bench). The live leaderboard
+  at taubench.com takes submissions by pull request, with trajectory files for validation.
+self_description:
+  source: src-arxiv-2406-12045-v1
+  quote: We propose τ -bench, a benchmark emulating dynamic conversations between a user (simulated
+    by language models) and a language agent provided with domain-specific API tools and policy
+    guidelines
+external_ids:
+  arxiv: '2406.12045'
+paper:
+  title: 'τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains'
+  arxiv: '2406.12045'
+  version_read: v1
+  source: src-arxiv-2406-12045-v1
+released: 2024-06-17
+released_note: The τ-bench paper's arXiv submission, as the abstract page dates it.
+released_source: src-arxiv-2406-12045
+released_quote: Submitted on 17 Jun 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/tool-api-calling
+domain_basis:
+  reason: A single agent is scored on calling domain APIs correctly against a backend while a
+    simulated user converses with it -- the leaf's own inclusion case.
+  source: src-arxiv-2406-12045-v1
+  quote: compares the database state at the end of a conversation with the annotated goal state
+capability:
+  - tool-use
+  - reliability-consistency
+  - instruction-following
+capability_basis:
+  tool-use:
+    reason: The goal state is reached only through correctly chosen and parameterised API calls.
+    source: src-tau2-bench-readme
+    quote: A set of **tools** that the agent can use
+  reliability-consistency:
+    reason: pass^k runs each task k times and counts it only if every trial succeeds.
+    source: src-arxiv-2406-12045-v1
+    quote: We also propose a new metric (pass^k) to evaluate the reliability of agent behavior over
+      multiple trials
+  instruction-following:
+    reason: Each domain gives the agent a written policy, and the paper claims rule-following as one
+      of the abilities it tests; a policy violation changes the database outcome.
+    source: src-tau2-bench-readme
+    quote: A **policy** that the agent must follow
+
+evaluation_method:
+  - environment-state-check
+evaluation_method_basis:
+  reason: After the conversation, the program compares the backend database with the annotated goal
+    state, so any trajectory that reaches it passes.
+  source: src-arxiv-2406-12045-v1
+  quote: compares the database state at the end of a conversation with the annotated goal state
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: Standard submissions run a general model through the default τ-bench agent, which
+    model-in-benchmark-harness names as its own example; custom submissions replace or extend that
+    scaffold, which is agent-scaffold.
+  source: src-tau2-bench-submission-guide
+  quote: A standard text submission evaluates a general-purpose LLM through the default τ-bench
+    agent scaffold
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers released τ³-bench in 2026, with a July 2026 grading update, and run a live
+    leaderboard; the tau2-bench repository was last pushed on 2026-10-07 (GitHub API).
+  source: src-tau2-bench-readme
+  quote: results produced with tau2-bench < 1.0.1 are not comparable with >= 1.0.1
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard takes submissions at any time by pull request and has never run in rounds.
+  source: src-tau2-bench-submission-guide
+  quote: Submit your agent results to the τ-bench leaderboard at
+    **[taubench.com](https://taubench.com)**.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: gpt-4o (tool-calling agent)
+    source: src-github-tau-bench-readme
+    observed_on: 2026-10-10
+    quote: '[TC (gpt-4o)](https://platform.openai.com/docs/guides/function-calling)'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's annotated goal database state and expected actions, in the
+  repository.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Domains, tasks, the user simulator and the evaluator are open source; a run needs API
+    access for the agent and the simulated user.
+  source: src-tau2-bench-readme
+  quote: tau2 run --domain airline --agent-llm gpt-4.1 --user-llm gpt-4.1
+
+task:
+  exists: true
+  input:
+    - a domain policy, a set of tools, and a conversation with a simulated user who has a hidden
+      goal
+  output: Messages to the user and tool calls against the domain backend, until the conversation
+    ends.
+  scoring: Success when the final database state matches the goal (with expected outputs where
+    required); pass^k over k trials per task, per domain.
+  source: src-arxiv-2406-12045-v1
+  quote: We also propose a new metric (pass^k) to evaluate the reliability of agent behavior over
+    multiple trials
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Tasks, policies, tools and goal states are all in the open-source repository.
+    source: src-tau2-bench-readme
+    quote: A set of **tasks** to evaluate the agent's performance
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Tasks and grading change in labelled releases, and the maintainers say when scores
+      across versions are not comparable.
+    source: src-tau2-bench-readme
+    quote: results produced with tau2-bench < 1.0.1 are not comparable with >= 1.0.1
+  data_provenance:
+    - expert-authored
+    - model-generated
+  data_provenance_note: Schemas, APIs and scenarios were designed and verified by hand; database
+    entries were generated with language-model help.
+  data_provenance_source: src-arxiv-2406-12045-v1
+  data_provenance_quote: manual schema and API design, LM-assisted generation of data entries, and
+    manual scenario generation and verification
+  contamination_risk: medium
+  contamination_risk_note: Every task and its goal state is public. The leaderboard's standard track
+    requires that the system was not trained on τ-bench tasks, which names the route; nothing checks
+    it.
+  contamination_evidence: []
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Sierra (sierra-research)
+  maintainer_basis:
+    reason: The paper's authors are at Sierra, and both repositories sit in its research
+      organisation.
+    source: src-arxiv-2406-12045-v1
+    quote: Pedram Razavi Sierra
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-verified
+  submission_process_note: Submitters run the evaluation, validate with the provided tool (which
+    checks that metrics match the trajectories), and open a pull request with a link to their
+    trajectories for verification; the maintainers can also run the evaluation on request.
+  submission_process_source: src-tau2-bench-submission-guide
+  submission_process_quote: include a link to your trajectory data in the PR description for
+    verification
+  independence_flags: []
+  independence_flags_note: Not assessed. Sierra builds customer-service agents, the use case the
+    benchmark tests; whether it ranks its own systems was not read.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: The user simulator is a hosted language model, so a rerun depends on
+    that model's availability -- the hosted-dependency blocker Stage 3 proposed eight times
+    (hosted-judge-dependency) and the vocabulary does not yet have.
+  reproducibility_tier_basis:
+    reason: A run is automatic end to end; the simulated user is a language model reached by API.
+    source: src-tau2-bench-readme
+    quote: tau2 run --domain airline --agent-llm gpt-4.1 --user-llm gpt-4.1
+  harness_availability: official-harness
+  harness: tau2 (the tau2-bench command line)
+  harness_source: src-tau2-bench-readme
+  harness_quote: tau2 run --domain airline --agent-llm gpt-4.1 --user-llm gpt-4.1
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for both repositories, read 2026-10-10; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the harness version (scores before and after 1.0.1 are not comparable), the agent
+  # scaffold (standard or custom), k and trials per task. The user-simulator model also changes the number and has
+  # no conditions field.
+  material_extra:
+    - harness
+    - scaffold
+    - k
+
+homepage: https://taubench.com
+repository: https://github.com/sierra-research/tau2-bench
+leaderboard_url: https://taubench.com
+
+tags:
+  - tool-calling
+  - customer-service
+  - user-simulation
+  - pass-hat-k
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S3-T02)
+  added_on: 2026-10-10
+  last_verified: 2026-10-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-12045-v1
+    - src-arxiv-2406-12045
+    - src-github-tau-bench-readme
+    - src-tau2-bench-readme
+    - src-tau2-bench-submission-guide
+  sources_note: >
+    The τ-bench paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date; both
+    READMEs and the submission guide at main. The τ²-bench and τ³ papers and taubench.com were not read.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - The user-simulator model (part of what a score means) has no comparability field.
+    - independence_flags: whether Sierra's own agents are ranked.
+    - The original repository's README keeps an outdated leaderboard table; the live board is taubench.com.

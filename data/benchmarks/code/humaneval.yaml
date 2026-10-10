@@ -1,0 +1,219 @@
+# data/benchmarks/code/humaneval.yaml
+#
+# P1-S3-T02, checkpoint entry 12 of 20 (copilot off). Filled from the Codex paper that introduced HumanEval, arXiv
+# 2107.03374 read as its v2 PDF, and its abstract page; the human-eval repository README; lm-evaluation-harness's
+# humaneval task at the adapter's pin; and a 2026 abstract that reports on it. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: humaneval
+name: HumanEval
+aliases:
+  - OpenAI HumanEval
+tagline: 164 hand-written Python problems, each a signature and docstring to complete, scored by
+  unit tests as pass@k.
+description: >
+  164 original Python programming problems, written by hand for the Codex paper so that they would not
+  appear in training data scraped from GitHub. Each gives a function signature and docstring. The model
+  completes the body, and the completion is run against the problem's unit tests (7.7 per problem on average).
+  Scored as pass@k, the chance that at least one of k samples passes every test, with an unbiased estimator
+  from n samples. The released dataset includes a reference solution for each problem.
+self_description:
+  source: src-arxiv-2107-03374-v2
+  quote: On HumanEval, a new evaluation set we release to measure functional correctness for
+    synthesizing programs from docstrings
+external_ids:
+  huggingface: openai/openai_humaneval
+  arxiv: '2107.03374'
+paper:
+  title: Evaluating Large Language Models Trained on Code
+  arxiv: '2107.03374'
+  version_read: v2
+  source: src-arxiv-2107-03374-v2
+released: 2021-07-07
+released_note: The Codex paper's first arXiv version, as the abstract page dates it.
+released_source: src-arxiv-2107-03374
+released_quote: Submitted on 7 Jul 2021
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/function-synthesis
+domain_basis:
+  reason: Each item asks for a self-contained function from its specification, scored by running
+    tests on it -- the leaf's definition word for word.
+  source: src-arxiv-2107-03374-v2
+  quote: Each problem includes a function signature, docstring, body, and several unit tests, with
+    an average of 7.7 tests per problem
+capability: []
+capability_note: No capability term names writing a correct program from a specification. The paper
+  says the problems "assess language comprehension, algorithms, and simple mathematics";
+  quantitative-reasoning covers a minority of items, constraint-satisfaction's structure (every test
+  must pass) fits but is not the benchmark's claim. Left empty and logged as a missing term.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: A completion counts when it passes all of the problem's unit tests on execution.
+  source: src-arxiv-2107-03374-v2
+  quote: count the number of correct samples c ≤ n which pass unit tests
+designed_for_subjects:
+  - base-model
+designed_for_subjects_basis:
+  reason: The protocol gives the signature and docstring as a prompt and takes the model's
+    continuation, stopped at the next top-level statement -- raw continuation, as in the harness's
+    stop sequences. Instruction-tuned models are now scored on it through variant prompts.
+  source: src-lm-eval-harness-humaneval-task
+  quote: 'doc_to_text: "{{prompt}}"'
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers still report HumanEval pass@1 in October 2026, for example a quantisation paper's
+    main results. The maintainers' repository was last pushed in January 2025 (GitHub API).
+  source: src-arxiv-2610-09202
+  quote: 41.7% in HumanEval pass@1
+activity: no-submission-channel
+activity_basis:
+  reason: The repository is an evaluation harness and the problems; it has no leaderboard or
+    submission route, and results appear in users' papers.
+  source: src-github-human-eval-readme
+  quote: This is an evaluation harness for the HumanEval problem solving dataset
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Codex (12B)
+    source: src-arxiv-2107-03374-v2
+    observed_on: 2026-10-10
+    quote: our model solves 28.8% of the problems, while GPT-3 solves 0% and GPT-J solves 11.4%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each problem's own hand-written unit tests.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The problems, tests and harness are public; running model code needs a sandbox.
+  source: src-github-human-eval-readme
+  quote: Users are strongly encouraged not to do so outside of a robust security sandbox
+
+task:
+  exists: true
+  input:
+    - a Python function signature with a docstring describing its behaviour
+  output: The function body.
+  scoring: pass@k over the 164 problems, from n samples per problem (the paper uses n = 200, k up to
+    100); most later reports give pass@1 with greedy decoding.
+  source: src-arxiv-2107-03374-v2
+  quote: we generate n ≥ k samples per task (in this paper, we use n = 200 and k ≤ 100)
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The problems, tests and reference solutions are released with the harness.
+    source: src-arxiv-2107-03374-v2
+    quote: We release this data along with an evaluation framework
+  refresh: static
+  refresh_basis:
+    reason: One fixed set of 164 problems since release; extensions with more tests (HumanEval+) are
+      separate benchmarks.
+    source: src-arxiv-2107-03374-v2
+    quote: we create a dataset of 164 original programming problems with unit tests
+  data_provenance:
+    - expert-authored
+  data_provenance_note: The problems were written by hand by the paper's authors, so that they would
+    not appear in the GitHub code Codex was trained on.
+  data_provenance_source: src-arxiv-2107-03374-v2
+  data_provenance_quote: It is important for these tasks to be hand-written
+  contamination_risk: high
+  contamination_risk_note: The scored problems have been public with their reference solutions (the
+    "body" of each problem) and tests since 2021, so the solutions themselves are on the web for any
+    later training set to take in. The route is open in the only split there is.
+  contamination_evidence:
+    - source: src-arxiv-2107-03374-v2
+      stance: supports
+      quote: Each problem includes a function signature, docstring, body, and several unit tests
+  ceiling_anchor_type: theoretical-maximum
+  size_note: 164 problems, 7.7 tests each on average.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OpenAI
+  maintainer_basis:
+    reason: The dataset and harness sit in OpenAI's GitHub organisation, released with OpenAI's
+      Codex paper.
+    source: src-github-human-eval-readme
+    quote: described in the paper "[Evaluating Large Language Models Trained on Code]
+  maintainer_type: industry-lab
+  submission_process:
+    - literature-only
+  independence_flags: []
+  independence_flags_note: None recorded as a flag. OpenAI's own models were the release baselines,
+    and OpenAI reports HumanEval for later models in its own documents. With no board of its own,
+    there is no ranking to compete on.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public problems and tests and an open harness; scoring is automatic.
+    source: src-github-human-eval-readme
+    quote: evaluate_functional_correctness samples.jsonl
+  harness_availability: official-harness
+  harness: human-eval (evaluate_functional_correctness)
+  harness_source: src-github-human-eval-readme
+  harness_quote: This is an evaluation harness for the HumanEval problem solving dataset
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for openai/human-eval, read 2026-10-10; not a quoted
+    Source.
+  runnable_via:
+    - lm_eval
+  runnable_via_source: src-lm-eval-harness-humaneval-task
+  runnable_via_quote: 'task: humaneval'
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: k and the number of samples behind it, and the decoding (greedy pass@1 or sampled).
+  material_extra:
+    - k
+    - n_samples
+    - sampling
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The reported number is pass@k averaged over problems, by the paper's unbiased estimator.
+  source: src-arxiv-2107-03374-v2
+  quote: calculate the unbiased estimator
+
+homepage: https://github.com/openai/human-eval
+repository: https://github.com/openai/human-eval
+dataset_url: https://huggingface.co/datasets/openai/openai_humaneval
+
+tags:
+  - code-generation
+  - python
+  - pass-at-k
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S3-T02)
+  added_on: 2026-10-10
+  last_verified: 2026-10-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2107-03374-v2
+    - src-arxiv-2107-03374
+    - src-github-human-eval-readme
+    - src-lm-eval-harness-humaneval-task
+    - src-arxiv-2610-09202
+  sources_note: >
+    The Codex paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the date; the README
+    at master; the harness task file at the adapter's pin, read from the object store; and a 2026 abstract
+    as evidence of current use.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - capability is empty: no term fits program synthesis (logged).
+    - ceiling_anchor_type theoretical-maximum: every problem has a passing reference solution.
