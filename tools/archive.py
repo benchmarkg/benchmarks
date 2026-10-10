@@ -30,6 +30,12 @@ from datetime import datetime, timedelta, timezone
 USER_AGENT = 'UAIBI/0.1 (+https://github.com/benchmarkg/benchmarks)'
 WINDOW = timedelta(days=30)
 MAX_NETWORK_FAILURES = 3   # consecutive, before the run stops rather than hammering a sick host
+# CDX answers a lookup intermittently with a 503 "Temporarily Offline" page (four lookups of one URL on
+# 2026-10-10: 200, 503, 200, a 60 s timeout). A capture that exists is then missed, and SPN2 refuses the
+# submit as a duplicate, so a 5xx is asked once more after a pause. A timeout is not: it has already cost
+# 60 s, and it counts toward MAX_NETWORK_FAILURES, which a retry would reach from one lookup and one submit.
+CDX_RETRY_STATUSES = (502, 503, 504)
+CDX_RETRY_PAUSE = 5        # in units of the client's spacing, so a test client with spacing 0 never waits
 
 
 class StopRun(Exception):
@@ -89,6 +95,9 @@ class Wayback:
     def _newest(self, url, params):
         q = urllib.parse.urlencode(dict({'url': url, 'output': 'json', 'limit': '-1'}, **params))
         status, body = self._request('https://web.archive.org/cdx/search/cdx?' + q)
+        if status in CDX_RETRY_STATUSES:
+            time.sleep(CDX_RETRY_PAUSE * self.spacing)
+            status, body = self._request('https://web.archive.org/cdx/search/cdx?' + q)
         self.lookup_failed = status != 200
         if status == 429:
             raise StopRun('CDX returned 429')
