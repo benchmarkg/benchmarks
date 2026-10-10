@@ -1,0 +1,252 @@
+# data/benchmarks/biology-genetics/proteingym.yaml
+#
+# P1-S3-T01, checkpoint entry 5 of 10 (copilot on: the F6 copilot's extractive drafter snapshotted the bioRxiv
+# page and drafted one field, the name). Filled from the NeurIPS 2023 Datasets and Benchmarks paper, the
+# bioRxiv preprint's page (for its posting date) and the repository's README at main. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# proteingym.org renders entirely by script (an empty root div), so the leaderboard was not read; the README
+# says the site hosts the same performance files the repository's benchmarks/ folder holds.
+
+id: proteingym
+name: ProteinGym
+tagline: Zero-shot and supervised prediction of mutation effects, scored against over 250 deep mutational
+  scanning assays and clinical variant labels.
+description: >
+  A benchmark suite for protein fitness prediction. It has two parts. Over 250 standardised deep mutational
+  scanning (DMS) assays (substitutions and indels) give the experimentally measured fitness of millions of
+  mutated sequences. Curated clinical variants from ClinVar and gnomAD are labelled benign or pathogenic.
+  Models are scored zero-shot (the mutation scored without training on the assay) or supervised, under
+  random, contiguous and modulo cross-validation, by Spearman and other ranking and classification metrics.
+  The aggregate is computed by UniProt id and functional category, not as a plain mean over assays. New
+  baselines join by pull request with scores for every mutant and open-source code.
+self_description:
+  source: src-github-proteingym-readme
+  quote: ProteinGym is an extensive set of Deep Mutational Scanning (DMS) assays and annotated human clinical
+    variants curated to enable thorough comparisons of various mutation effect predictors in different regimes
+paper:
+  title: 'ProteinGym: Large-Scale Benchmarks for Protein Fitness Prediction and Design'
+  source: src-neurips-2023-proteingym
+released: 2023-12-08
+released_note: The bioRxiv preprint's posting date. The NeurIPS 2023 Datasets and Benchmarks paper is the same
+  work; the dataset's own v1.0 release on Zenodo is not dated in the README.
+released_source: src-biorxiv-2023-12-07-570727
+released_quote: Posted December 08, 2023
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/protein-fitness-prediction
+  secondary:
+    - biology-genetics/genomics-variant-effect
+domain_basis:
+  reason: The DMS benchmarks score how mutations change a protein's measured fitness, which is the primary
+    leaf's definition. The clinical benchmarks score whether human variants are pathogenic, which is
+    variant-effect prediction.
+  source: src-neurips-2023-proteingym
+  quote: we introduce ProteinGym, a large-scale and holistic set of benchmarks specifically designed for protein
+    fitness prediction and design
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Models predict the measured effect of a mutation on a protein and are scored against the assay's
+      measurement or the clinical label.
+    source: src-github-proteingym-readme
+    quote: 'DMS_score (float): corresponds to the experimental measurement in the DMS assay'
+  distribution-shift-generalization:
+    reason: In the supervised setting, the contiguous and modulo schemes hold out positions that training never
+      saw, and each scheme is reported as its own condition beside the random one.
+    source: src-neurips-2023-proteingym
+    quote: In the Contiguous scheme, we split the sequence contiguously along its length
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The zero-shot setting scores models trained on other data (sequence databases), but the scored task
+      is the same mutation-effect prediction throughout; the move is in the inputs, not the task.
+
+evaluation_method:
+  - statistical-fit
+  - classification-metric
+evaluation_method_basis:
+  reason: Spearman correlation (and MSE when supervised) against continuous assay scores is the headline.
+    AUC, MCC, NDCG and top-k recall score the binarised fitness, or the benign/pathogenic labels for the
+    clinical sets.
+  source: src-github-proteingym-readme
+  quote: 'For DMS benchmarks in the zero-shot setting: Spearman, NDCG, AUC, MCC and Top-K recall'
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The published figure is aggregated by UniProt id and then over functional categories, with bootstrapped
+    standard errors, by the maintainers' performance scripts.
+  source: src-github-proteingym-readme
+  quote: thus the resulting aggregated performance is not the same as the arithmetic average across assays
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers keep adding baselines in numbered releases. The latest, v1.3, added sixteen, among them
+    models released in 2024-2025, and the repository was last pushed on 2026-03-25 (GitHub API).
+  source: src-github-proteingym-readme
+  quote: Added 16 baselines to the zero-shot DMS substitutions benchmark (eg., ESM3, ESM C, ProGen3, xTrimoPGLM)
+activity: accepting-submissions
+activity_basis:
+  reason: New baselines join at any time by pull request, and the benchmark has never run in rounds.
+  source: src-github-proteingym-readme
+  quote: Submit a PR to our repo with two things
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ESM-1v
+    source: src-github-proteingym-readme
+    observed_on: 2026-10-10
+    quote: ESM-1v | Single sequence
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are protein models -- alignment-based, protein language models, inverse folding --
+    trained on biological sequence or structure data and scored on assays they were not trained to emulate,
+    which scientific-surrogate-model's exclusion sends to domain-specialist-model. Supervised models
+    trained on the assay itself are the minority setting.
+  source: src-neurips-2023-proteingym
+  quote: covers both zero-shot and supervised settings
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: DMS assay measurements; for the clinical sets, ClinVar and gnomAD annotations.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The assays, clinical sets, alignments, structures and every baseline's scores are downloadable, and the
+    performance scripts are in the repository.
+  source: src-github-proteingym-readme
+  quote: If you would like to compute all performance metrics for the various benchmarks, please follow the
+    following steps
+
+task:
+  exists: true
+  input:
+    - a wild-type protein sequence and a set of mutated sequences (substitutions or indels), optionally with
+      the family's multiple sequence alignment or a predicted structure
+  output: A fitness score for each mutated sequence (or a pathogenicity score for a clinical variant).
+  scoring: Spearman per assay (and NDCG, AUC, MCC, top-k recall), aggregated by UniProt id and functional
+    category; supervised settings add MSE under three cross-validation schemes.
+  source: src-github-proteingym-readme
+  quote: 'For DMS benchmarks in the zero-shot setting: Spearman, NDCG, AUC, MCC and Top-K recall'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every benchmark file, with its scores and labels, is a public download in numbered versions.
+    source: src-github-proteingym-readme
+    quote: The latest version is v1.3.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Changes come in numbered releases on Zenodo (v1.0 to v1.3), each listed with what it changed.
+    source: src-github-proteingym-readme
+    quote: Added 16 baselines to the zero-shot DMS substitutions benchmark (eg., ESM3, ESM C, ProGen3, xTrimoPGLM)
+  data_provenance:
+    - experimental-measurement
+    - curated-public-database
+  data_provenance_note: The DMS scores are published assays' measurements, curated and standardised. The clinical
+    labels are selected from ClinVar (and gnomAD), archives compiled for other purposes.
+  data_provenance_source: src-neurips-2023-proteingym
+  data_provenance_quote: ClinVar [Landrum and Kattman, 2018] is an extensive, public database developed by the
+    National Center for Biotechnology Information (NCBI)
+  contamination_risk: unknown
+  contamination_risk_note: The DMS measurements and clinical labels are public. Zero-shot models train on sequence
+    databases, not on these labels, but whether any baseline trained on ClinVar or on these assays was not
+    assessed here.
+  contamination_evidence: []
+  size_note: About 2.7 million missense variants in 217 DMS assays and 2,525 clinical proteins, and about 300k indel
+    mutants in 74 assays and 1,555 clinical proteins ("~2.7M missense variants across 217 DMS assays").
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OATML (University of Oxford) and the Marks Lab (Harvard Medical School)
+  maintainer_basis:
+    reason: The repository and the data sit in the OATML-Markslab organisation account, shared by the two
+      groups; the paper's authors are from both.
+    source: src-github-proteingym-readme
+    quote: This project is available under the MIT license found in the LICENSE file in this GitHub repository
+  maintainer_type: community-collective
+  maintainer_type_note: academic-lab's exclusion sends a shared organisation account across institutions, with no
+    single holder stated, to community-collective. Both members are university labs.
+  submission_process:
+    - self-reported
+    - open-source-gated
+  submission_process_note: The requester supplies scores for every mutant, computed with the maintainers'
+    performance scripts, and the model must be open source so that the maintainers can reproduce the scores
+    if needed. They do not say they always do.
+  submission_process_source: src-github-proteingym-readme
+  submission_process_quote: The corresponding model is open source (we should be able to reproduce scores if
+    needed)
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-proteingym-readme
+      quote: Riesselman, A.J., Ingraham, J., & Marks, D.S. (2018). Deep generative models of genetic variation
+        capture the effects of mutations
+  independence_flags_note: The Marks Lab's own models (EVmutation, DeepSequence, EVE) are among the ranked
+    baselines, as the README's baseline table cites them.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: All labels are public, and the maintainers' scripts compute the official aggregate from a model's
+      scores.
+    source: src-github-proteingym-readme
+    quote: If you would like to compute all performance metrics for the various benchmarks, please follow the
+      following steps
+  harness_availability: official-harness
+  harness: ProteinGym performance scripts (proteingym/performance_DMS_benchmarks.py)
+  harness_source: src-github-proteingym-readme
+  harness_quote: Run the relevant performance script
+  runnable_via:
+    - custom
+  code_licence: MIT
+  code_licence_source: src-github-proteingym-readme
+  code_licence_quote: This project is available under the MIT license found in the LICENSE file in this GitHub
+    repository
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the setting (zero-shot or supervised, and the cross-validation scheme) and the
+  # benchmark version, since each release adds baselines and may change reference files.
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://www.proteingym.org/
+repository: https://github.com/OATML-Markslab/ProteinGym
+dataset_url: https://zenodo.org/records/15293562
+
+tags:
+  - protein-fitness
+  - deep-mutational-scanning
+  - variant-effect
+  - protein-language-models
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S3-T01)
+  added_on: 2026-10-10
+  last_verified: 2026-10-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-neurips-2023-proteingym
+    - src-biorxiv-2023-12-07-570727
+    - src-github-proteingym-readme
+  sources_note: >
+    The NeurIPS proceedings PDF read as text, with narrow windows that keep the correspondence addresses after
+    the abstract out; the bioRxiv page as the copilot snapshotted it, for the posting date; and the README at
+    main. proteingym.org renders by script and was not read.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - The leaderboard on proteingym.org (script-rendered) was not read; whether it shows the same aggregate as
+      the repository's performance files is the README's word.
+    - contamination_risk: whether any ranked baseline trained on ClinVar labels or on the DMS assays.

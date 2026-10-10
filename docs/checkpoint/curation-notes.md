@@ -123,3 +123,26 @@ facets, so the copilot arm measures a weak copilot.
   four lookups of the URL), so the archiver missed it, and SPN2 refused the new capture as a duplicate four
   times. The timer was stopped before the tooling work. The archiver now asks CDX once more on a 5xx (a
   separate commit). The capture was recorded with the archiver's own writer, from a CDX answer read by hand.
+
+## 5. proteingym (biology-genetics; copilot on; 7.3 min)
+
+- **The copilot drafted one field, the name, from a phrase fragment ("we introduce ProteinGym,").** Its
+  snapshot of the bioRxiv page did save a fetch: bioRxiv often refuses scripted requests, and the snapshot
+  gave the posting date. It is the only copilot output that went into an entry so far.
+- **A README did most of the work.** The repository README states the scope, metrics, aggregation,
+  releases, contribution rules and licence in one MIT-licensed page. The fastest entries are the ones whose
+  maintainers wrote such a page. The paper was needed only for the cross-validation schemes and ClinVar.
+- **The site renders by script into an empty root.** It is the fourth benchmark site of five that does
+  (COCO, OC20's boards, Vals AI's styles, ProteinGym). The leaderboard itself was never read for any of
+  them.
+- **`independence_flags` takes an object, not a term,** when the flag needs evidence
+  (`{flag, source, quote}`), and the validator refuses a bare term. The `_source`/`_quote` sibling pattern
+  that works elsewhere is refused here. Two shapes for "a term with its evidence" in one schema.
+- **The same flag, judged differently on entry 1.** Applying `maintainer-competes-on-own-benchmark` here
+  (the Marks Lab's models are ranked) showed that SUPERB's authors' models (Mockingjay, TERA, and HuBERT,
+  which has SUPERB co-authors) are the same case. SUPERB was left empty with a note, and it is now
+  corrected. An agent curator drifts too. A per-flag checklist in the vocabulary ("are any ranked systems
+  the maintainers' own?") would make this a lookup.
+- **`aggregation_policy` has a basis only under the `_policy_basis` spelling.** `aggregation_basis` is
+  refused. The rule (`<field>_basis`) is regular, but nothing tells a curator it is the rule. Errors name
+  the key, not the expected spelling.
