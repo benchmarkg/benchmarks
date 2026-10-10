@@ -364,3 +364,21 @@ The alternation continues: odd entries with the copilot, even without.
   written against the stress corpus, and entries from that corpus are faster to tag.
 - **`reliability-consistency` has a clear test** (pass^k). It is the first entry where a capability is
   decided by the metric's definition alone.
+
+## 14. climatebench (earth-climate; copilot off; 5.6 min)
+
+- **The publisher refused the paper.** JAMES (Wiley) answered 403 to a scripted request for the open-access
+  PDF. Crossref's record carries the abstract, the CC-BY licence and the date, so a registry record is the
+  paper's Source. Anything beyond the abstract came from the README and the data record.
+- **A successor announced a week ago.** ClimateBench v2 (arXiv, 2026-10-03, same first author) takes in v1's
+  emulation task as one of its tiers, with a different design. Calling v1 "superseded" a week after v2's
+  preprint is premature, and calling it "active" ignores v2. The vocabulary has no "successor announced"
+  state; `under-revision` is for the content the entry names being reissued, which this is not quite.
+- **The forecasting profile again.** The same waiver pair (lead_time, resolution_window) is needed for the
+  fifth time. The rule should not fire on simulation surrogates.
+- **ORCID and affiliation beside the creator's name.** The Zenodo record puts the creator's name, ORCID and
+  affiliation in one JSON object, so the maintainer quote needed an 8-character window and a forbid on
+  "orcid".
+- **One person's account.** The repository and the data record belong to one researcher, so
+  `maintainer_type: individual`. That is the key-person risk the term exists for, even for a benchmark with
+  an institutional paper.
