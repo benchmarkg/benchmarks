@@ -348,3 +348,19 @@ The alternation continues: odd entries with the copilot, even without.
   prompts. This is the third entry where designed and used subjects differ.
 - **A forbid-list that blocked a metric name.** Forbidding `@` (added for brace-form addresses) caught "pass@k".
   A text filter for personal data needs real address patterns, not a character.
+
+## 13. tau-bench (agents-tooluse; copilot on; 6.2 min)
+
+- **Three versions in two repositories.** τ-bench's own repository says its tasks are outdated and points to
+  tau2-bench, which now holds τ³-bench. The maintainers publish a grading change with "results produced with
+  tau2-bench < 1.0.1 are not comparable with >= 1.0.1". One family entry with `versioned-releases` fits, and
+  `harness` as a comparability field carries the version. The repository move is only in notes.
+- **The simulated user changes the score and has no field.** Every run pairs the agent with a user played by
+  an LLM (`--user-llm`). The comparability conditions have `judge_model`, but the simulator is not a judge.
+  Stage 3's eight `hosted-judge-dependency` proposals cover the reproducibility side (a hosted model in the
+  loop). The comparability side has no proposal yet.
+- **The subject terms already name this benchmark.** `model-in-benchmark-harness` cites "the default tau-bench
+  agent" as its own example, so standard and custom tracks map to two terms directly. The vocabulary was
+  written against the stress corpus, and entries from that corpus are faster to tag.
+- **`reliability-consistency` has a clear test** (pass^k). It is the first entry where a capability is
+  decided by the metric's definition alone.
