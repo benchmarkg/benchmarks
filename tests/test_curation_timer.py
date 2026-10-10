@@ -131,3 +131,60 @@ def test_the_committed_live_ledger_parses():
 
 def test_self_test_passes(capsys):
     assert curation_timer.main(['--self-test']) == 0
+
+
+# ---- P1-S3-T03: --assert-n, the speedup's spread, and the checkpoint file -----------------------------------
+#
+# A four-record interleaved ledger, worked by hand. In start order: on 20, off 15, on 10, off 5 minutes.
+#   speedup (off-median / on-median) = 10 / 15 = 0.6667
+#   pairs from the first record: (on 20, off 15) -> 0.75, (on 10, off 5) -> 0.5; median 0.625
+#   pairs from the second:       (off 15, on 10) -> 1.5; one pair
+#   position slope over 1..4 of 20, 15, 10, 5: covariance -25 / variance 5 = -5.0 minutes per entry
+
+def interleaved(tmp_path):
+    rows = [('a', True, '09:00', '09:20'), ('b', False, '10:00', '10:15'),
+            ('c', True, '11:00', '11:10'), ('d', False, '12:00', '12:05')]
+    path = tmp_path / 'interleaved.jsonl'
+    path.write_text(''.join(json.dumps({'entry_id': e, 'curator': 'c', 'copilot': on,
+                                        'start': '2026-03-01T%s:00Z' % a, 'stop': '2026-03-01T%s:00Z' % b}) + '\n'
+                            for e, on, a, b in rows), encoding='utf-8')
+    return path
+
+
+def test_assert_n_fails_below_the_count_and_passes_at_it(capsys):
+    assert curation_timer.main(['--report', '--ledger', FIXTURE, '--assert-n', '3']) == 0
+    assert curation_timer.main(['--report', '--ledger', FIXTURE, '--assert-n', '4']) == 1
+    assert 'asserted at least 4' in capsys.readouterr().err
+
+
+def test_pairs_follow_start_order_from_each_offset(tmp_path):
+    records = curation_timer.load(str(interleaved(tmp_path)))
+    assert curation_timer.pair_speedups(records, 0) == [0.75, 0.5]
+    assert curation_timer.pair_speedups(records, 1) == [1.5]
+    assert curation_timer.position_slope(records) == -5.0
+
+
+def test_the_checkpoint_file_carries_the_hand_computed_numbers(tmp_path, capsys):
+    ledger, out = interleaved(tmp_path), tmp_path / 'checkpoint.json'
+    assert curation_timer.main(['--report', '--ledger', str(ledger), '--checkpoint', str(out)]) == 0
+    doc = json.loads(out.read_text(encoding='utf-8'))
+    assert doc['n'] == 4 and doc['median_minutes_per_entry'] == 12.5          # median of 5, 10, 15, 20
+    assert doc['copilot_speedup'] == 0.67
+    spread = doc['copilot_speedup_spread']
+    assert spread['pairs_from_first']['median'] == 0.625 and spread['pairs_from_second']['n'] == 1
+    assert doc['position_trend_minutes_per_entry'] == -5.0
+    lo, hi = spread['bootstrap_90']
+    assert lo <= 0.6667 <= hi
+    import hashlib
+    assert doc['ledger_sha256'] == hashlib.sha256(ledger.read_bytes()).hexdigest()
+    again = tmp_path / 'again.json'
+    assert curation_timer.main(['--report', '--ledger', str(ledger), '--checkpoint', str(again)]) == 0
+    assert again.read_text(encoding='utf-8') == out.read_text(encoding='utf-8')   # the seed fixes the interval
+
+
+def test_the_committed_checkpoint_matches_the_committed_ledger():
+    path = os.path.join(ROOT, 'metrics', 'checkpoint-20.json')
+    ledger = os.path.join(ROOT, 'metrics', 'curation-rate.jsonl')
+    committed = json.load(open(path, encoding='utf-8'))
+    assert committed == json.loads(json.dumps(curation_timer.checkpoint(curation_timer.load(ledger), ledger)))
+    assert committed['n'] >= 20 and committed['curators'] and committed['ledger'] == 'metrics/curation-rate.jsonl'
