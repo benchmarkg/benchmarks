@@ -49,7 +49,7 @@ from typing import Any, Literal
 
 ChangeClass = Literal['new', 'field-change', 'result-change', 'metrics-only', 'gone', 'no-change']
 EntityType = Literal['benchmark', 'benchmark_version', 'system', 'organization',
-                     'metric', 'leaderboard', 'source', 'claim', 'conditions']
+                     'metric', 'leaderboard', 'rating_pool', 'source', 'claim', 'conditions']   # rating_pool: P5-S6-T02
 UnresolvedReason = Literal['no-match', 'ambiguous-match', 'unparseable', 'out-of-band', 'policy']
 RunStatus = Literal['ok', 'no-change', 'partial', 'soft-fail', 'hard-fail', 'capped']
 

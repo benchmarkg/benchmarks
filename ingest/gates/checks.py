@@ -119,6 +119,7 @@ CAP_ROWS = {                 # entity type -> (floor, ceiling), 07 S8.1's table
     'claim': (50, 200), 'benchmark': (10, 25), 'system': (25, 100), 'organization': (5, 25),
     'metric': (5, 20), 'source': (50, 200), 'conditions': (50, 200),
     'leaderboard': (10, 25),  # not in 07's table: a leaderboard arrives as its benchmark does, so it takes that row
+    'rating_pool': (10, 25),  # not in 07's table either: one pool per leaderboard snapshot (LMArena, P5-S6-T02)
 }
 CAP_FRACTION = 0.25
 
