@@ -10,8 +10,12 @@
 # It lives in its own workflow rather than in pr-validate.yml because that file is P0-S6-T01's to
 # create; when it exists, this job can move there unchanged.
 #
-# Stdlib only, so no toolchain install. Actions are pinned by commit SHA (08 S6); the SHA is the
-# one archive-sources.yml resolved from v7.0.1 on 2026-09-24.
+# structure-lint is stdlib only, so no toolchain install. breakage-drill (P5-S6-T04) is 14-roadmap.md's
+# Phase 5 exit criterion 4 run on every pull request: the SWE-bench adapter, given its fixture page with the
+# <script id="leaderboard-data"> tag renamed, must hard-fail, open adapter-broken and write no YAML
+# (tests/ingest/test_breakage_swebench.py). It needs the locked environment, so it installs uv and runs
+# the lockfile's Python, as pr-validate.yml does. Actions are pinned by commit SHA (08 S6); checkout's is
+# the one archive-sources.yml resolved from v7.0.1 on 2026-09-24, setup-uv's pr-validate.yml's.
 
 name: ingest-lint
 
@@ -34,3 +38,14 @@ jobs:
 
       - name: No .get() with a default under ingest/ (07 S9.2)
         run: python3 scripts/check_no_get_default.py ingest/
+
+  breakage-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: A renamed SWE-bench script tag hard-fails and writes nothing (07 S9.2)
+        run: uv run --locked --python 3.12 pytest tests/ingest/test_breakage_swebench.py
