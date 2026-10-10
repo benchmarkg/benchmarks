@@ -160,7 +160,9 @@ def test_the_other_reports_refuse_the_staleness_options():
 
 
 def test_the_repository_itself_reports(tmp_path):
-    rep = Q.build(ROOT, date.fromisoformat(AS_OF))
+    # The report's own default, the data commit's date: a fixed AS_OF falls behind the corpus, and an entry
+    # verified after it would count negative days (P1-S3-T01's entries, verified 2026-10-10).
+    rep = Q.build(ROOT)
     assert rep['summary']['entries'] == len(rep['rows']) > 0
     assert all(r['priority'] >= 0 for r in rep['rows'])
 

@@ -11,6 +11,69 @@ not a person's minutes, and P1-S3-T03 should say so before it uses them as the e
 That is the only drafter that runs without an API key. It gives the title, ids and dates, and drafts no
 facets, so the copilot arm measures a weak copilot.
 
+## Entries 1-10 at a glance (written after entry 10, for P1-S3-T03 and T04)
+
+| # | entry | family | copilot | minutes |
+| --- | --- | --- | --- | --- |
+| 1 | superb | audio-speech | on | 10.0 |
+| 2 | coco | vision | off | 16.8 |
+| 3 | medqa | medicine-health | on | 8.6 |
+| 4 | oc20 | chemistry-materials | off | 10.8 |
+| 5 | proteingym | biology-genetics | on | 7.3 |
+| 6 | libero | robotics-embodiment | off | 4.7 |
+| 7 | the-well | physics | on | 5.4 |
+| 8 | minif2f | mathematics | off | 5.0 |
+| 9 | harmbench | safety-alignment | on | 3.5 |
+| 10 | mmmu | multimodal | off | 6.1 |
+
+Median 6.7 minutes over ten. With the copilot, 7.3 (n = 5); without, 6.1 (n = 5). The order effect is larger
+than either. Minutes fall with position (the first two took 10-17, the last four 3.5-6), and the alternation
+gives each arm the same positions only roughly. T03 should model position, not compare medians. Four caveats
+belong with the numbers:
+
+- The curator is an agent. Its minutes measure tool and network latency as much as reading, and a person's will
+  be several times longer.
+- The copilot is the extractive drafter. Over five entries it filled 1-5 of 24 fields, always the cheapest
+  (title, ids, date, repository). It did not draft a single facet. The measured "speedup" is of this drafter,
+  not of an LLM copilot.
+- Archiving is inside the window, and Wayback's latency varied from seconds to minutes. Entry 4 was stopped
+  before tooling work on the archiver (see below).
+- Stage 3 records (failure logs) were read for COCO and consulted when choosing terms; the Stage 3
+  classification records were not read before writing. Entries whose Stage 3 failures were open (the-well,
+  harmbench) cite them instead of logging duplicates.
+
+The findings that recur, most consequential first:
+
+1. **`lifecycle` cannot say "not observed".** The vocabulary says leave it null; the schema requires a value
+   and defaults to `active` (the-well). An omitted field silently asserts the benchmark is in use.
+2. **Designed protocol and actual use diverge** (medqa: open-book designed, closed-book used; libero: lifelong
+   designed, multitask used). `capability` and `designed_for_subjects` follow the design, and nothing records
+   the dominant use.
+3. **Hand-overs have no structure.** Submission servers moved or closed (coco, oc20, mmmu), maintainership moved
+   by fork (minif2f), and access changed on a date (mmmu). `submission_channel`, `maintainer` and
+   `data.access` each hold one value.
+4. **Empty lists cannot say "unknown".** `independence_flags: []` and `submission_process: []` meant "not
+   assessed" in some entries and "none" in others, distinguished only by a note.
+5. **Board-less benchmarks need a literature search for liveness.** Five of ten have no leaderboard. Current
+   use was evidenced by others' abstracts (libero, minif2f, harmbench, mmmu), and was not found for the-well.
+6. **Script-rendered sites.** Six of ten benchmark sites or boards render by script and were read through
+   their fragments, API records or app text, or not at all.
+7. **Personal data beside cited facts** (contact lines in papers and READMEs, organiser handles in API
+   records) needed narrow windows and a forbid-list in the extract builder, in five entries.
+8. **Vocabulary ids that hide their scope** (`any-to-any-generation` for captioning, `rl-policy` for behaviour
+   cloning, `simulation-surrogates` beside `fluid-dynamics`) cost two wrong first choices and one wrong gap
+   record.
+9. **The forecasting profile fires on surrogates.** The facet pair statistical-fit x scientific-surrogate-model
+   resolves `forecasting`, so OC20 and The Well each had to waive lead_time and resolution_window, as
+   Matbench Discovery and the Virtual Cell Challenge already did. That makes four waivers of the same two
+   fields. The rule, not the entries, is wrong, and P1-S3-T04 should say so. The corpus tests surfaced it,
+   not validation.
+10. **`bench fmt` is a gate the curation loop never ran.** Entries written at 115 columns passed validation, then
+   failed the fmt test. The formatter rewraps folded paragraphs but keeps their old breaks, which leaves orphan
+   words. Each folded block had to be joined and reformatted. The curation tools should end with `bench fmt`.
+11. **Key spellings are learned from errors.** `<field>_basis` and `<field>_note`, and `{flag, source, quote}`
+   for an evidenced independence flag. The validator names the bad key, not the expected one.
+
 ## 1. superb (audio-speech; copilot on; 10.0 min)
 
 - **The homepage did not answer** (superbbenchmark.org, 2026-10-10). Without it, `lifecycle` and `activity`
@@ -229,3 +292,22 @@ facets, so the copilot arm measures a weak copilot.
 - **The maintainers' own defence is ranked.** R2D2 is in the paper's own figures, so the flag applies, with
   a figure label as its quote. This is the third application of `maintainer-competes-on-own-benchmark`
   (after SUPERB and ProteinGym), each found in a different kind of evidence.
+
+## 10. mmmu (multimodal; copilot off; 6.1 min)
+
+- **Access changed mid-life.** Test answers were withheld behind EvalAI until 2026-02-11 and released on
+  2026-02-12. `data.access` is now `fully-open`, contamination is `high` (the release is the route), and
+  `activity` is `closed`. Every claim made before February 2026 was scored on a held-out set, and every
+  claim since on a public one. `access_by_phase` exists for CASP's edition phases but is not shaped for "until
+  this date". A dated access history, or the date as a claim condition, is needed to compare across that line.
+- **The same EvalAI story as OC20, with a different ending.** OC20 moved its board to Hugging Face. MMMU
+  closed its server and published the answers. Both are recorded only as notes and quotes. `submission_channel`
+  holds one Evidence, not a history.
+- **Human experts are entrants here.** College seniors answered their own subjects' questions and sit on the
+  leaderboard. `designed_for_subjects: human-expert` and `ceiling_anchor_type: expert-average` both apply,
+  from one source. Whether seniors count as "credentialed" is a reviewer check the vocabulary leaves open.
+- **Notes need `<field>_note`, as with `_basis`.** `ceiling_anchor_note` was refused, and
+  `ceiling_anchor_type_note` passed. It is the same rule as `aggregation_policy_basis`, and the error again
+  named only the key.
+- **The family again.** MMMU-Pro and Video-MMMU sit on MMMU's site and README. Stage 3 classified MMMU-Pro, not
+  MMMU. The entry is MMMU alone, so the family has no record yet.

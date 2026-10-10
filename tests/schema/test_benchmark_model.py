@@ -68,9 +68,16 @@ def test_the_three_entries_load(path):
 
 
 def test_the_committed_entries():
-    # The three P0-S3 entries plus the P0-S8 stress entries as they land.
-    assert sorted(os.path.basename(p) for p in ENTRIES) == ['arc-agi-3.yaml', 'casp.yaml', 'critpt.yaml', 'forecastbench.yaml', 'kaggle-game-arena.yaml', 'matbench-discovery.yaml', 'mmlu.yaml', 'paperbench.yaml',
-                                                             'roboarena.yaml', 'scicode.yaml', 'swe-bench-verified.yaml', 'swe-bench.yaml', 'virtual-cell-challenge.yaml',
+    # The three P0-S3 entries, the P0-S8 stress entries and the P1-S3 checkpoint entries, as they land.
+    assert sorted(os.path.basename(p) for p in ENTRIES) == ['arc-agi-3.yaml', 'casp.yaml', 'coco.yaml',
+                                                             'critpt.yaml', 'forecastbench.yaml', 'harmbench.yaml',
+                                                             'kaggle-game-arena.yaml', 'libero.yaml',
+                                                             'matbench-discovery.yaml', 'medqa.yaml', 'minif2f.yaml',
+                                                             'mmlu.yaml', 'mmmu.yaml', 'oc20.yaml',
+                                                             'paperbench.yaml', 'proteingym.yaml', 'roboarena.yaml',
+                                                             'scicode.yaml', 'superb.yaml',
+                                                             'swe-bench-verified.yaml', 'swe-bench.yaml',
+                                                             'the-well.yaml', 'virtual-cell-challenge.yaml',
                                                              'weatherbench-2.yaml']
 
 
