@@ -311,3 +311,40 @@ The findings that recur, most consequential first:
   named only the key.
 - **The family again.** MMMU-Pro and Video-MMMU sit on MMMU's site and README. Stage 3 classified MMMU-Pro, not
   MMMU. The entry is MMMU alone, so the family has no record yet.
+
+# Entries 11-20 (P1-S3-T02)
+
+Same curator ("agent (P1-S3-T02)" in the timing ledger, the same agent as entries 1-10), and the same protocol.
+The alternation continues: odd entries with the copilot, even without.
+
+## 11. flores (language; copilot on; 8.7 min)
+
+- **A gated dataset card hides the facts it would state.** FLORES+ is distributed through a Hugging Face
+  dataset with automatic gating. Reading the card means accepting its terms with the user's account, and that
+  was not done. The public API record gave the gate, the licence (CC-BY-SA-4.0), the splits and the last
+  change. A JSON record is now the Source for `data.access` and `dataset_licence`.
+- **A family with three editions and a change of hands.** FLORES-101 and FLORES-200 came from Meta AI.
+  FLORES+ is OLDI's, a community initiative that takes new languages. One entry carries all three, and
+  `governance.maintainer` names the current holder only. It is the fourth hand-over in eleven entries.
+- **The hidden test split disappeared.** FLORES-101 kept its test split for an evaluation server. FLORES+
+  publishes dev and devtest only, so devtest became the de facto test. `access` and `ground_truth_source`
+  describe the family. Neither can say "the split results are reported on changed from held-out to public".
+- **Names next to the cited sentence.** OLDI's home page lists its organisers right after the sentence on
+  FLORES+, so the window had to shrink to three characters. That is the extract builder's sixth
+  personal-data case.
+
+## 12. humaneval (code; copilot off; 4.7 min)
+
+- **No capability for writing programs.** The capability vocabulary has reasoning, knowledge, perception and
+  agency terms but nothing for "produce a correct program from a specification". HumanEval's capability is
+  left empty and the gap is logged (`2026-10-10-humaneval-001`). Every function-synthesis benchmark will hit
+  it. The SWE-bench entries used `context-integration`, which fits repository-scale work but not a
+  self-contained function.
+- **"Body" is the reference solution, and it is published.** The paper lists each problem's "function
+  signature, docstring, body, and several unit tests". The released file therefore contains the answers,
+  and contamination is `high` on the paper's own words, the same reading as miniF2F's published proofs.
+- **`base-model` is right for the design and wrong for the use.** The harness's stop sequences show the
+  protocol is raw continuation. Most results since 2023 are from instruction-tuned models through variant
+  prompts. This is the third entry where designed and used subjects differ.
+- **A forbid-list that blocked a metric name.** Forbidding `@` (added for brace-form addresses) caught "pass@k".
+  A text filter for personal data needs real address patterns, not a character.
