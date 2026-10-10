@@ -65,3 +65,32 @@ facets, so the copilot arm measures a weak copilot.
 - **Personal data in the page next to the cited fact.** The CodaLab page prints the organiser's account
   name beside the phase dates. The extract builder needed a narrower window and a forbid-list. That is the
   same problem as SUPERB's contact line, now on a web page.
+
+## 3. medqa (medicine-health; copilot on; 8.6 min)
+
+- **The copilot saved almost nothing.** It drafted 3 fields (title, arXiv id, date) and left 21 absent, and
+  it set `curation.added_by` to the git user, not the curator. The minutes on this entry are reading,
+  judgement and Sources, the same as without it.
+- **Capability depends on the protocol.** The paper defines MedQA as open-domain QA over a released
+  textbook collection. Almost every result since answers closed-book. knowledge-recall and
+  context-integration are each right for one protocol, and `capability` is one list (logged:
+  `2026-10-10-medqa-001`). `comparability.material_extra: tools_allowed` was the nearest way to say "with
+  or without the corpus", and it is a stretch.
+- **`designed_for_subjects` against use.** The design is retrieval-augmented. The use is instruction-tuned
+  models prompted closed-book. The field asks about design, so the entry follows the paper. A reader
+  looking for "benchmarks used on chat models" will not find MedQA by this facet.
+- **`saturated` cannot be set, and nothing derives it yet.** A third-party board (Vals AI) archived MedQA as
+  saturated, with the top three at about 96.4-96.5% on four options (headroom about 0.95). The schema
+  rightly refuses a hand-set saturated. Without a ResultClaim the derivation has nothing to run on, so the
+  entry says "active" and puts the saturation evidence in a basis. P1-S3-T04 should note that lifecycle
+  stays stale until claims exist.
+- **A third party's board as the only current evidence.** The maintainers publish no results. The only 2026
+  evidence of use is Vals AI's re-run, which may be a perturbed variant ("bias evaluation"). There is no
+  field for "evidence of use comes from a variant", so it is a reviewer check.
+- **Data licence unknown, code licence known.** `dataset_licence: null` with a note. The code licence came
+  from GitHub's API, not a quotable page, so `code_licence` has no Source. That is the same gap as COCO's
+  code licence.
+- **Huge script-and-style pages.** The Vals page is 470 KB, 450 KB of it inline CSS and JS. `normalise()`
+  keeps script and style text, so a windowed extract around a quote can be all CSS. I stripped `<script>`
+  and `<style>` before normalising and said so in the Source's notes. The project's normaliser has no such
+  mode, so this Source's `content_sha256` is not reproducible by `normalise(raw)`.

@@ -1,0 +1,239 @@
+# data/benchmarks/medicine-health/medqa.yaml
+#
+# P1-S3-T01, checkpoint entry 3 of 10 (copilot on: the F6 copilot's extractive drafter gave the title, arXiv
+# id and release date). Filled from MedQA's paper, arXiv 2009.13081 read as its v1 PDF, and its abstract page;
+# the repository's README; the MedQA task in lm-evaluation-harness at the pin docs/pins.md records; and Vals
+# AI's MedQA page, a third party's board. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+
+id: medqa
+name: MedQA
+aliases:
+  - MedQA-USMLE
+tagline: Multiple-choice questions from medical licensing exams in the US, Mainland China and Taiwan.
+description: >
+  Multiple-choice questions taken from medical board exams and mock exams in the US (USMLE), Mainland
+  China (MCMLE) and Taiwan (TWMLE), in English, simplified Chinese and traditional Chinese. The paper casts
+  it as open-domain question answering over a collection of medical textbooks released with the
+  questions; most later results, including every language-model board, answer the four-option English
+  set closed-book. Scored as accuracy against the exam's keyed answer, on an official random 80/10/10
+  split.
+self_description:
+  source: src-arxiv-2009-13081-v1
+  quote: OpenQA dataset for solving medical problems, MEDQA, collected from the professional medical board exams
+external_ids:
+  arxiv: '2009.13081'
+paper:
+  title: 'What Disease does this Patient Have? A Large-scale Open Domain Question Answering Dataset from Medical
+    Exams'
+  arxiv: '2009.13081'
+  version_read: v1
+  source: src-arxiv-2009-13081-v1
+released: 2020-09-28
+released_note: The paper's only arXiv version, as the abstract page dates it.
+released_source: src-arxiv-2009-13081
+released_quote: Submitted on 28 Sep 2020
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/clinical-qa
+domain_basis:
+  reason: Every item is a medical exam question with one keyed answer, which is clinical-qa's definition.
+  source: src-arxiv-2009-13081-v1
+  quote: Questions in this dataset are collected from medical board exams in US, Mainland China, and Taiwan,
+    where human doctors are evaluated on their professional knowledge and ability to make clinical decisions
+capability:
+  - knowledge-recall
+capability_basis:
+  knowledge-recall:
+    reason: Results are almost all closed-book -- Vals AI's board and the harness task supply the question and
+      options only -- so the answer comes from what the model holds. Under the paper's own open-domain
+      protocol, the released textbooks supply the knowledge, and knowledge-recall's exclusion would apply
+      instead. The facet cannot say "depends on the protocol" (logged).
+    source: src-lm-eval-harness-medqa-task
+    quote: 'task: medqa_4options'
+capability_considered_and_rejected:
+  - term: context-integration
+    reason: The textbook corpus is supplied in the paper's protocol, but only the final answer is scored, not
+      whether the system used the corpus, and most results use no corpus.
+  - term: deductive-reasoning
+    reason: The vignettes need medical knowledge from outside the item, which deductive-reasoning's inclusion
+      test excludes.
+
+evaluation_method:
+  - multiple-choice
+evaluation_method_basis:
+  reason: The system picks one of the supplied options. The US and Mainland China sets were cut to four
+    options (chance 0.25); the original exams have more.
+  source: src-arxiv-2009-13081-v1
+  quote: which results in four options with one right option and three wrong options
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results were still being produced in 2026. Vals AI's board was last updated on 2026-04-16, with
+    models released that year. The same board has since stopped running new models because it judges the
+    benchmark saturated. saturated is derived, never hand-set (02 S8), so this is recorded as evidence for the
+    derivation, not as the value.
+  source: src-vals-ai-medqa
+  quote: Since performance on this benchmark has saturated, we no longer run this benchmark on new model
+    releases
+activity: no-submission-channel
+activity_basis:
+  reason: The maintainers publish the data and baseline code only. There is no leaderboard or submission route
+    of their own; results appear in others' papers and on third-party boards.
+  source: src-github-jind11-medqa-readme
+  quote: This is the data and baseline source code for the paper
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: BioBERT
+    source: src-arxiv-2009-13081-v1
+    observed_on: 2026-10-10
+    quote: English BioBERT-Base and BioBERTLarge
+  - system: o1
+    source: src-vals-ai-medqa
+    observed_on: 2026-10-10
+    quote: As of April 16, 2026, o1 ranks first on MedQA with 96.52%
+designed_for_subjects:
+  - retrieval-augmented-system
+designed_for_subjects_basis:
+  reason: The paper builds MedQA as open-domain QA. Its baselines pair a document retriever over the textbook
+    collection with a reader model, and retrieval is inside what is scored. Today's closed-book use by
+    instruction-tuned models is how the benchmark is used, not what it was designed for.
+  source: src-arxiv-2009-13081-v1
+  quote: we prepared text materials from a total of 18 English medical textbooks
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The answer each exam or mock exam keyed; the test split's answers are released with
+  it.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The questions, answers and split are public, and scoring is accuracy over keyed options.
+  source: src-github-jind11-medqa-readme
+  quote: we also provide an official random split into train, dev, and test sets
+
+task:
+  exists: true
+  input:
+    - an exam question, usually a clinical vignette, with four or five answer options
+    - optionally, the released textbook collection to retrieve from
+  output: The letter of one option.
+  scoring: Accuracy on the test split; the paper reports each language set separately.
+  source: src-arxiv-2009-13081-v1
+  quote: randomly split the data based on questions, with 80% training, 10% development, and 10% test
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Questions, answers, splits and textbooks are one public download linked from the README.
+    source: src-github-jind11-medqa-readme
+    quote: The data that contains both the QAs and textbooks can be downloaded from
+  refresh: static
+  refresh_basis:
+    reason: One release with a fixed split; the repository's last push was 2022-12-01 and nothing in the README
+      announces a revision.
+    source: src-github-jind11-medqa-readme
+    quote: we also provide an official random split into train, dev, and test sets
+  data_provenance:
+    - exam-derived
+  data_provenance_note: Real exams and mock tests from the three boards, deduplicated, with the US and Mainland
+    China option sets cut to four.
+  data_provenance_source: src-arxiv-2009-13081-v1
+  data_provenance_quote: We include problems from both real exams and mock tests
+  contamination_risk: medium
+  contamination_risk_note: The test questions and their answers have been public since 2020, on Google Drive and
+    in Hugging Face copies that the harness loads, and come from widely circulated exam-preparation material.
+    A training route is plausible. No source read here shows contamination evidence.
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: The repository is MIT-licensed (GitHub's licence metadata, read 2026-10-10), which covers
+    the code. The paper says the questions were adapted to comply with fair use, and the textbooks are released
+    for research use only. No licence for the data itself was read.
+  size_note: 12,723 English, 34,251 simplified Chinese and 14,123 traditional Chinese questions ("contains
+    12,723, 34,251, and 14,123 questions for the three languages, respectively"), each split 80/10/10.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The MedQA authors (MIT CSAIL), through the first author's GitHub account
+  maintainer_basis:
+    reason: The repository holding the code and the data link sits in one person's account, and no institution
+      is stated as holding it.
+    source: src-github-jind11-medqa-readme
+    quote: This is the data and baseline source code for the paper
+  maintainer_type: individual
+  submission_process:
+    - literature-only
+  submission_process_note: No board, results page or submission route of the maintainers'. Vals AI's board is a
+    third party's re-run and, as literature-only's exclusion test says, does not change this.
+  independence_flags: []
+  independence_flags_note: None recorded.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public questions with keyed answers, scored by exact option match; the harness task runs end to end.
+    source: src-lm-eval-harness-medqa-task
+    quote: 'output_type: multiple_choice'
+  harness_availability: reference-implementation-only
+  harness_availability_note: The repository's code is the paper's IR and neural baselines, not a scorer the
+    maintainers designate. lm-evaluation-harness's task is a third party's.
+  runnable_via:
+    - lm_eval
+  runnable_via_source: src-lm-eval-harness-medqa-task
+  runnable_via_quote: 'dataset_path: GBaker/MedQA-USMLE-4-options-hf'
+  runnable_via_note: The harness loads a Hugging Face copy of the four-option US set, not the authors' download;
+    whether it is item-for-item identical was not checked.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for jind11/MedQA, read 2026-10-10; not a quoted Source.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Two conditions beyond the fallback profile change a MedQA number: which set (US, Mainland China or Taiwan,
+  # four or five options), and whether the system had the textbook collection or answered closed-book.
+  material_extra:
+    - subset_used
+    - tools_allowed
+
+homepage: https://github.com/jind11/MedQA
+repository: https://github.com/jind11/MedQA
+leaderboard_url: null
+
+tags:
+  - medical-exams
+  - usmle
+  - multilingual
+  - open-domain-qa
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S3-T01)
+  added_on: 2026-10-10
+  last_verified: 2026-10-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2009-13081-v1
+    - src-arxiv-2009-13081
+    - src-github-jind11-medqa-readme
+    - src-lm-eval-harness-medqa-task
+    - src-vals-ai-medqa
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, with narrow windows that keep the authors' contact
+    line out; the abstract page for the date; the README at master; the harness task file at the pinned
+    commit, read from the object store; and Vals AI's board, read with its scripts and styles stripped.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - Vals AI describes its MedQA as "Evaluating language model bias in medical questions"; whether its items
+      are the original test split or a perturbed variant was not read. If a variant, its numbers belong to a
+      variant entry, and the learned-entrant item from it should move.
+    - tools_allowed stands for the textbook corpus. Check that it is the right comparability field for a
+      supplied retrieval corpus.
