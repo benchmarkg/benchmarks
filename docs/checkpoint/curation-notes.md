@@ -397,3 +397,18 @@ The alternation continues: odd entries with the copilot, even without.
   belong on Metric entities and subsets.
 - **No fixed split in the sources.** The code's configuration chooses the split, and neither the paper nor
   the README states it. `contamination_risk` stays unknown for want of a scored split.
+
+## 16. nle (games-planning; copilot off; 4.3 min)
+
+- **The second move to a personal account and back to an organisation.** facebookresearch/nle is archived and
+  says "find NLE at its new home" in one person's account, which GitHub now redirects to the NetHack-LE
+  organisation. It is the sixth hand-over in sixteen entries. `governance.maintainer` names the current holder,
+  and the history is a note.
+- **The vocabulary names this benchmark in its examples.** `episodic-return` cites "NetHack in-game score", and
+  `rl-policy`'s test already covers prompted language agents scored in RL environments. As with τ-bench, the
+  stress corpus shaped the terms, and entries from it go faster.
+- **A competition run on the environment.** The 2021 NetHack Challenge used NLE, with its own rules and board. It
+  is an `Event` or its own entry, and the line between the two is not obvious to a curator. It was left out and
+  flagged.
+- **Low contamination for the right reason.** Scored episodes are generated from seeds at evaluation and do not
+  exist beforehand. Of sixteen entries, this is the first `low` that the structure settles outright.
