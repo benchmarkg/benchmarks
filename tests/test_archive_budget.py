@@ -163,6 +163,28 @@ def test_the_capture_asks_for_30d_and_existence_goes_through_cdx(monkeypatch):
     assert 'wayback/available?' not in src                                 # nowhere in the client
 
 
+def test_a_cdx_lookup_that_gets_no_answer_is_asked_once_more(monkeypatch):
+    # CDX's intermittent 503 hid an eight-day-old capture of opencatalystproject.org (2026-10-10), and
+    # SPN2 then refused the submit as a duplicate: one retry finds it. A second failure stays unknown, and
+    # a timeout is not retried (it counts toward the run's three-network-errors stop).
+    row = '[["timestamp","original","digest"],["20261002203137","https://x.example.org/","D"]]'
+    for replies, found in (([(503, 'Temporarily Offline'), (200, row)], True),
+                           ([(None, 'timed out')], False),
+                           ([(503, 'Temporarily Offline'), (503, 'Temporarily Offline')], False),
+                           ([(200, '[["timestamp","original","digest"]]')], False)):
+        sent, queue = [], list(replies)
+
+        def request(url, data=None, auth=False):
+            sent.append(url)
+            return queue.pop(0)
+
+        wb = Wayback('key', 'secret', spacing=0)
+        monkeypatch.setattr(wb, '_request', request)
+        hit = wb.latest('https://x.example.org/')
+        assert (hit is not None) == found and len(sent) == len(replies) and not queue
+        assert wb.lookup_failed == (replies[-1][0] != 200)
+
+
 # ---- a failure is recorded, with its reason, and lowers reliability ----------------------------
 
 def test_a_refused_capture_is_failed_with_its_reason_and_lowers_reliability(tmp_path):

@@ -81,8 +81,20 @@ def test_the_entries_resolve_to_different_material_sets():
         'swe-bench-verified.yaml': (('agentic',), 12),                         # plus provider_snapshot
         'critpt.yaml': (('llm-static-text',), 9),                             # plus snapshot, selection, harness
         'scicode.yaml': ((), 8),                     # no profile resolves; llm-static-text's fields as extras
+        # the P1-S3-T01 checkpoint entries
+        'superb.yaml': ((), 3),                                               # harness, eligibility_track, subset
+        'coco.yaml': ((), 2),                                                 # split and training data
+        'medqa.yaml': ((), 2),                                                # set, and the textbook corpus
+        'oc20.yaml': (('forecasting',), 2),                                   # lead time and window waived
+        'proteingym.yaml': ((), 2),                                           # setting and training data
+        'libero.yaml': (('simulation',), 7),                                  # plus n_samples, training data
+        'the-well.yaml': (('forecasting',), 3),                               # waived, plus the hardware budget
+        'minif2f.yaml': ((), 2),                                              # version and pass@k
+        'harmbench.yaml': (('model-graded',), 8),                             # the classifier is the judge
+        'mmmu.yaml': (('llm-static-text',), 6),
     }
-    assert len({r.material for r in got.values()}) == 13   # scicode's set is mmlu's
+    # scicode's set is mmlu's; coco, oc20 and proteingym share virtual-cell-challenge's (split and training data)
+    assert len({r.material for r in got.values()}) == 20
     # the board's track and the run's harness both enter ARC-AGI-3's key (02 S12.7)
     assert {'eligibility_track', 'harness'} <= set(got['arc-agi-3.yaml'].material)
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
@@ -325,8 +337,11 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'arc-agi-3', 'casp', 'critpt', 'forecastbench', 'kaggle-game-arena', 'matbench-discovery', 'mmlu', 'paperbench',
-                                   'roboarena', 'scicode', 'swe-bench', 'swe-bench-verified', 'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(out['profiles']) == {'arc-agi-3', 'casp', 'coco', 'critpt', 'forecastbench', 'harmbench',
+                                   'kaggle-game-arena', 'libero', 'matbench-discovery', 'medqa', 'minif2f', 'mmlu',
+                                   'mmmu', 'oc20', 'paperbench', 'proteingym', 'roboarena', 'scicode', 'superb',
+                                   'swe-bench', 'swe-bench-verified', 'the-well', 'virtual-cell-challenge',
+                                   'weatherbench-2'}
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 
