@@ -455,3 +455,59 @@ The alternation continues: odd entries with the copilot, even without.
   leaderboard is on the department's host. `individual` and `academic-lab` each fit one half.
 - **Near the ceiling on one split.** ABCD to D reaches an average of 4.67 of 5. Saturation is derived and needs
   claims, so the observation goes in the notes.
+
+## 20. pdebench (physics; copilot off; 6.4 min)
+
+- **The extract builder had an offset bug, found here.** It located quotes in a casefolded copy of the text.
+  casefold() lengthens some characters (the ligature "ﬁ" folds to "fi"), so in a long, ligature-heavy paper the
+  window landed far from the quote, and the builder's own containment check stopped it. Earlier extracts passed
+  that check, so every committed quote is in its extract. Their windows may sit off-centre. The fix maps
+  folded offsets back to the original text. About two minutes of this entry's time is that debugging.
+- **The forecasting-profile waiver for the seventh time** (simulation surrogate, statistical fit).
+- **A README that names its maintainers with their addresses on the next line.** The quote for maintainership
+  had to move to another line, as for SUPERB, MMMU and The Well.
+
+## Entries 11-20 at a glance (written after entry 20)
+
+| # | entry | family | copilot | minutes |
+| --- | --- | --- | --- | --- |
+| 11 | flores | language | on | 8.7 |
+| 12 | humaneval | code | off | 4.7 |
+| 13 | tau-bench | agents-tooluse | on | 6.2 |
+| 14 | climatebench | earth-climate | off | 5.6 |
+| 15 | circuitnet | engineering-design | on | 6.1 |
+| 16 | nle | games-planning | off | 4.3 |
+| 17 | folio | reasoning-general | on | 6.0 |
+| 18 | legalbench | society-econ-law | off | 3.7 |
+| 19 | calvin | robotics-embodiment | on | 5.1 |
+| 20 | pdebench | physics | off | 6.4 |
+
+Over all twenty: median 6.0 minutes; with the copilot 6.1 (n = 10), without 5.3 (n = 10). The copilot arm is
+slower in both halves (7.3 vs 6.1, then 6.1 vs 4.7), and every copilot entry includes a copilot run of 10-30
+seconds and a draft to delete. The extractive drafter saves nothing measurable. The caveats at the top
+still apply: the curator is an agent, and the drafter is not an LLM.
+
+Twenty entries cover eighteen families. Robotics (LIBERO, CALVIN) and physics (The Well, PDEBench) each have
+two, as P1-S3-T02's step 3 asks.
+
+New in 11-20, beyond the list at the top:
+
+- **Gated dataset cards** (FLORES+, FOLIO v2) hide facts behind terms the curator should not accept on the user's
+  behalf. The public API records carried the gate and the licence.
+- **Designated split versus reported split** (FOLIO: the test split was never released, and everyone reports on
+  validation). Combined with MedQA's and LIBERO's designed-versus-used splits, "protocol as used" is now the
+  most frequent gap in the schema.
+- **No capability for program synthesis** (HumanEval, logged).
+- **A successor announced a week before curation** (ClimateBench v2). The vocabulary has no "successor
+  announced" state.
+- **A simulated user's model changes the score** (τ-bench) and has no comparability field.
+- **Hand-graded minority tasks set the tier** (LegalBench), while the boards that run it use only the automatic
+  tasks.
+- **Two licences for one dataset** (FOLIO), and per-task licences (LegalBench), against a one-value
+  `dataset_licence`.
+- **Profiles that do not resolve.** τ-bench (environment-state-check, model-in-benchmark-harness) resolves no
+  comparability profile, although SWE-bench's `agentic` profile is meant for the same kind of run, and HumanEval
+  and FLORES resolve none either. Their conditions come only from `material_extra`. The profile rules miss
+  agentic tool-use and reference-metric benchmarks (found when the corpus tests were updated).
+- **The extract builder's two bugs** (casefold offsets, and markup stripping on Markdown) argue for the project's
+  own extract tool, so curators do not each write one.
