@@ -382,3 +382,18 @@ The alternation continues: odd entries with the copilot, even without.
 - **One person's account.** The repository and the data record belong to one researcher, so
   `maintainer_type: individual`. That is the key-person risk the term exists for, even for a benchmark with
   an institutional paper.
+
+## 15. circuitnet (engineering-design; copilot on; 6.1 min)
+
+- **A dataset with tasks, not a benchmark with a board.** CircuitNet calls itself a dataset. It earns a
+  benchmark entry because its tasks have fixed metrics and learned entrants. The line between "dataset" and
+  "benchmark" is the admissibility test (A5), and it was easy to apply here.
+- **`scientific-prediction` stretched to engineering.** Its definition names physical, chemical, biological
+  and Earth systems. Predicting a chip layout's congestion or IR drop is predicting a physical system's state,
+  but an engineered one. The capability vocabulary has nothing for "predict a design's downstream property",
+  so the stretch is flagged in the basis rather than logged.
+- **Metric per task, borrowed from prior methods.** CircuitNet scores each task with "the same evaluation
+  metrics as in the original studies". `evaluation_method` takes the union, and the per-task metrics would
+  belong on Metric entities and subsets.
+- **No fixed split in the sources.** The code's configuration chooses the split, and neither the paper nor
+  the README states it. `contamination_risk` stays unknown for want of a scored split.
