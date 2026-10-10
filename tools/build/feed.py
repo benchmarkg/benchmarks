@@ -332,7 +332,9 @@ def main(argv=None):
         with open(a.out, 'w', encoding='utf-8', newline='\n') as f:
             f.write(text)
     else:
-        sys.stdout.write(text)
+        # Bytes, as freshness.py and ingest_health.py write: the site reads this as UTF-8, and a Windows console's
+        # code page cannot encode a name like 'τ-bench' (P1-S3-T02's tau-bench entry, 2026-10-10).
+        sys.stdout.buffer.write(text.encode('utf-8'))
     return 0
 
 
