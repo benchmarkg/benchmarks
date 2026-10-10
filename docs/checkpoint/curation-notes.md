@@ -441,3 +441,17 @@ The alternation continues: odd entries with the copilot, even without.
   combined corpus item met. Here the third party is evidence of use, not part of the benchmark.
 - **Vals AI's page as liveness again** (after MedQA). A third-party board's "Updated" date has been the most
   direct current-use evidence for two entries. Liveness checks could read such boards.
+
+## 19. calvin (robotics-embodiment; copilot on; 5.1 min)
+
+- **A leaderboard with no stated way onto it.** The site's table lists published methods by split and sensors, and
+  nothing says whether rows come from the maintainers reading papers or from authors asking. `activity: unknown`
+  and `submission_process: []` both say "not stated". This is the fourth benchmark (after HarmBench, FLORES and
+  the empty lists noted before) where an empty or unknown value carries a different meaning from "none".
+- **Angle brackets are tags to the normaliser.** The README's command line `--dataset_path <PATH/TO/DATASET>`
+  loses the placeholder when the text is normalised, so a quote containing it can never match. A curator has to
+  know to avoid such quotes, and the normaliser's HTML stripping is right for HTML but runs on Markdown too.
+- **A personal repository on a university site.** The code is in the first author's account, and the
+  leaderboard is on the department's host. `individual` and `academic-lab` each fit one half.
+- **Near the ceiling on one split.** ABCD to D reaches an average of 4.67 of 5. Saturation is derived and needs
+  claims, so the observation goes in the notes.

@@ -1,0 +1,234 @@
+# data/benchmarks/robotics-embodiment/calvin.yaml
+#
+# P1-S3-T02, checkpoint entry 19 of 20 (copilot on: the F6 copilot's extractive drafter gave the title, arXiv id and
+# release date). Filled from the CALVIN paper, arXiv 2112.03227 read as its v4 PDF (RA-L 2022), and its abstract
+# page; the repository README; and the project site's leaderboard. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: calvin
+name: CALVIN
+aliases:
+  - Composing Actions from Language and Vision
+tagline: Chains of five language instructions for a simulated robot arm across four environments,
+  scored by chain length.
+description: >
+  A simulated benchmark (PyBullet) for language-conditioned, long-horizon manipulation. A 7-DOF Franka
+  arm works in four related tabletop environments (A to D) with a drawer, a sliding door, buttons, a switch
+  and blocks, from onboard cameras and proprioception. Training data is about 24 hours of teleoperated
+  play with 20K language annotations. The headline protocol (long-horizon multi-task language control)
+  runs 1,000 fixed chains of five instructions in a row, drawn from 34 subtasks, and reports the success
+  rate at each chain length and the average number completed (0 to 5). Evaluation modes vary the training
+  environments (D to D, ABC to D unseen, ABCD to D) and the sensors.
+self_description:
+  source: src-github-calvin-readme
+  quote: an open-source simulated benchmark to learn long-horizon language-conditioned tasks
+external_ids:
+  arxiv: '2112.03227'
+paper:
+  title: 'CALVIN: A Benchmark for Language-Conditioned Policy Learning for Long-Horizon Robot Manipulation
+    Tasks'
+  arxiv: '2112.03227'
+  version_read: v4
+  source: src-arxiv-2112-03227-v4
+released: 2021-12-06
+released_note: The paper's first arXiv version, as the abstract page dates it.
+released_source: src-arxiv-2112-03227
+released_quote: Mon, 6 Dec 2021
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/embodied-instruction-following
+  secondary:
+    - robotics-embodiment/manipulation
+domain_basis:
+  reason: The agent carries out a sequence of natural-language instructions through simulated
+    manipulation, which is the primary leaf's definition; the actions are tabletop manipulation.
+  source: src-github-calvin-readme
+  quote: a single agent must solve complex manipulation tasks by understanding a series of
+    unconstrained language expressions in a row
+capability:
+  - long-horizon-execution
+  - sensorimotor-control
+  - distribution-shift-generalization
+capability_basis:
+  long-horizon-execution:
+    reason: Each chain is five dependent instructions; once one fails the chain stops, so a
+      mid-chain error ends the episode's credit.
+    source: src-arxiv-2112-03227-v4
+    quote: to arrive at 1000 unique instruction chains
+  sensorimotor-control:
+    reason: A 7-DOF arm is controlled in closed loop from onboard sensors, and success depends on
+      the resulting physical state.
+    source: src-arxiv-2112-03227-v4
+    quote: Physics are simulated using the PyBullet physics engine
+  distribution-shift-generalization:
+    reason: The hardest mode trains on environments A, B and C and tests on D, which differs in
+      textures and object placement, reported as its own condition.
+    source: src-arxiv-2112-03227-v4
+    quote: allows testing zero-shot generalization by leveraging a range of four manipulation
+      environments and unseen language instructions
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Every number is the success of episodes run in the simulator -- the share of chains
+    reaching each length, and the average length -- a bounded outcome per episode.
+  source: src-calvin-site
+  quote: LH-MTLC (32 tasks) No. Instructions in a Row (1000 chains) 1 2 3 4 5 Avg. Len.
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The entrants are learned language-conditioned control policies acting in the simulator;
+    most are trained by imitation from the play data, which rl-policy's test covers as a learned
+    controller.
+  source: src-arxiv-2112-03227-v4
+  quote: we evaluate the multi-context imitation learning (MCIL) approach that uses relabeled
+    imitation learning to distill many reusable behaviors into a goal-directed policy
+
+lifecycle: active
+lifecycle_basis:
+  reason: The leaderboard lists recent methods (FLOWER at 4.67 average length on ABCD to D), and the
+    repository was last pushed in September 2025 (GitHub API); the benchmark is still in use.
+  source: src-calvin-site
+  quote: FLOWER Static RGB + Gripper RGB - 99.2% 96.9% 96.9% 92.3% 88.3% 4.67
+activity: unknown
+activity_note: The site keeps a leaderboard of published methods, but neither the site nor the
+  README says how rows are added or whether outside results are taken; the README points readers to
+  it for "a detailed overview of the evaluation performances".
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: FLOWER
+    source: src-calvin-site
+    observed_on: 2026-10-10
+    quote: FLOWER Static RGB + Gripper RGB - 99.2% 96.9% 96.9% 92.3% 88.3% 4.67
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each subtask's success condition, checked on the simulator's state.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The simulator, data, evaluation chains and evaluation script are open source.
+  source: src-github-calvin-readme
+  quote: you can implement the `CustomModel` class in `evaluate_policy.py`
+
+task:
+  exists: true
+  input:
+    - onboard camera images (static and gripper), optional depth or tactile, proprioception, and one
+      language instruction at a time
+  output: Continuous 7-DOF arm and gripper actions until the instruction is done or times out, then
+    the next instruction in the chain.
+  scoring: Over 1,000 chains of five instructions, the share completing 1-5 in a row and the average
+    number completed.
+  source: src-arxiv-2112-03227-v4
+  quote: to arrive at 1000 unique instruction chains
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The simulator, the play datasets for each split and the evaluation code are public
+      downloads.
+    source: src-github-calvin-readme
+    quote: choose which split you want to download with the argument `D`, `ABC` or `ABCD`
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Data fixes are announced with dates in the README (a major fix to the ABC and ABCD
+      datasets in September 2022, a scene file fix in February 2023), so a result can name the state
+      it used.
+    source: src-github-calvin-readme
+    quote: MAJOR BUG IN ABC and ABCD dataset
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Evaluation runs in the PyBullet simulation; training data is human
+    teleoperated play in it, with language annotations.
+  data_provenance_source: src-arxiv-2112-03227-v4
+  data_provenance_quote: CALVIN includes ∼24 hours teleoperated unstructured play data together with
+    20K language directives
+  contamination_risk: unknown
+  contamination_risk_note: Scoring is closed-loop in the simulator, but the 1,000 evaluation chains
+    are a fixed public list; whether methods tune on them was not assessed.
+  contamination_evidence: []
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: University of Freiburg (Oier Mees and collaborators)
+  maintainer_basis:
+    reason: The site and leaderboard are hosted by the University of Freiburg's computer science
+      department; the code sits in the first author's GitHub account.
+    source: src-arxiv-2112-03227-v4
+    quote: http://calvin.cs.uni-freiburg.de
+  maintainer_type: academic-lab
+  maintainer_type_note: The repository is in one person's account, which individual's test points
+    at; the site is the university's, so the lab is taken as the holder. A reviewer may prefer
+    individual.
+  submission_process: []
+  submission_process_note: Not stated; the leaderboard lists published methods, and how rows reach
+    it is not said.
+  independence_flags: []
+  independence_flags_note: Not assessed. The leaderboard includes the maintainers' own later methods
+    (HULC, HULC++); whether that makes maintainer-competes-on-own-benchmark apply was not checked
+    against the authors.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Evaluation is automatic but runs only inside CALVIN's PyBullet environment.
+    source: src-arxiv-2112-03227-v4
+    quote: Physics are simulated using the PyBullet physics engine
+  harness_availability: official-harness
+  harness: calvin (evaluation/evaluate_policy.py)
+  harness_source: src-github-calvin-readme
+  harness_quote: you can implement the `CustomModel` class in `evaluate_policy.py`
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for mees/calvin, read 2026-10-10; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the split (D to D, ABC to D, ABCD to D), the sensor suite, and the data fix the
+  # dataset was downloaded before or after (September 2022).
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: http://calvin.cs.uni-freiburg.de/
+repository: https://github.com/mees/calvin
+leaderboard_url: http://calvin.cs.uni-freiburg.de/
+
+tags:
+  - language-conditioned-manipulation
+  - long-horizon
+  - simulation
+  - imitation-learning
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S3-T02)
+  added_on: 2026-10-10
+  last_verified: 2026-10-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2112-03227-v4
+    - src-arxiv-2112-03227
+    - src-github-calvin-readme
+    - src-calvin-site
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text; its abstract page for the date; the README
+    at main; and the site's leaderboard with scripts and styles stripped.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - How rows reach the leaderboard (activity, submission_process).
+    - Whether the maintainers' own methods (HULC, HULC++) on the board make maintainer-competes-on-own-benchmark apply.
+    - The ABCD to D average length of 4.67 (FLOWER) is near the maximum of 5; saturated is derived and needs claims.
