@@ -146,3 +146,23 @@ facets, so the copilot arm measures a weak copilot.
 - **`aggregation_policy` has a basis only under the `_policy_basis` spelling.** `aggregation_basis` is
   refused. The rule (`<field>_basis`) is regular, but nothing tells a curator it is the rule. Errors name
   the key, not the expected spelling.
+
+## 6. libero (robotics-embodiment; copilot off; 4.7 min)
+
+- **Designed protocol and actual use diverge, as with MedQA.** The paper's protocol is lifelong: tasks in
+  sequence, scored by FWT, NBT and AUC. Almost every result since (vision-language-action models) is
+  multitask success rate per suite, which is near saturation (97.1% average for OpenVLA-OFT, 2025). The
+  capability (`continual-learning`) is right for the first and wrong for the second. Two benchmarks out
+  of six now need "protocol as used" beside "protocol as designed". `subsets` can carry a suite, but
+  nothing carries a protocol.
+- **Evidence of use comes from a user's paper.** There is no leaderboard, and the maintainers' repository
+  was last pushed in March 2025. `lifecycle: active` rests on a third party's abstract. There is no field
+  for "most-cited recent result", so it sits in `lifecycle_basis` and `learned_entrant_evidence`.
+- **`activity: no-submission-channel` has to prove an absence.** The quote is the site's navigation bar
+  (paper, code, docs, datasets, no leaderboard). A quote can show what is there; it cannot show that
+  nothing else is. COCO and MedQA had the same problem.
+- **`rl-policy` for behaviour-cloned policies.** The term's name says reinforcement learning, and its test
+  covers any learned controller. The id misleads, like `any-to-any-generation` for captioning.
+- **The README carried the licences per component** (code MIT, data CC-BY-4.0) in one table. `code_licence`
+  and `dataset_licence` took them directly, with quotes. This is the first entry where both licence fields
+  are filled from one quotable source.
