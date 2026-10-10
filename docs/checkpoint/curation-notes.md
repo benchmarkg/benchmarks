@@ -188,3 +188,23 @@ facets, so the copilot arm measures a weak copilot.
   check should be tested on brace-grouped addresses.
 - **The copilot gave four fields** (title, arXiv id, date, repository), all correct and all the cheapest
   ones.
+
+## 8. minif2f (mathematics; copilot off; 5.0 min)
+
+- **Maintainership moved by fork.** OpenAI's repository is archived. Meta's fork maintains the statements,
+  fixes them, adds informal versions, and refuses new proofs to limit contamination. `governance.maintainer`
+  is one value and `homepage`/`repository` are one URL each. Nothing records "originally X, now Y". It is
+  the third entry with a hand-over (COCO's server, OC20's board).
+- **Versioning by commit.** The original froze v1 in a branch. The fork asks users to cite "the version you
+  used by commit or date". `versions` could hold v1, but not the fork's moving state. `versioned-releases`
+  fits only because a commit is a pin.
+- **Ground truth with no reference answer.** A proof assistant's verdict is the truth. `ground_truth_source`
+  has `none`, which reads as "no ground truth" rather than "the checker is the ground truth". Formal
+  benchmarks need their own value.
+- **Contamination was easy to evidence for once.** The fork's README states the concern, and the original
+  publishes proofs beside test statements. `high` with two evidence items, the first entry where the
+  sources settled it.
+- **Stage 3's corpus item combined two benchmarks** (miniF2F and miniF2F-Dafny), like OC20/OC22. That is
+  the third Stage 3 combination split at curation. Corpus ids and entry ids now differ for both.
+- **No paper PDF was needed.** Two READMEs and an abstract gave everything quoted. The fastest entries
+  (LIBERO, miniF2F, The Well) are the ones whose maintainers wrote a full README.
