@@ -208,3 +208,24 @@ facets, so the copilot arm measures a weak copilot.
   the third Stage 3 combination split at curation. Corpus ids and entry ids now differ for both.
 - **No paper PDF was needed.** Two READMEs and an abstract gave everything quoted. The fastest entries
   (LIBERO, miniF2F, The Well) are the ones whose maintainers wrote a full README.
+
+## 9. harmbench (safety-alignment; copilot on; 3.5 min)
+
+- **Current use came from one API query this time.** An arXiv search for "HarmBench", newest first, gave
+  five 2026 papers reporting on it. The Well's search found none. The difference is the name: "HarmBench"
+  is a unique token, and "the Well" is two common words. Any automated liveness check by literature will
+  miss benchmarks with ordinary names.
+- **`submission_process: []` stands for "not known".** The site renders by script and the README describes
+  no route, so neither `literature-only` nor `maintainer-run` could be justified. An empty list cannot say
+  "unknown" as opposed to "none". The same ambiguity as `independence_flags: []`, now on a second field.
+- **Two subjects, both legitimate.** HarmBench ranks attacks across models and models across attacks.
+  `designed_for_subjects` took both (`attack-or-intervention-method` and `instruction-tuned-model`), which
+  its test allows. The aggregate ranks two kinds of entrant, and `aggregation_policy` is one value for
+  both.
+- **The scorer is a released classifier, so `model-derived-metric`, not `model-graded-judge`.** The two
+  terms' exclusion tests settle it cleanly. The classifier's version is a comparability condition
+  (`judge_model`), although the vocabulary says it is not a judge. The condition's name and the term
+  disagree.
+- **The maintainers' own defence is ranked.** R2D2 is in the paper's own figures, so the flag applies, with
+  a figure label as its quote. This is the third application of `maintainer-competes-on-own-benchmark`
+  (after SUPERB and ProteinGym), each found in a different kind of evidence.

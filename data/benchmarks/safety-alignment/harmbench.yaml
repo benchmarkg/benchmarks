@@ -1,0 +1,238 @@
+# data/benchmarks/safety-alignment/harmbench.yaml
+#
+# P1-S3-T01, checkpoint entry 9 of 10 (copilot on: the F6 copilot's extractive drafter gave the name, title,
+# arXiv id, release date and repository). Filled from HarmBench's paper, arXiv 2402.04249 read as its v2 PDF
+# (2024-02-27), and its abstract page; the repository README; and the abstract of SENTINEL (arXiv 2610.04470),
+# a 2026 result. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# harmbench.org renders by script (an empty root div) and was not read, so whether it keeps a results table
+# or takes submissions is not known: activity is unknown, and so is the submission process.
+
+id: harmbench
+name: HarmBench
+tagline: 510 harmful behaviours for scoring automated red-teaming attacks against LLMs, and LLMs' refusal under
+  attack.
+description: >
+  A standardised evaluation of automated red teaming. There are 510 behaviours (100 validation, 410 test) in
+  four functional categories: standard, contextual, copyright and multimodal. They span semantic categories
+  such as cybercrime, chemical and biological weapons, misinformation and harassment. A red-teaming method
+  generates test cases to elicit each behaviour from a target model, and a completion counts as a success
+  when HarmBench's released classifier judges that it exhibits the behaviour; copyright behaviours are
+  checked by hashing instead. The score is attack success rate. The benchmark ranks attacks across models
+  and models (and defences) across attacks; the initial release covered 18 methods and 33 models.
+self_description:
+  source: src-github-harmbench-readme
+  quote: A fast, scalable, and open-source framework for evaluating automated red teaming methods and LLM
+    attacks/defenses
+external_ids:
+  arxiv: '2402.04249'
+paper:
+  title: 'HarmBench: A Standardized Evaluation Framework for Automated Red Teaming and Robust Refusal'
+  arxiv: '2402.04249'
+  version_read: v2
+  source: src-arxiv-2402-04249-v2
+released: 2024-02-06
+released_note: The paper's first arXiv version, as the abstract page dates it; the README dates the initial
+  release the same day.
+released_source: src-arxiv-2402-04249
+released_quote: Submitted on 6 Feb 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/jailbreak-robustness
+domain_basis:
+  reason: The scored event is an attack eliciting a harmful behaviour from a model that should refuse it.
+  source: src-arxiv-2402-04249-v2
+  quote: its attack success rate (ASR) on a given target model
+capability:
+  - adversarial-robustness
+capability_basis:
+  adversarial-robustness:
+    reason: Automated attackers choose the inputs, and the score is how often they break the target, which is the
+      target's resistance read the other way.
+    source: src-arxiv-2402-04249-v2
+    quote: which is the percentage of test cases that elicit the behavior from the target model
+capability_considered_and_rejected:
+  - term: harm-avoidance
+    reason: Its exclusion test removes benchmarks that measure resistance to an attacker rather than conduct under
+      ordinary use, and HarmBench's score is attack success.
+
+evaluation_method:
+  - adversarial-red-team
+  - model-derived-metric
+evaluation_method_basis:
+  reason: The number is attack success rate. Success is decided by a released classifier fine-tuned for the task
+    (a Llama 2 13B model), or for copyright behaviours by hashing, not by a prompted general judge.
+  source: src-github-harmbench-readme
+  quote: HarmBench provide 3 classifier models
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: Attacks and models are ranked by average ASR, over models for an attack and over attacks for a model.
+  source: src-arxiv-2402-04249-v2
+  quote: We use average ASR to rank models and attacks
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced in 2026 by others, for example a defence paper in October 2026.
+    The maintainers' repository was last pushed on 2024-08-16 (GitHub API), which is maintenance evidence,
+    not use.
+  source: src-arxiv-2610-04470
+  quote: Experiments on HarmBench across multiple LLMs show that SENTINEL reduces jailbreak success rates to
+    close to 5
+activity: unknown
+activity_note: harmbench.org renders by script and was not read, and the README describes no submission route.
+  Whether the site keeps a results table, and whether it takes entries, is not known. Stage 3 logged the
+  submission process as source-silent (2026-09-28-harmbench-004).
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Zephyr 7B with R2D2 adversarial training
+    source: src-arxiv-2402-04249-v2
+    observed_on: 2026-10-10
+    quote: Zephyr Qwen 7B +R2D2 (Ours)
+designed_for_subjects:
+  - attack-or-intervention-method
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: HarmBench ranks red-teaming methods applied to a fixed set of target models, which is
+    attack-or-intervention-method's case. It ranks the target models (and defences) as well, so their own term
+    is tagged beside it.
+  source: src-github-harmbench-readme
+  quote: 'There are two primary ways to use HarmBench: (1) evaluating red teaming methods against a set of LLMs,
+    and (2) evaluating LLMs against a set of red teaming methods'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: none
+ground_truth_source_note: No reference completions. The released classifier, or the hash check, decides whether a
+  completion exhibits the behaviour.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Behaviours, classifiers and the full pipeline are released; closed-model targets need their APIs.
+  source: src-github-harmbench-readme
+  quote: The easiest way to run the evaluation pipeline is with `./scripts/run_pipeline.py`
+
+task:
+  exists: true
+  input:
+    - a harmful behaviour (for contextual behaviours with a context string, for multimodal ones with an image)
+      and a target model to attack
+  output: Test cases from the attack, and the target model's completions to them.
+  scoring: Attack success rate on the 410 test behaviours, judged by the test classifier with greedy decoding;
+    averages rank attacks and models.
+  source: src-arxiv-2402-04249-v2
+  quote: The validation set contains 100 behaviors and the test set contains 410 behaviors
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The behaviours of both splits and the classifiers are released; the test behaviours are reserved for
+      evaluation by rule, not withheld.
+    source: src-arxiv-2402-04249-v2
+    quote: We require that attacks and defenses do not tune on the test set or on behaviors semantically
+      identical to those in the test set
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Changes came in a dated, named release (HarmBench 1.0, 2024-02-26) after the initial one; nothing later
+      is announced in the README.
+    source: src-github-harmbench-readme
+    quote: 'HarmBench 1.0: adversarial training code+model, precomputed test cases, and various improvements'
+  data_provenance:
+    - expert-authored
+  data_provenance_note: Several of the authors, AI-safety researchers, designed the behaviours by hand, guided by a
+    GPT-4 summary of model providers' acceptable-use policies. Whether they count as specialists in the harm
+    areas the behaviours test is a reviewer check.
+  data_provenance_source: src-arxiv-2402-04249-v2
+  data_provenance_quote: several authors of this work manually designed a large set of behaviors
+  contamination_risk: medium
+  contamination_risk_note: The test behaviours are public. The rules forbid tuning on them, and nothing enforces
+    it. Defences and safety training could include them or near-copies, and no evidence of this was read.
+  contamination_evidence: []
+  size_note: 510 behaviours in four functional categories; 100 validation and 410 test.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Center for AI Safety
+  maintainer_basis:
+    reason: The repository and the classifiers sit in the Center for AI Safety's organisation accounts (GitHub
+      centerforaisafety, Hugging Face cais).
+    source: src-github-harmbench-readme
+    quote: git clone https://github.com/centerforaisafety/HarmBench.git
+  maintainer_type: nonprofit
+  maintainer_type_note: The Center for AI Safety is a nonprofit; its legal form is not stated in the sources read.
+  submission_process: []
+  submission_process_note: Not known; the site renders by script, and the README gives no submission route (Stage
+    3's 2026-09-28-harmbench-004).
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2402-04249-v2
+      quote: Zephyr Qwen 7B +R2D2 (Ours)
+  independence_flags_note: The paper ranks its own adversarial-training defence (R2D2 on Zephyr 7B) among the
+    models it evaluates.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The pipeline generates test cases, completions and classifier verdicts end to end with released
+      classifiers and no human step.
+    source: src-github-harmbench-readme
+    quote: 'The HarmBench evaluation pipeline consists of three steps (with an optional merging step), shown in the
+      figure above: (1) generating test cases, (1.5) merging test cases, (2) generating completions, (3)
+      evaluating completions'
+  harness_availability: official-harness
+  harness: HarmBench (scripts/run_pipeline.py)
+  harness_source: src-github-harmbench-readme
+  harness_quote: The easiest way to run the evaluation pipeline is with `./scripts/run_pipeline.py`
+  runnable_via:
+    - custom
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for centerforaisafety/HarmBench, read 2026-10-10; not a quoted
+    Source.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the classifier that judged success (and its version), the behaviour set (split
+  # and functional categories), and, for a model's score, which attacks it was averaged over.
+  material_extra:
+    - judge_model
+    - subset_used
+
+homepage: https://www.harmbench.org/
+repository: https://github.com/centerforaisafety/HarmBench
+
+tags:
+  - red-teaming
+  - jailbreaks
+  - refusal
+  - llm-safety
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S3-T01)
+  added_on: 2026-10-10
+  last_verified: 2026-10-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2402-04249-v2
+    - src-arxiv-2402-04249
+    - src-github-harmbench-readme
+    - src-arxiv-2610-04470
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; the abstract page for the date; the README at main;
+    and SENTINEL's abstract page (2026) as evidence of current use. harmbench.org was not read.
+  confidence: medium
+  notes: |
+    Reviewer checks:
+    - harmbench.org: whether it holds a results table (maintainer-run) or takes submissions.
+    - data_provenance expert-authored: the behaviour authors are AI-safety researchers; whether that is the
+      specialist skill the items test.
+    - A 2026 psychometric audit (arXiv 2610.12409) questions whether HarmBench measures a single attribute;
+      not read beyond its abstract.
