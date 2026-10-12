@@ -93,7 +93,7 @@ def check_form(name, doc) -> list[str]:
     elif name == 'new-benchmark.yml' and tuple(o['label'] for o in attest) != NEW_BENCHMARK_ATTESTATIONS:
         out.append("the attestations are not 05 S6's two")
     bot = checkboxes(body, 'bot-disclosure')
-    if not bot or not all(o.get('required') for o in bot) or not all('bot' in o.get('label', '') for o in bot):
+    if not bot or not all(o.get('required') for o in bot) or not all('bot' in str(o.get('label')) for o in bot):
         out.append('no required bot disclosure (a checkbox saying a bot handles the issue)')
     labels = doc.get('labels') or []
     if name == 'taxonomy-term.yml':
