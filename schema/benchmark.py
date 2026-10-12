@@ -23,9 +23,9 @@ What this model enforces:
           `deferred_fields()` lists every one present.
   - The admissibility boundary (00 S6 A5): at least one `learned_entrant_evidence` item, each citing
     a Source, plus `evaluation_target`.
-  - Derived fields are never hand-written (04 S5): `maintenance_status`,
+  - Derived fields are never hand-written (04 S5): `maintenance_status`, `license` (ADR-0024),
     `execution.inspect_evals_available` and `curation.stewardship` are rejected if present, and
-    `lifecycle: saturated` may not be hand-set. `inspect_evals_available` is computed.
+    `lifecycle: saturated` may not be hand-set. `inspect_evals_available` and `license` are computed.
   - A facet term cannot be both assigned and `*_considered_and_rejected`, and a per-term
     `capability_basis` justifies only a term that is assigned.
 
@@ -101,15 +101,19 @@ SourceId = Annotated[str, StringConstraints(pattern=r'^src-[a-z0-9]+(-[a-z0-9]+)
 Url = Annotated[str, StringConstraints(pattern=r'^https?://\S+$')]
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 YearMonth = Annotated[str, StringConstraints(pattern=r'^\d{4}-\d{2}(-\d{2})?$')]
+Doi = Annotated[str, StringConstraints(pattern=r'^10\.\d{4,9}/\S+$')]
+DottedField = Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')]
 
 EvaluationTarget = Literal['learned-system', 'numerical-method', 'human-population', 'mixed']
 ExecutionMode = Literal['automated', 'human-in-loop', 'wet-lab', 'physical-trial', 'panel']
+# ADR-0024: `formal-verifier` (a proof assistant's verdict, miniF2F) and `released-classifier` (a released
+# classifier's verdict, HarmBench) are mechanical judges, which `none` read as "no ground truth".
 GroundTruthSource = Literal['repository-tests', 'held-out-labels', 'simulation', 'experimental', 'expert-panel',
-                            'forecast-resolution', 'none']
+                            'forecast-resolution', 'formal-verifier', 'released-classifier', 'none']
 RunnableVia = Literal['inspect', 'lm_eval', 'helm', 'custom', 'none']
 # 13 S5.4 rule 1: populated during curation from the benchmark's own stated terms.
 MaintainerRerunPolicy = Literal['unrestricted', 'no-third-party-endpoints', 'contact-first', 'unstated']
-AggregationPolicy = Literal['official-aggregate', 'community-aggregate', 'none-by-design']
+AggregationPolicy = Literal['official-aggregate', 'community-aggregate', 'none-by-design', 'unknown']  # ADR-0024
 SecondaryAxis = Literal['cost', 'latency', 'throughput', 'energy', 'reliability']
 VerificationStatus = Literal['ai-drafted-unverified', 'machine-ingested', 'curator-reviewed', 'primary-source-verified',
                              'expert-reviewed', 'maintainer-confirmed']  # 05 S4's ladder
@@ -250,9 +254,11 @@ class ExternalIds(Closed):
 
 
 class Paper(Closed):
-    """The benchmark's own paper. It is a Source; this names which one and which arXiv version was read."""
+    """The benchmark's own paper. It is a Source; this names which one and which arXiv version was read.
+    `doi` is the published version's DOI where there is one beside the preprint (ADR-0024)."""
     title: Text
     arxiv: Annotated[str, StringConstraints(pattern=r'^\d{4}\.\d{4,5}$')] | None = None
+    doi: Doi | None = None
     version_read: Annotated[str, StringConstraints(pattern=r'^v\d+$')] | None = None
     source: SourceId
 
@@ -270,6 +276,35 @@ class ObservedSubjects(Closed):
     values: list[Subject] = Field(min_length=1)
     basis: Text
     source: SourceId
+
+
+class AsUsed(Block):
+    """How the benchmark is run in practice where that differs from its design (ADR-0024): MedQA designed
+    open-book and run closed-book, FOLIO's results on the validation split because the test split was never
+    released. The facets keep describing the design; who actually submits is `observed_subjects`."""
+    protocol: Text
+    split: Text | None = None
+    source: SourceId
+    quote: Text | None = None
+    note: Text | None = None
+
+
+HistoryEventKind = Literal['channel-opened', 'channel-closed', 'channel-moved', 'maintainer-changed',
+                           'repository-moved', 'access-changed', 'licence-changed']
+
+
+class HistoryEvent(Block):
+    """A dated change to a field that holds one current value (ADR-0024): a submission server that moved or
+    closed, a maintainer hand-over, a repository that moved, access that changed on a date. `date` is null
+    where the sources show the change but do not date it; the list is in the order the changes happened."""
+    date_: Union[date, YearMonth, None] = Field(default=None, alias='date')
+    event: HistoryEventKind
+    field: DottedField
+    from_: Text | None = Field(default=None, alias='from')
+    to: Text | None = None
+    source: SourceId
+    quote: Text | None = None
+    note: Text | None = None
 
 
 class Domain(Block):
@@ -344,13 +379,18 @@ Scale.model_rebuild()
 
 # ---- data ---------------------------------------------------------------------------------------
 
-class Size(Block):
-    """Item counts per split and what they are drawn from. Replaces 04 S5's `{items, unit}`, which no
-    entry used, with the shape SWE-bench needed (P0-S4-T10)."""
-    n_items: Count
-    n_repositories: Count | None = None
-    other_splits: list[Count] = Field(default_factory=list)
-    languages: list[Text] = Field(default_factory=list)
+class SizeRow(Block):
+    """One count in a benchmark's size (ADR-0024): how many of what (`unit`), in which split, subset, version
+    or language (`subset`), and the source that states it. The first row is the headline count. This
+    replaces P0-S4-T10's `{n_items, n_repositories, other_splits, languages}`, which wanted one headline
+    count: twenty-one of the 34 curated entries wrote `size_note` instead, because their sizes come per
+    version, per language, per suite or in seeds."""
+    count: int = Field(ge=0)
+    unit: Text
+    subset: Text | None = None
+    note: Text | None = None
+    source: SourceId
+    quote: Text | None = None
 
 
 class SubmissionLimit(Closed):
@@ -398,7 +438,8 @@ class Data(Block):
     ceiling_by_category: list[CategoryCeiling] = Field(default_factory=list)
     dataset_licence: Text | None = None
     upstream_licences: Text | None = None
-    size: Size | None = None
+    size: list[SizeRow] | None = None           # null: not recorded; the first row is the headline count
+    languages: list[Text] = Field(default_factory=list)   # the items' languages, natural or programming
     submission_limit: SubmissionLimit | None = None
 
 
@@ -434,8 +475,11 @@ class Governance(Block):
     maintainer: Text | None = None             # the display name; `maintainers[]` holds Organization refs
     maintainer_type: MaintainerType | None = None
     maintainers: list[Annotated[str, StringConstraints(pattern=r'^org-[a-z0-9-]+$')]] = Field(default_factory=list)
-    submission_process: SubmissionProcess | list[SubmissionProcess] | None = None
+    submission_process: SubmissionProcess | list[SubmissionProcess] | None = None   # null: not stated
     independence_flags: list[Union[IndependenceFlag, FlagItem]] = Field(default_factory=list)
+    # ADR-0024: whether anyone checked. `[]` with true is "checked, and no flag applies"; with false, "not
+    # assessed". `no-known-conflict` is the stronger statement about a search, and carries last_verified.
+    independence_assessed: bool | None = None
     funding: Evidence | None = None
     participation: Evidence | None = None
     independence_policy: Evidence | None = None
@@ -733,7 +777,10 @@ class Benchmark(Block):
     designed_for_subjects: list[Subject] = Field(default_factory=list)
     designed_for_subjects_considered_and_rejected: list[Rejected] = Field(default_factory=list)
     observed_subjects: ObservedSubjects | None = None
-    lifecycle: Lifecycle = 'active'
+    as_used: list[AsUsed] = Field(default_factory=list)
+    # ADR-0024: null when the sources do not show whether the benchmark is in use (lifecycle.yaml's dormant
+    # exclusion: "leave the field null and log it"). It once defaulted to `active`, which asserted use.
+    lifecycle: Lifecycle | None = None
     activity: Activity | None = None
     planned_end: YearMonth | None = None
     events: list[Event] = Field(default_factory=list)
@@ -776,8 +823,6 @@ class Benchmark(Block):
     leaderboard_url: Url | None = None
     api_url: Url | None = None
     maintainer_url: Url | None = None
-    license: str | None = None
-    license_notes: str | None = None
 
     versions: list[BenchmarkVersion] = Field(default_factory=list)
     subsets: list[Subset] = Field(default_factory=list)
@@ -787,6 +832,7 @@ class Benchmark(Block):
     leaderboards: list[Annotated[str, StringConstraints(pattern=r'^lb-[a-z0-9-]+$')]] = Field(default_factory=list)
     baselines: list[Baseline] = Field(default_factory=list)
     lineage: Lineage | None = None
+    history: list[HistoryEvent] = Field(default_factory=list)
     tags: list[Text] = Field(default_factory=list)
     ingestion: dict | None = None                           # machine-written (04 S9)
     curation: Curation
@@ -799,7 +845,21 @@ class Benchmark(Block):
         if isinstance(data, dict) and ('lifecycle', data.get('lifecycle')) in _DERIVED_TERMS:
             raise ValueError('lifecycle %r is derived (taxonomy/lifecycle.yaml) and may never be hand-set'
                              % data['lifecycle'])
+        if isinstance(data, dict) and ('license' in data or 'license_notes' in data):
+            raise ValueError('license is derived from data.dataset_licence and execution.code_licence (ADR-0024) '
+                             'and may never be hand-written; record and annotate those two instead')
         return data
+
+    @computed_field
+    @property
+    def license(self) -> str | None:
+        """ADR-0024: derived, never hand-set. The entries record the data's licence and the code's apart
+        (`data.dataset_licence`, `execution.code_licence`), so the one licence Croissant's `sc:license` and 04
+        S5's table ask for is computed from them: whichever is set, or both, labelled, when they differ."""
+        data, code = self.data.dataset_licence, self.execution.code_licence
+        if data and code and data != code:
+            return 'data: %s; code: %s' % (data, code)
+        return data or code
 
     @model_validator(mode='after')
     def _rejected_terms(self):

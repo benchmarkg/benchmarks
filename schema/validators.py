@@ -32,6 +32,10 @@ The rules, in the order 02 S11 and 04 S12 give them:
                               episodic-return -> derived headroom is null (02 S8 guard 4)
   rating-pool-required        pairwise-preference-elo | tournament-play -> rating_pool_required (auto-fix)
   independence-evidence       an independence flag other than no-known-conflict -> an evidence Source
+  independence-assessed       ADR-0024: a flag is an assessment, so independence_assessed is not false
+                              beside one
+  lifecycle-unobserved        ADR-0024: lifecycle null -> a warning that the sources do not show use
+                              (lifecycle.yaml's dormant exclusion: "leave the field null and log it")
   contested-pair              maintenance_status_contested -> contested_source AND contested_statement_date
   range-basis                 any range estimate -> basis
   subset-drops-terms          02 S11 rule 4: a subset override with fewer terms than its parent (warning)
@@ -289,6 +293,20 @@ def _independence(b, corpus, level):
         flag, src = (f, None) if isinstance(f, str) else (f.flag, f.source)
         if flag != 'no-known-conflict' and not src:
             yield 'blocking', 'independence flag %s needs an evidence Source' % flag
+
+
+@_benchmark_rule('independence-assessed', 'ADR-0024')
+def _independence_assessed(b, corpus, level):
+    if b.governance.independence_flags and b.governance.independence_assessed is False:
+        yield 'blocking', ('independence_assessed is false beside %d flag(s); a flag is an assessment'
+                           % len(b.governance.independence_flags)), 'governance.independence_assessed = true'
+
+
+@_benchmark_rule('lifecycle-unobserved', 'ADR-0024; taxonomy/lifecycle.yaml dormant exclusion')
+def _lifecycle_unobserved(b, corpus, level):
+    if b.lifecycle is None:
+        yield 'warning', ('lifecycle is null: the sources read do not show whether the benchmark is in use; '
+                          'a failure-log record in taxonomy/_failures/ should say so')
 
 
 @_benchmark_rule('contested-pair', '02 S11 implications')

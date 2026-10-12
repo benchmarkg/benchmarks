@@ -53,6 +53,7 @@ def test_full_required_fields_left_empty_are_listed_per_entry(tmp_path):
     assert nulls['capability'] == {'alpha': 'absent'}                       # absent, and the default is []
     assert nulls['governance.independence_flags'] == {'alpha': 'empty', 'beta': 'absent'}
     assert 'beta' not in nulls['data.data_provenance'] and 'alpha' in nulls['data.data_provenance']
+    assert 'license' not in nulls        # 04's table requires it at full, but ADR-0024 derives it: never hand-written
 
 
 def test_unused_fields_are_the_model_fields_no_entry_sets(tmp_path):

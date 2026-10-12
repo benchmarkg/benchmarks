@@ -58,11 +58,11 @@ def test_the_fabricated_quote_yields_a_null_field_and_a_recorded_rejection(tmp_p
     on_disk = read_yaml(r.bench_path)
     BenchmarkDraft.model_validate(on_disk)                                     # written, and valid
     assert 'size' not in on_disk.get('data', {})                               # null, not 3,000
-    assert row(on_disk, 'data.size.n_items') == {
-        'field': 'data.size.n_items', 'confidence': 'absent',
+    assert row(on_disk, 'data.size') == {
+        'field': 'data.size', 'confidence': 'absent',
         'note': 'value rejected: its quote is not in the source snapshot'}
-    assert rejected(on_disk, 'data.size.n_items') == [{
-        'field': 'data.size.n_items', 'value': {'count': 3000, 'unit': 'task instances'},
+    assert rejected(on_disk, 'data.size') == [{
+        'field': 'data.size', 'value': {'count': 3000, 'unit': 'task instances'},
         'claimed': 'SWE-bench consists of 3,000 task instances collected from GitHub.',
         'reason': 'its quote is not in the source snapshot', 'stage': 'vet'}]
     assert on_disk['capability'] == ['context-integration']                    # the fabricated term is gone

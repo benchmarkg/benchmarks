@@ -34,7 +34,7 @@ def bench(bid, family, org, lifecycle='active', status='primary-source-verified'
         maintenance_status: {maint}
         liveness: {{last_checked: 2026-04-10}}
         data: {{access: fully-open}}
-        license: {licence}
+        execution: {{code_licence: {licence}}}
         governance: {{maintainers: [{org}]}}
         curation:
           added_on: 2026-01-0{2 if family == 'code' else 3}

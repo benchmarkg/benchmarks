@@ -142,14 +142,14 @@ FIELD_GLOSS = {
     'task.output': 'What the system under test produces for one item.',
     'task.scoring': 'How that output is scored, in one or two sentences.',
     'data.access': 'Whether and how the evaluation items can be obtained.',
-    'data.size.n_items': 'The number of evaluation items and their unit.',
+    'data.size': 'The number of evaluation items and their unit.',
     'data.dataset_licence': 'The licence of the dataset, as stated.',
     'governance.maintainer': 'Who maintains the benchmark, as the document names them.',
     'homepage': 'The benchmark\'s own web page.',
     'repository': 'Its code repository.',
     'leaderboard_url': 'Its leaderboard page.',
     'dataset_url': 'Where its dataset is downloaded.',
-    'license': 'The licence of the benchmark\'s code or of the whole release, as stated.',
+    'execution.code_licence': 'The licence of the benchmark\'s code, as stated.',
 }
 PROSE_CAP = {'tagline': 160, 'description': 1200, 'task.output': 400, 'task.scoring': 600}
 CAPS = {'verbatim': 300, 'entrant': 200, 'unit': 80, 'quote': 1500, 'note': 300}
@@ -617,7 +617,7 @@ class ExtractiveDrafter(Drafter):
             put('name', m.group(1), m.group(0))
         m = self.LICENCE.search(t)
         if m:
-            put('license', m.group(1), m.group(0))
+            put('execution.code_licence', m.group(1), m.group(0))
         m = re.search(r'https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', t)
         if m:
             put('repository', m.group(0).rstrip('.'), m.group(0).rstrip('.'))
@@ -940,7 +940,7 @@ def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_i
         if r.value is None:
             continue
         if kind == 'count':
-            _set(rec, path, {'value': r.value['count'], 'unit': r.value['unit'], 'source': sid, 'quote': r.quote})
+            _set(rec, path, [{'count': r.value['count'], 'unit': r.value['unit'], 'source': sid, 'quote': r.quote}])
         elif kind == 'entrant':
             rec[path] = [{'system': r.value, 'source': sid, 'observed_on': today.isoformat(), 'quote': r.quote}]
         else:
@@ -971,7 +971,7 @@ def assemble(vetted: list[Vetted], answer: dict, doc: Fetched, sid: str, bench_i
     return ordered
 
 
-BLOCKS = {('learned_entrant_evidence',): 'learned_entrant_evidence', ('data', 'size', 'n_items'): 'data.size.n_items'}
+BLOCKS = {('learned_entrant_evidence',): 'learned_entrant_evidence', ('data', 'size', 0): 'data.size'}
 
 
 def _unset(rec: dict, path: str):
@@ -1040,10 +1040,9 @@ def body_at(rec: dict, path: str) -> Any:
 
 def _plain_value(value: Any) -> Any:
     """A drafted block as its offered value: the count and unit, or the entrant's name."""
-    if isinstance(value, dict) and 'value' in value:
-        return {'count': value['value'], 'unit': value.get('unit')}
     if isinstance(value, list) and value and isinstance(value[0], dict):
-        return value[0].get('system')
+        first = value[0]
+        return {'count': first['count'], 'unit': first.get('unit')} if 'count' in first else first.get('system')
     return value
 
 

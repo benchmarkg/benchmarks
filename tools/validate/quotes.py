@@ -22,10 +22,11 @@ S9 says a source with no extract "may not be quoted, only cited", and a check th
 had nothing to compare against is the failure it names.
 
 Nulling (`apply`). "Null" means the slot: a mapping value becomes null and a list item is removed.
-Where that leaves the record invalid -- a required `n_items`, a `min_length=1` list -- the enclosing
-slot is nulled instead, and so on up, so the record as a whole still validates; the reason goes
-into `curation.notes`. A quote whose every enclosing slot is required cannot be nulled, and says
-so. `apply` never touches the file; the curation copilot (11 S F6) is what writes its output.
+Where that leaves the record invalid -- a required field such as `access_by_phase.during_edition`, a
+`min_length=1` list -- the enclosing slot is nulled instead, and so on up, so the record as a whole
+still validates; the reason goes into `curation.notes`. A quote whose every enclosing slot is required
+cannot be nulled, and says so. `apply` never touches the file; the curation copilot (11 S F6) is what
+writes its output.
 
 In tier 3 (schema/validators.py, rule `quote-substring`) the same check runs over every benchmark.
 For an ai-drafted-unverified record the finding is a warning offering the null as its auto-fix --

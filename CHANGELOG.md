@@ -23,6 +23,13 @@ under `## [Unreleased]` in the same pull request, in this form:
 
 ### Added
 
+- The 20-entry checkpoint's additions: `Benchmark.history[]` (dated moves, closures and hand-overs),
+  `Benchmark.as_used[]` (how a benchmark is run where that differs from its design), `Paper.doi`,
+  `Governance.independence_assessed`, `Data.languages`, `EvalConditions.user_simulator` and
+  `user_simulator_version`, `Source.rendered_url` and `Source.extract_preprocessing`; the
+  `ground_truth_source` values `formal-verifier` and `released-classifier`; `aggregation_policy: unknown`;
+  and the `surrogate-fit` comparability profile (comparability-profiles.yaml 0.2.0). ADR:
+  adr/0024-checkpoint-schema-revision.md. Migration: schema/migrations/0024-checkpoint-revision.py
 - `Metric.rubric`, an optional block recording a rubric-graded metric's rubric structure (tree or
   flat, rubric, leaf and node counts, leaf scoring, node aggregation, leaves per type). ADR:
   adr/0008-metric-rubric.md. Migration: schema/migrations/0008-metric-rubric.py
@@ -35,3 +42,17 @@ under `## [Unreleased]` in the same pull request, in this form:
   nothing is stable before 1.0.0. ADR: none (initial vocabulary). Migration: none
 - Pydantic models for every `taxonomy/*.yaml` file (`schema/taxonomy.py`) and the `Source` record
   (`schema/source.py`). ADR: none (initial schema). Migration: none
+
+### Changed
+
+- `lifecycle` is nullable and defaults to null (was `active`); `data.size` is a list of `{count, unit,
+  subset, note, source, quote}` rows, headline first (was `{n_items, n_repositories, other_splits,
+  languages}`); `license` is derived from `data.dataset_licence` and `execution.code_licence` and may not
+  be hand-written; `[statistical-fit, scientific-surrogate-model]` resolves `surrogate-fit`, not
+  `forecasting`. ADR: adr/0024-checkpoint-schema-revision.md. Migration:
+  schema/migrations/0024-checkpoint-revision.py
+
+### Removed
+
+- The hand-written top-level `license_notes`. ADR: adr/0024-checkpoint-schema-revision.md. Migration:
+  schema/migrations/0024-checkpoint-revision.py

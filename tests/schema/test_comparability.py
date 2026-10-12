@@ -70,10 +70,10 @@ def test_the_entries_resolve_to_different_material_sets():
         'casp.yaml': (('wet-lab',), 3),
         'roboarena.yaml': (('physical-trial',), 4),
         'swe-bench.yaml': (('agentic',), 11),
-        'weatherbench-2.yaml': (('forecasting', 'eligibility-gated'), 7),
-        'matbench-discovery.yaml': (('forecasting', 'eligibility-gated'), 5),   # lead time and window waived
+        'weatherbench-2.yaml': (('forecasting', 'surrogate-fit', 'eligibility-gated'), 7),
+        'matbench-discovery.yaml': (('surrogate-fit', 'eligibility-gated'), 5),  # ADR-0024: no lead time, no waiver
         'arc-agi-3.yaml': (('simulation',), 8),                                 # plus three extras, one waiver
-        'virtual-cell-challenge.yaml': (('forecasting',), 2),                  # lead time and window waived
+        'virtual-cell-challenge.yaml': (('surrogate-fit',), 2),
         'paperbench.yaml': (('model-graded',), 8),                             # plus two extras, two waivers
         'forecastbench.yaml': (('forecasting',), 4),
         'kaggle-game-arena.yaml': ((), 5),                                    # no profile resolves; four extras
@@ -85,24 +85,24 @@ def test_the_entries_resolve_to_different_material_sets():
         'superb.yaml': ((), 3),                                               # harness, eligibility_track, subset
         'coco.yaml': ((), 2),                                                 # split and training data
         'medqa.yaml': ((), 2),                                                # set, and the textbook corpus
-        'oc20.yaml': (('forecasting',), 2),                                   # lead time and window waived
+        'oc20.yaml': (('surrogate-fit',), 2),
         'proteingym.yaml': ((), 2),                                           # setting and training data
         'libero.yaml': (('simulation',), 7),                                  # plus n_samples, training data
-        'the-well.yaml': (('forecasting',), 3),                               # waived, plus the hardware budget
+        'the-well.yaml': (('surrogate-fit',), 3),                             # plus the hardware budget
         'minif2f.yaml': ((), 2),                                              # version and pass@k
         'harmbench.yaml': (('model-graded',), 8),                             # the classifier is the judge
         'mmmu.yaml': (('llm-static-text',), 6),
         # the P1-S3-T02 checkpoint entries
         'flores.yaml': ((), 1),                                               # edition, split, language pair
         'humaneval.yaml': ((), 4),                                            # pass@k, samples, decoding
-        'tau-bench.yaml': ((), 4),                                            # no profile; harness, scaffold, k
-        'climatebench.yaml': (('forecasting',), 2),                           # lead time and window waived
+        'tau-bench.yaml': ((), 5),                           # no profile; harness, scaffold, k, user simulator
+        'climatebench.yaml': (('surrogate-fit',), 2),
         'circuitnet.yaml': ((), 2),                                           # version and training data
         'nle.yaml': (('simulation',), 6),                                     # task id and episodes
         'folio.yaml': (('llm-static-text',), 6),
         'legalbench.yaml': (('llm-static-text', 'human-judged'), 9),          # the hand-graded tasks
         'calvin.yaml': (('simulation',), 7),                                  # split and training data
-        'pdebench.yaml': (('forecasting',), 2),                               # lead time and window waived
+        'pdebench.yaml': (('surrogate-fit',), 2),
     }
     # scicode's set is mmlu's, folio's is mmmu's, calvin's is libero's; coco, oc20, proteingym, climatebench,
     # circuitnet and pdebench share virtual-cell-challenge's (split and training data)

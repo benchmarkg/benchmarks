@@ -54,6 +54,8 @@ export interface Source {
   contains_personal_data?: boolean | null;
   drafted_by?: string | null;
   repointed_from?: string | null;
+  rendered_url?: string | null;
+  extract_preprocessing?: string | null;
   link_status?: ("live" | "changed" | "suspect" | "dead") | null;
   link_checked_at?: string | null;
   link_detail?: string | null;

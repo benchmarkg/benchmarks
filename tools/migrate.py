@@ -30,7 +30,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from types import ModuleType
 
-from schema.migrations import KINDS, Row, sentinel
+from schema.migrations import ABSENT, KINDS, Row, sentinel
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MIGRATIONS = os.path.join(ROOT, 'schema', 'migrations')
@@ -127,6 +127,42 @@ def _node(doc, at):
     return doc
 
 
+def _round_trip(x):
+    """A plan's plain value as ruamel nodes, so comment lines can be attached inside it."""
+    from ruamel.yaml.comments import CommentedMap, CommentedSeq
+    if isinstance(x, dict):
+        return CommentedMap((k, _round_trip(v)) for k, v in x.items())
+    if isinstance(x, list):
+        return CommentedSeq(_round_trip(v) for v in x)
+    return x
+
+
+def _write(fmt, parent, key, new):
+    """Set, add or remove parent[key] and keep the full comment lines that follow it. ruamel keeps the lines
+    after a value on the value's last scalar, so replacing or removing a value would take them along: the
+    section dividers between blocks, a note above the next key. They move to the new value's end, or to the
+    end of the key before a removed one; an added key, which lands last, takes the mapping's trailing lines."""
+    keys = list(parent) if isinstance(parent, dict) else list(range(len(parent)))
+    if key in keys:
+        _, rest = fmt.tail(parent, key).split()
+        fmt.tail(parent, key).set(fmt.tail(parent, key).split()[0] or None)
+    elif keys:
+        _, rest = fmt.tail(parent, keys[-1]).split()
+        fmt.tail(parent, keys[-1]).set(fmt.tail(parent, keys[-1]).split()[0] or None)
+    else:
+        rest = ''
+    if new is ABSENT:
+        before = keys[keys.index(key) - 1] if keys.index(key) > 0 else None
+        del parent[key]
+        if rest and before is None:
+            raise MigrateError('removing the first key %r would lose the comment lines after it' % key)
+        if rest:
+            fmt.tail(parent, before).append(rest)
+        return
+    parent[key] = _round_trip(new)
+    fmt.tail(parent, key).append(rest)
+
+
 def render(rows: list[Row], root: str) -> OrderedDict[str, str]:
     """The new text of every file the rows touch, or MigrateError before anything is written."""
     from tools import fmt
@@ -140,16 +176,23 @@ def render(rows: list[Row], root: str) -> OrderedDict[str, str]:
             raise MigrateError('%s: the plan names a file that does not exist' % rel)
         with open(full, encoding='utf-8') as fh:
             doc = fmt.emitter().load(fh)
+        comments = fmt.comment_lines(doc)
         for r in file_rows:
             try:
-                parent, current = _node(doc, r.at[:-1]), _node(doc, r.at)
+                parent = _node(doc, r.at[:-1])
+                absent = r.old is ABSENT and isinstance(parent, dict) and r.at[-1] not in parent
+                current = ABSENT if absent else _node(doc, r.at)
             except (KeyError, IndexError, TypeError):
                 raise MigrateError('%s %s: the plan names a location the file does not have; re-run --dry-run'
                                    % (rel, r.where())) from None
-            if current != r.old:
+            if current is not r.old and current != r.old:
                 raise MigrateError('%s %s holds %r, not the planned %r; the plan is stale, re-run --dry-run'
                                    % (rel, r.where(), current, r.old))
-            parent[r.at[-1]] = r.new
+            _write(fmt, parent, r.at[-1], r.new)
+        lost = comments - fmt.comment_lines(doc)
+        if lost:
+            raise MigrateError('%s: the plan would drop %d comment line(s), first %r; a row replaces a value with '
+                               'comments inside it' % (rel, sum(lost.values()), next(iter(lost))))
         out[rel] = fmt.format_text(fmt.dumps(doc), fmt.model_for(rel), rel)
     return out
 

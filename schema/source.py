@@ -171,6 +171,11 @@ class Source(BaseModel):
     # A dead URL a curator replaced with a live copy of the same document (P5-S8-T02). The id, derived from
     # the original link, stays; this says which link it was, so a scaffold that meets it again knows the record.
     repointed_from: Url | None = None
+    # ADR-0024. `rendered_url` is the page a reader opens when `url`, the one fetched, is something else: the
+    # fragment a script loads, the API record behind a page that renders by script. `extract_preprocessing`
+    # says what was removed from the fetched body before normalise(), so what content_sha256 hashes.
+    rendered_url: Url | None = None
+    extract_preprocessing: Text | None = None
 
     # The link-rot re-check (06 S7.2; P5-S8-T01, tools/check_links.py writes them). `body_sha256` is
     # the accepted digest of the page -- the first check's, or the one a curator accepted after a

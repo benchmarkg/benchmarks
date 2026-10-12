@@ -118,10 +118,20 @@ def lookup(doc, dotted):
     return True, node
 
 
-def nulls(docs, required):
-    """For each full-required field: the entries that leave it absent (no default), null, or empty."""
+def computed_fields():
+    """The Benchmark fields the model computes (ADR-0024's `license`): never hand-written, so never missing."""
+    sys.path.insert(0, ROOT)
+    from schema.benchmark import Benchmark
+    return set(Benchmark.model_computed_fields)
+
+
+def nulls(docs, required, derived=frozenset()):
+    """For each full-required field: the entries that leave it absent (no default), null, or empty. A field
+    the model derives is skipped: a hand-written file may not carry it."""
     out = []
     for field, has_default in required:
+        if field in derived:
+            continue
         missing = []
         for rel, doc in docs:
             present, v = lookup(doc, field)
@@ -169,7 +179,7 @@ def unused(docs, fields):
 
 def build(root):
     docs = entries(root)
-    return {'entries': len(docs), 'notes': notes(docs), 'nulls': nulls(docs, full_required(root)),
+    return {'entries': len(docs), 'notes': notes(docs), 'nulls': nulls(docs, full_required(root), computed_fields()),
             'unused': unused(docs, schema_fields())}
 
 

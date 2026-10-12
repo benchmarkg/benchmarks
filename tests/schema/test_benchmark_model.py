@@ -176,6 +176,68 @@ def test_a_derived_lifecycle_term_may_not_be_hand_set():
     Benchmark.model_validate(minimal(lifecycle='mature'))
 
 
+# ---- ADR-0024, the checkpoint revision ---------------------------------------------------------
+
+def test_lifecycle_may_be_null_when_the_sources_do_not_show_use():
+    assert Benchmark.model_validate(minimal(lifecycle=None)).lifecycle is None
+    rejects(minimal(lifecycle='unobserved'))                              # null, not a new term
+
+
+@pytest.mark.parametrize('key', ['license', 'license_notes'])
+def test_license_is_derived_and_may_not_be_hand_written(key):
+    rejects(minimal(**{key: 'MIT'}), match='derived from data.dataset_licence and execution.code_licence')
+
+
+def test_license_is_computed_from_the_data_and_code_licences():
+    def lic(**kw):
+        return Benchmark.model_validate(minimal(**kw)).license
+    assert lic() is None
+    assert lic(**{'execution.code_licence': 'MIT'}) == 'MIT'
+    assert lic(**{'data.dataset_licence': 'CC-BY-4.0', 'execution.code_licence': 'CC-BY-4.0'}) == 'CC-BY-4.0'
+    assert lic(**{'data.dataset_licence': 'CC-BY-4.0', 'execution.code_licence': 'MIT'}) == 'data: CC-BY-4.0; code: MIT'
+    assert Benchmark.model_validate(minimal(**{'execution.code_licence': 'MIT'})).model_dump()['license'] == 'MIT'
+
+
+def test_size_is_a_list_of_rows_headline_first():
+    rows = [{'count': 3001, 'unit': 'sentences', 'subset': 'dev and devtest', 'source': 'src-example'},
+            {'count': 1012, 'unit': 'sentences', 'subset': 'devtest', 'source': 'src-example', 'quote': 'q'}]
+    b = Benchmark.model_validate(minimal(**{'data.size': rows, 'data.languages': ['English']}))
+    assert [r.count for r in b.data.size] == [3001, 1012] and b.data.languages == ['English']
+    assert Benchmark.model_validate(minimal(**{'data.size': None})).data.size is None
+    rejects(minimal(**{'data.size': {'n_items': {'value': 1, 'source': 'src-example'}}}))     # the old shape
+    rejects(minimal(**{'data.size': [{'count': 1, 'source': 'src-example'}]}), match='unit')
+
+
+def test_history_records_dated_changes_under_their_yaml_keys():
+    item = {'date': '2026-01-31', 'event': 'channel-closed', 'field': 'execution.submission_channel',
+            'from': 'EvalAI challenge 712', 'source': 'src-example', 'quote': 'q'}
+    [h] = Benchmark.model_validate(minimal(history=[item, ])).history
+    assert (str(h.date_), h.from_, h.to) == ('2026-01-31', 'EvalAI challenge 712', None)
+    Benchmark.model_validate(minimal(history=[{**item, 'date': '2026-01'}]))         # a month will do
+    Benchmark.model_validate(minimal(history=[{k: v for k, v in item.items() if k != 'date'}]))   # undated
+    rejects(minimal(history=[{**item, 'event': 'moved-somewhere'}]))
+    rejects(minimal(history=[{**item, 'field': 'Execution Channel'}]))
+
+
+def test_the_other_additions():
+    b = Benchmark.model_validate(minimal(
+        as_used=[{'protocol': 'Accuracy on the public validation split.', 'split': 'validation', 'source': 'src-example'}],
+        paper={'title': 'T', 'doi': '10.1021/acscatal.0c04525', 'source': 'src-example'},
+        ground_truth_source='formal-verifier', aggregation_policy='unknown',
+        **{'governance.independence_assessed': False}))
+    assert b.as_used[0].split == 'validation' and b.paper.doi.startswith('10.1021/')
+    assert b.governance.independence_assessed is False
+    Benchmark.model_validate(minimal(ground_truth_source='released-classifier'))
+    rejects(minimal(paper={'title': 'T', 'doi': 'doi:10.1021/x', 'source': 'src-example'}), match='doi')
+
+
+def test_the_user_simulator_condition_needs_its_model_for_a_version():
+    from schema.conditions import EvalConditions
+    EvalConditions.model_validate({'id': 'cond-0123456789ab', 'user_simulator': 'gpt-4o', 'user_simulator_version': '2024-08-06'})
+    with pytest.raises(ValidationError, match='user_simulator_version without user_simulator'):
+        EvalConditions.model_validate({'id': 'cond-0123456789ab', 'user_simulator_version': '2024-08-06'})
+
+
 def test_inspect_evals_available_is_derived_from_the_id():
     assert Benchmark.model_validate(minimal(execution={'inspect_evals_id': 'swe_bench'})).execution.inspect_evals_available
     assert not Benchmark.model_validate(minimal()).execution.inspect_evals_available
@@ -203,7 +265,8 @@ def test_external_ids_is_a_fixed_key_set():
 
 def test_defaults_match_04_s5():
     b = Benchmark.model_validate(minimal())
-    assert (b.lifecycle, b.data.contamination_risk, b.data.ceiling_anchor_type) == ('active', 'unknown', 'none-known')
+    # ADR-0024: lifecycle defaults to null, not `active`; an omitted lifecycle asserts nothing.
+    assert (b.lifecycle, b.data.contamination_risk, b.data.ceiling_anchor_type) == (None, 'unknown', 'none-known')
     assert (b.execution.runnable_via, b.aggregation_policy, b.curation.confidence) == (['none'], 'official-aggregate', 'medium')
     assert (b.aliases, b.capability, b.tags, b.comparability.rating_pool_required) == ([], [], [], False)
 
@@ -292,7 +355,7 @@ def test_the_new_blocks_are_closed():
 def test_the_entries_carry_the_reconciled_fields():
     by = {os.path.basename(p): load_benchmark(p) for p in ENTRIES}
     swe, casp, robo = by['swe-bench.yaml'], by['casp.yaml'], by['roboarena.yaml']
-    assert swe.external_ids.arxiv == '2310.06770' and swe.data.size.n_items.value == 2294
+    assert swe.external_ids.arxiv == '2310.06770' and swe.data.size[0].count == 2294
     assert swe.execution.code_licence == 'MIT' and swe.lineage.role == 'root' and len(swe.lineage.variants) == 4
     assert casp.activity == 'unknown' and 'assessment-in-progress' in casp.tags
     assert 'Critical Assessment of Techniques for Protein Structure Prediction' in casp.aliases
@@ -304,8 +367,8 @@ def test_the_entries_carry_the_reconciled_fields():
 
 
 def test_croissant_terms_name_real_fields():
-    for f in bm.CROISSANT_TERMS:
-        assert f in Benchmark.model_fields, f
+    for f in bm.CROISSANT_TERMS:                 # `license` is computed since ADR-0024, and serialises like a field
+        assert f in Benchmark.model_fields or f in Benchmark.model_computed_fields, f
     # Where schema.org's term is the same word, the field uses it.
     for f in ('name', 'description', 'license'):
         assert bm.CROISSANT_TERMS[f] == 'sc:' + f

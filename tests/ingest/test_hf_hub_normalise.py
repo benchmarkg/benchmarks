@@ -222,7 +222,7 @@ def test_a_listed_value_without_a_row_is_a_hint_without_candidates_for_each_fiel
 def test_language_values_are_normalised(tags, values):
     hints = norm(synthetic_space(tags))[0][0].payload['_suggested']
     assert [s['value'] for s in hints] == values
-    assert all(s['field'] == 'data.size.languages' for s in hints)
+    assert all(s['field'] == 'data.languages' for s in hints)
 
 
 def test_arxiv_is_a_join_key_in_identity_never_a_suggestion():
