@@ -1,0 +1,56 @@
+---
+// site/src/pages/taxonomy/[facet]/[...term].astro -- P2-S3-T05. /taxonomy/{facet}/{term}/: one page per facet-qualified
+// vocabulary id (lib/terms.ts reads taxonomy/*.yaml). A rest parameter, because a domain term id carries its family:
+// /taxonomy/domain/code/repository-scale-se/. An id 9c lets a file repeat across fields is one page with every sense.
+// cacheKey is the content digest of the senses, the neighbours the page names, and the member lists.
+import Base from '../../../layouts/Base.astro';
+import TermDetail from '../../../views/TermDetail.astro';
+import { benchmarks } from '../../../lib/collections';
+import { contentDigest } from '../../../lib/corpus';
+import { release } from '../../../lib/release';
+import { facetFiles, facetSegment, members, type TaxTerm } from '../../../lib/terms';
+import type { Benchmark } from '../../../types/benchmark';
+
+export async function getStaticPaths() {
+  const all = await benchmarks();
+  const published = new Set(all.map((b) => b.id));
+  return facetFiles().flatMap((f) => {
+    const byId = new Map<string, TaxTerm>();
+    const grouped = new Map<string, TaxTerm[]>();
+    for (const t of f.terms) {
+      if (!byId.has(t.id)) byId.set(t.id, t);
+      grouped.set(t.id, [...(grouped.get(t.id) ?? []), t]);
+    }
+    return [...grouped.entries()].map(([id, terms]) => {
+      const senses = terms.map((term) => ({ term, members: members(term, all) }));
+      const children = f.facet === 'domain' ? f.terms.filter((t) => t.parent === id) : [];
+      const related = terms.flatMap((t) => [...(t.see_also ?? []), ...(t.not_to_be_confused_with ?? []).map((n) => n.term), t.parent ?? '']);
+      return {
+        params: { facet: facetSegment(f.facet), term: id },
+        props: { senses, file: f.file, byId, children, published },
+        cacheKey: contentDigest({ senses: senses.map((s) => ({ term: s.term,
+            members: s.members == null ? null : s.members.map((x) => [x.benchmark.id, x.benchmark.name, x.secondary]) })),
+          file: f.file, children: children.map((c) => [c.id, c.label, c.status]),
+          related: related.map((r) => byId.get(r)?.label ?? null),
+          examples: terms.flatMap((t) => t.examples ?? []).map((e) => published.has(e.ref)) }),
+      };
+    });
+  });
+}
+
+interface Props {
+  senses: { term: TaxTerm; members: { benchmark: Benchmark; secondary: boolean }[] | null }[];
+  file: string;
+  byId: Map<string, TaxTerm>;
+  children: TaxTerm[];
+  published: Set<string>;
+}
+
+const p = Astro.props;
+const first = p.senses[0].term;
+---
+<Base title={`${first.label} · ${first.facet.replace(/_/g, ' ')} · Benchmark index`} zeroJs>
+  <main>
+    <TermDetail senses={p.senses} file={p.file} byId={p.byId} children={p.children} published={p.published} release={release()} />
+  </main>
+</Base>

@@ -10,6 +10,7 @@
 // read them through src/lib/collections.ts, which types every entry with the generated interface.
 // test/config.test.mjs fails if any defineCollection() call here gains a `schema`.
 import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
 import { corpusEntities } from './lib/corpus';
 
 export const collections = {
@@ -18,4 +19,7 @@ export const collections = {
   organizations: defineCollection({ loader: () => corpusEntities('organization') }),
   metrics: defineCollection({ loader: () => corpusEntities('metric') }),
   sources: defineCollection({ loader: () => corpusEntities('source') }),
+  // P2-S3-T05: the three narrative documents the site renders at /docs/{slug}/ (10 "Information architecture"). Prose,
+  // not records, so there is nothing for a schema to validate; only these three of docs/ are published.
+  docs: defineCollection({ loader: glob({ pattern: '{methodology,provenance,comparability}.md', base: '../docs' }) }),
 };
