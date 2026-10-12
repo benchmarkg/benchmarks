@@ -1,0 +1,47 @@
+---
+// site/src/pages/orgs/[id].astro -- P2-S3-T04. /orgs/{id}/: one page per published organisation (views/OrgDetail),
+// the V9 organisation profile. cacheKey is the content digest of everything the page renders.
+import Base from '../../layouts/Base.astro';
+import OrgDetail from '../../views/OrgDetail.astro';
+import { benchmarks, organizations, sources, systems } from '../../lib/collections';
+import { contentDigest } from '../../lib/corpus';
+import type { Benchmark } from '../../types/benchmark';
+import type { Organization } from '../../types/organization';
+import type { Source } from '../../types/source';
+import type { System } from '../../types/system';
+
+export async function getStaticPaths() {
+  const all = await organizations();
+  const byId = new Map(all.map((o) => [o.id, o]));
+  const syss = await systems();
+  const benches = await benchmarks();
+  const srcs = new Map((await sources()).map((s) => [s.id, s]));
+  return all.map((o) => {
+    const released = syss.filter((s) => s.organization === o.id);
+    const maintained = benches.filter((b) => (b.governance.maintainers ?? []).includes(o.id));
+    const inMaintained = (JSON.stringify(maintained).match(/"src-[a-z0-9-]+"/g) ?? []).map((q) => q.slice(1, -1));
+    const cited = [...new Set([...o.sources, ...inMaintained])];
+    return {
+      params: { id: o.id },
+      props: { org: o, organizations: byId, systems: syss, benchmarks: benches, sources: srcs },
+      cacheKey: contentDigest({ org: o, related: all.filter((x) => x.id === o.parent || x.parent === o.id), released, maintained,
+        sources: cited.sort().map((id) => srcs.get(id) ?? null) }),
+    };
+  });
+}
+
+interface Props {
+  org: Organization;
+  organizations: Map<string, Organization>;
+  systems: System[];
+  benchmarks: Benchmark[];
+  sources: Map<string, Source>;
+}
+
+const p = Astro.props;
+---
+<Base title={`${p.org.name} · Benchmark index`} zeroJs>
+  <main>
+    <OrgDetail org={p.org} organizations={p.organizations} systems={p.systems} benchmarks={p.benchmarks} sources={p.sources} />
+  </main>
+</Base>

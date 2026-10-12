@@ -1,0 +1,46 @@
+---
+// site/src/components/SourceBlocks.astro -- P2-S3-T04 (08 S7.5 Decision 4). The sources an entity cites, each as an
+// anchored block on the entity's own page: there is no /sources/{src-id}/ page, because the file budget cannot carry
+// one per archived document, so a source's home is every page that cites it, at #{src-id}, and its canonical
+// external identity is its archive URL (SourceCitation's archive link). Ids are listed in the order given.
+//
+// NEVER: a link without a retrieval date (SourceCitation throws), or a cited id silently dropped: one the corpus does
+// not hold renders as its id with "not recorded".
+import Absent from './Absent.astro';
+import SourceCitation from './SourceCitation.astro';
+import type { Source } from '../types/source';
+
+interface Props {
+  ids: string[];
+  sources: Map<string, Source>;
+}
+
+const { ids, sources } = Astro.props;
+const retrieved = (s: Source) => s.accessed ?? s.fetched_at?.slice(0, 10) ?? null;
+const publisher = (s: Source) => s.publisher ?? new URL(s.url).hostname;
+---
+<ol class="source-blocks">
+  {ids.map((id) => {
+    const s = sources.get(id);
+    const at = s != null ? retrieved(s) : null;
+    return (
+      <li id={id} data-source-item={id}>
+        {s != null && at != null
+          ? <SourceCitation source_id={id} title={s.title ?? s.url} publisher={publisher(s)} url={s.url} archive_url={s.archive_url ?? null} retrieved_at={at} source_type={s.type} link_only={s.licence_class === 'no-redistribution'} />
+          : <><code>{id}</code> <Absent state="not-recorded" reason="no source record" /></>}
+      </li>
+    );
+  })}
+</ol>
+
+<style>
+  .source-blocks {
+    display: grid;
+    gap: var(--sp-2);
+    padding-inline-start: var(--sp-6);
+  }
+  li:target {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+</style>

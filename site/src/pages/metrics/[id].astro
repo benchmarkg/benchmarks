@@ -1,0 +1,41 @@
+---
+// site/src/pages/metrics/[id].astro -- P2-S3-T04. /metrics/{id}/: one page per published metric (views/MetricDetail).
+// cacheKey is the content digest of the metric, the benchmarks that use it and its sources.
+import Base from '../../layouts/Base.astro';
+import MetricDetail from '../../views/MetricDetail.astro';
+import { benchmarks, metrics, sources } from '../../lib/collections';
+import { contentDigest } from '../../lib/corpus';
+import type { Benchmark } from '../../types/benchmark';
+import type { Metric } from '../../types/metric';
+import type { Source } from '../../types/source';
+
+export async function getStaticPaths() {
+  const all = await metrics();
+  const ids = new Set(all.map((m) => m.id));
+  const benches = await benchmarks();
+  const srcs = new Map((await sources()).map((s) => [s.id, s]));
+  return all.map((m) => {
+    const users = benches.filter((b) => b.headline_metric === m.id || (Array.isArray(b.metrics) && b.metrics.includes(m.id)));
+    return {
+      params: { id: m.id },
+      props: { metric: m, metrics: ids, benchmarks: benches, sources: srcs },
+      cacheKey: contentDigest({ metric: m, users: users.map((b) => [b.id, b.name, b.headline_metric === m.id]),
+        sources: (m.sources ?? []).map((id) => srcs.get(id) ?? null), links: (m.must_report_with ?? []).map((id) => ids.has(id)) }),
+    };
+  });
+}
+
+interface Props {
+  metric: Metric;
+  metrics: Set<string>;
+  benchmarks: Benchmark[];
+  sources: Map<string, Source>;
+}
+
+const p = Astro.props;
+---
+<Base title={`${p.metric.name} · Benchmark index`} zeroJs>
+  <main>
+    <MetricDetail metric={p.metric} metrics={p.metrics} benchmarks={p.benchmarks} sources={p.sources} />
+  </main>
+</Base>
