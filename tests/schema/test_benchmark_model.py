@@ -362,8 +362,8 @@ def test_the_entries_carry_the_reconciled_fields():
     assert [c.class_ for c in casp.entrant_classes] == ['server', 'expert']
     assert robo.task.exists is False
     assert robo.execution.compute_tier_by_role == {'submitter': None, 'evaluator': 'physical-hardware'}
-    for b in by.values():
-        assert b.description and 'Reviewer check' in (b.curation.notes or '')
+    for b in by.values():                         # ADR-0026: the reviewer checks are records, not a notes paragraph
+        assert b.description and b.curation.review_checks and b.curation.notes is None
 
 
 def test_croissant_terms_name_real_fields():

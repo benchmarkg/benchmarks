@@ -41,7 +41,7 @@ from schema.claim import LicenceClass, Sha256, Url
 from schema.conditions import FIELDS as CONDITION_FIELDS
 from schema.conditions import ConditionsId
 from schema.conditions import REASONING_EFFORTS
-from schema.system import OrgRef, SourceId, SystemRef, Text
+from schema.system import Evidence, OrgRef, SourceId, SystemRef, Text
 from schema.taxonomy import load_taxonomy
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -116,6 +116,7 @@ class Subset(Closed):
     domain_override: DomainOverride | None = None
     capability_override: list[Capability] | None = None
     metric_override: Slug | None = None
+    evidence: list[Evidence] = Field(default_factory=list)    # ADR-0026: the sources and quotes behind the subset's notes
     notes: str | None = None
 
     @property
