@@ -1,0 +1,42 @@
+---
+// site/src/pages/benchmarks/[id]/v/[version].astro -- P2-S3-T08. /benchmarks/{id}/v/{version}/: one page per superseded
+// version (lib/versions.ts), the citation target for a version that is no longer current. Current versions and
+// editions render on /benchmarks/{id}/ and get no file of their own. cacheKey is the content digest of the version
+// record and everything the page renders from it.
+import Base from '../../../../layouts/Base.astro';
+import BenchmarkVersionDetail from '../../../../views/BenchmarkVersionDetail.astro';
+import { benchmarks, sources } from '../../../../lib/collections';
+import { contentDigest } from '../../../../lib/corpus';
+import { release } from '../../../../lib/release';
+import { supersededVersions } from '../../../../lib/versions';
+import type { Benchmark, BenchmarkVersion } from '../../../../types/benchmark';
+import type { Source } from '../../../../types/source';
+
+export async function getStaticPaths() {
+  const srcs = new Map((await sources()).map((s) => [s.id, s]));
+  return (await benchmarks()).flatMap((b) => supersededVersions(b).map((v) => {
+    const cited = [...new Set([...(v.sources ?? []), ...(v.errata ?? []).map((e) => e.source)])];
+    return {
+      params: { id: b.id, version: v.version },
+      props: { benchmark: b, version: v, sources: srcs },
+      cacheKey: contentDigest({ id: b.id, name: b.name, primary: b.domain.primary, version: v,
+        versions: supersededVersions(b).map((x) => x.version),
+        baselines: (b.baselines ?? []).filter((x) => x.benchmark_version === `${b.id}@${v.version}`),
+        sources: cited.map((id) => srcs.get(id) ?? null) }),
+    };
+  }));
+}
+
+interface Props {
+  benchmark: Benchmark;
+  version: BenchmarkVersion;
+  sources: Map<string, Source>;
+}
+
+const p = Astro.props;
+---
+<Base title={`${p.benchmark.name} ${p.version.version} · Benchmark index`} zeroJs>
+  <main>
+    <BenchmarkVersionDetail benchmark={p.benchmark} version={p.version} sources={p.sources} release={release()} />
+  </main>
+</Base>
