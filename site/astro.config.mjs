@@ -11,6 +11,7 @@ const FIXTURES = {
   'citations-openalex-headline': './test/fixtures/citations.astro',
   theme: './test/fixtures/theme.astro',
   components: './test/fixtures/components.astro',
+  provenance: './test/fixtures/provenance.astro',
 };
 
 function fixturePages(name) {

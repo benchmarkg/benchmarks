@@ -148,6 +148,18 @@ test('ConditionMeter never rounds up: a completeness above its counts throws', a
   await assert.rejects(render('ConditionMeter', { condition_completeness: 0.7, fields_specified: 7, fields_material_total: 11 }), /never round up/);
 });
 
+test('ConditionMeter takes 04 S8 weighted completeness when it is given the weights, and is as strict', async () => {
+  const weights = { scaffold: 2, shots: 1, harness: 1 };                       // scaffold doubles for an agent scaffold
+  const html = await render('ConditionMeter', { condition_completeness: 0.5, fields_specified: 1, fields_material_total: 3,
+    unknown_fields: ['shots', 'harness'], weights });
+  assert.equal(count(html, /<i class="on"/g), 1);                              // the fill is still the count
+  await assert.rejects(render('ConditionMeter', { condition_completeness: 1 / 3, fields_specified: 1, fields_material_total: 3,
+    unknown_fields: ['shots', 'harness'], weights }), /weighted share 0\.500/);
+  await assert.rejects(render('ConditionMeter', { condition_completeness: 0.5, fields_specified: 1, fields_material_total: 3 }), /never round up/);
+  await assert.rejects(render('ConditionMeter', { condition_completeness: 0.5, fields_specified: 1, fields_material_total: 3,
+    unknown_fields: ['shots'], weights }), /do not describe/);
+});
+
 test('ConditionMeter never hides at low completeness, never colours it as an error, and is a fraction above 12', async () => {
   const empty = await render('ConditionMeter', { condition_completeness: 0, fields_specified: 0, fields_material_total: 11 });
   assert.equal(count(empty, /<i class="off"/g), 11);
