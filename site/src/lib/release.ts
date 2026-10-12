@@ -7,6 +7,8 @@
 //                 tagged release, which the page says rather than inventing one
 //   concept_doi   CITATION.cff's `doi:`, the Zenodo concept DOI, which resolves to the latest version (docs/releasing.md)
 //   built_on      the build date (SOURCE_DATE_EPOCH when set, for a reproducible build), YYYY-MM-DD
+//   built_at      the build timestamp, ISO 8601 to the second in UTC, which every page footer prints (P2-S3-T07)
+//   index_title   CITATION.cff's `title:`, the name a citation gives the index
 //
 // P2-S1-T05's build-manifest.json will carry the same four facts; until it exists they are read here.
 import { execFileSync } from 'node:child_process';
@@ -18,6 +20,8 @@ export interface Release {
   commit_sha: string;
   concept_doi: string | null;
   built_on: string;
+  built_at: string;
+  index_title: string;
 }
 
 const REPO_ROOT = process.env.REPO_ROOT ?? resolve(process.cwd(), '..');
@@ -41,9 +45,12 @@ export function release(): Release {
   }
   const tag = process.env.UAIBI_RELEASE_TAG || git('describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*', commit);
   const cff = join(REPO_ROOT, 'CITATION.cff');
-  const doi = existsSync(cff) ? (/^doi:\s*(\S+)\s*$/m.exec(readFileSync(cff, 'utf8'))?.[1] ?? null) : null;
+  const cffText = existsSync(cff) ? readFileSync(cff, 'utf8') : '';
+  const doi = /^doi:\s*(\S+)\s*$/m.exec(cffText)?.[1] ?? null;
+  const indexTitle = /^title:\s*(.+?)\s*$/m.exec(cffText)?.[1] ?? 'The Universal AI Benchmark Index';
   const epoch = process.env.SOURCE_DATE_EPOCH;
   const built = epoch ? new Date(Number(epoch) * 1000) : new Date();
-  memo = { tag, commit_sha: commit, concept_doi: doi, built_on: built.toISOString().slice(0, 10) };
+  memo = { tag, commit_sha: commit, concept_doi: doi, built_on: built.toISOString().slice(0, 10),
+    built_at: `${built.toISOString().slice(0, 19)}Z`, index_title: indexTitle };
   return memo;
 }
