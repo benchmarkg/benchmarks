@@ -15,9 +15,9 @@ ai-drafted-unverified` or `provenance: ai-worker` in any file under data/, comme
 
 Reported, not yet blocking (the maintainer's decision of 2026-10-12): every entry in data/ is still an agent's
 draft awaiting a person, so the job would hold main red until then, while the build already refuses every draft
-(tools/build/artifacts.py). pr-validate.yml runs it with continue-on-error until P1-S13-T02 promotes the drafts;
-tests/ci/test_no_ai_records.py fails the moment this check passes on the repository while the job is still not
-blocking, so the flip cannot be forgotten.
+(tools/build/artifacts.py). pr-validate.yml runs it through scripts/reported.py (a warning on a green job) until
+P1-S13-T02 promotes the drafts; tests/ci/test_no_ai_records.py fails the moment this check passes on the repository
+while the job is still only reporting, so the flip cannot be forgotten.
 """
 from __future__ import annotations
 

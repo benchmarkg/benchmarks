@@ -70,15 +70,15 @@ def job():
         return YAML(typ='safe').load(fh)['jobs']['check-9i-no-ai-records']
 
 
-def test_the_job_runs_the_check():
-    assert [s['run'] for s in job()['steps'] if 'run' in s] == [
-        'uv run --locked --python "$PYTHON" python scripts/check_no_ai_records.py']
+BLOCKING = 'uv run --locked --python "$PYTHON" python scripts/check_no_ai_records.py'
+REPORTED = ('uv run --locked --python "$PYTHON" python scripts/reported.py --title "9i no AI-written record in data/" '
+            'scripts/check_no_ai_records.py')
 
 
 def test_the_job_is_reported_while_drafts_remain_and_blocking_once_none_do():
-    passes = run(ROOT)[0] == 0
-    if passes:
-        assert job().get('continue-on-error') is not True, (
-            'data/ holds no AI-written record any more: make check-9i-no-ai-records blocking (drop continue-on-error)')
+    runs = [s['run'] for s in job()['steps'] if 'run' in s]
+    assert 'continue-on-error' not in job()             # reported.py keeps it green; no red X on every pull request
+    if run(ROOT)[0] == 0:
+        assert runs == [BLOCKING], 'data/ holds no AI-written record any more: run the check directly, so it blocks'
     else:
-        assert job().get('continue-on-error') is True, 'drafts remain under data/, and the decision of 2026-10-12 reports them'
+        assert runs == [REPORTED], 'drafts remain under data/, and the decision of 2026-10-12 reports them'
