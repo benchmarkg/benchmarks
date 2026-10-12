@@ -20,6 +20,11 @@
 # with --locked, so a stale lockfile fails rather than resolving afresh
 # (tests/ci/test_pr_validate_matrix.py holds the two together).
 #
+# Jobs 7 and 8 (P0-S6-T04; 05 S9) are the metadata-only invariant -- no dataset or archive file and nothing
+# over 256 KB under data/ -- and the licence firewall: no commit moves vendor/ content into data/ without a
+# `Re-derived-from:` trailer naming a primary source. Job 8 reads every commit of the pull request (or of
+# the push), so it needs the history, hence fetch-depth: 0.
+#
 # Job 5 is the codegen drift check (P0-S6-T02; 05 S9): `bench schema gen --check` regenerates the JSON Schema
 # from the Pydantic models and the TypeScript types from it, and fails on any diff. The vocabularies become
 # Literal enums at import time, so a taxonomy/ change drifts the artifacts as surely as a schema/ change; the
@@ -128,6 +133,35 @@ jobs:
         run: npm ci --ignore-scripts
       - name: bench schema gen --check
         run: uv run --locked --python "$PYTHON" bench schema gen --check
+
+  check-7-metadata-only:
+    name: 7 metadata-only invariant
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: check_metadata_only.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_metadata_only.py
+
+  check-8-licence-firewall:
+    name: 8 licence firewall
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # The commits to read: a pull request's against its base, a push's since the previous tip, and a
+      # manual run's own tip only (no base).
+      FIREWALL_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: check_licence_firewall.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_licence_firewall.py ${FIREWALL_BASE:+--base "$FIREWALL_BASE"}
 
   sweep-families:
     name: sweep hub list is the domain vocabulary
