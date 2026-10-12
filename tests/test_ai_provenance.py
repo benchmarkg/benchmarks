@@ -89,18 +89,22 @@ def job():
         return YAML(typ='safe').load(fh)['jobs']['check-ai-provenance']
 
 
+BLOCKING = 'uv run --locked --python "$PYTHON" python scripts/check_ai_provenance.py'
+REPORTED = ('uv run --locked --python "$PYTHON" python scripts/reported.py --title "drafts/ boundary" '
+            'scripts/check_ai_provenance.py')
+
+
 def test_the_job_runs_the_checker_over_the_full_history():
     j = job()
-    assert [s['run'] for s in j['steps'] if 'run' in s] == [
-        'uv run --locked --python "$PYTHON" python scripts/check_ai_provenance.py']
+    assert [s['run'] for s in j['steps'] if 'run' in s] in ([BLOCKING], [REPORTED])
     checkout = [s for s in j['steps'] if str(s.get('uses', '')).startswith('actions/checkout@')][0]
     assert checkout['with']['fetch-depth'] == 0         # the last commit per path needs the history
 
 
 def test_verify_the_job_is_blocking_once_no_draft_remains():
-    passes = subprocess.run([sys.executable, CHECK], capture_output=True).returncode == 0
-    if passes:
-        assert job().get('continue-on-error') is not True, (
-            'check_ai_provenance.py passes on the repository: make check-ai-provenance blocking (drop continue-on-error)')
+    runs = [s['run'] for s in job()['steps'] if 'run' in s]
+    assert 'continue-on-error' not in job()             # reported.py keeps it green; no red X on every pull request
+    if subprocess.run([sys.executable, CHECK], capture_output=True).returncode == 0:
+        assert runs == [BLOCKING], 'check_ai_provenance.py passes on the repository: run it directly, so it blocks'
     else:
-        assert job().get('continue-on-error') is True, 'drafts remain under data/, and the decision of 2026-10-12 reports them'
+        assert runs == [REPORTED], 'drafts remain under data/, and the decision of 2026-10-12 reports them'
