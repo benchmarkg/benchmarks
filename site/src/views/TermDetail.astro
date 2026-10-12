@@ -1,0 +1,132 @@
+---
+// site/src/views/TermDetail.astro -- P2-S3-T05 (02 S11; 10 "Information architecture": /taxonomy/{facet}/{term}/). One
+// vocabulary term as the taxonomy governs it: its definition, the inclusion and exclusion tests a curator applies, the
+// worked examples and the near misses (examples that do NOT qualify, with why), what it is not to be confused with,
+// and the published benchmarks that carry it. The prose is the taxonomy file's, verbatim; inline `code` spans in it
+// render as code. Zero JavaScript.
+//
+// One page per facet-qualified id, which is what a URL names. 9c lets a vocabulary file repeat an id across the
+// fields it applies to (execution's `wet-lab` is a compute tier and a reproducibility blocker), so such a page carries
+// every sense, each under the field it belongs to.
+import Absent from '../components/Absent.astro';
+import { blobAt, sha } from '../lib/repo';
+import { facetSegment, termHref, type TaxTerm } from '../lib/terms';
+import type { Release } from '../lib/release';
+import type { Benchmark } from '../types/benchmark';
+
+interface Sense {
+  term: TaxTerm;
+  members: { benchmark: Benchmark; secondary: boolean }[] | null;
+}
+interface Props {
+  senses: Sense[];                                // one, or one per field the id is used for
+  file: string;                                   // taxonomy/<name>.yaml
+  byId: Map<string, TaxTerm>;                     // this facet's terms, by id
+  children: TaxTerm[];                            // domain subdomains under a family
+  published: Set<string>;                         // benchmark ids with a page
+  release: Release;
+}
+
+const { senses, file, byId, children, published, release } = Astro.props;
+const first = senses[0].term;
+const multi = senses.length > 1;
+const H = multi ? 'h3' : 'h2';
+const facetName = first.facet.replace(/_/g, ' ');
+const parts = (text: string) => text.trim().split('`').map((s, i) => ({ code: i % 2 === 1, s }));
+const why = (s: string) => s.trim().replace(/^NEAR MISS\.\s*/, '');
+const parent = first.parent != null ? byId.get(first.parent) : undefined;
+---
+<article class="record" data-term={`${first.facet}:${first.id}`}>
+  <header>
+    <p class="kind"><a href={`/browse/${facetSegment(first.facet)}/${first.id}/`}>{facetName}</a> · <code>{first.id}</code> · <span data-status={first.status}>{first.status}</span>{first.introduced_in != null && <> · since {first.introduced_in}</>}</p>
+    <h1>{first.label}</h1>
+    {parent != null && <p class="kind">Part of <a href={termHref(first.facet, parent.id)}>{parent.label}</a></p>}
+    {multi && <p class="note" data-senses={senses.length}>This id names {senses.length} terms of the {facetName} facet, one for each field it applies to: {senses.map((s, i) => <>{i > 0 && ', '}<code>{s.term.field}</code></>)}.</p>}
+  </header>
+
+  {senses.map(({ term: t, members }) => {
+    const examples = (t.examples ?? []).filter((e) => e.qualifies);
+    const nearMisses = (t.examples ?? []).filter((e) => !e.qualifies);
+    return (
+      <div class="sense" data-sense={t.field ?? t.facet}>
+        {multi && <h2>{t.label} <span class="count">(<code>{t.field}</code>)</span></h2>}
+        <section>
+          <H>Definition</H>
+          <p data-definition>{parts(t.definition).map((p) => (p.code ? <code>{p.s}</code> : p.s))}</p>
+          {t.derived === true && t.derivation != null && <p class="note">Derived, not curated: {parts(t.derivation).map((p) => (p.code ? <code>{p.s}</code> : p.s))}</p>}
+        </section>
+
+        <section>
+          <H>How it is applied</H>
+          <dl class="pairs">
+            <div data-test="inclusion"><dt>Inclusion test</dt><dd>{t.inclusion_test != null ? parts(t.inclusion_test).map((p) => (p.code ? <code>{p.s}</code> : p.s)) : <Absent state="not-recorded" />}</dd></div>
+            <div data-test="exclusion"><dt>Exclusion test</dt><dd>{t.exclusion_test != null ? parts(t.exclusion_test).map((p) => (p.code ? <code>{p.s}</code> : p.s)) : <Absent state="not-recorded" />}</dd></div>
+          </dl>
+        </section>
+
+        <section>
+          <H>Examples <span class="count">({examples.length})</span></H>
+          {examples.length === 0 ? <p><Absent state="not-recorded" /></p> : (
+            <ul class="list">{examples.map((e) => <li data-example={e.ref}>{published.has(e.ref) ? <a href={`/benchmarks/${e.ref}/`}><code>{e.ref}</code></a> : <code>{e.ref}</code>}: {parts(why(e.why)).map((p) => (p.code ? <code>{p.s}</code> : p.s))}</li>)}</ul>
+          )}
+          <H>Near misses <span class="count">({nearMisses.length})</span></H>
+          {nearMisses.length === 0 ? <p><Absent state="not-recorded" /></p> : (
+            <ul class="list">{nearMisses.map((e) => <li data-near-miss={e.ref}>{published.has(e.ref) ? <a href={`/benchmarks/${e.ref}/`}><code>{e.ref}</code></a> : <code>{e.ref}</code>} does not qualify: {parts(why(e.why)).map((p) => (p.code ? <code>{p.s}</code> : p.s))}</li>)}</ul>
+          )}
+        </section>
+
+        {((t.not_to_be_confused_with ?? []).length > 0 || (t.see_also ?? []).length > 0) && (
+          <section>
+            <H>Related terms</H>
+            {(t.not_to_be_confused_with ?? []).length > 0 && (
+              <ul class="list">{(t.not_to_be_confused_with ?? []).map((n) => <li data-confusable={n.term}>Not <a href={termHref(t.facet, n.term)}>{byId.get(n.term)?.label ?? n.term}</a>: {parts(n.distinction).map((p) => (p.code ? <code>{p.s}</code> : p.s))}</li>)}</ul>
+            )}
+            {(t.see_also ?? []).length > 0 && <p>See also: {(t.see_also ?? []).map((id, i) => <>{i > 0 && ', '}<a href={termHref(t.facet, id)}>{byId.get(id)?.label ?? id}</a></>)}</p>}
+          </section>
+        )}
+
+        <section>
+          <H>Benchmarks <span class="count">({members == null ? 'derived' : members.length})</span></H>
+          {members == null
+            ? <p><Absent state="not-applicable" reason="derived from observable signals, never curated, so not a list a curator keeps" /></p>
+            : members.length === 0
+              ? <p><Absent state="not-recorded" reason="no published benchmark carries this term" /></p>
+              : <ul class="list">{members.map((m) => <li data-member={m.benchmark.id}><a href={`/benchmarks/${m.benchmark.id}/`}>{m.benchmark.name}</a>{m.secondary && <span class="muted"> (secondary)</span>}</li>)}</ul>}
+        </section>
+      </div>
+    );
+  })}
+
+  {children.length > 0 && (
+    <section>
+      <h2>Subdomains <span class="count">({children.length})</span></h2>
+      <ul class="cols">{children.map((c) => <li><a href={termHref(c.facet, c.id)}>{c.label}</a> <span class="muted">{c.status}</span></li>)}</ul>
+    </section>
+  )}
+
+  <p class="governed">Governed in <a href={blobAt(sha(release.commit_sha), file)}><code>{file}</code></a>; a new term or a change to this one goes through an ADR.</p>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  h3 { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-base); }
+  .kind, .muted, .governed { color: var(--c-ink-muted); }
+  .kind { margin: 0 0 var(--sp-1); font-size: var(--fs-sm); }
+  .muted { font-size: var(--fs-sm); }
+  .governed { margin-block-start: var(--sp-8); font-size: var(--fs-sm); }
+  .count { font-weight: 400; color: var(--c-ink-muted); }
+  .note { font-size: var(--fs-sm); color: var(--c-ink-muted); }
+  .pairs { display: grid; gap: var(--sp-3); margin: 0; }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 10rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; }
+  .list { display: grid; gap: var(--sp-2); padding-inline-start: var(--sp-6); }
+  .cols { columns: 2 16rem; padding-inline-start: var(--sp-6); }
+  .sense + .sense { margin-block-start: var(--sp-8); padding-block-start: var(--sp-4); border-block-start: 1px solid var(--c-border); }
+</style>
