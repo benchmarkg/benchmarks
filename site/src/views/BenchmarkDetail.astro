@@ -22,6 +22,8 @@ import FacetChips from '../components/FacetChips.astro';
 import SourceBlocks from '../components/SourceBlocks.astro';
 import Staleness from '../components/Staleness.astro';
 import SourceRef from './detail/SourceRef.astro';
+import Contribute from '../components/Contribute.astro';
+import SuggestFix from '../components/SuggestFix.astro';
 import { daysSince, formatValue, term } from '../lib/vocab';
 import { versionHref } from '../lib/versions';
 import type { Adoption, SubsetRow } from '../lib/corpus';
@@ -66,11 +68,11 @@ const paragraphs = b.description != null ? b.description.split(/\n\s*\n/).map((p
 
 // ---- 3. facets ---------------------------------------------------------------------------------------------------
 const facetRows = [
-  { name: 'Primary domain', chips: [chip('domain', 'domain')(b.domain.primary)] },
-  { name: 'Secondary domains', chips: (b.domain.secondary ?? []).map(chip('domain', 'domain')) },
-  { name: 'Capabilities', chips: (b.capability ?? []).map(chip('capability', 'capability')) },
-  { name: 'Evaluation method', chips: (b.evaluation_method ?? []).map(chip('evaluation_method', 'evaluation-method')) },
-  { name: 'Designed for', chips: (b.designed_for_subjects ?? []).map(chip('subject', 'subject')) },
+  { name: 'Primary domain', field: 'domain.primary', chips: [chip('domain', 'domain')(b.domain.primary)] },
+  { name: 'Secondary domains', field: 'domain.secondary', chips: (b.domain.secondary ?? []).map(chip('domain', 'domain')) },
+  { name: 'Capabilities', field: 'capability', chips: (b.capability ?? []).map(chip('capability', 'capability')) },
+  { name: 'Evaluation method', field: 'evaluation_method', chips: (b.evaluation_method ?? []).map(chip('evaluation_method', 'evaluation-method')) },
+  { name: 'Designed for', field: 'designed_for_subjects', chips: (b.designed_for_subjects ?? []).map(chip('subject', 'subject')) },
 ];
 
 // ---- 6. metrics: the headline first, then the rest in the record's order ----------------------------------------
@@ -123,9 +125,9 @@ const govEvidence = ([['Funding', G.funding], ['Participation', G.participation]
 // ---- 13. licence and access ------------------------------------------------------------------------------------------
 const D = b.data;
 const licences = [
-  ['Dataset licence', D.dataset_licence], ['Records licence', D.records_licence],
-  ['Upstream licences', D.upstream_licences], ['Code licence', b.execution.code_licence],
-] as [string, string | null | undefined][];
+  ['Dataset licence', D.dataset_licence, 'data.dataset_licence'], ['Records licence', D.records_licence, 'data.records_licence'],
+  ['Upstream licences', D.upstream_licences, 'data.upstream_licences'], ['Code licence', b.execution.code_licence, 'execution.code_licence'],
+] as [string, string | null | undefined, string][];
 const licenceCount = 1 + licences.filter(([, v]) => v != null).length;    // the access class is always recorded
 const contamination = (D.contamination_evidence ?? []).map((e) => (typeof e === 'string' ? { source: e } as EvidenceItem : e));
 
@@ -167,19 +169,20 @@ const C = b.curation;
 
   <aside class="rail" aria-label="Key facts">
     <dl class="facts">
-      <div data-fact="lifecycle"><dt>Lifecycle</dt><dd>{b.lifecycle != null ? <FacetChip facet="lifecycle" term_id={b.lifecycle} state="filter-available" href={browse('lifecycle', b.lifecycle)} /> : <Absent state="not-reported" reason="the sources do not show whether it is in use" />}</dd></div>
+      <div data-fact="lifecycle"><dt>Lifecycle<SuggestFix entity={b.id} field="lifecycle" label="Lifecycle" /></dt><dd>{b.lifecycle != null ? <FacetChip facet="lifecycle" term_id={b.lifecycle} state="filter-available" href={browse('lifecycle', b.lifecycle)} /> : <Absent state="not-reported" reason="the sources do not show whether it is in use" />}</dd></div>
       <div data-fact="headroom"><dt>Headroom</dt><dd><Absent state={headroomAbsent[0]} reason={headroomAbsent[1]} /></dd></div>
       <div data-fact="adoption"><dt>Adoption</dt><dd>{adoption != null ? <span>{formatValue(adoption.systems)} {adoption.systems === 1 ? 'system' : 'systems'} with a claim</span> : <Absent state="not-recorded" reason="adoption not built" />}</dd></div>
-      <div data-fact="released"><dt>Released</dt><dd>{b.released != null ? <time datetime={b.released}>{b.released}</time> : <Absent state="not-recorded" />}</dd></div>
-      <div data-fact="domain"><dt>Domain</dt><dd>{label('domain', family)}{b.domain.primary.includes('/') && <> · {label('domain', b.domain.primary)}</>}</dd></div>
-      <div data-fact="access"><dt>Data access</dt><dd>{label('data_properties', D.access)}</dd></div>
+      <div data-fact="released"><dt>Released<SuggestFix entity={b.id} field="released" label="Released" /></dt><dd>{b.released != null ? <time datetime={b.released}>{b.released}</time> : <Absent state="not-recorded" />}</dd></div>
+      <div data-fact="domain"><dt>Domain<SuggestFix entity={b.id} field="domain.primary" label="Domain" /></dt><dd>{label('domain', family)}{b.domain.primary.includes('/') && <> · {label('domain', b.domain.primary)}</>}</dd></div>
+      <div data-fact="access"><dt>Data access<SuggestFix entity={b.id} field="data.access" label="Data access" /></dt><dd>{label('data_properties', D.access)}</dd></div>
       <div data-fact="verified"><dt>Last verified</dt><dd><Staleness last_verified_at={C.last_verified} entity_kind="benchmark" today={today} /></dd></div>
     </dl>
+    <Contribute entity_id={b.id} entity_kind="benchmark" yaml_path={yamlPath} />
   </aside>
 
   <div class="body">
     <section data-section="2" aria-labelledby="s-description">
-      <h2 id="s-description">Description</h2>
+      <h2 id="s-description">Description<SuggestFix entity={b.id} field="description" label="description" /></h2>
       {paragraphs.length > 0 ? paragraphs.map((p) => <p>{p}</p>) : <p><Absent state="not-recorded" /></p>}
     </section>
 
@@ -187,13 +190,13 @@ const C = b.curation;
       <h2 id="s-facets">Facets</h2>
       <dl class="pairs">
         {facetRows.map((r) => (
-          <div><dt>{r.name}</dt><dd>{r.chips.length > 0 ? <FacetChips chips={r.chips} /> : <Absent state="not-recorded" />}</dd></div>
+          <div><dt>{r.name}<SuggestFix entity={b.id} field={r.field} label={r.name} /></dt><dd>{r.chips.length > 0 ? <FacetChips chips={r.chips} /> : <Absent state="not-recorded" />}</dd></div>
         ))}
       </dl>
     </section>
 
     <section data-section="4" aria-labelledby="s-versions">
-      <h2 id="s-versions">Version history</h2>
+      <h2 id="s-versions">Version history<SuggestFix entity={b.id} field="versions" label="version history" /></h2>
       {(b.versions ?? []).length === 0 && (b.history ?? []).length === 0 && <p><Absent state="not-recorded" reason="no version or change recorded" /></p>}
       {(b.versions ?? []).length > 0 && (
         <ol class="versions">
@@ -227,7 +230,7 @@ const C = b.curation;
     </section>
 
     <section data-section="5" aria-labelledby="s-subsets">
-      <h2 id="s-subsets">Subsets</h2>
+      <h2 id="s-subsets">Subsets<SuggestFix entity={b.id} field="subsets" label="subsets" /></h2>
       {subsets.length === 0 ? <p><Absent state="not-recorded" reason="no subset recorded" /></p> : (
         <div class="scroll" tabindex="0" role="region" aria-label="Subsets">
           <table>
@@ -274,20 +277,20 @@ const C = b.curation;
             <h3>{m.full_name ?? m.name}{id === b.headline_metric && <span class="tag"> headline</span>}</h3>
             <p>{m.definition}</p>
             <dl class="pairs">
-              <div><dt>Range</dt><dd>{m.unbounded ? 'unbounded' : m.range != null && m.range.min != null && m.range.max != null ? `${formatValue(m.range.min)} to ${formatValue(m.range.max)}` : <Absent state="not-recorded" />}</dd></div>
-              <div><dt>Chance baseline</dt><dd>{m.chance_baseline != null ? formatValue(m.chance_baseline) : <Absent state="not-reported" />}</dd></div>
-              <div><dt>Direction</dt><dd>{optimum(m)}</dd></div>
-              <div><dt>Aggregation</dt><dd>{m.aggregation ?? <Absent state="not-reported" />}</dd></div>
-              <div><dt>Units</dt><dd>{m.units ?? <Absent state="not-applicable" />}</dd></div>
+              <div><dt>Range<SuggestFix entity={id} field="range" label={`${m.name}: range`} /></dt><dd>{m.unbounded ? 'unbounded' : m.range != null && m.range.min != null && m.range.max != null ? `${formatValue(m.range.min)} to ${formatValue(m.range.max)}` : <Absent state="not-recorded" />}</dd></div>
+              <div><dt>Chance baseline<SuggestFix entity={id} field="chance_baseline" label={`${m.name}: chance baseline`} /></dt><dd>{m.chance_baseline != null ? formatValue(m.chance_baseline) : <Absent state="not-reported" />}</dd></div>
+              <div><dt>Direction<SuggestFix entity={id} field="optimum" label={`${m.name}: direction`} /></dt><dd>{optimum(m)}</dd></div>
+              <div><dt>Aggregation<SuggestFix entity={id} field="aggregation" label={`${m.name}: aggregation`} /></dt><dd>{m.aggregation ?? <Absent state="not-reported" />}</dd></div>
+              <div><dt>Units<SuggestFix entity={id} field="units" label={`${m.name}: units`} /></dt><dd>{m.units ?? <Absent state="not-applicable" />}</dd></div>
             </dl>
-            <p class="pitfalls" data-pitfalls><strong>Pitfalls:</strong> {m.pitfalls ?? <Absent state="not-recorded" />}</p>
+            <p class="pitfalls" data-pitfalls><strong>Pitfalls:</strong> {m.pitfalls ?? <Absent state="not-recorded" />}<SuggestFix entity={id} field="pitfalls" label={`${m.name}: pitfalls`} /></p>
           </div>
         );
       })}
     </section>
 
     <section data-section="7" aria-labelledby="s-baselines">
-      <h2 id="s-baselines">Human baselines</h2>
+      <h2 id="s-baselines">Human baselines<SuggestFix entity={b.id} field="baselines" label="human baselines" /></h2>
       {(b.baselines ?? []).length === 0 ? <p><Absent state="not-recorded" reason="no baseline recorded" /></p> : (
         <div class="scroll" tabindex="0" role="region" aria-label="Baselines">
           <table>
@@ -312,7 +315,7 @@ const C = b.curation;
     </section>
 
     <section data-section="8" aria-labelledby="s-leaderboards">
-      <h2 id="s-leaderboards">Leaderboards</h2>
+      <h2 id="s-leaderboards">Leaderboards<SuggestFix entity={b.id} field="leaderboard_url" label="leaderboards" /></h2>
       {b.leaderboard_url == null && (b.leaderboards ?? []).length === 0 ? <p><Absent state="not-recorded" reason="no leaderboard recorded" /></p> : (
         <ul class="leaderboards">
           {b.leaderboard_url != null && (
@@ -342,7 +345,7 @@ const C = b.curation;
 
     <details class="more" data-section="11">
       <summary><h2>Lineage <span class="count">({edges.length})</span></h2></summary>
-      <p>Role: {L?.role ?? <Absent state="not-recorded" />}</p>
+      <p>Role: {L?.role ?? <Absent state="not-recorded" />}<SuggestFix entity={b.id} field="lineage" label="lineage" /></p>
       {edges.length === 0 ? <p><Absent state="not-recorded" reason="no lineage relation recorded" /></p> : (
         <ul class="edges">
           {edges.map((e) => (
@@ -355,9 +358,9 @@ const C = b.curation;
     <details class="more" data-section="12">
       <summary><h2>Governance and independence <span class="count">({flags.length} {flags.length === 1 ? 'flag' : 'flags'})</span></h2></summary>
       <dl class="pairs">
-        <div><dt>Maintainer</dt><dd>{G.maintainer ?? <Absent state="not-reported" />}{G.maintainer_type && <> · <FacetChip facet="governance" term_id={G.maintainer_type} /></>}</dd></div>
-        <div><dt>Submission process</dt><dd>{submission.length > 0 ? <FacetChips chips={submission.map((t) => ({ facet: 'governance', term_id: t }))} /> : <Absent state="not-reported" />}</dd></div>
-        <div><dt>Independence assessed</dt><dd>{G.independence_assessed === true ? 'yes' : G.independence_assessed === false ? 'no' : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Maintainer<SuggestFix entity={b.id} field="governance.maintainer" label="Maintainer" /></dt><dd>{G.maintainer ?? <Absent state="not-reported" />}{G.maintainer_type && <> · <FacetChip facet="governance" term_id={G.maintainer_type} /></>}</dd></div>
+        <div><dt>Submission process<SuggestFix entity={b.id} field="governance.submission_process" label="Submission process" /></dt><dd>{submission.length > 0 ? <FacetChips chips={submission.map((t) => ({ facet: 'governance', term_id: t }))} /> : <Absent state="not-reported" />}</dd></div>
+        <div><dt>Independence assessed<SuggestFix entity={b.id} field="governance.independence_assessed" label="Independence assessed" /></dt><dd>{G.independence_assessed === true ? 'yes' : G.independence_assessed === false ? 'no' : <Absent state="not-recorded" />}</dd></div>
       </dl>
       {flags.length > 0 && (
         <ul class="flags">
@@ -370,9 +373,9 @@ const C = b.curation;
     <details class="more" data-section="13">
       <summary><h2>Licence and access <span class="count">({licenceCount} of {licences.length + 1} recorded)</span></h2></summary>
       <dl class="pairs">
-        <div><dt>Data access</dt><dd><FacetChip facet="data_properties" term_id={D.access} state="filter-available" href={browse('access', D.access)} />{D.records_access != null && <> · records: <FacetChip facet="data_properties" term_id={D.records_access} /></>}</dd></div>
-        {licences.map(([name, v]) => <div><dt>{name}</dt><dd>{v ?? <Absent state="not-recorded" />}</dd></div>)}
-        <div><dt>Contamination risk</dt><dd>{D.contamination_risk ?? <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Data access<SuggestFix entity={b.id} field="data.access" label="Data access" /></dt><dd><FacetChip facet="data_properties" term_id={D.access} state="filter-available" href={browse('access', D.access)} />{D.records_access != null && <> · records: <FacetChip facet="data_properties" term_id={D.records_access} /></>}</dd></div>
+        {licences.map(([name, v, field]) => <div><dt>{name}<SuggestFix entity={b.id} field={field} label={name} /></dt><dd>{v ?? <Absent state="not-recorded" />}</dd></div>)}
+        <div><dt>Contamination risk<SuggestFix entity={b.id} field="data.contamination_risk" label="Contamination risk" /></dt><dd>{D.contamination_risk ?? <Absent state="not-recorded" />}</dd></div>
       </dl>
       {contamination.length > 0 && (
         <ul class="contamination" aria-label="Contamination evidence">
@@ -384,12 +387,12 @@ const C = b.curation;
     <details class="more" data-section="14">
       <summary><h2>Execution cost <span class="count">({costCount} of {costRows.length} recorded)</span></h2></summary>
       <dl class="pairs">
-        <div><dt>Compute tier</dt><dd>{X.compute_tier != null ? <FacetChip facet="execution" term_id={X.compute_tier} /> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Reproducibility tier</dt><dd>{X.reproducibility_tier != null ? <FacetChip facet="execution" term_id={X.reproducibility_tier} /> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Estimated runtime</dt><dd>{X.est_runtime_hours != null ? <>{range(X.est_runtime_hours)} hours{X.est_runtime_hours.basis != null && <> ({X.est_runtime_hours.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Estimated cost</dt><dd>{X.est_cost_usd != null ? <>US${range(X.est_cost_usd)}{X.est_cost_usd.basis != null && <> ({X.est_cost_usd.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Participant cost</dt><dd>{X.est_participant_cost_usd != null ? <>US${range(X.est_participant_cost_usd)} ({X.est_participant_cost_usd.basis})</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Harness</dt><dd>{X.harness_availability != null ? <FacetChip facet="execution" term_id={X.harness_availability} /> : <Absent state="not-recorded" />}{X.harness != null && <> · {X.harness}</>}</dd></div>
+        <div><dt>Compute tier<SuggestFix entity={b.id} field="execution.compute_tier" label="Compute tier" /></dt><dd>{X.compute_tier != null ? <FacetChip facet="execution" term_id={X.compute_tier} /> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Reproducibility tier<SuggestFix entity={b.id} field="execution.reproducibility_tier" label="Reproducibility tier" /></dt><dd>{X.reproducibility_tier != null ? <FacetChip facet="execution" term_id={X.reproducibility_tier} /> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Estimated runtime<SuggestFix entity={b.id} field="execution.est_runtime_hours" label="Estimated runtime" /></dt><dd>{X.est_runtime_hours != null ? <>{range(X.est_runtime_hours)} hours{X.est_runtime_hours.basis != null && <> ({X.est_runtime_hours.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Estimated cost<SuggestFix entity={b.id} field="execution.est_cost_usd" label="Estimated cost" /></dt><dd>{X.est_cost_usd != null ? <>US${range(X.est_cost_usd)}{X.est_cost_usd.basis != null && <> ({X.est_cost_usd.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Participant cost<SuggestFix entity={b.id} field="execution.est_participant_cost_usd" label="Participant cost" /></dt><dd>{X.est_participant_cost_usd != null ? <>US${range(X.est_participant_cost_usd)} ({X.est_participant_cost_usd.basis})</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Harness<SuggestFix entity={b.id} field="execution.harness_availability" label="Harness" /></dt><dd>{X.harness_availability != null ? <FacetChip facet="execution" term_id={X.harness_availability} /> : <Absent state="not-recorded" />}{X.harness != null && <> · {X.harness}</>}</dd></div>
       </dl>
       {(X.reproducibility_blockers ?? []).length > 0 && <p>Reproducibility blockers: <FacetChips chips={(X.reproducibility_blockers ?? []).map((t) => ({ facet: 'execution', term_id: t }))} /></p>}
     </details>
@@ -397,9 +400,9 @@ const C = b.curation;
     <details class="more" data-section="15">
       <summary><h2>Maintenance status <span class="count">({signalCount} of {signals.length} signals observed)</span></h2></summary>
       <dl class="pairs">
-        <div><dt>Last repository commit</dt><dd>{V?.repo_last_commit != null ? <><time datetime={V.repo_last_commit}>{V.repo_last_commit}</time> ({ago(V.repo_last_commit)})</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Leaderboard last updated</dt><dd>{V?.leaderboard_last_updated != null ? <><time datetime={V.leaderboard_last_updated}>{V.leaderboard_last_updated}</time> ({ago(V.leaderboard_last_updated)})</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Reproduction script</dt><dd>{V?.reproduction_script_present == null ? <Absent state="not-recorded" /> : V.reproduction_script_present ? `present${V.reproduction_script_verified ? ', verified to run' : ''}` : 'absent'}</dd></div>
+        <div><dt>Last repository commit<SuggestFix entity={b.id} field="liveness.repo_last_commit" label="Last repository commit" /></dt><dd>{V?.repo_last_commit != null ? <><time datetime={V.repo_last_commit}>{V.repo_last_commit}</time> ({ago(V.repo_last_commit)})</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Leaderboard last updated<SuggestFix entity={b.id} field="liveness.leaderboard_last_updated" label="Leaderboard last updated" /></dt><dd>{V?.leaderboard_last_updated != null ? <><time datetime={V.leaderboard_last_updated}>{V.leaderboard_last_updated}</time> ({ago(V.leaderboard_last_updated)})</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Reproduction script<SuggestFix entity={b.id} field="liveness.reproduction_script_present" label="Reproduction script" /></dt><dd>{V?.reproduction_script_present == null ? <Absent state="not-recorded" /> : V.reproduction_script_present ? `present${V.reproduction_script_verified ? ', verified to run' : ''}` : 'absent'}</dd></div>
         <div><dt>Signals checked</dt><dd>{V?.last_checked != null ? <time datetime={V.last_checked}>{V.last_checked}</time> : <Absent state="not-recorded" />}</dd></div>
       </dl>
       {b.maintenance_status_contested && <p>The maintainers contest the observed status. <SourceRef id={b.contested_source} sources={sources} /></p>}
@@ -474,6 +477,7 @@ const C = b.curation;
     color: var(--c-ink-muted);
   }
   .facts dd { margin: 0; }
+  .rail :global(.contribute) { margin-block-start: var(--sp-3); }
   section, .more, .cite-block {
     margin-block: 0 var(--sp-8);
   }
