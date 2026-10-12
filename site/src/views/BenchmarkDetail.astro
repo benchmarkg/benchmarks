@@ -61,7 +61,7 @@ const headroomAbsent: [string, string] = b.data.ceiling_anchor_type === 'none-kn
       : ['not-recorded', 'computed from the claims artifact, which this build does not include'];
 
 // ---- 2. description, as its paragraphs -------------------------------------------------------------------------
-const paragraphs = (b.description ?? '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+const paragraphs = b.description != null ? b.description.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean) : [];
 
 // ---- 3. facets ---------------------------------------------------------------------------------------------------
 const facetRows = [
@@ -200,13 +200,13 @@ const C = b.curation;
         <ol class="versions">
           {(b.versions ?? []).map((v) => (
             <li data-version={v.version}>
-              <p class="version-line"><code>{v.version}</code>{v.label && <> {v.label}</>}{v.breaking && <strong class="breaking" data-breaking> Breaking change</strong>}{v.frozen && <span class="muted"> · frozen</span>}</p>
-              <p class="muted">{v.version_kind ?? 'revision'} · released {v.released != null ? <time datetime={v.released}>{v.released}</time> : <Absent state="not-recorded" />}{v.items != null && <> · {formatValue(v.items)} items</>}{v.supersedes_version && <> · supersedes <code>{v.supersedes_version}</code></>}{v.superseded_by && <> · superseded by <code>{v.superseded_by}</code></>}</p>
-              {v.changes && <p>{v.changes}</p>}
+              <p class="version-line"><code>{v.version}</code>{v.label != null && <> {v.label}</>}{v.breaking && <strong class="breaking" data-breaking> Breaking change</strong>}{v.frozen && <span class="muted"> · frozen</span>}</p>
+              <p class="muted">{v.version_kind ?? 'revision'} · released {v.released != null ? <time datetime={v.released}>{v.released}</time> : <Absent state="not-recorded" />}{v.items != null && <> · {formatValue(v.items)} items</>}{v.supersedes_version != null && <> · supersedes <code>{v.supersedes_version}</code></>}{v.superseded_by != null && <> · superseded by <code>{v.superseded_by}</code></>}</p>
+              {v.changes != null && <p>{v.changes}</p>}
               {(v.errata ?? []).length > 0 && (
                 <ul class="errata" aria-label={`Errata for ${v.version}`}>
                   {(v.errata ?? []).map((e) => (
-                    <li data-erratum><strong>Erratum</strong>{e.date && <> <time datetime={e.date}>{e.date}</time></>}{e.scope && <> ({e.scope})</>}: {e.description} <SourceRef id={e.source} sources={sources} /></li>
+                    <li data-erratum><strong>Erratum</strong>{e.date != null && <> <time datetime={e.date}>{e.date}</time></>}{e.scope != null && <> ({e.scope})</>}: {e.description} <SourceRef id={e.source} sources={sources} /></li>
                   ))}
                 </ul>
               )}
@@ -220,7 +220,7 @@ const C = b.curation;
           <h3>Recorded changes</h3>
           <ul class="history">
             {(b.history ?? []).map((h) => (
-              <li data-history={h.event}>{h.date != null ? <time datetime={h.date}>{h.date}</time> : <Absent state="not-reported" reason="undated" />}: {h.event.replace(/-/g, ' ')} (<code>{h.field}</code>){h.from != null && <> from {h.from}</>}{h.to != null && <> to {h.to}</>}. {h.note && <span>{h.note} </span>}<SourceRef id={h.source} quote={h.quote} sources={sources} /></li>
+              <li data-history={h.event}>{h.date != null ? <time datetime={h.date}>{h.date}</time> : <Absent state="not-reported" reason="undated" />}: {h.event.replace(/-/g, ' ')} (<code>{h.field}</code>){h.from != null && <> from {h.from}</>}{h.to != null && <> to {h.to}</>}. {h.note != null && <span>{h.note} </span>}<SourceRef id={h.source} quote={h.quote} sources={sources} /></li>
             ))}
           </ul>
         </>
@@ -254,7 +254,7 @@ const C = b.curation;
         <>
           <h3>Size</h3>
           <ul class="sizes">
-            {(D.size ?? []).map((s) => <li>{formatValue(s.count)} {s.unit}{s.subset && <> in <code>{s.subset}</code></>}{s.note && <> ({s.note})</>} <SourceRef id={s.source} quote={s.quote} sources={sources} /></li>)}
+            {(D.size ?? []).map((s) => <li>{formatValue(s.count)} {s.unit}{s.subset != null && <> in <code>{s.subset}</code></>}{s.note != null && <> ({s.note})</>} <SourceRef id={s.source} quote={s.quote} sources={sources} /></li>)}
           </ul>
         </>
       )}
@@ -265,7 +265,7 @@ const C = b.curation;
       {metricIds.length === 0 && metricNotes.length === 0 && <p><Absent state="not-recorded" reason="no metric recorded" /></p>}
       {metricNotes.length > 0 && (
         <ul class="metric-notes" aria-label="Scoring as the sources describe it">
-          {metricNotes.map((n) => <li data-metric-note={n.name}><code>{n.name}</code>{n.metric && <>: {n.metric}</>} <SourceRef id={n.source} quote={n.quote} sources={sources} /></li>)}
+          {metricNotes.map((n) => <li data-metric-note={n.name}><code>{n.name}</code>{n.metric != null && <>: {n.metric}</>} <SourceRef id={n.source} quote={n.quote} sources={sources} /></li>)}
         </ul>
       )}
       {metricIds.map((id) => {
@@ -347,7 +347,7 @@ const C = b.curation;
       {edges.length === 0 ? <p><Absent state="not-recorded" reason="no lineage relation recorded" /></p> : (
         <ul class="edges">
           {edges.map((e) => (
-            <li data-edge={e.relation}>{e.relation} {published.has(e.target) && e.target !== b.id ? <a href={`/benchmarks/${e.target}/`}><code>{e.target}</code></a> : <code>{e.target}</code>}{e.detail && <> ({e.detail})</>} <SourceRef id={e.source} quote={e.quote} sources={sources} /></li>
+            <li data-edge={e.relation}>{e.relation} {published.has(e.target) && e.target !== b.id ? <a href={`/benchmarks/${e.target}/`}><code>{e.target}</code></a> : <code>{e.target}</code>}{e.detail !== undefined && <> ({e.detail})</>} <SourceRef id={e.source} quote={e.quote} sources={sources} /></li>
           ))}
         </ul>
       )}
@@ -377,7 +377,7 @@ const C = b.curation;
       </dl>
       {contamination.length > 0 && (
         <ul class="contamination" aria-label="Contamination evidence">
-          {contamination.map((e) => <li>{e.stance && <span>{e.stance}: </span>}<SourceRef id={e.source} quote={e.quote} sources={sources} /></li>)}
+          {contamination.map((e) => <li>{e.stance != null && <span>{e.stance}: </span>}<SourceRef id={e.source} quote={e.quote} sources={sources} /></li>)}
         </ul>
       )}
     </details>
@@ -387,10 +387,10 @@ const C = b.curation;
       <dl class="pairs">
         <div><dt>Compute tier</dt><dd>{X.compute_tier != null ? <FacetChip facet="execution" term_id={X.compute_tier} /> : <Absent state="not-recorded" />}</dd></div>
         <div><dt>Reproducibility tier</dt><dd>{X.reproducibility_tier != null ? <FacetChip facet="execution" term_id={X.reproducibility_tier} /> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Estimated runtime</dt><dd>{X.est_runtime_hours != null ? <>{range(X.est_runtime_hours)} hours{X.est_runtime_hours.basis && <> ({X.est_runtime_hours.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Estimated cost</dt><dd>{X.est_cost_usd != null ? <>US${range(X.est_cost_usd)}{X.est_cost_usd.basis && <> ({X.est_cost_usd.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Estimated runtime</dt><dd>{X.est_runtime_hours != null ? <>{range(X.est_runtime_hours)} hours{X.est_runtime_hours.basis != null && <> ({X.est_runtime_hours.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Estimated cost</dt><dd>{X.est_cost_usd != null ? <>US${range(X.est_cost_usd)}{X.est_cost_usd.basis != null && <> ({X.est_cost_usd.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
         <div><dt>Participant cost</dt><dd>{X.est_participant_cost_usd != null ? <>US${range(X.est_participant_cost_usd)} ({X.est_participant_cost_usd.basis})</> : <Absent state="not-recorded" />}</dd></div>
-        <div><dt>Harness</dt><dd>{X.harness_availability != null ? <FacetChip facet="execution" term_id={X.harness_availability} /> : <Absent state="not-recorded" />}{X.harness && <> · {X.harness}</>}</dd></div>
+        <div><dt>Harness</dt><dd>{X.harness_availability != null ? <FacetChip facet="execution" term_id={X.harness_availability} /> : <Absent state="not-recorded" />}{X.harness != null && <> · {X.harness}</>}</dd></div>
       </dl>
       {(X.reproducibility_blockers ?? []).length > 0 && <p>Reproducibility blockers: <FacetChips chips={(X.reproducibility_blockers ?? []).map((t) => ({ facet: 'execution', term_id: t }))} /></p>}
     </details>
@@ -431,7 +431,7 @@ const C = b.curation;
         <div><dt>Verification status</dt><dd data-verification-status>{C.verification_status ?? <Absent state="not-recorded" />}</dd></div>
         <div><dt>Confidence</dt><dd>{C.confidence ?? <Absent state="not-recorded" />}</dd></div>
       </dl>
-      {C.notes && <p class="notes">{C.notes}</p>}
+      {C.notes != null && <p class="notes">{C.notes}</p>}
       {(C.not_yet_available ?? []).length > 0 && <p>Not yet available: {(C.not_yet_available ?? []).length} item(s) the sources announce but have not released.</p>}
       {(C.unreachable ?? []).length > 0 && <p>Unreachable: {(C.unreachable ?? []).length} source(s) could not be read.</p>}
     </details>
