@@ -15,8 +15,8 @@ commit that changed the schema's code -- a schema/*.py module whose syntax tree,
     python scripts/check_schema_churn.py --window 40      # exit 0 when the schema held for 40 entries, else 1
     python scripts/check_schema_churn.py --root DIR       # another repository (the tests do)
 
-In pr-validate.yml it is a reported signal (the job never blocks a pull request); at the Phase 1 exit gate it
-is blocking, which is where a still-moving schema means the plan has to stop.
+In pr-validate.yml it is a reported signal, run through scripts/reported.py (a warning on a green job, never a
+block); at the Phase 1 exit gate it is blocking, which is where a still-moving schema means the plan has to stop.
 """
 from __future__ import annotations
 

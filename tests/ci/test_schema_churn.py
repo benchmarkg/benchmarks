@@ -88,6 +88,7 @@ def test_the_repository_reports_its_count():
 def test_it_is_a_reported_signal_not_a_blocking_job():
     with open(os.path.join(ROOT, '.github', 'workflows', 'pr-validate.yml'), encoding='utf-8') as fh:
         job = YAML(typ='safe').load(fh)['jobs']['schema-churn']
-    assert job['continue-on-error'] is True
+    assert 'continue-on-error' not in job          # reported.py keeps the job green, so no red X on every PR
     assert [s['run'] for s in job['steps'] if 'run' in s] == [
-        'uv run --locked --python "$PYTHON" python scripts/check_schema_churn.py --window 40']
+        'uv run --locked --python "$PYTHON" python scripts/reported.py --title "schema freeze" '
+        'scripts/check_schema_churn.py --window 40']

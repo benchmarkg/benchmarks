@@ -278,17 +278,18 @@ jobs:
     name: schema freeze (reported, not blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # A reported signal (P1-S3-T09): the log says how many entries the schema has held for, and whether
-    # stopping rule (b) fired; it never blocks a pull request. The Phase 1 exit gate is where it blocks.
-    continue-on-error: true
+    # A reported signal (P1-S3-T09): the log and the job summary say how many entries the schema has held for, and
+    # whether stopping rule (b) fired; it never blocks a pull request. scripts/reported.py turns the check's findings
+    # into a warning on a green job (continue-on-error would show a red X on every pull request) and still fails the
+    # job if the check itself breaks. The Phase 1 exit gate is where the freeze blocks.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-      - name: check_schema_churn.py --window 40
-        run: uv run --locked --python "$PYTHON" python scripts/check_schema_churn.py --window 40
+      - name: check_schema_churn.py --window 40, reported
+        run: uv run --locked --python "$PYTHON" python scripts/reported.py --title "schema freeze" scripts/check_schema_churn.py --window 40
 
   sweep-families:
     name: sweep hub list is the domain vocabulary
