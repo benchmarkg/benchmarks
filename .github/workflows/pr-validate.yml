@@ -20,7 +20,11 @@
 # with --locked, so a stale lockfile fails rather than resolving afresh
 # (tests/ci/test_pr_validate_matrix.py holds the two together).
 #
-# Job 5, the codegen drift check, is schema-codegen.yml until it is folded in here.
+# Job 5 is the codegen drift check (P0-S6-T02; 05 S9): `bench schema gen --check` regenerates the JSON Schema
+# from the Pydantic models and the TypeScript types from it, and fails on any diff. The vocabularies become
+# Literal enums at import time, so a taxonomy/ change drifts the artifacts as surely as a schema/ change; the
+# job has no path filter, like every job here, so it runs on both. It replaced schema-codegen.yml, which ran
+# the same command on its own until this file existed. The issue-form dropdowns join it when the forms do.
 #
 # sweep-families (P1-S12-T01; 06 S6) runs scripts/check_sweep_families.py: docs/sweeps/hubs.yaml's
 # families are exactly taxonomy/domains.yaml's, 06 S6's cadence and effort tables agree with it, and
@@ -106,6 +110,24 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: bench validate --tier semantic
         run: uv run --locked --python "$PYTHON" bench validate --tier semantic $SCOPE
+
+  check-5-codegen:
+    name: 5 codegen drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: json-schema-to-typescript from the site lockfile
+        working-directory: site
+        run: npm ci --ignore-scripts
+      - name: bench schema gen --check
+        run: uv run --locked --python "$PYTHON" bench schema gen --check
 
   sweep-families:
     name: sweep hub list is the domain vocabulary
