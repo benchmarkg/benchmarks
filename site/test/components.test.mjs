@@ -351,7 +351,7 @@ test('Contribute: the issue form is the first, primary action; editing the YAML 
   const links = [...html.matchAll(/<a class="(\w+)" data-action="([\w-]+)" href="([^"]+)"/g)].map((m) => m.slice(1));
   assert.equal(links[0][0], 'primary');
   assert.equal(links[0][1], 'correction');
-  assert.match(links[0][2], /\/issues\/new\?template=correction\.yml&amp;entity_id=swe-bench/);
+  assert.match(links[0][2], /\/issues\/new\?template=correction\.yml&amp;entity=swe-bench&amp;title=/);
   assert.deepEqual(links[1].slice(0, 2), ['secondary', 'edit-yaml']);
   assert.match(style('Contribute'), /\.secondary\s*\{\s*font-size: var\(--fs-xs\)/);
   await assert.rejects(render('Contribute', { entity_id: 'x', entity_kind: 'benchmark', yaml_path: 'x',
