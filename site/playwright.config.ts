@@ -13,9 +13,12 @@
 // build from a preview at all (src/lib/corpus.ts). One server for both, because two `astro build`s of one project
 // at once share .astro/ and would race.
 //
-// Two projects: `js` runs every spec but the detail page's; `nojs` runs that one with JavaScript disabled in the
+// Two projects: `js` runs every spec but the citable pages'; `nojs` runs those with JavaScript disabled in the
 // browser, because a detail page that needs JavaScript to be read has failed (08 S4.3).
 import { defineConfig } from '@playwright/test';
+
+// the specs that read the site with JavaScript off: the detail page (P2-S3-T01) and its provenance drill-down (P2-S3-T02)
+const NOJS = /(detail-nojs|provenance)\.spec\.ts$/;
 
 export default defineConfig({
   testDir: 'tests',
@@ -23,8 +26,8 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: 'http://localhost:4322' },
   projects: [
-    { name: 'js', testIgnore: /detail-nojs\.spec\.ts$/ },
-    { name: 'nojs', testMatch: /detail-nojs\.spec\.ts$/, use: { javaScriptEnabled: false } },
+    { name: 'js', testIgnore: NOJS },
+    { name: 'nojs', testMatch: NOJS, use: { javaScriptEnabled: false } },
   ],
   webServer: {
     command: 'uv run python ../scripts/preview_corpus.py --out ../build/preview && npm run build && npm run preview -- --port 4322',
@@ -32,7 +35,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 300_000,
     env: {
-      UAIBI_SITE_FIXTURES: 'theme,components',
+      UAIBI_SITE_FIXTURES: 'theme,components,provenance',
       UAIBI_CORPUS: '../build/preview/corpus.json',
       UAIBI_SITE_DRAFTS: '1',
       ASTRO_TELEMETRY_DISABLED: '1',
