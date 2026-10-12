@@ -29,6 +29,7 @@ tools/resolve.py, tools/tag_gap.py).
 """
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import os
 import sys
@@ -194,6 +195,10 @@ def build_cmd(
         raise typer.Exit(1)
     for path in artifacts.write(result, str(out)):
         typer.echo('wrote %s' % path)
+    # SUCCESSION.md item 5: the date of the last human commit to data/, which the site's banner reads (P0-S7-T04)
+    from tools import dormancy
+    typer.echo('wrote %s' % dormancy.write(dormancy.state(dormancy.last_human_commit(ROOT), _dt.date.today()),
+                                          str(out / 'dormancy.json')))
     if derived:
         # 07 S9.1: every source's health, read from ingest/state/ and the run logs (P5-S7-T03)
         from tools.build import ingest_health
