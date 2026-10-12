@@ -35,6 +35,11 @@
 # scripts/taxonomy_stats.py --check; and presentation-group containment (9h), run after a `bench build` so
 # the shipped artifacts exist to be scanned rather than reported NOT RUN.
 #
+# check-schema-gate (P0-S6-T07; GOVERNANCE.md, 05 S5) refuses a diff that changes the schema or a vocabulary's
+# structure without adding adr/NNNN-*.md and schema/migrations/NNNN-*.py under one number. Job 5 is what
+# holds the same diff to its regenerated JSON Schema and TypeScript types. It reads the merge base, hence
+# fetch-depth: 0.
+#
 # Job 5 is the codegen drift check (P0-S6-T02; 05 S9): `bench schema gen --check` regenerates the JSON Schema
 # from the Pydantic models and the TypeScript types from it, and fails on any diff. The vocabularies become
 # Literal enums at import time, so a taxonomy/ change drifts the artifacts as surely as a schema/ change; the
@@ -222,6 +227,23 @@ jobs:
         run: uv run --locked --python "$PYTHON" bench build --out build/
       - name: check_display_only_vocab.py
         run: uv run --locked --python "$PYTHON" python scripts/check_display_only_vocab.py
+
+  check-schema-gate:
+    name: schema change carries its ADR and migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # The diff to read: a pull request's against its base, a push's since the previous tip; a manual run
+      # compares with origin/main, which on main itself is no diff.
+      GATE_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before || 'origin/main' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: check_schema_change_gate.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_schema_change_gate.py --base "$GATE_BASE"
 
   sweep-families:
     name: sweep hub list is the domain vocabulary
