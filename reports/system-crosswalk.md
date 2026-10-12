@@ -8,18 +8,17 @@ P3-S3-T05. Every distinct Epoch `Model version` string (927; reports/epoch-ident
 
 | | Strings |
 | --- | ---: |
-| Written as aliases, unreviewed | 819 |
+| Written as aliases, unreviewed | 835 |
 | of which `exact`: nothing stripped | 494 |
-| of which `provider-endpoint`: a provider or an effort routed | 325 |
-| **Proposed for a person (the band)** | **108** |
+| of which `provider-endpoint`: a provider or an effort routed | 341 |
+| **Proposed for a person (the band)** | **92** |
 | Total | 927 |
 
-The band covers 47 Systems. Why each string is in it (its first reason):
+The band covers 36 Systems. Why each string is in it (its first reason):
 
 | Reason | Strings |
 | --- | ---: |
 | suffix | 68 |
-| no Organization record | 16 |
 | namespace | 11 |
 | condition word | 8 |
 | bedrock | 3 |
@@ -27,20 +26,19 @@ The band covers 47 Systems. Why each string is in it (its first reason):
 
 ## The estimate, re-derived from the band
 
-The task carried 8-24 h, "proportional to a number nobody has measured". The number is **108 proposals** in 15 patterns, plus 37 auto rows worth a second look (below). The human pass costs:
+The task carried 8-24 h, "proportional to a number nobody has measured". The number is **92 proposals** in 14 patterns, plus 37 auto rows worth a second look (below). The human pass costs:
 
 - 3-5 minutes for each proposal;
 - 15-30 minutes to settle each pattern's reading the first time;
 - 1-2 minutes for each spot check.
 
-In total, **9.8-17.7 hours**.
+In total, **8.7-15.9 hours**.
 
 The patterns, each a reading to settle once:
 
 | Pattern | Strings |
 | --- | ---: |
 | suffix `_NK` | 62 |
-| no Organization record | 16 |
 | condition word | 8 |
 | bedrock | 3 |
 | namespace `fireworks/` | 3 |
