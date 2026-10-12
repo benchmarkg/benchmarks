@@ -48,6 +48,7 @@ from pydantic import (BaseModel, ConfigDict, Field, StringConstraints, TypeAdapt
 
 from schema.baseline import Baseline
 from schema.entities import BenchmarkVersion, Subset
+from schema.system import Evidence  # ADR-0026: shared with Baseline and Subset
 from schema.taxonomy import load_taxonomy
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -205,12 +206,6 @@ def _no_derived(data: Any, fields: tuple[str, ...], where: str):
             raise ValueError('%s %s derived and may never appear in a hand-written file (04 S5); remove %s'
                              % (where, 'is' if len(present) == 1 else 'are', ', '.join(present)))
     return data
-
-
-class Evidence(Closed):
-    """A source and the verbatim quote in it that carries a fact."""
-    source: SourceId
-    quote: Text | None = None
 
 
 class Count(Block):
@@ -634,6 +629,24 @@ class PersonalDataExcluded(Closed):
     what: Text
 
 
+class ReviewCheck(Closed):
+    """A question the drafter leaves for the person who verifies the entry (ADR-0026; 05 S4). It used to be a
+    paragraph of curation.notes; as a record it says which field it concerns, whether it needs a domain specialist
+    (05 S4's expert-reviewed), and the source and verbatim quote behind it where it rests on one, which the quote
+    check then verifies like any other. A reviewer resolves a check by acting on it and deleting it."""
+    check: Text
+    field: Annotated[str, StringConstraints(pattern=r'^[a-z_]+(\.[a-z_]+)*$')] | None = None
+    specialist: bool = False
+    source: SourceId | None = None
+    quote: Text | None = None
+
+    @model_validator(mode='after')
+    def _quoted(self):
+        if self.quote is not None and self.source is None:
+            raise ValueError('a review check quoting a source names it: %s' % self.check[:60])
+        return self
+
+
 class Curation(Block):
     added_by: Text
     added_on: date
@@ -641,6 +654,7 @@ class Curation(Block):
     verification_status: VerificationStatus = 'ai-drafted-unverified'
     sources: list[Union[SourceId, InlineSource]] = Field(min_length=1)
     confidence: Literal['low', 'medium', 'high'] = 'medium'
+    review_checks: list[ReviewCheck] = Field(default_factory=list)
     notes: str | None = None
     not_yet_available: list[NotYetAvailable] = Field(default_factory=list)
     unreachable: list[Unreachable] = Field(default_factory=list)

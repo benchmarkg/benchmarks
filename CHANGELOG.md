@@ -23,6 +23,11 @@ under `## [Unreleased]` in the same pull request, in this form:
 
 ### Added
 
+- `Curation.review_checks[]` (the questions a draft leaves for its verifier, each with its field, whether it needs a
+  specialist, and its source and quote), `Baseline.subset`, `Baseline.evidence[]` and `Subset.evidence[]`; the
+  entries' reviewer checks move out of `curation.notes` into the new field, and their schema findings out of the
+  entries into docs/schema-findings-ledger.md. ADR: adr/0026-review-checks-and-evidence.md. Migration:
+  schema/migrations/0026-review-checks.py
 - The 20-entry checkpoint's additions: `Benchmark.history[]` (dated moves, closures and hand-overs),
   `Benchmark.as_used[]` (how a benchmark is run where that differs from its design), `Paper.doi`,
   `Governance.independence_assessed`, `Data.languages`, `EvalConditions.user_simulator` and

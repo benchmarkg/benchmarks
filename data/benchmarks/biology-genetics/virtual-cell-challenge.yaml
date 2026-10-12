@@ -437,11 +437,14 @@ baselines:
     value: 1.0
     is_primary: true
     source: src-vcc-2026-evaluation
+    evidence:
+      - source: src-vcc-2026-evaluation
+        quote: taken as the mean of five disjoint half-splits of the real data
+      - source: src-vcc-2026-faq
+        quote: 1 is a landmark, not a ceiling
     notes: >
       1 by construction: every metric in every context is scaled so that a real replicate experiment
-      scores 1, the replicate "taken as the mean of five disjoint half-splits of the real data"
-      (src-vcc-2026-evaluation). A landmark, not a maximum -- "1 is a landmark, not a ceiling"
-      (src-vcc-2026-faq) -- and a submission can pass it.
+      scores 1. A landmark, not a maximum: a submission can pass it.
   - id: base-vcc-2026-context-mean
     benchmark_version: virtual-cell-challenge@2026
     kind: classical-algorithm
@@ -450,9 +453,7 @@ baselines:
     source: src-vcc-2026-evaluation
     notes: >
       The floor: the cell-context mean, one average profile predicted for every perturbation, scores 0
-      on every metric by construction. It is computed from the withheld measurements, so it is a
-      reference point rather than a submission an entrant could make; classical-algorithm is the
-      nearest floor kind (curation.notes). Scores below 0 are ordinary.
+      on every metric by construction. Scores below 0 are ordinary.
 
 lineage:
   role: root
@@ -486,33 +487,23 @@ curation:
     commentaries carry DOIs and are not archived: cell.com and ScienceDirect refused automated
     retrieval (403 and a browser check), so their extracts are the abstracts as Europe PMC serves them.
   confidence: medium
-  notes: |
-    Reviewer checks (specialist):
-    - Whether the normalisation anchors are described correctly is a biology judgement: 0 is the
-      cell-context mean and 1 a split-half replicate of the held-out data, per metric and per context
-      (data.ceiling_anchor_type_basis, baselines[]).
-    - The contamination question about recognisable cell lines and public same-line data
-      (data.contamination_risk_note).
-    - transfer-learning and the rejection of distribution-shift-generalization (capability).
-    - maintainer_type nonprofit is unquoted (governance.maintainer_type_note).
-
-    Schema findings (none worked around here):
-    1. EvalConditions.training_data_policy's four terms have no definitions. Here `zero-shot-only`
-       means no perturbation response in a target context is released; training on any other data is
-       allowed. Read as a training ban -- 02 S12.10's "none" -- it would be false.
-    2. Baseline.kind has no term for a reference point computed from the ground truth itself (the
-       cell-context mean); classical-algorithm, the nearest floor kind, suggests an entrant-style method.
-    3. A reference-scaled metric whose ceiling anchor is passable has no field saying so: Metric's
-       `unbounded` marks it, which also makes headroom uncomputable, although headroom against the
-       replicate is exactly what the scale is built for.
-    4. The anchors are per metric and per context (six by three per round), measured on the held-out
-       data; Baseline stores one value per (version, metric), so only the overall score's 0 and 1 are
-       stored, and the per-context raw anchors are not.
-    5. taxonomy/domains.yaml and taxonomy/capabilities.yaml cite `virtual-cell-challenge-2026`, which
-       is not an entry id (aliases_note).
-    6. independence_flags has no term for a sponsor that co-develops the scorer (NVIDIA and cell-eval).
-    7. As with Matbench Discovery, statistical-fit x scientific-surrogate-model resolves the
-       forecasting profile, so lead_time and resolution_window arrived as material and were
-       waived, until ADR-0024 gave the pair its own profile.
-    8. A site that renders client-side can only be sourced through its script bundles; Source has no
-       field to say that the extract's bytes are a bundle and not the page at `url`, so the notes say it.
+  review_checks:
+    - check: 'Whether the normalisation anchors are described correctly is a biology judgement: 0 is the
+        cell-context mean and 1 a split-half replicate of the held-out data, per metric and per context
+        (data.ceiling_anchor_type_basis, baselines[]).'
+      specialist: true
+    - check: The contamination question about recognisable cell lines and public same-line data
+        (data.contamination_risk_note).
+      field: data.contamination_risk_note
+      specialist: true
+    - check: transfer-learning and the rejection of distribution-shift-generalization (capability).
+      field: capability
+      specialist: true
+    - check: maintainer_type nonprofit is unquoted (governance.maintainer_type_note).
+      field: governance.maintainer_type_note
+      specialist: true
+    - check: base-vcc-2026-context-mean is recorded as classical-algorithm, the nearest floor kind.
+        The cell-context mean is computed from the withheld measurements, so it is a reference point
+        rather than a submission an entrant could make; Baseline.kind has no term for that (schema
+        finding 2).
+      field: baselines

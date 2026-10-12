@@ -51,6 +51,13 @@ class Closed(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
 
+class Evidence(Closed):
+    """A source and the verbatim quote in it that carries a fact. Defined here, below every entity module, so a
+    Baseline and a Subset can carry evidence as a Benchmark does (ADR-0026)."""
+    source: SourceId
+    quote: Text | None = None
+
+
 class SystemVersion(Closed):
     version: Annotated[str, StringConstraints(pattern=r'^[A-Za-z0-9][A-Za-z0-9._-]*$')]
     released: date | None = None
