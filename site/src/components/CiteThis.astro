@@ -1,10 +1,14 @@
 ---
-// site/src/components/CiteThis.astro -- P2-S2-T06 (09 S6.13). A bordered block at the foot of every entry page and
-// analysis view: BibTeX, APA, a permalink at the commit SHA, and the raw YAML at that SHA. A component, not a footer
-// string, because citability is a differentiator and has to look like a feature. Until a release DOI is minted the
-// DOI line says so in the absent token; the permalink stands in.
+// site/src/components/CiteThis.astro -- P2-S2-T06 (09 S6.13); P2-S3-T07 (10 "The permanent citation URL"). A bordered
+// block at the foot of every entry page and analysis view: the release, a permalink at the commit SHA, the raw YAML
+// at that SHA, the concept DOI, APA, BibTeX, and links to the same citation as files (cite.bib, cite.json, cite.ris,
+// cite.yaml), all from lib/cite.ts so the block and the files agree. A component, not a footer string, because
+// citability is a differentiator and has to look like a feature. It points at the git commit and the Zenodo DOI,
+// never at an artifact URL. Until a release DOI is minted the DOI line says so in the absent token; the permalink
+// stands in.
 import Absent from './Absent.astro';
-import { blobAt, rawAt, sha } from '../lib/repo';
+import { apa, bibtex, FORMATS, permalink, type CiteFacts } from '../lib/cite';
+import { rawAt, sha } from '../lib/repo';
 
 interface Props {
   entity_id: string;
@@ -16,25 +20,17 @@ interface Props {
   /** The release the page was built from (lib/release.ts); null before the first tagged release, omitted to leave
    *  the line out. */
   release_tag?: string | null;
+  index_title?: string;
+  /** The page whose cite.{ext} routes hold the files (for example /benchmarks/swe-bench/); omitted, no file links. */
+  formats_base?: string;
 }
 
-const { entity_id, title, commit_sha, release_doi, retrieved_at, yaml_path, release_tag } = Astro.props;
+const { entity_id, title, commit_sha, release_doi, retrieved_at, yaml_path, release_tag, formats_base,
+  index_title = 'The Universal AI Benchmark Index' } = Astro.props;
 const at = sha(commit_sha);
-const permalink = blobAt(at, yaml_path);
-const year = retrieved_at.slice(0, 4);
-const key = `uaibi-${entity_id}-${at.slice(0, 7)}`.replace(/[^a-zA-Z0-9-]/g, '-');
-const bibtex = [
-  `@misc{${key},`,
-  `  title = {${title}},`,
-  '  author = {{Benchmark index contributors}},',
-  `  year = {${year}},`,
-  `  howpublished = {\\url{${permalink}}},`,
-  ...(release_doi != null ? [`  doi = {${release_doi}},`] : []),
-  `  note = {Entry ${entity_id} at commit ${at}, retrieved ${retrieved_at}}`,
-  '}',
-].join('\n');
-const apa = `Benchmark index contributors. (${year}). ${title} [Data set entry ${entity_id}]. `
-  + (release_doi != null ? `https://doi.org/${release_doi}` : permalink);
+const facts: CiteFacts = { entity_id, title, commit_sha: at, release_doi, release_tag: release_tag ?? null, retrieved_at,
+  yaml_path, index_title };
+const link = permalink(facts);
 ---
 <section class="cite" data-cite={entity_id}>
   <h2>Cite this</h2>
@@ -42,15 +38,17 @@ const apa = `Benchmark index contributors. (${year}). ${title} [Data set entry $
     {release_tag !== undefined && <dt>Release</dt>}
     {release_tag !== undefined && <dd data-release-tag>{release_tag != null ? <code>{release_tag}</code> : <Absent state="not-applicable" reason="no tagged release yet" />}</dd>}
     <dt>Permalink at <code>{at.slice(0, 12)}</code></dt>
-    <dd><a href={permalink}>{permalink}</a></dd>
+    <dd><a href={link}>{link}</a></dd>
     <dt>Raw YAML</dt>
     <dd><a href={rawAt(at, yaml_path)}><code>{yaml_path}</code></a></dd>
     <dt>Release DOI</dt>
     <dd>{release_doi != null ? <a href={`https://doi.org/${release_doi}`}>{release_doi}</a> : <Absent state="not-applicable" reason="no release DOI minted yet" />}</dd>
     <dt>APA</dt>
-    <dd><p class="apa">{apa}</p></dd>
+    <dd><p class="apa">{apa(facts)}</p></dd>
     <dt>BibTeX</dt>
-    <dd><pre><code>{bibtex}</code></pre></dd>
+    <dd><pre><code>{bibtex(facts).trimEnd()}</code></pre></dd>
+    {formats_base != null && <dt>Formats</dt>}
+    {formats_base != null && <dd class="formats" data-formats>{Object.entries(FORMATS).map(([ext, f]) => <a href={`${formats_base}cite.${ext}`} data-format={ext}>{f.label}</a>)}</dd>}
   </dl>
 </section>
 
@@ -79,5 +77,10 @@ const apa = `Benchmark index contributors. (${year}). ${title} [Data set entry $
   }
   .apa {
     margin: 0;
+  }
+  .formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
   }
 </style>
