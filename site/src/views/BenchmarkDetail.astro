@@ -1,0 +1,588 @@
+---
+// site/src/views/BenchmarkDetail.astro -- P2-S3-T01 (10 V6; 09 S5.3, S10; 08 S4.3). The canonical, citable page for
+// one benchmark: 10 V6's eighteen sections, in its order. Sections 1-9 are the readable article; 10-17 are
+// collapsed <details> with a count in each summary -- collapsed, not absent, so their content is in the HTML,
+// crawlable, printable and found by the browser's own find; 18 is the citation block. Every disclosure is a native
+// <details> and nothing here has a script, so the page reads completely with JavaScript off and ships none.
+//
+// The entry grid (09 S5.3): from --bp-md (51rem) a prose column beside a 20rem metadata rail; below it one column,
+// with the rail's facts as a compact strip ABOVE the prose (09 S10: "on a phone the facts are usually why you
+// arrived"). The rail is one element the grid places, so each fact is written once.
+//
+// Where the data is not there, the section stays and says so in one of the four absence phrases (09 S11.2), rather
+// than disappearing. Claims are counted here (from the adoption artifact) but not yet tabled: the claims table (10),
+// the trajectory chart (9) and headroom (1) are drawn from claims.json, which P3-S10-T03 builds; the provenance
+// drill-down on each number is P2-S3-T02's, the lineage and trajectory SVGs P2-S3-T03's (the
+// lineage edges are listed here as text), the export formats P2-S3-T07's. 10 V6 section 14 also names
+// est_api_calls, which the schema (04) has no field for, so it is not rendered as a recordable gap.
+import Absent from '../components/Absent.astro';
+import CiteThis from '../components/CiteThis.astro';
+import FacetChip from '../components/FacetChip.astro';
+import FacetChips from '../components/FacetChips.astro';
+import SourceCitation from '../components/SourceCitation.astro';
+import Staleness from '../components/Staleness.astro';
+import SourceRef from './detail/SourceRef.astro';
+import { daysSince, formatValue, term } from '../lib/vocab';
+import type { Adoption, SubsetRow } from '../lib/corpus';
+import type { Release } from '../lib/release';
+import type { Benchmark, Evidence, FlagItem, EvidenceItem } from '../types/benchmark';
+import type { Metric } from '../types/metric';
+import type { Source } from '../types/source';
+
+interface Props {
+  benchmark: Benchmark;
+  metrics: Map<string, Metric>;       // every Metric the corpus publishes, by id
+  sources: Map<string, Source>;       // every Source the corpus publishes, by id
+  published: Set<string>;             // the benchmark ids that have a page, so lineage links only to real pages
+  subsets: SubsetRow[];               // corpus.json's materialised rows for this benchmark
+  adoption: Adoption | null;          // claims and the systems they are about; null when adoption.json was not built
+  release: Release;
+}
+
+const { benchmark: b, metrics, sources, published, subsets, adoption, release } = Astro.props;
+const today = new Date(`${release.built_on}T00:00:00Z`);
+const family = b.domain.primary.split('/')[0];
+const yamlPath = `data/benchmarks/${family}/${b.id}.yaml`;        // 05 S2: the family of domain.primary
+const draft = b.curation.verification_status === 'ai-drafted-unverified';
+
+// /browse/{facet}/{term}/, 10 "Information architecture": the single-facet pages, the no-JS path
+const browse = (facet: string, id: string) => `/browse/${facet}/${id}/`;
+const chip = (facet: string, segment: string) => (id: string) => ({ facet, term_id: id, state: 'filter-available' as const, href: browse(segment, id) });
+const label = (facet: string, id: string) => term(facet, id).label;
+
+// ---- 1. identity, lifecycle, headroom, adoption ----------------------------------------------------------------
+const headline = b.headline_metric != null ? metrics.get(b.headline_metric) : undefined;
+const headroomAbsent: [string, string] = b.data.ceiling_anchor_type === 'none-known'
+  ? ['not-applicable', 'no known ceiling, so no headroom']
+  : b.no_legitimate_aggregate
+    ? ['not-applicable', 'no legitimate aggregate to take headroom of']
+    : headline?.unbounded
+      ? ['not-applicable', 'an unbounded metric has no headroom']
+      : ['not-recorded', 'computed from the claims artifact, which this build does not include'];
+
+// ---- 2. description, as its paragraphs -------------------------------------------------------------------------
+const paragraphs = (b.description ?? '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
+// ---- 3. facets ---------------------------------------------------------------------------------------------------
+const facetRows = [
+  { name: 'Primary domain', chips: [chip('domain', 'domain')(b.domain.primary)] },
+  { name: 'Secondary domains', chips: (b.domain.secondary ?? []).map(chip('domain', 'domain')) },
+  { name: 'Capabilities', chips: (b.capability ?? []).map(chip('capability', 'capability')) },
+  { name: 'Evaluation method', chips: (b.evaluation_method ?? []).map(chip('evaluation_method', 'evaluation-method')) },
+  { name: 'Designed for', chips: (b.designed_for_subjects ?? []).map(chip('subject', 'subject')) },
+];
+
+// ---- 6. metrics: the headline first, then the rest in the record's order ----------------------------------------
+// `metrics` is a list of Metric ids, or -- where the sources describe the scoring without a metric the index models
+// (CASP's assessor-chosen measures) -- a mapping of named notes, each with its source and quote (schema/benchmark.py).
+const metricList = Array.isArray(b.metrics) ? b.metrics : [];
+const metricNotes = Array.isArray(b.metrics) || b.metrics == null ? [] : Object.entries(b.metrics).map(([name, v]) => {
+  const n = (v ?? {}) as { metric?: unknown; source?: string; quote?: string };
+  return { name, metric: typeof n.metric === 'string' ? n.metric : null, source: n.source ?? null, quote: n.quote ?? null };
+});
+const metricIds = [...new Set([...(b.headline_metric != null ? [b.headline_metric] : []), ...metricList])];
+const optimum = (m: Metric) => ({
+  max: 'higher is better', min: 'lower is better', zero: 'closer to zero is better',
+  target: `closer to ${m.optimum_target != null ? formatValue(m.optimum_target) : 'its target'} is better`,
+}[m.optimum]);
+
+// ---- 7. baselines: a missing value is one of the four phrases, chosen by the recorded reason ----------------------
+const baselineAbsent = { 'no-published-comparator': 'not-reported', 'not-applicable': 'not-applicable', 'not-yet-measured': 'not-reported' } as const;
+
+// ---- 8. leaderboards ------------------------------------------------------------------------------------------------
+const lbUpdated = b.liveness?.leaderboard_last_updated ?? null;
+
+// ---- 11. lineage: every relation as an edge, counted -------------------------------------------------------------
+const L = b.lineage;
+const edges: { relation: string; target: string; detail?: string; source?: string | null; quote?: string | null }[] = [
+  ...(L?.supersedes ?? []).map((t) => ({ relation: 'supersedes', target: t })),
+  ...(L?.superseded_by ?? []).map((t) => ({ relation: 'superseded by', target: t })),
+  ...(L?.subset_of != null ? [{ relation: 'subset of', target: L.subset_of }] : []),
+  ...(L?.extended_by ?? []).map((t) => ({ relation: 'extended by', target: t })),
+  ...(L?.decontaminates != null ? [{ relation: 'decontaminates', target: L.decontaminates }] : []),
+  ...(L?.correlates_with ?? []).map((c) => ({
+    relation: 'correlates with', target: c.benchmark, source: c.source,
+    detail: c.coefficient != null ? `coefficient ${formatValue(c.coefficient)}` : undefined,
+  })),
+  ...(L?.variants ?? []).map((v) => ({
+    relation: `variant (${v.relation})`, target: v.id, source: v.source, quote: v.quote,
+    detail: [v.n_items != null ? `${formatValue(v.n_items)} items` : null, v.co_maintainer ? `with ${v.co_maintainer}` : null].filter(Boolean).join(', ') || undefined,
+  })),
+  ...(L?.forks ?? []).map((f) => ({ relation: 'fork', target: f.id, detail: `maintained by ${f.maintainer}`, source: f.source, quote: f.quote })),
+  ...(L?.views ?? []).map((v) => ({ relation: `view of ${v.of}`, target: v.name, source: v.source, quote: v.quote })),
+];
+
+// ---- 12. governance ---------------------------------------------------------------------------------------------------
+const G = b.governance;
+const flags = (G.independence_flags ?? []).map((f) => (typeof f === 'string' ? { flag: f } as FlagItem : f));
+const submission = G.submission_process == null ? [] : Array.isArray(G.submission_process) ? G.submission_process : [G.submission_process];
+const govEvidence = ([['Funding', G.funding], ['Participation', G.participation], ['Independence policy', G.independence_policy], ['Known limitation', G.known_limitation]] as [string, Evidence | null | undefined][])
+  .filter((e): e is [string, Evidence] => e[1] != null);
+
+// ---- 13. licence and access ------------------------------------------------------------------------------------------
+const D = b.data;
+const licences = [
+  ['Dataset licence', D.dataset_licence], ['Records licence', D.records_licence],
+  ['Upstream licences', D.upstream_licences], ['Code licence', b.execution.code_licence],
+] as [string, string | null | undefined][];
+const licenceCount = 1 + licences.filter(([, v]) => v != null).length;    // the access class is always recorded
+const contamination = (D.contamination_evidence ?? []).map((e) => (typeof e === 'string' ? { source: e } as EvidenceItem : e));
+
+// ---- 14. execution cost ------------------------------------------------------------------------------------------------
+const X = b.execution;
+const range = (r: { min: number; max: number } | null | undefined) => (r == null ? null : r.min === r.max ? formatValue(r.min) : `${formatValue(r.min)}–${formatValue(r.max)}`);
+const costRows = [X.compute_tier, X.reproducibility_tier, X.est_runtime_hours, X.est_cost_usd, X.est_participant_cost_usd];
+const costCount = costRows.filter((v) => v != null).length;
+
+// ---- 15. maintenance: the observable signals ----------------------------------------------------------------------------
+const V = b.liveness;
+const signals = [V?.repo_last_commit, V?.leaderboard_last_updated, V?.reproduction_script_present];
+const signalCount = signals.filter((v) => v != null).length;
+const ago = (iso: string) => `${daysSince(iso, today)} days before this build`;
+
+// ---- 16. sources: every source the record cites, by id -------------------------------------------------------------------
+const cited = new Set<string>();
+(function walk(x: unknown, key: string) {
+  if (typeof x === 'string') {
+    if (/^src-/.test(x) && (key === 'source' || key.endsWith('_source') || key === 'sources' || key === 'id' || key === 'contested_source')) cited.add(x);
+  } else if (Array.isArray(x)) {
+    for (const v of x) walk(v, key);
+  } else if (x !== null && typeof x === 'object') {
+    for (const [k, v] of Object.entries(x)) walk(v, k);
+  }
+})(b, '');
+const citedIds = [...cited].sort();
+const retrieved = (s: Source) => s.accessed ?? s.fetched_at?.slice(0, 10) ?? null;
+const publisher = (s: Source) => s.publisher ?? new URL(s.url).hostname;
+
+// ---- 17. curation ----------------------------------------------------------------------------------------------------------
+const C = b.curation;
+---
+<article class="entry" data-benchmark={b.id} data-yaml-path={yamlPath}>
+  <header class="head" data-section="1">
+    {draft && <p class="draft" data-draft-entry>This entry is an agent's draft that no person has verified. It appears only in a draft preview.</p>}
+    <h1>{b.name}</h1>
+    {b.aliases != null && b.aliases.length > 0 && <p class="aliases">Also known as {b.aliases.join(', ')}</p>}
+    <p class="tagline">{b.tagline}</p>
+  </header>
+
+  <aside class="rail" aria-label="Key facts">
+    <dl class="facts">
+      <div data-fact="lifecycle"><dt>Lifecycle</dt><dd>{b.lifecycle != null ? <FacetChip facet="lifecycle" term_id={b.lifecycle} state="filter-available" href={browse('lifecycle', b.lifecycle)} /> : <Absent state="not-reported" reason="the sources do not show whether it is in use" />}</dd></div>
+      <div data-fact="headroom"><dt>Headroom</dt><dd><Absent state={headroomAbsent[0]} reason={headroomAbsent[1]} /></dd></div>
+      <div data-fact="adoption"><dt>Adoption</dt><dd>{adoption != null ? <span>{formatValue(adoption.systems)} {adoption.systems === 1 ? 'system' : 'systems'} with a claim</span> : <Absent state="not-recorded" reason="adoption not built" />}</dd></div>
+      <div data-fact="released"><dt>Released</dt><dd>{b.released != null ? <time datetime={b.released}>{b.released}</time> : <Absent state="not-recorded" />}</dd></div>
+      <div data-fact="domain"><dt>Domain</dt><dd>{label('domain', family)}{b.domain.primary.includes('/') && <> · {label('domain', b.domain.primary)}</>}</dd></div>
+      <div data-fact="access"><dt>Data access</dt><dd>{label('data_properties', D.access)}</dd></div>
+      <div data-fact="verified"><dt>Last verified</dt><dd><Staleness last_verified_at={C.last_verified} entity_kind="benchmark" today={today} /></dd></div>
+    </dl>
+  </aside>
+
+  <div class="body">
+    <section data-section="2" aria-labelledby="s-description">
+      <h2 id="s-description">Description</h2>
+      {paragraphs.length > 0 ? paragraphs.map((p) => <p>{p}</p>) : <p><Absent state="not-recorded" /></p>}
+    </section>
+
+    <section data-section="3" aria-labelledby="s-facets">
+      <h2 id="s-facets">Facets</h2>
+      <dl class="pairs">
+        {facetRows.map((r) => (
+          <div><dt>{r.name}</dt><dd>{r.chips.length > 0 ? <FacetChips chips={r.chips} /> : <Absent state="not-recorded" />}</dd></div>
+        ))}
+      </dl>
+    </section>
+
+    <section data-section="4" aria-labelledby="s-versions">
+      <h2 id="s-versions">Version history</h2>
+      {(b.versions ?? []).length === 0 && (b.history ?? []).length === 0 && <p><Absent state="not-recorded" reason="no version or change recorded" /></p>}
+      {(b.versions ?? []).length > 0 && (
+        <ol class="versions">
+          {(b.versions ?? []).map((v) => (
+            <li data-version={v.version}>
+              <p class="version-line"><code>{v.version}</code>{v.label && <> {v.label}</>}{v.breaking && <strong class="breaking" data-breaking> Breaking change</strong>}{v.frozen && <span class="muted"> · frozen</span>}</p>
+              <p class="muted">{v.version_kind ?? 'revision'} · released {v.released != null ? <time datetime={v.released}>{v.released}</time> : <Absent state="not-recorded" />}{v.items != null && <> · {formatValue(v.items)} items</>}{v.supersedes_version && <> · supersedes <code>{v.supersedes_version}</code></>}{v.superseded_by && <> · superseded by <code>{v.superseded_by}</code></>}</p>
+              {v.changes && <p>{v.changes}</p>}
+              {(v.errata ?? []).length > 0 && (
+                <ul class="errata" aria-label={`Errata for ${v.version}`}>
+                  {(v.errata ?? []).map((e) => (
+                    <li data-erratum><strong>Erratum</strong>{e.date && <> <time datetime={e.date}>{e.date}</time></>}{e.scope && <> ({e.scope})</>}: {e.description} <SourceRef id={e.source} sources={sources} /></li>
+                  ))}
+                </ul>
+              )}
+              {(v.sources ?? []).length > 0 && <p class="muted">Sources: {(v.sources ?? []).map((s) => <SourceRef id={s} sources={sources} />)}</p>}
+            </li>
+          ))}
+        </ol>
+      )}
+      {(b.history ?? []).length > 0 && (
+        <>
+          <h3>Recorded changes</h3>
+          <ul class="history">
+            {(b.history ?? []).map((h) => (
+              <li data-history={h.event}>{h.date != null ? <time datetime={h.date}>{h.date}</time> : <Absent state="not-reported" reason="undated" />}: {h.event.replace(/-/g, ' ')} (<code>{h.field}</code>){h.from != null && <> from {h.from}</>}{h.to != null && <> to {h.to}</>}. {h.note && <span>{h.note} </span>}<SourceRef id={h.source} quote={h.quote} sources={sources} /></li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+
+    <section data-section="5" aria-labelledby="s-subsets">
+      <h2 id="s-subsets">Subsets</h2>
+      {subsets.length === 0 ? <p><Absent state="not-recorded" reason="no subset recorded" /></p> : (
+        <div class="scroll" tabindex="0" role="region" aria-label="Subsets">
+          <table>
+            <thead><tr><th scope="col">Subset</th><th scope="col">Parent</th><th scope="col">Items</th><th scope="col">Scored separately</th><th scope="col">Own facets</th></tr></thead>
+            <tbody>
+              {subsets.map((row) => {
+                const curated = (b.subsets ?? []).find((s) => s.id === row.id);
+                return (
+                  <tr data-subset={row.id}>
+                    <th scope="row">{row.label} <code>{row.id}</code></th>
+                    <td>{row.parent != null ? <code>{row.parent}</code> : <Absent state="not-applicable" reason="top level" />}</td>
+                    <td>{curated?.items != null ? formatValue(curated.items) : <Absent state="not-recorded" />}</td>
+                    <td>{curated?.scored_separately ? 'yes' : 'no'}</td>
+                    <td>{row.overrides.length === 0 ? 'inherits every facet' : row.overrides.map((f) => <span class="override" data-override={f}>{f}: {JSON.stringify(row.facets[f])} </span>)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {(D.size ?? []).length > 0 && (
+        <>
+          <h3>Size</h3>
+          <ul class="sizes">
+            {(D.size ?? []).map((s) => <li>{formatValue(s.count)} {s.unit}{s.subset && <> in <code>{s.subset}</code></>}{s.note && <> ({s.note})</>} <SourceRef id={s.source} quote={s.quote} sources={sources} /></li>)}
+          </ul>
+        </>
+      )}
+    </section>
+
+    <section data-section="6" aria-labelledby="s-metrics">
+      <h2 id="s-metrics">Metrics</h2>
+      {metricIds.length === 0 && metricNotes.length === 0 && <p><Absent state="not-recorded" reason="no metric recorded" /></p>}
+      {metricNotes.length > 0 && (
+        <ul class="metric-notes" aria-label="Scoring as the sources describe it">
+          {metricNotes.map((n) => <li data-metric-note={n.name}><code>{n.name}</code>{n.metric && <>: {n.metric}</>} <SourceRef id={n.source} quote={n.quote} sources={sources} /></li>)}
+        </ul>
+      )}
+      {metricIds.map((id) => {
+        const m = metrics.get(id);
+        return m == null ? <p data-metric={id}><code>{id}</code> <Absent state="not-recorded" reason="no metric record" /></p> : (
+          <div class="metric" data-metric={id}>
+            <h3>{m.full_name ?? m.name}{id === b.headline_metric && <span class="tag"> headline</span>}</h3>
+            <p>{m.definition}</p>
+            <dl class="pairs">
+              <div><dt>Range</dt><dd>{m.unbounded ? 'unbounded' : m.range != null && m.range.min != null && m.range.max != null ? `${formatValue(m.range.min)} to ${formatValue(m.range.max)}` : <Absent state="not-recorded" />}</dd></div>
+              <div><dt>Chance baseline</dt><dd>{m.chance_baseline != null ? formatValue(m.chance_baseline) : <Absent state="not-reported" />}</dd></div>
+              <div><dt>Direction</dt><dd>{optimum(m)}</dd></div>
+              <div><dt>Aggregation</dt><dd>{m.aggregation ?? <Absent state="not-reported" />}</dd></div>
+              <div><dt>Units</dt><dd>{m.units ?? <Absent state="not-applicable" />}</dd></div>
+            </dl>
+            <p class="pitfalls" data-pitfalls><strong>Pitfalls:</strong> {m.pitfalls ?? <Absent state="not-recorded" />}</p>
+          </div>
+        );
+      })}
+    </section>
+
+    <section data-section="7" aria-labelledby="s-baselines">
+      <h2 id="s-baselines">Human baselines</h2>
+      {(b.baselines ?? []).length === 0 ? <p><Absent state="not-recorded" reason="no baseline recorded" /></p> : (
+        <div class="scroll" tabindex="0" role="region" aria-label="Baselines">
+          <table>
+            <thead><tr><th scope="col">Baseline</th><th scope="col">Value</th><th scope="col">Metric</th><th scope="col">Version</th><th scope="col">Population</th><th scope="col">n</th><th scope="col">Time limit</th><th scope="col">Source</th></tr></thead>
+            <tbody>
+              {(b.baselines ?? []).map((x) => (
+                <tr data-baseline={x.id} data-primary={x.is_primary ? 'true' : undefined}>
+                  <th scope="row">{x.kind.replace(/-/g, ' ')}{x.is_primary && <strong class="tag"> primary</strong>}</th>
+                  <td class="num">{x.value != null ? formatValue(x.value) : <Absent state={x.value_absent_reason != null ? baselineAbsent[x.value_absent_reason] : 'not-reported'} />}</td>
+                  <td><code>{x.metric}</code></td>
+                  <td><code>{x.benchmark_version}</code></td>
+                  <td>{x.population ?? <Absent state="not-reported" />}</td>
+                  <td class="num">{x.n_humans != null ? formatValue(x.n_humans) : <Absent state="not-reported" />}</td>
+                  <td>{x.time_limit ?? <Absent state="not-reported" />}</td>
+                  <td><SourceRef id={x.source} sources={sources} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+
+    <section data-section="8" aria-labelledby="s-leaderboards">
+      <h2 id="s-leaderboards">Leaderboards</h2>
+      {b.leaderboard_url == null && (b.leaderboards ?? []).length === 0 ? <p><Absent state="not-recorded" reason="no leaderboard recorded" /></p> : (
+        <ul class="leaderboards">
+          {b.leaderboard_url != null && (
+            <li data-leaderboard-url><a href={b.leaderboard_url}>{b.leaderboard_url}</a> · last updated {lbUpdated != null ? <><time datetime={lbUpdated}>{lbUpdated}</time> ({ago(lbUpdated)})</> : <Absent state="not-recorded" />}{b.activity != null && <> · <FacetChip facet="lifecycle" term_id={b.activity} /></>}</li>
+          )}
+          {(b.leaderboards ?? []).map((id) => <li data-leaderboard={id}><code>{id}</code></li>)}
+        </ul>
+      )}
+    </section>
+
+    <section data-section="9" aria-labelledby="s-trajectory">
+      <h2 id="s-trajectory">State-of-the-art trajectory</h2>
+      <figure class="trajectory" data-trajectory>
+        <p><Absent state="not-recorded" reason="drawn from the claims artifact, which this build does not include" /></p>
+        <figcaption>The highest reported value under each set of conditions, over time.</figcaption>
+      </figure>
+    </section>
+
+    <details class="more" data-section="10">
+      <summary><h2>Claims <span class="count">({adoption != null ? formatValue(adoption.claims) : 'not counted'})</span></h2></summary>
+      {adoption == null
+        ? <p><Absent state="not-recorded" reason="claims are counted from the adoption artifact, which this build does not include" /></p>
+        : adoption.claims === 0
+          ? <p>No claim is recorded for this benchmark. <Absent state="not-recorded" /></p>
+          : <p data-claims-pending>{formatValue(adoption.claims)} {adoption.claims === 1 ? 'claim is' : 'claims are'} recorded for this benchmark. Their table, sorted by verification and then value with each row's provenance, is drawn from the claims artifact, which this build does not include yet. <Absent state="not-recorded" reason="claims table" /></p>}
+    </details>
+
+    <details class="more" data-section="11">
+      <summary><h2>Lineage <span class="count">({edges.length})</span></h2></summary>
+      <p>Role: {L?.role ?? <Absent state="not-recorded" />}</p>
+      {edges.length === 0 ? <p><Absent state="not-recorded" reason="no lineage relation recorded" /></p> : (
+        <ul class="edges">
+          {edges.map((e) => (
+            <li data-edge={e.relation}>{e.relation} {published.has(e.target) && e.target !== b.id ? <a href={`/benchmarks/${e.target}/`}><code>{e.target}</code></a> : <code>{e.target}</code>}{e.detail && <> ({e.detail})</>} <SourceRef id={e.source} quote={e.quote} sources={sources} /></li>
+          ))}
+        </ul>
+      )}
+    </details>
+
+    <details class="more" data-section="12">
+      <summary><h2>Governance and independence <span class="count">({flags.length} {flags.length === 1 ? 'flag' : 'flags'})</span></h2></summary>
+      <dl class="pairs">
+        <div><dt>Maintainer</dt><dd>{G.maintainer ?? <Absent state="not-reported" />}{G.maintainer_type && <> · <FacetChip facet="governance" term_id={G.maintainer_type} /></>}</dd></div>
+        <div><dt>Submission process</dt><dd>{submission.length > 0 ? <FacetChips chips={submission.map((t) => ({ facet: 'governance', term_id: t }))} /> : <Absent state="not-reported" />}</dd></div>
+        <div><dt>Independence assessed</dt><dd>{G.independence_assessed === true ? 'yes' : G.independence_assessed === false ? 'no' : <Absent state="not-recorded" />}</dd></div>
+      </dl>
+      {flags.length > 0 && (
+        <ul class="flags">
+          {flags.map((f) => <li data-flag={f.flag}><FacetChip facet="governance" term_id={f.flag} /> <SourceRef id={f.source} quote={f.quote} sources={sources} /></li>)}
+        </ul>
+      )}
+      {govEvidence.map(([name, e]) => <p><strong>{name}:</strong> <SourceRef id={e.source} quote={e.quote} sources={sources} /></p>)}
+    </details>
+
+    <details class="more" data-section="13">
+      <summary><h2>Licence and access <span class="count">({licenceCount} of {licences.length + 1} recorded)</span></h2></summary>
+      <dl class="pairs">
+        <div><dt>Data access</dt><dd><FacetChip facet="data_properties" term_id={D.access} state="filter-available" href={browse('access', D.access)} />{D.records_access != null && <> · records: <FacetChip facet="data_properties" term_id={D.records_access} /></>}</dd></div>
+        {licences.map(([name, v]) => <div><dt>{name}</dt><dd>{v ?? <Absent state="not-recorded" />}</dd></div>)}
+        <div><dt>Contamination risk</dt><dd>{D.contamination_risk ?? <Absent state="not-recorded" />}</dd></div>
+      </dl>
+      {contamination.length > 0 && (
+        <ul class="contamination" aria-label="Contamination evidence">
+          {contamination.map((e) => <li>{e.stance && <span>{e.stance}: </span>}<SourceRef id={e.source} quote={e.quote} sources={sources} /></li>)}
+        </ul>
+      )}
+    </details>
+
+    <details class="more" data-section="14">
+      <summary><h2>Execution cost <span class="count">({costCount} of {costRows.length} recorded)</span></h2></summary>
+      <dl class="pairs">
+        <div><dt>Compute tier</dt><dd>{X.compute_tier != null ? <FacetChip facet="execution" term_id={X.compute_tier} /> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Reproducibility tier</dt><dd>{X.reproducibility_tier != null ? <FacetChip facet="execution" term_id={X.reproducibility_tier} /> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Estimated runtime</dt><dd>{X.est_runtime_hours != null ? <>{range(X.est_runtime_hours)} hours{X.est_runtime_hours.basis && <> ({X.est_runtime_hours.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Estimated cost</dt><dd>{X.est_cost_usd != null ? <>US${range(X.est_cost_usd)}{X.est_cost_usd.basis && <> ({X.est_cost_usd.basis})</>}</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Participant cost</dt><dd>{X.est_participant_cost_usd != null ? <>US${range(X.est_participant_cost_usd)} ({X.est_participant_cost_usd.basis})</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Harness</dt><dd>{X.harness_availability != null ? <FacetChip facet="execution" term_id={X.harness_availability} /> : <Absent state="not-recorded" />}{X.harness && <> · {X.harness}</>}</dd></div>
+      </dl>
+      {(X.reproducibility_blockers ?? []).length > 0 && <p>Reproducibility blockers: <FacetChips chips={(X.reproducibility_blockers ?? []).map((t) => ({ facet: 'execution', term_id: t }))} /></p>}
+    </details>
+
+    <details class="more" data-section="15">
+      <summary><h2>Maintenance status <span class="count">({signalCount} of {signals.length} signals observed)</span></h2></summary>
+      <dl class="pairs">
+        <div><dt>Last repository commit</dt><dd>{V?.repo_last_commit != null ? <><time datetime={V.repo_last_commit}>{V.repo_last_commit}</time> ({ago(V.repo_last_commit)})</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Leaderboard last updated</dt><dd>{V?.leaderboard_last_updated != null ? <><time datetime={V.leaderboard_last_updated}>{V.leaderboard_last_updated}</time> ({ago(V.leaderboard_last_updated)})</> : <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Reproduction script</dt><dd>{V?.reproduction_script_present == null ? <Absent state="not-recorded" /> : V.reproduction_script_present ? `present${V.reproduction_script_verified ? ', verified to run' : ''}` : 'absent'}</dd></div>
+        <div><dt>Signals checked</dt><dd>{V?.last_checked != null ? <time datetime={V.last_checked}>{V.last_checked}</time> : <Absent state="not-recorded" />}</dd></div>
+      </dl>
+      {b.maintenance_status_contested && <p>The maintainers contest the observed status. <SourceRef id={b.contested_source} sources={sources} /></p>}
+    </details>
+
+    <details class="more" data-section="16">
+      <summary><h2>Sources <span class="count">({citedIds.length})</span></h2></summary>
+      <ol class="sources">
+        {citedIds.map((id) => {
+          const s = sources.get(id);
+          const at = s != null ? retrieved(s) : null;
+          return (
+            <li id={id} data-source-item={id}>
+              {s != null && at != null
+                ? <SourceCitation source_id={id} title={s.title ?? s.url} publisher={publisher(s)} url={s.url} archive_url={s.archive_url ?? null} retrieved_at={at} source_type={s.type} link_only={s.licence_class === 'no-redistribution'} />
+                : <><code>{id}</code> <Absent state="not-recorded" reason="no source record" /></>}
+            </li>
+          );
+        })}
+      </ol>
+    </details>
+
+    <details class="more" data-section="17">
+      <summary><h2>Curation <span class="count">({daysSince(C.last_verified, today)} days since last verified)</span></h2></summary>
+      <dl class="pairs">
+        <div><dt>Added by</dt><dd>{C.added_by}, <time datetime={C.added_on}>{C.added_on}</time></dd></div>
+        <div><dt>Last verified</dt><dd><Staleness last_verified_at={C.last_verified} entity_kind="benchmark" today={today} /></dd></div>
+        <div><dt>Verification status</dt><dd data-verification-status>{C.verification_status ?? <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Confidence</dt><dd>{C.confidence ?? <Absent state="not-recorded" />}</dd></div>
+      </dl>
+      {C.notes && <p class="notes">{C.notes}</p>}
+      {(C.not_yet_available ?? []).length > 0 && <p>Not yet available: {(C.not_yet_available ?? []).length} item(s) the sources announce but have not released.</p>}
+      {(C.unreachable ?? []).length > 0 && <p>Unreachable: {(C.unreachable ?? []).length} source(s) could not be read.</p>}
+    </details>
+
+    <div class="cite-block" data-section="18">
+      <CiteThis entity_id={b.id} title={b.name} commit_sha={release.commit_sha} release_doi={release.concept_doi} retrieved_at={release.built_on} yaml_path={yamlPath} release_tag={release.tag} />
+    </div>
+  </div>
+</article>
+
+<style>
+  .entry {
+    display: grid;
+    grid-template-areas: 'head' 'rail' 'body';
+    gap: var(--sp-6);
+    max-inline-size: 68rem;          /* 09 S5.2 --w-entry */
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  .head { grid-area: head; }
+  .rail { grid-area: rail; }
+  .body { grid-area: body; min-inline-size: 0; }
+  h1 {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-2xl);
+    line-height: var(--lh-tight);
+  }
+  .aliases, .muted, .tagline {
+    color: var(--c-ink-muted);
+  }
+  .aliases { margin: 0 0 var(--sp-1); font-size: var(--fs-sm); }
+  .tagline { margin: 0; font-size: var(--fs-md); }
+  .draft {
+    margin: 0 0 var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-caution);
+    background: var(--c-caution-bg);
+    font-weight: 600;
+  }
+  /* the phone fact strip: the rail's facts in a wrapping row above the prose */
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2) var(--sp-4);
+    margin: 0;
+    padding: var(--sp-3);
+    border: 1px solid var(--c-border);
+    background: var(--c-surface);
+    font-size: var(--fs-sm);
+  }
+  .facts dt {
+    font-size: var(--fs-xs);
+    color: var(--c-ink-muted);
+  }
+  .facts dd { margin: 0; }
+  section, .more, .cite-block {
+    margin-block: 0 var(--sp-8);
+  }
+  h2 {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-lg);
+  }
+  h3 {
+    margin: var(--sp-4) 0 var(--sp-2);
+    font-size: var(--fs-base);
+  }
+  .more summary {
+    cursor: pointer;
+    padding-block: var(--sp-2);
+    border-block-start: 1px solid var(--c-border);
+  }
+  .more summary h2 {
+    display: inline;
+    margin: 0;
+  }
+  .count {
+    font-weight: 400;
+    color: var(--c-ink-muted);
+  }
+  .pairs {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-3);
+  }
+  .pairs > div {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr;
+    gap: var(--sp-3);
+  }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .breaking {
+    color: var(--c-alert);
+  }
+  .tag {
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--c-ink-muted);
+    text-transform: lowercase;
+  }
+  .metric {
+    margin-block-end: var(--sp-4);
+    padding-block-end: var(--sp-3);
+    border-block-end: 1px solid var(--c-border);
+  }
+  .pitfalls {
+    padding: var(--sp-2) var(--sp-3);
+    border-inline-start: 3px solid var(--c-caution);
+    background: var(--c-caution-bg);
+  }
+  .scroll {
+    overflow-x: auto;
+    margin-block-end: var(--sp-3);
+  }
+  table {
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  th, td {
+    padding: var(--sp-1) var(--sp-2);
+    border-block-end: 1px solid var(--c-border);
+    text-align: start;
+    vertical-align: top;
+  }
+  thead th { color: var(--c-ink-muted); font-weight: 600; }
+  tbody th { font-weight: 400; }
+  .num { text-align: end; font-variant-numeric: tabular-nums; }
+  .versions, .history, .edges, .metric-notes, .flags, .sources, .sizes, .leaderboards, .contamination, .errata {
+    display: grid;
+    gap: var(--sp-2);
+    padding-inline-start: var(--sp-6);
+  }
+  .notes { white-space: pre-line; }
+  .trajectory {
+    margin: 0;
+    padding: var(--sp-4);
+    border: 1px dashed var(--c-border-strong);
+  }
+  .trajectory figcaption {
+    font-size: var(--fs-sm);
+    color: var(--c-ink-muted);
+  }
+  /* 09 S5.3: the metadata rail from --bp-md (51rem; a custom property cannot sit in a media query) */
+  @media (min-width: 51rem) {
+    .entry {
+      grid-template-columns: [prose] minmax(0, 68ch) [rail] 20rem;
+      grid-template-areas: 'head rail' 'body rail';
+      grid-template-rows: auto 1fr;
+      column-gap: var(--sp-8);
+    }
+    .rail { align-self: start; position: sticky; top: var(--sp-4); }
+    .facts { display: grid; gap: var(--sp-3); }
+  }
+</style>

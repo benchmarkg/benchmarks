@@ -1,0 +1,55 @@
+---
+// site/src/pages/benchmarks/[id]/index.astro -- P2-S3-T01 (10 V6, "Information architecture"). /benchmarks/{id}/:
+// one page per published benchmark, the canonical citable page, shipping zero JavaScript (08 S4.3).
+//
+// getStaticPaths() returns each page's content digest as its cacheKey: the benchmark record together with every
+// record the page renders from it (its metrics, its sources, its subset rows, its adoption count), so that an
+// incremental build (Astro's experimental.incrementalBuild) re-renders a page exactly when something on it
+// changed. The release metadata is left out of the key on purpose: a page skipped at a later commit keeps the
+// citation block of the commit it was rendered at, and since nothing in the digest changed, the YAML at that
+// commit is the YAML at HEAD, so its permalink still cites the same content.
+import Base from '../../../layouts/Base.astro';
+import BenchmarkDetail from '../../../views/BenchmarkDetail.astro';
+import { benchmarks, metrics, sources } from '../../../lib/collections';
+import { adoptionCounts, contentDigest, corpusDoc } from '../../../lib/corpus';
+import { release } from '../../../lib/release';
+import type { Benchmark } from '../../../types/benchmark';
+
+export async function getStaticPaths() {
+  const all = await benchmarks();
+  const metricById = new Map((await metrics()).map((m) => [m.id, m]));
+  const sourceById = new Map((await sources()).map((s) => [s.id, s]));
+  const adoption = adoptionCounts();
+  const rows = corpusDoc().subsets;
+  const published = new Set(all.map((b) => b.id));
+  return all.map((b) => {
+    const subsets = rows.filter((r) => r.benchmark === b.id);
+    const used = {
+      metrics: [b.headline_metric, ...(Array.isArray(b.metrics) ? b.metrics : [])].filter((id): id is string => id != null).map((id) => metricById.get(id) ?? null),
+      sources: [...new Set(JSON.stringify(b).match(/"src-[a-z0-9-]+"/g) ?? [])].sort().map((q) => sourceById.get(JSON.parse(q)) ?? null),
+    };
+    const count = adoption == null ? null : adoption.get(b.id) ?? { systems: 0, claims: 0 };
+    return {
+      params: { id: b.id },
+      props: { benchmark: b, metrics: metricById, sources: sourceById, published, subsets, adoption: count },
+      cacheKey: contentDigest({ benchmark: b, ...used, subsets, adoption: count }),
+    };
+  });
+}
+
+interface Props {
+  benchmark: Benchmark;
+  metrics: Map<string, import('../../../types/metric').Metric>;
+  sources: Map<string, import('../../../types/source').Source>;
+  published: Set<string>;
+  subsets: import('../../../lib/corpus').SubsetRow[];
+  adoption: import('../../../lib/corpus').Adoption | null;
+}
+
+const p = Astro.props;
+---
+<Base title={`${p.benchmark.name} · Benchmark index`} zeroJs>
+  <main>
+    <BenchmarkDetail benchmark={p.benchmark} metrics={p.metrics} sources={p.sources} published={p.published} subsets={p.subsets} adoption={p.adoption} release={release()} />
+  </main>
+</Base>

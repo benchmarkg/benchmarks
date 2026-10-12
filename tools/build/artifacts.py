@@ -161,7 +161,12 @@ def resolve_subsets(b: dict) -> tuple[list[dict], list[str]]:
     return rows, errors
 
 
-def build(root: str = ROOT) -> Build:
+def build(root: str = ROOT, drafts: bool = False) -> Build:
+    """`drafts=True` is the preview build (scripts/preview_corpus.py; not a `bench build` flag, which 05 S3 does
+    not list): an ai-drafted-unverified benchmark that passes tier 1 is included rather than excluded, and the
+    corpus says `"drafts": true`, so that a person reviewing the drafts, and the site's page tests, can read them
+    rendered. The site refuses to build from such a corpus unless
+    it is told it is a preview (site/src/lib/corpus.ts), so a preview never ships as the published site."""
     from tools.validate import tiers
     out = Build()
     published: dict[str, dict[str, dict]] = {k: {} for k in CORPUS_KINDS}
@@ -180,7 +185,7 @@ def build(root: str = ROOT) -> Build:
         if kind == 'source':
             sources.setdefault(r.id, []).append(r)
             continue
-        if kind == 'benchmark' and r.parsed and status(r.raw) == DRAFT:
+        if kind == 'benchmark' and r.parsed and status(r.raw) == DRAFT and not (drafts and r.model and not broken(r)):
             out.excluded.append((r.path, r.id, DRAFT + (' (and fails tier 1)' if broken(r) else '')))
             continue
         if not r.parsed or r.model is None or broken(r):
@@ -218,7 +223,8 @@ def build(root: str = ROOT) -> Build:
     if out.errors:
         return out
     entities = {k: [v[i] for i in sorted(v)] for k, v in published.items()}
-    out.corpus = nfc({'artifact': 'corpus', 'format': FORMAT, 'entities': entities, 'subsets': subsets})
+    out.corpus = nfc({'artifact': 'corpus', 'format': FORMAT, 'entities': entities, 'subsets': subsets,
+                      **({'drafts': True} if drafts else {})})
     out.facets = nfc({'artifact': 'facets', 'format': FORMAT, 'vocabularies': vocabulary_versions(),
                       'benchmarks': [facet_row(b) for b in entities['benchmark']]})
     return out
