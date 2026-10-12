@@ -1,0 +1,35 @@
+# .github/workflows/health-check.yml -- P0-S7-T04
+#
+# The dormancy triggers of SUCCESSION.md item 5 (05 S10): tools/dormancy.py reads the date of the last human
+# commit to data/ and, at 90 days, opens and pins a `Maintainer succession` issue (idempotently: an open one is
+# left alone). The 180-day staleness banner needs no job: `bench build` writes build/dormancy.json and every
+# page reads it. The full history is fetched because the date comes from `git log -- data/`.
+#
+# The cron runs at an odd minute past an odd hour (08 S6: never on the hour, when every scheduled job on
+# GitHub starts at once). Actions are pinned by commit SHA (08 S6), the SHAs pr-validate.yml uses.
+
+name: health-check
+
+on:
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dormancy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: dormancy triggers (SUCCESSION.md item 5)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: uv run --locked --python 3.12 python -m tools.dormancy --apply
