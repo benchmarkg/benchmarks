@@ -88,9 +88,9 @@ def test_the_replay_answer_keeps_what_its_quotes_carry_and_nulls_the_five_faults
     assert 'not word for word' in notes['governance.maintainer']
     assert notes['data.access'] == 'value rejected: the drafter gave a value but called it absent'
     assert 'access' not in r.bench.get('data', {})
-    assert r.bench['data']['size']['n_items'] == {'value': 2294, 'unit': 'software engineering problems',
-                                                  'source': 'src-arxiv-2310-06770',
-                                                  'quote': 'consisting of $2,294$ software engineering problems'}
+    assert r.bench['data']['size'] == [{'count': 2294, 'unit': 'software engineering problems',
+                                        'source': 'src-arxiv-2310-06770',
+                                        'quote': 'consisting of $2,294$ software engineering problems'}]
     assert r.bench['homepage'] == 'https://www.swebench.com'
     assert r.bench['learned_entrant_evidence'][0]['system'] == 'Claude 2'
     assert r.bench['domain'] == {'primary': 'code/repository-scale-se'}
@@ -212,8 +212,8 @@ def rows(rec, field):
 
 def test_the_contract_rejects_an_unquoted_value(good):
     bad = copy.deepcopy(good)
-    bad['license'] = 'MIT'
-    with pytest.raises(ValidationError, match='license holds a value, but its evidence is absent'):
+    bad.setdefault('execution', {})['code_licence'] = 'MIT'
+    with pytest.raises(ValidationError, match='execution.code_licence holds a value, but its evidence is absent'):
         BenchmarkDraft.model_validate(bad)
 
 
@@ -251,7 +251,7 @@ def test_the_contract_rejects_any_status_but_ai_drafted_unverified_and_guessed_d
 
 def test_the_contract_requires_the_block_quote_to_match_its_row(good):
     bad = copy.deepcopy(good)
-    bad['data']['size']['n_items']['quote'] = 'consisting of $2,294$'
+    bad['data']['size'][0]['quote'] = 'consisting of $2,294$'
     with pytest.raises(ValidationError, match='differ from its evidence row'):
         BenchmarkDraft.model_validate(bad)
 

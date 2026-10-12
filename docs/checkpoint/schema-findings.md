@@ -1,7 +1,9 @@
 # Schema findings from the first twenty checkpoint entries
 
-P1-S3-T04 (DRAFT for review). This is input for P1-S3-T05, which applies the agreed changes with a migration and an
-ADR. Nothing here is applied.
+P1-S3-T04 (DRAFT for review). This was the input for P1-S3-T05. The maintainer agreed the recommended option for
+each proposal in section 4 on 2026-10-12, and ADR-0024 (adr/0024-checkpoint-schema-revision.md) applies them, with
+migration 0024. It records where the implementation differs from the proposal here (A4, A10) and what it left
+out (A8, and A7's blocker).
 
 **Sources.**
 
@@ -213,7 +215,7 @@ between `stub` and `full`. The re-cut should not read it as the cost of a `full`
 - **D2.** Reshape or drop `data.size`. Twenty-one entries chose a note over it. A list of {split or subset, count,
   unit} would fit what they wrote.
 - **D3.** Fix the comparability rule, not the entries: statistical-fit x scientific-surrogate-model resolves
-  `forecasting`. Seven entries waive its lead_time and resolution_window, so the rule, not the waiver, should
+  `forecasting`. Six entries waive its lead_time and resolution_window, so the rule, not the waiver, should
   change.
 - **D4.** Keep the unused interop keys and conditional fields for now, and revisit them at 100 entries. Zero uses
   in 34 is not evidence that 320 will not need them. Nothing in section 3 is proposed for deletion outright.

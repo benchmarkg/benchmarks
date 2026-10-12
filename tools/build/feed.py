@@ -76,7 +76,7 @@ MATERIAL = [
     'governance.independence_flags',                                                # facet 7
     'execution.compute_tier', 'execution.reproducibility_tier',
     'execution.est_runtime_hours', 'execution.est_cost_usd',                        # facet 8
-    'license', 'versions',                                                          # V8 by name
+    'data.dataset_licence', 'execution.code_licence', 'versions',      # V8 by name (license: ADR-0024)
 ]
 STALE = {'stale', 'abandoned'}
 UNPUBLISHABLE = {'ai-drafted-unverified'}  # 14-roadmap: "Unverified entries excluded from the build"

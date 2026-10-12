@@ -114,6 +114,10 @@ class EvalConditions(Closed):
     grading_rubric_ref: Text | None = None
     human_in_loop: bool | None = None
     human_assistance: HumanAssistance | None = None
+    # ADR-0024: the model that plays the user in a simulated conversation (tau-bench), which moves the score
+    # the way a judge model does.
+    user_simulator: SystemRef | None = None
+    user_simulator_version: Text | None = None
 
     # --- environment (non-LLM domains)
     simulator: Text | None = None
@@ -159,6 +163,7 @@ class EvalConditions(Closed):
     @model_validator(mode='after')
     def _dependents(self):
         for dependent, on in (('judge_model_version', 'judge_model'), ('judge_prompt_hash', 'judge_model'),
+                              ('user_simulator_version', 'user_simulator'),
                               ('simulator_version', 'simulator'), ('scaffold_source', 'scaffold'),
                               ('harness_source', 'harness'), ('prompt_template_source', 'prompt_template_hash')):
             if getattr(self, dependent) is not None and getattr(self, on) is None:

@@ -46,6 +46,8 @@ export interface EvalConditions {
   grading_rubric_ref?: string | null;
   human_in_loop?: boolean | null;
   human_assistance?: ("none" | "permitted" | "required") | null;
+  user_simulator?: string | null;
+  user_simulator_version?: string | null;
   simulator?: string | null;
   simulator_version?: string | null;
   hardware_platform?: string | null;

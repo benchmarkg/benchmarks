@@ -33,7 +33,8 @@ maintenance_status: actively-maintained
 data:
   access: fully-open
   contamination_risk: medium
-license: MIT
+execution:
+  code_licence: MIT
 tags: [demo]
 curation:
   added_on: 2026-01-02
@@ -58,7 +59,7 @@ domain: {primary: code/repository-scale-se, secondary: []}
 data: {contamination_risk: medium, access: fully-open}
 lifecycle: active
 maintenance_status: actively-maintained
-license: 'MIT'
+execution: {code_licence: 'MIT'}
 curation:
   added_on: 2026-01-02
 """
@@ -132,7 +133,7 @@ def test_a_cosmetic_diff_produces_no_material_update_event(repo):
 @pytest.mark.parametrize('old, new, field', [
     ('capability: [planning]', 'capability: [planning, tool-use]', 'capability'),
     ('  access: fully-open', '  access: gated-registration', 'data.access'),
-    ('license: MIT', 'license: Apache-2.0', 'license'),
+    ('  code_licence: MIT', '  code_licence: Apache-2.0', 'execution.code_licence'),
     ('tags: [demo]', 'tags: [demo]\nversions: [{id: v2}]', 'versions'),
     ('  contamination_risk: medium', '  contamination_risk: high', 'data.contamination_risk'),
 ])
@@ -200,11 +201,11 @@ def test_correction_needs_the_tag_and_a_previously_published_value(repo):
     commit(repo, 'rename display name', '2026-03-03T10:00:00Z')
     assert events(repo, 'correction') == []
     # ... and a fix: that changes one is.
-    v4 = replace(replace(v3, 'name: Demo Bench', 'name: Demo-Bench'), 'license: MIT', 'license: Apache-2.0')
+    v4 = replace(replace(v3, 'name: Demo Bench', 'name: Demo-Bench'), '  code_licence: MIT', '  code_licence: Apache-2.0')
     write(repo, BENCH, v4)
     commit(repo, 'fix(demo-bench): licence was misread from the repo', '2026-03-04T10:00:00Z')
     [e] = events(repo, 'correction')
-    assert e['changes'] == [{'field': 'license', 'before': 'MIT', 'after': 'Apache-2.0'}]
+    assert e['changes'] == [{'field': 'execution.code_licence', 'before': 'MIT', 'after': 'Apache-2.0'}]
 
 
 def test_a_correction_trailer_counts_as_the_tag(repo):
@@ -249,7 +250,7 @@ def test_only_mains_first_parent_line_publishes(repo):
     git(repo, 'checkout', '-q', '-b', 'topic')
     write(repo, BENCH, BENCH_V1)
     commit(repo, 'add on a branch', '2026-03-02T10:00:00Z')
-    write(repo, BENCH, replace(BENCH_V1, 'license: MIT', 'license: BSD-3-Clause'))
+    write(repo, BENCH, replace(BENCH_V1, '  code_licence: MIT', '  code_licence: BSD-3-Clause'))
     commit(repo, 'amend on the branch', '2026-03-03T10:00:00Z')
     git(repo, 'checkout', '-q', 'main')
     git(repo, 'merge', '-q', '--no-ff', '-m', 'merge topic', 'topic', when='2026-03-04T10:00:00Z')
@@ -267,7 +268,7 @@ def test_all_seven_event_types_are_covered():
 
 
 def test_events_carry_families_and_organisations_for_the_feeds(repo):
-    write(repo, BENCH, replace(BENCH_V1, 'license: MIT', 'license: MIT\ngovernance: {maintainers: [org-demo-lab]}'))
+    write(repo, BENCH, replace(BENCH_V1, '  code_licence: MIT', '  code_licence: MIT\ngovernance: {maintainers: [org-demo-lab]}'))
     write(repo, 'data/claims/demo-bench/claim-cccc.yaml',
           'id: claim-cccc\nbenchmark: demo-bench@v1\nreported_by: org-some-lab\ndate_reported: 2026-02-01\n')
     write(repo, SOURCE, 'id: src-demo\ncited_by: [demo-bench]\nlink_status: live\n')
@@ -297,10 +298,10 @@ def test_an_unverified_or_deleted_entity_is_not_publishable(repo):
 
 
 def test_a_correction_on_a_benchmark_is_filed_under_its_family(repo):
-    v1 = replace(BENCH_V1, 'license: MIT', 'license: MIT\ngovernance: {maintainers: [org-demo-lab]}')
+    v1 = replace(BENCH_V1, '  code_licence: MIT', '  code_licence: MIT\ngovernance: {maintainers: [org-demo-lab]}')
     write(repo, BENCH, v1)
     commit(repo, 'add', '2026-03-01T10:00:00Z')
-    write(repo, BENCH, replace(v1, 'license: MIT', 'license: Apache-2.0'))
+    write(repo, BENCH, replace(v1, '  code_licence: MIT', '  code_licence: Apache-2.0'))
     commit(repo, 'fix: licence', '2026-03-02T10:00:00Z')
     [e] = events(repo, 'correction')
     assert (e['families'], e['organisations']) == (['code'], ['org-demo-lab'])

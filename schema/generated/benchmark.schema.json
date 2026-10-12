@@ -71,6 +71,67 @@
       "title": "Admission",
       "type": "object"
     },
+    "AsUsed": {
+      "additionalProperties": true,
+      "description": "How the benchmark is run in practice where that differs from its design (ADR-0024): MedQA designed\nopen-book and run closed-book, FOLIO's results on the validation split because the test split was never\nreleased. The facets keep describing the design; who actually submits is `observed_subjects`.",
+      "properties": {
+        "protocol": {
+          "minLength": 1,
+          "title": "Protocol",
+          "type": "string"
+        },
+        "split": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split"
+        },
+        "source": {
+          "pattern": "^src-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Source",
+          "type": "string"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "protocol",
+        "source"
+      ],
+      "title": "AsUsed",
+      "type": "object"
+    },
     "Baseline": {
       "additionalProperties": false,
       "properties": {
@@ -491,6 +552,7 @@
                 "physical-trial",
                 "wet-lab",
                 "forecasting",
+                "surrogate-fit",
                 "human-judged",
                 "eligibility-gated"
               ],
@@ -986,13 +1048,25 @@
         "size": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Size"
+              "items": {
+                "$ref": "#/$defs/SizeRow"
+              },
+              "type": "array"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Size"
+        },
+        "languages": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Languages",
+          "type": "array"
         },
         "submission_limit": {
           "anyOf": [
@@ -2896,6 +2970,18 @@
           "title": "Independence Flags",
           "type": "array"
         },
+        "independence_assessed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Independence Assessed"
+        },
         "funding": {
           "anyOf": [
             {
@@ -2964,6 +3050,111 @@
         }
       },
       "title": "Governance",
+      "type": "object"
+    },
+    "HistoryEvent": {
+      "additionalProperties": true,
+      "description": "A dated change to a field that holds one current value (ADR-0024): a submission server that moved or\nclosed, a maintainer hand-over, a repository that moved, access that changed on a date. `date` is null\nwhere the sources show the change but do not date it; the list is in the order the changes happened.",
+      "properties": {
+        "date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "pattern": "^\\d{4}-\\d{2}(-\\d{2})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date"
+        },
+        "event": {
+          "enum": [
+            "channel-opened",
+            "channel-closed",
+            "channel-moved",
+            "maintainer-changed",
+            "repository-moved",
+            "access-changed",
+            "licence-changed"
+          ],
+          "title": "Event",
+          "type": "string"
+        },
+        "field": {
+          "pattern": "^[a-z_]+(\\.[a-z_]+)*$",
+          "title": "Field",
+          "type": "string"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To"
+        },
+        "source": {
+          "pattern": "^src-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Source",
+          "type": "string"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "event",
+        "field",
+        "source"
+      ],
+      "title": "HistoryEvent",
       "type": "object"
     },
     "InjectionSpan": {
@@ -3314,7 +3505,7 @@
     },
     "Paper": {
       "additionalProperties": false,
-      "description": "The benchmark's own paper. It is a Source; this names which one and which arXiv version was read.",
+      "description": "The benchmark's own paper. It is a Source; this names which one and which arXiv version was read.\n`doi` is the published version's DOI where there is one beside the preprint (ADR-0024).",
       "properties": {
         "title": {
           "minLength": 1,
@@ -3333,6 +3524,19 @@
           ],
           "default": null,
           "title": "Arxiv"
+        },
+        "doi": {
+          "anyOf": [
+            {
+              "pattern": "^10\\.\\d{4,9}/\\S+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Doi"
         },
         "version_read": {
           "anyOf": [
@@ -3743,44 +3947,71 @@
       "title": "Scale",
       "type": "object"
     },
-    "Size": {
+    "SizeRow": {
       "additionalProperties": true,
-      "description": "Item counts per split and what they are drawn from. Replaces 04 S5's `{items, unit}`, which no\nentry used, with the shape SWE-bench needed (P0-S4-T10).",
+      "description": "One count in a benchmark's size (ADR-0024): how many of what (`unit`), in which split, subset, version\nor language (`subset`), and the source that states it. The first row is the headline count. This\nreplaces P0-S4-T10's `{n_items, n_repositories, other_splits, languages}`, which wanted one headline\ncount: twenty-one of the 34 curated entries wrote `size_note` instead, because their sizes come per\nversion, per language, per suite or in seeds.",
       "properties": {
-        "n_items": {
-          "$ref": "#/$defs/Count"
+        "count": {
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
         },
-        "n_repositories": {
+        "unit": {
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "subset": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Count"
+              "minLength": 1,
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Subset"
         },
-        "other_splits": {
-          "items": {
-            "$ref": "#/$defs/Count"
-          },
-          "title": "Other Splits",
-          "type": "array"
+        "note": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
         },
-        "languages": {
-          "items": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "title": "Languages",
-          "type": "array"
+        "source": {
+          "pattern": "^src-[a-z0-9]+(-[a-z0-9]+)*$",
+          "title": "Source",
+          "type": "string"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
         }
       },
       "required": [
-        "n_items"
+        "count",
+        "unit",
+        "source"
       ],
-      "title": "Size",
+      "title": "SizeRow",
       "type": "object"
     },
     "SubmissionLimit": {
@@ -4589,22 +4820,36 @@
       ],
       "default": null
     },
+    "as_used": {
+      "items": {
+        "$ref": "#/$defs/AsUsed"
+      },
+      "title": "As Used",
+      "type": "array"
+    },
     "lifecycle": {
-      "default": "active",
-      "enum": [
-        "proposed",
-        "active",
-        "mature",
-        "saturated",
-        "under-revision",
-        "contaminated",
-        "superseded",
-        "deprecated",
-        "retracted",
-        "dormant"
+      "anyOf": [
+        {
+          "enum": [
+            "proposed",
+            "active",
+            "mature",
+            "saturated",
+            "under-revision",
+            "contaminated",
+            "superseded",
+            "deprecated",
+            "retracted",
+            "dormant"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
       ],
-      "title": "Lifecycle",
-      "type": "string"
+      "default": null,
+      "title": "Lifecycle"
     },
     "activity": {
       "anyOf": [
@@ -4695,6 +4940,8 @@
             "experimental",
             "expert-panel",
             "forecast-resolution",
+            "formal-verifier",
+            "released-classifier",
             "none"
           ],
           "type": "string"
@@ -4830,7 +5077,8 @@
       "enum": [
         "official-aggregate",
         "community-aggregate",
-        "none-by-design"
+        "none-by-design",
+        "unknown"
       ],
       "title": "Aggregation Policy",
       "type": "string"
@@ -4979,30 +5227,6 @@
       "default": null,
       "title": "Maintainer Url"
     },
-    "license": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "License"
-    },
-    "license_notes": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "License Notes"
-    },
     "versions": {
       "items": {
         "$ref": "#/$defs/BenchmarkVersion"
@@ -5058,6 +5282,13 @@
         }
       ],
       "default": null
+    },
+    "history": {
+      "items": {
+        "$ref": "#/$defs/HistoryEvent"
+      },
+      "title": "History",
+      "type": "array"
     },
     "tags": {
       "items": {

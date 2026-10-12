@@ -129,17 +129,21 @@ export interface Benchmark {
   )[];
   designed_for_subjects_considered_and_rejected?: Rejected[];
   observed_subjects?: ObservedSubjects | null;
+  as_used?: AsUsed[];
   lifecycle?:
-    | "proposed"
-    | "active"
-    | "mature"
-    | "saturated"
-    | "under-revision"
-    | "contaminated"
-    | "superseded"
-    | "deprecated"
-    | "retracted"
-    | "dormant";
+    | (
+        | "proposed"
+        | "active"
+        | "mature"
+        | "saturated"
+        | "under-revision"
+        | "contaminated"
+        | "superseded"
+        | "deprecated"
+        | "retracted"
+        | "dormant"
+      )
+    | null;
   activity?:
     | (
         | "accepting-submissions"
@@ -168,6 +172,8 @@ export interface Benchmark {
         | "experimental"
         | "expert-panel"
         | "forecast-resolution"
+        | "formal-verifier"
+        | "released-classifier"
         | "none"
       )
     | null;
@@ -185,7 +191,7 @@ export interface Benchmark {
   execution?: Execution;
   comparability?: Comparability;
   reference_conditions?: string | null;
-  aggregation_policy?: "official-aggregate" | "community-aggregate" | "none-by-design";
+  aggregation_policy?: "official-aggregate" | "community-aggregate" | "none-by-design" | "unknown";
   headline_metric?: string | null;
   no_legitimate_aggregate?: boolean;
   secondary_axes?: ("cost" | "latency" | "throughput" | "energy" | "reliability")[];
@@ -199,8 +205,6 @@ export interface Benchmark {
   leaderboard_url?: string | null;
   api_url?: string | null;
   maintainer_url?: string | null;
-  license?: string | null;
-  license_notes?: string | null;
   versions?: BenchmarkVersion[];
   subsets?: Subset[];
   metrics?:
@@ -211,6 +215,7 @@ export interface Benchmark {
   leaderboards?: string[];
   baselines?: Baseline[];
   lineage?: Lineage | null;
+  history?: HistoryEvent[];
   tags?: string[];
   ingestion?: {
     [k: string]: unknown;
@@ -241,10 +246,12 @@ export interface ExternalIds {
 }
 /**
  * The benchmark's own paper. It is a Source; this names which one and which arXiv version was read.
+ * `doi` is the published version's DOI where there is one beside the preprint (ADR-0024).
  */
 export interface Paper {
   title: string;
   arxiv?: string | null;
+  doi?: string | null;
   version_read?: string | null;
   source: string;
 }
@@ -751,6 +758,19 @@ export interface ObservedSubjects {
   source: string;
 }
 /**
+ * How the benchmark is run in practice where that differs from its design (ADR-0024): MedQA designed
+ * open-book and run closed-book, FOLIO's results on the validation split because the test split was never
+ * released. The facets keep describing the design; who actually submits is `observed_subjects`.
+ */
+export interface AsUsed {
+  protocol: string;
+  split?: string | null;
+  source: string;
+  quote?: string | null;
+  note?: string | null;
+  [k: string]: unknown;
+}
+/**
  * A dated challenge run on a live benchmark: neither an edition nor a separate benchmark.
  */
 export interface Event {
@@ -903,7 +923,8 @@ export interface Data {
   ceiling_by_category?: CategoryCeiling[];
   dataset_licence?: string | null;
   upstream_licences?: string | null;
-  size?: Size | null;
+  size?: SizeRow[] | null;
+  languages?: string[];
   submission_limit?: SubmissionLimit | null;
   [k: string]: unknown;
 }
@@ -935,22 +956,18 @@ export interface CategoryCeiling {
   quote?: string | null;
 }
 /**
- * Item counts per split and what they are drawn from. Replaces 04 S5's `{items, unit}`, which no
- * entry used, with the shape SWE-bench needed (P0-S4-T10).
+ * One count in a benchmark's size (ADR-0024): how many of what (`unit`), in which split, subset, version
+ * or language (`subset`), and the source that states it. The first row is the headline count. This
+ * replaces P0-S4-T10's `{n_items, n_repositories, other_splits, languages}`, which wanted one headline
+ * count: twenty-one of the 34 curated entries wrote `size_note` instead, because their sizes come per
+ * version, per language, per suite or in seeds.
  */
-export interface Size {
-  n_items: Count;
-  n_repositories?: Count | null;
-  other_splits?: Count[];
-  languages?: string[];
-  [k: string]: unknown;
-}
-export interface Count {
-  value: number;
-  unit?: string | null;
-  split?: string | null;
+export interface SizeRow {
+  count: number;
+  unit: string;
+  subset?: string | null;
   note?: string | null;
-  source?: string | null;
+  source: string;
   quote?: string | null;
   [k: string]: unknown;
 }
@@ -1033,6 +1050,7 @@ export interface Governance {
       )
     | FlagItem
   )[];
+  independence_assessed?: boolean | null;
   funding?: Evidence | null;
   participation?: Evidence | null;
   independence_policy?: Evidence | null;
@@ -1170,6 +1188,7 @@ export interface Comparability {
         | "physical-trial"
         | "wet-lab"
         | "forecasting"
+        | "surrogate-fit"
         | "human-judged"
         | "eligibility-gated"
       )
@@ -1751,6 +1770,15 @@ export interface Variant {
   quote?: string | null;
   [k: string]: unknown;
 }
+export interface Count {
+  value: number;
+  unit?: string | null;
+  split?: string | null;
+  note?: string | null;
+  source?: string | null;
+  quote?: string | null;
+  [k: string]: unknown;
+}
 /**
  * A derivative by another maintainer.
  */
@@ -1768,6 +1796,29 @@ export interface View {
   of: string;
   source: string;
   quote?: string | null;
+}
+/**
+ * A dated change to a field that holds one current value (ADR-0024): a submission server that moved or
+ * closed, a maintainer hand-over, a repository that moved, access that changed on a date. `date` is null
+ * where the sources show the change but do not date it; the list is in the order the changes happened.
+ */
+export interface HistoryEvent {
+  date?: string | null;
+  event:
+    | "channel-opened"
+    | "channel-closed"
+    | "channel-moved"
+    | "maintainer-changed"
+    | "repository-moved"
+    | "access-changed"
+    | "licence-changed";
+  field: string;
+  from?: string | null;
+  to?: string | null;
+  source: string;
+  quote?: string | null;
+  note?: string | null;
+  [k: string]: unknown;
 }
 export interface Curation {
   added_by: string;

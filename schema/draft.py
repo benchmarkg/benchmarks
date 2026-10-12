@@ -47,8 +47,8 @@ from schema.benchmark import (AggregationPolicy, Access, Benchmark, CeilingAncho
 from schema.source import Source, Text as SourceText
 
 # path -> kind. `terms` is a multi-valued facet (one evidence row per term); `count` and `entrant`
-# are blocks that carry their own source and quote as well (schema/benchmark.py's Count and
-# LearnedEntrantEvidence), which must agree with the evidence row.
+# are one-item lists whose item carries its own source and quote as well (schema/benchmark.py's SizeRow
+# and LearnedEntrantEvidence), which must agree with the evidence row.
 DRAFT_FIELDS: dict[str, str] = {
     'name': 'verbatim',
     'tagline': 'prose',
@@ -66,14 +66,14 @@ DRAFT_FIELDS: dict[str, str] = {
     'task.output': 'prose',
     'task.scoring': 'prose',
     'data.access': 'enum',
-    'data.size.n_items': 'count',
+    'data.size': 'count',
     'data.dataset_licence': 'verbatim',
     'governance.maintainer': 'verbatim',
     'homepage': 'url',
     'repository': 'url',
     'leaderboard_url': 'url',
     'dataset_url': 'url',
-    'license': 'verbatim',
+    'execution.code_licence': 'verbatim',     # `license` is derived since ADR-0024
 }
 # Slots that are not claims of their own. The `count` and `entrant` blocks are leaves here: their
 # source, quote, unit and observed_on are typed by their own models.
@@ -185,11 +185,13 @@ class BenchmarkDraft(Benchmark):
                 raise ValueError('provenance.fields: %s is single-valued and takes no term' % path)
             if kind == 'entrant' and value and len(value) != 1:
                 raise ValueError('learned_entrant_evidence: a draft names one entrant, the one its row quotes')
+            if kind == 'count' and value and len(value) != 1:
+                raise ValueError('data.size: a draft names one count, the one its row quotes')
             if e.confidence == 'absent' and not empty(value):
                 raise ValueError('%s holds a value, but its evidence is absent: an unquoted field is null' % path)
             if e.confidence != 'absent' and empty(value):
                 raise ValueError('%s is null, but its evidence row says %s' % (path, e.confidence))
-            inline = value[0] if kind == 'entrant' and value else value if kind == 'count' else None
+            inline = value[0] if kind in ('entrant', 'count') and value else None
             if inline is not None and (inline.source, inline.quote) != (e.source, e.quote):
                 raise ValueError('%s: the block\'s source and quote differ from its evidence row' % path)
         for r in self.provenance.rejected:

@@ -13,7 +13,9 @@ it is loaded by path, never imported), declaring:
     SUMMARY = 'one line: what changes and why'
     def plan(root: str) -> list[Row]: ...
 
-`plan` reads the corpus and returns the rows it would change; it never writes. tools/migrate.py
+`plan` reads the corpus and returns the rows it would change; it never writes. A row whose `old` is
+ABSENT adds a key the mapping does not have yet, and one whose `new` is ABSENT removes the key; `bench
+fmt`'s emitter then puts an added key in its model's field order. tools/migrate.py
 prints the plan (`--dry-run`, the output attached to the ADR's PR) or writes it (`--apply`) through
 the project's one YAML emitter, so comments survive and the file stays what `bench fmt` writes.
 Keeping the writing out of the migration is what lets the dry run be exactly the apply.
@@ -34,9 +36,29 @@ SENTINEL_PREFIX = '__NEEDS_REVIEW__:'
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
+class _Absent:
+    """A key that is not in its mapping: as a Row's `old`, the row adds the key; as its `new`, it removes it."""
+    _one = None
+
+    def __new__(cls):
+        if cls._one is None:
+            cls._one = super().__new__(cls)
+        return cls._one
+
+    def __repr__(self) -> str:
+        return 'ABSENT'
+
+    def __reduce__(self):
+        return (_Absent, ())
+
+
+ABSENT = _Absent()
+
+
 @dataclass(frozen=True)
 class Row:
-    """One value a migration changes: in `path` (root-relative), at `at` (keys and list indices)."""
+    """One value a migration changes: in `path` (root-relative), at `at` (keys and list indices). `old` or
+    `new` may be ABSENT: the key is added or removed."""
     path: str
     at: tuple
     old: Any

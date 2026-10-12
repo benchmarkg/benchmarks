@@ -30,10 +30,15 @@ RECORD = {
     'evaluation_target': 'learned-system',
     'task': {'scoring': 'resolved if all tests pass', 'scoring_source': 'src-paper',
              'scoring_quote': 'If the patch applies and all tests pass'},
-    'data': {'access': 'fully-open', 'size': {
-        'n_items': {'value': 2294, 'unit': 'task instances', 'source': 'src-paper', 'quote': 'We collect 2,294 task instances'},
-        'n_repositories': {'value': 12, 'source': 'src-paper', 'quote': 'from 12 popular Python repositories'},
-        'other_splits': [{'value': 225, 'split': 'dev', 'source': 'src-paper', 'quote': 'The dev split has 225 instances.'}],
+    'data': {'access': 'fully-open', 'size': [
+        {'count': 2294, 'unit': 'task instances', 'source': 'src-paper', 'quote': 'We collect 2,294 task instances'},
+        {'count': 12, 'unit': 'repositories', 'source': 'src-paper', 'quote': 'from 12 popular Python repositories'},
+        {'count': 225, 'unit': 'task instances', 'subset': 'dev', 'source': 'src-paper',
+         'quote': 'The dev split has 225 instances.'},
+    ], 'access_by_phase': {
+        'during_edition': 'test instances withheld', 'during_edition_source': 'src-paper',
+        'during_edition_quote': 'We collect 2,294 task instances',
+        'after_edition': 'released', 'after_edition_source': 'src-paper', 'after_edition_quote': 'The dev split has 225',
     }},
     'homepage': 'https://example.org/',
     'curation': {'added_by': 'a-curator', 'added_on': '2026-09-25', 'last_verified': '2026-09-25', 'sources': ['src-paper']},
@@ -66,9 +71,11 @@ def test_the_base_record_is_valid_and_every_quote_in_it_matches():
     assert [(quotes.dotted(q.at), q.key, q.source) for q in found] == [
         ('learned_entrant_evidence[0]', 'quote', 'src-paper'),
         ('task', 'scoring_quote', 'src-paper'),
-        ('data.size.n_items', 'quote', 'src-paper'),
-        ('data.size.n_repositories', 'quote', 'src-paper'),
-        ('data.size.other_splits[0]', 'quote', 'src-paper'),
+        ('data.size[0]', 'quote', 'src-paper'),
+        ('data.size[1]', 'quote', 'src-paper'),
+        ('data.size[2]', 'quote', 'src-paper'),
+        ('data.access_by_phase', 'during_edition_quote', 'src-paper'),
+        ('data.access_by_phase', 'after_edition_quote', 'src-paper'),
     ]
     assert quotes.check(RECORD, SOURCES) == []
 
@@ -85,7 +92,7 @@ def test_a_matching_quote_is_accepted_and_the_record_is_untouched():
     'We collect 2&#44;294 task instances',          # entities decode on both sides
 ])
 def test_quote_and_extract_are_normalised_identically(quote):
-    assert quotes.check(record(data__size__n_items__quote=quote), SOURCES) == []
+    assert quotes.check(record(data__size__0__quote=quote), SOURCES) == []
 
 
 def test_a_quote_is_checked_against_its_own_source_before_the_mappings():
@@ -98,14 +105,13 @@ def test_a_quote_is_checked_against_its_own_source_before_the_mappings():
 # ---- a fabricated quote nulls its field, records a reason, and the record still validates --------
 
 def test_verify_a_fabricated_block_quote_removes_its_item_and_the_record_validates():
-    r = record(data__size__other_splits__0__quote=FAKE)
+    r = record(data__size__2__quote=FAKE)
     assert valid(r)                                                   # a fabricated quote is well-formed YAML
     fixed, [res] = quotes.apply(r, SOURCES)
-    assert res.nulled == ('data', 'size', 'other_splits', 0) and 'not a substring' in res.reason
-    assert fixed['data']['size']['other_splits'] == []
-    assert 'data.size.other_splits[0] removed: the quote is not a substring' in fixed['curation']['notes']
+    assert res.nulled == ('data', 'size', 2) and 'not a substring' in res.reason
+    assert fixed['data']['size'] == r['data']['size'][:2]             # nothing else is touched
+    assert 'data.size[2] removed: the quote is not a substring' in fixed['curation']['notes']
     assert valid(fixed)
-    assert fixed['data']['size']['n_items'] == r['data']['size']['n_items']      # nothing else is touched
 
 
 def test_verify_a_fabricated_annotation_quote_nulls_the_field_it_annotates():
@@ -118,25 +124,25 @@ def test_verify_a_fabricated_annotation_quote_nulls_the_field_it_annotates():
 
 
 def test_a_required_slot_nulls_the_enclosing_field_instead():
-    """n_items is required in a Size, so an unquotable item count takes the size block with it."""
-    fixed, [res] = quotes.apply(record(data__size__n_items__quote=FAKE), SOURCES)
-    assert res.nulled == ('data', 'size')
-    assert fixed['data']['size'] is None and valid(fixed)
+    """during_edition is required in an AccessByPhase, so an unquotable one takes the block with it."""
+    fixed, [res] = quotes.apply(record(data__access_by_phase__during_edition_quote=FAKE), SOURCES)
+    assert res.nulled == ('data', 'access_by_phase')
+    assert fixed['data']['access_by_phase'] is None and valid(fixed)
 
 
 def test_a_quote_inside_an_already_nulled_field_reports_that_field():
-    r = record(data__size__n_items__quote=FAKE, data__size__n_repositories__quote=FAKE)
+    r = record(data__access_by_phase__during_edition_quote=FAKE, data__access_by_phase__after_edition_quote=FAKE)
     fixed, results = quotes.apply(r, SOURCES)
-    assert [res.nulled for res in results] == [('data', 'size'), ('data', 'size')]
-    assert fixed['data']['size'] is None and valid(fixed)
+    assert [res.nulled for res in results] == [('data', 'access_by_phase'), ('data', 'access_by_phase')]
+    assert fixed['data']['access_by_phase'] is None and valid(fixed)
 
 
 def test_removals_do_not_shift_the_items_still_to_be_checked():
-    good = {'value': 12, 'split': 'kept', 'source': 'src-paper', 'quote': '12 popular'}
-    bad = {'value': 1, 'split': 'fabricated', 'source': 'src-paper', 'quote': FAKE}
-    fixed, results = quotes.apply(record(data__size__other_splits=[bad, good, bad]), SOURCES)
-    assert [res.nulled for res in results] == [('data', 'size', 'other_splits', 0), ('data', 'size', 'other_splits', 2)]
-    assert fixed['data']['size']['other_splits'] == [good]
+    good = {'count': 12, 'unit': 'repositories', 'subset': 'kept', 'source': 'src-paper', 'quote': '12 popular'}
+    bad = {'count': 1, 'unit': 'items', 'subset': 'fabricated', 'source': 'src-paper', 'quote': FAKE}
+    fixed, results = quotes.apply(record(data__size=[bad, good, bad]), SOURCES)
+    assert [res.nulled for res in results] == [('data', 'size', 0), ('data', 'size', 2)]
+    assert fixed['data']['size'] == [good]
 
 
 def test_a_quote_that_cannot_be_nulled_says_so_and_leaves_the_record_as_it_was():
@@ -276,7 +282,7 @@ def test_exit_criterion_5_the_fabricated_quote_nulls_its_field_and_the_record_st
     assert res.nulled == path and fx['reason'] in res.reason
     assert _at(fixed, path[:-1])[path[-1]] is None                    # nulled, not deleted, not raised
     assert '%s set to null: the quote is %s' % (fx['fabricated'], fx['reason']) in fixed['curation']['notes']
-    assert fixed['data']['size']['n_items'] == fx['benchmark']['data']['size']['n_items']
+    assert fixed['data']['size'] == fx['benchmark']['data']['size']
     assert valid(fixed)                                               # null, not a failed record
     assert quotes.check(fixed, sources) == []                         # and nothing unquoted remains
 

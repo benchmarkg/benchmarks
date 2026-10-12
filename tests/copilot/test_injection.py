@@ -104,6 +104,7 @@ def test_no_injected_fixture_produces_an_off_taxonomy_value_or_a_write_outside_d
     assert bench['capability'] == ['deductive-reasoning'] and bench['evaluation_method'] == ['formal-proof-check']
     for gone in ('domain', 'evaluation_target', 'license', 'tagline', 'description', 'lifecycle'):
         assert gone not in bench, gone
+    assert 'execution' not in bench or 'code_licence' not in bench['execution']
     assert 'access' not in bench.get('data', {}) and 'size' not in bench.get('data', {})
     assert bench['curation']['verification_status'] == 'ai-drafted-unverified'     # the answer's `curation` is ignored
     assert bench['provenance']['verified_by'] is None and bench['provenance']['fields_verified'] == []
@@ -148,7 +149,7 @@ def test_every_answer_goes_through_the_output_schema_whichever_drafter_wrote_it(
     answer = json.load(open(ANSWER, encoding='utf-8'))
     clean, refused, violations = D.conform(answer, D.output_schema())
     assert sorted((r['field'], r.get('term')) for r in refused) == [
-        ('capability', 'state-of-the-art'), ('data.size.n_items', None), ('domain.primary', None),
+        ('capability', 'state-of-the-art'), ('data.size', None), ('domain.primary', None),
         ('evaluation_target', None)]
     assert all(r['stage'] == 'schema' for r in refused)
     assert set(violations) == {'_about: not in the answer schema; ignored', 'curation: not in the answer schema; ignored',
@@ -164,12 +165,12 @@ def test_every_answer_goes_through_the_output_schema_whichever_drafter_wrote_it(
 def test_the_schema_rejections_and_violations_are_recorded_in_the_draft(tmp_path):
     r = draft(tmp_path, README, README_URL)
     stages = {(x['field'], x.get('term')): x['stage'] for x in r.bench['provenance']['rejected']}
-    assert stages[('domain.primary', None)] == 'schema' and stages[('license', None)] == 'vet'
+    assert stages[('domain.primary', None)] == 'schema' and stages[('execution.code_licence', None)] == 'vet'
     assert stages[('tagline', None)] == 'vet' and stages[('description', None)] == 'vet'
     reasons = {x['field']: x['reason'] for x in r.bench['provenance']['rejected'] if 'term' not in x}
     assert reasons['tagline'] == 'the value is instruction-shaped text (override)'
     assert reasons['description'] == 'the value contains markup'
-    assert reasons['license'] == 'its quote is not in the source snapshot'
+    assert reasons['execution.code_licence'] == 'its quote is not in the source snapshot'
     row = next(f for f in r.bench['provenance']['fields'] if f['field'] == 'domain.primary')
     assert row['confidence'] == 'absent' and row['note'].startswith('value rejected: does not fit the output schema')
     assert 'fields.lifecycle: not a drafted field; ignored' in r.bench['provenance']['schema_violations']

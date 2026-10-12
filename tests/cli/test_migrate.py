@@ -222,6 +222,26 @@ def test_a_stale_plan_writes_nothing(env):
     assert text(root) == before
 
 
+def test_a_field_migration_adds_and_removes_keys_in_model_order(env):
+    root, migrations = env
+    script(migrations, '0027-add-remove.py', 'field', '''\
+        from schema.migrations import ABSENT
+        return [Row(%r, ('data', 'contamination_risk'), ABSENT, 'low'),
+                Row(%r, ('liveness',), {'last_checked': __import__('datetime').date(2026, 9, 20)}, ABSENT)]
+        ''' % (BENCH, BENCH))
+    adr(root, '0027')
+    dry = invoke('0027')
+    assert dry.exit_code == 0 and "data.contamination_risk: ABSENT -> 'low'" in dry.output, dry.output
+    res = invoke('0027', '--apply')
+    assert res.exit_code == 0, res.output
+    after = text(root)
+    assert 'liveness' not in after
+    assert after.index('access: fully-open') < after.index('contamination_risk: low')   # the model's order
+    assert fmt.format_text(after, fmt.model_for(BENCH)) == after
+    stale = invoke('0027', '--apply')                                   # the key is there now: stale
+    assert stale.exit_code == 1 and 'the plan is stale' in stale.output
+
+
 def test_term_rows_finds_every_whole_value_occurrence(env):
     root, _ = env
     rows = term_rows(str(root), OLD, NEW)
