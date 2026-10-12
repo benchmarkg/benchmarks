@@ -30,6 +30,11 @@
 # homograph declarations (9d) and their tautological coverage cells (9e, PENDING until the coverage build
 # emits build/derived/coverage.json; a pending check does not fail the job, and says so in its log).
 #
+# Jobs 9b and 9h (P0-S6-T06; 05 S9) are the taxonomy gates: the stats drift check over 02 and 12's generated
+# counts (9b), seed-target integrity (9f) and the capability-group partition (9g), all in
+# scripts/taxonomy_stats.py --check; and presentation-group containment (9h), run after a `bench build` so
+# the shipped artifacts exist to be scanned rather than reported NOT RUN.
+#
 # Job 5 is the codegen drift check (P0-S6-T02; 05 S9): `bench schema gen --check` regenerates the JSON Schema
 # from the Pydantic models and the TypeScript types from it, and fails on any diff. The vocabularies become
 # Literal enums at import time, so a taxonomy/ change drifts the artifacts as surely as a schema/ change; the
@@ -191,6 +196,32 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: check_homographs.py
         run: uv run --locked --python "$PYTHON" python scripts/check_homographs.py
+
+  check-9b-taxonomy-stats:
+    name: 9b taxonomy stats (9b, 9f, 9g)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: taxonomy_stats.py --check
+        run: uv run --locked --python "$PYTHON" python scripts/taxonomy_stats.py --check
+
+  check-9h-display-only:
+    name: 9h presentation groups stay out of shipped artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: bench build, so there are artifacts to scan
+        run: uv run --locked --python "$PYTHON" bench build --out build/
+      - name: check_display_only_vocab.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_display_only_vocab.py
 
   sweep-families:
     name: sweep hub list is the domain vocabulary

@@ -219,8 +219,24 @@ def build(root: str = ROOT) -> Build:
         return out
     entities = {k: [v[i] for i in sorted(v)] for k, v in published.items()}
     out.corpus = nfc({'artifact': 'corpus', 'format': FORMAT, 'entities': entities, 'subsets': subsets})
-    out.facets = nfc({'artifact': 'facets', 'format': FORMAT,
+    out.facets = nfc({'artifact': 'facets', 'format': FORMAT, 'vocabularies': vocabulary_versions(),
                       'benchmarks': [facet_row(b) for b in entities['benchmark']]})
+    return out
+
+
+def vocabulary_versions(root: str = ROOT) -> dict[str, str]:
+    """The vocabulary versions a build was made against (P0-S6-T06; 02 S4.3, 12 S5.1): the aggregate taxonomy
+    version, and the two presentation-group files, which version themselves. A re-grouping of capability
+    terms changes every coverage figure without touching a benchmark record, so the build says which grouping
+    it used; P2-S1-T05's build-manifest.json carries this forward when it exists. It reads the repository's
+    taxonomy/, because that is what the models were built from at import time (schema/benchmark.py), whatever
+    data root the build was pointed at."""
+    from schema.taxonomy import read_yaml
+    tax = os.path.join(root, 'taxonomy')
+    with open(os.path.join(tax, 'VERSION'), encoding='utf-8') as fh:
+        out = {'taxonomy': fh.read().strip()}
+    for name in ('capability_groups', 'domain_groups'):
+        out[name] = str(read_yaml(os.path.join(tax, name + '.yaml'))['version'])
     return out
 
 
