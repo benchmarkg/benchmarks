@@ -66,6 +66,12 @@ def test_job_5_has_the_typescript_generator(job5):
     assert npm['working-directory'] == 'site'
 
 
+def test_job_5_typechecks_the_site_against_the_generated_interfaces(job5):
+    """P2-S1-T03: the site's code is held to src/types/ on the same pull request that regenerates it."""
+    site = [s['run'] for s in job5['steps'] if s.get('working-directory') == 'site' and 'run' in s]  # get-default: a uses: step has no working-directory
+    assert site == ['npm ci --ignore-scripts', 'npx astro sync', 'npx tsc --noEmit']
+
+
 def test_it_runs_on_schema_and_taxonomy_changes_alike(wf):
     """No path filter: a pull request touching only taxonomy/ runs it as surely as one touching schema/."""
     on = wf['on']

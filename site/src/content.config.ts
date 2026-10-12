@@ -6,7 +6,16 @@
 // and it would drift from the first. So every collection is declared WITHOUT `schema`; the types
 // the site uses come from site/src/types/, generated from the same JSON Schema (05 S3).
 //
-// Collections over the S8 artifacts arrive with the emitter (P2-S1-T02 onward).
+// The collections read build/corpus.json, `bench build`'s artifact (P2-S1-T03; src/lib/corpus.ts), and the pages
+// read them through src/lib/collections.ts, which types every entry with the generated interface.
 // test/config.test.mjs fails if any defineCollection() call here gains a `schema`.
+import { defineCollection } from 'astro:content';
+import { corpusEntities } from './lib/corpus';
 
-export const collections = {};
+export const collections = {
+  benchmarks: defineCollection({ loader: () => corpusEntities('benchmark') }),
+  systems: defineCollection({ loader: () => corpusEntities('system') }),
+  organizations: defineCollection({ loader: () => corpusEntities('organization') }),
+  metrics: defineCollection({ loader: () => corpusEntities('metric') }),
+  sources: defineCollection({ loader: () => corpusEntities('source') }),
+};
