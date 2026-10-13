@@ -13,8 +13,8 @@
 
 | Secret | Service | Acquired | Limit | Where it is held |
 | --- | --- | --- | --- | --- |
-| `OPENALEX_API_KEY` | OpenAlex (metered, key required since about 2026-02-13) | 2026-09-29 | metered per key | Windows Credential Manager (`uaibi`); repository Actions secret: **to set** |
-| `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar Academic Graph | 2026-09-29 | 1 request per second, across all endpoints | Windows Credential Manager (`uaibi`); repository Actions secret: **to set** |
+| `OPENALEX_API_KEY` | OpenAlex (metered, key required since about 2026-02-13) | 2026-09-29 | metered per key | Windows Credential Manager (`uaibi`); repository Actions secret, set 2026-09-29 |
+| `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar Academic Graph | 2026-09-29 | 1 request per second, across all endpoints | Windows Credential Manager (`uaibi`); repository Actions secret, set 2026-09-29 |
 
 Neither key is needed for conditions (1) and (3), which read this repository, or for DataCite,
 which needs no key.
