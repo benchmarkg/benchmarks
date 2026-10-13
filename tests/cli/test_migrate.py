@@ -6,6 +6,7 @@ split migration refuses to run unattended". Everything but the 0000 test runs ag
 root (a copy of the validate base fixture) and a temporary migrations directory, with cli.ROOT and
 migrate.MIGRATIONS patched, so nothing in the repository's data/ or adr/ is touched.
 """
+import glob
 import os
 import shutil
 import sys
@@ -252,3 +253,13 @@ def test_term_rows_finds_every_whole_value_occurrence(env):
 def test_the_repository_0000_is_a_valid_noop():
     m = migrate.find('0000')
     assert m.kind == 'noop' and m.plan(ROOT) == []
+
+
+COMMITTED = sorted(os.path.basename(p)[:4] for p in glob.glob(os.path.join(migrate.MIGRATIONS, '[0-9]' * 4 + '-*.py')))
+
+
+@pytest.mark.parametrize('number', COMMITTED)
+def test_every_committed_migration_replans_to_nothing(number):
+    # A committed migration has been applied, so its plan over the repository is empty. One that raises or plans
+    # rows was broken by a later change to what it reads: 0024's note edits crashed once 0026 moved the notes.
+    assert migrate.find(number).plan(ROOT) == []
