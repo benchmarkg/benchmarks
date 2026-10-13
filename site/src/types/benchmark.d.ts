@@ -225,7 +225,8 @@ export interface Benchmark {
   [k: string]: unknown;
 }
 /**
- * A source and the verbatim quote in it that carries a fact.
+ * A source and the verbatim quote in it that carries a fact. Defined here, below every entity module, so a
+ * Baseline and a Subset can carry evidence as a Benchmark does (ADR-0026).
  */
 export interface Evidence {
   source: string;
@@ -1288,6 +1289,7 @@ export interface Subset {
       )[]
     | null;
   metric_override?: string | null;
+  evidence?: Evidence[];
   notes?: string | null;
 }
 export interface DomainOverride {
@@ -1736,7 +1738,9 @@ export interface Baseline {
   population?: string | null;
   time_limit?: string | null;
   is_primary?: boolean;
+  subset?: string | null;
   source?: string | null;
+  evidence?: Evidence[];
   notes?: string | null;
 }
 export interface Lineage {
@@ -1836,6 +1840,7 @@ export interface Curation {
    */
   sources: [string | InlineSource, ...(string | InlineSource)[]];
   confidence?: "low" | "medium" | "high";
+  review_checks?: ReviewCheck[];
   notes?: string | null;
   not_yet_available?: NotYetAvailable[];
   unreachable?: Unreachable[];
@@ -1849,6 +1854,19 @@ export interface Curation {
 export interface InlineSource {
   id: string;
   [k: string]: unknown;
+}
+/**
+ * A question the drafter leaves for the person who verifies the entry (ADR-0026; 05 S4). It used to be a
+ * paragraph of curation.notes; as a record it says which field it concerns, whether it needs a domain specialist
+ * (05 S4's expert-reviewed), and the source and verbatim quote behind it where it rests on one, which the quote
+ * check then verifies like any other. A reviewer resolves a check by acting on it and deleting it.
+ */
+export interface ReviewCheck {
+  check: string;
+  field?: string | null;
+  specialist?: boolean;
+  source?: string | null;
+  quote?: string | null;
 }
 export interface NotYetAvailable {
   what: string;

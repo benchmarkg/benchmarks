@@ -1,0 +1,157 @@
+---
+// site/src/components/ProvenanceDetails.astro -- P2-S3-T02 (10 V6 "The provenance drill-down"; 04 S8). A claim's
+// number wrapped in a native <details>: the <summary> is the value with its verification badge and condition
+// meter, and opening it -- one click, no navigation, no JavaScript -- shows the definition list 10 V6 draws:
+// source (accessed, archived), date reported, reported by, verification, comparability_key with how many other
+// claims share it, artifact, provenance snapshot, conditions, and the unknown fields AS A SET, so a reader sees
+// the shape of what is missing rather than scanning for blanks.
+//
+// Conditions lists the benchmark's material fields first, each with its value or `unknown` (09 S11.2 reserves the
+// word for exactly these), then whatever else the condition record answers. A claim with no condition record has
+// every material field unknown, and says so.
+//
+// NEVER: a number without its badge and meter in the summary; an empty row (a missing value is one of the four
+// absence phrases); a link inside the summary (the badge's dispute links are left to the open list).
+import Absent from './Absent.astro';
+import ConditionMeter from './ConditionMeter.astro';
+import VerificationBadge from './VerificationBadge.astro';
+import type { ClaimRow } from '../lib/claims';
+import { formatValue } from '../lib/vocab';
+
+interface Props {
+  row: ClaimRow;
+}
+
+const { row } = Astro.props;
+const { claim: c, conditions, comparability: k, source: s } = row;
+if (c.value == null && (c.value_text == null || c.value_text === '')) {
+  throw new Error(`ProvenanceDetails ${c.id}: no value; a missing result is <Absent>, not a drill-down`);
+}
+const display = c.value != null ? formatValue(c.value) : c.value_text!;
+const disputedBy = c.disputed_by ?? [];
+const specified = k.fields_material_total - k.key_unknown_count;
+const unknown = new Set(k.unknown_fields);
+
+const show = (v: unknown): string => {
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (typeof v === 'number') return formatValue(v);
+  if (Array.isArray(v)) return `[${v.map(show).join(', ')}]`;
+  if (v !== null && typeof v === 'object') {
+    return Object.entries(v as Record<string, unknown>).filter(([, x]) => x != null).map(([n, x]) => `${n} ${show(x)}`).join(', ') || '{}';
+  }
+  return String(v);
+};
+const record = (conditions ?? {}) as Record<string, unknown>;
+const materialRows = row.material.map((f) => ({ field: f, value: unknown.has(f) ? null : record[f] }));
+const otherRows = Object.entries(record)
+  .filter(([f, v]) => f !== 'id' && !row.material.includes(f) && v != null)
+  .map(([field, value]) => ({ field, value }));
+const snap = c.provenance_snapshot ?? null;
+const snapValue = snap != null ? Object.entries(snap.raw).find(([n]) => /value|score|rate/i.test(n)) : undefined;
+const uncertainty = c.uncertainty != null && c.uncertainty.type !== 'none' && c.uncertainty.value != null
+  ? `${c.uncertainty.type} ${Array.isArray(c.uncertainty.value) ? c.uncertainty.value.map(formatValue).join('–') : formatValue(c.uncertainty.value)}`
+  : null;
+---
+<details class="prov" data-prov={c.id}>
+  <summary>
+    <span class="value" data-prov-value>{display}</span>
+    <VerificationBadge verification={c.verification} disputed={disputedBy.length > 0} disputed_by={disputedBy} link_disputes={false} />
+    {k.condition_completeness != null
+      ? <ConditionMeter condition_completeness={k.condition_completeness} fields_specified={specified} fields_material_total={k.fields_material_total} unknown_fields={k.unknown_fields} weights={row.weights} />
+      : <Absent state="not-applicable" reason="every material field is waived" />}
+  </summary>
+  <dl class="prov-list">
+    <div data-prov-row="source"><dt>source</dt><dd>
+      {s != null
+        ? <><a href={s.url}>{s.title ?? s.url}</a> <code>{s.id}</code><br />
+            accessed {s.accessed ?? s.fetched_at?.slice(0, 10) ?? <Absent state="not-recorded" />} | {s.archive_url != null
+              ? <>archived {s.archive_captured ?? <Absent state="not-recorded" />} (<a href={s.archive_url}>archive copy</a>)</>
+              : <span data-archive="none">not archived</span>}</>
+        : <><code>{c.source}</code> <Absent state="not-recorded" reason="no source record" /></>}
+    </dd></div>
+    <div data-prov-row="date-reported"><dt>date reported</dt><dd><time datetime={c.date_reported}>{c.date_reported}</time></dd></div>
+    <div data-prov-row="reported-by"><dt>reported by</dt><dd>{row.reporter.name ?? <Absent state="not-recorded" />} <code>{row.reporter.id}</code></dd></div>
+    <div data-prov-row="verification"><dt>verification</dt><dd>{c.verification}{c.resolution_status != null && <> · {c.resolution_status}{c.resolved_as_of != null && <> as of <time datetime={c.resolved_as_of}>{c.resolved_as_of}</time></>}</>}{disputedBy.length > 0 && <> · disputed by {disputedBy.map((d) => <code>{d}</code>)}</>}</dd></div>
+    {uncertainty != null && <div data-prov-row="uncertainty"><dt>uncertainty</dt><dd>{uncertainty}{c.uncertainty?.n_runs != null && <> over {formatValue(c.uncertainty.n_runs)} runs</>}</dd></div>}
+    <div data-prov-row="comparability-key"><dt>comparability_key</dt><dd><code>{k.comparability_key}</code> ({row.key_shared_with === 0 ? 'no other claim shares this key' : `${row.key_shared_with} other ${row.key_shared_with === 1 ? 'claim shares' : 'claims share'} this key`})</dd></div>
+    <div data-prov-row="artifact"><dt>artifact</dt><dd>{c.artifact_url != null ? <a href={c.artifact_url}>{c.artifact_url}</a> : <Absent state="not-reported" />}</dd></div>
+    <div data-prov-row="provenance-snapshot"><dt>provenance snapshot</dt><dd>{snap != null
+      ? <>ingested <time datetime={snap.retrieved_at}>{snap.retrieved_at.slice(0, 10)}</time> from {snap.source_record_id != null ? <code>{snap.source_record_id}</code> : <Absent state="not-reported" reason="no upstream row id" />}{snapValue != null && <>, raw value <code>{show(snapValue[1])}</code></>}</>
+      : <Absent state="not-applicable" reason="curated by hand, not ingested" />}</dd></div>
+    <div data-prov-row="conditions"><dt>conditions</dt><dd>
+      {conditions == null && <p class="note">No condition record: every material field is unknown.</p>}
+      <ul class="conds" aria-label="Material condition fields">
+        {materialRows.map((r) => <li data-cond={r.field}><code>{r.field}</code> {r.value != null ? show(r.value) : <Absent state="unknown" />}</li>)}
+      </ul>
+      {otherRows.length > 0 && (
+        <ul class="conds other" aria-label="Other recorded conditions">
+          {otherRows.map((r) => <li data-cond-other={r.field}><code>{r.field}</code> {show(r.value)}</li>)}
+        </ul>
+      )}
+    </dd></div>
+    <div data-prov-row="unknown-fields"><dt>unknown fields</dt><dd>{k.unknown_fields.length > 0
+      ? <ul class="set" data-unknown-set>{k.unknown_fields.map((f) => <li><code>{f}</code></li>)}</ul>
+      : <span data-unknown-set>none</span>}</dd></div>
+  </dl>
+</details>
+
+<style>
+  .prov {
+    display: inline-block;
+    max-inline-size: 100%;
+  }
+  .prov[open] {
+    display: block;
+    margin-block: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-border-strong);
+    background: var(--c-surface);
+  }
+  summary {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    align-items: center;
+    cursor: pointer;
+  }
+  .value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+  .prov-list {
+    display: grid;
+    gap: var(--sp-2);
+    margin: var(--sp-2) 0 0;
+    font-size: var(--fs-sm);
+  }
+  .prov-list > div {
+    display: grid;
+    grid-template-columns: minmax(8rem, 11rem) 1fr;
+    gap: var(--sp-3);
+  }
+  dt {
+    color: var(--c-ink-muted);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+  }
+  dd {
+    margin: 0;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+  .conds, .set {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .conds.other {
+    margin-block-start: var(--sp-1);
+    color: var(--c-ink-muted);
+  }
+  .note {
+    margin: 0 0 var(--sp-1);
+  }
+</style>

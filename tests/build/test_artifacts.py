@@ -201,6 +201,43 @@ def test_machine_ingested_is_not_a_draft(tree):
     assert [b['id'] for b in artifacts.build(str(tree)).corpus['entities']['benchmark']] == ['alpha-bench']
 
 
+# ---- the draft preview (scripts/preview_corpus.py, P2-S3-T01) ----------------------------------------------
+
+def test_a_draft_preview_includes_the_drafts_that_load_and_says_so(tmp_path):
+    result = artifacts.build(FIXTURE, drafts=True)
+    assert result.errors == []
+    assert result.corpus['drafts'] is True
+    assert [b['id'] for b in result.corpus['entities']['benchmark']] == ['alpha-bench', 'beta-bench']
+    assert 'src-beta-page' in [s['id'] for s in result.corpus['entities']['source']]     # closed over the drafts too
+    # a draft that fails tier 1 stays out of a preview as well: the models refuse it
+    assert [(i, r) for _, i, r in result.excluded if i == 'gamma-bench'] == [('gamma-bench', 'ai-drafted-unverified (and fails tier 1)')]
+
+
+def test_a_published_build_carries_no_drafts_key():
+    assert 'drafts' not in artifacts.build(FIXTURE).corpus
+
+
+def test_the_committed_drafts_all_preview():
+    result = artifacts.build(ROOT, drafts=True)
+    assert result.errors == []
+    assert len(result.corpus['entities']['benchmark']) == len(
+        [i for _, i, r in artifacts.build(ROOT).excluded if r == artifacts.DRAFT])
+
+
+def test_the_preview_script_writes_its_own_directory_and_never_build(tmp_path, capsys):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('preview_corpus', os.path.join(ROOT, 'scripts', 'preview_corpus.py'))
+    preview = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(preview)
+    assert preview.main(['--root', FIXTURE, '--out', os.path.join(FIXTURE, 'build')]) == 2
+    assert not os.path.exists(os.path.join(FIXTURE, 'build'))
+    assert preview.main(['--root', FIXTURE, '--out', str(tmp_path / 'preview')]) == 0
+    with open(tmp_path / 'preview' / 'corpus.json', encoding='utf-8') as fh:
+        assert json.load(fh)['drafts'] is True
+    with open(tmp_path / 'preview' / 'derived' / 'adoption.json', encoding='utf-8') as fh:
+        assert json.load(fh)['artifact'] == 'adoption'
+
+
 def test_records_carry_every_field_and_no_computed_field(tmp_path):
     from schema.benchmark import Benchmark
     from schema.metric import Metric

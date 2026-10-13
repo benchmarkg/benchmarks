@@ -82,10 +82,10 @@ test('lint_absence passes null checks, boolean guards and a guard passed on as a
   assert.equal(r.code, 0, r.err);
 });
 
-test('lint_absence passes the real components tree', () => {
+test('lint_absence passes the real components and views trees', () => {
   const r = run('lint_absence.mjs');
   assert.equal(r.code, 0, r.err);
-  assert.match(r.out, /0 finding\(s\) in site\/src\/components/);
+  assert.match(r.out, /0 finding\(s\) in site\/src\/components, site\/src\/views/);
 });
 
 // ---- lint_svg ---------------------------------------------------------------------------------------------

@@ -1,0 +1,39 @@
+---
+// site/src/pages/systems/[id].astro -- P2-S3-T04. /systems/{id}/: one page per published system (views/SystemDetail).
+// cacheKey is the content digest of the system and every record the page renders from it (08 S4.3; as the
+// benchmark route does).
+import Base from '../../layouts/Base.astro';
+import SystemDetail from '../../views/SystemDetail.astro';
+import { organizations, sources, systems } from '../../lib/collections';
+import { contentDigest } from '../../lib/corpus';
+import type { Organization } from '../../types/organization';
+import type { Source } from '../../types/source';
+import type { System } from '../../types/system';
+
+export async function getStaticPaths() {
+  const all = await systems();
+  const orgs = new Map((await organizations()).map((o) => [o.id, o]));
+  const srcs = new Map((await sources()).map((s) => [s.id, s]));
+  const ids = new Set(all.map((s) => s.id));
+  return all.map((s) => ({
+    params: { id: s.id },
+    props: { system: s, organizations: orgs, systems: ids, sources: srcs },
+    cacheKey: contentDigest({ system: s, organization: s.organization != null ? orgs.get(s.organization) ?? null : null,
+      sources: (s.sources ?? []).map((id) => srcs.get(id) ?? null), built_on: (s.built_on ?? []).map((r) => ids.has(r.split('@', 1)[0])) }),
+  }));
+}
+
+interface Props {
+  system: System;
+  organizations: Map<string, Organization>;
+  systems: Set<string>;
+  sources: Map<string, Source>;
+}
+
+const p = Astro.props;
+---
+<Base title={`${p.system.name} · Benchmark index`} zeroJs>
+  <main>
+    <SystemDetail system={p.system} organizations={p.organizations} systems={p.systems} sources={p.sources} />
+  </main>
+</Base>

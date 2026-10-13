@@ -22,7 +22,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, StringConstraints, model_validator
 
-from schema.system import SourceId, Text
+from schema.system import Evidence, SourceId, Text
 
 CEILING_ANCHOR = {                       # Baseline.kind -> data.ceiling_anchor_type
     'human-crowd-average': 'crowd-average',
@@ -41,6 +41,7 @@ ValueAbsentReason = Literal['no-published-comparator', 'not-applicable', 'not-ye
 BaselineId = Annotated[str, StringConstraints(pattern=r'^base-[a-z0-9]+(-[a-z0-9]+)*$')]
 BenchmarkVersionRef = Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9-]{1,62}(@[a-z0-9][a-z0-9._-]*)?$')]
 MetricRef = Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9-]{1,62}$')]
+SubsetRef = Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9-]{1,62}#[a-z0-9][a-z0-9-]*$')]
 
 
 class Baseline(BaseModel):
@@ -56,7 +57,9 @@ class Baseline(BaseModel):
     population: Text | None = None
     time_limit: Text | None = None
     is_primary: bool = False
+    subset: SubsetRef | None = None        # ADR-0026: the subset the value was measured on, when not the whole version
     source: SourceId | None = None
+    evidence: list[Evidence] = Field(default_factory=list)    # ADR-0026: further quotes behind the value
     notes: str | None = None
 
     @property
@@ -76,6 +79,8 @@ class Baseline(BaseModel):
             raise ValueError('%s: a baseline value needs its source' % self.id)
         if self.n_humans is not None and not self.kind.startswith('human-'):
             raise ValueError('%s: n_humans on a %s baseline' % (self.id, self.kind))
+        if self.subset is not None and self.subset.split('#')[0] != self.benchmark_version.split('@')[0]:
+            raise ValueError('%s: subset %s is not a subset of %s' % (self.id, self.subset, self.benchmark_version))
         return self
 
 

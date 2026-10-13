@@ -24,6 +24,16 @@ export interface Baseline {
   population?: string | null;
   time_limit?: string | null;
   is_primary?: boolean;
+  subset?: string | null;
   source?: string | null;
+  evidence?: Evidence[];
   notes?: string | null;
+}
+/**
+ * A source and the verbatim quote in it that carries a fact. Defined here, below every entity module, so a
+ * Baseline and a Subset can carry evidence as a Benchmark does (ADR-0026).
+ */
+export interface Evidence {
+  source: string;
+  quote?: string | null;
 }

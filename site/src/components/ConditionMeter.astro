@@ -6,20 +6,37 @@
 //
 // NEVER: round up (the fill is the count, and a completeness that disagrees with the counts throws); hide itself
 // when completeness is low; colour low completeness as an error (only ink and border tokens, never alert/caution).
+//
+// `weights` (P2-S3-T02): 04 S8's completeness is weighted -- `judge_model` counts 2.0 on a model-graded benchmark and
+// `scaffold` 2.0 when the subject is an agent scaffold -- so on such a profile it is not s/t. Given the profile's
+// weights (every material field) and the unknown fields, the check is against the weighted share instead, and is
+// as strict: the fill is still the count, and a completeness the weights do not produce still throws.
 interface Props {
   condition_completeness: number;
   fields_specified: number;
   fields_material_total: number;
   unknown_fields?: string[];
+  weights?: Record<string, number>;
 }
 
 const MAX_SEGMENTS = 12;
-const { condition_completeness: c, fields_specified: s, fields_material_total: t, unknown_fields = [] } = Astro.props;
+const { condition_completeness: c, fields_specified: s, fields_material_total: t, unknown_fields = [], weights } = Astro.props;
 if (!Number.isInteger(s) || !Number.isInteger(t) || t < 1 || s < 0 || s > t) {
   throw new Error(`ConditionMeter: ${s} of ${t} is not a count of material fields`);
 }
-if (Math.abs(c - s / t) > 0.005) {
-  throw new Error(`ConditionMeter: condition_completeness ${c} is not ${s}/${t} (09 S6.4: never round up)`);
+let expected = s / t;
+let basis = `${s}/${t}`;
+if (weights != null) {
+  const fields = Object.keys(weights);
+  if (fields.length !== t || unknown_fields.length !== t - s || unknown_fields.some((f) => !(f in weights))) {
+    throw new Error(`ConditionMeter: weights for ${fields.length} fields and ${unknown_fields.length} unknown do not describe ${s} of ${t}`);
+  }
+  const total = fields.reduce((a, f) => a + weights[f], 0);
+  expected = (total - unknown_fields.reduce((a, f) => a + weights[f], 0)) / total;
+  basis = `the weighted share ${expected.toFixed(3)}`;
+}
+if (Math.abs(c - expected) > 0.005) {
+  throw new Error(`ConditionMeter: condition_completeness ${c} is not ${basis} (09 S6.4: never round up)`);
 }
 const readout = `${s} of ${t} material condition fields specified`;
 const unknown = unknown_fields.length > 0 ? `; unknown: ${unknown_fields.join(', ')}` : '';

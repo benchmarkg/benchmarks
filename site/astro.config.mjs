@@ -11,6 +11,7 @@ const FIXTURES = {
   'citations-openalex-headline': './test/fixtures/citations.astro',
   theme: './test/fixtures/theme.astro',
   components: './test/fixtures/components.astro',
+  provenance: './test/fixtures/provenance.astro',
 };
 
 function fixturePages(name) {
@@ -44,4 +45,7 @@ export default defineConfig({
   build: { inlineStylesheets: 'auto' },
   vite: { build: { assetsInlineLimit: 14 * 1024 } },
   integrations: [react(), ...fixtures.map(fixturePages)],
+  // 10 "Information architecture" names /methodology/; the page itself renders at /docs/methodology/ (P2-S3-T05), and
+  // a static redirect (a meta refresh, no script) keeps the named URL resolving.
+  redirects: { '/methodology': '/docs/methodology/' },
 });

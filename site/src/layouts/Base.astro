@@ -6,18 +6,35 @@
 // exists, so a reader who chose dark under a light OS (or the other way round) never sees a flash of the
 // other theme. Everything else is a module or a stylesheet. The tokens (generated, tokens.css) and the type
 // stack (type.css) are global here, so no page re-imports them.
+//
+// `zeroJs` (P2-S3-T01) is for the pages that exist to be cited, which ship zero JavaScript (08 S4.3): it leaves
+// out the theme toggle, whose module script is the only other JavaScript the shell carries. PREPAINT stays -- 09 S9
+// allows it on every page, and it is what applies a reader's stored theme on a page that has no toggle. Without
+// the toggle the page follows that stored choice, or the OS preference, which is what ThemeToggle.astro already
+// does when its script cannot run.
+//
+// Every page's footer prints the release tag, the commit SHA and the build timestamp, and says in one sentence that an
+// artifact URL is a cache key, not a citation (10 "The permanent citation URL", 08 S4.4; P2-S3-T07): a page that
+// cannot tell you which version of the data produced it is not a citable page.
+//
+// A draft-preview build (UAIBI_SITE_DRAFTS=1 over scripts/preview_corpus.py's corpus; lib/corpus.ts) says so on every
+// page, so a screenshot of a preview can never pass for the published index.
 import FontPreloads from '../components/FontPreloads.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import { PREPAINT } from '../lib/theme';
 import { bannerText, dormancy } from '../lib/dormancy';
+import { corpusDoc } from '../lib/corpus';
+import BuildFooter from '../components/BuildFooter.astro';
 import '../styles/tokens.css';
 import '../styles/type.css';
 
 interface Props {
   title: string;
+  zeroJs?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, zeroJs = false } = Astro.props;
+const preview = corpusDoc().drafts;
 // SUCCESSION.md item 5: at 180 days without a human commit to data/, every page says so (P0-S7-T04).
 const stale = bannerText(dormancy());
 ---
@@ -32,12 +49,14 @@ const stale = bannerText(dormancy());
     <slot name="head" />
   </head>
   <body>
+    {preview && <p class="staleness-banner" role="status" data-draft-preview>Draft preview: this build includes entries an agent drafted and no person has verified. It is never published.</p>}
     {stale && <p class="staleness-banner" role="status" data-staleness-banner>{stale}</p>}
     <header class="site-header">
       <a class="site-name" href="/">Benchmark index</a>
-      <ThemeToggle />
+      {!zeroJs && <ThemeToggle />}
     </header>
     <slot />
+    <BuildFooter />
   </body>
 </html>
 

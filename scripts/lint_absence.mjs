@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // scripts/lint_absence.mjs -- P2-S2-T04. The absence rule of 09-design-system.md S13 and S11.2.
 //
-//   node scripts/lint_absence.mjs               # lint site/src/components/; exit 1 on any finding
+//   node scripts/lint_absence.mjs               # lint site/src/components/ and site/src/views/; exit 1 on any finding
 //   node scripts/lint_absence.mjs PATH...       # lint these files or directories instead
 //
 // A missing value is a fact with a name -- not reported, not recorded, not applicable, unknown (09 S11.2) --
-// rendered by <Absent>, never an empty string, a dash or nothing. So under components/ this fails on:
+// rendered by <Absent>, never an empty string, a dash or nothing. So under components/ and views/ (the page
+// bodies, P2-S3-T01) this fails on:
 //   filler     `v || ''`, `v ?? ''`, `v ?? '—'` and the same with any filler a reader would take for a
 //              value or a blank: '', ' ', '-', '–', '—', '?', 'n/a', 'N/A', 'NA', 'none', 'null'
 //   guard      a truthiness-guarded value render: `{v && <b>{v}</b>}` or `{v ? <b>{v}</b> : ...}` or
@@ -18,7 +19,7 @@ import { extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const DEFAULT = join(ROOT, 'site', 'src', 'components');
+const DEFAULT = [join(ROOT, 'site', 'src', 'components'), join(ROOT, 'site', 'src', 'views')];
 const EXTS = new Set(['.astro', '.tsx', '.jsx', '.ts', '.js', '.mjs']);
 const FILLERS = ['', ' ', '-', '–', '—', '?', 'n/a', 'N/A', 'NA', 'none', 'null'];
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -90,7 +91,7 @@ export function lint(targets) {
 }
 
 function main(argv) {
-  const targets = argv.length ? argv.map((p) => resolve(p)) : [DEFAULT];
+  const targets = argv.length ? argv.map((p) => resolve(p)) : DEFAULT;
   for (const t of targets) {
     if (!existsSync(t)) { console.error(`lint_absence: ${t} does not exist`); return 2; }
   }

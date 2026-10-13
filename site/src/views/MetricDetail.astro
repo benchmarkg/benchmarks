@@ -1,0 +1,113 @@
+---
+// site/src/views/MetricDetail.astro -- P2-S3-T04 (10 "Information architecture": "/metrics/{id}/ metric definition,
+// range, pitfalls"). A metric's definition, what a value can be (range, direction, chance and ceiling), how it is
+// aggregated, what must be reported with it, its rubric shape, and its pitfalls set where they cannot be missed (10
+// V6: "a metric's known failure modes should be unavoidable, not buried"). Then the benchmarks that use it, and its
+// sources as anchored blocks (08 S7.5 Decision 4). Zero JavaScript.
+import Absent from '../components/Absent.astro';
+import FacetChip from '../components/FacetChip.astro';
+import Contribute from '../components/Contribute.astro';
+import SourceBlocks from '../components/SourceBlocks.astro';
+import SuggestFix from '../components/SuggestFix.astro';
+import { formatValue } from '../lib/vocab';
+import type { Benchmark } from '../types/benchmark';
+import type { Metric } from '../types/metric';
+import type { Source } from '../types/source';
+
+interface Props {
+  metric: Metric;
+  metrics: Set<string>;                 // published metric ids, so must_report_with links only to real pages
+  benchmarks: Benchmark[];              // every published benchmark; the page keeps the ones that use this metric
+  sources: Map<string, Source>;
+}
+
+const { metric: m, metrics, benchmarks, sources } = Astro.props;
+const direction = {
+  max: 'higher is better', min: 'lower is better', zero: 'closer to zero is better',
+  target: `closer to ${m.optimum_target != null ? formatValue(m.optimum_target) : 'its target'} is better`,
+}[m.optimum];
+const range = m.unbounded
+  ? 'unbounded'
+  : m.range != null && m.range.min != null && m.range.max != null ? `${formatValue(m.range.min)} to ${formatValue(m.range.max)}` : null;
+const users = benchmarks
+  .filter((b) => b.headline_metric === m.id || (Array.isArray(b.metrics) && b.metrics.includes(m.id)))
+  .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+const yes = (v: boolean | undefined) => (v ? 'yes' : 'no');
+---
+<article class="record" data-metric={m.id}>
+  <header>
+    <h1>{m.name}</h1>
+    {m.full_name != null && <p class="kind">{m.full_name}</p>}
+    <Contribute entity_id={m.id} entity_kind="metric" yaml_path={`data/metrics/${m.id}.yaml`} />
+  </header>
+
+  <section aria-labelledby="s-definition">
+    <h2 id="s-definition">Definition<SuggestFix entity={m.id} field="definition" label="definition" /></h2>
+    <p>{m.definition}</p>
+    {m.formula_reference != null && <p class="muted">Formula: {m.formula_reference}</p>}
+    <p class="pitfalls" data-pitfalls><strong>Pitfalls:</strong> {m.pitfalls ?? <Absent state="not-recorded" />}<SuggestFix entity={m.id} field="pitfalls" label="pitfalls" /></p>
+  </section>
+
+  <section aria-labelledby="s-values">
+    <h2 id="s-values">Values</h2>
+    <dl class="pairs">
+      <div><dt>Value type<SuggestFix entity={m.id} field="value_type" label="Value type" /></dt><dd>{m.value_type}</dd></div>
+      <div><dt>Range<SuggestFix entity={m.id} field="range" label="Range" /></dt><dd>{range ?? <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Direction<SuggestFix entity={m.id} field="optimum" label="Direction" /></dt><dd>{direction}</dd></div>
+      <div><dt>Chance baseline<SuggestFix entity={m.id} field="chance_baseline" label="Chance baseline" /></dt><dd>{m.chance_baseline != null ? formatValue(m.chance_baseline) : <Absent state="not-reported" />}</dd></div>
+      <div><dt>Score ceiling<SuggestFix entity={m.id} field="score_ceiling" label="Score ceiling" /></dt><dd>{m.score_ceiling != null ? formatValue(m.score_ceiling) : <Absent state="not-reported" />}</dd></div>
+      <div><dt>Normalisation anchor<SuggestFix entity={m.id} field="normalization_anchor" label="Normalisation anchor" /></dt><dd>{m.normalization_anchor ?? <Absent state="not-applicable" />}</dd></div>
+      <div><dt>Aggregation<SuggestFix entity={m.id} field="aggregation" label="Aggregation" /></dt><dd>{m.aggregation ?? <Absent state="not-reported" />}</dd></div>
+      <div><dt>Units<SuggestFix entity={m.id} field="units" label="Units" /></dt><dd>{m.units ?? <Absent state="not-applicable" />}</dd></div>
+      <div><dt>Needs a rating pool<SuggestFix entity={m.id} field="requires_pool" label="Needs a rating pool" /></dt><dd>{yes(m.requires_pool)}</dd></div>
+      <div><dt>Headroom computable<SuggestFix entity={m.id} field="headroom_computable" label="Headroom computable" /></dt><dd>{yes(m.headroom_computable)}</dd></div>
+      <div><dt>Report with<SuggestFix entity={m.id} field="must_report_with" label="Report with" /></dt><dd>{(m.must_report_with ?? []).length > 0
+        ? <ul class="inline">{(m.must_report_with ?? []).map((id) => <li>{metrics.has(id) ? <a href={`/metrics/${id}/`}><code>{id}</code></a> : <code>{id}</code>}</li>)}</ul>
+        : <Absent state="not-applicable" reason="reported alone" />}</dd></div>
+    </dl>
+    {m.rubric != null && (
+      <>
+        <h3>Rubric</h3>
+        <dl class="pairs" data-rubric>
+          <div><dt>Structure</dt><dd>{m.rubric.structure}{m.rubric.rubric_count != null && <> · {formatValue(m.rubric.rubric_count)} rubrics</>}</dd></div>
+          <div><dt>Leaves</dt><dd>{formatValue(m.rubric.leaf_count)}, scored {m.rubric.leaf_scoring}</dd></div>
+          <div><dt>Nodes</dt><dd>{m.rubric.node_count != null ? formatValue(m.rubric.node_count) : <Absent state="not-reported" />}{m.rubric.node_aggregation != null && <> · {m.rubric.node_aggregation.replace(/-/g, ' ')}</>}</dd></div>
+        </dl>
+      </>
+    )}
+    {(m.domains ?? []).length > 0 && <p>Domains: {(m.domains ?? []).map((d) => <FacetChip facet="domain" term_id={d} />)}</p>}
+  </section>
+
+  <section aria-labelledby="s-used-by">
+    <h2 id="s-used-by">Used by <span class="count">({users.length})</span></h2>
+    {users.length === 0 ? <p><Absent state="not-recorded" reason="no published benchmark names this metric" /></p> : (
+      <ul class="list">{users.map((b) => <li data-used-by={b.id}><a href={`/benchmarks/${b.id}/`}>{b.name}</a>{b.headline_metric === m.id && <span class="muted"> (headline)</span>}</li>)}</ul>
+    )}
+  </section>
+
+  <section aria-labelledby="s-sources">
+    <h2 id="s-sources">Sources <span class="count">({(m.sources ?? []).length})</span></h2>
+    {(m.sources ?? []).length > 0 ? <SourceBlocks ids={m.sources ?? []} sources={sources} /> : <p><Absent state="not-recorded" /></p>}
+  </section>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  h3 { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-base); }
+  .kind, .muted { color: var(--c-ink-muted); }
+  .kind { margin: 0; }
+  .count { font-weight: 400; color: var(--c-ink-muted); }
+  .pairs { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .inline { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin: 0; padding: 0; list-style: none; }
+  .list { display: grid; gap: var(--sp-1); padding-inline-start: var(--sp-6); }
+  .pitfalls { padding: var(--sp-2) var(--sp-3); border-inline-start: 3px solid var(--c-caution); background: var(--c-caution-bg); }
+</style>

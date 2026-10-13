@@ -1,0 +1,120 @@
+---
+// site/src/views/SystemDetail.astro -- P2-S3-T04 (10 "Information architecture": "/systems/{id}/ a system, as the
+// subject of claims (not a model directory)"). What the record says the system is -- maker, type, availability,
+// what it is built on, what it disclosed -- and its versions, so a claim's `system@version` resolves to something.
+// Its claims arrive with the claims artifact (P3-S10-T03); until then the page says so rather than showing none.
+// Sources are anchored blocks (08 S7.5 Decision 4). Zero JavaScript, like every record page (10 "Performance budget").
+import Absent from '../components/Absent.astro';
+import FacetChip from '../components/FacetChip.astro';
+import Contribute from '../components/Contribute.astro';
+import SourceBlocks from '../components/SourceBlocks.astro';
+import SuggestFix from '../components/SuggestFix.astro';
+import { formatValue } from '../lib/vocab';
+import type { Organization } from '../types/organization';
+import type { Source } from '../types/source';
+import type { System } from '../types/system';
+
+interface Props {
+  system: System;
+  organizations: Map<string, Organization>;
+  systems: Set<string>;                 // published system ids, so built_on links only to real pages
+  sources: Map<string, Source>;
+}
+
+const { system: s, organizations, systems, sources } = Astro.props;
+const org = s.organization != null ? organizations.get(s.organization) : undefined;
+const openWeights = s.open_weights == null ? null : s.open_weights ? 'yes' : 'no';
+const baseId = (ref: string) => ref.split('@', 1)[0];
+---
+<article class="record" data-system={s.id}>
+  <header>
+    <h1>{s.name}</h1>
+    <p class="kind"><FacetChip facet="subject" term_id={s.system_type} /> {org != null
+      ? <>by <a href={`/orgs/${org.id}/`}>{org.name}</a></>
+      : s.organization != null ? <>by <code>{s.organization}</code></> : <Absent state="not-recorded" reason="maker" />}<SuggestFix entity={s.id} field="organization" label="maker" /></p>
+    <Contribute entity_id={s.id} entity_kind="system" yaml_path={`data/systems/${s.id}.yaml`} />
+  </header>
+
+  <section aria-labelledby="s-record">
+    <h2 id="s-record">Record</h2>
+    <dl class="pairs">
+      <div><dt>Availability<SuggestFix entity={s.id} field="availability" label="Availability" /></dt><dd>{s.availability.replace(/-/g, ' ')}{s.retired_on != null && <> · retired <time datetime={s.retired_on}>{s.retired_on}</time></>}</dd></div>
+      <div><dt>First released<SuggestFix entity={s.id} field="first_released" label="First released" /></dt><dd>{s.first_released != null ? <time datetime={s.first_released}>{s.first_released}</time> : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>API identifier<SuggestFix entity={s.id} field="api_identifier" label="API identifier" /></dt><dd>{s.api_identifier != null ? <code>{s.api_identifier}</code> : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Open weights<SuggestFix entity={s.id} field="open_weights" label="Open weights" /></dt><dd>{openWeights ?? <Absent state="not-reported" />}</dd></div>
+      <div><dt>Licence<SuggestFix entity={s.id} field="license" label="Licence" /></dt><dd>{s.license ?? <Absent state="not-recorded" />}{s.license_class != null && <> · {s.license_class.replace(/-/g, ' ')}</>}</dd></div>
+      <div><dt>Modalities<SuggestFix entity={s.id} field="modalities_in" label="Modalities" /></dt><dd>{(s.modalities_in ?? []).length > 0 || (s.modalities_out ?? []).length > 0
+        ? <>in: {(s.modalities_in ?? []).join(', ') || <Absent state="not-recorded" />}; out: {(s.modalities_out ?? []).join(', ') || <Absent state="not-recorded" />}</>
+        : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Parameters<SuggestFix entity={s.id} field="parameter_count" label="Parameters" /></dt><dd>{s.parameters_disclosed
+        ? (s.parameter_count != null ? formatValue(s.parameter_count) : <Absent state="not-recorded" />)
+        : <Absent state="not-reported" reason="not disclosed by the maker" />}</dd></div>
+      <div><dt>Training compute<SuggestFix entity={s.id} field="training_compute_flop" label="Training compute" /></dt><dd>{s.training_compute_disclosed
+        ? (s.training_compute_flop != null ? <>{s.training_compute_flop.toExponential(2)} FLOP{s.training_compute_estimated && <> (estimated)</>}</> : <Absent state="not-recorded" />)
+        : <Absent state="not-reported" reason="not disclosed by the maker" />}{s.training_compute_notes != null && <p class="note">{s.training_compute_notes}</p>}</dd></div>
+      <div><dt>Built on<SuggestFix entity={s.id} field="built_on" label="Built on" /></dt><dd>{(s.built_on ?? []).length > 0
+        ? <ul class="inline">{(s.built_on ?? []).map((ref) => <li>{systems.has(baseId(ref)) ? <a href={`/systems/${baseId(ref)}/`}><code>{ref}</code></a> : <code>{ref}</code>}</li>)}</ul>
+        : <Absent state="not-applicable" reason="not built on another recorded system" />}</dd></div>
+    </dl>
+    {Object.keys(s.external_ids ?? {}).length > 0 && (
+      <dl class="pairs">
+        {Object.entries(s.external_ids ?? {}).map(([k, v]) => <div><dt>{k}</dt><dd><code>{String(v)}</code></dd></div>)}
+      </dl>
+    )}
+  </section>
+
+  <section aria-labelledby="s-versions">
+    <h2 id="s-versions">Versions<SuggestFix entity={s.id} field="versions" label="versions" /> <span class="count">({(s.versions ?? []).length})</span></h2>
+    {(s.versions ?? []).length === 0 ? <p><Absent state="not-recorded" reason="no version recorded" /></p> : (
+      <div class="scroll" tabindex="0" role="region" aria-label="Versions">
+        <table>
+          <thead><tr><th scope="col">Version</th><th scope="col">Released</th><th scope="col">API identifier</th><th scope="col">Deprecated</th><th scope="col">Notes</th></tr></thead>
+          <tbody>
+            {(s.versions ?? []).map((v) => (
+              <tr data-version={v.version}>
+                <th scope="row"><code>{v.version}</code></th>
+                <td>{v.released != null ? <time datetime={v.released}>{v.released}</time> : <Absent state="not-recorded" />}</td>
+                <td>{v.api_identifier != null ? <code>{v.api_identifier}</code> : <Absent state="not-recorded" />}</td>
+                <td>{v.deprecated ? 'yes' : 'no'}</td>
+                <td>{v.notes ?? <Absent state="not-recorded" />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+
+  <section aria-labelledby="s-claims">
+    <h2 id="s-claims">Claims</h2>
+    <p>Claims about this system are drawn from the claims artifact, which this build does not include yet. <Absent state="not-recorded" reason="claims table" /></p>
+  </section>
+
+  <section aria-labelledby="s-sources">
+    <h2 id="s-sources">Sources <span class="count">({(s.sources ?? []).length})</span></h2>
+    <SourceBlocks ids={s.sources ?? []} sources={sources} />
+  </section>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  .kind { margin: 0; color: var(--c-ink-muted); }
+  .count { font-weight: 400; color: var(--c-ink-muted); }
+  .pairs { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .note { margin: var(--sp-1) 0 0; font-size: var(--fs-sm); color: var(--c-ink-muted); }
+  .inline { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin: 0; padding: 0; list-style: none; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: var(--fs-sm); }
+  th, td { padding: var(--sp-1) var(--sp-2); border-block-end: 1px solid var(--c-border); text-align: start; vertical-align: top; }
+  thead th { color: var(--c-ink-muted); }
+  tbody th { font-weight: 400; }
+</style>

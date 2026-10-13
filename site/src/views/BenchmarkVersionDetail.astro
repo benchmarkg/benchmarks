@@ -1,0 +1,119 @@
+---
+// site/src/views/BenchmarkVersionDetail.astro -- P2-S3-T08 (10 "Information architecture": /benchmarks/{id}/v/{version}/;
+// 04 S6). The page a citation to a superseded version lands on. It says, first, that the version is superseded and
+// by what, linking the benchmark's current page; then the version's own record -- kind, release, items, what
+// changed, whether the change broke comparability -- its errata as first-class entries (10 V6 section 4: "a score
+// against FrontierMath without a version is now meaningless"), the baselines recorded against it, its sources as
+// anchored blocks, and its citation. What did not change with the version (facets, governance, lineage) is the
+// benchmark's, on the benchmark's page. Zero JavaScript.
+import Absent from '../components/Absent.astro';
+import CiteThis from '../components/CiteThis.astro';
+import Contribute from '../components/Contribute.astro';
+import SourceBlocks from '../components/SourceBlocks.astro';
+import SuggestFix from '../components/SuggestFix.astro';
+import SourceRef from './detail/SourceRef.astro';
+import { formatValue } from '../lib/vocab';
+import { supersededVersions, versionHref } from '../lib/versions';
+import type { Release } from '../lib/release';
+import type { Benchmark, BenchmarkVersion } from '../types/benchmark';
+import type { Source } from '../types/source';
+
+interface Props {
+  benchmark: Benchmark;
+  version: BenchmarkVersion;
+  sources: Map<string, Source>;
+  release: Release;
+}
+
+const { benchmark: b, version: v, sources, release } = Astro.props;
+const ref = `${b.id}@${v.version}`;
+const yamlPath = `data/benchmarks/${b.domain.primary.split('/')[0]}/${b.id}.yaml`;
+const pinned = new Set(supersededVersions(b).map((x) => x.version));
+const versionLink = (tag: string) => (pinned.has(tag) ? versionHref(b.id, tag) : `/benchmarks/${b.id}/`);
+const baselines = (b.baselines ?? []).filter((x) => x.benchmark_version === ref);
+const cited = [...new Set([...(v.sources ?? []), ...(v.errata ?? []).map((e) => e.source)])];
+---
+<article class="record" data-benchmark-version={ref}>
+  <header>
+    <p class="superseded" role="note" data-superseded>This version of {b.name} is superseded by <a href={versionLink(v.superseded_by!)}><code>{v.superseded_by}</code></a>. <a href={`/benchmarks/${b.id}/`}>The benchmark as it stands</a>.</p>
+    <h1>{b.name} <code class="tag">{v.version}</code></h1>
+    {v.label != null && <p class="kind">{v.label}</p>}
+    <Contribute entity_id={b.id} entity_kind="benchmark" yaml_path={yamlPath} />
+  </header>
+
+  <section aria-labelledby="s-version">
+    <h2 id="s-version">This version<SuggestFix entity={b.id} field="versions" label="this version" /></h2>
+    <dl class="pairs">
+      <div><dt>Kind</dt><dd>{v.version_kind ?? 'revision'}</dd></div>
+      <div><dt>Released</dt><dd>{v.released != null ? <time datetime={v.released}>{v.released}</time> : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Items</dt><dd>{v.items != null ? formatValue(v.items) : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Comparability</dt><dd data-breaking={v.breaking ? 'true' : 'false'}>{v.breaking
+        ? <strong class="breaking">Breaking: scores on this version are not comparable with other versions</strong>
+        : 'scores carry across to its neighbours'}</dd></div>
+      <div><dt>Frozen</dt><dd>{v.frozen ? 'yes' : 'no'}</dd></div>
+      <div><dt>Supersedes</dt><dd>{v.supersedes_version != null ? <a href={versionLink(v.supersedes_version)}><code>{v.supersedes_version}</code></a> : <Absent state="not-applicable" reason="the first recorded version" />}</dd></div>
+      <div><dt>Superseded by</dt><dd><a href={versionLink(v.superseded_by!)}><code>{v.superseded_by}</code></a></dd></div>
+    </dl>
+    <h3>What changed</h3>
+    <p>{v.changes ?? <Absent state="not-recorded" />}</p>
+  </section>
+
+  <section aria-labelledby="s-errata">
+    <h2 id="s-errata">Errata <span class="count">({(v.errata ?? []).length})</span></h2>
+    {(v.errata ?? []).length === 0 ? <p><Absent state="not-recorded" reason="no erratum recorded" /></p> : (
+      <ul class="list">
+        {(v.errata ?? []).map((e) => (
+          <li data-erratum>{e.date != null ? <time datetime={e.date}>{e.date}</time> : <Absent state="not-reported" reason="undated" />}{e.scope != null && <> ({e.scope})</>}: {e.description} <SourceRef id={e.source} sources={sources} /></li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  <section aria-labelledby="s-baselines">
+    <h2 id="s-baselines">Baselines on this version <span class="count">({baselines.length})</span></h2>
+    {baselines.length === 0 ? <p><Absent state="not-recorded" reason="no baseline recorded against this version" /></p> : (
+      <ul class="list">
+        {baselines.map((x) => (
+          <li data-baseline={x.id}>{x.kind.replace(/-/g, ' ')}{x.is_primary && <strong> (primary)</strong>}: {x.value != null ? formatValue(x.value) : <Absent state="not-reported" />} <code>{x.metric}</code>{x.population != null && <>, {x.population}</>} <SourceRef id={x.source} sources={sources} /></li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  <section aria-labelledby="s-sources">
+    <h2 id="s-sources">Sources <span class="count">({cited.length})</span></h2>
+    {cited.length > 0 ? <SourceBlocks ids={cited} sources={sources} /> : <p><Absent state="not-recorded" /></p>}
+  </section>
+
+  <div class="cite-block">
+    <CiteThis entity_id={ref} title={`${b.name} ${v.version}`} commit_sha={release.commit_sha} release_doi={release.concept_doi} retrieved_at={release.built_on} yaml_path={yamlPath} release_tag={release.tag} index_title={release.index_title} />
+  </div>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  h3 { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-base); }
+  .tag { font-size: var(--fs-lg); font-weight: 400; }
+  .kind { margin: 0; color: var(--c-ink-muted); }
+  .count { font-weight: 400; color: var(--c-ink-muted); }
+  .superseded {
+    margin: 0 0 var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-caution);
+    background: var(--c-caution-bg);
+    font-weight: 600;
+  }
+  .breaking { color: var(--c-alert); }
+  .pairs { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .list { display: grid; gap: var(--sp-2); padding-inline-start: var(--sp-6); }
+  .cite-block { margin-block-start: var(--sp-8); }
+</style>

@@ -58,6 +58,7 @@ export interface Subset {
       )[]
     | null;
   metric_override?: string | null;
+  evidence?: Evidence[];
   notes?: string | null;
 }
 export interface DomainOverride {
@@ -482,4 +483,12 @@ export interface DomainOverride {
     | "reasoning-general/counterfactual"
     | "reasoning-general/puzzle-solving"
   )[];
+}
+/**
+ * A source and the verbatim quote in it that carries a fact. Defined here, below every entity module, so a
+ * Baseline and a Subset can carry evidence as a Benchmark does (ADR-0026).
+ */
+export interface Evidence {
+  source: string;
+  quote?: string | null;
 }

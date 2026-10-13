@@ -1,0 +1,89 @@
+---
+// site/src/pages/api.astro -- P2-S3-T05 (08 S4.5). /api/: the export surface documented as one, and said plainly not to
+// be an API. It states what a consumer gets, where, and the stability contract of each, then the three rules, among
+// them the deprecation rule. Which artifacts this build actually carries is read at build time rather than claimed,
+// so the page cannot promise a file that is not there. Zero JavaScript.
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import Absent from '../components/Absent.astro';
+import Base from '../layouts/Base.astro';
+import { CORPUS_PATH } from '../lib/corpus';
+import { release } from '../lib/release';
+import { REPO } from '../lib/repo';
+
+const built = dirname(CORPUS_PATH);
+const has = (name: string) => existsSync(join(built, name));
+const r = release();
+const rows = [
+  { what: 'corpus.json', detail: 'every entity, fully resolved', where: '/data/latest/corpus.json', present: has('corpus.json'),
+    contract: 'Additive within a major schema_version. Fields are added, never renamed or removed; a removal or rename is a major bump, announced in the release notes and here at least one release ahead.' },
+  { what: 'facets.json', detail: 'the slim index for filtering', where: '/data/latest/facets.json', present: has('facets.json'),
+    contract: 'The same contract as corpus.json.' },
+  { what: 'claims.json, claims-ingested/<id>.json', detail: 'the result claims', where: '/data/latest/', present: has('claims.json'),
+    contract: 'The same contract. Ingested claims are segregated by path and carry machine-ingested, which is part of the contract rather than an implementation detail.' },
+  { what: 'index.sqlite and the data tarball', detail: 'the release archive', where: 'the GitHub release for each tag', present: r.tag != null,
+    contract: 'Frozen at the tag. The table shapes may change between majors; the tag never changes.' },
+  { what: 'The YAML itself', detail: 'the curated records', where: 'the git repository at a commit SHA', present: true,
+    contract: 'The citable surface, and the only one with no expiry. Everything above is derived from it and can be rebuilt from it.' },
+];
+---
+<Base title="The data contract · Benchmark index" zeroJs>
+  <main>
+    <article class="prose" data-api>
+      <h1>The data contract</h1>
+      <p class="lead" data-not-an-api><strong>/api/ is not an API.</strong> There is no query endpoint, no authentication and no rate limit, because there is no server. Anything a query endpoint would do, you do locally against a file. This page documents the files: what each holds, where it is, and what you can rely on about it.</p>
+
+      <h2>What you get</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="Artifacts and their contracts">
+        <table>
+          <thead><tr><th scope="col">Artifact</th><th scope="col">Where</th><th scope="col">Stability contract</th><th scope="col">In this build</th></tr></thead>
+          <tbody>
+            {rows.map((x) => (
+              <tr data-artifact={x.what}>
+                <th scope="row"><code>{x.what}</code> <span class="muted">{x.detail}</span></th>
+                <td>{x.where.startsWith('/') ? <code>{x.where}</code> : x.where}</td>
+                <td data-contract>{x.contract}</td>
+                <td>{x.present ? 'yes' : <Absent state="not-applicable" reason="not built yet" />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>The four stability contracts, in short:</p>
+      <ul>
+        <li>The JSON artifacts are additive within a major schema version.</li>
+        <li>Machine-ingested claims are kept apart, by path and by label.</li>
+        <li>The release archive is frozen at its tag.</li>
+        <li>The YAML at a commit never expires, and it is what to cite.</li>
+      </ul>
+
+      <h2>Three rules</h2>
+      <ol>
+        <li data-rule="schema-version"><strong>The schema version travels with the data,</strong> in the build manifest and in each artifact's envelope. A consumer that pins the major <code>schema_version</code> and re-reads the manifest can tell a breaking change from a rebuild without diffing our files.</li>
+        <li data-rule="deprecation"><strong>A deprecation is announced one release before it lands,</strong> on this page, in the release notes and in <a href="/feed.xml">the feed</a>. A catalogue that silently renames a field breaks every downstream script at once and teaches its users not to depend on it.</li>
+        <li data-rule="not-an-api"><strong>This is not an API.</strong> There is nothing to query and nothing to rate-limit. That is stated here so that nobody has to discover it.</li>
+      </ol>
+
+      <h2>Citing</h2>
+      <p>An artifact URL is a cache key, not a citation. Cite the YAML at a commit in <a href={REPO}>the repository</a>, or the release and its DOI{r.concept_doi != null && <> (<a href={`https://doi.org/${r.concept_doi}`}>{r.concept_doi}</a>, which always resolves to the latest version)</>}. See also <a href="/docs/provenance/">provenance</a> and <a href="/docs/methodology/">methodology</a>.</p>
+    </article>
+  </main>
+</Base>
+
+<style>
+  .prose {
+    max-inline-size: 68rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+    line-height: var(--lh-prose);
+  }
+  h1 { font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin-block-start: var(--sp-8); font-size: var(--fs-lg); }
+  .lead { max-inline-size: 68ch; }
+  .muted { color: var(--c-ink-muted); font-size: var(--fs-sm); font-weight: 400; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: var(--fs-sm); }
+  th, td { padding: var(--sp-2); border-block-end: 1px solid var(--c-border); text-align: start; vertical-align: top; }
+  thead th { color: var(--c-ink-muted); }
+  tbody th { font-weight: 400; }
+</style>

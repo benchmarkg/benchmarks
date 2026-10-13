@@ -1,0 +1,111 @@
+---
+// site/src/views/OrgDetail.astro -- P2-S3-T04 (10 V9 "The organisation profile page"). An organisation's record: what
+// it is, the systems it released, the benchmarks it maintains (governance.maintainers names it) with their
+// independence flags, each linked to its evidence, and the domains those benchmarks sit in. Claims reported, their
+// verification mix and the contamination exposure of that evidence come with the claims artifact (P3-S10-T03); until
+// then the page says so. V9's charts live on V9; this page is tables, flags and links.
+//
+// The independence analysis is DISCLOSURE, never accusation (10 V9): no score, no ranking, no alert colour;
+// `no-known-conflict` has the same weight as any other flag; and the page carries the standing note below.
+import Absent from '../components/Absent.astro';
+import FacetChip from '../components/FacetChip.astro';
+import Contribute from '../components/Contribute.astro';
+import SourceBlocks from '../components/SourceBlocks.astro';
+import SuggestFix from '../components/SuggestFix.astro';
+import SourceRef from './detail/SourceRef.astro';
+import { term } from '../lib/vocab';
+import type { Benchmark } from '../types/benchmark';
+import type { Organization } from '../types/organization';
+import type { Source } from '../types/source';
+import type { System } from '../types/system';
+
+interface Props {
+  org: Organization;
+  organizations: Map<string, Organization>;
+  systems: System[];                    // every published system; the page keeps this org's
+  benchmarks: Benchmark[];              // every published benchmark; the page keeps the ones it maintains
+  sources: Map<string, Source>;
+}
+
+const { org: o, organizations, systems, benchmarks, sources } = Astro.props;
+const parent = o.parent != null ? organizations.get(o.parent) : undefined;
+const children = [...organizations.values()].filter((x) => x.parent === o.id);
+const released = systems.filter((s) => s.organization === o.id).sort((a, b) => a.name.localeCompare(b.name, 'en'));
+const maintained = benchmarks.filter((b) => (b.governance.maintainers ?? []).includes(o.id)).sort((a, b) => a.name.localeCompare(b.name, 'en'));
+const flags = maintained.flatMap((b) => (b.governance.independence_flags ?? []).map((f) => ({ benchmark: b, ...(typeof f === 'string' ? { flag: f, source: null, quote: null } : f) })));
+const families = [...new Set(maintained.flatMap((b) => [b.domain.primary.split('/')[0]]))].sort();
+---
+<article class="record" data-org={o.id}>
+  <header>
+    <h1>{o.name}</h1>
+    <p class="kind">{o.kind.replace(/-/g, ' ')}{o.country != null && <> · {o.country}</>}<SuggestFix entity={o.id} field="kind" label="kind" /></p>
+    <Contribute entity_id={o.id} entity_kind="organization" yaml_path={`data/organizations/${o.id}.yaml`} />
+  </header>
+
+  <section aria-labelledby="s-record">
+    <h2 id="s-record">Record</h2>
+    <dl class="pairs">
+      <div><dt>Roles<SuggestFix entity={o.id} field="roles" label="Roles" /></dt><dd>{(o.roles ?? []).length > 0 ? (o.roles ?? []).map((r) => r.replace(/-/g, ' ')).join(', ') : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Part of<SuggestFix entity={o.id} field="parent" label="Part of" /></dt><dd>{parent != null ? <a href={`/orgs/${parent.id}/`}>{parent.name}</a> : o.parent != null ? <code>{o.parent}</code> : <Absent state="not-applicable" reason="no parent organisation recorded" />}</dd></div>
+      {children.length > 0 && <div><dt>Includes</dt><dd>{children.map((c) => <a href={`/orgs/${c.id}/`}>{c.name}</a>)}</dd></div>}
+      <div><dt>Homepage<SuggestFix entity={o.id} field="homepage" label="Homepage" /></dt><dd>{o.homepage != null ? <a href={o.homepage}>{o.homepage}</a> : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>ROR<SuggestFix entity={o.id} field="ror" label="ROR" /></dt><dd>{o.ror != null ? <a href={o.ror}>{o.ror}</a> : <Absent state="not-recorded" />}</dd></div>
+      <div><dt>Wikidata<SuggestFix entity={o.id} field="wikidata" label="Wikidata" /></dt><dd>{o.wikidata != null ? <a href={`https://www.wikidata.org/wiki/${o.wikidata}`}>{o.wikidata}</a> : <Absent state="not-recorded" />}</dd></div>
+    </dl>
+  </section>
+
+  <section aria-labelledby="s-systems">
+    <h2 id="s-systems">Systems released <span class="count">({released.length})</span></h2>
+    {released.length === 0 ? <p><Absent state="not-recorded" reason="no published system names this organisation" /></p> : (
+      <ul class="list">{released.map((s) => <li data-released={s.id}><a href={`/systems/${s.id}/`}>{s.name}</a> <span class="muted">{term('subject', s.system_type).label}</span></li>)}</ul>
+    )}
+  </section>
+
+  <section aria-labelledby="s-benchmarks">
+    <h2 id="s-benchmarks">Benchmarks maintained <span class="count">({maintained.length})</span></h2>
+    {maintained.length === 0 ? <p><Absent state="not-recorded" reason="no published benchmark names this organisation as a maintainer" /></p> : (
+      <ul class="list">{maintained.map((b) => <li data-maintained={b.id}><a href={`/benchmarks/${b.id}/`}>{b.name}</a></li>)}</ul>
+    )}
+    {families.length > 0 && <p>Domains: {families.map((f) => <FacetChip facet="domain" term_id={f} />)}</p>}
+  </section>
+
+  <section aria-labelledby="s-independence">
+    <h2 id="s-independence">Independence flags <span class="count">({flags.length})</span></h2>
+    <p class="standing" data-standing-note>Maintainers competing on their own benchmarks is normal and often unavoidable: the people who can build a good benchmark are usually the people working on the problem. These flags are recorded so that readers can see the relationship and weigh it themselves, not as a judgement of anyone.</p>
+    {flags.length === 0 ? <p><Absent state="not-recorded" reason="no flag on a benchmark this organisation maintains" /></p> : (
+      <ul class="list">
+        {flags.map((f) => <li data-flag={f.flag}><a href={`/benchmarks/${f.benchmark.id}/`}>{f.benchmark.name}</a>: <FacetChip facet="governance" term_id={f.flag} /> <SourceRef id={f.source} quote={f.quote} sources={sources} /></li>)}
+      </ul>
+    )}
+  </section>
+
+  <section aria-labelledby="s-claims">
+    <h2 id="s-claims">Claims reported</h2>
+    <p>The claims this organisation reported, their verification mix and the contamination exposure of that evidence are drawn from the claims artifact, which this build does not include yet. <Absent state="not-recorded" reason="claims table" /></p>
+  </section>
+
+  <section aria-labelledby="s-sources">
+    <h2 id="s-sources">Sources <span class="count">({o.sources.length})</span></h2>
+    <SourceBlocks ids={o.sources} sources={sources} />
+  </section>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  .kind, .muted { color: var(--c-ink-muted); }
+  .kind { margin: 0; }
+  .muted { font-size: var(--fs-sm); }
+  .count { font-weight: 400; color: var(--c-ink-muted); }
+  .pairs { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .list { display: grid; gap: var(--sp-1); padding-inline-start: var(--sp-6); }
+  .standing { padding: var(--sp-2) var(--sp-3); border-inline-start: 3px solid var(--c-border-strong); background: var(--c-surface); font-size: var(--fs-sm); }
+</style>
