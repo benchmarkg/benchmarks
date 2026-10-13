@@ -13,7 +13,7 @@
 | Token | fine-grained personal access token, resource owner `benchmarkg`, repository `benchmarks` only |
 | Permissions | Contents: read and write; Pull requests: read and write; Metadata: read (implicit) |
 | Created / expires | 2026-09-29 / **2026-12-28** (90 days) |
-| Secret | `UAIBI_BOT_PAT`, a repository Actions secret (to set: see below) |
+| Secret | `UAIBI_BOT_PAT`, a repository Actions secret, set 2026-09-29 (`gh secret list`, read 2026-10-13) |
 | Checked | 2026-09-29: the token authenticates as `uaibi-bot`, and has push access to `benchmarkg/benchmarks` and no admin |
 
 The repository moved from the personal account `intelligence-benchmark` to the `benchmarkg`
@@ -68,8 +68,11 @@ separable from human curation in `git log`, which is the first reason 07 §6.1 g
 
 ## Not done yet
 
-- `UAIBI_BOT_PAT` is not yet a repository secret; a maintainer sets it.
 - `main` has no branch protection or ruleset. 07 §6.1's design assumes branch protection requires
-  `pr-validate.yml`, and that is P0-S6's to set up once the workflows are switched back on.
+  `pr-validate.yml`, which runs on every pull request since 2026-10-12 (P0-S6-T01); requiring it is
+  P2-S6-T06's, a maintainer's setting.
+- No bot-opened pull request has run yet, so the claim above -- a PAT-opened pull request triggers
+  `pr-validate.yml` where a `GITHUB_TOKEN` one would not -- is the design's, not yet observed. P5-S3-T01
+  closes it by opening one.
 - No ruleset yet limits which branches the bot may push to (the intake bot's `contrib/*`, the
   ingest jobs' `ingest/*`). A fine-grained token cannot do that; a ruleset can.
