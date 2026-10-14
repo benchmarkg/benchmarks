@@ -1,0 +1,488 @@
+# data/benchmarks/physics/fair-universe-higgsml.yaml
+#
+# P1-S6-T05, physics entry 5 of 9. Filled from the challenge paper, arXiv 2410.02867 read as its v5 PDF
+# (2025-09-24; v1 2024-10-03), and its abstract page; the FAIR Universe home page and the challenge's results
+# page on fair-universe.lbl.gov (scripts and styles stripped); the documentation's Evaluation page; Codabench's
+# public JSON record of the competition (2977); the HEP-Challenge repository README at master; Zenodo's record
+# of the public dataset (15131565); and the v1 PDF of arXiv 2609.02781 (September 2026), a paper that reports
+# results on the benchmark. The HEP ML Living Review was swept first and lists the challenge under Datasets.
+# Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: fair-universe-higgsml
+name: FAIR Universe HiggsML Uncertainty Challenge
+aliases:
+  - HiggsML Uncertainty Challenge
+  - FAIR Universe Higgs Uncertainty Challenge
+  - FAIR Universe HiggsML Uncertainty Dataset and Competition
+tagline: Confidence intervals on the Higgs signal strength under six systematic uncertainties,
+  scored on coverage and width.
+description: >
+  A NeurIPS 2024 competition and dataset from the FAIR Universe project, led by Lawrence Berkeley
+  National Laboratory. Each scored item is a pseudo-experiment, an unlabelled set of simulated
+  proton-proton collisions (H to tau tau signal against Z, ttbar and diboson backgrounds, generated
+  with Pythia 8.2 and Delphes 3.5.0, 28 features per event) drawn with a randomised signal strength
+  mu and six nuisance parameters for systematic effects such as the tau and jet energy scales and the
+  background normalisations. A submission is code (a model.py with fit and predict) that receives the
+  labelled training set and a biasing script, and returns a 68.27% confidence interval for mu on each
+  pseudo-experiment. The Quantile Score rewards narrow intervals and penalises coverage away from
+  68.27%, more heavily for under-coverage. Codabench ran the code on organiser hardware at NERSC and
+  LBNL from August 2024 to March 2025; every submission was then re-run on pseudo-experiments from a
+  private 120M-event set, and HEPHY (Vienna) and IBRAHIME (UIUC) were declared joint first. The public
+  dataset has been on Zenodo under CC BY 4.0 since 2025 as a long-term benchmark, with no submission
+  route open. FAIR Universe's 2025 and 2026 NeurIPS challenges are on weak lensing, a different task,
+  and are not included here.
+self_description:
+  source: src-fair-universe-higgs-challenge-site
+  quote: This NeurIPS 2024 Machine Learning competition is one of the first to strongly emphasise
+    mastering uncertainties in the input training dataset and outputting credible confidence
+    intervals
+external_ids:
+  arxiv: '2410.02867'
+paper:
+  title: FAIR Universe HiggsML Uncertainty Dataset and Competition
+  arxiv: '2410.02867'
+  version_read: v5
+  source: src-arxiv-2410-02867-v5
+released: 2024-10-01
+released_note: The date the project's news list gives for launching the NeurIPS 2024 challenge on
+  Codabench. Codabench's record dates the public phase from 2024-08-31, and the paper's first arXiv
+  version is 2024-10-03. A pilot ran from March 2024 (see versions).
+released_source: src-fair-universe-site
+released_quote: Higgs Uncertainty Challenge launched on Codabench October 01, 2024
+release_venue: NeurIPS 2024 Competition Track; the dataset paper was submitted to the NeurIPS 2025
+  Datasets and Benchmarks track
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/particle-physics
+  secondary: []
+domain_basis:
+  reason: The scored quantity is the Higgs signal strength, a physics quantity recovered from
+    simulated LHC collision events in an ATLAS-like detector, which is the leaf's definition.
+  source: src-arxiv-2410-02867
+  quote: The FAIR Universe HiggsML Uncertainty Challenge focused on measuring the physical
+    properties of elementary particles with imperfect simulators
+domain_considered_and_rejected:
+  - term: physics/simulation-surrogates
+    reason: Entrants infer a parameter from simulated events; none stands in for the Pythia and
+      Delphes simulation that made them, and no score compares an emulator with that simulator.
+capability:
+  - calibration-uncertainty
+  - scientific-prediction
+capability_basis:
+  calibration-uncertainty:
+    reason: The scoring function consumes the interval each submission emits for every
+      pseudo-experiment, through its coverage of the true mu and its width.
+    source: src-arxiv-2410-02867-v5
+    quote: Participants were required to compute and report confidence intervals for a parameter of
+      interest regarding the Higgs boson
+  scientific-prediction:
+    reason: The challenge's claim is that systems measure the signal strength of each
+      pseudo-experiment, a property of the simulated physical system, and the score compares their
+      intervals with the true mu the pseudo-experiment was generated with.
+    source: src-fair-universe-higgs-challenge-site
+    quote: Participants should design an advanced analysis technique that can not only measure the
+      signal strength but also provide a confidence interval
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The paper calls the task transduction with distribution shift, since the test
+      pseudo-experiments carry nuisance values unlike the nominal training set. But entrants are
+      given the biasing script that produces data for any nuisance values, so the shift stays inside
+      a family they can train over ("known unknowns"), and no score is reported on shifted inputs as
+      a condition of its own.
+    source: src-arxiv-2410-02867-v5
+    quote: the task resembles a transduction problem with distribution shift
+
+evaluation_method:
+  - uncertainty-calibration-score
+evaluation_method_basis:
+  reason: The Quantile Score, -ln((w + epsilon) f(c)), combines the average width w of the emitted
+    68.27% intervals with a penalty f on their coverage c, steeper for under-coverage than over.
+  source: src-fair-universe-higgs-docs-evaluation
+  quote: So the best model will maximise their score by minimising the average width of the
+    interval, while maintaining an expected 68.27% coverage
+evaluation_method_considered_and_rejected:
+  - term: statistical-fit
+    reason: Codabench's leaderboard shows an RMSE column for the point estimate, but the ranking is
+      by the Quantile Score on the intervals.
+    source: src-codabench-fair-universe-higgs-2977
+    quote: '"title":"RMSE","key":"rmse"'
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: Entrants are inference pipelines built for this high-energy-physics measurement and
+    trained from scratch on its data. The joint winners used simulation-based inference with a
+    calibrated multiclassifier and parametric regressors (HEPHY) and contrastive normalising flows
+    (IBRAHIME); the baseline is an XGBoost classifier with a binned likelihood fit.
+  source: src-arxiv-2410-02867-v5
+  quote: We use simulation-based inference (SBI)
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: A submission measures a parameter from events; it does not emulate the event simulation
+      or the detector.
+  - term: task-specific-supervised-model
+    reason: The task, a signal-strength measurement with nuisance parameters, is defined by particle
+      physics, which the term's exclusion sends to domain-specialist-model.
+as_used:
+  - protocol: Results on the public Zenodo dataset outside the challenge, with the user's own
+      pseudo-experiment draws, classifiers and profile-likelihood constructions, scored on the
+      coverage of 68.27% intervals for mu rather than on the official Quantile Score.
+    split: four 300k-event draws from the public dataset
+    source: src-arxiv-2609-02781-v1
+    quote: We instantiate the framework on the FAIR Universe HiggsML Uncertainty benchmark with a
+      quantum-kernel classifier and matched classical controls
+    note: arXiv 2609.02781 (September 2026) audits a quantum-kernel classifier and classical
+      controls. It cites He et al. for a graph learner evaluated on the same benchmark.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the released dataset, its nuisance parameterisation and
+    its mu-interval protocol; a September 2026 paper reports on it. The competition itself ended in
+    March 2025 (activity), and the project's site now leads with its weak-lensing challenges.
+  source: src-arxiv-2609-02781-v1
+  quote: We instantiate the framework on the FAIR Universe HiggsML Uncertainty benchmark with a
+    quantum-kernel classifier and matched classical controls
+activity: closed
+activity_note: Codabench's public competition list, searched for "higgs" on 2026-10-14, shows the
+  pilot (2164), this competition (2977) and a single-systematic variant (4346), all with their
+  phases ended; no permanent benchmark phase is open. The README still says the challenge "will soon
+  be relased as a long term benchmark".
+activity_basis:
+  reason: Codabench was the only route for entering a system, and its one phase ended on 2025-03-14;
+    the record's title now carries "(Ended)". The winners were announced on 2025-05-08 and no new
+    round of this task is announced.
+  source: src-codabench-fair-universe-higgs-2977
+  quote: '"title":"(Ended) FAIR UNIVERSE - Higgs Uncertainty Challenge"'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: HEPHY (simulation-based inference with a calibrated multiclassifier; joint first)
+    source: src-fair-universe-higgs-challenge-site
+    observed_on: 2026-10-14
+    quote: 1 (Tie) HEPHY 0.6683 0.4599 -0.5823
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each pseudo-experiment's true mu, the value it was generated with from the
+  simulated events, with the six nuisance parameters drawn alongside.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The official final scores were computed on a 120M-event set the organisers keep private,
+    and the submission server has closed. Pseudo-experiments drawn from the public set can be scored
+    by anyone with the released scoring code, but not on the official items.
+  source: src-arxiv-2410-02867-v5
+  quote: A separate 120M i.i.d dataset has been used for the final results in section 5 and is kept
+    private for future over-training checks
+
+task:
+  exists: true
+  input:
+    - one pseudo-experiment, an unlabelled set of simulated collision events with 28 features, drawn
+      with a randomised mu (0.1 to 3) and six nuisance parameters
+    - at fit time, the labelled training set and the biasing script that applies the systematic
+      effects
+  output: For each pseudo-experiment, mu_hat, its uncertainty, and the bounds p16 and p84 of a
+    68.27% confidence interval for mu.
+  scoring: The Quantile Score over the pseudo-experiments, from the average interval width and the
+    coverage of the true mu. The public leaderboard used 10 trials of 100 pseudo-experiments, drawn
+    separately for each submission; the final ranking used 1000 trials of 100 from the private set,
+    the same for every submission.
+  tests_hidden_from_system: true
+  source: src-fair-universe-higgs-docs-evaluation
+  quote: The Model class must accept two arguments, get_train_set and systematics
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_basis:
+    reason: The final ranking, the headline result, was computed by running each entrant's code on
+      pseudo-experiments from a 120M-event set that never left the organisers.
+    source: src-arxiv-2410-02867-v5
+    quote: A separate 120M i.i.d dataset has been used for the final results in section 5 and is
+      kept private for future over-training checks
+  access_by_phase:
+    during_edition: Training data downloadable without registration; submitted code ran on
+      organiser-held pseudo-experiments, drawn separately per submission for the public leaderboard
+      and from the private 120M-event set for the final ranking.
+    after_edition: The public dataset is on Zenodo under CC BY 4.0, with the biasing script and
+      scoring code on GitHub, so pseudo-experiments can be drawn and scored locally. The private set
+      stays with the organisers, and no submission route is open.
+    after_edition_source: src-zenodo-fair-universe-higgsml
+    after_edition_quote: Creative Commons Attribution 4.0 International
+  refresh: static
+  refresh_basis:
+    reason: Pseudo-experiments are drawn afresh for each evaluation, but from fixed event pools (the
+      public set and the private 120M set), which static's inclusion test leaves static.
+    source: src-arxiv-2410-02867-v5
+    quote: All submissions were run on the same pseudo-experiments, instead of separate
+      pseudo-experiments for the public leaderboard
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Proton-proton collisions at 13 TeV generated with Pythia 8.2 and passed
+    through Delphes 3.5.0 with an ATLAS-like detector description; the systematic effects are
+    applied by the organisers' biasing script.
+  data_provenance_source: src-arxiv-2410-02867-v5
+  data_provenance_quote: was created with two widely-used simulation tools, Pythia 8.2
+  contamination_risk: low
+  contamination_risk_note: Training on the public simulated events is the protocol. The items behind
+    the final ranking came from a private set and entrants' code never saw them. Results now
+    reported on draws from the public set (as_used) have no such protection.
+  contamination_risk_source: src-arxiv-2410-02867-v5
+  contamination_risk_quote: A separate 120M i.i.d dataset has been used for the final results in
+    section 5 and is kept private for future over-training checks
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: The Quantile Score is bounded above by -ln(0.01), about 4.61, at zero
+    interval width with coverage inside the no-penalty band, a point no valid interval reaches. No
+    measured ceiling is published; the joint winners scored -0.58 on the final evaluation, and the
+    paper says the optimum has not been reached. Stage 3 logged the boundary
+    (2026-09-28-fair-universe-higgsml-uncertainty-challenge-004).
+  ceiling_anchor_type_source: src-arxiv-2410-02867-v5
+  ceiling_anchor_type_quote: is a regularisation term to guard against submissions that report
+    unrealistically narrow CIs
+  dataset_licence: CC-BY-4.0
+  dataset_licence_source: src-zenodo-fair-universe-higgsml
+  dataset_licence_quote: Creative Commons Attribution 4.0 International
+  size:
+    - count: 220099101
+      unit: simulated collision events in the public dataset (52,040,227 Higgs signal, 160,383,358
+        Z, 605,118 diboson, 7,070,398 ttbar)
+      subset: public dataset (Zenodo v1)
+      note: The sum of the record's per-process counts; arXiv 2609.02781 counted the same number at
+        ingestion. The paper gives 280M (next row).
+      source: src-zenodo-fair-universe-higgsml
+      quote: Label Higgs 52 040 227 1015 signal Z Boson 160 383 358 1 002 395 background Di-Boson
+        605 118 3 783 background ttbar 7 070 398 44 192 background
+    - count: 280000000
+      unit: simulated collision events, as the paper states the public dataset
+      subset: public dataset (paper)
+      source: src-arxiv-2410-02867-v5
+      quote: The dataset comprises 280M simulated proton-proton collision events
+    - count: 120000000
+      unit: simulated collision events, held privately
+      subset: final-evaluation set
+      source: src-arxiv-2410-02867-v5
+      quote: A separate 120M i.i.d dataset has been used for the final results in section 5
+    - count: 100000
+      unit: pseudo-experiments per submission (1000 trials of 100)
+      subset: final evaluation
+      source: src-arxiv-2410-02867-v5
+      quote: evaluated over 100 pseudo-experiments, times 1000 trials
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: participant, in the public phase (100 in all)
+    source: src-codabench-fair-universe-higgs-2977
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The FAIR Universe collaboration, led by Lawrence Berkeley National Laboratory with
+    Université Paris-Saclay, the University of Washington and ChaLearn
+  maintainer_basis:
+    reason: The project's principal investigator is at LBNL, the site is on lbl.gov, and LBNL
+      researchers lead the dataset's Zenodo record and the GitHub organisation.
+    source: src-fair-universe-site
+    quote: Wahid Bhimji, FAIR Universe Project Principal Investigator
+  maintainer_type: government-agency
+  maintainer_type_note: The holder rule names the lead laboratory, Lawrence Berkeley National
+    Laboratory; the university partners and ChaLearn, which supplied the contest rules, do not hold
+    the dataset or repository. academic-lab and nonprofit were considered (Stage 3 failure 002,
+    resolved this way).
+  submission_process:
+    - sandboxed-rerun
+  submission_process_note: Entrants uploaded a zip holding a model.py (and optionally pre-trained
+    weights), which Codabench ran inside the organisers' Docker image on a Perlmutter node at NERSC
+    or an LBNL workstation, with a two-hour limit. For the final ranking every submission was run
+    again on new pseudo-experiments from the private set. So the private-test-server access goes
+    with a code rerun rather than a server-side term, because the code is not a container of the
+    entrant's own, which sandboxed-rerun's exclusion reserves for
+    containerized-algorithm-submission.
+  submission_process_source: src-fair-universe-higgs-docs-evaluation
+  submission_process_quote: submissions must consist of a zip file containing a model.py file
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2410-02867-v5
+      quote: A separate 120M i.i.d dataset has been used for the final results in section 5 and is
+        kept private for future over-training checks
+  independence_flags_note: The organisers held the final-evaluation set and ran every submission on
+    it. Prizes of $2,000, $2,000 and $500 were awarded (results page), while the Codabench Terms say
+    no prizes are granted; no source read names who paid them, so prize-sponsored-by-industry is
+    neither set nor excluded, and no-known-conflict is not claimed (Stage 3 failure 003). The
+    winning teams joined the paper as co-authors after the competition; no organiser team is among
+    the ranked entrants in the sources read.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2410-02867-v5
+    quote: We are grateful to the US Department of Energy, Office of High Energy Physics, and the
+      subprogram on Computational High Energy Physics, for sponsoring this research
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_basis:
+    reason: The official scores came from running each submission on organiser hardware, one
+      Perlmutter node with four A100 GPUs for the final evaluation. Training compute was the
+      entrant's own.
+    source: src-fair-universe-higgs-docs-evaluation
+    quote: When running on Perlmutter, submissions will have one node assigned, which consists of 1
+      AMD EPYC 7763 CPU, 256GB of RAM, and 4 NVIDIA A100 GPUs with 40GB of memory each
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The final ranking needs the private 120M-event set, which only the organisers hold, and
+      the server that ran submissions has closed. Scores on draws from the public set can be
+      reproduced by anyone.
+    source: src-arxiv-2410-02867-v5
+    quote: A separate 120M i.i.d dataset has been used for the final results in section 5 and is
+      kept private for future over-training checks
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: FAIR-Universe/HEP-Challenge (the Codabench ingestion and scoring programs, the
+    starting-kit notebook and the baseline models)
+  harness_source: src-arxiv-2410-02867-v5
+  harness_quote: This includes a Jupyter notebook starting kit, simple baseline models, a small
+    sample of the dataset, and code to compute the score
+  code_licence: null
+  code_licence_note: GitHub's licence metadata for FAIR-Universe/HEP-Challenge reports no licence,
+    read 2026-10-14, and the README states none.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which items (the public leaderboard's per-submission draws, the private final
+  # set, or a user's own draws from the public Zenodo set), how many pseudo-experiments and trials (10 x 100
+  # publicly, 1000 x 100 in the final evaluation), and whether the official Quantile Score or another
+  # coverage measure is reported.
+  material_extra:
+    - subset_used
+    - n_samples
+
+homepage: https://fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html
+repository: https://github.com/FAIR-Universe/HEP-Challenge
+dataset_url: https://doi.org/10.5281/zenodo.15131565
+leaderboard_url: https://www.codabench.org/competitions/2977/
+
+versions:
+  - version: pilot-2024
+    label: HiggsML Uncertainty Pilot Competition
+    version_kind: edition
+    released: 2024-03-12
+    changes: A pilot run of the challenge on Codabench in spring 2024, presented at ACAT 2024. The
+      sources read do not describe how its data or scoring differed.
+    breaking: true
+    superseded_by: '2024'
+    frozen: true
+    sources:
+      - src-fair-universe-site
+  - version: '2024'
+    label: NeurIPS 2024 HiggsML Uncertainty Challenge
+    version_kind: edition
+    released: 2024-10-01
+    changes: The competition proper. Public phase on Codabench to 2025-03-14, then every submission
+      re-run on the private 120M-event set for the final ranking; winners announced 2025-05-08, and
+      the public dataset released on Zenodo in May 2025.
+    breaking: true
+    supersedes_version: pilot-2024
+    frozen: true
+    sources:
+      - src-fair-universe-site
+      - src-codabench-fair-universe-higgs-2977
+      - src-arxiv-2410-02867-v5
+      - src-arxiv-2410-02867
+      - src-github-hep-challenge-readme
+
+history:
+  - date: 2025-03-14
+    event: channel-closed
+    field: execution.submission_channel
+    from: Codabench competition 2977, public phase
+    source: src-codabench-fair-universe-higgs-2977
+    quote: '"end":"2025-03-14T00:00:00Z","name":"Public Phase"'
+    note: The phase opened on 2024-08-31 by the record; no later phase or benchmark was opened.
+
+tags:
+  - particle-physics
+  - higgs
+  - systematic-uncertainties
+  - uncertainty-quantification
+  - simulation-based-inference
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2410-02867-v5
+    - src-arxiv-2410-02867
+    - src-fair-universe-site
+    - src-fair-universe-higgs-challenge-site
+    - src-fair-universe-higgs-docs-evaluation
+    - src-codabench-fair-universe-higgs-2977
+    - src-github-hep-challenge-readme
+    - src-zenodo-fair-universe-higgsml
+    - src-arxiv-2609-02781-v1
+  sources_note: >
+    The paper's v5 PDF (a DOI, not archived) read as text, and its abstract page; the project's home
+    page and the challenge's results page, and the documentation's Evaluation page, with scripts and
+    styles stripped; Codabench's JSON record of competition 2977, withheld from archiving because it
+    holds an organiser's personal e-mail address; the README at master; Zenodo's record of the public
+    dataset (a DOI); and the v1 PDF of arXiv 2609.02781 (a DOI) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: The assignment fixes the id fair-universe-higgsml, but the taxonomy's examples name
+        this benchmark fair-universe-higgsml-uncertainty (domains, capabilities, evaluation methods)
+        and fair-universe-higgsml-uncertainty-challenge (governance, execution, the stress corpus).
+        The refs and the id should be brought into line.
+    - check: The paper states 280M public events, but the Zenodo record's per-process counts sum to
+        220,099,101, the number arXiv 2609.02781 verified at ingestion. Which is right, or whether
+        280M counts events before a selection, is not settled by the sources read.
+      field: data.size
+      specialist: true
+      source: src-arxiv-2609-02781-v1
+      quote: 220,099,101 events verified at ingestion
+    - check: lifecycle active rests on one September 2026 paper that uses the public set with its
+        own protocol, not the Quantile Score. With the competition closed and the project moved on
+        to weak lensing, mature (an ended competition whose instrument stays in use) is the
+        alternative.
+      field: lifecycle
+    - check: scientific-prediction is assigned beside calibration-uncertainty because the claim is a
+        measurement of mu scored against the simulated truth. The ranking scores only the interval;
+        the point estimate appears in Codabench's RMSE column.
+      field: capability
+    - check: sandboxed-rerun rather than containerized-algorithm-submission. Entrants upload code
+        that the organisers' Docker image runs, not a container of their own; the brain-score
+        precedent was followed.
+      field: governance.submission_process
+      source: src-codabench-fair-universe-higgs-2977
+      quote: '"docker_image":"docker.io/nersc/fair_universe:1298f0a8"'
+    - check: Who paid the $4,500 in prizes is unstated, and the Codabench Terms contradict the
+        Prizes page. prize-sponsored-by-industry could apply if a commercial sponsor paid.
+      field: governance.independence_flags
+      source: src-fair-universe-higgs-challenge-site
+      quote: will win $2000
+    - check: arXiv 2609.02781 reports an official normalisation defect in the dataset tooling, found
+        and reported upstream. Whether it touched the official scores, and whether it belongs in a
+        version's errata, is not known.
+      field: versions
+      specialist: true
+      source: src-arxiv-2609-02781-v1
+      quote: the official normalization no-op defect found, worked around, and reported upstream
+    - check: The pilot is recorded as an edition from the site's news alone. A single-systematic
+        (TES) variant ran on Codabench (4346) to 2025-05-31 and is not recorded; the 2025 and 2026
+        weak-lensing challenges are treated as other benchmarks.
+      field: versions
+      source: src-fair-universe-site
+      quote: We have launched the pilot version of HiggsML Uncertainty Competition today
+    - check: theoretical-maximum follows the letter of the ceiling tests; the bound is the
+        regulariser's artefact and unreachable (Stage 3 failure 004, still open).
+      field: data.ceiling_anchor_type

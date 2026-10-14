@@ -1,0 +1,475 @@
+# data/benchmarks/physics/qcircuitbench.yaml
+#
+# P1-S6-T05, physics entry 7 of 9. Filled from QCircuitBench's paper, arXiv 2410.07961 read as its v3 PDF
+# (2025-12-16, NeurIPS 2025 Datasets and Benchmarks), its abstract page, and the abstract page of its v1
+# (2024-10-10, then titled QCircuitNet); the repository README at main; and the v2 PDF of Messier (arXiv
+# 2607.25891, August 2026), a paper that contributes new runs on the benchmark. GitHub's API supplied the
+# licence, the last push and the commit log; Hugging Face's API lists no QCircuitBench dataset. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# ADR-0017 put the quantum-hardware scoreboards (Metriq, QED-C) out of scope because they score devices. This
+# is the cross-over case the ADR keeps in scope: a quantum benchmark whose entrants are language models.
+
+id: qcircuitbench
+name: QCircuitBench
+aliases:
+  - QCircuitNet
+aliases_note: The first arXiv version (2024-10-10) carried the title QCircuitNet; the same arXiv
+  record was renamed QCircuitBench in its later versions.
+aliases_source: src-arxiv-2410-07961-v1-abs
+aliases_quote: 'QCircuitNet: A Large-Scale Hierarchical Dataset for Quantum Algorithm Design'
+tagline: 'Quantum algorithm design as code generation: LLMs write OpenQASM circuits for 25 algorithms,
+  verified by simulation.'
+description: >
+  A benchmark and dataset for language models that design and implement quantum algorithms as code. A
+  problem description in natural language and LaTeX names an oracle to construct, a problem to solve
+  with an oracle supplied as a black-box OpenQASM gate, or a quantum state to reproduce. The model
+  answers with an OpenQASM 3.0 circuit and, for algorithm design, a Python post-processing function
+  that runs the circuit on Qiskit's Aer simulator and returns the answer. Three task suites cover 25
+  algorithms in 120,290 data points: oracle construction (35,872), quantum algorithm design (6,534, from
+  Bernstein-Vazirani and Grover to Shor, the generalized Simon problem and variational algorithms such
+  as VQE and QAOA) and random circuit synthesis over Clifford and universal gate sets (77,884).
+  Verification functions check the QASM and Python syntax and score the semantics by simulation, as the
+  success rate over test oracles and shots or as the fidelity to the target state; BLEU, byte
+  perplexity and gate, shot and time ratios to the reference implementation are reported beside them.
+  A Cirq version mirrors the Qiskit one.
+self_description:
+  source: src-arxiv-2410-07961-v3
+  quote: QCircuitBench is a comprehensive benchmark for LLM-driven quantum algorithm design
+external_ids:
+  arxiv: '2410.07961'
+paper:
+  title: 'QCircuitBench: A Large-Scale Dataset for Benchmarking Quantum Algorithm Design'
+  arxiv: '2410.07961'
+  version_read: v3
+  source: src-arxiv-2410-07961-v3
+released: 2024-10-10
+released_note: The paper's first arXiv version, then titled QCircuitNet. The version read here is v3
+  (2025-12-16), the NeurIPS 2025 paper with three task suites and 25 algorithms.
+released_source: src-arxiv-2410-07961
+released_quote: Submitted on 10 Oct 2024
+release_venue: NeurIPS 2025, Datasets and Benchmarks Track
+release_venue_source: src-github-qcircuitbench-readme
+release_venue_quote: Neural Information Processing Systems (NeurIPS 2025), Datasets and Benchmarks
+  Track
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/quantum-systems
+  secondary:
+    - code/function-synthesis
+domain_basis:
+  reason: >
+    The subject is quantum circuits, which the leaf names, and every semantic score is a property of a
+    simulated quantum process, the outcome statistics of a circuit run on Qiskit's simulator or the
+    fidelity of the state it prepares. ADR-0017's cross-over ruling puts a quantum (machine-learning)
+    algorithm benchmark with a model-shaped subject in physics/quantum-systems. The code family's
+    inclusion test also passes, since the model
+    writes a program that tests run, so function synthesis is secondary; physics is primary because the
+    code family excludes code that is the means to a result in another field (review_checks).
+  source: src-arxiv-2410-07961-v3
+  quote: we run the quantum circuit simulation for a number of shots
+domain_considered_and_rejected:
+  - term: physics/physics-reasoning
+    reason: The problems are posed in text, but the answer is a program scored by simulating it, not
+      a physics answer scored directly.
+capability:
+  - generation-fidelity
+capability_note: No capability term names writing a correct algorithm or program from a
+  specification, which is what the oracle-construction and algorithm-design suites score;
+  HumanEval's entry logs the same missing term.
+capability_basis:
+  generation-fidelity:
+    reason: The largest suite, random circuit synthesis (77,884 of the 120,290 data points), and the
+      state-preparation tasks score the generated circuit by the fidelity of the state it prepares
+      to the target state, a continuous closeness to a stated specification. The oracle and
+      algorithm tasks score discrete answers against a key, which the term excludes.
+    source: src-arxiv-2410-07961-v3
+    quote: the semantic score is defined as the fidelity between the generated and target quantum
+      states
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: Textbook quantum algorithms are background the model brings, but the score is whether
+      its circuit works, and in the paper's open-book probe web search mostly lowered the scores.
+  - term: deductive-reasoning
+    reason: A circuit's correctness follows from the stated oracle and goal, but much of the
+      difficulty is knowing the algorithm (the paper reports models leaning on memorised Qiskit
+      tutorials), which the term's exclusion of recall sends elsewhere.
+  - term: context-integration
+    reason: The secret string or oracle interface is supplied, and models misplace gates on it (the
+      paper's counting errors), but what is scored is whether the program is right, as with any
+      specification.
+  - term: sample-efficiency
+    reason: Results are reported at 1 and 5 shots, but the shot count is a harness setting, not a
+      budget the benchmark scores.
+
+evaluation_method:
+  - execution-tests
+  - domain-metric
+  - reference-metric
+evaluation_method_basis:
+  reason: >
+    The generated circuit and post-processing code are run on Qiskit's Aer simulator against test
+    oracles, and the semantic score is the success rate over test cases and shots (execution-tests).
+    For state preparation and random circuits the score is quantum state fidelity, a measure with no
+    meaning outside quantum information (domain-metric). BLEU against the reference code and byte
+    perplexity are reported for every suite, with gate, shot and time counts as ratios to the
+    reference implementation (reference-metric).
+  source: src-arxiv-2410-07961-v3
+  quote: we use a suite of end-to-end test cases to validate the functional correctness of the
+    generated circuits
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: A simulator produces every verdict, but it executes the produced program once per test
+      case; no policy acts in a simulated environment over an episode.
+  - term: constraint-check
+    reason: QASM and Python syntax are checked first, but the semantic verdict needs the circuit to
+      be run, which the term's exclusion gives to execution-tests.
+designed_for_subjects:
+  - instruction-tuned-model
+  - base-model
+designed_for_subjects_basis:
+  reason: >
+    The paper prompts language models with a problem description after 1 or 5 in-context examples,
+    single-turn and without tools. GPT-4o (gpt-4o-2024-05-13) answers as an assistant. Meta-Llama-3-8B
+    and Qwen2.5-7B are named by their base checkpoints, and byte perplexity, reported for the open
+    models, scores raw continuation; the README runs the tasks through lm_eval with a few-shot setting.
+  source: src-arxiv-2410-07961-v3
+  quote: gpt-4o-2024-05-13 (1-shot) gpt-4o-2024-05-13 (few-shot) Meta-Llama-3-8B (1-shot)
+    Meta-Llama-3-8B (few-shot) Qwen2.5-7B (1-shot) Qwen2.5-7B (few-shot) DeepSeek-R1 (1-shot)
+    DeepSeek-R1 (few-shot)
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: DeepSeek-R1 is evaluated, but no reasoning budget is set or reported as a condition; the
+      paper reports its long reasoning running past the context window as a failure, not a setting.
+    source: src-arxiv-2410-07961-v3
+    quote: DeepSeek-R1 often underperforms due to its long-chain reasoning style, which often
+      exceeds the context window before producing a complete and verifiable solution.
+  - term: tool-augmented-model
+    reason: An appendix probes GPT-4o with web search (Table 8), but the protocol's results are
+      produced without tools.
+    source: src-arxiv-2410-07961-v3
+    quote: we further evaluate model performance in an open-book setting by enabling web search
+  - term: model-in-benchmark-harness
+    reason: The verification functions return error messages meant to drive interactive reasoning,
+      but no reported run feeds them back to the model.
+    source: src-arxiv-2410-07961-v3
+    quote: a detailed error message is provided as the feedback for LLMs to improve through
+      interactive reasoning
+  - term: agent-scaffold
+    reason: Messier (2026) runs agents in the OpenHands scaffold on the benchmark (as_used), but the
+      design is single-turn prompting.
+as_used:
+  - protocol: Five agents, GPT-5, GPT-5-nano, GPT-4o, Claude Haiku 4.5 and Claude Sonnet 4.5 each in
+      the OpenHands scaffold, run once per task through the Harbor harness against hosted APIs, in
+      place of few-shot prompting.
+    source: src-arxiv-2607-25891-v2
+    quote: We evaluate the same five models on each benchmark using the OpenHands (Wang et al.,
+      2025) scaffold through Harbor.
+    note: Messier (July 2026, v2 August 2026), a corpus of agent results across 30 benchmarks. It
+      does not say which QCircuitBench tasks it ran; the README ships a one-instance-per-algorithm
+      subset for Harbor's Terminal-Bench adapter.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. Messier (2026) contributes new runs of five agents on
+    QCircuitBench, and the repository was last pushed on 2026-05-06 (GitHub API), after the NeurIPS
+    2025 version.
+  source: src-arxiv-2607-25891-v2
+  quote: 'we contribute new evaluations on six benchmarks: HarveyAI-Lab (Grupen et al., 2026), MedAgentBench
+    (Jiang et al., 2025), DABStep (Egg et al., 2025), QCircuitBench (Yang et al., 2026)'
+activity: no-submission-channel
+activity_basis:
+  reason: The paper and README describe a download-and-run dataset with verification scripts, and no
+    leaderboard, server or submission route; results appear in users' own papers.
+  source: src-github-qcircuitbench-readme
+  quote: For the complete dataset, please download it from
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4o (gpt-4o-2024-05-13), 5-shot
+    source: src-arxiv-2410-07961-v3
+    observed_on: 2026-10-14
+    quote: the QASM syntax score of GPT-4o improves from 0.0000 to 1.0000
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each algorithm's verification function with its test oracles and their
+  secret strings, and the reference circuits, all released in the repository; for state-preparation
+  and random-circuit tasks, the target state.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data, the verification functions and the benchmarking scripts are released.
+  source: src-arxiv-2410-07961-v3
+  quote: We release the dataset in a fully reproducible format, accompanied by detailed
+    documentation, executable code and transparent benchmarking protocols.
+
+task:
+  exists: true
+  input:
+    - a problem description in natural language and LaTeX, from a per-algorithm template with the
+      qubit number and other settings filled in, naming the oracle to build, the problem to solve or
+      the state to reproduce
+    - the oracle or custom gates as black-box OpenQASM gate definitions in .inc files
+    - 1 or 5 in-context examples drawn from other algorithms
+  output: An OpenQASM 3.0 circuit (or Qiskit code) and, for algorithm design, a Python function
+    run_and_analyze(circuit, aer_sim) that simulates the circuit and returns the answer.
+  scoring: A triplet per item, QASM syntax (0 or 1), Python syntax (0 or 1) and a semantic score
+    that is the success rate over test cases and shots or, for state preparation and random
+    circuits, the fidelity to the target state. Scores are reported per algorithm with standard
+    errors and averaged, beside BLEU, byte perplexity and the efficiency ratios.
+  reference_solution: true
+  source: src-arxiv-2410-07961-v3
+  quote: The final verification score is a triplet
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The repository holds a demo version; the README links the full dataset on Google
+    Drive, and the paper names a deposit on Harvard Dataverse. Neither download was fetched for this
+    entry.
+  access_basis:
+    reason: The dataset, the verification code and the benchmarking scripts are public on GitHub and
+      Harvard Dataverse, with no account or agreement stated.
+    source: src-arxiv-2410-07961-v3
+    quote: is available on GitHub (https://github.com/EstelYang/QCircuitBench) and Harvard Dataverse
+      (https://doi.org/10.7910/DVN/ZC4PNI)
+  refresh: null
+  refresh_note: >
+    Left null. The content has changed since release, so it is not static. arXiv v1 (2024, as
+    QCircuitNet) predates the three-suite, 25-algorithm set of v2 and v3, and GitHub's commit log (read
+    2026-10-14, not a quoted Source) shows problem descriptions, verification functions and random
+    seeds edited between December 2025 and May 2026. The repository has no releases or tags, so the
+    changes carry no version label (versioned-releases), and there is no leaderboard for them to reach
+    (rolling-live).
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: Data points are generated by per-algorithm Qiskit scripts over settings such
+    as secret strings and qubit numbers, and random circuits are sampled from Clifford and universal
+    gate sets; the problem-description templates are written by hand. expert-authored is not tagged
+    because the sources do not describe the authors' prior skill.
+  data_provenance_source: src-arxiv-2410-07961-v3
+  data_provenance_quote: one general Qiskit code to create quantum circuits for oracles or
+    algorithms of different settings
+  contamination_risk: medium
+  contamination_risk_note: >
+    The data have been public since the first release in October 2024 (the repository was created on
+    2024-10-10, GitHub API), and the algorithms are textbook ones with public Qiskit tutorials; the
+    paper attributes part of the gap between Qiskit and QASM outputs to memorised tutorials. The
+    few-shot examples hold out the algorithm under test. No study shows QCircuitBench's own items in
+    training data.
+  contamination_risk_source: src-arxiv-2410-07961-v3
+  contamination_risk_quote: Since Qiskit provides detailed tutorial with general codes for several
+    algorithms, LLMs may rely on memorization and retrieval rather than genuine algorithm design.
+  contamination_evidence: []
+  ceiling_anchor_type: null
+  ceiling_anchor_type_note: The paper reports a human baseline at the foot of each table (a semantic
+    average of 0.1374 on algorithm design, below GPT-4o's 0.2006 at 5 shots) but does not describe
+    the participants' expertise in its text, so crowd-average and expert-average cannot be told
+    apart. theoretical-maximum is excluded because a measured human score is published.
+  ceiling_anchor_type_source: src-arxiv-2410-07961-v3
+  ceiling_anchor_type_quote: we conduct a human study and report human baseline scores at the bottom
+    line of each table as reference
+  dataset_licence: MIT
+  dataset_licence_note: The README's licence line covers the repository, its demo data included; the
+    terms of the Google Drive and Harvard Dataverse copies were not read.
+  dataset_licence_source: src-github-qcircuitbench-readme
+  dataset_licence_quote: This project is licensed under the MIT License.
+  size:
+    - count: 120290
+      unit: data points over 25 algorithms in 3 task suites
+      source: src-arxiv-2410-07961-v3
+      quote: spanning 3 task suites, 25 algorithms, and 120,290 data points
+    - count: 77884
+      unit: data points
+      subset: random circuit synthesis
+      source: src-arxiv-2410-07961-v3
+      quote: The third task we consider is random circuit synthesis, containing 77,884 data points.
+    - count: 35872
+      unit: data points
+      subset: oracle construction
+      source: src-arxiv-2410-07961-v3
+      quote: This task suite contains 35,872 data points in total, focused on two types of oracle
+        constructions.
+    - count: 6534
+      unit: data points
+      subset: quantum algorithm design
+      source: src-arxiv-2410-07961-v3
+      quote: from fundamental primitives to advanced applications, covering 6,534 data points
+  languages:
+    - English
+    - OpenQASM 3.0
+    - Python
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The QCircuitBench authors (Peking University), from the EstelYang GitHub account
+  maintainer_basis:
+    reason: The paper's authors are at Peking University, one at UCLA. The code and data sit in the
+      personal GitHub account EstelYang, with a copy on Harvard Dataverse.
+    source: src-arxiv-2410-07961-v3
+    quote: is available on GitHub (https://github.com/EstelYang/QCircuitBench) and Harvard Dataverse
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered. The authors are a Peking University group, but
+    the repository is a user account's (GitHub API, owner type User) and no institution is stated as
+    holding the benchmark, the case the academic-lab exclusion sends to individual, as GPQA's
+    near-miss shows. Who holds the Harvard Dataverse deposit was not read.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route. The release paper's
+    tables are the maintainers' only results, and others report theirs in their own work, as Messier
+    does.
+  submission_process_source: src-arxiv-2607-25891-v2
+  submission_process_quote: We evaluate the same five models on each benchmark using the OpenHands
+    (Wang et al., 2025) scaffold through Harbor.
+  independence_flags: []
+  independence_flags_note: None recorded. The paper evaluates other parties' models (OpenAI's,
+    Meta's, Qwen and DeepSeek); its own Llama3-8B fine-tune is a demonstration of the dataset as
+    training data, not a ranked entry. The stated funder is the National Natural Science Foundation
+    of China, not an evaluated party. Left empty rather than no-known-conflict because the sources
+    do not say who paid for API access or compute.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2410-07961-v3
+    quote: This work was supported by the National Natural Science Foundation of China (Grant Number
+      92365117).
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Scoring a model costs its inference, through an API for GPT-4o, plus simulation on CPU;
+      the paper puts it at about 48 A100-GPU hours of inference per open model and 24 single-core
+      CPU hours of verification. simulator-required was considered (reproducibility_tier_basis).
+    source: src-arxiv-2410-07961-v3
+    quote: 48 A100-GPU hours for inference and an additional 24 single-core CPU hours for
+      verification and simulation
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: >
+      The data, verification functions and scripts are public, and every verdict is computed by code.
+      The circuits run on Qiskit's Aer simulator, a CPU library installed with the harness that computes
+      ideal quantum mechanics, so the score is not defined by one simulator build as
+      automatable-with-simulator means; the paper's verification APIs are written to run on IBM hardware
+      as well (review_checks).
+    source: src-arxiv-2410-07961-v3
+    quote: All the verification functions were executed by classical simulations in our experiments
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The repository's per-algorithm verification functions (check_model in each
+    *_verification.py), run through lm_eval
+  harness_source: src-github-qcircuitbench-readme
+  harness_quote: model outputs are evaluated by executing the
+  harness_gotcha:
+    source: src-arxiv-2410-07961-v3
+    quote: GPT-4o tends to use advanced OpenQASM 3.0 features unsupported by Qiskit yet
+  harness_gotcha_note: The QASM syntax score is whatever the installed Qiskit's OpenQASM 3.0
+    importer accepts, which the paper calls experimental, so the Qiskit version belongs with a
+    result.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for EstelYang/QCircuitBench also reports MIT (read
+    2026-10-14).
+  code_licence_source: src-github-qcircuitbench-readme
+  code_licence_quote: This project is licensed under the MIT License.
+  runnable_via:
+    - lm_eval
+  runnable_via_note: The README gives an lm_eval command template for the QCircuitBench tasks;
+    whether the tasks ship in upstream lm_eval was not checked. Harbor's Terminal-Bench adapter is a
+    second route (README).
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The llm-static-text profile (resolved from reference-metric with these subjects) already holds the shot
+  # count, which moves the number most (GPT-4o's Bernstein-Vazirani QASM syntax goes from 0 to 1 between 1 and 5
+  # shots), the tools and the subset (which suite and algorithms). Beyond it: the harness, meaning the paper's
+  # pipeline, lm_eval or Harbor's adapter with its one-instance-per-algorithm subset, the Qiskit or Cirq version
+  # of the dataset, and the Qiskit release whose OpenQASM 3.0 importer decides QASM syntax.
+  material_extra:
+    - harness
+
+homepage: https://github.com/EstelYang/QCircuitBench
+repository: https://github.com/EstelYang/QCircuitBench
+dataset_url: https://doi.org/10.7910/DVN/ZC4PNI
+
+tags:
+  - quantum-computing
+  - quantum-circuits
+  - code-generation
+  - openqasm
+  - qiskit
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2410-07961-v3
+    - src-arxiv-2410-07961
+    - src-arxiv-2410-07961-v1-abs
+    - src-github-qcircuitbench-readme
+    - src-arxiv-2607-25891-v2
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, its windows kept clear of the authors'
+    e-mail addresses; its abstract page for the first version's date; the v1 abstract page for the
+    QCircuitNet title; the README at main; and Messier's v2 PDF (a DOI, not archived) as evidence of
+    current use. Hugging Face's API (searches for qcircuit and QCircuitBench) lists no dataset. Harvard
+    Dataverse was not fetched: its robots.txt could not be read (an empty 202 response).
+  confidence: medium
+  review_checks:
+    - check: Domain primary is physics/quantum-systems with code/function-synthesis secondary. The
+        code family's inclusion test passes too (the model writes a program that tests run), and
+        SciCode's entry puts the same shape, science problems solved as tested code, under code
+        primary. The call here rests on the quantum-systems leaf naming circuits, ADR-0017's
+        cross-over ruling and the code family's exclusion of code as the means to a result in
+        another field.
+      field: domain
+      source: src-arxiv-2410-07961-v3
+      quote: we make a change of perspective by formulating quantum algorithm design as quantum code
+        generation
+    - check: base-model rests on the open models being named by their base checkpoints
+        (Meta-Llama-3-8B, Qwen2.5-7B) and on byte perplexity scoring continuation; the paper does
+        not say whether instruct variants were run. reasoning-model and tool-augmented-model were
+        rejected (no reasoning budget; web search only in an appendix probe).
+      field: designed_for_subjects
+    - check: Messier (2026) ran five agents in the OpenHands scaffold through Harbor, recorded under
+        as_used. Whether observed_subjects should add agent-scaffold, on one paper's evidence.
+      field: observed_subjects
+      source: src-arxiv-2607-25891-v2
+      quote: Each (agent, task) pair was run once.
+    - check: generation-fidelity rests on the fidelity-scored suites (random circuits and state
+        preparation); the oracle and algorithm-design suites have no capability term, and leaving
+        the facet empty as HumanEval's entry does is the alternative.
+      field: capability
+    - check: reproducibility fully-automatable and compute api-credits-only treat Qiskit's Aer
+        simulator as part of the test runtime. If a quantum circuit simulator counts as a specific
+        simulation environment, both become automatable-with-simulator and simulator-required.
+      field: execution.reproducibility_tier
+    - check: maintainer_type individual because the repository sits in a personal GitHub account;
+        the authors are a Peking University group, and academic-lab applies if an institution is
+        held to be the holder (the Dataverse deposit's holder was not read).
+      field: governance.maintainer_type
+    - check: ceiling_anchor_type left null. The human study's participants and instructions are in
+        Figure 12, an image whose text the PDF does not carry; reading it would settle crowd-average
+        or expert-average.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2410-07961-v3
+      quote: we conduct a human study and report human baseline scores at the bottom line of each
+        table as reference
+    - check: No versions are recorded. arXiv v1 (QCircuitNet, 2024) predates the three-suite,
+        25-algorithm set and evaluated other models; its PDF was not read, so whether v1 is a
+        breaking edition, and what it held, is open. The entry treats QCircuitNet as the same
+        benchmark.
+      field: versions
+      source: src-arxiv-2410-07961-v1-abs
+      quote: we introduce QCircuitNet, the first benchmark and test dataset designed to evaluate AI
+    - check: access fully-open rests on the paper and README; the full dataset's Google Drive link
+        and the Harvard Dataverse deposit were not fetched.
+      field: data.access
