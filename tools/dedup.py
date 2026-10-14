@@ -171,7 +171,10 @@ CATALOGUE_HOSTS = ('arxiv.org', 'doi.org', 'openreview.net', 'aclanthology.org',
                    'benchmarklist.com', 'paperswithcode.com', 'zenodo.org', 'figshare.com',
                    # competition platforms: each competition is its own path, and one platform hosts thousands of
                    # unrelated ones (FAIR Universe HiggsML and the Fusion Equilibrium Challenge, P1-S6-T05)
-                   'codabench.org', 'codalab.lisn.upsaclay.fr', 'competitions.codalab.org', 'eval.ai')
+                   'codabench.org', 'codalab.lisn.upsaclay.fr', 'competitions.codalab.org', 'eval.ai',
+                   # shared documents: each spreadsheet is its own path, and boards kept as Google Sheets are
+                   # unrelated (WebArena, AndroidWorld and AgentBench FC, P1-S9-T01)
+                   'docs.google.com')
 
 
 # A section that holds many unrelated things: two pages under it are not one site's family.

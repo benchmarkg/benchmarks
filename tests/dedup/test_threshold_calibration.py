@@ -81,6 +81,8 @@ def test_arxiv_ids_are_paths_not_file_names():
     assert D.same_site('https://www.swebench.com/lite.html', 'https://www.swebench.com/verified.html')
     assert D.same_site('https://crfm.stanford.edu/helm/lite/latest/', 'https://crfm.stanford.edu/helm/safety/latest/')
     assert not D.same_site('https://epoch.ai/benchmarks/a', 'https://epoch.ai/benchmarks/b')   # a generic section
+    assert not D.same_site('https://docs.google.com/spreadsheets/d/1aB/edit',                 # two unrelated boards
+                           'https://docs.google.com/spreadsheets/d/9yZ/edit')
     assert not D.same_site('https://github.com/openai/mle-bench', 'https://github.com/openai/preparedness')
     assert D.same_site('https://github.com/SWE-bench/SWE-bench', 'https://github.com/SWE-bench/SWE-bench/tree/main')
 
