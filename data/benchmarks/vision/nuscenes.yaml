@@ -1,0 +1,662 @@
+# data/benchmarks/vision/nuscenes.yaml
+#
+# P1-S8-T05, vision entry 8 of 8. Filled from the nuScenes paper, arXiv 1903.11027 read as its v5 PDF (2020-05-05,
+# CVPR 2020), and its abstract page; nuscenes.org's overview and terms-of-use pages, each read from the script chunk
+# that renders it; the detection and tracking leaderboard data the task pages load; the devkit README and the
+# detection, tracking, prediction, lidar segmentation and panoptic task READMEs at master, which the task pages
+# render; the Hugging Face Space record of the detection server and the devkit pull request that moved the servers
+# there; and the v1 PDF of PQR3D (arXiv 2609.32163, September 2026), a paper reporting on the test server. Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The entry is nuScenes and its evaluation servers. Detection, tracking, prediction, lidar segmentation and Panoptic
+# nuScenes are subsets, the detection challenge's lidar, vision and open tracks are children of detection, and the
+# workshop challenges that ran on them (CVPR 2019 to NeurIPS 2021) are events. nuImages and nuPlan, Motional's other
+# datasets on the same site and devkit, are not included.
+
+id: nuscenes
+name: nuScenes
+aliases:
+  - nuTonomy scenes
+tagline: '1,000 Boston and Singapore drives with camera, lidar and radar: 3D detection by NDS and more,
+  on hidden test labels.'
+description: >
+  A driving dataset from Motional (formerly nuTonomy): 1,000 scenes of 20 seconds, recorded in Boston
+  and Singapore by cars carrying 6 cameras, 5 radars and 1 lidar, annotated at 2 Hz with 3D boxes for
+  23 classes and their attributes. The headline task is 3D object detection over 10 classes, ranked by
+  the nuScenes Detection Score (NDS), a weighted sum of mean average precision (matched by 2D center
+  distance rather than overlap) and five true-positive error scores for translation, scale,
+  orientation, velocity and attribute. Tracking (AMOTA), trajectory prediction (minADE and minFDE),
+  lidar segmentation (nuScenes-lidarseg, mIoU) and panoptic segmentation and tracking (Panoptic
+  nuScenes, PQ and PAT) were added in dated devkit releases from 2019 to 2021. Train and validation
+  annotations are released and test annotations are not; entrants upload test predictions to an
+  evaluation server, on EvalAI until August 2026 and on Hugging Face since, at most three a year. The
+  maintainers ran challenges at CVPR, ICRA and NeurIPS workshops from 2019 to 2021, and the leaderboards
+  still take entries. The data is free for non-commercial use under CC BY-NC-SA 4.0 and Motional's
+  terms, after registration.
+self_description:
+  source: src-arxiv-1903-11027
+  quote: 'In this work we present nuTonomy scenes (nuScenes), the first dataset to carry the full autonomous
+    vehicle sensor suite: 6 cameras, 5 radars and 1 lidar, all with full 360 degree field of view.'
+external_ids:
+  arxiv: '1903.11027'
+paper:
+  title: 'nuScenes: A multimodal dataset for autonomous driving'
+  arxiv: '1903.11027'
+  version_read: v5
+  source: src-arxiv-1903-11027-v5
+released: 2019-03-26
+released_note: The paper's first arXiv version, as its abstract page dates it; the full dataset and
+  devkit v1.0.0 were released the same day. A teaser dataset and its devkit came out on 2018-09-12.
+released_source: src-arxiv-1903-11027
+released_quote: Submitted on 26 Mar 2019
+release_venue: CVPR 2020
+release_venue_source: src-arxiv-1903-11027
+release_venue_quote: CVPR 2020 camera ready incl. supplementary material
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: vision/driving-perception-3d
+domain_basis:
+  reason: Every perception task is scored on the road scene around a car, recovered from the car's
+    own cameras, lidar and radar in 3D -- boxes in the global frame, tracks, labels per lidar point.
+    The leaf was created to keep nuScenes' NDS apart from driving scores such as CARLA's.
+  source: src-nuscenes-site
+  quote: nuScenes is the first large-scale dataset to provide data from the entire sensor suite of
+    an autonomous vehicle (6 cameras, 1 LIDAR, 5 RADAR, GPS, IMU).
+domain_considered_and_rejected:
+  - term: vision/detection
+    reason: The detection task localises and labels object instances, but as 3D boxes in the global
+      frame from any of the sensors, while the leaf is defined within an image;
+      driving-perception-3d is the leaf for this case.
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: Here we define the 3D object detection task on nuScenes.
+  - term: vision/segmentation
+    reason: The lidar segmentation and panoptic subsets label every lidar point, not image pixels;
+      they stay under driving-perception-3d with the rest.
+  - term: robotics-embodiment/autonomous-driving-planning
+    reason: No task scores a driving outcome. Prediction forecasts other agents' trajectories and
+      scores their displacement from the logged future; nothing drives the car.
+    source: src-github-nuscenes-devkit-prediction-readme
+    quote: The goal of the nuScenes prediction task is to predict the future trajectories of objects
+      in the nuScenes dataset.
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: Detection, tracking, lidar segmentation and the panoptic tasks score what was recovered
+      from raw camera, lidar and radar data -- 3D boxes with velocities and attributes, tracks,
+      per-point classes -- against held-out labels.
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: The goal of this task is to place a 3D bounding box around 10 different object
+      categories,
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: Boxes are placed in 3D and matched by center distance, but that is geometry recovered
+      from the signal; no item turns on an inferred spatial relation.
+  - term: temporal-reasoning
+    reason: Tracking keeps identities across frames and detection estimates velocity from past
+      sweeps, but the score is recovered motion and identity, not an inference about order or
+      duration.
+  - term: probabilistic-forecasting
+    reason: Prediction submissions give up to 25 trajectories with probabilities for an agent's next
+      6 seconds, but the futures are already logged and only withheld, which the term excludes.
+    source: src-github-nuscenes-devkit-prediction-readme
+    quote: The user can submit up to 25 proposed future trajectories
+  - term: distribution-shift-generalization
+    reason: Boston and Singapore, rain and night are in every split in the same proportions; no
+      shifted condition is scored as its own.
+    source: src-arxiv-1903-11027-v5
+    quote: The dataset splits (train, val, test) follow the same data distribution with respect to
+      these criteria.
+
+evaluation_method:
+  - domain-metric
+  - statistical-fit
+  - classification-metric
+  - composite
+evaluation_method_note: >
+  NDS, the headline, is composite: (5 mAP + the five TP scores) / 10, each TP score max(1 - error, 0).
+  Its constituents are tagged as the composite term asks. mAP over center-distance thresholds and the
+  scale error (1 - IoU) are domain-metric; the translation, orientation and velocity errors are mean
+  absolute errors on continuous values (statistical-fit); the attribute error is 1 - attribute accuracy,
+  averaged over classes (classification-metric). Per subset: tracking ranks by AMOTA, lidar segmentation
+  by mIoU, Panoptic nuScenes by PQ and PAT (all domain-metric); prediction reports minADE_k and minFDE_k,
+  L2 displacement errors (statistical-fit), with a miss rate beside them.
+evaluation_method_basis:
+  reason: The detection README defines NDS as a weighted sum of mAP and the five true-positive
+    scores, each computed by its own measure.
+  source: src-github-nuscenes-devkit-detection-readme
+  quote: We then assign a weight of *5* to mAP and *1* to each of the 5 TP scores and calculate the
+    normalized sum.
+evaluation_method_considered_and_rejected:
+  - term: entrant-relative-ranking
+    reason: NDS is computed for each submission against the fixed test labels; adding an entrant
+      moves no other entrant's score.
+designed_for_subjects:
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: The entrants are 3D detectors, trackers, segmentation networks and motion forecasters
+    trained on the released train split and scored as trained, from the paper's PointPillars and OFT
+    baselines to today's multi-view camera and lidar-camera fusion detectors.
+  source: src-arxiv-1903-11027-v5
+  quote: PointPillars, OFT and SSD+3D are baselines provided in this paper, other methods are the
+    top submissions to the nuScenes detection challenge leaderboard.
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: Some tracking entries, such as TrustTrack-UQ, run a deterministic tracker with no
+      learned components, but on top of learned detections, and the benchmark was built for learned
+      perception.
+    source: src-nuscenes-leaderboard-tracking
+    quote: The tracker is fully deterministic, with no learned components in the tracking stage.
+as_used:
+  - protocol: A test-server result from a camera-only detector that uses future frames, listed on
+      the leaderboard beside entries that keep to the detection task's limit of about 0.5 s of past
+      sensor data at inference.
+    split: test
+    source: src-nuscenes-leaderboard-detection
+    quote: The submitted ViT-L configuration uses future frames and external pretraining.
+    note: PQR3D (arXiv 2609.32163), 0.716 NDS on the board, submitted 2026-09-24. Its paper marks
+      the configurations that use future frames ("indicates configurations that use future frames",
+      src-arxiv-2609-32163-v1); the rule is "The maximum time window of past sensor data and ego
+      poses that may be used at inference time is approximately 0.5s"
+      (src-github-nuscenes-devkit-detection-readme).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the test server. A September 2026 paper reports a new
+    test result, and the leaderboard data holds rows submitted in 2026, the newest on 2026-10-12.
+  source: src-arxiv-2609-32163-v1
+  quote: With a ViT-L backbone, PQR3D sets a new state of the art on the nuScenes test set,
+    achieving 71.6 NDS and 64.9 mAP.
+activity: leaderboard-live-no-round
+activity_note: The task READMEs list challenges up to the 6th AI Driving Olympics (ICRA 2021) and,
+  for Panoptic nuScenes, the 7th (NeurIPS 2021), and announce none since; each server "is open all
+  year round for submission" (src-github-nuscenes-devkit-detection-readme).
+activity_basis:
+  reason: The benchmark has run rounds, workshop challenges from CVPR 2019 to NeurIPS 2021, and none
+    is open. The standing leaderboards still take results from outside Motional; the newest row
+    read, on the tracking board, was submitted on 2026-10-12.
+  source: src-nuscenes-leaderboard-tracking
+  quote: '"submitted_at":"2026-10-12T11:12:29"},"leaderboard":"tracking"'
+  newest_submission: 2026-10-12
+events:
+  - name: nuScenes detection challenge, Workshop on Autonomous Driving, CVPR 2019
+    kind: workshop-challenge-on-the-benchmark
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: The first nuScenes detection challenge was held at CVPR 2019.
+  - name: nuScenes tracking challenge, AI Driving Olympics, NeurIPS 2019
+    kind: workshop-challenge-on-the-benchmark
+    source: src-github-nuscenes-devkit-tracking-readme
+    quote: AI Driving Olympics (AIDO), NIPS 2019
+  - name: Detection and prediction challenges, Workshop on Benchmarking Progress in Autonomous
+      Driving, ICRA 2020
+    kind: workshop-challenge-on-the-benchmark
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: Workshop on Benchmarking Progress in Autonomous Driving, ICRA 2020
+  - name: Detection and lidar segmentation challenges, 5th AI Driving Olympics, NeurIPS 2020
+    kind: workshop-challenge-on-the-benchmark
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: 5th AI Driving Olympics, NeurIPS 2020
+  - name: Detection, tracking, prediction and lidar segmentation challenges, 6th AI Driving
+      Olympics, ICRA 2021
+    kind: workshop-challenge-on-the-benchmark
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: 6th AI Driving Olympics, ICRA 2021
+  - name: Panoptic nuScenes challenge, 7th AI Driving Olympics, NeurIPS 2021
+    kind: workshop-challenge-on-the-benchmark
+    source: src-github-nuscenes-devkit-panoptic-readme
+    quote: 7th AI Driving Olympics, NeurIPS 2021
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: MV2DFusion-e (Beihang University, TuSimple), first on the detection board at 0.788 NDS
+    source: src-nuscenes-leaderboard-detection
+    observed_on: 2026-10-14
+    quote: '"method_name":"MV2DFusion-e"'
+  - system: PQR3D
+    source: src-arxiv-2609-32163-v1
+    observed_on: 2026-10-14
+    quote: With a ViT-L backbone, PQR3D sets a new state of the art on the nuScenes test set,
+      achieving 71.6 NDS and 64.9 mAP.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: 3D boxes with classes and attributes for every 2 Hz keyframe of the test
+  scenes, annotated by Scale, and the per-point lidar labels of nuScenes-lidarseg and Panoptic
+  nuScenes, held by Motional.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The devkit's evaluation code is public, so the validation split can be scored locally, and
+    anyone who registers can download the test sensor data and submit to the servers.
+  source: src-github-nuscenes-devkit-detection-readme
+  quote: For the train and val sets the evaluation can be performed by the user on their local
+    machine.
+
+task:
+  exists: true
+  input:
+    - the sensor data of one 2 Hz keyframe from a car's 6 cameras, 5 radars and 1 lidar, with ego
+      poses and calibration, and up to about 0.5 s of past sweeps; the semantic map and external
+      data only in the open track
+  output: Up to 500 3D boxes per keyframe in the global frame, each with one of 10 classes, a
+    confidence, a velocity and an attribute.
+  scoring: NDS, (5 mAP + the five TP scores) / 10, on the test scenes through the server. mAP
+    matches predictions by 2D center distance at 0.5, 1, 2 and 4 m and averages over the 10 classes;
+    each TP score is max(1 - error, 0) for the translation, scale, orientation, velocity and
+    attribute errors, measured at a 2 m match.
+  metric_range:
+    - 0.0
+    - 1.0
+  source: src-github-nuscenes-devkit-detection-readme
+  quote: Our final score is a weighted sum of mean Average Precision (mAP) and several True Positive
+    (TP) metrics.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The released data sits behind a gate. A downloader creates an account on nuscenes.org
+    and agrees to the Terms of Use, which allow non-commercial use only. Under ADR-0020's access
+    precedence the withheld test labels decide, and gated-registration is the near miss. The site
+    also names the Registry of Open Data on AWS as a source of the dataset, which was not checked.
+  access_basis:
+    reason: Sensor data is released for the train, validation and test splits, with annotations for
+      train and validation only; test scores come only from the evaluation servers.
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: We release annotations for the train and val set, but not for the test set.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The scenes and splits have stood since v1.0 (2019-03-26). Tasks and scoring changed in
+      dated devkit releases -- tracking (November 2019), the AMOTA reweighting (December 2019),
+      prediction (March 2020), lidar segmentation (August 2020), Panoptic nuScenes (July 2021) and
+      its PAT metric (September 2021) -- so a claim can name the state it was measured on.
+    source: src-github-nuscenes-devkit-readme
+    quote: 'Dec. 11, 2019: Devkit v1.0.5: Remove weight factor from AMOTA tracking metrics.'
+  data_provenance:
+    - real-world-instrument
+  data_provenance_note: Two cars with the same cameras, lidar and radar recorded the driving; from
+    84 logs (15 hours) the maintainers chose 1,000 scenes by hand. Scale annotated them ("The
+    nuScenes dataset was annotated by Scale.ai", same Source), with "expert annotators and multiple
+    validation steps"; whether those annotators make the labels expert-authored or crowd-authored is
+    left open (see review_checks).
+  data_provenance_source: src-arxiv-1903-11027-v5
+  data_provenance_quote: We drive in Boston (Seaport and South Boston) and Singapore (One North,
+    Holland Village and Queenstown)
+  contamination_risk: medium
+  contamination_risk_note: The test labels are withheld, each team may submit three results a year,
+    and top entries are reviewed. But the test sensor data is released, the open track allows
+    external data and pretraining, and camera backbones are now pretrained on large external sets,
+    so routes to the test scenes without their labels are plausible. No source assesses
+    contamination.
+  contamination_risk_source: src-github-nuscenes-devkit-detection-readme
+  contamination_risk_quote: We release sensor data for train, val and test set.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: NDS is bounded at 1, since mAP is and each TP score is capped at 1; no
+    source reports a human or measured ceiling.
+  ceiling_anchor_type_source: src-arxiv-1903-11027-v5
+  ceiling_anchor_type_quote: Since mAVE, mAOE and mATE can be larger than 1, we bound each metric
+    between 0 and 1 in (3).
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: With Motional's additional Dataset Terms (last updated 2021-11-16), which
+    prevail where they conflict with the licence. The paper states the same licence ("The nuScenes
+    data is published under CC BY-NC-SA 4.0 license", src-arxiv-1903-11027-v5).
+  dataset_licence_source: src-nuscenes-terms-of-use
+  dataset_licence_quote: these Datasets are provided to You under a Creative Commons
+    Attribution-NonCommercial-ShareAlike 4.0 International Public License
+  size:
+    - count: 150
+      unit: test scenes with withheld annotations (850 for training and validation)
+      subset: the test split, shared by every task
+      note: The site states the split in its nuScenes-lidarseg paragraph; PQR3D gives it as 700, 150
+        and 150 scenes for training, validation and testing (src-arxiv-2609-32163-v1).
+      source: src-nuscenes-site
+      quote: 850 scenes for training and validation, and 150 scenes for testing
+    - count: 1000
+      unit: scenes of 20 seconds
+      subset: v1.0
+      source: src-arxiv-1903-11027
+      quote: nuScenes comprises 1000 scenes, each 20s long and fully annotated with 3D bounding
+        boxes for 23 classes and 8 attributes.
+    - count: 1400000
+      unit: 3D object bounding boxes (about 1.4 million) in 40,000 keyframes
+      subset: v1.0
+      source: src-nuscenes-site
+      quote: 1.4M object bounding boxes in 40k keyframes
+    - count: 10
+      unit: detection classes, merged from the 23 annotated classes
+      subset: detection
+      source: src-github-nuscenes-devkit-detection-readme
+      quote: This results in 10 classes for the detection challenge.
+  submission_limit:
+    max_submissions: 3
+    period_days: 365
+    per: user or team, on each task's server (three a month for prediction), from different models
+    source: src-github-nuscenes-devkit-detection-readme
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Motional (formerly nuTonomy)
+  maintainer_basis:
+    reason: Motional AD Inc. publishes the datasets under its own terms, runs nuscenes.org and the
+      Hugging Face servers under the nuscenes organisation, and holds the devkit repository in the
+      nutonomy organisation, whose licence file names Motional as copyright holder.
+    source: src-nuscenes-terms-of-use
+    quote: The Datasets are collections of data, managed by Motional and provided in a number of
+      machine-readable formats.
+  maintainer_type: industry-lab
+  maintainer_type_note: The tracking task was designed with Carnegie Mellon University and the
+    panoptic challenge with the University of Freiburg's Robot Learning Lab, but Motional holds the
+    data, the devkit and the servers.
+  submission_process:
+    - held-out-server
+  submission_process_note: Entrants sign in to Hugging Face and upload zipped results to the task's
+    Space, which scores them against the hidden test labels; they then send their method details to
+    the maintainers to be listed, and top entries and their papers are reviewed by hand. Prediction
+    differs (see its subset). Its board ranks validation-set results, the top five send code for the
+    maintainers to run on the test set, and its challenge requires a technical report.
+  submission_process_source: src-github-nuscenes-devkit-detection-readme
+  submission_process_quote: Users make predictions on the test set and submit the results to our
+    evaluation server, which returns the metrics listed below.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-nuscenes-leaderboard-detection
+      quote: '"method_name":"PointPillars","participant_team_name":"Motional"'
+    - flag: single-evaluator-private-test-set
+      source: src-github-nuscenes-devkit-detection-readme
+      quote: This is the only way to benchmark your method against the test dataset.
+  independence_flags_note: Motional's own rows are ranked on the detection board. PointPillars
+    (2019) is marked "a baseline that does not participate in the nuScenes detection challenge", and
+    PointPillars+ and Painted PointPillars+ are entered under team Motional. Motional rows also
+    appear in the lidar segmentation data (AMVNet, PolarNet, RVNet) and a Motional co-authored row
+    in the prediction data (PGP); those files were read but are not Sources. The panoptic
+    challenge's co-organiser, Freiburg's Robot Learning Lab, has rows on the panoptic board (also
+    read, not a Source). Motional holds the test labels and its servers score every entry. No
+    funding statement or prize sponsor appears in the sources read; Scale, which annotated the data,
+    is not an evaluated party.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are test-set results, which only Motional's servers can produce
+      because Motional holds the test labels. Validation scores can be computed by anyone with the
+      devkit.
+    source: src-github-nuscenes-devkit-detection-readme
+    quote: This is the only way to benchmark your method against the test dataset.
+  reproducibility_blockers:
+    - private-test-set
+  reproducibility_blockers_note: The data needs an account and agreement to non-commercial terms,
+    which slows reproduction for research without forbidding it, so licence-restriction is not
+    tagged.
+  harness_availability: official-harness
+  harness: nuscenes-devkit (pip install nuscenes-devkit; the detection, tracking, prediction,
+    lidarseg and panoptic evaluation code under python-sdk/nuscenes/eval)
+  harness_source: src-github-nuscenes-devkit-detection-readme
+  harness_quote: For the train and val sets the evaluation can be performed by the user on their
+    local machine.
+  submission_channel:
+    source: src-huggingface-space-nuscenes-detection-challenge
+    quote: '"id":"nuscenes/nuscenes-detection-challenge"'
+  submission_channel_note: Five Hugging Face Spaces under the nuscenes organisation, one per task,
+    linked from the task READMEs; the detection Space was created on 2026-07-16 and was running on
+    2026-10-14. The challenges were on EvalAI before (see history).
+  code_licence: Apache-2.0
+  code_licence_note: LICENSE.txt at master (Copyright 2021 Motional), read 2026-10-14; GitHub's
+    licence metadata for nutonomy/nuscenes-devkit reports Other (NOASSERTION). Not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which task and which detection track (lidar only, camera only, or open, with
+  # radar, the semantic map and external data), which split (the test server or the validation scenes run
+  # locally), and what the method used beyond the rules' defaults (external pretraining, future frames, test-time
+  # augmentation, ensembles), which the leaderboard records per row.
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://www.nuscenes.org/nuscenes
+repository: https://github.com/nutonomy/nuscenes-devkit
+leaderboard_url: https://www.nuscenes.org/object-detection
+
+versions:
+  - version: v1.0
+    label: nuScenes v1.0, the full release
+    version_kind: revision
+    released: 2019-03-26
+    items: 1000
+    changes: The full dataset of 1,000 scenes, with the paper, the detection task and devkit v1.0.0;
+      support for the 2018 teaser data was dropped.
+    breaking: true
+    frozen: true
+    sources:
+      - src-github-nuscenes-devkit-readme
+      - src-arxiv-1903-11027
+  - version: devkit-1.0.5
+    label: Devkit v1.0.5, AMOTA without the weight factor
+    version_kind: revision
+    released: 2019-12-11
+    changes: The weight factor was removed from the AMOTA tracking metrics, so tracking scores
+      before and after differ.
+    breaking: true
+    frozen: true
+    sources:
+      - src-github-nuscenes-devkit-readme
+  - version: devkit-1.1.8
+    label: Devkit v1.1.8, PAT for Panoptic nuScenes
+    version_kind: revision
+    released: 2021-09-17
+    changes: Added the PAT metric, the panoptic tracking task's primary ranking metric, after the
+      Panoptic nuScenes challenge had opened on 2021-09-01.
+    breaking: true
+    frozen: true
+    sources:
+      - src-github-nuscenes-devkit-readme
+      - src-github-nuscenes-devkit-panoptic-readme
+
+subsets:
+  - id: nuscenes#detection
+    label: Detection
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-detection-readme
+        quote: Here we define the 3D object detection task on nuScenes.
+      - source: src-github-nuscenes-devkit-detection-readme
+        quote: Methods will be compared within these tracks and the winners will be decided for each
+          track separately.
+    notes: The headline task, ranked by NDS over 10 classes, with at most about 0.5 s of past sensor
+      data at inference. One leaderboard, filtered into three tracks for the challenges.
+  - id: nuscenes#detection-lidar
+    label: Detection, lidar track
+    parent: nuscenes#detection
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-detection-readme
+        quote: Only lidar input allowed.
+    notes: Lidar input only at test time, no external or map data; image-classification pretraining
+      allowed.
+  - id: nuscenes#detection-vision
+    label: Detection, vision track
+    parent: nuscenes#detection
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-detection-readme
+        quote: Only camera input allowed.
+    notes: Camera input only at test time, no external or map data; image-classification pretraining
+      allowed.
+  - id: nuscenes#detection-open
+    label: Detection, open track
+    parent: nuscenes#detection
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-detection-readme
+        quote: External data and map data allowed.
+    notes: Any sensor input, external data and the semantic map.
+  - id: nuscenes#tracking
+    label: Tracking
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-tracking-readme
+        quote: The challenge winner will be determined based on AMOTA.
+    notes: Online 3D multi-object tracking of the 7 non-static detection classes, ranked by AMOTA,
+      with AMOTP and traditional MOT metrics beside it. Released in November 2019, designed with
+      Carnegie Mellon University.
+  - id: nuscenes#prediction
+    label: Prediction
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-prediction-readme
+        quote: The goal of the nuScenes prediction task is to predict the future trajectories of
+          objects in the nuScenes dataset.
+      - source: src-github-nuscenes-devkit-prediction-readme
+        quote: Unlike previous challenges, the leaderboard will be ranked according to performance
+          on the nuScenes val set.
+      - source: src-github-nuscenes-devkit-prediction-readme
+        quote: the top 5 submissions on the leaderboard will be asked to send us their code and we
+          will run their model on the test set.
+      - source: src-github-nuscenes-devkit-prediction-readme
+        quote: Every submission to the challenge must be accompanied by a brief technical report
+    notes: Six seconds of an agent's future x-y positions at 2 Hz, up to 25 weighted modes, from up
+      to two seconds of history; minADE_k, minFDE_k and a 2 m miss rate. The leaderboard ranks
+      validation-set results, and the maintainers run the top five's code on the test set to decide
+      the challenge. Three submissions a month. Released in March 2020.
+  - id: nuscenes#lidarseg
+    label: Lidar segmentation (nuScenes-lidarseg)
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-lidarseg-readme
+        quote: The challenge winners and leaderboard ranking will be determined by the mean
+          intersection-over-union (mIOU) score.
+      - source: src-github-nuscenes-devkit-lidarseg-readme
+        quote: There are 16 categories (10 foreground classes and 6 background classes).
+    notes: A class for every lidar point of each test keyframe, scored by mIoU over 16 classes
+      merged from 32. Released in August 2020.
+  - id: nuscenes#panoptic
+    label: Panoptic nuScenes (panoptic segmentation and tracking)
+    scored_separately: true
+    evidence:
+      - source: src-github-nuscenes-devkit-panoptic-readme
+        quote: as the primary ranking metric for panoptic segmentation tasks, and Panoptic Tracking
+          (PAT) metric as the primary
+      - source: src-github-nuscenes-devkit-panoptic-readme
+        quote: collaboration between Motional and the Robot Learning Lab of Prof. Valada at the
+          University of Freiburg.
+    notes: A semantic class and an instance ID for every lidar point, ranked by PQ for panoptic
+      segmentation and by PAT for panoptic tracking, with LSTQ and PTQ beside them. Released in 2021
+      with the University of Freiburg; the panoptic labels have their own paper (arXiv 2109.03805).
+
+history:
+  - date: 2026-08-06
+    event: channel-moved
+    field: execution.submission_channel
+    from: EvalAI
+    to: Hugging Face Spaces (the nuscenes organisation, one Space per task)
+    source: src-github-nuscenes-devkit-pr-1209
+    quote: '"title":"docs: replace EvalAI links with Hugging Face challenge platforms"'
+    note: The pull request, merged on 2026-08-06, replaced the EvalAI links in all five task
+      READMEs; the detection Space was created on 2026-07-16. EvalAI had hosted the challenges since
+      2019 (the paper thanks "EvalAI [30] for setting up the nuScenes challenges",
+      src-arxiv-1903-11027-v5).
+
+tags:
+  - 3d-object-detection
+  - autonomous-driving
+  - lidar
+  - radar
+  - multi-object-tracking
+  - trajectory-prediction
+  - lidar-segmentation
+  - leaderboard
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1903-11027-v5
+    - src-arxiv-1903-11027
+    - src-nuscenes-site
+    - src-nuscenes-terms-of-use
+    - src-nuscenes-leaderboard-detection
+    - src-nuscenes-leaderboard-tracking
+    - src-github-nuscenes-devkit-readme
+    - src-github-nuscenes-devkit-detection-readme
+    - src-github-nuscenes-devkit-tracking-readme
+    - src-github-nuscenes-devkit-prediction-readme
+    - src-github-nuscenes-devkit-lidarseg-readme
+    - src-github-nuscenes-devkit-panoptic-readme
+    - src-huggingface-space-nuscenes-detection-challenge
+    - src-github-nuscenes-devkit-pr-1209
+    - src-arxiv-2609-32163-v1
+  sources_note: >
+    The paper's v5 PDF (a DOI, not archived) read as text, and its abstract page for the dates. nuscenes.org
+    is a React app: the overview and terms-of-use Sources are the text of the script chunks that render
+    them, and the leaderboard Sources are the JSON files the task pages load. The task pages render the
+    devkit's task READMEs, which are Sources at raw.githubusercontent.com. The Hugging Face Space and
+    the
+    pull request are API records. PQR3D's v1 PDF is evidence of current use. The prediction, lidar
+    segmentation and panoptic leaderboard JSON was read but is not a Source; the lidar segmentation and
+    panoptic Motional and Freiburg rows in the independence note rest on it.
+  confidence: medium
+  review_checks:
+    - check: evaluation_method tags NDS's constituents as composite asks. The translation,
+        orientation and velocity errors are read as statistical-fit (mean errors on continuous
+        values) and the attribute error as classification-metric (macro-averaged accuracy). All five
+        TP errors could instead be read as nuScenes-defined detection measures (domain-metric),
+        which would leave composite combining a single method.
+      field: evaluation_method
+      source: src-github-nuscenes-devkit-detection-readme
+      quote: Our final score is a weighted sum of mean Average Precision (mAP) and several True
+        Positive (TP) metrics.
+    - check: The prediction subset inherits driving-perception-3d and perception, but it forecasts
+        agents' trajectories from their annotated past and the map, which is not perception. No
+        capability passes. probabilistic-forecasting needs unresolved futures, scientific-prediction
+        is for physical systems, and planning is the ego's own plan. Its challenge also requires a
+        technical report and has the maintainers re-run the top five on the test set.
+        publication-gated and sandboxed-rerun are recorded on the subset only, not tagged on the
+        entry.
+      field: subsets
+      source: src-github-nuscenes-devkit-prediction-readme
+      quote: Every submission to the challenge must be accompanied by a brief technical report
+    - check: The leaderboard lists PQR3D's camera-only row, which uses future frames, beside entries
+        that keep to the 0.5 s past-data rule. Whether the maintainers enforce the rule or only
+        label such rows decides whether NDS on the board is comparable across rows (as_used).
+      field: as_used
+      source: src-nuscenes-leaderboard-detection
+      quote: The submitted ViT-L configuration uses future frames and external pretraining.
+    - check: data_provenance has real-world-instrument only. The labels come from Scale's "expert
+        annotators", but no source describes the annotators' prior skill or training. That would
+        decide between expert-authored and crowd-authored.
+      field: data.data_provenance
+      source: src-arxiv-1903-11027-v5
+      quote: Using expert annotators and multiple validation steps, we achieve highly accurate
+        annotations.
+    - check: activity leaderboard-live-no-round rests on the 2019-2021 workshop challenges being
+        rounds. If they count as events beside a leaderboard that never ran in rounds, it is
+        accepting-submissions.
+      field: activity
+    - check: Identity. nuScenes-lidarseg and Panoptic nuScenes are filed as subsets because they
+        share the scenes, splits, devkit and site, though Panoptic nuScenes has its own paper (arXiv
+        2109.03805, not read). nuImages (2D images, no leaderboard) and nuPlan (planning, its own
+        benchmark) are left out.
+      field: subsets
+      source: src-github-nuscenes-devkit-readme
+      quote: 'Jul. 29, 2021: Devkit v1.1.6: Panoptic nuScenes v1.0 code, NeurIPS challenge announcement.'
+    - check: maintainer-competes-on-own-benchmark rests on Motional's own rows, one of them marked
+        as a baseline outside the challenge. contamination_risk medium follows COCO's and ScanNet's
+        reading of released test inputs with withheld labels.
+      field: governance.independence_flags
+      source: src-nuscenes-leaderboard-detection
+      quote: PointPillars is a baseline that does not participate in the nuScenes detection
+        challenge.
