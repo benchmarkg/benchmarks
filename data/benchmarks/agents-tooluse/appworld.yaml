@@ -1,0 +1,556 @@
+# data/benchmarks/agents-tooluse/appworld.yaml
+#
+# P1-S9-T01, agents-tooluse entry 9 of 10. Filled from the AppWorld paper, arXiv 2407.18901 read as its v1 PDF
+# (2024-07-26, ACL 2024), and its abstract page; the leaderboard page on appworld.dev (scripts and styles
+# stripped) and the public JSON the page renders its table from (appworld.dev serves no robots.txt); the READMEs
+# of the StonyBrookNLP/appworld and StonyBrookNLP/appworld-leaderboard repositories at main, with GitHub's API for
+# licence and pushed_at; and the v2 PDF of Harness as a Language (arXiv 2609.26891, September 2026), a paper that
+# runs AppWorld's Test-Challenge split. Every quote below is checked by the quote-substring validator against
+# those Sources' committed extracts. Nothing was registered for, and no encrypted bundle was downloaded or opened.
+
+id: appworld
+name: AppWorld
+aliases:
+  - AppWorld Benchmark
+tagline: Agents write code against 457 APIs of nine simulated apps; unit tests check the database
+  state they leave.
+description: >
+  A benchmark of 750 everyday tasks (250 scenarios, three tasks each) set in AppWorld Engine, a simulated
+  world of nine day-to-day apps (Amazon, Spotify, Venmo, Gmail, Todoist, SimpleNote, Splitwise, a file
+  system and a phone) operable through 457 APIs and populated with the digital lives of about 100 fictitious
+  people. An agent receives a supervisor's instruction and completes it by writing Python in a stateful
+  shell that calls the APIs, looking up their documentation and reading intermediate results as it goes.
+  Each task starts from its own database and a frozen date and time. Evaluation diffs the final database
+  against the start and runs state-based unit tests that accept any valid way of completing the task and
+  fail on collateral damage. Task Goal Completion (TGC) counts tasks that pass every test; Scenario Goal
+  Completion (SGC) counts scenarios whose three tasks all pass. Both are reported on Test-Normal (168
+  tasks) and Test-Challenge (417 tasks, each needing an API of Amazon or Gmail, apps unseen in training).
+  Most of the code and data ship in encrypted bundles, with a canary string, to keep them out of training
+  corpora. The leaderboard at appworld.dev lists method-plus-LLM pairs at pass@1 without state resets;
+  submissions are packed experiment outputs that a GitHub workflow scores.
+self_description:
+  source: src-arxiv-2407-18901-v1
+  quote: a suite of 750 natural, diverse, and challenging autonomous agent tasks requiring rich and
+    interactive code generation
+external_ids:
+  arxiv: '2407.18901'
+paper:
+  title: 'AppWorld: A Controllable World of Apps and People for Benchmarking Interactive Coding Agents'
+  arxiv: '2407.18901'
+  version_read: v1
+  source: src-arxiv-2407-18901-v1
+released: 2024-07-26
+released_note: The paper's only arXiv version, as its abstract page dates it. The repository was
+  created on 2024-06-23 (GitHub API), but no source read dates its public release.
+released_source: src-arxiv-2407-18901
+released_quote: Submitted on 26 Jul 2024
+release_venue: ACL 2024
+release_venue_source: src-arxiv-2407-18901
+release_venue_quote: ACL'24 Camera Ready
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/tool-api-calling
+domain_basis:
+  reason: One agent completes each task by invoking the apps' APIs against a database backend, and
+    the grader checks the database it leaves -- the leaf's inclusion case. The agent calls the APIs
+    from code it writes, but the code is its means, not the scored artefact.
+  source: src-arxiv-2407-18901-v1
+  quote: AppWorld requires up to 26 APIs (avg. 9.5) with dependencies between calls (i.e., outputs
+    of calls used as inputs to subsequent calls)
+domain_considered_and_rejected:
+  - term: agents-tooluse/software-agents
+    reason: The agents write up to 134 lines of code per task, but to operate apps, not to do
+      software-engineering work in a repository or toolchain; the leaf's exclusion covers systems
+      that return code without acting in one.
+    source: src-arxiv-2407-18901-v1
+    quote: AppWorld introduces complex tasks requiring agents to combine tool usage and interactive
+      code generation for app-based tasks.
+  - term: code/function-synthesis
+    reason: No test runs against the code the agent wrote; the tests read the database it changed.
+      The code family's exclusion sends a grader of the environment's end state to agents-tooluse.
+    source: src-arxiv-2407-18901-v1
+    quote: Since our evaluation is based on the database state
+  - term: agents-tooluse/long-horizon-autonomy
+    reason: Tasks take dozens of dependent API calls, but leaderboard rows average 3 to 72 agent
+      turns per task, most between 10 and 40 (leaderboard data), which is not the extended
+      unattended run the leaf names; the interface leaf already describes the benchmark.
+  - term: agents-tooluse/multi-agent-coordination
+    reason: Every task has one assistant acting for one supervisor; the paper leaves multi-agent
+      tasks to future work. Multi-agent entrants such as LARA MAS are one entrant's internal design.
+    source: src-arxiv-2407-18901-v1
+    quote: We built AppWorld Benchmark for testing
+capability:
+  - tool-use
+  - long-horizon-execution
+  - distribution-shift-generalization
+  - autonomy
+capability_basis:
+  tool-use:
+    reason: A task is completed only through executed API calls whose outputs feed later calls; a
+      wrong API, a hallucinated argument or a misread response leaves the database wrong and fails
+      the tests.
+    source: src-arxiv-2407-18901-v1
+    quote: AppWorld requires up to 26 APIs (avg. 9.5) with dependencies between calls (i.e., outputs
+      of calls used as inputs to subsequent calls)
+  long-horizon-execution:
+    reason: The authors' own solutions average 41 to 57 lines and 42 to 47 API calls per task (paper
+      Table 2), which an agent writes across many shell turns with feedback between them. A
+      state-changing mistake (a payment sent, a list deleted) cannot be undone, because the
+      leaderboard bars resetting to an earlier state, and the collateral-damage tests then fail the
+      task.
+    source: src-appworld-leaderboard
+    quote: But such resets can undo actions that are irreversible in real life (e.g., sending
+      money), giving an unrealistic advantage.
+  distribution-shift-generalization:
+    reason: Test-Challenge holds every task that needs an API of Amazon or Gmail, apps absent from
+      Train, Dev and Test-Normal, and it is reported as its own split. The task type and the scoring
+      are unchanged; only the apps move.
+    source: src-arxiv-2407-18901-v1
+    quote: Having at least one unseen app prevents models from simply using memorized actions seen
+      in the training set or in prompts, forcing them to actually read, understand, and follow API
+      documentation.
+  autonomy:
+    reason: The agent works each task unattended until it calls complete_task, and the leaderboard
+      rules out humans inspecting test tasks or their reports to revise prompts or add hints.
+    source: src-appworld-leaderboard
+    quote: This also rules out manually inspecting test tasks or their evaluation reports to revise
+      prompts or add hints or tips.
+capability_considered_and_rejected:
+  - term: planning
+    reason: The paper names the ability to plan among five abilities the tasks require, but the
+      tests are process-agnostic and score the end state, not the action sequence; Plan & Execute is
+      one scaffold among the entrants, not a scored property.
+    source: src-arxiv-2407-18901-v1
+    quote: the ability to plan, handle failures, adapt dynamically, and learn from the interaction
+  - term: reliability-consistency
+    reason: SGC is a consistency metric, but over three tasks with different requirements and start
+      states, not repeated trials of one task; the term's exclusion covers inputs that change
+      between trials.
+    source: src-appworld-leaderboard
+    quote: Each scenario contains three task variants with different requirements and starting
+      states, so SGC measures consistency across these variants.
+  - term: compositional-generalization
+    reason: Test-Challenge's unseen apps bring APIs never seen in training, which are new
+      primitives, not a new arrangement of known ones.
+  - term: self-correction
+    reason: Error traces let the agent repair its code within an episode, but only the end state is
+      scored; no improvement is measured.
+  - term: instruction-following
+    reason: The paper's error analysis counts partial instruction following among failures, but the
+      source does not claim to measure it, and the tests score the goal state.
+
+evaluation_method:
+  - environment-state-check
+evaluation_method_basis:
+  reason: After the episode, programmatic assertions read the diff between the task's start database
+    and the one the agent left, checking the expected changes and that nothing else changed, so any
+    trajectory that reaches a valid state passes.
+  source: src-arxiv-2407-18901-v1
+  quote: that directly check entries and changes in the database, allowing programmatic and robust
+    evaluation accounting for different but equally valid ways of solving complex tasks
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: The unit tests run, but against the database state the agent changed, not against code
+      it wrote; the term's exclusion sends tests that inspect changed state to
+      environment-state-check.
+  - term: constraint-check
+    reason: Each task's tests are a battery of assertions, but what they check is the environment
+      the agent left, which the term's exclusion assigns to environment-state-check.
+  - term: exact-match
+    reason: About 15% of tasks are questions whose answer is compared with a ground-truth field, but
+      that comparison is one assertion inside the task's state-based test suite.
+    source: src-arxiv-2407-18901-v1
+    quote: of the tasks are questions seeking answers (QA)
+designed_for_subjects:
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: Entrants bring their own loop, prompts and tool handling, and every leaderboard row names
+    a method beside its LLM, from the paper's ReAct, PlanExec, FullCodeRefl and IPFunCall to IBM
+    CUGA and multi-agent systems. A 2026 paper finds the official baseline's prompt alone costs
+    about 15% of Test-Challenge tasks (execution.harness_gotcha), so the scaffold is part of what is
+    scored.
+  source: src-appworld-leaderboard
+  quote: Method LLM Link Date Test-Normal Test-Challenge TGC SGC Interactions
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The repository ships reference agents (appworld-agents) that run across many models, but
+      no view of the leaderboard runs every entrant inside one maintainer loop; each row names its
+      method.
+    source: src-github-appworld-readme
+    quote: In it you will find code for various AppWorld agents, built with different frameworks (or
+      no framework).
+  - term: rl-policy
+    reason: Some entrants were trained by reinforcement learning on the train split (LOOP, Alibaba's
+      AgentRL), which the rules allow, but the environment is built for prompted agents and the
+      paper calls its task set too small for training. Trained entrants are a claim-level subject.
+    source: src-appworld-leaderboard-data
+    quote: '"name": "LOOP", "tooltip": "Leave-one-out PPO"'
+  - term: multi-agent-system
+    reason: Each task has one assistant under evaluation; a row built from several cooperating
+      agents is one entrant's design, and nothing in the protocol scores agents against each other.
+as_used:
+  - protocol: Continual self-improvement over all 417 Test-Challenge tasks in one fixed shuffled
+      order, the agent seeing each task's test feedback before the next, scored by TGC and SGC
+      averaged over three to six runs. The leaderboard's rules keep this setting out of its main
+      rankings.
+    split: test_challenge
+    source: src-arxiv-2609-26891-v2
+    quote: In our continual self-improvement setup, the full set of tasks is given to the agent in a
+      fixed order, with full test feedback from each task so that the agent can learn from its
+      mistakes.
+    note: Harness as a Language (JAZ, MIT CSAIL, September 2026), with GPT-5.4 nano solvers and a
+      GPT-5.4 meta-agent. Its per-task baselines, which follow the leaderboard's protocol, run the
+      official AppWorld agent out of the box (48.2 TGC) and its own CodeAct loop without the
+      official prompt's workflow guidance (67.5 TGC), with the same solver model (its Table 2).
+
+lifecycle: active
+lifecycle_basis:
+  reason: The leaderboard took new rows from February to September 2026, the newest dated
+    2026-09-02; the repository was last pushed on 2026-09-04 (GitHub API); and a September 2026
+    paper runs the Test-Challenge split.
+  source: src-appworld-leaderboard-data
+  quote: '"date": "2026-09-02"'
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard takes pull requests at any time and has never run in rounds.
+  source: src-github-appworld-leaderboard-readme
+  quote: Submit your own agent's experiment outputs to be included on the leaderboard via a PR.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Button Agent (Claude Opus 4.6)
+    source: src-appworld-leaderboard-data
+    observed_on: 2026-10-14
+    quote: '"name": "Button Agent", "tooltip": "Button Agent" }, "llm": { "name": "Claude Opus 4.6"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's evaluation program, state-based assertions over expected
+  values, shipped in the package's encrypted bundles. For the test splits the setup and solution
+  programs are withheld; the evaluation programs are not.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The environment, the test tasks and their evaluation programs install with the package, so
+    anyone can score an agent on both test splits locally; a run needs API access to the agent's
+    LLM.
+  source: src-github-appworld-readme
+  quote: This means you can evaluate your agent on test sets conveniently
+
+task:
+  exists: true
+  input:
+    - a supervisor's natural-language instruction, with the supervisor's identity and the task's
+      frozen date and time
+    - a stateful Python shell exposing the nine apps' APIs, an ApiDocs app for their documentation
+      and a Supervisor app for the supervisor's accounts, addresses and payment cards
+  output: Code run step by step in the shell, calling APIs, until the agent calls complete_task
+    (with an answer for question tasks).
+  scoring: A task passes when every one of its unit tests passes (TGC); a scenario passes when all
+    three of its tasks do (SGC). Both are reported per test split and per hand-labelled difficulty
+    level (1 to 3), at pass@1.
+  tests_hidden_from_system: true
+  source: src-appworld-leaderboard
+  quote: 'TGC (Task Goal Completion): The percentage of tasks for which the agent passes all evaluation
+    tests.'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The data downloads with `appworld download data`, and the protected code (apps, APIs,
+    tests, task generators) ships in encrypted .bundle files that `appworld install` unpacks, with
+    no account or agreement. The encryption, and the request not to post unpacked code or data, are
+    anti-contamination devices, not a gate. For the test splits the setup and solution programs are
+    withheld, but not the evaluation programs.
+  access_basis:
+    reason: The evaluation programs behind both test splits are released, so the headline scores can
+      be computed from what anyone can install.
+    source: src-github-appworld-readme
+    quote: We release everything for `train` and `dev` sets, but only evaluation programs for
+      `test_normal` and `test_challenge` sets.
+  refresh_note: Left empty. The package has code releases v0.1.0 to v0.1.3.post1 (GitHub API; the
+    latest notes say main is significantly ahead), and runs record code and data versions, but no
+    source read says whether tasks or tests changed after release, which decides between static and
+    versioned-releases.
+  data_provenance:
+    - expert-authored
+    - synthetic-procedural
+    - model-generated
+  data_provenance_note: The scenarios, task generators, tests and validation solutions were written
+    by the authors. The base database of about 370K rows was populated by a procedural method that
+    calls the apps' own APIs, with ChatGPT writing free-text entries where exact wording did not
+    matter.
+  data_provenance_basis:
+    reason: The authors, with NLP and software-development experience, wrote the engine and the task
+      generators themselves.
+    source: src-arxiv-2407-18901-v1
+    quote: by a subset of the authors with many years of NLP and software development experience
+      (rather than by crowdworkers or LLMs)
+  data_provenance_source: src-arxiv-2407-18901-v1
+  data_provenance_quote: we devise a procedural data population method, with sparing and careful use
+    of ChatGPT, to stochastically sample realistic and diverse data at scale
+  contamination_risk: medium
+  contamination_risk_note: >
+    The test tasks' instructions, start databases and evaluation programs reach every entrant, so a route
+    into training data is plausible; none is evidenced. The maintainers' measures lower it without closing
+    it: the apps, tests, task data and leaderboard submissions ship encrypted, a canary string marks the
+    code and data for filtering, the README asks users not to post unpacked material, and the leaderboard
+    forbids learning from the test sets. Test-Challenge's unseen apps guard against memorised actions
+    from
+    the train split, not against pretraining on the released bundles.
+  contamination_risk_basis:
+    reason: The canary string is published for training-data filters to match.
+    source: src-github-appworld-readme
+    quote: we include the following canary string in our codebase and data to make it easier to
+      filter it out from LLM training data
+  contamination_risk_source: src-github-appworld-readme
+  contamination_risk_quote: To reduce the risk of this portion of the codebase unintentionally
+    becoming part of the training corpora of LLMs
+  contamination_evidence: []
+  dataset_licence: Apache-2.0, with the added requirement that any public redistribution be
+    encrypted
+  dataset_licence_note: The licence of the protected portion (task data, API implementations,
+    tests); training language models and serving their outputs are said not to be redistribution.
+  dataset_licence_source: src-github-appworld-readme
+  dataset_licence_quote: released under the Apache 2.0 license with an additional requirement that
+    any of its public redistribution (or of its derivatives) should be done in an encrypted format
+  size:
+    - count: 750
+      unit: tasks (250 scenarios of 3 tasks)
+      subset: all splits (Train 105, Dev 60, Test-Normal 168, Test-Challenge 417)
+      source: src-arxiv-2407-18901-v1
+      quote: Our benchmark has 250 task scenarios with 3 tasks each, totaling 750 tasks, split into
+        Train (105), Dev (60), Test-N (168), and Test-C (417) splits.
+    - count: 417
+      unit: tasks
+      subset: Test-Challenge
+      source: src-arxiv-2407-18901-v1
+      quote: Our benchmark has 250 task scenarios with 3 tasks each, totaling 750 tasks, split into
+        Train (105), Dev (60), Test-N (168), and Test-C (417) splits.
+    - count: 168
+      unit: tasks
+      subset: Test-Normal
+      source: src-arxiv-2407-18901-v1
+      quote: Our benchmark has 250 task scenarios with 3 tasks each, totaling 750 tasks, split into
+        Train (105), Dev (60), Test-N (168), and Test-C (417) splits.
+    - count: 457
+      unit: APIs across 9 apps
+      subset: AppWorld Engine
+      source: src-arxiv-2407-18901-v1
+      quote: 9 day-to-day apps operable via 457 APIs
+  languages:
+    - en
+    - Python
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: StonyBrookNLP (Stony Brook University's NLP group)
+  maintainer_basis:
+    reason: Both repositories sit in the StonyBrookNLP organisation (GitHub API), and the paper's
+      first and last authors are at Stony Brook University, with co-authors at the Allen Institute
+      for AI and Saarland University.
+    source: src-arxiv-2407-18901-v1
+    quote: Stony Brook University
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-scored-predictions
+    - maintainer-run
+  submission_process_note: Submitters run their agent on both test splits, pack the experiment
+    outputs into encrypted bundles, open a pull request on the leaderboard repository and post a
+    command naming the Python and appworld versions. A GitHub workflow evaluates the outputs and
+    writes the leaderboard entry; before merging, the maintainer checks that nothing changed after
+    the last evaluation. The evaluation programs are public, so the workflow guards the arithmetic,
+    not the test set. The 14 baseline rows of 2024-07-26 were run by the authors.
+  submission_process_basis:
+    reason: The maintainer's review before merging is of the submission's integrity, not its number.
+    source: src-github-appworld-leaderboard-readme
+    quote: to ensure that no new changes are made after the last evaluation, and merge it
+  submission_process_source: src-github-appworld-leaderboard-readme
+  submission_process_quote: This will start an automatic GitHub workflow
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-appworld-leaderboard-data
+      quote: '"url": "https://appworld.dev", "date": "2024-07-26"'
+  independence_flags_note: The 14 rows dated 2024-07-26 that link to appworld.dev are the paper's
+    baselines (four prompting methods on four LLMs from OpenAI, Meta and DeepSeek), run by the
+    maintainers; none is a system the maintainers built. The work was funded by AFRL, DARPA and NSF,
+    none of them an evaluated party, and no Allen Institute for AI model is on the board.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2407-18901-v1
+    quote: supported in part by the Air Force Research Laboratory (AFRL), DARPA
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: AppWorld runs as one local Python process over in-memory SQLite, with no GPU or
+    server required; the cost of a run is the agent's LLM inference.
+  compute_tier_source: src-arxiv-2407-18901-v1
+  compute_tier_quote: Owing, in part, to this process, evaluations run fast (under 0.6 seconds per
+    task on average on a regular MacBook Pro).
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The test tasks and their evaluation programs are installed locally, so a run and its
+      score need no maintainer step; the leaderboard's workflow re-runs the same evaluator.
+    source: src-github-appworld-readme
+    quote: This means you can evaluate your agent on test sets conveniently
+  harness_availability: official-harness
+  harness: appworld (the package's evaluate command; reference agents in appworld-agents)
+  harness_source: src-github-appworld-readme
+  harness_quote: AppWorld provides robust database-state-based unit tests to check if the agent
+    completed the task correctly without causing any collateral damage.
+  harness_gotcha:
+    source: src-arxiv-2609-26891-v2
+    quote: We found that the original description of the task submission format had an ambiguity
+      that caused a 15% drop in the performance of the baseline
+  harness_gotcha_note: With the official baseline's prompt, agents often passed an answer to
+    complete_task on tasks that ask for none, which fails the task however well the rest was done;
+    the paper puts the loss at about 15% of Test-Challenge tasks. A score belongs to the prompt as
+    well as the model.
+  code_licence: Apache-2.0
+  code_licence_note: The public portion (agent baselines, evaluation utilities, execution shell);
+    GitHub's licence metadata for StonyBrookNLP/appworld also reads Apache-2.0 (2026-10-14).
+  code_licence_source: src-github-appworld-readme
+  code_licence_quote: It is released in plain text format on this repository under the Apache 2.0
+    license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the scaffold (method) and its prompt, which move Test-Challenge TGC by about
+  # 19 points with one model (src-arxiv-2609-26891-v2); the appworld package version the leaderboard asks for;
+  # retries (the rules ask for pass@1 with no state resets, which the README says give an unfair advantage);
+  # the step cap (the paper's ReAct stops at 100 LLM calls); and what the agent was trained or tuned on (the
+  # train and dev splits are allowed, the test splits are not).
+  material_extra:
+    - scaffold
+    - harness
+    - retries_allowed
+    - max_steps
+    - training_data_policy
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: TGC and SGC are computed per test split; the paper names Test-Challenge the main target
+    and does not combine the splits.
+  source: src-arxiv-2407-18901-v1
+  quote: we consider Test-C as the main target for AppWorld, with TestN serving as an intermediate
+    target
+
+homepage: https://appworld.dev/
+repository: https://github.com/StonyBrookNLP/appworld
+leaderboard_url: https://appworld.dev/appworld/leaderboard
+
+subsets:
+  - id: appworld#test-normal
+    label: Test-Normal (Test-N)
+    items: 168
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2407-18901-v1
+        quote: Our benchmark has 250 task scenarios with 3 tasks each, totaling 750 tasks, split
+          into Train (105), Dev (60), Test-N (168), and Test-C (417) splits.
+    notes: Drawn at random, with Train and Dev, from the tasks that use no unseen app; the paper's
+      intermediate target.
+  - id: appworld#test-challenge
+    label: Test-Challenge (Test-C)
+    items: 417
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2407-18901-v1
+        quote: an API from at least one designated unseen app, Amazon and Gmail.
+      - source: src-arxiv-2407-18901-v1
+        quote: we consider Test-C as the main target for AppWorld, with TestN serving as an
+          intermediate target
+    notes: Every task needing an API of Amazon or Gmail, apps absent from the other splits; the
+      paper's main target, and the split behind distribution-shift-generalization.
+subsets_note: The Train (105) and Dev (60) splits are for training, tuning and error analysis and
+  are not scored on the leaderboard, so they are not listed.
+
+tags:
+  - tool-calling
+  - interactive-coding
+  - app-apis
+  - state-based-evaluation
+  - encrypted-release
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2407-18901-v1
+    - src-arxiv-2407-18901
+    - src-appworld-leaderboard
+    - src-appworld-leaderboard-data
+    - src-github-appworld-readme
+    - src-github-appworld-leaderboard-readme
+    - src-arxiv-2609-26891-v2
+  sources_note: >
+    The AppWorld paper's v1 PDF (a DOI, not archived) read as text, its windows kept away from the
+    authors' contact line; its abstract page for the date and venue; the leaderboard page with scripts
+    and
+    styles stripped, whose table is rendered from the leaderboard JSON, read as its own Source; both
+    READMEs at main; and Harness as a Language's v2 PDF (a DOI) as evidence of current use. The
+    appworld.dev homepage was read but not cited, because it prints a contact address.
+  confidence: medium
+  review_checks:
+    - check: Domain primary tool-api-calling. The agents act by writing code, so software-agents and
+        long-horizon-autonomy (secondary) were considered; both were rejected because the code
+        operates apps rather than doing software engineering, and episodes run tens of interactions.
+      field: domain
+    - check: long-horizon-execution rests on irreversible state changes plus the no-reset rule;
+        reads and failed calls can be retried, so only some intermediate errors foreclose success,
+        and the FullCodeRefl baselines solved up to a third of Test-Normal in 3 to 5 turns
+        (leaderboard data).
+      field: capability
+      source: src-appworld-leaderboard
+      quote: But such resets can undo actions that are irreversible in real life (e.g., sending
+        money), giving an unrealistic advantage.
+    - check: distribution-shift-generalization rests on Test-Challenge's unseen apps (Amazon,
+        Gmail). New apps could instead count as new primitives (no term) or as transfer-learning;
+        autonomy rests on the leaderboard's ban on human inspection of test tasks.
+      field: capability
+    - check: planning was rejected though the paper lists the ability to plan among what tasks need,
+        which the term's inclusion test may accept for an interactive episode with an explicit goal.
+      field: capability
+      source: src-arxiv-2407-18901-v1
+      quote: the ability to plan, handle failures, adapt dynamically, and learn from the interaction
+    - check: submission_process maintainer-scored-predictions. What is submitted is experiment
+        outputs (the agent's logs and database changes), scored by the maintainers' workflow against
+        evaluation programs that are public but encrypted; maintainer-verified is the alternative
+        reading.
+      field: governance.submission_process
+      source: src-github-appworld-leaderboard-readme
+      quote: This will start an automatic GitHub workflow
+    - check: Whether the paper's baseline rows, which the maintainers ran with other developers'
+        LLMs, count as maintainer-competes-on-own-benchmark (RoboCasa's entry flags the same
+        pattern).
+      field: governance.independence_flags
+      source: src-appworld-leaderboard-data
+      quote: '"url": "https://appworld.dev", "date": "2024-07-26"'
+    - check: data.access fully-open treats the encrypted bundles as an anti-contamination device;
+        the test splits' setup and solution programs are withheld, but their evaluation programs
+        ship.
+      field: data.access
+    - check: data.refresh and versions are left empty. Code releases v0.1.0 to v0.1.3.post1 exist
+        and the leaderboard records the appworld version used, but no source says whether tasks or
+        tests changed.
+      field: data.refresh
+    - check: The appworld.dev homepage announces AppWorld-UL (ICML 2026), a user-in-the-loop
+        benchmark built on AppWorld. It is not read here and may need an entry of its own, linked by
+        lineage.
+    - check: The September 2026 paper's protocol (continual learning with test feedback across all
+        of Test-Challenge) is one the leaderboard keeps out of its main rankings; its numbers are
+        not comparable with leaderboard rows.
+      field: as_used
