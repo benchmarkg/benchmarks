@@ -132,6 +132,69 @@ def test_a_cdx_capture_inside_the_window_costs_no_capture(tmp_path):
     assert wb.looked_up == ['https://src-s0.example.org/', 'https://src-s1.example.org/']   # CDX first, every time
 
 
+# ---- a CDX capture must hold the extract it stands for ------------------------------------------
+
+EXTRACT = 'The board lists 18 policies … Awomo-0.5I leads at 64.4'
+
+
+class Captures(Fake):
+    """Fake, plus the bodies the CDX hits resolve to, and the if_not_archived_within each submit asked for."""
+
+    def __init__(self, bodies, **kw):
+        super().__init__(**kw)
+        self.bodies, self.within = bodies, []
+
+    def capture_body(self, ts, original):
+        return self.bodies.get(ts)                 # get-default: a capture that does not load
+
+    def submit(self, url, within='30d', force_get=False):
+        self.within.append(within)
+        return super().submit(url)
+
+
+def board(tmp_path, body):
+    write(tmp_path, 'src-board', quote_extract=EXTRACT, quote_extract_mode='windows',
+          quote_extract_basis='normalised-text')
+    hit = {'https://src-board.example.org/': ('20260920000000', 'https://src-board.example.org/', 'D' * 32)}
+    wb = Captures({'20260920000000': body}, cdx=hit)
+    stats, _ = run(tmp_path, wb, str(tmp_path / 'archive.json'))
+    return stats, wb
+
+
+def test_a_cdx_capture_that_holds_the_extract_is_reused(tmp_path):
+    stats, wb = board(tmp_path, b'<p>The board lists 18 policies.</p><script>var x</script><p>Awomo-0.5I leads at 64.4</p>')
+    assert stats['from_cdx'] == 1 and wb.submitted == []
+
+
+def test_a_cdx_capture_missing_an_extract_window_is_captured_afresh(tmp_path):
+    # the board gained rows after the capture, so the copy CDX offers cannot back the quotes taken today
+    stats, wb = board(tmp_path, b'<p>The board lists 9 policies.</p>')
+    assert stats['from_cdx'] == 0 and stats['stale'] == 1
+    assert wb.submitted == ['https://src-board.example.org/'] and wb.within == ['1d']   # not the 30d key
+
+
+def test_a_capture_that_cannot_be_read_is_reused_as_before(tmp_path):
+    stats, wb = board(tmp_path, None)
+    assert stats['from_cdx'] == 1 and wb.submitted == []
+
+
+def test_capture_body_reads_the_id_form_and_undoes_gzip(monkeypatch):
+    import gzip
+    import io
+    import urllib.request
+    seen = []
+
+    def urlopen(req, timeout=60):
+        seen.append(req.full_url)
+        r = io.BytesIO(gzip.compress(b'<p>as stored</p>'))
+        r.status = 200
+        return r
+    monkeypatch.setattr(urllib.request, 'urlopen', urlopen)
+    wb = Wayback(spacing=0)
+    assert wb.capture_body('20261014024038', 'https://x.example.org/board.json') == b'<p>as stored</p>'
+    assert seen == ['https://web.archive.org/web/20261014024038id_/https://x.example.org/board.json']
+
+
 def test_one_request_per_source_never_per_field(tmp_path):
     write(tmp_path, 'src-many', accessed='2026-09-01',
           notes='See https://mirror.example.net/a and https://docs.example.net/b for the same table.')
