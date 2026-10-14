@@ -1,0 +1,584 @@
+# data/benchmarks/agents-tooluse/gaia.yaml
+#
+# P1-S9-T01, agents-tooluse entry 7 of 10. Filled from the GAIA paper, arXiv 2311.12983 read as its v1 PDF
+# (2023-11-21), and its abstract page; the paper's ICLR 2024 proceedings page; Hugging Face's public API record of
+# the gated dataset gaia-benchmark/GAIA (its terms were not accepted and none of its files was read); the leaderboard
+# Space's content.py, app.py and scorer.py, raw at its commit 9f133d7; rows of the board's public results dataset,
+# read through the datasets-server filter API; HAL's GAIA board (an existing Source); and the v1 PDF of a July 2026
+# paper that reports on the validation split (arXiv 2607.17044). Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# HAL's GAIA board (benchmarklist:hal_gaia, variant-of family:gaia in tests/dedup/fixtures/known-pairs.yaml) runs
+# this benchmark's public validation set under HAL's own harness. HAL is curated as its own entry, so its board is
+# recorded here as a use of GAIA (as_used), not as a version or a lineage member.
+
+id: gaia
+name: GAIA
+aliases:
+  - General AI Assistants Benchmark
+tagline: 466 assistant questions that need web browsing, files, code or multimodality, each scored
+  on one short exact answer.
+description: >
+  A benchmark for general AI assistants from Meta (FAIR and GenAI), Hugging Face and AutoGPT, first
+  released in November 2023 and published at ICLR 2024. Its 466 questions were written and validated by
+  human annotators to be conceptually simple for people but to need several steps of finding and
+  combining information: most need browsing the live web, and others reading an attached file (PDF,
+  spreadsheet, image, audio or video), running code or handling another modality. Each question has one
+  short, unambiguous answer (a number, a few words or a list), and a system's final answer is scored by
+  quasi exact match after a normalisation tied to the answer's type. The questions fall into three levels
+  by the number of steps and tools an annotator needed (146, 245 and 75 questions). A validation set of
+  165
+  questions is released with its answers; the 301 test questions are released without them, and the
+  maintainers' leaderboard Space on Hugging Face scores uploaded answer files against answers it keeps
+  private. GAIA prescribes no tools, APIs or agent loop: each leaderboard row is an agent system, named
+  with
+  the model family under it. The annotators scored 92%; in October 2026 the top test row stands at 94.02%.
+self_description:
+  source: src-arxiv-2311-12983-v1
+  quote: GAIA is a benchmark for AI systems proposing general assistant questions.
+external_ids:
+  huggingface: gaia-benchmark/GAIA
+  arxiv: '2311.12983'
+paper:
+  title: 'GAIA: a benchmark for General AI Assistants'
+  arxiv: '2311.12983'
+  version_read: v1
+  source: src-arxiv-2311-12983-v1
+released: 2023-11-21
+released_note: The paper's only arXiv version, as its abstract page dates it. The Hugging Face
+  dataset repository was created on 2023-10-20 (its API record); whether it was public before the
+  paper is not stated.
+released_source: src-arxiv-2311-12983
+released_quote: Submitted on 21 Nov 2023
+release_venue: ICLR 2024
+release_venue_source: src-iclr-2024-gaia
+release_venue_quote: International Conference on Learning Representations 2024 (ICLR 2024)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/web-navigation
+domain_basis:
+  reason: A system answers each question by its own loop of browsing, reading files and running
+    tools, and the grader checks the answer it returns, the family's case. Web browsing is the
+    capability most questions need, 355 of 466 by the annotators' own count (Figure 3), done on the
+    live web, where the paper asks for no action beyond clicks.
+  source: src-arxiv-2311-12983-v1
+  quote: Although web browsing is a key component of GAIA
+domain_considered_and_rejected:
+  - term: agents-tooluse/agent-evaluation-suites
+    reason: GAIA's claim is breadth of assistant abilities (browsing, coding, multimodality, file
+      reading), but it is one question set rather than a suite, and one subdomain holds most of its
+      questions, which the term's exclusion test sends to that subdomain.
+    source: src-arxiv-2311-12983-v1
+    quote: Web browsing 355
+  - term: agents-tooluse/research-agents
+    reason: Answering means gathering and combining information from several sources, but every
+      question has one short factual answer rather than being an open research question, and citing
+      sources is not scored; the paper leaves it to future work.
+    source: src-arxiv-2311-12983-v1
+    quote: a useful assistant would answer by citing its sources or keeping the most trustworthy one
+  - term: agents-tooluse/tool-api-calling
+    reason: No functions or APIs are specified, offered or checked; the paper sets GAIA against
+      benchmarks of specific API calls, and only the final answer is scored.
+    source: src-arxiv-2311-12983-v1
+    quote: By opposition, GAIA does not specify possible APIs, and relies on interactions with the
+      real world.
+  - term: general-intelligence/human-comparison-batteries
+    reason: The headline contrast is humans at 92% against GPT-4 with plugins at 15%, and the paper
+      ties the benchmark to AGI, but the human score is a by-product of question validation and the
+      breadth is of abilities an assistant exercises through tools, inside this family, which
+      general-intelligence's exclusion test leaves to the family's subdomains.
+capability:
+  - perception
+  - context-integration
+capability_basis:
+  perception:
+    reason: Some questions come with, or lead to, images, video or audio whose content holds the
+      answer (138 of 466 need a multimodality tool by the annotators' count), and the answer is
+      right only if that content was read correctly.
+    source: src-arxiv-2311-12983-v1
+    quote: We also include questions requiring to process varied data modalities such as PDFs,
+      spreadsheets, but also images, videos or audio
+  context-integration:
+    reason: For questions that come with a file, the file is the source of truth the answer must be
+      taken from. By the annotators' count 129 of 466 need a file-reading tool, for files attached
+      or found on the web.
+    source: src-arxiv-2311-12983-v1
+    quote: In other cases, the source of truth is entirely provided with the question, e.g., an
+      attached document.
+capability_considered_and_rejected:
+  - term: tool-use
+    reason: Tool use is GAIA's headline claim, and its levels are defined partly by the number of
+      tools an annotator used, but the protocol exposes no callable tools; every tool belongs to the
+      entrant's system, which is why the scaffold and its tools are conditions of each result.
+      swe-bench's entry rejects the term on the same ground.
+    source: src-arxiv-2311-12983-v1
+    quote: By opposition, GAIA does not specify possible APIs, and relies on interactions with the
+      real world.
+  - term: knowledge-recall
+    reason: Question writers were told to choose answers that do not exist in plain text on the web,
+      so answers are to be found and derived, not recalled.
+    source: src-arxiv-2311-12983-v1
+    quote: Make sure the answer to your question does not exist on the internet in plain text.
+  - term: long-horizon-execution
+    reason: Level 3 questions can take long action sequences, but Level 1 needs at most about five
+      steps, and a failed search or reading can be redone later in the episode, so an intermediate
+      failure does not make the answer unattainable.
+    source: src-arxiv-2311-12983-v1
+    quote: Level 1 questions generally require no tools, or at most one tool but no more than 5
+      steps.
+  - term: planning
+    reason: Systems must plan their steps, but only the final answer is scored; the paper says the
+      trace is not evaluated, which the term's exclusion test covers.
+    source: src-arxiv-2311-12983-v1
+    quote: In its current form, GAIA does not evaluate the trace leading to the answer.
+  - term: autonomy
+    reason: The protocol neither prohibits nor measures human help. The paper's own GPT-4 with
+      plugins had its plugins chosen by hand for each question.
+    source: src-arxiv-2311-12983-v1
+    quote: GPT4 + plugins scores were obtained by manually selecting plugins, and cannot be
+      reproduced exactly for the reasons described in the main text.
+  - term: factual-precision
+    reason: One short answer is scored against a key, which the term's exclusion test names.
+
+evaluation_method:
+  - exact-match
+evaluation_method_basis:
+  reason: Every question has one correct answer, a string, a number or a list, and the official
+    scorer compares the submitted answer with it after a normalisation tied to the answer's type.
+    Strings are compared with spaces and punctuation removed and case folded; numbers are stripped
+    of $, % and commas and compared as floats; lists are compared element by element. There is no
+    tolerance band and no partial credit.
+  source: src-arxiv-2311-12983-v1
+  quote: Hence, evaluation is done via quasi exact match
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: Numeric answers are converted to floats and must be equal; no tolerance is applied.
+    source: src-hf-gaia-leaderboard-scorer
+    quote: return normalized_answer == float(ground_truth)
+designed_for_subjects:
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: GAIA prescribes no tools, APIs or loop and scores the system as a whole; entrants bring
+    their own agent, which decides what to search, read or run and when to answer. The submission
+    form asks for an agent name and, separately, the model family under it, and the paper's AutoGPT
+    baseline is such a scaffold.
+  source: src-arxiv-2311-12983-v1
+  quote: GAIA aims at evaluating AI systems rather than the current architectural standard.
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The maintainers supply no loop or tools, only a system prompt fixing the answer format,
+      which they advise rather than require.
+    source: src-hf-gaia-leaderboard-content
+    quote: We advise you to use the system prompt provided in the paper to ensure your agents answer
+      using the correct and expected format.
+  - term: tool-augmented-model
+    reason: The paper's GPT-4 with plugins was a directed exchange with hand-picked plugins, but the
+      protocol offers no tools of its own, and the paper calls that score an oracle estimate rather
+      than a reproducible result.
+    source: src-arxiv-2311-12983-v1
+    quote: GPT4 + plugins scores were obtained by manually selecting plugins, and cannot be
+      reproduced exactly for the reasons described in the main text.
+observed_subjects:
+  values:
+    - agent-scaffold
+    - full-product-pipeline
+  basis: The board's rows are agent systems named apart from the model families under them, and
+    vendors report on the validation split with shipped products whose parts are proprietary, such
+    as Leni's unmodified production configuration in 2026.
+  source: src-arxiv-2607-17044-v1
+as_used:
+  - protocol: The 165-question validation split, whose answers are public, scored locally with a
+      re-implementation of the official scorer and reported at pass@1 (the last completed attempt
+      per task) beside a best-of-k figure; the hidden test set was not submitted to.
+    split: validation
+    source: src-arxiv-2607-17044-v1
+    quote: 'Data: GAIA validation split [2], 165 questions (Level 1: 53; Level 2: 86; Level 3: 26).'
+    note: A vendor's evaluation of its own production agent (Leni, a Claude Opus 4.6 planner with
+      routed executors and small trained specialists), run in March and April 2026. It retracts an
+      earlier 77.6% that mixed best-of-three and single attempts across levels, and reports 75.2% at
+      pass@1 and 83.0% best of all runs.
+  - protocol: HAL's GAIA board runs the public validation set under HAL's own harness, two scaffolds
+      across seventeen models.
+    split: validation
+    source: src-hal-gaia-leaderboard
+    quote: We evaluate on the public validation set of 165 questions.
+    note: HAL is curated as its own entry (holistic-agent-leaderboard-hal); its GAIA board is not
+      this benchmark's official board.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The test leaderboard is still taking results; its top row in the public results dataset
+    was submitted on 2026-10-12, and 2026 papers report on the validation split.
+  source: src-hf-gaia-results-public-rows
+  quote: '"organisation":"Shadow","score":0.9401993355481728'
+activity: accepting-submissions
+activity_basis:
+  reason: The Space takes test-set submissions at any time and has never run in rounds; the
+    validation board was closed.
+  source: src-hf-gaia-leaderboard-content
+  quote: Results can be submitted for the test set (we closed the validation leaderboard, as it was
+    no longer informative).
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Shadow Harness V8.01 (an agent over GPT, Claude, Grok, Gemini and DeepSeek models)
+    source: src-hf-gaia-results-public-rows
+    observed_on: 2026-10-14
+    quote: '"model":"Shadow Harness V8.01"'
+  - system: Hugging Face Agents + GPT-4o
+    source: src-hf-gaia-results-public-rows
+    observed_on: 2026-10-14
+    quote: '"model":"Hugging Face Agents + GPT-4o"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each question's single answer, written by its creator and confirmed by two
+  more annotators; the test answers sit in a private dataset (GAIA_internal) that the Space loads to
+  score submissions. The validation answers are public.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The leaderboard's test answers never leave the maintainers. Anyone can run and score the
+    validation split, whose answers are released.
+  source: src-hf-gaia-leaderboard-content
+  quote: a test set with private answers and metadata
+
+task:
+  exists: true
+  input:
+    - a question in English, sometimes with an attached file (a PDF, spreadsheet, image, audio or
+      video file, text or another format)
+    - a system prompt fixing the answer format, which the maintainers advise using
+  output: A final answer (a number, as few words as possible, or a comma-separated list), with an
+    optional reasoning trace that is not scored.
+  scoring: Quasi exact match per question after type-specific normalisation; each submitted run is a
+    row reporting the percentage correct over the 301 test questions and per level, and the authors
+    list only their best run.
+  tests_hidden_from_system: true
+  source: src-hf-gaia-leaderboard-content
+  quote: The first two fields are mandatory, `reasoning_trace` is optional
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: Both splits sit in one gated Hugging Face dataset whose gate approves automatically
+    once a user agrees not to reshare it outside a gated or private repository; this entry read only
+    its public API record. The test questions and their files are in it, the test answers are not.
+  access_basis:
+    reason: The validation questions are released with their answers and the test questions without
+      them; the maintainers keep the test answers and score uploaded answers against them.
+    source: src-hf-gaia-leaderboard-content
+    quote: Each level is divided into a fully public dev set for validation, and a test set with
+      private answers and metadata.
+  data_provenance:
+    - crowd-authored
+  data_provenance_note: The authors wrote seed questions; compensated annotators from Surge AI wrote
+    the rest from them, each question then answered independently by two further annotators and
+    repaired or removed on disagreement. The questions need no specialist knowledge, and the paper
+    calls its annotators non-experts.
+  data_provenance_source: src-arxiv-2311-12983-v1
+  data_provenance_quote: compensated annotators from Surge AI
+  contamination_risk: medium
+  contamination_risk_note: The test answers never leave the maintainers, so the board's headline has
+    no training route to its answers; the test questions are public behind the gate. The validation
+    split, on which papers and HAL report, has public answers. The maintainers gate the dataset
+    against scraping and ask that neither split be reshared in crawlable form or used for training,
+    but a 2026 audit found GAIA-derived copies (the dataset pages, WebVoyager's GAIA_web.jsonl, the
+    agents-course metadata.jsonl) in the search results of agent runs. That is answer lookup at run
+    time on a split the board no longer scores, not an evidenced training route, so the value stays
+    medium.
+  contamination_risk_source: src-hf-api-gaia
+  contamination_risk_quote: Please do not reshare the validation or test set in a crawlable format.
+  contamination_evidence:
+    - source: src-arxiv-2607-17044-v1
+      stance: supports
+      quote: Twenty-five of 803 trajectories, spanning 12 tasks, contain such a URL
+    - source: src-arxiv-2311-12983-v1
+      stance: against
+      quote: their absence in plain text from the internet prevent a possible data contamination
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_basis:
+    reason: The paper reads scores against the human score, the validating annotators' success rate
+      on the valid questions, 92% overall (93.9%, 91.8% and 87.3% by level). The annotators are
+      non-specialists. The top test rows, at 94.02% in October 2026, now exceed it.
+    source: src-arxiv-2311-12983-v1
+    quote: and report this as the human score for GAIA
+  dataset_licence_note: The dataset's card metadata declares no licence (its Hugging Face API
+    record, read 2026-10-14); its gate asks users not to reshare it.
+  size:
+    - count: 466
+      unit: questions
+      source: src-arxiv-2311-12983-v1
+      quote: It is composed of 466 questions designed and annotated by humans.
+    - count: 301
+      unit: questions, answers private
+      subset: test
+      note: The paper gives 300 test and 166 validation questions; the Space's counts are those it
+        checks submissions against.
+      source: src-hf-gaia-leaderboard-app
+      quote: 'ref_scores_len = {"validation": 165, "test": 301}'
+    - count: 165
+      unit: questions, answers public
+      subset: validation
+      source: src-hf-gaia-leaderboard-app
+      quote: 'ref_scores_len = {"validation": 165, "test": 301}'
+  languages:
+    - en
+  submission_limit:
+    max_submissions: 1
+    period_days: 1
+    per: Hugging Face account; accounts created less than 60 days earlier cannot submit
+    source: src-hf-gaia-leaderboard-app
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The GAIA authors (Meta's FAIR and GenAI, Hugging Face and AutoGPT), through the
+    gaia-benchmark organisation on Hugging Face
+  maintainer_basis:
+    reason: The authors are at Meta, Hugging Face and AutoGPT, and the dataset, the leaderboard
+      Space and its results dataset all sit in the gaia-benchmark organisation on Hugging Face.
+    source: src-arxiv-2311-12983-v1
+    quote: 1FAIR, Meta, 2HuggingFace, 3AutoGPT, 4GenAI, Meta
+  maintainer_type: industry-lab
+  submission_process: held-out-server
+  submission_process_note: An entrant logs in with a Hugging Face account and uploads a JSON-lines
+    file of answers to all 301 test questions, with an agent name, a model family, an organisation
+    and a contact address kept privately. The Space scores it at once against the private answers
+    and adds the row; it refuses accounts under 60 days old, a second submission the same day, a
+    model and organisation already listed, and an all-correct file. Rows are not reviewed by hand in
+    any source read.
+  submission_process_source: src-hf-gaia-leaderboard-app
+  submission_process_quote: gold_dataset = load_dataset(INTERNAL_DATA_DATASET
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-hf-gaia-leaderboard-content
+      quote: Submission made by our team are labelled "GAIA authors".
+    - flag: single-evaluator-private-test-set
+      source: src-hf-gaia-leaderboard-content
+      quote: a test set with private answers and metadata
+  independence_flags_note: The authors' own rows (GPT-4, GPT-4 Turbo and GPT-3.5, November 2023) are
+    baselines labelled "GAIA authors". Hugging Face, which co-maintains the benchmark, has also
+    entered an agent of its own library (Hugging Face Agents + GPT-4o, 33.22%, June 2024). The
+    maintainers hold the test answers and score every test submission.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: A run needs a model behind an API and the entrant's own tools; the protocol mandates no
+      hardware, and scoring is a string comparison.
+    source: src-arxiv-2311-12983-v1
+    quote: Evaluating LLMs with GAIA only requires the ability to prompt the model, i.e an API
+      access.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline test score can be produced only by the maintainers' Space, which alone
+      holds the test answers; validation scores can be reproduced by anyone.
+    source: src-hf-gaia-leaderboard-content
+    quote: a test set with private answers and metadata
+  reproducibility_blockers:
+    - private-test-set
+    - live-world-state
+  reproducibility_blockers_note: Most questions are answered from the live web, which changes; the
+    question writers chose sources likely to last and dated the evidence where needed, and asked
+    that the pages be open to bots under their robots.txt.
+  reproducibility_blockers_source: src-arxiv-2311-12983-v1
+  reproducibility_blockers_quote: First, the evidence might change over time.
+  harness_availability: official-harness
+  harness: scorer.py (question_scorer) in the gaia-benchmark/leaderboard Space, at commit 9f133d7.
+    It scores answers only; GAIA ships no agent loop or tools.
+  harness_source: src-hf-gaia-leaderboard-content
+  harness_quote: Our scoring function can be found
+  submission_channel:
+    source: src-hf-gaia-leaderboard-app
+    quote: submit_button = gr.Button("Submit Eval On Test")
+  code_licence: Apache-2.0
+  code_licence_note: The Space's card metadata declares apache-2.0 (its README front matter and its
+    Hugging Face API record, read 2026-10-14); not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile ((exact-match, agent-scaffold) has no profile of its own): the scaffold is the
+  # entrant, and a 2026 decomposition credits most of one system's uplift to scaffolding, routing and specialist
+  # models; the harness that runs it (HAL's, a vendor's own) and the scorer version; the tools given (the paper's
+  # GPT-4 scores 9.1% on Level 1 without tools and 30.3% with hand-picked plugins, Table 4); how a run is selected
+  # and how many are run (the authors list only their best run, and the 2607.17044 paper retracts a figure that
+  # mixed best-of-three with single attempts); and whether a human helped, as the paper's plugin choice did.
+  material_extra:
+    - scaffold
+    - harness
+    - tools_allowed
+    - selection_strategy
+    - n_samples
+    - human_in_loop
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline per split, the percentage of questions answered correctly, shown beside the
+    three level scores.
+  source: src-hf-gaia-leaderboard-content
+  quote: Scores are expressed as the percentage of correct answers for a given split.
+
+homepage: https://huggingface.co/gaia-benchmark
+repository: https://huggingface.co/spaces/gaia-benchmark/leaderboard
+dataset_url: https://huggingface.co/datasets/gaia-benchmark/GAIA
+leaderboard_url: https://huggingface.co/spaces/gaia-benchmark/leaderboard
+
+versions:
+  - version: '2023'
+    label: GAIA 2023, the dataset's 2023 configurations
+    version_kind: revision
+    released: 2023-11-21
+    items: 466
+    changes: The release, 466 questions in three levels, split into a validation set with answers
+      and a test set without; the only version the dataset and the Space name.
+    sources:
+      - src-arxiv-2311-12983
+      - src-hf-api-gaia
+      - src-hf-gaia-leaderboard-app
+
+subsets:
+  - id: gaia#validation
+    label: Validation set (answers public)
+    items: 165
+    scored_separately: true
+    evidence:
+      - source: src-hf-gaia-leaderboard-app
+        quote: 'ref_scores_len = {"validation": 165, "test": 301}'
+    notes: The split papers and HAL report on. Its leaderboard was closed as no longer informative.
+  - id: gaia#test
+    label: Test set (answers private)
+    items: 301
+    scored_separately: true
+    evidence:
+      - source: src-hf-gaia-leaderboard-app
+        quote: 'ref_scores_len = {"validation": 165, "test": 301}'
+    notes: The split the leaderboard scores.
+  - id: gaia#level-1
+    label: Level 1
+    items: 146
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12983-v1
+        quote: Level 1 questions generally require no tools, or at most one tool but no more than 5
+          steps.
+      - source: src-hf-gaia-leaderboard-app
+        quote: 'ref_level_len = {"validation": {1: 53, 2: 86, 3: 26}, "test": {1: 93, 2: 159, 3: 49}}'
+    notes: 53 validation and 93 test questions; the board shows a score per level.
+  - id: gaia#level-2
+    label: Level 2
+    items: 245
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12983-v1
+        quote: Level 2 question generally involve more steps, roughly between 5 and 10 and combining
+          different tools is needed.
+      - source: src-hf-gaia-leaderboard-app
+        quote: 'ref_level_len = {"validation": {1: 53, 2: 86, 3: 26}, "test": {1: 93, 2: 159, 3: 49}}'
+    notes: 86 validation and 159 test questions.
+  - id: gaia#level-3
+    label: Level 3
+    items: 75
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12983-v1
+        quote: Level 3 are questions for a near perfect general assistant, requiring to take
+          arbitrarily long sequences of actions, use any number of tools, and access to the world in
+          general.
+      - source: src-hf-gaia-leaderboard-app
+        quote: 'ref_level_len = {"validation": {1: 53, 2: 86, 3: 26}, "test": {1: 93, 2: 159, 3: 49}}'
+    notes: 26 validation and 49 test questions.
+subsets_note: The levels cut across both splits; the per-level totals (146, 245, 75) are the paper's
+  Table 4 and match the sums of the Space's per-split counts.
+
+lineage:
+  role: root
+
+tags:
+  - general-assistant
+  - web-browsing
+  - multimodal
+  - file-handling
+  - leaderboard
+  - held-out-answers
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2311-12983-v1
+    - src-arxiv-2311-12983
+    - src-iclr-2024-gaia
+    - src-hf-api-gaia
+    - src-hf-gaia-leaderboard-content
+    - src-hf-gaia-leaderboard-app
+    - src-hf-gaia-leaderboard-scorer
+    - src-hf-gaia-results-public-rows
+    - src-hal-gaia-leaderboard
+    - src-arxiv-2607-17044-v1
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date; the ICLR 2024
+    proceedings page for the venue; the gated dataset's public API record only (no terms accepted, no
+    file read); the Space's three app files raw at commit 9f133d7; a filtered page of the public results
+    dataset (the top two rows, the authors' rows and Hugging Face's own) from the datasets-server API;
+    HAL's GAIA board, an existing Source drafted for HAL's entry; and the 2607.17044 v1 PDF as evidence
+    of current use.
+  confidence: medium
+  review_checks:
+    - check: Domain primary is web-navigation because 355 of 466 questions need web browsing by the
+        annotators' count, the agent-evaluation-suites exclusion sends a majority subdomain there,
+        and HAL files GAIA under Web Assistance. GAIA's own claim is general assistants, and the
+        answer, not a web state, is graded; research-agents would fit if its definition did not
+        require citing sources for an open question.
+      field: domain
+      source: src-arxiv-2311-12983-v1
+      quote: Although web browsing is a key component of GAIA
+    - check: tool-use is rejected on the inclusion test's "protocol exposes callable tools", as
+        swe-bench does, although tool use is GAIA's headline claim. perception and
+        context-integration hold only for the questions with multimodal or attached material, and no
+        term covers finding information on the open web, which most questions need (a possible tag
+        gap, not logged with bench tag-gap because this task may not write to taxonomy/).
+      field: capability
+    - check: exact-match's inclusion test allows whitespace or case normalisation; GAIA's scorer
+        also removes punctuation from strings and $, % and commas from numbers.
+      field: evaluation_method
+      source: src-hf-gaia-leaderboard-scorer
+      quote: return no_spaces.lower().translate(translator)
+    - check: data.refresh is left unset, and versions[0].frozen takes its default. The only version
+        named is 2023, but the dataset's lastModified is 2025-10-28 and its commit history is gated
+        (HTTP 401 without accepting its terms), and the split counts differ by one between the paper
+        (166 and 300) and the Space (165 and 301), so whether the content changed after release
+        (static against versioned-releases) is not settled.
+      field: data.refresh
+      source: src-hf-api-gaia
+      quote: '"lastModified":"2025-10-28T14:44:54.000Z"'
+    - check: Identity. Gaia2 (Meta's ARE platform, arXiv 2509.17158 and 2602.11964, not read here)
+        shares the name and part of the team; whether it is GAIA's successor (lineage, and
+        lifecycle) or an unrelated benchmark of its own needs a reading. HAL's GAIA board is
+        recorded as as_used, not as the variant known-pairs labels it.
+      field: lineage
+    - check: maintainer-competes-on-own-benchmark rests on the authors' baseline rows and on Hugging
+        Face, a co-maintainer, entering an agent of its own library; whether that is a competing
+        system or a baseline, and whether Meta's models appear on the board, was not settled.
+      field: governance.independence_flags
+      source: src-hf-gaia-results-public-rows
+      quote: '"model":"Hugging Face Agents + GPT-4o"'
+    - check: Entrants choose which runs to submit (the authors list only their best), the Space
+        takes one submission a day per account, and the top row (94.02%, above the 92% human score)
+        has no description or link; whether repeated submission tunes systems to the private test
+        set is not assessed.
+      field: data.contamination_risk
+      source: src-hf-gaia-leaderboard-content
+      quote: we only report the best run in the leaderboard.
