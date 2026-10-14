@@ -1,0 +1,487 @@
+# data/benchmarks/earth-climate/cy-bench.yaml
+#
+# P1-S7-T01, earth-climate entry 6 of 9. Filled from the CY-Bench paper in Earth System Science Data (ESSD 18,
+# 3997-4018, published 2026-06-11), read as the text of its PDF; the hub site cybench.agml.org, with scripts and
+# styles stripped; the repository's README and CONTRIBUTING guide at main, and the maintainers' March 2025
+# baseline tables (results_baselines, data v1.8); Zenodo's pages for the dataset's v1.0 (2024-06-06) and v1.10
+# (2025-10-06); and the v1 PDF of a July 2026 arXiv paper that trains models on the data (2607.09751). The CY-Bench
+# paper has no arXiv version. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# Lead time and spatial resolution decide what a CY-Bench number means. Both are recorded with quotes in `task`
+# (input and item_definition) and named in comparability.material_extra. No EvalConditions record is written
+# here (see the review checks).
+
+id: cy-bench
+name: CY-Bench
+aliases:
+  - Crop Yield Benchmark
+  - AgML Crop Yield Forecasting
+aliases_note: Not aliased as "Cybench", the cybersecurity benchmark's name (the stub `cybench`),
+  which a search for this entry must not resolve to.
+tagline: Pre-harvest maize and wheat yield forecasts for subnational regions of over 25 countries,
+  scored leave-one-year-out.
+description: >
+  A dataset and benchmark for forecasting end-of-season maize and wheat yields per subnational
+  region before harvest, built by AgML, the machine-learning team of AgMIP, and held by Wageningen
+  University & Research. The targets are official yield statistics at the finest administrative
+  level each country publishes, from US counties and Brazilian municipalities to provinces: 38
+  countries for maize and 29 for wheat in the 2026 paper. Each kind of predictor comes from one global
+  source, harmonised and aggregated over each region's cropland: AgERA5 weather, GLDAS soil
+  moisture, JRC fPAR, MODIS NDVI and WISE soil properties, with ESA WorldCereal crop masks and crop
+  calendars. A forecast is made at a lead time before harvest, the middle of the season by default,
+  with every time series cut there. Models are trained and scored per crop and country by
+  leave-one-year-out cross-validation, with NRMSE, MAPE and R2 computed by the cybench Python library.
+  The maintainers' baseline tables (data v1.8, March 2025) list an average-yield model and a linear
+  trend beside random-forest and ridge regressions; for maize the average-yield model has the lowest
+  NRMSE over all countries. Results by others appear in their own papers.
+self_description:
+  source: src-essd-18-3997-2026
+  quote: we introduce CY-Bench (Crop Yield Benchmark), a comprehensive dataset and benchmark to
+    forecast maize and wheat yields at a global scale
+paper:
+  title: 'CY-Bench: a comprehensive benchmark dataset for sub-national crop yield forecasting'
+  doi: 10.5194/essd-18-3997-2026
+  source: src-essd-18-3997-2026
+released: 2024-06-06
+released_note: The dataset's first Zenodo version (1.0), the one submitted to the NeurIPS Datasets
+  and Benchmarks Track. The paper was received by ESSD on 2025-02-17 and published there on
+  2026-06-11.
+released_source: src-zenodo-cy-bench-v1-0
+released_quote: Published June 6, 2024 | Version 1.0
+release_venue: Zenodo (dataset v1.0); the paper appeared in Earth System Science Data 18 (2026).
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/agriculture
+domain_basis:
+  reason: The scored quantity is a region's end-of-season crop yield, which is what the agriculture
+    leaf names.
+  source: src-essd-18-3997-2026
+  quote: we introduce CY-Bench (Crop Yield Benchmark), a comprehensive dataset and benchmark to
+    forecast maize and wheat yields at a global scale
+domain_considered_and_rejected:
+  - term: earth-climate/remote-sensing
+    reason: Satellite fPAR and NDVI are predictors, already aggregated to regions, and the target is
+      yield. The remote-sensing leaf's exclusion test names CY-Bench as its near miss.
+  - term: earth-climate/weather-forecasting
+    reason: Weather enters as observed predictors cut at the forecast date; no atmospheric state is
+      forecast, and weather forecasts are left out of the inputs.
+    source: src-essd-18-3997-2026
+    quote: We did not include weather forecasts in CY-Bench because the evidence supporting their
+      usefulness is variable
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Models predict a property of an agricultural system, a region's end-of-season yield,
+      from measurements of its weather, soil moisture, vegetation and soil, and the score compares
+      the prediction with the yield the statistics office reported.
+    source: src-essd-18-3997-2026
+    quote: forecasting refers to the production of end-of-season yield estimates with a certain lead
+      time before harvest (e.g., mid-season or 30 d before harvest)
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: Leave-one-year-out holds out each year in turn and pools every fold into one score, to
+      stop correlated yields of the same year leaking into training. No input is drawn deliberately
+      from a shifted distribution and scored as a condition of its own.
+    source: src-essd-18-3997-2026
+    quote: LOYO avoids this by holding out an entire year, ensuring that correlations within that
+      year are only encountered during evaluation.
+  - term: transfer-learning
+    reason: The paper names transfer learning and domain adaptation as research the dataset enables,
+      not as part of its protocol, which trains and tests within one crop and country.
+    source: src-essd-18-3997-2026
+    quote: CY-Bench enables explorations in transfer learning, domain adaptation, and representation
+      learning
+  - term: probabilistic-forecasting
+    reason: The yields of every evaluated year already exist and are in the dataset; the forecasts
+      are point estimates of past seasons, and no probability is scored.
+    source: src-cy-bench-site
+    quote: we evaluate models using predictors and yield statistics for all available years
+  - term: temporal-reasoning
+    reason: The inputs are time series cut at the lead time, but the score is the error of a yield
+      estimate, not whether order or duration was judged correctly.
+
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: NRMSE (the RMSE divided by the test set's mean yield), MAPE and R2 are general
+    goodness-of-fit statistics on continuous yields.
+  source: src-essd-18-3997-2026
+  quote: 'Our library computes the following evaluation metrics: normalized root mean squared error (NRMSE'
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: Dividing the RMSE by the mean yield does not make it a statistic defined only within
+      agronomy.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The benchmark compares data-driven yield models trained from scratch on its own
+    per-country data, for a task agronomy defines. The maintainers' tables rank random-forest and
+    ridge models beside two non-learned baselines, an average-yield model and a linear trend, scored
+    the same way.
+  source: src-github-cy-bench-baselines
+  quote: AverageYieldModel | LinearTrend | RFRes | RidgeRes | SklearnRF | SklearnRidge
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: The models do not stand in for a crop simulation or a solver. They are scored against
+      reported yields, and the paper sets them apart from process-based crop models.
+    source: src-essd-18-3997-2026
+    quote: Traditionally, crop yield prediction has been based on biophysical process based crop
+      models
+  - term: task-specific-supervised-model
+    reason: Crop yield forecasting is defined by agronomy, an earth-climate discipline, which the
+      term's exclusion test sends to domain-specialist-model.
+
+as_used:
+  - protocol: Six country datasets of data v1.4 (maize in Argentina, Germany and Zambia; wheat in
+      India, France and Italy), with each time series summarised over the whole growing season and
+      scored by RMSE on repeated random 70/30 splits, not the benchmark's lead-time cut and
+      leave-one-year-out folds.
+    split: random 70/30, ten seeds
+    source: src-arxiv-2607-09751-v1
+    quote: partitioned using a standardized random-splitting strategy
+    note: A July 2026 paper on synthetic training data for agricultural prediction. Its features run
+      from the start to the end of the growing season, so no lead time applies.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it. A July 2026 paper trains models on CY-Bench data, and
+    the maintainers published their paper in ESSD in June 2026; the repository was last pushed on
+    2026-07-20 (GitHub API).
+  source: src-arxiv-2607-09751-v1
+  quote: Crop yield prediction experiments were carried out using version 1.4 of CY-Bench dataset
+activity: accepting-submissions
+activity_basis:
+  reason: The contribution guide invites outside models, run on the benchmark by their authors and
+    sent to the AgML team for inclusion. The benchmark has never run in rounds.
+  source: src-github-cy-bench-contributing
+  quote: Contribute models. We are still working on putting the leaderboard in GitHub. In the
+    meantime, you can run the benchmark on your own and add models that outperform the baselines.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: RFRes (a random-forest baseline)
+    source: src-github-cy-bench-baselines
+    observed_on: 2026-10-14
+    quote: '| *wheat* | *ALL* | *14.83* | *15.90* | ***14.63*** | *22.01* | *17.05* | *56.93* |'
+    note: The lowest NRMSE over all wheat countries in the March 2025 tables (data v1.8). The
+      columns are AverageYieldModel, LinearTrend, RFRes, RidgeRes, SklearnRF and SklearnRidge.
+  - system: Random-forest, multilayer-perceptron and support-vector regressors
+    source: src-arxiv-2607-09751-v1
+    observed_on: 2026-10-14
+    quote: Random Forest (RF) (Breiman, 2001), Multilayer Perceptron (MLP) (Hornik et al., 1989),
+      and Support Vector Machine (SVM)
+    note: Trained on six CY-Bench country datasets in a July 2026 paper, under its own splits
+      (as_used).
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The yield the statistics office reported for each region in the held-out
+  year. The labels are public and are held out only within each cross-validation fold.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data are on Zenodo, and the cybench library with its baselines is in the repository.
+  source: src-zenodo-cy-bench
+  quote: The full dataset can be downloaded directly from Zenodo
+
+task:
+  exists: true
+  input:
+    - daily weather (AgERA5) and soil moisture (GLDAS), dekadal fPAR and 8-day NDVI, averaged over
+      the region's cropland from 90 days before the start of season up to the forecast date
+    - static soil properties (WISE), the region's location and its crop calendar
+  input_note: The lead time is a condition of every number. The first forecast is at the middle of
+    the season, (eos - sos)/2 before its end; a quarter of the season and n days before harvest are
+    the other options. Every time series is cut at that point, so claims at different lead times are
+    not comparable.
+  input_source: src-cy-bench-site
+  input_quote: The first forecast is made at middle-of-season (EOS - SOS)/2. Other options are
+    quarter-of-season (EOS - SOS)/4 and n-day(s) before harvest.
+  output: The region's end-of-season yield, in tonnes per hectare, for that season.
+  scoring: Per crop and country dataset, leave-one-year-out cross-validation scored by NRMSE (RMSE
+    over the test set's mean yield), MAPE and R2 over the held-out years and the country's regions.
+    The maintainers' tables report the median over folds and add an ALL row per crop and metric.
+  scoring_source: src-github-cy-bench-baselines
+  scoring_quote: Reported results reflect the median computed over folds in a leave-one-year-out
+    cross-validation scheme.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: Every year's statistics are in the public dataset; a year is held
+    out only within its own fold.
+  item_definition: One region-season pair. The region is an administrative unit at the finest level
+    its country publishes statistics for, which differs by country (NUTS 2 or 3 in the EU, admin
+    level 1 or 2 in the FEWS NET countries, counties in the US, municipalities in Brazil and Mali,
+    districts in India, provinces in China). The spatial resolution is therefore a property of each
+    country dataset, fixed by the statistics rather than chosen by the entrant.
+  item_definition_source: src-essd-18-3997-2026
+  item_definition_quote: When statistics for multiple administrative levels are available, we select
+    the highest resolution.
+  source: src-essd-18-3997-2026
+  quote: we adopt Leave-One-Year-Out validation (LOYO), which is more appropriate for this type of
+    agricultural problem
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every country dataset, labels included, is an open download on Zenodo without an
+      account.
+    source: src-zenodo-cy-bench
+    quote: The full dataset can be downloaded directly from Zenodo
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data change in numbered Zenodo versions, each with a note, from 1.0 (June 2024) to
+      1.10 (October 2025). 1.8 filtered the yields, 1.9 changed the ET0 source and 1.10 corrected
+      Australia's yields.
+    source: src-zenodo-cy-bench
+    quote: 1.8 filter out invalid yield values
+  data_provenance:
+    - curated-public-database
+    - real-world-instrument
+    - simulation-generated
+  data_provenance_note: The labels are official yield statistics from national statistics offices
+    and regional compilations (the EU's, FEWS NET's), filtered for consistency. The predictors are
+    satellite products (fPAR, NDVI) and observation-constrained model products, AgERA5 (from the
+    ERA5 reanalysis) and GLDAS (land-surface modelling with data assimilation), which take
+    real-world-instrument and simulation-generated together.
+  data_provenance_source: src-essd-18-3997-2026
+  data_provenance_quote: Crop yield statistics for sub-national administrative levels are obtained
+    from national statistics
+  contamination_risk: medium
+  contamination_risk_note: Every year's yields are public, in the dataset and at the statistics
+    offices, and leave-one-year-out training sees all years but the held-out one, so only the
+    protocol keeps a held-out year's yields out of fitting. Tuning across folds, or pretraining on
+    the published statistics, is a plausible route; no evidence of one was read. The paper chose
+    LOYO against the leakage random splits cause between same-year neighbours, which the random
+    70/30 splits of a July 2026 user reopen (as_used).
+  contamination_evidence: []
+  dataset_licence: EUPL-1.2
+  dataset_licence_note: The licence of the dataset as a whole, on Zenodo and in the paper. Each
+    source dataset keeps its own conditions (upstream_licences); the paper says EUPL-1.2 is
+    compatible with all of them.
+  dataset_licence_source: src-zenodo-cy-bench
+  dataset_licence_quote: Rights License European Union Public License 1.2
+  upstream_licences: Per source dataset, as each data card under data_preparation/ states (yield
+    statistics per country, AgERA5, GLDAS, JRC fPAR, MOD09CMG, WISE, ESA WorldCereal). The data
+    cards were not read, so the mix is not recorded here.
+  upstream_licences_source: src-zenodo-cy-bench
+  upstream_licences_quote: We kindly ask all users of CY-Bench to properly respect licensing and
+    citation conditions of the datasets included.
+  size:
+    - count: 38
+      unit: countries with maize yield statistics
+      subset: maize (the 2026 paper; Zenodo v1.10 gives the same counts)
+      source: src-essd-18-3997-2026
+      quote: covering thirty-eight countries for maize and twenty-nine countries for wheat across
+        six continents
+    - count: 29
+      unit: countries with wheat yield statistics
+      subset: wheat
+      source: src-essd-18-3997-2026
+      quote: covering thirty-eight countries for maize and twenty-nine countries for wheat across
+        six continents
+    - count: 42
+      unit: countries with maize yield statistics
+      subset: maize, data v1.0 (2024)
+      source: src-zenodo-cy-bench-v1-0
+      quote: 'Spatial Coverage : Wheat (29 countries), Maize (42).'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Wageningen University & Research (its AI group), for the AgML community
+  maintainer_basis:
+    reason: The repository sits in the WUR-AI organisation and the site is copyright Wageningen
+      University and Research. AgML, the machine-learning team of AgMIP, conceived and curated the
+      benchmark.
+    source: src-cy-bench-site
+    quote: © Copyright 2025, Wageningen University and Research.
+  maintainer_type: academic-lab
+  maintainer_type_note: community-collective was considered. taxonomy/governance.yaml gives cy-bench
+    as academic-lab's example and community-collective's near miss.
+  submission_process:
+    - maintainer-run
+  submission_process_note: The repository's results tables, which the README calls its leaderboard,
+    hold only the maintainers' runs of their own baselines. The contribution guide asks outside
+    modellers to run the benchmark themselves and send models that beat the baselines to the AgML
+    team for inclusion; no outside model is in the tables, and no source says how a contributed
+    model's numbers would be produced or checked.
+  submission_process_source: src-github-cy-bench-readme
+  submission_process_quote: Leaderboard See [tables inside results_baselines]
+  independence_flags: []
+  independence_flags_note: None recorded. The ranked rows are the maintainers' baselines by design,
+    as in climatebench. The funders are Wageningen's own research programme and the EU's Digital
+    Europe Programme, neither an evaluated party, and the authors declare no competing interests.
+  independence_assessed: true
+  funding:
+    source: src-essd-18-3997-2026
+    quote: This work was partially supported by the WUR Research Investment Theme on Data-Driven
+      Discoveries in a Changing Climate
+  known_limitation:
+    source: src-essd-18-3997-2026
+    quote: the LOYO method of evaluation is used due to small data sizes in many countries
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier_note: Not set. The protocol fits every model once per held-out year, and no source
+    states what one entrant's run needs beyond the whole-benchmark estimate in est_runtime_hours.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Open data and the cybench library train and score a model end to end, with no human,
+      physical or maintainer-only step.
+    source: src-github-cy-bench-readme
+    quote: is an open source python library to load CY-Bench dataset and run the CY-Bench tasks
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: cybench (the repository's Python package; cybench/runs/run_benchmark.py fits a model and
+    computes the metrics)
+  harness_source: src-github-cy-bench-readme
+  harness_quote: is an open source python library to load CY-Bench dataset and run the CY-Bench
+    tasks
+  code_licence: EUPL-1.2
+  code_licence_note: The repository's LICENSE file names EUPL 1.2 for the package and repository
+    only; GitHub's licence metadata reports NOASSERTION (read 2026-10-14).
+  code_licence_source: src-essd-18-3997-2026
+  code_licence_quote: The CY-Bench dataset and the python library are licensed under EUPL-1.2
+  est_runtime_hours:
+    min: 50
+    max: 60
+    basis: The README's estimate for the whole benchmark with the baseline models, run in sequence
+      on one capable GPU; the maintainers' machine had a 32-core Xeon, 256 GB of memory and an RTX
+      A6000. One model's share is not stated.
+    source: src-github-cy-bench-readme
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile, the two conditions this task asks for and one more:
+  #   lead_time -- when in the season the forecast is issued: middle-of-season ((eos - sos)/2), where the hub
+  #     says the first forecast is made, quarter-of-season ((eos - sos)/4), or n days before harvest
+  #     (task.input_quote). The baseline tables do not say which they used.
+  #   subset_used -- the crop and country dataset, which fixes the spatial resolution: the administrative level
+  #     the country publishes (task.item_definition_quote, the paper's Table 2), and the data version (1.4,
+  #     1.8, 1.10, see versions).
+  #   training_data_policy -- whether the model saw only CY-Bench's own predictors and the other years of the
+  #     same dataset, which the protocol assumes, or outside data.
+  material_extra:
+    - lead_time
+    - subset_used
+    - training_data_policy
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The maintainers' tables add an ALL row per crop and metric across the country datasets;
+    how it is computed across countries is not stated.
+  source: src-github-cy-bench-baselines
+  quote: '| *maize* | *ALL* | ***19.83*** | *23.81* | *21.95* |'
+
+homepage: https://cybench.agml.org/
+repository: https://github.com/WUR-AI/AgML-CY-Bench
+dataset_url: https://doi.org/10.5281/zenodo.11502142
+leaderboard_url: https://github.com/WUR-AI/AgML-CY-Bench/tree/main/results_baselines/tables
+
+versions:
+  - version: '1.0'
+    label: Data v1.0, the NeurIPS Datasets and Benchmarks submission
+    released: 2024-06-06
+    changes: The first release, with maize in 42 countries and wheat in 29.
+    frozen: true
+    sources:
+      - src-zenodo-cy-bench-v1-0
+      - src-zenodo-cy-bench
+  - version: '1.8'
+    label: Data v1.8, the version of the maintainers' March 2025 baseline tables
+    changes: Invalid yield values filtered out. Versions 1.1 to 1.7 had fixed column names and
+      region ids, added region shapes, completed the 2023 fPAR, fixed the crop calendar and the NDVI
+      series, and cut stored precision to three decimals.
+    breaking: true
+    frozen: true
+    sources:
+      - src-zenodo-cy-bench
+      - src-github-cy-bench-baselines
+  - version: '1.10'
+    label: Data v1.10, the current Zenodo version
+    released: 2025-10-06
+    changes: 1.9 took ET0 from AgERA5 instead of FAO-AQUASTAT, moved to AgERA5 2.0 and added vapour
+      pressure deficit; 1.10 added region areas and crop masks and corrected Australia's yields.
+      Maize covers 38 countries.
+    breaking: true
+    frozen: true
+    sources:
+      - src-zenodo-cy-bench
+
+tags:
+  - crop-yield
+  - food-security
+  - subnational
+  - maize
+  - wheat
+  - leave-one-year-out
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-essd-18-3997-2026
+    - src-cy-bench-site
+    - src-github-cy-bench-readme
+    - src-github-cy-bench-contributing
+    - src-github-cy-bench-baselines
+    - src-zenodo-cy-bench
+    - src-zenodo-cy-bench-v1-0
+    - src-arxiv-2607-09751-v1
+  sources_note: >
+    The ESSD paper's PDF (a DOI, not archived) read as text; its landing page carries the same dates and
+    licence and is not cited. The hub site with scripts and styles stripped; the README, CONTRIBUTING
+    guide and March 2025 results tables at main; Zenodo's record pages for v1.10 and v1.0 (DOIs, not
+    archived), read as pages because zenodo.org's robots.txt disallows /api; and the v1 PDF of an arXiv
+    paper as evidence of current use. No arXiv version of the CY-Bench paper exists.
+  confidence: medium
+  review_checks:
+    - check: No EvalConditions record was written, because this task may not write data/conditions/.
+        The proposed reference conditions are lead_time middle-of-season ((eos - sos)/2; it is also
+        FORECAST_LEAD_TIME's value in cybench/config.py at main, read 2026-10-14 and not a quoted
+        Source), and subset_used naming crop, country dataset and data version. The tables do not
+        say which lead time they were run at.
+      field: comparability
+      source: src-cy-bench-site
+      quote: The first forecast is made at middle-of-season (EOS - SOS)/2. Other options are
+        quarter-of-season (EOS - SOS)/4 and n-day(s) before harvest.
+    - check: The paper says the metrics are averaged over folds and regions; the tables report the
+        median over folds and an ALL row whose method across countries is not stated. Which defines
+        the official score?
+      field: task.scoring
+      source: src-essd-18-3997-2026
+      quote: These metrics are computed by averaging over all cross-validation test folds
+    - check: classical-algorithm rests on the average-yield and linear-trend baselines in the
+        tables, which are fitted to each region's past yields but contain no learned model. Drop it
+        if baselines that simple should not count as designed-for entrants.
+      field: designed_for_subjects
+    - check: activity accepting-submissions rests on the contribution guide's invitation to send
+        models; the tables hold only the maintainers' baselines, and the guide says the leaderboard
+        is not yet on GitHub. no-submission-channel is the alternative.
+      field: activity
+      source: src-github-cy-bench-contributing
+      quote: Contribute models. We are still working on putting the leaderboard in GitHub.
+    - check: distribution-shift-generalization was rejected because leave-one-year-out pools every
+        held-out year into one score. A specialist may read held-out extreme years as a deliberate
+        shift.
+      field: capability
+      specialist: true
+    - check: data_provenance tags the predictors (satellite products, AgERA5 and GLDAS) beside the
+        labels (official statistics); whether the predictors' provenance belongs in the field is a
+        judgement.
+      field: data.data_provenance
+    - check: Maize coverage fell from 42 countries (v1.0) to 38 (v1.10 and the paper); which
+        countries left, and whether results on v1.0 are comparable, is not stated.
+      field: data.size
