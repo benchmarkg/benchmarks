@@ -1,0 +1,465 @@
+# data/benchmarks/language/squad.yaml
+#
+# P1-S10-T03, language entry 3 of 7. Filled from the SQuAD paper, arXiv 1606.05250 read as its v3 PDF (EMNLP
+# 2016), and its abstract page; the SQuAD 2.0 paper, arXiv 1806.03822 read as its v1 PDF (ACL 2018), and its
+# abstract page; the ACL Anthology pages of both papers (D16-1264, P18-2124); the SQuAD explorer site with both
+# leaderboards (scripts and styles stripped); Hugging Face's API records of rajpurkar/squad and
+# rajpurkar/squad_v2; the README and task file of the SQuAD task in inspect_evals; and the v4 PDF of "When AI
+# Benchmarks Plateau" (arXiv 2602.16763, ICML 2026) as current-use and saturation evidence. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# One entry with SQuAD 1.1 and SQuAD 2.0 as editions: 2.0 keeps 1.1's articles and splits and adds unanswerable
+# questions, and the explorer site carries both leaderboards. The submission tutorial on worksheets.codalab.org
+# could not be read (its TLS certificate expired on 2026-10-07), so the submission route is described from the
+# explorer page alone.
+
+id: squad
+name: SQuAD
+aliases:
+  - Stanford Question Answering Dataset
+  - SQuAD 1.1
+  - SQuAD 2.0
+  - SQuADRUn
+tagline: Extractive QA on Wikipedia paragraphs, scored by exact match and token F1; SQuAD 2.0 adds
+  unanswerable questions.
+description: >
+  Stanford's reading comprehension dataset: crowdworkers wrote questions on paragraphs of 536 English
+  Wikipedia articles, and every answer is a span of the paragraph. A system reads the paragraph and the
+  question and returns a span. SQuAD 2.0 (2018) keeps SQuAD 1.1's questions and article splits and adds
+  53,775 unanswerable questions written by crowdworkers to look like answerable ones, so a system must
+  also
+  abstain when the paragraph does not support an answer. Predictions are scored by exact match and by
+  token-level F1 against the crowdsourced answers, both after removing punctuation and articles, taking
+  the
+  best match over the reference answers. Training and development sets are public; the test set is not
+  released, and official scores come from the SQuAD team running a submitted model on it. The explorer
+  site keeps a leaderboard for each version, each with a crowdworker human-performance row that the top
+  systems now exceed; the newest rows are from 2023 (2.0) and 2021 (1.1). The SQuAD paper received the
+  ACL 2026 Test of Time Award.
+self_description:
+  source: src-arxiv-1606-05250-v3
+  quote: We present the Stanford Question Answering Dataset (SQuAD), a new reading comprehension
+    dataset consisting of 100,000+ questions posed by crowdworkers on a set of Wikipedia articles
+external_ids:
+  inspect_evals: squad
+  huggingface: rajpurkar/squad_v2
+  arxiv: '1606.05250'
+paper:
+  title: 'SQuAD: 100,000+ Questions for Machine Comprehension of Text'
+  arxiv: '1606.05250'
+  doi: 10.18653/v1/D16-1264
+  version_read: v3
+  source: src-arxiv-1606-05250-v3
+released: 2016-06-16
+released_note: The SQuAD paper's first arXiv version, as its abstract page dates it. SQuAD 2.0
+  followed on 2018-06-11 (see versions).
+released_source: src-arxiv-1606-05250
+released_quote: Submitted on 16 Jun 2016
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: language/understanding
+domain_basis:
+  reason: Each question is posed on a supplied Wikipedia paragraph and its answer is a span of that
+    paragraph, so the passage determines the answer, the leaf's definition.
+  source: src-arxiv-1606-05250-v3
+  quote: where the answer to each question is a segment of text from the corresponding reading
+    passage
+domain_considered_and_rejected:
+  - term: language/retrieval-qa
+    reason: The paragraph is given with the question; no document has to be retrieved from a corpus
+      first.
+  - term: language/information-extraction
+    reason: The output is one answer span per question, not structured records such as entities,
+      relations or events.
+capability:
+  - context-integration
+capability_basis:
+  context-integration:
+    reason: The protocol supplies the paragraph that determines the answer and scores whether the
+      system recovered it from that paragraph; in SQuAD 2.0 it also scores whether the system
+      recognised that the paragraph does not support any answer.
+    source: src-arxiv-1806-03822-v1
+    quote: systems must not only answer questions when possible, but also determine when no answer
+      is supported by the paragraph and abstain from answering
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: The answer is always in, or absent from, the supplied paragraph; nothing is answered
+      from what the system brought with it.
+  - term: honesty
+    reason: SQuAD 2.0 rewards abstaining, but only where the key says the question is unanswerable,
+      and abstention is then simply the correct answer; abstaining on an answerable question scores
+      0 like a wrong span. Being wrong is the only failure measured.
+    source: src-arxiv-1806-03822-v1
+    quote: For negative examples, abstaining receives a score of 1, and any other response gets 0,
+      for both exact match and F1.
+  - term: adversarial-robustness
+    reason: The 2.0 questions were written adversarially by crowdworkers to resemble answerable
+      ones, but not against any system under test, and the score is plain exact match and F1, not
+      resistance to an attacker.
+    source: src-arxiv-1806-03822-v1
+    quote: SQuAD 2.0 combines existing SQuAD data with over 50,000 unanswerable questions written
+      adversarially by crowdworkers to look similar to answerable ones.
+  - term: calibration-uncertainty
+    reason: Baseline systems abstain when their predicted no-answer probability passes a threshold,
+      but the scorer consumes only the answer or the abstention, never the probability.
+    source: src-arxiv-1806-03822-v1
+    quote: These models all learn to predict the probability that a question is unanswerable
+
+evaluation_method:
+  - exact-match
+  - reference-metric
+evaluation_method_basis:
+  reason: Exact match marks a prediction correct when it equals any reference answer after removing
+    punctuation and articles, and is averaged over questions. F1 gives per-question partial credit
+    by token overlap with the closest reference answer, a fixed-formula similarity to reference
+    texts, so it is a reference metric rather than a classification metric over a confusion matrix.
+    The two are reported side by side, not combined.
+  source: src-arxiv-1606-05250-v3
+  quote: We treat the prediction and ground truth as bags of tokens, and compute their F1.
+designed_for_subjects:
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: The dataset was built with a training split for models trained on it, from the paper's
+    logistic regression model to the fine-tuned BERT, ALBERT and ELECTRA systems that fill the
+    leaderboards. Prompted general models are scored on it now (inspect_evals' task), but it was
+    built for, and its leaderboards rank, systems trained for the task.
+  source: src-arxiv-1606-05250-v3
+  quote: We build a strong logistic regression model, which achieves an F1 score of 51.0%
+as_used:
+  - protocol: inspect_evals' squad task prompts a model with the paragraph and question, asks for an
+      answer in as few words as possible or 'unanswerable', and scores the reply with its built-in
+      F1 and exact-match scorers.
+    split: SQuAD 2.0 development set (rajpurkar/squad_v2, validation)
+    source: src-github-inspect-evals-squad-task
+    quote: split="validation"
+    note: Unanswerable targets are rewritten from an empty list to the string 'unanswerable', so a
+      longer reply containing the word earns partial F1 where the official script gives 0. Since
+      2026-08-20 its exact match compares full normalised strings, as the official script does.
+
+lifecycle: active
+lifecycle_basis:
+  reason: A 2026 study of benchmark saturation (ICML 2026) included SQuAD v2 among 60 benchmarks it
+    chose for being in current use in LLM evaluation, and inspect_evals maintained its SQuAD 2.0
+    task in 2026. The official leaderboards' newest rows are from 2023 (2.0) and 2021 (1.1), and the
+    top systems exceed the human-performance rows on both; whether that is saturation is for the
+    derived value, not this hand-set one (see review_checks).
+  source: src-arxiv-2602-16763-v4
+  quote: focusing on benchmarks that (i) are actively used in contemporary LLM evaluation
+activity: unknown
+activity_note: The explorer page still tells entrants to submit a model through the CodaLab
+  submission tutorial. Its newest leaderboard rows are dated 2023-09-29 (2.0) and 2021-07-24 (1.1),
+  and the site's repository rajpurkar/SQuAD-explorer was last pushed on 2023-10-13 (GitHub API, read
+  2026-10-14). worksheets.codalab.org, which hosts the tutorial, the evaluation script and every
+  submitted bundle, could not be read on 2026-10-14 because its TLS certificate had expired on
+  2026-10-07, so whether a submission would be run today was not established.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: IE-Net (ensemble), RICOH_SRCB_DML, first on the SQuAD 2.0 leaderboard
+    source: src-squad-leaderboard
+    observed_on: 2026-10-14
+    quote: Human Performance Stanford University (Rajpurkar & Jia et al. '18) 86.831 89.452 1 Jun
+      04, 2021 IE-Net (ensemble) RICOH_SRCB_DML 90.939 93.214
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Crowdworkers' answer spans, at least three per development and test
+  question in SQuAD 1.1; in SQuAD 2.0 the unanswerable questions' key is abstention. The test set's
+  questions and answers are withheld.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The official scores are on a test set that is not released and is scored only by the SQuAD
+    team running the submitted model. The development sets, on which most outside results are
+    reported, and the evaluation script are public.
+  source: src-squad-leaderboard
+  quote: To preserve the integrity of test results, we do not release the test set to the public.
+
+task:
+  exists: true
+  input:
+    - a paragraph from an English Wikipedia article and a question about it
+  output: A span of the paragraph that answers the question, or, in SQuAD 2.0, no answer when the
+    paragraph does not support one.
+  scoring: Exact match and F1, each the maximum over the reference answers and averaged over
+    questions, after removing punctuation and articles; in SQuAD 2.0 an abstention scores 1 on an
+    unanswerable question and any answer scores 0. Both leaderboards show exact match and F1.
+  source: src-arxiv-1606-05250-v3
+  quote: Both metrics ignore punctuations and articles (a, an, the).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: Training and development sets are downloadable from the explorer site and Hugging
+    Face (ungated); the test paragraphs, questions and answers stay with the maintainers.
+  access_basis:
+    reason: The test set is not released, inputs included, and a test score is produced only by the
+      maintainers running the entrant's model on it.
+    source: src-squad-leaderboard
+    quote: Instead, we require you to submit your model so that we can run it on the test set for
+      you.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The content changed in labelled versions, v1.0 (the paper's experiments), v1.1 and 2.0,
+      and the site names the version each leaderboard scores.
+    source: src-squad-leaderboard
+    quote: SQuAD 1.1, the previous version of the SQuAD dataset, contains 100,000+ question-answer
+      pairs on 500+ articles.
+  data_provenance:
+    - crowd-authored
+    - web-scraped
+  data_provenance_note: The paragraphs come from 536 articles sampled from English Wikipedia's top
+    10,000 by PageRank. Crowdworkers on Daemo (backed by Amazon Mechanical Turk) wrote the questions
+    and answers, the extra answers for development and test questions, and SQuAD 2.0's unanswerable
+    questions.
+  data_provenance_source: src-arxiv-1606-05250-v3
+  data_provenance_quote: Next, we employed crowdworkers to create questions.
+  contamination_risk: medium
+  contamination_risk_note: The test questions and answers have never been released, but the
+    paragraphs are English Wikipedia text, and the training and development sets, on which most
+    current results are reported (inspect_evals among them), have been public since 2016 and 2018
+    and sit on Hugging Face. A training route is plausible for those; no evidence was read.
+  contamination_evidence: []
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_note: Each leaderboard has a Human Performance row on its test set, SQuAD 2.0
+    at 86.831 EM and 89.452 F1 and SQuAD 1.1 at 82.304 EM and 91.221 F1, and the top systems exceed
+    both. SQuAD 2.0's figure is a majority vote of extra crowdworkers who answered every question;
+    SQuAD 1.1's is one crowdworker's answer scored against the others.
+  ceiling_anchor_type_basis:
+    reason: The anchor the leaderboards read scores against is measured performance of
+      non-specialist crowdworkers, scored with the same metrics as systems.
+    source: src-arxiv-1806-03822-v1
+    quote: we hired additional crowdworkers to answer all questions in the SQuAD 2.0 development and
+      test sets
+  dataset_licence: CC-BY-SA-4.0
+  dataset_licence_source: src-squad-leaderboard
+  dataset_licence_quote: distributed under the CC BY-SA 4.0 license
+  size:
+    - count: 8862
+      unit: test questions (4,332 unanswerable) on 28 articles, with 11,873 development questions
+        (5,945 unanswerable) on 35 articles
+      subset: SQuAD 2.0 test (withheld)
+      source: src-arxiv-1806-03822-v1
+      quote: 11,873 5,945 35 35 8,862 4,332 28 28
+    - count: 53775
+      unit: unanswerable questions added to SQuAD 1.1's paragraphs
+      subset: SQuAD 2.0
+      source: src-arxiv-1806-03822-v1
+      quote: with 53,775 new, unanswerable questions about the same paragraphs
+    - count: 107785
+      unit: question-answer pairs on 536 articles, split 80/10/10 by article into train, development
+        and test
+      subset: SQuAD v1.0, as the paper describes it
+      source: src-arxiv-1606-05250-v3
+      quote: SQuAD contains 107,785 question-answer pairs on 536 articles
+    - count: 10570
+      unit: development questions
+      subset: SQuAD 1.1 development set (rajpurkar/squad, validation)
+      source: src-hf-api-squad
+      quote: '"name":"validation","num_bytes":10472984,"num_examples":10570'
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Stanford NLP Group (the SQuAD team of Pranav Rajpurkar, Robin Jia and Percy Liang)
+  maintainer_basis:
+    reason: Both papers come from Stanford's Computer Science Department, the human-performance rows
+      are credited to Stanford University, and the explorer site's footer links the Stanford NLP
+      Group.
+    source: src-squad-leaderboard
+    quote: SQuAD Stanford NLP Group
+  maintainer_type: academic-lab
+  maintainer_type_note: The site repository (rajpurkar/SQuAD-explorer) and the Hugging Face datasets
+    (rajpurkar/squad, rajpurkar/squad_v2) sit in one author's personal namespace; the site names the
+    Stanford NLP Group, which is why academic-lab rather than individual (see review_checks).
+  submission_process:
+    - sandboxed-rerun
+    - maintainer-run
+  submission_process_note: Entrants submit a model, as a CodaLab bundle, and the SQuAD team runs it
+    on the hidden test set and posts its exact match and F1; leaderboard rows link to the CodaLab
+    bundles. The SQuAD 2.0 paper's own baselines, BiDAF and DocQA variants marked "modified by
+    Stanford", are on the 2.0 board.
+  submission_process_source: src-squad-leaderboard
+  submission_process_quote: Instead, we require you to submit your model so that we can run it on
+    the test set for you.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-squad-leaderboard
+      quote: BiDAF-No-Answer (single model) University of Washington [modified by Stanford]
+    - flag: single-evaluator-private-test-set
+      source: src-squad-leaderboard
+      quote: To preserve the integrity of test results, we do not release the test set to the
+        public.
+  independence_flags_note: The maintainers' rows are the 2.0 paper's re-implemented baselines, not a
+    system built for the board. ELECTRA (Google Brain & Stanford, 2020) is also on the 2.0 board;
+    its Stanford authors' relation to the SQuAD team was not checked. The SQuAD team holds the test
+    set and runs every official evaluation.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are on the withheld test set, which only the SQuAD team can run. The
+      development-set scores that papers and harnesses report can be reproduced by anyone with the
+      public script.
+    source: src-squad-leaderboard
+    quote: To preserve the integrity of test results, we do not release the test set to the public.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: evaluate-v2.0.py (and the v1.1 script), the official evaluation scripts, on CodaLab
+  harness_source: src-squad-leaderboard
+  harness_quote: the evaluation script we will use for official evaluation
+  code_licence_note: Not recorded. The evaluation scripts sit on CodaLab, which could not be read;
+    GitHub's licence metadata reports MIT for rajpurkar/SQuAD-explorer, the site's repository (read
+    2026-10-14), which does not hold the scripts.
+  runnable_via:
+    - custom
+    - inspect
+  inspect_evals_id: squad
+  inspect_evals_id_note: inspect_evals implements SQuAD 2.0 on the development set with prompted
+    generation and its own F1 and exact-match scorers, drawn from the official script; it does not
+    reproduce the test-set scores (as_used). Its README also says "A simple accuracy is calculated
+    over the datapoints", while the task file scores F1 and exact match.
+  inspect_evals_id_source: src-github-inspect-evals-squad-readme
+  inspect_evals_id_quote: inspect eval inspect_evals/squad
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the version and split (SQuAD 1.1 or 2.0, the hidden test set or the public
+  # development set, which most papers and inspect_evals report), the metric (exact match or F1), and what the
+  # system was trained on (SQuAD's training set, or nothing for prompted models), plus the prompt for those.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - prompt_template_hash
+
+homepage: https://rajpurkar.github.io/SQuAD-explorer/
+repository: https://github.com/rajpurkar/SQuAD-explorer
+dataset_url: https://huggingface.co/datasets/rajpurkar/squad_v2
+leaderboard_url: https://rajpurkar.github.io/SQuAD-explorer/
+
+versions:
+  - version: '1.1'
+    label: SQuAD 1.1
+    version_kind: edition
+    changes: The original release. The paper's experiments are on v1.0 (107,785 question-answer
+      pairs on 536 articles); what v1.1 changed is not described in the sources read. Its
+      leaderboard's earliest row is dated 2016-08-27.
+    breaking: true
+    superseded_by: '2.0'
+    frozen: true
+    sources:
+      - src-arxiv-1606-05250-v3
+      - src-arxiv-1606-05250
+      - src-acl-d16-1264
+      - src-hf-api-squad
+  - version: '2.0'
+    label: SQuAD 2.0 (SQuADRUn in the ACL version of its paper)
+    version_kind: edition
+    released: 2018-06-11
+    changes: Adds 53,775 crowdworker-written unanswerable questions to SQuAD 1.1's paragraphs, in
+      the same article splits, so systems must also abstain; scoring gives an abstention 1 on those
+      questions. It became the primary benchmark on the official leaderboard.
+    breaking: true
+    supersedes_version: '1.1'
+    frozen: true
+    sources:
+      - src-arxiv-1806-03822-v1
+      - src-arxiv-1806-03822
+      - src-acl-p18-2124
+      - src-hf-api-squad-v2
+
+tags:
+  - reading-comprehension
+  - extractive-qa
+  - question-answering
+  - unanswerable-questions
+  - wikipedia
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1606-05250-v3
+    - src-arxiv-1606-05250
+    - src-arxiv-1806-03822-v1
+    - src-arxiv-1806-03822
+    - src-acl-d16-1264
+    - src-acl-p18-2124
+    - src-squad-leaderboard
+    - src-hf-api-squad
+    - src-hf-api-squad-v2
+    - src-github-inspect-evals-squad-readme
+    - src-github-inspect-evals-squad-task
+    - src-arxiv-2602-16763-v4
+  sources_note: >
+    Both papers' PDFs (DOIs, not archived) read as text and their abstract pages for dates and venues;
+    the ACL Anthology pages for the DOIs, the CC BY 4.0 licence and the 2026 award; the explorer page
+    with scripts and styles stripped, withheld from archiving because it gives a maintainer's e-mail
+    address; Hugging Face's API records of both datasets; inspect_evals' SQuAD README and task file at
+    main; and the v4 PDF of a 2026 saturation study (a DOI, not archived) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: lifecycle is hand-set active; saturated is derived and was not set. Saturation evidence
+        read but not asserted - the top rows exceed the Human Performance rows on both leaderboards
+        (2.0, 90.939 EM / 93.214 F1 against 86.831 / 89.452; 1.1, 90.622 / 95.719 against 82.304 /
+        91.221), and Figure 1 of arXiv 2602.16763 ranks SQuAD v2 first by its saturation index, near
+        1.0. The figure is an image, so it is not quoted. mature may also fit, since the official
+        record has not moved since 2023.
+      field: lifecycle
+      source: src-squad-leaderboard
+      quote: Human Performance Stanford University (Rajpurkar & Jia et al. '18) 86.831 89.452 1 Jun
+        04, 2021 IE-Net (ensemble) RICOH_SRCB_DML 90.939 93.214
+    - check: submission_process is sandboxed-rerun, not the held-out-server the assignment expected,
+        because entrants hand over a model that the SQuAD team runs, not predictions. CodaLab runs
+        bundles in Docker images, so containerized-algorithm-submission is the alternative; the
+        tutorial that would settle it could not be read.
+      field: governance.submission_process
+      source: src-squad-leaderboard
+      quote: Instead, we require you to submit your model so that we can run it on the test set for
+        you.
+    - check: activity is unknown. worksheets.codalab.org failed TLS on 2026-10-14 (certificate valid
+        2026-07-09 to 2026-10-07), so the tutorial and scripts were unreadable and
+        curation.unreachable could not record it (no HTTP status). No source says submissions are
+        closed; the newest row is 2023-09-29 and the site repository was last pushed 2023-10-13.
+        Re-check once CodaLab answers.
+      field: activity
+    - check: ceiling_anchor_type is crowd-average, from SQuAD 2.0's majority-vote crowd answers.
+        SQuAD 1.1's human figure is one crowd answer scored against the others, which its paper
+        calls interannotator agreement and could be read as noise-ceiling.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-1606-05250-v3
+      quote: These results are still well behind human performance, which is 86.8% F1 based on
+        interannotator agreement.
+    - check: exact-match normalisation removes punctuation and articles as well as case, slightly
+        more than the term's whitespace-or-case allowance; reference-metric is assigned to token F1.
+      field: evaluation_method
+      source: src-arxiv-1606-05250-v3
+      quote: Both metrics ignore punctuations and articles (a, an, the).
+    - check: maintainer_type academic-lab or individual. The site, its repository and the Hugging
+        Face datasets sit in Pranav Rajpurkar's personal namespaces, and the site's only
+        institutional statement is a footer link to the Stanford NLP Group.
+      field: governance.maintainer_type
+      source: src-squad-leaderboard
+      quote: SQuAD Stanford NLP Group
+    - check: maintainer-competes-on-own-benchmark rests on the 2.0 paper's re-implemented baselines
+        on the board, as RoboCasa's entry treats its baseline rows; whether baselines should carry
+        the flag is open.
+      field: governance.independence_flags
+    - check: The entry treats SQuAD 1.1 and 2.0 as editions of one entry. 2.0 is distinct enough
+        (abstention, its own leaderboard) to be its own entry, and v1.0, on which the 2016 paper's
+        experiments ran, is not recorded as a version because no source read says what v1.1 changed.
+      field: versions

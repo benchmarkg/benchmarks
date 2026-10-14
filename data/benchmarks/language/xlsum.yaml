@@ -1,0 +1,480 @@
+# data/benchmarks/language/xlsum.yaml
+#
+# P1-S10-T03, language entry 7 of 7. Filled from the XL-Sum paper, arXiv 2106.13822 read as its v1 PDF (the
+# camera-ready of Findings of ACL-IJCNLP 2021), and its abstract page; the ACL Anthology page of the published
+# version (scripts and styles stripped); the repository README and its multilingual ROUGE module's README, at
+# master; Hugging Face's API record of the csebuetnlp/xlsum dataset; and the v5 PDF of AfroBench (arXiv
+# 2311.07978, ACL Findings 2025), a paper that scores LLMs on XL-Sum. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: xlsum
+name: XL-Sum
+aliases:
+  - XLSum
+  - XL-Sum v2.0
+tagline: BBC article-summary pairs in 44 languages (45 in v2.0), for multilingual abstractive
+  summarization scored by ROUGE.
+description: >
+  A multilingual abstractive summarization dataset built from the BBC's news sites. Most BBC articles
+  open with a bold paragraph of one or two sentences, written by the article's author, that sums up
+  the story; XL-Sum takes that paragraph as the reference summary and the rest of the article as the
+  input. The paper's release (v1.0) holds 1,005,292 pairs in 44 languages, BBC's 43 language services
+  with Serbian counted once per script, more than two-thirds of them low-resource by the paper's
+  measure. The newer release (v2.0), which the maintainers recommend, adds Traditional Chinese and
+  holds about 1.35 million pairs, deduplicated and split 80/10/10 per language. Systems generate a
+  summary of each test article in its language and are scored per language by ROUGE-1, ROUGE-2 and
+  ROUGE-L against the BBC summary. Because ROUGE depends on tokenization and stemming, the repository
+  ships a multilingual adaptation of Google's rouge-score with language-specific stemmers and word
+  segmenters, and how a score was computed is part of what it means. The baselines are mT5 models
+  fine-tuned on the training split; prompted LLMs are now scored on it too, in suites such as
+  AfroBench.
+self_description:
+  source: src-arxiv-2106-13822-v1
+  quote: We release XL-Sum, a dataset containing 1 million article-summary pairs in 44 languages
+external_ids:
+  huggingface: csebuetnlp/xlsum
+  papers_with_code: xl-sum
+  arxiv: '2106.13822'
+paper:
+  title: 'XL-Sum: Large-Scale Multilingual Abstractive Summarization for 44 Languages'
+  arxiv: '2106.13822'
+  doi: 10.18653/v1/2021.findings-acl.413
+  version_read: v1
+  source: src-arxiv-2106-13822-v1
+released: 2021-06-25
+released_note: The arXiv submission, as the abstract page dates it; the only arXiv version, the
+  camera-ready of the Findings paper.
+released_source: src-arxiv-2106-13822
+released_quote: Submitted on 25 Jun 2021
+release_venue: Findings of ACL-IJCNLP 2021
+release_venue_source: src-aclanthology-2021-findings-acl-413
+release_venue_quote: 'Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: language/summarization
+  secondary:
+    - language/multilingual
+    - language/low-resource-languages
+domain_basis:
+  reason: The scored act is producing a shorter text that keeps an article's key content, the
+    summarization leaf's definition. The same task is run and reported per language across 44 (later
+    45) languages, which is the multilingual leaf, and the paper builds and evaluates it for
+    low-resource languages, more than two-thirds of its set by its own threshold. The primary is the
+    task, as FLORES's is translation with multilingual secondary.
+  source: src-arxiv-2106-13822-v1
+  quote: 'We performed summarization experiments in two settings: (i) multilingual, and (ii) lowresource.'
+domain_considered_and_rejected:
+  - term: language/translation
+    reason: Each summary is in its article's own language; nothing is rendered from one language
+      into another. The cross-lingual variant is CrossSum, a separate dataset the README points to.
+    source: src-github-xl-sum-readme
+    quote: the cross-lingual extension of XL-Sum
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: The system's summary is scored by ROUGE n-gram and longest-common-subsequence overlap
+      with the reference summary, a similarity to a target.
+    source: src-arxiv-2106-13822-v1
+    quote: We used the ROUGE-1, ROUGE-2 and ROUGE-L (Lin, 2004) scores for automatic evaluation.
+capability_considered_and_rejected:
+  - term: context-integration
+    reason: The article is supplied, but the score is overlap with the BBC summary, not a check that
+      the system used the article correctly. By the paper's own human evaluation about a third of
+      the reference summaries carry information the article does not support, so the reference is
+      not determined by the supplied material.
+    source: src-arxiv-2106-13822-v1
+    quote: while about one-third on average had information that was not directly inferrable
+      (Property C)
+  - term: factual-precision
+    reason: ROUGE counts overlapping n-grams; no particular asserted in the summary is checked
+      against the article or the reference one by one.
+
+evaluation_method:
+  - reference-metric
+evaluation_method_note: The scorer is material. ROUGE was built for English and its numbers move
+  with tokenization and stemming; the README's multilingual ROUGE module adapts Google's rouge-score
+  with stemmers for 18 languages and word segmenters for Chinese, Thai, Japanese and Burmese, and
+  falls back to Unicode punctuation stripping for the rest. The paper notes that Japanese scored
+  high after Fugashi segmentation and that no reliable stemmer was found for Amharic and
+  Azerbaijani.
+evaluation_method_basis:
+  reason: ROUGE-1, ROUGE-2 and ROUGE-L against one reference summary per article, reported per
+    language, are fixed-formula similarity measures.
+  source: src-arxiv-2106-13822-v1
+  quote: We used the ROUGE-1, ROUGE-2 and ROUGE-L (Lin, 2004) scores for automatic evaluation.
+evaluation_method_considered_and_rejected:
+  - term: model-derived-metric
+    reason: AfroBench scores its XL-Sum subset with BERTScore, a learned metric, but that is one
+      suite's protocol (as_used), not the benchmark's own metric.
+    source: src-arxiv-2311-07978-v5
+    quote: Summarization (bertscore)
+  - term: human-expert-eval
+    reason: The paper's professional annotators rated the dataset's own reference summaries in ten
+      languages, not system outputs.
+    source: src-arxiv-2106-13822-v1
+    quote: to assess the quality of the top-10 languages according to the number of speakers
+      worldwide
+designed_for_subjects:
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: The dataset is built to train summarization models, and its baselines are mT5 checkpoints
+    fine-tuned on the training split and scored as trained, multilingually and per low-resource
+    language.
+  source: src-arxiv-2106-13822-v1
+  quote: In this section, we train summarization models with the XL-Sum dataset and provide several
+    baselines and benchmark results.
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: Prompted LLMs are scored on it now (observed_subjects), but it was built as training and
+      test data for fine-tuned summarizers.
+observed_subjects:
+  values:
+    - instruction-tuned-model
+    - task-specific-supervised-model
+  basis: >
+    AfroBench (ACL Findings 2025) prompts instruction-tuned LLMs, among them GPT-4o, Gemini 1.5 Pro,
+    Gemma 2 and LLaMa 3.1, on XL-Sum's African-language test sets, beside a fine-tuned AfriTeVa V2
+    Large baseline.
+  source: src-arxiv-2311-07978-v5
+as_used:
+  - protocol: Instruction-tuned LLMs prompted zero-shot with three summarization prompts (few-shot
+      for the best models), on the test sets of ten African languages (twelve languages in its Table
+      2, English among them), scored by BERTScore rather than ROUGE.
+    split: test
+    source: src-arxiv-2311-07978-v5
+    quote: Summarization (bertscore)
+    note: AfroBench's XL-Sum task. Its Arabic and English test sizes (4,689 and 11,535) are the
+      README's v2.0 test splits, so it uses v2.0; scores are not comparable with ROUGE results.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced against it; AfroBench, accepted at ACL 2025 (Findings),
+    reports per-language XL-Sum results for twelve LLMs. The repository was last pushed on
+    2024-03-26 (GitHub API, read 2026-10-14), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2311-07978-v5
+  quote: 'Figure 30: Per-language performance results for the XL-SUM dataset.'
+activity: unknown
+activity_note: XL-Sum has no leaderboard or server of its own; results appear in papers. The README
+  points to an ExplainaBoard leaderboard for XL-Sum, a third party's (NeuLab's) service. Its page
+  still loads, but its rows are fetched by script, so whether it holds or takes results was not
+  established.
+activity_basis:
+  reason: The one results route the maintainers name is a third-party leaderboard whose state could
+    not be read; without it the value would be no-submission-channel (see review_checks).
+  source: src-github-xl-sum-readme
+  quote: The leaderboard can be found
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: mT5-base fine-tuned on XL-Sum (multilingual)
+    source: src-arxiv-2106-13822-v1
+    observed_on: 2026-10-14
+    quote: The mT5-base model achieves a R2-score of 15.18 on the English language.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The BBC's own summary paragraph of each test article, written by the
+  article's author; test references are public in both releases.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Every split with its reference summaries is downloadable without a gate, and the ROUGE
+    scorer the maintainers used is released.
+  source: src-hf-api-xlsum
+  quote: '"gated":false'
+
+task:
+  exists: true
+  input:
+    - a BBC news article in one of the dataset's languages, with its headline and summary paragraph
+      removed and image captions kept
+  output: A short summary in the article's language, comparable to the BBC's one- or two-sentence
+    summary paragraph.
+  scoring: ROUGE-1, ROUGE-2 and ROUGE-L against the article's BBC summary, averaged per language on
+    its test split; the multilingual ROUGE module supplies language-specific stemming and
+    segmentation.
+  source: src-arxiv-2106-13822-v1
+  quote: All texts except the summary and the headline must be included in the input text (including
+    image captions).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The Hugging Face copy is ungated, and the README links direct downloads per language.
+    The README asks users to agree to the licence before use, which is a statement, not a gate.
+  access_basis:
+    reason: All splits, test summaries included, download from the ungated Hugging Face dataset.
+    source: src-hf-api-xlsum
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The content changed once, in a second release that the README describes against the
+      paper's; the files are labelled v2.0 and the old release sits under legacy/v1.0, so a claim
+      can name its version.
+    source: src-github-xl-sum-readme
+    quote: 'We are releasing two versions of the dataset: an older version that has been reported in the
+      paper; and a newer version with **another added language (Traditional Chinese)**'
+  data_provenance:
+    - web-scraped
+  data_provenance_note: Articles and their summary paragraphs were crawled from the BBC's language
+    sites and paired by extraction heuristics. The summaries were written by BBC journalists for
+    publication, not for the benchmark.
+  data_provenance_source: src-arxiv-2106-13822-v1
+  data_provenance_quote: As BBC does not provide any archive or RSS feed on their website, we
+    designed a crawler to recursively crawl pages starting from the homepage
+  contamination_risk: medium
+  contamination_risk_note: The test articles and summaries are public BBC web pages and have been
+    downloadable as a dataset since 2021, so a route into pretraining or instruction-tuning data is
+    plausible. No source read evidences one for the test splits; AfroBench states it could not
+    check.
+  contamination_risk_source: src-arxiv-2311-07978-v5
+  contamination_risk_quote: Without knowledge of the data mixture, we cannot determine whether or by
+    how much or evaluation sets overlap with the training dataset.
+  contamination_evidence: []
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: Hugging Face's record carries the same licence.
+  dataset_licence_source: src-github-xl-sum-readme
+  dataset_licence_quote: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+    License (CC BY-NC-SA 4.0)
+  upstream_licences: The articles and summaries are the BBC's; the README leaves their copyright
+    with its holders, and no BBC licence for the text is stated.
+  upstream_licences_source: src-github-xl-sum-readme
+  upstream_licences_quote: Copyright of the dataset contents belongs to the original copyright
+    holders.
+  size:
+    - count: 1350000
+      unit: article-summary pairs (the README's rounded total)
+      subset: v2.0
+      source: src-github-xl-sum-readme
+      quote: The new version contains a total of **1.35 million** article-summary pairs
+    - count: 45
+      unit: languages (v1.0's 44 and Traditional Chinese)
+      subset: v2.0
+      source: src-github-xl-sum-readme
+      quote: 'We are releasing two versions of the dataset: an older version that has been reported in
+        the paper; and a newer version with **another added language (Traditional Chinese)**'
+    - count: 1005292
+      unit: article-summary pairs (Table 2's total)
+      subset: v1.0
+      source: src-arxiv-2106-13822-v1
+      quote: 11,596 6,316 1,005,292
+    - count: 44
+      unit: languages (BBC's 43 services, Serbian counted once per script)
+      subset: v1.0
+      source: src-arxiv-2106-13822-v1
+      quote: We treat them as different languages in this work, totaling to a coverage of 44
+        languages.
+    - count: 500
+      unit: test pairs per language, with 500 more for development
+      subset: v1.0, as the paper split it
+      source: src-arxiv-2106-13822-v1
+      quote: we randomly sampled 500 pairs for its development set and 500 pairs for its test set
+  size_note: v2.0 splits every language 80/10/10 except English (93/3.5/3.5, 11,535 test pairs) and
+    Scottish Gaelic, Kyrgyz and Sinhala (500 test pairs each); Chinese and Serbian use the same
+    evaluation articles in both of their variants.
+  languages:
+    - Amharic
+    - Arabic
+    - Azerbaijani
+    - Bengali
+    - Burmese
+    - Chinese (Simplified)
+    - Chinese (Traditional)
+    - English
+    - French
+    - Gujarati
+    - Hausa
+    - Hindi
+    - Igbo
+    - Indonesian
+    - Japanese
+    - Kirundi
+    - Korean
+    - Kyrgyz
+    - Marathi
+    - Nepali
+    - Oromo
+    - Pashto
+    - Persian
+    - West African Pidgin English
+    - Portuguese
+    - Punjabi
+    - Russian
+    - Scottish Gaelic
+    - Serbian (Cyrillic)
+    - Serbian (Latin)
+    - Sinhala
+    - Somali
+    - Spanish
+    - Swahili
+    - Tamil
+    - Telugu
+    - Thai
+    - Tigrinya
+    - Turkish
+    - Ukrainian
+    - Urdu
+    - Uzbek
+    - Vietnamese
+    - Welsh
+    - Yoruba
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: csebuetnlp, an NLP group at Bangladesh University of Engineering and Technology (BUET)
+  maintainer_basis:
+    reason: The repository and the Hugging Face dataset sit in the csebuetnlp organisation, and the
+      first authors are at BUET; co-authors are at Rochester, Monash and Swinburne.
+    source: src-arxiv-2106-13822-v1
+    quote: Bangladesh University of Engineering and Technology (BUET)
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: The maintainers publish the paper's mT5 baselines and, in the README, the
+    scores of their own v2.0 multilingual checkpoint, and keep no ranking. Others report results in
+    their own papers; the ExplainaBoard leaderboard the README links is a third party's.
+  submission_process_source: src-github-xl-sum-readme
+  submission_process_quote: Multilingual model scores on test sets are given below.
+  independence_flags: []
+  independence_flags_note: None recorded. The paper's acknowledged support is compute at the OzSTAR
+    national facility, funded in part by the Australian Government; the maintainers' own entries are
+    release baselines with no board to compete on.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The test splits and their references are public and the scorer is a released fixed
+      formula, so any system can be scored end to end.
+    source: src-hf-api-xlsum
+    quote: '"gated":false'
+  harness_availability: official-harness
+  harness: xl-sum's multilingual_rouge_scoring module (an adaptation of Google's rouge-score) and
+    its seq2seq training and evaluation module
+  harness_note: The README's v2.0 benchmark scores come from these modules. UK AISI's inspect_evals
+    does not implement XL-Sum (its listing of 137 evaluations, read 2026-10-14). AfroBench's
+    African-language XL-Sum task runs in EleutherAI's lm-evaluation-harness, with its own prompts
+    and BERTScore.
+  harness_source: src-github-xl-sum-multilingual-rouge-readme
+  harness_quote: Enables multilingual ROUGE scoring by making use of popular word segmentation /
+    stemming algorithms for various languages.
+  code_licence: CC-BY-NC-SA-4.0
+  code_licence_note: The README's licence covers the repository's contents. The ROUGE module adapts
+    Google's rouge-score, originally Apache 2.0; GitHub's licence metadata for the repository is
+    empty (read 2026-10-14).
+  code_licence_source: src-github-xl-sum-readme
+  code_licence_quote: Contents of this repository are restricted to only non-commercial research
+    purposes under the
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the release and language (v1.0's paper splits or v2.0's), the ROUGE implementation
+  # with its tokenizer, stemmer and segmenter (Google's rouge-score, the multilingual module, BERTScore in
+  # AfroBench), whether the system was fine-tuned on the training split or prompted, and with how many shots.
+  material_extra:
+    - subset_used
+    - harness
+    - training_data_policy
+    - shots
+
+homepage: https://github.com/csebuetnlp/xl-sum
+repository: https://github.com/csebuetnlp/xl-sum
+dataset_url: https://huggingface.co/datasets/csebuetnlp/xlsum
+
+versions:
+  - version: v1.0
+    label: XL-Sum as reported in the paper
+    version_kind: revision
+    released: 2021-06-25
+    items: 1005292
+    changes: The first release, 44 languages; the paper drew 500 development and 500 test pairs per
+      language for its experiments.
+    breaking: true
+    superseded_by: v2.0
+    frozen: true
+    sources:
+      - src-arxiv-2106-13822-v1
+      - src-github-xl-sum-readme
+  - version: v2.0
+    label: XL-Sum v2.0, the README's newer version
+    version_kind: revision
+    changes: Traditional Chinese added (45 languages), about 1.35 million pairs, better formatting
+      and extraction, deduplication and larger 80/10/10 evaluation splits. The README's benchmarks
+      and released checkpoint are on it; its release date is not stated in the sources read.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: true
+    sources:
+      - src-github-xl-sum-readme
+      - src-hf-api-xlsum
+
+tags:
+  - summarization
+  - multilingual
+  - low-resource-languages
+  - news
+  - bbc
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2106-13822-v1
+    - src-arxiv-2106-13822
+    - src-aclanthology-2021-findings-acl-413
+    - src-github-xl-sum-readme
+    - src-github-xl-sum-multilingual-rouge-readme
+    - src-hf-api-xlsum
+    - src-arxiv-2311-07978-v5
+  sources_note: >
+    The XL-Sum paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date and
+    venue; the ACL Anthology page of the published version (its DOI) with scripts and styles stripped;
+    the repository README and the multilingual ROUGE module's README at master; Hugging Face's public
+    API record of the ungated dataset; and AfroBench's v5 PDF (a DOI, not archived) as evidence of
+    current use.
+  confidence: medium
+  review_checks:
+    - check: Primary is summarization, with multilingual and low-resource-languages secondary. The
+        language leaves carry definitions but no inclusion tests yet; multilingual could be argued
+        primary, since the dataset's contribution is its language coverage.
+      field: domain
+    - check: The 44 (v2.0 45) languages are scored separately but recorded as a size count and
+        data.languages, not as subsets. Whether per-language subsets are wanted for claims.
+      field: subsets
+    - check: activity unknown or no-submission-channel. The README names an ExplainaBoard
+        leaderboard (NeuLab's, third party); its page loads but its rows come from a script, and
+        whether it still takes results was not established.
+      field: activity
+      source: src-github-xl-sum-readme
+      quote: The leaderboard can be found
+    - check: v2.0 is recorded as a breaking revision of v1.0, with no release date found; the
+        paper's results are on v1.0 and the README's on v2.0. The labels come from the legacy/v1.0
+        folder and the v2.0 file names.
+      field: versions
+    - check: fully-open despite the README's call to agree to the licence and terms before use; the
+        Hugging Face copy is ungated.
+      field: data.access
+      source: src-github-xl-sum-readme
+      quote: You must agree to the
+    - check: The repository's CC BY-NC-SA 4.0 is the maintainers' grant; the article text stays the
+        BBC's copyright. Whether that limits redistribution enough for licence-restriction, and
+        whether the ROUGE module is better recorded as Apache 2.0.
+      field: execution.code_licence
+      source: src-github-xl-sum-readme
+      quote: Copyright of the dataset contents belongs to the original copyright holders.
+    - check: literature-only although the README tabulates the maintainers' own v2.0 checkpoint
+        scores; that is one release baseline, not a ranking, but maintainer-run is arguable.
+      field: governance.submission_process

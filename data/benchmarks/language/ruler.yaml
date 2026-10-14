@@ -1,0 +1,478 @@
+# data/benchmarks/language/ruler.yaml
+#
+# P1-S10-T03, language entry 4 of 7. Filled from the RULER paper, arXiv 2404.06654 read as its v3 PDF (2024-08-06,
+# COLM 2024), and its abstract page; the NVIDIA/RULER README at main and its scorer
+# (scripts/eval/synthetic/constants.py); lm-evaluation-harness's RULER task README and scoring utilities at the
+# pin docs/pins.md records; and the v1 PDF of the Mellum 2 technical report (arXiv 2605.31268, May 2026), as
+# evidence of current use. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+
+id: ruler
+name: RULER
+tagline: Synthetic long-context tasks generated at any input length, reporting the context size a
+  model can really use.
+description: >
+  NVIDIA's synthetic benchmark for long-context language models. A generator builds every input
+  at a chosen length, counted in the evaluated model's own tokens (4K to 128K in the paper), so the
+  same tasks can be rerun as the input grows. The 13 tasks fall in four categories. Retrieval has
+  eight needle-in-a-haystack variants, with different needle types, distractor needles, and
+  several values or keys to return. Multi-hop tracing follows a chain of variable assignments.
+  Aggregation returns the most common or most frequent words of a long synthetic word list.
+  Question answering hides SQuAD and HotpotQA gold paragraphs among distractor paragraphs. Each
+  task is scored by whether the reference strings appear in the model's output, over 500 samples
+  per length, and the 13 task scores are averaged at each length. The headline is a model's
+  effective context length, the longest tested length at which its average still beats
+  Llama2-7B's score at 4K (85.6%), set beside the length the model claims. The paper evaluated 17
+  models in 2024; the repository's results table has grown since, partly with rows that model
+  developers reported in their own papers.
+self_description:
+  source: src-arxiv-2404-06654-v3
+  quote: we create a new synthetic benchmark RULER with flexible configurations for customized
+    sequence length and task complexity
+external_ids:
+  arxiv: '2404.06654'
+paper:
+  title: "RULER: What's the Real Context Size of Your Long-Context Language Models?"
+  arxiv: '2404.06654'
+  version_read: v3
+  source: src-arxiv-2404-06654-v3
+released: 2024-04-09
+released_note: The paper's first arXiv version, as the abstract page dates it. The version read, v3
+  (2024-08-06), is the COLM 2024 camera-ready.
+released_source: src-arxiv-2404-06654
+released_quote: Submitted on 9 Apr 2024
+release_venue: COLM 2024
+release_venue_source: src-arxiv-2404-06654
+release_venue_quote: COLM 2024; Code is available at
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: language/long-context
+domain_basis:
+  reason: The benchmark's subject is how well a language model uses a long input, and its difficulty
+    is set by the input's length; every task is run at increasing lengths to find where performance
+    drops.
+  source: src-arxiv-2404-06654-v3
+  quote: In this work, we propose RULER, a new benchmark to evaluate long-context modeling
+    capabilities for language models
+domain_considered_and_rejected:
+  - term: language/retrieval-qa
+    reason: The QA category's gold paragraphs are inside the input, among distractor paragraphs; the
+      system retrieves nothing from a corpus first, which the leaf's definition asks.
+    source: src-arxiv-2404-06654-v3
+    quote: In this task category, we insert the golden paragraphs (i.e., the paragraphs that contain
+      answers) into paragraphs randomly sampled from the same dataset.
+  - term: reasoning-general/logical-deduction
+    reason: Variable tracking is decidable from the stated bindings, but it is one task of 13, the
+      paper frames it as a proxy for coreference resolution, and the object of study is long-context
+      modelling, not a reasoning form (reasoning-general's inclusion test).
+    source: src-arxiv-2404-06654-v3
+    quote: 'Multi-hop Tracing: we propose variable tracking, a minimal proxy task for coreference chain
+      resolution to check the behavior of tracing entities with multi-hop connections.'
+capability:
+  - context-integration
+capability_basis:
+  context-integration:
+    reason: Every answer is fixed by material the input supplies, such as random values hidden in a
+      haystack, a chain of variable bindings, word counts in a synthetic list or a gold paragraph
+      among distractors. The inputs are synthetic so that knowledge the model already holds does not
+      help.
+    source: src-arxiv-2404-06654-v3
+    quote: The synthetic input in RULER reduces reliance on parametric knowledge, which interferes
+      with the utilization of long-context input in realistic tasks
+capability_considered_and_rejected:
+  - term: memory-retention
+    reason: The needle sits earlier in the input than the query at its end, but the whole input is
+      in the window when the query is read. The term's exclusion keeps it off benchmarks where only
+      the input is long, and RULER does not vary or report the distance between needle and query.
+    source: src-arxiv-2404-06654-v3
+    quote: Current RULER reports a single number metric for each input length without providing the
+      depth-level performance.
+  - term: deductive-reasoning
+    reason: Only variable tracking, one of 13 tasks, turns on entailment from stated bindings; the
+      benchmark-level score does not.
+  - term: distribution-shift-generalization
+    reason: The paper does test models beyond their training lengths, but every length is drawn from
+      the same generator and the benchmark defines no held-out input distribution of its own.
+
+evaluation_method:
+  - reference-metric
+evaluation_method_basis:
+  reason: Each task scores the share of the reference strings (the inserted values, the variable
+    names, the top words) found case-insensitively in the output, a fixed-formula recall against
+    references with partial credit when several strings are expected. For QA one of the reference
+    answers is enough. The headline averages these per-task accuracies.
+  source: src-arxiv-2404-06654-v3
+  quote: we append the task input with an answer prefix and check the presence of the target output
+    with recall-based accuracy
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: The output is not compared for equality with the reference. A reference string counts if
+      it appears anywhere in the output, and multi-answer tasks give partial credit, which the
+      term's exclusion test rules out.
+    source: src-github-ruler-eval-metrics
+    quote: score = sum([sum([1.0 if r.lower() in pred.lower() else 0.0 for r in ref]) / len(ref) for
+      pred, ref in zip(preds, refs)]) / len(preds) * 100
+  - term: constraint-check
+    reason: No battery of properties invalidates an output; the score is a recall over reference
+      strings.
+  - term: entrant-relative-ranking
+    reason: The effective-length threshold is a fixed baseline (Llama2-7B at 4K, 85.6%) that does
+      not move with the entrants, which the term's exclusion test sets aside.
+designed_for_subjects:
+  - instruction-tuned-model
+  - base-model
+designed_for_subjects_basis:
+  reason: The main results are aligned models prompted through their chat templates with an answer
+    prefix appended. Base models are run by plain continuation of the same prompt and answer prefix,
+    with their own Llama2-7B (base) threshold in Appendix F.
+  source: src-arxiv-2404-06654-v3
+  quote: Our results in the main text only include aligned models (GPT-4, Gemini-1.5, and 15
+    open-source models). Besides the aligned models, we also evaluate 7 open-source base models
+    using RULER.
+as_used:
+  - protocol: The 13 tasks at 128K only, run at checkpoints during long-context training as the
+      developer's primary long-context benchmark, not the 4K-128K series and its effective length.
+    source: src-arxiv-2605-31268-v1
+    quote: we used RULER [29] at 128K as the primary long-context benchmark
+    note: Mellum 2 (JetBrains, May 2026). Its QA scores were near zero for a prompt-formatting
+      reason, the model continuing the question instead of answering, which the authors chose not to
+      train away; it calls the scorer exact-match.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. A May 2026 technical report used RULER at 128K as its
+    primary long-context benchmark, and the README's results table carries rows from 2025 model
+    reports. The repository was last pushed on 2026-07-22 (GitHub API, read 2026-10-14).
+  source: src-arxiv-2605-31268-v1
+  quote: we used RULER [29] at 128K as the primary long-context benchmark
+activity: unknown
+activity_note: The README's results table holds the maintainers' runs and rows that model developers
+  reported in their own papers, the newest from 2025 with weighted averages still "TBD". No source
+  states a route for adding results or says whether one is open.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Gemini-1.5-Pro
+    source: src-arxiv-2404-06654-v3
+    observed_on: 2026-10-14
+    quote: The closed-source model Gemini-1.5-Pro outperforms the rest of the models by a large
+      margin
+  - system: Mellum 2
+    source: src-arxiv-2605-31268-v1
+    observed_on: 2026-10-14
+    quote: we used RULER [29] at 128K as the primary long-context benchmark
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The generator records each sample's answers as it builds the input (the
+  inserted values, the variable names, the top words). QA answers are SQuAD's and HotpotQA's. None
+  is held out; anyone can generate them.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The generator, task configurations and scorer are public, and inputs are determined by the
+    model's tokenizer, the target length and a random seed.
+  source: src-github-ruler-readme
+  quote: Verify the script is reproducible given a tokenizer, a sequence length, and a random seed.
+
+task:
+  exists: true
+  input:
+    - a generated text of the target length in the model's own tokens (distractor essays, noise
+      sentences, synthetic word lists or distractor paragraphs) with the task's key information
+      inserted, followed by the question and an answer prefix
+  output: A short answer, such as the requested values, the variable names bound to a value, the
+    most common or most frequent words, or the answer to the question.
+  scoring: Per task, the share of reference strings found in the output (any one answer for QA),
+    averaged over 500 samples per length; the 13 task scores are averaged at each length. A model's
+    effective length is the longest tested length whose average beats Llama2-7B (chat) at 4K
+    (85.6%). Two weighted averages over the lengths, one weighting long inputs more (inc) and one
+    short inputs (dec), rank the models.
+  metric_range:
+    - 0
+    - 100
+  source: src-arxiv-2404-06654-v3
+  quote: The performance exceeding the Llama2-7B performance at 4K (85.6%) is underlined. The
+    effective context length is the maximum length passing this threshold.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: generated-on-demand
+  access_note: The generator is seeded, so a given tokenizer, length and seed always yield the same
+    samples; no canonical sample set is distributed by the maintainers. The essays and the QA sets
+    it draws on are public downloads.
+  access_basis:
+    reason: No fixed item set is released. The repository's scripts generate each run's samples for
+      the model's tokenizer and the target length, from the task configurations.
+    source: src-arxiv-2404-06654-v3
+    quote: Evaluation examples in RULER are automatically generated based on input configurations
+      (see Table 2) that define the length and complexity of each input.
+  refresh: continuously-generated
+  refresh_basis:
+    reason: The samples a run is scored on are synthesised for that run by the generator; the 13
+      task configurations stay fixed.
+    source: src-github-ruler-readme
+    quote: RULER generates synthetic examples to evaluate long-context language models with
+      configurable sequence length and task complexity.
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: The needles, variable chains and word lists are produced by rule-based
+    scripts with no model in the loop. The background text comes from elsewhere. The retrieval
+    haystacks use Paul Graham's essays, and the QA category re-uses SQuAD and HotpotQA questions and
+    paragraphs, whose own provenance the sources read do not describe.
+  data_provenance_source: src-arxiv-2404-06654-v3
+  data_provenance_quote: Compared to existing realistic benchmarks (Table 1), RULER consists solely
+    of synthetic tasks
+  contamination_risk: medium
+  contamination_risk_note: The synthetic tasks' answers are random values drawn when the input is
+    built, so they cannot be memorised, but the generator is public and a developer can train on
+    tasks of the same form. The QA category's questions and paragraphs come from SQuAD and HotpotQA,
+    public for years. No source evidences a route; one 2026 developer states it kept RULER-style QA
+    prompts out of its training mix.
+  contamination_risk_source: src-arxiv-2605-31268-v1
+  contamination_risk_quote: We deliberately did not add RULER-style QA prompts to the long-context
+    data mix
+  contamination_evidence: []
+  dataset_licence_note: No licence is stated for the generated samples. The code is Apache-2.0
+    (execution.code_licence); the Paul Graham essays, SQuAD and HotpotQA carry their own terms,
+    which were not read.
+  size:
+    - count: 13
+      unit: tasks in four categories (8 retrieval, 1 multi-hop tracing, 2 aggregation, 2 QA)
+      source: src-arxiv-2404-06654-v3
+      quote: We test all models on 13 tasks ranging diverse complexities from the four categories of
+        RULER.
+    - count: 500
+      unit: generated samples per task at each length
+      source: src-arxiv-2404-06654-v3
+      quote: we evaluate each model with 500 examples generated for each length from the series (4K,
+        8K, 16K, 32K, 64K, 128K)
+    - count: 6
+      unit: input lengths in the paper's series (4K, 8K, 16K, 32K, 64K, 128K)
+      source: src-arxiv-2404-06654-v3
+      quote: we evaluate each model with 500 examples generated for each length from the series (4K,
+        8K, 16K, 32K, 64K, 128K)
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: NVIDIA
+  maintainer_basis:
+    reason: The repository is in NVIDIA's GitHub organisation (NVIDIA/RULER), the code is NVIDIA
+      Corporation's copyright, and the eight authors are at NVIDIA. The README adds that it is a
+      research project, not an official NVIDIA product.
+    source: src-github-ruler-eval-metrics
+    quote: Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-run
+    - self-reported
+  submission_process_note: The README's results table holds the maintainers' own runs and, marked
+    with an asterisk, rows that model developers reported in their own papers (Jamba-1.5, FILM-7B,
+    Qwen2.5-1M, Qwen3, EXAONE 4.0), copied in with a link and no stated check. No route for
+    submitting results is described.
+  submission_process_source: src-github-ruler-readme
+  submission_process_quote: Jamba-1.5-large results are reported by authors from this
+  independence_flags:
+    - flag: results-published-only-in-vendor-document
+      source: src-github-ruler-readme
+      quote: Qwen3 results are reported by authors from this
+  independence_flags_note: The flag covers the asterisked rows only. Their numbers come from the
+    developers' own technical reports and were not run by the maintainers. No NVIDIA model is on the
+    table. Whether NVIDIA co-developed any listed model (Mistral-NeMo, say) was not checked in the
+    sources read.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The paper ran GPT-4 and Gemini-1.5-Pro beside open models, and the pipeline ships OpenAI
+      and Gemini API backends. Generation sizes inputs with a tokenizer and scoring is string
+      matching, so the protocol mandates no hardware; GPUs only serve local weights.
+    source: src-github-ruler-readme
+    quote: MODEL_FRAMEWORK="openai"
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Inputs are generated and scored by public scripts with no human or maintainer-only step.
+    source: src-github-ruler-readme
+    quote: Verify the script is reproducible given a tokenizer, a sequence length, and a random
+      seed.
+  harness_availability: official-harness
+  harness: NVIDIA/RULER, the original run.sh pipeline (now marked deprecated in the README) and the
+    rulerv1-ns branch's NeMo-Skills pipeline, which the README names as the current one for RULER
+  harness_source: src-github-ruler-readme
+  harness_quote: branch to use our latest pipeline for RULERv1 evaluation
+  harness_gotcha:
+    source: src-lm-eval-harness-ruler-readme
+    quote: The default maximum sequence length is 4096.
+  harness_gotcha_note: lm-evaluation-harness's ruler group scores 4K only unless the other lengths
+    are passed in its metadata, so a bare lm-eval "ruler" number is not the paper's 4K-128K series.
+    Its QA scorer also differs from RULER's (see review_checks).
+  code_licence: Apache-2.0
+  code_licence_source: src-github-ruler-eval-metrics
+  code_licence_quote: Licensed under the Apache License, Version 2.0
+  runnable_via:
+    - custom
+    - lm_eval
+  runnable_via_note: lm-evaluation-harness implements all 13 tasks as its ruler group. UK AISI's
+    inspect_evals has NIAH and InfiniteBench tasks but no RULER (its src/inspect_evals directory,
+    read 2026-10-14; not a quoted Source).
+  runnable_via_source: src-lm-eval-harness-ruler-readme
+  runnable_via_quote: All 13 tasks in the RULER benchmark
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: the input length, which is THE condition (a score at 4K and one at 128K
+  # are different numbers, and lengths are counted in each model's own tokenizer), carried here in
+  # context_window_used, with subset_used naming the task set and the length series of an aggregate; the prompt
+  # template and answer prefix (the paper flags prompt sensitivity, and a 2026 report lost its QA scores to
+  # formatting); and the harness (RULER's scripts, NeMo-Skills or lm-evaluation-harness, which differ in default
+  # lengths and QA scoring). shots, already in the profile, also matters: VT and CWE carry one demonstration.
+  material_extra:
+    - context_window_used
+    - prompt_template_hash
+    - harness
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper averages the 13 task scores at each length, derives the effective length from
+    that average against the Llama2-7B threshold, and ranks models by two weighted averages over the
+    lengths.
+  source: src-arxiv-2404-06654-v3
+  quote: The performance at a certain length is the average of all 13 tasks in RULER.
+
+homepage: https://github.com/NVIDIA/RULER
+repository: https://github.com/NVIDIA/RULER
+
+subsets:
+  - id: ruler#retrieval
+    label: Retrieval (needle-in-a-haystack)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2404-06654-v3
+        quote: 'Retrieval: we extend the needle-in-a-haystack (Kamradt, 2023, NIAH) test to evaluate retrieval
+          capability with diverse types and quantities of needles.'
+      - source: src-arxiv-2404-06654-v3
+        quote: breakdown by task categories can be found in Appendix F
+    notes: Eight of the 13 tasks, namely three single-needle variants (passkey retrieval, vanilla
+      NIAH, UUID values), three multi-key variants (with distractor needles, or a haystack made of
+      them), and one multi-value and one multi-query task.
+  - id: ruler#multi-hop-tracing
+    label: Multi-hop tracing (variable tracking)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2404-06654-v3
+        quote: Specifically, a variable X1 is initialized with a value V, followed by a linear chain
+          of variable name binding statements
+    notes: One task, with one chain of four name-binding hops, so five variable names to return.
+  - id: ruler#aggregation
+    label: Aggregation (common and frequent words extraction)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2404-06654-v3
+        quote: 'Aggregation: we propose common/frequent words extraction, proxy tasks for summarization
+          to test the ability to aggregate relevant information that spans long-range context.'
+    notes: Two tasks. CWE returns the 10 common words, and FWE the 3 most frequent words of a
+      Zeta-distributed list.
+  - id: ruler#question-answering
+    label: Question answering (SQuAD and HotpotQA with distractor paragraphs)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2404-06654-v3
+        quote: For QA, we augment SQuAD (Rajpurkar et al., 2018) and HotpotQA (Yang et al., 2018) to
+          simulate long-context scenario.
+    notes: Two tasks, single-hop (SQuAD) and multi-hop (HotpotQA); scored by whether any one
+      reference answer appears.
+
+history:
+  - event: repository-moved
+    field: repository
+    from: hsiehjackson/RULER
+    to: NVIDIA/RULER
+    source: src-arxiv-2404-06654-v3
+    quote: https://github.com/hsiehjackson/RULER
+    note: The paper's footnote links the first author's repository; the code and the results table
+      now live in NVIDIA/RULER. The date of the move was not read.
+
+tags:
+  - long-context
+  - needle-in-a-haystack
+  - synthetic
+  - effective-context-length
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2404-06654-v3
+    - src-arxiv-2404-06654
+    - src-github-ruler-readme
+    - src-github-ruler-eval-metrics
+    - src-lm-eval-harness-ruler-readme
+    - src-lm-eval-harness-ruler-utils
+    - src-arxiv-2605-31268-v1
+  sources_note: >
+    The RULER paper's v3 PDF (a DOI, not archived) read as text; its abstract page for the date and
+    venue; the README and the scorer file at main; lm-evaluation-harness's RULER README and
+    common_utils.py at the adapter's pin; and the Mellum 2 report's v1 PDF (a DOI, not archived) as
+    evidence of current use. GitHub's API was read for the licence and the last push (not Sources).
+  confidence: medium
+  review_checks:
+    - check: evaluation_method is reference-metric, a fixed-formula recall of reference strings
+        found anywhere in the output with partial credit. exact-match was rejected because the
+        output need not equal the reference, though Mellum 2 calls the scorer exact-match and many
+        readers would file it there.
+      field: evaluation_method
+      source: src-github-ruler-eval-metrics
+      quote: score = sum([max([1.0 if r.lower() in pred.lower() else 0.0 for r in ref]) for pred,
+        ref in zip(preds, refs)]) / len(preds) * 100
+    - check: The input length is carried in context_window_used, read as the length a run was scored
+        at. If that field means the model's configured window instead, the length belongs in
+        subset_used (for example "13 tasks at 131072 tokens"), and a new length field may be needed.
+        Lengths are counted in each model's own tokenizer, so "128K" is not the same text across
+        models.
+      field: comparability.material_extra
+    - check: lm-evaluation-harness's QA scorer gives the share of reference answers found, where
+        RULER's own counts a sample right if any one answer appears, so lm-eval scores QA samples
+        with several distinct answers lower. Confirm before treating lm-eval RULER numbers as
+        comparable.
+      field: execution.runnable_via
+      source: src-lm-eval-harness-ruler-utils
+      quote: score = max( sum(1.0 if r.lower() in pred.lower() else 0.0 for r in ref) / len(ref)
+    - check: RULERv2 (NeurIPS 2025, the same NVIDIA authors) has its own pipeline on the rulerv2-ns
+        branch. It was not read; it could be an edition of this entry or an entry of its own.
+      field: versions
+      source: src-github-ruler-readme
+      quote: branch to use our latest pipeline for RULERv2 evaluation
+    - check: data.access generated-on-demand and refresh continuously-generated rest on samples
+        being generated per run. The generator is seeded, so a tokenizer, length and seed fix the
+        samples; fully-open with static could be argued instead.
+      field: data.access
+    - check: memory-retention was rejected as the input is all in the window and needle depth is not
+        reported; the needle does precede the query by the whole haystack, which the term's
+        inclusion test describes.
+      field: capability
+    - check: data_provenance is synthetic-procedural only. The haystack essays (from the web) and
+        the SQuAD and HotpotQA questions are re-used text whose provenance the sources read do not
+        state; web-scraped or crowd-authored could be added from those datasets' own papers.
+      field: data.data_provenance
+      source: src-github-ruler-readme
+      quote: QA datasets are downloaded from
+    - check: self-reported and results-published-only-in-vendor-document rest on the asterisked rows
+        copied from developers' reports. Whether those rows count as a submission channel (and so
+        whether activity is unknown or no-submission-channel) is unsettled; the README names no
+        route.
+      field: governance.independence_flags
+      source: src-github-ruler-readme
+      quote: Qwen3 results are reported by authors from this
