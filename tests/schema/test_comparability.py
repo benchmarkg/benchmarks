@@ -110,11 +110,18 @@ def test_the_entries_resolve_to_different_material_sets():
         'simplerenv.yaml': (('simulation',), 7),                              # libero's set
         'habitat-challenge.yaml': (('simulation',), 7),                       # libero's set
         'maniskill.yaml': (('simulation',), 8),                               # plus max_steps
+        # the P1-S5-T04 biology entries
+        'cafa.yaml': (('eligibility-gated',), 6),                             # plus the resolution window
+        'cagi.yaml': (('wet-lab',), 4),                                       # the assay protocol, per challenge
+        'open-problems.yaml': ((), 2),                                        # task and harness
+        'cameo.yaml': ((), 2),                                                # category and target selection
+        'brain-score.yaml': ((), 3),                                          # benchmark, harness, evaluation date
+        'bixbench.yaml': (('model-graded',), 12),                             # plus scaffold and answer mode
     }
     # scicode's set is mmlu's, folio's is mmmu's; calvin, habitat-challenge, robocasa, robotwin and simplerenv share
     # libero's; coco, oc20, proteingym, climatebench, circuitnet and pdebench share virtual-cell-challenge's (split and
     # training data)
-    assert len({r.material for r in got.values()}) == 27
+    assert len({r.material for r in got.values()}) == 33
     # the board's track and the run's harness both enter ARC-AGI-3's key (02 S12.7)
     assert {'eligibility_track', 'harness'} <= set(got['arc-agi-3.yaml'].material)
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
@@ -357,13 +364,14 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'arc-agi-3', 'behavior-1k', 'calvin', 'casp', 'circuitnet', 'climatebench', 'coco',
-                                    'critpt', 'flores', 'folio', 'forecastbench', 'habitat-challenge', 'harmbench',
-                                    'humaneval', 'kaggle-game-arena', 'legalbench', 'libero', 'maniskill',
-                                    'matbench-discovery', 'medqa', 'minif2f', 'mmlu', 'mmmu', 'nle', 'oc20',
-                                    'paperbench', 'pdebench', 'proteingym', 'roboarena', 'robocasa', 'robotwin',
-                                    'scicode', 'simplerenv', 'superb', 'swe-bench', 'swe-bench-verified', 'tau-bench',
-                                    'the-well', 'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(out['profiles']) == {'arc-agi-3', 'behavior-1k', 'bixbench', 'brain-score', 'cafa', 'cagi', 'calvin',
+                                    'cameo', 'casp', 'circuitnet', 'climatebench', 'coco', 'critpt', 'flores', 'folio',
+                                    'forecastbench', 'habitat-challenge', 'harmbench', 'humaneval', 'kaggle-game-arena',
+                                    'legalbench', 'libero', 'maniskill', 'matbench-discovery', 'medqa', 'minif2f',
+                                    'mmlu', 'mmmu', 'nle', 'oc20', 'open-problems', 'paperbench', 'pdebench',
+                                    'proteingym', 'roboarena', 'robocasa', 'robotwin', 'scicode', 'simplerenv',
+                                    'superb', 'swe-bench', 'swe-bench-verified', 'tau-bench', 'the-well',
+                                    'virtual-cell-challenge', 'weatherbench-2'}
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 
