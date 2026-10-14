@@ -1,0 +1,478 @@
+# data/benchmarks/reasoning-general/cladder.yaml
+#
+# P1-S11-T01, reasoning-general entry 3 of 6. Filled from the CLadder paper, arXiv 2312.04350 read as its v3 PDF
+# (2024-01-17, NeurIPS 2023, revised with dataset v1.5), and its abstract page; the NeurIPS 2023 proceedings page;
+# the repository README at main; GitHub's API records of the repository and of the causalNLP account that holds
+# it; Hugging Face's API record of the dataset; and the abstract page of CRAwDAD (arXiv 2511.22854, v2 March 2026),
+# a paper that reports results on it. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+
+id: cladder
+name: CLadder
+tagline: Yes/no causal questions generated from causal graphs across Pearl's three rungs, answered
+  by a causal inference engine.
+description: >
+  A dataset of yes/no questions that test formal causal inference in natural language, in Pearl's
+  sense. Each question starts from a small causal graph (three or four binary variables, in ten
+  common structures), a query type and some numerical "available data"; a causal inference engine
+  derives the ground-truth answer and a step-by-step explanation, and templates verbalise the
+  graph, the probabilities and the question as a short story. The queries span the three rungs of
+  the Ladder of Causation: association (marginal and conditional probabilities, explaining away),
+  intervention (average treatment effect, backdoor adjustment sets, collider bias) and
+  counterfactuals (counterfactual probability, effect of the treatment on the treated, natural
+  direct and indirect effects). Stories come in commonsensical, anti-commonsensical and
+  nonsensical variants, the last two built so that memorised causal knowledge does not help. The
+  score is accuracy against the engine's answers, overall, by rung and by variant. v1.0's main set
+  has 10,560 questions; v1.5's balanced set, which the paper's revised results use, has 10,112
+  with equal numbers of yes and no answers. The paper also introduces CausalCoT, a chain-of-thought
+  prompt built on the engine's steps.
+self_description:
+  source: src-arxiv-2312-04350-v3
+  quote: We introduce CLADDER (Section 3), a dataset containing more than 10K causal questions,
+    spanning all three rungs of the ladder of causation
+external_ids:
+  huggingface: causal-nlp/CLadder
+  arxiv: '2312.04350'
+paper:
+  title: 'CLadder: Assessing Causal Reasoning in Language Models'
+  arxiv: '2312.04350'
+  doi: 10.52202/075280-1353
+  version_read: v3
+  source: src-arxiv-2312-04350-v3
+released: 2023-05-25
+released_note: The README's date for the v1 data; GitHub's API record gives the repository's
+  creation the same day. The paper's first arXiv version is dated 2023-12-07.
+released_source: src-github-cladder-readme
+released_quote: 'Date: 2023-05-25'
+release_venue: NeurIPS 2023 (Main Conference Track)
+release_venue_source: src-neurips-2023-cladder
+release_venue_quote: Advances in Neural Information Processing Systems 36 (NeurIPS 2023) Main
+  Conference Track
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: reasoning-general/causal-inference
+  secondary:
+    - reasoning-general/counterfactual
+  secondary_note: Rung 3's questions (counterfactual probability, ATT, NDE and NIE; 3,792 of v1.5's
+    10,112) reason about what would have happened had the treatment been different; that subset
+    carries its own domain_override in subsets[].
+domain_basis:
+  reason: The paper's object of study is causal inference as a reasoning form, posed as questions
+    about causal graphs whose answers follow Pearl's rules; association and intervention questions
+    ask the system to tell causal effects from correlation.
+  source: src-arxiv-2312-04350-v3
+  quote: We compose more than 10,000 causal questions that cover a variety of causal queries across
+    the three rungs of the Ladder of Causation
+domain_considered_and_rejected:
+  - term: reasoning-general/logical-deduction
+    reason: The answers follow necessarily from the stated graph and probabilities, but the
+      reasoning form the paper studies is causal inference, which has its own leaf.
+  - term: reasoning-general/commonsense
+    reason: The commonsensical stories come from causal-inference textbooks, but everything a
+      question needs is stated in it, and the anti-commonsensical and nonsensical variants are built
+      so that everyday knowledge does not help.
+    source: src-arxiv-2312-04350-v3
+    quote: in these latter cases, amortized causal inference is expected to fail, whereas formal
+      causal reasoning would still yield the correct answer
+capability:
+  - causal-reasoning
+  - deductive-reasoning
+capability_basis:
+  causal-reasoning:
+    reason: Rung 2 and 3 answers depend on the effect of an intervention or a counterfactual that
+      the stated data does not show directly, computed with do-calculus or counterfactual inference
+      from the graph; an answer read off the raw correlation is wrong in cases such as Figure 1's
+      Simpson's paradox.
+    source: src-arxiv-2312-04350-v3
+    quote: For Rung 2 questions, we can enquire average treatment effects (ATE)
+  deductive-reasoning:
+    reason: Every question is set in a self-contained hypothetical world whose graph and
+      probabilities are stated, and the engine derives the answer from them alone; the nonsensical
+      and anti-commonsensical variants remove any help from world knowledge.
+    source: src-arxiv-2312-04350-v3
+    quote: in these latter cases, amortized causal inference is expected to fail, whereas formal
+      causal reasoning would still yield the correct answer
+capability_considered_and_rejected:
+  - term: quantitative-reasoning
+    reason: Arithmetic on the stated probabilities is one of the six subskills, but the scored
+      answer is yes or no, not a number, which the term's inclusion test asks for.
+  - term: distribution-shift-generalization
+    reason: The anti-commonsensical and nonsensical variants are constructed contrasts that probe
+      memorisation; there is no training distribution the scored items move away from.
+
+evaluation_method:
+  - exact-match
+evaluation_method_basis:
+  reason: Each question has a binary answer from the causal inference engine, and the score is
+    accuracy over per-item verdicts, overall, by rung and by variant. The balanced set has equal
+    numbers of yes and no answers, so chance is 50%. The authors' scoring script reads a response as
+    yes or no by its first word after lowercasing (causalbenchmark/eval/eval_llms.py, read
+    2026-10-14; not a quoted Source).
+  source: src-arxiv-2312-04350-v3
+  quote: Our main task is to test the accuracy of the prediction function
+evaluation_method_considered_and_rejected:
+  - term: multiple-choice
+    reason: The answer is one of two labels, but no options are supplied with the question; a yes/no
+      question in prose scored by accuracy against a fixed label set is what exact-match's inclusion
+      test keeps.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The protocol prompts a compliant model and asks for a one-word answer. The paper's GPT
+    models are queried through the OpenAI API at temperature 0, and the non-instruction-tuned models
+    stay near chance.
+  source: src-arxiv-2312-04350-v3
+  quote: With instruction-tuning, models start to show some improvement
+designed_for_subjects_considered_and_rejected:
+  - term: base-model
+    reason: The paper runs non-instruction-tuned GPT-3 and LLaMa as baselines, which score near
+      chance; the protocol is a prompted yes/no answer, not raw continuation.
+    source: src-arxiv-2312-04350-v3
+    quote: As baselines, we also include the non-instruction-tuned GPT-3 (davinci)
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers still report results on CLadder in 2026; CRAwDAD's v2 (2026-03-09) reports
+    reasoning models' accuracy on it. The repository was last pushed on 2024-05-29 (GitHub API),
+    which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2511-22854
+  quote: Qwen3's overall accuracy improves from 84.16% to 89.41%
+activity: no-submission-channel
+activity_basis:
+  reason: Neither the README nor the paper describes a leaderboard, server or submission route;
+    users download the data and report accuracy in their own papers.
+  source: src-arxiv-2511-22854
+  quote: We evaluate our approach on the CLadder dataset, a benchmark linking natural language
+    questions to formally defined causal graphs across all three rungs of Pearl's ladder of
+    causation
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4 (gpt-4-1106-preview)
+    source: src-arxiv-2312-04350-v3
+    observed_on: 2026-10-14
+    quote: which substantially improves the performance of vanilla GPT-4 by 8.37 points
+  - system: DeepSeek-R1
+    source: src-arxiv-2511-22854
+    observed_on: 2026-10-14
+    quote: improves DeepSeek-R1's overall accuracy in causal inference from 78.03% to 87.45%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Stored yes/no answers, derived for each question by the authors' causal
+  inference engine from its graph, query and data, and released with the questions.
+ground_truth_source_basis:
+  reason: The answers are computed symbolically before the questions are verbalised.
+  source: src-arxiv-2312-04350-v3
+  quote: we obtain symbolic questions and ground-truth answers, through an oracle causal inference
+    engine
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The questions, answers and generator are public, and the dataset is ungated on Hugging
+    Face.
+  source: src-github-cladder-readme
+  quote: This repo contains the full CLadder dataset (and code) for evaluating (formal) causal
+    reasoning in language models
+
+task:
+  exists: true
+  input:
+    - 'a short story in natural language: the causal graph verbalised as direct effects, numerical marginal
+      or conditional probabilities, and a yes/no question about an association, an intervention or a counterfactual'
+  output: Yes or No.
+  scoring: Accuracy against the engine's answers, overall, by rung and by commonsense alignment
+    (commonsensical, nonsensical, anti-commonsensical). Chance is 50% on the balanced set.
+  source: src-arxiv-2312-04350-v3
+  quote: We report the overall accuracy (Acc.), and also fine-grained accuracy by rung, and by
+    degree of commonsense alignment
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The questions with their answers are in the repository's zip and on Hugging Face, whose
+      record is ungated.
+    source: src-hf-api-cladder
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data changed once, from v1.0 to v1.5, under a version label that results name; the
+      paper's arXiv revision of 2024-01-16 moved its results to v1.5.
+    source: src-arxiv-2312-04350
+    quote: NeurIPS 2023; updated with CLadder dataset v1.5
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: The causal graphs, query types and data come from a rule-based generator,
+    the answers and explanations from a causal inference engine, and the text from templates. The
+    commonsensical stories (variable names) were taken from causal-inference textbooks and papers,
+    and the invented variable names of the nonsensical stories were generated with GPT-4, but no
+    model writes the questions.
+  data_provenance_source: src-arxiv-2312-04350-v3
+  data_provenance_quote: Our dataset is generated through an algorithmic procedure
+  contamination_risk: medium
+  contamination_risk_note: Every question and answer has been public on GitHub since 2023 and on
+    Hugging Face since 2023-08, so a training route into the scored items is plausible; none is
+    evidenced. The paper's anti-commonsensical and nonsensical variants guard against memorised
+    stories, not against training on the released items.
+  contamination_risk_source: src-arxiv-2312-04350-v3
+  contamination_risk_quote: it is very likely that at least some of the stories appear in the
+    training data of many LLMs
+  contamination_evidence: []
+  dataset_licence_note: No licence is stated for the data in the README, the paper or the Hugging
+    Face record, which carries no licence tag. The GitHub repository that ships the zip carries an
+    MIT licence (execution.code_licence); whether it covers the data is not stated.
+  size:
+    - count: 10112
+      unit: questions, as many with the answer yes as no
+      subset: v1.5 balanced set
+      source: src-arxiv-2312-04350-v3
+      quote: benchmark (main benchmark in v1.5), containing 10,112 questions split between all
+        stories, graphs, query types, and commonsensicalness
+    - count: 3160
+      unit: questions
+      subset: v1.5, Rung 1 (association)
+      source: src-arxiv-2312-04350-v3
+      quote: Rung 1 3,160
+    - count: 3160
+      unit: questions
+      subset: v1.5, Rung 2 (intervention)
+      source: src-arxiv-2312-04350-v3
+      quote: Rung 2 3,160
+    - count: 3792
+      unit: questions
+      subset: v1.5, Rung 3 (counterfactuals)
+      source: src-arxiv-2312-04350-v3
+      quote: Rung 3 3,792
+    - count: 10560
+      unit: questions
+      subset: v1.0 aggregate set
+      source: src-arxiv-2312-04350-v3
+      quote: variant (main benchmark in v1.0) contains 10,560 questions
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Zhijing Jin and collaborators (the CausalNLP GitHub account; the paper is from the MPI
+    for Intelligent Systems and ETH Zurich)
+  maintainer_basis:
+    reason: The repository sits in the causalNLP account, a GitHub user account (not an
+      organisation) whose profile names Zhijing Jin, the paper's first author, as its owner; the
+      Hugging Face copy is in the causal-nlp organisation.
+    source: src-github-causalnlp-gh-api
+    quote: Repo of research projects to bridge causality and NLP. By Zhijing Jin
+  maintainer_type: individual
+  maintainer_type_note: academic-lab and community-collective were considered. No institution is
+    stated as holding the repository or the data, and the account is a user account that one
+    person's profile names, which the individual term's test sends here.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or results page; beyond the paper's own tables, results
+    appear in users' papers.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2312-04350-v3
+      quote: our CAUSALCOT achieves the highest performance of 70.40%
+  independence_flags_note: The authors introduce CausalCoT, their own prompting strategy on GPT-4,
+    and report it as the best system on their benchmark. The acknowledged funders are public
+    research funders and foundations; none is an evaluated party.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The questions and answers are public and scoring is accuracy on yes/no answers, with no
+      human, simulator or maintainer-only step.
+    source: src-github-cladder-readme
+    quote: The dataset asks yes/no questions in natural language that generally require statistical
+      and causal inference to answer.
+  harness_availability: reference-implementation-only
+  harness_availability_note: The README's eval/ link points at a folder that does not exist; the
+    scripts are in causalbenchmark/eval/, and eval_llms.py, which computes the accuracies, reads
+    data files that are not in the repository (bern_cna_35.json, updated_data_ids_not_ready.txt).
+    Read from the repository tree on 2026-10-14; not a quoted Source. UK AISI's inspect_evals has no
+    CLadder implementation (its repository tree, read the same day).
+  harness: causalbenchmark/eval (the authors' run_gpt_v1.5.py and eval_llms.py scripts)
+  harness_source: src-github-cladder-readme
+  harness_quote: to see how to run different LLMs in inference mode on our data
+  code_licence: MIT
+  code_licence_source: src-github-cladder-gh-api
+  code_licence_quote: '"spdx_id":"MIT"'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: the data version (v1.0's aggregate set or v1.5's balanced set), the set
+  # scored (the full set, one rung or variant, or a stratified sample, as some 2025 papers use), and the prompt
+  # (with or without the model's `background` field, the README's recommended three-part prompt, CausalCoT).
+  material_extra:
+    - prompt_template_hash
+
+homepage: https://github.com/causalNLP/cladder
+repository: https://github.com/causalNLP/cladder
+dataset_url: https://huggingface.co/datasets/causal-nlp/CLadder
+
+versions:
+  - version: v1.0
+    label: CLadder v1.0 (the aggregate set)
+    version_kind: revision
+    released: 2023-05-25
+    items: 10560
+    changes: The first release. The main set is the aggregate variant, balanced across stories but
+      not across the commonsensical, anti-commonsensical and nonsensical variants. The revised paper
+      keeps its earlier results on it in Appendix D.
+    breaking: true
+    superseded_by: v1.5
+    frozen: true
+    sources:
+      - src-github-cladder-readme
+      - src-arxiv-2312-04350-v3
+  - version: v1.5
+    label: CLadder v1.5 (the balanced set)
+    version_kind: revision
+    items: 10112
+    changes: The main set becomes the balanced variant, with roughly the same number of questions
+      for each story, graph and query combination across the three variants and equal numbers of yes
+      and no answers, and shorter explanations. The paper's arXiv revision of 2024-01-16 reports its
+      results on it; Hugging Face carries it beside v1 as separate splits.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: true
+    sources:
+      - src-arxiv-2312-04350
+      - src-arxiv-2312-04350-v3
+      - src-hf-api-cladder
+
+subsets:
+  - id: cladder#rung-1
+    label: 'Rung 1: association'
+    items: 3160
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2312-04350-v3
+        quote: Rung 1 deals with statistical dependences among random variables
+    notes: Marginal probability, correlation (conditional probability) and explaining-away
+      questions; the count is v1.5's (v1.0 has 3,288).
+  - id: cladder#rung-2
+    label: 'Rung 2: intervention'
+    items: 3160
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2312-04350-v3
+        quote: This enables us to formalize the concept of actively intervening in the world
+    notes: Average treatment effect, backdoor adjustment set and collider bias questions; the count
+      is v1.5's (v1.0 has 3,288).
+  - id: cladder#rung-3
+    label: 'Rung 3: counterfactuals'
+    items: 3792
+    scored_separately: true
+    domain_override:
+      primary: reasoning-general/counterfactual
+      secondary:
+        - reasoning-general/causal-inference
+    evidence:
+      - source: src-arxiv-2312-04350-v3
+        quote: Lastly, for Rung 3, we include counterfactuals
+    notes: Counterfactual probability, ATT, NDE and NIE questions; the count is v1.5's (v1.0 has
+      3,984).
+  - id: cladder#commonsensical
+    label: Commonsensical stories
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2312-04350-v3
+        quote: which ensures that the stories and corresponding causal graph structures adhere to
+          empirical common sense
+  - id: cladder#anti-commonsensical
+    label: Anti-commonsensical stories
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2312-04350-v3
+        quote: For the anti-commonsensical stories, we randomly do one of the actions
+    notes: The effect is replaced by an unrelated attribute, or the treatment by an irrelevant one.
+  - id: cladder#nonsensical
+    label: Nonsensical stories
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2312-04350-v3
+        quote: For the nonsensical variants, we invent artificial words as variable names
+subsets_note: The paper reports accuracy by rung and by commonsense alignment, so both cuts are
+  listed. The alignment subsets' sizes in v1.5 are not stated in the sources read.
+
+tags:
+  - causal-inference
+  - ladder-of-causation
+  - counterfactuals
+  - synthetic
+  - yes-no-questions
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2312-04350-v3
+    - src-arxiv-2312-04350
+    - src-neurips-2023-cladder
+    - src-github-cladder-readme
+    - src-github-cladder-gh-api
+    - src-github-causalnlp-gh-api
+    - src-hf-api-cladder
+    - src-arxiv-2511-22854
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text; its abstract page for the dates and the
+    v1.5 revision; the NeurIPS 2023 proceedings page for the venue and DOI; the README at main;
+    GitHub's API records of the repository (licence, last push) and of the causalNLP account;
+    Hugging Face's API record of the dataset (ungated; its card holds only the split
+    configuration); and CRAwDAD's abstract page as evidence of current use. HTML pages were read
+    with scripts and styles stripped.
+  confidence: medium
+  review_checks:
+    - check: 'maintainer_type individual: the causalNLP account is a GitHub user account whose profile
+        names Zhijing Jin "and many awesome collaborators", and the Hugging Face copy is in a causal-nlp
+        organisation. academic-lab (her group) or community-collective could be argued.'
+      field: governance.maintainer_type
+      source: src-github-causalnlp-gh-api
+      quote: '"type":"User"'
+    - check: exact-match was chosen over multiple-choice for a yes/no answer, by exact-match's
+        "accuracy against a fixed label set"; FOLIO's entry tags its True/False/Unknown labels
+        multiple-choice, so the family is inconsistent one way or the other.
+      field: evaluation_method
+    - check: released is the README's date for the v1 data (2023-05-25, the day the repository was
+        created); no source shows the data public that day. The arXiv paper is dated 2023-12-07.
+      field: released
+      source: src-github-cladder-readme
+      quote: 'Date: 2023-05-25'
+    - check: Version naming is inconsistent. The GitHub zip is named v1 and dated 2023-05-25, but a
+        count of its files (2026-10-14, not a quoted Source) finds both the v1.0 aggregate set
+        (10,560) and the v1.5 balanced set (10,112, file dated 2023-08-03), and the README's
+        statistics are the balanced set's. v1.5's release date is left null for that reason.
+      field: versions
+      source: src-github-cladder-readme
+      quote: 'Number of questions: 10,112'
+    - check: maintainer-competes-on-own-benchmark rests on the authors' CausalCoT prompt (on GPT-4)
+        being reported as the best system; the benchmark has no ranking of its own.
+      field: governance.independence_flags
+    - check: deductive-reasoning sits beside causal-reasoning because answers follow from stated
+        premises alone; it may double-count the same property.
+      field: capability
+    - check: Rung 1 (association) is left under causal-inference with no override; its marginal and
+        correlation questions do not by themselves separate cause from correlation.
+      field: subsets
+    - check: The harness is reference-implementation-only because the published scoring script reads
+        files the repository lacks; official-harness could be argued, since it is the authors' own
+        accuracy script.
+      field: execution.harness_availability
+    - check: Current users include reasoning models and multi-agent debate systems (CRAwDAD on
+        DeepSeek-R1 and Qwen3); observed_subjects is not set.
+      field: designed_for_subjects
+      source: src-arxiv-2511-22854
+      quote: improves DeepSeek-R1's overall accuracy in causal inference from 78.03% to 87.45%
