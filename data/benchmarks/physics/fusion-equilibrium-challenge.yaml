@@ -1,0 +1,512 @@
+# data/benchmarks/physics/fusion-equilibrium-challenge.yaml
+#
+# P1-S6-T05, physics entry 6 of 9. Filled from the challenge's paper, arXiv 2609.01750 read as its v1 PDF
+# (2026-09-01, NeurIPS 2026 Competition Track), and its abstract page; the challenge site's home and data
+# pages (scripts and styles stripped); Codabench's public JSON record of competition 17739, whose pages carry
+# the rules, the evaluation, the data configs and the phases; the starter kit's README at main; and Sophelio's
+# home page, for the maintainer's type. Every quote below is checked by the quote-substring validator against
+# those Sources' committed extracts.
+
+id: fusion-equilibrium-challenge
+name: Fusion Equilibrium Challenge
+tagline: 'Tokamak equilibrium reconstruction without magnetic sensors: DIII-D flux maps, then zero-shot
+  transfer to MAST.'
+description: >
+  A NeurIPS 2026 competition, run by Sophelio with General Atomics and the University of Texas at Austin,
+  on shots from two tokamaks: DIII-D (General Atomics) and MAST (UKAEA). From a shot's coil currents,
+  plasma current and Thomson-scattering electron temperature and density profiles, with no magnetic diagnostics,
+  a model predicts at every EFIT timestep the 65x65 poloidal flux map psi(R,Z) and the two scalars a flux
+  map cannot contain, q95 and betaN. The scorer derives the plasma boundary and seven shape scalars from
+  the submitted flux with the same code it applies to EFIT's reconstruction, which is the ground truth.
+  Challenge 1 ranks S_model on DIII-D, a weighted blend of R2 on psi, R2 on q95 and betaN, a normalised
+  Hausdorff distance between boundaries and the agreement of the derived scalars. Challenge 2 ranks G_ratio,
+  the MAST score over the DIII-D score, for a model given no MAST training data. Training shots and test
+  inputs are on Hugging Face under CC BY 4.0; the targets are withheld and scored on Codabench, in a development
+  phase on a public test fold (2026-07-27 to 2026-10-18) and a blind final phase on private folds (2026-10-19
+  to 2026-10-26), with results due at NeurIPS in December 2026.
+self_description:
+  source: src-arxiv-2609-01750-v1
+  quote: The challenge provides the first open-access, harmonized multi-machine benchmark for fusion
+external_ids:
+  huggingface: Sophelio/fusion-equilibrium-challenge
+  arxiv: '2609.01750'
+paper:
+  title: 'The Fusion Equilibrium Challenge: Inferring Magnetic Geometry Without Magnetic Diagnostics'
+  arxiv: '2609.01750'
+  version_read: v1
+  source: src-arxiv-2609-01750-v1
+released: 2026-07-27
+released_note: The development phase's stated opening. The Hugging Face dataset's API record gives
+  createdAt 2026-07-30 and Codabench's record created_when 2026-07-31, so the data and the server
+  went up a few days after it. The paper followed on 2026-09-01 (src-arxiv-2609-01750).
+released_source: src-fusion-equilibrium-challenge-site
+released_quote: Opens Jul 27, 2026, closes Oct 18, 2026.
+release_venue: NeurIPS 2026 Competition Track
+release_venue_source: src-fusion-equilibrium-challenge-site
+release_venue_quote: A Sophelio initiative for NeurIPS 2026 Competition Track.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/plasma-fusion
+  secondary: []
+domain_basis:
+  reason: The scored quantity is the magnetic equilibrium of a tokamak plasma, inferred from two
+    machines' diagnostics, which is the leaf's definition (predicting plasma behaviour in fusion
+    devices).
+  source: src-arxiv-2609-01750-v1
+  quote: reconstruct the two-dimensional poloidal flux function ψ(R, Z) and a suite of scalar
+    equilibrium parameters from non-magnetic diagnostics alone
+domain_considered_and_rejected:
+  - term: physics/simulation-surrogates
+    reason: A model stands in for EFIT, but EFIT is a reconstruction fitted to each shot's magnetic
+      measurements, not an expensive simulation, and the task is to reach its output from other
+      inputs rather than to emulate it faster. The leaf's own distinction also gives a benchmark
+      with one physical system as its subject that subject's leaf.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: A model predicts the state of a physical system, the plasma's flux map and two scalars,
+      from measurements of it, and is scored against a reference computation, EFIT's reconstruction.
+    source: src-arxiv-2609-01750-v1
+    quote: Given the non-magnetic diagnostic inputs at all EFIT timestamps of a held-out shot,
+      predict the full 65 × 65 poloidal flux map
+  distribution-shift-generalization:
+    reason: Challenge 2 trains on DIII-D and scores zero-shot on MAST, a spherical tokamak with
+      another coil set, and reports that score as its own condition beside the DIII-D one. The task
+      and targets are unchanged and only the machine moves, so the shift term applies rather than
+      transfer-learning, whatever the source calls it; taxonomy/capabilities.yaml names this
+      benchmark as the term's example.
+    source: src-arxiv-2609-01750-v1
+    quote: Two complementary awards reward intra-machine reconstruction fidelity (Smodel) on DIII-D
+      and zero-shot cross-machine generalization (Gratio) to the topologically distinct MAST
+      spherical tokamak
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The move to MAST keeps the task, the target grid and the scoring; only the inputs'
+      machine changes, which the term's exclusion sends to distribution-shift-generalization.
+  - term: perception
+    reason: The inputs are measured signals, but they are engineered diagnostic time series and the
+      score is the physical state inferred from them, which is scientific-prediction's case.
+  - term: calibration-uncertainty
+    reason: The paper asks for bootstrap confidence intervals beside point predictions, but a
+      submission is the flux map, q95 and betaN only, and no score consumes an interval.
+
+evaluation_method:
+  - composite
+  - statistical-fit
+evaluation_method_basis:
+  reason: >
+    S_model is a fixed weighted sum of four terms: pooled R2 on the flux map, pooled R2 on q95 and betaN,
+    one minus a length-normalised Hausdorff distance between predicted and reference boundaries, and the
+    mean R2 of seven scalars derived from the flux. Each is an error against EFIT's reference, so statistical-fit
+    is the constituent method; composite records that the headline blends different metrics. G_ratio,
+    Challenge 2's ranking, is a ratio of two S_model values.
+  source: src-arxiv-2609-01750-v1
+  quote: with organizer-default weights (w1, w2, w3, w4) = (0.55, 0.15, 0.10, 0.20) summing to 1
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: D_LCFS is specific to plasma boundaries, but it is the challenge's own normalisation of
+      a general Hausdorff distance, not a metric named and standardised within the discipline.
+    source: src-arxiv-2609-01750-v1
+    quote: A length-normalized symmetric Hausdorff distance
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrant stands in for EFIT with its magnetic measurements and is scored against what
+    EFIT produced, which is the term's inclusion test. Any method is admitted, from ridge regression
+    to neural operators.
+  source: src-fusion-equilibrium-challenge-site
+  quote: A single learned mapping turns coil currents and laser profiles into the flux surfaces,
+    plasma boundary, and equilibrium parameters EFIT normally derives from magnetic sensors.
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: The models are built for a plasma-physics task, but the term's exclusion sends an
+      artifact that emulates a process in place of a measurement to scientific-surrogate-model.
+  - term: classical-algorithm
+    reason: Physics-based pipelines are allowed, and the rules let entrants train on synthetic
+      equilibria from their own free-boundary solvers, but the challenge is built for learned
+      mappings and its four reference baselines are all learned.
+    source: src-fusion-equilibrium-challenge-site
+    quote: No restriction on language or framework — from ridge regression to neural operators.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The development phase is running. Codabench's record counts 233 participants and 2,271
+    submissions, and the development leaderboard, read through Codabench's API on 2026-10-14, holds
+    131 rows, the newest dated that day.
+  source: src-codabench-fusion-equilibrium-challenge-17739
+  quote: '"participants_count":233,"submissions_count":2271'
+activity: accepting-submissions
+activity_note: The development phase closes on 2026-10-18. The blind final phase runs from
+  2026-10-19 to 2026-10-26 with three submissions per team and a hidden leaderboard; results follow
+  at the NeurIPS session in December 2026, so the value turns to results-pending after 2026-10-26.
+activity_basis:
+  reason: A round is open now; teams submit predictions on the public test fold, five a day.
+  source: src-fusion-equilibrium-challenge-site
+  quote: Phase 1 (development) is open — submissions close Oct 18, 2026
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: MLP on PCA targets (the organisers' Baseline 3)
+    source: src-arxiv-2609-01750-v1
+    observed_on: 2026-10-14
+    quote: A 3-layer fully-connected network (128 units, ReLU, dropout 0.1, Adam
+    note: One of four learned reference baselines (PCA with ridge regression, PCA with
+      gradient-boosted trees, this MLP and a convolutional decoder). Entrants' rows on the
+      development leaderboard are not cited because they carry personal account names.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: EFIT's equilibrium reconstruction of each timeslice (EFIT on DIII-D,
+  EFIT++ from the FAIR-MAST archive on MAST), a Grad-Shafranov fit to the shot's magnetic
+  measurements, withheld on every test fold. simulation is the other reading, since the labels come
+  from a physics code, but one fitted to measured signals (see data_provenance).
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The official scores need targets that only the organisers hold. Anyone can score held-out
+    training shots locally with the scorer's own functionals, which is a proxy, not the score.
+  source: src-codabench-fusion-equilibrium-challenge-17739
+  quote: Private-fold EFIT reconstructions are never released; leakage or memorization is
+    disqualifying.
+
+task:
+  exists: true
+  input:
+    - one shot's coil currents (shaping, ohmic and toroidal-field), plasma current, and core and
+      edge Thomson-scattering electron temperature and density profiles, each on its own time base,
+      with the machine's coil and Thomson-chord geometry
+    - the shot's EFIT timestamps and the coordinates of the 65x65 flux grid
+  output: At every EFIT timestamp, the 65x65 poloidal flux map psi(R,Z) and the scalars q95 and
+    betaN, one .npz file per machine; nothing else is submitted.
+  scoring: S_model per machine = 0.55 R2(psi) + 0.15 R2(q95, betaN) + 0.10 (1 - D_LCFS) + 0.20
+    Consistency, the R2 terms pooled over grid points, timesteps and shots and clipped at 0, D_LCFS
+    clipped at 1, and the flux's global sign normalised once per machine. Challenge 1 ranks S_model
+    on DIII-D; Challenge 2 ranks G_ratio = S_model(MAST) / S_model(DIII-D) among entries with a
+    DIII-D S_model of at least 0.85.
+  tests_hidden_from_system: true
+  source: src-codabench-fusion-equilibrium-challenge-17739
+  quote: That is the whole contract — the flux map plus the only two scalars a flux map cannot
+    contain.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: DIII-D training shots come with their targets; the public test folds ship inputs
+    only, and there is no MAST training split. The final phase's private folds (879 DIII-D and 1,205
+    MAST shots, per the site's 2026-10-09 announcement) are published as inputs on 2026-10-19, their
+    targets withheld. The Hugging Face dataset is ungated.
+  access_basis:
+    reason: The test folds' inputs are released and their EFIT targets are not, so entrants run
+      their models and upload predictions for scoring.
+    source: src-codabench-fusion-equilibrium-challenge-17739
+    quote: The **Final** phase swaps in two private folds of comparable size, blind until it closes.
+  refresh: versioned-releases
+  refresh_note: The data is v1.1.0, final for the competition. Two input-column errata are fixed by
+    the starter kit's data_fixes.py rather than by a new data revision. Scoring and rules changed on
+    dated announcements, the Challenge 2 gate on 2026-08-18 and the ban on MAST equilibrium data on
+    2026-09-23.
+  refresh_basis:
+    reason: Every change is pinned to the labelled data version or a dated maintainer announcement.
+    source: src-github-fusion-equilibrium-challenge-starter-readme
+    quote: 'There will be no v1.1.1 release: v1.1.0 plus these fixes is the final data for the competition'
+  data_provenance:
+    - real-world-instrument
+    - simulation-generated
+  data_provenance_note: The inputs are signals recorded on each shot at DIII-D and MAST; the ground
+    truth is EFIT's reconstruction fitted to the shot's magnetic measurements, an
+    observation-constrained physics product, which takes both terms (taxonomy/data-properties.yaml
+    names this benchmark under simulation-generated). experimental-measurement was considered, since
+    each shot is a run of the machine, but the scored truth is the fitted reconstruction, not a
+    designed experiment's readout.
+  data_provenance_source: src-arxiv-2609-01750-v1
+  data_provenance_quote: The dataset is assembled from the DIII-D National Fusion Facility (General
+    Atomics)
+  contamination_risk: medium
+  contamination_risk_note: >
+    The DIII-D test targets have not been published. The MAST targets are drawn from the public FAIR-MAST
+    archive, a route the maintainers name and bar by rule (from 2026-09-23, with development entries not
+    judged retroactively), not by construction; the archive stays public, and the check is a data-provenance
+    statement and a rebuild of the top five entries per challenge. No source shows an entrant using it.
+  contamination_risk_source: src-codabench-fusion-equilibrium-challenge-17739
+  contamination_risk_quote: The withheld MAST targets are drawn from that archive, so using it is
+    training on the test set.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: S_model is bounded in [0, 1] and EFIT's reconstruction is the ground truth itself, so
+      reaching the bound means matching the incumbent's labels. The scorer's check that a perfect
+      prediction scores exactly 1 is a self-test of the harness, not evidence that 1 is reachable
+      from the inputs. The development board's best DIII-D S_model is 0.997.
+    source: src-fusion-equilibrium-challenge-site
+    quote: It blends flux-map accuracy, the two predicted scalars, boundary alignment, and the
+      consistency of the seven ψ-derived scalars into one number in [0, 1].
+  dataset_licence: CC-BY-4.0
+  dataset_licence_source: src-fusion-equilibrium-challenge-data
+  dataset_licence_quote: Dataset released under CC BY 4.0 for open research.
+  size:
+    - count: 9121
+      unit: shots (7,915 DIII-D, 1,206 MAST)
+      subset: the released training and public test folds, v1.1.0
+      source: src-fusion-equilibrium-challenge-data
+      quote: 9,121 shots, 98 GB total
+    - count: 7041
+      unit: DIII-D training shots, with targets
+      subset: diii_d_train
+      source: src-fusion-equilibrium-challenge-data
+      quote: The challenge releases 7,915 DIII-D shots (7,041 train + 874 public test) and 1,206
+        MAST shots (zero-shot transfer set)
+    - count: 262434
+      unit: scored frames (flux maps) in a complete public-test submission, 193,359 DIII-D and
+        69,075 MAST
+      subset: development phase, public test folds
+      source: src-codabench-fusion-equilibrium-challenge-17739
+      quote: 262,434 in all
+    - count: 8794
+      unit: DIII-D shots, with 2,414 MAST shots, across all folds
+      subset: the whole corpus, private folds included
+      source: src-arxiv-2609-01750-v1
+      quote: The release contains 8,794 DIII-D shots and 2,414 MAST shots
+  size_note: The abstract's 9,113 DIII-D and 2,416 MAST shots are counts before the diverted-plasma
+    filter (see review_checks).
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: team, in the development phase (100 in all; the final phase allows 3 in all)
+    source: src-codabench-fusion-equilibrium-challenge-17739
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Sophelio, with General Atomics (DIII-D) and the University of Texas at Austin
+  maintainer_basis:
+    reason: The site presents the challenge as Sophelio's, and the dataset, the starter kit and the
+      Codabench competition sit in Sophelio's accounts. The paper's authors are at Sophelio, General
+      Atomics and UT Austin.
+    source: src-fusion-equilibrium-challenge-site
+    quote: A Sophelio initiative for NeurIPS 2026 Competition Track.
+  maintainer_type: industry-lab
+  maintainer_type_note: General Atomics staff are six of the ten organisers on the site's organisers
+    page, and UKAEA is named as a partner with no organiser, but neither holds the dataset, the code
+    or the competition. conference-workshop was considered and rejected; this is a one-off NeurIPS
+    competition organised and hosted by one company.
+  maintainer_type_basis:
+    reason: The holder of the dataset, the starter kit and the competition is a company.
+    source: src-sophelio-site
+    quote: Sophelio, an award-winning applied AI and machine-learning company
+  submission_process:
+    - held-out-server
+    - maintainer-verified
+  submission_process_note: >
+    Teams upload predictions, as a pointer to a pinned commit of a Hugging Face repository or as a direct
+    upload, and Codabench's scorer scores them against withheld targets. Every final-phase submission
+    must name a reproduction package; the organisers rebuild the top five entries per challenge before
+    awards, and an entry that cannot be rebuilt stays on the board but cannot win. Releasing source under
+    an OSI-approved licence and a methods report are prize conditions for the top three, not conditions
+    of being ranked, so neither open-source-gated nor publication-gated applies.
+  submission_process_source: src-arxiv-2609-01750-v1
+  submission_process_quote: so that organizers can independently rebuild and re-score the entry
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-codabench-fusion-equilibrium-challenge-17739
+      quote: Private-fold EFIT reconstructions are never released; leakage or memorization is
+        disqualifying.
+  independence_flags_note: >
+    The organisers hold the private folds and score every entry. No source names who pays the two $500
+    awards, so prize-sponsored-by-industry is left unset. No row on the development leaderboard is identifiably
+    an organiser's, and organising-team members with access to the hidden ground truth are excluded from
+    prizes, so maintainer-competes-on-own-benchmark is not set.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2609-01750-v1
+    quote: Organizer time, cluster compute, and storage are covered by existing institutional grants
+      at the participating laboratories; no external sponsor is required to run the challenge.
+  participation:
+    source: src-codabench-fusion-equilibrium-challenge-17739
+    quote: '"participants_count":233,"submissions_count":2271'
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: trivial-cpu
+  compute_tier_basis:
+    reason: Scoring is CPU-only, and every reference baseline trains in under two hours on one
+      commodity GPU or CPU. Training is the entrant's cost; final-phase reproduction packages must
+      rebuild within 24 GPU-hours on one 80 GB A100-class GPU.
+    source: src-codabench-fusion-equilibrium-challenge-17739
+    quote: Scoring runs automatically on submission (CPU-only).
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: Every official score needs the withheld targets, which only the organisers hold, so
+      nobody else can produce one. The starter kit scores held-out training shots with the same
+      functionals as a proxy.
+    source: src-codabench-fusion-equilibrium-challenge-17739
+    quote: Private-fold EFIT reconstructions are never released; leakage or memorization is
+      disqualifying.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: fusion_scoring/ and local_score.py in the starter kit (the Codabench scorer's own
+    functionals); the scorer runs on Codabench as ghcr.io/sophelio/fusion-eq-scorer
+  harness_source: src-github-fusion-equilibrium-challenge-starter-readme
+  harness_quote: the functionals are the same code Codabench runs, not a reimplementation
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for Sophelio/fusion-equilibrium-challenge-starter
+    reports NOASSERTION (read 2026-10-14); its LICENSE file is the MIT text.
+  code_licence_source: src-github-fusion-equilibrium-challenge-starter-readme
+  code_licence_quote: Starter-kit code is MIT-licensed
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which machine and fold (DIII-D or MAST, the public development fold or
+  # the private final one), what the model was trained on (external archives and pre-trained models are
+  # allowed with disclosure, MAST equilibrium data is barred from 2026-09-23, and development entries
+  # before that are not judged by it), and the training budget (the self-declared compute-light badge, and
+  # the final phase's 24 GPU-hour rebuild ceiling).
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - hardware
+
+homepage: https://fusion-equilibrium-challenge.sophelio.io/
+repository: https://github.com/Sophelio/fusion-equilibrium-challenge-starter
+dataset_url: https://huggingface.co/datasets/Sophelio/fusion-equilibrium-challenge
+leaderboard_url: https://www.codabench.org/competitions/17739/
+maintainer_url: https://sophelio.io/
+
+versions:
+  - version: v1.1.0
+    label: Dataset v1.1.0, the competition's final data
+    version_kind: revision
+    changes: Shaping-coil currents in ampere-turns on both machines. Two input-column errata found
+      after release are fixed by the starter kit's data_fixes.py, not by a new data revision, and no
+      v1.1.1 will follow.
+    errata:
+      - scope: DIII-D input column magnetics_plasma_current_times (4,930 of 7,041 training shots and
+          586 of 874 public-test shots)
+        description: The plasma-current time axis is wrong on about 69% of DIII-D shots;
+          data_fixes.fix_d3d_ip_times corrects it shot by shot. The targets and scoring are
+          unaffected.
+        source: src-github-fusion-equilibrium-challenge-starter-readme
+      - scope: MAST input column thomson_core_R
+        description: 130 radii for 131 core Thomson channels; channel 0 has no calibration and is
+          NaN, and data_fixes.align_mast_thomson_core aligns the rest.
+        source: src-github-fusion-equilibrium-challenge-starter-readme
+    frozen: true
+    sources:
+      - src-github-fusion-equilibrium-challenge-starter-readme
+
+subsets:
+  - id: fusion-equilibrium-challenge#challenge-1-diii-d
+    label: Challenge 1, intra-machine reconstruction on DIII-D
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2609-01750-v1
+        quote: Two complementary awards reward intra-machine reconstruction fidelity (Smodel) on
+          DIII-D
+    notes: Ranked by S_model on the DIII-D test fold, the leaderboard's default column; Award 1 (USD
+      500).
+  - id: fusion-equilibrium-challenge#challenge-2-diii-d-to-mast
+    label: Challenge 2, zero-shot transfer from DIII-D to MAST
+    scored_separately: true
+    evidence:
+      - source: src-fusion-equilibrium-challenge-site
+        quote: Take that model to a completely different machine it has never seen — with zero
+          training data.
+      - source: src-codabench-fusion-equilibrium-challenge-17739
+        quote: with a DIII-D composite `S ≥ 0.85` (raised 2026-08-18 from
+    notes: Ranked by G_ratio = S_model(MAST) / S_model(DIII-D), reported as 0 for an entry whose
+      DIII-D S_model is below 0.85 (the gate was R2(psi) above 0.6 until 2026-08-18); Award 2 (USD
+      500). Four honorable mentions are judged on the MAST blind fold.
+
+tags:
+  - tokamak
+  - plasma-equilibrium
+  - fusion-energy
+  - scientific-machine-learning
+  - cross-machine-generalization
+  - competition
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2609-01750-v1
+    - src-arxiv-2609-01750
+    - src-fusion-equilibrium-challenge-site
+    - src-fusion-equilibrium-challenge-data
+    - src-codabench-fusion-equilibrium-challenge-17739
+    - src-github-fusion-equilibrium-challenge-starter-readme
+    - src-sophelio-site
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date and licence;
+    the site's home and data pages with scripts and styles stripped; Codabench's JSON record of the competition,
+    with its rules, evaluation, data and submission pages; the starter kit's README at main; and Sophelio's
+    home page. The site's organisers, rules, FAQ, timeline and announcements pages and the development
+    leaderboard's API were read but not cited; the leaderboard's rows and the timeline page carry personal
+    account names.
+  confidence: medium
+  review_checks:
+    - check: composite rests on S_model blending different metrics. Every constituent is an error
+        against EFIT's reference and is counted under statistical-fit, so a strict reading of
+        composite's exclusion ("every constituent shares one method") would drop it; reading D_LCFS
+        as domain-metric would keep it, but that metric is the challenge's own.
+      field: evaluation_method
+    - check: contamination_risk is medium. The maintainers say the withheld MAST targets come from
+        the public FAIR-MAST archive and bar that route by rule, checked by rebuilding the top five
+        entries. A reviewer who reads that statement as an evidenced route into a scored split would
+        make it high, with this Source as contamination_evidence.
+      field: data.contamination_risk
+      source: src-codabench-fusion-equilibrium-challenge-17739
+      quote: The withheld MAST targets are drawn from that archive, so using it is training on the
+        test set.
+    - check: Shot counts differ by source. The abstract has 9,113 DIII-D and 2,416 MAST (the
+        README's 9,113 "source shots", before the diverted-plasma filter); the paper body 8,794 and
+        2,414 (all folds); the site 7,915 and 1,206 (the released folds); the 2026-10-09
+        announcement 879 and 1,205 private shots, which give 2,411 MAST, not 2,414.
+      field: data.size
+      source: src-github-fusion-equilibrium-challenge-starter-readme
+      quote: validated to make the correct, unambiguous call on all 9,113 DIII-D source shots
+    - check: The paper says the private fold's ground truth stays confidential until the end of
+        Phase 2; Codabench's rules and terms say it is never released. If the targets are released
+        after the final phase, reproducibility_tier and the private-test-set blocker change for
+        later use.
+      field: execution.reproducibility_tier
+      source: src-arxiv-2609-01750-v1
+      quote: remain confidential until the end of Phase 2
+    - check: activity is accepting-submissions only until 2026-10-18. Re-check after the final phase
+        closes on 2026-10-26 (results-pending until the December 2026 NeurIPS session).
+      field: activity
+    - check: official-harness rests on the starter kit's fusion_scoring/ being the scorer's own
+        modules, run locally on held-out training shots. The README also says the scorer itself is
+        not in the kit, which could read as reference-implementation-only.
+      field: execution.harness_availability
+      source: src-github-fusion-equilibrium-challenge-starter-readme
+      quote: The scorer runs on Codabench against held-out ground truth; it is not part of this
+        starter kit.
+    - check: No source names who funds the two $500 awards, so prize-sponsored-by-industry is unset.
+        Sophelio is a company and runs the challenge, and the paper says no external sponsor is
+        needed.
+      field: governance.independence_flags
+      source: src-arxiv-2609-01750-v1
+      quote: no external sponsor is required to run the challenge.
+    - check: Some development entries look physics-based (one fact-sheet method name describes a
+        Green's-function flux model for MAST), so observed_subjects might add classical-algorithm.
+        The leaderboard was not made a Source because its rows carry personal account names.
+      field: designed_for_subjects
+    - check: ground_truth_source is held-out-labels; simulation is the other reading, since the
+        labels are a physics code's reconstruction fitted to measurements.
+      field: ground_truth_source
+  personal_data_excluded:
+    - source: src-arxiv-2609-01750-v1
+      what: the corresponding author's e-mail address on the title page
