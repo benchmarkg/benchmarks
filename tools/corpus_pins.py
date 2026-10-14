@@ -14,7 +14,8 @@ add two different files, so they merge in either order.
     python -m tools.corpus_pins check                    list entries no file pins, and values that drifted
 
 Every value is computed from the code by `write`, never typed by hand. A file's name is the task (or fix) that
-adds its entries; `base` holds the entries that were on main when the files were introduced.
+adds its entries; `base` holds the entries that were on main when the files were introduced. Run `write` on a
+tree that also merges the other open PRs, so a near-duplicate pair across two of them is pinned too (load()).
 """
 from __future__ import annotations
 
@@ -75,16 +76,20 @@ def compute(root: str = ROOT) -> tuple[dict[str, dict], list[tuple[str, str]]]:
 
 
 def load(root: str = ROOT) -> tuple[dict[str, dict], list[tuple[str, str]]]:
-    """The union of the pin files: entry id -> values, and the proposals. An id pinned twice is an error."""
-    entries, proposals, where = {}, [], {}
+    """The union of the pin files: entry id -> values, and the proposals. An id pinned twice is an error.
+
+    A proposal is expected only while both of its entries are pinned. Two open PRs can add the two halves of a
+    pair (BrowseComp and HealthBench share openai/simple-evals); the PR written second pins the pair, computed on
+    a tree that merges the other, and the pair is expected once both have merged, whichever merges first."""
+    entries, proposals, where = {}, set(), {}
     for path in sorted(glob.glob(os.path.join(root, PIN_DIR, '*.yaml'))):
         doc = yaml.safe_load(open(path, encoding='utf-8')) or {}
         for eid, values in (doc.get('entries') or {}).items():
             if eid in entries:
                 raise ValueError('%s is pinned in both %s and %s' % (eid, where[eid], os.path.basename(path)))
             entries[eid], where[eid] = values, os.path.basename(path)
-        proposals += [tuple(p) for p in doc.get('proposals') or []]
-    return entries, sorted(proposals)
+        proposals |= {tuple(p) for p in doc.get('proposals') or []}
+    return entries, sorted(p for p in proposals if p[0] in entries and p[1] in entries)
 
 
 def write(name: str, ids: list[str], root: str = ROOT) -> str:
