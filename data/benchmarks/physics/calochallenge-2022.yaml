@@ -1,0 +1,545 @@
+# data/benchmarks/physics/calochallenge-2022.yaml
+#
+# P1-S6-T06, physics entry 14. Filled from the challenge's community write-up, arXiv 2410.21611 read as its v2
+# PDF (2025-11-13, matching the version published in Reports on Progress in Physics; v1 2024-10-28), and its
+# abstract page; the challenge's site on calochallenge.github.io (scripts and styles stripped), whose Jekyll
+# source is the repository README; the evaluation script code/evaluate.py in CaloChallenge/homepage at main;
+# Zenodo's records of the three datasets (8099322, 6366270 and 6366323); and the v2 PDF of CaloTrilogy (arXiv
+# 2606.04165, June 2026), a paper that reports on datasets 2 and 3 with the challenge's metrics. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: calochallenge-2022
+name: Fast Calorimeter Simulation Challenge 2022
+aliases:
+  - CaloChallenge
+  - CaloChallenge 2022
+tagline: Generative surrogates for Geant4 calorimeter showers on four datasets, scored on fidelity,
+  generation time and size.
+description: >
+  A community challenge, announced in February 2022, for deep generative models that stand in for
+  Geant4 in simulating calorimeter showers, the costliest part of LHC detector simulation. Entrants
+  learn the distribution of voxelised energy deposits given the incident particle's energy, from
+  Geant4 showers on three datasets: dataset 1, photons (368 voxels) and charged pions (533 voxels)
+  simulated in the ATLAS calorimeter and taken from ATLAS open data; and datasets 2 and 3, electrons
+  in an idealised silicon-tungsten calorimeter simulated with Geant4's Par04 example, at 6,480 and
+  40,500 voxels. Each dataset has training and evaluation files, all public on Zenodo under CC BY
+  4.0. Entrants sent files of generated showers, and the organisers compared them with the Geant4
+  evaluation file through separation powers of high-level feature histograms, binary classifiers'
+  AUCs, a multiclass classifier's log-posterior across all submissions, FPD and KPD, and precision,
+  recall, density and coverage. Each model's generation was timed in a container on one cluster, at
+  three batch sizes, beside its parameter count. No aggregate is formed and no winner was declared.
+  The write-up (Reports on Progress in Physics 88, 116201) compares 59 submissions from 31 models by
+  23 collaborations, and the datasets, submitted samples, evaluation script and result tables stay
+  public as a benchmark.
+self_description:
+  source: src-calochallenge-site
+  quote: The purpose of this challenge was to spur the development and benchmarking of fast and
+    high-fidelity calorimeter shower generation using deep learning methods.
+external_ids:
+  arxiv: '2410.21611'
+paper:
+  title: 'CaloChallenge 2022: A Community Challenge for Fast Calorimeter Simulation'
+  arxiv: '2410.21611'
+  doi: 10.1088/1361-6633/ae1304
+  version_read: v2
+  source: src-arxiv-2410-21611-v2
+released: 2022-03-17
+released_note: Zenodo's publication date for datasets 2 and 3, the earliest dated release in the
+  sources read. The write-up says the challenge was first announced in February 2022, and the
+  repository was created on 2022-01-27 (GitHub API). Dataset 1's current record (v3) is dated
+  2023-06-30; its first version's date was not read (see versions).
+released_source: src-zenodo-calochallenge-ds2
+released_quote: Published March 17, 2022
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/simulation-surrogates
+  secondary:
+    - physics/particle-physics
+domain_basis:
+  reason: Entrants are generative models that stand in for Geant4's calorimeter simulation and are
+    scored against held-out Geant4 showers, which is simulation-surrogates' definition. The physical
+    subject is the response of particle detectors to single particles, so particle-physics is
+    secondary; that leaf's definition, analysing collision or detector data to recover physics
+    quantities, does not cover generating detector data, which is why it is not primary (see
+    review_checks).
+  source: src-arxiv-2410-21611-v2
+  quote: we are interested in surrogate models that are faithful (i.e. reproduce the showers of
+    Geant4 as close as possible)
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: The challenge's claim is that a model learns the distribution of a physical system's
+      state, the energy deposited in each calorimeter voxel given the incident energy, and every
+      quality metric compares the generated showers with Geant4's reference computation on a
+      held-out file. What is predicted is a distribution, sampled, rather than one state per input
+      (see review_checks).
+    source: src-arxiv-2410-21611-v2
+    quote: participants were tasked with training their favorite generative model on the provided
+      calorimeter shower datasets
+capability_considered_and_rejected:
+  - term: generation-fidelity
+    reason: The scores measure how closely generated showers match the reference, which the term's
+      inclusion test describes, but its exclusion sends a predicted state of a physical system
+      scored against a reference computation to scientific-prediction.
+  - term: distribution-shift-generalization
+    reason: The site listed an interpolation test, one incident energy left out of training and
+      generated after it, among the planned metrics, but the write-up reports no such test; every
+      dataset is scored on an evaluation file drawn like its training file.
+    source: src-calochallenge-site
+    quote: 'Interpolation capabilities: leave out one energy in training and generate samples at that
+      energy after training.'
+
+evaluation_method:
+  - statistical-fit
+  - classification-metric
+  - entrant-relative-ranking
+evaluation_method_basis:
+  reason: >
+    The write-up reports its metrics per dataset, each apart. statistical-fit for the separation
+    powers between histograms of high-level features (energy per layer, total energy, centres of
+    energy and their widths, sparsity), a normalised chi-squared-type distance; for FPD and KPD,
+    Frechet and kernel distances computed on the same features; for the layer-energy correlations;
+    and for precision, recall, density and coverage, nearest-neighbour statistics of the generated
+    and reference samples. classification-metric for the binary classifiers' AUC: a network is
+    trained afresh to tell each submission from the Geant4 file, so the AUC is a statistic of scores
+    against a labelled key, not the output of a fixed scoring model. entrant-relative-ranking for the
+    multiclass test: one classifier is trained on all submissions together and read on the Geant4
+    sample, so the log-posterior of every submission moves when one is added or removed.
+  source: src-arxiv-2410-21611-v2
+  quote: For each of these observables, we compute the separation power between the submissions and
+    the held-out test set.
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: No published figure combines the metrics. Quality, generation time and model size are
+      reported apart and compared on Pareto fronts, and the organisers expected no single winner.
+    source: src-calochallenge-site
+    quote: It is expected that there will not necessarily be a single clear winner, but different
+      methods will have their pros and cons.
+  - term: model-derived-metric
+    reason: The classifiers are trained afresh for each evaluation, ten per submission and averaged,
+      not released as fixed scoring models, which the term's exclusion leaves to the final
+      statistic's method. FPD and KPD are computed on the physics features themselves, not on a
+      network's activations as FID is.
+    source: src-arxiv-2410-21611-v2
+    quote: We train ten classifiers with different random initialization and average the AUCs when
+      reporting the results.
+  - term: domain-metric
+    reason: Separation power is a general histogram distance close to the chi-squared homogeneity
+      test, and FPD a Frechet distance; neither is defined only within particle physics, though both
+      are applied to its features.
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are deep generative models (GANs, VAEs, normalising flows, diffusion and
+    flow-matching models) trained to stand in for Geant4 and scored against its showers.
+  source: src-calochallenge-site
+  quote: Therefore there is an urgent need to develop GEANT4 emulators that are both fast
+    (computationally lightweight) and accurate.
+designed_for_subjects_considered_and_rejected:
+  - term: generative-media-model
+    reason: The outputs are generated, but they are voxelised energy deposits in a simulated
+      detector, not images, video or audio, although some entrants treat them as 3D images.
+  - term: domain-specialist-model
+    reason: The entrants are built for a particle-physics task, but they emulate a simulation, which
+      the term's exclusion sends to scientific-surrogate-model.
+as_used:
+  - protocol: Datasets 2 and 3 at perpendicular incidence only, scored with the challenge's metrics
+      plus the Wasserstein distance and cosine similarity of high-level observables. On dataset 3
+      the comparison is with a pretrained CaloDiffusion the authors ran themselves, not with the
+      challenge's submitted samples.
+    split: the datasets' evaluation (reference) files
+    source: src-arxiv-2606-04165-v2
+    quote: Although samples with varying incident angles are available, only perpendicular incidence
+      is considered here.
+    note: CaloTrilogy (June 2026, revised July 2026), a one-step generator built on MeanFlow, also
+      evaluated on an ILD calorimeter dataset outside the challenge.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the challenge's datasets and metrics; a paper first
+    posted in June 2026 and revised in July evaluates on datasets 2 and 3 following them, and the
+    write-up says the datasets will serve as benchmarks. The challenge itself has ended (activity),
+    and the repository was last pushed on 2025-11-25 (GitHub API), which is maintenance evidence,
+    not lifecycle.
+  source: src-arxiv-2606-04165-v2
+  quote: We follow the evaluation metrics of the CaloChallenge 2022
+activity: closed
+activity_note: The site describes the challenge in the past tense and sends anyone who wants to
+  compare a model to its Legacy section, which holds the submitted samples on Zenodo, the evaluation
+  script and the write-up's numbers with a notebook that redraws its figures. No source dates the
+  end of submissions; the write-up says they continued past the planned close in May 2023, with new
+  ones presented at ML4Jets in November 2023.
+activity_basis:
+  reason: Entrants' samples went to the organisers, who scored them for the write-up, and that
+    write-up is now the final result. The site offers no route for new entries; later comparisons
+    are run by their authors with the released code.
+  source: src-calochallenge-site
+  quote: The results of the CaloChallenge are summarized in the final write-up.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: CaloINN (a normalising flow; the write-up's best quality-speed trade-off on dataset 1
+      photons)
+    source: src-arxiv-2410-21611-v2
+    observed_on: 2026-10-14
+    quote: making CaloINN an optimal submission
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Held-out Geant4 showers, from the ATLAS simulation for dataset 1 and from
+  Geant4's Par04 example for datasets 2 and 3.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The training and evaluation files, the 59 submitted samples, the evaluation script and the
+    numbers behind every figure and table are public. Generation timings were measured on one
+    cluster and are comparable only on the same hardware.
+  source: src-arxiv-2410-21611-v2
+  quote: The 59 submitted samples are available for download at
+
+task:
+  exists: true
+  input:
+    - Geant4 calorimeter showers for training, each the voxel energy deposits with the incident
+      particle's energy
+    - at generation, incident energies following the distribution of the dataset's evaluation file
+  output: An HDF5 file of generated showers in the training data's format, one shower per incident
+    energy.
+  scoring: Per dataset and apart, with no aggregate. Separation powers of high-level feature
+    histograms; binary-classifier AUCs on voxels and on high-level features; a multiclass
+    classifier's log-posterior across submissions; FPD and KPD; precision, recall, density and
+    coverage; and generation time at batch sizes 1, 100 and 10,000 on CPU and GPU, with the
+    trainable parameter count.
+  source: src-calochallenge-site
+  quote: Note that the distribution of incident energies of the samples should match the
+    distribution in the validation data
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Each dataset's training and evaluation files are on Zenodo under CC BY 4.0 and download
+      without an account, the evaluation files included.
+    source: src-zenodo-calochallenge-ds2
+    quote: dataset_2_1.hdf5 should be used for training, dataset_2_2.hdf5 can be used as reference
+      in the evaluation.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The one content change is labelled. Dataset 1's Zenodo record moved to v3 (2023-06-30)
+      after ATLAS supplied a second, independent pion sample, and the write-up's trainings and
+      evaluations use the two independent files. Datasets 2 and 3 are still at v1.
+    source: src-arxiv-2410-21611-v2
+    quote: Initially, only one dataset for the pion sample was available.
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Dataset 1 was simulated with the official ATLAS software, which is based on
+    Geant4, without electronic noise or cross-talk; datasets 2 and 3 with Geant4's Par04 example, an
+    idealised cylindrical calorimeter of 90 tungsten and silicon layers. The showers are voxelised
+    onto cylindrical readouts.
+  data_provenance_source: src-arxiv-2410-21611-v2
+  data_provenance_quote: The interaction of the particles in the calorimeters was simulated with the
+    official ATLAS software, which is based on Geant4
+  contamination_risk: medium
+  contamination_risk_note: The evaluation files sit on Zenodo beside the training files, and a model
+    trained on them would look closer to the reference under every two-sample test. No source
+    reports that happening, and the write-up describes no check for it.
+  contamination_evidence: []
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: All three Zenodo records (8099322, 6366270 and 6366323) carry the same
+    licence; the record for dataset 1 is cited.
+  dataset_licence_source: src-zenodo-calochallenge-ds1
+  dataset_licence_quote: Creative Commons Attribution 4.0 International
+  size:
+    - count: 4
+      unit: calorimeter shower datasets scored separately (dataset 1 photons, dataset 1 pions,
+        dataset 2, dataset 3)
+      subset: all
+      source: src-arxiv-2410-21611-v2
+      quote: We study state-of-the-art generative models on four calorimeter shower datasets of
+        increasing dimensionality
+    - count: 200000
+      unit: Geant4 electron showers in four files of 50,000, two for training and two as the
+        evaluation reference, 40,500 voxels each
+      subset: dataset 3
+      source: src-zenodo-calochallenge-ds3
+      quote: It consists of four files with 50k GEANT4-simulated showers each of electrons
+    - count: 200000
+      unit: Geant4 electron showers in two files of 100,000, one for training and one as the
+        evaluation reference, 6,480 voxels each
+      subset: dataset 2
+      source: src-zenodo-calochallenge-ds2
+      quote: It consists of two files with 100k GEANT4-simulated showers each of electrons
+    - count: 121000
+      unit: photon showers per file (one training and one evaluation file), 368 voxels each
+      subset: dataset 1 photons
+      source: src-arxiv-2410-21611-v2
+      quote: total 121 000 120 800
+    - count: 120800
+      unit: charged-pion showers per file (one training and one evaluation file), 533 voxels each
+      subset: dataset 1 pions
+      source: src-arxiv-2410-21611-v2
+      quote: total 121 000 120 800
+    - count: 59
+      unit: submitted sample sets, from 31 models by 23 collaborations
+      subset: the challenge's submissions
+      source: src-arxiv-2410-21611-v2
+      quote: In total, we have received 59 submissions, sampled from 31 models, from 23
+        collaborations
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The seven CaloChallenge organisers, from INFN Rome Tor Vergata, Universität Hamburg,
+    Rutgers University, LBNL, the University of Geneva and Warsaw University of Technology
+  maintainer_basis:
+    reason: The site and code sit in the CaloChallenge GitHub organisation, and the datasets in
+      Zenodo records whose creators are the seven organisers from six institutions; no institution
+      is named as the holder.
+    source: src-calochallenge-site
+    quote: homepage is maintained by CaloChallenge
+  maintainer_type: community-collective
+  maintainer_type_note: academic-lab was considered. The organisers come from six institutions and
+    none is stated to hold the data or repository, which the term's test sends here.
+    conference-workshop does not apply; the challenge ran once, presented at ML4Jets 2022 and 2023
+    and a dedicated workshop, not as a recurring series.
+  submission_process:
+    - maintainer-scored-predictions
+    - sandboxed-rerun
+  submission_process_note: Entrants sent files of generated showers, which the organisers checked
+    and scored against the Geant4 evaluation files that every entrant also holds. For the timings,
+    each group supplied a Singularity container, which the organisers ran on the CLIP cluster to
+    load the model and generate samples, publishing their own timings. The public evaluation script
+    has neither the multiclass classifier nor the timing runs. Since the write-up, results appear
+    only in their authors' papers.
+  submission_process_source: src-arxiv-2410-21611-v2
+  submission_process_quote: All submitted files were checked for NaN entries
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2410-21611-v2
+      quote: By Matthew R. Buckley, Claudius Krause, Ian Pang, and David Shih
+  independence_flags_note: All seven organisers co-authored submissions. Krause and Shih are on
+    L2LFlows, CaloFlow, CaloINN and CaloVAE+INN, and Shih also on SuperCalo; Kasieczka on L2LFlows
+    and CaloClouds; Nachman on CaloScore; Salamani on CaloDiT, DNNCaloSim and Geant4-Transformer;
+    Zaborowska on CaloDiT and Geant4-Transformer; Faucci Giannelli on CaloShowerGAN. No prizes are
+    mentioned in the sources read, and the evaluation files are public, so
+    single-evaluator-private-test-set does not apply.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The data, the submitted samples and the evaluation script are public, and the script
+      scores a file of generated showers against a reference file with no human or maintainer-only
+      step. The generation timings need the same hardware to be compared.
+    source: src-github-calochallenge-evaluate
+    quote: set of events in .hdf5 file format (same shape as training data)
+  harness_availability: official-harness
+  harness: CaloChallenge/homepage code/evaluate.py (histograms and their chi-squared differences,
+    classifiers on voxels and high-level features, a ResNet classifier, FPD and KPD, precision,
+    recall, density and coverage); the multiclass classifier and the timings are not in it
+  harness_source: src-github-calochallenge-evaluate
+  harness_quote: Main script to evaluate contributions to the Fast Calorimeter Challenge 2022
+  code_licence: null
+  code_licence_note: GitHub's licence metadata for CaloChallenge/homepage reports no licence, read
+    2026-10-14, and the site states none.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the profiles: which evaluation code produced the numbers (the write-up's pipeline, with the
+  # multiclass classifier trained on its own pool, or the public evaluate.py), how many showers were generated
+  # and compared, and the hardware the generation was timed on.
+  material_extra:
+    - harness
+    - n_samples
+    - hardware
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Every metric is reported apart, per dataset, and the write-up names no winner; it compares
+    submissions on trade-offs between quality, speed and size.
+  source: src-arxiv-2410-21611-v2
+  quote: 'there is no single submission that excels in all three types of metrics: speed, quality, and
+    size'
+headline_metric: null
+no_legitimate_aggregate: true
+secondary_axes:
+  - latency
+  - throughput
+secondary_axes_basis:
+  reason: Generation time is reported beside quality at batch size 1, the way Geant4 simulates, and
+    at 100 and 10,000, on CPU and GPU, with the trainable parameter count as a proxy for memory.
+  source: src-arxiv-2410-21611-v2
+  quote: We therefore study batch sizes of 1, 100, and 10 000 to show how the models behave under
+    different use cases.
+
+homepage: https://calochallenge.github.io/homepage/
+repository: https://github.com/CaloChallenge/homepage
+
+versions:
+  - version: v1
+    label: The datasets as first released
+    version_kind: revision
+    released: 2022-03-17
+    changes: Datasets 2 and 3 on Zenodo (still at v1), and dataset 1 with a single pion sample. The
+      date is datasets 2 and 3's; dataset 1's first version was not read.
+    breaking: false
+    superseded_by: ds1-v3
+    frozen: true
+    sources:
+      - src-zenodo-calochallenge-ds2
+      - src-zenodo-calochallenge-ds3
+      - src-arxiv-2410-21611-v2
+  - version: ds1-v3
+    label: Dataset 1, Zenodo v3
+    version_kind: revision
+    released: 2023-06-30
+    changes: ATLAS provided a second, independent pion sample, so dataset 1 has two photon and two
+      pion files, one of each for training and one for evaluation; all of the write-up's trainings
+      and evaluations use the two independent files. Datasets 2 and 3 are unchanged. What Zenodo's
+      v2 of dataset 1 changed was not read.
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-zenodo-calochallenge-ds1
+      - src-arxiv-2410-21611-v2
+
+subsets:
+  - id: calochallenge-2022#dataset-1-photons
+    label: Dataset 1, photons
+    items: 121000
+    scored_separately: true
+    evidence:
+      - source: src-zenodo-calochallenge-ds1
+        quote: resulting in 368 voxels for photons and 533 for pions
+    notes: Single photons in the ATLAS calorimeter at 0.2 < |eta| < 0.25, 15 incident energies from
+      256 MeV to 4 TeV in powers of two; 368 voxels in 5 layers. items counts the showers in the
+      evaluation file.
+  - id: calochallenge-2022#dataset-1-pions
+    label: Dataset 1, charged pions
+    items: 120800
+    scored_separately: true
+    evidence:
+      - source: src-zenodo-calochallenge-ds1
+        quote: resulting in 368 voxels for photons and 533 for pions
+    notes: Single charged pions under the same conditions as the photons; 533 voxels in 7 layers.
+      items counts the showers in the evaluation file.
+  - id: calochallenge-2022#dataset-2
+    label: Dataset 2
+    items: 100000
+    scored_separately: true
+    evidence:
+      - source: src-zenodo-calochallenge-ds2
+        quote: It consists of two files with 100k GEANT4-simulated showers each of electrons
+    notes: Electrons from 1 GeV to 1 TeV, log-uniform, in the Par04 calorimeter; 45 layers of 16
+      angular by 9 radial bins, 6,480 voxels. items counts the showers in the evaluation file.
+  - id: calochallenge-2022#dataset-3
+    label: Dataset 3
+    items: 100000
+    scored_separately: true
+    evidence:
+      - source: src-zenodo-calochallenge-ds3
+        quote: It consists of four files with 50k GEANT4-simulated showers each of electrons
+    notes: The same electrons and detector as dataset 2 at higher granularity; 45 layers of 50
+      angular by 18 radial bins, 40,500 voxels. items counts the showers in the two evaluation
+      files.
+subsets_note: >
+  The challenge calls dataset 1 one dataset of two particles; the write-up scores photons and pions
+  apart, so there are four subsets. Every metric is reported per subset and never pooled.
+
+history:
+  - date: null
+    event: channel-closed
+    field: execution.submission_channel
+    from: generated samples sent to the organisers for scoring
+    source: src-calochallenge-site
+    quote: The results of the CaloChallenge are summarized in the final write-up.
+    note: Undated in the sources read. Submissions were still being presented at ML4Jets in November
+      2023, and the write-up was first posted on arXiv on 2024-10-28.
+
+tags:
+  - particle-physics
+  - calorimeter
+  - fast-simulation
+  - generative-models
+  - geant4
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T06)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2410-21611-v2
+    - src-arxiv-2410-21611
+    - src-calochallenge-site
+    - src-github-calochallenge-evaluate
+    - src-zenodo-calochallenge-ds1
+    - src-zenodo-calochallenge-ds2
+    - src-zenodo-calochallenge-ds3
+    - src-arxiv-2606-04165-v2
+  sources_note: >
+    The write-up's v2 PDF (a DOI, not archived) read as text, and its abstract page for the dates and
+    the journal DOI; the challenge's site with scripts and styles stripped; the evaluation script at
+    main, for the official harness; Zenodo's three dataset records (DOIs); and CaloTrilogy's v2 PDF (a
+    DOI) as evidence of current use. Zenodo's version lists are rendered from its API, which
+    zenodo.org/robots.txt disallows, so earlier versions of dataset 1 were not read.
+  confidence: medium
+  review_checks:
+    - check: Primary domain. simulation-surrogates' definition fits verbatim, and the fair-universe
+        entry rejected that leaf only because no emulator was scored against its simulator. But the
+        surrogates/fluid-dynamics distinction says a benchmark with one physical system as its
+        subject takes that subject's leaf whatever the method. If calorimeter showers count as one
+        system (two detectors, three particle types), particle-physics would be primary, though its
+        definition (analysing detector data to recover physics quantities) does not describe
+        generating showers.
+      field: domain.primary
+      source: src-arxiv-2410-21611-v2
+      quote: we are interested in surrogate models that are faithful (i.e. reproduce the showers of
+        Geant4 as close as possible)
+    - check: scientific-prediction is assigned to models that sample a distribution of showers
+        rather than predict one state per input; generation-fidelity is the alternative, kept out
+        only by its exclusion test.
+      field: capability
+    - check: Evaluation methods. The AUC comes from a classifier trained afresh on each submission
+        against Geant4, so it is filed as classification-metric although the entrant classifies
+        nothing. entrant-relative-ranking rests on the multiclass log-posterior alone, one of
+        several published figures with no headline. Precision, recall, density and coverage are
+        nearest-neighbour manifold statistics, put under statistical-fit although
+        classification-metric names precision and recall. Separation power could be read as
+        domain-metric.
+      field: evaluation_method
+      source: src-arxiv-2410-21611-v2
+      quote: When evaluating the trained classifier on a Geant4-based test set, we can read off
+        which submission the Geant4 sample is closest to.
+    - check: sandboxed-rerun is set for the timings only (organisers ran each group's container);
+        the quality scores come from submitted samples. How samples were sent to the organisers is
+        not described in the sources read.
+      field: governance.submission_process
+      source: src-arxiv-2410-21611-v2
+      quote: each submitting group created a singularity container
+    - check: lifecycle active rests on one 2026 paper using datasets 2 and 3. With the challenge
+        closed and its record final, mature (an ended competition whose instrument stays in use) is
+        the alternative. activity closed has no dated close.
+      field: lifecycle
+    - check: Identity. The entry is the 2022 challenge with its four datasets as subsets. The Par04
+        datasets with varying incident angles, published beside datasets 2 and 3 but outside the
+        challenge, are not included; a later CaloChallenge, if one runs, would be an edition here or
+        an entry of its own.
+      field: subsets
+      source: src-arxiv-2606-04165-v2
+      quote: Although samples with varying incident angles are available, only perpendicular
+        incidence is considered here.
+    - check: contamination_risk medium because the evaluation files are public beside the training
+        files; no source considers training on them.
+      field: data.contamination_risk
