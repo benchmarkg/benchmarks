@@ -25,6 +25,7 @@ from schema.benchmark import Benchmark, load_benchmark  # noqa: E402
 from schema.conditions import COMPANIONS, FIELDS, EvalConditions, parse_reasoning_effort  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
 from schema.stub import curated_benchmark_files  # noqa: E402
+from tools import corpus_pins  # noqa: E402
 
 spec = importlib.util.spec_from_file_location('comparability', os.path.join(ROOT, 'tools', 'build', 'comparability.py'))
 comp = importlib.util.module_from_spec(spec)
@@ -65,63 +66,15 @@ def run_fixture(path):
 # ---- the material set resolves per benchmark -----------------------------------------------------
 
 def test_the_entries_resolve_to_different_material_sets():
-    got = {os.path.basename(p): comp.resolve_profile(load_benchmark(p), PROFILES) for p in ENTRIES}
-    assert {k: (r.profiles, r.fields_material_total) for k, r in got.items()} == {
-        'casp.yaml': (('wet-lab',), 3),
-        'roboarena.yaml': (('physical-trial',), 4),
-        'swe-bench.yaml': (('agentic',), 11),
-        'weatherbench-2.yaml': (('forecasting', 'surrogate-fit', 'eligibility-gated'), 7),
-        'matbench-discovery.yaml': (('surrogate-fit', 'eligibility-gated'), 5),  # ADR-0024: no lead time, no waiver
-        'arc-agi-3.yaml': (('simulation',), 8),                                 # plus three extras, one waiver
-        'virtual-cell-challenge.yaml': (('surrogate-fit',), 2),
-        'paperbench.yaml': (('model-graded',), 8),                             # plus two extras, two waivers
-        'forecastbench.yaml': (('forecasting',), 4),
-        'kaggle-game-arena.yaml': ((), 5),                                    # no profile resolves; four extras
-        'mmlu.yaml': (('llm-static-text',), 8),                                # plus harness and selection_strategy
-        'swe-bench-verified.yaml': (('agentic',), 12),                         # plus provider_snapshot
-        'critpt.yaml': (('llm-static-text',), 9),                             # plus snapshot, selection, harness
-        'scicode.yaml': ((), 8),                     # no profile resolves; llm-static-text's fields as extras
-        # the P1-S3-T01 checkpoint entries
-        'superb.yaml': ((), 3),                                               # harness, eligibility_track, subset
-        'coco.yaml': ((), 2),                                                 # split and training data
-        'medqa.yaml': ((), 2),                                                # set, and the textbook corpus
-        'oc20.yaml': (('surrogate-fit',), 2),
-        'proteingym.yaml': ((), 2),                                           # setting and training data
-        'libero.yaml': (('simulation',), 7),                                  # plus n_samples, training data
-        'the-well.yaml': (('surrogate-fit',), 3),                             # plus the hardware budget
-        'minif2f.yaml': ((), 2),                                              # version and pass@k
-        'harmbench.yaml': (('model-graded',), 8),                             # the classifier is the judge
-        'mmmu.yaml': (('llm-static-text',), 6),
-        # the P1-S3-T02 checkpoint entries
-        'flores.yaml': ((), 1),                                               # edition, split, language pair
-        'humaneval.yaml': ((), 4),                                            # pass@k, samples, decoding
-        'tau-bench.yaml': ((), 5),                           # no profile; harness, scaffold, k, user simulator
-        'climatebench.yaml': (('surrogate-fit',), 2),
-        'circuitnet.yaml': ((), 2),                                           # version and training data
-        'nle.yaml': (('simulation',), 6),                                     # task id and episodes
-        'folio.yaml': (('llm-static-text',), 6),
-        'legalbench.yaml': (('llm-static-text', 'human-judged'), 9),          # the hand-graded tasks
-        'calvin.yaml': (('simulation',), 7),                                  # split and training data
-        'pdebench.yaml': (('surrogate-fit',), 2),
-        # the P1-S5-T01 robotics entries
-        'robocasa.yaml': (('simulation',), 7),                                # libero's set
-        'behavior-1k.yaml': (('simulation',), 8),                             # plus the challenge track
-        'robotwin.yaml': (('simulation',), 7),                                # libero's set
-        'simplerenv.yaml': (('simulation',), 7),                              # libero's set
-        'habitat-challenge.yaml': (('simulation',), 7),                       # libero's set
-        'maniskill.yaml': (('simulation',), 8),                               # plus max_steps
-        # the P1-S5-T04 biology entries
-        'cafa.yaml': (('eligibility-gated',), 6),                             # plus the resolution window
-        'cagi.yaml': (('wet-lab',), 4),                                       # the assay protocol, per challenge
-        'open-problems.yaml': ((), 2),                                        # task and harness
-        'cameo.yaml': ((), 2),                                                # category and target selection
-        'brain-score.yaml': ((), 3),                                          # benchmark, harness, evaluation date
-        'bixbench.yaml': (('model-graded',), 12),                             # plus scaffold and answer mode
-    }
-    # scicode's set is mmlu's, folio's is mmmu's; calvin, habitat-challenge, robocasa, robotwin and simplerenv share
-    # libero's; coco, oc20, proteingym, climatebench, circuitnet and pdebench share virtual-cell-challenge's (split and
-    # training data)
-    assert len({r.material for r in got.values()}) == 33
+    # Each entry's profiles and material fields, computed from the code into tests/fixtures/corpus_pins/ by the
+    # change that added it (tools/corpus_pins.py). A profile-table or facet change shows up here as drift.
+    got = {os.path.basename(p)[:-5]: comp.resolve_profile(load_benchmark(p), PROFILES) for p in ENTRIES}
+    pinned, _ = corpus_pins.load(ROOT)
+    assert {k: (list(r.profiles), list(r.material)) for k, r in got.items()} == \
+        {k: (v['profiles'], v['material']) for k, v in pinned.items()}
+    # different, not one global list: many entries share a set, but far from all
+    assert len({r.material for r in got.values()}) > len(got) // 2
+    got = {k + '.yaml': r for k, r in got.items()}
     # the board's track and the run's harness both enter ARC-AGI-3's key (02 S12.7)
     assert {'eligibility_track', 'harness'} <= set(got['arc-agi-3.yaml'].material)
     assert 'lead_time' in got['weatherbench-2.yaml'].material     # a 3-day and a 10-day score differ (04 S8)
@@ -364,14 +317,7 @@ def test_condition_rules(fields):
 
 def test_build_over_the_repository():
     out = comp.build()
-    assert set(out['profiles']) == {'arc-agi-3', 'behavior-1k', 'bixbench', 'brain-score', 'cafa', 'cagi', 'calvin',
-                                    'cameo', 'casp', 'circuitnet', 'climatebench', 'coco', 'critpt', 'flores', 'folio',
-                                    'forecastbench', 'habitat-challenge', 'harmbench', 'humaneval', 'kaggle-game-arena',
-                                    'legalbench', 'libero', 'maniskill', 'matbench-discovery', 'medqa', 'minif2f',
-                                    'mmlu', 'mmmu', 'nle', 'oc20', 'open-problems', 'paperbench', 'pdebench',
-                                    'proteingym', 'roboarena', 'robocasa', 'robotwin', 'scicode', 'simplerenv',
-                                    'superb', 'swe-bench', 'swe-bench-verified', 'tau-bench', 'the-well',
-                                    'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(out['profiles']) == set(corpus_pins.load(ROOT)[0])
     assert out['profiles']['swe-bench']['fields_material_total'] == 11
 
 

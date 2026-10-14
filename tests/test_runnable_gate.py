@@ -13,6 +13,8 @@ import sys
 import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+from tools import corpus_pins  # noqa: E402
 FIXTURE = os.path.join(ROOT, 'tests', 'fixtures', 'runnable_gate')
 spec = importlib.util.spec_from_file_location('runnable_gate', os.path.join(ROOT, 'scripts', 'runnable_gate.py'))
 gate = importlib.util.module_from_spec(spec)
@@ -143,20 +145,15 @@ def test_the_threshold_is_derived_from_phase_hours():
 # ---- the committed corpus -----------------------------------------------------------------------
 
 def test_the_committed_corpus():
-    """SWE-bench, SWE-bench Verified, SciCode and ForecastBench clear the first three clauses and stop, undetermined,
-    at the carve-out: the fact is not a schema field yet. RoboArena needs physical hardware, ARC-AGI-3's official scores
-    come from a set only its maintainers run, so do the Virtual Cell Challenge's and CritPt's (and COCO's and OC20's test
-    servers', FOLIO's unreleased test split, BEHAVIOR-1K's and the Habitat Challenge's hidden test instances, and
-    Brain-Score's private neural recordings), LegalBench's hand-graded tasks need human raters, and the tiers of CASP,
-    CAGI and CAMEO are not curated. BixBench, like the SWE-bench pair, stops at the carve-out."""
+    """Where every curated entry stops: the first clause it does not pass, failed or undetermined, or 'passed'.
+    Each change that adds entries pins its own in tests/fixtures/corpus_pins/ (tools/corpus_pins.py), computed from
+    this gate, so a fact that moves an entry across a clause shows up here."""
     g = gate.run(gate.load(ROOT))
-    assert g.count == 0
+    pinned, _ = corpus_pins.load(ROOT)
+    assert corpus_pins.gate_outcomes(g) == {k: v['gate'] for k, v in pinned.items()}
+    assert g.count == sum(v['gate'] == 'passed' for v in pinned.values())
     steps = {s.clause.number: s for s in g.steps}
-    assert steps[1].failed == ['arc-agi-3', 'behavior-1k', 'brain-score', 'coco', 'critpt', 'folio', 'habitat-challenge',
-                               'legalbench', 'oc20', 'roboarena', 'virtual-cell-challenge']
-    assert steps[1].undetermined == ['cagi', 'cameo', 'casp']
-    assert steps[3].remaining == 5
-    assert steps[4].undetermined == ['bixbench', 'forecastbench', 'scicode', 'swe-bench', 'swe-bench-verified']
+    assert all(s.remaining >= 0 for s in steps.values()) and steps[1].entering == len(pinned)
 
 
 def test_the_gate_is_not_on_the_bench_surface():

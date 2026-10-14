@@ -29,6 +29,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.insert(0, ROOT)
 from tools import cli  # noqa: E402
 from tools.build import artifacts  # noqa: E402
+from tools import corpus_pins  # noqa: E402
 
 FIXTURE = os.path.join(ROOT, 'tests', 'build', 'fixtures', 'minimal')
 runner = CliRunner()
@@ -176,13 +177,7 @@ def test_the_committed_corpus_publishes_no_draft_and_no_draft_source():
     result = artifacts.build(ROOT)
     assert result.errors == []
     drafts = [i for _, i, r in result.excluded if r.startswith(artifacts.DRAFT)]
-    assert sorted(drafts) == ['arc-agi-3', 'behavior-1k', 'bixbench', 'brain-score', 'cafa', 'cagi', 'calvin', 'cameo',
-                              'casp', 'circuitnet', 'climatebench', 'coco', 'critpt', 'flores', 'folio',
-                              'forecastbench', 'habitat-challenge', 'harmbench', 'humaneval', 'kaggle-game-arena',
-                              'legalbench', 'libero', 'maniskill', 'matbench-discovery', 'medqa', 'minif2f', 'mmlu',
-                              'mmmu', 'nle', 'oc20', 'open-problems', 'paperbench', 'pdebench', 'proteingym',
-                              'roboarena', 'robocasa', 'robotwin', 'scicode', 'simplerenv', 'superb', 'swe-bench',
-                              'swe-bench-verified', 'tau-bench', 'the-well', 'virtual-cell-challenge', 'weatherbench-2']   # every committed entry is still a draft
+    assert sorted(drafts) == sorted(corpus_pins.load(ROOT)[0])   # every committed entry is still a draft
     assert result.corpus['entities']['benchmark'] == []
     # Metrics, Systems and Organizations carry no curation block and publish when they load (module
     # docstring), and so do the Sources they cite -- and nothing else: no draft benchmark's Source

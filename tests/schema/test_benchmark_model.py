@@ -23,6 +23,7 @@ from schema import benchmark as bm  # noqa: E402
 from schema.benchmark import Benchmark, annotation_fields, deferred_fields, load_benchmark  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
 from schema.stub import curated_benchmark_files  # noqa: E402
+from tools import corpus_pins  # noqa: E402
 
 ENTRIES = curated_benchmark_files(ROOT)                   # data/benchmarks/_stubs/ holds BenchmarkStub, not Benchmark
 
@@ -62,29 +63,19 @@ def rejects(doc, match=None):
 @pytest.mark.parametrize('path', ENTRIES, ids=[os.path.basename(p) for p in ENTRIES])
 def test_the_three_entries_load(path):
     b = load_benchmark(path)
-    assert b.evaluation_target == 'learned-system'
+    # 00 S6 A5: in scope when at least one entrant is a learned system, with evidence. `mixed` is the case where
+    # classical or human-led entrants compete beside learned ones.
+    assert b.evaluation_target in ('learned-system', 'mixed')
     assert b.learned_entrant_evidence and all(e.source.startswith('src-') for e in b.learned_entrant_evidence)
     assert b.curation.verification_status == 'ai-drafted-unverified'
 
 
 def test_the_committed_entries():
-    # The three P0-S3 entries, the P0-S8 stress entries and the P1-S3 checkpoint entries, as they land.
-    assert sorted(os.path.basename(p) for p in ENTRIES) == ['arc-agi-3.yaml', 'behavior-1k.yaml', 'bixbench.yaml',
-                                                            'brain-score.yaml', 'cafa.yaml', 'cagi.yaml', 'calvin.yaml',
-                                                            'cameo.yaml', 'casp.yaml', 'circuitnet.yaml',
-                                                            'climatebench.yaml', 'coco.yaml', 'critpt.yaml',
-                                                            'flores.yaml', 'folio.yaml', 'forecastbench.yaml',
-                                                            'habitat-challenge.yaml', 'harmbench.yaml',
-                                                            'humaneval.yaml', 'kaggle-game-arena.yaml',
-                                                            'legalbench.yaml', 'libero.yaml', 'maniskill.yaml',
-                                                            'matbench-discovery.yaml', 'medqa.yaml', 'minif2f.yaml',
-                                                            'mmlu.yaml', 'mmmu.yaml', 'nle.yaml', 'oc20.yaml',
-                                                            'open-problems.yaml', 'paperbench.yaml', 'pdebench.yaml',
-                                                            'proteingym.yaml', 'roboarena.yaml', 'robocasa.yaml',
-                                                            'robotwin.yaml', 'scicode.yaml', 'simplerenv.yaml',
-                                                            'superb.yaml', 'swe-bench-verified.yaml', 'swe-bench.yaml',
-                                                            'tau-bench.yaml', 'the-well.yaml',
-                                                            'virtual-cell-challenge.yaml', 'weatherbench-2.yaml']
+    # Every curated entry, as each change that adds entries pins them in tests/fixtures/corpus_pins/.
+    pinned, _ = corpus_pins.load(ROOT)
+    assert sorted(os.path.basename(p) for p in ENTRIES) == sorted(v['file'].split('/')[-1] for v in pinned.values())
+    assert sorted(os.path.relpath(p, os.path.join(ROOT, 'data', 'benchmarks')).replace(os.sep, '/') for p in ENTRIES) \
+        == sorted(v['file'] for v in pinned.values())
 
 
 def test_the_admissibility_block_is_present():
