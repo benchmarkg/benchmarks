@@ -1,0 +1,613 @@
+# data/benchmarks/chemistry-materials/tdc-admet.yaml
+#
+# P1-S6-T01, chemistry-materials entry 9 of 10. Filled from the Therapeutics Data Commons paper, arXiv 2102.09548
+# read as its v2 PDF (2021-08-28, NeurIPS 2021 Datasets and Benchmarks), and its abstract page; the repository
+# README (mims-harvard/TDC, at main); five pages of tdcommons.ai with scripts and styles stripped (the ADMET group's
+# overview, the TDC.Caco2_Wang leaderboard, the leaderboard guidelines, the news page and the team page); the Harvard
+# Dataverse version history of the group's data file, admet_group.zip; the commit list of the site's gh-pages
+# branch, for the leaderboard's last update; and Koleiev et al.'s audit of the leaderboards (J. Chem. Inf. Model.,
+# July 2026, read as Europe PMC's full text) as evidence of current use. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# The ADMET Benchmark Group only. TDC is a platform with several benchmark groups (drug combination, docking, DTI
+# domain generalisation, single-cell DTI, protein-peptide binding, counterfactual and clinical-trial outcome
+# prediction), each with its own tasks, splits and leaderboards; under the family/child convention each group is
+# its own entry, and none of the others is described here (review_checks).
+
+id: tdc-admet
+name: TDC ADMET Benchmark Group
+aliases:
+  - ADMET Benchmark Group
+  - TDC ADMET Group
+  - ADMET_Group
+  - TDC ADMET leaderboards
+tagline: 22 small-molecule ADMET prediction tasks on fixed scaffold splits, each with its own TDC
+  leaderboard.
+description: >
+  The Therapeutics Data Commons' benchmark group for the absorption, distribution, metabolism,
+  excretion and toxicity (ADMET) of small molecules: 22 datasets taken from published studies, from
+  Caco-2 permeability and CYP450 inhibition to hERG blockade and drug-induced liver injury, of 475 to
+  13,130 compounds each. Every dataset has one fixed scaffold split that holds out 20% of its compounds
+  for test. Entrants train on the rest, redrawing the train and validation sets under at least five
+  seeds, and report the mean and standard deviation over those runs. Nine regression tasks are scored
+  by MAE or, where the property depends on more than chemical structure, by Spearman correlation; 13
+  binary tasks by AUROC, or AUPRC where positives are rare. Each dataset has its own leaderboard on
+  tdcommons.ai and no group-wide score is published. The PyTDC package returns the test labels with
+  the data, entrants compute their own scores with its evaluator and send them through a form. Known
+  weaknesses the sources name: the test sets have been public since 2021, so tuning on them can lift a
+  model's rank, and a 2026 audit could reproduce only three of the top-ranked models.
+self_description:
+  source: src-tdc-admet-site
+  quote: We formulate the ADMET Benchmark Group using 22 ADMET datasets in TDC.
+external_ids:
+  arxiv: '2102.09548'
+paper:
+  title: 'Therapeutics Data Commons: Machine Learning Datasets and Tasks for Drug Discovery and Development'
+  arxiv: '2102.09548'
+  version_read: v2
+  source: src-arxiv-2102-09548-v2
+released: 2020-12-24
+released_note: The news page's date for "TDC's first leaderboard on ADMET prediction" (PyTDC 0.1.2).
+  The group's data file was added to TDC's Dataverse record on 2020-12-19, and the paper's first
+  arXiv version is dated 2021-02-18.
+released_source: src-tdc-news
+released_quote: "2020.12.24 TDC updates to 0.1.2, major changes: Leaderboard Release! TDC's first leaderboard
+  on ADMET prediction is released."
+release_venue: NeurIPS 2021 Datasets and Benchmarks
+release_venue_source: src-arxiv-2102-09548
+release_venue_quote: Published at NeurIPS 2021 Datasets and Benchmarks
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/drug-discovery-admet
+domain_note: The medicine-health family was considered and has no leaf to name here. Some labels are
+  human endpoints (intestinal absorption, half-life, drug-induced liver injury), but each is a
+  property of the compound, not a diagnosis, a treatment or a patient's outcome.
+domain_basis:
+  reason: Every one of the 22 tasks predicts an ADMET property of a small molecule from its
+    structure, and the site groups them under absorption, distribution, metabolism, excretion and
+    toxicity.
+  source: src-tdc-admet-site
+  quote: An ML model that could accurately predict all ADMET properties using structural information
+    of compounds would be greatly valuable.
+domain_considered_and_rejected:
+  - term: chemistry-materials/molecular-property-prediction
+    reason: Lipophilicity and aqueous solubility are physicochemical properties, but the group files
+      them under absorption, and the ADMET leaf, the more specific term, covers all 22 tasks.
+  - term: biology-genetics/drug-target-interaction
+    reason: CYP450 and P-glycoprotein inhibition and hERG blockade concern named proteins, but the
+      biology family's exclusion sends a small molecule scored for its own ADMET properties to
+      chemistry-materials, and the target-interaction leaf's own distinction calls this ADMET.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict measured pharmacokinetic and toxicity properties of compounds from their
+      structure and are scored against the experimental values.
+    source: src-arxiv-2102-09548-v2
+    quote: the ADME learning task aims to predict experimental properties of individual compounds
+  distribution-shift-generalization:
+    reason: Every test set is a scaffold split, held out so that the test compounds are structurally
+      distant from the training compounds, and the score on it is the one the board ranks.
+    source: src-arxiv-2102-09548-v2
+    quote: ADMET prediction requires a model to generalize to a set of unseen drugs that are
+      structurally distant to the known drug set.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: Pretrained molecular models (ContextPred, AttrMasking, MiniMol) are entered, but each
+      task and its labels are the same in training and test; pretraining is an entrant's choice, not
+      a transfer the benchmark reports.
+  - term: sample-efficiency
+    reason: Several datasets are small (DILI has 475 compounds), but no budget of training samples
+      is fixed and scored as such.
+
+evaluation_method:
+  - statistical-fit
+  - classification-metric
+evaluation_method_basis:
+  reason: The nine regression tasks are scored by MAE or Spearman correlation against measured
+    values (statistical-fit); the 13 binary tasks by AUROC or AUPRC against labels
+    (classification-metric).
+  source: src-tdc-admet-site
+  quote: Spearman's correlation coefficient is used for benchmarks that depend on factors beyond the
+    chemical structure.
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: No published figure combines the tasks; each dataset has its own leaderboard ranked by
+      its own metric (aggregation_policy).
+  - term: entrant-relative-ranking
+    reason: The boards order entrants, but the published number is each entrant's own metric, which
+      does not move when another entrant is added.
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are models trained on each dataset's training compounds to predict what an
+    assay or an in vivo study measured, standing in for that measurement, and are scored against it.
+    The release paper's baselines and the board's leaders (descriptor-based gradient boosting, graph
+    networks, pretrained molecular models) are all learned.
+  source: src-arxiv-2102-09548-v2
+  quote: An accurate ML model that can predict various ADMET endpoints are thus highly sought-after.
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: Its exclusion sends a model that emulates a measurement to scientific-surrogate-model.
+      Pretrained chemistry models such as MiniMol are among the entrants either way (review_checks).
+  - term: classical-algorithm
+    reason: No non-learned entrant appears on the TDC.Caco2_Wang board or among the paper's
+      baselines.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the group. A peer-reviewed audit published in July 2026
+    re-ran the top-ranked models of all 22 leaderboards on the official splits. The leaderboard
+    itself was last regenerated on 2025-07-13 (activity_note).
+  source: src-jcim-2026-tdc-admet-audit
+  quote: We assessed the top-ranked models of all 22 TDC ADMET leaderboards
+activity: accepting-submissions
+activity_note: The form is a Google Form that asks for a sign-in, so whether it still takes
+  responses was not seen. The leaderboard pages were last regenerated on 2025-07-13, in a gh-pages
+  commit titled "update leaderboard"; the site's Last-Modified header gives the same time. The
+  newest dated row read, CaliciBoost on TDC.Caco2_Wang, links a June 2025 arXiv paper.
+activity_basis:
+  reason: The guidelines invite results for any benchmark of the group through a form, with no
+    rounds or deadlines; the group has never run in rounds.
+  source: src-tdc-benchmark-guidelines
+  quote: To be included in the leaderboard, please fill out THIS FORM, include results of your model
+    and provide a brief summary about your model
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: CaliciBoost
+    source: src-tdc-admet-caco2-leaderboard
+    observed_on: 2026-10-14
+    quote: 'Rank Model Contact Link #Params MAE 1 CaliciBoost'
+    note: First on TDC.Caco2_Wang (MAE 0.256 ± 0.006); one of the three top-ranked models the 2026
+      audit could reproduce.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: Measured values and outcomes from published assays and in vivo studies;
+  DILI's labels are aggregated from the FDA's National Center for Toxicological Research.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The splits, test labels included, come with the PyTDC loader, and its evaluator computes
+    the leaderboard metric locally.
+  source: src-github-tdc-readme
+  quote: Use the TDC model evaluator to calculate your model's performance on the test set.
+
+task:
+  exists: true
+  input:
+    - a small molecule's structure, from one of the 22 datasets
+  output: A predicted value for a regression task, or a score for the positive class for a binary
+    one, for every compound in the dataset's test set.
+  scoring: Per dataset, MAE or Spearman correlation (regression) or AUROC or AUPRC (binary) on the
+    fixed scaffold test set, reported as the mean and standard deviation over at least five runs
+    with seed-dependent train and validation splits, and ranked on that dataset's own leaderboard.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The loader returns each test set with its labels, and entrants
+    score themselves.
+  item_definition: A compound of one dataset's test set, the 20% of its compounds that the scaffold
+    split holds out.
+  item_definition_source: src-tdc-admet-site
+  item_definition_quote: For every dataset in the benchmark group, we use the scaffold split to
+    partition the dataset into training, validation, and test sets. We hold out 20% data samples for
+    the test set.
+  source: src-tdc-benchmark-guidelines
+  quote: TDC requires at minimum five independent runs of the model to calculate average performance
+    and standard deviation.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The data are downloaded from TDC's Harvard Dataverse record by the PyTDC loader, with
+    no account or agreement.
+  access_basis:
+    reason: Every test set, labels included, is public, and the score is computed by the entrant
+      with the published evaluator; nothing is withheld.
+    source: src-tdc-benchmark-guidelines
+    quote: Use the TDC model evaluator to calculate the performance of your model on the test set.
+  refresh: versioned-releases
+  refresh_note: The 2026 audit says TDC gives its data sets no versions, checksums or changelogs and
+    that the snapshot behind a leaderboard row may differ from today's. For this group's file the
+    Dataverse record shows one replacement, in 2021, and the same file in every version since,
+    through 2025-08-27; the 22 tasks and their metrics are those of the 2021 paper. Whether the
+    PyTDC evaluator's code changed between releases was not checked (review_checks).
+  refresh_basis:
+    reason: The group's data file, admet_group.zip, was added to TDC's Dataverse record on
+      2020-12-19 and replaced on 2021-02-26, the day the news page announced PyTDC 0.1.7's
+      streamlined leaderboard framework; both changes sit in dated Dataverse versions.
+    source: src-dataverse-tdc-admet-group-versions
+    quote: '"publishedDate":"2021-02-26","datafileId":4426004,"persistentId":"","fileDifferenceSummary":{"file":"Replaced"}'
+  data_provenance:
+    - inherited-from-constituents
+    - experimental-measurement
+  data_provenance_note: Each dataset is taken from a published study or collection that the paper
+    cites (Wang et al. for Caco-2, Hou et al. for HIA, AstraZeneca's ChEMBL deposit through
+    MoleculeNet for lipophilicity, Carbon-Mangels and Hutter for the CYP substrates, Zhu et al. for
+    LD50). The labels are assay or in vivo measurements; DILI's are aggregated from the FDA's
+    National Center for Toxicological Research, which curated-public-database may describe better.
+  data_provenance_source: src-arxiv-2102-09548-v2
+  data_provenance_quote: the ADME learning task aims to predict experimental properties of
+    individual compounds
+  contamination_risk: medium
+  contamination_risk_note: The test sets and their labels have been public since 2021, so tuning on
+    them is an open route; the audit showed that models deliberately tuned on them reached the top
+    three on 10 of the 22 boards. The leakage it traced is in three entrants' own training (MiniMol,
+    GradientBoost and XGBoost), which belongs on those entrants' claims. No source shows test
+    compounds inside a training set the protocol prescribes (review_checks).
+  contamination_evidence:
+    - source: src-jcim-2026-tdc-admet-audit
+      stance: supports
+      quote: Open train-test split introduces the risk of deliberate cheating or unintentional model
+        adaptation to a specific test set.
+    - source: src-jcim-2026-tdc-admet-audit
+      stance: supports
+      quote: We traced direct or indirect data leakage in the MiniMol, GradientBoost, and XGBoost
+        models
+  dataset_licence_note: Per dataset. The README defers to each dataset's licence on the website, and
+    those pages were not read.
+  size:
+    - count: 22
+      unit: datasets, each a task with its own scaffold split, metric and leaderboard
+      source: src-tdc-admet-site
+      quote: We formulate the ADMET Benchmark Group using 22 ADMET datasets in TDC.
+  size_note: Dataset sizes run from 475 compounds (DILI) to 13,130 (CYP2D6 inhibition); each is
+    recorded on its subset. Every dataset holds out 20% of its compounds, by scaffold, as its test
+    set (task.item_definition).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The TDC team (Marinka Zitnik's lab at Harvard, the mims-harvard GitHub organisation),
+    with Kexin Huang, now at Stanford, who updates the leaderboard
+  maintainer_basis:
+    reason: The team page lists the people developing and maintaining TDC, most of them at Harvard
+      with Marinka Zitnik; the code and the site's source sit in the mims-harvard organisation, and
+      the leaderboard's last update was committed from Kexin Huang's account.
+    source: src-tdc-team
+    quote: Developing and Maintaining Therapeutics Data Commons
+  maintainer_type: academic-lab
+  submission_process:
+    - self-reported
+    - maintainer-run
+  submission_process_note: Entrants run the PyTDC evaluator on the public test sets and send the
+    mean and standard deviation through a Google Form, with a summary, the parameter count, hardware
+    and links to code and paper; the maintainers turn the responses into the boards with a notebook
+    (auto_leaderboard.ipynb on the gh-pages branch, read but not kept as a Source). No source states
+    a check of the numbers, and one TDC.Caco2_Wang row (admet_ai_v2, MAE 6.328 ± 0.101, its links
+    "NaN") carries exactly the example output printed in the README and the guidelines. The release
+    paper's baselines are listed on the boards with a maintainer as contact (maintainer-run). The
+    guidelines apply FAIR4RS principles to listed tools, which reads as a policy, not a stated
+    condition of listing, so open-source-gated is not tagged (review_checks).
+  submission_process_source: src-tdc-benchmark-guidelines
+  submission_process_quote: To be included in the leaderboard, please fill out THIS FORM, include
+    results of your model and provide a brief summary about your model
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-tdc-admet-caco2-leaderboard
+      quote: RDKit2D + MLP (DeepPurpose) Kexin Huang
+  independence_flags_note: The release paper's eight baselines sit on the boards with Kexin Huang, a
+    maintainer, as contact. The SMILES CNN comes from the first author's own work, and ContextPred
+    and AttrMasking from a paper Marinka Zitnik co-authored. They are baselines the maintainers ran,
+    not models built for the board, and none is in the top ten of TDC.Caco2_Wang.
+  independence_flags_source: src-arxiv-2102-09548-v2
+  independence_flags_quote: Hu, Liu, Gomes, Zitnik, Liang, Pande & Leskovec
+  independence_assessed: true
+  known_limitation:
+    source: src-jcim-2026-tdc-admet-audit
+    quote: These results indicate that current TDC leaderboard positions cannot be read as a direct
+      measure of model quality and practical applicability
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier_note: Not stated. Scoring is a metric over at most a few thousand test predictions;
+    training is the entrant's own cost.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The data, test labels included, and the evaluator are public, so anyone can produce the
+      number the board lists for a new model with no human or maintainer-only step.
+    source: src-github-tdc-readme
+    quote: Use the TDC model evaluator to calculate your model's performance on the test set.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: PyTDC (tdc.benchmark_group.admet_group, with its evaluate and evaluate_many methods)
+  harness_source: src-github-tdc-readme
+  harness_quote: group = BenchmarkGroup(name = 'ADMET_Group', path = 'data/')
+  submission_channel:
+    source: src-tdc-benchmark-guidelines
+    quote: To be included in the leaderboard, please fill out THIS FORM, include results of your
+      model and provide a brief summary about your model
+  submission_channel_note: A Google Form (forms.gle/HYupGaV7WDuutbr9A) that asks for a sign-in.
+  code_licence: MIT
+  code_licence_source: src-github-tdc-readme
+  code_licence_quote: The TDC codebase is licensed under the MIT license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which of the 22 datasets, what the model was trained or pretrained on
+  # beyond the dataset's train_val set (the audit's leakage cases are all here), and how many seeded runs the
+  # mean and standard deviation are over (the protocol asks for at least five).
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - n_samples
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Each dataset has its own leaderboard and metric, a submission may cover a single dataset,
+    and the maintainers publish no group-wide score.
+  source: src-tdc-benchmark-guidelines
+  quote: it is possible to separately submit results for each benchmark in the group
+headline_metric: null
+
+homepage: https://tdcommons.ai/benchmark/admet_group/overview/
+repository: https://github.com/mims-harvard/TDC
+dataset_url: https://doi.org/10.7910/DVN/21LKWG
+leaderboard_url: https://tdcommons.ai/benchmark/admet_group/overview/
+
+subsets:
+  - id: tdc-admet#caco2-wang
+    label: TDC.Caco2_Wang (Caco-2 permeability; absorption)
+    items: 906
+    evidence:
+      - source: src-tdc-admet-site
+        quote: Caco2 cm/s 906 Regression MAE Scaffold
+    notes: Regression, MAE (cm/s).
+  - id: tdc-admet#hia-hou
+    label: TDC.HIA_Hou (human intestinal absorption; absorption)
+    items: 578
+    evidence:
+      - source: src-tdc-admet-site
+        quote: HIA % 578 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#pgp-broccatelli
+    label: TDC.Pgp_Broccatelli (P-glycoprotein inhibition; absorption)
+    items: 1212
+    evidence:
+      - source: src-tdc-admet-site
+        quote: Pgp % 1,212 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#bioavailability-ma
+    label: TDC.Bioavailability_Ma (oral bioavailability; absorption)
+    items: 640
+    evidence:
+      - source: src-tdc-admet-site
+        quote: Bioav % 640 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#lipophilicity-astrazeneca
+    label: TDC.Lipophilicity_AstraZeneca (lipophilicity; absorption)
+    items: 4200
+    evidence:
+      - source: src-tdc-admet-site
+        quote: Lipo log-ratio 4,200 Regression MAE Scaffold
+    notes: Regression, MAE (log-ratio).
+  - id: tdc-admet#solubility-aqsoldb
+    label: TDC.Solubility_AqSolDB (aqueous solubility; absorption)
+    items: 9982
+    evidence:
+      - source: src-tdc-admet-site
+        quote: AqSol log mol/L 9,982 Regression MAE Scaffold
+    notes: Regression, MAE (log mol/L).
+  - id: tdc-admet#bbb-martins
+    label: TDC.BBB_Martins (blood-brain barrier penetration; distribution)
+    items: 1975
+    evidence:
+      - source: src-tdc-admet-site
+        quote: BBB % 1,975 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#ppbr-az
+    label: TDC.PPBR_AZ (plasma protein binding rate; distribution)
+    items: 1797
+    evidence:
+      - source: src-tdc-admet-site
+        quote: PPBR % 1,797 Regression MAE Scaffold
+    notes: Regression, MAE (%).
+  - id: tdc-admet#vdss-lombardo
+    label: TDC.VDss_Lombardo (volume of distribution at steady state; distribution)
+    items: 1130
+    evidence:
+      - source: src-tdc-admet-site
+        quote: VDss L/kg 1,130 Regression Spearman Scaffold
+    notes: Regression, Spearman correlation.
+  - id: tdc-admet#cyp2c9-veith
+    label: TDC.CYP2C9_Veith (CYP2C9 inhibition; metabolism)
+    items: 12092
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CYP2C9 Inhibition % 12,092 Binary AUPRC Scaffold
+    notes: Binary, AUPRC.
+  - id: tdc-admet#cyp2d6-veith
+    label: TDC.CYP2D6_Veith (CYP2D6 inhibition; metabolism)
+    items: 13130
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CYP2D6 Inhibition % 13,130 Binary AUPRC Scaffold
+    notes: Binary, AUPRC.
+  - id: tdc-admet#cyp3a4-veith
+    label: TDC.CYP3A4_Veith (CYP3A4 inhibition; metabolism)
+    items: 12328
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CYP3A4 Inhibition % 12,328 Binary AUPRC Scaffold
+    notes: Binary, AUPRC.
+  - id: tdc-admet#cyp2c9-substrate-carbonmangels
+    label: TDC.CYP2C9_Substrate_CarbonMangels (CYP2C9 substrate; metabolism)
+    items: 666
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CYP2C9 Substrate % 666 Binary AUPRC Scaffold
+    notes: Binary, AUPRC.
+  - id: tdc-admet#cyp2d6-substrate-carbonmangels
+    label: TDC.CYP2D6_Substrate_CarbonMangels (CYP2D6 substrate; metabolism)
+    items: 664
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CYP2D6 Substrate % 664 Binary AUPRC Scaffold
+    notes: Binary, AUPRC.
+  - id: tdc-admet#cyp3a4-substrate-carbonmangels
+    label: TDC.CYP3A4_Substrate_CarbonMangels (CYP3A4 substrate; metabolism)
+    items: 667
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CYP3A4 Substrate % 667 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#half-life-obach
+    label: TDC.Half_Life_Obach (half-life; excretion)
+    items: 667
+    evidence:
+      - source: src-tdc-admet-site
+        quote: Half Life hr 667 Regression Spearman Scaffold
+    notes: Regression, Spearman correlation.
+  - id: tdc-admet#clearance-hepatocyte-az
+    label: TDC.Clearance_Hepatocyte_AZ (hepatocyte clearance; excretion)
+    items: 1020
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CL-Hepa uL.min-1.(10^6 cells)-1 1,020 Regression Spearman Scaffold
+    notes: Regression, Spearman correlation.
+  - id: tdc-admet#clearance-microsome-az
+    label: TDC.Clearance_Microsome_AZ (microsome clearance; excretion)
+    items: 1102
+    evidence:
+      - source: src-tdc-admet-site
+        quote: CL-Micro mL.min-1.g-1 1,102 Regression Spearman Scaffold
+    notes: Regression, Spearman correlation.
+  - id: tdc-admet#ld50-zhu
+    label: TDC.LD50_Zhu (acute toxicity; toxicity)
+    items: 7385
+    evidence:
+      - source: src-tdc-admet-site
+        quote: LD50 log(1/(mol/kg)) 7,385 Regression MAE Scaffold
+    notes: Regression, MAE (log(1/(mol/kg))).
+  - id: tdc-admet#herg
+    label: TDC.hERG (hERG blockade; toxicity)
+    items: 648
+    evidence:
+      - source: src-tdc-admet-site
+        quote: hERG % 648 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#ames
+    label: TDC.AMES (Ames mutagenicity; toxicity)
+    items: 7255
+    evidence:
+      - source: src-tdc-admet-site
+        quote: Ames % 7,255 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+  - id: tdc-admet#dili
+    label: TDC.DILI (drug-induced liver injury; toxicity)
+    items: 475
+    evidence:
+      - source: src-tdc-admet-site
+        quote: DILI % 475 Binary AUROC Scaffold
+    notes: Binary, AUROC.
+subsets_note: The 22 datasets as the group's overview tabulates them, each scored and ranked
+  separately. items counts a dataset's compounds, train_val and test together.
+
+tags:
+  - admet
+  - drug-discovery
+  - small-molecules
+  - scaffold-split
+  - leaderboard
+  - therapeutics-data-commons
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2102-09548-v2
+    - src-arxiv-2102-09548
+    - src-github-tdc-readme
+    - src-tdc-admet-site
+    - src-tdc-admet-caco2-leaderboard
+    - src-tdc-benchmark-guidelines
+    - src-tdc-news
+    - src-tdc-team
+    - src-dataverse-tdc-admet-group-versions
+    - src-github-tdc-gh-pages-commits
+    - src-jcim-2026-tdc-admet-audit
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, whose text layer drops every numeral; its
+    abstract page for the date and venue; the README at main; five tdcommons.ai pages with scripts and
+    styles stripped, of which the Caco2_Wang board (one of 22 boards, all fetched) and the team page are
+    withheld from archiving for the e-mail addresses in their raw HTML; Dataverse's JSON version history
+    of the group's data file; GitHub's JSON commit list for the gh-pages branch, also withheld; and the
+    2026 audit's full text from Europe PMC (a DOI, not archived).
+  confidence: medium
+  review_checks:
+    - check: The entry is the ADMET Benchmark Group alone. TDC's other benchmark groups, listed
+        beside it in the site's menu, have their own tasks, splits and boards and would be entries
+        of their own; TDC as a platform is not one.
+      field: name
+      source: src-tdc-admet-site
+      quote: ADMET Group DrugCombo Group Docking Group DTI DG Group Single-cell DTI Group
+    - check: activity accepting-submissions rests on the guidelines' standing invitation. The form
+        needs a Google sign-in and could not be checked, and the boards have not changed since
+        2025-07-13; if the form is closed, no-submission-channel or unknown fits better.
+      field: activity
+      source: src-github-tdc-gh-pages-commits
+      quote: '"date":"2025-07-13T17:44:04Z"},"message":"update leaderboard"'
+    - check: submission_process self-reported rests on no stated check and on a row that carries the
+        docs' example output. The guidelines' FAIR4RS statement could be read as a code-release
+        condition (open-source-gated); most rows link code and a paper, which the form asks for.
+      field: governance.submission_process
+      source: src-tdc-benchmark-guidelines
+      quote: we apply FAIR4RS principles and implementation guidelines to all software and ML tools
+        included in TDC leaderboards
+    - check: contamination_risk medium. The audit traces leakage in three top-ranked entrants and
+        shows that tuning on the public test sets lifts rank; whether that is a benchmark-level
+        route (high) or entrant-level (medium, as recorded) is a judgement.
+      field: data.contamination_risk
+      source: src-jcim-2026-tdc-admet-audit
+      quote: Our deliberately overfitted models entered the top-3 in 10 out of 22 end points
+    - check: refresh versioned-releases against the audit's statement that TDC has no data set
+        versioning. The Dataverse record shows the group's file unchanged since 2021-02-26;
+        rolling-live would fit if the evaluator or the loader's processing changed scores between
+        PyTDC releases.
+      field: data.refresh
+      source: src-jcim-2026-tdc-admet-audit
+      quote: The platform does not provide fixed data set releases, version identifiers, check sums
+        or detailed changelogs
+    - check: designed_for_subjects scientific-surrogate-model, because the entrants emulate assay
+        and in vivo measurements; domain-specialist-model is the alternative, as for ProteinGym.
+      field: designed_for_subjects
+      specialist: true
+    - check: distribution-shift-generalization rests on the scaffold split alone. No in-distribution
+        score is reported beside it, which the term allows, and whether a scaffold split counts as a
+        deliberately shifted distribution is a cheminformatics judgement.
+      field: capability
+      specialist: true
+    - check: aggregation_policy none-by-design. The maintainers publish no group score and accept
+        single-dataset submissions, but the guidelines encourage whole-group submissions, and others
+        average ranks across the boards; unknown or community-aggregate are the alternatives.
+      field: aggregation_policy
+    - check: Whether the release paper's baselines, listed with a maintainer as contact, count as
+        maintainer-competes-on-own-benchmark, as RoboCasa's baseline rows do.
+      field: governance.independence_flags
+      source: src-tdc-admet-caco2-leaderboard
+      quote: RDKit2D + MLP (DeepPurpose) Kexin Huang
+  personal_data_excluded:
+    - source: src-tdc-admet-caco2-leaderboard
+      what: The Contact column's mailto links, which are the submitters' and a maintainer's e-mail
+        addresses; kept out of the extract, and the Source is withheld from archiving.
+    - source: src-tdc-team
+      what: A team member's e-mail address behind the page's contact link; kept out of the extract,
+        and the Source is withheld from archiving.
+    - source: src-github-tdc-gh-pages-commits
+      what: The commit author's and committer's e-mail addresses; kept out of the extract, and the
+        Source is withheld from archiving.
+    - source: src-arxiv-2102-09548-v2
+      what: The authors' e-mail addresses under the title.
+    - source: src-jcim-2026-tdc-admet-audit
+      what: The corresponding author's e-mail address.
