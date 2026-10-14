@@ -1,0 +1,468 @@
+# data/benchmarks/language/hotpotqa.yaml
+#
+# P1-S10-T03, language entry 6 of 7. Filled from the HotpotQA paper, arXiv 1809.09600 read as its v1 PDF
+# (EMNLP 2018), and its abstract page; the ACL Anthology page of the EMNLP paper (DOI 10.18653/v1/D18-1259);
+# hotpotqa.github.io, the home page that carries both leaderboards (scripts and styles stripped); the repository
+# README at master; Hugging Face's API record of hotpotqa/hotpot_qa; and the v1 PDF of a September 2026
+# multi-hop retrieval paper (arXiv 2609.07050, CIKM 2026) as evidence of current use. The CodaLab submission
+# guide could not be read (its TLS certificate expired on 2026-10-07). Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# One entry with two settings: the distractor and fullwiki settings share the training and dev questions but
+# have separate test sets, submission routes and leaderboards. They are subsets, the distractor setting with
+# its own domain.
+
+id: hotpotqa
+name: HotpotQA
+tagline: 113k crowd-written Wikipedia questions that need two paragraphs to answer, scored on
+  answers and supporting sentences.
+description: >
+  A multi-hop question answering dataset over English Wikipedia: 112,779 questions written by crowd
+  workers, each shown two linked Wikipedia paragraphs and asked for a question that needs both. Most
+  are bridge questions, answered through an intermediate entity; the rest compare two entities, some
+  as yes/no questions. Workers also marked the sentences that support each answer, so a system
+  returns an answer and its supporting facts. There are two settings, each with its own test set of
+  7,405 questions whose answers are withheld. In the distractor setting the two gold paragraphs are shuffled
+  with eight
+  retrieved by bigram tf-idf; in the fullwiki setting the system must find the evidence among the
+  first paragraphs of all of Wikipedia. Answers are scored by exact match and token F1, supporting
+  facts by exact match and F1 against the annotated set, and joint metrics combine the two. Training
+  and dev sets are public. Test scores came from CodaLab, where distractor entrants submitted code in
+  a Docker environment and fullwiki entrants submitted prediction files; the two leaderboards'
+  newest rows are from 2023 and 2024. A September 2026 multi-hop retrieval paper still reports answer
+  EM and F1 on it, with its own retrieval and reader.
+self_description:
+  source: src-arxiv-1809-09600-v1
+  quote: We present HOTPOTQA, a large-scale question answering dataset aimed at facilitating the
+    development of QA systems capable of performing explainable, multi-hop reasoning over diverse
+    natural language
+external_ids:
+  huggingface: hotpotqa/hotpot_qa
+  papers_with_code: hotpotqa
+  arxiv: '1809.09600'
+paper:
+  title: 'HotpotQA: A Dataset for Diverse, Explainable Multi-hop Question Answering'
+  arxiv: '1809.09600'
+  doi: 10.18653/v1/D18-1259
+  version_read: v1
+  source: src-arxiv-1809-09600-v1
+released: 2018-09-25
+released_note: The paper's arXiv submission, as the abstract page dates it; there is only a v1. The
+  EMNLP 2018 proceedings version has the DOI 10.18653/v1/D18-1259.
+released_source: src-arxiv-1809-09600
+released_quote: Submitted on 25 Sep 2018
+release_venue: EMNLP 2018
+release_venue_source: src-acl-d18-1259
+release_venue_quote: 'Venue: EMNLP'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: language/retrieval-qa
+  secondary:
+    - language/understanding
+domain_basis:
+  reason: The fullwiki setting gives the system only the question and the whole of Wikipedia's first
+    paragraphs, so the evidence must be retrieved first, the retrieval-qa leaf's case; the paper
+    calls it the setting that truly tests multi-hop reasoning, and current use retrieves from a
+    corpus too. The distractor setting supplies ten paragraphs that determine the answer, the
+    understanding leaf's case, and carries that leaf as its domain_override in subsets[].
+  source: src-arxiv-1809-09600-v1
+  quote: This full wiki setting truly tests the performance of the systems
+domain_considered_and_rejected:
+  - term: reasoning-general/logical-deduction
+    reason: The paper's subject is multi-hop reasoning over text, but the answers are spans or
+      yes/no read off Wikipedia paragraphs and scored against a crowd answer, not conclusions that
+      follow necessarily from stated premises; the reasoning is reading across documents, which the
+      language family's inclusion test covers.
+  - term: language/long-context
+    reason: Ten short paragraphs are not long input; the difficulty is finding and connecting two of
+      them, not the length the system must use.
+
+capability:
+  - context-integration
+capability_basis:
+  context-integration:
+    reason: The answer is determined by supplied material, ten paragraphs in the distractor setting
+      or the released Wikipedia corpus in the fullwiki one, and the score checks both the answer and
+      which supplied sentences the system used.
+    source: src-arxiv-1809-09600-v1
+    quote: Most of the questions require at least one supporting fact from each paragraph to answer.
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: Every setting supplies the evidence, as passages or as a corpus to retrieve from, so the
+      protocol does not score what the system already held.
+  - term: deductive-reasoning
+    reason: Bridge and comparison questions chain facts across two paragraphs, but correctness is
+      equality or overlap with a crowd-written answer, not decidability from premises, and the
+      authors judge about 6% of sampled questions single-hop and 2% unanswerable.
+    source: src-arxiv-1809-09600-v1
+    quote: about 6% of the sampled questions can be answered with one of the two paragraphs, and 2%
+      of them unanswerable
+  - term: quantitative-reasoning
+    reason: Some comparison questions need arithmetic, such as counting or comparing dates, but the
+      scored answer is mostly an entity, and no number is required as such.
+    source: src-arxiv-1809-09600-v1
+    quote: sometimes require arithmetic such as counting
+  - term: search-exploration
+    reason: The fullwiki system must search a 5-million-paragraph corpus, but only the answer and
+      the supporting facts are scored, not how the corpus was traversed.
+
+evaluation_method:
+  - exact-match
+  - reference-metric
+  - classification-metric
+  - composite
+evaluation_method_basis:
+  reason: Six numbers per entry. Answer EM is exact match after normalisation; answer F1 is token
+    overlap with the reference answer, a fixed-formula reference metric. Supporting-fact EM and F1
+    compare the predicted set of (title, sentence) pairs with the gold set, F1 being a
+    classification statistic over each question's sentences. Joint EM and F1 multiply the answer's
+    and the supporting facts' precision and recall, combining sub-scores of different methods; the
+    leaderboards are ordered by joint F1.
+  source: src-arxiv-1809-09600-v1
+  quote: The second set features joint metrics that combine the evaluation of answer spans and
+    supporting facts as follows.
+designed_for_subjects:
+  - task-specific-supervised-model
+  - retrieval-augmented-system
+designed_for_subjects_basis:
+  reason: The entrants the paper and leaderboards were built for are QA models trained on HotpotQA's
+    own training set and scored as trained. In the fullwiki setting the entrant's own retrieval is
+    inside the scored system, which the README encourages in place of the released tf-idf
+    paragraphs.
+  source: src-github-hotpot-readme
+  quote: If you want to use your own IR system (which is encouraged!)
+observed_subjects:
+  values:
+    - retrieval-augmented-system
+  basis: >
+    Current use pairs a retriever with a prompted language model that was not trained on HotpotQA: the
+    September 2026 paper read here scores each retrieval method by the answers of Llama-3.1-8B reading
+    the top five passages it retrieved.
+  source: src-arxiv-2609-07050-v1
+as_used:
+  - protocol: Answer EM and F1 only, with a Llama-3.1-8B reader given the top five passages each
+      retrieval method returns from a shared retrieval corpus, and retrieval recall, MAP and nDCG
+      against the supporting passages beside them. No supporting-fact or joint metrics, and no
+      official test-server scores.
+    source: src-arxiv-2609-07050-v1
+    quote: 'Table 3: Downstream QA performance using the top-5 retrieved passages.'
+    note: arXiv 2609.07050 (September 2026, CIKM 2026). It names neither the split nor the corpus,
+      saying it follows prior work, IRCoT among it.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; a September 2026 paper reports HotpotQA answer EM and F1
+    beside MuSiQue and 2WikiMultihopQA. The leaderboards' newest rows are from 2023 (distractor) and
+    2024 (fullwiki), and the repository's default branch was last changed in 2019, which is
+    maintenance evidence, not lifecycle.
+  source: src-arxiv-2609-07050-v1
+  quote: Experiments on MuSiQue, HotpotQA, and 2WikiMultihopQA demonstrate consistent improvements
+    in retrieval quality and downstream QA performance over baselines.
+activity: unknown
+activity_note: The home page still sends submitters to a submission guide on CodaLab Worksheets, but
+  that site could not be read on 2026-10-14 because its TLS certificate expired on 2026-10-07, so
+  whether test-set evaluation still runs is not known. The newest leaderboard rows are dated
+  2024-06-25 (fullwiki) and 2023-08-07 (distractor).
+activity_basis:
+  reason: The only route for official test scores is the CodaLab submission the home page points to,
+    and its guide was unreadable.
+  source: src-hotpotqa-leaderboard
+  quote: To submit your models and evaluate them on the official test sets, please read our
+    submission guide hosted on Codalab.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Beam Retrieval (single model), BUPT and Tencent
+    source: src-hotpotqa-leaderboard
+    observed_on: 2026-10-14
+    quote: Beam Retrieval (single model) BUPT & Tencent
+    note: First on the distractor leaderboard, submitted 2023-08-07.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Crowd-written answers and supporting-fact annotations; the test sets'
+  answers and supporting facts are withheld, and the distractor test questions themselves are not
+  released.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The leaderboard scores are on test sets whose answers, and in the distractor setting whose
+    questions, only the maintainers hold. Anyone can score the public dev sets with the released
+    evaluation script.
+  source: src-github-hotpot-readme
+  quote: In the distractor setting, you must submit your code and provide a Docker environment. Your
+    code will run on the test set.
+
+task:
+  exists: true
+  input:
+    - a question, with ten Wikipedia paragraphs (the two gold paragraphs and eight bigram tf-idf
+      distractors, shuffled) in the distractor setting
+    - a question alone in the fullwiki setting, with the first paragraphs of all English Wikipedia
+      articles as the corpus to retrieve from
+  output: An answer (a text span, or yes or no) and the supporting facts as (paragraph title,
+    sentence index) pairs.
+  scoring: Answer EM and F1, supporting-fact EM and F1, and joint EM and F1, each computed per
+    question and averaged; the leaderboards list all six.
+  source: src-arxiv-1809-09600-v1
+  quote: Joint EM is 1 only if both tasks achieve an exact match and otherwise 0.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: Training and dev sets, with answers and supporting facts, are public, and so are the
+    fullwiki test questions, without answers. The distractor test set is not released at all, which
+    on its own would be private-test-server; the primary setting's test set decides.
+  access_basis:
+    reason: The fullwiki test questions are published for entrants to run their systems on, while
+      their answers and supporting facts are withheld for server scoring.
+    source: src-github-hotpot-readme
+    quote: we publish the test set without the answers and supporting facts
+  refresh: static
+  refresh_note: The dev and test files are still the v1 release. The training file is v1.1, which
+    the repository's history (2018-11-06, read through the GitHub API) says removed extremely short
+    questions; it changed what entrants train on, not what is scored.
+  refresh_basis:
+    reason: No change to the evaluation questions, answers or metrics is recorded since release.
+    source: src-github-hotpot-readme
+    quote: hotpot_train_v1.1.json
+  data_provenance:
+    - crowd-authored
+    - web-scraped
+  data_provenance_note: Amazon Mechanical Turk workers wrote the questions and answers and marked
+    the supporting sentences; the paragraphs are from the English Wikipedia dump of 2017-10-01.
+  data_provenance_source: src-arxiv-1809-09600-v1
+  data_provenance_quote: HOTPOTQA is collected by crowdsourcing based on Wikipedia articles, where
+    crowd workers are shown multiple supporting context documents
+  contamination_risk: medium
+  contamination_risk_note: The training and dev sets with their answers have been public since 2018,
+    the paragraphs are Wikipedia text, and current papers report on public questions rather than the
+    withheld test sets. A training route is plausible; no evidence was read.
+  contamination_evidence: []
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_note: 'The paper measured the original crowd worker against three further workers
+    on 1,000 dev and test questions: answer EM 83.60 and F1 91.40, joint EM 52.30 and F1 82.55, with an
+    upper bound of 96.80 and 98.77 on the answer. It set them beside the distractor-setting baseline;
+    no human figure is given for the fullwiki setting.'
+  ceiling_anchor_type_basis:
+    reason: The human figure is the measured performance of non-specialist crowd workers.
+    source: src-arxiv-1809-09600-v1
+    quote: To establish human performance on our dataset, we randomly sampled 1,000 examples from
+      the dev and test sets
+  dataset_licence: CC-BY-SA-4.0
+  dataset_licence_source: src-hotpotqa-leaderboard
+  dataset_licence_quote: HotpotQA is distributed under a CC BY-SA 4.0 License
+  size:
+    - count: 112779
+      unit: question-answer pairs, all splits
+      source: src-arxiv-1809-09600-v1
+      quote: We collected 112,779 valid examples in total on Amazon Mechanical Turk
+    - count: 7405
+      unit: questions in each of the dev, test-distractor and test-fullwiki splits
+      note: The paper's Table 1, flattened in the PDF's text layer.
+      source: src-arxiv-1809-09600-v1
+      quote: 7,405 7,405 7,405 112,779
+    - count: 90447
+      unit: training questions
+      subset: train v1.1
+      source: src-hf-api-hotpot-qa
+      quote: '{"name":"train","num_bytes":552948795,"num_examples":90447}'
+    - count: 5000000
+      unit: Wikipedia paragraphs, at least (the fullwiki corpus)
+      subset: fullwiki
+      source: src-arxiv-1809-09600-v1
+      quote: tfidf retrieval among 5,000,000+ wiki paragraphs
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The HotpotQA team (Carnegie Mellon University, Stanford University and Université de
+    Montréal)
+  maintainer_basis:
+    reason: The home page names the team and its three universities, and the page, repository and
+      Hugging Face dataset sit under the shared hotpotqa account.
+    source: src-hotpotqa-leaderboard
+    quote: It is collected by a team of NLP researchers at Carnegie Mellon University, Stanford
+      University, and Université de Montréal.
+  maintainer_type: community-collective
+  maintainer_type_note: academic-lab was considered. The repository, site and Hugging Face dataset
+    are in a shared hotpotqa organisation of researchers from three universities with no single
+    institution stated as holder, which academic-lab's exclusion sends here, although the data files
+    are served from a CMU host.
+  submission_process:
+    - containerized-algorithm-submission
+    - held-out-server
+  submission_process_note: Distractor entrants submitted code with a Docker environment, which ran
+    on a test set they never saw; fullwiki entrants submitted prediction files, scored against
+    withheld answers. Both went through CodaLab Worksheets.
+  submission_process_source: src-github-hotpot-readme
+  submission_process_quote: We use Codalab for test set evaluation.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-hotpotqa-leaderboard
+      quote: IRRR+ (single model) Stanford University & Samsung Research (Qi, Lee, Sido, and
+        Manning. 2020)
+    - flag: funded-by-evaluated-party
+      source: src-arxiv-1809-09600-v1
+      quote: This work is partly funded by the Facebook ParlAI Research Award.
+    - flag: single-evaluator-private-test-set
+      source: src-github-hotpot-readme
+      quote: In the distractor setting, you must submit your code and provide a Docker environment.
+        Your code will run on the test set.
+  independence_flags_note: Two of the paper's authors (Qi, Manning) are on IRRR and IRRR+, ranked on
+    the fullwiki board, and the team's own baselines are on both. Facebook partly funded the paper,
+    and Facebook AI systems are ranked (Recursive Dense Retriever, Unsupervised Decomposition);
+    Google and NVIDIA support is acknowledged too. The maintainers hold the distractor test set and
+    run every distractor entry.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The leaderboard scores need test answers only the maintainers hold, and the distractor
+      test questions too; dev-set scores can be reproduced by anyone.
+    source: src-github-hotpot-readme
+    quote: we publish the test set without the answers and supporting facts
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness_availability_note: No source says the server runs the same script; UK AISI's inspect_evals
+    has no HotpotQA task (its src/inspect_evals listing, read 2026-10-14 through the GitHub API).
+  harness: hotpot_evaluate_v1.py (the maintainers' evaluation script, at master)
+  harness_source: src-github-hotpot-readme
+  harness_quote: python hotpot_evaluate_v1.py dev_distractor_pred.json hotpot_dev_distractor_v1.json
+  submission_channel:
+    source: src-hotpotqa-leaderboard
+    quote: To submit your models and evaluate them on the official test sets, please read our
+      submission guide hosted on Codalab.
+  code_licence: Apache-2.0
+  code_licence_source: src-github-hotpot-readme
+  code_licence_quote: The code is distribued under the Apache 2.0 license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profile: the setting (distractor or fullwiki), the split (dev, a sample of dev, or the
+  # test server), the retrieval corpus and depth in fullwiki-style use, the reader model, and whether the
+  # system was trained on HotpotQA's training set or used zero-shot.
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://hotpotqa.github.io/
+repository: https://github.com/hotpotqa/hotpot
+dataset_url: https://huggingface.co/datasets/hotpotqa/hotpot_qa
+leaderboard_url: https://hotpotqa.github.io/
+
+subsets:
+  - id: hotpotqa#distractor
+    label: Distractor setting
+    items: 7405
+    scored_separately: true
+    domain_override:
+      primary: language/understanding
+    evidence:
+      - source: src-hotpotqa-leaderboard
+        quote: In the distractor setting, a question-answering system reads 10 paragraphs to provide
+          an answer (Ans) to a question.
+      - source: src-arxiv-1809-09600-v1
+        quote: We mix them with the 2 gold paragraphs (the ones used to collect the question and
+          answer) to construct the distractor setting.
+    notes: The answer is determined by the ten supplied paragraphs. The test set was never released;
+      entries ran as code on the maintainers' side.
+  - id: hotpotqa#fullwiki
+    label: Fullwiki setting
+    items: 7405
+    scored_separately: true
+    evidence:
+      - source: src-hotpotqa-leaderboard
+        quote: In the fullwiki setting, a question-answering system must find the answer to a
+          question in the scope of the entire Wikipedia.
+      - source: src-github-hotpot-readme
+        quote: In the fullwiki setting, you only need to submit your prediction file.
+    notes: The entry's primary domain. Test questions are released without answers, with the
+      maintainers' top-10 tf-idf paragraphs, which entrants may replace with their own retrieval.
+subsets_note: The two settings share the training and dev questions but have separate test sets so
+  that the fullwiki test set's gold paragraphs stay unknown; each has its own leaderboard.
+
+tags:
+  - multi-hop
+  - question-answering
+  - wikipedia
+  - explainability
+  - retrieval
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1809-09600-v1
+    - src-arxiv-1809-09600
+    - src-acl-d18-1259
+    - src-hotpotqa-leaderboard
+    - src-github-hotpot-readme
+    - src-hf-api-hotpot-qa
+    - src-arxiv-2609-07050-v1
+  sources_note: >
+    The HotpotQA paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date;
+    the ACL Anthology page for the EMNLP venue and DOI; hotpotqa.github.io, the home page that holds
+    both leaderboards, with scripts and styles stripped; the README at master; Hugging Face's API
+    record of the dataset; and the v1 PDF of arXiv 2609.07050 (a DOI, not archived) as evidence of
+    current use. The CodaLab Worksheets submission guide was not read: its TLS certificate expired on
+    2026-10-07 and the check was not bypassed.
+  confidence: medium
+  review_checks:
+    - check: Primary domain is retrieval-qa (fullwiki) with the distractor setting as an
+        understanding subset. The distractor board is the one the paper and site list first, and its
+        test set is the more protected, so the primary could be swapped.
+      field: domain
+      source: src-arxiv-1809-09600-v1
+      quote: This full wiki setting truly tests the performance of the systems
+    - check: activity is unknown because the CodaLab Worksheets guide could not be read (expired TLS
+        certificate, 2026-10-07). If CodaLab still scores HotpotQA submissions this is
+        accepting-submissions; if it has stopped, closed.
+      field: activity
+      source: src-hotpotqa-leaderboard
+      quote: To submit your models and evaluate them on the official test sets, please read our
+        submission guide hosted on Codalab.
+    - check: "evaluation_method has four terms: classification-metric for supporting-fact F1 (a per-question
+        sentence-set F1, averaged) and composite for the joint metrics. A lighter reading takes both F1s
+        as one overlap measure (reference-metric), which would rule composite out. Answer EM also strips
+        punctuation and articles (hotpot_evaluate_v1.py, read but not cited), a little beyond exact-match's
+        whitespace-or-case normalisation."
+      field: evaluation_method
+      source: src-arxiv-1809-09600-v1
+      quote: The second set features joint metrics that combine the evaluation of answer spans and
+        supporting facts as follows.
+    - check: maintainer_type community-collective follows the shared hotpotqa organisation account;
+        academic-lab fits if the CMU host of the data files is taken as the holder.
+      field: governance.maintainer_type
+    - check: funded-by-evaluated-party rests on a 2018 Facebook ParlAI Research Award and on later
+        Facebook AI rows on the boards; maintainer-competes rests on IRRR by two of the authors.
+      field: governance.independence_flags
+      source: src-arxiv-1809-09600-v1
+      quote: This work is partly funded by the Facebook ParlAI Research Award.
+    - check: data.access is train-open-test-held-out after the fullwiki setting; the distractor
+        setting alone would be private-test-server, and subsets cannot carry their own access.
+      field: data.access
+    - check: refresh static treats the v1.1 training file (extremely short questions removed,
+        2018-11-06) as outside the scored content; versioned-releases fits if a training-set
+        revision counts.
+      field: data.refresh
+    - check: The (composite, retrieval-augmented-system) pair resolves to the agentic profile, which
+        makes scaffold, sandbox and harness material; for a QA dataset the retrieval corpus and
+        reader model matter more, which the profile has no fields for.
+      field: comparability
