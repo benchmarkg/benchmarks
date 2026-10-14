@@ -1,0 +1,626 @@
+# data/benchmarks/chemistry-materials/omol25.yaml
+#
+# P1-S6-T01, chemistry-materials entry 6 of 10. Filled from the OMol25 paper, arXiv 2505.08762 read as its v2
+# PDF (2026-03-04, the final OMol-1 release) beside its v1 PDF (2025-05-13, the OMol-0 pre-release) and its
+# abstract page; Hugging Face's public API record of facebook/OMol25, a gated model repository that holds the
+# dataset card (api/datasets/facebook/OMol25 returns 401: there is no dataset repository of that name; the
+# gate's terms were not accepted); the FAIR Chemistry documentation page for the OMol25 leaderboard (scripts
+# and styles stripped); the served Gradio config of the FAIR Chemistry leaderboard Space, which holds the
+# board's rows and its submission form; the fairchem README at main; and the v3 PDF of the PET paper (arXiv
+# 2601.16195, June 2026), a third-party paper that reports OMol25 results. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# The Space's content.py at the same commit is already a Source (src-hf-fairchem-leaderboard-content, written
+# for oc20); its extract holds no OMol25 passage and may not be edited here, so the config stands in for it.
+# OC20 shares the leaderboard Space and is its own entry; the OMol25 paper cites OC20 only as earlier work that
+# used the same error metric, which is not lineage.
+#
+# The level of theory decides what an OMol25 number means: every label is a ωB97M-V/def2-TZVPD single point
+# from ORCA 6.0.0. It is fixed for the whole benchmark, so it is recorded with the ground truth
+# (ground_truth_source_note and its basis) and as the ceiling's anchor, not as a per-claim condition; see the
+# comment under comparability for when it becomes material.
+
+id: omol25
+name: OMol25
+aliases:
+  - Open Molecules 2025
+  - OMol
+tagline: ML interatomic potentials scored against molecular DFT on held-out splits and seven
+  chemistry evaluation tasks.
+description: >
+  Open Molecules 2025 is a dataset of more than 140 million DFT single-point calculations on
+  molecular systems of up to 350 atoms (biomolecules, electrolytes, metal complexes, and organic
+  and main-group molecules, with 83 elements and varied charge and spin), every one computed at
+  the same level of theory, the ωB97M-V functional with the def2-TZVPD basis in ORCA 6.0.0. As a
+  benchmark it scores machine-learned interatomic potentials two ways. S2EF asks for the total
+  energy and per-atom forces of a structure, on a validation and a test split held out by
+  molecular composition and, in the paper, on five further out-of-distribution splits. Seven
+  evaluations score chemistry computed with the potential against the same DFT: protein-ligand
+  interaction energies, ligand strain, conformer ordering, protonation energies, distance
+  scaling, ionisation energies and electron affinities, and spin gaps. Scores are mean absolute
+  errors of energies, forces and energy differences, and RMSDs between DFT- and model-optimised
+  structures. Training and validation data are public behind a gate on Hugging Face; test labels
+  are withheld, and test and evaluation scores come from the FAIR Chemistry leaderboard on
+  Hugging Face, which scores uploaded prediction files. A pre-release of about 100 million
+  calculations (OMol-0, May 2025) was extended by 40 million to the final release (OMol-1).
+self_description:
+  source: src-arxiv-2505-08762-v2
+  quote: Beyond the dataset, we introduce a series of evaluation tasks that represent common
+    objectives in computational chemistry
+external_ids:
+  arxiv: '2505.08762'
+paper:
+  title: The Open Molecules 2025 (OMol25) Dataset, Evaluations, and Models
+  arxiv: '2505.08762'
+  version_read: v2
+  source: src-arxiv-2505-08762-v2
+released: 2025-05-13
+released_note: The paper's first arXiv version, which came with the OMol-0 pre-release, as the
+  abstract page dates it. The final release (OMol-1) is described by v2 of 2026-03-04 (see
+  versions).
+released_source: src-arxiv-2505-08762
+released_quote: Submitted on 13 May 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/force-fields-potentials
+  secondary:
+    - chemistry-materials/molecular-property-prediction
+domain_basis:
+  reason: S2EF scores a learned potential's energies and forces against quantum-chemical reference
+    calculations, the primary leaf's definition. The seven evaluations score molecular quantities
+    computed with the potential (ionisation energies, electron affinities, spin gaps, protonation
+    and conformer energies), the secondary leaf's case. arXiv files the paper under physics.chem-ph,
+    but the physics family's exclusion names OMol25 and sends molecular systems here.
+  source: src-fairchem-omol-leaderboard-docs
+  quote: Evaluations correspond to several chemistry relevant tasks (spin gap, ligand-strain, etc.)
+    introduced in OMol25 to evaluate MLIPs beyond simple energy and force metrics
+domain_considered_and_rejected:
+  - term: biology-genetics/drug-target-interaction
+    reason: The ligand-pocket evaluation is a stand-in for binding, but what it scores is a DFT
+      interaction energy of a fixed ligand-pocket complex, not an affinity or a pose, and it is one
+      of seven evaluations of a potential.
+    source: src-arxiv-2505-08762-v2
+    quote: as a proxy for the binding free energy task
+  - term: chemistry-materials/reaction-prediction
+    reason: The Reactivity split holds structures along reaction paths, and what is scored is their
+      energies and forces; no system predicts a reaction's products.
+    source: src-arxiv-2505-08762-v2
+    quote: Out-of-distribution organic reactivity data is taken from the work of Grambow, Pattanaik,
+      and Green
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Entrants predict energies, forces and derived molecular quantities of molecular systems,
+      and every score compares them with a reference computation, the DFT labels.
+    source: src-arxiv-2505-08762-v2
+    quote: The per-atom mean absolute error (MAE) is used as the primary evaluation metric
+  distribution-shift-generalization:
+    reason: Beyond the composition-held-out test split, the paper builds splits on purpose from what
+      training lacks (held-out metal-ligand bonds, metal-containing proteins, held-out reactions,
+      experimental crystal structures, new anions) and reports each as its own condition, with the
+      task unchanged. The leaderboard ranks the composition split only, by domain.
+    source: src-arxiv-2505-08762-v2
+    quote: To test generalizability beyond just out-of-distribution (OOD) compositions, we also
+      generate several explicit OOD splits.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The paper calls the PDB-TM split a test of transfer from metal-complex and electrolyte
+      data, but the task (energies and forces against the same DFT) stays fixed and only the inputs
+      move, which the vocabulary sends to distribution-shift-generalization whatever the source
+      calls it.
+    source: src-arxiv-2505-08762-v2
+    quote: so that it can be used to test the learning transfer from metal complex and electrolytes
+      data
+  - term: generation-fidelity
+    reason: Model-optimised geometries are scored by RMSD to the DFT-optimised ones, but the term's
+      exclusion sends a predicted structure of a physical system scored against reference
+      computation to scientific-prediction.
+
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: Every number is an error statistic over continuous values, the MAE of energies, forces and
+    energy differences or an RMSD between structures, against the DFT reference; the vocabulary's
+    own near-miss example for numeric-tolerance-match is this benchmark.
+  source: src-arxiv-2505-08762-v2
+  quote: The per-atom mean absolute error (MAE) is used as the primary evaluation metric
+evaluation_method_considered_and_rejected:
+  - term: entrant-relative-ranking
+    reason: The leaderboard's Overview tab orders models by their average rank across the seven
+      evaluations, which moves when the pool changes, but it publishes no rank figure; every number
+      on the board is a per-task error, and each S2EF and evaluation tab ranks by its own error.
+    source: src-hf-fairchem-leaderboard-config
+    quote: Overview rankings based on average rank across all evaluations
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are machine-learned interatomic potentials that stand in for DFT and are
+    scored against what DFT computed; the board's rows are learned models (UMA, eSEN, GemNet-OC,
+    MACE, PET and others).
+  source: src-fairchem-omol-leaderboard-docs
+  quote: The simplest way to get started is to have an ASE-compatible MLIP calculator that can make
+    energy and force predictions.
+
+as_used:
+  - protocol: Results on the public validation split, computed by the authors and reported in eV,
+      beside a leaderboard row for the large conservative model run with rotational symmetrization;
+      the board labels that row's training set Other.
+    split: val
+    source: src-arxiv-2601-16195-v3
+    quote: Results for all models evaluated on the OMol validation splits without rotational
+      symmetrization can be found in Table XIII.
+    note: The PET paper (COSMO, EPFL), which calls the Open Molecules leaderboard one of the two
+      most widely used large-scale MLIP benchmarks for molecules. Its validation numbers are not
+      test scores and use a different unit from the board (meV) and the OMol25 paper's v2
+      (kcal/mol).
+
+lifecycle: active
+lifecycle_basis:
+  reason: The board took new rows in the week this entry was read, from an independent submitter on
+    2026-10-10 and 2026-10-11 and from Meta on 2026-10-06. Rows under other organisations' names run
+    from 2025-08-20 (MACE-Cambridge) through 2026 (JSR Corporation, COSMO at EPFL).
+  source: src-hf-fairchem-leaderboard-config
+  quote: '"Mena-3M","Independent",true,"OMol-140M",270.42616189242557,20.91912699732727,"2026-10-11"'
+activity: accepting-submissions
+activity_note: No source read describes a competition round; the PET paper's "leaderboard and
+  community challenges" is the only mention of challenges, and none is dated.
+activity_basis:
+  reason: The leaderboard takes prediction files from anyone signed in to Hugging Face, at any time,
+    and has never run in rounds.
+  source: src-hf-fairchem-leaderboard-config
+  quote: 'Ready to submit your model? Check out our steps for running benchmarks and generating prediction
+    files:'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: PET-OMOL-L (COSMO, EPFL)
+    source: src-hf-fairchem-leaderboard-config
+    observed_on: 2026-10-14
+    quote: '"COSMO (EPFL)",true,"Other",186.66766122250286'
+    note: A third-party potential, posted 2026-04-21; its paper is src-arxiv-2601-16195-v3.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Every label is a DFT single point at the ωB97M-V/def2-TZVPD level of
+  theory, computed with ORCA 6.0.0 using RI-J and COSX, tight SCF convergence and the DEFGRID3 grids
+  (590 angular points for exchange-correlation, 302 for the final COSX grid), unrestricted Kohn-Sham
+  for open-shell systems and for singlets with metals or breaking bonds. These settings are what
+  make two OMol25 numbers comparable; a score against another reference (the paper's Wiggle150 split
+  is CCSD(T)/CBS) is a different quantity. Test labels are withheld.
+ground_truth_source_basis:
+  reason: The paper names the functional, the basis set and the code for every calculation in the
+    dataset.
+  source: src-arxiv-2505-08762-v2
+  quote: a large-scale dataset composed of more than 140 million density functional theory (DFT)
+    calculations at the ωB97M-V/def2-TZVPD level of theory
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The training and validation splits and the evaluation inputs are released with the recipes
+    that produce prediction files, and anyone can submit test predictions to the maintainers' board.
+  source: src-arxiv-2505-08762-v2
+  quote: All training and validations splits are made publicly available.
+
+task:
+  exists: true
+  input:
+    - 'a molecular structure: element types and 3D positions, with the total charge and spin multiplicity
+      (S2EF)'
+    - each evaluation's input structures, run through fairchem's recipes with the entrant's
+      potential as an ASE calculator
+  output: The total energy and per-atom forces of each structure (S2EF, as an .npz file); for an
+    evaluation, a JSON file of the energies, energy differences and optimised geometries its recipe
+    computes.
+  scoring: MAE of energies and forces against the DFT labels on the validation or test split,
+    overall and by domain (meV and meV/Å on the board); for the evaluations, MAEs of energy and
+    force differences and RMSDs between DFT- and model-optimised structures. The paper reports S2EF
+    also on five out-of-distribution splits.
+  tests_hidden_from_system: true
+  tests_hidden_from_system_note: Test inputs can be downloaded; their labels are not in the released
+    data, and test scores come only from the board.
+  source: src-arxiv-2505-08762-v2
+  quote: The per-atom mean absolute error (MAE) is used as the primary evaluation metric
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The gate is recorded here, as the vocabulary's precedence rule asks. The
+    documentation's download links for the S2EF splits and the evaluation data point into the
+    facebook/OMol25 repository on Hugging Face, whose gate is manual. The form asks for full legal
+    name, date of birth, country and affiliation and an acknowledgement of the licences, and access
+    is refused in comprehensively sanctioned jurisdictions and in China, Russia and Belarus
+    (src-hf-api-omol25, "available via HuggingFace globally, except in comprehensively sanctioned
+    jurisdictions, and in China, Russia, and Belarus."). Whether the evaluations' reference values
+    are released was not established; their description sits in the gated repository's DATASET.md,
+    which was not read.
+  access_basis:
+    reason: Training and validation splits, with labels, are released, and so are the test inputs;
+      the test labels are not, so test scores come only from the board. Withheld test labels take
+      precedence over the gate on the released data, and omol25 is the vocabulary's own example of
+      this term.
+    source: src-fairchem-omol-leaderboard-docs
+    quote: Validation labels are already accessible in the released dataset for local benchmarking
+      and debugging, so we highly encourage users to make Test submissions to fairly and accurately
+      compare models.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data changed once, from the OMol-0 pre-release to OMol-1, which added 40 million
+      calculations, and the paper names both; the board labels each row with the training set it
+      used.
+    source: src-arxiv-2505-08762-v2
+    quote: A pre-release version of the OMol25 dataset was initially published on arXiv on May 13,
+      2025 along with models.
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Every label is a new DFT calculation. Input geometries come from the
+    dataset's own sampling (MD, conformer search, reaction paths) and from existing community
+    datasets (SPICE2, ANI-2X, Transition-1X, OrbNet Denali, GEOM and others), recomputed at OMol25's
+    level of theory; the COD split starts from experimental crystal structures.
+    curated-public-database was not assigned, as those sources supply geometries only, and the
+    community datasets were published as ML datasets.
+  data_provenance_source: src-arxiv-2505-08762-v2
+  data_provenance_quote: we have recomputed several of the most widely used datasets to upgrade them
+    to a consistent and higher level of theory
+  contamination_risk: unknown
+  contamination_risk_note: The test labels are withheld and the test split holds out whole
+    compositions. Not assessed are three routes. Test structures drawn from the recomputed community
+    datasets are public with labels at other levels of theory, which models trained on those
+    datasets (the board's Other) may have seen. The board also ranks validation submissions, whose
+    labels are public. And whether the evaluations' reference values are public was not read.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Zero error against the DFT labels is the bound. The paper is explicit
+    that the labels are no more accurate than their level of theory, so a perfect score means
+    reproducing ωB97M-V/def2-TZVPD, not experiment or coupled cluster.
+  ceiling_anchor_type_source: src-arxiv-2505-08762-v2
+  ceiling_anchor_type_quote: it cannot be more accurate than this level of theory
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The models in the same repository are under the FAIR Chemistry License with
+    an acceptable use policy; the paper calls it commercially permissive with geographic and
+    acceptable-use restrictions.
+  dataset_licence_source: src-hf-api-omol25
+  dataset_licence_quote: The OMol25 dataset is provided under a CC-BY-4.0 License.
+  size:
+    - count: 2805046
+      unit: structures
+      subset: S2EF test split (out-of-distribution compositions), the board's Test
+      source: src-fairchem-omol-leaderboard-docs
+      quote: Val 2,762,021 Test 2,805,046
+    - count: 2762021
+      unit: structures
+      subset: S2EF validation split, labels public
+      source: src-fairchem-omol-leaderboard-docs
+      quote: Val 2,762,021 Test 2,805,046
+    - count: 140641161
+      unit: training structures (DFT single points)
+      subset: OMol-1 training split All; the board's OMol-140M
+      source: src-arxiv-2505-08762-v2
+      quote: 140,641,161 3,986,754 34,335,828
+    - count: 101666280
+      unit: training structures (DFT single points)
+      subset: OMol-0 training split All (v1 of the paper); the board's OMol-102M
+      source: src-arxiv-2505-08762-v1
+      quote: 101,666,280 3,986,754 34,335,828
+    - count: 42028
+      unit: structures
+      subset: OOD test split M-Lig (held-out metal-ligand pairs), OMol-1; 39,615 in v1
+      source: src-arxiv-2505-08762-v2
+      quote: 2,805,046 42,028 26,614 64,898 84,807 16,488
+    - count: 26614
+      unit: structures
+      subset: OOD test split PDB-TM (metal-containing protein structures)
+      source: src-arxiv-2505-08762-v2
+      quote: 2,805,046 42,028 26,614 64,898 84,807 16,488
+    - count: 64898
+      unit: structures
+      subset: OOD test split Reactivity (held-out reactions)
+      source: src-arxiv-2505-08762-v2
+      quote: 2,805,046 42,028 26,614 64,898 84,807 16,488
+    - count: 84807
+      unit: structures
+      subset: OOD test split COD (experimental crystal structures), OMol-1; 76,156 in v1
+      source: src-arxiv-2505-08762-v2
+      quote: 2,805,046 42,028 26,614 64,898 84,807 16,488
+    - count: 16488
+      unit: structures
+      subset: OOD test split Anions (new anions)
+      source: src-arxiv-2505-08762-v2
+      quote: 2,805,046 42,028 26,614 64,898 84,807 16,488
+  size_note: Each evaluation task is run on at least 1,000 structures ("Each task is carried out on
+    at least 1,000 different structures to achieve robust statistics", src-arxiv-2505-08762-v2). The
+    v1 figures for M-Lig and COD are from src-arxiv-2505-08762-v1 ("2,805,046 39,615 26,614 64,898
+    76,156 16,488").
+  submission_limit:
+    max_submissions: 5
+    period_days: 30
+    per: user, per evaluation type (successful submissions; the board says per month)
+    source: src-hf-fairchem-leaderboard-config
+
+training_data_eligibility_tiers:
+  - id: omol-4m
+    label: OMol-4M
+    rule: Trained on the uniform ~4M subset of the OMol25 training split only.
+    source: src-hf-fairchem-leaderboard-config
+  - id: omol-102m
+    label: OMol-102M
+    rule: Trained on the full training split of the OMol-0 pre-release.
+    source: src-hf-fairchem-leaderboard-config
+  - id: omol-140m
+    label: OMol-140M
+    rule: Trained on the full training split of the final OMol-1 release.
+    source: src-hf-fairchem-leaderboard-config
+  - id: uma-459m
+    label: UMA-459M
+    rule: Trained on the training mix of Meta's UMA models, of which OMol25 is a part.
+    source: src-hf-fairchem-leaderboard-config
+  - id: other
+    label: Other
+    rule: Any other training data, alone or with OMol25.
+    source: src-hf-fairchem-leaderboard-config
+training_data_eligibility_tiers_note: The board's submission form makes every entrant pick one of
+  five training sets, and each row shows its pick; the rows also carry UMA-520M (UMA-1.2), which the
+  form does not offer. The board shows the label beside each row but does not rank the tiers apart.
+  The rules are this entry's reading of the labels; the form names them without defining them.
+training_data_eligibility_tiers_basis:
+  reason: The training set is a required field of every submission, with these five choices.
+  source: src-hf-fairchem-leaderboard-config
+  quote: '"choices":[["OMol-140M","OMol-140M"],["OMol-102M","OMol-102M"],["OMol-4M","OMol-4M"],["UMA-459M","UMA-459M"],["Other","Other"]]'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Meta FAIR (the FAIR Chemistry team)
+  maintainer_basis:
+    reason: Meta FAIR released the dataset, holds it in the facebook organisation on Hugging Face,
+      keeps the code in facebookresearch/fairchem and runs the board. Co-authors from other
+      institutions (among them Lawrence Berkeley National Laboratory) do not change the holder.
+    source: src-arxiv-2505-08762-v2
+    quote: Meta FAIR introduces Open Molecules 2025 (OMol25)
+  maintainer_type: industry-lab
+  submission_process:
+    - held-out-server
+    - maintainer-scored-predictions
+  submission_process_note: Entrants sign in with Hugging Face, fill in a form (model, organisation,
+    training set, contact) and upload a prediction file for one evaluation type; the board scores it
+    and posts the row. Test predictions are scored against withheld labels (held-out-server). The
+    board also takes Validation predictions, whose labels are public
+    (maintainer-scored-predictions). For the seven evaluations the sources read do not say whether
+    the reference values are released.
+  submission_process_source: src-hf-fairchem-leaderboard-config
+  submission_process_quote: '["Validation","Validation"],["Test","Test"],["Ligand pocket","Ligand pocket"]'
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-hf-fairchem-leaderboard-config
+      quote: '"Meta",true,"UMA-520M",66.60352850079563'
+    - flag: single-evaluator-private-test-set
+      source: src-fairchem-omol-leaderboard-docs
+      quote: Validation labels are already accessible in the released dataset for local benchmarking
+        and debugging, so we highly encourage users to make Test submissions to fairly and
+        accurately compare models.
+  independence_flags_note: Most rows are Meta's own potentials (UMA, eSEN, GemNet-OC, and AllScAIP
+    with UC Berkeley), several of them at the top of their tables, beside entries from
+    MACE-Cambridge, COSMO (EPFL), JSR Corporation and independent submitters. Meta also holds the
+    test labels and computes every test score. Scoring is programmatic, so no grader has a stake.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not guessed. The docs warn that the S2EF example and four of the evaluations
+    are slow on one GPU and leave parallelising to the entrant ("The above example can be very slow
+    on a single GPU and we encourage users to parallelize this however they like."), but no source
+    states what a run needs, and it varies with the potential.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The test scores, the board's headline numbers, can be produced only by the maintainers'
+      board, which holds the labels. Validation scores can be computed by anyone.
+    source: src-fairchem-omol-leaderboard-docs
+    quote: Validation labels are already accessible in the released dataset for local benchmarking
+      and debugging, so we highly encourage users to make Test submissions to fairly and accurately
+      compare models.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: reference-implementation-only
+  harness_availability_note: fairchem's recipes write the prediction files and the board computes
+    the official scores against labels only it holds. The Space publishes an evaluator.py beside its
+    app, which was not read; without the labels it cannot produce a test score.
+  harness: fairchem-core (the OMol recipes in fairchem.core.components.calculate.recipes.omol) with
+    fairchem-data-omol
+  harness_source: src-fairchem-omol-leaderboard-docs
+  harness_quote: To generate prediction files for the different tasks, we have released a set of
+    recipes to be used with ASE-compatible calculators.
+  submission_channel:
+    source: src-hf-fairchem-leaderboard-config
+    quote: Results will appear on the leaderboard after successful validation
+  submission_channel_note: The FAIR Chemistry leaderboard Space on Hugging Face
+    (facebook/fairchem_leaderboard), shared with OC20; its content.py links the documentation at
+    fair-chem.github.io, which now redirects to facebookresearch.github.io/fairchem.
+  code_licence: MIT
+  code_licence_source: src-github-fairchem-readme
+  code_licence_quote: '`fairchem` is available under a [MIT License](LICENSE.md).'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the surrogate-fit profile (subset_used, training_data_policy), four things change an OMol25 number,
+  # and none is a per-claim condition field of its own:
+  #   - the release: OMol-0 and OMol-1 share the composition test split (2,805,046 structures in both paper
+  #     versions), but the M-Lig and COD OOD splits grew between them, so OOD-split numbers need the version;
+  #   - the unit and the energy normalisation: the board reports meV, the paper's v1 meV and v2 kcal/mol, and
+  #     the paper calls per-atom MAE primary while its Table 3 and the board report energy MAE without saying
+  #     per atom (see review_checks);
+  #   - the training set, which training_data_policy and the board's training-set label carry;
+  #   - the reference: every OMol25 label is ωB97M-V/def2-TZVPD from ORCA 6.0.0 (ground_truth_source_note).
+  #     That is fixed inside the benchmark, so it is not listed as material; it bites only when an OMol25
+  #     number is set beside one scored against another reference, such as SPICE's labels or the CCSD(T)/CBS
+  #     Wiggle150 set in the paper's appendix.
+  material_extra: []
+
+aggregation_policy: official-aggregate
+aggregation_policy_note: The board's Overview orders models by average rank across the seven
+  evaluations and shows no rank figure; the S2EF tables and each evaluation tab rank by their own
+  MAE. The paper reports no aggregate.
+aggregation_policy_basis:
+  reason: The maintainers' board publishes the Overview ordering as its summary view.
+  source: src-hf-fairchem-leaderboard-config
+  quote: Overview rankings based on average rank across all evaluations
+headline_metric: null
+
+homepage: https://facebookresearch.github.io/fairchem/omol/
+repository: https://github.com/facebookresearch/fairchem
+dataset_url: https://huggingface.co/facebook/OMol25
+leaderboard_url: https://huggingface.co/spaces/facebook/fairchem_leaderboard
+
+versions:
+  - version: omol-0
+    label: OMol-0, the pre-release
+    version_kind: revision
+    released: 2025-05-13
+    changes: About 100 million DFT calculations, released with v1 of the paper; the board's
+      OMol-102M training set. Models trained on it are still ranked.
+    breaking: true
+    superseded_by: omol-1
+    frozen: true
+    sources:
+      - src-arxiv-2505-08762-v1
+      - src-arxiv-2505-08762
+  - version: omol-1
+    label: OMol-1, the final release
+    version_kind: revision
+    released: 2026-03-04
+    changes: "About 40 million calculations added: intermediate-spin metal complexes and more oxidation
+      states, low-spin and larger electrolytes, and most of the main-group molecules domain. The composition
+      validation and test splits kept their sizes; the M-Lig and COD OOD splits grew. Dated by v2 of the
+      paper, which describes it; the sources do not date the data's own release."
+    breaking: true
+    supersedes_version: omol-0
+    frozen: true
+    sources:
+      - src-arxiv-2505-08762-v2
+
+subsets:
+  - id: omol25#s2ef-test
+    label: S2EF test (out-of-distribution compositions)
+    items: 2805046
+    scored_separately: true
+    notes: The board's Test tab, overall and for Biomolecules, Electrolytes, Metal Complexes and
+      Neutral Organics. Labels withheld.
+  - id: omol25#s2ef-val
+    label: S2EF validation
+    items: 2762021
+    scored_separately: true
+    notes: The board's Validation tab; labels public.
+  - id: omol25#ood-splits
+    label: The paper's five OOD test splits (M-Lig, PDB-TM, Reactivity, COD, Anions)
+    scored_separately: true
+    notes: Reported in the paper's Table 3, not on the board. Sizes in data.size.
+  - id: omol25#evaluations
+    label: 'The seven evaluations: ligand pocket, ligand strain, conformers, protonation, distance scaling,
+      IE/EA, spin gap'
+    scored_separately: true
+    notes: Each has its own tab on the board and its own metrics (paper Table 2); the Overview
+      orders models by average rank across them.
+
+lineage:
+  role: root
+
+history:
+  - event: channel-opened
+    field: execution.submission_channel
+    to: Hugging Face Space facebook/fairchem_leaderboard
+    source: src-arxiv-2505-08762-v2
+    quote: We have also released a public leaderboard to inspire innovation on ML models for
+      molecular chemistry.
+    note: Undated in the sources read. v1 of the paper (2025-05-13) still promised it ("In the near
+      future, we will also release a public leaderboard", src-arxiv-2505-08762-v1); the board's
+      earliest rows are dated 2025-08-19, and Hugging Face dates the Space's creation 2025-08-20
+      (API, not a Source).
+
+tags:
+  - dft-reference
+  - machine-learned-potentials
+  - molecules
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2505-08762-v2
+    - src-arxiv-2505-08762-v1
+    - src-arxiv-2505-08762
+    - src-hf-api-omol25
+    - src-fairchem-omol-leaderboard-docs
+    - src-hf-fairchem-leaderboard-config
+    - src-github-fairchem-readme
+    - src-arxiv-2601-16195-v3
+  sources_note: >
+    The paper's v2 and v1 PDFs (DOIs, not archived) read as text; the abstract page for the
+    first date; Hugging Face's API record of the gated repository, read without accepting its
+    terms; the documentation page with scripts and styles stripped; the leaderboard Space's
+    served config, withheld from archiving because it carries a maintainer's personal e-mail
+    address; the fairchem README at main; and the PET paper's v3 PDF as evidence of third-party
+    use.
+  confidence: medium
+  review_checks:
+    - check: Identity. OMol25 is a training dataset with an evaluation layer; this entry treats the
+        evaluation layer as the benchmark, because it has fixed held-out splits, seven tasks with
+        defined metrics and a leaderboard that scores submissions, and a third-party paper calls it
+        one of the two most used molecular MLIP benchmarks. The dataset itself is not a separate
+        entry.
+      source: src-arxiv-2601-16195-v3
+      quote: and the Open Molecules leaderboard and community challenges
+    - check: data.access is train-open-test-held-out, not gated-registration as the task brief
+        suggested. The vocabulary gives withheld test labels precedence over a gate on released data
+        and names omol25 as this term's example; the gate (manual approval, identity fields,
+        geographic exclusions) is in access_note. The gate is manual, which may be nearer
+        credentialed-dua than click-through.
+      field: data.access
+      source: src-hf-api-omol25
+      quote: '"gated":"manual"'
+    - check: That test labels are withheld rests on what the sources leave out (training and
+        validation released, validation labels said to be in the release, test scores only from the
+        board); no source read says so in as many words. It carries data.access,
+        single-evaluator-private-test-set and the reproducibility tier.
+      field: data.access
+      source: src-arxiv-2505-08762-v2
+      quote: All training and validations splits are made publicly available.
+    - check: Whether the seven evaluations' DFT reference values are released (DATASET.md in the
+        gated repository was not read). If they are, the evaluations are
+        maintainer-scored-predictions with public labels and their reproducibility tier differs from
+        S2EF test's.
+      field: governance.submission_process
+    - check: The paper calls per-atom energy MAE the primary metric, but its Table 3 caption and the
+        board report energy MAE without saying per atom; the PET paper reports both. Which one the
+        board's Energy MAE is decides whether board numbers and per-atom numbers can be compared.
+      field: task.scoring
+      specialist: true
+      source: src-arxiv-2505-08762-v2
+      quote: Energy (kcal/mol), Forces (kcal/mol/Å)
+    - check: molecular-property-prediction as a secondary domain rests on the evaluations scoring
+        molecular quantities computed with the potential; a reviewer may read them as force-field
+        scoring only.
+      field: domain
+      specialist: true
+    - check: distribution-shift-generalization rests on the paper's five explicit OOD splits; the
+        leaderboard ranks only the composition split, which is held out by composition at random.
+      field: capability
+    - check: aggregation_policy official-aggregate for an Overview ordered by average rank with no
+        figure shown, and entrant-relative-ranking considered and rejected for the same ordering;
+        the two calls stand or fall together.
+      field: aggregation_policy
+    - check: The training_data_eligibility_tiers are the board's training-set labels, which the form
+        does not define, and the rows also carry UMA-520M; whether they should be recorded as tiers
+        or only as claims' training_data_policy.
+      field: training_data_eligibility_tiers

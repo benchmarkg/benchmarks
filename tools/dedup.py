@@ -147,7 +147,14 @@ def jaccard(a: set, b: set) -> float:
 
 
 def name_jaccard(a: Record, b: Record) -> float:
-    return max(jaccard(tokens(x), tokens(y)) for x in a.names for y in b.names)
+    """The best Jaccard over name pairs, edition and version tokens left out: those are same_stem's question, and
+    counting them made τ²-bench and GEO-Bench-2 half alike on {'bench', '2'} (P1-S7-T01)."""
+    return max(jaccard(core(x), core(y)) for x in a.names for y in b.names)
+
+
+def core(s: str) -> set[str]:
+    """A name's tokens without its edition or version tokens."""
+    return {t for t in tokens(s) if not VERSION.match(t)}
 
 
 def same_stem(a: Record, b: Record) -> bool:
@@ -161,7 +168,13 @@ def alias_hit(a: Record, b: Record) -> bool:
 
 CODE_HOSTS = ('github.com', 'gitlab.com', 'huggingface.co', 'bitbucket.org', 'kaggle.com')
 CATALOGUE_HOSTS = ('arxiv.org', 'doi.org', 'openreview.net', 'aclanthology.org', 'benchmark-radar.org',
-                   'benchmarklist.com', 'paperswithcode.com', 'zenodo.org', 'figshare.com')
+                   'benchmarklist.com', 'paperswithcode.com', 'zenodo.org', 'figshare.com',
+                   # competition platforms: each competition is its own path, and one platform hosts thousands of
+                   # unrelated ones (FAIR Universe HiggsML and the Fusion Equilibrium Challenge, P1-S6-T05)
+                   'codabench.org', 'codalab.lisn.upsaclay.fr', 'competitions.codalab.org', 'eval.ai',
+                   # shared documents: each spreadsheet is its own path, and boards kept as Google Sheets are
+                   # unrelated (WebArena, AndroidWorld and AgentBench FC, P1-S9-T01)
+                   'docs.google.com')
 
 
 # A section that holds many unrelated things: two pages under it are not one site's family.

@@ -15,6 +15,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, 'tests', 'dedup', 'fixtures'))
+from tools import corpus_pins  # noqa: E402
 from tools import dedup as D  # noqa: E402
 
 CFG = D.load_config()
@@ -81,6 +82,11 @@ def test_arxiv_ids_are_paths_not_file_names():
     assert D.same_site('https://www.swebench.com/lite.html', 'https://www.swebench.com/verified.html')
     assert D.same_site('https://crfm.stanford.edu/helm/lite/latest/', 'https://crfm.stanford.edu/helm/safety/latest/')
     assert not D.same_site('https://epoch.ai/benchmarks/a', 'https://epoch.ai/benchmarks/b')   # a generic section
+    # a competition platform holds unrelated competitions under one section: the whole path must match
+    assert not D.same_site('https://www.codabench.org/competitions/2977/', 'https://www.codabench.org/competitions/17739/')
+    assert D.same_site('https://www.codabench.org/competitions/2977/', 'https://www.codabench.org/competitions/2977')
+    assert not D.same_site('https://docs.google.com/spreadsheets/d/1aB/edit',                 # two unrelated boards
+                           'https://docs.google.com/spreadsheets/d/9yZ/edit')
     assert not D.same_site('https://github.com/openai/mle-bench', 'https://github.com/openai/preparedness')
     assert D.same_site('https://github.com/SWE-bench/SWE-bench', 'https://github.com/SWE-bench/SWE-bench/tree/main')
 
@@ -97,17 +103,22 @@ def test_letters_of_every_script_are_name_tokens():
     # SWE-bench's duplicate at Jaccard 1/2. Greek letters are tokens, and they split from digits like Latin ones.
     assert D.tokens('τ-bench') == {'τ', 'bench'} and D.tokens('τ²-bench') == {'τ', '2', 'bench'}
     assert D.name_jaccard(D.Record('t', 'τ-bench'), D.Record('s', 'SWE-bench')) == 1 / 3
+    # edition tokens are same_stem's question, not the name signal's: {'bench', '2'} alone made these half alike
+    assert D.name_jaccard(D.Record('t', 'τ²-bench'), D.Record('g', 'GEO-Bench-2')) == 1 / 3
 
 
 def test_candidates_are_proposals_never_merges():
     records = D.corpus_records([])
-    # The curated entries are different benchmarks; swe-bench and swe-bench-verified look alike (url, name) but
-    # swe-bench-verified's lineage says it is swe-bench's subset, a curator's answer, so they are not proposed.
-    assert D.candidates(records, CFG) == []
+    # swe-bench and swe-bench-verified look alike (url, name) but swe-bench-verified's lineage says it is swe-bench's
+    # subset, a curator's answer, so they are not proposed. The pairs that are proposed are different benchmarks a
+    # person has yet to rule on (the schema has no "distinct" verdict); the change that added each pinned it.
+    base = sorted((s.a, s.b) for s, _ in D.candidates(records, CFG))
+    assert base == corpus_pins.load(ROOT)[1]
     assert D.from_benchmark({'id': 'swe-bench-verified', 'lineage': {'subset_of': 'swe-bench'}}).related == {'swe-bench'}
     verified = D.Record('drafts/benchmarks/swe-bench-verified.yaml', 'SWE-bench Verified',
                         urls=['https://www.swebench.com/verified.html'])
-    got = D.candidates(records + [verified], CFG)          # a draft has no lineage: proposed beside both
+    got = [g for g in D.candidates(records + [verified], CFG) if (g[0].a, g[0].b) not in base]
+    # a draft has no lineage: proposed beside both
     assert sorted((s.a, s.b) for s, _ in got) == [('swe-bench', 'drafts/benchmarks/swe-bench-verified.yaml'),
                                                   ('swe-bench-verified', 'drafts/benchmarks/swe-bench-verified.yaml')]
     assert all({'url', 'name'} <= set(fired) for _, fired in got)

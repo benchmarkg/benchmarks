@@ -1,0 +1,517 @@
+# data/benchmarks/chemistry-materials/cspbench.yaml
+#
+# P1-S6-T01, chemistry-materials entry 10 of 10. Filled from the CSPBench paper, arXiv 2407.00733 read as its v1
+# PDF (2024-06-30, the only version) and its abstract page; the README of the benchmark's repository
+# (usccolumbia/cspbenchmark) at main; the README of the metrics repository the paper names as its scoring code
+# (usccolumbia/CSPBenchMetrics) at main; the abstract page of TCSP 2.0 (arXiv 2503.23183, March 2025), the
+# maintainers' own later method reported on CSPBench; and Istanbul Technical University's research-portal record
+# of PNcsp+ (J. Chem. Theory Comput. 22(7), April 2026), an independent group's method reported on CSPBench.
+# GitHub's API was read for both repositories' licences and last pushes, and for the test list's commit history;
+# those reads are not Sources. Every quote below is checked by the quote-substring validator against the
+# Sources' committed extracts.
+#
+# The energy model behind the scores (task step 2): the ground-truth structures are Materials Project records,
+# and none of the sources read states the level of theory behind them. The energy distance relaxes both the
+# ground truth and the prediction with the M3GNet potential and compares M3GNet energies, so M3GNet is the
+# benchmark's energy model (ground_truth_source_note). DFT appears only inside one entrant, CALYPSO, run with
+# VASP at the PBE GGA level with PAW potentials.
+
+id: cspbench
+name: CSPBench
+aliases:
+  - CSPBenchmark
+  - CSP180
+aliases_note: CSPBenchmark is the repository's name for the benchmark, and CSP180 the paper's name
+  for its test set. CSPBenchMetrics, the metrics package, is the benchmark's scoring code
+  (execution.harness), not another name for it.
+tagline: 'Crystal structure prediction from composition: 180 Materials Project structures, twelve distances,
+  pool-relative ranks.'
+description: >
+  A benchmark for crystal structure prediction (CSP) of inorganic materials: given a chemical
+  composition, an algorithm must predict the crystal structure that composition adopts. The test
+  set, CSP180, is 180 structures selected from the Materials Project database, 60 each of binary,
+  ternary and quaternary compounds, spread over many space groups and crystal systems and graded
+  by difficulty; where a composition has several known polymorphs, the prediction is compared with
+  each and the closest counts. One prediction per composition (top-1) is scored against the ground
+  truth by twelve distances from the authors' CSPBenchMetrics package (an energy distance computed
+  with the M3GNet potential after relaxing both structures, and geometric and crystallographic
+  distances such as Wyckoff-position RMSE, Sinkhorn, Chamfer and Hausdorff distances, superpose
+  RMSD, CrystalNN fingerprint, XRD and OFM distances), and by success rates:
+  pymatgen's StructureMatcher at fixed tolerances, space-group match, and both together. Algorithms
+  are compared by ranking scores from 100 to 0 assigned per test structure by rank within the
+  evaluated pool, so a score depends on which algorithms are compared. The release paper ran 13
+  algorithms on all 180 structures (template-based TCSP and CSPML, the ParetoCSP, GN-OA and AGOX
+  global searches driven by the M3GNet or MEGNet potentials, and the deep-learning AlphaCrystal-II)
+  and the DFT-based CALYPSO on a 23-structure subset. There is no leaderboard; the repository holds
+  the test list, the predicted structures and the maintainers' own results tables. Its authors
+  warn that the hand-picked test set carries selection bias.
+self_description:
+  source: src-arxiv-2407-00733-v1
+  quote: We aim to fill this gap by introducing a CSP benchmark suite with 180 test structures along
+    with our recently implemented CSP performance metric set.
+external_ids:
+  arxiv: '2407.00733'
+paper:
+  title: 'CSPBench: a benchmark and critical evaluation of Crystal Structure Prediction'
+  arxiv: '2407.00733'
+  version_read: v1
+  source: src-arxiv-2407-00733-v1
+released: 2024-06-30
+released_note: The paper's first and only arXiv version, as the abstract page dates it. GitHub's API
+  dates the repository's creation 2024-03-08 and the first commit of the test list 2024-03-11;
+  whether the repository was public then is not shown.
+released_source: src-arxiv-2407-00733
+released_quote: Submitted on 30 Jun 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/crystal-structure-prediction
+domain_basis:
+  reason: Every test item is a composition whose known crystal structure the algorithm must predict,
+    which is the leaf's definition, and the score compares the predicted structure with the known
+    one.
+  source: src-arxiv-2407-00733-v1
+  quote: We evaluated the performance of 13 CSP algorithms in predicting the structures of 180 test
+    samples
+domain_considered_and_rejected:
+  - term: chemistry-materials/crystal-stability-discovery
+    reason: An energy distance is one of the metrics, but it is the gap between the prediction's
+      energy and the known structure's, and no candidate is screened for whether it is worth making;
+      the leaf's own distinction sends scoring against a known structure to
+      crystal-structure-prediction.
+  - term: chemistry-materials/force-fields-potentials
+    reason: M3GNet and MEGNet potentials drive several of the searches, but no potential is scored
+      against reference calculations; what is scored is the structure the whole algorithm predicts.
+    source: src-arxiv-2407-00733-v1
+    quote: Two graph neural network potentials have been tested here including the MEGNet [44] and
+      M3GNet [35]
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: The benchmark's claim is that algorithms predict a material's crystal structure from its
+      composition, and every score compares the prediction with the structure recorded in the
+      Materials Project.
+    source: src-arxiv-2407-00733-v1
+    quote: We adopted a ranking scheme to evaluate candidate CSP algorithms based on the quality of
+      their predicted structure against the ground truth structure.
+capability_considered_and_rejected:
+  - term: generation-fidelity
+    reason: Predicted structures are scored by distance to a reference, but the term's exclusion
+      sends a predicted structure of a physical system scored against a reference to
+      scientific-prediction.
+  - term: search-exploration
+    reason: Most entrants are global searches, and their budgets are set per algorithm (3,000 DFT
+      energy calculations per CALYPSO run), but only the top-1 structure is scored; how the space
+      was traversed and what the search cost are not.
+    source: src-arxiv-2407-00733-v1
+    quote: Note that in this benchmark study, we only consider the top-1 prediction performance.
+  - term: optimization
+    reason: The searches minimise an energy, but algorithms are ranked by distance to a known
+      structure, which is accuracy against a key, not the objective's value.
+  - term: distribution-shift-generalization
+    reason: The test set is graded by difficulty and by composition class, but no split is drawn
+      from a distribution the entrants were not fitted to and reported as a condition of its own.
+
+evaluation_method:
+  - domain-metric
+  - statistical-fit
+  - model-derived-metric
+  - entrant-relative-ranking
+  - composite
+evaluation_method_note: domain-metric for the crystallographic comparisons (StructureMatcher at
+  ltol=0.2, stol=0.3, angle_tol=5, space-group match from pymatgen's analyser at default settings,
+  CrystalNN fingerprint, XRD spectrum, OFM and crystal-graph edit distances). statistical-fit for
+  the positional errors and point-set distances (Wyckoff-position RMSE and MAE, pymatgen RMS
+  distance, superpose RMSD, Sinkhorn, Chamfer and Hausdorff distances), as OMol25 tags its structure
+  RMSDs. model-derived-metric for the M3GNet energy distance, which a released potential computes
+  after relaxing both structures; the sources do not pin the M3GNet version (CSPBenchMetrics
+  installs m3gnet unversioned). entrant-relative-ranking for the ranking scores, whose pool in the
+  release paper is 13 algorithms on all 180 structures and four on the 23-structure CALYPSO subset
+  (snapshot 2024-06-30). composite for the overall ranking averaged across all twelve distances (the
+  paper's Figure 5), which mixes the three kinds of measure.
+evaluation_method_basis:
+  reason: Each algorithm is ranked against the others on each test structure by each distance and
+    given a score from 100 to 0 by rank, so adding or removing an algorithm moves every other's
+    score; the per-structure distances underneath come from three kinds of measure, and an overall
+    ranking averages the ranking scores across all twelve distances.
+  source: src-arxiv-2407-00733-v1
+  quote: Ranking scores on a 0-100 scale are assigned to the algorithms using a standardized scoring
+    method to ensure fairness in ranking.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Space-group match compares a space-group number with the ground truth's, but the number
+      is assigned by a symmetry analyser under tolerance settings, which the paper says change the
+      rate; it is kept with the crystallographic checks under domain-metric.
+    source: src-arxiv-2407-00733-v1
+    quote: space group determination is dependent on the parameter setting adopted
+designed_for_subjects:
+  - classical-algorithm
+  - domain-specialist-model
+designed_for_subjects_note: CALYPSO is classical-algorithm on the paper's account of it ("Due to the
+  computational costs associated with DFT-based CALYPSO, we selected a subset of 23 structures from
+  the test dataset for prediction.", src-arxiv-2407-00733-v1); the README's later table adds USPEX,
+  also run with DFT.
+designed_for_subjects_basis:
+  reason: The entrants are CSP algorithms of both kinds. CALYPSO, run with DFT, has no learned
+    component. The rest carry models trained on materials data for the task, such as
+    AlphaCrystal-II's network that predicts interatomic distances from the composition, CSPML's
+    metric learning over template structures, TCSP's learned oxidation-state predictor, and the
+    M3GNet and MEGNet potentials that drive the ParetoCSP, GN-OA and AGOX searches.
+  source: src-arxiv-2407-00733-v1
+  quote: A deep neural network is trained to predict the distance matrix given only the composition
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: The M3GNet and MEGNet potentials stand in for DFT inside the searches, but the scored
+      artifact is the structure the whole algorithm predicts, not the potential's energies against
+      DFT; the potential is one component of the entrant.
+
+as_used:
+  - protocol: Top-5 predictions per composition on all 180 structures, scored by space-group success
+      rate and structural similarity, not the release paper's top-1 distances and ranking scores.
+    source: src-arxiv-2503-23183
+    quote: achieving 83.89% space-group success rate and 78.33% structural similarity accuracy for
+      top-5 predictions
+    note: TCSP 2.0 (March 2025), the maintainers' own successor to TCSP.
+  - protocol: Top-5 predictions per composition on all 180 structures, scored by space-group
+      accuracy and structure matching accuracy without relaxing the predicted structures.
+    source: src-itu-pncsp-plus-record
+    quote: our approach surpasses alternative methods by achieving 86.1% space group accuracy and
+      85.0% structure matching accuracy within the Top-5 predictions, all without structure
+      relaxations
+    note: PNcsp+ (Istanbul Technical University with MPDS), read from the abstract on the
+      university's research portal; the article's full text was not read, so its matching tolerances
+      are not known.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced against the test set by groups other than its
+    maintainers; an independent group's method published in April 2026 reports on it. The
+    benchmark's repository was last pushed on 2025-06-09 (GitHub API), which is maintenance
+    evidence, not lifecycle.
+  source: src-itu-pncsp-plus-record
+  quote: a curated set of 180 benchmark crystal structures for assessing CSP methods
+activity: no-submission-channel
+activity_basis:
+  reason: A download-and-run benchmark with no leaderboard, server or submission route. The
+    repository serves the test list, and the results tables in its README are the maintainers' own
+    runs; others report in their own papers (as_used).
+  source: src-github-cspbenchmark-readme
+  quote: You can download the whold test data in data/CSPbenchmark_test_data.csv
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: AlphaCrystal-II
+    source: src-arxiv-2407-00733-v1
+    observed_on: 2026-10-14
+    quote: AlphaCrystal-II [40] is a deep learning based crystal structure prediction algorithm
+evaluation_target: mixed
+evaluation_target_note: Learned entrants (AlphaCrystal-II, CSPML, and the searches driven by learned
+  potentials) are scored beside CALYPSO, a DFT-driven search with no learned component, on the same
+  metrics.
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each test item's ground truth is a Materials Project structure, named by
+  its mp-id; polymorphic compositions have several, and the one nearest the prediction by M3GNet
+  energy distance is used. None of the sources read states the level of theory behind the Materials
+  Project structures. The energy distance does not use their recorded energies; it relaxes both the
+  ground truth and the prediction with the M3GNet potential and compares M3GNet energies, so M3GNet
+  is the benchmark's energy model and its version is part of the score. DFT enters only through one
+  entrant, CALYPSO, whose structural relaxations ran in VASP with the PBE generalized gradient
+  approximation and PAW potentials ("by considering the Perdew-Burke-Ernzerhof generalized gradient
+  approximation [42] for the exchange-correlation function", src-arxiv-2407-00733-v1).
+ground_truth_source_basis:
+  reason: The paper replaces DFT with M3GNet for the energy comparison and relaxes both structures
+    with it.
+  source: src-arxiv-2407-00733-v1
+  quote: We substituted DFT calculations with the M3GNet potential, a graph neural network-based
+    surrogate potential model [35], to compute the energy distance for relaxing both the ground
+    truth structure and the predicted structure.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The test list, the scoring code and the predicted structures of the paper's algorithms are
+    public, and the metrics package computes every distance from a ground-truth and a predicted
+    structure file.
+  source: src-github-cspbenchmetrics-readme
+  quote: This is a package for benchmarking the performance of crystal structure prediction
+    algorithms by calculating the quality of predicted structures compared to the ground truth
+    structures using several common distance metrics
+
+task:
+  exists: true
+  input:
+    - a chemical composition (the formula of one of the 180 test materials)
+  output: One predicted crystal structure for the composition (the top-1 prediction), as a structure
+    file.
+  scoring: Twelve distances between the prediction and the ground-truth structure (M3GNet energy
+    distance in eV/atom, Wyckoff RMSE and MAE, pymatgen RMS, Sinkhorn, Chamfer, Hausdorff, superpose
+    RMSD, CrystalNN fingerprint, edit graph, XRD and OFM distances); success rates by pymatgen
+    StructureMatcher (ltol=0.2, stol=0.3, angle_tol=5), by space-group match and by both together;
+    and ranking scores from 100 to 0 per structure and metric by rank among the evaluated
+    algorithms, averaged over structures and, for the overall ranking, over all twelve distances. An
+    algorithm that returns no valid structure gets the lowest score.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The test list names each ground truth by its public Materials
+    Project id.
+  source: src-arxiv-2407-00733-v1
+  quote: Note that in this benchmark study, we only consider the top-1 prediction performance.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The repository's test list holds mp-ids and metadata (formulae, space group, crystal
+    system, category), not the structures; the ground-truth structures come from the Materials
+    Project. Whether the Materials Project's own access route needs an account or an API key was not
+    read here; if every copy of the ground truth does, the value is gated-registration
+    (review_checks).
+  access_basis:
+    reason: The test list is a CSV in the public repository, downloadable without an account, and
+      every ground truth is a public Materials Project record.
+    source: src-github-cspbenchmark-readme
+    quote: You can download the whold test data in data/CSPbenchmark_test_data.csv
+  refresh: static
+  refresh_note: The 180 mp-ids have not changed since the test list was first committed
+    (2024-03-11), but the list's metadata has, without announcement. GitHub's commit history (API,
+    not a Source) shows five structures relabelled from polymorph to non-polymorph categories on
+    2024-10-13 and the formula columns rewritten in February and March 2025. The polymorph label
+    decides whether a prediction is compared with several ground truths, so the relabelling may
+    change scores (review_checks).
+  refresh_basis:
+    reason: One test set of 180 Materials Project structures, released with the paper; no versioned
+      release of it exists.
+    source: src-arxiv-2407-00733-v1
+    quote: We selected a total of 180 crystal structures, named CSP180, from the Materials Project
+      database [57].
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: The test structures are selected Materials Project records. How the
+    Materials Project produced them (DFT relaxations of experimental or hypothetical structures) is
+    not stated in the sources read, so simulation-generated and experimental-measurement are not
+    assigned.
+  data_provenance_source: src-arxiv-2407-00733-v1
+  data_provenance_quote: The 180 test structures are obtained from the Materials Project database.
+  contamination_risk: medium
+  contamination_risk_note: Every ground truth is a public Materials Project record. Template-based
+    entrants select templates from structure databases, and the M3GNet and MEGNet potentials were
+    trained on Materials Project data, so a route from the test structures into an entrant's
+    template pool or training data is plausible. No source read says whether the targets were
+    excluded from the template databases, and none evidences a route either way.
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: GitHub's licence metadata reports MIT for the repository that holds the test
+    list (read 2026-10-14, not a quoted Source). The ground-truth structures are Materials Project
+    records under that database's own terms, which were not read.
+  size:
+    - count: 180
+      unit: crystal structures (compositions to predict)
+      subset: CSP180, the full test set
+      source: src-arxiv-2407-00733-v1
+      quote: We selected a total of 180 crystal structures, named CSP180, from the Materials Project
+        database [57].
+    - count: 60
+      unit: crystal structures, each of binary, ternary and quaternary compounds
+      subset: composition classes
+      source: src-arxiv-2407-00733-v1
+      quote: we focus on their predictions across 60 binary structures
+    - count: 23
+      unit: crystal structures (13 binary, 10 ternary)
+      subset: the subset run with DFT-based CALYPSO
+      source: src-arxiv-2407-00733-v1
+      quote: Therefore, we selected a subset that includes 13 binary structures and 10 ternary
+        structures for evaluating the DFT-based algorithm
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Machine Learning and Evolution Laboratory (Jianjun Hu), University of South Carolina
+  maintainer_basis:
+    reason: The repository sits in the usccolumbia organisation and its README names the laboratory
+      and the university as the benchmark's developers.
+    source: src-github-cspbenchmark-readme
+    quote: Developed by Lai Wei and Dr. Jianjun Hu at Machine Learning and Evolution Laboratory.
+      University of South Carolina.
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: No outside route exists. The maintainers chose the algorithms, ran them,
+    and keep the results in the README (the ranking figures and a table of energy and Hausdorff
+    distances on the 23-structure subset). The README's table goes beyond the v1 paper's Table 4,
+    adding USPEX and replacing AGOX-pt with AGOX-rss, with different ParetoCSP values; GitHub dates
+    that README rewrite 2025-06-09 (API, not a Source), and no source explains it.
+  submission_process_source: src-github-cspbenchmark-readme
+  submission_process_quote: space group and M3GNet ranking comparison of CSP algorithms over all
+    test structures
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2407-00733-v1
+      quote: Similar to the GN-OA approach, our method also considers crystal structure prediction
+        with symmetry constraints.
+  independence_flags_note: ParetoCSP is the authors' own method (the quote), AlphaCrystal-II's
+    repository is in the maintainers' usccolumbia organisation (src-github-cspbenchmark-readme), and
+    TCSP is their template-based framework, which TCSP 2.0's abstract calls "our template-based
+    crystal structure prediction framework" (src-arxiv-2503-23183). Among the ranked algorithms,
+    TCSP leads the M3GNet-energy and Chamfer rankings and the space-group match rate, and ParetoCSP
+    ranks above every other de novo algorithm by M3GNet energy distance; CSPML, whose repository is
+    a third party's (Minoru938/CSPML), leads the overall ranking. The maintainers also chose the
+    test set and the ranking scheme. The work was funded by the National Science Foundation, which
+    is not an evaluated party.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2407-00733-v1
+    quote: due to the subjectivity of selecting the 180 test samples, our evaluation has inherent
+      bias despite our effort in trying to cover diverse structures, symmetries, and structural
+      prototypes
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not guessed. Scoring runs M3GNet relaxations of both structures for every test
+    item, and the metrics package installs PyTorch with CUDA, but no source states what a run needs;
+    an entrant's own cost varies from a template lookup to thousands of DFT calculations per
+    composition.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The test list, the ranking and success-rate scripts and the metrics package are public,
+      and scoring needs no human or maintainer-only step.
+    source: src-arxiv-2407-00733-v1
+    quote: The performance metrics calculation is done using the code from the CSPBenchMetrics
+      repository
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: CSPBenchMetrics (usccolumbia/CSPBenchMetrics, the distance metrics), with
+    eval/ranking_calculator.py and eval/success_rates.py in usccolumbia/cspbenchmark
+  harness_source: src-arxiv-2407-00733-v1
+  harness_quote: The code for calculating ranking scores can be also downloaded from the Github
+    repository.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata reports MIT for both usccolumbia/cspbenchmark and
+    usccolumbia/CSPBenchMetrics (read 2026-10-14); not a quoted Source. CSPBenchMetrics was last
+    pushed on 2024-08-01.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile, three things change a CSPBench number, and a fourth has no condition field:
+  #   - which structures: all 180, one composition class, or the 23-structure CALYPSO subset (subset_used);
+  #   - how many predictions count: the paper scores the top-1 structure, while TCSP 2.0 and PNcsp+ report top-5
+  #     success rates (k);
+  #   - the scoring code, and in it the M3GNet version behind the energy distance and the StructureMatcher and
+  #     symmetry tolerances (harness);
+  #   - for ranking scores, the pool of algorithms ranked together, which no condition field records: a ranking
+  #     score from one paper cannot be set beside one from another unless the pools match.
+  material_extra:
+    - subset_used
+    - k
+    - harness
+
+aggregation_policy: official-aggregate
+aggregation_policy_note: The paper publishes per-metric rankings (M3GNet energy distance, Chamfer
+  and Hausdorff distance), success rates, and an overall ranking that averages the ranking scores
+  over all twelve distances; it names none of them the headline. The overall ranking is the one
+  aggregate the maintainers publish, and it depends on the pool.
+aggregation_policy_basis:
+  reason: The maintainers compute and publish the overall ranking across all twelve distances.
+  source: src-arxiv-2407-00733-v1
+  quote: we conducted a comprehensive analysis by computing overall ranking scores based on all 12
+    distance metrics
+headline_metric: null
+
+homepage: https://github.com/usccolumbia/cspbenchmark
+repository: https://github.com/usccolumbia/cspbenchmark
+dataset_url: https://github.com/usccolumbia/cspbenchmark/blob/main/data/CSPbenchmark_test_data.csv
+
+subsets:
+  - id: cspbench#binary
+    label: Binary compounds
+    items: 60
+    scored_separately: true
+    notes: Graded binary_easy, binary_medium and binary_hard in the paper's Table 2.
+  - id: cspbench#ternary
+    label: Ternary compounds
+    items: 60
+    scored_separately: true
+  - id: cspbench#quaternary
+    label: Quaternary compounds
+    items: 60
+    scored_separately: true
+  - id: cspbench#calypso-subset
+    label: The 23 structures run with DFT-based CALYPSO
+    items: 23
+    scored_separately: true
+    notes: Thirteen binary and ten ternary structures, on which CALYPSO, CSPML, ParetoCSP and
+      AGOX-pt are compared by energy and Hausdorff distance and by success rates.
+
+lineage:
+  role: root
+
+tags:
+  - crystal-structure-prediction
+  - materials-project
+  - inorganic-crystals
+  - ranking-score
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2407-00733-v1
+    - src-arxiv-2407-00733
+    - src-github-cspbenchmark-readme
+    - src-github-cspbenchmetrics-readme
+    - src-arxiv-2503-23183
+    - src-itu-pncsp-plus-record
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, and its abstract page for the date; both
+    READMEs at main; TCSP 2.0's abstract page; and the ITU research-portal record of PNcsp+ with
+    scripts and styles stripped, as evidence of current use. CrystalFormer-CSP (arXiv 2512.18251) was
+    read as a candidate and dropped: its CSP benchmarks are another paper's datasets, not CSPBench.
+  confidence: medium
+  review_checks:
+    - check: The evaluation methods split the twelve distances three ways. Positional errors and
+        point-set distances (Wyckoff RMSE, superpose RMSD, Chamfer, Hausdorff, Sinkhorn) are tagged
+        statistical-fit, as OMol25 tags its RMSDs, and the crystallographic comparisons
+        domain-metric; a reviewer may put all structure distances under domain-metric. composite
+        rests on the overall ranking of Figure 5, which the paper does not call its headline.
+      field: evaluation_method
+      specialist: true
+    - check: ground_truth_source is held-out-labels (stored Materials Project structures, public, as
+        USPTO-50k's patent labels are). If the Materials Project structures are DFT relaxations,
+        which no source read says, simulation may fit better.
+      field: ground_truth_source
+      specialist: true
+    - check: data.access is fully-open on the public test list; the structures themselves come from
+        the Materials Project, whose access terms were not read. If every copy needs an account or
+        an API key, the value is gated-registration.
+      field: data.access
+    - check: refresh is static on unchanged mp-ids, but the test list's category labels and formula
+        columns were changed after release without announcement (GitHub commit history, not a
+        Source); five polymorph labels changed, and polymorph handling affects scoring.
+        versioned-releases does not fit an unannounced change, and rolling-live needs a live
+        leaderboard.
+      field: data.refresh
+    - check: The README's results table differs from the v1 paper's Table 4 (adds USPEX, AGOX-rss
+        for AGOX-pt, other ParetoCSP values) and was rewritten on 2025-06-09; a revised paper may
+        exist that arXiv does not hold, which would make the v1 numbers stale.
+      field: governance.submission_process_note
+      source: src-github-cspbenchmark-readme
+      quote: CALYPSO | | USPEX |
+    - check: designed_for_subjects puts the ML-potential searches under domain-specialist-model and
+        rejects scientific-surrogate-model, on the reading that the entrant is the whole search and
+        the potential one component of it.
+      field: designed_for_subjects
+      specialist: true
+    - check: lifecycle active rests on PNcsp+ (April 2026), read only as the abstract on Istanbul
+        Technical University's research portal, beside the maintainers' own TCSP 2.0 (March 2025);
+        the JCTC full text was not read.
+      field: lifecycle
+      source: src-itu-pncsp-plus-record
+      quote: In evaluations on the CSPBench data set

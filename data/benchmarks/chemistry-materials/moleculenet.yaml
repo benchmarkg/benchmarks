@@ -1,0 +1,823 @@
+# data/benchmarks/chemistry-materials/moleculenet.yaml
+#
+# P1-S6-T01, chemistry-materials entry 7 of 10. Filled from the MoleculeNet paper, arXiv 1703.00564 read as its v3
+# PDF (2018-10-26), beside its v1 (2017-03-02) and v2 (2017-10-11) PDFs for the versions, and its abstract page;
+# Crossref's record of the Chemical Science article (10.1039/C7SC02664A) for the venue; the MoleculeNet page of
+# the DeepChem documentation, which hosts the loaders; the README of deepchem/moleculenet, the leaderboard
+# repository; the abstract page of an in-context LLM study on three MoleculeNet datasets (arXiv 2603.25857, March
+# 2026) as evidence of current use; and the abstract page of a Tox21 leaderboard paper (arXiv 2511.14744, November
+# 2025) for what MoleculeNet did to the Tox21 data. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+#
+# One entry, with the 17 datasets of the paper as subsets under its four categories. moleculenet.org answers 404
+# with an empty body and moleculenet.ai no longer resolves (curation.unreachable), so the homepage is the DeepChem
+# documentation page.
+
+id: moleculenet
+name: MoleculeNet
+aliases:
+  - MolNet
+aliases_note: The DeepChem documentation calls the collection MolNet in places, and its module is
+  dc.molnet.
+aliases_source: src-deepchem-moleculenet-docs
+aliases_quote: Please review the datasets already available in MolNet before contributing
+tagline: 17 molecular property datasets, from DFT energies to clinical toxicity, each with a
+  recommended split and metric.
+description: >
+  A benchmark collection for molecular machine learning, released with DeepChem by Vijay Pande's group
+  at Stanford: 17 public datasets in four categories, quantum mechanics (QM7, QM7b, QM8, QM9),
+  physical chemistry (ESOL, FreeSolv, Lipophilicity), biophysics (PCBA, MUV, HIV, PDBbind, BACE) and
+  physiology (BBBP, Tox21, ToxCast, SIDER, ClinTox), over 700,000 compounds and over 800 tasks in
+  all. A system takes a molecule, as SMILES or, for the quantum sets and PDBbind, 3D coordinates, and
+  predicts each of the dataset's properties. For each dataset the paper recommends a split, 80/10/10
+  random, scaffold, time or stratified, and a metric, MAE or RMSE for regression and ROC-AUC or
+  PRC-AUC for classification, averaged over a dataset's tasks; there is no score across datasets. The
+  quantum labels are DFT and TDDFT/CC2 calculations, the rest mostly experimental measurements. The
+  DeepChem loaders now default to scaffold splits for most datasets, and the documentation's
+  recommended split differs from the paper's for ESOL, Lipophilicity, MUV and PDBbind, so a number
+  means little without its split. A leaderboard repository last changed in 2021; results appear in
+  papers.
+self_description:
+  source: src-arxiv-1703-00564-v3
+  quote: This work introduces MoleculeNet, a large scale benchmark for molecular machine learning.
+external_ids:
+  arxiv: '1703.00564'
+paper:
+  title: 'MoleculeNet: A Benchmark for Molecular Machine Learning'
+  arxiv: '1703.00564'
+  doi: 10.1039/C7SC02664A
+  version_read: v3
+  source: src-arxiv-1703-00564-v3
+released: 2017-03-02
+released_note: The paper's first arXiv version, as the abstract page dates it. That version had 12
+  datasets; the 17-dataset collection dates from v2, 2017-10-11 (see versions).
+released_source: src-arxiv-1703-00564
+released_quote: Submitted on 2 Mar 2017
+release_venue: Chemical Science 9(2), 513-530 (2018)
+release_venue_note: Crossref's record, which dates the article's licence from 2017-10-31 and its
+  issue to 2018. The arXiv record states no venue.
+release_venue_source: src-crossref-10-1039-c7sc02664a
+release_venue_quote: '"container-title":["Chemical Science"]'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/molecular-property-prediction
+  secondary:
+    - chemistry-materials/drug-discovery-admet
+    - biology-genetics/drug-target-interaction
+  secondary_note: The physiology datasets (BBBP, Tox21, ToxCast, SIDER, ClinTox) score
+    blood-brain-barrier penetration and toxicity of drug candidates and marketed drugs, ADMET's
+    definition; each carries it as its domain_override. PDBbind and BACE score binding to a protein
+    target, which the chemistry family's exclusion test sends to biology-genetics, and carry
+    drug-target-interaction as theirs.
+domain_basis:
+  reason: Every dataset scores a property of a molecule predicted from its structure, at four levels
+    from quantum-mechanical energies to effects on the human body.
+  source: src-arxiv-1703-00564-v3
+  quote: 'These properties can be subdivided into four categories: quantum mechanics, physical chemistry,
+    biophysics and physiology.'
+domain_considered_and_rejected:
+  - term: chemistry-materials/force-fields-potentials
+    reason: The quantum sets are scored against DFT, but on molecular properties such as atomization
+      energies and orbital energies of relaxed structures, not on energies and forces along
+      trajectories that a learned potential would supply.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict molecular properties and are scored against measurements or, for the
+      quantum sets, DFT calculations.
+    source: src-arxiv-1703-00564-v3
+    quote: Molecular machine learning methods have to be capable of learning to predict this very
+      broad range of properties.
+  distribution-shift-generalization:
+    reason: The scaffold split puts molecules with different two-dimensional frameworks in test than
+      in training, and PDBbind's time split tests on newer complexes than it trains on. The paper
+      recommends scaffold splits for HIV, BACE and BBBP and reports them as their own condition; the
+      other datasets' recommended splits are random or stratified (review_checks).
+    source: src-arxiv-1703-00564-v3
+    quote: Three datasets (HIV, BACE, BBBP) in these two categories are evaluated under scaffold
+      splitting.
+capability_considered_and_rejected:
+  - term: sample-efficiency
+    reason: The paper trains on growing fractions of Tox21, FreeSolv and QM7 to show how models
+      scale with data, but as analyses; no dataset fixes a training budget and scores at it.
+  - term: transfer-learning
+    reason: Multitask training across a dataset's tasks is a modelling choice, and pretraining on
+      outside molecules is how later users approach it; the benchmark scores each task on its own
+      label set and reports no transfer protocol.
+
+evaluation_method:
+  - statistical-fit
+  - classification-metric
+evaluation_method_basis:
+  reason: Regression datasets are scored by MAE or RMSE, classification datasets by ROC-AUC or
+    PRC-AUC (PRC-AUC where positives are under 2%), each averaged over a dataset's tasks.
+  source: src-arxiv-1703-00564-v3
+  quote: regression datasets are evaluated by mean absolute error (MAE) and root-mean-square error
+    (RMSE)
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: MAE, RMSE, ROC-AUC and PRC-AUC are general-purpose statistics, which the term's
+      exclusion test names.
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are models trained on each dataset's training split to stand in for the DFT
+    calculation or the laboratory measurement that produced its labels; the paper frames the quantum
+    sets as learning fast approximators to DFT, and compares FreeSolv models with alchemical
+    free-energy calculations.
+  source: src-arxiv-1703-00564-v3
+  quote: As most conventional methods are slower than data-driven methods by orders of magnitude
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: Its exclusion test sends models that emulate a process in place of a simulation or
+      measurement to scientific-surrogate-model (review_checks, where the USPTO-MIT entry's choice
+      is compared).
+  - term: classical-algorithm
+    reason: Every baseline in the paper is learned, the kernel SVMs, random forests, gradient
+      boosting and logistic regression among them.
+  - term: instruction-tuned-model
+    reason: General LLMs prompted in context appear in 2026 use (as_used), not in the protocol the
+      collection was built for.
+as_used:
+  - protocol: In-context regression by nine LLM variants (GPT-4.1, GPT-5 and Gemini 2.5 families) on
+      Delaney (ESOL), Lipophilicity and QM7, with 0, 60 and 1,000 shots and progressive blinding of
+      the molecule and property information, as a test of memorization.
+    source: src-arxiv-2603-25857
+    quote: on three MoleculeNet datasets (Delaney solubility, Lipophilicity, QM7 atomization energy)
+    note: Busch et al. (arXiv v1 2026-03-26, v3 2026-08-04). The abstract does not give the splits.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the datasets in 2026, for example by a study of LLMs on
+    three of them. The leaderboard repository was last pushed on 2021-04-29 and the DeepChem
+    repository on 2026-08-20 (GitHub API, read 2026-10-14), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2603-25857
+  quote: We evaluate nine LLM variants across three families (GPT-4.1, GPT-5, Gemini 2.5)
+activity: no-submission-channel
+activity_note: The deepchem/moleculenet README holds rows dated January 2020 to March 2021 and
+  states no route for adding others; the repository was last pushed on 2021-04-29 (GitHub API).
+activity_basis:
+  reason: No source read shows a route by which outsiders enter results. The leaderboard README
+    lists runs of the DeepChem implementations, the paper's own results are in the paper, and
+    everyone else reports in their own papers.
+  source: src-github-moleculenet-readme
+  quote: '# MoleculeNet Leaderboard ## Physical Chemistry ### Delaney (ESOL)'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: MPNN (message-passing neural network)
+    source: src-arxiv-1703-00564-v3
+    observed_on: 2026-10-14
+    quote: DTNN and MPNN which use distance information perform better on QM datasets than simple
+      graph convolutions.
+  - system: GPT-5 (in context)
+    source: src-arxiv-2603-25857
+    observed_on: 2026-10-14
+    quote: We evaluate nine LLM variants across three families (GPT-4.1, GPT-5, Gemini 2.5)
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: Most labels are measurements (solubility, hydration free energy, logD,
+  assay activity, binding, barrier penetration, toxicity assays). The quantum sets' labels are DFT
+  and TDDFT/CC2 calculations, a simulation; SIDER's and ClinTox's are drug side-effect records and
+  clinical-trial and FDA-approval outcomes compiled from databases.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Every dataset, labels included, loads through DeepChem's public library calls, and the
+    splitters and metrics are in the same library.
+  source: src-arxiv-1703-00564-v3
+  quote: Users of DeepChem can easily load all MoleculeNet benchmark data through provided library
+    calls.
+
+task:
+  exists: true
+  input:
+    - a molecule as SMILES, with 3D coordinates for the quantum sets and protein-ligand complex
+      coordinates for PDBbind
+  output: A value for each of the dataset's regression tasks, or a class score for each of its
+    classification tasks.
+  scoring: The dataset's recommended metric (MAE, RMSE, ROC-AUC or PRC-AUC) on the test part of its
+    recommended 80/10/10 split, averaged over the dataset's tasks; each dataset is scored on its
+    own.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: Every split's labels are public.
+  source: src-arxiv-1703-00564-v3
+  quote: For datasets containing more than one task, we report the mean metric values over all
+    tasks.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The DeepChem loaders download the prepared files from DeepChem's AWS bucket, with no
+    account or agreement; new datasets reach the bucket through the project's technical steering
+    committee.
+  access_basis:
+    reason: All datasets and their labels load through public DeepChem library calls.
+    source: src-arxiv-1703-00564-v3
+    quote: Users of DeepChem can easily load all MoleculeNet benchmark data through provided library
+      calls.
+  refresh: versioned-releases
+  refresh_note: The collection changed between the paper's versions (12 datasets in v1, 17 in v2,
+    revised compound counts in v3; see versions). Since then DeepChem replaced QM9's SDF file in its
+    bucket after issue 4413 (opened 2025-04-08, closed 2026-01-21, GitHub API), later than its last
+    tagged release, 2.8.0 of 2024-04-03, so that change has no library version label; the
+    documentation's note is its announcement, undated. The documentation's recommended splits also
+    differ from the paper's for four datasets (subsets_note).
+  refresh_basis:
+    reason: Changes come as labelled paper versions and an announced fix to QM9's file; no live
+      leaderboard moves under them.
+    source: src-deepchem-moleculenet-docs
+    quote: in the previously included SDF files for the QM9 dataset, where some molecules
+      incorrectly carried formal charges
+  data_provenance:
+    - inherited-from-constituents
+    - curated-public-database
+    - simulation-generated
+    - experimental-measurement
+  data_provenance_note: Most datasets are earlier public datasets taken over (QM7, QM7b, QM8 and QM9
+    from the Quantum-Machine effort, the Tox21 challenge data, MUV, ESOL, FreeSolv, the PCBA subset
+    of earlier multitask work). Lipophilicity was curated from ChEMBL, and ClinTox, introduced by
+    the paper, was compiled from the SWEETLEAD database and ClinicalTrials.gov's AACT database. The
+    quantum labels are DFT and TDDFT/CC2 calculations; FreeSolv's, Lipophilicity's, BACE's and
+    PDBbind's are experimental.
+  data_provenance_source: src-arxiv-1703-00564-v3
+  data_provenance_quote: MoleculeNet curates multiple public datasets
+  contamination_risk: medium
+  contamination_risk_note: Every split and label has been public since 2017. The scaffold split,
+    which the paper recommends for HIV, BACE and BBBP and DeepChem's loaders now default to for most
+    datasets, controls structural leakage from training to test molecules within the benchmark; it
+    does nothing against pretraining exposure. Molecular foundation models pretrain on large public
+    molecule collections, and whether those hold the test molecules was not assessed. A 2026 study
+    found no verbatim retrieval of Delaney, Lipophilicity or QM7 labels by nine LLMs, evidence
+    against one route for three datasets.
+  contamination_evidence:
+    - source: src-arxiv-2603-25857
+      stance: against
+      quote: We find no evidence of verbatim retrieval on the legacy benchmarks
+  dataset_licence: null
+  dataset_licence_note: No source read states a licence for the collection; each constituent keeps
+    its own terms. GitHub reports MIT for deepchem/moleculenet, the leaderboard repository (read
+    2026-10-14).
+  size:
+    - count: 17
+      unit: datasets
+      source: src-arxiv-1703-00564-v3
+      quote: At the time of writing, MoleculeNet contains 17 datasets prepared and benchmarked
+    - count: 700000
+      unit: compounds (over), across the 17 datasets
+      source: src-arxiv-1703-00564-v3
+      quote: MoleculeNet contains data on the properties of over 700,000 compounds
+    - count: 800
+      unit: tasks (over), 617 of them ToxCast's
+      source: src-arxiv-1703-00564-v3
+      quote: 'We gathered data for a wide range of molecular properties: 17 dataset collections including
+        over 800'
+  size_note: Per-dataset compound counts are the subsets' items, from the v3 Table 1.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The DeepChem project (deepchem-contributors); released by Vijay Pande's group at
+    Stanford
+  maintainer_basis:
+    reason: The datasets are served from DeepChem's AWS bucket and added through its technical
+      steering committee, the documentation is the deepchem-contributors' (Copyright 2024), and the
+      leaderboard repository sits in the deepchem organisation.
+    source: src-deepchem-moleculenet-docs
+    quote: Ask a member of the technical steering committee to add your .tar.gz or .zip file to the
+      DeepChem AWS bucket.
+  maintainer_type: community-collective
+  maintainer_type_note: academic-lab was considered, for the originating Stanford group, but the
+    collection is now held in the deepchem organisation's library and bucket, run by a steering
+    committee of contributors, with no single institution stated as holder and no legal form.
+  submission_process:
+    - maintainer-run
+  submission_process_note: The deepchem/moleculenet README, titled the MoleculeNet Leaderboard, has
+    nine tables on eight datasets (seven of the 17, BACE twice, and HOPV), ranking GCN and
+    random-forest runs, with one atomic-convolution (ACNN) row for the PDBbind core set; each row
+    names a contact person, and the latest is from March 2021. The paper had promised its results
+    would be maintained online as part of DeepChem. Everyone else's results are in their own papers
+    (review_checks, literature-only).
+  submission_process_source: src-github-moleculenet-readme
+  submission_process_quote: '| Rank | Model | Featurization | Test RMSE | Validation RMSE | Contact'
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-1703-00564-v3
+      quote: (74) Ramsundar, B.; Liu, B.; Wu, Z.; Verras, A.; Tudor, M.; Sheridan, R. P.; Pande, V.
+  independence_flags_note: The release paper benchmarks its authors' own earlier models beside
+    others'. Bypass multitask networks (reference 74) are by three of its authors, multitask
+    networks (reference 10) by two, and the weave model (reference 23) has Pande among its authors.
+    Bypass, at 0.827 ROC-AUC, is the best conventional method on ClinTox in Table 3. The paper names
+    NIH grants and Folding@home donors as the group's support, neither an evaluated party.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2511-14744
+    quote: the dataset was altered and labels were imputed or manufactured, resulting in a loss of
+      comparability across studies
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public data and labels, and the loaders, splitters and metrics in one library; no human,
+      physical or maintainer-only step.
+    source: src-arxiv-1703-00564-v3
+    quote: Users of DeepChem can easily load all MoleculeNet benchmark data through provided library
+      calls.
+  harness_availability: official-harness
+  harness: DeepChem's molnet module (dc.molnet loaders and splitters, with dc.metrics)
+  harness_note: Many papers use other copies and pipelines (for example the Open Graph Benchmark's
+    versions of several datasets, which 2511.14744 names), whose splits and labels can differ.
+  harness_source: src-arxiv-1703-00564-v3
+  harness_quote: DeepChem also directly provides molnet sub-module to support benchmarking.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for deepchem/deepchem, read 2026-10-14; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: subset_used names the dataset and must carry its split (random, scaffold, time
+  # or stratified; the paper's, the documentation's and the loaders' defaults differ), what the model was
+  # pretrained on (outside molecule collections), and which copy and pipeline produced the data (DeepChem's
+  # loaders or another copy, such as the Open Graph Benchmark's, with different labels for Tox21).
+  material_extra:
+    - training_data_policy
+    - harness
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Each dataset has its own metric and split, regression and classification metrics are not
+    on one scale, and the paper compares methods dataset by dataset.
+  source: src-arxiv-1703-00564-v3
+  quote: For each dataset, we propose a metric and a splitting pattern
+headline_metric: null
+
+homepage: https://deepchem.readthedocs.io/en/latest/api_reference/moleculenet.html
+repository: https://github.com/deepchem/deepchem
+leaderboard_url: https://github.com/deepchem/moleculenet
+
+versions:
+  - version: v1
+    label: MoleculeNet, arXiv v1
+    version_kind: edition
+    released: 2017-03-02
+    changes: The first release, with 12 datasets; regression scored by squared Pearson correlation
+      (R2), classification by ROC-AUC.
+    breaking: true
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-arxiv-1703-00564-v1
+      - src-arxiv-1703-00564
+  - version: v2
+    label: MoleculeNet, arXiv v2
+    version_kind: edition
+    released: 2017-10-11
+    changes: 17 datasets (QM8, QM9, Lipophilicity, BACE and BBBP added), MAE and RMSE for
+      regression, PRC-AUC beside ROC-AUC for classification, and a recommended split and metric per
+      dataset.
+    breaking: true
+    supersedes_version: v1
+    superseded_by: v3
+    frozen: true
+    sources:
+      - src-arxiv-1703-00564-v2
+      - src-arxiv-1703-00564
+  - version: v3
+    label: MoleculeNet, arXiv v3
+    version_kind: revision
+    released: 2018-10-26
+    changes: Table 1's compound counts revised down for eleven datasets (PCBA 439,863 to 437,929,
+      Tox21 8,014 to 7,831, ClinTox 1,491 to 1,478, among others); tasks, splits and metrics in
+      Table 1 unchanged. The sources do not say why the counts changed.
+    breaking: false
+    supersedes_version: v2
+    errata:
+      - scope: QM9 (DeepChem's SDF file)
+        description: Some QM9 molecules carried formal charges in DeepChem's SDF file although QM9's
+          molecules are neutral. DeepChem regenerated the file from the original XYZ files with Open
+          Babel and replaced it in its S3 bucket; the issue (4413) was opened on 2025-04-08 and
+          closed on 2026-01-21 (GitHub API, not a quoted Source).
+        source: src-deepchem-moleculenet-docs
+    frozen: true
+    sources:
+      - src-arxiv-1703-00564-v3
+      - src-arxiv-1703-00564
+      - src-deepchem-moleculenet-docs
+
+subsets:
+  - id: moleculenet#quantum-mechanics
+    label: Quantum mechanics (QM7, QM7b, QM8, QM9)
+    scored_separately: false
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: '# Compounds 7160 7210 21786'
+      - source: src-arxiv-1703-00564-v3
+        quote: '# Tasks 1 14 12 12 1 1 1'
+      - source: src-arxiv-1703-00564-v3
+        quote: Rec - Metric MAE MAE MAE MAE RMSE RMSE RMSE
+    notes: Properties calculated with quantum chemistry, predicted from 3D coordinates; MAE on each.
+  - id: moleculenet#qm7
+    label: QM7
+    parent: moleculenet#quantum-mechanics
+    items: 7160
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: determined using ab-initio density functional theory (PBE0/tier2 basis set)
+      - source: src-deepchem-moleculenet-docs
+        quote: Stratified splitting is recommended for this dataset.
+    notes: GDB-13 molecules with up to seven heavy atoms; one task, the atomization energy, at
+      PBE0/tier2 DFT. Stratified split, MAE.
+  - id: moleculenet#qm7b
+    label: QM7b
+    parent: moleculenet#quantum-mechanics
+    items: 7210
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: QM7b, 3 models (QM7b only provides 3D coordinates) are evaluated by MAE on random
+          split
+    notes: 14 electronic properties of GDB-13 molecules with up to seven heavy atoms, from 3D
+      coordinates only. The paper's one sentence gives PBE0/tier2 for QM7 and QM7b together
+      (review_checks). Random split, MAE. The DeepChem documentation has no QM7b loader.
+  - id: moleculenet#qm8
+    label: QM8
+    parent: moleculenet#quantum-mechanics
+    items: 21786
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: Multiple methods, including time-dependent density functional theories (TDDFT) and
+          second-order approximate coupled-cluster (CC2)
+      - source: src-deepchem-moleculenet-docs
+        quote: four excited state properties calculated by four different methods on 22 thousand
+          samples
+      - source: src-deepchem-moleculenet-docs
+        quote: 'Columns 2-5: RI-CC2/def2TZVP Columns 6-9: LR-TDPBE0/def2SVP Columns 10-13: LR-TDPBE0/def2TZVP
+          Columns 14-17: LR-TDCAM-B3LYP/def2TZVP'
+    notes: The first two singlet excitation energies and their oscillator strengths of GDB-17
+      molecules with up to eight heavy atoms. DeepChem's files give the four properties at four
+      levels of theory (RI-CC2/def2TZVP, LR-TDPBE0/def2SVP, LR-TDPBE0/def2TZVP,
+      LR-TDCAM-B3LYP/def2TZVP); the paper counts 12 tasks and three methods. Random split, MAE.
+  - id: moleculenet#qm9
+    label: QM9
+    parent: moleculenet#quantum-mechanics
+    items: 133885
+    scored_separately: true
+    evidence:
+      - source: src-deepchem-moleculenet-docs
+        quote: All molecules are modeled using density functional theory (B3LYP/6-31G(2df,p) based
+          DFT). Random splitting is recommended for this dataset.
+      - source: src-deepchem-moleculenet-docs
+        quote: The updated SDF file is uploaded to the Deepchem S3 bucket.
+    notes: Geometric, energetic, electronic and thermodynamic properties of GDB-17 molecules with up
+      to nine heavy atoms, 12 tasks at B3LYP/6-31G(2df,p). Random split, MAE. DeepChem's SDF file
+      gave some neutral molecules formal charges until it was regenerated from the original XYZ
+      files (versions, errata).
+  - id: moleculenet#physical-chemistry
+    label: Physical chemistry (ESOL, FreeSolv, Lipophilicity)
+    scored_separately: false
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: 133885 1128 642 4200
+      - source: src-arxiv-1703-00564-v3
+        quote: ESOL, 8 models are evaluated by RMSE on random split; FreeSolv, 8 models are
+          evaluated by RMSE on random split; Lipophilicity, 8 models are evaluated by RMSE on random
+          split.
+    notes: One regression task each, from SMILES; RMSE on a random split in the paper.
+  - id: moleculenet#esol
+    label: ESOL (Delaney)
+    parent: moleculenet#physical-chemistry
+    items: 1128
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: ESOL is a small dataset consisting of water solubility data for 1128 compounds.
+      - source: src-deepchem-moleculenet-docs
+        quote: directly from molecular structures (as encoded in SMILES strings). Scaffold splitting
+          is recommended for this dataset.
+    notes: Water solubility (log solubility). RMSE. Random split in the paper, scaffold in the
+      DeepChem documentation.
+  - id: moleculenet#freesolv
+    label: FreeSolv
+    parent: moleculenet#physical-chemistry
+    items: 642
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: We include the experimental values in the benchmark collection, and use calculated
+          values for comparison.
+    notes: Experimental hydration free energies in water; the database's alchemical free-energy
+      calculations are kept for comparison. Random split, RMSE. DeepChem has two loaders for it,
+      load_sampl and load_freesolv.
+  - id: moleculenet#lipophilicity
+    label: Lipophilicity
+    parent: moleculenet#physical-chemistry
+    items: 4200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: (logD at pH 7.4) of 4200 compounds
+      - source: src-deepchem-moleculenet-docs
+        quote: of 4200 compounds. Scaffold splitting is recommended for this dataset.
+    notes: Experimental octanol/water distribution coefficients (logD at pH 7.4) curated from
+      ChEMBL. RMSE. Random split in the paper, scaffold in the DeepChem documentation.
+  - id: moleculenet#biophysics
+    label: Biophysics (PCBA, MUV, HIV, PDBbind, BACE)
+    scored_separately: false
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: 437929 93087 41127 11908 1513 2039 7831 8575 1427 1478
+      - source: src-arxiv-1703-00564-v3
+        quote: 128 17 1 1 1 1 12 617 27 2
+    notes: Activity in screens and binding to protein targets. The two Table 1 rows run PCBA, MUV,
+      HIV, PDBbind, BACE, BBBP, Tox21, ToxCast, SIDER, ClinTox.
+  - id: moleculenet#pcba
+    label: PCBA (PubChem BioAssay, 128 assays)
+    parent: moleculenet#biophysics
+    items: 437929
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: We use a subset of PCBA, containing 128 bioassays measured over 400 thousand
+          compounds
+      - source: src-arxiv-1703-00564-v3
+        quote: PCBA, 4 models are evaluated by AUC-PRC on random split; MUV, 8 models are evaluated
+          by AUC-PRC on random split
+    notes: 128 high-throughput screening assays, the subset earlier multitask work used. Random
+      split, PRC-AUC (positive rate 1.40%).
+  - id: moleculenet#muv
+    label: MUV (Maximum Unbiased Validation)
+    parent: moleculenet#biophysics
+    items: 93087
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: The MUV dataset contains 17 challenging tasks for around 90 thousand compounds
+      - source: src-deepchem-moleculenet-docs
+        quote: specifically designed for validation of virtual screening techniques. Scaffold
+          splitting is recommended for this dataset.
+    notes: 17 virtual-screening tasks selected from PubChem BioAssay. PRC-AUC (positive rate 0.20%).
+      Random split in the paper, scaffold in the DeepChem documentation.
+  - id: moleculenet#hiv
+    label: HIV
+    parent: moleculenet#biophysics
+    items: 41127
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: tested the ability to inhibit HIV replication for over 40,000 compounds
+      - source: src-arxiv-1703-00564-v3
+        quote: Three datasets (HIV, BACE, BBBP) in these two categories are evaluated under scaffold
+          splitting.
+    notes: The DTP AIDS Antiviral Screen, confirmed active and moderately active against inactive.
+      Scaffold split, ROC-AUC.
+  - id: moleculenet#pdbbind
+    label: PDBbind
+    parent: moleculenet#biophysics
+    items: 11908
+    scored_separately: true
+    domain_override:
+      primary: biology-genetics/drug-target-interaction
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: provides detailed 3D Cartesian coordinates of both ligands and their target proteins
+      - source: src-arxiv-1703-00564-v3
+        quote: Time splitting is also adopted for dataset that includes time information(PDBbind).
+      - source: src-deepchem-moleculenet-docs
+        quote: The core set is a subset of the refined set that is not updated annually. Random
+          splitting is recommended for this dataset.
+    notes: Experimental binding affinities of protein-ligand complexes, with the complexes'
+      coordinates, in core, refined and full sets. RMSE. Time split in the paper; the DeepChem
+      documentation describes PDBbind v2019 (refined, general) and v2013 (core) and recommends a
+      random split.
+  - id: moleculenet#bace
+    label: BACE
+    parent: moleculenet#biophysics
+    items: 1513
+    scored_separately: true
+    domain_override:
+      primary: biology-genetics/drug-target-interaction
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: The BACE dataset provides quantitative (IC50) and qualitative (binary label) binding
+          results for a set of inhibitors of human
+      - source: src-arxiv-1703-00564-v3
+        quote: Three datasets (HIV, BACE, BBBP) in these two categories are evaluated under scaffold
+          splitting.
+    notes: Binding of inhibitors of human beta-secretase 1, as a binary label; DeepChem also loads
+      the IC50 values as a regression set. Scaffold split, ROC-AUC.
+  - id: moleculenet#physiology
+    label: Physiology (BBBP, Tox21, ToxCast, SIDER, ClinTox)
+    scored_separately: false
+    domain_override:
+      primary: chemistry-materials/drug-discovery-admet
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: ToxCast, 8 models are evaluated by AUC-ROC on random split; Tox21, 9 models are
+          evaluated by AUC-ROC on random split
+    notes: Effects on the body, all classification, ROC-AUC. Compound and task counts are in the
+      biophysics subset's two Table 1 rows.
+  - id: moleculenet#bbbp
+    label: BBBP (blood-brain barrier penetration)
+    parent: moleculenet#physiology
+    items: 2039
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/drug-discovery-admet
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: This dataset includes binary labels for over 2000 compounds on their permeability
+          properties.
+      - source: src-arxiv-1703-00564-v3
+        quote: Thus penetration of the barrier forms a long-standing issue in development of drugs
+          targeting central nervous system.
+    notes: Whether a compound penetrates the blood-brain barrier. Scaffold split, ROC-AUC.
+  - id: moleculenet#tox21
+    label: Tox21
+    parent: moleculenet#physiology
+    items: 7831
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/drug-discovery-admet
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: This dataset contains qualitative toxicity measurements for 8014 compounds on 12
+      - source: src-arxiv-2511-14744
+        quote: After the Tox21 Challenge concluded, its dataset was included in several established
+          benchmarks, such as MoleculeNet and the Open Graph Benchmark.
+      - source: src-deepchem-moleculenet-docs
+        quote: "load_tox21(featurizer: Featurizer | str = 'ECFP', splitter: Splitter | str | None = 'scaffold'"
+    notes: Twelve nuclear-receptor and stress-response assays from the 2014 Tox21 Data Challenge.
+      Random split and ROC-AUC in the paper and the documentation, though the loader's default
+      splitter is scaffold. A 2025 paper says the integrations altered the data and imputed labels,
+      so MoleculeNet's Tox21 numbers are not comparable with the original challenge's
+      (governance.known_limitation).
+  - id: moleculenet#toxcast
+    label: ToxCast
+    parent: moleculenet#physiology
+    items: 8575
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/drug-discovery-admet
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: The processed collection in MoleculeNet includes qualitative results of over 600
+          experiments on 8615 compounds.
+    notes: 617 in vitro high-throughput toxicology assays. Random split, ROC-AUC.
+  - id: moleculenet#sider
+    label: SIDER (Side Effect Resource)
+    parent: moleculenet#physiology
+    items: 1427
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/drug-discovery-admet
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: is a database of marketed drugs and adverse drug reactions (ADR)
+      - source: src-arxiv-1703-00564-v3
+        quote: SIDER, 9 models are evaluated by AUC-ROC on random split
+    notes: Adverse drug reactions of approved drugs grouped into 27 MedDRA system organ classes.
+      Random split, ROC-AUC.
+  - id: moleculenet#clintox
+    label: ClinTox
+    parent: moleculenet#physiology
+    items: 1478
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/drug-discovery-admet
+    evidence:
+      - source: src-arxiv-1703-00564-v3
+        quote: compares drugs approved by the FDA and drugs that have failed clinical trials for
+          toxicity reasons
+      - source: src-arxiv-1703-00564-v3
+        quote: ClinTox, 9 models are evaluated by AUC-ROC on random split.
+    notes: Introduced by the paper; two tasks, clinical-trial toxicity and FDA approval status.
+      Random split, ROC-AUC.
+subsets_note: >
+  The paper's 17 datasets under its four categories; the category subsets are groupings and are not
+  scored. items are the compound counts of the v3 Table 1, whose rows run in the order QM7, QM7b, QM8,
+  QM9, ESOL, FreeSolv, Lipophilicity, PCBA, MUV, HIV, PDBbind, BACE, BBBP, Tox21, ToxCast, SIDER,
+  ClinTox; the dataset descriptions in the same text keep v2's larger counts for some (Tox21 8014,
+  ToxCast 8615, BACE 1522, ClinTox 1491). Recommended splits, paper against the DeepChem documentation
+  read 2026-10-14: the two agree except for ESOL, Lipophilicity and MUV (random in the paper, scaffold
+  in the documentation) and PDBbind (time against random); QM7b has no loader in the documentation.
+  The loaders' default splitter is scaffold for most datasets, whatever the documentation recommends
+  (Tox21's evidence quotes its loader). DeepChem's MoleculeNet module now loads many more datasets
+  (HOPV, Clearance, ChEMBL, materials sets and others), which are not listed here.
+
+tags:
+  - molecular-property-prediction
+  - qsar
+  - toxicity
+  - quantum-chemistry
+  - scaffold-split
+  - deepchem
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1703-00564-v3
+    - src-arxiv-1703-00564
+    - src-arxiv-1703-00564-v1
+    - src-arxiv-1703-00564-v2
+    - src-crossref-10-1039-c7sc02664a
+    - src-deepchem-moleculenet-docs
+    - src-github-moleculenet-readme
+    - src-arxiv-2603-25857
+    - src-arxiv-2511-14744
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, with windows that keep the authors' contact
+    line out, and its v1 and v2 PDFs for the versions; its abstract page for the dates; Crossref's JSON
+    record of the journal article for the venue (the publisher's page answered 403), with windows that
+    keep the authors' ORCIDs out; the DeepChem documentation's MoleculeNet page with scripts and styles
+    stripped; the deepchem/moleculenet README at master, whose rows carry contributors' e-mail
+    addresses, so it is withheld from archiving; and two abstract pages, a 2026 LLM study as evidence
+    of current use and a 2025 Tox21 paper.
+  confidence: medium
+  review_checks:
+    - check: One entry with the paper's 17 datasets as subsets. DeepChem's MoleculeNet module now
+        loads many more datasets, and widely used copies (the Open Graph Benchmark's ogbg-mol* sets)
+        carry their own splits; neither is included, and whether either belongs here as subsets or
+        variants is open.
+      field: subsets
+    - check: drug-discovery-admet is carried by the physiology datasets. SIDER's and ClinTox's
+        endpoints are clinical (side effects of marketed drugs, trial toxicity and FDA approval),
+        which the biology family's exclusion sends to medicine-health; no medicine-health leaf fits
+        a structure-to-outcome prediction, so they stay under ADMET.
+      field: domain
+    - check: PDBbind and BACE are overridden to biology-genetics/drug-target-interaction, following
+        the chemistry family's exclusion for binding affinity; PCBA, MUV and HIV stay under
+        molecular-property-prediction, though MUV's 17 tasks are target-based actives.
+      field: subsets
+    - check: distribution-shift-generalization rests on the scaffold split (HIV, BACE, BBBP) and
+        PDBbind's time split; the paper's recommended split for the other 13 datasets is random or
+        stratified, while DeepChem's loaders now default to scaffold. capability_override per subset
+        was not used.
+      field: capability
+      source: src-arxiv-1703-00564-v3
+      quote: Three datasets (HIV, BACE, BBBP) in these two categories are evaluated under scaffold
+        splitting.
+    - check: scientific-surrogate-model rather than domain-specialist-model, which the USPTO-MIT
+        entry chose for reaction prediction. SIDER's and ClinTox's labels are not an assay or solver
+        output. LLMs prompted in context (as_used) could be recorded as observed_subjects.
+      field: designed_for_subjects
+    - check: ground_truth_source experimental covers 11 of 17 datasets; the quantum sets are DFT
+        (simulation), and SIDER and ClinTox are compiled records.
+      field: ground_truth_source
+    - check: submission_process maintainer-run rests on the deepchem/moleculenet README, a ranking
+        of DeepChem's own runs unchanged since 2021; literature-only may describe the benchmark
+        better, since all other results are in independent papers.
+      field: governance.submission_process
+      source: src-github-moleculenet-readme
+      quote: '# MoleculeNet Leaderboard ## Physical Chemistry ### Delaney (ESOL)'
+    - check: maintainer-competes-on-own-benchmark rests on the release paper benchmarking its
+        authors' earlier models (bypass and multitask networks, weave); the USPTO-MIT entry did not
+        flag a release paper's own model where no ranking exists.
+      field: governance.independence_flags
+    - check: refresh versioned-releases. The QM9 file was replaced without a library release label,
+        and the documentation's recommended splits changed without a dated announcement; static (for
+        the paper's collection) or null may fit better.
+      field: data.refresh
+    - check: The paper's one sentence puts QM7 and QM7b at PBE0/tier2; whether all 14 QM7b
+        properties were computed at that level was not checked against the original QM7b work.
+      field: subsets
+      source: src-arxiv-1703-00564-v3
+      quote: determined using ab-initio density functional theory (PBE0/tier2 basis set)
+    - check: paper.doi is the Chemical Science article's, read through Crossref only; whether the
+        journal's Table 1 counts match v2 or v3 was not read.
+      field: paper
+    - check: The Tox21 alteration claim comes from an abstract that names MoleculeNet and the Open
+        Graph Benchmark together; which changes are MoleculeNet's was not read.
+      field: governance.known_limitation
+      source: src-arxiv-2511-14744
+      quote: the dataset was altered and labels were imputed or manufactured, resulting in a loss of
+        comparability across studies
+  unreachable:
+    - url: https://moleculenet.org/
+      http_status: 404
+      consequence: MoleculeNet's own site was not read, and the homepage is the DeepChem
+        documentation page. It answered 404 with an empty body on 2026-10-14; Wayback's 2025
+        captures hold only a script-rendered shell titled Welcome. moleculenet.ai does not resolve
+        (no DNS record), and Wayback's 2026 captures of it show an unrelated site.
+  personal_data_excluded:
+    - source: src-github-moleculenet-readme
+      what: the contributors' e-mail addresses in the leaderboard's Contact column
+    - source: src-arxiv-1703-00564-v3
+      what: the corresponding author's e-mail address under the title (also in v1 and v2)

@@ -1,0 +1,498 @@
+# data/benchmarks/chemistry-materials/guacamol.yaml
+#
+# P1-S6-T01, chemistry-materials entry 8 of 10. Filled from the GuacaMol paper, arXiv 1811.09621 read as its v2
+# PDF (2019-02-26; J. Chem. Inf. Model. 2019), and its abstract page; the repository README at master, with
+# GitHub's API record of the repository for its licence and last push; the Wayback Machine's capture of the
+# leaderboard page (2022-12-01), the last capture that still shows it; BenevolentAI's publication page, where
+# the leaderboard URL now redirects; the v1 PDF of a DPO and curriculum-learning paper (arXiv 2504.01389, April
+# 2025) that reports GuacaMol scores; and the v2 PDF of PMO (arXiv 2206.12411), a later benchmark that reuses
+# GuacaMol's objectives and names its weakness. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+
+id: guacamol
+name: GuacaMol
+aliases:
+  - 'GuacaMol: Benchmarking Models for De Novo Molecular Design'
+tagline: BenevolentAI's de novo molecular design suite on ChEMBL, 5 distribution-learning and 20
+  goal-directed benchmarks.
+description: >
+  An open-source Python package and benchmark suite from BenevolentAI for models that generate
+  molecules de novo, classical algorithms and neural models alike. Five distribution-learning
+  benchmarks score molecules sampled from a model trained on a standardised subset of ChEMBL 24:
+  validity (RDKit can parse them), uniqueness, novelty against the training set, the Fréchet
+  ChemNet Distance and the KL divergence between descriptor distributions of the generated and the
+  training molecules. Twenty goal-directed benchmarks give a model a scoring function to maximise:
+  rediscovering a drug held out of the training set, generating molecules similar to one, isomers
+  of a molecular formula, median molecules between two drugs, multi-property objectives built on
+  marketed drugs, a SMARTS task, and scaffold and decorator hops. Every score lies between 0 and 1;
+  goal-directed scores average the best 1, 10 and 100 molecules for most tasks. The two groups are
+  reported apart, with no aggregate across them. A leaderboard on BenevolentAI's site listed the
+  paper's baselines and invited results as e-mailed JSON files; it was gone by December 2023, and
+  results now appear in papers. Known weaknesses the sources name: several goal-directed tasks are
+  solved by most models (the authors' own conclusion), and the number of scoring-function calls is
+  recorded but not limited.
+self_description:
+  source: src-arxiv-1811-09621
+  quote: we propose an evaluation framework, GuacaMol, based on a suite of standardized benchmarks
+external_ids:
+  arxiv: '1811.09621'
+paper:
+  title: 'GuacaMol: Benchmarking Models for De Novo Molecular Design'
+  arxiv: '1811.09621'
+  doi: 10.1021/acs.jcim.8b00839
+  version_read: v2
+  source: src-arxiv-1811-09621-v2
+released: 2018-11-22
+released_note: The paper's first arXiv version, as its abstract page dates it; v2 followed on
+  2019-02-26, and the journal version in March 2019 (release_venue).
+released_source: src-arxiv-1811-09621
+released_quote: Submitted on 22 Nov 2018
+release_venue: Journal of Chemical Information and Modeling (2019)
+release_venue_source: src-guacamol-site
+release_venue_quote: 19 Mar 2019 JOURNAL OF CHEMICAL INFORMATION AND MODELING
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/generative-molecular-design
+domain_basis:
+  reason: Every benchmark scores molecules a model generates, either as a distribution matching a
+    training set or as candidates for a stated property profile; the scored quantities are
+    properties of the molecules.
+  source: src-arxiv-1811-09621
+  quote: De novo design seeks to generate molecules with required property profiles by virtual
+    design-make-test cycles
+domain_considered_and_rejected:
+  - term: chemistry-materials/drug-discovery-admet
+    reason: The multi-property objectives are built on marketed drugs and use computed properties
+      such as logP and TPSA, but no absorption, distribution, metabolism, excretion or toxicity
+      property is predicted or scored.
+  - term: biology-genetics/drug-target-interaction
+    reason: No objective scores binding to a protein. Similarity to a known drug stands in for
+      activity; the paper calls it a surrogate for a machine-learning model.
+capability:
+  - optimization
+  - generation-fidelity
+capability_basis:
+  optimization:
+    reason: Each goal-directed benchmark states an objective, a scoring function in [0, 1], and
+      ranks models by the scores of the molecules they return for it.
+    source: src-arxiv-1811-09621-v2
+    quote: Concretely, the models are asked to generate a given number of molecules with high scores
+      for a given function.
+  generation-fidelity:
+    reason: The distribution-learning benchmarks compare the generated set with the training set, by
+      the Fréchet ChemNet Distance between their activations and by the KL divergence between their
+      descriptor distributions.
+    source: src-arxiv-1811-09621
+    quote: the fidelity of the models to reproduce the property distribution of the training sets
+capability_considered_and_rejected:
+  - term: creativity-novelty
+    reason: The novelty benchmark penalises molecules already in the training set, but it counts
+      them without any usefulness criterion, which the term's exclusion test rules out; the
+      goal-directed scores do not penalise known molecules, and rediscovery rewards reproducing one.
+    source: src-arxiv-1811-09621-v2
+    quote: The novelty benchmark penalizes models when they generate molecules already present in
+      the training set.
+  - term: search-exploration
+    reason: The number of scoring-function calls is recorded with each goal-directed result but not
+      scored or limited, so nothing about the traversal is ranked.
+    source: src-arxiv-1811-09621-v2
+    quote: the number of calls to the scoring function, and the internal similarity of the top
+      molecules are captured in the results of each goal-directed benchmark
+  - term: sample-efficiency
+    reason: No budget of samples or scoring-function calls is fixed, which the term's exclusion test
+      rules out. PMO lists GuacaMol among benchmarks with at least one of three problems, the first
+      of them "Lack of consideration of the oracle budget".
+    source: src-arxiv-2206-12411-v2
+    quote: Most method development papers and existing benchmarks such as Guacamol [13],
+      Therapeutics Data Commons (TDC) [14] and Tripp et al.
+
+evaluation_method:
+  - domain-metric
+  - model-derived-metric
+  - statistical-fit
+evaluation_method_basis:
+  reason: >
+    domain-metric for the goal-directed scores, chemoinformatics objectives (Tanimoto similarity on
+    molecular fingerprints, TPSA, logP, SMARTS matches, molecular-formula isomer scores) computed
+    with RDKit, and for validity, uniqueness and novelty, defined on parsed and canonical SMILES;
+    model-derived-metric for the Fréchet ChemNet Distance, computed from the activations of
+    ChemNet, a released neural network, through the FCD library pinned at version 1.1 in the
+    README; statistical-fit for the KL benchmark, KL divergences between descriptor distributions
+    of the generated and the training molecules.
+  source: src-arxiv-1811-09621-v2
+  quote: The FCD is determined from the hidden representation of molecules in a neural network
+    called ChemNet trained for predicting biological activities
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: The two groups are reported apart and no published figure combines scores of different
+      methods. The paper's Table 2 sums the twenty goal-directed scores into a Total, which later
+      papers report, but every constituent is the same method, which the term's exclusion test rules
+      out.
+    source: src-arxiv-1811-09621-v2
+    quote: The two benchmark categories are evaluated independently
+  - term: constraint-check
+    reason: Validity is one parse by RDKit rather than a battery of conditions, and the score is the
+      share of molecules that parse.
+    source: src-arxiv-1811-09621-v2
+    quote: Molecules are considered to be valid if their SMILES representation can be successfully
+      parsed by RDKit.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The paper sets out to compare neural generative models trained for molecular design (a
+    SMILES LSTM, a VAE, an AAE, ORGAN) with established algorithms that learn nothing (a graph and a
+    SMILES genetic algorithm, Monte Carlo tree search, random sampling and best-of-dataset
+    baselines). The best optimiser in the paper is the graph genetic algorithm.
+  source: src-arxiv-1811-09621
+  quote: To standardize the assessment of both classical and neural models for de novo molecular
+    design
+designed_for_subjects_considered_and_rejected:
+  - term: generative-media-model
+    reason: The output is molecules as SMILES strings, not images, video, audio or speech.
+  - term: scientific-surrogate-model
+    reason: The models generate candidate molecules; none stands in for a simulation or an assay.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the suite; an April 2025 paper pretrains on the
+    GuacaMol training set and reports all twenty goal-directed scores. The repository was last
+    pushed on 2024-02-11 (GitHub API), which is maintenance evidence, not lifecycle. Saturation is a
+    review check, since the vocabulary derives that state and never hand-sets it.
+  source: src-arxiv-2504-01389-v1
+  quote: the method achieved a score of 0.883 on the Perindopril MPO task
+activity: closed
+activity_note: The README still points to https://www.benevolent.com/guacamol, which now redirects
+  to a publication page with no leaderboard. The last Wayback capture showing the leaderboard is of
+  2022-12-01; the publication page is captured from 2023-12-05 on (Wayback CDX, read 2026-10-14).
+activity_basis:
+  reason: A route existed, results e-mailed as GuacaMol JSON files for the leaderboard page, and the
+    page that carried it is gone, so no route is open. Results now appear only in their authors' own
+    papers.
+  source: src-guacamol-leaderboard
+  quote: If you would like your model to appear in the leaderboard, please send your JSON files
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: SMILES LSTM (the paper's neural baseline)
+    source: src-arxiv-1811-09621-v2
+    observed_on: 2026-10-14
+    quote: The SMILES LSTM is a simple, yet powerful baseline model
+  - system: DPO with curriculum learning (arXiv 2504.01389)
+    source: src-arxiv-2504-01389-v1
+    observed_on: 2026-10-14
+    quote: A systematic evaluation of the proposed method on the GuacaMol Benchmark yielded
+      excellent scores
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: There is no labelled or measured truth. The package's own scoring
+  functions (RDKit similarities, descriptors, SMARTS and formula matches) score the generated
+  molecules, and the distribution-learning benchmarks compare them with the ChEMBL training set.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The package, the scoring functions and the ChEMBL-derived datasets, with their MD5 hashes,
+    are public, and a Docker image regenerates the datasets.
+  source: src-github-guacamol-readme
+  quote: You can download pre-built datasets
+
+task:
+  exists: true
+  input:
+    - 'distribution learning: the GuacaMol training set, a standardised subset of ChEMBL 24'
+    - 'goal-directed: a scoring function the model may call, without being told what it computes, and
+      the number of molecules to return'
+  output: SMILES strings. For distribution learning, 10,000 sampled molecules per benchmark (for
+    some, sampling goes on until 10,000 are valid or distinct); for a goal-directed benchmark, the
+    requested number of top-scoring molecules, 100 for most tasks.
+  scoring: Each benchmark gives a score between 0 and 1. Validity, uniqueness and novelty are shares
+    of the sampled molecules; FCD is reported as exp(-0.2 FCD); the KL benchmark averages exp(-KL)
+    over the descriptors. A goal-directed score averages the top-1, top-10 and top-100 molecule
+    scores for most tasks (top-1 for rediscovery, the top 159 or 250 for the isomer tasks).
+  metric_range:
+    - 0.0
+    - 1.0
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The scoring functions are specified in the paper and the package;
+    during optimisation a model queries them as black boxes.
+  source: src-arxiv-1811-09621-v2
+  quote: Concretely, the models are asked to generate a given number of molecules with high scores
+    for a given function.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The training, validation and test sets are downloadable from figshare without an
+      account, and the scoring functions ship in the package.
+    source: src-github-guacamol-readme
+    quote: You can download pre-built datasets
+  refresh: static
+  refresh_note: The 25 benchmarks and the dataset have not changed since release. The README's
+    change log records dependency updates only, one of them to the FCD library that computes one
+    benchmark (review check).
+  refresh_basis:
+    reason: The suite as published, five distribution-learning and twenty goal-directed benchmarks,
+      is the suite the 2025 paper reports.
+    source: src-arxiv-2504-01389-v1
+    quote: Subsequently, we further trained the model on 20 tasks from the Guacamol benchmark
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: The training set and the distribution-learning reference set are ChEMBL 24
+    after salt removal, charge neutralisation, length and element filters, and removal of molecules
+    too similar to ten held-out drugs. The goal-directed scoring functions were written by the
+    authors; the sources do not describe them as specialists, so expert-authored is not tagged.
+  data_provenance_source: src-arxiv-1811-09621-v2
+  data_provenance_quote: The datasets used for training generative models are derived from the
+    ChEMBL 24 database.
+  contamination_risk: medium
+  contamination_risk_note: The rediscovery and similarity targets are ten marketed drugs, removed
+    from GuacaMol's training set with every molecule close to them. That closes the route only for
+    models trained on that set, which the README asks for but nothing checks; a model pretrained on
+    another corpus (ZINC, PubChem, general text) can have seen the targets. Not assessed in any
+    source read.
+  contamination_evidence:
+    - source: src-github-guacamol-readme
+      stance: against
+      quote: as a holdout set, and will exclude molecules very similar to these.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Every benchmark's score is bounded at 1. The paper's baselines already
+    reach 1.000 on the rediscovery and similarity tasks; for the median-molecule tasks, whose
+    targets conflict, no source says 1 is reachable. For the KL and FCD benchmarks the paper takes
+    the random sampler, which returns training molecules, as an upper bound (ceiling_by_category).
+  ceiling_anchor_type_source: src-arxiv-1811-09621-v2
+  ceiling_anchor_type_quote: restrict scores to the interval [0, 1]
+  ceiling_by_category:
+    - category: distribution learning, KL divergence benchmark (random sampler over the training
+        set)
+      value: 0.998
+      metric: KL divergence score
+      source: src-arxiv-1811-09621-v2
+      quote: Random sampler 1.000 0.997 0.000 0.998 0.929
+    - category: distribution learning, FCD benchmark (random sampler over the training set)
+      value: 0.929
+      metric: FCD score
+      source: src-arxiv-1811-09621-v2
+      quote: Random sampler 1.000 0.997 0.000 0.998 0.929
+  dataset_licence_note: Neither the README nor the paper states a licence for the ChEMBL-derived
+    datasets, and ChEMBL's own licence was not read.
+  size:
+    - count: 20
+      unit: goal-directed benchmarks
+      subset: goal-directed
+      source: src-arxiv-1811-09621-v2
+      quote: The proposed suite comprises 5 benchmarks for the ability of generative models to learn
+        distributions of molecules, 20 optimization benchmarks
+    - count: 5
+      unit: distribution-learning benchmarks
+      subset: distribution-learning
+      source: src-arxiv-1811-09621-v2
+      quote: The proposed suite comprises 5 benchmarks for the ability of generative models to learn
+        distributions of molecules, 20 optimization benchmarks
+  size_note: The molecule counts of the ChEMBL-derived training, validation and test sets are not
+    stated in the sources read; the figshare files were not opened.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: BenevolentAI
+  maintainer_basis:
+    reason: The package and its baselines are in BenevolentAI's GitHub organisation, the paper's
+      authors were at BenevolentAI, and the leaderboard was on its site.
+    source: src-github-guacamol-readme
+    quote: Example implementations for baseline methods are available from
+      https://github.com/BenevolentAI/guacamol_baselines.
+  maintainer_type: industry-lab
+  submission_process:
+    - self-reported
+    - maintainer-run
+  submission_process_note: The leaderboard page invited developers to e-mail the JSON files the
+    package writes, which carry their own scores, and states no check before listing. Its tables
+    held only the paper's baselines, run by BenevolentAI, in every capture read; no outside entry
+    appears. The channel is closed (activity).
+  submission_process_source: src-guacamol-leaderboard
+  submission_process_quote: If you would like your model to appear in the leaderboard, please send
+    your JSON files
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-1811-09621-v2
+      quote: Segler et al. introduced the notion of transfer and reinforcement learning for molecule
+        generation
+  independence_flags_note: The SMILES LSTM baseline, second only to the graph genetic algorithm on
+    the goal-directed benchmarks, is the method of Segler et al. (the paper's reference 14), and
+    Marwin Segler is one of GuacaMol's authors. It is a baseline the maintainers ran, not a model
+    built for the board, as with RoboCasa's baseline rows.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-1811-09621-v2
+    quote: some benchmark tasks can be too easily solved by most of the models
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, scoring functions and harness are public, and the harness scores a model with no
+      human, physical or maintainer-only step.
+    source: src-github-guacamol-readme
+    quote: For the actual benchmarks, call `assess_distribution_learning`
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: guacamol Python package (assess_distribution_learning, assess_goal_directed_generation)
+  harness_source: src-github-guacamol-readme
+  harness_quote: For the actual benchmarks, call `assess_distribution_learning`
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for BenevolentAI/guacamol, read 2026-10-14; the
+    README states no licence.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which benchmarks were run (the 25, or a subset such as the goal-directed
+  # ones only), what the model was trained on (the GuacaMol ChEMBL set the README asks for, or another
+  # corpus), and the package and FCD library versions, since the FCD score depends on the ChemNet model.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - harness
+
+aggregation_policy: none-by-design
+aggregation_policy_note: Within the goal-directed group the paper's Table 2 adds a Total, the sum of
+  the twenty scores, which later papers also report.
+aggregation_policy_basis:
+  reason: The paper evaluates the two groups separately and publishes no figure across them.
+  source: src-arxiv-1811-09621-v2
+  quote: The two benchmark categories are evaluated independently
+headline_metric: null
+
+homepage: https://github.com/BenevolentAI/guacamol
+repository: https://github.com/BenevolentAI/guacamol
+dataset_url: https://figshare.com/projects/GuacaMol/56639
+
+subsets:
+  - id: guacamol#distribution-learning
+    label: Distribution-learning benchmarks
+    items: 5
+    scored_separately: true
+    capability_override:
+      - generation-fidelity
+    evidence:
+      - source: src-arxiv-1811-09621-v2
+        quote: The proposed suite comprises 5 benchmarks for the ability of generative models to
+          learn distributions of molecules, 20 optimization benchmarks
+      - source: src-guacamol-leaderboard
+        quote: Leaderboard DISTRIBUTION BENCHMARKS benchmark AAE Graph MCTS Random Sampler SMILES
+          LSTM VAE ORGAN
+    notes: Validity, uniqueness, novelty, Fréchet ChemNet Distance and KL divergence, each reported
+      on its own. Models that only optimise, such as the genetic algorithms, are not run on them.
+      The override keeps generation-fidelity alone on purpose; no score here is an objective's
+      value.
+  - id: guacamol#goal-directed
+    label: Goal-directed benchmarks
+    items: 20
+    scored_separately: true
+    capability_override:
+      - optimization
+    evidence:
+      - source: src-arxiv-1811-09621-v2
+        quote: Concretely, the models are asked to generate a given number of molecules with high
+          scores for a given function.
+      - source: src-guacamol-leaderboard
+        quote: GOAL DIRECTED BENCHMARKS benchmark Best of Dataset SMILES GA Graph MCTS Graph GA
+          SMILES LSTM
+    notes: Three rediscovery, three similarity, two isomer and two median-molecule tasks, seven
+      multi-property objectives, a SMARTS task, and scaffold and decorator hops. Seven easier
+      objectives (logP, TPSA, QED, CNS MPO and others) are in the paper's appendix as trivial and
+      are not part of the suite. The override keeps optimization alone on purpose; no goal-directed
+      score compares the output with a distribution.
+
+history:
+  - event: channel-closed
+    field: execution.submission_channel
+    from: The GuacaMol leaderboard on BenevolentAI's site (results e-mailed as JSON files)
+    source: src-guacamol-site
+    quote: The benchmarking framework is available as an open-source Python package.
+    note: Undated in the sources. The leaderboard's last Wayback capture is of 2022-12-01
+      (src-guacamol-leaderboard), and its URL now redirects to this publication page, which has no
+      leaderboard and is captured from 2023-12-05 on.
+
+tags:
+  - de-novo-design
+  - molecular-generation
+  - chembl
+  - drug-discovery
+  - smiles
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1811-09621-v2
+    - src-arxiv-1811-09621
+    - src-github-guacamol-readme
+    - src-guacamol-leaderboard
+    - src-guacamol-site
+    - src-arxiv-2504-01389-v1
+    - src-arxiv-2206-12411-v2
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the dates, the
+    licence and the journal DOI; the README at master; the Wayback capture of the leaderboard page
+    of 2022-12-01, its SHA-1 checked against the CDX digest and its scripts and styles stripped,
+    with windows that keep the page's contact address out; the publication page the leaderboard URL
+    now redirects to, scripts and styles stripped; and two later papers' PDFs (DOIs, not archived),
+    a 2025 one as evidence of current use and PMO for GuacaMol's missing oracle budget.
+  confidence: medium
+  review_checks:
+    - check: lifecycle is active, but the suite may be near saturation, which the vocabulary derives
+        and never hand-sets. The authors concluded that some tasks are too easily solved; their
+        graph GA already scored 1.000 on eight tasks, and the 2025 paper's model scores 1.000 on 11
+        of 20 goal-directed tasks, 18.235 of a possible 20. Whether to record ceiling evidence or
+        Metric entities so headroom can be derived.
+      field: lifecycle
+      source: src-arxiv-2504-01389-v1
+      quote: 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 0.455 0.422 0.990 1.000 0.950 0.883
+        0.906 0.838 0.797 0.994 1.000 1.000 18.235
+    - check: Identity and lineage. PMO (2022) reuses 19 of GuacaMol's objectives under a budget of
+        10,000 scoring calls and is widely used for molecular optimisation. Whether it supersedes
+        GuacaMol's goal-directed group (lifecycle superseded) or is its own entry recorded as a fork
+        in lineage.
+      field: lineage
+      source: src-arxiv-2206-12411-v2
+      quote: and 19 oracles from Guacamol [13]
+    - check: activity closed rests on a leaderboard URL that now redirects to a publication page
+        with no leaderboard, and on the README's pointer to it; no source announces the board's end.
+        submission_process self-reported rests on the page's invitation to e-mail JSON files, but no
+        outside entry appears in any capture read, so the channel may never have been used.
+      field: activity
+      source: src-guacamol-leaderboard
+      quote: If you would like your model to appear in the leaderboard, please send your JSON files
+    - check: maintainer-competes-on-own-benchmark rests on a co-author's method (the SMILES LSTM)
+        being one of the baselines the maintainers ran and listed, not on a model built for the
+        board.
+      field: governance.independence_flags
+      source: src-arxiv-1811-09621-v2
+      quote: Segler et al. introduced the notion of transfer and reinforcement learning for molecule
+        generation
+    - check: evaluation_method. statistical-fit is tagged for the KL benchmark, a general statistic
+        between the generated and the training descriptor distributions rather than error against
+        measurements; validity, uniqueness and novelty are filed under domain-metric. composite is
+        rejected because no figure combines different methods (Table 2's Total sums twenty
+        goal-directed scores).
+      field: evaluation_method
+    - check: refresh static, while the README's change log updates the FCD dependency, which
+        computes one benchmark's score; whether FCD scores from before and after are comparable.
+      field: data.refresh
+      source: src-github-guacamol-readme
+      quote: '1 May 2020: update version of FCD dependency'
+    - check: ground_truth_source repository-tests is the nearest value for scores computed by the
+        package's own functions with no labelled truth; none would read as no ground truth at all.
+      field: ground_truth_source

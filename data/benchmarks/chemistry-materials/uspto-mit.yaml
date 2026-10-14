@@ -1,0 +1,452 @@
+# data/benchmarks/chemistry-materials/uspto-mit.yaml
+#
+# P1-S6-T01, chemistry-materials entry 4 of 10. Filled from Jin et al.'s NIPS 2017 paper, arXiv 1709.04555 read as
+# its v3 PDF (2017-12-29), and its abstract page; the README and the USPTO/README.md of the repository that
+# distributes the data (wengong-jin/nips17-rexgen, at master); the Molecular Transformer paper, arXiv 1811.02633
+# read as its v2 PDF (2019-05-30), for the USPTO_MIT name and the separated and mixed settings; and the v1 PDF of
+# RxnNano (arXiv 2603.02215, February 2026) as evidence of current use. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# USPTO-MIT only. USPTO-50k, the retrosynthesis set, is a separate entry and is not cited here; the two share
+# their origin in Lowe's extraction of reactions from US patents (lineage_note).
+
+id: uspto-mit
+name: USPTO-MIT
+aliases:
+  - USPTO-480k
+  - USPTO_MIT
+  - USPTO_480k
+aliases_note: Jin et al. call the set "USPTO"; the Molecular Transformer paper names it USPTO_MIT,
+  and RxnNano writes USPTO-480K (MIT) and USPTO_480k. Not the same set as USPTO-15K or USPTO_LEF
+  (subsets, see lineage), USPTO_STEREO, USPTO-full or USPTO-50k.
+aliases_source: src-arxiv-2603-02215-v1
+aliases_quote: USPTO-480K (MIT) [13]
+tagline: Forward reaction prediction on about 480,000 US-patent reactions, scored by top-k accuracy
+  of the predicted product.
+description: >
+  The forward reaction prediction set Jin et al. built for their NIPS 2017 paper on Weisfeiler-Lehman
+  networks: about 480,000 reactions from US granted patents, taken from Lowe's text-mined extraction
+  with duplicates and erroneous reactions removed, atom-mapped, without stereochemistry, and split
+  into training, development and test sets (409,035, 30,000 and 40,000 reactions in the distributed
+  files; the paper rounds them to 400K, 40K and 40K). Given a reaction's reactants and reagents, a
+  system predicts its product, and is scored by top-k accuracy, the share of test reactions whose
+  recorded product is among its k highest-ranked predictions. Later papers call the set USPTO_MIT or
+  USPTO-480k. The Molecular Transformer paper (Schwaller et al. 2019) added a mixed setting, with no
+  split between reactants and reagents in the input, beside the separated setting earlier work used,
+  which it argues presumes knowledge of the product; numbers from the two settings are not
+  comparable. The release paper also had ten chemists predict 80 test reactions, on which its model
+  scored 69.1% top-1 and the best chemist 72.0%. There is no leaderboard; results appear in the
+  papers that use the set.
+self_description:
+  source: src-arxiv-1709-04555-v3
+  quote: After removing duplicates and erroneous reactions, we obtained a set of 480K reactions, to
+    which we refer in the paper as USPTO.
+external_ids:
+  arxiv: '1709.04555'
+paper:
+  title: Predicting Organic Reaction Outcomes with Weisfeiler-Lehman Network
+  arxiv: '1709.04555'
+  version_read: v3
+  source: src-arxiv-1709-04555-v3
+released: 2017-09-13
+released_note: The paper's first arXiv version, as its abstract page dates it. The data was
+  committed to the repository on 2017-09-22 (GitHub API, read 2026-10-14; not a quoted Source).
+released_source: src-arxiv-1709-04555
+released_quote: Submitted on 13 Sep 2017
+release_venue: NIPS 2017
+release_venue_source: src-arxiv-1709-04555
+release_venue_quote: accepted by NIPS 2017
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/reaction-prediction
+domain_basis:
+  reason: A system is given a reaction's reactants and reagents and predicts its product, which is
+    the leaf's definition.
+  source: src-arxiv-1709-04555-v3
+  quote: One of the fundamental problems in organic chemistry is the prediction of which products
+    form as a result of a chemical reaction
+domain_considered_and_rejected:
+  - term: chemistry-materials/retrosynthesis
+    reason: The sources read score the forward direction only, from reactants to product. RxnNano
+      scores retrosynthesis on USPTO-50k and USPTO-full, and forward prediction on this set.
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict the product of a chemical reaction, a structure of matter, and are
+      scored against the product its patent recorded.
+    source: src-github-nips17-rexgen-uspto-readme
+    quote: This script internally generates SMILES for each candidate product (given bond
+      assignments to each atom pair), and test if it matches the labeled product.
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The paper divides the set into training, development and test portions and states no
+      deliberate shift between them, and no shifted condition is scored. Its breakdown of test
+      reactions by template popularity is an analysis, not a condition of its own.
+    source: src-arxiv-1709-04555-v3
+    quote: This dataset is divided into 400K, 40K, and 40K for training, development, and testing
+      purposes.
+  - term: calibration-uncertainty
+    reason: The Molecular Transformer paper reports how well its model's own confidence separates
+      right from wrong predictions, but the benchmark's score, top-k accuracy, consumes no
+      confidence.
+
+evaluation_method:
+  - exact-match
+evaluation_method_basis:
+  reason: Top-k accuracy is the share of test reactions whose recorded product is among a system's k
+    highest-ranked predictions, each prediction right or wrong with no partial credit. Products are
+    compared as SMILES after canonicalisation (the Molecular Transformer paper canonicalised every
+    reaction with RDKit); the maintainers' script counts a candidate right when the recorded
+    product's molecules are a subset of the candidate's.
+  source: src-github-nips17-rexgen-uspto-readme
+  quote: A candidate product (a set of molecules) is said to match the labeled product (again, a set
+    of molecules) whhen the labeled product is a subset of candidate product.
+evaluation_method_considered_and_rejected:
+  - term: symbolic-equivalence
+    reason: Two different SMILES strings can name one molecule, and canonicalisation makes them
+      compare equal, but the comparison is still of strings after a cheminformatics toolkit rewrites
+      them, not a computer-algebra judgement, which the term's inclusion test asks.
+    source: src-arxiv-1811-02633-v2
+    quote: All the reactions used in this work were canonicalized using RDKit.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are models trained on the set's training split for a task organic chemistry
+    defines, from the paper's Weisfeiler-Lehman networks to sequence models such as the Molecular
+    Transformer and, in 2026, a 0.5B-parameter language model fine-tuned for reaction prediction
+    (RxnNano).
+  source: src-arxiv-1709-04555-v3
+  quote: This dataset is divided into 400K, 40K, and 40K for training, development, and testing
+    purposes.
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: A product predictor could be read as standing in for running the reaction, but the paper
+      sets the task up as a chemist's prediction and compares its model with chemists; no solver,
+      potential or assay is named as what the model replaces (review_checks).
+  - term: human-expert
+    reason: Ten chemists predicted 80 test reactions in the paper's human study, as a comparison for
+      the model, not as the subject the set was built for.
+    source: src-arxiv-1709-04555-v3
+    quote: Our model achieves an accuracy of 69.1%, very close to the best individual performer who
+      scored 72.0%.
+as_used:
+  - protocol: Forward prediction on the 40,000-reaction test split, top-1 to top-10 accuracy,
+      reported separately for atom-mapped and unmapped inputs, by a language model built on
+      Qwen2.5-0.5B and fine-tuned with LoRA.
+    split: test
+    source: src-arxiv-2603-02215-v1
+    quote: rigorously separate performance on atom-mapped and unmapped
+    note: RxnNano (February 2026). It does not say whether reagents were separated from reactants;
+      its baseline table includes a top-1 of 88.6, the Molecular Transformer's mixed-setting figure.
+      It reports results without test-time augmentation and criticises papers that use it.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced; a February 2026 paper reports a new top-1 on the set.
+    The repository was last pushed on 2018-11-01 (GitHub API), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2603-02215-v1
+  quote: On USPTO-480k forward prediction, we obtain 94.2% top-1 accuracy and outperform all the
+    baselines.
+activity: no-submission-channel
+activity_basis:
+  reason: The repository holds the data and the paper's code, and no source shows a leaderboard,
+    server or submission route; results appear in the papers that use the set.
+  source: src-github-nips17-rexgen-readme
+  quote: This repository contains the data and codes of the paper
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: WLDN (Weisfeiler-Lehman Difference Network)
+    source: src-arxiv-1709-04555-v3
+    observed_on: 2026-10-14
+    quote: The generated candidates are scored by a Weisfeiler-Lehman Difference Network
+  - system: Molecular Transformer
+    source: src-arxiv-1811-02633-v2
+    observed_on: 2026-10-14
+    quote: Our algorithm reaches 90.4% top-1 accuracy (93.7% top-2 accuracy) on a common benchmark
+      dataset.
+  - system: RxnNano (Qwen2.5-0.5B)
+    source: src-arxiv-2603-02215-v1
+    observed_on: 2026-10-14
+    quote: we implement our framework using the Qwen2.5-0.5B architecture as our base model
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The product each patent recorded for the reaction, as Lowe's text mining
+  extracted it. The test split's products are released with it.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The three splits and their products are public, and top-k accuracy needs only the recorded
+    products to compute.
+  source: src-github-nips17-rexgen-readme
+  quote: USPTO/data.zip includes the train/dev/test split of USPTO dataset used in our paper.
+
+task:
+  exists: true
+  input:
+    - the SMILES of a reaction's reactants and reagents (atom-mapped in the distributed files), with
+      the reagents set apart in the separated setting and not in the mixed one
+  output: A ranked list of predicted products, as SMILES or as the graph edits that produce them.
+  scoring: Top-k accuracy on the 40,000-reaction test split (k of 1, 3 and 5 in Jin et al.; 1, 2, 3
+    and 5 in the Molecular Transformer paper), a prediction counting when it matches the recorded
+    product.
+  source: src-arxiv-1811-02633-v2
+  quote: The single model top-k accuracy of the Molecular Transformer
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The three splits, products included, are one zip file in the public repository, with no
+      registration.
+    source: src-github-nips17-rexgen-readme
+    quote: USPTO/data.zip includes the train/dev/test split of USPTO dataset used in our paper.
+  refresh: static
+  refresh_basis:
+    reason: One release. The data file was committed once, on 2017-09-22, and never changed, and the
+      repository was last pushed on 2018-11-01 (GitHub API, read 2026-10-14; not a quoted Source).
+    source: src-github-nips17-rexgen-readme
+    quote: USPTO/data.zip includes the train/dev/test split of USPTO dataset used in our paper.
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: Reactions from US granted patents in Lowe's text-mined extraction, with
+    duplicates and erroneous reactions removed and atoms mapped; stereochemistry is not kept.
+  data_provenance_source: src-arxiv-1709-04555-v3
+  data_provenance_quote: we used reactions from USPTO granted patents, collected by Lowe
+  contamination_risk: medium
+  contamination_risk_note: The test reactions and their products have been public since 2017, and
+    the same patent reactions are in larger sets drawn from Lowe's extraction (USPTO-full,
+    USPTO_STEREO) that models also train on, so a training route is plausible, for pretrained
+    language models above all. No source read here evidences one for the test split.
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: The repository's LICENSE is MIT (GitHub's licence metadata and the LICENSE
+    file, read 2026-10-14) and grants rights in "the Software". No licence naming the data was read,
+    nor the licence of Lowe's extraction.
+  size:
+    - count: 479035
+      unit: reactions (409,035 training, 30,000 validation, 40,000 test)
+      subset: all three splits
+      note: Jin et al. round the set to 480K split 400K, 40K and 40K. The files in data.zip hold
+        409,035, 30,000 and 40,000 lines (counted 2026-10-14), the figures the Molecular Transformer
+        paper and RxnNano give.
+      source: src-arxiv-1811-02633-v2
+      quote: USPTO_MIT set23 409,035 30,000 40,000 - No stereochemical information
+    - count: 40000
+      unit: test reactions
+      subset: test
+      source: src-arxiv-1811-02633-v2
+      quote: The test set contained 40k reactions.
+    - count: 80
+      unit: test reactions, ten from each of eight template-popularity bins
+      subset: the release paper's human study
+      source: src-arxiv-1709-04555-v3
+      quote: We randomly selected 80 reaction examples from the test set
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The paper's authors (MIT CSAIL and MIT Chemical Engineering), through the first
+    author's GitHub account
+  maintainer_basis:
+    reason: The repository holding the data and code sits in one person's account and states no
+      institution as its holder. Its README points to an updated model repository in another
+      author's account.
+    source: src-github-nips17-rexgen-readme
+    quote: This repository contains the data and codes of the paper
+  maintainer_type: individual
+  submission_process:
+    - literature-only
+  submission_process_note: No board, results page or submission route of the maintainers'. The
+    release paper's baselines are its only results; everyone else reports top-k accuracy in their
+    own papers.
+  submission_process_source: src-github-nips17-rexgen-readme
+  submission_process_quote: This repository contains the data and codes of the paper
+  independence_flags: []
+  independence_flags_note: None recorded. The release paper's own model is its baseline, and there
+    is no ranking for the maintainers to compete on. The paper names DARPA's Make-It program as its
+    funder, a government agency and not an evaluated party.
+  independence_flags_source: src-arxiv-1709-04555-v3
+  independence_flags_quote: This work was supported by the DARPA Make-It program
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The splits and their products are public, and top-k accuracy compares predicted with
+      recorded products, with no human, physical or maintainer-only step.
+    source: src-github-nips17-rexgen-readme
+    quote: USPTO/data.zip includes the train/dev/test split of USPTO dataset used in our paper.
+  harness_availability: reference-implementation-only
+  harness_availability_note: The repository's scripts/eval.py scores the paper's own pipeline,
+    turning its predicted bond changes into SMILES before matching; it does not take another
+    system's SMILES predictions. No scorer for those is published with the data.
+  harness_availability_source: src-github-nips17-rexgen-uspto-readme
+  harness_availability_quote: This script internally generates SMILES for each candidate product
+    (given bond assignments to each atom pair), and test if it matches the labeled product.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for wengong-jin/nips17-rexgen and its LICENSE file,
+    read 2026-10-14; not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profile: the setting (separated or mixed reagents, recorded as subsets so that subset_used
+  # carries it) and what the model was trained on (this training split alone, or larger reaction sets as well)
+  # change a USPTO-MIT number. Test-time augmentation, randomised SMILES at test time with the predictions
+  # pooled, changes it too and has no condition field (review_checks).
+  material_extra:
+    - training_data_policy
+
+homepage: https://github.com/wengong-jin/nips17-rexgen
+repository: https://github.com/wengong-jin/nips17-rexgen
+dataset_url: https://github.com/wengong-jin/nips17-rexgen/tree/master/USPTO
+leaderboard_url: null
+
+subsets:
+  - id: uspto-mit#separated
+    label: Reagents separated from reactants
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1811-02633-v2
+        quote: Reagents take part in the reaction, but do not contribute any atom to the product.
+      - source: src-arxiv-1811-02633-v2
+        quote: We point out that previous work have all considered an unrealistically generous
+          setting of separated reactants and reagents.
+    notes: The reactions with the reactants, which contribute atoms to the product, set apart from
+      the reagents in the input. Earlier work used this setting; the Molecular Transformer paper
+      calls it generous, since telling reactants from reagents needs the product. Its top-1 here is
+      90.4.
+  - id: uspto-mit#mixed
+    label: Reactants and reagents mixed
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1811-02633-v2
+        quote: we decided to train and test on inputs where the reactants and the reagents were
+          mixed and no distinction was made between the two
+      - source: src-arxiv-1811-02633-v2
+        quote: We demonstrate an accuracy of 88.6% when no distinction is drawn between reactants
+          and reagents in the inputs
+    notes: The same reactions with no reactant-reagent split in the input, introduced by the
+      Molecular Transformer paper.
+subsets_note: The two are input settings over the same reactions and splits, not item subsets; they
+  are recorded as subsets so that subset_used carries the setting a number was produced under.
+
+lineage:
+  role: root
+  variants:
+    - id: uspto-15k
+      relation: subset
+      relation_note: Built by Coley et al. from reactions covered by the 1.7K most common templates,
+        with its own split (10.5K, 1.5K and 3K); Jin et al. report on it beside this set and ship it
+        in the same repository.
+      source: src-arxiv-1709-04555-v3
+      quote: the subset of 15K reaction from this dataset (referred as USPTO-15K) used by Coley et
+        al.
+    - id: uspto-lef
+      relation: subset
+      relation_note: Bradshaw et al.'s linear-electron-flow subset, 349,898 reactions with a
+        29,360-reaction test set in the Molecular Transformer paper's Table 1.
+      source: src-arxiv-1811-02633-v2
+      quote: Non-public subset of USPTO_MIT, without e.g. multi-step reactions
+lineage_note: The set was filtered and split by Jin et al. from Lowe's text-mined extraction of US
+  patent reactions, the origin the Molecular Transformer paper gives for most public reaction
+  datasets. USPTO_STEREO, which keeps stereochemistry and was filtered less, comes from the same
+  extraction rather than from this set, and USPTO-50k (a separate entry, retrosynthesis) shares that
+  origin; neither is recorded as a relation here.
+lineage_source: src-arxiv-1811-02633-v2
+lineage_quote: Most of the publicly available reaction datasets were derived from the patent mining
+  work of Lowe
+
+tags:
+  - reaction-prediction
+  - forward-synthesis
+  - uspto
+  - patents
+  - smiles
+  - organic-chemistry
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1709-04555-v3
+    - src-arxiv-1709-04555
+    - src-github-nips17-rexgen-readme
+    - src-github-nips17-rexgen-uspto-readme
+    - src-arxiv-1811-02633-v2
+    - src-arxiv-2603-02215-v1
+  sources_note: >
+    Jin et al.'s v3 PDF (a DOI, not archived) read as text, with windows that keep the authors' contact
+    line out; its abstract page for the date and venue; the repository README and USPTO/README.md at
+    master; the Molecular Transformer's v2 PDF (a DOI) for the name, the split sizes and the separated
+    and
+    mixed settings; and RxnNano's v1 PDF (a DOI) as evidence of current use. The README lists its
+    contributors' e-mail addresses, so its Source is withheld from archiving.
+  confidence: medium
+  review_checks:
+    - check: The pair (exact-match, domain-specialist-model) resolves to the llm-static-text
+        profile, whose shots, chain_of_thought, reasoning_effort, tools_allowed and retries_allowed
+        mean nothing for a trained reaction model; taxonomy/comparability-profiles.yaml may need a
+        profile for non-LLM specialists, as ADR-0024 gave Matbench Discovery surrogate-fit. Nothing
+        is waived meanwhile.
+      field: comparability
+    - check: exact-match is assigned, but a prediction is matched after SMILES canonicalisation
+        (RDKit), and the maintainers' script counts it right when the recorded product's molecules
+        are a subset of the candidate's. Neither is string equality after whitespace or case
+        normalisation; whether exact-match, symbolic-equivalence or a new term fits.
+      field: evaluation_method
+      source: src-github-nips17-rexgen-uspto-readme
+      quote: A candidate product (a set of molecules) is said to match the labeled product (again, a
+        set of molecules) whhen the labeled product is a subset of candidate product.
+    - check: domain-specialist-model, not scientific-surrogate-model. A reaction-outcome predictor
+        could be said to stand in for running the reaction, whose recorded product is the ground
+        truth; that would also make ground_truth_source experimental rather than held-out-labels.
+      field: designed_for_subjects
+    - check: Separated and mixed are recorded as subsets, though they are input settings over the
+        same reactions; EvalConditions has no field for input preprocessing. Test-time augmentation,
+        which RxnNano says many papers use, changes the number too and has no field either.
+      field: subsets
+      source: src-arxiv-2603-02215-v1
+      quote: creating synthetic evaluation scenarios where models are tested on heavily augmented
+        data rather than genuine chemical examples
+    - check: The paper gives 400K, 40K and 40K; the distributed files hold 409,035, 30,000 and
+        40,000 reactions (a local line count, matching the Molecular Transformer paper and RxnNano).
+        The headline follows the files.
+      field: data.size
+      source: src-arxiv-1709-04555-v3
+      quote: This dataset is divided into 400K, 40K, and 40K for training, development, and testing
+        purposes.
+    - check: reference-implementation-only, because scripts/eval.py scores only the paper's own
+        bond-edit outputs. If the maintainers' script counts as the official scorer, this is
+        official-harness.
+      field: execution.harness_availability
+    - check: USPTO-15K was built by Coley et al. before this set, and Jin et al. call it a subset
+        "from this dataset"; whether it belongs here as a variant or as its own entry. USPTO_LEF is
+        recorded as the Molecular Transformer paper describes it, non-public.
+      field: lineage
+    - check: independence_flags is empty. The release paper's model, and the same group's later
+        models, report on the set, but there is no ranking; whether no-known-conflict should be
+        tagged instead, the funder being DARPA.
+      field: governance.independence_flags
+    - check: dataset_licence is null. The repository's MIT licence names "the Software"; whether it
+        covers data.zip, and what Lowe's extraction is licensed under, were not read.
+      field: data.dataset_licence
+  personal_data_excluded:
+    - source: src-github-nips17-rexgen-readme
+      what: the contributors' e-mail addresses in its Contributors section
+    - source: src-arxiv-1709-04555-v3
+      what: the authors' e-mail addresses under the title
