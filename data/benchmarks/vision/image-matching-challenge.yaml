@@ -1,0 +1,653 @@
+# data/benchmarks/vision/image-matching-challenge.yaml
+#
+# P1-S8-T05, vision entry 7 of 8. Filled from the workshop site (image-matching-workshop.github.io: the current
+# 2026 page and the 2019 page, scripts and styles stripped); three pages of the 2020-2021 challenge site at the
+# University of British Columbia (the 2020 home page, the 2020 submission rules and the 2021 home page); the
+# benchmark paper, arXiv 2003.01587 read as its v5 PDF (2021-02-11), and its abstract page; Kaggle's public JSON
+# records of the 2022, 2023, 2024 and 2025 Ongoing competitions and its page-service records of the 2025 and 2025
+# Ongoing competitions' pages, read without registering or accepting any rules; and the v1 PDF of LoMa (arXiv
+# 2604.04931, April 2026), a paper that reports on the 2022 edition. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# The entry is the series: the yearly editions are versions, and the 2019-2021 tasks and keypoint budgets are
+# subsets, not entries of their own.
+
+id: image-matching-challenge
+name: Image Matching Challenge
+aliases:
+  - IMC
+  - IMW Challenge
+tagline: Wide-baseline image matching challenge, yearly at CVPR since 2019, scored by the accuracy
+  of recovered camera poses.
+description: >
+  The open challenge of the Image Matching: Local Features and Beyond workshop, held at CVPR every
+  year since 2019. Entrants match photographs of the same scene taken across wide baselines, with
+  different viewpoints, cameras, times and conditions, and are scored on the camera poses recovered
+  from their matches by mean Average Accuracy (mAA): the share of poses whose error is under a
+  threshold, averaged over a sweep of thresholds. The 2019 to 2021 editions scored submitted
+  features and matches with the organisers' pipeline (open-sourced in 2020) on landmark scenes from tourist
+  photo collections, in a wide-baseline stereo task and a multi-view reconstruction task; the
+  benchmark paper (Jin et al., arXiv 2003.01587) defines that protocol. Since 2022 the challenge is
+  a Kaggle code competition: entrants submit notebooks, which Kaggle runs on a hidden test set. The
+  2022 edition asked for the relative pose of image pairs, 2023 and 2024 for the poses of whole
+  image sets (2024 across six domains), and 2025 also for grouping mixed images into scenes and
+  discarding outliers, scored by the harmonic mean of mAA and a clustering score. An ongoing copy of
+  the 2025 competition, without prizes and with one leaderboard, stood in for the 2026 challenge
+  from November 2025 until its deadline of 15 September 2026.
+self_description:
+  source: src-arxiv-2003-01587-v5
+  quote: We introduce a comprehensive benchmark for local features and robust estimation algorithms
+external_ids:
+  arxiv: '2003.01587'
+paper:
+  title: 'Image Matching across Wide Baselines: From Paper to Practice'
+  arxiv: '2003.01587'
+  doi: 10.1007/s11263-020-01385-0
+  version_read: v5
+  source: src-arxiv-2003-01587-v5
+released: 2019-02-28
+released_note: The first edition's test data and submission instructions went up on this date, as
+  the 2019 page's news gives it (the line has no year; the page is the 2019 edition's). The
+  benchmark paper's first arXiv version followed on 2020-03-03.
+released_source: src-image-matching-workshop-2019-site
+released_quote: 'February 28: Uploaded test data and submission instructions for the Phototourism dataset.'
+release_venue: Image Matching -- Local Features and Beyond workshop, CVPR 2019
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: vision/image-matching-correspondence
+  secondary:
+    - vision/3d-reconstruction
+domain_basis:
+  reason: Every edition scores how well images of one scene are matched across wide baselines, with
+    3D reconstruction the downstream task through which the matches are scored. Since 2023 the task
+    is itself to reconstruct scenes from image sets and give every camera's pose, so
+    3d-reconstruction is secondary (see review_checks).
+  source: src-image-matching-workshop-site
+  quote: Matching two or more images across wide baselines is a core computer vision problem
+domain_considered_and_rejected:
+  - term: vision/multi-view-stereo
+    reason: Multi-view stereo recovers dense geometry from calibrated views. Here the camera poses
+      are the unknowns being scored, and no dense geometry is.
+  - term: vision/depth-geometry
+    reason: The paper derives depth maps from its reconstructions for intermediate metrics
+      (repeatability, matching score), but the ranked score is pose accuracy, not per-pixel depth.
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is photographs and the score measures what was recovered from them, the
+      relative or absolute camera poses, and since 2025 which scene each image shows.
+    source: src-imc-2020-site
+    quote: our primary metric measures the accuracy of the reconstructed poses
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: Recovering camera geometry is spatial, but the scored quantity is reconstruction
+      accuracy, which the term's exclusion test sends to perception.
+  - term: distribution-shift-generalization
+    reason: Editions add domains and conditions (six domains in 2024, outliers and look-alike scenes
+      in 2025), but none scores a held-out shifted condition of its own.
+    source: src-kaggle-image-matching-challenge-2024-record
+    quote: '"briefDescription":"Reconstruct 3D scenes from 2D images over six different domains"'
+
+evaluation_method:
+  - domain-metric
+evaluation_method_basis:
+  reason: mAA, the area under the curve of pose accuracy against an error threshold, is the field's
+    own measure; the paper takes it from an earlier "mAP" and renames it. The 2020 ranking averaged
+    it over the stereo and multi-view tasks, one metric scored the same way, and the Kaggle editions
+    apply it to pairwise poses (2022) and to camera centres (2024 and 2025).
+  source: src-arxiv-2003-01587-v5
+  quote: We compute the mean Average Accuracy (mAA) by integrating this curve up to a maximum
+    threshold, which we set to 10
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: Since 2025 the score is the harmonic mean of mAA and a clustering score, which the
+      organisers liken to F1. Read like Tanks and Temples' F-score, as one field-specific measure;
+      but the clustering half is a general precision (see review_checks).
+    source: src-kaggle-image-matching-challenge-2025-ongoing
+    quote: In this formulation, the mAA score is roughly equivalent to recall, and the clustering
+      score to precision, and the final score is thus analogous to the standard F1 score.
+  - term: classification-metric
+    reason: The 2025 clustering score is a precision of cluster membership, but it is not reported
+      on its own; it enters only the combined score.
+designed_for_subjects:
+  - task-specific-supervised-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The benchmark was built to compare hand-crafted pipelines (SIFT, RANSAC variants, COLMAP)
+    with learned local features, matchers and outlier filters inside the same pipeline, and the
+    paper finds that tuned classical methods can still beat learned ones. Learned methods trained
+    for the task have won since 2019.
+  source: src-arxiv-2003-01587-v5
+  quote: embedding dozens of popular algorithms and evaluating them, from seminal works to the
+    cutting edge of machine learning research
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: Image matching is a general vision task, not one that a scientific, clinical or
+      engineering-design discipline defines.
+as_used:
+  - protocol: Papers report scores on a past edition's hidden test by submitting a notebook to its
+      closed Kaggle competition, outside the ranked leaderboard, and compare them with that
+      edition's winners.
+    split: the 2022 edition's hidden test
+    source: src-arxiv-2604-04931-v1
+    quote: We run the official Kaggle competition and use 200K iterations of MAGSAC
+    note: LoMa (April 2026). The 2025 Ongoing competition's page says that submissions made after a
+      deadline are not shown on the leaderboards (src-kaggle-image-matching-challenge-2025-ongoing).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced. The 2025 Ongoing leaderboard took 754 submissions from 30
+    teams between November 2025 and its September 2026 deadline, and an April 2026 paper reports a
+    new best score on the 2022 edition's hidden test.
+  source: src-arxiv-2604-04931-v1
+  quote: +12.4 mAA on IMC 2022
+activity: between-rounds
+activity_note: The 2025 Ongoing competition's rules say it "does not have an end date" and the
+  workshop site lists no hard deadline, but Kaggle's record gives a deadline of 2026-09-15, which
+  has passed. The workshop site, read on 2026-10-14, announces no 2027 edition. Kaggle still scores
+  notebooks submitted after a deadline without ranking them (as_used).
+activity_basis:
+  reason: The series runs in yearly editions. The last leaderboard, the 2025 Ongoing competition
+    that stood in for the 2026 challenge, reached its deadline on 2026-09-15, and no next round has
+    a date (see review_checks).
+  source: src-kaggle-image-matching-challenge-2025-ongoing-record
+  quote: '"deadline":"2026-09-15T23:59:00Z"'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ContextDesc descriptors with a deep-network matcher (2019 winners)
+    source: src-image-matching-workshop-2019-site
+    observed_on: 2026-10-14
+    quote: winning both tracks with their ContextDesc descriptors and a custom, deep network-based
+      matcher
+  - system: LoMa (2022 edition, scored on Kaggle)
+    source: src-arxiv-2604-04931-v1
+    observed_on: 2026-10-14
+    quote: +12.4 mAA on IMC 2022
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Camera poses from structure-from-motion reconstructions of the full image
+  collections, which the paper calls pseudo ground truth, withheld for the test scenes.
+ground_truth_source_source: src-arxiv-2003-01587-v5
+ground_truth_source_quote: which provides the (pseudo) ground truth
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: Since 2022 the test images and poses never leave Kaggle, which runs each notebook on them.
+    The 2020-2021 PhotoTourism and PragueParks test poses were released in September 2022, so those
+    editions' tasks can now be scored offline.
+  source: src-kaggle-image-matching-challenge-2025-ongoing
+  quote: This competition uses a hidden test. When your submitted notebook is scored, the actual
+    test data (including a sample submission) will be made available to your notebook.
+
+task:
+  exists: true
+  input:
+    - 'photographs of one or more scenes taken across wide baselines: image pairs (the 2019-2021 stereo
+      task and 2022) or image sets (the multi-view task and 2023-2025), mixed with images of other scenes
+      and outliers since 2025'
+  output: Camera poses, as a relative pose per image pair or a rotation and translation for every
+    image, with a scene or outlier label per image since 2025. In 2019-2021 entrants could send
+    features and matches, which the organisers' pipeline turned into poses.
+  scoring: mAA, pose accuracy thresholded over a sweep of error thresholds and averaged. The 2025
+    editions take the harmonic mean of mAA and a clustering score per dataset and average it over
+    the datasets.
+  source: src-kaggle-image-matching-challenge-2025-ongoing
+  quote: Finally, we average the results over the different datasets to obtain a single score.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: In 2019-2021 the test scenes' images were released (100 per scene) and only their
+    poses withheld, which is train-open-test-held-out; those poses were released on 2022-09-07
+    (history). Since 2022 the test images themselves stay on Kaggle.
+  access_basis:
+    reason: The test images and poses are given only to the submitted notebook, at scoring time.
+    source: src-kaggle-image-matching-challenge-2025-ongoing
+    quote: This competition uses a hidden test. When your submitted notebook is scored, the actual
+      test data (including a sample submission) will be made available to your notebook.
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: Each edition brought new test data. PragueParks and GoogleUrban joined PhotoTourism in
+      2021, 2022 used Google Street View pairs, 2023 image sets for reconstruction, 2024 six domains
+      and 2025 mixed collections. The 2025 Ongoing competition reuses 2025's test data.
+    source: src-imc-2021-site
+    quote: 'Three additional datasets: PragueParks, GoogleUrban dataset, Synthetic dataset (TBA)'
+  data_provenance:
+    - web-scraped
+    - real-world-instrument
+  data_provenance_note: The PhotoTourism scenes are tourist photographs of landmarks from public
+    photo collections; the 2020 rules ban models trained on the full YFCC100M because it overlaps
+    the test set (src-imc-2020-submit). The 2022 hidden test is Google Street View imagery
+    (src-arxiv-2604-04931-v1). Ground-truth poses come from reconstructions of the full collections.
+    Where the 2023-2025 datasets come from, each with its own licence file, was not read.
+  data_provenance_source: src-arxiv-2003-01587-v5
+  data_provenance_quote: Phototourism images satisfy this condition and are readily available.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The hidden test images are never released, but the PhotoTourism test scenes are famous
+    landmarks, and a public training set covering the same landmarks is a route: in 2019 D2-Net was
+    removed because its training data overlapped the test data, and the 2020 rules ban images of
+    the test landmarks and list the overlapping MegaDepth scenes. The 2019-2021 test poses are
+    public since 2022, so papers that still score those scenes have no protection. Nobody has
+    assessed whether the 2023-2025 test scenes appear in public training sets.
+  contamination_evidence:
+    - source: src-image-matching-workshop-2019-site
+      stance: supports
+      quote: Removed D2-Net, as its training data overlaps with our test data.
+    - source: src-imc-2020-submit
+      stance: against
+      quote: Using images showing the scenes or landmarks present in the test set is prohibited
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: mAA is a share of correct poses averaged over thresholds, so it tops out
+    at 1, and the ground truth is the reference reconstruction's own poses. No source publishes a
+    measured ceiling.
+  dataset_licence: Apache-2.0
+  dataset_licence_note: For the 2025 and 2025 Ongoing competition data; 2024's is also Apache 2.0
+    and 2022's and 2023's are "Subject to Competition Rules" (Kaggle records). The same rules ask
+    entrants not to pass the data to anyone outside the competition.
+  dataset_licence_source: src-kaggle-image-matching-challenge-2025-ongoing
+  dataset_licence_quote: 'The Competition Data is also subject to the following terms and conditions:
+    [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)'
+  upstream_licences: Each dataset folder carries its own licence file, which was not read.
+  upstream_licences_source: src-kaggle-image-matching-challenge-2025-ongoing
+  upstream_licences_quote: The license for each dataset.
+  size:
+    - count: 1300
+      unit: images in the hidden test set (roughly)
+      subset: 2025 and 2025 Ongoing
+      source: src-kaggle-image-matching-challenge-2025-ongoing
+      quote: Expect to find roughly 1,300 images in the hidden test set.
+    - count: 9
+      unit: test scenes, beside 2 validation and 14 training scenes (about 30k images in all)
+      subset: PhotoTourism, the benchmark paper's set (2020)
+      source: src-arxiv-2003-01587-v5
+      quote: Out of the 25 scenes, containing almost 30k registered images in total, we select 2 for
+        validation and 9 for testing.
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: team, on the Kaggle competitions
+    source: src-kaggle-image-matching-challenge-2025-ongoing
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The organisers of the Image Matching -- Local Features and Beyond workshop (CVPR)
+  maintainer_basis:
+    reason: The challenge is the workshop's own. Its 2026 organisers are at the University of
+      Palermo, Czech Technical University in Prague, the Bruno Kessler Foundation, USDA-ARS, Google
+      and the University of British Columbia.
+    source: src-image-matching-workshop-site
+    quote: Organisers Fabio Bellavia University of Palermo Jiri Matas Czech Technical University
+      Dmytro Mishkin Czech Technical University, HOVER Inc.
+  maintainer_type: conference-workshop
+  maintainer_type_note: The organising team has changed between editions (five organisers in 2019,
+    eight in 2026, with Eduard Trulls and Kwang Moo Yi throughout), and so has the host, from the
+    University of British Columbia's server (2020-2021) to Kaggle competitions hosted by Google AI
+    (2022-2023) and by Czech Technical University in Prague (2024-2025). No one standing lab holds
+    it.
+  maintainer_type_basis:
+    reason: The 2019 organisers, beside the 2026 list in maintainer_basis.
+    source: src-image-matching-workshop-2019-site
+    quote: Organisers Vassileios Balntas Scape Technologies Vincent Lepetit University of Bordeaux
+      Johannes Schönberger Microsoft Eduard Trulls Google Kwang Moo Yi University of Victoria
+  submission_process:
+    - containerized-algorithm-submission
+    - held-out-server
+    - publication-gated
+  submission_process_note: >
+    By edition. Since 2022 entrants submit Kaggle notebooks, which Kaggle runs with internet access
+    disabled on the hidden test, at up to five submissions a day; the 2025 Ongoing leaderboard
+    combines the public and private splits. In 2019-2021 entrants uploaded features or matches, or
+    settings for the built-in methods, and the organisers' pipeline scored them against withheld
+    poses, at two submissions per group per week in 2020. The 2020 rules made a short description
+    of each method, uploaded to arXiv, a condition of being processed (src-imc-2020-submit), which
+    is the publication-gated term; the Kaggle editions ask a write-up only of prize winners.
+  submission_process_source: src-kaggle-image-matching-challenge-2025
+  submission_process_quote: Submissions to this competition must be made through Notebooks.
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-image-matching-workshop-2019-site
+      quote: The prizes for the workshop challenge are sponsored by Google and Scape.
+    - flag: single-evaluator-private-test-set
+      source: src-kaggle-image-matching-challenge-2025-ongoing
+      quote: This competition uses a hidden test.
+  independence_flags_note: >
+    Google and Scape sponsored the 2019 prizes while organisers worked at each (Eduard Trulls at
+    Google, Vassileios Balntas at Scape Technologies). Google AI hosted the 2022 and 2023 Kaggle
+    competitions, with US$10,000 and US$50,000 in prizes (their Kaggle records); the 2025
+    competition's US$50,000 names Czech Technical University in Prague as sponsor and no funder. The
+    2020 rules let organisers enter without prizes, but no organiser entry was found in the sources
+    read, so maintainer-competes-on-own-benchmark is not adopted (see review_checks).
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_basis:
+    reason: Since 2022 the official score comes from Kaggle running the entrant's notebook on its
+      own CPU or GPU, for up to 540 minutes. No source read states the cost to the entrant (see
+      review_checks).
+    source: src-kaggle-image-matching-challenge-2025-ongoing-record
+    quote: '"maxGpuRuntimeMinutes":540'
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are on test sets whose poses only the organisers hold, on Kaggle
+      since 2022 and, before the 2022 release, for the PhotoTourism test scenes.
+    source: src-arxiv-2003-01587-v5
+    quote: For the test scenes we release only a subset of 100 images and keep the ground truth
+      private, which is an integral part of the Image Matching Challenge.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: image-matching-benchmark (ubc-vision), the 2019-2021 pipeline from features to stereo and
+    multi-view mAA
+  harness_note: The Kaggle editions are scored by Kaggle metric notebooks (the 2025 Ongoing record
+    names "IMC 2025 Rolling Metric"), whose code was not read.
+  harness_source: src-arxiv-2003-01587-v5
+  harness_quote: The benchmark code has been open-sourced
+  submission_channel:
+    source: src-kaggle-image-matching-challenge-2025-ongoing-record
+    quote: '"onlyAllowKernelSubmissions":true'
+  submission_channel_note: kaggle.com/competitions/image-matching-challenge-2025-ongoing. Earlier
+    editions each had a Kaggle competition of their own (2022-2025) or the University of British
+    Columbia's upload page (2020-2021).
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for ubc-vision/image-matching-benchmark, read
+    2026-10-14 (last pushed 2024-05-13); not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The profile resolves to eligibility-gated (a domain metric with classical pipelines among the entrants);
+  # eligibility_track is the keypoint-budget category. Within it: which edition and task (the 2019-2021 stereo
+  # and multi-view tasks, each Kaggle edition's own data and metric), which split (validation scenes, Kaggle's
+  # public, private or combined leaderboard), and what external data and pretrained models were used (the 2020
+  # rules ban the test landmarks; the Kaggle rules allow public external data). The benchmark defines no
+  # training-data tiers, so that field is waived.
+  material_extra:
+    - subset_used
+    - training_data_policy
+  material_waived:
+    - field: training_data_eligibility
+      reason: The rules bar some data but define no training-data tiers; what an entrant trained on
+        is training_data_policy.
+
+homepage: https://image-matching-workshop.github.io/
+repository: https://github.com/ubc-vision/image-matching-benchmark
+leaderboard_url: https://www.kaggle.com/competitions/image-matching-challenge-2025-ongoing
+
+versions:
+  - version: '2019'
+    label: IMW 2019 challenge
+    version_kind: edition
+    released: 2019-02-28
+    changes: The first edition, wide-baseline matching on the Phototourism dataset, with a SILDa
+      image matching dataset added in April, presented at CVPR 2019.
+    breaking: true
+    superseded_by: '2020'
+    frozen: true
+    sources:
+      - src-image-matching-workshop-2019-site
+  - version: '2020'
+    label: Image Matching Challenge 2020
+    version_kind: edition
+    released: 2020-02-10
+    changes: A second, rebuilt edition on the open-sourced benchmark and its PhotoTourism test
+      scenes. Stereo and multi-view tasks are scored by pose mAA and ranked by their average, in a
+      2,048-keypoint and an 8,000-keypoint category.
+    breaking: true
+    supersedes_version: '2019'
+    superseded_by: '2021'
+    frozen: true
+    sources:
+      - src-imc-2020-site
+      - src-imc-2020-submit
+      - src-arxiv-2003-01587-v5
+  - version: '2021'
+    label: Image Matching Challenge 2021
+    version_kind: edition
+    released: 2021-05-10
+    changes: The third edition, adding the PragueParks and GoogleUrban datasets to PhotoTourism on a
+      fresh leaderboard.
+    breaking: true
+    supersedes_version: '2020'
+    superseded_by: '2022'
+    frozen: true
+    sources:
+      - src-imc-2021-site
+  - version: '2022'
+    label: Image Matching Challenge 2022
+    version_kind: edition
+    released: 2022-04-04
+    changes: Moved to Kaggle as a code competition, hosted by Google AI. Entrants register image
+      pairs from Google Street View (a hidden test), scored by pose mAA; 642 teams.
+    breaking: true
+    supersedes_version: '2021'
+    superseded_by: '2023'
+    frozen: true
+    sources:
+      - src-kaggle-image-matching-challenge-2022-record
+      - src-imc-2021-site
+      - src-arxiv-2604-04931-v1
+  - version: '2023'
+    label: Image Matching Challenge 2023
+    version_kind: edition
+    released: 2023-04-11
+    changes: Reconstruct 3D scenes from image sets and give every image's pose, hosted by Google AI;
+      494 teams.
+    breaking: true
+    supersedes_version: '2022'
+    superseded_by: '2024'
+    frozen: true
+    sources:
+      - src-kaggle-image-matching-challenge-2023-record
+  - version: '2024'
+    label: Image Matching Challenge 2024 - Hexathlon
+    version_kind: edition
+    released: 2024-03-25
+    changes: Reconstruction across six domains, scored by mAA on camera centres after registration,
+      hosted by Czech Technical University in Prague; 929 teams.
+    breaking: true
+    supersedes_version: '2023'
+    superseded_by: '2025'
+    frozen: true
+    sources:
+      - src-kaggle-image-matching-challenge-2024-record
+  - version: '2025'
+    label: Image Matching Challenge 2025
+    version_kind: edition
+    released: 2025-04-01
+    changes: Images of several scenes and outliers are mixed together, and entrants also group them
+      into scenes, scored by the harmonic mean of mAA and a clustering score; US$50,000 in prizes.
+    breaking: true
+    supersedes_version: '2024'
+    superseded_by: 2025-ongoing
+    frozen: true
+    sources:
+      - src-kaggle-image-matching-challenge-2025
+  - version: 2025-ongoing
+    label: Image Matching Challenge 2025 Ongoing, the 2026 challenge
+    version_kind: revision
+    released: 2025-11-04
+    changes: The 2025 competition reopened on the same data without prizes, points, medals or
+      deadlines, on one leaderboard that combines the public and private splits. The workshop site
+      calls it the 2026 challenge. Its Kaggle record's deadline was 2026-09-15.
+    breaking: true
+    supersedes_version: '2025'
+    frozen: true
+    sources:
+      - src-kaggle-image-matching-challenge-2025-ongoing
+      - src-kaggle-image-matching-challenge-2025-ongoing-record
+      - src-image-matching-workshop-site
+
+subsets:
+  - id: image-matching-challenge#stereo
+    label: Wide-baseline stereo (2019-2021)
+    scored_separately: true
+    evidence:
+      - source: src-imc-2020-submit
+        quote: which is the mean Average Accuracy (mAA) averaged across the stereo and multi-view
+          tasks
+    notes: Pose estimation from two images at a time, by the entrant's matches and a robust
+      estimator. Its mAA was reported on its own and averaged with the multi-view task's for the
+      ranking.
+  - id: image-matching-challenge#multiview
+    label: Multi-view reconstruction from image subsets (2019-2021)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2003-01587-v5
+        quote: The same metric is used for multiview.
+      - source: src-image-matching-workshop-2019-site
+        quote: fixed a bug in the aggregation of results for the MVS task
+    notes: Reconstructions from bags of 5, 10 and 25 images with COLMAP, scored by mAA over every
+      image pair in a bag.
+  - id: image-matching-challenge#keypoints-2k
+    label: 2,048-keypoint budget (2020-2021)
+    scored_separately: true
+    evidence:
+      - source: src-imc-2020-submit
+        quote: we consider a limited budget of 2048 features, and an unlimited budget (capped to
+          8000 features per image for practical reasons)
+    notes: A category ranked apart from the unlimited budget, across both tasks.
+  - id: image-matching-challenge#keypoints-8k
+    label: Unlimited budget, capped at 8,000 keypoints (2020-2021)
+    scored_separately: true
+    evidence:
+      - source: src-imc-2020-submit
+        quote: we consider a limited budget of 2048 features, and an unlimited budget (capped to
+          8000 features per image for practical reasons)
+subsets_note: The tracks are the 2019-2021 tasks and keypoint categories. The 2021 datasets
+  (PhotoTourism, PragueParks, GoogleUrban) had leaderboards of their own and are not modelled; each
+  Kaggle edition has one leaderboard and is a version.
+
+history:
+  - date: 2022-04-04
+    event: channel-moved
+    field: execution.submission_channel
+    from: the challenge's upload page at the University of British Columbia
+    to: Kaggle code competitions
+    source: src-imc-2021-site
+    quote: 'April 4, 2022: The challenge has moved to Kaggle! It opens today and will run for two months,
+      until June 2.'
+  - date: 2022-09-07
+    event: access-changed
+    field: data.access
+    from: 2020-2021 test poses withheld
+    to: released for the PhotoTourism and PragueParks test scenes
+    source: src-imc-2021-site
+    quote: 'September 7, 2022: Releasing ground truth for Phototourism and PragueParks test set.'
+  - date: 2025-11-04
+    event: channel-opened
+    field: execution.submission_channel
+    to: Kaggle competition image-matching-challenge-2025-ongoing
+    source: src-kaggle-image-matching-challenge-2025-ongoing-record
+    quote: '"dateEnabled":"2025-11-04T20:53:05.507Z"'
+    note: The workshop site announces it on 2025-12-01.
+  - date: 2026-09-15
+    event: channel-closed
+    field: execution.submission_channel
+    from: Kaggle competition image-matching-challenge-2025-ongoing
+    source: src-kaggle-image-matching-challenge-2025-ongoing-record
+    quote: '"deadline":"2026-09-15T23:59:00Z"'
+    note: The record's deadline; the rules page says the competition has no end date (see
+      review_checks).
+
+tags:
+  - image-matching
+  - local-features
+  - structure-from-motion
+  - camera-pose
+  - kaggle
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-image-matching-workshop-site
+    - src-image-matching-workshop-2019-site
+    - src-imc-2020-site
+    - src-imc-2020-submit
+    - src-imc-2021-site
+    - src-arxiv-2003-01587-v5
+    - src-arxiv-2003-01587
+    - src-kaggle-image-matching-challenge-2022-record
+    - src-kaggle-image-matching-challenge-2023-record
+    - src-kaggle-image-matching-challenge-2024-record
+    - src-kaggle-image-matching-challenge-2025
+    - src-kaggle-image-matching-challenge-2025-ongoing
+    - src-kaggle-image-matching-challenge-2025-ongoing-record
+    - src-arxiv-2604-04931-v1
+  sources_note: >
+    The workshop's 2026 and 2019 pages and three pages of the 2020-2021 challenge site, with scripts and
+    styles stripped; the paper's v5 PDF (a DOI, not archived) read as text and its abstract page; Kaggle's
+    public JSON records of four competitions and its page-service records of the 2025 and 2025 Ongoing
+    competitions' pages, read anonymously without accepting any rules; and LoMa's v1 PDF as evidence of
+    current use. The pages' contact addresses are mailing lists or generic inboxes and stay out of every
+    extract. Kaggle's blog recap of the 2025 challenge is script-rendered and was not read.
+  confidence: medium
+  review_checks:
+    - check: The entry is the series. The PhotoTourism benchmark that the paper defines (with the
+        image-matching-benchmark code, its test poses public since 2022) is still used on its own in
+        papers and could be an entry of its own; the 2025 Ongoing competition is recorded as a
+        revision of 2025, not an edition.
+      field: versions
+    - check: activity between-rounds rests on the record's passed deadline, against the rules' "no
+        end date" and the site's "No hard deadline". If the Ongoing leaderboard still ranks new
+        entries, it is leaderboard-live-no-round; if the yearly series has ended (the unread Kaggle
+        blog recap may say), closed.
+      field: activity
+      source: src-kaggle-image-matching-challenge-2025-ongoing
+      quote: This Competition does not have an end date.
+    - check: The 2025 score combines mAA with a clustering precision by harmonic mean. Read here as
+        one F1-like domain metric; it could be composite with classification-metric for the 2025
+        editions.
+      field: evaluation_method
+    - check: submission_process lists routes of past editions too (held-out-server and
+        publication-gated for 2019-2021). Whether a family entry keeps them or only the current
+        Kaggle route.
+      field: governance.submission_process
+      source: src-imc-2020-submit
+      quote: Participants should provide a short description of their solution
+    - check: maintainer-competes-on-own-benchmark not adopted. The 2020 rules let organisers enter,
+        and the organisers ran baseline methods that may sit on the 2020 leaderboards, which were
+        not read.
+      field: governance.independence_flags
+      source: src-imc-2020-submit
+      quote: We have evaluated several methods from our baseline repository as part of an upcoming
+        paper
+    - check: compute_tier provided-allocation rests on Kaggle running the notebooks; no source read
+        says the compute is free to entrants.
+      field: execution.compute_tier
+    - check: official-harness rests on the 2019-2021 pipeline; whether the Kaggle metric notebooks
+        are public was not checked.
+      field: execution.harness_availability
+    - check: contamination medium rests on the landmark-overlap route evidenced in 2019 and 2020;
+        the 2023-2025 test scenes' sources were not read.
+      field: data.contamination_risk
+    - check: The Kaggle pages number the editions differently from the site (2025 is "the third" and
+        its Ongoing copy "the fourth edition", while the series ran every year from 2019).
+      field: versions
+      source: src-kaggle-image-matching-challenge-2025
+      quote: This is the third Image Matching Challenge
+    - check: 3d-reconstruction is secondary because the 2023-2025 tasks are reconstruction; the 2022
+        edition is pairwise only.
+      field: domain
+    - check: The abstract page links the published version's DOI (a Springer journal); the venue,
+        IJCV, is not named in the sources read.
+      field: paper
+      source: src-arxiv-2003-01587
+      quote: 10.1007/s11263-020-01385-0
