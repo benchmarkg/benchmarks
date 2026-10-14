@@ -1,0 +1,518 @@
+# data/benchmarks/medicine-health/luna16.yaml
+#
+# P1-S6-T03, medicine-health entry 6 of 10. Filled from the challenge paper, arXiv 1612.08012 read as its v4 PDF
+# (2017-07-15, the version accepted by Medical Image Analysis), and its abstract page; six public pages of
+# luna16.grand-challenge.org (home, Data, Evaluation, Results, and the announcements of 2017-09-01 and
+# 2018-01-03), scripts and styles stripped; Zenodo's record of the LUNA16 download (part 1 of 2); The Cancer
+# Imaging Archive's LIDC-IDRI page, for the upstream data's licence; and a February 2026 Digital Health paper
+# (PMC12868601) as evidence of current use. Grand Challenge's API, which its robots.txt disallows, was not
+# called. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+
+id: luna16
+name: LUNA16
+aliases:
+  - LUng Nodule Analysis 2016
+tagline: Lung nodule detection in 888 LIDC-IDRI chest CT scans, scored as mean FROC sensitivity at
+  seven false-positive rates.
+description: >
+  A challenge for computer-aided detection of pulmonary nodules in chest CT, organised from the
+  Diagnostic Image Analysis Group at Radboud University Medical Center, with a workshop at ISBI 2016.
+  It uses 888 scans of the public LIDC-IDRI database, thick-slice scans removed. The reference standard
+  is the 1,186 nodules of 3 mm or more that at least three of the four LIDC-IDRI radiologists accepted;
+  marks on smaller nodules, non-nodules and nodules fewer readers accepted count neither way. There
+  are two tracks: nodule detection, where a complete system takes the CT scan, and false positive
+  reduction, which scores a supplied list of 754,975 candidate locations. Entrants submit a CSV of
+  locations with a degree of suspicion. A mark hits a nodule if it lies within the nodule's radius of
+  its centre, and the score, the Competition Performance Metric (CPM), is the mean FROC sensitivity at
+  1/8, 1/4, 1/2, 1, 2, 4 and 8 false positives per scan. Images and reference standard are public, so
+  the same scans train and test, through ten patient-level folds the organisers provide for
+  cross-validation. The organisers stopped processing new submissions on 2018-01-03; the data and the
+  evaluation script stay available on Zenodo, and papers still report CPM on the 888 scans.
+self_description:
+  source: src-arxiv-1612-08012-v4
+  quote: We have therefore set up the LUNA16 challenge, an objective evaluation framework for
+    automatic nodule detection algorithms using the largest publicly available reference database of
+    chest CT scans, the LIDC-IDRI data set
+external_ids:
+  arxiv: '1612.08012'
+paper:
+  title: 'Validation, comparison, and combination of algorithms for automatic detection of pulmonary nodules
+    in computed tomography images: The LUNA16 challenge'
+  arxiv: '1612.08012'
+  doi: 10.1016/j.media.2017.06.015
+  version_read: v4
+  source: src-arxiv-1612-08012-v4
+released: null
+released_note: No page read gives the challenge's opening date. The original candidate list was made
+  for the LUNA16 workshop at ISBI 2016, the earliest rows on the leaderboard are dated 1 April 2016,
+  and the paper's first arXiv version is 2016-12-23, after the challenge had opened.
+released_source: src-luna16-leaderboard
+released_quote: VisiaCTLung (jacobsc) 1 April 2016 0.715
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/medical-imaging-diagnostic
+  secondary:
+    - vision/detection
+domain_basis:
+  reason: Systems detect pulmonary nodules, a clinical finding, in chest CT, and are scored against
+    the nodules that radiologists marked, which the leaf's inclusion test takes whatever the metric.
+    The detection operation is recorded as the vision secondary, as the medicine-health family's
+    exclusion test directs.
+  source: src-arxiv-1612-08012-v4
+  quote: We considered the 1,186 nodules annotated by the majority of the radiologists (at least 3
+    out of 4 radiologists) as the positive examples in our reference standard.
+domain_considered_and_rejected:
+  - term: medicine-health/medical-imaging-segmentation
+    reason: A nodule is scored as found when a point lies within its radius of its centre, not
+      delineated as a mask. The lung segmentations supplied with the data are aids, not a reference
+      standard.
+    source: src-luna16-data
+    quote: The lung segmentation images are not intended to be used as the reference standard for
+      any segmentation study.
+  - term: vision/medical-imaging-cv
+    reason: The false positive reduction track was added to bring in image-classification teams, but
+      the task is nodule detection for lung cancer screening against a radiologist reference
+      standard, so the claim is clinical, not a vision method.
+    source: src-luna16-site
+    quote: A vital first step in the analysis of lung cancer screening CT scans is the detection of
+      pulmonary nodules, which may or may not represent early stage lung cancer.
+  - term: vision/classification
+    reason: The false positive reduction track labels each candidate location nodule or not, but its
+      outputs are scored as detections by the same FROC analysis, not as image labels.
+
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is a volumetric CT scan, and the score counts the reference nodules found in
+      it against the false marks made.
+    source: src-arxiv-1612-08012-v4
+    quote: The complete nodule detection track requires the participants to develop a complete CAD
+      system, meaning that the only input into the system is a CT scan.
+capability_considered_and_rejected:
+  - term: calibration-uncertainty
+    reason: Every mark carries a degree of suspicion that the scorer consumes, which the term's
+      inclusion test reads literally, but FROC only thresholds it. Any order-preserving rescaling
+      leaves the score unchanged, so no confidence is scored for calibration.
+    source: src-luna16-evaluation
+    quote: The FROC curve of the system will be determined by thresholding this value.
+  - term: distribution-shift-generalization
+    reason: The folds are random patient-level splits of one database, and no shifted condition is
+      scored. The paper names validation on independent data as work still to do.
+    source: src-arxiv-1612-08012-v4
+    quote: it is important to further validate the performance and the generalizability of the
+      systems using a completely independent validation data set
+  - term: spatial-reasoning
+    reason: Localisation is scored as a hit within the nodule's radius, a perceptual output; no
+      spatial relation has to be inferred.
+
+evaluation_method:
+  - domain-metric
+evaluation_method_basis:
+  reason: The score is the FROC competition performance metric of nodule detection, sensitivity
+    averaged over seven false-positive rates per scan, a measure defined within CAD evaluation and
+    introduced by the ANODE09 study. classification-metric's exclusion test sends FROC sensitivity
+    to domain-metric.
+  source: src-luna16-evaluation
+  quote: 'The final score is defined as the average sensitivity at 7 predefined false positive rates:
+    1/8, 1/4, 1/2, 1, 2, 4, and 8 FPs per scan.'
+evaluation_method_considered_and_rejected:
+  - term: classification-metric
+    reason: The score is built on sensitivity, but it is read off the FROC curve at seven
+      false-positive rates per scan, a construction with no meaning outside detection evaluation.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are CAD systems built for pulmonary nodule detection, a clinically defined
+    task, from ConvNets trained on the provided folds to commercial products such as an FDA-approved
+    lung CAD system. task-specific-supervised-model's exclusion test sends clinical tasks here.
+  source: src-arxiv-1612-08012-v4
+  quote: It was observed that the leading solutions employed convolutional networks and used the
+    provided set of nodule candidates.
+as_used:
+  - protocol: Six-fold cross-validation over the LUNA16 scans, with CPM and sensitivity averaged
+      over the folds, in place of the ten folds the organisers provide. Nothing is submitted to the
+      leaderboard, which is closed.
+    split: all 888 scans, in six folds
+    source: src-pmc-12868601
+    quote: a six-fold cross-validation strategy was employed
+    note: Wang et al., Digital Health, February 2026, a two-stage detector whose false positive
+      reduction stage reports CPM 0.878. The passages read do not say how its six folds were built
+      from the scans.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the 888 scans; a paper published in February 2026 reports
+    CPM on them. The leaderboard stopped taking entries in January 2018 (activity), which records
+    the competition's end, not the instrument's.
+  source: src-pmc-12868601
+  quote: achieves a CPM of 0.878, which is the highest among the compared methods
+activity: closed
+activity_note: The home page says the challenge has been closed. The evaluation script stays on
+  Zenodo so that anyone can score themselves and compare with the board, which is not a route onto
+  it.
+activity_basis:
+  reason: The site's submission route existed and the organisers shut it on 2018-01-03, having
+    restricted it in September 2017 to submissions with a full description article.
+  source: src-luna16-announcement-2018
+  quote: We have decided to stop processing new submissions to LUNA16. The website and the data will
+    remain available.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: PAtech (first on the nodule detection board, CPM 0.951)
+    source: src-luna16-leaderboard
+    observed_on: 2026-10-14
+    quote: PAtech (PA_tech) 2 January 2018 0.951
+  - system: CUMedVis (multi-level contextual 3D ConvNets)
+    source: src-arxiv-1612-08012-v4
+    observed_on: 2026-10-14
+    quote: The best average score was achieved by CuMedVis, with a CPM of 0.908.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The 1,186 nodules accepted by at least three of the four LIDC-IDRI
+  radiologists, with their irrelevant findings. The labels are public, not held out (data.access).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The scans, the reference standard, the candidate lists and the evaluation script are all
+    public, and the organisers point to the script for self-evaluation.
+  source: src-luna16-announcement-2018
+  quote: the evaluation script of LUNA16 will stay available in the Zenodo repository, so you can
+    still evaluate your system on LUNA16 yourself and compare to the systems listed on the
+    leaderboard
+
+task:
+  exists: true
+  input:
+    - a chest CT scan (MetaImage), one of the 888, with the ten patient-level folds for training by
+      cross-validation
+    - in the false positive reduction track, the supplied candidate locations in world coordinates
+      (candidates_V2.csv)
+  output: A CSV with one finding per line, the scan's series UID, its x, y and z world coordinates
+    in millimetres, and a degree of suspicion.
+  scoring: FROC analysis over all scans. A mark is a true positive if it lies within the radius of a
+    reference nodule from its centre; marks on irrelevant findings are ignored, the rest are false
+    positives. The score (CPM) is the mean sensitivity at 1/8, 1/4, 1/2, 1, 2, 4 and 8 false
+    positives per scan, with a bootstrapped 95% confidence interval.
+  source: src-luna16-evaluation
+  quote: Our hit criterium is that a candidate should be located within a distance R of the nodule
+    center, where R is set to the diameter of the nodule divided by 2.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Zenodo's record holds part 1 of 2 of the download, the other subsets in a second
+    record (part 2), which was not read.
+  access_basis:
+    reason: Scans, reference standard, candidate lists and the evaluation script are an open Zenodo
+      record under CC BY 4.0, downloadable without an account. The images come from LIDC-IDRI,
+      public at The Cancer Imaging Archive under CC BY 3.0.
+    source: src-zenodo-luna16
+    quote: Published March 16, 2019 | Version v3 Dataset Open LUNA16 Part 1/2
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The false positive reduction track's candidate list was replaced after ISBI 2016 by a
+      larger one, and the board marks results on the original list with an asterisk.
+    source: src-luna16-data
+    quote: After ISBI 2016, we have decided to release a new set of candidates, candidates_V2.csv,
+      for the false positive reduction track.
+  data_provenance:
+    - inherited-from-constituents
+    - real-world-instrument
+  data_provenance_note: The scans and the radiologists' marks are LIDC-IDRI's, a public database
+    built for developing and evaluating CAD methods, selected and converted for LUNA16, which merged
+    the four readers' marks into its reference standard. The scans are clinical and low-dose CT
+    recorded at the LIDC-IDRI sites (real-world-instrument). The candidate lists come from five
+    existing detection algorithms.
+  data_provenance_source: src-tcia-lidc-idri
+  data_provenance_quote: It is a web-accessible international resource for development, training,
+    and evaluation of computer-assisted diagnostic (CAD) methods for lung cancer detection and
+    diagnosis.
+  contamination_risk: high
+  contamination_risk_note: There is one split, all 888 scans, and its reference standard is public.
+    Entrants train and test on the same scans through the provided folds, and the paper concedes the
+    positive bias of tuning a design on the full set. In September 2017 the organisers stopped
+    listing submissions that their sanity checks flagged. Results now come from papers (as_used),
+    with only the folds between a system's training and the scored scans.
+  contamination_evidence:
+    - source: src-arxiv-1612-08012-v4
+      stance: supports
+      quote: This data set can be used for training of the systems and the evaluation of the
+        algorithms is performed on the same data set.
+    - source: src-arxiv-1612-08012-v4
+      stance: supports
+      quote: positive bias may still remain if the design and architecture of a system are selected
+        or optimized based on the full challenge data set
+    - source: src-luna16-announcement-2017
+      stance: against
+      quote: We ask all participants to train their systems in a cross-validation procedure or to
+        not use the LIDC data for training.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: CPM is bounded at 1. The paper's observer study found nodules among the
+    combined systems' false positives that the LIDC-IDRI readers had missed, so a perfect score
+    means matching an incomplete reference standard; the extra nodules were released separately.
+  ceiling_anchor_type_source: src-luna16-evaluation
+  ceiling_anchor_type_quote: Clearly a perfect system will have a score of 1 and the lowest possible
+    score is 0.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_source: src-luna16-data
+  dataset_licence_quote: This data uses the Creative Commons Attribution 3.0 Unported License. The
+    data for LUNA16 is made available under a similar license, the Creative Commons Attribution 4.0
+    International License.
+  upstream_licences: LIDC-IDRI's images and annotations are CC BY 3.0 at The Cancer Imaging Archive,
+    and its data usage policy requires citing the collection's DOI.
+  upstream_licences_source: src-tcia-lidc-idri
+  upstream_licences_quote: Users must abide by the TCIA Data Usage Policy and Restrictions.
+  size:
+    - count: 888
+      unit: CT scans
+      subset: all (both tracks, in ten folds)
+      source: src-luna16-data
+      quote: In total, 888 CT scans are included.
+    - count: 1186
+      unit: reference nodules (3 mm or more, accepted by at least three of four radiologists)
+      subset: reference standard
+      source: src-luna16-data
+      quote: The annotation file contains 1186 nodules.
+    - count: 754975
+      unit: candidate locations to classify
+      subset: false positive reduction track (candidates_V2)
+      source: src-luna16-evaluation
+      quote: 754,975 findings (the amount of given candidates) are expected
+    - count: 551065
+      unit: candidate locations, finding 1,120 of the 1,186 nodules
+      subset: the original candidate list (ISBI 2016)
+      source: src-luna16-data
+      quote: Using this method, 1120 out of 1186 nodules are detected with 551,065 candidates.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The LUNA16 organisers, at the Diagnostic Image Analysis Group of Radboud University
+    Medical Center (Nijmegen)
+  maintainer_basis:
+    reason: The paper's first and last authors are at the Diagnostic Image Analysis Group, as are
+      three of the four organisers the site lists; the Zenodo record holding the data is in the
+      names of two of them at Radboud UMC. Grand Challenge hosts the site.
+    source: src-arxiv-1612-08012-v4
+    quote: Diagnostic Image Analysis Group, Radboud University Medical Center, Nijmegen, The
+      Netherlands
+  maintainer_type: academic-lab
+  maintainer_type_note: Radboud University Medical Center is a university medical centre and the
+    Diagnostic Image Analysis Group a research group in it. conference-workshop was considered; the
+    challenge had one ISBI 2016 workshop and then stayed open as a standing board, with no team
+    re-forming by edition.
+  submission_process:
+    - maintainer-scored-predictions
+    - publication-gated
+  submission_process_note: Entrants uploaded a CSV of findings and a PDF describing the system; the
+    site's evaluation script scored the CSV against the public reference standard and posted the
+    result. The organisers reserved the right not to process a submission without a suitable
+    description, and from 2017-09-01 processed only those with a full description article. Their
+    sanity checks kept implausible results off the board. Teams could submit as often as they
+    wanted, provided each submission was substantially different.
+  submission_process_source: src-arxiv-1612-08012-v4
+  submission_process_quote: Submitted results are automatically evaluated and presented on the
+    website.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-luna16-leaderboard
+      quote: DIAG_CONVNET (arnaud.setio) 23 May 2016 0.854
+  independence_flags_note: DIAG_CONVNET, the organisers' group's multi-view ConvNet (Setio et al.,
+    2016), is ranked on the false positive reduction board, submitted from the account of the
+    paper's first author, an organiser. The detection board also carries VisiaCTLung, a commercial
+    lung CAD product, and M5LCADThreshold0.3 from accounts named after two other organisers. No
+    prize or sponsor appears on the pages read.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The scans, reference standard and evaluation script are public, so anyone can compute a
+      CPM on the 888 scans; the board itself takes no new entries.
+    source: src-luna16-announcement-2018
+    quote: the evaluation script of LUNA16 will stay available in the Zenodo repository, so you can
+      still evaluate your system on LUNA16 yourself and compare to the systems listed on the
+      leaderboard
+  harness_availability: official-harness
+  harness: The LUNA16 evaluation script (evaluationScript.zip in the Zenodo record), the script the
+    site scored submissions with
+  harness_source: src-luna16-evaluation
+  harness_quote: Evaluation script is provided in this link, so that participants can use the same
+    evaluation method for the development of the algorithm.
+  code_licence: null
+  code_licence_note: The script is a file of the Zenodo record, whose licence is CC BY 4.0; no
+    software licence of its own was read.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which track (nodule detection or false positive reduction) and, for the
+  # second, which candidate list (the original or candidates_V2, asterisked on the board); and what the system
+  # was trained on (the ten provided folds, folds of the paper's own, or outside data such as NLST scans, which
+  # the paper's Aidence entry used while keeping LUNA16 for validation only).
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://luna16.grand-challenge.org/
+repository: null
+leaderboard_url: https://luna16.grand-challenge.org/Results/
+
+versions:
+  - version: candidates-v1
+    label: The original candidate list (candidates.csv), made for the ISBI 2016 workshop
+    version_kind: revision
+    changes: The false positive reduction track's first candidate list, merged from three detection
+      algorithms, finding 1,120 of the 1,186 nodules with 551,065 candidates.
+    breaking: true
+    superseded_by: candidates-v2
+    frozen: true
+    sources:
+      - src-luna16-data
+      - src-luna16-leaderboard
+  - version: candidates-v2
+    label: The extended candidate list (candidates_V2.csv)
+    version_kind: revision
+    items: 754975
+    changes: The original candidates merged with those of two full CAD systems, finding 1,166 of the
+      1,186 nodules. Scores on the two lists are not comparable, and the board marks the older ones.
+    breaking: true
+    supersedes_version: candidates-v1
+    frozen: true
+    sources:
+      - src-luna16-data
+      - src-luna16-evaluation
+      - src-luna16-leaderboard
+
+subsets:
+  - id: luna16#ndet
+    label: Nodule detection (NDET)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1612-08012-v4
+        quote: The complete nodule detection track requires the participants to develop a complete
+          CAD system, meaning that the only input into the system is a CT scan.
+    notes: Complete systems take the CT scan alone; 21 rows on its board.
+  - id: luna16#fpred
+    label: False positive reduction (FPRED)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1612-08012-v4
+        quote: In the false positive reduction track, participants are only required to classify a
+          number of locations in each scan as being a nodule or not.
+      - source: src-luna16-leaderboard
+        quote: The submissions with asterisk (*) used the initially provided list of nodule
+          candidates computed using fewer candidate detection algorithms.
+    notes: Systems score each supplied candidate location; 29 rows on its board, those with an
+      asterisk on the original candidate list.
+
+history:
+  - date: 2018-01-03
+    event: channel-closed
+    field: execution.submission_channel
+    from: the site's Submit page (luna16.grand-challenge.org/Submit/)
+    source: src-luna16-announcement-2018
+    quote: We have decided to stop processing new submissions to LUNA16. The website and the data
+      will remain available.
+    note: From 2017-09-01 the channel had taken only submissions with a full description article
+      (src-luna16-announcement-2017).
+
+tags:
+  - lung-nodules
+  - chest-ct
+  - computer-aided-detection
+  - froc
+  - lidc-idri
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1612-08012-v4
+    - src-arxiv-1612-08012
+    - src-luna16-site
+    - src-luna16-data
+    - src-luna16-evaluation
+    - src-luna16-leaderboard
+    - src-luna16-announcement-2017
+    - src-luna16-announcement-2018
+    - src-zenodo-luna16
+    - src-tcia-lidc-idri
+    - src-pmc-12868601
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text; its abstract page for the dates and the
+    journal DOI; six pages of the challenge site, scripts and styles stripped, each withheld from archiving
+    because its HTML carries an organiser's e-mail address; Zenodo's record of the data (a DOI, not
+    archived); TCIA's LIDC-IDRI page; and the PMC copy of a February 2026 Digital Health paper, withheld
+    for
+    its corresponding author's address. The site's Description, Procedure, Download and Tutorial pages
+    were
+    read but not cited.
+  confidence: medium
+  review_checks:
+    - check: lifecycle active or mature. The board has been frozen since 2018 and the organisers
+        called for a successor with a hidden test set, but papers still report CPM on the scans (a
+        February 2026 paper read here), which the precedence rule reads as active.
+      field: lifecycle
+      source: src-luna16-announcement-2017
+      quote: It would be a good idea to repeat the LUNA16 challenge with a new test data set.
+    - check: released is left null. No page read dates the challenge's opening; the earliest board
+        rows are 1 April 2016 and the paper's first arXiv version 2016-12-23. A dated capture of the
+        site or the ISBI 2016 workshop programme would settle it.
+      field: released
+    - check: maintainer-competes-on-own-benchmark rests on the board's submitter handle for
+        DIAG_CONVNET matching the first author and organiser, and on the paper describing
+        DIAG_CONVNET as his group's method. The handles behind VisiaCTLung and M5LCADThreshold0.3
+        are read as two other organisers' by name only.
+      field: governance.independence_flags
+      source: src-arxiv-1612-08012-v4
+      quote: This method uses multi-view ConvNets proposed by Setio et al. (2016)
+    - check: calibration-uncertainty was rejected although the scorer consumes each mark's degree of
+        suspicion, because FROC only thresholds it. Confirm that reading of the inclusion test.
+      field: capability
+    - check: data_provenance takes inherited-from-constituents for LIDC-IDRI, read as a published
+        CAD dataset rather than a curated archive of records. expert-authored was not added for the
+        radiologists' marks, which LUNA16 inherited and merged rather than commissioned.
+      field: data.data_provenance
+    - check: The slice-thickness cut-off differs between the Data page (2.5 mm) and the paper (3
+        mm), both giving 888 scans; the description says only that thick-slice scans were removed.
+      source: src-arxiv-1612-08012-v4
+      quote: we discarded scans with a slice thickness greater than 3 mm
+    - check: versions records the false positive reduction track's two candidate lists as revisions
+        of the whole benchmark, although the nodule detection track did not change with them. A
+        per-subset record may fit better.
+      field: versions
+    - check: Commercial products whose components are not described (VisiaCTLung, Aidence,
+        JianPeiCAD) are among the entrants; whether observed_subjects should add
+        full-product-pipeline beside domain-specialist-model.
+      field: designed_for_subjects
+  personal_data_excluded:
+    - source: src-luna16-site
+      what: An organiser's e-mail address in the page's mailto links (navigation and contact).
+    - source: src-luna16-data
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-luna16-evaluation
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-luna16-leaderboard
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-luna16-announcement-2017
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-luna16-announcement-2018
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-pmc-12868601
+      what: The corresponding author's e-mail address in the author notes.
