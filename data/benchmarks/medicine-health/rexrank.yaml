@@ -1,0 +1,495 @@
+# data/benchmarks/medicine-health/rexrank.yaml
+#
+# P1-S6-T03, medicine-health entry 8 of 10. Filled from the ReXrank paper, arXiv 2411.15122 read as its v2 PDF
+# (2026-08-12), and its abstract page; the leaderboard at rexrank.ai and its submission guideline page (scripts
+# and styles stripped); the data README in the rajpurkarlab/ReXrank repository; the README of the lab's
+# CXR-Report-Metric repository, the paper's official metric implementation; the abstract page of CRIMSON (arXiv
+# 2603.06183), the metric the live board now leads with; and the v1 PDF of CARE-X (arXiv 2608.03890, August 2026),
+# a paper that reports results submitted to the board. Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+
+id: rexrank
+name: ReXrank
+aliases:
+  - ReXrank Challenge
+tagline: Leaderboard for AI-written chest X-ray reports, scored on a private 10,000-study set and
+  three public test sets.
+description: >
+  A public leaderboard from the Rajpurkar Lab at Harvard Medical School for AI models that write chest
+  X-ray radiology reports. A model is given a study's images with the patient's age, gender, indication
+  and comparison, and writes the findings section, or the findings and impression, which are ranked
+  separately. The generated reports are scored against the radiologists' reports on four test sets:
+  ReXGradient, 10,000 studies from 67 US sites provided by Gradient Health and held by the maintainers,
+  who run every model on it; and the public MIMIC-CXR (2,347 studies) and IU-Xray (590) test splits and
+  the CheXpert Plus validation set (200). The paper reports eight metrics, from BLEU-2 and BERTScore to
+  labeller-, entity- and LLM-based clinical metrics, with 1/RadCliQ-v1, a composite of BLEU, BERTScore,
+  SembScore and RadGraph-F1, as the primary one. The live board has since dropped FineRadScore for
+  CRIMSON, an LLM-based metric from the same lab, and its ranking follows CRIMSON. Entrants e-mail a
+  conda environment and an inference script that the maintainers run; the paper's 16 founding models
+  are public checkpoints the maintainers ran themselves. A second track, Challenge V2.0, ranks
+  vision-language models on 41,007 question-answer pairs (ReXVQA) built from the ReXGradient studies.
+self_description:
+  source: src-rexrank-leaderboard
+  quote: ReXrank is a public leaderboard for chest X-ray image interpretation, including both
+    radiology report generation (RRG) and visual question answering (VQA) tasks.
+external_ids:
+  arxiv: '2411.15122'
+paper:
+  title: 'ReXrank: A Public Leaderboard for AI-Powered Radiology Report Generation'
+  arxiv: '2411.15122'
+  version_read: v2
+  source: src-arxiv-2411-15122-v2
+released: 2024-11-22
+released_note: The paper's first arXiv version, as the abstract page dates it; v2 followed on
+  2026-08-12. The rajpurkarlab/ReXrank repository was created on 2024-06-11 (GitHub API, not a
+  quoted Source), so the board itself may be older than the paper.
+released_source: src-arxiv-2411-15122
+released_quote: Submitted on 22 Nov 2024 (v1), last revised 12 Aug 2026 (this version, v2)
+release_venue: Proceedings of The First AAAI Bridge Program on AI for Medicine and Healthcare (PMLR
+  281, 2025)
+release_venue_note: Taken from CARE-X's reference list; the ReXrank sources read do not name the
+  venue.
+release_venue_source: src-arxiv-2608-03890-v1
+release_venue_quote: Proceedings of The First AAAI Bridge Program on AI for Medicine and Healthcare,
+  volume 281 of Proceedings of Machine Learning Research
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/radiology-report-generation
+  secondary:
+    - multimodal/visual-qa
+domain_basis:
+  reason: Every scored output of the main track is a free-text radiology report written from a chest
+    X-ray study and compared with the radiologist's report. The secondary leaf is the VQA track
+    (Challenge V2.0), which asks questions about the same studies.
+  source: src-arxiv-2411-15122-v2
+  quote: a public leaderboard and challenge specifically designed for evaluating AI-powered
+    radiology report generation from chest X-ray images
+domain_considered_and_rejected:
+  - term: medicine-health/medical-imaging-diagnostic
+    reason: The taxonomy names ReXrank as this term's near miss, because the output is a written
+      report. The VQA track's presence and differential-diagnosis questions come closer, but the
+      sources read do not say who set ReXVQA's answers.
+  - term: vision/medical-imaging-cv
+    reason: The claim is a clinical task, reports scored against radiologists' reports, not a vision
+      method tested on medical images.
+capability:
+  - perception
+  - factual-precision
+  - generation-fidelity
+  - distribution-shift-generalization
+capability_basis:
+  perception:
+    reason: The input is the study's radiographs, and every clinical metric scores which findings
+      the report recovered from them.
+    source: src-arxiv-2411-15122-v2
+    quote: requiring both deep expertise in medical imaging and the ability to accurately interpret
+      and articulate intricate findings
+  factual-precision:
+    reason: RadGraph-F1, SembScore and the LLM-based metrics check the report's individual findings,
+      entities and relations against the reference one by one, whatever the report's wording.
+    source: src-arxiv-2411-15122-v2
+    quote: RadGraph-F1 is a metric for radiology report evaluation. It computes the overlap in
+      clinical entities and relations that RadGraph [11] extracts from candidate and reference
+      reports.
+  generation-fidelity:
+    reason: BLEU-2 and BERTScore score the report by its similarity to the reference text.
+    source: src-arxiv-2411-15122-v2
+    quote: It evaluates the quality of generated text by comparing n-gram precision between the
+      candidate and reference texts
+  distribution-shift-generalization:
+    reason: ReXGradient's 67 US sites were brought in because MIMIC-CXR, which most entrants train
+      on, does not test unseen distributions, and the board reports each test set as a condition of
+      its own.
+    source: src-arxiv-2411-15122-v2
+    quote: This broad dataset spectrum allows us to evaluate model performance on data with varying
+      distributions
+capability_considered_and_rejected:
+  - term: communication
+    reason: The taxonomy makes ReXrank this term's near miss. Reports are written for clinicians,
+      but every metric compares the generated report with a reference, and no reader's understanding
+      or action is scored.
+  - term: context-integration
+    reason: The patient's indication and comparison are supplied with the images, but no score
+      isolates whether the report used them.
+
+evaluation_method:
+  - reference-metric
+  - model-derived-metric
+  - model-graded-judge
+  - composite
+evaluation_method_note: The paper names RadCliQ-v1 primary ("We default use RadCliQ-v1 as the
+  primary metric"). The judge models are GREEN's own (the Stanford-AIMI implementation) and GPT-4o
+  for FineRadScore; which model the board runs CRIMSON with is not stated, and CRIMSON's release
+  includes a fine-tuned MedGemma. No scoring model's version or checkpoint (CheXbert, RadGraph,
+  BERTScore's encoder) is given in the sources read.
+evaluation_method_basis:
+  reason: BLEU-2 is a reference metric. BERTScore, SembScore (CheXbert labels), RadGraph-F1 and
+    RaTEScore are computed by released scoring models. GREEN, FineRadScore (paper) and CRIMSON (live
+    board) are LLM-based metrics whose model decides which findings are errors. 1/RadCliQ-v1, the
+    paper's primary metric, combines BLEU with three model-derived metrics into one figure.
+  source: src-arxiv-2411-15122-v2
+  quote: RadCliQ is a composite metric designed for evaluating radiology report generation,
+    combining BLEU, BERTScore, SembScore, and RadGraph-F1
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: RadGraph-F1, SembScore and RadCliQ are field-standard radiology metrics, but each is
+      computed by a model, which the taxonomy assigns to model-derived-metric.
+  - term: human-expert-eval
+    reason: CRIMSON was validated against radiologists' error counts and preferences, but no
+      radiologist rates the entrants' reports.
+    source: src-arxiv-2603-06183
+    quote: CRIMSON is validated through strong alignment with clinically significant error counts
+      annotated by six board-certified radiologists
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: Most entrants are radiology report generators trained on chest X-ray corpora (MedVersa,
+    CheXagent, MAIRA-2, RadFM, the CheXpert Plus baselines), and the taxonomy names ReXrank as the
+    term's example.
+  source: src-arxiv-2411-15122-v2
+  quote: These models were trained on different medical datasets, primarily MIMIC-CXR, CheXpert
+    Plus, and IU-Xray
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: General vision-language models appear (GPT-4V among the founding models; Qwen, Phi and
+      LLaVA models on the VQA board), but as comparators to the radiology-specific entrants.
+as_used:
+  - protocol: Findings-only reports on all four test sets, with the comparators' numbers taken from
+      the ReXrank leaderboard rather than rerun.
+    split: ReXGradient (private), MIMIC-CXR, IU-Xray and CheXpert Plus
+    source: src-arxiv-2608-03890-v1
+    quote: We compare against MedGemma, MedVersa, and CheXOne using baseline results from the
+      ReXrank leaderboard
+    note: CARE-X (Microsoft Research, August 2026), now ranked on the board. Its SFT checkpoint was
+      submitted before CRIMSON existed, so only its RL variant has a CRIMSON score.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The board carries rows dated 2026 (CARE-X, Deepwise-RG, MedGemma 1.5 4B), and a paper of
+    August 2026 reports submitting to it.
+  source: src-rexrank-leaderboard
+  quote: 25 2026 CARE-X Microsoft Research 0.438 1.635
+activity: accepting-submissions
+activity_basis:
+  reason: The submission route is open with no deadline or round stated. "Challenge V1.0" and "V2.0"
+    name the report and VQA tasks, not dated rounds.
+  source: src-rexrank-submission-guideline
+  quote: Once your model has been evaluated, your scores will be added to the leaderboard.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Deepwise-RG (Deepwise)
+    source: src-rexrank-leaderboard
+    observed_on: 2026-10-14
+    quote: 30 2026 Deepwise-RG Deepwise 0.442 2.021
+  - system: MedVersa
+    source: src-arxiv-2411-15122-v2
+    observed_on: 2026-10-14
+    quote: MedVersa emerges as one of the top-performing models
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The radiologists' findings and impression for each study. ReXGradient's
+  are held by the maintainers; the public sets' are in the repository's test files.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: ReXGradient, the set every model is scored on first, is private, so only the maintainers
+    can produce those scores. Scores on the three public sets can be recomputed with the public
+    checkpoints and metric code.
+  source: src-rexrank-leaderboard
+  quote: ReXGradient is a large-scale private test dataset contains 10,000 studies collected from
+    different medical centers in the US.
+
+task:
+  exists: true
+  input:
+    - a chest X-ray study's images (frontal, and lateral where taken), with the patient's age,
+      gender, indication and comparison
+  output: A free-text report, either the findings section or the findings and impression.
+  scoring: Each metric is averaged over the test set, per test set and per section setting. The
+    paper ranks by 1/RadCliQ-v1 (the reciprocal of the lower-is-better RadCliQ-v1); the live board
+    leads with CRIMSON, scored in (-1, 1].
+  scoring_source: src-arxiv-2608-03890-v1
+  scoring_quote: yielding a severity-weighted score in
+  source: src-arxiv-2411-15122-v2
+  quote: ReXrank employs 8 evaluation metrics and separately assesses models capable of generating
+    only findings sections and those providing both findings and impressions sections
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The three public sets are MIMIC-CXR's official test split, IU-Xray's R2Gen test split
+    and CheXpert Plus's validation set. Their test files, with each study's findings and impression,
+    sit in the repository's data folder, and the images come from each dataset's own distributor
+    under terms not read here. ReXGradient-160K, a public dataset of the same name, is a different
+    set from the 10,000-study test set.
+  access_basis:
+    reason: The headline mixes three public sets with ReXGradient, which the maintainers hold and
+      run every submitted model on; under the mixed-headline rule the held set decides.
+    source: src-rexrank-leaderboard
+    quote: In ReXrank, we use additional private test set ReXGradient, 10,000 studies for
+      benchmarking.
+  refresh: rolling-live
+  refresh_basis:
+    reason: The test sets are fixed, but the scoring changed on the live board with no version
+      label. The paper (v2, 2026-08-12) lists FineRadScore and ranks by 1/RadCliQ-v1; the live
+      tables show CRIMSON first and no FineRadScore, and CARE-X reports CRIMSON arriving after its
+      first submission.
+    source: src-arxiv-2608-03890-v1
+    quote: CRIMSON became available after the SFT checkpoint was submitted to ReXrank
+  data_provenance:
+    - real-world-instrument
+    - patient-clinical-record
+    - inherited-from-constituents
+  data_provenance_note: Chest radiographs from clinical imaging, with the radiologists' reports as
+    references. ReXGradient's studies come from 7,004 patients at 67 US sites through Gradient
+    Health; the other three sets are published datasets reused by their existing splits. Whether the
+    references are identifiable is not stated (see review_checks).
+  data_provenance_source: src-arxiv-2411-15122-v2
+  data_provenance_quote: This private test set is provided by Gradient Health, which consists of
+    10,000 studies collected from 7,004 patients across 67 medical sites in the United States.
+  contamination_risk: medium
+  contamination_risk_note: The three public test sets and their reference reports have been public
+    for years, and their test files are in the board's own repository; entrants train on the same
+    corpora's training splits. ReXGradient is private, but ReXGradient-160K, a public dataset of the
+    same name and largely the same authors, now trains entrants (CARE-X), and no source read says
+    whether the 10,000 test studies are disjoint from it. No source evidences contamination.
+  contamination_risk_source: src-github-rexrank-data-readme
+  contamination_risk_quote: 'For each dataset, the test set JSON file includes the following fields:'
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: No licence for the test data is stated in the sources read. The paper's
+    disclosure says a 4x downsampled version of the private dataset is available under the Gradient
+    Health Public License (see review_checks); the public sets keep their distributors' terms.
+  size:
+    - count: 10000
+      unit: studies
+      subset: ReXGradient (private test set)
+      source: src-arxiv-2411-15122-v2
+      quote: This private test set is provided by Gradient Health, which consists of 10,000 studies
+        collected from 7,004 patients across 67 medical sites in the United States.
+    - count: 2347
+      unit: studies
+      subset: MIMIC-CXR test split
+      source: src-arxiv-2411-15122-v2
+      quote: For public datasets, we utilize the official test splits of MIMIC-CXR (2,347 studies)
+        and IU-Xray (590 studies)
+    - count: 590
+      unit: studies
+      subset: IU-Xray test split (R2Gen's)
+      source: src-arxiv-2411-15122-v2
+      quote: We follow the split provided by R2Gen [6] and report scores on the test set, which
+        comprises 590 studies.
+    - count: 200
+      unit: studies
+      subset: CheXpert Plus validation set
+      source: src-arxiv-2411-15122-v2
+      quote: We follow the official split of CheXpert Plus and report scores on the validation set,
+        which contains 200 studies.
+    - count: 41007
+      unit: question-answer pairs over the 10,000 ReXGradient studies
+      subset: VQA track (Challenge V2.0, ReXVQA)
+      source: src-rexrank-leaderboard
+      quote: ReXrank Challenge V2.0 is a competition in VQA task utilizing VQA dataset constructed
+        from ReXGradient, including 41,007 VQA pairs with 10,000 radiological studies.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Rajpurkar Lab (Department of Biomedical Informatics, Harvard Medical School)
+  maintainer_basis:
+    reason: The board names the lab, the repository sits in the rajpurkarlab organisation, and the
+      authors are at Harvard's Department of Biomedical Informatics, with two from Gradient Health,
+      which supplied the private set.
+    source: src-rexrank-leaderboard
+    quote: ReXrank Harvard Rajpurkar Lab
+  maintainer_type: academic-lab
+  submission_process:
+    - sandboxed-rerun
+    - maintainer-run
+  submission_process_note: Entrants e-mail a model description, a conda environment file and an
+    inference script with a fixed command line to a named organiser; the maintainers run it on the
+    test sets and add the scores. The paper's 16 founding models were public checkpoints (and GPT-4V
+    through its API) that the maintainers chose and ran. A model can be withdrawn on request.
+  submission_process_source: src-rexrank-submission-guideline
+  submission_process_quote: 'Inference Script: The model should support the following command:'
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-rexrank-leaderboard
+      quote: In ReXrank, we use additional private test set ReXGradient, 10,000 studies for
+        benchmarking.
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2411-15122-v2
+      quote: Eric J Topol, and Pranav Rajpurkar. A generalist learner for multifaceted medical image
+        interpretation
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2411-15122-v2
+      quote: For evaluation, we employ GPT-4o as the LLM
+  independence_flags_note: MedVersa, listed as Harvard's and among the top models, is the paper's
+    reference 30, by three of ReXrank's authors, the lab head among them. FineRadScore's judge is
+    GPT-4o, and the GPT-4V entrant was run through OpenAI's API as a GPT-4o snapshot, so an OpenAI
+    model grades an OpenAI entrant in the paper's tables. Gradient Health, which provided the
+    private set, has two founders among the authors; it is not an evaluated party, and the paper
+    says it gave no funding.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: ReXGradient scores can only come from the maintainers, who hold the set. The three
+      public sets can be scored by anyone with the checkpoints and the metric code.
+    source: src-rexrank-leaderboard
+    quote: ReXGradient is a large-scale private test dataset contains 10,000 studies collected from
+      different medical centers in the US.
+  reproducibility_blockers:
+    - private-test-set
+  reproducibility_blockers_note: The RadGraph checkpoint behind RadGraph-F1 and RadCliQ-v1 is
+    downloaded from PhysioNet after credentialed access is granted.
+  reproducibility_blockers_source: src-github-cxr-report-metric-readme
+  reproducibility_blockers_quote: 'Note: You need to apply for credentialed access to RadGraph on PhysioNet.'
+  harness_availability: official-harness
+  harness: CXR-Report-Metric (rajpurkarlab) for BLEU, BERTScore, SembScore, RadGraph-F1 and
+    RadCliQ-v1; GREEN, RaTEScore, FineRadScore and CRIMSON from their own repositories
+  harness_note: The paper names the lab's metric repository as RadCliQ's official implementation.
+    The pipeline that runs submitted scripts on ReXGradient is not published, and no version of any
+    metric code is pinned.
+  harness_source: src-arxiv-2411-15122-v2
+  harness_quote: For our evaluation, we utilized the official implementation
+  code_licence: MIT
+  code_licence_note: CXR-Report-Metric's README states MIT; GitHub's licence metadata for
+    rajpurkarlab/ReXrank also reports MIT (read 2026-10-14).
+  code_licence_source: src-github-cxr-report-metric-readme
+  code_licence_quote: This repository is made publicly available under the MIT License.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which test set and section setting (findings only, or findings and
+  # impression), which metric implementations and versions (CXR-Report-Metric, RaTEScore, GREEN), and which
+  # judge model and version scored the LLM-based metrics (GPT-4o for FineRadScore in the paper; CRIMSON's
+  # model on the live board).
+  material_extra:
+    - subset_used
+    - harness
+    - judge_model
+    - judge_model_version
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper ranks models by 1/RadCliQ-v1 averaged over the four test sets. The live board
+    shows no cross-set aggregate; it ranks each test set in its own column.
+  source: src-arxiv-2411-15122-v2
+  quote: based on the average 1/RadCliQ-v1 metric of four distinct datasets
+
+homepage: https://rexrank.ai/
+repository: https://github.com/rajpurkarlab/ReXrank
+leaderboard_url: https://rexrank.ai/
+
+tags:
+  - radiology
+  - chest-x-ray
+  - report-generation
+  - visual-question-answering
+  - leaderboard
+  - private-test-set
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2411-15122-v2
+    - src-arxiv-2411-15122
+    - src-rexrank-leaderboard
+    - src-rexrank-submission-guideline
+    - src-github-rexrank-data-readme
+    - src-github-cxr-report-metric-readme
+    - src-arxiv-2603-06183
+    - src-arxiv-2608-03890-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, with windows that keep the corresponding
+    author's contact line out; its abstract page for the dates; the leaderboard and the submission
+    guideline with scripts and styles stripped (the guideline names an organiser's personal e-mail
+    address, so it is withheld from archiving); the data README and the metric repository's README at
+    main; CRIMSON's abstract page; and CARE-X's v1 PDF (a DOI) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: reference-metric is tagged because BLEU-2 is a column on every table and one of
+        RadCliQ-v1's constituents, which composite says to tag as well. The taxonomy's
+        reference-metric example lists ReXrank as a near miss, so the example and the tests
+        disagree.
+      field: evaluation_method
+      source: src-arxiv-2411-15122-v2
+      quote: It evaluates the quality of generated text by comparing n-gram precision between the
+        candidate and reference texts
+    - check: The paper names RadCliQ-v1 primary, but the live board's ranking follows CRIMSON. The
+        summary table's order matches the CRIMSON column, not 1/RadCliQ-v1 (MAIRA-2 is third on
+        ReXGradient with CRIMSON 0.391 and 1/RadCliQ-v1 0.93, above UniRG-CXR at 0.315 and 1.509),
+        and a comment in the page's stylesheet, outside the stripped extract, calls CRIMSON the
+        primary metric. If CRIMSON is the headline, composite describes a secondary column only.
+      field: evaluation_method
+      source: src-rexrank-leaderboard
+      quote: Findings Findings + Impression Rank Model CRIMSON 1/RadCliQ-v1 BLEU BertScore SembScore
+        RadGraph RaTEScore GREEN
+    - check: GREEN and CRIMSON run fine-tuned, released models (GREEN's own; a fine-tuned MedGemma
+        for CRIMSON), which sits between model-graded-judge and model-derived-metric. With
+        model-graded-judge tagged, the reference-grader rule asks for reference conditions naming
+        the judge; the board does not say which CRIMSON model it runs.
+      field: evaluation_method
+      source: src-arxiv-2603-06183
+      quote: We release the metric, the evaluation benchmarks, RadJudge and RadPref, and a
+        fine-tuned MedGemma model
+    - check: grader-from-evaluated-party rests on the paper's GPT-4o FineRadScore judge and GPT-4V
+        entrant. Whether it also covers CRIMSON (by the maintainer lab, whose MedVersa competes, and
+        built on MedGemma while Google's MedGemma models are ranked) or GREEN (Stanford-AIMI, while
+        Stanford models are ranked).
+      field: governance.independence_flags
+      source: src-arxiv-2603-06183
+      quote: Oishi Banerjee, Pranav Rajpurkar
+    - check: The paper's disclosure says a downsampled version of the private dataset is public. If
+        that is the 10,000-study test set rather than ReXGradient-160K, data.access and the
+        reproducibility tier change.
+      field: data.access
+      source: src-arxiv-2411-15122-v2
+      quote: is available under the Gradient Health Public License
+    - check: MIMIC-CXR is distributed by PhysioNet under credentialed access, but no source read
+        here says so for MIMIC-CXR (the paper calls it publicly accessible); only RadGraph's
+        checkpoint is stated as credentialed. It does not change data.access, which ReXGradient
+        decides.
+      field: data.access
+      specialist: true
+    - check: distribution-shift-generalization rests on ReXGradient's held-out sites.
+        ReXGradient-160K, from the same provider, is public and now used for training (CARE-X), and
+        the sources do not say whether the test studies or sites are disjoint from it.
+      field: capability
+      source: src-arxiv-2608-03890-v1
+      quote: alongside CheXpert-Plus (Chambon et al., 2024) and ReXGradient (Zhang et al., 2025a)
+    - check: The VQA track (Challenge V2.0, on ReXVQA) is kept in this entry as a secondary domain.
+        It could be its own entry or a subset; its scoring (accuracy by question type) is not
+        tagged, because the sources read do not describe the answer format.
+      field: domain
+      source: src-rexrank-leaderboard
+      quote: Rank Model Overall Accuracy Differential Diagnosis Geometric Information Location
+        Assessment Negation Assessment Presence Assessment
+    - check: patient-clinical-record is tagged because the references are clinical radiology reports
+        held under data-use terms. The term's definition says identifiable records, and the sources
+        do not say whether these are identifiable.
+      field: data.data_provenance
+      specialist: true
+    - check: activity is accepting-submissions. The site calls V1.0 and V2.0 challenges and
+        competitions; if they ran as dated rounds that have closed, leaderboard-live-no-round fits
+        instead.
+      field: activity
+      source: src-rexrank-leaderboard
+      quote: ReXrank Challenge V1.0 is a competition in the generation of chest radiograph reports
+        utilizing ReXGradient, the largest private test dataset consisting of 10,000 studies across
+        67 sites.

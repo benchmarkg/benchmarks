@@ -1,0 +1,750 @@
+# data/benchmarks/medicine-health/medhelm.yaml
+#
+# P1-S6-T03, medicine-health entry 3 of 10. Filled from the MedHELM paper, arXiv 2505.23802 read as its v2 PDF
+# (2025-06-02), and its abstract page; the MedHELM page of the HELM documentation and HELM's Maintenance Mode
+# Policy page; the leaderboard's own files, its config script at /helm/medhelm/latest/ and the summary.json and
+# schema.json of release v4.0.0 in the public crfm-helm-public bucket (no score was read from the bucket); and the
+# v3 PDF of a CHIL 2026 paper (arXiv 2601.03423) that reports MedHELM jury scores, as evidence of use. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# MedHELM itself: the clinician-validated taxonomy, the benchmark suite mapped onto it and the leaderboard. Its
+# scenarios that are benchmarks in their own right (MedQA among them, entry medqa) are recorded here as subsets
+# only; see review_checks.
+
+id: medhelm
+name: MedHELM
+tagline: Stanford's clinician-validated suite of medical LLM tasks, from decision support to
+  billing, ranked by win rate.
+description: >
+  Stanford's holistic evaluation of language models on medical tasks, built on HELM by Stanford's
+  School of Medicine, Stanford Health Care and CRFM. A taxonomy of 5 categories, 22 subcategories and
+  121 tasks, validated with 29 clinicians, organises a suite of benchmarks: 35 in the paper (17
+  existing, 5 reformulated from existing datasets and 13 new, 12 of them on electronic health
+  records), and 37 in the final leaderboard release, which adds MedQA and MedMCQA. Each scenario
+  keeps its own metric: exact match for multiple-choice and classification tasks, a range check for
+  MedCalc-Bench, execution accuracy for EHRSQL, micro-F1 for ICD-10 billing codes, and, for the 13
+  open-ended scenarios, a jury of three LLMs (GPT-4o, Claude 3.7 Sonnet, Llama 3.3 70B) rating
+  accuracy, completeness and clarity. Models are ranked by pairwise win rate across the scenarios,
+  with a macro-average beside it. Of the paper's 35, 14 are public, 7 gated behind credentialed
+  access and 14 private, run only inside Stanford. The maintainers chose and ran every model. HELM
+  entered maintenance mode on 2026-06-01, which left v4.0.0 (13 models, January 2026) as the last
+  release.
+self_description:
+  source: src-arxiv-2505-23802-v2
+  quote: We introduce MedHELM, an extensible evaluation framework for assessing LLM performance for
+    medical tasks
+external_ids:
+  arxiv: '2505.23802'
+paper:
+  title: 'MedHELM: Holistic Evaluation of Large Language Models for Medical Tasks'
+  arxiv: '2505.23802'
+  version_read: v2
+  source: src-arxiv-2505-23802-v2
+released: 2025-05-26
+released_note: The paper's first arXiv version, as its abstract page dates it. The leaderboard's
+  bucket holds an earlier release, v1.0.0, whose summary.json is dated 2025-02-28; that file was
+  read but is not kept as a Source (see review_checks).
+released_source: src-arxiv-2505-23802
+released_quote: Submitted on 26 May 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/clinical-task-suites
+  secondary:
+    - medicine-health/clinical-qa
+    - medicine-health/diagnosis-triage
+    - medicine-health/treatment-planning
+    - medicine-health/ehr-prediction
+    - medicine-health/biomedical-literature
+domain_note: The secondaries are the subdomains its scenarios fall in. clinical-qa takes the
+  closed-book exam questions (HeadQA, Medbullets, MedQA, MedMCQA); diagnosis-triage the diagnostic
+  support and referral scenarios (CLEAR, MedCalc-Bench, the three referral sets); treatment-planning
+  MTSamples, which asks for a treatment plan; ehr-prediction EHRSHOT, which predicts a future event
+  from a coded record; biomedical-literature PubMedQA and MedHallu. Note generation, patient
+  communication and administration have no subdomain of their own.
+domain_basis:
+  reason: The suite spans the five categories of a clinical task taxonomy, no one subdomain holds
+    most of its scenarios, and its own claim is complete coverage of that taxonomy, which is the
+    inclusion test of clinical-task-suites (MedHELM is the term's example).
+  source: src-arxiv-2505-23802-v2
+  quote: a comprehensive benchmark suite comprising 35 benchmarks (17 existing, 18 newly formulated)
+    providing complete coverage of all categories and subcategories in the taxonomy
+domain_considered_and_rejected:
+  - term: medicine-health/radiology-report-generation
+    reason: MIMIC-RRS writes a report's impression from its findings text; no scenario produces a
+      report from an imaging study.
+  - term: medicine-health/clinical-agent-workflows
+    reason: The administrative scenarios (referrals, billing codes, CDI questions) are single
+      prompts over a supplied note; no scenario acts against a health information system.
+  - term: medicine-health/clinical-dialogue
+    reason: MedDialog summarises a conversation and MentalHealth writes one counsellor reply; no
+      scenario scores the conduct of a multi-turn exchange, which the term's definition asks.
+  - term: medicine-health/mental-health
+    reason: One scenario of 37 (MentalHealth), graded on the suite's general accuracy, completeness
+      and clarity axes rather than on mental-health criteria the sources describe.
+  - term: medicine-health/medical-safety
+    reason: RaceBias asks the model to detect race-based content in answers written by others; no
+      scenario measures harmful advice the evaluated model gives.
+  - term: general-intelligence/agi-composite-suites
+    reason: The breadth is within medicine, and that family is cross-field by definition.
+capability: []
+capability_considered_and_rejected:
+  - term: context-integration
+    reason: Most scenarios supply a note, message or record (the paper's Context component), but the
+      sources describe MedHELM by task category and make no claim of the form "tests X", and 02 S11
+      rule 2 forbids inferring one. The closed-book exam scenarios supply no source at all.
+    source: src-arxiv-2505-23802-v2
+    quote: 'Context: the raw input presented to the LLM (e.g. a clinical note, patient message, or structured
+      EHR record).'
+  - term: knowledge-recall
+    reason: Only the closed-book question sets (HeadQA, Medbullets, MedQA, MedMCQA) fit, a minority
+      of the suite, and no source claims the suite tests recall.
+  - term: generation-fidelity
+    reason: The open-ended scenarios are rated by a jury on accuracy, completeness and clarity,
+      using gold responses only when needed, not scored by similarity to a reference.
+
+evaluation_method:
+  - exact-match
+  - multiple-choice
+  - numeric-tolerance-match
+  - execution-tests
+  - classification-metric
+  - model-graded-judge
+  - rubric-graded
+  - composite
+  - entrant-relative-ranking
+evaluation_method_note: The jury is GPT-4o, Claude 3.7 Sonnet and Llama 3.3 70B, all three also
+  evaluated models. The paper names the evaluated snapshots in Table 1 (GPT-4o 2024-05-13, Claude
+  3.7 Sonnet 20250219) but does not give the judges' snapshot identifiers. Each response's jury
+  score is the mean of nine ratings (3 judges by 3 axes); NoteExtract replaces completeness with
+  structure. MedCalc-Bench's tolerance rule is exact match for risk, severity and diagnosis
+  questions and a range check for the rest.
+evaluation_method_basis:
+  reason: >
+    Each scenario keeps its own method. exact-match for the closed-ended scenarios and Medec's
+    error flag; multiple-choice for the closed-ended scenarios with predefined options (22 of the
+    paper's 35), whose chance baselines differ by scenario (two to five options);
+    numeric-tolerance-match for MedCalc-Bench's range check; execution-tests for EHRSQL's executed
+    queries; classification-metric for MIMIC-IV Billing Code's micro-F1; model-graded-judge and
+    rubric-graded for the 13 open-ended scenarios, three judge models each rating three named axes
+    from 1 to 5. composite for the macro-average and entrant-relative-ranking for the win rate,
+    which compares each model with every other and so moves when the pool changes.
+  source: src-arxiv-2505-23802-v2
+  quote: MedCalc Accuracy as exact match or thresholded match depending on question type, MedFlagAcc
+    as binary accuracy for detecting presence of errors, EHRSQLExeAcc as execution accuracy of
+    generated code against a target output, and MIMICBillingF1 as the F1 score on ICD-10 codes
+    extracted from a medical note
+evaluation_method_considered_and_rejected:
+  - term: human-expert-eval
+    reason: Clinicians rated outputs only to validate the jury, on two benchmarks; no published
+      score comes from them.
+    source: src-arxiv-2505-23802-v2
+    quote: To validate the LLM-jury approach, we collected clinician ratings on a subset of two
+      open-ended benchmarks (MEDIQA and ACI-Bench).
+  - term: reference-metric
+    reason: ROUGE is computed for the open-ended scenarios but only as a secondary metric, outside
+      the win rate and the macro-average.
+    source: src-arxiv-2505-23802-v2
+    quote: ROUGE and BERTScore were also computed for all open-ended benchmarks with gold standard
+      responses but used only as secondary metrics due to their limited alignment with clinical
+      judgment.
+  - term: model-derived-metric
+    reason: BERTScore is secondary in the same way.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: General frontier models are prompted directly under one prompting and decoding regimen,
+    with no tools and no loop; none is a medical model. The final release adds GPT-5, GPT-5 mini,
+    o4-mini and Gemini 2.5 Pro.
+  source: src-arxiv-2505-23802-v2
+  quote: We evaluated 9 state-of-the-art LLMs (Table 1) under a uniform prompting and decoding
+    regimen.
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: Medicine is the suite's subject, not its designed-for model; every evaluated model is a
+      general one (MedHELM is the term's near miss).
+as_used:
+  - protocol: MedHELM's LLM-jury metric applied outside the leaderboard to three of its open-ended
+      scenarios (MIMIC-BHC, MTSamples Procedures, MIMIC-RRS), 100 samples each, reported as a mean
+      out of 5 beside other metrics.
+    split: 100 samples per scenario
+    source: src-arxiv-2601-03423-v3
+    quote: 'on 100 samples from: MIMIC-BHC (Aali et al., 2024)'
+    note: A CHIL 2026 paper on training-free adaptation of clinical models, with Qwen3-30B and
+      MeLLaMA-13B among its systems. Three of its authors are MedHELM authors, so it is not an
+      independent use.
+
+lifecycle: mature
+lifecycle_basis:
+  reason: HELM, which hosts MedHELM's code and leaderboard, entered maintenance mode on 2026-06-01.
+    The instrument stays available and in use, and its result record is frozen at v4.0.0; ADR-0019
+    reads that as mature, with the ending recorded in activity (MedHELM is mature's example).
+  source: src-helm-maintenance-mode
+  quote: The HELM code and leaderboards will continue to be available as open-source resources for
+    the community.
+activity: closed
+activity_basis:
+  reason: The maintainers added every result themselves, release by release, and maintenance mode
+    formally stops new evaluations on the HELM leaderboards. HELM still takes contributions of
+    notable models and scenarios as code, which is not a route for results.
+  source: src-helm-maintenance-mode
+  quote: no new evaluations will be added to the HELM leaderboards
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: DeepSeek R1
+    source: src-arxiv-2505-23802-v2
+    observed_on: 2026-10-14
+    quote: 'DeepSeek R1: 66% win-rate'
+  - system: GPT-5 (2025-08-07)
+    source: src-medhelm-leaderboard-v4-schema
+    observed_on: 2026-10-14
+    quote: '"display_name": "GPT-5 (2025-08-07)"'
+    note: One of the 13 models in release v4.0.0's model list.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each closed-ended scenario's keyed answers, labels, values or codes. The
+  13 open-ended scenarios are scored by the LLM jury, against a gold response where the scenario has
+  one (NoteExtract has none).
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The 14 private scenarios are not released, so nobody outside Stanford can compute the
+    headline over the full suite. Anyone can run the public scenarios, and credentialed users the
+    gated ones.
+  source: src-arxiv-2505-23802-v2
+  quote: For privacy and regulatory compliance, as well as to prevent inclusion in LLM training
+    data, 14 datasets are not publicly released.
+
+task:
+  exists: true
+  input:
+    - 'a context: a clinical note, patient message, conversation, structured EHR record, question or abstract,
+      depending on the scenario'
+    - a standardized prompt template for the scenario, with the answer options for closed-ended ones
+  output: An option letter or label, a numeric value, an SQL query, a list of ICD-10 codes, or free
+    text such as a note, summary, instructions or a reply.
+  scoring: Each scenario's own metric (exact match, MedCalc accuracy, execution accuracy, micro-F1
+    or the jury score); models are ranked by pairwise win rate over the scenarios, beside a
+    macro-average of normalized scores.
+  source: src-arxiv-2505-23802-v2
+  quote: 'Context: the raw input presented to the LLM (e.g. a clinical note, patient message, or structured
+    EHR record).'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: Per the paper's 35, 14 public sets (from Hugging Face and GitHub, runnable by
+    anyone), 7 gated (PhysioNet and Redivis, for credentialed users) and 14 private (internal
+    Stanford Health Care data, run only by authorized members of the organisation). The gated sets
+    on their own would be credentialed-dua. v4.0.0 adds MedQA and MedMCQA, which the paper's access
+    table does not cover.
+  access_basis:
+    reason: The headline averages over every scenario, and 14 of them never leave the maintainers,
+      who run each model on them; private-test-server takes a headline that mixes open sets with a
+      maintainer-held one.
+    source: src-arxiv-2505-23802-v2
+    quote: Access levels are designated as 14 public, seven gated (i.e. requiring approval), and 14
+      private.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The leaderboard is published as numbered releases (v1.0.0 to v4.0.0), and each change to
+      the scenario set or the model pool came with a new release.
+    source: src-medhelm-docs
+    quote: Use the numbered release version you want to display.
+  data_provenance:
+    - inherited-from-constituents
+    - patient-clinical-record
+    - unreleasable-confidential
+  data_provenance_note: 17 scenarios are existing benchmarks reused whole and 5 reformulate existing
+    datasets, each with its own documented provenance. 12 of the 13 new benchmarks are built on
+    Stanford Health Care's electronic health records, curated with Stanford Health Care and run on a
+    PHI-compliant cluster, and the private ones cannot be released.
+  data_provenance_source: src-arxiv-2505-23802-v2
+  data_provenance_quote: The benchmark suite comprises 17 existing benchmarks, five re-formulated
+    benchmarks derived from previously unevaluated medical datasets, and 13 new benchmarks, out of
+    which 12 are EHR-based.
+  contamination_risk: medium
+  contamination_risk_note: The authors withhold the 14 private sets partly to keep them out of
+    training data. The public sets (MedQA, PubMedQA, MedDialog and the others) have been released
+    for years, so a training route into part of the scored content is plausible; no source read here
+    evidences one.
+  contamination_risk_source: src-arxiv-2505-23802-v2
+  contamination_risk_quote: For privacy and regulatory compliance, as well as to prevent inclusion
+    in LLM training data, 14 datasets are not publicly released.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: No human score on the tasks is reported, and the win rate is relative to
+    the model pool. The clinician-clinician ICC (0.43) is agreement among raters of outputs, not an
+    anchor (the taxonomy's near miss).
+  dataset_licence: null
+  dataset_licence_note: Mixed. Each public or gated scenario keeps its source dataset's terms (gated
+    ones behind PhysioNet or Redivis access), the private ones are not released, and the
+    leaderboard's bucket states no licence. No licence for the suite's data as a whole was read.
+  size:
+    - count: 37
+      unit: scenarios
+      subset: release v4.0.0, the final leaderboard
+      note: v4.0.0's schema lists the same 37 under the five categories (12, 6, 8, 6 and 5).
+      source: src-arxiv-2601-03423-v3
+      quote: any of the 37 MedHELM clinical classification, text generation, or question-answering
+        tasks
+    - count: 35
+      unit: benchmarks (17 existing, 5 reformulated, 13 new)
+      subset: the paper (release v2.0.0)
+      source: src-arxiv-2505-23802-v2
+      quote: The benchmark suite comprises 17 existing benchmarks, five re-formulated benchmarks
+        derived from previously unevaluated medical datasets, and 13 new benchmarks, out of which 12
+        are EHR-based.
+    - count: 121
+      unit: tasks in the taxonomy (5 categories, 22 subcategories)
+      subset: the taxonomy
+      source: src-arxiv-2505-23802-v2
+      quote: a clinician-validated taxonomy spanning five categories, 22 subcategories, and 121
+        tasks developed with 29 clinicians
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Stanford (CRFM's HELM, with the School of Medicine and Stanford Health Care)
+  maintainer_basis:
+    reason: The code, scenarios and leaderboard live in HELM, Stanford CRFM's framework and
+      repository (stanford-crfm/helm); the paper's authors are at Stanford's School of Medicine,
+      Stanford Health Care and CRFM, with Microsoft co-authors. Since 2026-06-01 HELM is kept by
+      volunteer maintainers.
+    source: src-helm-maintenance-mode
+    quote: HELM will continue to be maintained by volunteer maintainers on a best-effort basis.
+  maintainer_type: academic-lab
+  maintainer_type_note: Stanford Health Care, which holds the private datasets, is a partner that
+    supplies data; the repository and the leaderboard are CRFM's.
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers chose the models, ran them through HELM on Stanford
+    Health Care's deployments, some on a PHI-compliant cluster, and published each release. HELM
+    accepted model and scenario code, not results, and maintenance mode adds no new evaluations.
+  submission_process_source: src-arxiv-2505-23802-v2
+  submission_process_quote: We evaluated 9 state-of-the-art LLMs (Table 1) under a uniform prompting
+    and decoding regimen.
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2505-23802-v2
+      quote: The jury composition (GPT-4o, Claude 3.7 Sonnet, LLaMA 3.3 70B) was chosen to represent
+        diverse model architectures and training approaches
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2505-23802-v2
+      quote: For privacy and regulatory compliance, as well as to prevent inclusion in LLM training
+        data, 14 datasets are not publicly released.
+  independence_flags_note: All three jury models are among the evaluated models, so on the
+    open-ended scenarios entrants grade themselves and each other. Stanford holds the 14 private
+    sets and ran every evaluation on them. The v2 paper has no funding or acknowledgements section,
+    so funding by an evaluated party was not found and could not be ruled out; its Microsoft
+    co-authors are not the vendor of any model in v4.0.0.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Models were queried through APIs or local endpoints, and the jury is API spend as well.
+      GPUs for serving local weights are the entrant's choice, which the term's precedence rule sets
+      aside.
+    source: src-arxiv-2505-23802-v2
+    quote: All models were queried via their respective APIs or local endpoints
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The full-suite score needs the private scenarios, which only authorized members of the
+      data's organisation can run. The public scenarios can be reproduced by anyone and the gated
+      ones by credentialed users.
+    source: src-medhelm-docs
+    quote: Private Internal clinical datasets run_entries_medhelm_private_{org}.conf Authorized org
+      members
+  reproducibility_blockers:
+    - unreleasable-data
+    - private-test-set
+  reproducibility_blockers_note: The 14 private scenarios cannot be released for privacy and
+    regulatory reasons (unreleasable-data), and their items and labels stay with the maintainers
+    (private-test-set, which private-test-server requires). A further dependency has no blocker
+    term. The open-ended scores need the hosted jury (GPT-4o and Claude 3.7 Sonnet are API models),
+    and HELM warns that external APIs and models may change or be deprecated now that it is
+    unsupported.
+  reproducibility_blockers_source: src-arxiv-2505-23802-v2
+  reproducibility_blockers_quote: For privacy and regulatory compliance, as well as to prevent
+    inclusion in LLM training data, 14 datasets are not publicly released.
+  harness_availability: official-harness
+  harness: HELM, installed as crfm-helm with the medhelm extra; helm-run over the
+    run_entries_medhelm_{public,gated,private_org}.conf files, helm-summarize with
+    schema_medhelm.yaml
+  harness_source: src-medhelm-docs
+  harness_quote: Run the following command to install HELM and the necessary MedHELM extensions
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for stanford-crfm/helm says the same (read
+    2026-10-14); the repository was last pushed on 2026-09-01.
+  code_licence_source: src-helm-maintenance-mode
+  code_licence_quote: as long as you comply with the terms of the Apache 2.0 License
+  est_cost_usd:
+    min: 804.74
+    max: 1806.17
+    basis: The paper's upper-bound estimate of one model's full run over the 35 benchmarks,
+      benchmark prompts and LLM-jury together, at list prices of 2025-05-12 and the maximum output
+      tokens.
+    source: src-arxiv-2505-23802-v2
+  est_cost_usd_source: src-arxiv-2505-23802-v2
+  est_cost_usd_quote: The total cost reflects the estimated per-model expense of running a MedHELM
+    evaluation across 35 benchmarks
+  runnable_via:
+    - helm
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profiles: which release (the scenario set and the model pool change between them), and the
+  # model deployment, since the run entries name Stanford Health Care's own deployments ("The model_deployments of
+  # the models listed in these run entries are specific to Stanford Healthcare", src-medhelm-docs). The win rate
+  # compares each model with every other in the release, so a number means nothing outside its pool.
+  material_extra:
+    - provider_snapshot
+  rating_pool_required: true
+aggregation_policy: official-aggregate
+aggregation_policy_note: The win rate across the scenarios ranks the models; the paper reports a
+  macro-average of normalized scores beside it, and the categories are averaged for the paper's
+  category view.
+secondary_axes:
+  - cost
+secondary_axes_basis:
+  reason: The paper sets each model's estimated evaluation cost against its win rate.
+  source: src-arxiv-2505-23802-v2
+  quote: We plotted the mean win-rate against the cost
+
+homepage: https://crfm-helm.readthedocs.io/en/latest/medhelm/
+repository: https://github.com/stanford-crfm/helm
+leaderboard_url: https://crfm.stanford.edu/helm/medhelm/latest/
+
+versions:
+  - version: v2.0.0
+    label: The release the paper reports
+    version_kind: revision
+    items: 35
+    changes: 35 benchmarks over the five categories and nine models (Claude 3.5 and 3.7 Sonnet,
+      DeepSeek R1, Gemini 1.5 Pro and 2.0 Flash, GPT-4o, GPT-4o mini, Llama 3.3 70B, o3-mini).
+    breaking: true
+    superseded_by: v4.0.0
+    frozen: true
+    sources:
+      - src-arxiv-2505-23802-v2
+      - src-medhelm-docs
+  - version: v4.0.0
+    label: The final release, served at /helm/medhelm/latest/
+    version_kind: revision
+    released: 2026-01-19
+    items: 37
+    changes: 37 scenarios, MedQA and MedMCQA added to the paper's 35, and 13 models, GPT-5, GPT-5
+      mini, o4-mini and Gemini 2.5 Pro added to the paper's nine. Win rates are computed over the
+      new set and pool, so they are not comparable with v2.0.0's.
+    breaking: true
+    supersedes_version: v2.0.0
+    frozen: true
+    sources:
+      - src-medhelm-leaderboard-v4-summary
+      - src-medhelm-leaderboard-v4-schema
+      - src-medhelm-leaderboard
+versions_note: The bucket also holds v1.0.0 and v3.0.0, read on 2026-10-14 but not kept as Sources.
+  v1.0.0 (summary dated 2025-02-28) has 31 scenarios and 6 models; v3.0.0 (2025-10-09) has the 37
+  scenarios with v2.0.0's nine models, so MedQA and MedMCQA first appear there. v2.0.0's own summary
+  is dated 2025-06-02.
+
+subsets:
+  - id: medhelm#clinical-decision-support
+    label: Clinical Decision Support
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"subgroups": [ "medcalc_bench", "clear", "mtsamples_replicate", "medec", "ehrshot", "head_qa",
+          "medbullets", "med_qa", "med_mcqa", "medalign", "shc_ptbm_med", "shc_sei_med" ]'
+      - source: src-arxiv-2505-23802-v2
+        quote: Clinical Decision Support is the most represented category with ten benchmarks
+    notes: Ten benchmarks in the paper; twelve in v4.0.0, with MedQA and MedMCQA.
+  - id: medhelm#medcalc-bench
+    label: MedCalc-Bench
+    parent: medhelm#clinical-decision-support
+    notes: Public, an existing benchmark. MedCalc accuracy (exact match or range check).
+  - id: medhelm#clear
+    label: CLEAR
+    parent: medhelm#clinical-decision-support
+    notes: Private, reformulated. Exact match.
+  - id: medhelm#mtsamples
+    label: MTSamples
+    parent: medhelm#clinical-decision-support
+    notes: Public, reformulated (treatment plans from transcribed reports). Jury score.
+  - id: medhelm#medec
+    label: Medec
+    parent: medhelm#clinical-decision-support
+    notes: Public, existing. Error-flag accuracy.
+  - id: medhelm#ehrshot
+    label: EHRSHOT
+    parent: medhelm#clinical-decision-support
+    notes: Gated, existing. Exact match.
+  - id: medhelm#headqa
+    label: HeadQA
+    parent: medhelm#clinical-decision-support
+    notes: Public, existing. Exact match on multiple-choice questions.
+  - id: medhelm#medbullets
+    label: Medbullets
+    parent: medhelm#clinical-decision-support
+    notes: Public, existing. Exact match on multiple-choice questions.
+  - id: medhelm#medqa
+    label: MedQA
+    parent: medhelm#clinical-decision-support
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"name": "med_qa", "display_name": "MedQA"'
+    notes: Not among the paper's 35; in v4.0.0. Exact match. MedQA has its own entry, medqa.
+  - id: medhelm#medmcqa
+    label: MedMCQA
+    parent: medhelm#clinical-decision-support
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"name": "med_mcqa", "display_name": "MedMCQA"'
+    notes: Not among the paper's 35; in v4.0.0. Exact match.
+  - id: medhelm#medalign
+    label: MedAlign
+    parent: medhelm#clinical-decision-support
+    notes: Gated, existing (instructions over longitudinal EHRs). Jury score.
+  - id: medhelm#adhd-behavior
+    label: ADHD-Behavior
+    parent: medhelm#clinical-decision-support
+    notes: Private, new. Exact match.
+  - id: medhelm#adhd-medeffects
+    label: ADHD-MedEffects
+    parent: medhelm#clinical-decision-support
+    notes: Private, new. Exact match.
+  - id: medhelm#clinical-note-generation
+    label: Clinical Note Generation
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"subgroups": [ "dischargeme", "aci_bench", "mtsamples_procedures", "mimic_rrs", "mimic_bhc",
+          "chw_care_plan" ]'
+    notes: Six benchmarks, all open-ended and jury-scored.
+  - id: medhelm#dischargeme
+    label: DischargeMe
+    parent: medhelm#clinical-note-generation
+    notes: Gated, existing. Jury score.
+  - id: medhelm#aci-bench
+    label: ACI-Bench
+    parent: medhelm#clinical-note-generation
+    notes: Public, existing. Jury score; one of the two benchmarks clinicians rated to validate the
+      jury.
+  - id: medhelm#mtsamples-procedures
+    label: MTSamples Procedures
+    parent: medhelm#clinical-note-generation
+    notes: Public, reformulated. Jury score.
+  - id: medhelm#mimic-rrs
+    label: MIMIC-RRS
+    parent: medhelm#clinical-note-generation
+    notes: Gated, reformulated. Jury score.
+  - id: medhelm#mimic-bhc
+    label: MIMIC-IV-BHC
+    parent: medhelm#clinical-note-generation
+    notes: Gated, existing (MIMIC-BHC in the paper). Jury score.
+  - id: medhelm#noteextract
+    label: NoteExtract
+    parent: medhelm#clinical-note-generation
+    notes: Private, new. Jury score with structure in place of completeness, and no gold response.
+  - id: medhelm#patient-communication
+    label: Patient Communication and Education
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"subgroups": [ "medication_qa", "starr_patient_instructions", "med_dialog", "shc_conf_med",
+          "medi_qa", "mental_health", "shc_proxy_med", "shc_privacy_med" ]'
+    notes: Eight benchmarks.
+  - id: medhelm#medicationqa
+    label: MedicationQA
+    parent: medhelm#patient-communication
+    notes: Public, existing. Jury score.
+  - id: medhelm#patientinstruct
+    label: PatientInstruct
+    parent: medhelm#patient-communication
+    notes: Private, new. Jury score.
+  - id: medhelm#meddialog
+    label: MedDialog
+    parent: medhelm#patient-communication
+    notes: Public, existing. Jury score.
+  - id: medhelm#medconfinfo
+    label: MedConfInfo
+    parent: medhelm#patient-communication
+    notes: Private, new. Exact match.
+  - id: medhelm#mediqa
+    label: MEDIQA
+    parent: medhelm#patient-communication
+    notes: Public, existing. Jury score; one of the two benchmarks clinicians rated to validate the
+      jury.
+  - id: medhelm#mentalhealth
+    label: MentalHealth
+    parent: medhelm#patient-communication
+    notes: Private, new. Jury score.
+  - id: medhelm#proxysender
+    label: ProxySender
+    parent: medhelm#patient-communication
+    notes: Private, new. Exact match.
+  - id: medhelm#privacydetection
+    label: PrivacyDetection
+    parent: medhelm#patient-communication
+    notes: Private, new. Exact match.
+  - id: medhelm#medical-research
+    label: Medical Research Assistance
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"subgroups": [ "pubmed_qa", "ehr_sql", "shc_bmt_med", "race_based_med", "n2c2_ct_matching",
+          "medhallu" ]'
+    notes: Six benchmarks.
+  - id: medhelm#pubmedqa
+    label: PubMedQA
+    parent: medhelm#medical-research
+    notes: Public, existing. Exact match.
+  - id: medhelm#ehrsql
+    label: EHRSQL
+    parent: medhelm#medical-research
+    notes: Public, existing. Execution accuracy of the generated SQL.
+  - id: medhelm#bmt-status
+    label: BMT-Status
+    parent: medhelm#medical-research
+    notes: Private, new. Exact match.
+  - id: medhelm#racebias
+    label: RaceBias
+    parent: medhelm#medical-research
+    notes: Public, reformulated. Exact match.
+  - id: medhelm#n2c2-ct-matching
+    label: N2C2-CT Matching
+    parent: medhelm#medical-research
+    notes: Gated, existing. Exact match.
+  - id: medhelm#medhallu
+    label: MedHallu
+    parent: medhelm#medical-research
+    notes: Public, existing. Exact match.
+  - id: medhelm#administration-and-workflow
+    label: Administration and Workflow
+    evidence:
+      - source: src-medhelm-leaderboard-v4-schema
+        quote: '"subgroups": [ "shc_gip_med", "mimiciv_billing_code", "shc_sequoia_med", "shc_cdi_med",
+          "shc_ent_med" ]'
+    notes: Five benchmarks, four of them private Stanford Health Care sets.
+  - id: medhelm#hospicereferral
+    label: HospiceReferral
+    parent: medhelm#administration-and-workflow
+    notes: Private, new. Exact match.
+  - id: medhelm#mimic-iv-billing-code
+    label: MIMIC-IV Billing Code
+    parent: medhelm#administration-and-workflow
+    notes: Gated, existing. Micro-F1 over ICD-10 codes.
+  - id: medhelm#clinicreferral
+    label: ClinicReferral
+    parent: medhelm#administration-and-workflow
+    notes: Private, new. Exact match.
+  - id: medhelm#cdi-qa
+    label: CDI-QA
+    parent: medhelm#administration-and-workflow
+    notes: Private, new. Exact match.
+  - id: medhelm#ent-referral
+    label: ENT-Referral
+    parent: medhelm#administration-and-workflow
+    notes: Private, new. Exact match.
+
+history:
+  - date: 2026-06-01
+    event: channel-closed
+    field: activity
+    from: maintainer-run releases (v1.0.0 to v4.0.0)
+    to: closed
+    source: src-helm-maintenance-mode
+    quote: HELM entered maintenance mode on June 1, 2026.
+    note: HELM's maintenance mode covers every HELM leaderboard, MedHELM's among them.
+
+tags:
+  - clinical
+  - ehr
+  - llm-jury
+  - task-taxonomy
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2505-23802-v2
+    - src-arxiv-2505-23802
+    - src-medhelm-docs
+    - src-helm-maintenance-mode
+    - src-medhelm-leaderboard
+    - src-medhelm-leaderboard-v4-summary
+    - src-medhelm-leaderboard-v4-schema
+    - src-arxiv-2601-03423-v3
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, with windows that keep the corresponding
+    author's contact line out; its abstract page for the date; the MedHELM documentation page and HELM's
+    Maintenance Mode Policy, with scripts and styles stripped; the leaderboard's config script and release
+    v4.0.0's summary.json and schema.json from the crfm-helm-public bucket (no score was read); and the
+    v3 PDF of a CHIL 2026 paper as evidence of use.
+  confidence: medium
+  review_checks:
+    - check: Identity. The entry is MedHELM as a whole, the taxonomy, the suite and the leaderboard.
+        Scenarios that are benchmarks in their own right (MedQA, catalogued as medqa; PubMedQA,
+        EHRSHOT, ACI-Bench and others) are subsets here and separate entries where they exist. The
+        schema has no lineage field for a suite's constituents, so the relation lives only in the
+        subsets. The paper names MedQA among its existing benchmarks, but its Table C3 of 35 does
+        not list it; MedQA is a scenario from v3.0.0.
+      field: subsets
+      source: src-arxiv-2505-23802-v2
+      quote: We incorporated existing benchmarks from public or gated sources (e.g., MedQA, MIMIC-IV
+        Billing Code, ACI-Bench) to ensure broad subcategory coverage.
+    - check: The five secondary subdomains are read from the scenarios' descriptions; no source maps
+        each scenario to a subcategory. Whether some scenarios (MedQA, EHRSHOT) should carry a
+        domain_override, so that the coverage matrix counts them (02 S11 rule 4), was not decided.
+      field: domain.secondary
+    - check: capability is empty. The sources describe MedHELM by task category and claim no
+        capability. context-integration is the closest candidate, since most scenarios supply the
+        record the answer depends on, but 02 S11 rule 2 forbids inferring it.
+      field: capability
+    - check: numeric-tolerance-match (MedCalc-Bench) and execution-tests (EHRSQL) each rest on one
+        scenario. v4.0.0's schema describes EHRSQL's main metric as the share of correctly predicted
+        answerable questions, not as the execution accuracy the paper names; the judges' snapshot
+        identifiers are not given.
+      field: evaluation_method
+      source: src-medhelm-leaderboard-v4-schema
+      quote: Exact match for categories risk, severity and diagnosis. Check if within range for the
+        other categories.
+    - check: lifecycle mature or active. mature follows ADR-0019 and the term's own MedHELM example,
+        but results are still produced with MedHELM's jury outside the frozen leaderboard; the CHIL
+        paper's v3 (April 2026, before maintenance mode) is one, by overlapping authors.
+      field: lifecycle
+      source: src-arxiv-2601-03423-v3
+      quote: LLM-J = MedHelm LLM-jury score (average out of 5)
+    - check: data.access is private-test-server by the mixed-headline rule. The gated scenarios on
+        their own would be credentialed-dua, and the access levels of MedQA and MedMCQA come from no
+        source read here.
+      field: data.access
+      source: src-medhelm-docs
+      quote: Gated PhysioNet, Redivis run_entries_medhelm_gated.conf Credentialed users
+    - check: released is the paper's first arXiv version. The bucket's v1.0.0 summary is dated
+        2025-02-28, which would make the leaderboard older than the paper. v1.0.0 and v3.0.0 are
+        described in versions_note from files read but not kept as Sources; add them as Sources if
+        the earlier date or those versions should stand.
+      field: released
+    - check: A published version (listed as Nature Medicine on Stanford profile pages found by a web
+        search) was not read and may describe the 37-scenario suite; paper.doi is left empty.
+      field: paper
+    - check: The access level and curation status in each scenario's notes are transcribed from the
+        paper's Table C3, whose PDF text interleaves the table's columns; check them against the
+        rendered table.
+      field: subsets
+    - check: single-evaluator-private-test-set is tagged for the 14 private scenarios. Funding was
+        not stated in the v2 paper; Microsoft employs several authors, and Microsoft's Phi-3.5-mini
+        was among v1.0.0's six models (not in v4.0.0).
+      field: governance.independence_flags
+    - check: rating_pool_required is set because the win rate depends on the release's model pool;
+        the validator requires it only for preference and tournament methods.
+      field: comparability.rating_pool_required

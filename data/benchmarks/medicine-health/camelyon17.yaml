@@ -1,0 +1,494 @@
+# data/benchmarks/medicine-health/camelyon17.yaml
+#
+# P1-S6-T03, medicine-health entry 7 of 10. Filled from the challenge paper (Bandi et al., IEEE Transactions on
+# Medical Imaging 38(2), 2019), read as the text of the publisher's PDF that a co-author's group hosts at the
+# University of Freiburg; four public pages of camelyon17.grand-challenge.org (home, Data, Evaluation, Rules),
+# scripts and styles stripped; the Registry of Open Data on AWS page for the CAMELYON data set, its current
+# host; and the v2 PDF of nnMIL (arXiv 2511.14907, August 2026) as evidence of current use. Grand Challenge's
+# API, which its robots.txt disallows, was not called. Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+
+id: camelyon17
+name: CAMELYON17
+tagline: Breast cancer metastases in lymph node whole-slide images, staged per patient and scored by
+  quadratic weighted kappa.
+description: >
+  The second pathology challenge of the Diagnostic Image Analysis Group and the Department of
+  Pathology at Radboud University Medical Center, held with a workshop at ISBI 2017 and open for
+  submissions since. Systems detect and classify breast cancer metastases in whole-slide images of
+  H&E-stained sentinel lymph node sections and combine the findings into one pathologic N-stage per
+  patient (pN0, pN0(i+), pN1mi, pN1 or pN2), a simplified version of the TNM staging in which a node
+  holding only isolated tumour cells does not count as positive. The patients are artificial: five
+  slides, one lymph node each, mixed from several real patients of one centre so that the stage
+  distribution is comparable across centres. The slides come from five medical centres in the
+  Netherlands; 100 patients (500 slides) with stage and slide labels are for training, and 100 more
+  for testing, whose labels the organisers hold. CAMELYON16's slides, from two of the centres, are
+  re-used as lesion-level training data. Entrants upload predicted stages to the challenge site,
+  which scores them by five-class quadratic weighted Cohen's kappa; at the ISBI deadline 23 teams had
+  submitted 37 algorithms, scoring from 0.89 to -0.13. Its predecessor, CAMELYON16, scored metastasis
+  detection on single slides from two centres; CAMELYON17 moved to patient-level staging, added
+  isolated tumour cells and three more centres.
+self_description:
+  source: src-camelyon17-site
+  quote: The goal of this challenge is to evaluate new and existing algorithms for automated
+    detection and classification of breast cancer metastases in whole-slide images of histological
+    lymph node sections.
+paper:
+  title: 'From Detection of Individual Metastases to Classification of Lymph Node Status at the Patient
+    Level: The CAMELYON17 Challenge'
+  doi: 10.1109/TMI.2018.2867350
+  source: src-camelyon17-tmi
+released: 2016-11-18
+released_note: The day registration opened and the first training data set was released, as the home
+  page's dates give it; the site had launched on 2016-11-10 and the test data followed on
+  2017-03-01.
+released_source: src-camelyon17-site
+released_quote: '18 November 2016: First training dataset released.'
+release_venue: IEEE International Symposium on Biomedical Imaging (ISBI) 2017, Melbourne; the paper
+  in IEEE Transactions on Medical Imaging 38(2), 550-560 (2019)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/medical-imaging-diagnostic
+  secondary:
+    - vision/classification
+domain_basis:
+  reason: Systems detect metastases in pathology slides and assign each patient a pathologic
+    N-stage, scored against a reference prepared under expert pathologists' supervision, which the
+    leaf's inclusion test takes whatever the metric (it names kappa). The vision task behind it, one
+    category per patient from its slides, is recorded as the secondary, as the medicine-health
+    family's exclusion test directs.
+  source: src-camelyon17-evaluation
+  quote: The task in this challenge is to determine a pN-stage for every patient in the test
+    dataset.
+domain_considered_and_rejected:
+  - term: medicine-health/medical-imaging-segmentation
+    reason: Lesion outlines are supplied for 50 CAMELYON17 training slides and CAMELYON16's slides,
+      but no delineation is scored; only each patient's stage is.
+    source: src-camelyon17-data
+    quote: (50 annotated slides total)
+  - term: vision/medical-imaging-cv
+    reason: The claim is a clinical task, pN-staging against a pathologist-supervised reference, not
+      a vision method tested on medical images.
+  - term: vision/detection
+    reason: Metastases have to be found, but no detection is scored, only the stage derived from
+      them.
+
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is gigapixel whole-slide images, and the score depends on which metastases
+      were found in each node and how large they are, since their count and size categories fix the
+      stage.
+    source: src-camelyon17-evaluation
+    quote: To compose a pN-stage, the number of positive lymph nodes (i.e. nodes with a metastasis)
+      are counted.
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: All five centres are in both training and test, 20 training patients from each and a
+      test set built to the same stage distribution, and one kappa is computed over all 100 test
+      patients. No centre is held out or scored as a condition of its own, so the test differs from
+      training by sampling, which the term's exclusion test excludes. A derived protocol that trains
+      on CAMELYON16 and scores CAMELYON17's centres separately is recorded in as_used.
+    source: src-camelyon17-tmi
+    quote: The training set included 20 patients from each center with a disclosed pN-stage
+  - term: deductive-reasoning
+    reason: The stage follows from the slide findings by the rules the Evaluation page states, but
+      the findings must first be read from the images, so correctness is not decidable from stated
+      premises alone.
+  - term: quantitative-reasoning
+    reason: Metastases are sized and positive nodes counted on the way to the answer, but the scored
+      answer is a stage label, not a number.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: The only ranking metric is Cohen's kappa with quadratic weights between predicted and
+    reference stages, a general statistic of the whole confusion matrix that the term names. Ties
+    are broken by the same kappa on the patients of single stages, pN2 first.
+  source: src-camelyon17-evaluation
+  quote: For the evaluation of the results we use five class quadratic weighted kappa where the
+    classes are the pN-stages.
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: The classes are pathologic stages, but quadratic weighted kappa is an agreement
+      statistic with the same formula in every field, which domain-metric's exclusion test sends to
+      classification-metric.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are histopathology pipelines trained on the challenge's own slides, CNN
+    metastasis detectors with slide- and patient-level classifiers on top. Staging lymph nodes is a
+    task a clinical discipline defines, which task-specific-supervised-model's exclusion test sends
+    here.
+  source: src-camelyon17-tmi
+  quote: Almost all participants used the CAMELYON16 WSIs, the 50 exhaustively annotated CAMELYON17
+    WSIs, and all the negative WSIs from the CAMELYON17 data set to develop their algorithms.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The entrants are task-trained CNNs, but the task, pN-staging from lymph node slides, is
+      defined by pathology, a clinical discipline.
+as_used:
+  - protocol: Slide-level three-class classification (normal, micro-metastasis, macro-metastasis),
+      trained on CAMELYON16 and evaluated on CAMELYON17's labelled slides as an external set, with
+      WSI-level accuracy reported per institution. No patient stage is predicted, kappa is not
+      computed, and nothing is submitted to the challenge site.
+    split: 464 CAMELYON17 slides from the five centres
+    source: src-arxiv-2511-14907-v2
+    quote: CAMELYON17 was reserved for external evaluation with 464 WSIs from five independent
+      institutions
+    note: nnMIL (arXiv 2511.14907, v2 of August 2026), a multiple instance learning framework on
+      pathology foundation-model features, following what it calls the widely adopted protocol of
+      prior studies.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on CAMELYON17's slides; a paper revised in August 2026 uses
+    them as an external evaluation set, under a protocol of its own (as_used). The leaderboard's
+    newest readable row is dated 2021-12-20, but only its ten lowest-ranked rows could be read.
+  source: src-arxiv-2511-14907-v2
+  quote: CAMELYON17 was reserved for external evaluation with 464 WSIs from five independent
+    institutions
+activity: leaderboard-live-no-round
+activity_basis:
+  reason: The challenge ran one round, to the ISBI 2017 deadline, and reopened for submissions on
+    2017-05-15; the home page still says it is open, and the paper says it would stay open for new
+    submissions.
+  source: src-camelyon17-site
+  quote: The CAMELYON17 challenge is still open for submissions!
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Team 2's DeepLab (a ResNet-101 variant) metastasis detector, one of the twelve entries
+      the paper describes
+    source: src-camelyon17-tmi
+    observed_on: 2026-10-14
+    quote: Team 2 used a variant of ResNet101 called DeepLab
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each slide was labelled by a pathologist with its largest metastasis
+  (macro, micro or isolated tumour cells), using a cytokeratin-stained slide as reference where one
+  existed, and each patient's stage follows from its five slide labels by the challenge's simplified
+  rule. The 100 test patients' labels are withheld.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The test slides are public but their slide labels and stages are not, so only the
+    organisers' site can produce an official score.
+  source: src-camelyon17-data
+  quote: These slides are not annotated and not labelled. A pN-stage per patient is also not given.
+
+task:
+  exists: true
+  input:
+    - five whole-slide images (multi-resolution TIFF) of H&E-stained sentinel lymph node sections
+      per test patient, one node per slide
+    - for training, 100 patients with stage and slide labels, lesion outlines on 50 of their slides,
+      and CAMELYON16's slides with their lesion annotations
+  output: One pN-stage per test patient (pN0, pN0(i+), pN1mi, pN1 or pN2), uploaded to the challenge
+    site as a CSV.
+  scoring: Five-class quadratic weighted Cohen's kappa between predicted and reference stages over
+    the 100 test patients. Ties are broken by the kappa on the pN2 patients of the reference, then
+    pN1, and so on.
+  metric_range:
+    - -1.0
+    - 1.0
+  source: src-camelyon17-evaluation
+  quote: For the evaluation of the results we use five class quadratic weighted kappa where the
+    classes are the pN-stages.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The training and test slides, with the training labels and annotations, now download
+    without an account from the Registry of Open Data on AWS and from GigaScience, with a Baidu Pan
+    mirror. During the challenge the paper had access follow registration and acceptance of the
+    rules. No page read releases the test stages.
+  access_basis:
+    reason: The test slides are released with the rest of the data, but not their labels or the
+      patients' stages, so entrants upload predictions for the organisers' site to score.
+    source: src-camelyon17-data
+    quote: These slides are not annotated and not labelled. A pN-stage per patient is also not
+      given.
+  refresh: static
+  refresh_basis:
+    reason: One test set of 100 patients, released in March 2017, on which the board reopened after
+      the workshop; no source read announces a change to the items, labels or metric.
+    source: src-camelyon17-data
+    quote: The test data set was released in March 2017.
+  data_provenance:
+    - real-world-instrument
+    - expert-authored
+  data_provenance_note: H&E-stained sentinel lymph node slides from five Dutch centres, scanned on
+    three scanner models (real-world-instrument). A pathologist labelled every slide by its largest
+    metastasis and outlined the lesions on the annotated slides, with cytokeratin staining as
+    reference (expert-authored). The patients are assembled by rule from real slides, which
+    synthetic-procedural's exclusion test leaves to the slides' own provenance.
+  data_provenance_source: src-camelyon17-data
+  data_provenance_quote: All ground truth annotations were carefully prepared under supervision of
+    expert pathologists.
+  contamination_risk: medium
+  contamination_risk_note: The test labels are withheld, but the test slides have been public since
+    March 2017, now under CC0 on AWS, so unlabelled use of them is a plausible route, such as
+    self-supervised pretraining of pathology models on public slides or transductive tuning. The
+    current rules also allow open external data. No source read evidences a route.
+  contamination_risk_source: src-camelyon17-data
+  contamination_risk_quote: CAMELYON16 and CAMELYON17 data sets are open access and shared publicly
+    on GigaScience, Google Drive and on Baidu Pan.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Kappa is bounded at 1, and no source read measures pathologists'
+    agreement on the stage task. The 0.93 that the paper reports for combining the top entries is a
+    combination of entrants, not an anchor.
+  ceiling_anchor_type_source: src-camelyon17-tmi
+  ceiling_anchor_type_quote: metric ranges from −1 to +1
+  dataset_licence: CC0-1.0
+  dataset_licence_note: The AWS registry also gives CC0. The paper gives CC BY-NC-ND 4.0 for the
+    data as released for the challenge (history).
+  dataset_licence_source: src-camelyon17-data
+  dataset_licence_quote: This work is made available under CC0.
+  size:
+    - count: 100
+      unit: test patients (500 slides, five per patient)
+      subset: test
+      source: src-camelyon17-data
+      quote: For training, 100 patients will be provided and another 100 patients for testing.
+    - count: 100
+      unit: training patients with stage and slide labels (500 slides)
+      subset: training
+      source: src-camelyon17-data
+      quote: For training, 100 patients will be provided and another 100 patients for testing.
+    - count: 899
+      unit: whole-slide images for developing algorithms (CAMELYON17's 500 training slides and
+        CAMELYON16's 399)
+      subset: training material
+      source: src-camelyon17-tmi
+      quote: Participants were provided with 899 whole-slide images (WSIs) for developing their
+        algorithms.
+    - count: 1399
+      unit: whole-slide images shared for the challenge, CAMELYON16 included
+      subset: complete data set
+      source: src-camelyon17-tmi
+      quote: Altogether, 1399 WSIs were shared for the challenge
+  submission_limit:
+    max_submissions: 3
+    period_days: 0
+    per: team; the second and third must differ significantly in method
+    source: src-camelyon17-rules
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The CAMELYON17 organisers, at the Diagnostic Image Analysis Group and the Department
+    of Pathology of Radboud University Medical Center (Nijmegen)
+  maintainer_basis:
+    reason: The home page names the two Radboudumc groups as organisers, Grand Challenge hosts the
+      site, and the AWS registry lists Radboud University Medical Center as managing the data set.
+    source: src-camelyon17-site
+    quote: organised by the Diagnostic Image Analysis Group (DIAG) and Department of Pathology of
+      the Radboud University Medical Center (Radboudumc)
+  maintainer_type: academic-lab
+  maintainer_type_note: Radboud University Medical Center is a university medical centre, and the
+    Diagnostic Image Analysis Group a research group in it. conference-workshop was considered; the
+    challenge had one ISBI 2017 workshop and then stayed open as a standing board, with no team
+    re-forming by edition.
+  submission_process:
+    - held-out-server
+    - publication-gated
+  submission_process_note: Entrants upload predicted stages through the site, which scores them
+    against the withheld test labels and publishes the result. Being listed requires a link to a
+    four-page ISBI-style paper explaining the method, and a team may submit three times, each later
+    submission differing significantly in method. Anonymous participation was not allowed.
+  submission_process_source: src-camelyon17-rules
+  submission_process_quote: it is mandatory to submit a link to a 4-page paper (possibly arXiv) in
+    appropriate ISBI style to the organisers in which you explain your algorithm
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-camelyon17-data
+      quote: These slides are not annotated and not labelled. A pN-stage per patient is also not
+        given.
+  independence_flags_note: The organisers hold the test labels and every official score comes from
+    their site. Whether organiser groups also entered cannot be read; the leaderboard renders by
+    script, and its data request served only the ten lowest-ranked of 121 rows. The home page's
+    Sponsors section is logos only, among them ContextVision, Philips, Roche and Sectra by their
+    image file names, and two ContextVision AB staff co-author the paper, to which the rules invited
+    up to two authors from each of the top ten teams; no page says what the sponsors gave
+    (review_checks).
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The official score needs the withheld test labels, which only the organisers' site
+      holds. Anyone can run a system on the public test slides, but not score it.
+    source: src-camelyon17-data
+    quote: These slides are not annotated and not labelled. A pN-stage per patient is also not
+      given.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: reference-implementation-only
+  harness_availability_note: The Data page publishes Python snippets, built on the organisers' ASAP
+    library, for reading the slides and turning annotations into masks. No scoring code was found;
+    the site scores submissions against the withheld labels.
+  harness_availability_source: src-camelyon17-data
+  harness_availability_quote: The following python code snippet converts an annotation into a mask
+    file
+  submission_channel:
+    source: src-camelyon17-rules
+    quote: Evaluation of classification results uploaded to this website will be made publicly
+      available on the Results page of this site
+  submission_channel_note: The Results page the rules name returns 404 (read 2026-10-14); scores now
+    appear on the site's Leaderboard page.
+  code_licence: null
+  code_licence_note: No licence for the snippets is stated on the page; ASAP's own licence was not
+    read.
+  runnable_via:
+    - none
+  runnable_via_note: Nothing a runner could drive produces the official score, which needs the
+    withheld labels.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (subset_used: the challenge's 100 test patients scored by kappa, or slide-level
+  # classification on CAMELYON17's labelled slides as in as_used): what the system was trained on. The paper
+  # says the challenge allowed no other data sources, the current rules allow open external data if the paper
+  # discloses it, and derived protocols train on CAMELYON16 alone.
+  material_extra:
+    - training_data_policy
+
+homepage: https://camelyon17.grand-challenge.org/
+repository: null
+dataset_url: https://registry.opendata.aws/camelyon/
+dataset_url_note: The data set's page on the Registry of Open Data on AWS, managed by Radboud
+  University Medical Center, which gives the licence as CC0; GigaScience and Baidu Pan hold copies.
+dataset_url_source: src-aws-opendata-camelyon
+dataset_url_quote: AWS CLI Access (No AWS account required)
+leaderboard_url: https://camelyon17.grand-challenge.org/evaluation/challenge/leaderboard/
+
+history:
+  - date: 2017-05-15
+    event: channel-opened
+    field: execution.submission_channel
+    to: the challenge site's standing leaderboard, after the ISBI 2017 round
+    source: src-camelyon17-site
+    quote: '15 May 2017: Submission re-opened!'
+    note: The round's deadline was 1 April 2017 on the home page and 6 April 2017 in the paper.
+  - event: licence-changed
+    field: data.dataset_licence
+    from: CC-BY-NC-ND-4.0
+    to: CC0-1.0
+    source: src-camelyon17-data
+    quote: This work is made available under CC0.
+    note: The paper gives CC BY-NC-ND 4.0 for the data as released for the challenge
+      (src-camelyon17-tmi); the Data page and the AWS registry now give CC0. No source read dates
+      the change.
+
+tags:
+  - histopathology
+  - whole-slide-images
+  - breast-cancer
+  - lymph-node-metastases
+  - pn-staging
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-camelyon17-tmi
+    - src-camelyon17-site
+    - src-camelyon17-data
+    - src-camelyon17-evaluation
+    - src-camelyon17-rules
+    - src-aws-opendata-camelyon
+    - src-arxiv-2511-14907-v2
+  sources_note: >
+    The paper read as the text of the publisher's PDF hosted by a co-author's group at Freiburg (a DOI,
+    not
+    archived), with narrow windows that keep the corresponding author's address out. Of its open copies,
+    the
+    Radboud Repository's (hdl.handle.net/2066/201136) returned 503 and DTU Orbit's accepted manuscript
+    sat
+    behind a bot challenge. Four pages of the challenge site, scripts and styles stripped, each withheld
+    from
+    archiving because its HTML carries an organiser's e-mail address; the AWS registry page for the data
+    set; and nnMIL's v2 PDF (a DOI, not archived). The Background page was read but not cited; the Results
+    page returned 404; the leaderboard's data request, which serves only ten rows and carries participants'
+    user names, was read but not cited.
+  confidence: medium
+  review_checks:
+    - check: lifecycle active rests on nnMIL's use of CAMELYON17's slides under a protocol of its
+        own (as_used), not on new results against the challenge's kappa. The leaderboard's top rows
+        could not be read, and its newest readable row is dated 2021-12-20; if the board has gone
+        quiet, mature may fit better.
+      field: lifecycle
+    - check: The data licence changed from CC BY-NC-ND 4.0 (the paper) to CC0 (the Data page and the
+        AWS registry) on a date no source read gives. The GigaScience data note on the CAMELYON data
+        set (doi 10.1093/gigascience/giy065) was not read and may settle it.
+      field: data.dataset_licence
+      source: src-camelyon17-tmi
+      quote: The complete data set was made available under Creative Commons
+        Attribution-NonCommercialNoDerivatives 4.0 International License.
+    - check: distribution-shift-generalization was rejected because every centre is in both training
+        and test and one kappa is reported. The paper presents the five centres as staining and
+        scanner diversity, and nnMIL scores CAMELYON17's centres separately after training on
+        CAMELYON16, but that is a derived protocol, not the challenge's.
+      field: capability
+      source: src-camelyon17-tmi
+      quote: Five centers providing cases were included instead of only two centers, allowing for a
+        more accurate representation of preparation and staining diversity across laboratories and
+        scanners.
+    - check: harness_availability is reference-implementation-only on the strength of the Data
+        page's snippets for reading slides and annotations, which are code for taking part but not
+        for scoring. If they are too slight to count, the value is none and the
+        no-reference-implementation blocker applies.
+      field: execution.harness_availability
+    - check: The Sponsors section is images only. Its file names include ContextVision, and two
+        ContextVision AB staff co-author the paper, whose co-authors beyond the organisers come from
+        the top-ranked teams; whether that sponsorship makes funded-by-evaluated-party could not be
+        read. Whether organiser groups entered could not be checked either
+        (maintainer-competes-on-own-benchmark).
+      field: governance.independence_flags
+      source: src-camelyon17-tmi
+      quote: L. Jacobsson and M. Hedlund are with ContextVision AB
+    - check: The current Rules page allows open external data if the accompanying paper names it,
+        while the paper says the challenge allowed no other data sources. Which rule governs a given
+        leaderboard row decides its training_data_policy.
+      field: comparability.material_extra
+      source: src-camelyon17-tmi
+      quote: The challenge aimed for a fair comparison of algorithms, therefore participants were
+        not allowed to use other data sources.
+    - check: CAMELYON16, the predecessor the home page names, has no entry, so the lineage is in the
+        description only; lineage.supersedes needs a camelyon16 record to point at. Whether
+        CAMELYON17 supersedes it, or the two are separate challenges sharing data, is not stated by
+        the sources.
+      field: lineage
+      source: src-camelyon17-site
+      quote: Built on the success of its predecessor, CAMELYON17 is the second grand challenge in
+        pathology
+    - check: vision/classification is the secondary, although the scored unit is a patient of five
+        slides rather than one image.
+      field: domain.secondary
+  personal_data_excluded:
+    - source: src-camelyon17-site
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-camelyon17-data
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-camelyon17-evaluation
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-camelyon17-rules
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-camelyon17-tmi
+      what: The corresponding author's e-mail address in the first page's author notes.
+    - source: src-arxiv-2511-14907-v2
+      what: An author's e-mail address under the title.

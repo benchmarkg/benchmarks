@@ -1,0 +1,442 @@
+# data/benchmarks/medicine-health/pubmedqa.yaml
+#
+# P1-S6-T03, medicine-health entry 10 of 10. Filled from PubMedQA's paper, arXiv 1909.06146 read as its v1 PDF
+# (EMNLP 2019), and its abstract page; the repository README at master; the leaderboard page on pubmedqa.github.io
+# (scripts and styles stripped; the host serves no robots.txt); the Hugging Face dataset card in the first
+# author's namespace; the PubMedQA task in lm-evaluation-harness at the adapter's pin; and the v2 PDF of the
+# MedGemma 1.5 Technical Report (arXiv 2604.05081, May 2026), a model report that scores PubMedQA. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: pubmedqa
+name: PubMedQA
+tagline: Yes/no/maybe answers to biomedical research questions, read from PubMed abstracts with
+  their conclusions removed.
+description: >
+  A biomedical question answering dataset built from PubMed articles whose titles are questions. Each
+  instance pairs the title question with the article's structured abstract minus its conclusion (the
+  context), the conclusion itself (the long answer) and a yes, no or maybe label. The labelled set,
+  PQA-L, holds 1,000 instances labelled by two M.D. candidates: 500 are the test set and 500 are for
+  10-fold cross-validation. An unlabelled set (PQA-U, 61.2k) and an artificially generated one (PQA-A,
+  211.3k, statement titles turned into questions with heuristic yes/no labels) are released for
+  semi-supervised learning and pre-training. In the main, reasoning-required setting a system sees the
+  question and the context; in the reasoning-free setting it sees the conclusion instead, where a single
+  annotator reached 90.4% accuracy against 78.0% with the context. Scored by accuracy and macro-F1 on
+  the test set. The leaderboard on pubmedqa.github.io ranks the reasoning-required setting, was last
+  updated on 2024-04-28, and its top rows (82.0% accuracy) sit above the single-annotator human figure.
+self_description:
+  source: src-arxiv-1909-06146-v1
+  quote: We present PubMedQA, a novel dataset aimed at biomedical research question answering using
+    yes/no/maybe
+external_ids:
+  huggingface: qiaojin/PubMedQA
+  arxiv: '1909.06146'
+paper:
+  title: 'PubMedQA: A Dataset for Biomedical Research Question Answering'
+  arxiv: '1909.06146'
+  version_read: v1
+  source: src-arxiv-1909-06146-v1
+released: 2019-09-13
+released_note: The paper's only arXiv version, as the abstract page dates it.
+released_source: src-arxiv-1909-06146
+released_quote: Submitted on 13 Sep 2019
+release_venue: EMNLP-IJCNLP 2019
+release_venue_source: src-arxiv-1909-06146
+release_venue_quote: EMNLP 2019
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/biomedical-literature
+  secondary:
+    - language/understanding
+domain_basis:
+  reason: Each item asks what a published study concluded and is answered from that study's own
+    abstract, which is reading the published biomedical literature. The articles lean to clinical
+    studies (treatment outcomes, prognosis, risk factors), which keeps the family medicine-health
+    rather than biology-genetics. The answer is determined by a supplied passage, the secondary
+    leaf's definition.
+  source: src-arxiv-1909-06146-v1
+  quote: Articles of PubMedQA are biased towards clinical study-related topics
+domain_considered_and_rejected:
+  - term: medicine-health/clinical-qa
+    reason: The questions are medical, but the label is what the article's own results show, not an
+      answer that holds apart from the article, so without the supplied abstract there is no
+      determinate answer (see review_checks).
+    source: src-arxiv-1909-06146-v1
+    quote: so the answer is not universal but context-dependent
+  - term: language/retrieval-qa
+    reason: The abstract is supplied with the question; no retrieval step is part of the task.
+capability:
+  - context-integration
+capability_basis:
+  context-integration:
+    reason: The protocol supplies the abstract without its conclusion, and the label is whatever
+      that abstract's results support, so the score is whether the system read the supplied context
+      correctly. The paper built the dataset to require this.
+    source: src-arxiv-1909-06146-v1
+    quote: requires reasoning over the contexts to answer the questions
+capability_considered_and_rejected:
+  - term: quantitative-reasoning
+    reason: Nearly every item needs the context's statistics interpreted (group comparisons,
+      p-values), but the scored answer is a yes/no/maybe label, not a number or quantity, which the
+      term's inclusion test asks for.
+    source: src-arxiv-1909-06146-v1
+    quote: Reasoning over quantitative contents is required in nearly all (96.5%) of them
+  - term: knowledge-recall
+    reason: The abstract that determines the answer is in the prompt, which is the term's exclusion.
+  - term: causal-reasoning
+    reason: Over a third of the questions ask whether a factor influences an outcome, but the answer
+      is read off the study's reported results; nothing scores telling cause from correlation or
+      predicting an unobserved intervention.
+
+evaluation_method:
+  - exact-match
+  - classification-metric
+evaluation_method_basis:
+  reason: Each prediction is one of three labels checked against the reference label. Accuracy, the
+    mean of those verdicts, is exact-match, whose inclusion test keeps accuracy against a fixed
+    label set; macro-F1 over the three classes is the second headline metric. The leaderboard ranks
+    by accuracy.
+  source: src-arxiv-1909-06146-v1
+  quote: The main metrics of PubMedQA are accuracy and macro-F1 on PQA-L test set using question and
+    context as input
+evaluation_method_considered_and_rejected:
+  - term: multiple-choice
+    reason: The three labels are one fixed label set shared by every item, which the paper predicts
+      as a three-way classification and exact-match keeps. lm-evaluation-harness does frame them as
+      choices (see review_checks). The floor is the majority baseline, always yes at 55.2% accuracy,
+      not one chance in three.
+    source: src-lm-eval-harness-pubmedqa-task
+    quote: 'doc_to_choice: ["yes", "no", "maybe"]'
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The paper's baseline and comparison models are biomedical readers, BioBERT and BioELMo,
+    pretrained on PubMed text and fine-tuned on PubMedQA in several phases, with PQA-A and PQA-U
+    released for pre-training and semi-supervised learning. The task belongs to a clinical
+    discipline, which sends a fine-tuned task model here rather than to
+    task-specific-supervised-model.
+  source: src-arxiv-1909-06146-v1
+  quote: BioBERT is initialized with BERT (Devlin et al., 2018) and further pretrained on PubMed
+    abstracts
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The paper's entrants are fine-tuned on the benchmark's own training data, but the task
+      belongs to a clinical discipline, which the term's exclusion sends to domain-specialist-model.
+  - term: instruction-tuned-model
+    reason: Prompted models lead the leaderboard now (observed_subjects), but the paper predates
+      them and designs the task for fine-tuned readers.
+observed_subjects:
+  values:
+    - instruction-tuned-model
+    - domain-specialist-model
+  basis: The leaderboard's top rows are prompted large language models, general ones (GPT-4 with
+    Medprompt, Claude 3) and medical ones (Med-PaLM 2, MEDITRON, Palmyra-Med); fine-tuned biomedical
+    encoders (BioLinkBERT, BioBERT) sit lower.
+  source: src-pubmedqa-leaderboard
+as_used:
+  - protocol: Prompted generation by instruction-tuned models, the answer stated on a final-answer
+      line and scored by accuracy only, on the public test split; MedGemma 1.5 turns its thinking
+      mode on for PubMedQA.
+    split: test (the 500 PQA-L test instances)
+    source: src-arxiv-2604-05081-v2
+    quote: For general medical text MCQ, we also evaluated accuracy on the publicly available test
+      splits for MedQA, MedMCQA, PubMedQA
+    note: The MedGemma 1.5 Technical Report (v2, May 2026) scores MedGemma 1 and 1.5, Qwen3 VL 4B
+      and Gemini 3 Flash and Pro. Macro-F1, the paper's second metric, is not reported there, and
+      the leaderboard gives it for 3 of its 25 rows.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced; a May 2026 model report scores six models on the test
+    split. The leaderboard was last updated on 2024-04-28 and the repository last pushed on
+    2023-04-18 (GitHub API), which is maintenance evidence, not lifecycle. Top leaderboard scores
+    have passed the single-annotator human figure; saturated is derived, never hand-set, so that is
+    recorded as evidence for the derivation (review_checks), not as the value.
+  source: src-arxiv-2604-05081-v2
+  quote: For general medical text MCQ, we also evaluated accuracy on the publicly available test
+    splits for MedQA, MedMCQA, PubMedQA
+activity: accepting-submissions
+activity_note: The route is an e-mail with the predictions to the first author. The board's last
+  update was 2024-04-28, and results published since, such as MedGemma 1.5's, are not on it; whether
+  the route is still acted on was not established.
+activity_basis:
+  reason: A standing leaderboard that has never run in rounds, whose page and README give a
+    submission route.
+  source: src-pubmedqa-leaderboard
+  quote: To submit your model, please follow the instructions in the GitHub repository.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4 (Medprompt)
+    source: src-pubmedqa-leaderboard
+    observed_on: 2026-10-14
+    quote: GPT-4 (Medprompt) Microsoft (Nori et al. 2023) NA 82.0
+  - system: BioBERT (multi-phase fine-tuning)
+    source: src-pubmedqa-leaderboard
+    observed_on: 2026-10-14
+    quote: BioBERT (multi-phase tuning) University of Pittsburgh & Carnegie Mellon University (Jin
+      et al. 2019) 110M 68.1 52.7
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The label two annotators agreed on, after discussion where they differed;
+  the test labels are public in the repository.
+ground_truth_source_source: src-arxiv-1909-06146-v1
+ground_truth_source_quote: Annotator 1 and Annotator 2 discuss for an agreement annotation
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The labelled set and the scoring script are in the repository, so anyone can score
+    predictions locally.
+  source: src-github-pubmedqa-readme
+  quote: To evaluate your model predictions, please prepare the results in a json format where the
+    key is PMID
+
+task:
+  exists: true
+  input:
+    - a research question, the title of a PubMed article or derived from it
+    - the article's structured abstract without its conclusion (reasoning-required setting), or the
+      conclusion itself (reasoning-free setting)
+  output: One of yes, no or maybe.
+  scoring: Accuracy and macro-F1 against the reference labels of the 500-instance PQA-L test set.
+  source: src-arxiv-1909-06146-v1
+  quote: Each PubMedQA instance is composed of (1) a question which is either an existing research
+    article title or derived from one, (2) a context which is the corresponding abstract without its
+    conclusion
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The labelled set, test labels included, ships in the repository's data folder; PQA-U and
+      PQA-A are linked downloads, and an ungated copy is on Hugging Face.
+    source: src-github-pubmedqa-readme
+    quote: PQA-L is already in
+  refresh: static
+  refresh_basis:
+    reason: One release in 2019 with a fixed 500-instance test set; the repository was last pushed
+      on 2023-04-18 (GitHub API) and nothing announces a revision.
+    source: src-arxiv-1909-06146-v1
+    quote: 500 randomly sampled PQA-L instances are used for 10-fold cross validation and the rest
+      500 instances consist of PubMedQA test set
+  data_provenance:
+    - curated-public-database
+    - expert-authored
+  data_provenance_note: Questions, contexts and long answers are PubMed articles' titles and
+    structured abstracts, selected by rule. The PQA-L labels were written by two M.D. candidates
+    (expert-authored covers the labels only). PQA-A's yes/no labels come from a negation heuristic
+    and serve pre-training only; PQA-U is unlabelled.
+  data_provenance_source: src-arxiv-1909-06146-v1
+  data_provenance_quote: PubMed articles which have i) a question mark in the titles and ii) a
+    structured abstract with conclusive part are collected
+  contamination_risk: medium
+  contamination_risk_note: The test questions and labels have been public since 2019, in the
+    repository and on Hugging Face, and every test item is a PubMed abstract whose conclusion, which
+    states the answer, is itself in PubMed. Biomedical models pretrained on PubMed abstracts,
+    BioBERT among them, have a plausible route to the reasoning-free form of the test items. No
+    source read here evidences that overlap for the test set.
+  contamination_risk_source: src-arxiv-1909-06146-v1
+  contamination_risk_quote: BioBERT is initialized with BERT (Devlin et al., 2018) and further
+    pretrained on PubMed abstracts
+  contamination_evidence: []
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_note: One annotator, an M.D. candidate, scored 78.0% accuracy and 72.2%
+    macro-F1 in the reasoning-required setting, against agreed labels that annotator helped settle;
+    the paper calls its single-annotator figures lower bounds. The leaderboard lists it as a row,
+    and eleven systems sit above it.
+  ceiling_anchor_type_basis:
+    reason: The human figure is an annotator doing the task under the systems' protocol and scored
+      like them.
+    source: src-arxiv-1909-06146-v1
+    quote: a single annotator can get 78.0% accuracy and 72.2% macro-F1
+  dataset_licence: MIT
+  dataset_licence_note: The Hugging Face card in the first author's namespace tags the dataset MIT
+    while its Licensing Information section is empty; the GitHub repository that ships PQA-L is
+    MIT-licensed by GitHub's licence metadata (read 2026-10-14). The abstracts are PubMed records,
+    whose own terms were not read.
+  dataset_licence_source: src-hf-qiaojin-pubmedqa-card
+  dataset_licence_quote: 'license: - mit'
+  size:
+    - count: 1000
+      unit: expert-labelled instances (500 test, 500 for 10-fold cross-validation)
+      subset: PQA-L
+      source: src-arxiv-1909-06146-v1
+      quote: PubMedQA has 1k expert-annotated, 61.2k unlabeled and 211.3k
+    - count: 500
+      unit: test instances
+      subset: PQA-L test set
+      source: src-arxiv-1909-06146-v1
+      quote: 500 randomly sampled PQA-L instances are used for 10-fold cross validation and the rest
+        500 instances consist of PubMedQA test set
+    - count: 61200
+      unit: unlabelled instances (the paper rounds to 61.2k)
+      subset: PQA-U
+      source: src-arxiv-1909-06146-v1
+      quote: PubMedQA has 1k expert-annotated, 61.2k unlabeled and 211.3k
+    - count: 211300
+      unit: artificially generated instances with heuristic yes/no labels (the paper rounds to
+        211.3k; 200k train, 11.3k validation)
+      subset: PQA-A
+      source: src-arxiv-1909-06146-v1
+      quote: statement titles of 211.3k PubMed articles to questions and label them with yes/no
+        answers using a simple heuristic
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Qiao Jin, PubMedQA's first author
+  maintainer_basis:
+    reason: The leaderboard names one maintainer, the first author. The repository sits in a GitHub
+      user account named for the project (pubmedqa, GitHub API), and no institution is stated as
+      holding either.
+    source: src-pubmedqa-leaderboard
+    quote: Leaderboard maintained by Qiao Jin
+  maintainer_type: individual
+  submission_process:
+    - maintainer-scored-predictions
+  submission_process_note: Entrants e-mail their predictions, keyed by PubMed ID, with a short
+    system description to the first author, and the repository's script scores such a file against
+    the public test labels. Most rows cite the developers' own papers or model reports (Claude 3's
+    cites Anthropic, 2024), so some numbers may have been transcribed from publications rather than
+    scored from submitted predictions (review_checks).
+  submission_process_source: src-github-pubmedqa-readme
+  submission_process_quote: please send an email that contains the model predictions and a brief
+    description of the system
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-pubmedqa-leaderboard
+      quote: BioBERT (multi-phase tuning) University of Pittsburgh & Carnegie Mellon University (Jin
+        et al. 2019) 110M 68.1 52.7
+  independence_flags_note: The board ranks the release paper's own BioBERT model (23rd of 25) and
+    its single-annotator human figure beside outside entries; both are the paper's 2019 results, not
+    systems built for the board since. No funding from an evaluated party appears in the sources
+    read.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The test set and its labels are public and the repository's script scores a predictions
+      file end to end; no part of the score needs a human, a simulator or a maintainer-only step.
+    source: src-github-pubmedqa-readme
+    quote: Run the following script to get the performance
+  harness_availability: official-harness
+  harness: pubmedqa/pubmedqa evaluation.py, which scores a JSON file mapping PubMed IDs to yes, no
+    or maybe
+  harness_source: src-github-pubmedqa-readme
+  harness_quote: python evaluation.py PREDICTIONS_PATH
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for pubmedqa/pubmedqa, read 2026-10-14; not a quoted
+    Source.
+  runnable_via:
+    - custom
+    - lm_eval
+  runnable_via_note: lm-evaluation-harness's pubmedqa task loads BigBio's copy (the labelled set's
+    fold 0), frames the three labels as choices after an abstract-and-question prompt, and reports
+    accuracy only. Whether that fold's test split is item for item the official 500 was not checked.
+  runnable_via_source: src-lm-eval-harness-pubmedqa-task
+  runnable_via_quote: 'dataset_path: bigbio/pubmed_qa'
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: what the system was trained on (PQA-A pre-training, bootstrapped PQA-U,
+  # the PQA-L cross-validation folds, or nothing for prompted models), and what the prompt holds -- question and
+  # context (reasoning-required) or question and conclusion (reasoning-free), where one annotator scored 78.0% and
+  # 90.4%. The two settings score the same 500 items, so they are recorded here, not as subsets.
+  material_extra:
+    - training_data_policy
+    - prompt_template_hash
+
+homepage: https://pubmedqa.github.io/
+repository: https://github.com/pubmedqa/pubmedqa
+dataset_url: https://huggingface.co/datasets/qiaojin/PubMedQA
+leaderboard_url: https://pubmedqa.github.io/
+
+tags:
+  - biomedical-literature
+  - yes-no-qa
+  - reading-comprehension
+  - pubmed
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1909-06146-v1
+    - src-arxiv-1909-06146
+    - src-github-pubmedqa-readme
+    - src-pubmedqa-leaderboard
+    - src-hf-qiaojin-pubmedqa-card
+    - src-lm-eval-harness-pubmedqa-task
+    - src-arxiv-2604-05081-v2
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, with windows that keep the authors' contact
+    lines out; the abstract page for the date and venue; the README at master, withheld from archiving
+    because it gives a personal e-mail address; the leaderboard page with scripts and styles stripped;
+    the Hugging Face dataset card's raw README; the harness task file at the adapter's pin; and the
+    MedGemma 1.5 report's v2 PDF (a DOI, not archived) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: Primary domain biomedical-literature, with clinical-qa rejected because the label is
+        what the article's own results show. Model reports treat PubMedQA as a medical
+        multiple-choice set beside MedQA (as_used), which argues for clinical-qa, at least as a
+        secondary leaf. Neither leaf has an inclusion test yet.
+      field: domain
+      source: src-arxiv-1909-06146-v1
+      quote: so the answer is not universal but context-dependent
+    - check: exact-match and classification-metric, with multiple-choice rejected because the three
+        labels are one fixed label set. lm-evaluation-harness and model reports run it as multiple
+        choice; if multiple-choice is preferred, the floor to record is the 55.2% majority baseline,
+        not one in three.
+      field: evaluation_method
+      source: src-lm-eval-harness-pubmedqa-task
+      quote: 'output_type: multiple_choice'
+    - check: Saturation evidence. Eleven leaderboard rows (top 82.0%) sit above the single-annotator
+        human figure of 78.0%, the first since December 2022. The anchor is one annotator scored
+        against labels that annotator helped settle, which could be read as noise-ceiling rather
+        than expert-average, and the paper estimates the label error rate could be as low as 1%.
+      field: data.ceiling_anchor_type
+      source: src-pubmedqa-leaderboard
+      quote: Human Performance University of Pittsburgh & Carnegie Mellon University (Jin et al.
+        2019) NA 78.0 72.2
+    - check: activity accepting-submissions rests on the stated e-mail route; the board has not
+        changed since 2024-04-28 while results keep being published, so unknown, or closed if the
+        maintainer confirms, may be truer.
+      field: activity
+      source: src-pubmedqa-leaderboard
+      quote: 'Last update: 2024-04-28'
+    - check: submission_process maintainer-scored-predictions follows the README's route. Rows
+        citing developers' own reports may be numbers the maintainer transcribed, which would make
+        self-reported apply beside it.
+      field: governance.submission_process
+      source: src-pubmedqa-leaderboard
+      quote: Claude 3 Anthropic (Anthropic, 2024)
+    - check: maintainer-competes-on-own-benchmark rests on the release paper's BioBERT row and human
+        figure staying on the board, not on a system built for it since.
+      field: governance.independence_flags
+    - check: dataset_licence MIT rests on the Hugging Face card's metadata tag, set when a community
+        contributor added the dataset to the datasets library, while the card's Licensing
+        Information section is empty and the paper states no licence.
+      field: data.dataset_licence
+      source: src-hf-qiaojin-pubmedqa-card
+      quote: Licensing Information [More Information Needed]
+    - check: expert-authored covers the PQA-L labels only; the items themselves are PubMed records
+        (curated-public-database). Whether labelling alone meets expert-authored's inclusion test.
+      field: data.data_provenance
+  personal_data_excluded:
+    - source: src-github-pubmedqa-readme
+      what: The first author's personal e-mail address, which the README gives as the leaderboard's
+        submission route. It is kept out of the extract and this entry, and the Source is withheld
+        from archiving.

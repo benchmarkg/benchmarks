@@ -1,0 +1,517 @@
+# data/benchmarks/medicine-health/medagentbench.yaml
+#
+# P1-S6-T03, medicine-health entry 4 of 10. Filled from MedAgentBench's paper, arXiv 2501.14654 read as its v2 PDF
+# (2025-02-12, the 300-task version) and its v1 PDF (2025-01-24, the 100-task version), and its abstract page; the
+# README of stanfordmlgroup/MedAgentBench at main; the README of ericoericochen/medagentbenchv2 and the PSB 2026
+# paper "MedAgentBench v2: Improving Medical LLM Agent Design" (psb.stanford.edu PDF); and the abstract page of
+# arXiv 2609.13582 (September 2026), a study that runs the benchmark. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# Identity: this entry is the Stanford benchmark. Its maintainers' own v1 and v2 are the 100-task and 300-task
+# data files (test_data_v1.json, test_data_v2.json), modelled as editions. "MedAgentBench v2" (PSB 2026) is an
+# agent-design paper whose 300 new tasks sit in a personal repository; ADR-0020 makes such a set a separate entry,
+# so it is recorded under lineage.forks as medagentbench-v2 and not as a version or an alias (review_checks).
+
+id: medagentbench
+name: MedAgentBench
+tagline: LLM agents do 300 physician-written clinical tasks through FHIR API calls against a virtual
+  EHR of 100 patients.
+description: >
+  Stanford's benchmark of language-model agents working in an electronic health record. The agent
+  gets a clinician's instruction -- find a patient's MRN, retrieve or average lab values, record a
+  vital sign, order a test, a referral or a medication, sometimes only if a lab value is out of
+  range -- with hospital-specific context such as codes and the current time. It acts through nine
+  FHIR functions on a HAPI FHIR server, one GET or POST request per round for up to eight rounds,
+  and ends by calling FINISH with its answers. The server, shipped as a Docker image, holds 100
+  patient profiles extracted from Stanford's deidentified STARR clinical data warehouse, with
+  timestamps jittered and names and MRNs replaced. Two internal medicine physicians wrote the 300
+  tasks in ten categories, half queries and half actions. POST requests are not forwarded to the
+  server: query answers are compared with reference solutions computed from it, and action tasks
+  are graded by rule-based checks on the POST payloads the agent issued. The score is success rate
+  at pass@1. The first release (January 2025) had 100 tasks; the 300-task set replaced it in
+  February 2025 and is the one the NEJM AI paper reports. The PSB 2026 paper titled "MedAgentBench
+  v2" is a different artefact, an agent-design study whose 300 new tasks live in another
+  repository (lineage).
+self_description:
+  source: src-arxiv-2501-14654-v2
+  quote: we introduce MedAgentBench, a broad evaluation suite designed to assess the agent
+    capabilities of large language models within medical records contexts
+external_ids:
+  arxiv: '2501.14654'
+paper:
+  title: 'MedAgentBench: A Realistic Virtual EHR Environment to Benchmark Medical LLM Agents'
+  arxiv: '2501.14654'
+  version_read: v2
+  source: src-arxiv-2501-14654-v2
+released: 2025-01-24
+released_note: The paper's first arXiv version, which described the 100-task release, as the
+  abstract page dates it. The repository's commit history (GitHub API, read 2026-10-14) adds the v1
+  data on 2025-01-23 and the 300-task v2 data on 2025-02-06.
+released_source: src-arxiv-2501-14654
+released_quote: Submitted on 24 Jan 2025 (v1), last revised 12 Feb 2025 (this version, v2)
+release_venue: NEJM AI
+release_venue_note: Published as AIdbp2500144 in NEJM AI, vol. 2 no. 9, dated 2025-08-28 by Crossref
+  (read 2026-10-14). The journal page returned 403 and was not read (curation.unreachable).
+release_venue_source: src-github-stanfordmlgroup-medagentbench-readme
+release_venue_quote: journal={NEJM AI}
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/clinical-agent-workflows
+  secondary:
+    - agents-tooluse/tool-api-calling
+domain_basis:
+  reason: Every task is clinical work -- retrieving, recording and ordering -- carried out against a
+    FHIR health record server, which is the leaf's definition. The work is done by selecting and
+    parameterising API calls, so tool-api-calling is secondary; its exclusion test sends calls that
+    do clinical work against a health record system to this leaf as primary.
+  source: src-arxiv-2501-14654-v2
+  quote: MedAgentBench encompasses 300 patient-specific clinically-derived tasks from 10 categories
+    written by human physicians, realistic profiles of 100 patients with over 700,000 data elements,
+    a FHIR-compliant interactive environment
+domain_considered_and_rejected:
+  - term: medicine-health/ehr-prediction
+    reason: The tasks read and write structured EHR data, but none predicts a clinical outcome from
+      it; answers are retrieved values, aggregates and orders.
+  - term: medicine-health/treatment-planning
+    reason: Medication orders follow dosing rules the task supplies (potassium or magnesium
+      replacement against a threshold); no care plan is produced or scored.
+capability:
+  - tool-use
+  - temporal-reasoning
+  - quantitative-reasoning
+capability_basis:
+  tool-use:
+    reason: The agent chooses among nine FHIR functions, writes each GET or POST request with its
+      parameters, and must use what the server returns; an executed GET's raw response is fed back
+      to it. POST requests are never executed, which the term's exclusion bars on its own, but the
+      GET calls both halves of the task set depend on are (review_checks).
+    source: src-arxiv-2501-14654-v2
+    quote: If the agent system invokes a GET request, we send the request and input the raw response
+      back to the agent system.
+  temporal-reasoning:
+    reason: Answers turn on when records were made, against a current time the context supplies --
+      the most recent value within the last 24 hours, or a new HbA1C order only when the last result
+      is more than a year old.
+    source: src-arxiv-2501-14654-v2
+    quote: If the lab value result date is greater than 1 year old, order a new hemoglobin A1C lab
+      test.
+  quantitative-reasoning:
+    reason: Some tasks need arithmetic on retrieved values, such as averaging blood glucose over 24
+      hours or computing a replacement dose from how far a potassium level is below threshold, and
+      the dose is checked in the order the agent posts.
+    source: src-arxiv-2501-14654-v2
+    quote: for every 0.1 mEq/L (or mmol/L) below threshold, order 10 mEq potassium oral repletion
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: Tasks take one to a few requests and are capped at eight rounds, far below the term's
+      roughly ten dependent actions.
+    source: src-arxiv-2501-14654-v2
+    quote: As all tasks within MedAgentBench require only a few steps to complete
+  - term: reliability-consistency
+    reason: Each task is attempted once (pass@1). The paper names repeated runs of action tasks as
+      future work, and the September 2026 study that does it is an outside use (as_used).
+    source: src-arxiv-2501-14654-v2
+    quote: we exclusively adopt pass@1 in our benchmark
+  - term: instruction-following
+    reason: Format errors (extra text, a sentence instead of a value) fail tasks and are the paper's
+      most common error, but the paper claims agent capability, not instruction following, and only
+      task success is scored.
+    source: src-arxiv-2501-14654-v2
+    quote: One common error pattern of most models is the model does not follow the instruction
+      exactly.
+  - term: knowledge-recall
+    reason: Answers come from the patient records through the API, and codes such as LOINC and NDC
+      numbers are supplied in each task's context.
+  - term: planning
+    reason: What is scored is the returned answer and the posted payloads, not the request sequence.
+
+evaluation_method:
+  - environment-state-check
+  - exact-match
+evaluation_method_basis:
+  reason: Action tasks (half the set) are graded after the episode by rule-based checks on the POST
+    requests the agent issued -- the tool calls the term's inclusion test names -- so any trajectory
+    that posts the required orders passes. Query tasks compare the FINISH answer with the answer a
+    reference solution computes from the server, which is exact-match. POSTs are never forwarded to
+    the server, so no changed server state is inspected (review_checks).
+  source: src-arxiv-2501-14654-v2
+  quote: For action-based tasks, we manually write many rule-based sanity checks to verify the
+    correctness of the payload of POST requests.
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: The agent writes no code that is run against tests; its requests are checked as payloads
+      and answers.
+  - term: simulation-rollout
+    reason: The FHIR server is a stateful software environment, which the term's exclusion test
+      sends to environment-state-check, although the paper calls it a simulation of live EMR
+      systems.
+    source: src-arxiv-2501-14654-v2
+    quote: The environment is a simulation of real-world live EMR systems
+  - term: constraint-check
+    reason: The payload checks are a battery of field assertions, but the checked object is what the
+      agent issued in an episode against a stateful environment, which the term's exclusion sends to
+      environment-state-check.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The paper runs every model inside its own orchestrator -- one prompt, nine FHIR functions
+    and an eight-round cap -- so only the model varies, which is model-in-benchmark-harness. It
+    presents that orchestrator as an abstraction that developers replace with their own systems
+    under the same function access and round cap, which is agent-scaffold.
+  source: src-arxiv-2501-14654-v2
+  quote: Developers can implement more complex designs, including compound AI systems with
+    hierarchical reasoning, multiple specialized sub-agents
+designed_for_subjects_considered_and_rejected:
+  - term: tool-augmented-model
+    reason: The agent decides each round whether to send a GET, a POST or to finish, an autonomous
+      loop that the term's exclusion sends to the two harness terms.
+    source: src-arxiv-2501-14654-v2
+    quote: We develop a simple agent orchestrator to establish the baseline performance, inspired by
+      BFCL
+as_used:
+  - protocol: 'Same-input reruns: each of 50 tasks from the five write-capable (action) families run five
+      times with every input held fixed, comparing the orders filed across runs rather than the success
+      verdict.'
+    split: 50 action tasks of the 300-task set
+    source: src-arxiv-2609-13582
+    quote: apply it to 1000 MedAgentBench runs across 50 tasks from its five write-capable families
+    note: Two open-weight models below ten billion parameters, quantised to four bits, at two
+      temperatures (September 2026). It reports action-level divergence that the pass@1 score does
+      not record.
+  - protocol: The benchmark's 300 tasks run with the authors' own agent -- structured FHIR tools, a
+      calculator, a finish tool, a rewritten system prompt and, in one arm, a memory built from the
+      agent's failures on the same tasks.
+    split: the 300-task set (v2)
+    source: src-psb-2026-medagentbench-v2
+    quote: Using GPT-4.1 as the base model, our agent achieved a success rate of 91.0% without
+      memory and 98.0% with memory.
+    note: The PSB 2026 paper. Its tools replace the benchmark's raw GET and POST requests, and the
+      memory arm was populated from five failed tasks per category, so neither number is comparable
+      with the original orchestrator's.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results were still being produced in September 2026, when a study ran 1,000 MedAgentBench
+    episodes. Issues on the repository from April to September 2026 report further outside runs
+    (GitHub API, not a quoted Source); the repository itself was last pushed on 2025-11-21.
+  source: src-arxiv-2609-13582
+  quote: apply it to 1000 MedAgentBench runs across 50 tasks from its five write-capable families
+activity: no-submission-channel
+activity_basis:
+  reason: The README is a download-and-run guide that writes the success rate to a local file. There
+    is no leaderboard or submission route; outside results appear in papers and, once, in a
+    repository issue.
+  source: src-github-stanfordmlgroup-medagentbench-readme
+  quote: This section will guide you on how to quickly evaluate gpt-4o-mini as an agent on
+    MedAgentBench.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude 3.5 Sonnet v2
+    source: src-arxiv-2501-14654-v2
+    observed_on: 2026-10-14
+    quote: The best model (Claude 3.5 Sonnet v2) achieves a success rate of 69.67%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: A hand-written grader and reference solution per task category
+  (refsol.py), distributed through a Box link in the README rather than in the repository. Query
+  answers are computed from the FHIR server's records at grading time.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The tasks and code are in the repository, the FHIR server with the patient profiles is a
+    public Docker image, and the grader is a public download the README links.
+  source: src-github-stanfordmlgroup-medagentbench-readme
+  quote: docker pull jyxsu6/medagentbench:latest
+
+task:
+  exists: true
+  input:
+    - a clinician's instruction about one patient, with hospital-specific context (codes, the
+      current time, dosing rules)
+    - nine FHIR function definitions and a FHIR server holding 100 patient profiles
+  output: One GET or POST request per round, for up to eight rounds, ending with FINISH and a list
+    of answers.
+  scoring: Success rate at pass@1 over the tasks, reported overall and for the query and action
+    halves. Query answers must match the reference solution's; action tasks pass rule-based checks
+    on the POST payloads. An invalid action or running out of rounds fails the task.
+  reference_solution: true
+  source: src-arxiv-2501-14654-v2
+  quote: If the agent system requests for invalid actions or exceeds the maximum number of
+    interaction rounds, it is considered a failure.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The grader's Box page opened without signing in (2026-10-14). The README does not say
+    why refsol.py is kept out of the repository; the fork's repository republishes a copy.
+  access_basis:
+    reason: The tasks are in the repository, the FHIR server with the 100 profiles is a public
+      Docker image (13,557 pulls, Docker Hub API, 2026-10-14), and refsol.py is a public Box
+      download the README links. No account or agreement is needed.
+    source: src-github-stanfordmlgroup-medagentbench-readme
+    quote: docker pull jyxsu6/medagentbench:latest
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The task set changed once, from 100 tasks to 300, and each state has its own dated arXiv
+      version and labelled data file (test_data_v1.json, test_data_v2.json); the harness's config
+      pins test_data_v2.json. Nothing has changed since.
+    source: src-arxiv-2501-14654
+    quote: Submitted on 24 Jan 2025 (v1), last revised 12 Feb 2025 (this version, v2)
+  data_provenance:
+    - expert-authored
+    - patient-clinical-record
+  data_provenance_note: Two internal medicine physicians wrote the tasks. The records the answers
+    come from are real Stanford Hospital patients' lab results, vital signs, procedures, diagnoses
+    and medication orders from 2018 to 2023, taken from STARR's deidentified warehouse with
+    timestamps jittered per patient; MRNs are random and names, phone numbers and addresses come
+    from the Faker library. patient-clinical-record's definition asks for identifiable records
+    (review_checks).
+  data_provenance_source: src-arxiv-2501-14654-v2
+  data_provenance_quote: Benchmark examples are based on real patient cases that were deidentified
+    and jittered.
+  contamination_risk: medium
+  contamination_risk_note: The tasks, some with their answers, have been public on GitHub since
+    January 2025 and the records in a public Docker image; the grader, kept out of the repository,
+    is republished in the fork's. A training route is plausible. No source read here evidences one.
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: The repository is MIT-licensed (GitHub's licence metadata, read 2026-10-14),
+    which covers its code. No licence is stated for the tasks, the patient profiles in the Docker
+    image or refsol.py.
+  size:
+    - count: 300
+      unit: tasks (150 query, 150 action) in 10 categories
+      subset: v2
+      source: src-arxiv-2501-14654-v2
+      quote: Among the 300 tasks in MedAgentBench, half (150) only require information retrieval via
+        GET requests
+    - count: 100
+      unit: patient profiles, with over 700,000 data elements
+      subset: the FHIR environment
+      source: src-arxiv-2501-14654-v2
+      quote: realistic profiles of 100 patients with over 700,000 data elements
+    - count: 100
+      unit: tasks in 10 categories
+      subset: v1
+      source: src-arxiv-2501-14654-v1
+      quote: MedAgentBench encompasses 100 patient-specific clinically-derived tasks from 10
+        categories
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The MedAgentBench authors at Stanford University, in the Stanford ML Group's GitHub
+    organisation
+  maintainer_basis:
+    reason: The repository sits in the stanfordmlgroup organisation account (GitHub API), which the
+      paper names as the benchmark's home, and the authors are at Stanford. The FHIR image is on a
+      personal Docker Hub account (jyxsu6) and the grader on Stanford Medicine's Box.
+    source: src-arxiv-2501-14654-v2
+    quote: MedAgentBench establishes this and is publicly available at
+      https://github.com/stanfordmlgroup/MedAgentBench
+  maintainer_type: academic-lab
+  maintainer_type_note: individual was considered because the Docker image is on a personal account,
+    but the repository that distributes the tasks, code and links is a university group's
+    organisation account.
+  submission_process:
+    - literature-only
+  submission_process_note: No board or results page of the maintainers'. Beyond the paper's twelve
+    baselines, results appear in others' papers (the PSB 2026 agent study, the September 2026
+    reliability study) and once in a repository issue (April 2026, a claimed 300/300).
+  submission_process_source: src-github-stanfordmlgroup-medagentbench-readme
+  submission_process_quote: The results can be found at
+  independence_flags: []
+  independence_flags_note: Not assessed. arXiv v2's funding statement names only a PhD scholarship,
+    and no system of the maintainers' is ranked, but the NEJM AI version of record and its
+    disclosures returned 403, so the search was not completed.
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Besides the FHIR server, a Docker container that runs on CPU, a run's cost is inference
+      spend; the paper reached every model through an API, open-weight ones included.
+    source: src-arxiv-2501-14654-v2
+    quote: Mistral v0.3 from Mistral AI (via Together AI serverless API)
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Grading is programmatic and every component is public. The FHIR server is a Docker image
+      of a software system, not a simulator build (environment-state-check's tie-break against
+      simulation-rollout).
+    source: src-arxiv-2501-14654-v2
+    quote: we build a new Docker image for easy setup
+  harness_availability: official-harness
+  harness: MedAgentBench (its AgentBench-based task server and assigner, with refsol.py; data file
+    test_data_v2.json)
+  harness_note: refsol.py has to be downloaded separately from the Box link before a run.
+  harness_source: src-github-stanfordmlgroup-medagentbench-readme
+  harness_quote: python -m src.start_task -a
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for stanfordmlgroup/MedAgentBench, read 2026-10-14;
+    not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which task set (v1's 100 or v2's 300, or only the query or action half), the agent
+  # (the paper's orchestrator or another), the harness and the tools it exposes (raw GET and POST requests, or
+  # structured FHIR tools and a calculator as in the PSB study), and the round cap (eight in the paper).
+  material_extra:
+    - subset_used
+    - scaffold
+    - harness
+    - tools_allowed
+    - max_steps
+
+homepage: https://github.com/stanfordmlgroup/MedAgentBench
+repository: https://github.com/stanfordmlgroup/MedAgentBench
+dataset_url: https://hub.docker.com/r/jyxsu6/medagentbench
+leaderboard_url: null
+
+versions:
+  - version: v1
+    label: The 100-task release (arXiv v1; test_data_v1.json)
+    version_kind: edition
+    released: 2025-01-24
+    items: 100
+    changes: The first release, 10 tasks in each of the 10 categories (the data committed on
+      2025-01-23), with GPT-4o best at 72%.
+    breaking: true
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-arxiv-2501-14654
+      - src-arxiv-2501-14654-v1
+  - version: v2
+    label: The 300-task release (arXiv v2; test_data_v2.json; NEJM AI)
+    version_kind: edition
+    released: 2025-02-12
+    items: 300
+    changes: 30 tasks per category; v1's 100 tasks are among them, unchanged (compared item by item
+      for this entry). The data was committed on 2025-02-06 and the harness switched to it on
+      2025-02-11. Not the PSB 2026 "MedAgentBench v2" (lineage).
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-arxiv-2501-14654
+      - src-arxiv-2501-14654-v2
+      - src-github-stanfordmlgroup-medagentbench-readme
+
+lineage:
+  role: root
+  forks:
+    - id: medagentbench-v2
+      maintainer: Eric Chen, on a personal GitHub account (ericoericochen/medagentbenchv2); his PSB
+        2026 co-authors include MedAgentBench's two first authors and its senior author
+      source: src-psb-2026-medagentbench-v2
+      quote: To contribute to the benchmark and evaluate the generalization of our agent, we
+        developed 300 new multi-step clinically-driven tasks in collaboration with a physician.
+
+tags:
+  - ehr
+  - fhir
+  - clinical-agents
+  - tool-calling
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2501-14654-v2
+    - src-arxiv-2501-14654-v1
+    - src-arxiv-2501-14654
+    - src-github-stanfordmlgroup-medagentbench-readme
+    - src-github-medagentbenchv2-readme
+    - src-psb-2026-medagentbench-v2
+    - src-arxiv-2609-13582
+  sources_note: >
+    The paper's v2 and v1 PDFs (DOIs, not archived) read as text, with windows that keep the authors'
+    e-mail line out; the abstract page for the version dates; both READMEs at main; the PSB 2026 paper's
+    PDF (a DOI, not archived) for the fork; and the abstract page of arXiv 2609.13582 as evidence of
+    current use. Also read, not cited: the repository's config, task files and commit list, the fork's
+    task files and refsol.py, the issues list and Docker Hub's record (APIs), and Crossref's records of
+    both papers.
+  confidence: medium
+  review_checks:
+    - check: Identity. The PSB 2026 "MedAgentBench v2" is recorded as a fork (lineage.forks,
+        medagentbench-v2), not as a version or an alias. ADR-0020 makes a task set derived by
+        someone other than the maintainer a separate variant_of entry, and its 300 new tasks sit on
+        a personal account and were never added to the Stanford repository. But three of its five
+        authors (both co-first authors and the senior author) are MedAgentBench's, so it could also
+        be read as a same-team extension (lineage.variants with a co_maintainer). The proposed alias
+        "MedAgentBench v2" was left out because it would send claims about the PSB task set to this
+        entry; the maintainers' own v2 is the 300-task data file.
+      field: lineage
+      source: src-psb-2026-medagentbench-v2
+      quote: To contribute to the benchmark and evaluate the generalization of our agent, we
+        developed 300 new multi-step clinically-driven tasks in collaboration with a physician.
+    - check: The fork's README places the new tasks in test_data_v2.json, but that file is the same
+        git blob as the Stanford repository's test_data_v2.json, the original 300 tasks. The new
+        tasks look to be new_patient_tasks.json (300 items, 30 per category), which the fork's
+        config leaves commented out. Whoever curates medagentbench-v2 should check which file the
+        PSB results used.
+      field: lineage
+      source: src-github-medagentbenchv2-readme
+      quote: The new tasks are located in
+    - check: evaluation_method. POSTs are never sent to the server, so action tasks are graded on
+        the payloads in the transcript (tool calls issued, which environment-state-check names) and
+        nothing inspects a changed server state; a September 2026 repository issue makes the same
+        point about the grader. The refsol.py the fork republishes (read, not cited) accepts the
+        average-glucose answer within 0.1, so numeric-tolerance-match may apply to one category.
+      field: evaluation_method
+      source: src-arxiv-2501-14654-v2
+      quote: If the agent system invokes a POST request, we conduct a simple sanity check to make
+        sure the payload data is JSON-loadable, and indicate success of execution to the agent
+        system.
+    - check: tool-use's exclusion bars calls that are never executed, which holds for every POST. It
+        is assigned on the GET calls, which are executed and feed both halves of the set.
+      field: capability
+      source: src-arxiv-2501-14654-v2
+      quote: we decide to only send GET requests to the environment so that we do not need to
+        re-initialize the environment for each individual task
+    - check: patient-clinical-record's definition asks for identifiable records. The profiles are
+        real Stanford records, deidentified and jittered, with their identifiers replaced; no term
+        names deidentified real clinical records. A clinical-data specialist should decide.
+      field: data.data_provenance
+      specialist: true
+      source: src-arxiv-2501-14654-v2
+      quote: patient profiles are extracted from a deidentified clinical data warehouse curated by
+        the STARR (STAnford Research Repository) project
+    - check: v1 (100 tasks) stood for about two weeks before v2 replaced it, and the v2 paper calls
+        the 300-task set the first release. Whether v1 earns an edition or is better a note on v2.
+      field: versions
+      source: src-arxiv-2501-14654-v2
+      quote: We decided that the first release of MedAgentBench would contain 300 tasks and 100
+        patient profiles
+    - check: Most later results replace the paper's orchestrator (the PSB agent's tools and memory,
+        a repository issue's prefetch-and-execute agent at a claimed 300/300), so observed_subjects
+        could record agent-scaffold use and those claims need their scaffold.
+      field: designed_for_subjects
+    - check: Independence is not assessed; the NEJM AI page and its disclosures returned 403.
+      field: governance.independence_flags
+  unreachable:
+    - url: https://ai.nejm.org/doi/full/10.1056/AIdbp2500144
+      http_status: 403
+      consequence: The version of record and its disclosures were not read; arXiv v2 stands in for
+        it, and independence is left unassessed.
+  personal_data_excluded:
+    - source: src-arxiv-2501-14654-v2
+      what: the authors' e-mail addresses under the title
+    - source: src-arxiv-2501-14654-v1
+      what: the authors' e-mail addresses under the title
+    - source: src-psb-2026-medagentbench-v2
+      what: the authors' e-mail addresses under the title
