@@ -1,0 +1,494 @@
+# data/benchmarks/physics/airfrans.yaml
+#
+# P1-S6-T06, physics entry 18. Filled from the AirfRANS paper, arXiv 2212.07564 read as its v3 PDF (2023-06-01;
+# NeurIPS 2022 Datasets and Benchmarks), and its abstract page; the repository README at main; the documentation's
+# Introduction and Dataset pages (scripts and styles stripped); the NeurIPS 2024 ML4CFD competition proposal, arXiv
+# 2407.01641 read as its v1 PDF, and Codabench's public record of that competition (3282); and the abstract page of
+# DD-RNO (arXiv 2608.13490, August 2026), as evidence of current use. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: airfrans
+name: AirfRANS
+tagline: 1,000 RANS simulations of subsonic airfoil flow, for learned surrogates of the flow fields
+  and the drag and lift.
+description: >
+  A dataset and benchmark of 1,000 two-dimensional, incompressible, steady-state Reynolds-Averaged
+  Navier-Stokes simulations of subsonic flow around airfoils from the NACA 4- and 5-digit series, at
+  Reynolds numbers of 2 to 6 million and angles of attack of -5 to 15 degrees, computed with
+  OpenFOAM's simpleFoam solver and the k-omega SST turbulence model on meshes of 250,000 to 300,000
+  cells. A learned surrogate receives the mesh nodes with the inlet velocity, the distance to the
+  airfoil and the surface normals, and predicts the velocity, pressure and turbulent viscosity at
+  every node; the drag and lift coefficients are computed from the predicted fields. Four tasks split
+  the simulations: full data (800 training, 200 test), scarce data (200 training, the same test set),
+  and Reynolds-number and angle-of-attack extrapolation, whose test simulations lie outside the
+  training ranges. Models are scored by the MSE of each field in the volume and on the airfoil, by the
+  relative error of the drag and lift coefficients, and by Spearman's rank correlation between
+  predicted and true coefficients, which the authors put first for design use. The baselines are an
+  MLP, GraphSAGE, PointNet and Graph U-Net; the June 2023 arXiv version discloses that the main
+  text's baselines were trained with a plain MSE loss rather than the paper's volume-plus-surface
+  loss, and adds results for the latter. AirfRANS has no leaderboard of its own. IRT SystemX ran two
+  Codabench competitions on it, in 2023-2024 and at NeurIPS 2024 (ML4CFD, with the AirfRANS authors
+  among the organisers), with their own split and a global score that adds physical compliance and
+  speed-up; both have closed.
+self_description:
+  source: src-arxiv-2212-07564-v3
+  quote: we develop AIRFRANS, a dataset for studying the two-dimensional incompressible steady-state
+    Reynolds-Averaged Navier–Stokes equations over airfoils
+external_ids:
+  arxiv: '2212.07564'
+paper:
+  title: 'AirfRANS: High Fidelity Computational Fluid Dynamics Dataset for Approximating Reynolds-Averaged
+    Navier-Stokes Solutions'
+  arxiv: '2212.07564'
+  version_read: v3
+  source: src-arxiv-2212-07564-v3
+released: 2022-12-15
+released_note: The paper's first arXiv version, as the abstract page dates it, the earliest dated
+  source read. The data was public before it, for the NeurIPS 2022 Datasets and Benchmarks track;
+  the download's Last-Modified header is 2022-08-11 and the repository was created on 2022-08-04
+  (GitHub API), neither a quoted Source.
+released_source: src-arxiv-2212-07564
+released_quote: Submitted on 15 Dec 2022
+release_venue: NeurIPS 2022 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2212-07564-v3
+release_venue_quote: 36th Conference on Neural Information Processing Systems (NeurIPS 2022) Track
+  on Datasets and Benchmarks
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/fluid-dynamics
+  secondary:
+    - physics/simulation-surrogates
+domain_basis:
+  reason: The one physical system is subsonic turbulent flow around a 2D airfoil, and every score is
+    on predicted flow fields or the forces derived from them. The taxonomy sends a surrogate
+    benchmark with one physical system as its subject to that subject's leaf, with
+    simulation-surrogates (the method) secondary; PDEBench and the Well are primary
+    simulation-surrogates because they span many systems.
+  source: src-arxiv-2212-07564-v3
+  quote: we develop AIRFRANS, a dataset for studying the two-dimensional incompressible steady-state
+    Reynolds-Averaged Navier–Stokes equations over airfoils
+domain_considered_and_rejected:
+  - term: engineering-design/structural-mechanical-design
+    reason: The dataset is motivated by airfoil shape optimisation and the Spearman correlation is
+      meant to preserve the ranking of designs, but what is submitted and scored is a prediction of
+      flow fields and forces, not a design.
+    source: src-arxiv-2212-07564-v3
+    quote: This dataset is mainly motivated by a realistic shape optimization problem.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+  - sample-efficiency
+capability_basis:
+  scientific-prediction:
+    reason: A model predicts the velocity, pressure and turbulent viscosity fields of a simulated
+      flow, and the forces on the airfoil, and is scored against the RANS solver's solution.
+    source: src-arxiv-2212-07564-v3
+    quote: The machine learning task consists in predicting the different spatial fields such as the
+      mean-field velocity and reduced pressure
+  distribution-shift-generalization:
+    reason: The Reynolds and angle-of-attack tasks train on the middle of each parameter's range and
+      test on simulations outside it, scored as tasks of their own; the predicted fields and the
+      metrics are unchanged, only the inputs move.
+    source: src-arxiv-2212-07564-v3
+    quote: 'Reynolds extrapolation: the training set is composed of the samples with a Reynolds of three
+      to five million'
+  sample-efficiency:
+    reason: The scarce task fixes the training budget at 200 simulations and scores on the same test
+      set as the 800-simulation full task; the dataset was kept to 1,000 simulations to mirror the
+      little data available in practice.
+    source: src-arxiv-2212-07564-v3
+    quote: 'Scarce data regime: 200 samples for the training set and the same test set as in the full
+      data regime'
+capability_considered_and_rejected:
+  - term: optimization
+    reason: The design motive is finding the best airfoil, but no objective is optimised; models are
+      scored on accuracy against the solver's fields and coefficients, a held-out key, which is the
+      term's exclusion.
+
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: Every metric is a general error or correlation statistic against the simulated values, the
+    MSE of each field, the relative error of the drag and lift coefficients, and Spearman's rank
+    correlation of those coefficients.
+  source: src-arxiv-2212-07564-v3
+  quote: rank correlation coefficient between the true and predicted force coefficients
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: Drag and lift coefficients are aerodynamic quantities, but they are scored with relative
+      error and Spearman's correlation, statistics with the same meaning in any field.
+  - term: composite
+    reason: AirfRANS reports its metrics side by side. The ML4CFD competition's global score
+      combines accuracy, physical compliance, out-of-distribution and speed-up sub-scores, but it
+      belongs to the competitions recorded under events.
+    source: src-arxiv-2407-01641-v1
+    quote: The global score is computed based on linear combination of the scores related to three
+      evaluation criteria categories
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are learned models (the baselines are an MLP and three geometric deep
+    learning models) that stand in for the RANS solver and are scored against its solutions.
+  source: src-arxiv-2212-07564-v3
+  quote: We defined four ML tasks highlighting the different challenges of surrogate models, from
+    scarce data regimes to extrapolation.
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: OpenFOAM's solver produces the ground truth. The ML4CFD competition computes a global
+      score for OpenFOAM as its reference, with perfect accuracy and no speed-up, but a system that
+      is the ground truth is not an entrant (the term's exclusion).
+as_used:
+  - protocol: The NeurIPS 2024 ML4CFD competition trained on 103 simulations (the scarce task's
+      training split, kept to Reynolds numbers of 3 to 5 million), tested on the full task's 200
+      test simulations and on the Reynolds task's 496 as an out-of-distribution set, and ranked on a
+      global score that adds physical compliance and speed-up over OpenFOAM to field accuracy.
+    split: 103 training, 200 test, 496 out-of-distribution test
+    source: src-arxiv-2407-01641-v1
+    quote: 'OOD test Set : 496 samples, AirfRANS reynolds task, testing split'
+    note: A different split and score from the paper's four tasks, so competition numbers are not
+      AirfRANS task scores.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced on it; an August 2026 neural-operator paper reports field
+    and force results on AirfRANS, among them Reynolds extrapolation. The repositories were last
+    pushed on 2025-01-09 (GitHub API), which is maintenance evidence, not use.
+  source: src-arxiv-2608-13490
+  quote: On the AirfRANS benchmark, DD-RNO cuts velocity field mean-square error (MSE)
+activity: closed
+activity_note: AirfRANS's own four tasks never had a leaderboard; users run the repository's scripts
+  and report in their papers. The only routes for outside results were the two Codabench
+  competitions (events). The 2023-2024 one ran its phases from November 2023 to March 2024; every
+  phase of the NeurIPS 2024 one (3282), its post-competition phase last, ended on 2024-12-31, and
+  none is announced since.
+activity_basis:
+  reason: A route for outside results existed, the competitions' Codabench leaderboards, and none is
+    open now.
+  source: src-codabench-ml4cfd-3282
+  quote: '"end":"2024-12-31T00:00:00Z","name":"Post competition"'
+events:
+  - name: Machine Learning for Physical Simulation Challenge, airfoil design task (November 2023 to
+      March 2024)
+    kind: online-challenge    # the preliminary edition, on Codabench, with LIPS scoring and NVIDIA GPUs
+    source: src-arxiv-2407-01641-v1
+    quote: has already been implemented within the LIPS framework and was successfully utilized
+      during the preliminary edition of this competition
+  - name: NeurIPS 2024 ML4CFD Competition (July to October 2024)
+    kind: online-challenge    # IRT SystemX with the AirfRANS authors; Codabench competition 3282
+    source: src-arxiv-2407-01641-v1
+    quote: 'this iteration centers on a task fundamental to a well-established physical application: airfoil
+      design simulation, utilizing our proposed AirfRANS dataset'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GraphSAGE (a release baseline)
+    source: src-arxiv-2212-07564-v3
+    observed_on: 2026-10-14
+    quote: To propose baselines for the problem, we train three standard GDL models and a
+      Multi-Layer Perceptron (MLP) in the full data regime
+  - system: DD-RNO
+    source: src-arxiv-2608-13490
+    observed_on: 2026-10-14
+    quote: On the AirfRANS benchmark, DD-RNO cuts velocity field mean-square error (MSE)
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each simulation's converged solution from OpenFOAM's steady-state RANS
+  solver with the k-omega SST model; the authors checked the setup against NASA Langley's Turbulence
+  Modeling Resource experiments for the NACA 0012 and 4412.
+ground_truth_source_source: src-airfrans-docs-introduction
+ground_truth_source_quote: The setup to generate those simulations have been confronted to the
+  Langley Research Center experiments
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The simulations, the four splits, the training and scoring code, and the code to generate
+    new simulations are public.
+  source: src-arxiv-2212-07564-v3
+  quote: We provide a GitHub repository to reproduce all the experiments
+
+task:
+  exists: true
+  input:
+    - the nodes of a simulation's mesh, cropped around the airfoil, each with its position, the
+      inlet velocity, its distance to the airfoil and, on the airfoil, the outward surface normal
+  output: The velocity (two components), pressure and turbulent kinematic viscosity at every node,
+    from which the drag and lift coefficients are computed.
+  scoring: Per task, on its test set, the MSE of each normalised field over the volume and of the
+    pressure on the airfoil; the mean and standard deviation of the relative error of the drag and
+    lift coefficients; and Spearman's rank correlation between predicted and true coefficients. Test
+    scores are computed at the mesh nodes. The authors rank the metrics, with the correlation first,
+    and do not combine them.
+  source: src-arxiv-2212-07564-v3
+  quote: we use the MSE for each field on the volume and over the airfoil to measure the accuracy of
+    our models
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The pre-processed zip (10.0 GB) answered a HEAD request without any login on
+    2026-10-14; a raw OpenFOAM version is also offered, and PyTorch Geometric ships a loader.
+  access_basis:
+    reason: Every split's simulations, the test targets included, download from the authors' server
+      with no account or agreement.
+    source: src-github-airfrans-readme
+    quote: you can download the dataset
+  refresh: static
+  refresh_basis:
+    reason: The 1,000 simulations, the four splits and the metrics have not changed since release.
+      The June 2023 update corrected the paper's baseline experiments, not the data or the scoring.
+    source: src-github-airfrans-readme
+    quote: An important update correcting an inconsistency in the Machine Learning experiments
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Airfoils sampled from the NACA 4- and 5-digit families, Reynolds numbers and
+    angles of attack sampled over their ranges, and each case solved with OpenFOAM v2112.
+  data_provenance_source: src-arxiv-2212-07564-v3
+  data_provenance_quote: We then run the simulations with the help of the steady-state RANS solver
+    simpleFOAM
+  contamination_risk: medium
+  contamination_risk_note: The test simulations and their targets are public, and models are trained
+    on the training split by design, so leakage needs only a careless split. Collections for
+    pretraining physics models may include AirfRANS; whether any excludes its test splits was not
+    assessed. No contamination is evidenced.
+  contamination_evidence: []
+  dataset_licence: ODbL-1.0
+  dataset_licence_source: src-airfrans-docs-introduction
+  dataset_licence_quote: This dataset is under the Open Data Commons Open Database License (ODbL)
+    v1.0 and this library is under the MIT License
+  size:
+    - count: 1000
+      unit: simulations, each an airfoil, a Reynolds number and an angle of attack
+      source: src-arxiv-2212-07564-v3
+      quote: we run 1000 simulations, each defined by an airfoil, a Reynolds number, and an angle of
+        attack
+    - count: 200
+      unit: test simulations (800 training)
+      subset: full and scarce tasks (scarce trains on 200)
+      source: src-arxiv-2212-07564-v3
+      quote: 'Full data regime: 800 samples for the training set and 200 for the test set'
+    - count: 496
+      unit: test simulations
+      subset: Reynolds extrapolation task
+      source: src-arxiv-2407-01641-v1
+      quote: 'OOD test Set : 496 samples, AirfRANS reynolds task, testing split'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Extrality (its GitHub organisation, now named SimAI) with the MLIA team of Sorbonne
+    Université (ISIR)
+  maintainer_basis:
+    reason: The documentation names Extrality and Sorbonne's MLIA team as the work's proposers. The
+      dataset and library repositories sit in the Extrality GitHub organisation, and the data is
+      served from ISIR's server.
+    source: src-airfrans-docs-introduction
+    quote: This work is proposed by Extrality and the MLIA team of Sorbonne Université, Paris.
+  maintainer_type: industry-lab
+  maintainer_type_note: The repositories, the holder the term looks to, are in the Extrality
+    organisation, which GitHub's metadata (read 2026-10-14) names SimAI and links to Ansys's AI
+    page; the competition paper gives two AirfRANS authors as the SimAI team of Ansys. The data is
+    served from Sorbonne's ISIR server, so academic-lab is the alternative (see review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: The repository trains and scores models locally, and users report in
+    their own papers. The two competitions retrained participants' code on the organisers' GPUs and
+    ranked it on Codabench; both have ended (history).
+  submission_process_source: src-github-airfrans-readme
+  submission_process_quote: The scores of the trained model on the associated test set are written
+    in the folder
+  independence_flags: []
+  independence_flags_note: None recorded. AirfRANS has no ranking, and the paper names no funder.
+    For the competitions, NVIDIA supplied the GPUs and one organiser, but no NVIDIA system was
+    evaluated; the sources do not say who funded the cash prizes.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_basis:
+    reason: The paper's baselines train in about 2 to 7 hours each on one RTX 3090.
+    source: src-arxiv-2212-07564-v3
+    quote: The experiments have been conducted with a single NVIDIA RTX 3090 24Go.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public data and the repository's training and scoring script run end to end with no
+      human, physical or maintainer-only step; the simulator is needed only to make new data.
+    source: src-github-airfrans-readme
+    quote: If you want to compute the score of the models on the associated test set
+  harness_availability: official-harness
+  harness: AirfRANS repository (main.py with -t full|scarce|reynolds|aoa and -s 1), with the
+    airfrans library for loading and force coefficients
+  harness_source: src-github-airfrans-readme
+  harness_quote: If you want to compute the score of the models on the associated test set
+  harness_gotcha:
+    source: src-airfrans-docs-dataset
+    quote: The only constraint is that the test scores of models for the four target fields have to
+      be computed at the position of the nodes of the simulation meshes
+  harness_gotcha_note: Training may sample points anywhere in the volume or on the surface, but a
+    score computed on resampled points is not an AirfRANS score.
+  code_licence: ODbL-1.0
+  code_licence_note: The paper puts the generation code and the experiments under ODbL, and GitHub's
+    metadata for Extrality/AirfRANS reports ODbL-1.0. The airfrans library (Extrality/airfrans_lib)
+    is MIT, as the documentation and GitHub report.
+  code_licence_source: src-arxiv-2212-07564-v3
+  code_licence_quote: For both dataset generation (mesh generation, OpenFoam simulations) and ML
+    experiments/baselines.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The surrogate-fit profile's subset_used and training_data_policy cover what moves the number: which of the
+  # four tasks (or the competitions' 103/200/496 split), and what the model was trained on. Results from the
+  # NeurIPS version of the paper used a different training loss from the arXiv v3 tables.
+  material_extra: []
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Each task is scored on its own test set, and the paper ranks its metrics, Spearman's
+    correlation first, without combining them.
+  source: src-arxiv-2212-07564-v3
+  quote: the test set for the Reynolds and angle of attack extrapolation regimes are both different
+    from the test set of the full and scarce regimes
+
+homepage: https://airfrans.readthedocs.io/en/latest/
+repository: https://github.com/Extrality/AirfRANS
+dataset_url: https://data.isir.upmc.fr/extrality/NeurIPS_2022/Dataset.zip
+
+subsets:
+  - id: airfrans#full
+    label: Full data regime (800 training, 200 test simulations)
+    items: 200
+    scored_separately: true
+    capability_override:
+      - scientific-prediction
+    evidence:
+      - source: src-arxiv-2212-07564-v3
+        quote: 'Full data regime: 800 samples for the training set and 200 for the test set'
+  - id: airfrans#scarce
+    label: Scarce data regime (200 training, the full task's 200 test simulations)
+    items: 200
+    scored_separately: true
+    capability_override:
+      - scientific-prediction
+      - sample-efficiency
+    evidence:
+      - source: src-arxiv-2212-07564-v3
+        quote: 'Scarce data regime: 200 samples for the training set and the same test set as in the full
+          data regime'
+  - id: airfrans#reynolds
+    label: Reynolds extrapolation (train on 3 to 5 million, test on 2 to 3 and 5 to 6 million)
+    items: 496
+    scored_separately: true
+    capability_override:
+      - scientific-prediction
+      - distribution-shift-generalization
+    evidence:
+      - source: src-arxiv-2212-07564-v3
+        quote: 'Reynolds extrapolation: the training set is composed of the samples with a Reynolds of
+          three to five million'
+      - source: src-arxiv-2407-01641-v1
+        quote: 'OOD test Set : 496 samples, AirfRANS reynolds task, testing split'
+  - id: airfrans#aoa
+    label: Angle-of-attack extrapolation (train on -2.5 to 12.5 degrees, test outside it)
+    scored_separately: true
+    capability_override:
+      - scientific-prediction
+      - distribution-shift-generalization
+    evidence:
+      - source: src-arxiv-2212-07564-v3
+        quote: 'Angle of attack extrapolation: the training set is composed by the samples with an angle
+          of attack between'
+    notes: The sources read do not give this task's test-set size.
+subsets_note: >
+  The four tasks of the paper and the repository's -t option. Each capability_override keeps the terms
+  that task carries; the entry's list is their union.
+
+history:
+  - date: 2023-11
+    event: channel-opened
+    field: governance.submission_process
+    to: sandboxed-rerun
+    source: src-arxiv-2407-01641-v1
+    quote: Building upon the preliminary edition held from November 2023 to March 2024
+    note: The first competition on AirfRANS's airfoil task, on Codabench, retrained submitted code
+      on organiser GPUs and published the scores. It ended in March 2024, and the NeurIPS 2024
+      edition reopened the route from July 2024.
+  - date: 2024-12-31
+    event: channel-closed
+    field: governance.submission_process
+    from: sandboxed-rerun
+    to: literature-only
+    source: src-codabench-ml4cfd-3282
+    quote: '"end":"2024-12-31T00:00:00Z","name":"Post competition"'
+    note: The NeurIPS 2024 competition's last phase ended; no later competition is announced.
+
+tags:
+  - fluid-dynamics
+  - aerodynamics
+  - rans
+  - pde-surrogates
+  - geometric-deep-learning
+  - scientific-machine-learning
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T06)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2212-07564-v3
+    - src-arxiv-2212-07564
+    - src-github-airfrans-readme
+    - src-airfrans-docs-introduction
+    - src-airfrans-docs-dataset
+    - src-arxiv-2407-01641-v1
+    - src-codabench-ml4cfd-3282
+    - src-arxiv-2608-13490
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, with windows that keep the authors' addresses
+    out; its abstract page for the dates and venue; the README at main; two documentation pages with
+    scripts and styles stripped; the ML4CFD competition proposal's v1 PDF (a DOI) and Codabench's public
+    JSON record of that competition, for the events; and DD-RNO's abstract page as evidence of current
+    use.
+  confidence: medium
+  review_checks:
+    - check: Identity. The two Codabench competitions are recorded as events of this entry, which
+        makes activity closed and puts the route in history. They have their own split
+        (103/200/496), a composite global score with physics and speed-up criteria, a private final
+        test set and IRT SystemX as lead organiser, so the NeurIPS 2024 ML4CFD competition could be
+        an entry of its own; AirfRANS's activity would then be no-submission-channel.
+      field: events
+      source: src-arxiv-2407-01641-v1
+      quote: 'this iteration centers on a task fundamental to a well-established physical application:
+        airfoil design simulation, utilizing our proposed AirfRANS dataset'
+    - check: Domain. Primary fluid-dynamics follows the taxonomy's rule for a surrogate benchmark
+        with one physical system; PDEBench and the Well are primary simulation-surrogates because
+        they span many. engineering-design was rejected because the scored artefact is a prediction,
+        although the paper calls the dataset design-oriented.
+      field: domain.primary
+    - check: sample-efficiency rests on the scarce task's fixed 200-simulation training budget
+        scored as a task of its own; the paper frames it as a data regime, and the full task's 800
+        is also a fixed budget.
+      field: capability
+      source: src-arxiv-2212-07564-v3
+      quote: We choose to only run 1000 simulations as one of the goals of this dataset is to be
+        close to real-world settings, i.e. limited quantity of data
+    - check: maintainer_type industry-lab rests on the repositories' GitHub organisation (Extrality,
+        now named SimAI and linked to Ansys) and on the competition paper's affiliations; no quoted
+        source states the organisation's ownership. The data is on Sorbonne's ISIR server, so
+        academic-lab is the alternative.
+      field: governance.maintainer_type
+    - check: Smaller calls. aggregation_policy none-by-design is read from the paper's metrics
+        hierarchy, which no source calls a policy. contamination_risk is medium where PDEBench and
+        the Well chose unknown. released is the arXiv date although the data was public from August
+        2022, and the paper calls its ICLR 2022 workshop dataset (UIUC airfoils, coarser meshes) the
+        first version of this one, which is not recorded as a version.
+      field: aggregation_policy
