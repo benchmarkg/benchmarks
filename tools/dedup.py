@@ -161,7 +161,10 @@ def alias_hit(a: Record, b: Record) -> bool:
 
 CODE_HOSTS = ('github.com', 'gitlab.com', 'huggingface.co', 'bitbucket.org', 'kaggle.com')
 CATALOGUE_HOSTS = ('arxiv.org', 'doi.org', 'openreview.net', 'aclanthology.org', 'benchmark-radar.org',
-                   'benchmarklist.com', 'paperswithcode.com', 'zenodo.org', 'figshare.com')
+                   'benchmarklist.com', 'paperswithcode.com', 'zenodo.org', 'figshare.com',
+                   # competition platforms: each competition is its own path, and one platform hosts thousands of
+                   # unrelated ones (FAIR Universe HiggsML and the Fusion Equilibrium Challenge, P1-S6-T05)
+                   'codabench.org', 'codalab.lisn.upsaclay.fr', 'competitions.codalab.org', 'eval.ai')
 
 
 # A section that holds many unrelated things: two pages under it are not one site's family.
