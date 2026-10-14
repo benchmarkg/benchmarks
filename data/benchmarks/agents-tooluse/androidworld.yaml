@@ -1,0 +1,527 @@
+# data/benchmarks/agents-tooluse/androidworld.yaml
+#
+# P1-S9-T01, agents-tooluse entry 10 of 10. Filled from the AndroidWorld paper, arXiv 2405.14573 read as its v5 PDF
+# (2025-04-06, ICLR 2025), and its abstract page; the repository README at main; the leaderboard, a Google Sheet
+# linked from the README, read through the sheet's CSV endpoint on docs.google.com (its AndroidWorld tab; the
+# MobileMiniWoB++ tab was read and is not cited); and the v1 PDF of Minitap's paper (arXiv 2602.07787, February
+# 2026), which reports 100% on the benchmark, as evidence of current use. The project page was read and adds
+# nothing the paper does not say. GitHub's API gave the licence and the last push. Every quote below is checked by
+# the quote-substring validator against those Sources' committed extracts.
+#
+# MobileMiniWoB++, the MiniWoB++ port inside the same environment, is scored separately in the paper and on its own
+# tab of the sheet, so it is a subset here, not an entry of its own.
+
+id: androidworld
+name: AndroidWorld
+tagline: Agents operate 20 real Android apps on an emulator in 116 parameterised tasks, scored by
+  checks on device state.
+description: >
+  A benchmarking environment from Google DeepMind and Google for agents that operate an Android
+  phone. It runs a Pixel 6 emulator on Android 13 with 20 apps, open-source apps at fixed versions
+  from F-Droid beside built-in system apps such as Settings and Contacts, and defines 116 hand-written
+  task templates: creating a calendar event, sending a text, editing a note, or answering a question
+  about the data in an app. Each template is instantiated with parameters generated at random from a
+  seed, and each task has its own setup, success check and teardown. The check reads the device's
+  state through adb (app databases, files, system settings), or examines UI elements where the state
+  cannot be read; information-retrieval tasks compare the agent's answer with one computed from the
+  state the setup wrote. Agents see a screenshot and the accessibility tree and act by tapping,
+  swiping, typing and the navigation keys, within a per-task step budget of about twice the human
+  step count. In the paper, the best agent (M3A with GPT-4 Turbo on the accessibility tree) completed
+  30.6% of the tasks, against 80.0% for two software engineers. MiniWoB++ is ported into the
+  environment as MobileMiniWoB++ (92 tasks) and scored separately. The leaderboard is a Google Sheet
+  of community-submitted, self-reported results that names each row's agent, model and screen
+  representation; by September 2026 five rows reported 100%.
+self_description:
+  source: src-arxiv-2405-14573-v5
+  quote: we present ANDROIDWORLD, a fully functional Android environment that provides reward
+    signals for 116 programmatic tasks across 20 real-world Android apps
+external_ids:
+  arxiv: '2405.14573'
+paper:
+  title: 'AndroidWorld: A Dynamic Benchmarking Environment for Autonomous Agents'
+  arxiv: '2405.14573'
+  version_read: v5
+  source: src-arxiv-2405-14573-v5
+released: 2024-05-23
+released_note: The paper's first arXiv version, as its abstract page dates it. The repository was
+  created on 2024-05-13 (GitHub API).
+released_source: src-arxiv-2405-14573
+released_quote: Submitted on 23 May 2024
+release_venue: ICLR 2025
+release_venue_source: src-arxiv-2405-14573-v5
+release_venue_quote: Published as a conference paper at ICLR 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/computer-use-gui
+domain_basis:
+  reason: The agent operates apps through the phone's graphical interface, observing the screen and
+    acting with the gestures and keys a person uses, and the grader checks the app and device state
+    it leaves. The interface is a touch screen rather than a mouse and keyboard (see review_checks).
+  source: src-arxiv-2405-14573-v5
+  quote: The action space is similar to that which humans use, consisting of gestures (i.e.,
+    tapping, swiping), typing, and navigation buttons
+domain_considered_and_rejected:
+  - term: agents-tooluse/operating-system-tasks
+    reason: Some tasks change the operating system itself (Wi-Fi, Bluetooth, brightness, files), but
+      always through its graphical interface; computer-use-gui's exclusion sends to this leaf only
+      work done through a shell or an API with no graphical interface.
+  - term: agents-tooluse/web-navigation
+    reason: The MobileMiniWoB++ subset is web pages in a WebView and three tasks use Chrome, but the
+      headline tasks run in native apps, and MobileMiniWoB++ is scored separately and observed
+      through the accessibility tree and screenshot, without the DOM.
+    source: src-arxiv-2405-14573-v5
+    quote: Notably, it does not include the DOM as in the original implementation.
+  - term: agents-tooluse/tool-api-calling
+    reason: The environment exposes a few function-calling APIs, such as sending a text, beside the
+      UI actions, but they are an aid; the tasks are scored on the device state however it was
+      reached.
+    source: src-arxiv-2405-14573-v5
+    quote: exposes a limited set of function calling APIs, such as send text message, to help agents
+      accomplish goals
+  - term: agents-tooluse/long-horizon-autonomy
+    reason: Step budgets run from 10 to 120 steps, at about twice the human count, and many tasks
+      take a handful of actions; the horizon does not describe the benchmark beside its interface.
+capability:
+  - context-integration
+  - memory-retention
+capability_basis:
+  context-integration:
+    reason: The information-retrieval tasks are answered from data the setup wrote into the apps
+      (calendar events, tasks, recorded activities), drawn at random, so the answer can only come
+      from the device's state, and the answer is scored. Task-completion tasks likewise carry their
+      material in the environment, such as expenses in an image or recipes in a note.
+    source: src-arxiv-2405-14573-v5
+    quote: Tasks without side-effects are Information Retrieval tasks, requiring the agent to answer
+      a question based on the device or app
+  memory-retention:
+    reason: Some tasks need content read on one screen to be used several screens later, such as
+      transcribing from one app into another or multiplying numbers shown in turn, and the paper
+      names memory as what those tasks demand.
+    source: src-arxiv-2405-14573-v5
+    quote: for tasks that demand memory, such as performing transcriptions across apps, multiplying
+      numbers, or scrolling
+capability_considered_and_rejected:
+  - term: grounding
+    reason: The paper names grounding errors, but it means locating where on the screen to act; the
+      score is task success, not whether an expression was bound to its referent.
+    source: src-arxiv-2405-14573-v5
+    quote: The agents struggle with grounding, particularly when executing precise interactions
+  - term: perception
+    reason: Agents may read screenshots, but the score is whether the task was done, not what was
+      recovered from the image, and text-only agents on the accessibility tree are entered too.
+  - term: long-horizon-execution
+    reason: Most tasks take few steps, and a wrong tap can usually be undone with the back or home
+      key within the budget, so an intermediate error does not make full success unattainable.
+  - term: tool-use
+    reason: The function-calling APIs are optional aids beside the UI actions, incidental to the
+      score.
+  - term: reliability-consistency
+    reason: The paper's robustness study reports success rates per seed group, not agreement across
+      repeated trials, and the leaderboard's pass@k column credits any success among k trials.
+  - term: distribution-shift-generalization
+    reason: One analysis ran the agent on a Pixel 5 with Android 12, but that is not part of the
+      protocol, and the agents were not fitted to the primary device.
+  - term: autonomy
+    reason: The agents run unattended, but no source says the protocol prohibits or checks for human
+      help.
+  - term: instruction-following
+    reason: The tasks are given as instructions, but the score is whether the goal state was
+      reached, and no source claims instruction following.
+
+evaluation_method:
+  - environment-state-check
+  - exact-match
+evaluation_method_basis:
+  reason: After the episode a program inspects what the agent changed on the device, rows in app
+    databases, files and system settings, so any path to the required state passes. The
+    information-retrieval tasks instead compare the agent's answer with a value computed from the
+    state the setup wrote, which is exact match on the returned answer.
+  source: src-arxiv-2405-14573-v5
+  quote: ANDROIDWORLD provides reward signals primarily by managing application state using the
+    Android Debug Bridge (adb), while also incorporating UI element validation where appropriate
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: The success rate counts tasks as passed or failed whichever check decides each one; no
+      sub-scores of different methods are weighted together. Composite tasks give partial reward per
+      subtask, which is per-checkpoint credit inside environment-state-check.
+    source: src-arxiv-2405-14573-v5
+    quote: Composite tasks are more challenging due to their complexity but provide partial rewards
+      for subtask completion
+designed_for_subjects:
+  - agent-scaffold
+  - human-nonexpert
+designed_for_subjects_note: human-nonexpert is the paper's human baseline, two software engineers
+  who each attempted every task once on the emulator and reached 80.0%; the leaderboard lists it as
+  a row. Using a phone app needs no credential, so software engineers are not experts in the
+  benchmark's domain (see review_checks).
+designed_for_subjects_basis:
+  reason: Entrants bring their own agent, implementing the environment's agent interface and its
+    step method, and the leaderboard names each row's agent beside its model. Minitap's paper
+    attributes 21 points to its multi-agent design alone, so the scaffold is part of what a score
+    measures.
+  source: src-github-android-world-readme
+  quote: you can also easily create your own agent and run the benchmark with it as follows.
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The paper compares base models inside its own M3A and SeeAct agents, and M3A is the
+      default agent the repository runs, but no view of the protocol fixes the agent for every
+      entrant, and the leaderboard ranks entrants' own agents and end-to-end models in one table.
+    source: src-github-android-world-readme
+    quote: runs the default agent, M3A, on it.
+
+lifecycle: active
+lifecycle_note: Self-reported results have reached the top of the scale. Five leaderboard rows
+  report 100%, and Minitap's February 2026 paper claims the first full solve, above the 80.0% human
+  baseline. `saturated` is derived from headroom and is not hand-set.
+lifecycle_basis:
+  reason: Results are still being produced and added; the leaderboard's newest rows are dated
+    September 2026, one of them updated on 2026-09-30, and the repository was last pushed on
+    2026-10-13 (GitHub API).
+  source: src-androidworld-leaderboard
+  quote: '[09/30/2026] 91.4'
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard has never run in rounds, and it lists community-submitted rows dated up to
+    September 2026. No source read says how to submit (see review_checks).
+  source: src-androidworld-leaderboard
+  quote: Community-submitted results. No independent verification is performed. Scores are
+    self-reported and may be inaccurate.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: M3A (GPT-4 Turbo, accessibility tree)
+    source: src-arxiv-2405-14573-v5
+    observed_on: 2026-10-14
+    quote: On ANDROIDWORLD, M3A achieves a 30.6% success rate
+  - system: Minitap mobile-use (multi-agent)
+    source: src-arxiv-2602-07787-v1
+    observed_on: 2026-10-14
+    quote: a multi-agent system that achieves 100% success on the AndroidWorld benchmark, the first
+      to fully solve all 116 tasks and surpassing human performance (80%)
+  - system: AutoGLM-Mobile (9B)
+    source: src-androidworld-leaderboard
+    observed_on: 2026-10-14
+    quote: '"AutoGLM-Mobile","Model","✗","9B","AutoGLM-Mobile","Screenshot + A11y tree","80.2"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's success check (is_successful), with its setup and teardown, in
+  the repository; the information-retrieval tasks' expected answers are computed from the state the
+  setup wrote.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The environment, the tasks and their checks are open source, the emulator is free, and the
+    apps come from F-Droid at fixed versions; a run needs API access for model-based agents.
+  source: src-arxiv-2405-14573-v5
+  quote: To ensure reproducibility, each task includes dedicated initialization, success-checking,
+    and tear-down logic, which modifies and inspects the device
+
+task:
+  exists: true
+  input:
+    - a natural-language instruction from one of the 116 templates, filled with randomly generated
+      parameters
+    - at each step, a screenshot of the emulator's screen and its accessibility tree (the UI
+      elements with their text, bounds and state)
+  output: Actions on the device, one per step (tap, long press, swipe, type, enter, home, back, open
+    an app, wait), a completion status, and for information-retrieval tasks an answer, within the
+    task's step budget.
+  scoring: Success rate over the 116 tasks, each passed by its own check of the device state or of
+    the answer. The paper runs each task once, with seed 30 and temperature 0; the leaderboard
+    reports pass@1 and, for some rows, pass@k over several trials.
+  source: src-arxiv-2405-14573-v5
+  quote: The observation space consists of a full-resolution screenshot and a UI tree representation
+    developed for accessibility purposes
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Tasks, parameter generators and checks are code in the repository, and the apps are
+    installed from F-Droid by the setup script. generated-on-demand was considered, because every
+    run instantiates parameters afresh, but the 116 templates and their checks are a fixed public
+    set from which the instances are drawn.
+  access_basis:
+    reason: The environment, every task and every success check are public, with no account or
+      agreement.
+    source: src-arxiv-2405-14573-v5
+    quote: AndroidWorld and the experiments in this paper are available at
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The one content change the sources record, every task's step budget, is carried by a
+      dated announcement in the README with a sheet of per-task changes.
+    source: src-github-android-world-readme
+    quote: As of 11/18/2024, the max_steps/step_budget for each task in AndroidWorld have been
+      updated
+  data_provenance:
+    - expert-authored
+    - synthetic-procedural
+    - model-generated
+  data_provenance_note: The task templates and their checks were written by hand by the authors, and
+    each run's parameters are generated at random from a seed. Information-retrieval tasks are
+    protobuf definitions that, the paper says, can be drafted by a language model and then reviewed
+    and edited by hand, which it found faster than writing them from scratch.
+  data_provenance_source: src-github-android-world-readme
+  data_provenance_quote: contains a highly reproducible benchmark of 116 hand-crafted tasks across
+    20 apps, which are dynamically instantiated with randomly-generated parameters to create
+    millions of unique task variations
+  contamination_risk: medium
+  contamination_risk_note: Every template, generator and check is public, and the paper offers the
+    environment for generating training data. Fresh parameters keep exact instances from repeating,
+    but not the templates. Two leaderboard entrants state that they trained on AndroidWorld's apps
+    and tasks (V-Droid, AGI-0); a route evidenced for one entrant belongs on its claims and leaves
+    the benchmark at medium.
+  contamination_risk_source: src-androidworld-leaderboard
+  contamination_risk_quote: Training data consists of apps and tasks from the AndroidWorld
+    benchmark.
+  contamination_evidence: []
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_note: Two software engineers, one attempt per task, 80.0%; agents' scores are
+    read against it in the paper and on the leaderboard, and several rows now exceed it. Software
+    engineers are not specialists in using phone apps, so this is not expert-average (see
+    review_checks).
+  ceiling_anchor_type_source: src-arxiv-2405-14573-v5
+  ceiling_anchor_type_quote: remains significantly lower than the human success rate of 80.0%
+  size:
+    - count: 116
+      unit: tasks (parameterised templates)
+      subset: AndroidWorld
+      source: src-arxiv-2405-14573-v5
+      quote: ANDROIDWORLD consists of a suite of 116 tasks, spread across 20 diverse applications
+    - count: 20
+      unit: apps
+      subset: AndroidWorld
+      source: src-arxiv-2405-14573-v5
+      quote: ANDROIDWORLD consists of a suite of 116 tasks, spread across 20 diverse applications
+    - count: 92
+      unit: tasks
+      subset: MobileMiniWoB++
+      source: src-arxiv-2405-14573-v5
+      quote: Overall, ANDROIDWORLD supports 92 MiniWoB++ tasks.
+    - count: 62
+      unit: tasks (the paper's MobileMiniWoB++ evaluation)
+      subset: MobileMiniWoB++
+      source: src-arxiv-2405-14573-v5
+      quote: For MobileMiniWoB++, we evaluate on a subset of 62 tasks
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Google DeepMind and Google (the AndroidWorld team)
+  maintainer_basis:
+    reason: The authors are at Google DeepMind and Google, and the repository sits in the
+      google-research organisation; the README adds that it is not an officially supported Google
+      product.
+    source: src-arxiv-2405-14573-v5
+    quote: 1Google DeepMind 2Google
+  maintainer_type: industry-lab
+  submission_process:
+    - self-reported
+  submission_process_note: The sheet's header states that results are community-submitted and
+    unverified. Rows link trajectories, and notes on some rows record disputes (one says that
+    trajectories labelled successful contain incorrect actions), but no source says anything is
+    checked or re-run before a row appears. The maintainers' own rows are the paper's M3A baseline
+    and the human baseline.
+  submission_process_source: src-androidworld-leaderboard
+  submission_process_quote: Community-submitted results. No independent verification is performed.
+    Scores are self-reported and may be inaccurate.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-androidworld-leaderboard
+      quote: '"AndroidWorld","AI agent","✔","-","GPT-4 Turbo","A11y tree","30.6"'
+  independence_flags_note: The row is the paper's own agent, M3A, entered by the maintainers. Google
+    systems also appear, Gemini 2.5 Computer Use (69.7) and Artemis from the google GitHub
+    organisation (99.1); who submitted them is not stated.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The emulator runs on an ordinary machine, and agents built on hosted models cost
+      inference spend; serving open weights on GPUs is the entrant's choice.
+    source: src-arxiv-2405-14573-v5
+    quote: ANDROIDWORLD is lightweight, requiring only 2 GB of memory and 8 GB of disk space
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: The device is pinned (a Pixel 6 virtual device on Android 13, API level
+    33) and so are the app versions. An Android emulator is a virtual device, a stateful software
+    environment like OSWorld's virtual machine, not a physics simulator, so no simulator blocker is
+    recorded. The paper's Pixel 5 run on Android 12 scored 28.4%, within seed-to-seed variation.
+  reproducibility_tier_basis:
+    reason: Setup, the episode and the check are automatic end to end, and nothing behind the score
+      is held by the maintainers.
+    source: src-arxiv-2405-14573-v5
+    quote: The Android OS is fixed, consisting of a Pixel 6 emulator running Android 13
+  harness_availability: official-harness
+  harness: android_world (run.py, the suite runner that sets up, checks and tears down each task)
+  harness_source: src-github-android-world-readme
+  harness_quote: Leave it empty to run on the entire AndroidWorld suite.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for google-research/android_world, read 2026-10-14;
+    not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the agent scaffold, which is the main contribution of most rows, and the
+  # harness version (one row's score rose with an "updated harness"); the per-task step budget, changed on
+  # 2024-11-18; and the number of trials with the selection rule, since the sheet reports pass@1 and, for some
+  # rows, pass@k at k of 2 to 4. The screen representation the agent reads (screenshot, accessibility tree, or
+  # both) is a column of the sheet and moved the paper's own results, and the task-parameter seed moved them by
+  # up to 7 points, but EvalConditions has no field for either (see review_checks).
+  material_extra:
+    - scaffold
+    - harness
+    - max_steps
+    - n_samples
+    - selection_strategy
+    - k
+
+homepage: https://google-research.github.io/android_world/
+repository: https://github.com/google-research/android_world
+leaderboard_url:
+  https://docs.google.com/spreadsheets/d/1cchzP9dlTZ3WXQTfYNhh3avxoLipqHN75v1Tb86uhHo/edit?gid=0
+
+versions:
+  - version: '2024-05-23'
+    label: AndroidWorld as first released
+    version_kind: revision
+    released: 2024-05-23
+    items: 116
+    changes: The first release, with 116 tasks across 20 apps and the MobileMiniWoB++ port.
+    superseded_by: '2024-11-18'
+    frozen: true
+    sources:
+      - src-arxiv-2405-14573
+  - version: '2024-11-18'
+    label: Step budgets revised
+    version_kind: revision
+    released: 2024-11-18
+    items: 116
+    changes: Every task's maximum number of steps set to about twice the human average completion
+      time, with the per-task changes in a linked sheet. The README does not say whether earlier
+      results stay comparable.
+    supersedes_version: '2024-05-23'
+    frozen: true
+    sources:
+      - src-github-android-world-readme
+
+subsets:
+  - id: androidworld#mobileminiwob
+    label: MobileMiniWoB++
+    items: 92
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2405-14573-v5
+        quote: Overall, ANDROIDWORLD supports 92 MiniWoB++ tasks.
+      - source: src-arxiv-2405-14573-v5
+        quote: MobileMiniWoB++ uses the same observation space as the Android tasks (accessibility
+          tree and screenshot)
+    notes: >
+      MiniWoB++ ported into a WebView app inside the environment, with HTML inputs rendered as native
+      Android widgets, the Android tasks' observation and action space and no DOM; twelve original
+      tasks that did not work on a touch emulator were left out. The paper reports it in its own
+      column, and the leaderboard sheet on its own tab.
+  - id: androidworld#mobileminiwob-62
+    label: MobileMiniWoB++, the 62-task evaluation set
+    parent: androidworld#mobileminiwob
+    items: 62
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2405-14573-v5
+        quote: For MobileMiniWoB++, we evaluate on a subset of 62 tasks
+    notes: The paper's MobileMiniWoB++ results are on 62 tasks, as earlier MiniWoB++ studies used.
+
+lineage:
+  role: root
+
+tags:
+  - android
+  - mobile
+  - gui-agent
+  - computer-use
+  - emulator
+  - self-reported-leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2405-14573-v5
+    - src-arxiv-2405-14573
+    - src-github-android-world-readme
+    - src-androidworld-leaderboard
+    - src-arxiv-2602-07787-v1
+  sources_note: >
+    The AndroidWorld paper's v5 PDF (a DOI, not archived) read as text; its abstract page for the
+    date; the README at main; the leaderboard's AndroidWorld tab as CSV through the sheet's gviz
+    endpoint on docs.google.com (robots.txt allows /spreadsheet; the /export path redirects to
+    googleusercontent.com, whose robots.txt disallows everything, so it was not used); and Minitap's
+    v1 PDF (a DOI, not archived) as evidence of current use. The project page repeats the abstract
+    and is not cited.
+  confidence: medium
+  review_checks:
+    - check: computer-use-gui's inclusion test speaks of desktop applications operated by mouse and
+        keyboard; AndroidWorld is a phone operated by touch gestures. Whether mobile GUIs belong in
+        this leaf, as tagged, or need a leaf of their own.
+      field: domain.primary
+    - check: exact-match is tagged for the information-retrieval tasks, whose answers are compared
+        with values computed from the state the setup wrote; they could instead count as
+        environment-state-check, and composite was rejected because the success rate counts
+        pass/fail per task rather than weighting sub-scores.
+      field: evaluation_method
+      source: src-arxiv-2405-14573-v5
+      quote: For validation, we define the expected answer format within the prompt and use a few
+        supported functions
+    - check: The sheet ranks end-to-end GUI models ('Model') and multi-call agents ('AI agent') in
+        one table, distinguished only by a column and its legend. Whether the Model rows warrant
+        observed_subjects beside agent-scaffold, and whether model-in-benchmark-harness should apply
+        to the paper's model comparisons inside M3A.
+      field: designed_for_subjects
+      source: src-androidworld-leaderboard
+      quote: A relatively simple prompt involving one LLM /VLM call
+    - check: The screen representation (screenshot, accessibility tree, or both) and the
+        task-parameter seed both move scores, but EvalConditions has no field for either;
+        sampling.seed is the model's sampling seed, not the task generator's. Both are left out of
+        material_extra.
+      field: comparability.material_extra
+      source: src-arxiv-2405-14573-v5
+      quote: Across three seeds, we observe significant performance variations
+    - check: accepting-submissions rests on community rows dated up to September 2026; no source
+        read says how results reach the sheet (the README only links it).
+      field: activity
+    - check: maintainer-competes-on-own-benchmark rests on the paper's own M3A baseline row. Gemini
+        2.5 Computer Use and google/artemis are Google systems on the board, but who submitted them
+        is not stated.
+      field: governance.independence_flags
+      source: src-androidworld-leaderboard
+      quote: Open-source project available at https://github.com/google/artemis
+    - check: human-nonexpert and crowd-average treat the two software engineers as non-specialists,
+        since using phone apps has no credential; if their recruitment counts as selection for the
+        tasks' knowledge, both become the expert terms (human-expert, expert-average).
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2405-14573-v5
+      quote: we enlisted two software engineers to complete the tasks using an Android emulator
+    - check: context-integration and memory-retention each rest on part of the task set (the
+        information-retrieval tasks; the transcription and multiplication tasks). The vocabulary has
+        no capability for operating a GUI, which is most of what the tasks test.
+      field: capability
+    - check: versioned-releases rests on the one dated announcement (step budgets, 2024-11-18); the
+        commit history was not read, and task fixes landed between announcements would make it
+        rolling-live. model-generated rests on the paper's account of drafting information-retrieval
+        tasks with a language model.
+      field: data.refresh
+      source: src-arxiv-2405-14573-v5
+      quote: we found that editing LLM-generated protobufs can be more efficient than writing a
+        complete task from scratch
