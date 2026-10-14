@@ -1,0 +1,391 @@
+# data/benchmarks/audio-speech/musiccaps.yaml
+#
+# P1-S7-T03, audio-speech entry 8 of 9. Filled from MusicLM's paper, arXiv 2301.11325, read as its v1 PDF
+# (2023-01-26, the only version) and its abstract page; the Hugging Face dataset card of google/MusicCaps and that
+# dataset's public API record (gate, licence, dates); and the v2 PDF of Rubric-Based Optimization for Text-to-Music
+# Generation (arXiv 2610.03589, October 2026), a paper that reports results on MusicCaps. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# Scope call: MusicCaps is distributed as a dataset, but its release paper introduces it as the evaluation set for
+# text-to-music generation and states a scoring protocol on it (FAD, KLD, MCC, A-vs-B listening tests), so it is
+# catalogued as a benchmark with that protocol; see the first review check. The Kaggle page the paper links was not
+# read: its /robots.txt answers with an HTML page rather than a robots file.
+
+id: musiccaps
+name: MusicCaps
+tagline: 5.5k AudioSet music clips with musician-written captions, Google's evaluation set for
+  text-to-music generation.
+description: >
+  Google's evaluation set for text-to-music generation, released with MusicLM in January 2023:
+  5,521 ten-second music clips from AudioSet (2,858 from its eval split, 2,663 from its train
+  split), each with an English free-text caption of about four sentences and an aspect list (genre,
+  mood, tempo, instruments, voices) written by ten professional musicians. A genre-balanced subset
+  of 1,000 clips, all from AudioSet's eval split, is marked. A system generates music from each
+  caption. The release paper scores audio quality by Fréchet Audio Distance against the reference
+  clips, computed with two embedding models (Trill and VGGish), and adherence to the caption by the
+  KL divergence between an AudioSet classifier's predictions on generated and reference music and
+  by MuLan cycle consistency (MCC), the cosine similarity of caption and generated music in MuLan's
+  joint embedding; A-vs-B human listening tests on the balanced subset supplement them. Later papers
+  keep the captions and choose their own metrics, scoring models and splits. Only captions, aspect
+  lists and YouTube IDs with start and end times are distributed, so the audio has to be fetched
+  from YouTube. There is no leaderboard and no scoring code.
+self_description:
+  source: src-arxiv-2301-11325-v1
+  quote: To address the lack of evaluation data for this task, we introduce MusicCaps, a new
+    high-quality music caption dataset with 5.5k examples prepared by expert musicians
+external_ids:
+  huggingface: google/MusicCaps
+  arxiv: '2301.11325'
+paper:
+  title: 'MusicLM: Generating Music From Text'
+  arxiv: '2301.11325'
+  version_read: v1
+  source: src-arxiv-2301-11325-v1
+released: 2023-01-26
+released_note: MusicLM's first and only arXiv version, which released MusicCaps with it; the Hugging
+  Face copy was created the next day.
+released_source: src-arxiv-2301-11325
+released_quote: Submitted on 26 Jan 2023
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: audio-speech/music-generation
+  secondary:
+    - multimodal/any-to-any-generation
+domain_basis:
+  reason: The system generates music, and the protocol scores two things. Audio quality (FAD) is
+    scored on the generated audio alone, music generation's case; adherence to the caption (KLD,
+    MCC, the listening tests) scores whether music generated from text corresponds to it, which is
+    any-to-any generation, secondary because the paper puts the two aspects side by side.
+  source: src-arxiv-2301-11325-v1
+  quote: 'We compute different metrics to evaluate MusicLM, capturing two important aspects of music generation:
+    the audio quality and the adherence to the text description'
+domain_considered_and_rejected:
+  - term: multimodal/audio-language
+    reason: Caption and music correspondence is scored, but on music the system generated, which
+      any-to-any-generation names. MusicCaps is also used the other way round, for captioning music,
+      which would be this leaf; that use is not what this entry catalogues (see review_checks).
+  - term: audio-speech/music-understanding
+    reason: The captions and aspect lists describe musical attributes, but the release protocol
+      generates music from them rather than recognising attributes in audio.
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: Every number measures closeness to a target. FAD compares the generated set with the
+      reference clips in an embedding space, KLD compares a classifier's predictions on generated
+      and reference music, and MCC and the listening tests score faithfulness to the caption.
+    source: src-arxiv-2301-11325-v1
+    quote: to compute class predictions for both the generated and the reference music and measure
+      the KL divergence between probability distributions of class predictions
+capability_considered_and_rejected:
+  - term: instruction-following
+    reason: Captions are descriptions to be rendered, not directions whose compliance is checked
+      apart from quality, and the source does not claim instruction following.
+  - term: creativity-novelty
+    reason: The paper studies memorisation of training data, but no score rewards departing from
+      known music; the metrics reward matching the reference clips and captions.
+  - term: perception
+    reason: Nothing is recovered from a presented signal; audio is the system's output, not its
+      input.
+
+evaluation_method:
+  - model-derived-metric
+evaluation_method_basis:
+  reason: FAD is computed in the embedding spaces of two released audio models (Trill and VGGish),
+    KLD from a LEAF classifier trained on AudioSet, and MCC from MuLan's embeddings. Each number
+    comes from a fixed scoring model whose version is part of the result, the case the term names
+    for FID.
+  source: src-arxiv-2301-11325-v1
+  quote: We report the FAD based on two audio embedding models, both of which are publicly available
+evaluation_method_considered_and_rejected:
+  - term: human-crowd-eval
+    reason: The release paper adds A-vs-B listening tests (1,200 ratings on the balanced subset),
+      but it does not say how raters were recruited or whether any qualification was asked, so the
+      inclusion test cannot be applied; the paper also calls the tests a supplement to the metrics.
+    source: src-arxiv-2301-11325-v1
+    quote: We further supplement our evaluation of text faithfulness with a human listening test
+  - term: human-expert-eval
+    reason: No source says the listening-test raters were musicians or other domain experts; the
+      captions, not the ratings, are what professional musicians wrote.
+  - term: pairwise-preference-elo
+    reason: The listening tests are pairwise, but the outcome is reported as counts of wins, not a
+      rating fitted to the comparisons.
+  - term: reference-metric
+    reason: FAD and KLD compare against reference music, but through learned models, which the
+      term's exclusion test sends to model-derived-metric.
+designed_for_subjects:
+  - generative-media-model
+designed_for_subjects_basis:
+  reason: The systems scored generate music audio from a caption (MusicLM, Mubert, Riffusion in the
+    release paper; MusicGen and ACE-Step in 2026), and every score is a property of the generated
+    audio.
+  source: src-arxiv-2301-11325-v1
+  quote: We evaluate MusicLM by comparing it with two recent baselines for music generation from
+    descriptive text
+as_used:
+  - protocol: MusicCaps captions used as prompts and split once by the authors into training,
+      validation and test captions. The training captions are used for post-training, and the
+      generated clips for the test captions are scored with CLAP (a music-trained contrastive
+      model's caption-audio cosine similarity), SongEval and Audiobox-Aesthetics, with no FAD and no
+      reference audio.
+    split: the authors' own 553-caption test split
+    source: src-arxiv-2610-03589-v2
+    quote: split once into 4,416 training, 552 validation, and 553 test captions
+    note: Rubric-Based Optimization for Text-to-Music Generation (October 2026), which post-trains
+      MusicGen-small and ACE-Step v1. Its CLAP score fills the role MCC had in the release paper.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on MusicCaps; a paper first posted on 2026-10-02 reports CLAP,
+    SongEval and Audiobox-Aesthetics on its captions. The Hugging Face copy was last modified on
+    2023-03-08 (API record), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2610-03589-v2
+  quote: On MusicCaps, rubric-based optimization improves CLAP, SongEval, and Audiobox-Aesthetics
+    simultaneously
+activity: no-submission-channel
+activity_note: No leaderboard, server or submission route exists or is mentioned in the sources read
+  (the dataset card's Leaderboard field is empty); the release paper's comparison is the
+  maintainer's only result, and everyone else reports in their own papers.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: MusicLM
+    source: src-arxiv-2301-11325-v1
+    observed_on: 2026-10-14
+    quote: We demonstrate that our method outperforms baselines on MusicCaps
+  - system: MusicGen-small (post-trained with DPO)
+    source: src-arxiv-2610-03589-v2
+    observed_on: 2026-10-14
+    quote: MusicGen-small (Copet et al., 2023) is a 300M-parameter autoregressive transformer
+evaluation_target: learned-system
+execution_mode: automated
+execution_mode_note: The metrics are computed automatically; the release paper's listening tests are
+  a supplement that later users run, or not, with their own raters.
+ground_truth_source: held-out-labels
+ground_truth_source_note: No single output is correct. The reference clips and their
+  musician-written captions are the targets, compared with the generated music through scoring
+  models (FAD and KLD against the clips, MCC against the captions). They are public, not held out.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The captions and clip pointers are public and ungated, and the FAD embedding models are
+    public, so anyone can compute FAD on MusicCaps.
+  source: src-arxiv-2301-11325-v1
+  quote: We report the FAD based on two audio embedding models, both of which are publicly available
+  caveat: The paper does not say whether the LEAF classifier behind KLD or MuLan behind MCC is
+    released; later papers substitute other models (the 2026 paper's CLAP), so the release
+    protocol's KLD and MCC may not be reproducible as specified.
+
+task:
+  exists: true
+  input:
+    - a musician-written English free-text caption of about four sentences describing a 10-second
+      music clip
+  output: A music clip generated from the caption.
+  scoring: FAD (Trill and VGGish embeddings) between the generated and the reference clips; KL
+    divergence between an AudioSet classifier's predictions on generated and reference clips; MCC,
+    the mean MuLan cosine similarity of caption and generated music; and counts of wins in A-vs-B
+    listening tests on the genre-balanced 1k subset, where raters judge which clip the caption
+    better describes and ignore audio quality. Each is reported separately.
+  source: src-arxiv-2301-11325-v1
+  quote: the MCC metric as the average cosine similarity between these embeddings
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Only the CSV of captions, aspect lists, AudioSet labels and YouTube IDs with start
+    and end times is distributed; the audio must be fetched from YouTube. Pointer-only media is
+    fully-open with a note (ADR-0020, AudioSet's case). How many clips remain on YouTube was not
+    checked.
+  access_basis:
+    reason: The Hugging Face copy, under Google's account, is ungated, and its CSV holds every
+      caption and clip pointer; no account or agreement is needed.
+    source: src-hf-api-musiccaps
+    quote: '"gated":false'
+  refresh: static
+  refresh_basis:
+    reason: One release of 5,521 examples. The Hugging Face repository was last modified on
+      2023-03-08, six weeks after release, and no source read records a revision of the items.
+    source: src-hf-api-musiccaps
+    quote: '"lastModified":"2023-03-08T14:37:09.000Z"'
+  data_provenance:
+    - expert-authored
+    - inherited-from-constituents
+  data_provenance_note: The captions and aspect lists were written for MusicCaps by ten professional
+    musicians. The clips are selected from AudioSet's eval and train splits, whose own sources
+    document their provenance.
+  data_provenance_source: src-arxiv-2301-11325-v1
+  data_provenance_quote: This dataset includes 5.5k music clips from AudioSet (Gemmeke et al.,
+    2017), each paired with corresponding text descriptions in English, written by ten professional
+    musicians
+  contamination_risk: medium
+  contamination_risk_note: The captions and clip pointers have been public since January 2023, and
+    the clips are AudioSet's, nearly half from its train split, so a route into a generator's
+    training data is plausible, through AudioSet or YouTube audio or through the captions, which the
+    2026 paper post-trains on (on its own split). The release paper does not say whether MusicLM's
+    training music (280k hours) overlaps the clips. No source read evidences a route into what is
+    scored.
+  contamination_risk_source: src-arxiv-2301-11325-v1
+  contamination_risk_quote: It contains a total of 5,521 examples, out of which 2,858 are from the
+    AudioSet eval and 2,663 from the AudioSet train split
+  contamination_evidence: []
+  dataset_licence: CC-BY-SA-4.0
+  dataset_licence_note: The licence covers the distributed CSV. The audio is not distributed, and
+    the card states no terms for it.
+  dataset_licence_source: src-hf-musiccaps-card
+  dataset_licence_quote: The license for this dataset is cc-by-sa-4.0
+  size:
+    - count: 5521
+      unit: music clips of 10 seconds, each with a caption and an aspect list
+      source: src-arxiv-2301-11325-v1
+      quote: It contains a total of 5,521 examples, out of which 2,858 are from the AudioSet eval
+        and 2,663 from the AudioSet train split
+    - count: 1000
+      unit: music clips, genre-balanced, all from AudioSet's eval split
+      subset: balanced subset (the release paper's listening tests)
+      source: src-arxiv-2301-11325-v1
+      quote: We further tag 1,000 examples as a balanced subset of our dataset
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Google (released by Google Research with MusicLM; shared as googleai on Kaggle and
+    google on Hugging Face)
+  maintainer_basis:
+    reason: The paper's authors are at Google Research, and both official copies sit under Google's
+      accounts.
+    source: src-hf-api-musiccaps
+    quote: '"author":"google"'
+  maintainer_type: industry-lab
+  submission_process:
+    - literature-only
+  submission_process_note: There is no leaderboard or results page. The release paper's comparison
+    of MusicLM with Mubert and Riffusion is the maintainer's only result; others report in their own
+    papers, under metrics, scoring models and splits they choose.
+  submission_process_source: src-arxiv-2301-11325-v1
+  submission_process_quote: We perform our evaluations on MusicCaps, the evaluation dataset we
+    publicly release together with this paper
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2301-11325-v1
+      quote: We demonstrate that our method outperforms baselines on MusicCaps
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2301-11325-v1
+      quote: since MCC also relies on MuLan, the MCC scores are favorable to our method
+  independence_flags_note: Google released MusicCaps with its own MusicLM, which leads the release
+    paper's comparison. MCC is computed with MuLan, the joint embedding model MusicLM is conditioned
+    on, and the paper concedes that the metric favours MusicLM. The FAD embedding models are served
+    from Google's TF Hub namespace (tfhub.dev/google), and two of MusicLM's authors are among the
+    authors of LEAF, the classifier behind KLD.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: null
+  reproducibility_tier_note: A run is automatic end to end once the clips are fetched, which reads
+    as fully-automatable, but no implementation of the metrics is published (the blocker below), and
+    02 S11 forbids that tier beside it. The tier abstains, as AudioSet's classification did on a
+    similar pair (audioset-008). Counting the release paper's listening tests in the headline would
+    make it requires-human-raters.
+  reproducibility_blockers:
+    - no-reference-implementation
+  reproducibility_blockers_note: The release paper names its scoring models (Trill, VGGish, a LEAF
+    classifier, MuLan) but publishes no code; each paper reconstructs the metrics from prose with
+    models of its choosing.
+  harness_availability: none
+  harness_availability_note: Neither Google nor the dataset card publishes code that runs or scores
+    a system. The card links a third party's script for downloading the clips
+    (nateraw/download-musiccaps-dataset), which was not read.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profile (subset_used and the scoring model with its version): the metric implementation
+  # (which FAD code, embedding model and reference set, clip length), and what the generator was trained or
+  # post-trained on (AudioSet or YouTube audio, MusicCaps captions).
+  material_extra:
+    - harness
+    - training_data_policy
+aggregation_policy: unknown
+aggregation_policy_note: The release paper reports FAD, KLD, MCC and wins side by side and states no
+  aggregate.
+
+homepage: https://kaggle.com/datasets/googleai/musiccaps
+dataset_url: https://huggingface.co/datasets/google/MusicCaps
+
+tags:
+  - music
+  - text-to-music
+  - audio-generation
+  - audioset
+  - captions
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2301-11325-v1
+    - src-arxiv-2301-11325
+    - src-hf-musiccaps-card
+    - src-hf-api-musiccaps
+    - src-arxiv-2610-03589-v2
+  sources_note: >
+    MusicLM's v1 PDF (a DOI, not archived) read as text, and its abstract page for the date; the Hugging
+    Face dataset card read raw at main, and the dataset's public API record for its gate, licence and
+    dates; and the v2 PDF of the October 2026 rubric-optimisation paper (a DOI, not archived) as evidence
+    of
+    current use. The Kaggle page the paper links as the dataset's home was not read, because its robots.txt
+    could not be read as a robots file.
+  confidence: medium
+  review_checks:
+    - check: Scope. MusicCaps is distributed as a dataset; this entry treats it as a benchmark
+        because the release paper introduces it as the evaluation set for text-to-music and states a
+        protocol on it (FAD, KLD, MCC, listening tests). Later papers keep the captions but choose
+        their own metrics, scoring models and splits, so numbers are rarely comparable across
+        papers. MusicCaps is also used for music captioning (audio to text), which this entry does
+        not catalogue; that could be a second entry or a subset.
+      field: task
+      source: src-arxiv-2301-11325-v1
+      quote: To address the lack of evaluation data for this task, we introduce MusicCaps
+    - check: The listening tests' raters are not described, so neither human-crowd-eval nor
+        human-expert-eval is assigned. If the supplementary material describes them, add the term,
+        and consider requires-human-raters as the tier.
+      field: evaluation_method
+      source: src-arxiv-2301-11325-v1
+      quote: We collect 1200 ratings, with each source involved in 600 pair-wise comparisons
+    - check: grader-from-evaluated-party is applied to a scoring model (MuLan, behind MCC), while
+        the term's tests name judge models, jury members and human raters. The paper's own admission
+        that MCC favours MusicLM is the evidence.
+      field: governance.independence_flags
+      source: src-arxiv-2301-11325-v1
+      quote: since MCC also relies on MuLan, the MCC scores are favorable to our method
+    - check: reproducibility_tier is null. A run is automatic, but the no-reference-implementation
+        blocker rules out fully-automatable (02 S11), and no other tier fits.
+      field: execution.reproducibility_tier
+    - check: harness_availability none or reference-implementation-only. The dataset card links a
+        third party's script that downloads the clips; it neither runs nor scores a system, and it
+        is not Google's.
+      field: execution.harness_availability
+      source: src-hf-musiccaps-card
+      quote: In order to use this dataset, one must download the corresponding YouTube videos and
+        chunk them according to the start/end times
+    - check: live-world-state is not tagged. The clips are YouTube pointers, and AudioSet's
+        classification records the same clips vanishing as videos are removed, but no source read
+        for this entry says how many MusicCaps clips are gone.
+      field: execution.reproducibility_blockers
+    - check: Domain secondary. multimodal/any-to-any-generation was chosen over
+        multimodal/audio-language for the caption-adherence half of the protocol;
+        ground_truth_source is held-out-labels for a public reference set because no closer value
+        exists.
+      field: domain
