@@ -1,0 +1,470 @@
+# data/benchmarks/vision/tanks-and-temples.yaml
+#
+# P1-S8-T05, vision entry 6 of 8. Filled from the paper, read as the authors' preprint PDF that tanksandtemples.org
+# links (SIGGRAPH 2017, ACM Transactions on Graphics 36(4)), and Crossref's record of its DOI for the date; four
+# pages of tanksandtemples.org (home, tutorial, download, licence; scripts and styles stripped); the toolbox
+# repository's README at master; and two 2026 papers that report on the benchmark, the v1 PDFs of ZipMVS (arXiv
+# 2608.28033, August 2026), scored on the official server, and of a 3D Gaussian Splatting paper (arXiv 2604.28016,
+# SIGGRAPH 2026) that reuses the scenes for novel-view synthesis. The site's robots.txt disallows /leaderboard/,
+# /submit/ and /login/, so neither the leaderboard nor the submission page was read. Every quote below is checked
+# by the quote-substring validator against those Sources' committed extracts.
+
+id: tanks-and-temples
+name: Tanks and Temples
+aliases:
+  - Tanks & Temples
+  - TanksAndTemples
+tagline: Large-scale scene reconstruction from video, scored by F-score against laser scans held by
+  an evaluation server.
+description: >
+  A benchmark for image-based 3D reconstruction of large real scenes, from Intel Labs (SIGGRAPH
+  2017). Each scene was filmed as high-resolution 4K video and scanned with an industrial laser
+  scanner. An entrant reconstructs a dense point cloud from the video, or from the pre-sampled
+  image set, with no camera calibration given, and submits it with its camera poses. The
+  reconstruction is aligned to the ground truth and scored by precision, recall and their
+  F-score at a distance threshold set per scene. The test scenes form two groups: eight
+  intermediate (sculptures, vehicles, house-scale buildings) and six advanced (large indoor
+  rooms and complex outdoor sites). Their ground truth is withheld and an evaluation server
+  scores them, while seven training scenes come with public ground truth and an offline
+  evaluation script. Learned multi-view stereo networks now enter it beside classical SfM+MVS
+  pipelines, and novel-view synthesis papers reuse its scenes with image metrics outside the
+  official protocol.
+self_description:
+  source: src-tanks-and-temples-site
+  quote: We present a benchmark for image-based 3D reconstruction.
+paper:
+  title: 'Tanks and Temples: Benchmarking Large-Scale Scene Reconstruction'
+  doi: 10.1145/3072959.3073599
+  source: src-tanks-and-temples-paper
+released: 2017-07-20
+released_note: The paper's online publication in ACM Transactions on Graphics, as Crossref records
+  it; the site's BibTeX gives only the year.
+released_source: src-crossref-10-1145-3072959-3073599
+released_quote: '"published-online":{"date-parts":[[2017,7,20]]}'
+release_venue: SIGGRAPH 2017 (ACM Transactions on Graphics 36(4))
+release_venue_source: src-tanks-and-temples-site
+release_venue_quote: journal = {ACM Transactions on Graphics}
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: vision/3d-reconstruction
+  secondary:
+    - vision/multi-view-stereo
+domain_basis:
+  reason: The benchmark scores recovered geometry and was built for complete pipelines, from video
+    to dense point cloud, with camera calibration deliberately withheld, which is 3d-reconstruction
+    rather than multi-view stereo with calibrated views given. The paper also compares MVS systems
+    by fixing the SfM front end, and MVS networks are most of today's entrants, so multi-view-stereo
+    is secondary (see review_checks).
+  source: src-tanks-and-temples-paper
+  quote: 'was created to evaluate complete 3D reconstruction pipelines: from input video to dense point
+    cloud'
+domain_considered_and_rejected:
+  - term: vision/novel-view-synthesis
+    reason: The official score is geometric, against the laser scans. Novel-view synthesis papers
+      reuse the scenes and score rendered views by PSNR, SSIM and LPIPS, but that is a use outside
+      the benchmark's protocol and is recorded in as_used.
+    source: src-arxiv-2604-28016-v1
+    quote: We report PSNR, SSIM [Wang et al. 2004], and LPIPS [Zhang et al. 2018] metrics on novel
+      views
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is video of a real scene and the score measures how accurately and completely
+      its geometry was recovered from it.
+    source: src-tanks-and-temples-paper
+    quote: A high F-score for a stringent distance threshold can only be achieved by a
+      reconstruction that is both accurate and complete.
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: Thoroughly spatial, but the scored quantity is reconstruction accuracy, which the term's
+      exclusion test sends to perception.
+  - term: generation-fidelity
+    reason: The reconstruction is compared with a target by distance, but it is recovered from the
+      input video and scored against a measurement of the same scene, as ScanNet++'s reconstruction
+      is read as perception. The image-fidelity scores of novel-view synthesis papers are not the
+      benchmark's.
+  - term: distribution-shift-generalization
+    reason: Learned MVS networks trained only on DTU are run on these scenes, but that is how papers
+      use it; the benchmark defines no shifted condition of its own.
+    source: src-arxiv-2608-28033-v1
+    quote: 'Table 2: Results on Tanks and Temples for baselines trained only on DTU.'
+
+evaluation_method:
+  - domain-metric
+evaluation_method_basis:
+  reason: The F-score is the harmonic mean of precision and recall of point-to-point distances
+    between the aligned reconstruction and the laser scan at a per-scene threshold, a reconstruction
+    measure with no meaning outside the field; classification-metric's own examples name Tanks and
+    Temples as this near miss.
+  source: src-tanks-and-temples-paper
+  quote: The F-score at a given threshold d is the harmonic mean of precision and recall at this
+    threshold.
+evaluation_method_considered_and_rejected:
+  - term: classification-metric
+    reason: F-score is in its list, but here it is computed from distances to a laser scan at a
+      scene-specific threshold, not from predicted labels; the term's examples record Tanks and
+      Temples as its near miss.
+  - term: entrant-relative-ranking
+    reason: The paper reports each pipeline's average rank per group and calls it the primary
+      measure of relative performance, but it names F-score at the scene threshold as the
+      leaderboard's main measure. The leaderboard was not read (see review_checks).
+    source: src-tanks-and-temples-paper
+    quote: being the main measure for the leaderboard
+designed_for_subjects:
+  - classical-algorithm
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: The paper evaluates 15 SfM+MVS pipelines, all non-learned (COLMAP, MVE, OpenMVG with
+    OpenMVS, Pix4D and others). It also releases training scenes with public ground truth for
+    training, and the learned MVS networks that now enter are trained for the task, mostly on DTU.
+    Per-scene fitted methods, such as 3D Gaussian Splatting, fall under the latter term's
+    refitted-procedure clause.
+  source: src-tanks-and-temples-paper
+  quote: We have collected additional datasets that can be used for training.
+designed_for_subjects_considered_and_rejected:
+  - term: generative-media-model
+    reason: Novel-view synthesis methods render images, but they are fitted to reproduce held-out
+      views of the scene, and their use is outside the benchmark's protocol (as_used).
+  - term: domain-specialist-model
+    reason: 3D reconstruction is a general vision task, not one defined by a scientific, clinical or
+      engineering-design discipline.
+as_used:
+  - protocol: Learned depth-map MVS networks, trained on another dataset (DTU), are run on frames of
+      the test scenes with camera poses and intrinsics as input and their fused point clouds are
+      scored by the official server. The benchmark was designed for complete pipelines that recover
+      the cameras themselves.
+    split: intermediate and advanced
+    source: src-arxiv-2608-28033-v1
+    quote: together with their associated camera poses and intrinsics
+    note: ZipMVS (August 2026). Where the poses for the test scenes come from is not stated in it.
+  - protocol: Novel-view synthesis. The scenes are reused to fit per-scene 3D Gaussian Splatting
+      representations, scored by PSNR, SSIM and LPIPS on held-out views of the input, offline,
+      against the photographs rather than the laser scans and with no use of the server.
+    source: src-arxiv-2604-28016-v1
+    quote: We report PSNR, SSIM [Wang et al. 2004], and LPIPS [Zhang et al. 2018] metrics on novel
+      views
+    note: A SIGGRAPH 2026 paper on structure-aware densification. It does not name the scenes it
+      uses or how the held-out views were chosen; both follow the novel-view synthesis literature,
+      not a protocol the maintainers define.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the instrument. An August 2026 MVS paper reports
+    intermediate and advanced scores from the official server, and an April 2026 paper reuses the
+    scenes for novel-view synthesis. Intel's end of maintenance of the toolbox repository is
+    maintenance_status evidence, not lifecycle (the deprecated and dormant terms' tests name this
+    case).
+  source: src-arxiv-2608-28033-v1
+  quote: Performance on this dataset is evaluated by submitting reconstructed point clouds to the
+    official online server.
+activity: accepting-submissions
+activity_note: The site's robots.txt disallows /leaderboard/, /submit/ and /login/ for every agent,
+  so neither the leaderboard nor the submission page was read. The benchmark has never run in
+  rounds.
+activity_basis:
+  reason: The download page, served on 2026-10-14, still invites entrants to submit a group's
+    reconstructions and be listed, and ZipMVS reports scores from the official server in August
+    2026. No source says the server has closed.
+  source: src-tanks-and-temples-download
+  quote: Once you have reconstructed the entire intermediate set or the advanced set, you can submit
+    your results for evaluation and put your name on the leaderboard.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ZipMVS
+    source: src-arxiv-2608-28033-v1
+    observed_on: 2026-10-14
+    quote: On the Intermediate set, ZipMVS achieves an F-score of 54.46
+    note: A learned MVS network trained on the DTU training set; the paper reports scores from the
+      official online server.
+evaluation_target: mixed
+evaluation_target_basis:
+  reason: The benchmark was built to evaluate classical SfM+MVS pipelines, which are entrants, not
+    baselines, and learned MVS networks are now scored on the same server beside them; ZipMVS's
+    table lists COLMAP with the learned methods.
+  source: src-arxiv-2608-28033-v1
+  quote: Colmap [19] 43.16 44.48 42.14
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Laser scans of every scene, taken with a FARO Focus 3D X330 HDR scanner
+  and resampled on a voxel grid; the test scenes' scans are withheld and the training scenes' are
+  public.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Anyone can download the videos and image sets, reconstruct the test scenes and submit them
+    to the server, and the training scenes can be scored offline with the published script. The test
+    scores themselves come only from the server.
+  source: src-tanks-and-temples-tutorial
+  quote: The reconstruction of training set can be evaluated using public ground truth.
+
+task:
+  exists: true
+  input:
+    - a high-resolution 4K video of one scene, or the pre-sampled image set drawn from it, with no
+      camera calibration given
+  output: A dense point cloud of each scene in the intermediate or the advanced group, with a camera
+    pose for every input frame, uploaded together.
+  scoring: The reconstruction is aligned to the laser scan, cropped and resampled; precision and
+    recall are the shares of points within the scene's distance threshold of the other set, and
+    their F-score is reported per scene, with each group's mean and the average rank.
+  metric_range:
+    - 0
+    - 100
+  source: src-tanks-and-temples-tutorial
+  quote: Note that models in either the intermediate or the advanced set need to be reconstructed
+    for submission.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The videos and image sets of all 21 scenes are linked from the download page and
+    fetched by the toolbox's downloader, on the licence terms. Ground truth is public for the seven
+    training scenes only.
+  access_basis:
+    reason: The test scenes' inputs are released and their ground-truth geometry is not; test scores
+      come only from the maintainers' server.
+    source: src-tanks-and-temples-tutorial
+    quote: It is based on the same evaluation pipeline used for the offline case, but the ground
+      truth geometries are not public.
+  refresh: static
+  refresh_note: Whether the server's evaluation code has changed since 2017 is not shown by the
+    sources read.
+  refresh_basis:
+    reason: The download page lists the same eight intermediate and six advanced scenes the 2017
+      paper describes, and no source records a version or a change.
+    source: src-tanks-and-temples-download
+    quote: Intermediate video image set Family Francis Horse Lighthouse M60 Panther Playground Train
+  data_provenance:
+    - real-world-instrument
+  data_provenance_note: The inputs are 4K video from Sony a7S II and DJI Zenmuse X5R cameras on
+    gimbals; the ground truth is industrial laser scans of the same scenes.
+  data_provenance_source: src-tanks-and-temples-paper
+  data_provenance_quote: Ground-truth data was collected using a FARO Focus 3D X330 HDR scanner.
+  contamination_risk: low
+  contamination_risk_note: The scored content is the test scenes' laser scans, which were never
+    released and are held by the server. The input videos are public, but reconstructing from them
+    is the task. The novel-view synthesis use (as_used) scores public images offline and has no such
+    protection.
+  contamination_risk_source: src-tanks-and-temples-paper
+  contamination_risk_quote: Ground truth data for the benchmark sequences will be withheld to ensure
+    that the reported measures reflect genuine performance characteristics of the underlying
+    techniques.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Precision and recall lie in [0, 100], so the F-score tops out at 100. No
+    source measures an achievable ceiling.
+  ceiling_anchor_type_source: src-tanks-and-temples-paper
+  ceiling_anchor_type_quote: is defined to lie in the range [0,100] for convenience and can be
+    interpreted as a percentage
+  dataset_licence: CC-BY-4.0 as stated, with a licence grant on the same page for non-commercial
+    scientific research only
+  dataset_licence_note: The licence page publishes the data under CC BY 4.0, "even commercially",
+    and then grants use only for non-commercial scientific research and forbids making the data
+    available to third parties without permission. See review_checks.
+  dataset_licence_source: src-tanks-and-temples-license
+  dataset_licence_quote: published under the Creative Commons Attribution 4.0 International (CC BY
+    4.0) License
+  size:
+    - count: 14
+      unit: test scenes (8 intermediate, 6 advanced)
+      subset: test
+      source: src-tanks-and-temples-paper
+      quote: Intermediate Family Francis Horse Lighthouse M60 Panther Playground Train Advanced
+        Auditorium Ballroom Courtroom Museum Palace Temple
+    - count: 7
+      unit: training scenes with public ground truth
+      subset: training
+      source: src-tanks-and-temples-download
+      quote: Training Data ground truth video image set Barn Caterpillar Church Courthouse Ignatius
+        Meeting room Truck
+    - count: 15
+      unit: SfM+MVS pipelines evaluated in the paper
+      subset: 2017 paper
+      source: src-tanks-and-temples-paper
+      quote: to assemble 15 reconstruction pipelines for evaluation
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Intel Labs (originator); the site's current operator is not named
+  maintainer_basis:
+    reason: The paper's four authors are at Intel Labs. Intel has since discontinued the toolbox
+      repository. The site (footer dated 2025) names no operator, and the paragraph naming Intel's
+      Visual Computing Lab as owner of the data is commented out of the licence page's HTML.
+    source: src-tanks-and-temples-paper
+    quote: VLADLEN KOLTUN, Intel Labs
+  maintainer_type: industry-lab
+  maintainer_type_note: The originator's type. Intel no longer maintains the repository, and who
+    runs the website and its evaluation server now is not stated in the sources read; that decay
+    belongs to maintenance_status.
+  submission_process:
+    - held-out-server
+  submission_process_note: Entrants upload reconstructions and camera logs (the toolbox ships an
+    upload script) and the server scores them against laser scans they never see.
+    maintainer-scored-predictions was considered and rejected, because it needs public labels.
+  submission_process_source: src-tanks-and-temples-tutorial
+  submission_process_quote: This case uses a dedicated server for the evaluation.
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-tanks-and-temples-paper
+      quote: Ground truth data for the benchmark sequences will be withheld to ensure that the
+        reported measures reflect genuine performance characteristics of the underlying techniques.
+  independence_flags_note: The maintainers hold the test ground truth and score every test
+    submission. The 15 pipelines in the paper are third-party, one of them commercial (Pix4D), and
+    the paper states no funding. The leaderboard could not be read, so whether the maintainers' own
+    methods are listed on it is not known.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are on the intermediate and advanced groups, which only the server
+      can produce because it holds their ground truth. Training-scene scores can be reproduced
+      offline.
+    source: src-tanks-and-temples-tutorial
+    quote: It is based on the same evaluation pipeline used for the offline case, but the ground
+      truth geometries are not public.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: TanksAndTemples python_toolbox/evaluation (run.py on Open3D), the offline counterpart of
+    the server's pipeline, for the training scenes
+  harness_source: src-tanks-and-temples-tutorial
+  harness_quote: This can be done automatically by using Open3D and our evaluation script
+  submission_channel:
+    source: src-tanks-and-temples-tutorial
+    quote: Instead, the result can be posted on the leaderboard
+  submission_channel_note: Submission goes through the site's /submit/ page behind a login, which
+    robots.txt disallows and which was not read.
+  code_licence: MIT
+  code_licence_note: For the toolbox's python scripts. GitHub's licence metadata for
+    isl-org/TanksAndTemples reports NOASSERTION ("Other"), read 2026-10-14; not a quoted Source.
+  code_licence_source: src-github-tanksandtemples-readme
+  code_licence_quote: The python scripts are under the [MIT license](LICENSE).
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The profile resolves to eligibility-gated (a domain metric with classical pipelines among the entrants).
+  # Within it: which group was scored (intermediate or advanced, or the public training scenes offline), and
+  # what a learned method was trained on (DTU only, or fine-tuned on further data such as BlendedMVS), which
+  # papers separate in their tables. The benchmark has one board and no training-data tiers, so those two
+  # fields are waived.
+  material_extra:
+    - subset_used
+    - training_data_policy
+  material_waived:
+    - field: eligibility_track
+      reason: One leaderboard per group, with no track by data or method; the group is subset_used.
+    - field: training_data_eligibility
+      reason: The benchmark defines no training-data tiers; what a method trained on is
+        training_data_policy.
+
+homepage: https://www.tanksandtemples.org/
+repository: https://github.com/isl-org/TanksAndTemples
+dataset_url: https://www.tanksandtemples.org/download/
+leaderboard_url: https://www.tanksandtemples.org/leaderboard/
+
+history:
+  - event: repository-moved
+    field: repository
+    from: github.com/IntelVCL/TanksAndTemples
+    to: github.com/isl-org/TanksAndTemples
+    source: src-github-tanksandtemples-readme
+    quote: https://github.com/IntelVCL/TanksAndTemples/issues
+    note: Undated in the sources read. The README, fetched from isl-org, still links the IntelVCL
+      issues page, and the site's tutorial links the IntelVCL repository; GitHub's API resolves
+      IntelVCL/TanksAndTemples to isl-org/TanksAndTemples (read 2026-10-14). The repository is
+      archived, last pushed 2024-09-02.
+
+tags:
+  - 3d-reconstruction
+  - multi-view-stereo
+  - structure-from-motion
+  - laser-scan
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-tanks-and-temples-paper
+    - src-crossref-10-1145-3072959-3073599
+    - src-tanks-and-temples-site
+    - src-tanks-and-temples-tutorial
+    - src-tanks-and-temples-download
+    - src-tanks-and-temples-license
+    - src-github-tanksandtemples-readme
+    - src-arxiv-2608-28033-v1
+    - src-arxiv-2604-28016-v1
+  sources_note: >
+    The authors' preprint PDF linked from the site, read as text (the DOI resolves to the ACM
+    Digital Library, which the stress corpus recorded refusing scripted requests), with Crossref's
+    record of the DOI for the date; four site pages with scripts and styles stripped; the toolbox
+    README at master; and the v1 PDFs of ZipMVS and of a 3D Gaussian Splatting paper (DOIs, not
+    archived) as evidence of current use. robots.txt disallows the leaderboard, submit and login
+    pages, which were not fetched.
+  confidence: medium
+  review_checks:
+    - check: Domain primary is 3d-reconstruction because the benchmark withholds calibration and
+        scores complete pipelines; multi-view-stereo is secondary on the paper's component
+        comparison and today's MVS entrants. multi-view-stereo as primary is the alternative.
+      field: domain
+      source: src-tanks-and-temples-paper
+      quote: Individual components, such as specific SfM or MVS systems, can still be evaluated by
+        fixing the other components.
+    - check: Novel-view synthesis papers reuse the scenes with PSNR on held-out views, outside the
+        official protocol; recorded in as_used and rejected as a domain. Whether it should be a
+        secondary domain, or a variant entry of its own.
+      field: domain
+      source: src-arxiv-2604-28016-v1
+      quote: and 7k iterations for Tanks & Temples
+    - check: The assignment suggested maintainer-scored-predictions; held-out-server is assigned
+        because the test ground truth is never released.
+      field: governance.submission_process
+      source: src-tanks-and-temples-paper
+      quote: Researchers will be able to submit reconstructions of benchmark sequences, which will
+        be evaluated according to multiple measures
+    - check: activity accepting-submissions rests on the download page's invitation and ZipMVS's
+        2026 server results. The leaderboard and submit pages are disallowed by robots.txt and
+        unread, so unknown is the alternative; the same gap leaves maintainer-competes unassessed.
+      field: activity
+    - check: evaluation_target mixed is its first use in the corpus. WeatherBench 2 rejected it
+        because its numerical models are baselines; here the classical pipelines are the
+        designed-for entrants and still sit beside learned ones.
+      field: evaluation_target
+    - check: The paper calls average rank the primary measure of relative performance but names
+        F-score at the threshold as the leaderboard's main measure; how the live leaderboard orders
+        entries is unread, and an average-rank ordering would add entrant-relative-ranking.
+      field: evaluation_method
+      source: src-tanks-and-temples-paper
+      quote: The rank is a more robust summary statistic than the mean and should be regarded as the
+        primary measure of the relative performance of a given pipeline.
+    - check: The licence page contradicts itself, CC BY 4.0 for any purpose against a
+        non-commercial, no-redistribution grant; which governs, and how to record it.
+      field: data.dataset_licence
+      source: src-tanks-and-temples-license
+      quote: The Data may not be reproduced, modified, and/or made available in any form to any
+        third party without our prior written permission.
+    - check: Intel discontinued the toolbox repository, and the site names no current operator of
+        the server; maintainer and maintainer_type keep the originator.
+      field: governance.maintainer
+      source: src-github-tanksandtemples-readme
+      quote: This project will no longer be maintained by Intel.
+    - check: task-specific-supervised-model rests on the training scenes being released for
+        training; the 2017 evaluation itself had only classical pipelines.
+      field: designed_for_subjects
+      source: src-tanks-and-temples-paper
+      quote: We have evaluated many SfM+MVS pipelines on the presented benchmark.

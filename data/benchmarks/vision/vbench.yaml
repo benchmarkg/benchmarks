@@ -1,0 +1,546 @@
+# data/benchmarks/vision/vbench.yaml
+#
+# P1-S8-T05, vision entry 4 of 8. Filled from the VBench paper, arXiv 2311.17982 read as its v1 PDF
+# (2023-11-29, CVPR 2024), and its abstract page; the VBench++ abstract page (arXiv 2411.13503,
+# TPAMI 2025); the VBench-2.0 paper, arXiv 2503.21755 read as its v2 PDF (2025-08-20), and its
+# abstract page; the repository's README, its VBench-2.0 README, its prompt-suite README and its
+# score constants (scripts/constant.py), all at master; the Hugging Face leaderboard Space read
+# through the running app's public Gradio config (its tables and texts as served); and the v2 PDF of
+# the Motif-Video 2B technical report (arXiv 2604.16503, May 2026) as evidence of current use. Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The entry is the VBench family: VBench++ is a track-set and VBench-2.0 an edition of it (see
+# versions and the first review check), because one team keeps all three in one repository and one
+# leaderboard.
+
+id: vbench
+name: VBench
+aliases:
+  - VBench++
+  - VBench-2.0
+tagline: Text-to-video generation scored on 16 dimensions by specialist models, extended by VBench++
+  and VBench-2.0.
+description: >
+  A benchmark suite for video generative models kept by the VBench team, from Nanyang Technological
+  University's S-Lab and Shanghai Artificial Intelligence Laboratory. VBench (CVPR 2024) splits
+  text-to-video quality into 16 dimensions in two groups. Seven score the video alone: subject and
+  background consistency, temporal flickering, motion smoothness, dynamic degree, and aesthetic and
+  imaging quality. Nine score it against its prompt: object class, multiple objects, human action,
+  color, spatial relationship, scene, appearance style, temporal style and overall consistency. Each
+  dimension has its own suite of roughly 100 prompts and its own scoring model or pipeline, among
+  them DINO and CLIP feature similarity, RAFT optical flow, the LAION aesthetic predictor, MUSIQ and
+  the GRiT detector. Human preference annotations were collected to check each dimension against
+  human judgement. An entrant samples five videos per prompt and runs the released scorers. VBench++
+  (2024) added image-to-video, long-video and trustworthiness tracks. VBench-2.0 (2025) is a
+  complementary edition of 18 dimensions in five categories (Human Fidelity, Controllability,
+  Creativity, Physics, Commonsense) aimed at intrinsic faithfulness, scored mostly by open
+  video-language and language models with specialist detectors. A Hugging Face leaderboard ranks
+  models on each, and certifies rows by who sampled and who scored the videos.
+self_description:
+  source: src-arxiv-2311-17982-v1
+  quote: To this end, we present VBench, a comprehensive benchmark suite that dissects
+external_ids:
+  arxiv: '2311.17982'
+paper:
+  title: 'VBench: Comprehensive Benchmark Suite for Video Generative Models'
+  arxiv: '2311.17982'
+  version_read: v1
+  source: src-arxiv-2311-17982-v1
+released: 2023-11-29
+released_note: The VBench paper's first and only arXiv version, as its abstract page dates it.
+  VBench++ followed on 2024-11-20 and VBench-2.0 on 2025-03-27 (see versions).
+released_source: src-arxiv-2311-17982
+released_quote: Submitted on 29 Nov 2023
+release_venue: CVPR 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: vision/video-generation
+  secondary:
+    - multimodal/any-to-any-generation
+domain_basis:
+  reason: VBench's claim is the quality of the generated video. The seven video-quality dimensions
+    score the video alone and are weighted four to one against the nine prompt-consistency
+    dimensions in the leaderboard's Total Score. Those nine, VBench-2.0's Controllability and
+    VBench-I2V's video-image consistency score the video against its condition, which is
+    any-to-any-generation's case, so that leaf is secondary.
+  source: src-github-vbench-score-constants
+  quote: QUALITY_WEIGHT = 4
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: The video-condition dimensions score whether the generated video has what the prompt
+      specifies (the object class, its color, the spatial relation, the scene, the style), and
+      VBench-2.0 scores whether it is faithful to physical laws, anatomy, commonsense and the
+      prompt. Each dimension was checked against human preference.
+    source: src-arxiv-2311-17982-v1
+    quote: We use GRiT [115] to detect the success rate of generating the specific class of objects
+      depicted in the text prompt
+capability_considered_and_rejected:
+  - term: perception
+    reason: The scorers perceive the video, but the entrant generates it; nothing is recovered from
+      an input signal.
+  - term: creativity-novelty
+    reason: VBench-2.0's Creativity category measures inter-sample diversity, which has no
+      usefulness criterion, and Composition, whose uncommon combinations are named in the prompt, so
+      novelty is incidental to fidelity.
+    source: src-arxiv-2503-21755-v2
+    quote: we sample 20 videos from a model, and measure inter-sample variation using style and
+      content diversity metrics
+  - term: spatial-reasoning
+    reason: The Spatial Relationship dimension checks that rendered objects stand where the prompt
+      places them, a fidelity check on the output rather than reasoning about space.
+  - term: reliability-consistency
+    reason: Subject and background consistency compare frames within one video; no item is run
+      repeatedly with agreement across runs scored.
+
+evaluation_method:
+  - model-derived-metric
+  - model-graded-judge
+  - composite
+evaluation_method_note: model-graded-judge and composite are carried by the VBench-2.0 edition,
+  whose Total Score averages judge-scored categories (Controllability) with detector-scored ones
+  (Human Fidelity); see the review checks.
+evaluation_method_basis:
+  reason: Every VBench dimension is computed by a released model or a pipeline built on one (DINO,
+    CLIP, the AMT interpolation model, RAFT, the LAION aesthetic predictor, MUSIQ trained on SPAQ,
+    GRiT, UMT, Tag2Text, ViCLIP), so the scorer versions are part of the result; temporal flickering
+    alone is a fixed formula, the mean absolute difference across static frames. VBench-2.0 adds
+    prompted judges, LLaVA-Video-7B captioning or answering questions about the video and
+    Qwen2.5-7B-Instruct deciding yes or no, beside fine-tuned anomaly detectors. Both editions'
+    Total Scores combine dimensions scored by these different methods.
+  source: src-arxiv-2311-17982-v1
+  quote: We use RAFT [93] to estimate the degree of dynamics in synthesized videos
+evaluation_method_considered_and_rejected:
+  - term: human-crowd-eval
+    reason: Trained annotators compared pairs of videos per dimension, but only to validate the
+      automatic scorers; no published score comes from human ratings.
+    source: src-arxiv-2311-17982-v1
+    quote: The primary goal is to validate VBench evaluation
+  - term: pairwise-preference-elo
+    reason: The VBench Arena Spaces let visitors vote for a preferred video, but no rating from
+      those votes is published as a VBench score.
+    source: src-github-vbench-readme
+    quote: vote for your preferred video
+  - term: reference-metric
+    reason: No dimension compares the video with a reference text or video by a fixed similarity
+      formula; the prompts condition generation and the scorers are learned models.
+designed_for_subjects:
+  - generative-media-model
+designed_for_subjects_basis:
+  reason: The entrants are text-to-video and image-to-video generators, open and closed, and every
+    score is a property of the videos they generate.
+  source: src-github-vbench-readme
+  quote: Use VBench to evaluate videos, and video generative models.
+as_used:
+  - protocol: Videos sampled at the entrant's own resolution, length and frame rate and scored on
+      the 16 text-to-video dimensions; the rival models' scores copied from the public leaderboard,
+      with entries that used prompt optimisation set apart.
+    split: VBench 1.0, all 16 dimensions
+    source: src-arxiv-2604-16503-v2
+    quote: Unless otherwise noted in the table caption, scores are reported from the public VBench
+      leaderboard.
+    note: Motif-Video 2B (May 2026) reports a Total Score of 83.76% and sets aside Wan2.2-T2V's
+      84.23% because that entry rewrote its prompts. Its own samples are 1280 by 736 pixels, 121
+      frames at 24 fps.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The leaderboard's VBench 1.0 table holds a row dated 2026-08-07 (HiDream-O1-Video, sampled
+    by its developer and scored by the VBench team), its VBench 2.0 table a self-scored row dated
+    2026-04-01, and a May 2026 technical report ranks itself by VBench. The repository was last
+    pushed on 2026-08-21 (GitHub API), which is maintenance evidence, not use.
+  source: src-vbench-leaderboard
+  quote: HiDream.ai","VBench Team","[](https://github.com/HiDream-ai/DMSampler)","2026-08-07"
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard has never run in rounds. Its submission tabs take uploaded result files
+    now, and the README's Google Form takes sampled videos for the team to score.
+  source: src-vbench-leaderboard
+  quote: upload the generated `result.json` file here
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Wan2.2-T2V-A14B (Qwen prompt-optimized)
+    source: src-vbench-leaderboard
+    observed_on: 2026-10-14
+    quote: Wan2.2-T2V-A14B (Qwen prompt-optimized)
+    note: A Gold row, sampled and scored by the VBench team, dated 2026-02-18.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: released-classifier
+ground_truth_source_note: No labels are held. Each dimension's score is the verdict or measurement
+  of released scoring models (detectors, encoders, an optical-flow model, quality predictors) and,
+  in VBench-2.0, of open-weight video-language and language models prompted as judges.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The prompt suites, evaluation code, scorer weights, the team's sampled videos and the
+    human preference annotations are public, so anyone can sample a model and score it the way the
+    leaderboard does.
+  source: src-arxiv-2311-17982-v1
+  quote: We are open-sourcing VBench, including its evaluation dimension suite, evaluation method
+    suite, prompt suite, generated videos, and the dataset of human preference annotations
+
+task:
+  exists: true
+  input:
+    - a text prompt from the dimension's prompt suite (VBench-I2V adds a conditioning image)
+  output: Five videos per prompt, each from a different random seed (25 for temporal flickering,
+    whose static videos are filtered out first); VBench-2.0's Diversity needs 20 per prompt.
+  scoring: Each dimension is scored by its own model or pipeline on every video and averaged. The
+    leaderboard normalises each dimension between empirical bounds and combines them into a Quality
+    Score, a Semantic Score and a Total Score that weights quality four to one; VBench-2.0's Total
+    Score is the mean of its five category scores.
+  source: src-github-vbench-prompts-readme
+  quote: For each prompt, sample 5 videos.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The prompt suites and their metadata (the object and color labels some dimensions parse)
+      are files in the public repository, and the scoring models are released, so the headline score
+      needs nothing the maintainers hold back.
+    source: src-arxiv-2311-17982-v1
+    quote: We are open-sourcing VBench, including its evaluation dimension suite, evaluation method
+      suite, prompt suite, generated videos, and the dataset of human preference annotations
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The prompts change only with a named release (VBench, VBench++, VBench-2.0), and scoring
+      changes ship in labelled versions of the vbench package, as 0.1.2 changed imaging quality's
+      preprocessing for high-resolution videos.
+    source: src-github-vbench-readme
+    quote: This includes changes in the preprocessing for high-resolution images/videos for
+      `imaging_quality`
+  data_provenance:
+    - expert-authored
+    - web-scraped
+    - model-generated
+  data_provenance_note: The per-dimension prompts were written by the authors, video-generation
+    researchers. The eight per-category suites are prompts collected from the Internet, labelled by
+    a language model and cleaned by hand. VBench-2.0's Physics references are GPT-4o descriptions of
+    each prompt's expected outcome, and the optional longer prompt lists of August 2024 were
+    rewritten with GPT-4o.
+  data_provenance_source: src-arxiv-2311-17982-v1
+  data_provenance_quote: For each VBench evaluation dimension, we carefully designed a set of around
+    100 prompts as the test cases
+  contamination_risk: medium
+  contamination_risk_note: The prompts and the scoring models are public and fixed, so a generator
+    can be tuned towards them. No source assesses it for the benchmark. Motif-Video 2B's report says
+    it adjusted its training schedule partly on VBench scores, which concerns that entrant's claims.
+  contamination_evidence: []
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_note: Empirical Max is each dimension's best score over real WebVid-10M videos
+    retrieved for its prompts, below 100% for several dimensions (scene 82.22%, appearance style
+    28.55%). The leaderboard normalises each dimension between it and Empirical Min, measured on
+    noise clips and spliced real frames. The values approximate the bounds, and a model can exceed
+    them.
+  ceiling_anchor_type_source: src-arxiv-2311-17982-v1
+  ceiling_anchor_type_quote: We additionally designed three reference baselines, namely Empirical
+    Max, Empirical Min, and WebVid-Avg
+  dataset_licence: null
+  dataset_licence_note: No licence is stated for the prompts apart from the repository's, which
+    GitHub's metadata reports as Apache-2.0 (read 2026-10-14); none is stated for the sampled videos
+    on Google Drive or the human annotations. The leaderboard Space's card declares MIT for the
+    Space.
+  size:
+    - count: 16
+      unit: evaluation dimensions, each with its own prompt suite (72 to 100 prompts)
+      subset: VBench 1.0, text-to-video
+      source: src-arxiv-2311-17982-v1
+      quote: We have created 16 distinct evaluation dimensions, each with specialized prompts for
+        precise assessment
+    - count: 100
+      unit: prompts in each of eight content categories
+      subset: VBench 1.0, per-category suites
+      source: src-github-vbench-prompts-readme
+      quote: 100 prompts for each of the 8 content categories
+    - count: 18
+      unit: evaluation dimensions in five categories
+      subset: VBench-2.0
+      source: src-github-vbench-readme
+      quote: VBench-2.0 introduces a structured evaluation suite comprising five broad categories
+        and 18 fine-grained capability dimensions
+    - count: 70
+      unit: prompts per dimension, approximately
+      subset: VBench-2.0
+      source: src-arxiv-2503-21755-v2
+      quote: we carefully construct a suite of approximately 70 prompts
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The VBench team (Vchitect; Nanyang Technological University's S-Lab and Shanghai
+    Artificial Intelligence Laboratory)
+  maintainer_basis:
+    reason: The repository and the leaderboard Space sit in the shared Vchitect organisation, and
+      the leaderboard credits the VBench Contributors. The papers' authors are at NTU's S-Lab,
+      Shanghai Artificial Intelligence Laboratory, CUHK, Nanjing University and, for VBench-2.0, Sun
+      Yat-sen University.
+    source: src-vbench-leaderboard
+    quote: This leaderboard is updated and maintained by the team of
+  maintainer_type: community-collective
+  maintainer_type_note: academic-lab was considered on NTU's S-Lab, home of the first author and the
+    contact, but no source states one institution as the holder of the shared organisation, which
+    the holder rule sends to community-collective (Stage 3's vbench-2-0-004, since resolved).
+  submission_process:
+    - maintainer-run
+    - maintainer-scored-predictions
+    - self-reported
+  submission_process_note: Gold rows are models the VBench team chose, sampled and scored itself,
+    closed ones through vendor APIs. Rows whose videos a partner or the developer sampled and the
+    team scored come from the README's Google Form (the page's Silver and Bronze tiers; the app
+    labels both Silver). Anyone can also upload a result file they computed, which is listed
+    unchecked; the VBench 1.0 table hides such rows by default.
+  submission_process_source: src-vbench-leaderboard
+  submission_process_quote: Gold – Sampled and evaluated by the VBench team
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2311-17982-v1
+      quote: Yaohui Wang, Xinyuan Chen, Xin Ma, Shangchen Zhou, Ziqi Huang, Yi Wang, Ceyuan Yang,
+        Yinan He, Jiashuo Yu
+  independence_flags_note: LaVie, one of the four models the VBench paper evaluates, is by VBench's
+    own authors (the quote is its reference). LaVie, Latte-1, Vchitect-2.0 and RepVideo, all from
+    the Vchitect organisation that holds VBench, are Gold rows the team sampled and scored. Whether
+    funded-by-evaluated-party applies is open. VBench-2.0's acknowledgements name 'cash and in-kind
+    contribution from the industry partner(s)' without naming them.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_note: Scoring needs a CUDA GPU whatever generator is entered. Sampling is the
+    entrant's cost and is far larger for open models, over five minutes per VBench-2.0 sample on 8
+    A100s for HunyuanVideo and CogVideoX-1.5.
+  compute_tier_source: src-github-vbench-2-0-readme
+  compute_tier_quote: Evaluate 18 dimensions sequentially on a single GPU (not recommended)
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The prompts, code and scorer weights are public, and scoring runs without a human step.
+      Re-sampling a closed generator depends on its vendor still serving the same model.
+    source: src-arxiv-2311-17982-v1
+    quote: We are open-sourcing VBench, including its evaluation dimension suite, evaluation method
+      suite, prompt suite, generated videos, and the dataset of human preference annotations
+  harness_availability: official-harness
+  harness: vbench (the PyPI package and `vbench evaluate`, with scripts/cal_final_score.py for the
+    leaderboard scores), and vbench2 in the repository's VBench-2.0 folder
+  harness_source: src-github-vbench-readme
+  harness_quote: We have provided scripts for calculating the `Total Score`, `Quality Score`, and
+    `Semantic Score` in the Leaderboard
+  submission_channel:
+    source: src-vbench-leaderboard
+    quote: upload the generated `result.json` file here
+  submission_channel_note: The Hugging Face Space's submission tabs; sampled videos for the team to
+    score go through the README's Google Form.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for Vchitect/VBench, read 2026-10-14; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The profile resolves to model-graded (generative models scored by model-derived metrics and judges), which
+  # makes the judge models and their versions material. Beyond it: the number of videos sampled per prompt and
+  # their seeds, whether
+  # the prompts were rewritten before sampling (the board lists Wan2.2-T2V-A14B at 84.23% with
+  # Qwen-rewritten prompts and 82.61% without; the GPT-4o-enhanced prompt lists are another
+  # variant), and the vbench package version that scored the videos (0.1.2 changed imaging quality's
+  # preprocessing). subset_used covers which edition or track (1.0, I2V, Long, 2.0) and whether all
+  # dimensions were averaged.
+  material_extra:
+    - subset_used
+    - n_samples
+    - prompt_template_hash
+    - harness
+
+homepage: https://vchitect.github.io/VBench-project/
+repository: https://github.com/Vchitect/VBench
+leaderboard_url: https://huggingface.co/spaces/Vchitect/VBench_Leaderboard
+
+versions:
+  - version: '1.0'
+    label: VBench
+    version_kind: edition
+    released: 2023-11-29
+    changes: The first release, text-to-video only, with 16 dimensions in two groups and
+      per-dimension and per-category prompt suites.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2311-17982
+      - src-arxiv-2311-17982-v1
+  - version: plus-plus
+    label: VBench++
+    version_kind: track-set
+    released: 2024-11-20
+    changes: Adds VBench-I2V for image-to-video with an Image Suite of adaptive aspect ratios,
+      VBench-Long for long videos, and VBench-Trustworthiness (culture fairness, skin and gender
+      bias, safety). The 16 text-to-video dimensions are unchanged. The modules shipped in the
+      repository from March 2024; the date is the paper's.
+    breaking: false
+    frozen: true
+    sources:
+      - src-arxiv-2411-13503
+      - src-github-vbench-readme
+  - version: '2.0'
+    label: VBench-2.0
+    version_kind: edition
+    released: 2025-03-27
+    changes: 18 new dimensions in five categories (Human Fidelity, Controllability, Creativity,
+      Physics, Commonsense) for intrinsic faithfulness, with about 70 prompts each, scored by
+      video-language and language model judges and specialist detectors. It complements VBench 1.0,
+      which stays in use for superficial faithfulness, and does not replace it.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2503-21755
+      - src-arxiv-2503-21755-v2
+      - src-github-vbench-2-0-readme
+
+subsets:
+  - id: vbench#quality
+    label: Quality Score (VBench 1.0's seven video-quality dimensions)
+    scored_separately: true
+    notes: Subject and background consistency, temporal flickering, motion smoothness, dynamic
+      degree (at half weight), and aesthetic and imaging quality, scored on the video alone.
+  - id: vbench#semantic
+    label: Semantic Score (VBench 1.0's nine video-condition consistency dimensions)
+    scored_separately: true
+    domain_override:
+      primary: multimodal/any-to-any-generation
+      secondary:
+        - vision/video-generation
+    evidence:
+      - source: src-arxiv-2311-17982-v1
+        quote: We use GRiT [115] to detect the success rate of generating the specific class of
+          objects depicted in the text prompt
+    notes: Object class, multiple objects, human action, color, spatial relationship, scene,
+      appearance style, temporal style and overall consistency, each scored against the prompt.
+  - id: vbench#i2v
+    label: VBench-I2V (VBench++)
+    scored_separately: true
+    notes: Image-to-video, scored on video-image subject and background consistency, video-text
+      camera motion and the video-quality dimensions; its own leaderboard tab.
+  - id: vbench#long
+    label: VBench-Long (VBench++)
+    scored_separately: true
+    notes: Long videos on the 16 text-to-video dimensions; its own leaderboard tab.
+  - id: vbench#trustworthiness
+    label: VBench-Trustworthiness (VBench++)
+    scored_separately: true
+    evidence:
+      - source: src-vbench-leaderboard
+        quote: '"Culture Fairness","Skin Bias","Gender Bias","Safety"'
+    notes: Culture fairness, skin bias, gender bias and safety; its own leaderboard tab, with six
+      models.
+  - id: vbench#human-fidelity
+    label: Human Fidelity (VBench-2.0)
+    scored_separately: true
+    notes: Human anatomy, identity and clothes, scored by anomaly detectors and video-language
+      models.
+  - id: vbench#controllability
+    label: Controllability (VBench-2.0)
+    scored_separately: true
+    domain_override:
+      primary: multimodal/any-to-any-generation
+      secondary:
+        - vision/video-generation
+    evidence:
+      - source: src-github-vbench-2-0-readme
+        quote: The `Controllability Score` is the average of the following dimensions
+      - source: src-arxiv-2503-21755-v2
+        quote: The LLM outputs a binary judgment
+    notes: Dynamic spatial relationship, dynamic attribute, motion order, human interaction, complex
+      landscape, complex plot and camera motion, each judged against the prompt.
+  - id: vbench#creativity
+    label: Creativity (VBench-2.0)
+    scored_separately: true
+    notes: Diversity across 20 samples per prompt, and composition of uncommon combinations.
+  - id: vbench#physics
+    label: Physics (VBench-2.0)
+    scored_separately: true
+    notes: Mechanics, thermotics, material and multi-view consistency.
+  - id: vbench#commonsense
+    label: Commonsense (VBench-2.0)
+    scored_separately: true
+    notes: Motion rationality and instance preservation.
+subsets_note: >
+  VBench 1.0's two score groups, VBench++'s three tracks and VBench-2.0's five categories, each
+  reported separately on the leaderboard. The VBench-2.0 categories belong to the 2.0 edition only.
+
+tags:
+  - video-generation
+  - text-to-video
+  - image-to-video
+  - human-alignment
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2311-17982-v1
+    - src-arxiv-2311-17982
+    - src-arxiv-2411-13503
+    - src-arxiv-2503-21755-v2
+    - src-arxiv-2503-21755
+    - src-github-vbench-readme
+    - src-github-vbench-2-0-readme
+    - src-github-vbench-prompts-readme
+    - src-github-vbench-score-constants
+    - src-vbench-leaderboard
+    - src-arxiv-2604-16503-v2
+  sources_note: >
+    The VBench paper's v1 PDF and the VBench-2.0 paper's v2 PDF (DOIs, not archived) read as text;
+    the three abstract pages for dates; four repository files at master; the leaderboard read
+    through the running Space's Gradio config, whose tables come from a private dataset; and
+    Motif-Video 2B's v2 PDF as evidence of current use. The two READMEs and the leaderboard config
+    are withheld from archiving because they carry a team member's e-mail address.
+  confidence: medium
+  review_checks:
+    - check: The entry is the VBench family, with VBench++ as a track-set and VBench-2.0 as an
+        edition, because one team keeps all three in one repository and one leaderboard. VBench-2.0
+        could instead be its own entry (the stress corpus lists it as vbench-2-0). It has its own
+        paper, 18 dimensions disjoint from 1.0's and judge-based scoring, and its paper calls it
+        complementary to VBench rather than a replacement.
+      field: versions
+      source: src-arxiv-2503-21755-v2
+      quote: VBench-2.0 will be fully open-sourced, being complementary to VBench
+    - check: model-graded-judge and composite rest on the VBench-2.0 edition. VBench 1.0 alone is
+        model-derived-metric with one fixed-formula dimension (temporal flickering) that no method
+        term names, so whether its weighted Total Score is composite is open.
+      field: evaluation_method
+    - check: generation-fidelity covers the prompt-consistency dimensions and VBench-2.0's
+        faithfulness. No capability term fits the seven video-quality dimensions (aesthetics,
+        flicker, smoothness, dynamic degree), which score the video against no target, or
+        VBench-2.0's Diversity (Stage 3's vbench-2-0-002). Stage 3 also tagged instruction-following
+        on VBench-2.0's Controllability; the v2 PDF frames it as adherence to complex prompts, not
+        instruction following, so it is not assigned.
+      field: capability
+    - check: The trustworthiness track (culture fairness, skin and gender bias, safety) may warrant
+        a safety-alignment domain or harm-avoidance override on vbench#trustworthiness. The VBench++
+        paper was not read, so none was assessed.
+      field: subsets
+    - check: The two READMEs and the leaderboard config are withheld from archiving because they
+        hold a team member's e-mail address, written out in the config and as 'name [at] host [dot]
+        domain' in the READMEs. Whether the obfuscated form counts as personal data is a reviewer's
+        call.
+    - check: funded-by-evaluated-party is undecided. VBench-2.0's acknowledgements name unnamed
+        industry partners' cash and in-kind contribution.
+      field: governance.independence_flags
+      source: src-arxiv-2503-21755-v2
+      quote: as well as cash and in-kind contribution from the industry partner(s)
+    - check: measured-ceiling rests on Empirical Max, which approximates each dimension's achievable
+        best from real videos and anchors the leaderboard's normalisation; a model can score above
+        it, so theoretical-maximum is the alternative.
+      field: data.ceiling_anchor_type
