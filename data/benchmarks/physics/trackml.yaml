@@ -1,0 +1,590 @@
+# data/benchmarks/physics/trackml.yaml
+#
+# P1-S6-T06, physics entry 13. Filled from the Accuracy-phase paper, arXiv 1904.06778 read as its v3 PDF
+# (2021-05-03; v1 2019-04-14, NeurIPS 2018 Competition book), and its abstract page; the Throughput-phase paper,
+# arXiv 2105.01160 read as its v2 PDF (2021-05-14; Comput. Softw. Big Sci. 7 (2023)), and its abstract page; the
+# challenge's home page on sites.google.com (scripts and styles stripped); Kaggle's public JSON for competition
+# 7878 (trackml-particle-identification), its page service (description, evaluation, data, prizes, timeline,
+# sponsors and rules pages) and its competition record; Zenodo's records of the two phases' datasets (4730167 and
+# 4730157); the LAL/trackml-library README at master; and the v1 PDF of HEPTv2 (arXiv 2606.20437, June 2026), a
+# paper that reports results on the benchmark. CERN's Open Data portal was searched for the release the site
+# promised and no record was found (see review_checks). Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+
+id: trackml
+name: TrackML Particle Tracking Challenge
+aliases:
+  - TrackML
+  - Tracking Machine Learning challenge
+  - trackml-particle-identification
+tagline: Grouping simulated LHC detector hits into particle tracks, in a 2018 Kaggle accuracy phase
+  and a Codalab speed phase.
+description: >
+  A two-phase data challenge on charged-particle track reconstruction, run in 2018 and 2019 by
+  tracking experts from the ATLAS, CMS and LHCb experiments with machine-learning researchers and
+  ChaLearn. Each event is a simulated proton-proton bunch crossing under High-Luminosity LHC
+  conditions (a ttbar hard scatter with 200 soft interactions overlaid, generated with Pythia 8 and
+  propagated through a virtual silicon tracker with the ACTS fast simulation): about 100,000 3D hits
+  that the entrant must partition into tracks, one per charged particle, some 10,000 per event.
+  The score is the weighted fraction of hits assigned to the right track. A track counts only when
+  more than half its hits come from one particle and it holds more than half of that particle's
+  hits; weights favour a track's first and last hits and high-momentum particles; a perfect
+  solution scores 1 and a random one 0. The Accuracy phase ran on Kaggle from 30 April to 13 August
+  2018 (651 teams) on 125 test events whose hits were released and whose truth was held back, 36
+  for the public leaderboard and 89 for the final ranking. The Throughput phase ran on Codalab from
+  September 2018 to March 2019 on a corrected dataset: entrants uploaded code that the organisers
+  ran on undisclosed events on two CPU cores, and the score combined the accuracy with the mean
+  time per event (seven entrants scored). Both phases are closed. Each phase's training data is on
+  Zenodo under CC BY 4.0, and the Kaggle data is still a standard benchmark for learned tracking,
+  usually in a reduced pixel-only setting with its own efficiency metrics.
+self_description:
+  source: src-arxiv-1904-06778-v3
+  quote: 'This experiment took the form of a machine learning challenge organized in 2018: the Tracking
+    Machine Learning Challenge (TrackML)'
+external_ids:
+  arxiv: '1904.06778'
+paper:
+  title: 'The Tracking Machine Learning challenge: Accuracy phase'
+  arxiv: '1904.06778'
+  version_read: v3
+  source: src-arxiv-1904-06778-v3
+released: 2018-04-30
+released_note: The day Kaggle enabled the Accuracy phase, as its competition record gives it; the
+  rules give the same start date, and the Accuracy paper says 1 May 2018.
+released_source: src-kaggle-trackml-particle-identification-record
+released_quote: '"dateEnabled":"2018-04-30T21:06:13.297Z"'
+release_venue: Kaggle (the Accuracy phase, an official IEEE WCCI 2018 competition) and Codalab (the
+  Throughput phase, a NeurIPS 2018 competition)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/particle-physics
+  secondary: []
+domain_basis:
+  reason: The scored output is the grouping of a collision event's detector hits into the
+    trajectories of the particles that left them, recovered from simulated detector data, which is
+    the leaf's definition. FAIR Universe HiggsML, the family's own particle-physics example, is the
+    same kind of LHC-simulation challenge.
+  source: src-arxiv-1904-06778-v3
+  quote: Given 100.000 points, the participants had to connect them into about 10.000 arcs of
+    circles, following the trajectory of particles issued from very high energy proton collisions
+domain_considered_and_rejected:
+  - term: physics/simulation-surrogates
+    reason: The events come from Pythia 8 and the ACTS fast simulation, but entrants reconstruct
+      tracks from them; no learned model stands in for the simulation or is scored against its
+      output fields.
+capability:
+  - perception
+  - scientific-prediction
+capability_basis:
+  perception:
+    reason: The input is an unordered cloud of about 100,000 3D detector hits per event, with the
+      detector cells behind each, and the score measures the track structure recovered from it.
+      PLAsTiCC's entry rejected the term for tabulated photometry; IceCube's assigned it for a cloud
+      of detector hits, as here.
+    source: src-arxiv-1904-06778-v3
+    quote: Each hit is a 3D measurement in Cartesian coordinates
+  scientific-prediction:
+    reason: Systems reconstruct which hits each charged particle left along its trajectory, a state
+      of the simulated collision recovered from measurements of it, and the score compares it with
+      the simulation's truth. The track parameters themselves are out of scope (see review_checks).
+    source: src-arxiv-1904-06778-v3
+    quote: listing for each event the measured 3D points, and the list of 3D points associated to a
+      true track
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: The task is geometric throughout (helices in a magnetic field, hits on layers), but the
+      score is reconstruction accuracy, which the term's exclusion test leaves out.
+  - term: distribution-shift-generalization
+    reason: Test events come from the same simulation as the training events, and no shifted
+      condition is scored as one of its own.
+    source: src-arxiv-1904-06778-v3
+    quote: Internally, all events were generated in exactly the same way
+  - term: optimization
+    reason: The Throughput phase rewards speed, but entrants are ranked on accuracy against a
+      held-out key combined with their run time, not on the value of an objective they optimise.
+
+evaluation_method:
+  - domain-metric
+evaluation_method_basis:
+  reason: The TrackML score is defined for this challenge from tracking practice. Tracks and
+    particles are matched by the double-majority rule, hits are weighted by their place on the track
+    and the particle's transverse momentum, and the matched weights are summed per event and
+    averaged over events. The paper finds it consistent with the physics reconstruction metrics.
+  source: src-arxiv-1904-06778-v3
+  quote: This score is largely consistent with the various and more complicated metrics used in
+    physics reconstruction
+evaluation_method_considered_and_rejected:
+  - term: classification-metric
+    reason: The score compares a partition of the hits with the true one, as a clustering index
+      does, but its weights and matching rule are tracking's own and mean nothing outside it. The
+      paper builds it from two clustering measures rather than using either.
+    source: src-arxiv-1904-06778-v3
+    quote: It is a combination of the Jaccard version of counting pairs [6] and set matching [26]
+  - term: composite
+    reason: The Throughput phase's score combines the accuracy with the mean time per event, but run
+      time is a resource measure, not a scoring method; it is recorded in secondary_axes.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The challenge was set up to bring machine-learning methods to a tracking problem that
+    particle physics defines, with entrants training on its simulated events. The jury prizes went
+    to a Hough-transform-like method with a boosted-tree classifier, a DBSCAN-based method and an
+    LSTM track follower; the runner-up was a dense network predicting which hit pairs share a track.
+  source: src-arxiv-1904-06778-v3
+  quote: The competition has exposed a diversity of approaches, with various roles for Machine
+    Learning
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The models are trained for one task, but track reconstruction is defined by particle
+      physics, which that term's exclusion test sends to domain-specialist-model.
+  - term: scientific-surrogate-model
+    reason: Entrants reconstruct tracks from simulated hits; none emulates the event or detector
+      simulation.
+observed_subjects:
+  values:
+    - domain-specialist-model
+    - classical-algorithm
+  basis: The Throughput winner, also third in the Accuracy phase, is Mikado, a combinatorial track
+    finder whose tens of thousands of search-window parameters are tuned on the training data, with
+    no learned model; the Accuracy winner puts logistic-regression filters inside a combinatorial
+    track follower.
+  source: src-arxiv-2105-01160-v2
+as_used:
+  - protocol: The pixel-detector subset of the Kaggle data, with targets restricted to particles
+      above 0.9 GeV in transverse momentum and below 4 in absolute pseudorapidity that leave at
+      least three pixel hits, scored by double-majority efficiency and fake-track rate rather than
+      the weighted TrackML score, with latency measured on one A100 GPU.
+    split: the pixel-detector subset of the Kaggle events; the train and test split is not stated in
+      the source read
+    source: src-arxiv-2606-20437-v1
+    quote: Following recent TrackML-based studies [2, 21, 32], we consider the pixel-detector
+      setting of the benchmark
+    note: HEPTv2 (June 2026) reports 98.6% double-majority efficiency at a 0.8% fake rate and about
+      15 ms per event, and compares four earlier methods under the same protocol.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the challenge data. A June 2026 paper calls TrackML the
+    community-standard benchmark for charged-particle tracking and compares five methods on it. Both
+    competition phases ended in 2018-2019, which goes to activity, and the helper library was last
+    pushed in 2018 (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2606-20437-v1
+  quote: We evaluate HEPTv2 on TrackML [3, 15], the community-standard benchmark for
+    charged-particle tracking
+activity: closed
+activity_note: Kaggle's record gives the Accuracy phase's final deadline as 2018-08-13 with its
+  final leaderboard verified. The Throughput phase on Codalab (competition 20112) closed on
+  2019-03-15, and its scores were re-evaluated on a private test set afterwards. Whether Kaggle
+  still scores late submissions was not read (see review_checks).
+activity_basis:
+  reason: The Kaggle and Codalab competitions were the only routes for scored entries, both have
+    ended with their winners announced, and no further phase is announced.
+  source: src-trackml-site
+  quote: The competition is finished! Check the results.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: outrunner (2nd in the Accuracy phase), a dense neural network that predicts which hit
+      pairs belong to the same track
+    source: src-arxiv-1904-06778-v3
+    observed_on: 2026-10-14
+    quote: A neural network model composed of multiple wide dense layers is trained to predict the
+      probability of the pair to be on the same track
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each hit's generating particle in the Pythia 8 and ACTS simulation; the
+  truth files carry it with the hit's true position and momentum and its score weight.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The test truth stayed with the organisers in both phases, the Throughput test events were
+    never released, and both scoring servers have closed. Anyone can score held-back training events
+    with the released truth and the helper library's scoring function, but not the official test
+    sets.
+  source: src-trackml-site
+  quote: for which the ground truth is held out on the challenge platform
+
+task:
+  exists: true
+  input:
+    - 'one simulated event: about 100,000 hits, each a 3D position with its detector volume, layer and
+      module, and the detector cells behind it'
+    - "for training only: the per-hit truth (the generating particle, its true position and momentum at
+      the hit, and the hit's score weight) and the particles' initial parameters"
+  output: A track identifier for every hit of every event, each hit in exactly one track. Deriving
+    the track parameters is not part of the task.
+  scoring: The TrackML score. Tracks and particles are matched by the double-majority rule (more
+    than half of the track's hits from one particle, and more than half of that particle's hits in
+    the track), and each matched track contributes the summed weights of its correct hits. Weights
+    favour a track's first and last hits and high-momentum particles, are zero for noise and very
+    short tracks, and sum to one per event; event scores are averaged. In the Throughput phase this
+    accuracy, which had to reach 0.5, was combined with the mean time per event, capped at 600 s,
+    into an unbounded score, and secondary particles were left out of the accuracy.
+  tests_hidden_from_system: true
+  source: src-kaggle-trackml-particle-identification
+  quote: the matching particle is the one to which the absolute majority (strictly more that 50%) of
+    the track points belong
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The value is the Throughput phase's, the later edition, whose test events never left
+    the organisers. In the Accuracy phase the 125 test events' hits were downloadable from Kaggle
+    after accepting its rules while their truth stayed with Kaggle (train-open-test-held-out; see
+    review_checks). Neither test set's truth is released in the sources read; Zenodo holds the two
+    phases' training sets only.
+  access_basis:
+    reason: The Throughput phase's public and private test sets were undisclosed to participants and
+      scored only by running each submission's code on the organisers' machines.
+    source: src-arxiv-2105-01160-v2
+    quote: contrary to the Accuracy phase, the public test dataset is undisclosed
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: Each phase ranked entrants on its own test events, the second drawn from a corrected
+      simulation. The series ran twice and no third phase followed (see review_checks).
+    source: src-arxiv-2105-01160-v2
+    quote: were measured on a test dataset of 50 events (instead of 100 for the Accuracy phase)
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Pythia 8 collisions, a ttbar hard scatter with 200 soft QCD interactions
+    overlaid, propagated through a virtual silicon tracker modelled on the ATLAS and CMS upgrade
+    designs with the ACTS fast simulation, including noise hits and inefficient sensors.
+  data_provenance_source: src-arxiv-1904-06778-v3
+  data_provenance_quote: Charged particles are propagated through the detector using a fast detector
+    simulation based on the ACTS software [24]
+  contamination_risk: low
+  contamination_risk_note: Training on the simulated training events is the protocol. The truth of
+    both phases' scored test events stayed with the organisers, and the Throughput test events were
+    never released, so no training route to the scored truth is known. Results now reported on
+    events from the released training sets (as_used) have no such protection.
+  contamination_risk_source: src-trackml-site
+  contamination_risk_quote: for which the ground truth is held out on the challenge platform
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: The TrackML accuracy score is 1 for a perfect solution, the bound of the
+    Accuracy phase's ranking and of the accuracy term in the Throughput score. The Throughput
+    phase's combined score is unbounded (see review_checks). No measured ceiling is published; the
+    Throughput paper says the top Accuracy solutions reached just above 0.9.
+  ceiling_anchor_type_source: src-arxiv-1904-06778-v3
+  ceiling_anchor_type_quote: The overall score is normalized such that a perfect algorithm has a
+    score of one. A random algorithm has a null score.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The licence of both Zenodo releases of the training data. The Kaggle copy
+    stays under the competition rules, which allow academic research, education and other
+    non-commercial use and forbid redistribution.
+  dataset_licence_source: src-zenodo-trackml-accuracy
+  dataset_licence_quote: Creative Commons Attribution 4.0 International
+  size:
+    - count: 125
+      unit: test events (36 scored on the public leaderboard, 89 for the final ranking)
+      subset: Accuracy phase test set
+      note: The Throughput paper says 100 for the Accuracy phase; its own paper and Kaggle say 125.
+      source: src-kaggle-trackml-particle-identification
+      quote: the test dataset with 125 events
+    - count: 13741466
+      unit: hits in the 125 test events, one solution row each
+      subset: Accuracy phase test set
+      source: src-kaggle-trackml-particle-identification-record
+      quote: '"totalSolutionRows":13741466'
+    - count: 8850
+      unit: training events with truth
+      subset: Accuracy phase training set (train_1 to train_5 on Kaggle and Zenodo)
+      source: src-kaggle-trackml-particle-identification
+      quote: the full training dataset with 8850 events
+    - count: 50
+      unit: test events behind the public leaderboard
+      subset: Throughput phase
+      source: src-arxiv-2105-01160-v2
+      quote: were measured on a test dataset of 50 events (instead of 100 for the Accuracy phase)
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: team, in the Accuracy phase on Kaggle (two submissions selected for the final ranking)
+    source: src-kaggle-trackml-particle-identification
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The TrackML organising team (tracking experts from ATLAS, CMS and LHCb with
+    machine-learning researchers and ChaLearn); the Kaggle phase hosted under CERN
+  maintainer_basis:
+    reason: The papers name the team as organisers; the Zenodo records list its eighteen members
+      from eight institutions as creators, and CERN is the Kaggle host and the rules' Competition
+      Sponsor.
+    source: src-arxiv-1904-06778-v3
+    quote: The challenge was organized by an interdisciplinary team of physicists from three LHC
+      experiments (ATLAS, CMS, and LHCb), computer scientists, and ChaLearn
+  maintainer_type: community-collective
+  maintainer_type_note: The organisers come from CERN, Caltech, CNRS, LBNL, the University of
+    Geneva, the Yandex School of Data Analysis, UMass Amherst and INRIA, the Zenodo records name no
+    holder, and the helper library sits in the LAL GitHub organisation. government-agency was
+    considered for CERN as host and sponsor, but no source read states its legal status;
+    academic-lab was considered for LAL (see review_checks).
+  submission_process:
+    - held-out-server
+    - sandboxed-rerun
+  submission_process_note: Accuracy phase, held-out-server. Entrants ran their algorithms on their
+    own machines and uploaded one CSV of track assignments for all 125 test events, which Kaggle
+    scored against the hidden truth; five submissions a day, two chosen for the final ranking.
+    Throughput phase, sandboxed-rerun. Entrants uploaded code implementing a provided Python
+    skeleton (C/C++ binaries could be shipped), which Codalab ran in the organisers' Docker
+    environment on 2 CPU cores and 4 GB; final times were re-measured over ten runs on the private
+    test set. The entrant hands over code, not a container of its own, so
+    containerized-algorithm-submission was not used, as for FAIR Universe. Prizes in both phases
+    required releasing the code; the ranking did not, so open-source-gated is not set.
+  submission_process_source: src-arxiv-2105-01160-v2
+  submission_process_quote: participants had to upload their software to the Codalab platform, on
+    which it was executed in a controlled environment
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-kaggle-trackml-particle-identification
+      quote: One NVIDIA Tesla V100 GPU
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2105-01160-v2
+      quote: contrary to the Accuracy phase, the public test dataset is undisclosed
+  independence_flags_note: NVIDIA, a platinum sponsor, gave the GPU for the jury's HEP-meets-ML
+    award, and Kaggle, also a platinum sponsor, hosted the Accuracy phase; who paid the $25,000 in
+    cash prizes is not stated, and the rules make CERN the sponsor offering them. The organisers
+    held both phases' test truth and ran every Throughput evaluation. Placed entrants (Wind,
+    Gorbunov, Emeliyanov, Kunze and others) became co-authors of the result papers, which mark them
+    as participants rather than organisers; the rules let CERN personnel compete, and no source read
+    shows an organiser among the ranked entrants.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-1904-06778-v3
+    quote: This project has received funding from the European Union Horizon 2020 research and
+      innovation programme
+  participation:
+    source: src-arxiv-1904-06778-v3
+    quote: challenge was well attended, with a total of 656 participants
+  participation_note: Kaggle's record counts 651 teams and 739 competitors in the Accuracy phase;
+    the Throughput paper counts 648 Accuracy teams and seven Throughput entrants with non-zero
+    scores.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_basis:
+    reason: The Throughput phase's official scores came from running each submission on the
+      organisers' two dedicated machines, limited to 2 CPU cores and 4 GB. In the Accuracy phase
+      entrants ran everything on their own machines and uploaded results (see review_checks).
+    source: src-arxiv-2105-01160-v2
+    quote: the resources used to evaluate an algorithm were 2 CPU cores with 4GB of RAM
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The official scores need test truth (Accuracy) or test events (Throughput) that only the
+      organisers held, and both servers have closed. Scores on held-back training events can be
+      computed by anyone with the released truth and the helper library.
+    source: src-trackml-site
+    quote: for which the ground truth is held out on the challenge platform
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: reference-implementation-only
+  harness: LAL/trackml-library (event loading, and score_event, an implementation of the TrackML
+    score)
+  harness_note: Kaggle implemented the metric on its own platform for the official Accuracy scores,
+    and the Throughput scores came from the organisers' Codalab skeleton, whose code was not read.
+  harness_source: src-kaggle-trackml-particle-identification
+  harness_quote: An example implementation can be found in the
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for LAL/trackml-library also reports MIT (read
+    2026-10-14); the repository was last pushed on 2018-09-26.
+  code_licence_source: src-github-trackml-library-readme
+  code_licence_quote: All code is licensed under the
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which events and detector region (the Kaggle test set, the Throughput test sets,
+  # or a user's own held-back training events, often the pixel detector only), which target particles and metric
+  # (the weighted TrackML score, or double-majority efficiency and fake rate under a momentum cut), what the
+  # system was trained on (Kaggle's rules forbade outside data), and the hardware behind any time per event.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - hardware
+secondary_axes:
+  - latency
+secondary_axes_basis:
+  reason: The Throughput phase measured each submission's mean wall-clock time per event, events run
+    one at a time on fixed hardware, and folded it into the score. The Accuracy phase did not rank
+    on time.
+  source: src-arxiv-2105-01160-v2
+  quote: the average time per event (in second) as measured on the test dataset
+
+homepage: https://sites.google.com/site/trackmlparticle/
+repository: https://github.com/LAL/trackml-library
+dataset_url: https://doi.org/10.5281/zenodo.4730167
+leaderboard_url: https://www.kaggle.com/c/trackml-particle-identification
+
+versions:
+  - version: accuracy
+    label: Accuracy phase (Kaggle; an IEEE WCCI 2018 competition)
+    version_kind: edition
+    released: 2018-04-30
+    items: 125
+    changes: The first phase, scored on accuracy alone with no limit on run time. 8,850 training
+      events with truth; 125 test events, 36 on the public leaderboard and 89 for the final ranking,
+      scored on Kaggle from uploaded track assignments.
+    breaking: true
+    errata:
+      - scope: dataset
+        description: The simulation overestimated multiple Coulomb scattering for electrons (at most
+          0.5% of particles) and used a wrong strip thickness for cluster sizes. Both were corrected
+          for the Throughput phase, and checked not to affect the Accuracy results.
+        source: src-arxiv-2105-01160-v2
+    frozen: true
+    sources:
+      - src-kaggle-trackml-particle-identification
+      - src-kaggle-trackml-particle-identification-record
+      - src-arxiv-1904-06778-v3
+      - src-arxiv-1904-06778
+      - src-zenodo-trackml-accuracy
+      - src-arxiv-2105-01160-v2
+  - version: throughput
+    label: Throughput phase (Codalab; a NeurIPS 2018 competition)
+    version_kind: edition
+    released: 2018-09-03
+    items: 50
+    changes: Entrants uploaded code that the organisers ran on 2 CPU cores, and the score combined
+      the accuracy with the mean time per event. A corrected dataset (electron scattering, strip
+      thickness, a 55 mm beam spot instead of 5.5 mm), secondary particles left out of the accuracy,
+      and 50 undisclosed test events, with the final scores re-measured on a private set.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2105-01160-v2
+      - src-arxiv-2105-01160
+      - src-zenodo-trackml-throughput
+      - src-trackml-site
+
+history:
+  - date: 2018-08-13
+    event: channel-closed
+    field: execution.submission_channel
+    from: Kaggle competition trackml-particle-identification (the Accuracy phase)
+    source: src-kaggle-trackml-particle-identification-record
+    quote: '"deadline":"2018-08-13T23:59:00Z"'
+    note: Kaggle's record, rules and timeline give 13 August; the Accuracy paper says 10 August
+      2018.
+  - date: 2019-03-15
+    event: channel-closed
+    field: execution.submission_channel
+    from: Codalab competition 20112 (the Throughput phase)
+    source: src-arxiv-2105-01160-v2
+    quote: it was extended until 15 March 2019
+    note: The phase opened on 3 September 2018 and was first due to close on 18 October 2018.
+
+tags:
+  - particle-physics
+  - tracking
+  - pattern-recognition
+  - lhc
+  - simulation
+  - kaggle
+  - codalab
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T06)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1904-06778-v3
+    - src-arxiv-1904-06778
+    - src-arxiv-2105-01160-v2
+    - src-arxiv-2105-01160
+    - src-trackml-site
+    - src-kaggle-trackml-particle-identification
+    - src-kaggle-trackml-particle-identification-record
+    - src-zenodo-trackml-accuracy
+    - src-zenodo-trackml-throughput
+    - src-github-trackml-library-readme
+    - src-arxiv-2606-20437-v1
+  sources_note: >
+    The two phase papers' PDFs (DOIs, not archived) read as text, with windows clear of the contact
+    lines and e-mail addresses on their first pages, and their abstract pages for the dates. The
+    challenge's home page with scripts and styles stripped. Kaggle's competition pages render by
+    script, so they were read as the JSON that Kaggle's page service and competition service return
+    to an anonymous GET, without accepting the competition's rules; www.kaggle.com/robots.txt
+    returned 404 on 2026-10-14. Zenodo's two dataset records (DOIs), with scripts and styles
+    stripped. The helper library's README at master. HEPTv2's v1 PDF (a DOI) as evidence of current
+    use.
+  confidence: medium
+  review_checks:
+    - check: The entry is one benchmark with the two phases as editions, as the organisers present
+        them. They differ in score, submission route, data and test sets, so two entries (TrackML
+        Accuracy and TrackML Throughput) are the alternative.
+      field: versions
+      source: src-kaggle-trackml-particle-identification
+      quote: This challenge consists of two phases
+    - check: data.access is private-test-server, the Throughput phase's value, following
+        fully-open's rule that the current edition decides. The Accuracy phase, whose Kaggle data is
+        what current papers use, is train-open-test-held-out. compute_tier provided-allocation
+        follows the same choice; the Accuracy phase ran on the entrants' own machines.
+      field: data.access
+    - check: refresh periodic-recompetition rests on each phase ranking on its own new test events.
+        Two phases are hardly a recurring series; versioned-releases, two labelled datasets, is the
+        alternative.
+      field: data.refresh
+    - check: scientific-prediction rests on the reconstructed hit-to-particle assignment being a
+        state of the simulated collision. The papers frame the task as pattern recognition and leave
+        the track parameters out, so perception alone may be the better call.
+      field: capability
+      source: src-arxiv-1904-06778-v3
+      quote: deriving the track parameters is not the topic of the challenge
+    - check: lifecycle active or mature. Results are still produced, but in a reduced pixel-only
+        setting with its own metrics (as_used), not on the competition's protocol; with both phases
+        closed and their records settled, mature is the alternative.
+      field: lifecycle
+      source: src-arxiv-2606-20437-v1
+      quote: Following recent TrackML-based studies [2, 21, 32], we consider the pixel-detector
+        setting of the benchmark
+    - check: activity closed. Kaggle often scores late submissions on closed competitions; the
+        record read does not say whether this one does, and a late score does not enter the ranked
+        leaderboard. If late scoring is open, leaderboard-live-no-round might be argued.
+      field: activity
+      source: src-kaggle-trackml-particle-identification-record
+      quote: '"finalLeaderboardHasBeenVerified":true'
+    - check: maintainer_type community-collective, government-agency or academic-lab. CERN hosts the
+        Kaggle competition and is its Competition Sponsor, and gave permission to use the dataset;
+        the helper library is in the LAL (CNRS) organisation. No source read states CERN's legal
+        status as an intergovernmental body.
+      field: governance.maintainer_type
+      source: src-kaggle-trackml-particle-identification
+      quote: THE EUROPEAN ORGANIZATION FOR NUCLEAR RESEARCH (CERN)
+    - check: prize-sponsored-by-industry rests on NVIDIA's GPU for the jury award (the site calls it
+        a Titan V100, Kaggle a Tesla V100). Who paid the $25,000 cash prizes is unstated; if Kaggle,
+        a platinum sponsor, did, the flag holds on that too.
+      field: governance.independence_flags
+      source: src-kaggle-trackml-particle-identification-record
+      quote: '"reward":{"id":"USD","quantity":25000}'
+    - check: ceiling theoretical-maximum is the accuracy score's bound of 1. The Throughput phase's
+        combined score is unbounded, which would make none-known under the current-edition reading
+        used for data.access.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2105-01160-v2
+      quote: The score is an unbounded dimension-less positive number, the higher the better
+    - check: The site and the Accuracy paper promised a release on CERN's Open Data portal. No
+        record was found; the portal's search renders by script and its robots.txt disallows /api/,
+        and a web search found none. dataset_url names the Zenodo record; if a CERN Open Data record
+        exists, it may be the better pointer.
+      field: dataset_url
+      source: src-trackml-site
+      quote: The challenge dataset will be released for further studies on CERN Open Data portal.
+    - check: designed_for_subjects is domain-specialist-model, with classical-algorithm only in
+        observed_subjects, though combinatorial trackers won the Throughput phase; evaluation_target
+        is learned-system for the same reason. secondary_axes has latency for the mean time per
+        event; throughput is the phase's own word.
+      field: designed_for_subjects
+      source: src-arxiv-2105-01160-v2
+      quote: The Mikado approach for the TrackML challenge is a combinatorial algorithm.
