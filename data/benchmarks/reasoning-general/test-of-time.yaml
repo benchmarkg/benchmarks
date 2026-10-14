@@ -1,0 +1,547 @@
+# data/benchmarks/reasoning-general/test-of-time.yaml
+#
+# P1-S11-T01, reasoning-general entry 5 of 6. Filled from the Test of Time paper, arXiv 2406.09170 read as its v1 PDF
+# (2024-06-13, the only arXiv version), and its abstract page; the ICLR 2025 camera-ready PDF from the conference's
+# proceedings site; Hugging Face's API record of the baharef/ToT dataset, its card (README.md at main) and the dataset
+# viewer's row counts; and the v3 PDF of REMem (arXiv 2602.13530, ICLR 2026), a paper that reports results on it. No
+# GitHub repository was found. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+
+id: test-of-time
+name: Test of Time
+aliases:
+  - ToT
+tagline: Synthetic temporal-reasoning questions over anonymised fact graphs, and time-arithmetic
+  problems, scored by exact match.
+description: >
+  A benchmark of temporal reasoning in language models from Google Research and Google DeepMind,
+  in two tasks scored separately. ToT-Semantic (2,800 questions) generates random graphs with seven
+  generators (Erdős-Rényi, scale-free, Barabási-Albert, stochastic block model, star, complete, and
+  ego-nets taken from Wikidata and anonymised), attaches relations with time intervals between
+  anonymised entities such as E11 and R17, and asks eight types of question over the listed facts:
+  which entity held a relation at a given time, right before or after another, first or last, how
+  many did in an interval, how long a relation lasted, or the whole timeline in order. The facts
+  are presented in five orders. ToT-Arithmetic (1,850 questions) covers time arithmetic in seven
+  categories (add or subtract, compare, duration, schedule, time zone, trick and multi-operation
+  questions), built from problems that annotators proposed and the authors turned into functions
+  that sample values and compute answers. Models answer in JSON, and the score is accuracy against
+  the stored label, reported per task by graph generator, question type, fact order or category. A
+  46,480-question ToT-Semantic set is released beside them. All three are test splits on Hugging
+  Face under CC BY 4.0; there is no leaderboard and no published evaluation code.
+self_description:
+  source: src-arxiv-2406-09170-v1
+  quote: Our benchmark, Test of Time, ToT, is centered around the observation that temporal
+    reasoning often involves two primary skills
+external_ids:
+  huggingface: baharef/ToT
+  arxiv: '2406.09170'
+paper:
+  title: 'Test of Time: A Benchmark for Evaluating LLMs on Temporal Reasoning'
+  arxiv: '2406.09170'
+  version_read: v1
+  source: src-arxiv-2406-09170-v1
+released: 2024-06-13
+released_note: The paper's only arXiv version, as its abstract page dates it. The Hugging Face
+  repository was created on 2024-06-11 and last modified on 2024-06-14 (its API record); the
+  datasheet says the data was open to reviewers before the public, so the arXiv date is taken.
+released_source: src-arxiv-2406-09170
+released_quote: Submitted on 13 Jun 2024
+release_venue: ICLR 2025 (the camera-ready version; arXiv holds only the June 2024 preprint)
+release_venue_source: src-iclr-2025-test-of-time
+release_venue_quote: Published as a conference paper at ICLR 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: reasoning-general/temporal-reasoning
+  secondary:
+    - mathematics/arithmetic
+  secondary_note: ToT-Arithmetic (1,850 of the 4,650 questions in the two main sets) is time
+    arithmetic, such as adding days to a date, the days between two dates, or a time-zone
+    conversion; that subset carries its own domain_override in subsets[].
+domain_basis:
+  reason: The paper's object of study is temporal reasoning in its own right, split into the two
+    skills it names, the semantics and logic of time and time arithmetic; neither task applies it to
+    a field with a family of its own.
+  source: src-arxiv-2406-09170-v1
+  quote: In this work we focus on temporal reasoning, an essential task for intelligent systems
+    across many domains.
+domain_considered_and_rejected:
+  - term: reasoning-general/logical-deduction
+    reason: ToT-Semantic answers follow from the listed facts alone, but what the questions turn on
+      is the order, overlap and length of time intervals, which has its own leaf.
+capability:
+  - temporal-reasoning
+  - quantitative-reasoning
+  - context-integration
+capability_basis:
+  temporal-reasoning:
+    reason: Every ToT-Semantic answer depends on when relations held relative to one another or how
+      long they lasted, and every ToT-Arithmetic answer on computing with dates, times and
+      durations.
+    source: src-arxiv-2406-09170-v1
+    quote: 'RelationDuration: Asking the k-th time relation R happened between E1 and E2, how long did
+      it last'
+  quantitative-reasoning:
+    reason: ToT-Arithmetic's scored answers are dates, times, durations and counts computed from the
+      values in the question, with leap years and time zones to handle. It is that subset's
+      capability (capability_override), not ToT-Semantic's.
+    source: src-arxiv-2406-09170-v1
+    quote: ToT-Arithmetic, a crowd-sourced task, assesses the ability to perform calculations
+      involving time points and durations.
+  context-integration:
+    reason: ToT-Semantic supplies every fact an answer depends on, about anonymised entities, so
+      that what a model already knows cannot answer it; the paper's Figure 1 shows a model right
+      with real names and wrong with anonymised ones. It is that subset's capability.
+    source: src-arxiv-2406-09170-v1
+    quote: Importantly, when evaluating LLMs against ToT, they cannot exploit their latent knowledge
+      for shortcuts; instead, they must genuinely reason with the presented facts.
+capability_considered_and_rejected:
+  - term: deductive-reasoning
+    reason: ToT-Semantic answers are decidable from the listed facts alone, which the term's
+      inclusion test asks, but each question is a lookup, count, sort or interval comparison over
+      those facts rather than a chain of entailments; temporal-reasoning and context-integration
+      carry what the paper isolates (see review_checks).
+  - term: knowledge-recall
+    reason: The benchmark is built so that recalled knowledge does not help; entities and relations
+      are anonymised and most graphs are random.
+    source: src-arxiv-2406-09170-v1
+    quote: Gemini Advanced correctly answered the query with real names but failed with anonymized
+      names
+
+evaluation_method:
+  - exact-match
+evaluation_method_basis:
+  reason: Prompts ask for JSON with an explanation and an answer field; the answer field or fields
+    are parsed and compared with the stored label, and the score is accuracy. The paper's precision
+    and recall on Timeline questions' entity lists are an analysis beside the score, not the score.
+  source: src-iclr-2025-test-of-time
+  quote: This standardized output facilitated automated evaluation through parsing the JSON,
+    extracting the answer
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: Numeric answers get no tolerance band. An answer one day off the label is an error, the
+      most common one on Duration questions.
+    source: src-arxiv-2406-09170-v1
+    quote: Notably, the most common error among incorrect answers was a deviation of precisely one
+      day from the ground truth label.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: Each item is one prompt with output-format instructions, sent to API-served chat models
+    (Claude 3 Sonnet, GPT-4 and Gemini 1.5 Pro, with GPT-4o and Mistral Large added in the ICLR
+    version) with no tools and no loop.
+  source: src-iclr-2025-test-of-time
+  quote: The LLMs evaluated in this study are publicly accessible via API calls.
+as_used:
+  - protocol: ToT-Semantic only, all 2,800 questions, scored by exact match, with the facts given
+      either in full (the dataset's own prompt) or retrieved by the system under test from a memory
+      built over them.
+    split: test
+    source: src-arxiv-2602-13530-v3
+    quote: From the Test of Time, we adopt all samples from its semantic part, since this part
+      explicitly requires memory.
+    note: REMem (ICLR 2026), a memory framework for language agents run on GPT-4.1-mini. Its
+      retrieval systems answer from the top-ranked facts, not the full prompt, so their scores are
+      not full-context ToT-Semantic scores.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; REMem (February 2026, ICLR 2026) reports exact match on
+    ToT-Semantic for memory systems and for full-context models up to GPT-5-chat. The Hugging Face
+    data was last modified on 2024-06-14 (its API record), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2602-13530-v3
+  quote: For Test of Time (Fatemi et al., 2025), we use the unique metric exact match (EM) score.
+activity: no-submission-channel
+activity_basis:
+  reason: Neither the paper nor the dataset card describes a leaderboard, server or submission
+    route; the datasheet asks others to publish their own work, and results appear in their papers.
+  source: src-arxiv-2406-09170-v1
+  quote: They are encouraged to download the dataset, create their own modified versions, and
+    publish their work on their preferred platform.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Gemini 1.5 Pro
+    source: src-arxiv-2406-09170-v1
+    observed_on: 2026-10-14
+    quote: The models evaluated include Claude-3-Sonnet [4], GPT-4 [1], and Gemini 1.5 Pro [47].
+  - system: GPT-4.1-mini (gpt-4.1-mini-2025-04-14), in REMem's runs
+    source: src-arxiv-2602-13530-v3
+    observed_on: 2026-10-14
+    quote: We use GPT-4.1-mini-2025-04-14 (OpenAI, 2025b) as the default LLM
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Stored labels computed by the generating code, from the generated graph
+  for ToT-Semantic and by each problem's function for ToT-Arithmetic, and released with the
+  questions.
+ground_truth_source_basis:
+  reason: Each ToT-Arithmetic problem is a function that samples its values and computes the answer
+    from them.
+  source: src-arxiv-2406-09170-v1
+  quote: we implemented a functional version of each problem to enable sampling different values for
+    each question and solving based on those values
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Questions and labels are public on an ungated Hugging Face record, the ToT-Semantic
+    prompts ship with the data, and the score is exact match on a parsed answer field. No scoring
+    code is published, so a reproduction writes its own parser.
+  source: src-hf-api-tot
+  quote: '"gated":false'
+
+task:
+  exists: true
+  input:
+    - 'ToT-Semantic: a list of temporal facts between anonymised entities, such as "E11 was the R21 of
+      E23 from 1983 to 1985", in one of five orders, with a question about them'
+    - 'ToT-Arithmetic: a time-arithmetic word problem that states its answer format'
+  output: A JSON object with an explanation and the answer field or fields the prompt names, such as
+    an entity, a list of entities, a year, a date, a count, or a day offset and a time.
+  scoring: Accuracy, the share of items whose parsed answer equals the label, reported for each task
+    separately, by graph generator, question type and fact order (ToT-Semantic) or by category
+    (ToT-Arithmetic).
+  source: src-iclr-2025-test-of-time
+  quote: and comparing to the golden label
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: All three sets, labels included, are on Hugging Face under CC BY 4.0, and the record is
+      ungated; each is a test split.
+    source: src-hf-api-tot
+    quote: '"gated":false'
+  refresh: static
+  refresh_basis:
+    reason: One release. The Hugging Face repository has not changed since 2024-06-14, the day after
+      the paper, and the ICLR version reports on the same sets.
+    source: src-hf-api-tot
+    quote: '"lastModified":"2024-06-14T12:45:23.000Z"'
+  data_provenance:
+    - synthetic-procedural
+    - crowd-authored
+    - curated-public-database
+  data_provenance_note: ToT-Semantic is generated. NetworkX generators build random graphs,
+    relations and valid intervals are assigned at random, questions are filled from templates and
+    labels computed from the graph. One of its seven graph types, AWE (400 of the 2,800 questions),
+    takes ego-nets from Wikidata with entity and relation names replaced, which is the
+    curated-public-database share. ToT-Arithmetic's problems were proposed by 15 annotators from the
+    authors' seed set (the paper calls the task crowd-sourced), then filtered, grouped and turned
+    into functions from which values and answers are sampled. No model writes items.
+  data_provenance_source: src-arxiv-2406-09170-v1
+  data_provenance_quote: We leverage the NetworkX library for generating our random graphs.
+  contamination_risk: medium
+  contamination_risk_note: The anonymised, synthetic design stops a model answering ToT-Semantic
+    from knowledge of real entities, which is the leakage the paper sets out to avoid. The items and
+    labels themselves have been public on Hugging Face since June 2024, and the card's ban on
+    training with them is the only guard, so a training route into the scored items is plausible.
+    None is evidenced in the sources read.
+  contamination_risk_source: src-hf-tot-readme
+  contamination_risk_quote: Using ToT as a training set is strictly prohibited.
+  contamination_evidence: []
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The paper's datasheet states the same licence.
+  dataset_licence_source: src-hf-api-tot
+  dataset_licence_quote: license:cc-by-4.0
+  size:
+    - count: 2800
+      unit: questions (8 question types, 7 graph generators, 5 fact orders, 10 each)
+      subset: ToT-Semantic
+      source: src-arxiv-2406-09170-v1
+      quote: This gives as a benchmark with a total of 7 ∗ 8 ∗ 5 ∗ 10 = 2800 questions
+    - count: 1850
+      unit: questions
+      subset: ToT-Arithmetic
+      note: The dataset card gives 1,850 for ToT-semantic and 2,800 for ToT-arithmetic, the other
+        way round; the dataset viewer counts 1,850 rows in tot_arithmetic and 2,800 in tot_semantic,
+        as the paper's Section 3 does (see review_checks).
+      source: src-arxiv-2406-09170-v1
+      quote: This resulted in a dataset with 1850 questions in total.
+    - count: 46480
+      unit: questions
+      subset: ToT-Semantic, large set
+      source: src-hf-datasets-server-tot-size
+      quote: '"config":"tot_semantic_large","num_bytes_original_files":449387045,"num_bytes_parquet_files":102047710,"num_bytes_memory":435163660,"num_rows":46480'
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Google (the paper's authors at Google Research, Google DeepMind and Google)
+  maintainer_basis:
+    reason: The paper's authors at Google built the dataset as part of their work there, and the
+      datasheet names Google as the party that supports, hosts and maintains it. The data sits in
+      the first author's Hugging Face account.
+    source: src-arxiv-2406-09170-v1
+    quote: Google (the authors listed here in particular) will support, host, and maintain the
+      dataset.
+  maintainer_type: industry-lab
+  maintainer_type_note: individual was considered, as the Hugging Face repository is in a personal
+    account (baharef); the datasheet names Google as the holder.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or results page; beyond the release paper's tables,
+    results appear in users' papers.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2406-09170-v1
+      quote: The models evaluated include Claude-3-Sonnet [4], GPT-4 [1], and Gemini 1.5 Pro [47].
+  independence_flags_note: Google maintains the benchmark and evaluated its own Gemini 1.5 Pro
+    beside Anthropic's and OpenAI's models in the release paper, where Gemini ranks first on
+    ToT-Semantic; Figure 1, which motivates the benchmark, uses Gemini Advanced. Google funded the
+    dataset (the datasheet) and the experiments ran on Google Cloud. The ICLR version adds GPT-4o
+    and Mistral Large.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: null
+  reproducibility_tier_note: Left null. The data and labels are public and exact-match scoring needs
+    no human, simulator or maintainer step, which is fully-automatable's case, but no code is
+    published, so harness none brings the no-reference-implementation blocker, and 02 S11 bars
+    fully-automatable beside it (see review_checks).
+  reproducibility_blockers:
+    - no-reference-implementation
+  reproducibility_blockers_note: No generator, prompt-building or scoring code is published; a
+    reproduction rebuilds the JSON parsing and answer comparison from the paper's Appendix D (ICLR
+    version).
+  harness_availability: none
+  harness_availability_note: The paper says it open-sources the evaluation framework at the Hugging
+    Face link, but that repository holds only the three data files and the card (its API record
+    lists them), and no GitHub repository was found. UK AISI's inspect_evals (its documentation
+    index) and lm-evaluation-harness (its task tree) have no implementation, both read 2026-10-14;
+    not quoted Sources.
+  harness_availability_source: src-iclr-2025-test-of-time
+  harness_availability_quote: 'we are open-sourcing the datasets and evaluation framework used in our
+    experiments: https://huggingface.co/datasets/baharef/ToT'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: the set scored (ToT-Semantic, its 46,480-question large set, ToT-Arithmetic,
+  # or one question type), the prompt (the dataset's own ToT-Semantic prompt, a retrieval system's shortened one), and
+  # the answer parser, which every reporter writes for itself because no scoring code is published.
+  material_extra:
+    - prompt_template_hash
+    - harness
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The two tasks measure two skills and are scored separately. The paper reports each task's
+    accuracy by graph generator, question type, fact order or category, with average ranks, and
+    never a combined score.
+  source: src-arxiv-2406-09170-v1
+  quote: To measure and improve model performance along these independent axes, we create a
+    dedicated task for each skill.
+
+homepage: https://huggingface.co/datasets/baharef/ToT
+dataset_url: https://huggingface.co/datasets/baharef/ToT
+
+subsets:
+  - id: test-of-time#tot-semantic
+    label: ToT-Semantic
+    items: 2800
+    scored_separately: true
+    domain_override:
+      primary: reasoning-general/temporal-reasoning
+    capability_override:
+      - temporal-reasoning
+      - context-integration
+    evidence:
+      - source: src-arxiv-2406-09170-v1
+        quote: ToT-Semantic, a synthetic task, focuses on temporal semantics and logic
+      - source: src-hf-datasets-server-tot-size
+        quote: '"config":"tot_semantic","num_bytes_original_files":28759840,"num_bytes_parquet_files":6577077,"num_bytes_memory":27863645,"num_rows":2800'
+    notes: The Hugging Face config tot_semantic. Eight question types of 350 each, over seven graph
+      generators (400 each) and five fact orders (560 each).
+  - id: test-of-time#tot-arithmetic
+    label: ToT-Arithmetic
+    items: 1850
+    scored_separately: true
+    domain_override:
+      primary: reasoning-general/temporal-reasoning
+      secondary:
+        - mathematics/arithmetic
+    capability_override:
+      - temporal-reasoning
+      - quantitative-reasoning
+    evidence:
+      - source: src-arxiv-2406-09170-v1
+        quote: Specifically, we sampled 350 for AddSubtract, 350 for Compare, 200 for Duration, 250
+          for Schedule, 100 for Timezone, 250 for Trick, and 350 for MultiOp.
+      - source: src-hf-datasets-server-tot-size
+        quote: '"config":"tot_arithmetic","num_bytes_original_files":905701,"num_bytes_parquet_files":135159,"num_bytes_memory":817747,"num_rows":1850'
+    notes: The Hugging Face config tot_arithmetic. Seven categories, sampled in proportion to the
+      number of distinct problems in each.
+  - id: test-of-time#tot-semantic-large
+    label: ToT-Semantic, large set
+    items: 46480
+    scored_separately: true
+    evidence:
+      - source: src-hf-tot-readme
+        quote: Contains 46,480 examples in total.
+    notes: The Hugging Face config tot_semantic_large, generated the same way at a larger scale. The
+      paper's appendix reports it for Gemini 1.5 Pro only. The arXiv version's datasheet calls the
+      2,800-question set a sample of this one, while Section 3.1 describes generating the 2,800
+      directly.
+  - id: test-of-time#semantic-event-at-time-t
+    label: 'ToT-Semantic: EventAtTimeT'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-event-at-what-time
+    label: 'ToT-Semantic: EventAtWhatTime'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-number-of-events-in-time-interval
+    label: 'ToT-Semantic: NumberOfEventsInTimeInterval'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-before-after
+    label: 'ToT-Semantic: BeforeAfter'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-event-at-time-of-another-event
+    label: 'ToT-Semantic: EventAtTimeOfAnotherEvent'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-first-last
+    label: 'ToT-Semantic: FirstLast'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-relation-duration
+    label: 'ToT-Semantic: RelationDuration'
+    parent: test-of-time#tot-semantic
+    items: 350
+  - id: test-of-time#semantic-timeline
+    label: 'ToT-Semantic: Timeline'
+    parent: test-of-time#tot-semantic
+    items: 350
+    notes: The answer is a list of entities in chronological order; the paper also reports precision
+      and recall on it.
+  - id: test-of-time#arithmetic-add-subtract
+    label: 'ToT-Arithmetic: AddSubtract'
+    parent: test-of-time#tot-arithmetic
+    items: 350
+  - id: test-of-time#arithmetic-compare
+    label: 'ToT-Arithmetic: Compare'
+    parent: test-of-time#tot-arithmetic
+    items: 350
+  - id: test-of-time#arithmetic-duration
+    label: 'ToT-Arithmetic: Duration'
+    parent: test-of-time#tot-arithmetic
+    items: 200
+  - id: test-of-time#arithmetic-schedule
+    label: 'ToT-Arithmetic: Schedule'
+    parent: test-of-time#tot-arithmetic
+    items: 250
+  - id: test-of-time#arithmetic-timezone
+    label: 'ToT-Arithmetic: Timezone'
+    parent: test-of-time#tot-arithmetic
+    items: 100
+  - id: test-of-time#arithmetic-trick
+    label: 'ToT-Arithmetic: Trick'
+    parent: test-of-time#tot-arithmetic
+    items: 250
+  - id: test-of-time#arithmetic-multi-op
+    label: 'ToT-Arithmetic: MultiOp'
+    parent: test-of-time#tot-arithmetic
+    items: 350
+subsets_note: >
+  The paper reports each task's accuracy by question type (Tables 5 and 8 of v1), so the eight
+  ToT-Semantic types and seven ToT-Arithmetic categories are listed under their task. The Semantic
+  counts follow from generating 10 questions per graph generator, question type and fact order; the
+  Arithmetic counts are the paper's sampled numbers. The dataset viewer's column statistics agree
+  (read 2026-10-14; not a quoted Source). Graph generator and fact order are further cuts of
+  ToT-Semantic that the paper also reports, and are not listed.
+
+tags:
+  - temporal-reasoning
+  - date-arithmetic
+  - synthetic
+  - anonymised-entities
+  - test-only
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-09170-v1
+    - src-arxiv-2406-09170
+    - src-iclr-2025-test-of-time
+    - src-hf-api-tot
+    - src-hf-tot-readme
+    - src-hf-datasets-server-tot-size
+    - src-arxiv-2602-13530-v3
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date; the ICLR
+    2025 camera-ready PDF from proceedings.iclr.cc for the venue, the evaluation procedure and the
+    added models (withheld from archiving: its first page gives the corresponding authors' e-mail
+    addresses); Hugging Face's API record of the dataset, its card at main and the dataset viewer's
+    size record; and REMem's v3 PDF (a DOI, not archived) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: mathematics/arithmetic as a secondary domain on ToT-Arithmetic. The paper treats time
+        arithmetic as one of the two skills of temporal reasoning, and mathematics excludes
+        arithmetic incidental to a question about another field; of its seven categories, Compare,
+        Schedule, Timezone and Trick are not all calculation.
+      field: domain
+      source: src-arxiv-2406-09170-v1
+      quote: ToT-Arithmetic, a crowd-sourced task, assesses the ability to perform calculations
+        involving time points and durations.
+    - check: data_provenance. crowd-authored rests on the paper calling ToT-Arithmetic crowd-sourced
+        (15 annotators proposed problems), while the datasheet says the data collection was done
+        solely by the authors. curated-public-database rests on the AWE graphs, Wikidata ego-nets
+        that are one seventh of ToT-Semantic.
+      field: data.data_provenance
+      source: src-arxiv-2406-09170-v1
+      quote: We presented our seed set to 15 annotators
+    - check: deductive-reasoning was rejected, while CLadder's entry in this family assigns it on
+        similar grounds (answers decidable from stated premises alone). Consistency across the
+        family.
+      field: capability
+    - check: reproducibility_tier is null. A run needs no human, simulator or maintainer step, but
+        no code is published, and 02 S11 bars fully-automatable beside no-reference-implementation.
+      field: execution.reproducibility_tier
+    - check: The dataset card swaps the two tasks' sizes (1,850 Semantic, 2,800 Arithmetic), and the
+        arXiv version's datasheet also gives 2,800 for ToT-Arithmetic and calls the 2,800-question
+        Semantic set a sample of the 46,480 (the ICLR version has no datasheet). The entry follows
+        Section 3 and the dataset viewer's row counts.
+      field: data.size
+      source: src-hf-tot-readme
+      quote: Measuring the semantics and logic of time understanding. Contains 1,850 examples in
+        total.
+    - check: maintainer_type industry-lab although the data sits in a personal Hugging Face account;
+        and whether funded-by-evaluated-party belongs beside maintainer-competes-on-own-benchmark
+        (Google funded the dataset and Gemini is evaluated, but the funder is the maintainer
+        itself).
+      field: governance
+      source: src-arxiv-2406-09170-v1
+      quote: The dataset was created by Google employees as part of their work at the company, so
+        Google funded its development.
+    - check: REMem runs memory and retrieval systems (an agentic retriever over a graph built from
+        the facts) on ToT-Semantic; whether observed_subjects should record
+        retrieval-augmented-system or agent-scaffold beside the designed-for
+        instruction-tuned-model.
+      field: designed_for_subjects
+      source: src-arxiv-2602-13530-v3
+      quote: REMem is the only method that surpasses 90%
+  personal_data_excluded:
+    - source: src-arxiv-2406-09170-v1
+      what: The corresponding authors' e-mail addresses on the first page and the owner's in the
+        datasheet; the windows stop short of them.
+    - source: src-iclr-2025-test-of-time
+      what: The corresponding authors' e-mail addresses on the first page; the windows stop short of
+        them, and the PDF is not archived.
+    - source: src-arxiv-2602-13530-v3
+      what: The authors' e-mail addresses on the first page; the windows stop short of them.
