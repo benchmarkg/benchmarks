@@ -1,0 +1,502 @@
+# data/benchmarks/earth-climate/sen1floods11.yaml
+#
+# P1-S7-T01, earth-climate entry 5 of 9. Filled from the paper (Bonafilia et al., CVPR 2020 Workshops), read as the
+# Computer Vision Foundation's open-access PDF and its abstract page; Crossref's record of the IEEE version, for
+# the DOI and the workshop's dates; the repository README at master (with GitHub's API for licence and last push,
+# not quoted); the data bucket's public listing of its hand-labelled split files (no data downloaded); and the v1
+# PDF of Prithvi-CAFE (arXiv 2601.02315, January 2026), a paper that reports on the test split and on Bolivia.
+# Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: sen1floods11
+name: Sen1Floods11
+tagline: Flood and surface water segmentation of Sentinel-1 SAR chips from 11 flood events, scored
+  by IoU, with Bolivia held out.
+description: >
+  A dataset and benchmark for mapping flood and permanent surface water in Sentinel-1 radar
+  imagery, released by Cloud to Street with a CVPR 2020 workshop paper. It holds 4,831 chips of 512
+  x 512 pixels at 10 m from 11 flood events on six continents, each with Sentinel-1 VV and VH
+  backscatter and the 13-band Sentinel-2 image of the same area. 446 chips were hand labelled by
+  remote sensing analysts as water, not water or no data; the other 4,385 carry weak labels from
+  thresholding Sentinel-1 or Sentinel-2, and a further 814 chips carry permanent-water labels from
+  the JRC surface water dataset. The hand-labelled chips are split 60-20-20 at random into training,
+  validation and test sets, except that every hand-labelled chip from the Bolivia event is held out
+  as a second test set, an event the models were not trained on. Models are scored by intersection
+  over union of the water class, averaged over chips and reported for permanent, flood and all
+  water, with omission and commission error rates beside. The paper's baselines are a ResNet50
+  fully convolutional network trained on each label source and Otsu thresholding of the VH band.
+  Geospatial foundation model papers now report it with hand-labelled training only, as water-class
+  IoU and two-class mIoU on the test split and on Bolivia, with inputs that can include the
+  Sentinel-2 bands.
+self_description:
+  source: src-cvf-sen1floods11-abstract
+  quote: we introduce Sen1Floods11, a surface water data set including classified permanent water,
+    flood water, and raw Sentinel-1 imagery
+paper:
+  title: 'Sen1Floods11: A Georeferenced Dataset to Train and Test Deep Learning Flood Algorithms for Sentinel-1'
+  doi: 10.1109/cvprw50498.2020.00113
+  source: src-cvf-sen1floods11-pdf
+released: 2020-06-14
+released_note: The first day of the CVPR 2020 workshops, where the paper appeared, as Crossref's
+  record of the IEEE version dates the event; the record dates the paper itself only to June 2020.
+  The repository's README was first committed on 2020-03-17 (GitHub API), but no source read says
+  when the data became public.
+released_source: src-crossref-10-1109-cvprw50498-2020-00113
+released_quote: '"start":{"date-parts":[[2020,6,14]]}'
+release_venue: IEEE/CVF CVPR 2020 Workshops
+release_venue_note: The CVF open-access copy gives pp. 210-211; the IEEE Xplore version, the DOI's
+  target, gives pp. 835-845 and was not read.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/remote-sensing
+  secondary:
+    - vision/segmentation
+domain_basis:
+  reason: Surface water, permanent and flooded, is segmented in satellite radar chips. The label is
+    a land-surface state, so remote sensing is primary and the generic segmentation operation is
+    secondary, as the subdomain's inclusion test asks; taxonomy/domains.yaml names sen1floods11 as
+    its example.
+  source: src-cvf-sen1floods11-abstract
+  quote: we introduce Sen1Floods11, a surface water data set including classified permanent water,
+    flood water, and raw Sentinel-1 imagery
+domain_considered_and_rejected:
+  - term: earth-climate/hazard-prediction
+    reason: Floods are a hazard, but the flood extent is mapped from an image taken during the
+      event, not forecast before it; the remote-sensing inclusion test sends mapping a hazard
+      already visible in the image to remote-sensing.
+capability:
+  - perception
+  - distribution-shift-generalization
+capability_basis:
+  perception:
+    reason: The input is a radar (and optical) image chip, and the score measures the water mask
+      recovered from it pixel by pixel.
+    source: src-cvf-sen1floods11-pdf
+    quote: To predict water in each pixel, we use a fully convolutional network with a Resnet50
+      backbone
+  distribution-shift-generalization:
+    reason: Every hand-labelled chip of the Bolivia event is withheld from training and validation
+      and scored as its own test set (the paper's Tables 2 and 4), beside the random test split of
+      the other ten events. The task and label set are unchanged; only the event moves.
+    source: src-cvf-sen1floods11-pdf
+    quote: All handlabeled data from Bolivia is held out for a distinct test set to evaluate the
+      accuracy of trained models on
+    caveat: >
+      The hold-out is partial by design: the Sentinel-1 weak labels for Bolivia stay in the weak
+      training set, so a model trained on them has seen Bolivia's radar imagery, which the paper
+      offers as the likely reason that model scored best on Bolivia. Under the hand-labelled-only
+      protocol later papers use, Bolivia is a held-out site.
+capability_considered_and_rejected:
+  - term: scientific-prediction
+    reason: The water extent is read off the image being segmented, which is perception; nothing is
+      predicted beyond what the sensor shows, the same line the domain tests draw between mapping a
+      visible flood and hazard prediction.
+  - term: transfer-learning
+    reason: The paper scores a model trained on JRC permanent-water labels on flood water and calls
+      it transferability, but the task and label set (water or not water) stay fixed and only the
+      inputs differ, which the term's exclusion sends to distribution shift; it is a training-data
+      variant, not a condition of the benchmark.
+    source: src-cvf-sen1floods11-pdf
+    quote: This is important for understanding the transferability of permanent water detection to
+
+evaluation_method:
+  - domain-metric
+  - classification-metric
+evaluation_method_basis:
+  reason: Intersection over union of the water class, the headline number, is named in
+    domain-metric's inclusion test. The omission and commission error rates reported beside it, for
+    comparison with the remote sensing literature, are the false-negative and false-positive rates
+    of the water class, general confusion-matrix statistics, which is classification-metric.
+  source: src-cvf-sen1floods11-pdf
+  quote: Intersection over union(IOU) is used to evaluate the models; we report the mean IOU(equal
+    weighting of all chips).
+evaluation_method_considered_and_rejected:
+  - term: reference-metric
+    reason: IoU compares predicted and reference masks, not texts, and the term excludes
+      discipline-specific metrics.
+  - term: statistical-fit
+    reason: The compared values are per-pixel class labels, not continuous measurements.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The paper trains fully convolutional networks for surface water and flood detection, a
+    task remote sensing defines, and compares them with Otsu thresholding of the VH band, a
+    non-learned remote sensing method entered as a baseline in every table. Current entrants are
+    geospatial foundation models fine-tuned on the hand-labelled split.
+  source: src-cvf-sen1floods11-abstract
+  quote: We compare these four models to a common remote sensing approach of thresholding radar
+    backscatter to identify surface water.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: Segmentation is a general vision task, but flood and surface water mapping from SAR is a
+      task the earth-climate discipline defines, which the term's exclusion sends to
+      domain-specialist-model, as GEO-Bench-2 is tagged.
+
+as_used:
+  - protocol: Geospatial foundation models and U-Nets fine-tuned on the hand-labelled training split
+      only and scored by IoU of the water class and mIoU over the two classes, on the test split and
+      on Bolivia, with inputs that can include the Sentinel-2 bands; the paper's protocol averaged
+      water-class IoU over chips by water type and also trained on weak labels.
+    split: test and bolivia
+    source: src-arxiv-2601-02315-v1
+    quote: we used the exact given train, test, and validation split given by [3] to keep the
+      results fairly comparable
+    note: Prithvi-CAFE (January 2026, accepted at the CV4EO workshop at WACV 2026). Its Table 1
+      gathers other papers' results beside its own, so the protocols behind the rows differ.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against it; a January 2026 paper reports its own model and
+    gathers other geospatial foundation models' results on the test split and on Bolivia. The
+    repository was last pushed on 2021-04-09 (GitHub API), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2601-02315-v1
+  quote: This data set is one of the widely used benchmark data sets to evaluate the performance of
+    GFM for flood mapping as a downstream task
+activity: no-submission-channel
+activity_basis:
+  reason: The README describes the data bucket and an example training notebook, and no leaderboard,
+    results page or submission route; results appear in their authors' papers.
+  source: src-github-sen1floods11-readme
+  quote: shows how to train and validate the model on a dataset
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Prithvi-CAFE
+    source: src-arxiv-2601-02315-v1
+    observed_on: 2026-10-14
+    quote: On Sen1Flood11 test data, Prithvi-CAFE (IoU 83.41) outperforms the original Prithvi (IoU
+      82.50)
+  - system: FCNN with a ResNet50 backbone (the paper's baseline, trained on each label source)
+    source: src-cvf-sen1floods11-pdf
+    observed_on: 2026-10-14
+    quote: To predict water in each pixel, we use a fully convolutional network with a Resnet50
+      backbone
+evaluation_target: learned-system
+evaluation_target_note: Otsu thresholding sits in the tables as the conventional remote sensing
+  method the networks are compared with; the benchmark is built for the learned models.
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Hand labels drawn in Google Earth Engine by remote sensing analysts, who
+  corrected a Sentinel-2 water classification with the radar and optical images in view, and marked
+  what they could not identify as no data.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The chips, labels and split files are in a public bucket, and the training and evaluation
+    code is in the repository.
+  source: src-cvf-sen1floods11-abstract
+  quote: We provide Sen1Floods11, as well as our training and evaluation code at
+
+task:
+  exists: true
+  input:
+    - 'a 512 x 512 chip at 10 m ground resolution: Sentinel-1 VV and VH backscatter in dB, with the 13-band
+      Sentinel-2 image of the same area beside it'
+  input_note: The benchmark is named and built for Sentinel-1, but the Sentinel-2 bands ship with
+    every chip, and later entrants may use them as well as, or instead of, the radar bands.
+  output: A per-pixel water or not-water segmentation of the chip.
+  scoring: Intersection over union of the water class per chip, averaged with equal weight over
+    chips and reported separately for permanent, flood and all water, on the hand-labelled test
+    split of ten events and on the held-out Bolivia event; omission and commission error rates
+    beside. Later papers report water-class IoU and two-class mIoU instead (as_used).
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The test and Bolivia labels are in the public bucket with the rest.
+  item_definition: One 512 x 512 chip of 10 m pixels from one flood event.
+  item_definition_source: src-cvf-sen1floods11-pdf
+  item_definition_quote: 4,831 chips of 512 x 512 10m pixels across 11 distinct
+  source: src-cvf-sen1floods11-pdf
+  quote: The ground resolution of the imagery is sampled to 10 meters on all bands, with 2 bands (VV
+    and VH) for Sentinel-1 and 13 bands for Sentinel-2.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every split, labels included, is in a public Google Cloud Storage bucket; its listing
+      was read without credentials on 2026-10-14.
+    source: src-github-sen1floods11-readme
+    quote: The dataset is available for access through Google Cloud Storage bucket at
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data changed once, under a version label, from v1.0 in the cnn_chips bucket to v1.1
+      in the sen1floods11 bucket.
+    source: src-github-sen1floods11-readme
+    quote: v1.1 involved major restructing of the bucket and more understandable file naming as well
+      as updates to the dataset and data format to comply with COG spec.
+  data_provenance:
+    - real-world-instrument
+    - expert-authored
+    - curated-public-database
+  data_provenance_note: The inputs are Sentinel-1 and Sentinel-2 imagery. The scored labels were
+    drawn by trained remote sensing analysts. The weak labels were made by thresholding Sentinel-1
+    backscatter and Sentinel-2 water indices, rule outputs on the same real imagery, and were not
+    quality controlled; the permanent-water labels come from the JRC Global Surface Water dataset, a
+    curated Landsat product made for other purposes.
+  data_provenance_source: src-cvf-sen1floods11-pdf
+  data_provenance_quote: for trained remote sensing analysts to hand label water areas
+  contamination_risk: medium
+  contamination_risk_note: The test and Bolivia labels have been public since 2020, and geospatial
+    foundation models are pretrained on large Sentinel archives that may hold the test chips'
+    scenes, unlabelled. Nothing keeps either out of an entrant's training, and no evidence of either
+    was read. The Sentinel-1 weak training set includes Bolivia's radar imagery by design
+    (capability_basis).
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: No licence is stated in the README, the paper or the bucket listing read
+    here, and GitHub reports none for the repository (read 2026-10-14). The bucket's STAC collection
+    files, which may carry one, are inside catalog.zip, which was not downloaded.
+  size:
+    - count: 4831
+      unit: chips of 512 x 512 pixels
+      subset: all 11 flood events
+      source: src-cvf-sen1floods11-abstract
+      quote: This dataset consists of 4,831 512x512 chips covering 120,406 km
+    - count: 446
+      unit: hand-labelled chips (training, validation and test, Bolivia included)
+      subset: hand-labelled
+      note: The paper's own stratification adds to 448 (336 and 112).
+      source: src-cvf-sen1floods11-pdf
+      quote: In total 4,831 non-overlapping chips covering 120,406 sq. km were created, with 4,385
+        exported for training, and 446 hand-labeled and exported for training, validation and
+        testing.
+    - count: 4385
+      unit: weakly labelled chips, each with a Sentinel-1 and a Sentinel-2 classification
+      subset: weakly labelled
+      note: The paper's introduction gives 4,370 once; the abstract, the methods and the README's
+        bucket documentation give 4,385.
+      source: src-cvf-sen1floods11-abstract
+      quote: iv) 4385 chips of surface water classified from Sentinel-1 imagery from flood events
+    - count: 814
+      unit: chips with JRC permanent-water labels
+      subset: permanent water
+      source: src-cvf-sen1floods11-abstract
+      quote: ii) 814 chips of publicly available permanent water data labels from Landsat (JRC
+        surface water dataset)
+    - count: 11
+      unit: flood events, on six continents
+      subset: all
+      source: src-cvf-sen1floods11-abstract
+      quote: spans all 14 biomes, 357 ecoregions, and 6 continents of the world across 11 flood
+        events
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Cloud to Street
+  maintainer_basis:
+    reason: The README says Cloud to Street generated the data, the repository is in its GitHub
+      organisation, and the paper's authors were at Cloud to Street.
+    source: src-github-sen1floods11-readme
+    quote: This data was generated by Cloud to Street, a Public Benefit Corporation
+  maintainer_type: industry-lab
+  maintainer_type_note: A public benefit corporation is a company, which the term's inclusion test
+    names.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route exists; beyond the
+    paper's baselines, results appear in their authors' own papers.
+  independence_flags: []
+  independence_flags_note: None recorded. The only results the maintainer published are the release
+    paper's baselines, by design, and no ranking is kept for anyone to compete on. One of the
+    dataset's authors is also an author of the 2026 Prithvi-CAFE paper (src-arxiv-2601-02315-v1), at
+    a university, not at Cloud to Street.
+  independence_assessed: true
+  known_limitation:
+    source: src-cvf-sen1floods11-pdf
+    quote: Our validation dataset does not include any urban
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public chips, labels and split files and a fixed metric; a model can be trained and
+      scored end to end with no human or physical step.
+    source: src-github-sen1floods11-readme
+    quote: The dataset is available for access through Google Cloud Storage bucket at
+  reproducibility_blockers: []
+  harness_availability: reference-implementation-only
+  harness_availability_note: The notebook trains and validates the paper's baseline; no scorer is
+    designated, and later papers compute IoU and mIoU in their own code.
+  harness: Train.ipynb in cloudtostreet/Sen1Floods11 (the paper's training and evaluation notebook)
+  harness_source: src-github-sen1floods11-readme
+  harness_quote: shows how to train and validate the model on a dataset
+  code_licence: null
+  code_licence_note: GitHub's licence metadata for cloudtostreet/Sen1Floods11 is empty (read
+    2026-10-14) and the README states none; not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # classical-algorithm beside domain-metric resolves the eligibility-gated profile. Sen1Floods11 has no tracks, so
+  # two of its fields are waived; decontamination_applied stays, since pretraining on Sentinel archives may take in
+  # the test chips' scenes. subset_used carries the split (the random test split of ten events, or the held-out
+  # Bolivia event, subsets below), and training_data_policy what the model trained on (hand labels, weak labels,
+  # JRC labels, any pretraining). Two more conditions move a Sen1Floods11 number and have no EvalConditions field:
+  # the input bands (Sentinel-1, Sentinel-2 or both) and the metric's definition (the paper's per-chip mean IoU by
+  # water type, or later papers' water-class IoU and two-class mIoU). The 10 m ground resolution is fixed by the
+  # data for every chip (task.input).
+  material_extra:
+    - subset_used
+    - training_data_policy
+  material_waived:
+    - field: eligibility_track
+      reason: Sen1Floods11 runs no tracks; the eligibility-gated profile comes from the Otsu
+        baseline (classical-algorithm) beside domain-metric.
+    - field: training_data_eligibility
+      reason: No eligibility rule restricts training data; what an entrant trained on is recorded
+        under training_data_policy.
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper's number is the water-class IoU averaged over chips with equal weight, per water
+    type and per test set; nothing combines the test sets or water types into one score.
+  source: src-cvf-sen1floods11-pdf
+  quote: Intersection over union(IOU) is used to evaluate the models; we report the mean IOU(equal
+    weighting of all chips).
+
+homepage: https://github.com/cloudtostreet/Sen1Floods11
+repository: https://github.com/cloudtostreet/Sen1Floods11
+
+versions:
+  - version: v1.0
+    label: Sen1Floods11 v1.0, the paper's release
+    version_kind: revision
+    released: 2020-06-14
+    changes: The data as released with the paper, in the cnn_chips bucket, where the README says it
+      is still hosted for now.
+    superseded_by: v1.1
+    frozen: true
+    sources:
+      - src-github-sen1floods11-readme
+      - src-crossref-10-1109-cvprw50498-2020-00113
+  - version: v1.1
+    label: Sen1Floods11 v1.1, in the sen1floods11 bucket
+    version_kind: revision
+    changes: The bucket restructured, files renamed, the imagery converted to Cloud Optimized
+      GeoTIFF, and unspecified updates to the dataset. Its hand-labelled split files, Bolivia's
+      among them, are dated 2020-10-01 in the bucket listing, and the README's note about v1.1 was
+      committed on 2020-10-16 (GitHub API). Whether labels changed, and so whether v1.0 and v1.1
+      scores compare, is not stated.
+    supersedes_version: v1.0
+    frozen: true
+    sources:
+      - src-github-sen1floods11-readme
+      - src-gcs-sen1floods11-splits
+
+subsets:
+  - id: sen1floods11#test
+    label: Hand-labelled test split of ten flood events
+    scored_separately: true
+    evidence:
+      - source: src-cvf-sen1floods11-pdf
+        quote: Apart from the special handling of Bolivia data, the hand labeled data is split into
+          training, validation, and testing data with a random 60-20-20 split
+      - source: src-cvf-sen1floods11-pdf
+        quote: (all besides Bolivia) of models trained on each dataset in terms of Mean IOU for the
+          water class
+      - source: src-gcs-sen1floods11-splits
+        quote: '"name": "v1.1/splits/flood_handlabeled/flood_test_data.csv"'
+    notes: A random fifth of the hand-labelled chips of the ten events other than Bolivia; the
+      paper's Tables 1 and 3, and the "test set" of later papers. The paper does not state its chip
+      count.
+  - id: sen1floods11#bolivia
+    label: Held-out Bolivia flood event
+    scored_separately: true
+    evidence:
+      - source: src-cvf-sen1floods11-pdf
+        quote: All handlabeled data from Bolivia is held out for a distinct test set to evaluate the
+          accuracy of trained models on
+      - source: src-cvf-sen1floods11-pdf
+        quote: However, we do include Sentinel-1 based
+      - source: src-gcs-sen1floods11-splits
+        quote: '"name": "v1.1/splits/flood_handlabeled/flood_bolivia_data.csv"'
+      - source: src-arxiv-2601-02315-v1
+        quote: In the case of a geographically held-out test site (i.e., Bolivia)
+    notes: Every hand-labelled chip of the Bolivia event, kept out of training and validation
+      together with its Sentinel-2 classification, and scored as its own condition (the paper's
+      Tables 2 and 4); the bucket ships it as its own split file. The Sentinel-1 weak labels for
+      Bolivia do enter the weak training set. The paper does not state its chip count.
+subsets_note: The paper also reports each score separately for permanent, flood and all water; those
+  are breakdowns of one prediction by label type, not subsets of the chips.
+
+tags:
+  - flood-mapping
+  - surface-water
+  - sar
+  - sentinel-1
+  - semantic-segmentation
+  - earth-observation
+  - held-out-region
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-cvf-sen1floods11-pdf
+    - src-cvf-sen1floods11-abstract
+    - src-crossref-10-1109-cvprw50498-2020-00113
+    - src-github-sen1floods11-readme
+    - src-gcs-sen1floods11-splits
+    - src-arxiv-2601-02315-v1
+  sources_note: >
+    The paper's CVF open-access PDF read as text (withheld from archiving: its author block holds
+    personal e-mail addresses) and its CVF abstract page with scripts stripped; Crossref's JSON
+    record of the IEEE version (a DOI, not archived) for the DOI and the workshop's dates; the
+    README at master; the bucket's JSON listing of the hand-labelled split files; and Prithvi-CAFE's
+    v1 PDF (a DOI, not archived) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: distribution-shift-generalization rests on one held-out event, Bolivia, scored as its
+        own test set. The paper keeps Bolivia's Sentinel-1 weak labels in the weak training set, so
+        the hold-out is complete only for models trained on hand labels, as later papers do.
+      field: capability
+      source: src-cvf-sen1floods11-pdf
+      quote: However, we do include Sentinel-1 based
+    - check: classical-algorithm is assigned for the Otsu baseline. With domain-metric it resolves
+        the eligibility-gated comparability profile, two of whose fields are waived; dropping the
+        subject would leave the fallback profile with the two material_extra fields.
+      field: designed_for_subjects
+    - check: The paper's PDF Source carries no DOI and is withheld from archiving for its authors'
+        e-mail addresses. The DOI (paper.doi) is IEEE's version, which CVF says is identical apart
+        from the watermark but which was not read (pp. 835-845 against CVF's 210-211). Whether the
+        PDF Source should carry the DOI instead, which would make it citable without a capture.
+      field: paper
+    - check: Two conditions that change a score have no EvalConditions field, the input bands
+        (Sentinel-1, Sentinel-2 or both) and the IoU definition (per-chip mean by water type, or
+        pooled water-class IoU and two-class mIoU), so claims that differ on them can share a
+        comparability key.
+      field: comparability
+      source: src-arxiv-2601-02315-v1
+      quote: we opted for standard segmentation metrics such as Intersection over Union (IoU) for
+        the foreground class (flood in our case) mean Intersection over Union (mIoU)
+    - check: v1.1 is recorded as non-breaking by default, but the README says only that it updated
+        the dataset; whether hand labels or splits changed was not checked.
+      field: versions
+    - check: expert-authored rests on the paper's "trained remote sensing analysts", who corrected
+        an algorithmic Sentinel-2 classification rather than drawing from scratch; crowd-authored if
+        they learned the task for it. The weak labels, rule outputs on real imagery, are not tagged
+        synthetic-procedural.
+      field: data.data_provenance
+    - check: The README names Cloud to Street as the data's producer; whether the company still
+        holds the repository and bucket under that name, last touched in 2021, was not checked.
+      field: governance.maintainer
+  personal_data_excluded:
+    - source: src-cvf-sen1floods11-pdf
+      what: Three authors' e-mail addresses in the PDF's author block; the extract's windows leave
+        them out and the Source is withheld from archiving.
+    - source: src-arxiv-2601-02315-v1
+      what: The authors' e-mail addresses in the PDF's author block; the extract's windows leave
+        them out.
+    - source: src-github-sen1floods11-readme
+      what: The README's support contact address, a generic mailbox; the extract's windows leave it
+        out.
