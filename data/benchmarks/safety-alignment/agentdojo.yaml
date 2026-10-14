@@ -1,0 +1,543 @@
+# data/benchmarks/safety-alignment/agentdojo.yaml
+#
+# P1-S9-T03, safety-alignment entry 2 of 9. Filled from the AgentDojo paper, arXiv 2406.13352 read as its v3 PDF
+# (2024-11-24; NeurIPS 2024 Datasets and Benchmarks Track), and its abstract page; the repository README at main
+# and its task-suite registry (src/agentdojo/task_suite/load_suites.py); the GitHub API's list of the package's
+# releases; the documentation's results page and changelog (agentdojo.spylab.ai, scripts and styles stripped); UK
+# AISI's inspect_evals README for its AgentDojo port, against which the entry is reconciled; and the v1 PDF of
+# ContrAgent (arXiv 2609.18128, September 2026), a paper that reports on AgentDojo's runs. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# AgentDojo is a framework as well as a benchmark (its docs show how to build new suites); the entry catalogues the
+# four task suites it ships, Workspace, Slack, Travel and Banking, and their versions v1 to v1.2.2.
+
+id: agentdojo
+name: AgentDojo
+tagline: Tool-calling agents on 97 tasks in four simulated apps, scored on utility and on
+  prompt-injection attack success.
+description: >
+  A benchmark and framework from ETH Zurich's SPY Lab for prompt injection against tool-calling
+  language-model agents. Four simulated environments, Workspace (email, calendar and cloud drive),
+  Slack, Travel and Banking, hold dummy data and expose tools. An agent solves a user's task given in
+  natural language, while text an attacker planted in what the tools return tries to make it carry out
+  an
+  injection task, such as sending money or a security code to the attacker. Deterministic utility and
+  security functions inspect the environment state before and after the episode, and no language model
+  judges. The first version has 97 user tasks and 629 security test cases, each user task paired with
+  each
+  injection task of its suite. Results are reported as benign utility, utility under attack and targeted
+  attack success rate, per model, defence (a tool filter, a prompt-injection detector, data delimiters,
+  repeating the user prompt) and attack. The task suites are versioned, v1 to v1.2.2. The maintainers'
+  results page lists runs without ranking them, and takes outside results by pull request with an
+  implementation of the attack, defence or model. UK AISI's inspect_evals ports it at v1.2.1.
+self_description:
+  source: src-arxiv-2406-13352-v3
+  quote: To measure the adversarial robustness of AI agents, we introduce AgentDojo, an evaluation
+    framework for agents that execute tools over untrusted data
+external_ids:
+  inspect_evals: agentdojo
+  arxiv: '2406.13352'
+paper:
+  title: 'AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for LLM Agents'
+  arxiv: '2406.13352'
+  version_read: v3
+  source: src-arxiv-2406-13352-v3
+released: 2024-06-19
+released_note: The paper's first arXiv version, as the abstract page dates it. The package's first
+  release, v0.1.0, was published on GitHub the day before.
+released_source: src-arxiv-2406-13352
+released_quote: Submitted on 19 Jun 2024
+release_venue: NeurIPS 2024, Datasets and Benchmarks Track
+release_venue_source: src-github-agentdojo-readme
+release_venue_quote: The Thirty-eight Conference on Neural Information Processing Systems Datasets
+  and Benchmarks Track
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/prompt-injection
+  secondary:
+    - agents-tooluse/tool-api-calling
+domain_basis:
+  reason: The scored event is the agent carrying out instructions planted in tool outputs, and the
+    paper's claim is the agents' adversarial robustness. Utility on the same tool-use tasks is
+    reported beside the attack score, which the leaf's inclusion test covers and which makes
+    tool-api-calling secondary; the taxonomy names AgentDojo as the leaf's qualifying example.
+  source: src-arxiv-2406-13352-v3
+  quote: To measure the adversarial robustness of AI agents, we introduce AgentDojo, an evaluation
+    framework for agents that execute tools over untrusted data
+domain_considered_and_rejected:
+  - term: safety-alignment/jailbreak-robustness
+    reason: The harmful instruction comes from content the agent processes, not from the user, which
+      the prompt-injection leaf's exclusion test sends to this leaf, not that one.
+  - term: safety-alignment/agentic-harm
+    reason: The user's tasks are benign; the harmful action is the attacker's goal, injected through
+      tool outputs.
+capability:
+  - adversarial-robustness
+  - tool-use
+capability_basis:
+  adversarial-robustness:
+    reason: An attacker's injection text is placed in tool outputs, and the score is how often the
+      agent resists carrying out the attacker's goal (targeted attack success rate, read the other
+      way).
+    source: src-arxiv-2406-13352-v3
+    quote: our attacks succeed against the best performing agents in less than 25% of cases
+  tool-use:
+    reason: Utility and attack success both depend on which tools the agent calls, with what
+      arguments, and what it does with the results, against a stateful environment.
+    source: src-arxiv-2406-13352-v3
+    quote: tasks requiring chaining up to 18 different calls to both general-purpose and specialized
+      tools
+capability_considered_and_rejected:
+  - term: harm-avoidance
+    reason: Its exclusion test removes benchmarks that measure resistance to an attacker rather than
+      conduct under ordinary use; every harmful action here is an attacker's goal.
+  - term: long-horizon-execution
+    reason: Tasks chain up to 18 calls, but no source claims long-horizon execution, and nothing
+      shows a typical episode reaching about ten dependent actions.
+  - term: context-integration
+    reason: Some tasks search up to 7,000 tokens of environment data, but the data is reached
+      through tool calls, and whether those calls and their results were used correctly is
+      tool-use's case.
+  - term: instruction-following
+    reason: Benign utility is whether the user's task was done, judged on outcomes, and no source
+      claims instruction following as the measured ability.
+
+evaluation_method:
+  - environment-state-check
+  - adversarial-red-team
+evaluation_method_basis:
+  reason: Each user task's utility function and each injection task's security function is a
+    deterministic check of the environment state before and after the episode, with the model's
+    output; any trajectory that reaches the state passes. Where the checked state is the attacker's
+    goal, the aggregate is attack success rate, which the environment-state-check term pairs with
+    adversarial-red-team.
+  source: src-arxiv-2406-13352-v3
+  quote: a deterministic binary function which, given outputs of the model together with the state
+    of the environment before and after execution
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: The paper rejects a language-model evaluator, because an injection that hijacks the
+      agent could hijack the judge as well.
+    source: src-arxiv-2406-13352-v3
+    quote: there is a chance that it would also hijack the evaluation model
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: Each results row is a provider's model run through AgentDojo's own tool-calling pipeline
+    and system prompt, varied by a defence and an attack, which is model-in-benchmark-harness. The
+    paper builds the framework to evaluate new agent designs and defences as pipelines around the
+    model (agent-scaffold), and ranks attacks by the success they achieve against the same target
+    models (attack-or-intervention-method).
+  source: src-agentdojo-results
+  quote: Here are all the results from different combinations of models, defenses, and attacks that
+    we ran on our benchmark.
+designed_for_subjects_considered_and_rejected:
+  - term: tool-augmented-model
+    reason: The model decides which tool to call next and when to answer inside the pipeline's loop,
+      which the term's exclusion test sends to model-in-benchmark-harness or agent-scaffold.
+as_used:
+  - protocol: UK AISI's Inspect port, with every task at v1.2.1, Inspect's own agent loop, the
+      important_instructions attack only and no defences, and US AISI's Workspace Plus suite
+      (terminal tasks in Docker) in the default task set.
+    source: src-github-inspect-evals-agentdojo-readme
+    quote: All tasks are at version 1.2.1 (task versioning is not supported)
+    note: Its README reports GPT-4o at 31.4% targeted attack success and 68.8% benign utility,
+      against the results page's 47.69% and 69.07%, and Claude 3.7 Sonnet at 8.5% and 83.3%, against
+      7.31% and 88.66%.
+  - protocol: ContrAgent (September 2026) replays AgentDojo's published runs of 22 models through
+      its contract-based shield offline, instead of running agents live, and compares it with the
+      bundled defences' published numbers, which it does not re-run.
+    source: src-arxiv-2609-18128-v1
+    quote: ContrAgent replays the recorded runs, so its utility cannot exceed that of the undefended
+      agent.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against it. A September 2026 paper reports AgentDojo results
+    for 22 models, UK AISI's Inspect port was run in June 2025, and the repository was last pushed
+    on 2026-06-02 (GitHub API, read 2026-10-14).
+  source: src-arxiv-2609-18128-v1
+  quote: 'Figure 5: Indirect prompt-injection prevention across 22 LLMs on AgentDojo'
+activity: accepting-submissions
+activity_note: The page's newest row is dated 2025-02-24. The v0.1.35 release (2025-10-27) lists a
+  merged pull request adding results for Llama 3.3 and Meta SecAlign 70B, which the page does not
+  show.
+activity_basis:
+  reason: The results page takes outside results at any time by pull request, and the benchmark has
+    never run in rounds.
+  source: src-agentdojo-results
+  quote: Please run your attacks/models/defenses on the benchmark within a fork of the repository,
+    and open a PR with your results.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: claude-3-7-sonnet-20250219 (no defence, important_instructions attack)
+    source: src-agentdojo-results
+    observed_on: 2026-10-14
+    quote: anthropic claude-3-7-sonnet-20250219 None important_instructions 88.66% 77.27% 7.31%
+      2025-02-24
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each user task's utility function and each injection task's security
+  function, shipped in the package, decide success from the environment state and the model's
+  output.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Suites, tasks, attacks, defences and the benchmark script are in the open-source package;
+    a run needs API access to the model under test.
+  source: src-github-agentdojo-readme
+  quote: python -m agentdojo.scripts.benchmark --model gpt-4o-2024-05-13
+
+task:
+  exists: true
+  input:
+    - a user task in natural language, the suite's tool descriptions, and the outputs of the tools
+      the agent calls on a stateful environment, some of which carry an attacker's injection
+  output: Tool calls against the environment, then a final answer to the user.
+  scoring: Benign utility is the fraction of user tasks solved with no attack. Utility under attack
+    is the fraction of security cases (a user task paired with an injection task) where the user
+    task is solved without adversarial side effects, and targeted attack success rate the fraction
+    where the attacker's goal is met.
+  source: src-arxiv-2406-13352-v3
+  quote: 'Utility Under Attack: the fraction of security cases (i.e., a pair of user task and injection
+    task) where the agent solves the user task correctly, without any adversarial side effects'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The environments, user and injection tasks and their checking functions ship in the
+      open-source package, released under MIT.
+    source: src-arxiv-2406-13352-v3
+    quote: the data is released under MIT license unless otherwise stated in some portions of the
+      code
+  refresh: versioned-releases
+  refresh_note: The paper's datacard gives the collection cadence as static; the task suites have
+    since changed in six labelled versions.
+  refresh_basis:
+    reason: Task content changes in labelled suite versions (v1 to v1.2.2) that the package
+      registers side by side, so a run names the version it used.
+    source: src-agentdojo-changelog
+    quote: Fix some issues in Benchmark v1.2
+  data_provenance:
+    - expert-authored
+    - model-generated
+  data_provenance_note: The authors, security researchers, wrote the tasks and some of the
+    environment data; the rest of the dummy data (emails, calendars, files) was generated with
+    GPT-4o and Claude 3 Opus from a schema and examples, and inspected by hand.
+  data_provenance_source: src-arxiv-2406-13352-v3
+  data_provenance_quote: We generate the dummy data both manually or assisted by GPT-4o and Claude 3
+    Opus
+  contamination_risk: medium
+  contamination_risk_note: The tasks, injection tasks and checks have been public since June 2024,
+    and nothing stops a model or defence being tuned on them; no source evidences training on them.
+    One defence (ContrAgent's trace-learned contracts) is fitted to the recorded attack runs
+    themselves, a route for that entrant's claims, not the benchmark's.
+  contamination_evidence:
+    - source: src-arxiv-2609-18128-v1
+      stance: supports
+      quote: Contracts can also be mined from the recorded traces of the attacks themselves
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: No human or oracle score is published. Each user task carries a
+    ground-truth call sequence, and the documentation's check script runs it, but no source reports
+    that run for the shipped suites.
+  ceiling_anchor_type_basis:
+    reason: The headline metrics are fractions of tasks or security cases, bounded at 100% utility
+      and 0% attack success.
+    source: src-arxiv-2406-13352-v3
+    quote: 'Utility Under Attack: the fraction of security cases (i.e., a pair of user task and injection
+      task) where the agent solves the user task correctly, without any adversarial side effects'
+  dataset_licence: MIT
+  dataset_licence_source: src-arxiv-2406-13352-v3
+  dataset_licence_quote: the data is released under MIT license unless otherwise stated in some
+    portions of the code
+  size:
+    - count: 629
+      unit: security test cases (each user task paired with each injection task of its suite)
+      subset: v1
+      source: src-arxiv-2406-13352-v3
+      quote: We evaluate each agent on our full suite of 629 security test cases, for 97 different
+        user tasks
+    - count: 97
+      unit: user tasks (Workspace 40, Slack 21, Travel 20, Banking 16)
+      subset: v1
+      source: src-arxiv-2406-13352-v3
+      quote: Our suite features a total of 70 tools, 97 realistic user tasks and 27 injection
+        targets
+    - count: 27
+      unit: injection tasks (Workspace 6, Slack 5, Travel 7, Banking 9)
+      subset: v1
+      source: src-arxiv-2406-13352-v3
+      quote: Our suite features a total of 70 tools, 97 realistic user tasks and 27 injection
+        targets
+    - count: 14
+      unit: Workspace injection tasks, beside its 40 user tasks
+      subset: v1.2.1, as UK AISI's Inspect port counts it
+      source: src-github-inspect-evals-agentdojo-readme
+      quote: (40 user tasks, 14 injection tasks)
+  size_note: The paper gives 74 tools in its text and 70 in Table 1.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: ETH Zurich's SPY Lab (ethz-spylab)
+  maintainer_basis:
+    reason: The repository sits in the ethz-spylab organisation and the documentation on spylab.ai.
+      The authors are at ETH Zurich, three of the six also at Invariant Labs.
+    source: src-arxiv-2406-13352-v3
+    quote: We release code for AgentDojo at https://github.com/ethz-spylab/agentdojo
+  maintainer_type: academic-lab
+  submission_process:
+    - self-reported
+    - open-source-gated
+    - maintainer-run
+  submission_process_note: Outsiders run their attack, defence or model in a fork and open a pull
+    request with the results and an implementation in the repository; the maintainers merge it and
+    the page shows it, and no check of the numbers is stated. The page calls its rows runs the
+    maintainers made, which is maintainer-run; the changelog credits an outside contributor with
+    some of them.
+  submission_process_source: src-agentdojo-results
+  submission_process_quote: The PR should also include a brief description of the
+    attack/defense/model you are submitting, and an implementation of the attack/defense/model in
+    the agentdojo repository.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2406-13352-v3
+      quote: 'Figure 8: Our prompt injection outperforms prior approaches'
+  independence_flags_note: The maintainers' own attack (important_instructions, the paper's
+    "Important message") is the attack in most results rows, and their tool-filter defence is listed
+    beside defences from the literature. The named funding (armasuisse Science and Technology, the
+    Swiss National Science Foundation) comes from no evaluated party. Three authors are also at
+    Invariant Labs, whose Explorer hosts the run traces; none of its products appears in the results
+    read.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2406-13352-v3
+    quote: No institution provided explicit funding for the creation of this benchmark
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Models are reached through their providers' APIs and the environments are plain Python,
+      so a run's cost is inference spend; the paper puts the security suite on GPT-4o at about
+      US$35, and the 97 utility cases at US$4.
+    source: src-arxiv-2406-13352-v3
+    quote: running the full suite of 629 security test cases on GPT-4o costs around US$35
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: One script runs the chosen suites, model, defence and attack, and the utility and
+      security functions score the runs with no human step.
+    source: src-github-agentdojo-readme
+    quote: python -m agentdojo.scripts.benchmark --model gpt-4o-2024-05-13
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: agentdojo (the PyPI package's agentdojo.scripts.benchmark, with --benchmark-version,
+    --defense and --attack)
+  harness_source: src-github-agentdojo-readme
+  harness_quote: python -m agentdojo.scripts.benchmark --model gpt-4o-2024-05-13
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for ethz-spylab/agentdojo also reports MIT, read
+    2026-10-14.
+  code_licence_source: src-arxiv-2406-13352-v3
+  code_licence_quote: will be released, under MIT license, at
+    https://github.com/ethz-spylab/agentdojo
+  runnable_via:
+    - custom
+    - inspect
+  inspect_evals_id: agentdojo
+  inspect_evals_id_note: Reconciled against UK AISI's inspect_evals, read 2026-10-14. The port
+    reports the same three metrics, decided as in the original by formal functions over the
+    environment state, so the scoring rule matches. The harness does not. It fixes every task at
+    v1.2.1, drives the model with Inspect's agent loop, implements one attack
+    (important_instructions) and no defences, and adds US AISI's Workspace Plus suite to its default
+    task set. Its README's own runs differ from the results page (GPT-4o's targeted attack success
+    31.4% against 47.69%), so its numbers are not interchangeable with the page's.
+  inspect_evals_id_source: src-github-inspect-evals-agentdojo-readme
+  inspect_evals_id_quote: uv run inspect eval inspect_evals/agentdojo --model openai/gpt-5-nano
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The (evaluation_method, subject) pairs resolve to the fallback profile (subset_used: which suites and tasks).
+  # Beyond it: the harness (the agentdojo package, or inspect_evals' port, which scored GPT-4o's targeted attack
+  # success at 31.4% against the results page's 47.69%), and the scaffold, which carries the defence (none,
+  # tool_filter, transformers_pi_detector, spotlighting_with_delimiting, repeat_user_prompt), the pipeline element
+  # wrapping the model. The attack (important_instructions, ignore_previous, tool_knowledge, ...) varies in every
+  # results row and is material too, but no EvalConditions field holds it (review_checks). The task-suite version
+  # (v1 to v1.2.2) is the claim's benchmark_version.
+  material_extra:
+    - harness
+    - scaffold
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The maintainers decline to rank the runs, because not every model was attacked with every
+    attack and defence.
+  source: src-agentdojo-results
+  quote: Please note that this is not a leaderboard because we did not attack all models with all
+    attacks and defenses
+
+homepage: https://agentdojo.spylab.ai/
+repository: https://github.com/ethz-spylab/agentdojo
+leaderboard_url: https://agentdojo.spylab.ai/results/
+leaderboard_url_note: The results page, which says it is not a leaderboard.
+
+versions:
+  - version: v1
+    label: AgentDojo v1, the paper's task suites
+    released: 2024-06-19
+    changes: The first release, four suites with 97 user tasks, 27 injection tasks and 629 security
+      cases.
+    superseded_by: v1.1
+    frozen: true
+    sources:
+      - src-arxiv-2406-13352
+      - src-arxiv-2406-13352-v3
+      - src-github-agentdojo-load-suites
+  - version: v1.1
+    label: AgentDojo v1.1
+    released: 2024-07-16
+    changes: New versions of the Travel suite's tasks, released with package v0.1.9 ("Fix travel
+      suite"); the other suites unchanged. The paper's v3 (2024-11-24) updated its travel suite.
+    breaking: true
+    supersedes_version: v1
+    superseded_by: v1.1.1
+    frozen: true
+    sources:
+      - src-github-agentdojo-releases
+      - src-github-agentdojo-load-suites
+      - src-arxiv-2406-13352
+  - version: v1.1.1
+    label: AgentDojo v1.1.1
+    changes: New task versions in all four suites.
+    breaking: true
+    supersedes_version: v1.1
+    superseded_by: v1.1.2
+    frozen: true
+    sources:
+      - src-github-agentdojo-load-suites
+  - version: v1.1.2
+    label: AgentDojo v1.1.2
+    changes: New Workspace and Travel task versions.
+    breaking: true
+    supersedes_version: v1.1.1
+    superseded_by: v1.2
+    frozen: true
+    sources:
+      - src-github-agentdojo-load-suites
+  - version: v1.2
+    label: AgentDojo v1.2
+    changes: New task versions in all four suites. Package v0.1.30 (2025-04-30) fixed issues in it.
+    breaking: true
+    supersedes_version: v1.1.2
+    superseded_by: v1.2.1
+    frozen: true
+    sources:
+      - src-github-agentdojo-load-suites
+      - src-agentdojo-changelog
+  - version: v1.2.1
+    label: AgentDojo v1.2.1
+    changes: New Workspace task versions. UK AISI's Inspect port is fixed at this version, where
+      Workspace has 14 injection tasks.
+    breaking: true
+    supersedes_version: v1.2
+    superseded_by: v1.2.2
+    frozen: true
+    sources:
+      - src-github-agentdojo-load-suites
+      - src-github-inspect-evals-agentdojo-readme
+  - version: v1.2.2
+    label: AgentDojo v1.2.2
+    released: 2025-10-27
+    changes: New Workspace and Banking task versions, released with package v0.1.35 ("v1.2.2
+      tasks").
+    breaking: true
+    supersedes_version: v1.2.1
+    frozen: true
+    sources:
+      - src-github-agentdojo-load-suites
+      - src-github-agentdojo-releases
+      - src-agentdojo-changelog
+
+tags:
+  - prompt-injection
+  - tool-calling
+  - llm-agents
+  - security
+  - attacks-and-defences
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-13352-v3
+    - src-arxiv-2406-13352
+    - src-github-agentdojo-readme
+    - src-github-agentdojo-load-suites
+    - src-github-agentdojo-releases
+    - src-agentdojo-results
+    - src-agentdojo-changelog
+    - src-github-inspect-evals-agentdojo-readme
+    - src-arxiv-2609-18128-v1
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text; its abstract page for the dates and the v3
+    comment; the README and the suite registry at main; the GitHub API's release list for the versions'
+    dates; the results page and changelog with scripts and styles stripped; inspect_evals' README for
+    its
+    AgentDojo port; and ContrAgent's v1 PDF (a DOI, not archived) as evidence of current use. The
+    documentation's home and task-suite pages were read and not cited.
+  confidence: medium
+  review_checks:
+    - check: The attack varies in every results row, but EvalConditions has no field for it; 04's
+        open questions propose one for AgentDojo's attack and defence matrix. The defence is put in
+        scaffold and the runner in harness; whether the defence belongs in harness instead.
+      field: comparability
+    - check: Which task-suite version each results-page row ran on is not stated (the rows run from
+        2024-06-05 to 2025-02-24, across v1 to v1.2), and the release dates of v1.1.1 to v1.2.1 are
+        not in the sources read. Every version after v1 is marked breaking because its task content
+        changed, not because a source says scores moved.
+      field: versions
+      source: src-agentdojo-changelog
+      quote: Fix benchmark version inconsistencies.
+    - check: Defences are read as agent-scaffold (pipeline elements around the model) and attacks as
+        attack-or-intervention-method. A defence is also a procedure compared across models, so it
+        could be the latter as well.
+      field: designed_for_subjects
+    - check: maintainer-run beside self-reported and open-source-gated. The page calls its rows the
+        maintainers' runs, but the changelog credits an outside contributor with adding some.
+      field: governance.submission_process
+      source: src-agentdojo-changelog
+      quote: Add Gemini 1.5 Flash and Pro 002 and Claude Sonnet 3.5 October release by @maxwbuckley.
+    - check: accepting-submissions rests on the page's stated route. Its newest row is 2025-02-24,
+        and results the v0.1.35 release says were merged are not on it.
+      field: activity
+      source: src-agentdojo-changelog
+      quote: Adding result for Llama 3.3 and Meta SecAlign 70B by @cg563
+    - check: 'data_provenance expert-authored: the task authors are security researchers; whether that
+        is the specialist skill everyday app tasks and attacker goals test.'
+      field: data.data_provenance
+    - check: theoretical-maximum. The documentation's check script runs each task's ground truth,
+        which could make utility a measured-ceiling, but no source reports that run for the shipped
+        suites.
+      field: data.ceiling_anchor_type
+    - check: inspect_evals' default task set includes US AISI's Workspace Plus suite (terminal tasks
+        in Docker), an extension by another party. Whether it is a variant entry of its own or a
+        subset here, and whether the port's README numbers include it, is not stated.
+      field: execution.inspect_evals_id
+      source: src-github-inspect-evals-agentdojo-readme
+      quote: Added by US AISI as an extension to the original AgentDojo
+    - check: A 2026 paper (AgentDyn, arXiv 2602.03117, read as its abstract only) argues existing
+        agent-security benchmarks lack dynamic, open-ended tasks. Whether system-level defences have
+        saturated AgentDojo's security axis was not assessed.
+      field: lifecycle
