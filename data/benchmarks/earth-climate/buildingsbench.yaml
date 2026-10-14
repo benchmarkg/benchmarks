@@ -1,0 +1,510 @@
+# data/benchmarks/earth-climate/buildingsbench.yaml
+#
+# P1-S7-T01, earth-climate entry 8 of 9. Filled from the BuildingsBench paper, arXiv 2307.00142 read as its v3
+# PDF (2024-01-10, the NeurIPS 2023 Datasets and Benchmarks camera-ready), and its abstract page; the repository
+# README at main (the repository now sits at NatLabRockies/BuildingsBench, GitHub's redirect from NREL/); the
+# repository's release notes from the GitHub API (v1.1.0 and v2.0.0); the data record on OEDI (submission 5859,
+# scripts and styles stripped); Crossref's record of a June 2026 paper that scores the BuildingsBench transformer
+# zero-shot on the benchmark's BDG-2 buildings; and the v3 PDF of a 2025-2026 paper on train-test leakage in
+# time-series foundation model evaluation. Every quote below is checked by the quote-substring validator against
+# those Sources' committed extracts.
+#
+# Lead time and resolution (task step 2). Every score is a day-ahead forecast: 24 hourly values predicted from the
+# previous 168 hours, at hourly resolution (sub-hourly meter data is resampled to hourly). Lead time is made
+# material through comparability.material_extra, so a claim at any other horizon gets its own key. EvalConditions
+# has no field for a series' temporal resolution (`resolution_window` is when a forecast's outcome resolves, which
+# does not apply to a hindcast); the hourly resolution is recorded in `task` with its quote and as a review check.
+
+id: buildingsbench
+name: BuildingsBench
+tagline: Day-ahead building load forecasts, pretrained on 900K simulated buildings, scored on 1,900
+  real ones.
+description: >
+  NREL's benchmark for short-term load forecasting of residential and commercial buildings. Models
+  pretrain on Buildings-900K, the hourly total-energy series of about 900,000 EnergyPlus-simulated
+  buildings from the End-Use Load Profiles database, statistically representative of the U.S. building
+  stock, and are then scored on real smart-meter data: over 1,900 buildings from seven open datasets in
+  the U.S., Portugal, the UK, France and Canada. Each forecast is day-ahead: the next 24 hourly loads
+  from the previous 168 hours, with calendar features, the location of the building's census area and
+  its
+  type as covariates. Two tasks are scored. Zero-shot forecasting runs a pretrained model on unseen
+  buildings without fine-tuning, on every available year. Transfer learning fine-tunes it on the first
+  six months of a target building and tests it on the next six, over a sample of 100 residential and
+  100 commercial buildings. Accuracy is NRMSE and probabilistic forecasts are scored by the ranked
+  probability score; results are medians over buildings, reported for commercial and residential
+  buildings separately. A held-out simulated split (Buildings-900K-Test, four withheld census areas) is
+  scored beside the real data. The README's leaderboard holds NREL's own transformers and persistence
+  baselines.
+self_description:
+  source: src-arxiv-2307-00142-v3
+  quote: 'we present BuildingsBench, which consists of: 1) Buildings-900K, a large-scale dataset of 900K
+    simulated buildings representing the U.S. building stock'
+external_ids:
+  arxiv: '2307.00142'
+paper:
+  title: 'BuildingsBench: A Large-Scale Dataset of 900K Buildings and Benchmark for Short-Term Load Forecasting'
+  arxiv: '2307.00142'
+  version_read: v3
+  source: src-arxiv-2307-00142-v3
+released: 2023-06-30
+released_note: The paper's first arXiv version, as its abstract page dates it. The OEDI record says
+  the data was submitted on 2023-05-30, but not when it went public.
+released_source: src-arxiv-2307-00142
+released_quote: Submitted on 30 Jun 2023
+release_venue: NeurIPS 2023 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2307-00142
+release_venue_quote: NeurIPS 2023 Datasets & Benchmarks Track camera-ready version
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/energy-systems
+domain_basis:
+  reason: The scored quantity is building energy demand, forecast for power-system operation, which
+    is the subdomain's "forecasting energy demand". The family's own examples admit building energy
+    (smart-buildings-challenge).
+  source: src-arxiv-2307-00142-v3
+  quote: Building energy demand forecasting plays a part in reducing global emissions by helping to
+    decarbonize the building sector.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+  - calibration-uncertainty
+  - sample-efficiency
+capability_basis:
+  scientific-prediction:
+    reason: A model predicts a building's measured energy consumption over the next day from its
+      past consumption, and the forecast is scored against the meter readings.
+    source: src-arxiv-2307-00142-v3
+    quote: pretrained models are asked to provide day-ahead forecasts for unseen simulated and real
+      buildings
+  distribution-shift-generalization:
+    reason: Models fitted to simulated buildings are scored on real buildings they never saw, with
+      the task unchanged, and the shifted score is reported beside the in-distribution one on
+      held-out simulated buildings (Buildings-900K-Test). The sim-to-real gap is the paper's main
+      analysis.
+    source: src-arxiv-2307-00142-v3
+    quote: The average zero-shot STLF accuracy slightly improves from simulated to real commercial
+      buildings (-0.1% NRMSE) and drops for residential buildings (+43% NRMSE).
+  calibration-uncertainty:
+    reason: The benchmark is posed as probabilistic, and its RPS consumes the distribution a model
+      emits for each hour, Gaussian or categorical.
+    source: src-arxiv-2307-00142-v3
+    quote: Our platform implements the closed-form RPS for Gaussian CDFs, as well as a discrete RPS
+      for categorical distributions
+  sample-efficiency:
+    reason: The transfer-learning task fixes the target-building data at six months (about 180 daily
+      samples) and scores the model fine-tuned on that budget.
+    source: src-arxiv-2307-00142-v3
+    quote: Our transfer learning task assumes 6 months of metered data has been collected for each
+      target building
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The paper names a task "transfer learning", and zero-shot scoring is sim-to-real, but
+      the task, its output and its scoring are the same on simulated and real buildings; only the
+      input series move. That is distribution-shift-generalization by both terms' tests, whatever
+      the source calls the move (the taxonomy's fusion-equilibrium-challenge case).
+    source: src-arxiv-2307-00142-v3
+    quote: In zero-shot STLF, models forecast loads for unseen target buildings without any
+      fine-tuning.
+  - term: probabilistic-forecasting
+    reason: The forecasts are hindcasts of meter data recorded between 2007 and 2018 (and simulated
+      years), so the outcome already exists when the forecast is made; RPS is scored as calibration.
+  - term: temporal-reasoning
+    reason: Forecasting extrapolates a series; nothing is scored on the order or duration of events.
+
+evaluation_method:
+  - statistical-fit
+  - uncertainty-calibration-score
+evaluation_method_basis:
+  reason: NRMSE (the coefficient of variation of the RMSE) is a goodness-of-fit statistic on the
+    hourly loads. RPS scores the emitted distribution with a proper rule, closed-form CRPS for
+    Gaussian outputs and a discrete RPS for token-based ones.
+  source: src-arxiv-2307-00142-v3
+  quote: We primarily evaluate task performance with two metrics, the normalized root mean square
+    error (NRMSE) and the ranked probability score (RPS).
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: NRMSE is a general statistic and RPS scores an emitted distribution, which the term's
+      exclusion test sends to statistical-fit and uncertainty-calibration-score.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The benchmark is built for forecasting models specialised to building load, pretrained on
+    Buildings-900K (transformers at three sizes) or trained on a target building (LightGBM, DLinear,
+    linear regression, an RNN). Non-learned persistence forecasts (previous day, previous week and a
+    seven-day Gaussian ensemble) are scored in the same tables as baselines.
+  source: src-arxiv-2307-00142-v3
+  quote: In STLF, outperforming persistence is an indicator that a model is producing meaningful
+    forecasts.
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: The forecasters are trained on simulator output but do not stand in for the simulator;
+      they extrapolate a building's own load series, and the headline scores are against real
+      meters, not against what EnergyPlus would have produced.
+
+as_used:
+  - protocol: Zero-shot day-ahead forecasts of the BuildingsBench TransformerWithGaussian-L
+      checkpoint on the 611 BDG-2 buildings, the benchmark's own BDG-2 set, scored by CVRMSE (the
+      paper's NRMSE) and used as a building-diagnostic signal rather than ranked.
+    split: BDG-2 (real, commercial)
+    source: src-crossref-10-3390-buildings16122290
+    quote: Applied to 611 real buildings from the Building Data Genome Project 2
+    note: Yang and Kim, Buildings 16(12), 2290, June 2026, read from its Crossref abstract; the full
+      text was not read, so the protocol details beyond the abstract are not confirmed.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; a June 2026 paper runs the benchmark's pretrained
+    transformer zero-shot on the benchmark's BDG-2 buildings. The data record was last updated on
+    2026-07-14 and the repository last pushed on 2026-02-25 (GitHub API), which is maintenance
+    evidence, not lifecycle.
+  source: src-crossref-10-3390-buildings16122290
+  quote: pairs EUI with the zero-shot prediction error (CVRMSE) from a population-trained
+    Transformer model (TransformerWithGaussian-L, pre-trained on 900,000 simulated buildings)
+activity: no-submission-channel
+activity_note: The paper promised a leaderboard "updated with new model results", and the README
+  carries one, but it lists only NREL's transformers and the persistence baselines, and no source
+  describes how anyone else would enter a result. The datasheet welcomes pull requests to the code,
+  not results.
+activity_basis:
+  reason: The README's leaderboard is the maintainers' table of their own models; other results
+    appear in their authors' papers.
+  source: src-arxiv-2307-00142-v3
+  quote: We will maintain a leaderboard for BuildingsBench in our code repository, which will be
+    updated with new model results.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Transformer-L (Gaussian)
+    source: src-github-buildingsbench-readme
+    observed_on: 2026-10-14
+    quote: 13.31 | 5.23 | 79.34 | 0.072
+    note: The zero-shot leaderboard row (commercial NRMSE, commercial RPS, residential NRMSE,
+      residential RPS) of NREL's 160M-parameter transformer pretrained on Buildings-900K.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The recorded hourly loads of the 24 hours after each forecast window, from
+  smart meters for the real buildings and from the EnergyPlus simulations for Buildings-900K-Test.
+  All of them are in the public download.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The pretraining and evaluation data are a public download, and the repository's scripts
+    run both tasks for any model registered with the platform.
+  source: src-github-buildingsbench-readme
+  quote: We provide scripts in the `./scripts` directory for pretraining and to run the benchmark
+    tasks (zero-shot STLF and transfer learning)
+
+task:
+  exists: true
+  input:
+    - the previous 168 hourly loads (one week) of one building
+    - covariates for the window and the forecast day -- day of week, day of year and hour of day,
+      the latitude and longitude of the building's census-area centroid, and residential or
+      commercial -- and, from v2.0.0, optionally a temperature series
+  output: The next 24 hourly loads, as point forecasts or as a distribution per hour (Gaussian, or
+    categorical over load tokens).
+  scoring: Per building, NRMSE over every forecast day and, for probabilistic forecasts, RPS; the
+    leaderboard reports the median over buildings for commercial and residential buildings
+    separately. Zero-shot covers every real building and year; transfer learning fine-tunes on a
+    building's first six months and tests on the next six with a 24-hour sliding window, over 100
+    residential and 100 commercial buildings.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The evaluation series, future days included, are in the public
+    download; only the protocol keeps them out of training.
+  item_definition: One day-ahead forecast of 24 hourly loads at hourly resolution (sub-hourly meter
+    data resampled to hourly), from one 168-hour window of one building; windows slide by 24 hours.
+  item_definition_source: src-arxiv-2307-00142-v3
+  item_definition_quote: We resample each time series to hourly if the data is sub-hourly.
+  source: src-arxiv-2307-00142-v3
+  quote: We consider a day-ahead STLF scenario with H = 168 hours (one week) and T = 24 hours.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Pretraining and evaluation data are on OEDI's public data lake, readable without an
+      account, under CC BY 4.0.
+    source: src-oedi-buildingsbench
+    quote: s3 ls --no-sign-request s3://oedi-data-lake/buildings-bench/
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data changed under labelled versions (v1.0.0, v1.1.0, v2.0.0), with release notes;
+      v1.1.0 changed the pretraining loads and the evaluation series (see versions).
+    source: src-github-buildingsbench-releases
+    quote: Load value scaling is fixed. By error, we averaged instead of summed when aggregating
+      15-min to hourly data
+  data_provenance:
+    - simulation-generated
+    - real-world-instrument
+    - inherited-from-constituents
+  data_provenance_note: Buildings-900K and its test split are EnergyPlus simulations from NREL's
+    End-Use Load Profiles database, calibrated against metering data. The real evaluation data are
+    smart-meter readings taken from seven datasets published before the benchmark (Electricity,
+    BDG-2, Low Carbon London, SMART, IDEAL, Sceaux, Borealis), resampled to hourly and cleaned.
+  data_provenance_source: src-arxiv-2307-00142-v3
+  data_provenance_quote: Annual hourly energy consumption from EnergyPlus [8] simulations.
+  contamination_risk: medium
+  contamination_risk_note: The real evaluation series have been public for years in their own
+    repositories, and the benchmark's protocol (pretrain on simulated data only) is the only thing
+    keeping them out of training; nothing checks an entrant's pretraining data. One constituent,
+    Electricity (ElectricityLoadDiagrams20112014), is in the pretraining corpora of the time-series
+    foundation models a 2024 paper scored on it, per the cited leakage study. The held-out simulated
+    PUMAs are in the same public download as the pretraining data.
+  contamination_evidence:
+    - source: src-arxiv-2510-13654-v3
+      stance: supports
+      quote: In another example a peer-reviewed paper benchmarked TSFM models on the Electricity
+        dataset, which has been used for pretraining of every of tested TSFMs
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The paper says "CC-4.0"; the OEDI record's licence link points to CC BY 4.0.
+    The real datasets are redistributed under their original licences, which are not all CC BY 4.0
+    (see upstream_licences).
+  dataset_licence_source: src-arxiv-2307-00142-v3
+  dataset_licence_quote: Buildings-900K is hosted by the Open Energy Data Initiative and is
+    available for download with a permissive CC-4.0 license
+  upstream_licences: Electricity, Low Carbon London and IDEAL CC BY 4.0; BDG-2 MIT; Sceaux DbCL-1.0
+    (via Kaggle); Borealis CC0-1.0; SMART no licence stated.
+  upstream_licences_note: The paper's hosting section says the processed real datasets ship "along
+    with the original permissive licenses" under the same CC-4.0 licence; its appendix lists the
+    originals above, and SMART has none.
+  upstream_licences_source: src-arxiv-2307-00142-v3
+  upstream_licences_quote: This dataset is available online unaccompanied by a specific license
+  size:
+    - count: 1900
+      unit: real buildings (over 1,900), with 1.2M days of hourly load, from 7 open datasets
+      subset: BuildingsBench (real), zero-shot
+      source: src-arxiv-2307-00142-v3
+      quote: Altogether, our real building benchmark has over 1,900 buildings and 1.2M days of
+        energy usage.
+    - count: 200
+      unit: real buildings (100 residential, 100 commercial), each fine-tuned and tested separately
+      subset: transfer learning
+      source: src-arxiv-2307-00142-v3
+      quote: we randomly sample 100 residential and 100 commercial buildings and fine-tune
+        separately on each
+    - count: 900000
+      unit: simulated buildings (pretraining data)
+      subset: Buildings-900K
+      source: src-arxiv-2307-00142-v3
+      quote: 'we present BuildingsBench, which consists of: 1) Buildings-900K, a large-scale dataset of
+        900K simulated buildings representing the U.S. building stock'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: National Laboratory of the Rockies (NLR), formerly the National Renewable Energy
+    Laboratory (NREL)
+  maintainer_note: The paper names NREL as maintainer. The repository now sits in the NatLabRockies
+    GitHub organisation, the README credits the "NLR End-Use Load Profiles database", and OEDI's
+    citation names the National Laboratory of the Rockies as distributor beside its NREL
+    organisation field.
+  maintainer_basis:
+    reason: The datasheet names NREL as the maintainer of the code and the data, and the data is
+      held on DOE's Open Energy Data Initiative.
+    source: src-arxiv-2307-00142-v3
+    quote: NREL will maintain the code and datasets.
+  maintainer_type: government-agency
+  maintainer_type_basis:
+    reason: The holder is a U.S. Department of Energy national laboratory.
+    source: src-arxiv-2307-00142-v3
+    quote: This work was authored by the National Renewable Energy Laboratory (NREL), operated by
+      Alliance for Sustainable Energy, LLC, for the U.S. Department of Energy (DOE)
+  submission_process:
+    - maintainer-run
+  submission_process_note: The README's zero-shot and transfer-learning tables hold the maintainers'
+    own runs of their transformers and baselines; no route for outside results is described.
+  submission_process_source: src-github-buildingsbench-readme
+  submission_process_quote: '## BuildingsBench Leaderboard'
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2307-00142-v3
+      quote: we pretrain a representative time series transformer [47] on Buildings-900K
+  independence_flags_note: The leaderboard's learned rows are NREL's own transformers, pretrained by
+    the maintainers on their own dataset; they are the release's baselines and the only learned
+    entrants listed. Funding is NREL's internal LDRD programme, not an evaluated party.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2307-00142-v3
+    quote: pretraining on simulated data is fundamentally limited if deploying on real buildings is
+      the goal
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_note: For a learned entrant's zero-shot run; the persistence baselines run in under
+    an hour without one. Pretraining Transformer-L took 24 hours on one A100, and the
+    transfer-learning task 1.5 to 3.5 hours.
+  compute_tier_source: src-arxiv-2307-00142-v3
+  compute_tier_quote: For the largest model variant, it takes about 2-3 hours on one NVIDIA 40GB
+    A100.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public data and the repository's scripts run either task end to end with no human or
+      physical step.
+    source: src-arxiv-2307-00142-v3
+    quote: Our platform automates the evaluation of a variety of simple and advanced baselines on
+      the two tasks.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: buildings_bench (scripts/zero_shot.py and scripts/transfer_learning_torch.py)
+  harness_source: src-github-buildingsbench-readme
+  harness_quote: To use these scripts with your model you'll need to register your model with our
+    platform.
+  code_licence: BSD-3-Clause
+  code_licence_note: GitHub's licence metadata for NatLabRockies/BuildingsBench (read 2026-10-14)
+    agrees.
+  code_licence_source: src-arxiv-2307-00142-v3
+  code_licence_quote: Our code is opensourced under a BSD-3 license.
+  est_runtime_hours:
+    min: 2
+    max: 3
+    basis: The zero-shot task for Transformer-L on one 40GB A100 (paper, App. G).
+    source: src-arxiv-2307-00142-v3
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile. Lead time: every score is day-ahead (24 hourly values from 168 hours of
+  # context); a claim at another horizon or context length is a different condition (task step 2). Hourly
+  # resolution has no EvalConditions field (see the header). Which task and split (zero-shot or transfer
+  # learning; real or Buildings-900K-Test; commercial or residential; the data version, v1.1.0's outlier filter
+  # or not), and what the model was trained on (Buildings-900K only, other corpora, the target building's six
+  # months) move the number as much as the model does.
+  material_extra:
+    - lead_time
+    - subset_used
+    - training_data_policy
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The maintainers aggregate per-building scores by the median, for commercial and
+    residential buildings separately; no single number across the two is published.
+  source: src-arxiv-2307-00142-v3
+  quote: Results for Transformer-L and other baselines are shown in Table 3 aggregated by the median
+    over all buildings.
+
+homepage: https://github.com/NatLabRockies/BuildingsBench
+repository: https://github.com/NatLabRockies/BuildingsBench
+dataset_url: https://data.openei.org/submissions/5859
+leaderboard_url: https://github.com/NatLabRockies/BuildingsBench#buildingsbench-leaderboard
+
+versions:
+  - version: v1.0.0
+    label: The initial data and code release
+    version_kind: revision
+    changes: Buildings-900K, the seven real datasets and the two tasks, as the paper's first version
+      describes them.
+    superseded_by: v1.1.0
+    frozen: true
+    sources:
+      - src-github-buildingsbench-readme
+  - version: v1.1.0
+    label: Load scaling fix and outlier-filtered series
+    version_kind: revision
+    released: 2023-10-19
+    changes: Buildings-900K's hourly loads are summed rather than averaged from 15-minute data, the
+      evaluation series point to an outlier-filtered version (an argument keeps the unfiltered
+      data), and an autoregressive RNN baseline is added. The README's leaderboard checkpoints are
+      this version's.
+    breaking: true
+    supersedes_version: v1.0.0
+    superseded_by: v2.0.0
+    frozen: true
+    sources:
+      - src-github-buildingsbench-releases
+  - version: v2.0.0
+    label: Weather and building metadata
+    version_kind: revision
+    released: 2024-11-07
+    changes: Simulation metadata and weather files added to Buildings-900K, temperature series added
+      for the seven evaluation datasets, and transformer configurations that take weather inputs.
+      The release notes describe no change to the load series or the tasks; a model using the
+      temperature input is a different condition.
+    supersedes_version: v1.1.0
+    frozen: true
+    sources:
+      - src-github-buildingsbench-releases
+
+tags:
+  - load-forecasting
+  - buildings
+  - time-series
+  - sim-to-real
+  - pretraining
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2307-00142-v3
+    - src-arxiv-2307-00142
+    - src-github-buildingsbench-readme
+    - src-github-buildingsbench-releases
+    - src-oedi-buildingsbench
+    - src-crossref-10-3390-buildings16122290
+    - src-arxiv-2510-13654-v3
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, its extract kept clear of the authors' contact
+    lines; its abstract page for the dates and venue; the README and the GitHub API's release list at
+    main;
+    the OEDI data record with scripts and styles stripped, which is withheld from archiving because it
+    carries a named contact's phone number; Crossref's record of a June 2026 paper as evidence of current
+    use (the publisher refuses scripted requests); and the v3 PDF of a leakage study as contamination
+    evidence.
+  confidence: medium
+  review_checks:
+    - check: Lead time is material through material_extra, but the hourly resolution has no
+        EvalConditions field (resolution_window is a different concept). Whether the conditions
+        record should gain a temporal or spatial resolution field for earth-climate forecasting
+        benchmarks, as task step 2 asks.
+      field: comparability.material_extra
+    - check: The assignment suggested transfer-learning for the sim-to-real move; the entry tags
+        distribution-shift-generalization instead, because the task is unchanged and only the input
+        series move. Confirm against the two terms' tests.
+      field: capability
+      source: src-arxiv-2307-00142-v3
+      quote: In zero-shot STLF, models forecast loads for unseen target buildings without any
+        fine-tuning.
+    - check: sample-efficiency rests on the transfer-learning task's fixed six months of target
+        data, and scientific-prediction on building load counting as a state of an Earth or physical
+        system; either could be judged a stretch.
+      field: capability
+    - check: designed_for_subjects has domain-specialist-model and classical-algorithm (the
+        persistence baselines). The pair with statistical-fit and uncertainty-calibration-score
+        resolves to no comparability profile, so the fallback applies plus material_extra.
+      field: designed_for_subjects
+    - check: maintainer-competes-on-own-benchmark rests on NREL's transformers being the
+        leaderboard's only learned rows; ClimateBench's entry recorded its maintainer's baselines
+        with no flag.
+      field: governance.independence_flags
+    - check: activity no-submission-channel. The paper promised a leaderboard updated with new
+        results, but no source shows a way for outsiders to be added; if the maintainers accept
+        results by pull request, it is accepting-submissions with self-reported or
+        maintainer-verified.
+      field: activity
+      source: src-arxiv-2307-00142-v3
+      quote: We will maintain a leaderboard for BuildingsBench in our code repository, which will be
+        updated with new model results.
+    - check: The maintainer is recorded as the National Laboratory of the Rockies, formerly NREL,
+        from the repository's organisation name, the README's "NLR" and OEDI's citation; no source
+        read states the renaming in words.
+      field: governance.maintainer
+      source: src-oedi-buildingsbench
+      quote: Open EI | National Laboratory of the Rockies
+    - check: lifecycle active rests on one June 2026 paper read from its Crossref abstract; it uses
+        the benchmark's checkpoint and BDG-2 buildings as a diagnostic, not to rank a new model.
+      field: lifecycle
+    - check: v1.0.0's release date is not in any source read (it is a tag without a release), and
+        whether the paper's v3 tables are on v1.1.0 is inferred from the README reporting the same
+        numbers with v1.1.0 checkpoints.
+      field: versions
