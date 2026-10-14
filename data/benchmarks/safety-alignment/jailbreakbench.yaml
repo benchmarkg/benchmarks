@@ -1,0 +1,462 @@
+# data/benchmarks/safety-alignment/jailbreakbench.yaml
+#
+# P1-S9-T03, safety-alignment entry 7 of 9. Filled from JailbreakBench's paper, arXiv 2404.01318 read as its v5 PDF
+# (2024-10-31, NeurIPS 2024 Datasets and Benchmarks), its abstract page, and its v2 PDF (2024-04-23) for the
+# preprint's judge; jailbreakbench.github.io and the closed-source table its leaderboard loads (scripts and styles
+# stripped); the repository README and its classifier module at main; the Hugging Face API record of
+# JailbreakBench/JBB-Behaviors; two issue threads on the repository (#32, an attack submission, and #42, models
+# gone from Together AI); and the v1 PDF of REPRO (arXiv 2610.15513, October 2026), a paper that reports on
+# JBB-Behaviors. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts. No extract holds a behaviour's goal string or a jailbreak prompt.
+#
+# UK AISI inspect_evals was checked on 2026-10-14 and does not implement JailbreakBench (execution.inspect_evals_id),
+# so this family's reconciliation step had nothing to reconcile against.
+
+id: jailbreakbench
+name: JailbreakBench
+aliases:
+  - JBB
+  - JBB-Behaviors
+tagline: Jailbreak attacks and defences on LLMs, ranked by attack success on 100 misuse behaviours
+  under a Llama-3-70B judge.
+description: >
+  An open benchmark for jailbreak attacks on large language models and for defences against them.
+  Its dataset, JBB-Behaviors, holds 100 misuse behaviours, ten in each of ten categories taken from
+  OpenAI's usage policies; 55 are original and the rest come from AdvBench and TDC/HarmBench. Since
+  v1.0 it also holds 100 benign behaviours on the same topics, used to check that models and defences
+  do not refuse too much. An attack submits one jailbreak prompt per behaviour for each target model
+  (Vicuna-13B-v1.5 and Llama-2-7B-chat are required, GPT-3.5-Turbo-1106 and GPT-4-0125-Preview
+  optional). The library queries the target with fixed system prompts and greedy decoding, and a
+  judge decides whether each response is jailbroken: Llama-3-70B prompted with a custom instruction
+  since v1.0, Llama Guard before it. The score is attack success rate over the 100 behaviours, with
+  queries and tokens beside it, and every submitted prompt is published as a jailbreak artifact.
+  Defences are test-time wrappers in the library (SmoothLLM, perplexity filtering, Erase-and-Check,
+  synonym substitution, removal of non-dictionary words), scored by the success of attack artifacts
+  transferred to the defended model. The leaderboard has an open-source-model table and a
+  closed-source-model table; each row is one attack on one target behind one defence, and it holds
+  the four baseline attacks the authors ran.
+self_description:
+  source: src-github-jailbreakbench-readme
+  quote: Jailbreakbench is an open-source robustness benchmark for jailbreaking large language
+    models (LLMs)
+external_ids:
+  huggingface: JailbreakBench/JBB-Behaviors
+  arxiv: '2404.01318'
+paper:
+  title: 'JailbreakBench: An Open Robustness Benchmark for Jailbreaking Large Language Models'
+  arxiv: '2404.01318'
+  version_read: v5
+  source: src-arxiv-2404-01318-v5
+released: 2024-03-28
+released_note: The paper's first arXiv version, as the abstract page dates it. v1.0, the release the
+  leaderboard's numbers come from, followed in June 2024 (see versions).
+released_source: src-arxiv-2404-01318
+released_quote: Submitted on 28 Mar 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/jailbreak-robustness
+domain_basis:
+  reason: The taxonomy names JailbreakBench as a qualifying example of the family (attack success
+    rate, with a denominator that moves as attacks are published). The scored event is an
+    adversarial prompt getting a safety-trained model to produce content it should refuse, which is
+    the leaf's definition.
+  source: src-arxiv-2404-01318-v5
+  quote: it is often possible to elicit undesirable content by using so-called jailbreaking attacks
+domain_considered_and_rejected:
+  - term: safety-alignment/harmlessness-refusal
+    reason: The 100 benign behaviours measure refusal of requests that should be answered, but as a
+      sanity check on new models and defences, flagged above 90% refusals; the leaderboard does not
+      score it.
+    source: src-arxiv-2404-01318-v5
+    quote: We are open to adding any new defenses and models, but we will flag those that lead to
+      more than 90% refusals on our set of benign behaviors
+capability:
+  - adversarial-robustness
+capability_basis:
+  adversarial-robustness:
+    reason: Attackers choose the inputs, white-box, black-box or transfer, and the score is how
+      often they break the target, which is the target's (or defence's) resistance read the other
+      way.
+    source: src-arxiv-2404-01318-v5
+    quote: We accept any jailbreaking attack, including white-box, black-box, universal, transfer,
+      and adaptive attacks, and any jailbreaking defense, all of which are compared using the same
+      set of evaluation metrics
+capability_considered_and_rejected:
+  - term: harm-avoidance
+    reason: Its exclusion test removes benchmarks that measure resistance to an attacker rather than
+      conduct under ordinary use. The benign-behaviour refusal check is not on the leaderboard.
+
+evaluation_method:
+  - adversarial-red-team
+  - model-graded-judge
+evaluation_method_note: The judge's version is together_ai/meta-llama/Llama-3-70b-chat-hf at
+  temperature 0, with the prompt in the library (and the paper's Table 10); it answers 'safe' or
+  'unsafe'. Benign-behaviour refusals are judged by Llama-3-8B chat. Submissions may not use the
+  Llama-3-70B judge themselves, to prevent overfitting to it.
+evaluation_method_basis:
+  reason: The number is attack success rate, which moves when a new attack is published with no
+    change to the model. Success is decided by a general chat model prompted with a grading
+    instruction, Llama-3-70B, chosen over GPT-4, Llama Guard 1 and 2 and HarmBench's classifier on
+    300 labelled examples.
+  source: src-arxiv-2404-01318-v5
+  quote: The recent Llama-3-70B (AI@Meta, 2024) used as a judge with a custom prompt
+evaluation_method_considered_and_rejected:
+  - term: model-derived-metric
+    reason: The v1.0 judge is a general chat model given a grading prompt, not a guard classifier
+      fine-tuned to a fixed label set. The preprint's judge, Llama Guard, was such a classifier, so
+      preprint-era numbers were model-derived-metric (see versions).
+    source: src-github-jailbreakbench-classifier
+    quote: LITELLM_MODEL = "together_ai/meta-llama/Llama-3-70b-chat-hf"
+designed_for_subjects:
+  - attack-or-intervention-method
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The benchmark ranks attacks (PAIR, GCG, JailbreakChat's AIM, Prompt with Random Search)
+    and test-time defences applied to a fixed set of target models, which is
+    attack-or-intervention-method. It also takes robust models as defence entries and splits its
+    board by target model, so the models' own term is tagged beside it.
+  source: src-arxiv-2404-01318-v5
+  quote: we welcome the submission of new defensive mechanisms or robust models
+as_used:
+  - protocol: Attacks scored by the authors' own Qwen3-8B judge, which also stops each search when
+      it accepts, on all 100 harmful behaviours; successful attacks re-scored with the
+      JailbreakBench judge prompt; GPT-4o substituted for GPT-4-0125-Preview; baseline figures
+      transcribed from the JailbreakBench paper rather than re-run.
+    split: harmful (100 behaviours)
+    source: src-arxiv-2610-15513-v1
+    quote: All REPRO results in this paper use a single Qwen3-8B judge model for scoring target
+      responses
+    note: REPRO (October 2026), a black-box attack evaluated on 36 target models. Its own judge and
+      its stop-on-success search make its 100% not comparable with the leaderboard's Llama-3-70B
+      numbers, as its authors say.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against JBB-Behaviors in 2026, for example an October 2026
+    attack paper reporting on all 100 behaviours. The maintainers' repository was last pushed on
+    2025-04-04 (GitHub API, read 2026-10-14), which is maintenance evidence, not use.
+  source: src-arxiv-2610-15513-v1
+  quote: JailbreakBench [8] provides 100 misuse behaviors across 10 categories aligned with OpenAI
+    usage policies
+activity: accepting-submissions
+activity_note: The route the README gives, an issue carrying a submission file, is still open, but
+  the board shows only the four baseline attacks, dated up to April 2024. DSN, submitted in October
+  2024, was added to the artifacts repository in November 2024 with a promise to add it to the
+  website; its submitters asked again in February 2025 and it is still not on the board on
+  2026-10-14. A maintainer's "v2 update" pull request has been open since April 2025.
+activity_basis:
+  reason: The leaderboard never ran in rounds, and its stated route for attack submissions is open.
+  source: src-github-jailbreakbench-readme
+  quote: with the name of your algorithm in the title and upload
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4-0125-Preview (target model, attacked by PAIR, no defence)
+    source: src-jailbreakbench-leaderboard
+    observed_on: 2026-10-14
+    quote: GPT-4-0125-Preview None Jailbreaking Black Box Large Language Models in Twenty Queries
+      Prompt Automatic Iterative Refinement (PAIR) Black-box access LLM-assisted attack 51 34%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: released-classifier
+ground_truth_source_note: No reference responses. The released judge (Llama-3-70B with the library's
+  prompt) decides whether each response is jailbroken. It is a prompted general model rather than a
+  fine-tuned classifier; see review_checks.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Behaviours, jailbreak prompts, system prompts, judge prompts and the evaluation library
+    are released, and the judge is open-weight; the closed-model targets need their APIs.
+  source: src-jailbreakbench-site
+  quote: which are explicitly required for submissions to our benchmark to ensure reproducibility
+
+task:
+  exists: true
+  input:
+    - a misuse behaviour from JBB-Behaviors (an identifier, a goal string and a target affirmative
+      response) and a target model, optionally behind a defence
+  output: One jailbreak prompt per behaviour and target model; the library sends it to the target
+    (greedy decoding, 150 tokens by default) and records the response.
+  scoring: Attack success rate, the share of the 100 behaviours whose response the Llama-3-70B judge
+    calls unsafe, per attack, target model and defence; average queries and tokens are reported
+    beside it for attacks where they can be counted.
+  source: src-arxiv-2404-01318-v5
+  quote: we track the attack success rate (ASR) according to Llama-3-70B as a jailbreak judge
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Both behaviour splits and the judge-comparison set are a public Hugging Face dataset
+      with no gate, under MIT, and the jailbreak artifacts are a public GitHub repository.
+    source: src-hf-api-jbb-behaviors
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The scoring changed once, under a label. JailbreakBench v1.0 replaced the preprint's
+      Llama Guard judge with Llama-3-70B and added the benign behaviours; the 100 harmful behaviours
+      did not change.
+    source: src-arxiv-2404-01318
+    quote: a more accurate jailbreak judge (Llama-3-70B with a custom prompt)
+  data_provenance:
+    - inherited-from-constituents
+    - expert-authored
+  data_provenance_note: 45 harmful behaviours are taken from AdvBench (18) and TDC/HarmBench (27).
+    The other 55 were written by the authors, AI-safety researchers, some with LLMs used for
+    inspiration but not verbatim. Whether that counts as specialist skill in the harm areas the
+    items test is a reviewer check, as it is for HarmBench.
+  data_provenance_source: src-arxiv-2404-01318-v5
+  data_provenance_quote: Among these behaviors, 18% are sourced from AdvBench (Zou et al., 2023),
+    27% from TDC/HarmBench (Mazeika et al., 2023, 2024), whereas the remaining 55% are original to
+    JBB-Behaviors
+  contamination_risk: medium
+  contamination_risk_note: The behaviours are public, and the authors release every jailbreak prompt
+    on purpose, suggesting them as data for adversarial training. A model or defence trained on them
+    would be scored on the same behaviours and, for transfer evaluations, the same prompts. No
+    source read evidences that any ranked target was trained on them.
+  contamination_risk_source: src-arxiv-2404-01318-v5
+  contamination_risk_quote: we believe these jailbreaking artifacts can serve as an initial dataset
+    for adversarial training against jailbreaks
+  contamination_evidence: []
+  dataset_licence: MIT
+  dataset_licence_source: src-arxiv-2404-01318-v5
+  dataset_licence_quote: All code and data are released under the MIT license.
+  size:
+    - count: 100
+      unit: misuse behaviours, ten in each of ten categories
+      subset: harmful
+      source: src-arxiv-2404-01318-v5
+      quote: Specifically, JBB-Behaviors contains 100 rows, where each row specifies five distinct
+        fields
+    - count: 100
+      unit: benign behaviours on the harmful behaviours' topics
+      subset: benign
+      source: src-arxiv-2404-01318-v5
+      quote: 'Total samples: 200 (100 harmful behaviors and 100 benign behaviors)'
+    - count: 300
+      unit: prompt-response pairs with human and judge labels, used to choose the judge
+      subset: judge_comparison
+      source: src-github-jailbreakbench-readme
+      quote: The dataset contains 300 examples with the following columns
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The JailbreakBench maintainers (University of Pennsylvania, ETH Zurich, EPFL and Sony
+    AI)
+  maintainer_basis:
+    reason: The authors and the six maintainers the site lists are at these four institutions.
+    source: src-arxiv-2404-01318-v5
+    quote: 1University of Pennsylvania, 2ETH Zurich, 3EPFL, 4Sony AI
+  maintainer_type: community-collective
+  maintainer_type_basis:
+    reason: The dataset, library, artifacts and site sit in JailbreakBench organisation accounts on
+      Hugging Face and GitHub, run by people from four institutions. No source names one institution
+      as the holder or gives the group a legal form.
+    source: src-hf-api-jbb-behaviors
+    quote: '"author":"JailbreakBench"'
+  submission_process:
+    - maintainer-verified
+    - maintainer-run
+    - open-source-gated
+  submission_process_note: Attacks are submitted as an issue carrying a file of jailbreak prompts,
+    responses and judge labels produced with the library; the maintainers add the prompts to the
+    artifacts repository and may check them by hand for false positives. Defences enter as pull
+    requests implementing them in the library, reviewed and merged before artifacts are submitted
+    against them (open-source-gated applies to defences only). Every row on the board is one the
+    maintainers ran.
+  submission_process_source: src-arxiv-2404-01318-v5
+  submission_process_quote: To prevent potential overfitting to the judge, we reserve the right to
+    check manually the jailbreak artifacts and flag entries with a lot of false positives
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2404-01318-v5
+      quote: Patrick Chao, Alexander Robey, Edgar Dobriban, Hamed Hassani, George J Pappas, and Eric
+        Wong. Jailbreaking black box large language models in twenty queries
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2404-01318-v5
+      quote: The recent Llama-3-70B (AI@Meta, 2024) used as a judge with a custom prompt
+  independence_flags_note: Two of the four ranked attacks are the authors' own, PAIR (Chao, Robey,
+    Dobriban, Hassani, Pappas, Wong) and Prompt with Random Search (Andriushchenko, Croce,
+    Flammarion), and so is one of the five defences, SmoothLLM (Robey, Wong, Hassani, Pappas). The
+    judge is Meta's Llama-3-70B, and Meta's Llama-2-7B-chat is one of the target models.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Prompts are generated, sent to the targets and judged by the library with no human step,
+      and the paper states that the whole pipeline can run on cloud APIs.
+    source: src-arxiv-2404-01318-v5
+    quote: can be run exclusively through cloud-based models, circumventing the need for local GPUs
+    caveat: The closed-source targets change behind the same names (the paper reports GCG's success
+      on the GPT models falling to about 5% by June 2024, likely from safety patches), and Together
+      AI no longer serves Vicuna, Llama 2 or Llama Guard 1 (harness_gotcha).
+  harness_availability: official-harness
+  harness: jailbreakbench (the pip package; jbb.evaluate_prompts with its Llama-3 judges)
+  harness_source: src-github-jailbreakbench-readme
+  harness_quote: Run the following command to evaluate the attack success rate of your jailbreak
+    strings
+  harness_gotcha:
+    source: src-github-jailbreakbench-issue-42
+    quote: Llama 2, Vicuna, and Llama Guard 1 are not available anymore on Together AI
+  harness_gotcha_note: The library's default API route for the two required open-source targets
+    stopped working; the maintainers' issue (2025-03-31) and their "v2 update" pull request moving
+    to a local LiteLLM proxy are both still open, so those targets now have to be served locally.
+  code_licence: MIT
+  code_licence_source: src-github-jailbreakbench-readme
+  code_licence_quote: This codebase is released under [MIT License]
+  runnable_via:
+    - custom
+  inspect_evals_id: null
+  inspect_evals_id_note: Checked 2026-10-14 against UKGovernmentBEIS/inspect_evals at main. Neither
+    its 137 entries under src/inspect_evals nor its register and documentation listing include
+    JailbreakBench or JBB-Behaviors; the nearest are StrongREJECT, XSTest and AgentHarm. There is no
+    implementation to reconcile scoring against.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the judge (Llama Guard in the preprint, Llama-3-70B chat at temperature 0 in v1.0),
+  # its prompt, and the target's response length (150 tokens by default); and, under subset_used, the target model,
+  # the defence and whether the attack was run on the target or transferred to it.
+  material_extra:
+    - judge_model
+    - judge_model_version
+    - judge_prompt_hash
+    - max_output_tokens
+aggregation_policy: none-by-design
+aggregation_policy_note: Each row is one attack on one target model behind one defence (None for an
+  undefended model). The site splits rows into an open-source-model table (Vicuna-13B, Llama-2-7B)
+  and a closed-source-model table (GPT-3.5-Turbo-1106, GPT-4-0125-Preview), each sorted by model,
+  then defence, then attack success rate, and computes no average across models or defences.
+aggregation_policy_basis:
+  reason: The table carries attack success rate per row and no aggregate column.
+  source: src-jailbreakbench-leaderboard
+  quote: Date Model Defense Paper Name Threat model Notes Average queries Attack success rate
+    Jailbreak artifacts
+
+homepage: https://jailbreakbench.github.io/
+repository: https://github.com/JailbreakBench/jailbreakbench
+dataset_url: https://huggingface.co/datasets/JailbreakBench/JBB-Behaviors
+leaderboard_url: https://jailbreakbench.github.io/
+
+versions:
+  - version: preprint
+    label: JailbreakBench as first released (arXiv v1 and v2)
+    version_kind: revision
+    released: 2024-03-28
+    items: 100
+    changes: The 100 harmful behaviours, PAIR, GCG and JailbreakChat artifacts, and two defences
+      (SmoothLLM and perplexity filtering). Attack success was judged by Llama Guard, a fine-tuned
+      guard classifier.
+    breaking: true
+    superseded_by: v1.0
+    frozen: true
+    sources:
+      - src-arxiv-2404-01318-v2
+      - src-arxiv-2404-01318
+  - version: v1.0
+    label: JailbreakBench v1.0 (the NeurIPS 2024 camera-ready release)
+    version_kind: revision
+    items: 100
+    changes: Released in June 2024 (the data card's date). The judge became Llama-3-70B with a
+      custom prompt, chosen on a 300-example human-labelled set, so attack success rates before and
+      after are not comparable. Added 100 benign behaviours with a Llama-3-8B refusal judge, the
+      Prompt with Random Search attack and three more defences (Erase-and-Check, synonym
+      substitution, removal of non-dictionary words).
+    breaking: true
+    supersedes_version: preprint
+    frozen: true
+    sources:
+      - src-arxiv-2404-01318
+      - src-arxiv-2404-01318-v5
+
+subsets:
+  - id: jailbreakbench#harmful
+    label: JBB-Behaviors harmful behaviours
+    items: 100
+    scored_separately: true
+    evidence:
+      - source: src-hf-api-jbb-behaviors
+        quote: '{"split":"harmful","path":"data/harmful-behaviors.csv"},{"split":"benign","path":"data/benign-behaviors.csv"}'
+    notes: The set every attack success rate is computed on.
+  - id: jailbreakbench#benign
+    label: JBB-Behaviors benign behaviours
+    items: 100
+    scored_separately: true
+    evidence:
+      - source: src-jailbreakbench-site
+        quote: Moreover, now it is complemented with 100 benign behaviors that can be used to
+          quickly evaluate overrefusal rates for new models and defenses
+    notes: Scored as a refusal rate by a Llama-3-8B judge, a sanity check on models and defences
+      that the leaderboard does not show.
+
+tags:
+  - jailbreaks
+  - red-teaming
+  - llm-safety
+  - refusal
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2404-01318-v5
+    - src-arxiv-2404-01318
+    - src-arxiv-2404-01318-v2
+    - src-jailbreakbench-site
+    - src-jailbreakbench-leaderboard
+    - src-github-jailbreakbench-readme
+    - src-github-jailbreakbench-classifier
+    - src-hf-api-jbb-behaviors
+    - src-github-jailbreakbench-issue-32
+    - src-github-jailbreakbench-issue-42
+    - src-arxiv-2610-15513-v1
+  sources_note: >
+    The paper's v5 PDF and v2 PDF (DOIs, not archived) read as text; the abstract page for the dates and
+    the v1.0 comment; the site and the closed-source table its leaderboard loads, scripts and styles
+    stripped; the README and classifier.py at main; the Hugging Face API record (not gated, no terms
+    accepted); issue threads #32 and #42; and REPRO's v1 PDF (a DOI, not archived) as evidence of current
+    use. GitHub API metadata (licence, pushed_at) was read on 2026-10-14 and is not a quoted Source.
+  confidence: medium
+  review_checks:
+    - check: designed_for_subjects tags instruction-tuned-model beside
+        attack-or-intervention-method. The four target models are supplied identically to every
+        attack, which the subjects facet treats as environment; the tag rests on robust models being
+        admitted as defence entries and on the board being split by target model.
+      field: designed_for_subjects
+      source: src-arxiv-2404-01318-v5
+      quote: we welcome the submission of new defensive mechanisms or robust models
+    - check: grader-from-evaluated-party holds only if the target models count as evaluated systems
+        (the check above). The judge is Meta's Llama-3-70B and one target is Meta's Llama-2-7B-chat.
+      field: governance.independence_flags
+    - check: activity accepting-submissions or closed. The route is open on paper, but no outside
+        attack has reached the board; DSN was accepted into the artifacts in November 2024 and is
+        still missing in October 2026.
+      field: activity
+      source: src-github-jailbreakbench-issue-32
+      quote: Member More actions Hi, sorry for the delay. I will add it later this week!
+    - check: ground_truth_source released-classifier for a prompted general model (Llama-3-70B chat
+        with the library's prompt); ADR-0024 defined the value with HarmBench's fine-tuned
+        classifier in mind.
+      field: ground_truth_source
+    - check: maintainer-verified rests on the authors reserving the right to check artifacts by
+        hand; if that is not a stated review, attack submissions are self-reported.
+      field: governance.submission_process
+    - check: 'data_provenance expert-authored: the original behaviours were written by the authors, who
+        are AI-safety researchers; whether that is the specialist skill the items test.'
+      field: data.data_provenance
+    - check: contamination_risk medium. The benchmark itself suggests training on its released
+        jailbreak prompts, which are scored again in transfer evaluations; whether that is a
+        protocol route that makes the risk high.
+      field: data.contamination_risk
