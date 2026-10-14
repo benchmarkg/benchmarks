@@ -1,0 +1,412 @@
+# data/benchmarks/chemistry-materials/uspto-50k.yaml
+#
+# P1-S6-T01, chemistry-materials entry 3 of 10. Filled from the paper that defined the split and the top-N
+# protocol, Liu et al., arXiv 1706.01643 read as its v1 PDF (2017-06-06; published in ACS Central Science), and
+# its abstract page; the code repository's README and its evaluation notebook at master, beside GitHub's
+# metadata, commit list and file tree for the repository; and two 2026 papers that report top-k accuracy on
+# USPTO-50k, ConRetroBert (arXiv 2605.12736, v1 PDF, May 2026) and Order Matters in Retrosynthesis (arXiv
+# 2602.13136, v2 PDF, August 2026). The upstream data sources, Lowe's USPTO extraction and Schneider et al. 2016,
+# were not read. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+
+id: uspto-50k
+name: USPTO-50k
+aliases:
+  - USPTO-50K
+  - USPTO 50k
+tagline: Single-step retrosynthesis on about 50,000 US patent reactions in 10 classes, scored by
+  top-k exact match.
+description: >
+  About 50,000 reactions text-mined from US patents, atom-mapped and sorted into 10 reaction classes
+  (Lowe's extraction, classified by Schneider et al. 2016), used to score single-step retrosynthesis:
+  given a product, predict the reactants the patent reports. Liu et al. (2017) removed reagents, split
+  multi-product reactions into single-product ones, split the set 8:1:1 at random, gave the reaction
+  class to the model as an input token, and scored top-N accuracy, the share of test products whose
+  recorded reactant set is among a model's first N candidates (N from 1 to 50). Their repository holds
+  that split and an evaluation notebook. Papers in 2026 report the setting without the reaction class,
+  at k = 1, 3, 5 and 10, on a different split of the same reactions (40,008 / 5,001 / 5,007) distributed
+  with GLN (Dai et al. 2019). Each product has one recorded answer, so a chemically valid alternative
+  counts as wrong, and more than half of the GLN split's test reactions also sit in the training split
+  of USPTO-Full, a larger extraction that models are often pretrained on.
+self_description:
+  source: src-arxiv-1706-01643-v1
+  quote: The model is trained on 50,000 experimental reaction examples from the United States patent
+    literature, which span 10 broad reaction types that are commonly used by medicinal chemists
+external_ids:
+  arxiv: '1706.01643'
+paper:
+  title: Retrosynthetic reaction prediction using neural sequence-to-sequence models
+  arxiv: '1706.01643'
+  doi: 10.1021/acscentsci.7b00303
+  version_read: v1
+  source: src-arxiv-1706-01643-v1
+released: 2017-06-06
+released_note: The paper's only arXiv version, as its abstract page dates it. The journal version's
+  DOI (paper.doi) is the one the README links. The split files went public with the repository's
+  first code commit on 2017-11-30 (GitHub's commit list, read 2026-10-14; not a quoted Source).
+released_source: src-arxiv-1706-01643
+released_quote: Submitted on 6 Jun 2017
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/retrosynthesis
+domain_basis:
+  reason: Each item asks for the reactants that make a given product, one disconnection backwards
+    from the target. The leaf is defined as a whole route back to purchasable starting materials;
+    ADR-0020 deferred a single-step leaf and keeps single-step benchmarks here, with this note that
+    USPTO-50k scores one step and no route.
+  source: src-arxiv-1706-01643-v1
+  quote: For a given target molecule and a specified reaction type, the model predicts the most
+    likely reactants that can react in the specified reaction type to produce the target molecule
+domain_considered_and_rejected:
+  - term: chemistry-materials/reaction-prediction
+    reason: That is the forward direction, from reactants to products, which the paper names as the
+      other half of retrosynthetic analysis; USPTO-50k scores the backward step.
+    source: src-arxiv-1706-01643-v1
+    quote: The first task, reaction prediction, involves predicting how a set of reactants will
+      react to form products
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict the reactant structures of a chemical reaction from its product and are
+      scored against the reactants the patent reports, a recorded observation (ADR-0014 names
+      USPTO-50k as this term's case).
+    source: src-arxiv-1706-01643-v1
+    quote: The top-N accuracy refers to the percentage of examples where the ground truth reactant
+      set, which is the actual patent literature reported reactant set for the corresponding target
+      molecule in the test dataset, was found within the top N predictions made by the model
+capability_considered_and_rejected:
+  - term: hypothesis-generation
+    reason: The output is a ranked list of candidate reactant sets, but the score only asks whether
+      the one recorded set is among the first k, with no credit for other plausible candidates, and
+      the headline top-1 scores a single answer.
+    source: src-arxiv-1706-01643-v1
+    quote: Although the predicted reactant set does not match the ground truth reactant set, the
+      predicted reactant set is likely to react in the specified reaction type to produce the target
+      molecule
+  - term: planning
+    reason: One disconnection is predicted per item; no sequence of steps toward purchasable
+      compounds is built or scored.
+  - term: distribution-shift-generalization
+    reason: The test split is a random tenth of the same reactions, with no shifted condition
+      reported beside it.
+    source: src-arxiv-1706-01643-v1
+    quote: Finally, the dataset was split into training, validation and test datasets (8:1:1)
+
+evaluation_method:
+  - exact-match
+evaluation_method_basis:
+  reason: An item is right only if a candidate equals the recorded reactant set, with no partial
+    credit; top-k averages those verdicts. Liu et al.'s notebook compares InChI strings of the
+    predicted and recorded reactant SMILES, and the 2026 papers compare canonical reactant keys and
+    call the metric Top-k Exact Match Accuracy.
+  source: src-github-reaction-prediction-seq2seq-evaluation-notebook
+  quote: Calculates the exact match score for a single prediction and ground truth
+evaluation_method_considered_and_rejected:
+  - term: symbolic-equivalence
+    reason: Two differently written SMILES of the same reactants both count as right, because both
+      sides are canonicalised before the comparison, which goes beyond whitespace or case. But the
+      equivalence is a cheminformatics canonical form compared as a string, not a computer-algebra
+      judgement, which is that term's test.
+    source: src-github-reaction-prediction-seq2seq-evaluation-notebook
+    quote: Uses InChI comparison if canonicalize
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The release paper scores a character-level seq2seq model trained from scratch on the
+    patent reactions, a task chemistry defines, beside a rule-based expert system whose rules were
+    extracted from the training reactions and ranked by how often each was observed, which
+    classical-algorithm keeps (ADR-0020).
+  source: src-arxiv-1706-01643-v1
+  quote: Table 2 shows the top-N accuracies of the rule-based expert system baseline and the seq2seq
+    model on the test dataset
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: The entrants do not stand in for a solver or an assay; they predict the reactants a
+      patent recorded.
+as_used:
+  - protocol: Top-k exact match at k = 1, 3, 5 and 10 on the split distributed with GLN (Dai et al.
+      2019), not Liu et al.'s.
+    split: test, 5,007 reactions (40,008 train, 5,001 validation)
+    source: src-arxiv-2605-12736-v1
+    quote: Our primary benchmark is USPTO-50k under the standard GLN split
+    note: ConRetroBert (May 2026) keeps the split unfiltered to stay comparable with prior work, and
+      takes prior methods' numbers from another paper's table with a caveat that their preprocessing
+      may differ. Liu et al.'s split files hold 40,029, 5,004 and 5,004 reactions (lines counted in
+      the repository's processed_data folder, 2026-10-14; not a quoted Source).
+  - protocol: Reaction class unknown, that is without the class token Liu et al. prepend to the
+      product.
+    split: test
+    source: src-arxiv-2602-13136-v2
+    quote: Top-k Exact Match Accuracy on USPTO-50k (Reaction Class Unknown)
+    note: Order Matters in Retrosynthesis (v2, August 2026) reports this setting only. Liu et al.'s
+      protocol always gives the class.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on USPTO-50k in 2026, in ConRetroBert (May) and Order Matters
+    in Retrosynthesis (v2, August), which calls it the standard benchmark for the task. Both use the
+    GLN split (as_used). The repository's last commit, a README edit on 2018-03-30 (GitHub's commit
+    list), is maintenance evidence, not lifecycle.
+  source: src-arxiv-2602-13136-v2
+  quote: USPTO-50k contains approximately 50,000 atom-mapped reactions and serves as the standard
+    retrosynthesis benchmark
+activity: no-submission-channel
+activity_basis:
+  reason: The repository holds the split, the model scripts and an evaluation notebook, with no
+    leaderboard or submission route; results appear in their authors' own papers.
+  source: src-github-reaction-prediction-seq2seq-readme
+  quote: The prediction can be evaluated using reaction_evaluation.ipynb in the evaluation folder.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: seq2seq (Liu et al.'s LSTM encoder-decoder)
+    source: src-arxiv-1706-01643-v1
+    observed_on: 2026-10-14
+    quote: Table 2 shows the top-N accuracies of the rule-based expert system baseline and the
+      seq2seq model on the test dataset
+  - system: ConRetroBert (Stage 2 EMA Mid)
+    source: src-arxiv-2605-12736-v1
+    observed_on: 2026-10-14
+    quote: ConRetroBert Stage 2 EMA Mid 62.5 81.6 85.3 87.8
+    note: Top-1, 3, 5 and 10 on the GLN split, trained on USPTO-50k only.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The reactant set the patent reports for each test product, kept out of
+  training by the split; the test labels are public.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The processed split and the scoring notebook are in the public repository, and scoring
+    needs only RDKit.
+  source: src-github-reaction-prediction-seq2seq-readme
+  quote: The data has already been preprocessed for training the seq2seq model
+
+task:
+  exists: true
+  input:
+    - the product (the target molecule) as a SMILES string
+    - in Liu et al.'s protocol, the reaction class (1 to 10) as a token prepended to the product
+  output: A ranked list of candidate reactant sets, each a SMILES string.
+  scoring: Top-N accuracy, the share of test products whose recorded reactant set equals one of the
+    first N candidates after canonicalisation. Liu et al. report N = 1, 3, 5, 10, 20 and 50; 2026
+    papers report k = 1, 3, 5 and 10.
+  tests_hidden_from_system: false
+  source: src-arxiv-1706-01643-v1
+  quote: The top-N accuracy refers to the percentage of examples where the ground truth reactant
+    set, which is the actual patent literature reported reactant set for the corresponding target
+    molecule in the test dataset, was found within the top N predictions made by the model
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The train, validation and test sources and targets sit in the repository's
+      processed_data folder (GitHub's file tree, read 2026-10-14), downloadable without an account.
+    source: src-github-reaction-prediction-seq2seq-readme
+    quote: The data has already been preprocessed for training the seq2seq model
+  refresh: static
+  refresh_basis:
+    reason: One split, committed on 2017-11-30; the later commits, the last on 2018-03-30, edit the
+      README only (GitHub's commit list), and no source announces a revision.
+    source: src-github-reaction-prediction-seq2seq-readme
+    quote: The data has already been preprocessed for training the seq2seq model
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: Reactions text-mined from US patents (Lowe 2012, the paper's reference 46),
+    atom-mapped and classed into 10 types by Schneider et al. 2016 (reference 47), then stripped of
+    reagents, split into single-product reactions, canonicalised and split by Liu et al.
+  data_provenance_source: src-arxiv-1706-01643-v1
+  data_provenance_quote: which contains 50,000 atom-mapped reactions that have been classified into
+    10 broad reaction types
+  contamination_risk: high
+  contamination_risk_note: ConRetroBert matched canonical reaction signatures of the template-valid
+    test reactions of the GLN split (4,890 of its 5,007) against USPTO-Full's training split and
+    found 2,706 of them there, and 2,866 of 4,875 validation reactions. A model pretrained on
+    USPTO-Full without that removal has seen over half the scored test set. The overlap was measured
+    on the GLN split's test set; Liu et al.'s test set is another random tenth of the same reactions
+    and was not measured. The data has also been public since 2017.
+  contamination_risk_source: src-arxiv-2605-12736-v1
+  contamination_risk_quote: USPTO-50k test USPTO-50k val 4,890 4,875 2,706 2,866
+  contamination_evidence:
+    - source: src-arxiv-2605-12736-v1
+      stance: supports
+      quote: Since USPTO-50k is derived from the broader USPTO reaction corpus, transfer pretraining
+        on USPTO-Full can leak downstream validation or test chemistry unless the pretraining corpus
+        is explicitly decontaminated
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Top-k accuracy is bounded at 100% and no source measures an attainable
+    ceiling. Each product has one recorded reactant set, and a chemically plausible alternative
+    counts as wrong, so the attainable score is below the bound by an unmeasured amount.
+  ceiling_anchor_type_source: src-arxiv-1706-01643-v1
+  ceiling_anchor_type_quote: Although the predicted reactant set does not match the ground truth
+    reactant set, the predicted reactant set is likely to react in the specified reaction type to
+    produce the target molecule
+  dataset_licence: null
+  dataset_licence_note: The README states no licence for the data. The repository's LICENSE is
+    Apache 2.0 (GitHub's licence metadata), which is written for the code; the licences of the
+    upstream patent extraction and of Schneider et al.'s set were not read.
+  size:
+    - count: 50000
+      unit: atom-mapped reactions in 10 reaction classes (the paper's round figure)
+      source: src-arxiv-1706-01643-v1
+      quote: which contains 50,000 atom-mapped reactions that have been classified into 10 broad
+        reaction types
+    - count: 5007
+      unit: test reactions (with 40,008 train and 5,001 validation)
+      subset: the GLN split that 2026 papers use
+      source: src-arxiv-2605-12736-v1
+      quote: 40,008 5,001 5,007
+  size_note: Liu et al.'s own split files hold 40,029 train, 5,004 validation and 5,004 test
+    reactions (lines counted in processed_data, 2026-10-14; not a quoted Source).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Pande group, Stanford University (the pandegroup GitHub organisation)
+  maintainer_basis:
+    reason: The split and the notebook sit in the pandegroup organisation on GitHub, and the authors
+      are the Pande group at Stanford's chemistry department. Nobody has changed the repository
+      since 2018; that decay is maintenance_status evidence.
+    source: src-arxiv-1706-01643-v1
+    quote: The Pande Group is broadly supported by grants from the NIH
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: The maintainers publish only the release paper's Table 2, their baseline
+    and their model, and keep no ranking; everyone else reports top-k accuracy in their own papers.
+  submission_process_source: src-arxiv-1706-01643-v1
+  submission_process_quote: Table 2 shows the top-N accuracies of the rule-based expert system
+    baseline and the seq2seq model on the test dataset
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-1706-01643-v1
+      quote: We find that our model performs comparably with a rule-based expert system baseline
+        model
+  independence_flags_note: The split was released with the authors' own seq2seq model and baseline,
+    in a methods paper. The paper's declarations (consultancy, board and investment roles) name no
+    system the benchmark evaluates.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The split, the recorded reactants and the scoring notebook are public, and scoring a
+      prediction file is automatic.
+    source: src-github-reaction-prediction-seq2seq-readme
+    quote: The prediction can be evaluated using reaction_evaluation.ipynb in the evaluation folder.
+  reproducibility_blockers: []
+  reproducibility_blockers_note: The README pins python 3.5 and tensorflow 1.0.1 for re-running the
+    2017 model; the split and the scoring need neither.
+  harness_availability: official-harness
+  harness: reaction_evaluation.ipynb, in the repository's evaluation folder
+  harness_note: The notebook reads Liu et al.'s split and the seq2seq model's beam files. Papers on
+    the GLN split score with their own code, ConRetroBert by canonical reactant keys.
+  harness_source: src-github-reaction-prediction-seq2seq-readme
+  harness_quote: The prediction can be evaluated using reaction_evaluation.ipynb in the evaluation
+    folder.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for pandegroup/reaction_prediction_seq2seq and its
+    LICENSE file, read 2026-10-14; not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profile (exact-match with a domain-specialist model, whose subset_used carries the split:
+  # Liu et al.'s or the GLN split): k, since top-1 and top-10 are different numbers; whether the reaction class
+  # was given as input (Liu et al.'s protocol) or not (most later papers), recorded as the track because the two
+  # settings are reported in separate tables on the same test items, not as subsets; and the training data,
+  # since pretraining on USPTO-Full, decontaminated or not, changes the number.
+  material_extra:
+    - k
+    - eligibility_track
+    - training_data_policy
+
+homepage: https://github.com/pandegroup/reaction_prediction_seq2seq
+repository: https://github.com/pandegroup/reaction_prediction_seq2seq
+dataset_url: https://github.com/pandegroup/reaction_prediction_seq2seq/tree/master/processed_data
+
+tags:
+  - retrosynthesis
+  - single-step-retrosynthesis
+  - reaction-smiles
+  - patents
+  - top-k-accuracy
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1706-01643-v1
+    - src-arxiv-1706-01643
+    - src-github-reaction-prediction-seq2seq-readme
+    - src-github-reaction-prediction-seq2seq-evaluation-notebook
+    - src-arxiv-2605-12736-v1
+    - src-arxiv-2602-13136-v2
+  sources_note: >
+    The release paper's v1 PDF (a DOI, not archived) read as text, with short windows that keep the
+    authors' contact line out; its abstract page for the date; the README and the evaluation notebook
+    at
+    master; and two 2026 papers' PDFs (DOIs, not archived) as evidence of current use, the protocol now
+    run and the USPTO-Full overlap. GitHub's metadata, commit list and file tree were read for dates,
+    licence and file counts and are not Sources.
+  confidence: medium
+  review_checks:
+    - check: The pair (exact-match, domain-specialist-model) resolves to the llm-static-text
+        profile, whose shots, chain_of_thought, reasoning_effort, tools_allowed and retries_allowed
+        mean nothing for a trained retrosynthesis model; taxonomy/comparability-profiles.yaml may
+        need a profile for non-LLM specialists, as ADR-0024 gave Matbench Discovery surrogate-fit.
+        Nothing is waived meanwhile.
+      field: comparability
+    - check: The entry names Liu et al.'s split, as the stress corpus and the assignment do, but
+        both 2026 papers use the GLN split (40,008 / 5,001 / 5,007), while Liu et al.'s files hold
+        40,029 / 5,004 / 5,004. Whether the entry should be the reaction set with the two splits as
+        versions, or Liu et al.'s split with the GLN split (Coley et al. 2017, distributed by Dai et
+        al. 2019) as an entry of its own; the maintainer, harness and release date follow the
+        answer.
+      field: as_used
+      source: src-arxiv-2605-12736-v1
+      quote: Our primary benchmark is USPTO-50k under the standard GLN split
+    - check: lifecycle active rests on two independent papers (ADR-0020's open question 3 on
+        evidence of use), and both run the GLN split, not Liu et al.'s. If the entry stays Liu et
+        al.'s split, a paper on that split is needed, or lifecycle is null.
+      field: lifecycle
+    - check: contamination_risk high follows PoseBusters' Astex-in-PDBbind case. It could instead be
+        medium, if the USPTO-Full route is read as a training choice that belongs on each entrant's
+        claims (training_data_policy).
+      field: data.contamination_risk
+      source: src-arxiv-2605-12736-v1
+      quote: USPTO-50k test USPTO-50k val 4,890 4,875 2,706 2,866
+    - check: exact-match was kept although both sides are canonicalised (InChI in Liu et al.'s
+        notebook, canonical SMILES keys in 2026 papers), which goes beyond the term's
+        whitespace-or-case normalisation; symbolic-equivalence names computer-algebra systems only.
+      field: evaluation_method
+      source: src-github-reaction-prediction-seq2seq-evaluation-notebook
+      quote: Uses InChI comparison if canonicalize
+    - check: Reaction class known or unknown is recorded as comparability material in
+        eligibility_track, not as subsets, since the test items are the same. No condition field
+        names an input given to the model; check that eligibility_track is the right home.
+      field: comparability
+    - check: hypothesis-generation was rejected because top-k checks one recorded answer's presence
+        in a ranked list; a reviewer may read top-k at k of 10 or 50 as scoring the candidate set.
+      field: capability
+    - check: maintainer-competes-on-own-benchmark rests on the split being released inside the
+        authors' own methods paper, with their model and baseline; no ranking was ever kept.
+      field: governance.independence_flags
+    - check: The upstream sources were not read, Lowe's extraction and Schneider et al. 2016, so the
+        data's licence and its exact provenance are unverified.
+      field: data.dataset_licence
+      source: src-arxiv-1706-01643-v1
+      quote: Schneider, N.; Stiefl, N.; Landrum, G. A.
