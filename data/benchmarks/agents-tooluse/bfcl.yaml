@@ -1,0 +1,624 @@
+# data/benchmarks/agents-tooluse/bfcl.yaml
+#
+# P1-S9-T01, agents-tooluse entry 8 of 10. Filled from the BFCL paper (ICML 2025, PMLR 267), read as the text of
+# its PMLR PDF, and its PMLR abstract page; the leaderboard page (scripts and styles stripped) and the CSV its table
+# is loaded from (data_overall.csv); the project's blog index and the BFCL V1, V2 (Live), V3 (Multi-Turn) and V4
+# (Agentic Part 1, Web Search) blog posts, scripts and styles stripped; the README, CHANGELOG and CONTRIBUTING
+# guide of berkeley-function-call-leaderboard in ShishirPatil/gorilla at main; the Hugging Face API record of the
+# dataset; and the v1 PDF of The Bitter Lesson of Tool Calling (arXiv 2608.06370, August 2026), a paper that
+# reports results on a BFCL v4 subset. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# The family entry: V1 (February 2024) to V4 (July 2025) are editions of one leaderboard. Each changed the
+# categories and the overall score's composition, so every version is breaking. The overall formula the board
+# applies today was recomputed from the category columns of all 109 CSV rows: it is the V4 blog's weighted average,
+# with irrelevance alone as the 10% hallucination share, not the unweighted average the page states (review_checks).
+
+id: bfcl
+name: Berkeley Function Calling Leaderboard
+aliases:
+  - BFCL
+  - Berkeley Function-Calling Leaderboard
+  - BFCL V4
+tagline: 'How LLMs call functions: AST-matched single calls, state-checked multi-turn tasks, agentic web
+  search and memory.'
+description: >
+  UC Berkeley's leaderboard for how well language models call functions (tools). It began in
+  February 2024 (V1) with 2,000 expert-curated single-turn entries in Python, Java, JavaScript, REST
+  and SQL, scored by matching each call's abstract syntax tree against sets of acceptable argument
+  values, by executing the calls, and by whether a model abstains when no function fits. V2 (August
+  2024) added 2,251 live entries built from real user queries; V3 (September 2024) added 800
+  multi-turn entries scored by checking the state of stateful API backends after every turn; V4 (July
+  2025) added agentic web search and memory, scored by exact match of a final answer, and reweighted
+  the overall score towards them (Agentic 40%, Multi-Turn 30%, Live, Non-Live and Irrelevance 10%
+  each). Each version changed the categories and the overall score's composition, so overall scores
+  from different versions are not comparable. The executable categories were retired in April 2025.
+  The maintainers run every model themselves with the bfcl-eval package, through the model's native
+  function-calling interface (FC) or through BFCL's system prompt (Prompt), and the two modes of one
+  model can rank far apart.
+self_description:
+  source: src-pmlr-v267-patil25a
+  quote: We present the Berkeley Function Calling Leaderboard (BFCL), a comprehensive benchmark
+    designed to evaluate function calling capabilities in a wide range of real-world settings.
+external_ids:
+  huggingface: gorilla-llm/Berkeley-Function-Calling-Leaderboard
+paper:
+  title: 'The Berkeley Function Calling Leaderboard (BFCL): From Tool Use to Agentic Evaluation of Large
+    Language Models'
+  source: src-pmlr-v267-patil25a-pdf
+released: 2024-02-26
+released_note: The V1 blog post's date on the project's blog index. The paper followed at ICML 2025
+  (PMLR 267), by when the leaderboard was in its fourth version.
+released_source: src-gorilla-blog-index
+released_quote: Berkeley Function-Calling Leaderboard Fanjia Yan et al. Feb 26, 2024
+release_venue: ICML 2025
+release_venue_note: The venue of the paper, which came a year and a half after the leaderboard's
+  first release. The V1 blog post's citation block names NeurIPS instead (review_checks).
+release_venue_source: src-pmlr-v267-patil25a
+release_venue_quote: Proceedings of the 42nd International Conference on Machine Learning, PMLR
+  267:48371-48392, 2025.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/tool-api-calling
+  secondary: []
+domain_basis:
+  reason: A single model is scored on selecting functions and filling their arguments, from single
+    calls to multi-turn sessions against stateful API backends, the leaf's own inclusion case.
+  source: src-bfcl-leaderboard
+  quote: evaluates the LLM's ability to call functions (aka tools) accurately
+domain_considered_and_rejected:
+  - term: agents-tooluse/web-navigation
+    reason: V4's web-search category has the model search and fetch live pages, but through two
+      fixed function calls whose only scored product is an exact-match answer; it is 200 of the
+      5,088 scored entries (100 questions, with and without snippets), though 20% of the overall's
+      weight.
+  - term: agents-tooluse/research-agents
+    reason: The web-search questions are multi-hop factual questions with one stable answer, not
+      open research questions answered with cited sources.
+  - term: agents-tooluse/agent-evaluation-suites
+    reason: Every category scores function calls, so one subdomain holds the benchmark.
+
+capability:
+  - tool-use
+  - memory-retention
+capability_basis:
+  tool-use:
+    reason: The score is whether functions were chosen and parameterised correctly. In the
+      multi-turn and agentic categories, 70% of V4's overall, the calls are executed against a
+      backend and their results feed the next step; the single-turn AST categories score calls that
+      are never executed.
+    source: src-bfcl-blog-v3-multi-turn
+    quote: we now verify the actual state of the API system (like file systems or booking systems)
+      after the model runs its functions
+  memory-retention:
+    reason: The memory category, 20% of V4's overall, asks about facts from earlier sessions with
+      the chat history removed, so only what the model stored through the memory tools can answer.
+    source: src-pmlr-v267-patil25a-pdf
+    quote: Evaluation queries are issued with an empty chat history but access to the stored
+      snapshot
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: A multi-turn entry fails as soon as one turn fails, which meets half the inclusion test,
+      but no source read states that entries hold the ~10 dependent actions the term asks for.
+    source: src-bfcl-blog-v3-multi-turn
+    quote: Since all following turns depend on the correct action plan in the current turn, if the
+      model is incorrect in the current turn, it cannot be correct in subsequent turns
+  - term: honesty
+    reason: Irrelevance detection rewards making no call when no function fits, but it scores the
+      call decision as accuracy, not the truthfulness of an assertion.
+  - term: instruction-following
+    reason: Prompt-mode models must emit calls in BFCL's format and format sensitivity tests 26
+      prompt formats, but format sensitivity is non-scoring and no source claims instruction
+      following.
+  - term: planning
+    reason: Multi-turn entries need several dependent calls, but the score is the backend state and
+      the call results, not the plan.
+  - term: search-exploration
+    reason: Web-search questions take several searches, but the score is the final answer, with no
+      search budget or coverage at stake.
+
+evaluation_method:
+  - constraint-check
+  - environment-state-check
+  - exact-match
+  - composite
+evaluation_method_basis:
+  reason: Single-turn calls are parsed into an abstract syntax tree and pass only if the function
+    name matches and every argument is in its set of possible answers (constraint-check); multi-turn
+    entries must pass a state check of the backend and a check of the executed calls' results after
+    every turn (environment-state-check); agentic entries are an exact match of the normalised
+    answer field (exact-match). V4's overall weights the three kinds of category (composite).
+  source: src-pmlr-v267-patil25a-pdf
+  quote: The Multi-Turn category combines a state-based and a response-based checker (Section 4.4),
+    and the Agentic category is evaluated with a strict exact-match criterion
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: V1 also scored executable categories, running the generated calls and comparing their
+      outputs. V3's score composition no longer counts them, and they were retired from the
+      leaderboard and its pipeline in April 2025.
+    source: src-github-bfcl-changelog
+    quote: Retire the executable categories from the leaderboard.
+  - term: model-graded-judge
+    reason: The paper uses GPT-4o as a judge only to classify multi-turn errors; no score comes from
+      a model.
+    source: src-pmlr-v267-patil25a-pdf
+    quote: We use GPT-4o-08-06 as a judge
+
+designed_for_subjects:
+  - model-in-benchmark-harness
+designed_for_subjects_basis:
+  reason: Every row is a model run by the maintainers through BFCL's own handler and multi-turn
+    loop, with the same prompts and tools for all and no agent techniques added, so only the model
+    and its call mode (FC or Prompt) vary.
+  source: src-bfcl-blog-v3-multi-turn
+  quote: we chose not to use it throughout the BFCL series to evaluate base LLMs with the same
+    standards
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: Entrants cannot bring their own loop; scaffolds appear only in third-party papers that
+      run BFCL's data outside its harness (as_used).
+  - term: tool-augmented-model
+    reason: The single-turn categories offer tools in one exchange, but the multi-turn and agentic
+      categories, 70% of V4's overall, run the model in BFCL's loop, where a turn ends when the
+      model stops calling functions.
+  - term: hosted-inference-endpoint
+    reason: Most rows are provider APIs, but each row names a model and its call mode; serving is
+      not what the board compares.
+
+as_used:
+  - protocol: A 309-entry subset of eight single-turn AST categories of BFCL v4, run outside BFCL's
+      harness at temperature 0 with two call interfaces, native JSON tool calls and Python scripts
+      calling typed stubs, and scored in the authors' own harness by the benchmark's normalised
+      string comparison against the ground truth.
+    split: 309 entries from simple_python, multiple, parallel, parallel_multiple and the four live
+      categories
+    source: src-arxiv-2608-06370-v1
+    quote: we evaluate programmatic tool calling against JSON tool calling on a representative
+      309-entry subset of BFCL v4 spanning eight task categories
+    note: The Bitter Lesson of Tool Calling (arXiv 2608.06370, August 2026). Its "BFCL v4" numbers
+      hold none of the multi-turn or agentic categories that carry 70% of V4's overall, and changing
+      the call interface moved its models' accuracies by -26.9 to +10.6 points.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers last updated the leaderboard on 2026-04-12 and last pushed the repository
+    on 2026-04-13 (GitHub API), and an August 2026 paper reports new results on BFCL v4 (as_used).
+  source: src-bfcl-leaderboard
+  quote: 'Last Updated: 2026-04-12'
+activity: accepting-submissions
+activity_note: The board has never run in rounds. It was last updated six months before this entry
+  was read; the contributing guide at main still invites model handlers by pull request, and the
+  page points model developers to Discord.
+activity_basis:
+  reason: A developer adds a model by opening a pull request with a handler for it; the maintainers
+    then run it.
+  source: src-github-bfcl-contributing
+  quote: Raise a [Pull Request](https://github.com/ShishirPatil/gorilla/pulls) with your new Model
+    Handler and the necessary updates to the model config.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude-Opus-4-5-20251101 (FC)
+    source: src-bfcl-leaderboard-data
+    observed_on: 2026-10-14
+    quote: 1,77.47%,Claude-Opus-4-5-20251101 (FC)
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each entry's possible answers, ground-truth call trajectories and backend
+  states, or reference answer, shipped with the dataset and the evaluation package.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data and the evaluation package are public and the leaderboard names the exact package
+    version its rows were run with; a run needs API keys for the models and, for web search, a
+    search API.
+  source: src-bfcl-leaderboard
+  quote: pip install bfcl-eval==2025.12.17
+
+task:
+  exists: true
+  input:
+    - a user query, or a conversation of several turns, with function documents in JSON schema,
+      passed in the model's native tools field (FC) or in BFCL's system prompt (Prompt)
+    - for multi-turn entries, a stateful API backend (file system, vehicle control, trading bot,
+      travel booking and companion APIs) that executes the calls
+    - for agentic entries, web-search and page-fetch tools, or a memory backend (key-value, vector
+      or recursive summarisation) filled in earlier sessions
+  output: Function calls with their arguments, or no call when no function fits; in agentic entries
+    a final answer in a fixed answer-and-context format.
+  scoring: "Single-turn: the call's abstract syntax tree must match the function name and put every argument
+    in its set of possible answers, all or nothing per entry. Multi-turn: state and response checks after
+    every turn, correct only if both pass in all turns; a turn of more than 20 steps fails. Agentic: exact
+    match of the normalised answer field. V4's overall weights Agentic 40%, Multi-Turn 30%, Live 10%,
+    Non-Live 10% and Irrelevance 10%."
+  source: src-pmlr-v267-patil25a-pdf
+  quote: A function call is correct if the function name matches exactly and if all parameter values
+    fall within their respective possible answers.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The Hugging Face dataset holds the V3 files; the V4 agentic data ships with the
+    evaluation package in the repository. Neither needs an account.
+  access_basis:
+    reason: The dataset, possible answers included, is public and ungated on Hugging Face, and the
+      code and data are in the public repository.
+    source: src-hf-api-bfcl
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The categories and scoring change in named versions (V1 to V4), and the dataset fixes
+      and scoring changes between them are dated in the CHANGELOG; the board names the commit and
+      package version its rows were run with.
+    source: src-github-bfcl-changelog
+    quote: 'BFCL V4 release:'
+  data_provenance:
+    - web-scraped
+    - crowd-authored
+    - model-generated
+    - expert-authored
+  data_provenance_note: Single-turn functions were collected from popular GitHub repositories. The
+    live entries are real user queries sent to the maintainers' hosted endpoint between 2024-02-26
+    and 2024-04-01, deduplicated and lightly edited. Multi-turn queries were generated by prompting
+    GPT-4o, with ground-truth trajectories labelled by expert annotators. The web-search questions
+    are human-crafted.
+  data_provenance_source: src-pmlr-v267-patil25a-pdf
+  data_provenance_quote: We collect functions from popular GitHub repositories (top 100 starred) in
+    Python, Java, and JavaScript.
+  contamination_risk: medium
+  contamination_risk_note: Every category, possible answers included, is public, so a training route
+    is open. The live set was deduplicated against public function-calling sets to resist it. The
+    paper's perplexity comparison finds one model (xLAM-7B) more familiar with the public
+    single-turn set than with the later crowd-sourced one, a route evidenced for one entrant only.
+  contamination_evidence:
+    - source: src-pmlr-v267-patil25a-pdf
+      stance: supports
+      quote: In the instances of xLAM, the crowd-sourced evaluation reveals vulnerabilities that the
+        original static test masked.
+  dataset_licence: Apache-2.0
+  dataset_licence_note: The Hugging Face record's licence tag; the README says the leaderboard
+    statistics and data are released under Apache 2.0.
+  dataset_licence_source: src-hf-api-bfcl
+  dataset_licence_quote: '"license:apache-2.0"'
+  size:
+    - count: 5088
+      unit: scored entries (Agentic 665, Multi-Turn 800, Live 1,351, Non-Live 1,150, Irrelevance
+        1,122)
+      subset: V4
+      source: src-bfcl-blog-v4-web-search
+      quote: Overall Score Percentage Weighted Average (5088)
+    - count: 5218
+      unit: non-scoring entries (5,200 format-sensitivity cases for Prompt models, 26 prompt formats
+        of 200 cases, and 18 live relevance entries)
+      subset: V4
+      source: src-bfcl-blog-v4-web-search
+      quote: Non-Scoring No Score Impact (5218)
+    - count: 100
+      unit: multi-hop web-search questions, each scored with and without search snippets
+      subset: V4 web search
+      source: src-bfcl-blog-v4-web-search
+      quote: This category contains 100 human-crafted multihop questions spanning various domains.
+    - count: 4441
+      unit: scored entries
+      subset: V3
+      source: src-bfcl-blog-v3-multi-turn
+      quote: Overall Score Unweighted Average (4441)
+    - count: 2251
+      unit: live, user-contributed entries
+      subset: V2 Live
+      source: src-bfcl-blog-v2-live
+      quote: features a diverse set of 2,251 question-function-answer pairs
+    - count: 2000
+      unit: question-function-answer pairs
+      subset: V1
+      source: src-bfcl-blog-v1
+      quote: It consists of 2k question-function-answer pairs with multiple languages (python, java,
+        javascript, restAPI)
+  languages:
+    - English
+    - Python
+    - Java
+    - JavaScript
+  languages_note: The function calls are Python, Java and JavaScript (REST and SQL entries were in
+    V1). The dataset is tagged English; the live queries span more than 15 natural languages.
+  languages_source: src-pmlr-v267-patil25a-pdf
+  languages_quote: more than 15 languages represented in user queries
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Gorilla project at UC Berkeley
+  maintainer_basis:
+    reason: The leaderboard is on gorilla.cs.berkeley.edu, the paper's authors are at UC Berkeley,
+      and the README calls BFCL a UC Berkeley effort.
+    source: src-github-bfcl-readme
+    quote: BFCL is an open source effort from UC Berkeley
+  maintainer_type: academic-lab
+  maintainer_type_note: The code and data sit in ShishirPatil/gorilla, a personal GitHub account,
+    which points at `individual`; the Berkeley domain and the README's statement point at the lab
+    (review_checks).
+  submission_process:
+    - maintainer-run
+    - sandboxed-rerun
+  submission_process_note: The maintainers choose models and run them, and publish every model
+    response. A developer who wants a model listed opens a pull request with a handler for it (its
+    inference code, not its results), and the maintainers run it; the model must be publicly
+    accessible, open weights or a public API.
+  submission_process_source: src-bfcl-leaderboard
+  submission_process_quote: All the model response we obtained is available here.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-bfcl-blog-v1
+      quote: with the open-source model (OpenFunctions-v2), Mistral-medium model (from Mistral AI)
+        and Claude-2.1 (from Anthropic) following close behind
+  independence_flags_note: The V1 board ranked the maintainers' own Gorilla OpenFunctions-v2, which
+    the V1 post released beside it, and the live set was built from queries sent to their hosted
+    endpoint. The board of 2026-04-12 holds no Gorilla model. No funding or credits from an
+    evaluated party appear in the paper or the posts read.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The board lists API models and locally served open-weight models; the protocol
+    needs nothing beyond inference spend, plus a search API key for web search.
+  compute_tier_source: src-bfcl-leaderboard
+  compute_tier_quote: Cost is calculated as an estimate of the cost for the entire benchmark, in
+    USD.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Generation and scoring are automatic. Web search runs against the live
+    web through a search API, so a past web-search run cannot be repeated against the same pages,
+    which is `live-world-state`, but tier 3 forbids that blocker beside fully-automatable
+    (review_checks).
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: bfcl-eval (the berkeley-function-call-leaderboard package; `bfcl generate`, then `bfcl
+    evaluate`)
+  harness_source: src-github-bfcl-readme
+  harness_quote: bfcl generate --model MODEL_NAME --test-category TEST_CATEGORY --num-threads 1
+  harness_gotcha:
+    source: src-github-bfcl-readme
+    quote: the score reported will treat all unevaluated categories as 0 during calculation
+  harness_gotcha_note: A run over some categories still prints an Overall Acc, with the missing
+    categories counted as zero.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for ShishirPatil/gorilla, read 2026-10-14; not a
+    quoted Source.
+  est_cost_usd:
+    min: 0.46
+    max: 355.17
+    basis: The Total Cost column of the board's 109 rows on 2026-04-12, the maintainers' estimate
+      for one full run of each model, from Qwen3-0.6B (FC) to Grok-4-0709 (FC).
+    source: src-bfcl-leaderboard-data
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the harness, which here means the BFCL version and commit AND the call mode
+  # (FC, the model's native tools field, or Prompt, BFCL's system prompt). One model's two modes rank 1st and 57th
+  # (src-bfcl-leaderboard-data), and no EvalConditions field names the call interface, so the mode is recorded in
+  # `harness` (review_checks). Third-party papers swap BFCL's handler for their own scaffold (as_used), and
+  # thinking modes are separate rows.
+  material_extra:
+    - harness
+    - scaffold
+    - reasoning_effort
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The board's Overall Acc is V4's weighted average. Recomputed from all 109 rows of the CSV,
+    it matches 0.4 Agentic + 0.3 Multi-Turn + 0.1 Live + 0.1 Non-Live + 0.1 Irrelevance to within
+    0.01 points, although the page calls it unweighted (review_checks).
+  source: src-bfcl-blog-v4-web-search
+  quote: 'Formula: Overall Score = (Agentic × 40%) + (Multi-Turn × 30%) + (Live × 10%) + (Non-Live × 10%)
+    + (Hallucination × 10%)'
+secondary_axes:
+  - cost
+  - latency
+secondary_axes_basis:
+  reason: The board reports each row's total cost and its latency beside the accuracies.
+  source: src-bfcl-leaderboard
+  quote: Latency is measured in seconds.
+
+homepage: https://gorilla.cs.berkeley.edu/leaderboard.html
+repository: https://github.com/ShishirPatil/gorilla/tree/main/berkeley-function-call-leaderboard
+dataset_url: https://huggingface.co/datasets/gorilla-llm/Berkeley-Function-Calling-Leaderboard
+leaderboard_url: https://gorilla.cs.berkeley.edu/leaderboard.html
+
+versions:
+  - version: v1
+    label: BFCL V1
+    version_kind: edition
+    released: 2024-02-26
+    items: 2000
+    changes: The first release, 2,000 single-turn entries in Python, Java, JavaScript, REST and SQL,
+      shown in nine categories that cross AST and executable evaluation with simple, multiple,
+      parallel and parallel-multiple calls, plus relevance detection.
+    breaking: true
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-bfcl-blog-v1
+      - src-gorilla-blog-index
+  - version: v2
+    label: BFCL V2 Live
+    version_kind: edition
+    released: 2024-08-19
+    changes: Added 2,251 live entries from real user queries (258 simple, 1,053 multiple, 16
+      parallel, 24 parallel multiple, 882 irrelevance, 18 relevance), scored by AST matching; with
+      V1's entries they formed the BFCL-v2 dataset behind the overall.
+    breaking: true
+    supersedes_version: v1
+    superseded_by: v3
+    frozen: true
+    sources:
+      - src-bfcl-blog-v2-live
+      - src-github-bfcl-changelog
+  - version: v3
+    label: BFCL V3 Multi-Turn
+    version_kind: edition
+    released: 2024-09-19
+    items: 4441
+    changes: Added 800 multi-turn entries (base, missing function, missing parameter, long context)
+      scored by state checks of the API backends. The overall became the unweighted average of
+      Non-Live, Live and Multi-Turn, a third each, over 4,441 entries.
+    breaking: true
+    supersedes_version: v2
+    superseded_by: v4
+    errata:
+      - date: 2024-10-30
+        scope: multi-turn categories
+        description: A response-based checker was added beside the state checker, so an entry passes
+          only if both do, and multi-turn irrelevance detection was removed, with some entries
+          modified to match.
+        source: src-github-bfcl-changelog
+      - date: 2025-04-09
+        scope: executable categories
+        description: The executable categories (rest, exec_simple, exec_parallel, exec_multiple,
+          exec_parallel_multiple) were retired from the leaderboard and the evaluation pipeline.
+        source: src-github-bfcl-changelog
+    frozen: true
+    sources:
+      - src-bfcl-blog-v3-multi-turn
+      - src-github-bfcl-changelog
+  - version: v4
+    label: BFCL V4 Agentic
+    version_kind: edition
+    released: 2025-07-17
+    items: 5088
+    changes: Added the agentic categories, web search (100 multi-hop questions, with and without
+      snippets) and memory (key-value, vector and recursive-summarisation backends), and non-scoring
+      format-sensitivity tests for Prompt models. The overall became a weighted average, Agentic
+      40%, Multi-Turn 30%, Live, Non-Live and Irrelevance 10% each, and Non-Live and Live accuracies
+      stopped including relevance and irrelevance.
+    breaking: true
+    supersedes_version: v3
+    errata:
+      - date: 2025-09-17
+        scope: live_simple
+        description: A wrong date in the ground truth of live_simple_205-116-13 was fixed.
+        source: src-github-bfcl-changelog
+      - date: 2025-10-01
+        scope: multi_turn_base
+        description: The ground truth of multi_turn_base_154 was fixed.
+        source: src-github-bfcl-changelog
+    frozen: false
+    sources:
+      - src-bfcl-blog-v4-web-search
+      - src-github-bfcl-changelog
+      - src-bfcl-leaderboard
+
+tags:
+  - function-calling
+  - tool-calling
+  - leaderboard
+  - multi-turn
+  - ast-evaluation
+  - web-search
+  - agent-memory
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-pmlr-v267-patil25a-pdf
+    - src-pmlr-v267-patil25a
+    - src-bfcl-leaderboard
+    - src-bfcl-leaderboard-data
+    - src-gorilla-blog-index
+    - src-bfcl-blog-v1
+    - src-bfcl-blog-v2-live
+    - src-bfcl-blog-v3-multi-turn
+    - src-bfcl-blog-v4-web-search
+    - src-github-bfcl-readme
+    - src-github-bfcl-changelog
+    - src-github-bfcl-contributing
+    - src-hf-api-bfcl
+    - src-arxiv-2608-06370-v1
+  sources_note: >
+    The paper's PMLR PDF read as text (no DOI; withheld from archiving, as its raw text holds the
+    corresponding author's e-mail address) and its PMLR abstract page; the leaderboard page and the
+    blog posts with scripts and styles stripped; the CSV the leaderboard table loads; the README
+    (withheld for a maintainer's e-mail address), CHANGELOG and CONTRIBUTING guide at main; the
+    Hugging Face API record; and the v1 PDF of arXiv 2608.06370 (a DOI, not archived). The V4 memory
+    and format-sensitivity posts were read but are not cited; the paper covers memory.
+  confidence: medium
+  review_checks:
+    - check: The page says Overall Accuracy is an unweighted average, but all 109 CSV rows match
+        V4's weighted formula (0.4 Agentic, 0.3 Multi-Turn, 0.1 Live, 0.1 Non-Live, 0.1 Irrelevance)
+        to within 0.01 points, and an unweighted mean misses by up to 23. The V4 post calls the last
+        10% Hallucination Measurement, but its 1,122 entries are irrelevance only; relevance is
+        non-scoring.
+      field: aggregation_policy
+      source: src-bfcl-leaderboard
+      quote: Overall Accuracy is the unweighted average of all the sub-categories.
+    - check: FC against Prompt mode is material (Claude-Opus-4-5-20251101 is first in FC mode at
+        77.47% and 57th in Prompt mode at 33.47%), but no EvalConditions field names the call
+        interface, so it is folded into `harness`. A dedicated condition field may be wanted.
+      field: comparability.material_extra
+      source: src-bfcl-leaderboard-data
+      quote: 57,33.47%,Claude-Opus-4-5-20251101 (Prompt)
+    - check: AST matching is tagged constraint-check rather than exact-match, because each argument
+        may take any of several reference values after whitespace and punctuation are removed, with
+        type and required-parameter checks. The agentic answer match also strips punctuation, a
+        little beyond exact-match's whitespace-or-case allowance. execution-tests is rejected
+        because the executable categories, scored in V1 and out of V3's composition, were retired in
+        April 2025.
+      field: evaluation_method
+    - check: submission_process is maintainer-run plus sandboxed-rerun. A developer's pull request
+        supplies inference code (a handler), not results, so maintainer-scored-predictions does not
+        apply. The public-access rule allows a public API, so open-source-gated was not tagged.
+      field: governance.submission_process
+      source: src-github-bfcl-contributing
+      quote: Ensure that the model you add is publicly accessible, either open-source or behind a
+        publicly available API.
+    - check: maintainer_type academic-lab, although the repository is in a personal account
+        (ShishirPatil, a User per the GitHub API); `individual` is the alternative.
+      field: governance.maintainer_type
+      source: src-github-bfcl-readme
+      quote: BFCL is an open source effort from UC Berkeley
+    - check: Web search used DuckDuckGo in the V4 post and the paper; the README at main uses
+        SerpAPI. No CHANGELOG entry dates the switch (the CHANGELOG ends at 2025-10-01, while the
+        board was re-run under bfcl-eval 2025.12.17), so whether web-search scores before and after
+        compare, and whether the switch is a version, is open.
+      field: versions
+      source: src-github-bfcl-readme
+      quote: we use the [SerpAPI](https://serpapi.com/) service to perform web search
+    - check: Scoring changes inside a version (the 2024-10-30 multi-turn checker, the April 2025
+        retirement of the executable categories) are recorded as errata on v3, not as revisions;
+        v2's total item count and overall formula are not stated in the sources read, so v2 has no
+        items.
+      field: versions
+    - check: reproducibility_tier fully-automatable with no live-world-state blocker, following
+        forecastbench and kaggle-game-arena, although web search runs against the live web.
+      field: execution.reproducibility_tier
+    - check: The live entries are queries from users of the maintainers' hosted endpoint (banks,
+        tech companies, agent developers and hobbyists) and are tagged crowd-authored; they were not
+        written for the benchmark, and many authors were practitioners, which could read as
+        expert-authored.
+      field: data.data_provenance
+      source: src-bfcl-blog-v2-live
+      quote: our users including large banks, tech-corporations, agent developers, amongst hobbyists
+        and enterprises
+    - check: maintainer-competes-on-own-benchmark rests on V1, which ranked the maintainers' Gorilla
+        OpenFunctions-v2; the board of 2026-04-12 has no Gorilla model, so the flag may belong in
+        history rather than now.
+      field: governance.independence_flags
+    - check: The V1 post's citation block gives the paper as NeurIPS 2024, while the PMLR page and
+        the leaderboard cite ICML 2025; release_venue follows PMLR.
+      field: release_venue
+      source: src-bfcl-blog-v1
+      quote: booktitle = {Advances in Neural Information Processing Systems}
+    - check: long-horizon-execution rejected for want of a source stating ~10 dependent actions per
+        multi-turn entry, although one failed turn fails the entry.
+      field: capability

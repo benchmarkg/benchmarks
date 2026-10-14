@@ -1,0 +1,548 @@
+# data/benchmarks/agents-tooluse/webarena.yaml
+#
+# P1-S9-T01, agents-tooluse entry 3 of 10. Filled from the WebArena paper, arXiv 2307.13854 read as its v4 PDF
+# (2024-04-16, ICLR 2024), and its abstract page; the repository README at main and the repository's two GitHub
+# releases (v0.1.0, v0.2.0); the leaderboard, a Google Sheet linked from the README, read through its CSV export
+# after docs.google.com's robots.txt was read (it allows /spreadsheet paths for every agent); the WebArena-x
+# suite page at webarena.dev; and the v1 PDF of Agent-as-Annotators (arXiv 2604.07776, April 2026), a paper that
+# reports WebArena results through BrowserGym. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+
+id: webarena
+name: WebArena
+tagline: 812 long-horizon tasks on self-hosted shopping, forum, GitLab, CMS and map sites, scored by
+  functional correctness.
+description: >
+  A benchmark of 812 web tasks, instantiated from 241 templates, run on self-hosted copies of common
+  kinds of website: an online store (OneStopShop, on Magento) and its admin panel, a Reddit-like forum
+  (Postmill), GitLab, an OpenStreetMap map and an offline English Wikipedia, with a calculator and a
+  scratchpad, all shipped as Docker images. An agent gets a natural-language intent and the page (its
+  URL, the open tabs and the content as an accessibility tree, HTML or a screenshot) and acts with
+  browser actions -- click, type, hover, scroll, tab and URL operations -- until it issues stop, with
+  an answer where one is asked for; the paper caps an episode at 30 steps. Each task is scored by
+  functional correctness. Answers are checked by exact match, by required substrings or by a
+  gpt-4-0613 judge; navigation and content-and-configuration tasks are checked by programs that read
+  the websites' databases or pages after the episode. Some tasks cannot be done and expect "N/A". Five
+  computer science graduate students completed 78.24% of a 170-task sample, against 14.41% for the
+  paper's best GPT-4 agent. The leaderboard is a Google Sheet that lists self-reported results, with
+  trajectories required since September 2024, beside rows the maintainers ran. Entrants bring their
+  own agents; BrowserGym and AgentLab, which the README now recommends, add a common harness and a
+  381-task test split. VisualWebArena, WebArena-Lite and the other WebArena-x projects are separate
+  benchmarks and are not included here.
+self_description:
+  source: src-github-webarena-readme
+  quote: WebArena is a standalone, self-hostable web environment for building autonomous agents
+external_ids:
+  arxiv: '2307.13854'
+paper:
+  title: 'WebArena: A Realistic Web Environment for Building Autonomous Agents'
+  arxiv: '2307.13854'
+  version_read: v4
+  source: src-arxiv-2307-13854-v4
+released: 2023-07-25
+released_note: The paper's first arXiv version, as the abstract page dates it; the repository was
+  created the day before (GitHub API) and its first tagged release, v0.1.0, followed on 2023-08-23.
+released_source: src-arxiv-2307-13854
+released_quote: Submitted on 25 Jul 2023
+release_venue: ICLR 2024
+release_venue_source: src-arxiv-2307-13854-v4
+release_venue_quote: Published as a conference paper at ICLR 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/web-navigation
+  primary_basis:
+    reason: An agent completes tasks by browsing and acting on web pages, and the grader checks the
+      answer it returned or the state it left in the websites. The tasks stay inside self-hosted web
+      sites in a browser, which computer-use-gui's exclusion sends here.
+    source: src-arxiv-2307-13854
+    quote: Specifically, we focus on agents that perform tasks on the web, and create an environment
+      with fully functional websites from four common domains
+  secondary:
+    - agents-tooluse/long-horizon-autonomy
+  secondary_basis:
+    reason: The paper calls its tasks long-horizon, and long-horizon-autonomy's own distinction puts
+      the horizon second to the interface subdomain.
+    source: src-arxiv-2307-13854
+    quote: The tasks in our benchmark are diverse, long-horizon, and designed to emulate tasks that
+      humans routinely perform on the internet
+domain_considered_and_rejected:
+  - term: agents-tooluse/computer-use-gui
+    reason: The agent acts on rendered pages, but only on web sites in a browser, which the term's
+      exclusion (and its webarena near miss) assigns to web-navigation.
+  - term: agents-tooluse/tool-api-calling
+    reason: The map, calculator and scratchpad are web sites operated through browser actions, not
+      functions or APIs the agent invokes.
+    source: src-arxiv-2307-13854-v4
+    quote: we design a compound action space that emulates the keyboard and mouse operations
+      available on web pages
+capability:
+  - planning
+  - context-integration
+  - honesty
+capability_basis:
+  planning:
+    reason: Each task is an episode against an explicit goal whose outcome the evaluator checks, and
+      the paper claims planning. Information-seeking tasks are scored on the final answer, which
+      planning's exclusion covers (see review_checks).
+    source: src-arxiv-2307-13854-v4
+    quote: Success requires sophisticated, long-term planning and reasoning.
+  context-integration:
+    reason: Answers depend on the environment's own data (the simulated user's orders, repositories
+      and posts), which the agent has to find in the sites, not on knowledge it already holds.
+    source: src-arxiv-2307-13854-v4
+    quote: Importantly, these tasks in WebArena often require navigation across multiple pages or
+      focus on user-centric content.
+  honesty:
+    reason: Unachievable tasks reward answering "N/A" instead of an invented answer, and the paper
+      reports success on them separately from achievable tasks (Table 2's SR_UA column).
+    source: src-arxiv-2307-13854-v4
+    quote: avoid making unfounded claims and its adherence to factual accuracy
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: The paper caps an episode at 30 state transitions and asks only that a task need more
+      than one or two actions; no source gives per-task action counts near ten, and a wrong page can
+      be left with go_back, so an intermediate error does not in general make success unattainable.
+    source: src-arxiv-2307-13854-v4
+    quote: The maximum number of state transitions is set to 30.
+  - term: tool-use
+    reason: The tools the paper names (map, calculator, scratchpad) are web sites the agent operates
+      by clicking and typing; no callable tool or API is exposed or scored.
+    source: src-arxiv-2307-13854-v4
+    quote: Furthermore, WebArena incorporates several utility tools, such as map, calculator, and
+      scratchpad
+  - term: grounding
+    reason: The paper describes the tasks as grounding instructions to interactions, but the score
+      is whether the task was done, not whether an expression was attached to its referent.
+    source: src-arxiv-2307-13854-v4
+    quote: on grounding high-level natural language instructions to interactions in WebArena
+  - term: autonomy
+    reason: The agent runs unattended, but no source prohibits or measures human intervention; the
+      leaderboard lists a row whose high-level plans came from a human, with only a note.
+    source: src-webarena-leaderboard
+    quote: SteP,33.5,SteP,SteP,Link,High-level plans are derived by human
+  - term: instruction-following
+    reason: Success is whether the intent was carried out, not compliance with stated directions
+      checked apart from the outcome, and no source claims instruction following.
+
+evaluation_method:
+  - environment-state-check
+  - exact-match
+  - model-graded-judge
+evaluation_method_note: Navigation and content-and-configuration tasks are checked by locators (a
+  database query, a site API call or a JavaScript selector) that read the websites after the
+  episode, with the located content then matched against required keywords. Information-seeking
+  answers are scored by exact_match, must_include (the answer contains each reference string) or
+  fuzzy_match, in which gpt-4-0613 judges semantic equivalence and only "correct" scores one.
+  must_include has no term of its own (see review_checks).
+evaluation_method_basis:
+  reason: Programs inspect the websites' state after the episode, so any trajectory that reaches the
+    required state passes; answers go to exact match or the judge model.
+  source: src-arxiv-2307-13854-v4
+  quote: we establish reward functions rprog(s) that programmatically examine the intermediate
+    states s within an execution trajectory
+evaluation_method_considered_and_rejected:
+  - term: constraint-check
+    reason: Programs validate each task, but what they read is the websites' state after the
+      episode, which the term's exclusion (and its webarena near miss) assigns to
+      environment-state-check.
+  - term: execution-tests
+    reason: No code the agent wrote is run against tests; the agent's actions change the sites,
+      whose state is then checked.
+designed_for_subjects:
+  - agent-scaffold
+  - model-in-benchmark-harness
+  - human-expert
+designed_for_subjects_note: agent-scaffold for the entrants, who bring their own agents (the
+  README's "Develop Your Prompt-based Agent" section, and leaderboard rows such as Claude Code with
+  an MCP server or OpenAI's Operator). model-in-benchmark-harness for the paper's results and the
+  leaderboard's "WebArena Team" rows, which run a provider's model inside the repository's two
+  baseline agents. human-expert for the leaderboard's Human Performance row, five computer science
+  graduate students scored under the same evaluator.
+designed_for_subjects_basis:
+  reason: The scaffold is what entrants vary, and a comparison has to know it; the paper's own
+    agents are a fixed prompt-based loop around each model.
+  source: src-arxiv-2604-07776-v1
+  quote: WebArena and VWA leaderboard entries use varied setups (SoM, screenshots, custom pipelines)
+    that differ from GenericAgent.
+observed_subjects:
+  values:
+    - agent-scaffold
+    - model-in-benchmark-harness
+  basis: Most leaderboard rows are agent systems named by their own work (Narada AI Code, OpAgent,
+    IBM CUGA, Claude Code + GBOX MCP); the maintainers' rows name only a model run in the
+    repository's baseline agent.
+  source: src-webarena-leaderboard
+as_used:
+  - protocol: BrowserGym and AgentLab's GenericAgent with accessibility-tree observations, scored on
+      BrowserGym's official test split, with a failed task retried up to 10 times and the WebArena
+      instance reset between runs.
+    split: BrowserGym's test split, 381 of the 812 tasks (the other 431 are its train split)
+    source: src-arxiv-2604-07776-v1
+    quote: For WebArena (381 test / 431 train)
+    note: Agent-as-Annotators (April 2026) reports 41.5% on the 381-task split for its 9B model and
+      42.1% on all 812 tasks, the number the leaderboard lists. It names the harness and its version
+      as confounds when comparing with older BrowserGym runs.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The leaderboard holds rows dated 2026 up to September (Narada AI Code), and papers report
+    on it in 2026, such as Agent-as-Annotators in April. The repository was last pushed on
+    2025-11-26 (GitHub API).
+  source: src-webarena-leaderboard
+  quote: 09/2026,✗,-,Narada AI Code,86.1,Narada AI Code
+activity: accepting-submissions
+activity_note: Submissions go to the sheet as a comment or by e-mail to an author (the address is
+  not recorded here). The leaderboard has never run in rounds.
+activity_basis:
+  reason: The sheet takes entries now and states what a submission must include.
+  source: src-webarena-leaderboard
+  quote: Starting in September 2024, we require submissions to include raw trajectories (per-step
+    observation and predicted action), to enhance transparency on the leaderboard.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: A3-Qwen3.5-9B (Agent-as-Annotators)
+    source: src-webarena-leaderboard
+    observed_on: 2026-10-14
+    quote: 04/2026,✔,9,A3-Qwen3.5-9B,42.1,Agent-as-Annotators
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's reference answer or evaluator program (locator and required
+  keywords), written by the authors and generated into one configuration file per task from the
+  repository.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The websites ship as Docker images (and an Amazon machine image), and the task
+    configurations and evaluators are in the repository; the fuzzy_match tasks also need API access
+    to the judge model.
+  source: src-arxiv-2307-13854-v4
+  quote: End users can download our packaged Docker images and run them on their systems
+
+task:
+  exists: true
+  input:
+    - a natural-language intent, such as placing an order, changing a GitLab project or a question
+      about the user's own data
+    - the current page's URL, the open tabs and the focused tab's content, as an accessibility tree
+      with element IDs, HTML or a screenshot
+  output: One browser action per step (click, type, hover, press, scroll, tab and URL operations),
+    ending with stop and, for information-seeking tasks, an answer ("N/A" where the task cannot be
+    done).
+  scoring: Binary success per task, and the success rate over the 812 tasks. Answers are scored by
+    exact_match, must_include or fuzzy_match (a gpt-4-0613 judge); navigation and
+    content-and-configuration tasks by programs that locate content in the sites' databases, APIs or
+    pages after the episode and check required keywords.
+  source: src-arxiv-2307-13854-v4
+  quote: These intermediate states are often the underlying databases of the websites
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The task configurations, reference answers and evaluators are in the public repository
+      and the websites are public Docker images, with no registration.
+    source: src-arxiv-2307-13854-v4
+    quote: Our code, data, environment reproduction resources, and video demonstrations are publicly
+      available
+  refresh: versioned-releases
+  refresh_note: Commits after v0.2.0 (the repository was last pushed on 2025-11-26) were not read
+    for task or evaluator changes.
+  refresh_basis:
+    reason: The one revision of the tasks, v0.2.0, fixed annotation errors under a release tag and a
+      dated announcement, which says no major annotation changes are expected.
+    source: src-github-webarena-readme
+    quote: We re-examined the whole dataset and fixed the spotted annotation bugs.
+  data_provenance:
+    - expert-authored
+  data_provenance_note: The authors wrote the intents and templates, the reference answers were
+    annotated twice by the authors and an external annotator, and three authors wrote the evaluator
+    programs. ChatGPT was offered to the annotators for inspiration only. The websites' content
+    (products, posts, repositories, map data) was sampled from real sites; it is the environment,
+    not the items.
+  data_provenance_source: src-arxiv-2307-13854-v4
+  data_provenance_quote: Every author has extensive experience with web-based tasks.
+  contamination_risk: medium
+  contamination_risk_note: Every task, reference answer and evaluator has been public since 2023, so
+    a training route is plausible; no source evidences one into the scored tasks. BrowserGym's split
+    names 431 of the 812 tasks a train split, so a full-812 score from an agent trained on it would
+    include tasks it trained on; Agent-as-Annotators reports on the test split for that reason.
+  contamination_risk_source: src-arxiv-2604-07776-v1
+  contamination_risk_quote: we report on the test split only to avoid training data contamination
+  contamination_evidence: []
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_note: 78.24% from five computer science graduate students on one task per
+    template (170 tasks), not the 812-task set; the leaderboard lists it as the Human Performance
+    row. Systems have since passed it (86.1 for the top row read). The taxonomy's crowd-average
+    entry names webarena as its near miss.
+  ceiling_anchor_type_source: src-arxiv-2307-13854-v4
+  ceiling_anchor_type_quote: We sample one task from each of the 170 templates and ask five computer
+    science graduate students to perform these tasks.
+  dataset_licence_note: No source read states a licence for the task data. GitHub reports Apache-2.0
+    for the repository that holds the configurations (API, read 2026-10-14); the websites' imported
+    content is not covered by any licence statement read.
+  size:
+    - count: 812
+      unit: tasks (instantiated intents)
+      source: src-arxiv-2307-13854-v4
+      quote: In total, we curated 241 templates and 812 instantiated intents.
+    - count: 241
+      unit: intent templates
+      source: src-arxiv-2307-13854-v4
+      quote: In total, we curated 241 templates and 812 instantiated intents.
+    - count: 381
+      unit: tasks
+      subset: BrowserGym's test split
+      source: src-arxiv-2604-07776-v1
+      quote: For WebArena (381 test / 431 train)
+    - count: 170
+      unit: tasks, one per template
+      subset: the human comparison
+      source: src-arxiv-2307-13854-v4
+      quote: We sample one task from each of the 170 templates and ask five computer science
+        graduate students to perform these tasks.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The WebArena team, Carnegie Mellon University (web-arena-x)
+  maintainer_basis:
+    reason: Every author of the paper lists Carnegie Mellon University (the affiliation line carries
+      e-mail addresses and is not quoted), the canonical implementation sits in the web-arena-x
+      organisation, and the leaderboard is the team's sheet.
+    source: src-github-webarena-readme
+    quote: implementation of WebArena to reproduce the results reported in the paper
+  maintainer_type: academic-lab
+  submission_process:
+    - self-reported
+    - maintainer-run
+  submission_process_note: Outside entrants send their own numbers, by a comment on the sheet or by
+    e-mail, and most rows cite the entrant's own work as the result source; since September 2024 raw
+    trajectories are required, but no source says anyone checks them. Rows whose source is
+    "WebArena" or "WebArena Team" were run by the maintainers on other developers' models.
+  submission_process_source: src-webarena-leaderboard
+  submission_process_quote: 09/2025,✗,-,DeepSky Agent,66.9,Self-reported
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-webarena-leaderboard
+      quote: 05/2024,✔,-,gpt-4o-2024-05-13,13.1,WebArena Team
+    - flag: grader-from-evaluated-party
+      source: src-webarena-leaderboard
+      quote: 06/2023,✔,-,gpt-4-0613,14.9,WebArena
+  independence_flags_note: The maintainers list rows they ran themselves, baseline agents around
+    OpenAI, Meta and other models rather than a system of their own. The fuzzy_match judge is
+    gpt-4-0613 (evaluation_method_basis), which is itself a ranked entry, and OpenAI's other models
+    are ranked too. The paper thanks AWS AI for a gift; no Amazon system appears in the sources
+    read, so funded-by-evaluated-party is not set.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2307-13854-v4
+    quote: This project was also partially supported by a gift from AWS AI.
+  funding_note: The paper also thanks the Center for AI Safety for compute and acknowledges Air
+    Force Research Laboratory sponsorship.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The websites run as Docker containers on ordinary machines (or the provided
+    Amazon machine image), and the cost of a run is inference for the agent plus the gpt-4-0613
+    judge on fuzzy_match tasks. Serving open weights locally is the entrant's choice.
+  compute_tier_source: src-github-webarena-readme
+  compute_tier_quote: a valid OpenAI API key starts with
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: The fuzzy_match tasks are graded by a pinned hosted model, gpt-4-0613,
+    so their official scores can be recomputed only while that snapshot is served. The vocabulary
+    has no blocker for a hosted judge (taxonomy/_failures/2026-09-28-webarena-005), so blockers are
+    left empty.
+  reproducibility_tier_basis:
+    reason: The environment is self-hosted from Docker images and reset by restarting the
+      containers, and scoring is programmatic apart from the judge calls.
+    source: src-arxiv-2307-13854-v4
+    quote: End users can download our packaged Docker images and run them on their systems
+  harness_availability: official-harness
+  harness: webarena (run.py with the evaluation_harness package; release v0.2.0). The README now
+    recommends AgentLab with BrowserGym for experiments.
+  harness_source: src-github-webarena-readme
+  harness_quote: implementation of WebArena to reproduce the results reported in the paper
+  harness_gotcha:
+    source: src-github-webarena-readme
+    quote: After evaluating the 812 examples, reset the environment to the initial state
+  harness_gotcha_note: Tasks change the sites' data, so the containers must be reset before a rerun,
+    and the hosted demo sites are for browsing only, not evaluation.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for web-arena-x/webarena, read 2026-10-14; not a
+    quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (environment-state-check pairs with no profile): the scaffold, which is what
+  # entrants vary, and the harness and its version (the repository's run.py or BrowserGym/AgentLab, whose
+  # versions change observation processing and action parsing); the step cap (30 in the paper); retries on
+  # failed tasks (AgentLab runs retry up to 10 times); and the fuzzy_match judge and its snapshot. The split
+  # (all 812, BrowserGym's 381-task test split, the Reddit subset) is subset_used, already in the fallback.
+  material_extra:
+    - scaffold
+    - harness
+    - max_steps
+    - retries_allowed
+    - judge_model
+    - judge_model_version
+
+homepage: https://webarena.dev/
+repository: https://github.com/web-arena-x/webarena
+leaderboard_url:
+  https://docs.google.com/spreadsheets/d/1M801lEpBbKSNwP-vDBkC_pF7LdyGU1f_ufZb_NWNBZQ/edit?usp=sharing
+
+versions:
+  - version: v0.1.0
+    label: The first tagged release
+    version_kind: revision
+    released: 2023-08-23
+    changes: The first release of the code and tasks; the paper's first version and the repository
+      were public from July 2023.
+    superseded_by: v0.2.0
+    frozen: true
+    sources:
+      - src-github-webarena-releases
+  - version: v0.2.0
+    label: The re-annotated release
+    version_kind: revision
+    released: 2023-10-21
+    items: 812
+    changes: Locators and required contents fixed across the test data, evaluation code fixed for
+      corner cases, and the homepage and Magento URLs corrected. The paper's October 2023 version
+      reports new results against it, with better prompts and the human comparison.
+    breaking: true
+    supersedes_version: v0.1.0
+    frozen: true
+    sources:
+      - src-github-webarena-releases
+      - src-github-webarena-readme
+
+subsets:
+  - id: webarena#browsergym-test
+    label: BrowserGym's test split
+    items: 381
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2604-07776-v1
+        quote: For WebArena (381 test / 431 train)
+    notes: BrowserGym's official split of the 812 tasks; papers that train on WebArena's
+      environments report on it, and its other 431 tasks are a train split.
+  - id: webarena#reddit
+    label: The leaderboard's Reddit subset
+    scored_separately: true
+    evidence:
+      - source: src-webarena-leaderboard
+        quote: AutoGuide,43.7,AutoGuide,AutoGuide,,✔,Reddit subset
+    notes: Listed under "WebArena Subset" on the sheet, apart from the full-set rows; its size is
+      not stated in the sources read.
+  - id: webarena#human-170
+    label: The human comparison's 170 tasks
+    items: 170
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2307-13854-v4
+        quote: We sample one task from each of the 170 templates and ask five computer science
+          graduate students to perform these tasks.
+    notes: One task per template, on which the 78.24% human rate is measured.
+
+lineage:
+  role: root
+  role_note: VisualWebArena extends WebArena to vision-grounded tasks and WebArena-Lite is a
+    165-task subset others report on, as Agent-as-Annotators states; neither has a record yet, so
+    neither is linked here (see review_checks).
+
+tags:
+  - web-navigation
+  - browser-agents
+  - self-hosted
+  - functional-correctness
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2307-13854-v4
+    - src-arxiv-2307-13854
+    - src-github-webarena-readme
+    - src-github-webarena-releases
+    - src-webarena-leaderboard
+    - src-webarena-site
+    - src-arxiv-2604-07776-v1
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text; its abstract page for the dates; the README
+    at main; the GitHub releases API for the two release tags; the leaderboard's first tab as CSV, read
+    after docs.google.com's robots.txt, which allows /spreadsheet paths, and withheld from archiving
+    because it prints an author's e-mail address; the WebArena-x suite page with scripts and styles
+    stripped; and Agent-as-Annotators' v1 PDF (a DOI, not archived) as evidence of current use. The
+    project page at webarena.dev/og/ was read but not cited, because it prints the authors' e-mail
+    addresses and the paper carries the same content.
+  confidence: medium
+  review_checks:
+    - check: Capabilities. long-horizon-execution was rejected because no source gives per-task
+        action counts near ten and navigation errors can be undone, while the domain secondary
+        long-horizon-autonomy rests on the abstract's own claim. planning was tagged although
+        information-seeking tasks are scored on the final answer, which planning's exclusion covers.
+        honesty rests on the unachievable tasks being reported separately (SR_UA).
+      field: capability
+    - check: must_include (the answer must contain each reference string) has no term. exact-match
+        covers exact_match only; whether constraint-check should carry must_include.
+      field: evaluation_method
+      source: src-arxiv-2307-13854-v4
+      quote: Second, we create must_include where any
+    - check: model-graded-judge needs reference_conditions naming the judge (gpt-4-0613); no
+        conditions record exists, and writing one was outside this task's write scope.
+      field: reference_conditions
+      source: src-arxiv-2307-13854-v4
+      quote: Specifically, in this work, we use gpt-4-0613 to perform this evaluation.
+    - check: human-expert and expert-average take five computer science graduate students as experts
+        for web tasks; the paper says the tasks need domain knowledge an average user may lack.
+      field: designed_for_subjects
+      source: src-arxiv-2307-13854-v4
+      quote: We sample one task from each of the 170 templates and ask five computer science
+        graduate students to perform these tasks.
+    - check: maintainer-competes-on-own-benchmark rests on the maintainers' baseline rows around
+        other developers' models. Whether listed agent systems come from the authors' own groups was
+        not checked.
+      field: governance.independence_flags
+      source: src-webarena-leaderboard
+      quote: 05/2024,✔,-,gpt-4o-2024-05-13,13.1,WebArena Team
+    - check: Lineage. WebArena-Lite (165 tasks) is a subset other papers report on, and no source
+        read names its maintainer; WebArena-Verified was not read. Once records exist, link
+        WebArena-Lite as a variant or fork and VisualWebArena as extended_by.
+      field: lineage
+      source: src-arxiv-2604-07776-v1
+      quote: because they report on WebArena-Lite (165 tasks), not the full 812-task benchmark
+    - check: VisualWebArena extends WebArena (ACL 2024, listed on the WebArena-x suite page);
+        lineage cannot link it until it has a record (extended_by is checked for a dangling
+        reference).
+      field: lineage
+      source: src-arxiv-2604-07776-v1
+      quote: (449 tasks) extends this to vision-grounded tasks
+    - check: The WebArena-x suite page labels WebArena NeurIPS 2024 Oral, while the paper's v4 PDF
+        says ICLR 2024; release_venue follows the PDF.
+      field: release_venue
+      source: src-webarena-site
+      quote: A realistic web environment for building autonomous agents. NeurIPS 2024 · Oral
+    - check: v0.2.0 is marked breaking because it changed locators and required contents in the test
+        data; no source says whether scores before and after are comparable.
+      field: versions
+      source: src-github-webarena-releases
+      quote: Further fix inaccurate or wrong locators and required_contents in the test data
+    - check: Only the sheet's first tab was read (CSV export); Agent-as-Annotators says the same
+        sheet has a VisualWebArena tab. The robots.txt reading rests on the prefix rule "Allow
+        /spreadsheet" matching /spreadsheets/ paths.
+      field: leaderboard_url
