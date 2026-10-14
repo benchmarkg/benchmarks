@@ -19,6 +19,7 @@ Credentials: IA_SPN_KEY / IA_SPN_SECRET (07 S5). SPN2 refuses anonymous captures
 """
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import time
@@ -55,22 +56,30 @@ class Wayback:
     def can_capture(self):
         return bool(self.key and self.secret)
 
-    def _request(self, url, data=None, auth=False):
+    def _request(self, url, data=None, auth=False, raw=False):
+        """(status, body): the body as text, or as bytes with `raw`, gzip undone (a capture fetched in its
+        `id_` form keeps the Content-Encoding the page was served with)."""
         wait = self._last + self.spacing - time.monotonic()
         if wait > 0:
             time.sleep(wait)
-        headers = {'User-Agent': USER_AGENT, 'Accept': 'application/json'}
+        headers = {'User-Agent': USER_AGENT, 'Accept': '*/*' if raw else 'application/json'}
         if auth:
             headers['Authorization'] = 'LOW %s:%s' % (self.key, self.secret)
         body = urllib.parse.urlencode(data).encode() if data is not None else None
         req = urllib.request.Request(url, data=body, headers=headers)
         from ingest.http.policy import refuse
         refuse(url)                                      # # 07 S10.1: no-collect and forbidden hold for every code path
+
+        def read(r):
+            b = r.read()
+            if raw:
+                return gzip.decompress(b) if b[:2] == b'\x1f\x8b' else b
+            return b.decode('utf-8', 'replace')
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
-                out = r.status, r.read().decode('utf-8', 'replace')
+                out = r.status, read(r)
         except urllib.error.HTTPError as e:
-            out = e.code, e.read().decode('utf-8', 'replace')
+            out = e.code, read(e)
         except (urllib.error.URLError, OSError) as e:  # timeouts, resets, DNS: nothing came back
             self._network_failures += 1
             if self._network_failures >= MAX_NETWORK_FAILURES:
@@ -110,6 +119,12 @@ class Wayback:
         if len(rows) < 2:  # the first row is the header
             return None
         return tuple(rows[-1])
+
+    def capture_body(self, timestamp, original):
+        """A capture's body as Wayback stored it (its `id_` form, without the replay toolbar), as bytes, or
+        None when it cannot be fetched."""
+        status, body = self._request('https://web.archive.org/web/%sid_/%s' % (timestamp, original), raw=True)
+        return body if status == 200 else None
 
     def submit(self, url, within='30d', force_get=False):
         """A job id, or ('error', status_ext, message). `within` is SPN2's if_not_archived_within: 30d

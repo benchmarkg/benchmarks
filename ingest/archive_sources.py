@@ -9,7 +9,9 @@
   - every capture is a Save Page Now 2 request with if_not_archived_within=30d, which is the
     idempotency key: a re-run inside the window costs no capture, and a dropped cron costs nothing;
   - existence is checked through CDX first, never the Availability API (it 429s on a cold request,
-    07 S10), and a CDX capture younger than 30 days is recorded without submitting anything;
+    07 S10), and a CDX capture younger than 30 days is recorded without submitting anything -- if it
+    holds every window of the Source's committed quote_extract. A capture that lacks one is stale (the
+    page changed after it was taken) and is re-captured unless SPN2 has one from today;
   - one request per Source, never per field;
   - a Source SPN2 refuses is recorded `archive_status: failed` with its reason (S7.3), and a
     transient error leaves it `pending` with the reason, up to --max-attempts runs, after which it
@@ -67,6 +69,7 @@ from tools.archive import WINDOW, StopRun, Wayback, location, wayback_time  # no
 
 STATE = os.path.join(ROOT, 'ingest', 'state', 'archive.json')
 KEEP_RUNS = 30
+RECAPTURE_WITHIN = '1d'    # a stale CDX capture is re-captured unless SPN2 has one from today (tools/check_links.py)
 JOB_TIMEOUT = 600          # seconds a submitted capture may stay pending before it counts as an error
 FIELDS = ('archive_url', 'archive_captured', 'archive_status', 'archive_digest',
           'archive_requested_at', 'failure_reason')
@@ -105,6 +108,29 @@ def sub_resource(error, url):
 
 def utcnow():
     return datetime.now(timezone.utc).replace(microsecond=0)
+
+
+_SCRIPT_STYLE = re.compile(r'<(script|style)\b[^>]*>.*?</\1>', re.S | re.I)
+_BETWEEN_WINDOWS = re.compile(r'\s*…\s*')
+
+
+def lacking_windows(record, wayback, ts, original):
+    """How many windows of a Source's committed quote_extract a CDX capture does not hold.
+
+    A capture younger than 30 days is reused only if it holds the text the quotes were checked against: a
+    leaderboard that gained rows since the capture would otherwise be archived by a copy without them
+    (RoboTwin's board data, 2026-10-14). 0 when it cannot be told -- no extract, a raw-body extract, a PDF
+    body, or a capture that does not load -- in which case the capture is reused as before."""
+    from schema.source import fold, normalise
+    extract = record.get('quote_extract')
+    if not extract or record.get('quote_extract_basis') == 'raw-body' or not hasattr(wayback, 'capture_body'):
+        return 0
+    body = wayback.capture_body(ts, original)
+    if not body or body[:4] == b'%PDF':
+        return 0
+    text = fold(normalise(_SCRIPT_STYLE.sub(' ', body.decode('utf-8', 'replace'))))
+    windows = _BETWEEN_WINDOWS.split(extract) if record.get('quote_extract_mode') == 'windows' else [extract]
+    return sum(1 for w in windows if w.strip() and fold(w.strip()) not in text)
 
 
 def rewrite(path, updates):
@@ -251,16 +277,22 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
         for key0, key1, src in items:
             key, r = (key0, key1), src.record
             hit = wayback.latest(r['url'])
+            stale = 0
             if hit and now() - wayback_time(hit[0]) <= WINDOW:
                 ts, original, digest = hit
-                stats['from_cdx'] += 1
-                log('cdx     %s  %s' % (r['id'], ts))
-                finish(key, src, {'archive_url': 'https://web.archive.org/web/%s/%s' % (ts, original),
-                                  'archive_captured': captured_on(ts), 'archive_status': 'ok',
-                                  'archive_digest': digest, 'failure_reason': None})
-                continue
+                stale = lacking_windows(r, wayback, ts, original)
+                if not stale:
+                    stats['from_cdx'] += 1
+                    log('cdx     %s  %s' % (r['id'], ts))
+                    finish(key, src, {'archive_url': 'https://web.archive.org/web/%s/%s' % (ts, original),
+                                      'archive_captured': captured_on(ts), 'archive_status': 'ok',
+                                      'archive_digest': digest, 'failure_reason': None})
+                    continue
+                stats['stale'] = stats.get('stale', 0) + 1
+                log('stale   %s  %s lacks %d of the extract\'s windows' % (r['id'], ts, stale))
             if not wayback.can_capture or dry_run:
-                log('queued  %s  (%s)' % (r['id'], 'CDX did not answer' if getattr(wayback, 'lookup_failed', False)
+                log('queued  %s  (%s)' % (r['id'], 'the capture CDX has is stale' if stale else
+                                          'CDX did not answer' if getattr(wayback, 'lookup_failed', False)
                                           else 'no capture in the last 30 days'))
                 continue
             if stats['submitted'] >= max_captures:
@@ -270,8 +302,10 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
             plain = sub_resource((state['attempts'].get(r['id']) or {}).get('last_error'), r['url'])
             if plain:
                 log('force_get %s  (the last attempt failed on a sub-resource)' % r['id'])
-            # a StopRun here leaves the record untouched
-            job = wayback.submit(r['url'], force_get=True) if plain else wayback.submit(r['url'])
+            # a StopRun here leaves the record untouched. A stale capture is re-captured unless SPN2 has one from
+            # today, as the link-rot re-check does (06 S7.2): the 30-day key would hand the stale one back.
+            within = {'within': RECAPTURE_WITHIN} if stale else {}
+            job = wayback.submit(r['url'], force_get=True, **within) if plain else wayback.submit(r['url'], **within)
             if isinstance(job, tuple) and job[1] in BUDGET:
                 raise StopRun('SPN2 %s: %s' % (job[1], job[2]))
             stats['submitted'] += 1
