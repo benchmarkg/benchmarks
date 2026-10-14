@@ -1,0 +1,640 @@
+# data/benchmarks/reasoning-general/planbench.yaml
+#
+# P1-S11-T01, reasoning-general entry 2 of 6. Filled from the PlanBench paper, arXiv 2206.10498 read as its v4 PDF
+# (2023-11-26, NeurIPS 2023 Datasets and Benchmarks), its v1 PDF (2022-06-21) and its abstract page; the
+# repository README and the plan-bench README of karthikv792/LLMs-Planning at main, and the evaluation script
+# plan-bench/response_evaluation.py beside them; and the v2 PDF of La Malfa et al., arXiv 2512.09629 (May 2026),
+# a paper that reports results on it. Every quote below is checked by the quote-substring validator against
+# those Sources' committed extracts.
+
+id: planbench
+name: PlanBench
+tagline: LLM planning in IPC domains (Blocksworld, Logistics and their obfuscated Mystery versions),
+  plans checked by VAL.
+description: >
+  A benchmark suite for whether large language models can plan, built on the kinds of domains used in
+  the International Planning Competition and posed in natural language. In the paper every prompt
+  describes the domain's actions with their preconditions and effects, shows one solved instance and
+  poses a new one.
+  The NeurIPS 2023 version has eight test cases: plan generation and cost-optimal planning, the two
+  that are planning problems proper, and six auxiliary ones (plan verification, reasoning about plan
+  execution, robustness to goal reformulation, plan reuse, replanning and plan generalization). They
+  are grounded in Blocksworld (600 instances) and Logistics (285 instances), each also in "Mystery"
+  versions whose action, predicate and object names are replaced by misleading words or random
+  strings, about 26,250 prompts in all; a Depots domain was added later. A generated plan is parsed
+  back into PDDL and checked with the VAL plan validator, and a cost-optimal plan also against the
+  optimal cost; a predicted state must equal the one a plan executor computes. Every item is right or
+  wrong, and a score is the fraction right. The 2022 first version had seven test cases on Blocksworld
+  alone. The repository README keeps a zero-shot leaderboard on which DeepSeek R1 and o1-preview solve
+  99.1% and 97.8% of Blocksworld but 43.3% and 52.8% of Mystery Blocksworld.
+self_description:
+  source: src-arxiv-2206-10498-v4
+  quote: we propose PlanBench, an extensible benchmark suite based on the kinds of domains used in
+    the automated planning community, especially in the International Planning Competition, to test
+    the capabilities of LLMs in planning or reasoning about actions and change
+external_ids:
+  arxiv: '2206.10498'
+paper:
+  title: 'PlanBench: An Extensible Benchmark for Evaluating Large Language Models on Planning and Reasoning
+    about Change'
+  arxiv: '2206.10498'
+  version_read: v4
+  source: src-arxiv-2206-10498-v4
+released: 2022-06-21
+released_note: The paper's first arXiv version, as the abstract page dates it. That version was
+  titled "Large Language Models Still Can't Plan (A Benchmark for LLMs on Planning and Reasoning
+  about Change)" and held seven test cases on Blocksworld only (see versions).
+released_source: src-arxiv-2206-10498
+released_quote: Submitted on 21 Jun 2022
+release_venue: NeurIPS 2023 Track on Datasets and Benchmarks (arXiv v4)
+release_venue_source: src-arxiv-2206-10498
+release_venue_quote: NeurIPS 2023 Track on Datasets and Benchmarks
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: reasoning-general/planning
+domain_basis:
+  reason: The benchmark's subject is plan construction and reasoning about actions and change in
+    their own right, in domains whose action model is stated in the prompt, and the taxonomy names
+    it as the family's qualifying example.
+  source: src-arxiv-2206-10498-v4
+  quote: There is a strong need for systematic and extensible planning benchmarks with sufficient
+    diversity to evaluate whether LLMs have innate planning capabilities.
+domain_considered_and_rejected:
+  - term: games-planning/puzzle-games
+    reason: The taxonomy names PlanBench as the games-planning family's near miss. Each item is a
+      posed problem with one submitted answer, and no environment responds to the system's actions.
+  - term: reasoning-general/logical-deduction
+    reason: Plan verification and reasoning about plan execution derive consequences from the stated
+      action model, but they are auxiliary test cases in service of planning, which the paper puts
+      at the centre.
+  - term: reasoning-general/puzzle-solving
+    reason: Blocksworld is puzzle-like and each item is a posed problem, but the items are planning
+      problems from IPC domains, and the planning leaf is the narrower fit.
+capability:
+  - planning
+  - deductive-reasoning
+capability_basis:
+  planning:
+    reason: The two headline test cases score a generated plan, its validity checked by VAL and, for
+      cost-optimal planning, its cost against the optimum; replanning, plan reuse, plan
+      generalization and goal reformulation score plans the same way.
+    source: src-arxiv-2206-10498-v4
+    quote: Plan Generation - Can the LLM come up with valid plans that will achieve a specific goal?
+  deductive-reasoning:
+    reason: Whether a plan is valid, what state it leads to and why it fails are all decided by the
+      action model the prompt states. The obfuscated domains keep that model and remove the names
+      that connect it to world knowledge, so the answer follows from the stated premises alone.
+    source: src-arxiv-2206-10498-v4
+    quote: every instance will start with a description of the lifted planning domain that describes
+      what actions can be executed, their preconditions and their effects
+capability_considered_and_rejected:
+  - term: optimization
+    reason: Cost-optimal planning asks for the cheapest plan, but it is scored as a binary match
+      between the plan's cost and the optimal cost, not by the objective's value.
+    source: src-github-llms-planning-response-evaluation
+    quote: 'if actual_cost_llm == plan_executor.cost:'
+  - term: distribution-shift-generalization
+    reason: The Mystery domains are reported as conditions of their own with the task unchanged, but
+      the shift is away from the world knowledge attached to the names rather than from a
+      distribution the system was fitted to, and the deceptive variant chooses misleading words on
+      purpose (see review_checks).
+    source: src-arxiv-2206-10498-v4
+    quote: where the action names, predicate names and object names are obfuscated either with
+      misleading words or random alphanumeric strings
+  - term: long-horizon-execution
+    reason: A plan is produced in one generation with no environment feedback between steps, and
+      items are scored independently.
+  - term: abstraction
+    reason: The rules are stated in every prompt and only have to be applied; obfuscation renames
+      them without hiding them.
+  - term: inductive-reasoning
+    reason: Plan generalization shows example plans produced by a fixed program, but it scores the
+      plan for a new instance, not the program inferred.
+  - term: constraint-satisfaction
+    reason: A plan fails on any unmet precondition or goal, but the source claims planning and
+      reasoning about change, and the tie-break is the benchmark's own claim.
+  - term: abductive-reasoning
+    reason: The taxonomy's own near miss. Plan validity follows necessarily from the stated action
+      model.
+  - term: sensorimotor-control
+    reason: The taxonomy's own near miss. The action model is symbolic, with no body and no closed
+      loop.
+
+evaluation_method:
+  - constraint-check
+  - exact-match
+evaluation_method_note: The per-test-case checks are quoted from the evaluation script under
+  subsets. A response from which no plan can be extracted is counted wrong.
+evaluation_method_basis:
+  reason: Plans from every plan-producing test case are parsed into PDDL and checked by the VAL
+    validator, which fails a plan on any inexecutable action or unmet goal; cost-optimal planning
+    also checks the cost. Reasoning about plan execution compares the predicted state with the
+    executor's, and plan verification compares the verdict with the ground truth's, both by equality
+    with no partial credit.
+  source: src-arxiv-2206-10498-v4
+  quote: We used the Fast-Downward system [8] as the planner and VAL [10] as the plan validator in
+    our framework.
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: VAL steps the plan through the action model, but the artifact is a plan rather than
+      code, and no tests are run (see review_checks).
+  - term: simulation-rollout
+    reason: There is no episode; the plan is written open-loop and validated symbolically.
+  - term: model-graded-judge
+    reason: Only in La Malfa et al.'s 2026 use (as_used), which replaced VAL with a GPT-5-mini
+      judge; the benchmark's own scoring is mechanical.
+designed_for_subjects:
+  - instruction-tuned-model
+  - base-model
+designed_for_subjects_basis:
+  reason: The prompts are few-shot completions ending in a plan tag, so they work by raw
+    continuation. The first version was evaluated on the base GPT-3 Davinci, and the NeurIPS version
+    on InstructGPT-3 and GPT-4 through the OpenAI API.
+  source: src-arxiv-2206-10498-v1
+  quote: Initial evaluation results on the base version of GPT-3 (Davinci), showcase subpar
+    performance on these benchmarks.
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: Fast Downward and VAL produce the optimal plans and the verdicts; they provide the
+      ground truth rather than competing.
+  - term: reasoning-model
+    reason: The README leaderboard labels its top rows as reasoning models, but nothing in the
+      design sets a reasoning budget (observed_subjects records them).
+  - term: agent-scaffold
+    reason: La Malfa et al. run an LLM agent framework around an external planner, an observed use
+      (as_used), not the design.
+observed_subjects:
+  values:
+    - reasoning-model
+    - instruction-tuned-model
+  basis: The README leaderboard marks each row LLM or LRM. Its top three rows, DeepSeek R1,
+    o1-preview and o1-mini, are reasoning models, and the other seven are LLMs.
+  source: src-github-llms-planning-readme
+as_used:
+  - protocol: Zero-shot prompting, one score per domain on the README leaderboard (Blocksworld,
+      Mystery Blocksworld and Randomized Mystery Blocksworld, 600 instances each in natural
+      language; Blocksworld Hard, 110 instances in PDDL), where the paper's protocol is one-shot
+      across eight test cases.
+    source: src-github-llms-planning-readme
+    quote: The leaderboard below shows the performance of the models on the PlanBench static test
+      set with zero-shot prompting.
+    note: The README does not name the test case its columns score, and its detailed results sit in
+      llm_planning_analysis/results/, the companion papers' code rather than plan-bench's.
+  - protocol: An LLM agent framework that translates each problem into PDDL for an external planner,
+      scored by a GPT-5-mini judge comparing the natural-language plan with the ground-truth plan
+      rather than by VAL; 50 problems per dataset over three runs, on the Depots, Logistics, Mystery
+      Blocksworld and obfuscated deceptive Logistics sets.
+    source: src-arxiv-2512-09629-v2
+    quote: We employ GPT-5-mini as-a-judge
+    note: La Malfa et al., v2 of May 2026, with GPT-5-mini, GPT-5.4, Gemini 2.5 Flash and Gemini 3
+      Flash, each also run as a vanilla model.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced; a May 2026 paper evaluates GPT-5.4 and Gemini 3 Flash on
+    four of its datasets. The repository was last pushed on 2026-06-02 (GitHub API), which is
+    maintenance evidence, not lifecycle.
+  source: src-arxiv-2512-09629-v2
+  quote: Planbench [37] (depots, logistics, mystery blocksworld, obfuscated deceptive logistics)
+activity: accepting-submissions
+activity_basis:
+  reason: The README leaderboard has never run in rounds and invites results for new models as pull
+    requests.
+  source: src-github-llms-planning-readme
+  quote: Kindly submit results of any new models by submitting a pull request with the result file
+    and the leaderboard will be updated.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: DeepSeek R1
+    source: src-github-llms-planning-readme
+    observed_on: 2026-10-14
+    quote: Deepseek R1 | LRM | 99.1% | 43.3% | 25.8% | 53.6%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: formal-verifier
+ground_truth_source_note: VAL's verdict on a plan against the PDDL domain and problem, Fast
+  Downward's optimal plan cost, and the state a plan executor computes. Mechanical throughout; no
+  stored label stands in for them.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The instances, prompts, generators and the pipeline that prompts a model and scores its
+    responses are public in one repository.
+  source: src-arxiv-2206-10498-v4
+  quote: including the tools, datasets, and the scripts to reproduce the prompts and results in this
+    paper
+
+task:
+  exists: true
+  input:
+    - a natural-language description of the domain's actions, preconditions and effects (PDDL in
+      some configurations), a solved example instance (one-shot in the paper, none on the README
+      leaderboard) and a new instance
+  output: A plan, one action per line and closed by a [PLAN END] tag; for the auxiliary test cases,
+    the state a given action sequence leads to, or a verdict on a given plan with the first failing
+    action and a missing precondition or goal.
+  scoring: The fraction of instances correct, per test case and domain. A plan is correct if VAL
+    validates it (and, for cost-optimal planning, its cost is the optimum); a state or verdict is
+    correct if it equals the ground truth.
+  source: src-arxiv-2206-10498-v4
+  quote: every instance will start with a description of the lifted planning domain that describes
+    what actions can be executed, their preconditions and their effects
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The instances, the prompts and the tools that compute every answer are in the public
+      repository, with no account or agreement.
+    source: src-arxiv-2206-10498-v4
+    quote: including the tools, datasets, and the scripts to reproduce the prompts and results in
+      this paper
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The content changed after the first release, from seven test cases on Blocksworld to
+      eight on two domains with obfuscated versions, through dated arXiv versions; a Depots domain
+      and the leaderboard's Blocksworld Hard set came later still (see review_checks).
+    source: src-arxiv-2206-10498-v4
+    quote: We have significantly increased the scope of our benchmark (with additional test cases
+      and domains) from the initial version.
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: The main instances come from the IPC problem generators with added filters,
+    the plan-generalization instances from the authors' own generators, and the Mystery domains from
+    their obfuscator. Fast Downward and VAL compute the reference answers.
+  data_provenance_source: src-github-llms-planning-plan-bench-readme
+  data_provenance_quote: The problems as part of the main dataset are generated by generators that
+    are part of the IPC competitions
+  contamination_risk: medium
+  contamination_risk_note: The instances, prompts and reference plans have been public on GitHub
+    since 2022, so a training route is plausible; no source read evidences one. The obfuscated
+    domains are built to separate planning from retrieval of world knowledge, which is not a
+    protection against training on the instances themselves.
+  contamination_evidence: []
+  dataset_licence: MIT
+  dataset_licence_note: GitHub's licence metadata for karthikv792/LLMs-Planning, which holds the
+    instances beside the code, reports MIT (API, read 2026-10-14); no source read states a separate
+    licence for the data.
+  size:
+    - count: 600
+      unit: Blocksworld instances
+      subset: Blocksworld
+      source: src-arxiv-2206-10498-v4
+      quote: We developed 600 instances which vary in the number of objects used as well as the
+        optimal plan length
+    - count: 285
+      unit: Logistics instances
+      subset: Logistics
+      source: src-arxiv-2206-10498-v4
+      quote: We generate 285 instances for this domain
+    - count: 500
+      unit: Blocksworld instances for plan generalization, separate from the main set
+      subset: Plan Generalization
+      source: src-arxiv-2206-10498-v4
+      quote: generate 500 instances separate from the main blocksworld dataset
+    - count: 26250
+      unit: prompts (approximate), across test cases and domains with the obfuscated versions
+      subset: the NeurIPS 2023 version
+      source: src-arxiv-2206-10498-v4
+      quote: 26250 prompts across the various test cases and domains
+    - count: 110
+      unit: instances, prompted in PDDL
+      subset: Blocksworld Hard (README leaderboard)
+      source: src-github-llms-planning-readme
+      quote: Blocksworld Hard - PDDL - 110 instances
+  languages:
+    - English
+    - PDDL
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The PlanBench authors (Kambhampati's group at Arizona State University), through the
+    first author's GitHub account
+  maintainer_basis:
+    reason: The repository holding the benchmark, its data and the leaderboard sits in one person's
+      account (karthikv792) beside three companion papers' code, and no institution is stated as
+      holding it.
+    source: src-github-llms-planning-readme
+    quote: This repo has the code for four papers
+  maintainer_type: individual
+  submission_process:
+    - self-reported
+    - maintainer-run
+  submission_process_note: Outsiders send a result file by pull request, and the README states no
+    check before the leaderboard is updated. The existing rows point to the maintainers' own result
+    files, so they read as maintainer runs.
+  submission_process_source: src-github-llms-planning-readme
+  submission_process_quote: Kindly submit results of any new models by submitting a pull request
+    with the result file and the leaderboard will be updated.
+  independence_flags: []
+  independence_flags_note: None found. The maintainers build no model they rank. The NeurIPS paper's
+    funders are US government agencies and a JP Morgan faculty grant, none of them an evaluated
+    party. The paper evaluating o1, behind the leaderboard's o1 rows, was not read for its funding.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2206-10498-v4
+    quote: and a JP Morgan AI Faculty Research Grant to Kambhampati
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The leaderboard holds API-served models, and the pipeline needs only a Linux machine
+      with Fast Downward and VAL besides model access; local models are the entrant's choice.
+    source: src-github-llms-planning-plan-bench-readme
+    quote: LLM access/setup - (currently OpenAI/BLOOM)
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: One command generates the prompts, queries the model and scores the responses, with the
+      data public and no human step.
+    source: src-github-llms-planning-plan-bench-readme
+    quote: Run the following command to run the entire pipeline
+  harness_availability: official-harness
+  harness: plan-bench's llm_plan_pipeline.py (prompt_generation.py, response_generation.py and
+    response_evaluation.py, which calls VAL and Fast Downward)
+  harness_source: src-github-llms-planning-plan-bench-readme
+  harness_quote: This will evaluate the raw responses generated by the model.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for karthikv792/LLMs-Planning (API, read 2026-10-14);
+    not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: the harness (the repository's VAL pipeline, or another scorer such as
+  # La Malfa et al.'s LLM judge) and the prompt template (natural language or PDDL, the paper's one-shot
+  # prompts or the leaderboard's zero-shot ones). subset_used carries the test case and the domain, including
+  # which obfuscation.
+  material_extra:
+    - harness
+    - prompt_template_hash
+
+homepage: https://github.com/karthikv792/LLMs-Planning
+repository: https://github.com/karthikv792/LLMs-Planning
+leaderboard_url: https://github.com/karthikv792/LLMs-Planning#planbench-static-test-set-leaderboard
+
+versions:
+  - version: '2022'
+    label: The first release, arXiv v1 ("Large Language Models Still Can't Plan")
+    version_kind: revision
+    released: 2022-06-21
+    items: 500
+    changes: Seven test cases (plan verification not yet among them) on Blocksworld only, 500
+      instances each, evaluated on GPT-3 Davinci; the code in karthikv792/gpt-plan-benchmark.
+    breaking: true
+    superseded_by: '2023'
+    frozen: true
+    sources:
+      - src-arxiv-2206-10498-v1
+      - src-arxiv-2206-10498
+  - version: '2023'
+    label: PlanBench, NeurIPS 2023 Datasets and Benchmarks (arXiv v4)
+    version_kind: revision
+    items: 600
+    changes: Eight test cases with plan verification added; 600 Blocksworld and 285 Logistics
+      instances, with deceptive and randomized obfuscations of both; about 26,250 prompts. arXiv v2
+      (2022-10-29) and v3 (2023-04-08) fall between and were not read, so when this set first
+      appeared is not established; v4 is dated 2023-11-26.
+    breaking: true
+    supersedes_version: '2022'
+    superseded_by: depots
+    frozen: true
+    sources:
+      - src-arxiv-2206-10498-v4
+      - src-arxiv-2206-10498
+  - version: depots
+    label: Depots domain added
+    version_kind: revision
+    changes: A third domain, Depots, usable in every test case except plan generalization. The
+      README leaderboard also adds Blocksworld Hard, 110 instances prompted in PDDL. Neither is
+      dated in the sources read, and the existing sets are unchanged.
+    breaking: false
+    supersedes_version: '2023'
+    frozen: false
+    sources:
+      - src-github-llms-planning-plan-bench-readme
+      - src-github-llms-planning-readme
+
+subsets:
+  - id: planbench#plan-generation
+    label: Plan Generation
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: Plan Generation - Can the LLM come up with valid plans that will achieve a specific
+          goal?
+      - source: src-github-llms-planning-response-evaluation
+        quote: correct = int(validate_plan(self.domain_pddl, cur_instance, self.llm_plan_file))
+    notes: Named goal-directed reasoning in the first version.
+  - id: planbench#cost-optimal-planning
+    label: Cost-Optimal Planning
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: in addition to checking if the plan is valid, we also check if the cost of the plan
+          corresponds to the optimal plan cost
+      - source: src-github-llms-planning-response-evaluation
+        quote: 'if actual_cost_llm == plan_executor.cost:'
+  - id: planbench#plan-verification
+    label: Plan Verification
+    scored_separately: true
+    capability_override:
+      - deductive-reasoning
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: Plan Verification - Can the LLM determine if a plan will successfully execute, and if
+          not, can it explain why?
+      - source: src-github-llms-planning-response-evaluation
+        quote: "if parsed_llm_response['valid'] == parsed_ground_truth_response['valid']:"
+    notes: Scored three ways, the verdict alone, with the failure type, and with the explanation.
+      Added in the NeurIPS version. planning is dropped on purpose; the answer is a verdict on a
+      given plan, not a plan.
+  - id: planbench#plan-execution
+    label: Reasoning about Plan Execution
+    scored_separately: true
+    capability_override:
+      - deductive-reasoning
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: The LLM is expected to come up with the resulting state, which is then checked by
+          applying a plan executor
+      - source: src-github-llms-planning-response-evaluation
+        quote: 'if sorted(ground_state) == sorted(llm_state):'
+    notes: planning is dropped on purpose; the answer is the state a given action sequence leads to,
+      not a plan.
+  - id: planbench#goal-reformulation
+    label: Robustness to Goal Reformulation
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: Robustness to goal reformulation - Can the LLM recognize the same goal when specified
+          in different ways?
+    notes: Three variants, scored separately (goal shuffling, full to partial, partial to full).
+  - id: planbench#plan-reuse
+    label: Plan Reuse
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: Ability to reuse plans - Can the LLM recognize scenarios where it can reuse part or
+          the whole of the original plan to achieve the new goal?
+  - id: planbench#replanning
+    label: Replanning
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: Replanning - Can the LLM replan for cases where an unexpected change is reported?
+  - id: planbench#plan-generalization
+    label: Plan Generalization
+    items: 500
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: Plan Generalization - Can the LLM take specific plans, extract underlying procedural
+          patterns and apply them to a new instance?
+  - id: planbench#blocksworld
+    label: Blocksworld
+    items: 600
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: We developed 600 instances which vary in the number of objects used as well as the
+          optimal plan length
+    notes: Domains cut across the test cases; every test case runs on each domain.
+  - id: planbench#logistics
+    label: Logistics
+    items: 285
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: We generate 285 instances for this domain
+  - id: planbench#mystery-blocksworld
+    label: Mystery Blocksworld (deceptive obfuscation)
+    items: 600
+    scored_separately: true
+    evidence:
+      - source: src-github-llms-planning-readme
+        quote: Mystery Blocksworld - NL - 600 instances
+      - source: src-arxiv-2206-10498-v4
+        quote: Note that, for a standard planner, the original domain and the obfuscated version are
+          identical.
+    notes: Names replaced by misleading words; the randomized variant below uses random strings.
+      Logistics has the same two obfuscations.
+  - id: planbench#randomized-mystery-blocksworld
+    label: Randomized Mystery Blocksworld
+    items: 600
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-10498-v4
+        quote: where the action names, predicate names and object names are obfuscated either with
+          misleading words or random alphanumeric strings
+  - id: planbench#depots
+    label: Depots
+    scored_separately: true
+    evidence:
+      - source: src-github-llms-planning-plan-bench-readme
+        quote: We have added a new domain (depots) to the benchmark.
+      - source: src-github-llms-planning-plan-bench-readme
+        quote: Currently, this domain can be used for all test cases except the Plan Generalization
+          test case.
+  - id: planbench#blocksworld-hard
+    label: Blocksworld Hard (PDDL prompts)
+    items: 110
+    scored_separately: true
+    evidence:
+      - source: src-github-llms-planning-readme
+        quote: Blocksworld Hard - PDDL - 110 instances
+
+history:
+  - event: repository-moved
+    field: repository
+    from: https://github.com/karthikv792/gpt-plan-benchmark
+    to: https://github.com/karthikv792/LLMs-Planning
+    source: src-arxiv-2206-10498-v1
+    quote: 'Link to the github repo: https://github.com/karthikv792/gpt-plan-benchmark'
+    note: Undated. The v1 paper links gpt-plan-benchmark and the v4 paper LLMs-Planning; GitHub
+      dates the LLMs-Planning repository's creation to 2022-05-28, before v1, which suggests a
+      rename.
+
+tags:
+  - planning
+  - pddl
+  - blocksworld
+  - logistics
+  - obfuscation
+  - reasoning-about-change
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2206-10498-v4
+    - src-arxiv-2206-10498
+    - src-arxiv-2206-10498-v1
+    - src-github-llms-planning-readme
+    - src-github-llms-planning-plan-bench-readme
+    - src-github-llms-planning-response-evaluation
+    - src-arxiv-2512-09629-v2
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text, its v1 PDF for the first release, and its
+    abstract page for the dates and venue; the repository README and the plan-bench README at main; the
+    evaluation script at main, for how each test case is scored; and La Malfa et al.'s v2 PDF (a DOI,
+    not archived) as evidence of current use. UK AISI's inspect_evals listing was searched and holds no
+    PlanBench port.
+  confidence: medium
+  review_checks:
+    - check: evaluation_method is constraint-check for the plans, since VAL validates a plan's
+        properties against the action model and any failure invalidates it. VAL does step the plan
+        through the model, so a reviewer could read that as running the artifact (execution-tests),
+        though no code or tests are involved.
+      field: evaluation_method
+      source: src-arxiv-2206-10498-v4
+      quote: We used the Fast-Downward system [8] as the planner and VAL [10] as the plan validator
+        in our framework.
+    - check: ground_truth_source is formal-verifier (VAL's verdict); simulation, for the symbolic
+        execution of the plan, would also be defensible.
+      field: ground_truth_source
+    - check: base-model rests on the first version's evaluation of base GPT-3 Davinci and on the
+        completion-style prompts; the NeurIPS version evaluates instruction-tuned models only.
+      field: designed_for_subjects
+      source: src-arxiv-2206-10498-v1
+      quote: Initial evaluation results on the base version of GPT-3 (Davinci), showcase subpar
+        performance on these benchmarks.
+    - check: distribution-shift-generalization was rejected for the Mystery domains, which hold the
+        task fixed and change only the names and are reported as their own condition. A reviewer may
+        read them as a deliberate input shift; the deceptive variant's misleading words lean towards
+        an adversarial construction.
+      field: capability
+    - check: refresh is versioned-releases on the strength of the dated arXiv versions. The Depots
+        domain and the Blocksworld Hard set are undated in the sources read (the repository's commit
+        history is disallowed to crawlers), so rolling-live is possible if they reached the
+        leaderboard without a pin.
+      field: data.refresh
+      source: src-github-llms-planning-plan-bench-readme
+      quote: We have added a new domain (depots) to the benchmark.
+    - check: activity is accepting-submissions on the README's invitation. The leaderboard carries
+        no dates, its rows appear to be the maintainers' own runs, and whether outside pull requests
+        are merged was not checked.
+      field: activity
+    - check: Identity. The repository holds four papers' code, and the README leaderboard (with
+        Blocksworld Hard, whose results sit in a backprompting folder) is computed by the companion
+        papers' code under PlanBench's name. It is taken here as PlanBench's leaderboard; it could
+        instead be read as a separate board.
+      field: leaderboard_url
+      source: src-github-llms-planning-readme
+      quote: Check out llm_planning_analysis/results/ folder for the detailed files.
+    - check: independence_flags is empty with the search limited to the NeurIPS paper's
+        acknowledgements; the funding of the o1 evaluation behind the leaderboard's reasoning-model
+        rows was not read.
+      field: governance.independence_flags
