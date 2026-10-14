@@ -1,0 +1,553 @@
+# data/benchmarks/society-econ-law/mathtutorbench.yaml
+#
+# P1-S9-T05, society-econ-law entry 6 of 7. Filled from the MathTutorBench paper, arXiv 2502.18940 read as its v2
+# PDF (2025-10-12, EMNLP 2025), and its abstract page; the paper's ACL Anthology page (scripts and styles stripped);
+# the repository README at main and its scaffolding-score script (reward_model/compute_scaffolding_score.py); the
+# project site (scripts and styles stripped); Hugging Face's API records of the reward model, of StepVerify and of
+# the reward model's preference data; and the v1 PDF of OmniEdu (arXiv 2609.23088, September 2026), a paper that
+# reports MathTutorBench results. GitHub's API (licence, pushed_at, commit history), the Hub's commit history of the
+# reward model and the inspect_evals listing were read beside them and are not quoted Sources. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+
+id: mathtutorbench
+name: MathTutorBench
+tagline: LLM math tutors scored on expertise, student understanding and pedagogy; a trained reward
+  model judges scaffolding.
+description: >
+  An open-source benchmark from ETH Zurich for dialog tutoring models, built from existing math tutoring
+  data: GSM8K word problems, StepVerify's teacher-annotated student solutions, and the teacher turns of
+  MathDial and Bridge, combined as MathDialBridge. Seven tasks sit under three teacher skills. Math
+  expertise is problem solving (final-answer accuracy) and Socratic questioning (BLEU of generated
+  sub-questions against GSM8K's). Student understanding is judging whether a student's solution is
+  correct (F1), locating its first wrong step (micro-F1), and solving correctly despite a student's wrong
+  answer in the dialog (accuracy). Pedagogy is writing the next teacher turn of a dialog, with a simple
+  prompt (scaffolding generation) or with LearnLM's pedagogical prompt (pedagogical instruction
+  following), each on a base split and on a hard split with longer dialogs. The four pedagogy scores are
+  win rates, the share of a model's turns that a released reward model (Qwen2.5-1.5B-Instruct fine-tuned
+  on pedagogical preference pairs) scores above the human teacher's turn; the paper validates it at 0.84
+  accuracy in preferring expert over novice teacher responses. The leaderboard in the README and on the
+  site reports the nine columns with no aggregate, and has grown from the paper's eight models to
+  seventeen.
+self_description:
+  source: src-arxiv-2502-18940
+  quote: we present MathTutorBench, an open-source benchmark for holistic tutoring model evaluation
+external_ids:
+  arxiv: '2502.18940'
+paper:
+  title: 'MathTutorBench: A Benchmark for Measuring Open-ended Pedagogical Capabilities of LLM Tutors'
+  arxiv: '2502.18940'
+  doi: 10.18653/v1/2025.emnlp-main.11
+  version_read: v2
+  source: src-arxiv-2502-18940-v2
+released: 2025-02-26
+released_note: The paper's first arXiv version, as its abstract page dates it; the repository was
+  created on 2025-02-20 and the reward model's weights were committed on 2025-02-25 (GitHub and
+  Hugging Face APIs).
+released_source: src-arxiv-2502-18940
+released_quote: Submitted on 26 Feb 2025
+release_venue: EMNLP 2025, main conference (an oral presentation, per the arXiv comments)
+release_venue_source: src-acl-2025-emnlp-main-11
+release_venue_quote: 'Volume: Proceedings of the 2025 Conference on Empirical Methods in Natural Language
+  Processing'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: society-econ-law/education-tutoring
+  secondary:
+    - mathematics/arithmetic
+domain_basis:
+  reason: What the benchmark is built to score is a tutor's teaching, the leaf's "teaching or
+    assessing a learner, scored on pedagogical outcome or instructional quality", and its headline
+    finding is that solving ability does not make a good tutor. The mathematics family's exclusion
+    turns away maths that serves a question about another field. Two tasks (problem solving, mistake
+    correction) do check a numeric answer to a grade-school word problem, which the secondary leaf
+    records.
+  source: src-arxiv-2502-18940
+  quote: subject expertise, indicated by solving ability, does not immediately translate to good
+    teaching
+domain_considered_and_rejected:
+  - term: mathematics/applied-modeling
+    reason: GSM8K word problems are turned into arithmetic, but the tasks score the final number,
+      not a model formulated and solved; arithmetic's "computing numerical results" is the nearer
+      leaf.
+capability:
+  - context-integration
+  - quantitative-reasoning
+capability_basis:
+  context-integration:
+    reason: The student-understanding and pedagogy tasks supply the student's solution or the dialog
+      so far, and the answer depends on it; mistake location's answer is a step of the supplied
+      solution.
+    source: src-arxiv-2502-18940-v2
+    quote: ability to accurately identify the exact location of the first mistake in a student
+  quantitative-reasoning:
+    reason: Problem solving and mistake correction score the final numeric answer to multi-step word
+      problems, reached by arithmetic.
+    source: src-arxiv-2502-18940-v2
+    quote: We include a math word problem solving task that measures the accuracy of the final
+      numeric answer
+capability_considered_and_rejected:
+  - term: instruction-following
+    reason: The pedagogical instruction-following tasks are named for it, but they are scored by the
+      same reward model's preference over the teacher's turn, a judgement of pedagogical quality,
+      not a check that the prompt's directions (one question per turn, at most two sentences) were
+      obeyed. The term needs compliance checkable apart from whether the content is good.
+    source: src-arxiv-2502-18940-v2
+    quote: The task refers to the ability of the model to follow pedagogical instructions in prompts
+  - term: communication
+    reason: The teacher turn is written for a student, but no student reads it; the reward model
+      scores the message against the human teacher's, and no recipient's understanding is measured.
+  - term: self-correction
+    reason: Mistake location and correction concern a student's errors in the dialog, not errors in
+      the system's own output.
+
+evaluation_method:
+  - exact-match
+  - reference-metric
+  - classification-metric
+  - model-derived-metric
+evaluation_method_note: The scoring model is eth-nlped/Qwen2.5-1.5B-pedagogical-rewardmodel, a
+  sequence-scoring head on Qwen2.5-1.5B-Instruct, at Hub revision b1cf3e3 (read 2026-10-14). Its
+  weights were committed on 2025-02-25 and every later commit changes only the README (the Hub's
+  commit history). The script loads it by name with no revision pinned, so a future upload would
+  change scores silently. For each item it scores the model's turn and the teacher's turn and counts
+  a win when the first is higher.
+evaluation_method_basis:
+  reason: Each column has its own metric. Problem solving and mistake correction compare the
+    extracted number with the reference (as floats, within 1e-6). Socratic questioning is sentence
+    BLEU against GSM8K's sub-questions. Solution correctness is binary F1 and mistake location
+    micro-F1 against StepVerify's labels. The four pedagogy columns are win rates decided by a
+    released reward model, which outputs a scalar for each response; it is not a general model
+    prompted for a verdict.
+  source: src-mathtutorbench-site
+  quote: 'Problem Solving: accuracy · Socratic Questioning: BLEU · Solution Correctness: F1 · Mistake
+    Location: micro-F1 · Mistake Correction: accuracy · remaining columns: reward-model win rate.'
+evaluation_method_source: src-github-mathtutorbench-scaffolding-score
+evaluation_method_quote: MODEL_NAME = "eth-nlped/Qwen2.5-1.5B-pedagogical-rewardmodel"
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: The reward model is given a grading instruction as its system prompt, but it is a
+      fine-tuned scorer released as a checkpoint that returns a number, and the win is a comparison
+      of two numbers. The paper's prompted judges (Llama-3.1-70B, GPT-4o-mini, Prometheus) were
+      baselines for choosing the metric, not part of the benchmark.
+    source: src-arxiv-2502-18940-v2
+    quote: We use LLM-as-a-judge prompting as a baseline
+  - term: pairwise-preference-elo
+    reason: Every comparison is against one fixed opponent, the human teacher's turn, and is
+      reported as a win rate, which the term's exclusion names.
+  - term: composite
+    reason: The board reports nine columns and no combined figure; the README averages them into the
+      three skills only for a scatter plot.
+  - term: numeric-tolerance-match
+    reason: The 1e-6 band is floating-point equality, not a tolerance that admits different answers.
+
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: Each task prompts a model once with a fixed prompt, at temperature 0 in the paper, and the
+    board ranks general chat models beside tutoring-tuned ones with thinking disabled.
+  source: src-arxiv-2502-18940-v2
+  quote: We sample from all models in the benchmark with temperature set to 0 for reproducible
+    results
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: Tutoring-tuned models (LearnLM, SocraticLM, the maintainers' TutorRL-7B) are entrants
+      the benchmark is built to compare, but the term's disciplines are scientific, clinical and
+      engineering-design fields, not education.
+  - term: reasoning-model
+    reason: Thinking is disabled for every row except three Gemini models, which run with their
+      default adaptive budget; the setting is a run condition, not the subject.
+    source: src-github-mathtutorbench-readme
+    quote: All models are evaluated with thinking/reasoning **disabled**
+as_used:
+  - protocol: Only the four pedagogy win rates (scaffolding generation and pedagogical instruction
+      following, base and hard) are reported, under the official protocol; the expertise and
+      student-understanding tasks are not run.
+    split: MathDialBridge and MathDialBridge[hard]
+    source: src-arxiv-2609-23088-v1
+    quote: MathTutorBench evaluates the pedagogical quality of mathematical tutoring, focusing on
+      scaffolding and pedagogical instruction following.
+    note: OmniEdu (Peking University, September 2026) fine-tunes Qwen models on an education mixture
+      that includes 332 MathDial and 401 StepVerify examples, after removing anything that overlaps
+      its evaluation sets. Its 27B model's 78.74% scaffolding win rate is above every row on the
+      README board, where the best is 0.73.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced. A September 2026 paper reports scaffolding win rates, and the
+    README board carries 2026 models (Qwen3.6-27B, Gemini 3.6 Flash). The repository was last pushed
+    on 2026-08-27 (GitHub API).
+  source: src-arxiv-2609-23088-v1
+  quote: On tutoring, it reaches 78.74% Scaffold win rate on MathTutorBench
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard has never run in rounds, and submissions are opened as GitHub issues.
+  source: src-github-mathtutorbench-readme
+  quote: Open a new issue with the title
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Qwen/Qwen3.6-27B
+    source: src-github-mathtutorbench-readme
+    observed_on: 2026-10-14
+    quote: Qwen/Qwen3.6-27B | 0.97 | 0.28
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Stored answers and teacher annotations for five columns (GSM8K's answers
+  and sub-questions, StepVerify's correctness and first-error labels). In the four pedagogy columns
+  the human teacher's turn is the reference and the released reward model decides each comparison,
+  which is the released-classifier case.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Data, prompts, scoring code and the reward model are public, and a run needs no human
+    step.
+  source: src-github-mathtutorbench-readme
+  quote: The benchmark is designed to be run automatically on any new models you are developing.
+
+task:
+  exists: true
+  input:
+    - a GSM8K word problem (problem solving, Socratic questioning)
+    - a problem with a student's step-by-step solution, alone or inside a short teacher-student
+      dialog (solution correctness, mistake location, mistake correction)
+    - a problem and a teacher-student dialog that stops before a teacher turn, under a simple prompt
+      or LearnLM's pedagogical prompt (the four pedagogy columns)
+  output: A final numeric answer, a list of guiding sub-questions, a yes or no on whether the
+    student's solution is wrong, the number of its first wrong step, or a teacher turn of at most
+    two sentences.
+  scoring: Per task, with no aggregate. Answer accuracy (problem solving, mistake correction),
+    sentence BLEU against GSM8K's sub-questions, binary F1 (solution correctness), micro-F1 (mistake
+    location), and for the pedagogy columns the share of items where the reward model scores the
+    model's turn above the teacher's.
+  source: src-arxiv-2502-18940-v2
+  quote: The win rate is computed as the rate of the reward model preferring model responses over
+    teacher responses.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The MathDialBridge files sit in the repository, StepVerify and the reward model are
+      public on Hugging Face and not gated, and GSM8K is loaded from the Hub.
+    source: src-arxiv-2502-18940-v2
+    quote: We released the code and the dataset under CC-BY-4.0 license.
+  refresh: static
+  refresh_basis:
+    reason: The seven tasks and their data are the paper's; the board has grown by models, not
+      items. GitHub's commit history shows datasets/ last changed on 2025-02-25 (API, not a quoted
+      Source).
+    source: src-github-mathtutorbench-readme
+    quote: three high level teacher skills and seven concrete tasks
+  data_provenance:
+    - inherited-from-constituents
+  data_provenance_note: Every item comes from an earlier dataset. GSM8K supplies problems, answers
+    and Socratic sub-questions. StepVerify supplies student solutions with the first wrong step
+    annotated by teachers. MathDial supplies dialogs between human teachers and simulated students,
+    and Bridge supplies real online tutoring by novice teachers, each response revised by an expert;
+    their teacher turns are the references the pedagogy columns compare against.
+  data_provenance_source: src-arxiv-2502-18940-v2
+  data_provenance_quote: The problems are mostly sourced from GSM8k
+  contamination_risk: medium
+  contamination_risk_note: All test data is public, and GSM8K's test set, behind problem solving, is
+    one the paper itself calls saturated and contaminated, though no source shows a route for a
+    model on the board. StepVerify is scored whole (its one split), so it has no held-out part.
+    OmniEdu trained on MathDial and StepVerify examples after removing overlaps with its evaluation
+    sets, a route for one entrant that belongs on its claims. The reward model's own test set was
+    cut by topic from its training data.
+  contamination_risk_source: src-arxiv-2502-18940-v2
+  contamination_risk_quote: Even though this type of evaluation is popular, saturated, and
+    contaminated
+  contamination_evidence: []
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_basis:
+    reason: The four pedagogy columns are win rates against the human teacher's turn, so 0.5 marks
+      parity with the teachers, and models above it (GPT-4o's 0.82 with the pedagogical prompt) have
+      passed the anchor. The other five columns are bounded at 1.0.
+    source: src-mathtutorbench-site
+    quote: Win rates are computed by the pedagogical reward model against ground-truth teacher
+      responses.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The paper and the README's badge say CC BY 4.0. The README's closing line
+    and the site's footer say CC BY-SA 4.0, and GitHub detects no licence file.
+  dataset_licence_source: src-arxiv-2502-18940-v2
+  dataset_licence_quote: We released the code and the dataset under CC-BY-4.0 license.
+  upstream_licences: Each constituent keeps its own licence (GSM8K, MathDial, Bridge, StepVerify),
+    which the paper says the release follows. StepVerify's Hugging Face record carries no licence
+    tag; the reward model and its preference data are tagged cc-by-4.0.
+  upstream_licences_source: src-hf-api-pedagogical-rewardmodel
+  upstream_licences_quote: license:cc-by-4.0
+  size:
+    - count: 7
+      unit: tasks, reported in nine columns (the two pedagogy tasks each have a base and a hard
+        split)
+      source: src-arxiv-2502-18940-v2
+      quote: These skills are tested by seven different tasks, each consisting of a dataset, prompt,
+        and metric.
+    - count: 1319
+      unit: GSM8K test problems
+      subset: problem solving and Socratic questioning
+      source: src-arxiv-2502-18940-v2
+      quote: a 1319 q1, . . . , qN 1319
+    - count: 2004
+      unit: StepVerify items for solution correctness and for mistake location, and 1,002 for
+        mistake correction
+      subset: student understanding
+      source: src-arxiv-2502-18940-v2
+      quote: 2004 2004 1002
+    - count: 1150
+      unit: MathDialBridge dialogs, and 327 in the hard split
+      subset: pedagogy (scaffolding generation and pedagogical instruction following)
+      source: src-arxiv-2502-18940-v2
+      quote: uteacher 1150 uteacher 327
+    - count: 482
+      unit: expert-versus-novice response pairs from Bridge
+      subset: the reward model's test split
+      source: src-hf-api-pedagogical-rewardmodel-data
+      quote: '{"name":"test","num_bytes":202762,"num_examples":482}'
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: ETH Zurich (the authors' group; repository eth-lre/mathtutorbench, reward model in the
+    eth-nlped Hugging Face organisation)
+  maintainer_basis:
+    reason: The repository sits in ETH Zurich's eth-lre organisation, which the paper names as its
+      home, and the site names ETH Zurich and the ETH AI Center. Co-authors at TU Darmstadt's UKP
+      Lab are on the paper but hold none of the artefacts.
+    source: src-mathtutorbench-site
+    quote: MathTutorBench · ETH Zurich · ETH AI Center
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+    - maintainer-verified
+  submission_process_note: The paper's eight models were chosen and run by the maintainers. Outside
+    entrants open an issue naming a Hugging Face model and the settings the maintainers will run it
+    with, and copy in their own local results. The README states the run but not which number is
+    published, so sandboxed-rerun is not tagged.
+  submission_process_source: src-github-mathtutorbench-readme
+  submission_process_quote: which will be used to run your model
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-mathtutorbench-readme
+      quote: eth-nlped/TutorRL-7B | 0.77 | 0.23
+    - flag: grader-from-evaluated-party
+      source: src-hf-api-pedagogical-rewardmodel
+      quote: '"id":"eth-nlped/Qwen2.5-1.5B-pedagogical-rewardmodel"'
+  independence_flags_note: TutorRL-7B, on the board, is published under eth-nlped, the organisation
+    that holds the reward model, and the site marks "our models" in its scatter plot. The reward
+    model that scores the pedagogy columns is therefore the maintainers' own while one of their
+    models is ranked. It is also a fine-tune of Qwen2.5-1.5B-Instruct, and Qwen models are on the
+    board.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_basis:
+    reason: The pedagogy columns come from a 1.5B-parameter reward model run locally, a GPU-based
+      scorer; the models under test can be served by API.
+    source: src-github-mathtutorbench-readme
+    quote: As the model is small in size (1.5B parameters), running the full evaluation should be
+      fast (within 10 minutes on a single GPU).
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, prompts, scoring code and the reward model are released, and every column is
+      computed by code with no human step.
+    source: src-github-mathtutorbench-readme
+    quote: The benchmark is designed to be run automatically on any new models you are developing.
+  harness_availability: official-harness
+  harness: mathtutorbench (main.py with the task configs, then
+    reward_model/compute_scaffolding_score.py for the win rates)
+  harness_note: UK AISI's inspect_evals has no MathTutorBench task (its src/inspect_evals listing,
+    read 2026-10-14 through the GitHub API; not a quoted Source).
+  harness_source: src-github-mathtutorbench-readme
+  harness_quote: python reward_model/compute_scaffolding_score.py
+  harness_gotcha:
+    source: src-github-mathtutorbench-readme
+    quote: by default, as they are dialog-based
+  harness_gotcha_note: The five dialog-based columns (mistake correction and the four pedagogy
+    columns) are meant to run in chat mode (is_chat=True), the README's examples run the others as
+    completions, and thinking models need is_thinking or enable_thinking set; each changes the
+    prompt a model sees.
+  code_licence: CC-BY-4.0
+  code_licence_note: The paper's statement. The README's closing line and the site's footer say CC
+    BY-SA 4.0, and GitHub's licence metadata for eth-lre/mathtutorbench is empty (read 2026-10-14).
+  code_licence_source: src-arxiv-2502-18940-v2
+  code_licence_quote: We released the code and the dataset under CC-BY-4.0 license.
+  est_cost_usd:
+    min: 35
+    max: 200
+    basis: The README's estimate for a full run through OpenRouter, about $35 for a non-reasoning
+      model and up to $100-200 for a reasoning model. The paper put a GPT-4o-mini run under $3.
+    source: src-github-mathtutorbench-readme
+  est_cost_usd_source: src-github-mathtutorbench-readme
+  est_cost_usd_quote: Running the full benchmark via OpenRouter costs around $35 USD for
+    non-reasoning models
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the profiles the facets resolve to (the reward model's identity and revision are already material
+  # there): decoding (temperature 0 and 2,048 tokens in the paper), and the harness settings that change the
+  # prompt a model sees (chat or completion mode, thinking on or off, the repository's prompt templates).
+  material_extra:
+    - sampling
+    - harness
+
+homepage: https://eth-lre.github.io/mathtutorbench/
+repository: https://github.com/eth-lre/mathtutorbench
+leaderboard_url: https://eth-lre.github.io/mathtutorbench/#leaderboard
+
+subsets:
+  - id: mathtutorbench#expertise
+    label: Math expertise
+    scored_separately: false
+    notes: Averaged with its tasks only in the README's scatter plot; the board reports the tasks.
+  - id: mathtutorbench#problem-solving
+    label: Problem solving
+    parent: mathtutorbench#expertise
+    items: 1319
+  - id: mathtutorbench#socratic-questioning
+    label: Socratic questioning
+    parent: mathtutorbench#expertise
+    items: 1319
+  - id: mathtutorbench#student-understanding
+    label: Student understanding
+    scored_separately: false
+    evidence:
+      - source: src-hf-api-stepverify
+        quote: '"id":"eth-nlped/stepverify"'
+      - source: src-hf-api-stepverify
+        quote: arxiv:2407.09136
+    notes: All three tasks read StepVerify (Daheim et al., arXiv 2407.09136) from the Hub. The task
+      configs score its train split, its only one (configs/*.yaml at main, not a quoted Source).
+      Averaged with its tasks only in the README's scatter plot; the board reports the tasks.
+  - id: mathtutorbench#solution-correctness
+    label: Student solution correctness
+    parent: mathtutorbench#student-understanding
+    items: 2004
+  - id: mathtutorbench#mistake-location
+    label: Student mistake location
+    parent: mathtutorbench#student-understanding
+    items: 2004
+  - id: mathtutorbench#mistake-correction
+    label: Student mistake correction
+    parent: mathtutorbench#student-understanding
+    items: 1002
+  - id: mathtutorbench#pedagogy
+    label: Pedagogy (teacher response generation)
+    scored_separately: false
+    evidence:
+      - source: src-hf-api-pedagogical-rewardmodel
+        quote: '"sha":"b1cf3e323398713e10ed88a4dbfa27f4a8f3b8dc"'
+      - source: src-hf-api-pedagogical-rewardmodel
+        quote: base_model:finetune:Qwen/Qwen2.5-1.5B-Instruct
+      - source: src-arxiv-2502-18940-v2
+        quote: The resulting finetuned model achieves the best accuracy of 0.84.
+    notes: All four columns are win rates from the same reward model, at the revision quoted.
+      Averaged only in the README's scatter plot.
+  - id: mathtutorbench#scaffolding-generation
+    label: Scaffolding generation
+    parent: mathtutorbench#pedagogy
+    items: 1150
+  - id: mathtutorbench#pedagogy-following
+    label: Pedagogical instruction following
+    parent: mathtutorbench#pedagogy
+    items: 1150
+    notes: The same dialogs as scaffolding generation, under LearnLM's pedagogical prompt.
+  - id: mathtutorbench#scaffolding-generation-hard
+    label: Scaffolding generation (hard)
+    parent: mathtutorbench#pedagogy
+    items: 327
+    evidence:
+      - source: src-arxiv-2502-18940-v2
+        quote: a variant with a longer conversation history (avg. 5.78 turns)
+  - id: mathtutorbench#pedagogy-following-hard
+    label: Pedagogical instruction following (hard)
+    parent: mathtutorbench#pedagogy
+    items: 327
+
+tags:
+  - tutoring
+  - education
+  - pedagogy
+  - math-word-problems
+  - reward-model
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2502-18940-v2
+    - src-arxiv-2502-18940
+    - src-acl-2025-emnlp-main-11
+    - src-github-mathtutorbench-readme
+    - src-github-mathtutorbench-scaffolding-score
+    - src-mathtutorbench-site
+    - src-hf-api-pedagogical-rewardmodel
+    - src-hf-api-stepverify
+    - src-hf-api-pedagogical-rewardmodel-data
+    - src-arxiv-2609-23088-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the date; the ACL
+    Anthology page (a DOI) for the venue; the README and the scaffolding-score script at main; the project
+    site with scripts and styles stripped (its leaderboard rows are drawn by a script, so the README's
+    table is the one quoted); Hugging Face's API records of the reward model, StepVerify and the
+    preference data; and OmniEdu's v1 PDF (a DOI) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: The primary family rests on the education-tutoring leaf's definition. The
+        society-econ-law family's inclusion test names work, markets, legal reasoning, policy and
+        social behaviour, not education, and five of the nine columns check mathematics (answers, or
+        judgements of a student's maths). Confirm the family, and whether mathematics belongs as a
+        secondary at all.
+      field: domain
+    - check: The secondary leaf is arithmetic; applied-modeling also fits GSM8K word problems, whose
+        difficulty is turning text into steps rather than the calculation.
+      field: domain.secondary
+    - check: model-derived-metric rather than model-graded-judge. The reward model takes a grading
+        instruction as its system prompt but returns a scalar, and the win is a comparison of two
+        scalars.
+      field: evaluation_method
+      source: src-github-mathtutorbench-scaffolding-score
+      quote: Judge the pedagogical quality of the responses provided by two teachers.
+    - check: The licence is recorded as CC-BY-4.0 from the paper and the README badge, but the
+        README's closing line and the site's footer say CC BY-SA 4.0, and GitHub detects no licence
+        file.
+      field: data.dataset_licence
+      source: src-github-mathtutorbench-readme
+      quote: Creative Commons Attribution-ShareAlike 4.0 International License
+    - check: submission_process is maintainer-verified, because the README says the maintainers will
+        run a submitted model but not that they publish their own number; sandboxed-rerun if they
+        do.
+      field: governance.submission_process
+    - check: grader-from-evaluated-party rests on the reward model and TutorRL-7B both sitting under
+        eth-nlped, with the site marking "our models"; the Qwen base of the reward model is a
+        weaker, second ground.
+      field: governance.independence_flags
+      source: src-mathtutorbench-site
+      quote: Red-edged stars mark our models.
+    - check: ceiling_anchor_type expert-average treats MathDialBridge's teacher turns as an expert
+        reference; Bridge's originals are novice teachers' turns that experts revised, and the
+        sources do not say which version is the reference.
+      field: data.ceiling_anchor_type
+    - check: refresh static rests on datasets/ being unchanged since 2025-02-25. Commits on
+        2025-04-17 ("Fixed minor bugs") and 2025-09-05 touched configs and tasks, and one on
+        2026-07-30 touched the scoring script; none was audited for changes to scores.
+      field: data.refresh
+    - check: contamination_risk medium. The paper calls GSM8K's test set contaminated without naming
+        a route; high would need contamination_evidence for the problem-solving split.
+      field: data.contamination_risk
