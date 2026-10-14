@@ -1,0 +1,493 @@
+# data/benchmarks/agents-tooluse/browsecomp.yaml
+#
+# P1-S9-T01, agents-tooluse entry 5 of 10. Filled from the BrowseComp paper, arXiv 2504.12516 read as its v1 PDF
+# (2025-04-16), and its abstract page; OpenAI's announcement page (2025-04-10, scripts and styles stripped); and
+# three files of openai/simple-evals pinned at commit 652c89d (2026-04-22): the README, browsecomp_eval.py and the
+# simple_evals.py runner that names the grader model. Current use is from the v1 PDF of ArcticSwarm (arXiv
+# 2609.01870, September 2026), which runs the full set against the live web. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts. No question, answer or canary string is
+# quoted: the windows are built to stop short of them.
+
+id: browsecomp
+name: BrowseComp
+aliases:
+  - Browsing Competition
+tagline: 1,266 hard-to-find, easy-to-verify questions for web-browsing agents, graded against short
+  answers by a model.
+description: >
+  A benchmark from OpenAI of 1,266 questions written by human trainers so that the answer is short
+  and easy to check but hard to find: each question entangles several constraints, so that a
+  brute-force search would have to examine thousands of web pages. Trainers checked that GPT-4o
+  (with and without browsing), o1 and an early deep-research model could not answer a question, and
+  that five simple searches did not surface the answer. A system replies with an explanation, an
+  exact answer and a confidence. A grader model, prompted with Humanity's Last Exam's grading
+  prompt, judges whether the answer matches the reference; the headline is accuracy, and the paper
+  reports calibration error from the stated confidences beside it. The protocol supplies no tools
+  and no agent loop: the system under test brings its own browsing, so a score belongs to the model,
+  its tools, its scaffold and its test-time compute together. In the paper GPT-4o scores 0.6%
+  without browsing and 1.9% with it, o1 9.9%, and OpenAI's Deep Research, trained on data aimed at
+  BrowseComp-like tasks, 51.5%; aggregating 64 attempts per question (majority vote, a vote weighted
+  by confidence, or best-of-N by confidence) raises it by 15% to 25%. Human trainers, who could give
+  up after two hours of searching, solved 29.2% of the 1,255 questions they attempted, and agreed
+  with the reference on 86.4% of those. The questions and answers ship encrypted in
+  openai/simple-evals, with a canary string and a request not to reveal them. There is no
+  leaderboard: results appear in developers' own documents and in papers.
+self_description:
+  source: src-arxiv-2504-12516-v1
+  quote: We present BrowseComp, a simple yet challenging benchmark for measuring the ability for
+    agents to browse the web
+external_ids:
+  arxiv: '2504.12516'
+paper:
+  title: 'BrowseComp: A Simple Yet Challenging Benchmark for Browsing Agents'
+  arxiv: '2504.12516'
+  version_read: v1
+  source: src-arxiv-2504-12516-v1
+released: 2025-04-10
+released_note: OpenAI's announcement page is dated 2025-04-10, the day the eval was added to
+  simple-evals (GitHub API commit history, read 2026-10-14); the paper followed on arXiv on
+  2025-04-16.
+released_source: src-browsecomp-site
+released_quote: OpenAI April 10, 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/web-navigation
+  secondary:
+    - language/retrieval-qa
+domain_basis:
+  reason: The scored quantity is the answer a browsing agent returns after searching the open web,
+    which is the family's inclusion case (a result returned by a loop using a browser), and the task
+    is browsing live web pages. The questions sit in the line of retrieval QA benchmarks the paper
+    names, made hard enough to need persistent browsing, which is the secondary leaf's case.
+  source: src-arxiv-2504-12516-v1
+  quote: We present BrowseComp, a simple yet challenging benchmark for measuring the ability for
+    agents to browse the web
+domain_considered_and_rejected:
+  - term: agents-tooluse/research-agents
+    reason: Deep-research agents are prominent entrants, but each question has a single short answer
+      that is either right or wrong, not an open research question, and nothing gathered or cited is
+      scored.
+  - term: agents-tooluse/long-horizon-autonomy
+    reason: Hard questions take long browsing episodes, but the protocol sets no episode at all (a
+      model without browsing answers in one call), and web-navigation describes the interface, which
+      the term's own distinction makes primary.
+  - term: language/understanding
+    reason: No passage is supplied that determines the answer; the system has to find the pages
+      itself. The language family as primary was also rejected, because the paper's claim is the
+      browsing agent's persistence and creativity in finding information, not a language competence
+      (its exclusion test); the retrieval leaf is kept as secondary.
+    source: src-arxiv-2504-12516-v1
+    quote: it measures the important core capability of exercising persistence and creativity in
+capability:
+  - calibration-uncertainty
+capability_basis:
+  calibration-uncertainty:
+    reason: The prompt asks every system for a confidence between 0% and 100%, and the paper reports
+      calibration error computed from it beside accuracy for every model, as Humanity's Last Exam,
+      whose prompt it reuses, does.
+    source: src-arxiv-2504-12516-v1
+    quote: 'Table 3: Accuracy and calibration of OpenAI models on BrowseComp.'
+capability_considered_and_rejected:
+  - term: tool-use
+    reason: Browsing is what the benchmark is about, but the protocol exposes no tools of its own;
+      entrants bring their own, and the score is the final answer, not whether calls were selected
+      and parameterised correctly. That is the exclusion's "available but incidental to the score",
+      the same reading as Humanity's Last Exam.
+  - term: search-exploration
+    reason: Questions are built over a large space of candidate answers, but nothing about the
+      traversal is scored and the protocol sets no search budget; the paper's compute-scaling runs
+      are analysis, not the score.
+  - term: knowledge-recall
+    reason: The answers are meant to be found on the web during the run. o1 without browsing scores
+      9.9%, which the paper reads as some answers being reachable from internal knowledge, but the
+      questions were built so that models without browsing fail.
+  - term: factual-precision
+    reason: The exclusion test reads "Do NOT tag this if the benchmark scores one short answer
+      against a key".
+  - term: constraint-satisfaction
+    reason: Each question poses several constraints, but the grader checks the answer against one
+      reference answer, not against each constraint.
+  - term: long-horizon-execution
+    reason: Questions are scored independently, and within a browsing episode a wrong turn can be
+      undone before answering, so an intermediate error does not make success unattainable.
+
+evaluation_method:
+  - model-graded-judge
+  - uncertainty-calibration-score
+evaluation_method_basis:
+  reason: >
+    model-graded-judge because a grader model decides whether each response's extracted answer
+    matches the reference; the paper does not name the model, the reference implementation uses
+    gpt-4.1-2025-04-14 (src-github-simple-evals-runner), and ArcticSwarm calls GPT-4.1 the official
+    judge. uncertainty-calibration-score because the paper reports calibration error from the
+    elicited confidences as a first-class number beside accuracy (Table 3); the reference
+    implementation computes accuracy only.
+  source: src-arxiv-2504-12516-v1
+  quote: grading is done by simply using an AI model compare whether a predicted answer is
+    semantically equivalent to the reference answer
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Answers are short, but equivalence is decided by a grader model, not by string equality.
+    source: src-github-simple-evals-browsecomp-eval
+    quote: Judge whether the following [response] to [question] is correct or not based on the
+      precise and unambiguous [correct_answer] below.
+  - term: numeric-tolerance-match
+    reason: The grading prompt allows "a small margin of error for numerical problems", but the
+      margin is the grader model's judgement, not a stated tolerance.
+designed_for_subjects:
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The paper names browsing agents as the target and expects agents that cannot make many
+    tool calls or backtrack to struggle. The harness sends one prompt to the system and grades the
+    reply, so the browsing loop, its tools and when to stop are all the entrant's own.
+  source: src-arxiv-2504-12516-v1
+  quote: Early version of AI agents that can only make a limited number of tool calls and are not
+    good at backtracking would presumably struggle on this benchmark
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The reference harness has no loop and no tools; it prompts the system once and grades
+      the reply.
+    source: src-github-simple-evals-browsecomp-eval
+    quote: sampler._pack_message(content=QUERY_TEMPLATE.format(Question=problem), role="user")
+  - term: tool-augmented-model
+    reason: GPT-4o with browsing is evaluated, but the protocol offers no tools of its own, which
+      the term's benchmark-level test asks; a model with built-in search is a subject of that claim,
+      not of the design.
+  - term: instruction-tuned-model
+    reason: GPT-4o, GPT-4.5 and o1 without browsing are in the paper as evidence of difficulty (0.6%
+      to 9.9%), not as the designed-for subject.
+
+as_used:
+  - protocol: The full 1,266 questions against the live web, run by a multi-agent scaffold with
+      web_search, web_fetch and pdf_read tools and a filter that blanks any search result containing
+      "browsecomp", graded by GPT-4.1 with OpenAI's judge prompt.
+    split: full
+    source: src-arxiv-2609-01870-v1
+    quote: On BrowseComp, a contamination filter screens web_search and web_fetch output for the
+      substrings browsecomp and replaces any match with an exclusion placeholder.
+    note: ArcticSwarm (Snowflake AI Research, September 2026). Its Table 4 sets the same base model,
+      GPT-5, under three systems (the provider's 54.9%, MiroFlow's 63.4%, ArcticSwarm's 73.6%),
+      which is the scaffold dependence that comparability records.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced against the full set; a September 2026 paper runs all
+    1,266 questions against the live web and compares its scaffold with numbers that developers
+    reported. simple-evals stopped adding results in July 2025, which is maintenance evidence for
+    the repository, not the instrument's standing.
+  source: src-arxiv-2609-01870-v1
+  quote: On live-web BrowseComp with GPT-5, ArcticSwarm reaches 73.6%, against 54.9% for the
+    provider system and 63.4% for MiroFlow
+activity: no-submission-channel
+activity_note: The simple-evals results table, which took outside rows by pull request, never had a
+  BrowseComp column, and its July 2025 notice stopped that table; no source read gives BrowseComp a
+  leaderboard, server or route for results.
+activity_basis:
+  reason: No source read shows a leaderboard or submission route; developers publish their own
+    numbers, and papers collect them, as ArcticSwarm's Table 4 does.
+  source: src-arxiv-2609-01870-v1
+  quote: 'Table 4: Accuracy on live-web BrowseComp. Provider and prior-system rows are the numbers reported
+    by their authors.'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: OpenAI Deep Research (an early version)
+    source: src-arxiv-2504-12516-v1
+    observed_on: 2026-10-14
+    quote: an agent model explicitly trained for persistent web browsing
+  - system: ArcticSwarm (GPT-5)
+    source: src-arxiv-2609-01870-v1
+    observed_on: 2026-10-14
+    quote: On live-web BrowseComp with GPT-5, ArcticSwarm reaches 73.6%, against 54.9% for the
+      provider system and 63.4% for MiroFlow
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each question's reference answer, written by the trainer who wrote the
+  question and released encrypted beside it; a grader model judges responses against it.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The encrypted set downloads without an account, the decryption and grading code is
+    published, and a run needs only API access to the system and the grader. The live web the
+    systems search cannot be held fixed between runs (execution).
+  source: src-github-simple-evals-browsecomp-eval
+  quote: https://openaipublic.blob.core.windows.net/simple-evals/browse_comp_test_set.csv
+
+task:
+  exists: true
+  input:
+    - one question, with an instruction to reply with an explanation, an exact answer and a
+      confidence between 0% and 100%
+  output: The reply in that format, produced by whatever browsing and reasoning the system does.
+  scoring: A grader model extracts the final answer and judges it correct or not against the
+    reference (numbers within a small margin); the headline is accuracy over the 1,266 questions.
+    The paper also reports calibration error from the stated confidences.
+  source: src-github-simple-evals-browsecomp-eval
+  quote: 'Confidence: {{your confidence score between 0% and 100% for your answer}}'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The questions and answers are XOR-encrypted in a public CSV, keyed by each row's
+    canary column, and the decryption code ships in the eval file. The encryption and the paper's
+    request not to reveal examples are anti-contamination devices, not a gate.
+  access_basis:
+    reason: The whole scored set downloads from OpenAI's public blob storage without an account or
+      an agreement, and the published code decrypts it.
+    source: src-github-simple-evals-browsecomp-eval
+    quote: Decrypt base64-encoded ciphertext with XOR.
+  refresh: static
+  refresh_note: The 21 tasks removed from the original 1,287 were removed before release. The eval
+    file's history shows no change to the data since 2025-04-10 (GitHub API, read 2026-10-14). An
+    open issue on the repository reports one reference answer as misspelt and has not been acted on.
+  refresh_basis:
+    reason: One set of 1,266 questions, unchanged since release in any source read.
+    source: src-arxiv-2504-12516-v1
+    quote: Indeed, BrowseComp originally included 1,287 tasks.
+  data_provenance:
+    - crowd-authored
+  data_provenance_note: Trainers wrote questions on topics they were personally interested in,
+    following SimpleQA's guidelines, and a second trainer attempted a portion of them. The sources
+    describe them as human trainers, and say they were not expert browsers, the skill the items
+    test.
+  data_provenance_source: src-arxiv-2504-12516-v1
+  data_provenance_quote: the trainers were also not competition-level internet browsers
+  contamination_risk: medium
+  contamination_risk_note: >
+    The set is public and the paper names two routes: leakage into training corpora, and a browsing
+    agent finding the answers online during the run. The measures are encryption, a canary string
+    in each row and a request not to reveal examples; users add their own, as ArcticSwarm filters
+    any search result containing "browsecomp". No source read evidences a route into the scored
+    set. Not cited: an open issue on the simple-evals repository prints one question with its answer
+    in plain text, where a browsing agent could find it. The paper's Deep Research was trained on
+    data aimed at BrowseComp-like tasks, a route for that entrant, which belongs on its claims.
+  contamination_risk_source: src-arxiv-2504-12516-v1
+  contamination_risk_quote: We request that you do not reveal examples from this dataset in plain
+    text or images online
+  contamination_evidence: []
+  dataset_licence: MIT
+  dataset_licence_source: src-github-simple-evals-readme-652c89d
+  dataset_licence_quote: 'BrowseComp: A Simple Yet Challenging Benchmark for Browsing Agents, reference:
+    https://openai.com/index/browsecomp, [MIT License](https://github.com/openai/simple-evals/blob/main/LICENSE)'
+  size:
+    - count: 1266
+      unit: questions
+      source: src-arxiv-2504-12516
+      quote: BrowseComp comprises 1,266 questions that require persistently navigating the internet
+    - count: 1255
+      unit: questions attempted by human trainers (11 not attempted)
+      subset: human baseline
+      source: src-arxiv-2504-12516-v1
+      quote: 11 did not get attempted by humans due to various reasons, leaving 1,255
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OpenAI
+  maintainer_basis:
+    reason: The paper's authors are OpenAI's, and the benchmark is hosted in OpenAI's simple-evals
+      repository.
+    source: src-arxiv-2504-12516-v1
+    quote: William Fedus Amelia Glaese OpenAI
+  maintainer_type: industry-lab
+  submission_process:
+    - literature-only
+  submission_process_note: There is no leaderboard or results table of BrowseComp; beyond the
+    release paper's own runs, developers report their systems' numbers in their own documents and
+    others in papers. The paper invites researchers to evaluate their agents and send feedback.
+  submission_process_source: src-arxiv-2504-12516-v1
+  submission_process_quote: we invite researchers to evaluate the capabilities of more AI agents on
+    it, and to provide us feedback
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-browsecomp-site
+      quote: Note that the Deep Research model is trained on data that specifically teaches the
+        model to be good at BrowseComp tasks.
+    - flag: grader-from-evaluated-party
+      source: src-github-simple-evals-runner
+      quote: grading_sampler = ChatCompletionSampler( model="gpt-4.1-2025-04-14",
+  independence_flags_note: >
+    The paper evaluates only OpenAI's models, among them Deep Research, which OpenAI trained on data
+    aimed at BrowseComp-like tasks. The reference grader is OpenAI's own gpt-4.1-2025-04-14, which
+    users keep (ArcticSwarm calls GPT-4.1 the official judge) and which grades OpenAI's and other
+    developers' systems alike.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2504-12516-v1
+    quote: we cannot be certain that there were no other answers
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: Inference spend for the system under test, whatever browsing it does, plus one
+    call per question to the hosted grader; the protocol requires no hardware.
+  compute_tier_source: src-github-simple-evals-runner
+  compute_tier_quote: grading_sampler = ChatCompletionSampler( model="gpt-4.1-2025-04-14",
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: >
+    A fresh run is automatic end to end. But it is scored against the live web, which keeps moving
+    (pages appear, change and leak answers), so no run can be repeated against the same conditions:
+    that is the live-world-state blocker, which tier 3 forbids beside fully-automatable, so it is
+    recorded here as forecastbench records it. ArcticSwarm notes the stochasticity of closed models
+    as well. BrowseComp-Plus exists to fix the corpus for replicability.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: simple-evals browsecomp_eval.py (BrowseCompEval), read at commit 652c89d; it prompts the
+    system once and grades the reply, and brings no browsing of its own
+  harness_note: >
+    As read at commit 652c89d, grade_sample returns the whole regex match ("correct: yes"), which
+    the caller compares with "yes", so read literally the reference code scores every answer
+    incorrect. Two open pull requests (#67 and #93, found through the GitHub search API on
+    2026-10-14; not quoted Sources) change it to return the captured group. Not run here.
+  harness_source: src-github-simple-evals-browsecomp-eval
+  harness_quote: class BrowseCompEval(Eval)
+  harness_gotcha:
+    source: src-github-simple-evals-browsecomp-eval
+    quote: return match.group(0) if match else "no"
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for openai/simple-evals reads MIT (read 2026-10-14).
+  code_licence_source: src-github-simple-evals-readme-652c89d
+  code_licence_quote: By contributing to evals, you are agreeing to make your evaluation logic and
+    data under the same MIT license as this repository.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the model-graded profile (judge model, version and prompt are material already): the scaffold and
+  # harness that do the browsing, the tools it may call (search, fetch, PDF reading), and test-time compute. The
+  # paper scales accuracy with browsing effort and with 64 samples per question aggregated by majority vote,
+  # confidence-weighted vote or best-of-N, and ArcticSwarm's Table 4 puts three systems built on GPT-5 at 54.9%, 63.4%
+  # and 73.6%. A filter that blanks search results naming the benchmark also changes the number; it has no field.
+  material_extra:
+    - scaffold
+    - harness
+    - tools_allowed
+    - n_samples
+    - selection_strategy
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline, accuracy over the questions, which is what the reference implementation
+    returns; the paper's calibration error is reported beside it, not combined with it.
+  source: src-github-simple-evals-browsecomp-eval
+  quote: '"accuracy": aggregate_metrics["is_correct"],'
+
+homepage: https://openai.com/index/browsecomp/
+repository: https://github.com/openai/simple-evals
+dataset_url: https://openaipublic.blob.core.windows.net/simple-evals/browse_comp_test_set.csv
+
+versions:
+  - version: 2025-04
+    label: The release, 1,266 questions
+    version_kind: revision
+    released: 2025-04-10
+    items: 1266
+    changes: The set as released in simple-evals and described in arXiv 2504.12516, after 21 of the
+      original 1,287 tasks were removed for answer problems.
+    frozen: true
+    sources:
+      - src-browsecomp-site
+      - src-arxiv-2504-12516-v1
+
+lineage:
+  role: root
+  variants:
+    - id: browsecomp-plus
+      relation: fixed-corpus-revision
+      n_items: 830
+      source: src-arxiv-2609-01870-v1
+      quote: BrowseComp-Plus (Chen et al., 2025) contains 830 questions and replaces the live web
+        with corpus retrieval over approximately 100K curated documents for replicability.
+lineage_note: Only the variant a source read here states. BrowseComp-ZH, BrowseComp-Long and other
+  derivatives were not read and are separate benchmarks.
+
+tags:
+  - web-browsing
+  - deep-research
+  - short-answer
+  - llm-judge
+  - encrypted-dataset
+  - test-time-compute
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2504-12516-v1
+    - src-arxiv-2504-12516
+    - src-browsecomp-site
+    - src-github-simple-evals-readme-652c89d
+    - src-github-simple-evals-browsecomp-eval
+    - src-github-simple-evals-runner
+    - src-arxiv-2609-01870-v1
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, and its abstract page for the date and the
+    abstract; OpenAI's announcement page with scripts and styles stripped; the simple-evals README,
+    browsecomp_eval.py and simple_evals.py at commit 652c89d0ca9df547706735883097e9537d40dc47; and
+    ArcticSwarm's v1 PDF (a DOI) as evidence of current use. The data file was not fetched, and no
+    question was decrypted.
+  confidence: medium
+  review_checks:
+    - check: Primary web-navigation rather than research-agents. Prominent entrants are
+        deep-research agents, but the questions have single short answers and nothing gathered or
+        cited is scored. language/retrieval-qa as secondary rests on the paper placing itself in the
+        line of retrieval QA benchmarks.
+      field: domain
+      source: src-arxiv-2504-12516-v1
+      quote: While past benchmarks have measured the ability to retrieve information
+    - check: Only calibration-uncertainty passes a capability test. The benchmark's own claim,
+        persistent and creative information seeking on the open web, has no term whose test passes,
+        because tool-use needs tools the protocol exposes and search-exploration needs a scored
+        traversal.
+      field: capability
+      source: src-arxiv-2504-12516-v1
+      quote: it measures the important core capability of exercising persistence and creativity in
+    - check: uncertainty-calibration-score is tagged from the paper's Table 3. The reference
+        implementation computes accuracy only, and the users read report accuracy only, so the
+        calibration number may not belong to the benchmark as used.
+      field: evaluation_method
+      source: src-github-simple-evals-browsecomp-eval
+      quote: '"accuracy": aggregate_metrics["is_correct"],'
+    - check: The paper does not name its grader model. gpt-4.1-2025-04-14 is the reference
+        implementation's and ArcticSwarm's; no conditions record names it yet, so reference-grader
+        warns. Whether the paper's own runs used it is not stated.
+      field: reference_conditions
+      source: src-arxiv-2609-01870-v1
+      quote: For judge model, we use GPT-4.1, the official BrowseComp judge model, for BrowseComp
+        and BrowseComp-Plus.
+    - check: activity no-submission-channel rather than closed. ADR-0020 reads HealthBench, hosted
+        in the same repository, as closed under the July 2025 notice; BrowseComp never had a column
+        in the results table that notice stopped.
+      field: activity
+      source: src-github-simple-evals-readme-652c89d
+      quote: simple-evals` will no longer be updated for new models or benchmark results
+    - check: The reference grader's regex bug (harness_note) means the official harness, as pinned,
+        cannot produce a correct score unpatched. Whether harness_availability should stay
+        official-harness.
+      field: execution.harness_availability
+      source: src-github-simple-evals-browsecomp-eval
+      quote: is_correct = grade_result == "yes"
+    - check: reproducibility_tier fully-automatable with the live-world-state blocker held in the
+        note, as forecastbench does, because tier 3 forbids the pair.
+      field: execution.reproducibility_tier
+    - check: contamination_risk medium. An open issue on the simple-evals repository prints one
+        question and its answer in plain text, a route into a scored item for a browsing agent; it
+        is not cited here so as not to republish the item. A reviewer may judge that high.
+      field: data.contamination_risk
+    - check: data_provenance crowd-authored rests on "human trainers" who were "not
+        competition-level internet browsers"; the sources do not describe their domain expertise.
+      field: data.data_provenance
+    - check: Identity. BrowseComp-Plus is recorded as a variant only because ArcticSwarm describes
+        it; its relation label (fixed-corpus-revision) is this entry's wording, and it is not
+        curated here.
+      field: lineage
