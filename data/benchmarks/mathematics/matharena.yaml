@@ -1,0 +1,782 @@
+# data/benchmarks/mathematics/matharena.yaml
+#
+# P1-S10-T05, mathematics entry 2 of 6. Filled from the MathArena paper, arXiv 2505.23281 read as its v3 PDF
+# (2026-01-14; NeurIPS 2025), and its abstract page; the platform paper, arXiv 2605.00674 read as its v2 PDF
+# (2026-05-15), and its abstract page; the repository README (eth-sri/matharena, at main); matharena.ai's home
+# page and its competitions page (scripts and styles stripped); Hugging Face's API record of the ArXivMath
+# August 2026 set; and the v1 PDF of a training-method paper (arXiv 2610.11128, October 2026) that evaluates on
+# MathArena's competition sets. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+
+id: matharena
+name: MathArena
+tagline: ETH Zurich's platform scoring LLMs on maths problems released after them, from new
+  competitions to monthly arXiv sets.
+description: >
+  An evaluation platform from the SRI Lab at ETH Zurich and INSAIT that scores language models on
+  mathematics problems the models cannot have seen, by evaluating them on competitions within hours or
+  days of the contest. The 2025 benchmark (NeurIPS 2025) covered seven 2025 competitions with 162
+  problems: final-answer contests (AIME, HMMT February, BRUMO, CMIMC), whose boxed answers a
+  SymPy-based parser checks; the USAMO and IMO, whose proofs two expert human graders scored against
+  competition-style schemes; and recent Project Euler problems solved with code execution. Each model
+  is run four times per problem, the score is the mean, and the cost of each run is reported. The site
+  added further contests (SMT and HMMT November 2025, AIME and HMMT February 2026), Apex (hard 2025
+  problems selected against four frontier models), Kangaroo 2025 posed as images, and undergraduate
+  proof contests (IMC 2025, graded in house; Putnam and Miklós Schweitzer 2025, graded by the official
+  juries; USAMO 2026, graded by an LLM jury and reviewed by hand). Since 2026 it also builds three
+  research-level benchmarks from new arXiv abstracts: ArXivMath (final answers) and BrokenArXiv (false
+  statements a model should decline to prove), both monthly, and ArXivLean (Lean proofs), quarterly. Each
+  competition has its own leaderboard, and an expected-performance figure averages the non-deprecated
+  ones, imputing missing results with an item-response model. On 2026-10-14 the site marks every
+  competition section deprecated; only the arXiv-based benchmarks are current.
+self_description:
+  source: src-arxiv-2505-23281-v3
+  quote: 'we introduce MathArena, a new benchmark based on the following key insight: recurring math competitions
+    provide a stream of high-quality, challenging problems that can be used for real-time evaluation of
+    LLMs'
+external_ids:
+  arxiv: '2505.23281'
+paper:
+  title: 'MathArena: Evaluating LLMs on Uncontaminated Math Competitions'
+  arxiv: '2505.23281'
+  version_read: v3
+  source: src-arxiv-2505-23281-v3
+released: 2025-05-29
+released_note: The paper's first arXiv version, as its abstract page dates it. The leaderboard was
+  public before that, from February 2025, when the authors first reported results on new
+  competitions; GitHub dates the repository's creation to 2025-02-12 (GitHub API, read 2026-10-14).
+released_source: src-arxiv-2505-23281
+released_quote: Submitted on 29 May 2025 (v1), last revised 14 Jan 2026 (this version, v3)
+release_venue: NeurIPS 2025 (Datasets and Benchmarks)
+release_venue_source: src-github-matharena-readme
+release_venue_quote: MathArena (NeurIPS D&B '25) is a platform for evaluation of LLMs
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: mathematics/competition-math
+  secondary:
+    - mathematics/research-level-math
+    - mathematics/formal-theorem-proving
+domain_basis:
+  reason: The benchmark the paper defines, and most of its subsets, are olympiad and university
+    competitions whose answers or proofs are checked as mathematics. The 2026 research benchmarks
+    add research-level problems from arXiv and Lean proofs; their subsets carry those leaves as
+    overrides.
+  source: src-arxiv-2605-00674-v2
+  quote: MathArena now covers a much wider range of tasks, including proof-based competitions,
+    research-level arXiv problems, and formal proof generation in Lean
+domain_considered_and_rejected:
+  - term: mathematics/proof-verification
+    reason: BrokenArXiv hands the model a false statement and asks for a proof; no supplied proof is
+      judged, so the subset is recorded under research-level-math with honesty as its capability.
+  - term: multimodal/visual-qa
+    reason: Only Kangaroo 2025, a deprecated subset of 168 problems, poses problems as images; it
+      carries the term as its own override rather than the entry.
+  - term: code/competitive-programming
+    reason: Project Euler problems need programs, but only the final number is scored, with no
+      efficiency limit beyond the code tool's two-minute timeout.
+    source: src-arxiv-2605-00674-v2
+    quote: In our code execution tool, models can choose between Python and C++ with a two-minute
+      time limit
+capability:
+  - deductive-reasoning
+  - quantitative-reasoning
+capability_basis:
+  deductive-reasoning:
+    reason: A proof is correct, and a final answer right, only as it follows from the problem
+      statement; the proof-based competitions score the whole argument.
+    source: src-arxiv-2505-23281-v3
+    quote: we prompt the models to output their answer inside of a boxed environment, while for
+      proof-based competitions, we prompt the models to output the entire proof
+  quantitative-reasoning:
+    reason: The final-answer competitions score a number or expression reached by calculation and
+      algebra; AIME answers are integers.
+    source: src-matharena-competitions
+    quote: Each answer is an integer between 0 and 999 inclusive
+capability_considered_and_rejected:
+  - term: honesty
+    reason: Assigned to the BrokenArXiv subset only, where declining to prove a false statement
+      earns full credit; no other subset scores it.
+  - term: knowledge-recall
+    reason: ArXivMath needs up-to-date knowledge on the way to its answers, but the questions come
+      from papers too recent to have been trained on, so the answer is derived, not recalled.
+  - term: tool-use
+    reason: Project Euler and ArXivLean expose code execution and Lean tools, but the score is the
+      answer or the accepted proof, not how the tools were used.
+  - term: reliability-consistency
+    reason: Each problem is run four times, but the runs are averaged, which the term's exclusion
+      rules out.
+
+evaluation_method:
+  - symbolic-equivalence
+  - human-expert-eval
+  - rubric-graded
+  - model-graded-judge
+  - formal-proof-check
+  - multiple-choice
+  - composite
+  - entrant-relative-ranking
+evaluation_method_note: Judges. Final answers are cross-checked by an LLM judge (Gemini 2.5 Flash in
+  the 2025 paper), and disagreements with the parser are inspected by hand. The USAMO 2026 jury is
+  GPT-5.4, Gemini 3.1 Pro Preview and Claude Opus 4.6, taking the minimum of their scores. The
+  sources read do not name the BrokenArXiv judge model. Kangaroo's chance baseline is one in five.
+evaluation_method_basis:
+  reason: Final answers (the contests, Apex, ArXivMath) are parsed into SymPy expressions and
+    checked for equivalence. Proofs are scored by expert graders against per-problem grading
+    schemes, two graders per solution in 2025 and the official juries for Putnam and Miklós
+    Schweitzer 2025. BrokenArXiv is scored by an LLM judge, and USAMO 2026 by an LLM jury whose
+    every grade was reviewed by hand. ArXivLean proofs must pass the Lean checker. Kangaroo 2025 is
+    multiple choice among five options. The expected-performance figure averages these benchmarks,
+    imputing missing results with an item-response model fitted across all models.
+  source: src-arxiv-2505-23281-v3
+  quote: For final-answer problems, we use an automated rule-based parser to extract answers. For
+    proof-based problems, human graders evaluate the model outputs.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Answers are checked for equivalence by SymPy, not by string equality.
+    source: src-arxiv-2505-23281-v3
+    quote: These expressions are then checked for equivalence with the ground truth answer using
+      sympy
+  - term: expert-panel-assessment
+    reason: The Putnam and Miklós Schweitzer juries scored each solution in points, as they do human
+      papers, rather than issuing one collective judgement.
+  - term: human-distribution-percentile
+    reason: The 2025 paper sets AIME and HMMT scores beside the top 1% of human participants, but
+      the score is accuracy, not a percentile of the human distribution.
+designed_for_subjects:
+  - reasoning-model
+  - model-in-benchmark-harness
+designed_for_subjects_basis:
+  reason: Only reasoning models are evaluated, each row named with its reasoning-effort setting.
+    Project Euler and ArXivLean run every model inside the platform's own tool loop (code execution;
+    Lean execution and search), capped at 200 tool calls, with only the model varying.
+  source: src-arxiv-2505-23281-v3
+  quote: We exclude non-reasoning models, as they consistently underperform reasoning models
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: Non-reasoning models are excluded from evaluation.
+  - term: tool-augmented-model
+    reason: In Project Euler and ArXivLean the model decides what to run next and when to answer,
+      inside the platform's loop, which is model-in-benchmark-harness.
+  - term: agent-scaffold
+    reason: The standard boards run the platform's own prompts and tools for every model. Scaffolds
+      do appear among the rows (observed_subjects).
+observed_subjects:
+  values:
+    - reasoning-model
+    - agent-scaffold
+  basis: Rows include scaffolded systems beside bare models; DeepSeek-v3.2-Speciale with the
+    DeepSeekMath-V2 scaffold scored 86% on Putnam 2025.
+  source: src-arxiv-2605-00674-v2
+as_used:
+  - protocol: MathArena's AIME 2026, HMMT February 2025 and HMMT November 2025 sets used as test
+      sets beside AIME 2024 and 2025, with 12 sampled responses per question scored as pass@12, not
+      the platform's mean over four runs.
+    source: src-arxiv-2610-11128-v1
+    quote: we evaluate on five mathematical reasoning benchmarks, AIME 2024, AIME 2025, AIME 2026,
+      HMMT February 2025, and HMMT November 2025 (Balunovic et al., 2026, Dekoninck et al., 2026)
+    note: A training-method paper of October 2026 on Qwen3-4B and Qwen3-8B, which reports avg@12
+      beside pass@12.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers keep adding results; the home page announced new ArXivMath and BrokenArXiv
+    results on October 13, the ArXivMath August 2026 set was published on 2026-09-13, and a paper of
+    October 2026 evaluates on the competition sets.
+  source: src-matharena-site
+  quote: We published results for Mistral Large 4 on ArXivMath and BrokenArXiv
+activity: no-submission-channel
+activity_basis:
+  reason: The maintainers choose which models to run and run them; no source read offers developers
+    a route to submit a model or results. Model providers have given access to unreleased models
+    (Gemini Deep Think for IMC 2025), which is not a submission route.
+  source: src-arxiv-2505-23281-v3
+  quote: To avoid an overly cluttered leaderboard, we only select models that meet at least one of
+    the following criteria
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-5.5
+    source: src-arxiv-2605-00674-v2
+    observed_on: 2026-10-14
+    quote: Notably, the strongest model, GPT-5.5, now reaches 98% on the 2026 USA Math Olympiad and
+      74% on research-level questions
+  - system: GPT-6.1 Sol (max)
+    source: src-matharena-site
+    observed_on: 2026-10-14
+    quote: '#1 overall GPT-6.1 Sol (max) OpenAI 2026-09-29 90.1%'
+evaluation_target: learned-system
+execution_mode: human-in-loop
+execution_mode_note: Final answers, ArXivMath, BrokenArXiv and ArXivLean are scored automatically,
+  with hand review of flagged parses; the proof-based competitions are graded or reviewed by people.
+ground_truth_source: held-out-labels
+ground_truth_source_note: Stored gold answers for the final-answer sets; for proofs, human graders'
+  scores against grading schemes; for ArXivLean, the Lean checker's verdict on the fixed formal
+  statement; for BrokenArXiv, the known falsity of the perturbed statement.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Code, problems, answers and every model output are public, so final-answer and Lean
+    results can be recomputed. Proof grading needs recruited graders, and the Project Euler answers
+    are withheld under the site's terms, so those scores cannot be recomputed as published.
+  source: src-github-matharena-readme
+  quote: You can find logs from our evaluation containing full reasoning traces (if available) and
+    solutions produced by the models on our HuggingFace page
+
+task:
+  exists: true
+  input:
+    - a competition or research problem as LaTeX text (Kangaroo 2025 as one image holding the text,
+      figures and five options)
+    - for ArXivLean, the formal Lean statement beside its natural-language description
+  output: A final answer in a boxed LaTeX environment, a complete natural-language proof, or, for
+    ArXivLean, a Lean file proving the given statement.
+  scoring: Each problem's score is the mean over four runs (proofs in points, normalised); a
+    competition's score is the mean over its problems, shown with the average cost of one run.
+    Models released after a competition are flagged on its leaderboard.
+  source: src-arxiv-2505-23281-v3
+  quote: To account for stochasticity, each model generates four responses per question, and we
+    report the average score across these runs
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Problem sets and answers are on Hugging Face without a gate, and every model output
+    is published. Project Euler's answers are the exception, withheld under that site's terms; its
+    board is a deprecated subset.
+  access_basis:
+    reason: Datasets are published on Hugging Face under an open licence, and the records read are
+      ungated.
+    source: src-arxiv-2505-23281-v3
+    quote: Regarding data availability, we typically publish datasets on HuggingFace
+  refresh: periodic-recompetition
+  refresh_note: The headline rankings are per dated competition or monthly arXiv set, each new data.
+    The expected-performance aggregate moves as sets are added and deprecated, and as models are
+    added to the item-response fit.
+  refresh_basis:
+    reason: Each competition is a new, dated problem set, and ArXivMath and BrokenArXiv are rebuilt
+      every month from the previous month's papers (ArXivLean every three months).
+    source: src-arxiv-2605-00674-v2
+    quote: we release monthly versions of ArXivMath and BrokenArXiv, where each version consists of
+      problems extracted from papers published in the previous month
+  data_provenance:
+    - exam-derived
+    - model-generated
+  data_provenance_note: Competition problems are taken from the official sources and checked by
+    hand. The arXiv-based questions are drafted from paper abstracts by Gemini 3.1 Pro Preview,
+    filtered by automated checks and reviewed by the authors.
+  data_provenance_source: src-arxiv-2605-00674-v2
+  data_provenance_quote: We prompt Gemini 3.1 Pro Preview (medium reasoning) to generate candidate
+    questions from paper abstracts
+  contamination_risk: high
+  contamination_risk_note: The structure works against contamination (models run within hours or
+    days of a contest; arXiv sets from the previous month), but two routes are evidenced or stated.
+    Eight AIME 2025 problems and one HMMT February 2025 problem had appeared online in similar form
+    before the contests, and both sets are still published and scored. Models released after a
+    contest are evaluated and flagged rather than excluded, after its problems have been published.
+  contamination_evidence:
+    - source: src-arxiv-2505-23281-v3
+      stance: supports
+      quote: 8 problems from AIME 2025 and 1 problem from HMMT 2025 can be found online in a similar
+        form
+    - source: src-arxiv-2505-23281-v3
+      stance: supports
+      quote: If a model was released after the competition date, this is clearly indicated on the
+        leaderboard
+    - source: src-arxiv-2505-23281-v3
+      stance: against
+      quote: our evaluations are conducted only a few hours to at most a few days after the
+        competition concludes
+    - source: src-arxiv-2605-00674-v2
+      stance: against
+      quote: since models are unlikely to have been trained on such recent papers
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Every board's score is bounded at 100%. The 2025 paper sets the AIME and
+    HMMT February 2025 scores beside the top 1% of human participants (ceiling_by_category).
+  ceiling_by_category:
+    - category: AIME 2025, top 1% of human participants
+      value: 84.4
+      metric: accuracy (%)
+      source: src-arxiv-2505-23281-v3
+      quote: HUMAN (TOP 1%) 84.4 66.8
+    - category: HMMT February 2025, top 1% of human participants
+      value: 66.8
+      metric: accuracy (%)
+      source: src-arxiv-2505-23281-v3
+      quote: Human performance is reported for the top 1% of participants in the AIME and HMMT
+        competitions
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: The licence the paper gives for the competition sets. The arXiv-based sets'
+    Hugging Face records state CC-BY-SA-4.0 (see review_checks).
+  dataset_licence_source: src-arxiv-2505-23281-v3
+  dataset_licence_quote: All data is available under the CC-BY-NC-SA 4.0 license
+  upstream_licences: The competition organisers agreed to their problems' release under CC BY-NC-SA
+    4.0.
+  upstream_licences_source: src-arxiv-2505-23281-v3
+  upstream_licences_quote: All organizers agreed to the use of their questions under the CC-BY-NC-SA
+    4.0 license
+  size:
+    - count: 162
+      unit: problems in seven 2025 competitions
+      subset: the 2025 paper's benchmark (AIME, HMMT February, BRUMO, CMIMC, USAMO, IMO, Project
+        Euler)
+      source: src-arxiv-2505-23281-v3
+      quote: So far, we have evaluated over 50 models across seven competitions, totaling 162
+        problems
+    - count: 168
+      unit: multiple-choice problems in six grade groups
+      subset: Kangaroo 2025
+      source: src-arxiv-2605-00674-v2
+      quote: The final dataset contains 168 problems across six grade groups
+    - count: 57
+      unit: research-level questions
+      subset: ArXivMath, August 2026 release
+      source: src-hf-api-matharena-arxivmath-0826
+      quote: This dataset contains 57 self-contained research-level mathematics questions derived
+        from arXiv papers submitted in August 2026
+  size_note: The other subsets' problem counts, as the competitions page gives them, are on the
+    subsets.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: SRI Lab, ETH Zurich, with INSAIT (Sofia University)
+  maintainer_basis:
+    reason: The site names its creators, and the code sits in the SRI Lab's eth-sri organisation on
+      GitHub.
+    source: src-matharena-site
+    quote: Created by SRI Lab at ETH Zurich, and INSAIT
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers select models (top contenders, the best open model, and
+    points on the cost frontier), run them with provider-recommended settings, and try to reproduce
+    provider-reported numbers before publishing. For Putnam and Miklós Schweitzer 2025 they
+    submitted model solutions to the official juries.
+  submission_process_source: src-arxiv-2505-23281-v3
+  submission_process_quote: To avoid an overly cluttered leaderboard, we only select models that
+    meet at least one of the following criteria
+  independence_flags:
+    - flag: funded-by-evaluated-party
+      source: src-arxiv-2505-23281-v3
+      quote: This project was supported with computational resources provided by Google Cloud
+        Platform (GCP)
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2605-00674-v2
+      quote: LLM jury [74] consisting of GPT-5.4 [81], Gemini 3.1 Pro Preview [84], and Claude Opus
+        4.6 [97]
+  independence_flags_note: Google supplied compute for the 2025 paper, and Gemini models are ranked;
+    the 2026 paper's acknowledgements name only Bulgarian public funding. The USAMO 2026 jury models
+    are evaluated on USAMO 2026 themselves, though every grade was then reviewed by hand. Google
+    also gave access to Gemini Deep Think for IMC 2025, which the flag's exclusion does not count as
+    funding. The 2026 paper argues that platforms should be run by parties without a stake in the
+    results.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Models are queried through provider APIs (local serving with vLLM is optional), and the
+      ArXivLean harness runs in Docker on ordinary hardware.
+    source: src-github-matharena-readme
+    quote: The API key should be defined as an environment variable when using the specified API
+  reproducibility_tier: requires-human-raters
+  reproducibility_tier_basis:
+    reason: The final-answer and research sets score automatically, but the proof-based competitions
+      need human graders for a fresh run.
+    source: src-github-matharena-readme
+    quote: were graded using human verification. They can therefore not be graded automatically
+  reproducibility_blockers:
+    - human-raters
+  reproducibility_blockers_note: Putnam and Miklós Schweitzer 2025 were graded once by the official
+    juries, which no rerun can reconvene; a fresh run of them needs recruited graders.
+  harness_availability: official-harness
+  harness: eth-sri/matharena (scripts/run.py, and scripts/judge/judge.py for judged competitions)
+  harness_note: UK AISI's inspect_evals implements AIME 2024 to 2026 from other Hugging Face sets
+    (math-ai/aime26 for 2026), not MathArena's sets or protocol (its source tree, read 2026-10-14;
+    not a quoted Source).
+  harness_source: src-github-matharena-readme
+  harness_quote: uv run python scripts/run.py --comp path/to/competition --models path/to/model1
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for eth-sri/matharena, read 2026-10-14, with the
+    README's MIT badge; not a quoted Source. The repository was last pushed on 2026-09-16.
+  est_cost_usd:
+    min: 0.18
+    max: 9.09
+    basis: One run of one model over one final-answer competition (30 to 40 problems), as the 2025
+      paper measured it, from Grok 4 Fast ($0.18) to Claude Sonnet 4.5 with thinking ($9.09). A
+      leaderboard entry is four such runs. ArXivLean costs more, nearly $10 per answer for GPT-5.4
+      on its first release.
+    source: src-arxiv-2505-23281-v3
+  est_cost_usd_source: src-arxiv-2505-23281-v3
+  est_cost_usd_quote: Measured cost is the average cost to run a model one time on a single
+    competition
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profiles: which competition or monthly set was scored (subset_used, and whether the
+  # model was released after that contest, which the boards flag); the number of runs averaged (four on the
+  # boards, 12 in papers that reuse the sets); a best-of-n selection (32 samples per problem on IMO 2025);
+  # the tool budget on Project Euler and ArXivLean (20, later 200 calls); and the cost of a run, which every
+  # board reports beside the score. Nothing here forecasts, so lead_time and resolution_window are not in
+  # play.
+  material_extra:
+    - n_samples
+    - selection_strategy
+    - tools_allowed
+    - max_steps
+    - cost_usd
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The home page ranks models by expected performance over the non-deprecated competitions;
+    each competition also keeps its own leaderboard.
+  source: src-matharena-site
+  quote: Expected performance averages normalized scores across all questions from non-deprecated
+    competitions, giving each question equal weight
+secondary_axes:
+  - cost
+secondary_axes_basis:
+  reason: Every leaderboard reports the cost of a run beside the score, and the home page ranks
+    expected cost beside expected performance.
+  source: src-matharena-site
+  quote: To evaluate performance, we run each model 4 times on each problem, computing the average
+    score and the cost of the model (in USD) across all runs
+
+homepage: https://matharena.ai/
+repository: https://github.com/eth-sri/matharena
+dataset_url: https://huggingface.co/MathArena
+leaderboard_url: https://matharena.ai/
+
+subsets:
+  - id: matharena#final-answer
+    label: Final-Answer Comps
+    scored_separately: true
+    evidence:
+      - source: src-matharena-competitions
+        quote: Final-Answer Comps Deprecated Overall Deprecated 4 competitions
+    notes: High-school contests and Apex, scored by answer equivalence. Each set is evaluated close
+      to its contest date, and models released after it are flagged. Deprecated on the site on
+      2026-10-14; the 2026 paper calls these competitions saturated.
+  - id: matharena#aime-2025
+    label: AIME 2025
+    parent: matharena#final-answer
+    items: 30
+    evidence:
+      - source: src-matharena-competitions
+        quote: AIME 2025 Deprecated 30 problems · 61 models
+  - id: matharena#hmmt-feb-2025
+    label: HMMT Feb 2025
+    parent: matharena#final-answer
+    items: 30
+    evidence:
+      - source: src-matharena-competitions
+        quote: HMMT Feb 2025 Deprecated 30 problems · 60 models
+  - id: matharena#brumo-2025
+    label: BRUMO 2025
+    parent: matharena#final-answer
+    items: 30
+    evidence:
+      - source: src-matharena-competitions
+        quote: BRUMO 2025 Deprecated 30 problems · 45 models
+  - id: matharena#smt-2025
+    label: SMT 2025
+    parent: matharena#final-answer
+    items: 53
+    evidence:
+      - source: src-matharena-competitions
+        quote: SMT 2025 Deprecated 53 problems · 44 models
+  - id: matharena#cmimc-2025
+    label: CMIMC 2025
+    parent: matharena#final-answer
+    items: 40
+    evidence:
+      - source: src-matharena-competitions
+        quote: CMIMC 2025 Deprecated 40 problems · 36 models
+  - id: matharena#hmmt-nov-2025
+    label: HMMT Nov 2025
+    parent: matharena#final-answer
+    items: 30
+    evidence:
+      - source: src-matharena-competitions
+        quote: HMMT Nov 2025 Deprecated 30 problems · 23 models
+  - id: matharena#aime-2026
+    label: AIME 2026
+    parent: matharena#final-answer
+    items: 30
+    evidence:
+      - source: src-matharena-competitions
+        quote: AIME 2026 Deprecated 30 problems · 32 models
+  - id: matharena#hmmt-feb-2026
+    label: HMMT Feb 2026
+    parent: matharena#final-answer
+    items: 33
+    evidence:
+      - source: src-matharena-competitions
+        quote: HMMT Feb 2026 Deprecated 33 problems · 32 models
+  - id: matharena#apex
+    label: Apex
+    parent: matharena#final-answer
+    items: 12
+    evidence:
+      - source: src-matharena-competitions
+        quote: Apex Deprecated 12 problems · 48 models
+      - source: src-matharena-competitions
+        quote: Apex problems are specifically selected such that Grok 4, GPT-5, gemini-2.5-Pro, and
+          GLM 4.5 perform bad, introducing a bias
+    notes: Hard 2025 competition problems kept only if all four selection models failed all four
+      attempts, so those four models' scores are biased downwards.
+  - id: matharena#apex-shortlist
+    label: Apex Shortlist
+    parent: matharena#final-answer
+    items: 47
+    evidence:
+      - source: src-matharena-competitions
+        quote: Apex Shortlist Deprecated 47 problems · 40 models
+    notes: The 2026 paper counts 48 problems; the competitions page lists 47.
+  - id: matharena#proof-based
+    label: Proof-Based Comps
+    scored_separately: true
+    capability_override:
+      - deductive-reasoning
+    evidence:
+      - source: src-matharena-competitions
+        quote: Proof-Based Comps Deprecated USAMO 2025
+      - source: src-arxiv-2505-23281-v3
+        quote: Two independent judges grade each solution, providing not only a final score but also
+          a justification for their decision
+    notes: Natural-language proofs scored in points against per-problem grading schemes. The 2026
+      paper says these sets are too small to compare models reliably, only to track the field.
+      Deprecated on the site on 2026-10-14.
+  - id: matharena#usamo-2025
+    label: USAMO 2025
+    parent: matharena#proof-based
+    items: 6
+    evidence:
+      - source: src-matharena-competitions
+        quote: Proof-Based Comps Deprecated USAMO 2025 Deprecated 6 problems · 10 models
+  - id: matharena#imo-2025
+    label: IMO 2025
+    parent: matharena#proof-based
+    items: 6
+    evidence:
+      - source: src-matharena-competitions
+        quote: IMO 2025 Deprecated 6 problems · 7 models
+      - source: src-arxiv-2505-23281-v3
+        quote: selecting the best proof from 32 samples per problem
+    notes: Each model's submitted proof was chosen from 32 samples by the model itself in a bracket
+      tournament.
+  - id: matharena#imc-2025
+    label: IMC 2025
+    parent: matharena#proof-based
+    items: 10
+    evidence:
+      - source: src-matharena-competitions
+        quote: IMC 2025 Deprecated 10 problems · 3 models
+      - source: src-arxiv-2605-00674-v2
+        quote: IMC 2025 took place in July 2025
+    notes: Graded in house by two team members against their own rubrics, each problem out of 10.
+  - id: matharena#miklos-schweitzer-2025
+    label: Miklós Schweitzer 2025
+    parent: matharena#proof-based
+    items: 10
+    evidence:
+      - source: src-matharena-competitions
+        quote: Miklós Schweitzer 2025 Deprecated 10 problems · 1 models
+      - source: src-matharena-competitions
+        quote: The model was officially submitted and evaluated by the competition organizers
+    notes: One submission graded by the official jury, which was not told the solutions came from an
+      LLM.
+  - id: matharena#putnam-2025
+    label: Putnam 2025
+    parent: matharena#proof-based
+    items: 12
+    evidence:
+      - source: src-matharena-competitions
+        quote: Grading was performed by the official Putnam grading committee
+      - source: src-arxiv-2605-00674-v2
+        quote: graded by the official jury with full knowledge that the solutions were generated by
+          an LLM
+    notes: Six submissions, graded by the official jury in its second round.
+  - id: matharena#usamo-2026
+    label: USAMO 2026
+    parent: matharena#proof-based
+    items: 6
+    evidence:
+      - source: src-matharena-competitions
+        quote: USAMO 2026 Deprecated 6 problems · 9 models
+      - source: src-arxiv-2605-00674-v2
+        quote: After running the automated grading pipeline on USAMO 2026, our team carefully
+          reviewed every solution by hand
+    notes: Graded by an LLM jury (GPT-5.4, Gemini 3.1 Pro Preview, Claude Opus 4.6) against rubrics,
+      then reviewed by hand.
+  - id: matharena#visual-math
+    label: Visual Math (Kangaroo 2025)
+    items: 168
+    scored_separately: true
+    domain_override:
+      primary: mathematics/competition-math
+      secondary:
+        - multimodal/visual-qa
+    evidence:
+      - source: src-matharena-competitions
+        quote: Visual Math Deprecated Overall Deprecated 6 competitions
+      - source: src-arxiv-2605-00674-v2
+        quote: each with five answer options labeled A-E
+    notes: Six grade levels of the 2025 Kangaroo, an Albanian edition translated into English, each
+      problem shown as one image with its text, figures and options. Deprecated on the site.
+  - id: matharena#project-euler
+    label: Project Euler
+    items: 50
+    scored_separately: true
+    evidence:
+      - source: src-matharena-competitions
+        quote: Project Euler Deprecated Project Euler Deprecated 50 problems
+      - source: src-arxiv-2605-00674-v2
+        quote: Models are executed with access to Python and C++ code execution, with up to 200 tool
+          calls per problem
+    notes: The newest problem was added each week; the answers are withheld. The tool budget was 20
+      calls in the 2025 paper and was raised to 200 after it under-elicited open models. Deprecated
+      on the site on 2026-10-14.
+  - id: matharena#arxivmath
+    label: ArXivMath
+    scored_separately: true
+    domain_override:
+      primary: mathematics/research-level-math
+    evidence:
+      - source: src-matharena-competitions
+        quote: ArXivMath Overall 3 competitions
+      - source: src-arxiv-2605-00674-v2
+        quote: ArXivMath consists of research-level problems that admit a final answer, such as a
+          number, formula, or specific mathematical object
+      - source: src-arxiv-2605-00674-v2
+        quote: After filtering and human review, around 30 questions remain each month
+    notes: Monthly sets from 12/2025 to 08/2026 on the site, the 05, 06 and 08/2026 sets current.
+      Scored by the final-answer parser, without tools.
+  - id: matharena#brokenarxiv
+    label: BrokenArXiv
+    scored_separately: true
+    domain_override:
+      primary: mathematics/research-level-math
+    capability_override:
+      - honesty
+    evidence:
+      - source: src-matharena-competitions
+        quote: BrokenArXiv Overall 3 competitions
+      - source: src-arxiv-2605-00674-v2
+        quote: A model fails if it claims to provide such a proof, and succeeds if it either
+          correctly identifies the statement as false or states that it cannot provide a proof
+      - source: src-matharena-competitions
+        quote: Responses are graded on a 0–3 scale, with full credit for recognizing that the
+          statement is false
+    notes: Statements from new arXiv abstracts perturbed to be false, which the model is asked to
+      prove. An LLM judge scores the response; monthly sets from 02/2026, the 05, 06 and 08/2026
+      sets current. The 2026 paper describes a 0-2 scale, the August 2026 set a 0-3 scale.
+  - id: matharena#arxivlean
+    label: ArXivLean
+    scored_separately: true
+    domain_override:
+      primary: mathematics/formal-theorem-proving
+      secondary:
+        - mathematics/research-level-math
+    capability_override:
+      - deductive-reasoning
+    evidence:
+      - source: src-matharena-competitions
+        quote: ArXivLean is a benchmark of formalized statements from recent arXiv papers
+      - source: src-arxiv-2605-00674-v2
+        quote: A submission counts as correct only if it is accepted by the Lean checker in a fixed
+          environment
+      - source: src-matharena-competitions
+        quote: 06/2026 46 problems · 14 models
+    notes: Statements from arXiv abstracts formalised in Lean 4 and checked by hand; the model gets
+      Lean execution and search tools for up to 200 calls. Quarterly; the 06/2026 set is current.
+
+tags:
+  - competition-math
+  - olympiad
+  - proof-writing
+  - research-level
+  - lean
+  - contamination
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2505-23281-v3
+    - src-arxiv-2505-23281
+    - src-arxiv-2605-00674-v2
+    - src-arxiv-2605-00674
+    - src-github-matharena-readme
+    - src-matharena-site
+    - src-matharena-competitions
+    - src-hf-api-matharena-arxivmath-0826
+    - src-arxiv-2610-11128-v1
+  sources_note: >
+    Both papers' PDFs (DOIs, not archived) read as text, with their abstract pages for dates; the README
+    at main; the home and competitions pages with scripts and styles stripped, both withheld from
+    archiving because they carry a researcher's e-mail address; Hugging Face's API record of the August
+    2026 ArXivMath set; and an October 2026 paper's v1 PDF as evidence of use by others.
+  confidence: medium
+  review_checks:
+    - check: Identity. One entry for the platform, each competition and arXiv benchmark a subset.
+        The alternatives are versions per competition date, a track-set version for the 2026
+        expansion, or entries of their own for ArXivMath, BrokenArXiv and ArXivLean. AIME is also a
+        core entry of its own in the mathematics survey, so MathArena's AIME 2025 and 2026 subsets
+        overlap it.
+      field: subsets
+    - check: Primary domain. On 2026-10-14 the site marks every competition section deprecated, so
+        the current benchmarks are all research-level; the primary could move to
+        research-level-math. competition-math's definition also asks for determinate answers, which
+        proofs lack.
+      field: domain
+      source: src-matharena-competitions
+      quote: Final-Answer Comps Deprecated Overall Deprecated 4 competitions
+    - check: Final answers were expected to be exact-match, but the sources describe SymPy
+        equivalence, so symbolic-equivalence is tagged and exact-match rejected. composite and
+        entrant-relative-ranking rest only on the home page's expected-performance aggregate.
+      field: evaluation_method
+      source: src-matharena-site
+      quote: For missing results, we estimate the score with a two-parameter item-response theory
+        model
+    - check: contamination_risk high rests on the 2025 paper's finding that nine AIME and HMMT
+        February 2025 problems had near-copies online, in sets now deprecated but still published,
+        and on later models being flagged rather than excluded. medium is arguable if deprecated
+        sets do not count.
+      field: data.contamination_risk
+    - check: grader-from-evaluated-party rests on the USAMO 2026 jury, whose grades were all
+        reviewed by hand; funded-by-evaluated-party on Google Cloud compute acknowledged in the 2025
+        paper only.
+      field: governance.independence_flags
+    - check: Capability overrides drop terms on purpose (the validator's subset-drops-terms
+        warnings). The proof-based subsets and ArXivLean keep deductive-reasoning only, and
+        BrokenArXiv has honesty alone, assigned only there and not at entry level; whether the
+        entry's coverage should show it.
+      field: capability
+    - check: The arXiv-based sets on Hugging Face state CC-BY-SA-4.0, not the paper's
+        CC-BY-NC-SA-4.0; dataset_licence records the paper's.
+      field: data.dataset_licence
+      source: src-hf-api-matharena-arxivmath-0826
+      quote: '"license":"cc-by-sa-4.0"'
+    - check: reproducibility_tier requires-human-raters. Putnam and Miklós Schweitzer 2025 were
+        scored once by official juries, and Project Euler's answers are withheld, which could argue
+        for not-independently-reproducible; the exclusion for unrepeatable past runs was applied.
+      field: execution.reproducibility_tier
+    - check: activity no-submission-channel. No source read offers a route for developers to request
+        an evaluation; the site gives only a contact address.
+      field: activity
+    - check: cost_usd is in material_extra as the assignment asked; it is an outcome the boards
+        report beside every score rather than a run condition.
+      field: comparability.material_extra
