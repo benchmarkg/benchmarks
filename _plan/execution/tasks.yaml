@@ -2474,7 +2474,7 @@ phases:
             title: Freeze the schema and arm stopping rule (b)
             executor: agent
             status: blocked
-            blocked_reason: "The checker is built and wired (scripts/check_schema_churn.py; pr-validate job schema-churn, a reported signal). Its verify, check_schema_churn.py --window 40, exits 1 by design until 40 entries are curated after the last schema change (ADR-0024, 2026-10-12, at entry 34; 0 since). Unblock and finish when the count reaches 40, or close it on the done_when (the checker reports the count and is wired), which already holds."
+            blocked_reason: "Built and wired: scripts/check_schema_churn.py runs in pr-validate as the reported job schema-churn, and its verify, pytest tests/ci/test_schema_churn.py, passes (6 tests, 2026-10-13). It waits only on its input P1-S3-T05, which is in review: finish it once that is approved. The 40-entry window it reports is P1-S13-T07's to assert, at the Phase 1 exit (14-roadmap)."
             review_note: started ahead of review on P1-S3-T05
             depends_on:
               - P1-S3-T05
@@ -2485,12 +2485,14 @@ phases:
             steps:
               - Count entry-adding commits since the last change under schema/.
               - Exit non-zero when schema/ changed inside the last 40 entries.
-              - Add the checker to pr-validate.yml as a reported signal and to the exit gate as blocking.
+              - Add the checker to pr-validate.yml as a reported signal; P1-S13-T07 makes the 40-entry window blocking at the Phase 1 exit.
+              - Write tests/ci/test_schema_churn.py covering the count, rule (b) on either side of entry 60, and the reported wiring.
             produces:
               - scripts/check_schema_churn.py
+              - tests/ci/test_schema_churn.py
             modifies:
               - .github/workflows/pr-validate.yml
-            verify: python scripts/check_schema_churn.py --window 40
+            verify: pytest tests/ci/test_schema_churn.py
             done_when: The checker reports the entry count since the last schema change and is wired into CI.
             est_hours_low: 1
             est_hours_high: 2
