@@ -1,0 +1,459 @@
+# data/benchmarks/games-planning/craftax.yaml
+#
+# P1-S11-T03, games-planning entry 3 of 6. Filled from the Craftax paper, arXiv 2402.16801 read as its v2 PDF
+# (2024-06-03, ICML 2024), and its abstract page; the repository README at main (MichaelTMatthews/Craftax), with its
+# scoreboard; GitHub's release record of the repository; and the v2 PDF of RePPO (arXiv 2606.00151, ICML 2026), a
+# paper that runs the Craftax-1B protocol. Every quote below is checked by the quote-substring validator against
+# those Sources' committed extracts.
+#
+# Craftax and its two proposed benchmarks (Craftax-1B and Craftax-1M), with Craftax-Classic, the JAX rewrite of
+# Crafter, as a subset. Crafter itself (Hafner, 2021) has no entry. Multi-Agent Craftax was not read and is not
+# folded in.
+
+id: craftax
+name: Craftax
+tagline: 'Open-ended RL in JAX: an extended Crafter, scored by achievements unlocked within a fixed budget
+  of environment steps.'
+description: >
+  An open-ended reinforcement-learning environment written in JAX. Craftax-Classic rewrites Crafter, a
+  2D survival game like a simplified Minecraft, with 22 achievements. Craftax, the main environment,
+  extends it with mechanics inspired by NetHack: nine procedurally generated floors, from caves and
+  dungeons to a boss floor, 19 creatures, ranged and magic combat, potions whose effects are permuted
+  every episode, and 65 achievements. The agent is rewarded the first time it completes each
+  achievement in an episode, with harder categories worth more (1, 3, 5 or 8), and loses or regains
+  0.1 per point of health; results are reported as a percentage of the maximum reward, 226. The paper
+  proposes two benchmarks on the symbolic observations: Craftax-1B, a budget of one billion
+  environment interactions, and Craftax-1M, one million, as a test of sample efficiency. Because the
+  whole pipeline compiles to the GPU, a 1B run takes about an hour on one GPU. The baselines (PPO, PPO
+  with a recurrent network, and exploration bonuses) reach 11-15% of the maximum on Craftax-1B. A
+  scoreboard in the README takes further results by pull request, unverified.
+self_description:
+  source: src-arxiv-2402-16801-v2
+  quote: we present the main Craftax benchmark, a significant extension of the Crafter mechanics
+    with elements inspired from NetHack
+external_ids:
+  arxiv: '2402.16801'
+paper:
+  title: 'Craftax: A Lightning-Fast Benchmark for Open-Ended Reinforcement Learning'
+  arxiv: '2402.16801'
+  version_read: v2
+  source: src-arxiv-2402-16801-v2
+released: 2024-02-26
+released_note: The paper's first arXiv version, as the abstract page dates it; the v2 read here (3
+  June 2024) is the ICML 2024 version, the venue the README's citation names.
+released_source: src-arxiv-2402-16801
+released_quote: Submitted on 26 Feb 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: games-planning/open-ended-environments
+domain_basis:
+  reason: An agent acts in a game world with no single goal, and the score is the achievements it
+    unlocks, which is the leaf's definition; the family's own example names Craftax for open-ended
+    achievement progression.
+  source: src-arxiv-2402-16801-v2
+  quote: giving the agent a reward the first time each achievement is completed each episode
+domain_considered_and_rejected:
+  - term: games-planning/procedural-generalization
+    reason: Every world is procedurally generated, but the paper scores agents on levels drawn from
+      the training distribution and no held-out set, and sets Craftax's deep exploration against
+      XLand-Minigrid's wide generalisation. Generalisation to unseen levels is hoped for, not
+      measured (see review_checks).
+    source: src-arxiv-2402-16801-v2
+    quote: Craftax evaluating on in distribution levels, rather than a set of hold-out levels
+  - term: games-planning/video-games
+    reason: Craftax is a game built as an RL environment, and both proposed benchmarks are run on
+      its symbolic observations, an array encoding of the map and inventory rather than a game's
+      ordinary interface.
+    source: src-arxiv-2402-16801-v2
+    quote: We also limit the benchmarks to considering symbolic observations
+capability:
+  - search-exploration
+  - long-horizon-execution
+  - planning
+  - memory-retention
+  - sample-efficiency
+capability_basis:
+  search-exploration:
+    reason: The reward is discovery itself, the first completion of each achievement in an episode,
+      under a fixed budget of environment interactions; the paper presents the benchmark as a hard
+      exploration task and evaluates exploration methods on it.
+    source: src-arxiv-2402-16801-v2
+    quote: Craftax assesses deep exploration whereas XLand-Minigrid assesses wide generalisation
+  long-horizon-execution:
+    reason: An episode runs to thousands of dependent actions, and the player's death ends it, so an
+      early error makes the remaining achievements unattainable in that episode.
+    source: src-arxiv-2402-16801-v2
+    quote: successful runs typically take tens of thousands of frames
+  planning:
+    reason: Each episode is played against an explicit objective, the weighted achievements, and the
+      source claims long-term planning, so the executed action sequence is the plan and its reward
+      scores it (the term's tie-break for interactive episodes).
+    source: src-arxiv-2402-16801-v2
+    quote: Solving Craftax requires deep exploration, long term planning and memory, as well as
+      continual adaptation to novel situations as more of the world is discovered
+  memory-retention:
+    reason: Potion effects are permuted every episode, so an effect found by trial must be kept
+      across the intervening steps until a potion is next used; the paper names memory as what this
+      tests.
+    source: src-arxiv-2402-16801-v2
+    quote: an agent will need to discover which potions correspond to which effects through trial
+      and error each episode, further testing in-context learning and memory
+  sample-efficiency:
+    reason: Both benchmarks fix a budget of environment interactions and score the reward reached at
+      it; Craftax-1M is proposed as a sample-efficiency test outright, while Craftax-1B's budget is
+      set high on purpose.
+    source: src-arxiv-2402-16801-v2
+    quote: This benchmark is meant as a test of sample efficiency
+capability_considered_and_rejected:
+  - term: continual-learning
+    reason: The taxonomy's example tags it, and the paper names continual learning as a direction.
+      But every achievement is available in every episode and only the reward is reported, which the
+      term's exclusion test removes; no task sequence is presented and no retention is scored.
+    source: src-arxiv-2402-16801-v2
+    quote: This challenge is meant to provide a chance for algorithms focusing on exploration,
+      continual learning, and long-term planning and reasoning to differentiate themselves
+  - term: compositional-generalization
+    reason: The taxonomy's example and homographs.yaml tag it. The inclusion test needs held-out
+      items, and Craftax has none; the source does not claim that held-out levels recombine
+      primitives already shown.
+    source: src-arxiv-2402-16801-v2
+    quote: Craftax evaluating on in distribution levels, rather than a set of hold-out levels
+  - term: distribution-shift-generalization
+    reason: Evaluation levels come from the same generator as training levels, a difference by
+      random sampling only, which the term's exclusion test removes.
+  - term: creativity-novelty
+    reason: The taxonomy's example tags it. Achievements are a fixed list with fixed rewards;
+      nothing in the score rewards departure from known solutions or penalises reproducing them.
+  - term: self-improvement
+    reason: The taxonomy's example tags it. Competence rises over training from the agent's own
+      experience under a fixed algorithm, which the term's atari-100k near miss excludes; no source
+      measures capability before and after a period of the system's own work.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Every number is reward from episodes run in the Craftax environment, reported as a
+    fraction of the maximum reward that completing every achievement gives, so the score is bounded.
+  source: src-arxiv-2402-16801-v2
+  quote: We report reward as a percentage of the maximum achievable reward (obtained by completing
+    every achievement) of 226
+evaluation_method_considered_and_rejected:
+  - term: episodic-return
+    reason: The score is cumulative reward, but rescaled against a maximum (226) that cannot be
+      exceeded, which the term's exclusion test sends to a bounded method.
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The environment is built for reinforcement-learning policies trained under its budgets,
+    and every result read, the paper's baselines, the scoreboard and RePPO, is a policy trained on
+    it. The taxonomy's rl-policy example calls Craftax a near miss because prompted language agents
+    are evaluated on it; no source read here shows one (see review_checks).
+  source: src-github-craftax-readme
+  quote: Craftax is an RL environment written entirely in JAX
+
+as_used:
+  - protocol: Craftax-1B on the symbolic environment, with the official baseline implementation and
+      hyperparameters, run on 5 seeds rather than the paper's 10, each evaluated on 100 episodes,
+      reported as the mean and standard deviation across seeds in % of the maximum reward.
+    source: src-arxiv-2606-00151-v2
+    quote: agents were trained for 1B timesteps with 5 seeds and evaluated for 100 episodes per seed
+    note: RePPO (ICML 2026). The paper's own baselines report reward over training on 10 seeds and
+      give no count of evaluation episodes; seeds and evaluation episodes vary between papers.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it, among them an ICML 2026 paper that runs the Craftax-1B
+    protocol (revised September 2026), and the scoreboard holds entries citing 2025 papers (Simulus,
+    Efficient MBRL). The package's latest release, v1.6.1, is dated 2026-06-20 and the repository
+    was last pushed that day (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2606-00151-v2
+  quote: we reported mean and standard deviation across seeds as % of the max reward (226)
+activity: accepting-submissions
+activity_basis:
+  reason: The README's scoreboard, which has never run in rounds, takes new results by pull request
+    with a reference to their source.
+  source: src-github-craftax-readme
+  quote: If you would like to add an algorithm please open a PR and provide a reference to the
+    source of the results.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: PPO-GTrXL (TransformerXL PPO)
+    source: src-github-craftax-readme
+    observed_on: 2026-10-14
+    quote: PPO-GTrXL | 18.3
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The environment's own reward, from the achievements unlocked and the
+  health lost or regained in each episode.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The environment is open source and installs from PyPI, and the baselines' training code is
+    public; any policy can be trained and scored on fresh worlds.
+  source: src-github-craftax-readme
+  quote: pip install craftax
+
+task:
+  exists: true
+  input:
+    - 'the symbolic observation at each step: a one-hot encoding of the blocks and creatures in view,
+      with inventory, health, hunger and attributes (8,268 values in Craftax, 1,345 in Craftax-Classic);
+      pixel observations exist but the benchmarks do not use them'
+  output: One of 43 discrete actions per step (17 in Craftax-Classic), until the player dies or the
+    episode ends.
+  scoring: Reward for the first completion of each achievement in an episode, worth 1, 3, 5 or 8 by
+    category, minus 0.1 per point of damage and plus 0.1 per point recovered; reported as a
+    percentage of the maximum, 226, after training within the benchmark's budget (1B or 1M
+    interactions), averaged over seeds.
+  source: src-arxiv-2402-16801-v2
+  quote: We also penalise the agent by 0.1 for every point of damage taken and reward it by 0.1 for
+    every point recovered
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: generated-on-demand
+  access_basis:
+    reason: There is no stored set of levels. Each reset generates a new world of nine floors from a
+      random key, so the scored episodes are produced afresh in every run.
+    source: src-arxiv-2402-16801-v2
+    quote: resetting in Craftax is significantly more expensive as it involves generating 9 floors
+      with multiple passes of Perlin Noise and room generation
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The environment changes in labelled package releases, and fixes that change rewards or
+      dynamics are tied to a version in the README's errata (v1.5.0, v1.6.0), so a claim can name
+      the version it ran on.
+    source: src-github-craftax-readme
+    quote: Prior to version 1.6.0 there were two minor bugs for reward on death in Craftax-Classic.
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: Every world is generated by the game's own code, Perlin noise and room
+    generation, with no learned model in the loop. A small offline dataset of human trajectories is
+    offered separately and is not part of the benchmark.
+  data_provenance_source: src-arxiv-2402-16801-v2
+  data_provenance_quote: Craftax contains 9 unique procedurally generated floors
+  contamination_risk: low
+  contamination_risk_note: The scored worlds are generated at evaluation and do not exist
+    beforehand, and training on the environment is the protocol. What a pretrained model could have
+    read is knowledge of the game (the README links a tutorial), not the scored episodes.
+  contamination_evidence: []
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_basis:
+    reason: The metric's bound is 100% of 226, and an author with full knowledge of the mechanics
+      reached it, completing every achievement in one run of about five hours of play (see
+      review_checks).
+    source: src-arxiv-2402-16801-v2
+    quote: run where every achievement was completed
+  size:
+    - count: 65
+      unit: achievements
+      subset: Craftax
+      source: src-arxiv-2402-16801-v2
+      quote: There are 22 achievements in Craftax-Classic and 65 in Craftax
+    - count: 22
+      unit: achievements
+      subset: Craftax-Classic
+      source: src-arxiv-2402-16801-v2
+      quote: There are 22 achievements in Craftax-Classic and 65 in Craftax
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Michael Matthews (the paper's first author)
+  maintainer_basis:
+    reason: The repository and the baselines repository sit in the first author's personal GitHub
+      account (a User account, GitHub API), and the LICENSE file's copyright is his. The paper's
+      authors were at the University of Oxford and UCL; that line of the PDF sits beside the
+      correspondence address and is not quoted.
+    source: src-github-craftax-readme
+    quote: To run experiments see the [Craftax
+      Baselines](https://github.com/MichaelTMatthews/Craftax_Baselines) repository.
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered. The paper comes from an Oxford group, but no
+    institution is stated as holding the artefacts, which sit in one person's account; the term's
+    gpqa-diamond example decides it.
+  submission_process:
+    - self-reported
+    - maintainer-run
+  submission_process_note: Anyone opens a pull request adding a scoreboard row with a reference to
+    its source, and the README says outside scores are not verified. The maintainers' own baselines
+    from the paper (PPO, PPO-RNN, RND, ICM, E3B) sit in the same tables.
+  submission_process_source: src-github-craftax-readme
+  submission_process_quote: Note that all scores from outside the original Craftax paper are
+    reported and have not been verified.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-craftax-readme
+      quote: PPO-RNN | 15.3 |
+        [Craftax_Baselines](https://github.com/MichaelTMatthews/Craftax_Baselines/blob/main/ppo_rnn.py)
+  independence_flags_note: The maintainers' baseline runs are ranked beside outside entries. They
+    are standard algorithms the maintainers ran, not a system of their own built for the board.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Runs are automatic, but only inside the Craftax environment at a given package version,
+      which compiles with JAX and runs fastest on a GPU.
+    source: src-github-craftax-readme
+    quote: Craftax is an RL environment written entirely in JAX
+  harness_availability: official-harness
+  harness: craftax (the gymnax environments, e.g. Craftax-Symbolic-v1, whose reward is the score),
+    with the Craftax_Baselines training scripts
+  harness_source: src-github-craftax-readme
+  harness_quote: make_craftax_env_from_name("Craftax-Symbolic-v1", auto_reset=True)
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for MichaelTMatthews/Craftax (MIT) and the
+    repository's LICENSE file, read 2026-10-14; not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulator, simulator_version, hardware_platform, subset_used,
+  # selection_strategy, n_samples): the episode cap, 10,000 steps by default, which the paper's UED runs cut to
+  # 4,096. The interaction budget has no conditions field of its own; it is carried by subset_used (Craftax-1B or
+  # Craftax-1M), with the observation type (symbolic or pixels). n_samples is the seeds and evaluation episodes,
+  # which differ between the paper (10 seeds) and later work (5 seeds, 100 episodes each). simulator_version
+  # matters because v1.5.0 and v1.6.0 changed dynamics and rewards.
+  material_extra:
+    - max_steps
+
+homepage: https://github.com/MichaelTMatthews/Craftax
+repository: https://github.com/MichaelTMatthews/Craftax
+
+versions:
+  - version: v1.5.0
+    label: Plant growing bug
+    version_kind: revision
+    released: 2025-07-07
+    changes: Fixed a bug that made it hard or impossible for the first planted plant to ripen, in
+      both Craftax and Craftax-Classic; EAT_PLANT is a rare achievement.
+    breaking: false
+    superseded_by: v1.6.0
+    frozen: true
+    sources:
+      - src-github-craftax-releases
+      - src-github-craftax-readme
+  - version: v1.6.0
+    label: Bug fixes and refactoring
+    version_kind: revision
+    released: 2026-06-16
+    changes: Fixed two reward bugs on death in Craftax-Classic (walking into lava gave no negative
+      health reward, and health could go negative on the final step). The README warns of minor
+      behavioural differences in trained agents.
+    breaking: false
+    supersedes_version: v1.5.0
+    frozen: true
+    sources:
+      - src-github-craftax-releases
+      - src-github-craftax-readme
+
+subsets:
+  - id: craftax#craftax-1b
+    label: Craftax-1B
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2402-16801-v2
+        quote: we propose the Craftax-1B Challenge, where a budget of 1 billion environment
+          interactions is permitted on the Craftax-Symbolic environment
+    notes: The headline benchmark, a budget of one billion interactions on Craftax's symbolic
+      environment. Its scoreboard is led by PPO-GTrXL at 18.3% of the maximum.
+  - id: craftax#craftax-1m
+    label: Craftax-1M
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2402-16801-v2
+        quote: we propose the Craftax-1M Challenge, where a budget of 1 million environment
+          interactions is permitted
+    notes: The same environment with a budget of one million interactions, as a test of sample
+      efficiency. Its scoreboard is led by Simulus at 6.6%.
+  - id: craftax#craftax-classic
+    label: Craftax-Classic
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2402-16801-v2
+        quote: we leave Craftax-Classic mostly as a tool to help researchers iterate quickly on an
+          environment very similar to the original Crafter
+      - source: src-arxiv-2402-16801-v2
+        quote: Craftax-Classic is solved (to within 90% of maximum return) by a simple PPO
+    notes: The JAX rewrite of Crafter, with its 22 achievements and 17 actions. It is not one of the
+      two proposed benchmarks, and PPO reaches about 90% of its maximum return within an hour.
+
+lineage:
+  role: fork
+lineage_note: >
+  Craftax-Classic rewrites Crafter (Hafner, 2021) in JAX, and Craftax extends it, by authors other than
+  Crafter's. Not recorded as an edge, because Crafter has no entry; add it when Crafter is curated.
+lineage_source: src-github-craftax-readme
+lineage_quote: Craftax reimplements and significantly extends the game mechanics of Crafter, taking
+  inspiration from roguelike games such as NetHack
+
+tags:
+  - reinforcement-learning
+  - open-ended
+  - jax
+  - procedural-generation
+  - crafter
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2402-16801-v2
+    - src-arxiv-2402-16801
+    - src-github-craftax-readme
+    - src-github-craftax-releases
+    - src-arxiv-2606-00151-v2
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the date; the README
+    at
+    main, with the scoreboard; GitHub's release record for the version dates; and RePPO's v2 PDF (a DOI,
+    not archived) as evidence of current use and of the protocol as run.
+  confidence: medium
+  review_checks:
+    - check: Primary is open-ended-environments, as the family's example has it, but homographs.yaml
+        calls Craftax a procedural-generalization entry. The paper scores on in-distribution levels
+        with no held-out set, so procedural-generalization was rejected even as secondary; it could
+        come back as secondary on the paper's hope of generalisation across generated worlds.
+      field: domain
+      source: src-arxiv-2402-16801-v2
+      quote: In this way we hope to not only facilitate generalisation across different procedurally
+        generated worlds
+    - check: The taxonomy's examples tag Craftax with continual-learning,
+        compositional-generalization, creativity-novelty and self-improvement; each fails its own
+        inclusion test on the sources read and is rejected with the reason. Either the examples or
+        this entry should change.
+      field: capability
+    - check: rl-policy is tagged although its own example calls Craftax a near miss for prompted
+        language agents. Every result read is a trained policy; no source read shows a language
+        agent on Craftax, so observed_subjects is left empty.
+      field: designed_for_subjects
+    - check: measured-ceiling rests on one author's perfect run in one world, in a GUI with
+        unlimited time per move; whether that establishes 226 as reachable across worlds, or the
+        anchor is theoretical-maximum, is a judgement.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2402-16801-v2
+      quote: run where every achievement was completed
+    - check: data.access is generated-on-demand here, where nle.yaml has fully-open for the same
+        situation (worlds generated from seeds); the family's two entries should agree.
+      field: data.access
+    - check: maintainer-competes-on-own-benchmark rests on the maintainers' baseline rows on the
+        scoreboard, as robocasa's flag does; whether baselines of standard algorithms count. The
+        README's request for "a reference to the source of the results" was not read as
+        publication-gated.
+      field: governance.independence_flags
+    - check: Multi-Agent Craftax (arXiv 2511.04904) was not read; it is a separate entry or an
+        extension recorded in lineage.
+      field: lineage
