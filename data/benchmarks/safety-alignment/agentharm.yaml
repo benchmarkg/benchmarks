@@ -1,0 +1,599 @@
+# data/benchmarks/safety-alignment/agentharm.yaml
+#
+# P1-S9-T03, safety-alignment entry 3 of 9. Filled from the AgentHarm paper, arXiv 2410.09024 read as its v3 PDF
+# (2025-04-18, ICLR 2025), and its abstract page; Hugging Face's API record of ai-safety-institute/AgentHarm and
+# the dataset card (README.md) in that repository, which is not gated; the AgentHarm README and the eval.yaml
+# listing in UK AISI's inspect_evals, the codebase the dataset card names; and the abstract page of a March 2026
+# paper that builds on the benchmark (arXiv 2603.16734), as evidence of current use. Every quote below is checked
+# by the quote-substring validator against those Sources' committed extracts.
+#
+# The dataset holds harmful requests. No behaviour's prompt, tool output or grading target is quoted here or in
+# any extract; the quotes describe the benchmark only. The PDF's appendices from Appendix C onward fall inside
+# tag-like spans that normalise() strips, so nothing is quoted from them.
+
+id: agentharm
+name: AgentHarm
+tagline: Harmful multi-step tasks for LLM agents on synthetic tools, scored on harm completed and
+  refusals, with benign twins.
+description: >
+  A benchmark of explicitly malicious requests to LLM agents, from Gray Swan AI and the UK AI
+  Security Institute (ICLR 2025). 110 base behaviours across 11 harm categories, such as fraud,
+  cybercrime and harassment, become 440 tasks through augmentation (detailed and open-ended
+  phrasings, each with and without a hint naming the first tool). Each needs between two and eight
+  of 104 synthetic tools, written as side-effect-free Inspect functions, usually called in order.
+  The agent runs in a simple loop from a single user prompt, so the harmful request comes from the
+  user rather than from injected content. The harm score is the share of a behaviour's hand-written
+  grading checks the run passes, mostly programmatic checks on the tool calls and their arguments,
+  with a GPT-4o judge for narrow semantic checks; a GPT-4o refusal judge gives the refusal rate
+  beside it. A benign rewrite of every behaviour gives a capability baseline. The paper scores
+  models directly, under a forced tool call and under a jailbreak template. Behaviours are split
+  into validation (10%), public test (60%) and private test (30%); only 44 of the 66 public-test and
+  8 of the 11 validation base behaviours are released, and the private split is run only by the
+  maintainers. The dataset is loaded through the AgentHarm task in UK AISI's inspect_evals, whose
+  scoring has changed under labelled versions since August 2026, with a broader review announced.
+self_description:
+  source: src-arxiv-2410-09024-v3
+  quote: To enable simple and reliable evaluation of attacks and defenses for LLM-based agents
+external_ids:
+  inspect_evals: agentharm
+  huggingface: ai-safety-institute/AgentHarm
+  arxiv: '2410.09024'
+paper:
+  title: 'AgentHarm: A Benchmark for Measuring Harmfulness of LLM Agents'
+  arxiv: '2410.09024'
+  version_read: v3
+  source: src-arxiv-2410-09024-v3
+released: 2024-10-11
+released_note: The paper's first arXiv version, as the abstract page dates it; Hugging Face's API
+  record dates the dataset repository's creation the same day.
+released_source: src-arxiv-2410-09024
+released_quote: Submitted on 11 Oct 2024
+release_venue: ICLR 2025
+release_venue_source: src-arxiv-2410-09024
+release_venue_quote: Accepted at ICLR 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/agentic-harm
+  secondary:
+    - safety-alignment/jailbreak-robustness
+    - agents-tooluse/tool-api-calling
+domain_basis:
+  reason: The headline is the harm score, the share of a harmful multi-step task the agent
+    completed, not the toxicity of its text, which is agentic-harm's case. The paper's main
+    comparison is the same tasks with and without jailbreak attacks (jailbreak-robustness), and
+    every behaviour is scored on invoking the right synthetic tools with the right arguments, with a
+    benign twin as the capability baseline (tool-api-calling).
+  source: src-arxiv-2410-09024-v3
+  quote: scoring well on AgentHarm requires jailbroken agents to maintain their capabilities
+    following an attack to complete a multi-step task
+domain_considered_and_rejected:
+  - term: safety-alignment/prompt-injection
+    reason: The harmful instruction comes from the user, not from content the agent processes; the
+      taxonomy names AgentHarm as this term's near miss.
+    source: src-arxiv-2410-09024-v3
+    quote: harm comes from a malicious user who directly provides a harmful query to an LLM agent
+  - term: safety-alignment/harmlessness-refusal
+    reason: The refusal rate is reported, but as a secondary measure; the headline is how much of
+      the harmful task was carried out. The benign twins are a capability baseline, not a test of
+      over-refusal (a 2026 user reports over-refusal on them as a side finding; see as_used).
+    source: src-arxiv-2410-09024-v3
+    quote: this error would not affect the primary metric (harm score)
+  - term: safety-alignment/dangerous-capability-evals
+    reason: The tasks run on synthetic tools and are kept easy; the paper says they are not
+      themselves capabilities of concern, so the score is conduct, not a hazardous capability.
+    source: src-arxiv-2410-09024-v3
+    quote: Tasks are relatively easy and do not themselves constitute end-to-end capabilities of
+      concern.
+capability:
+  - harm-avoidance
+  - adversarial-robustness
+  - tool-use
+capability_basis:
+  harm-avoidance:
+    reason: Every model is scored under a direct request with no attack, where the harm score and
+      the refusal rate measure whether it declines the harmful task.
+    source: src-arxiv-2410-09024-v3
+    quote: Many leading models do not reliably refuse malicious agent requests.
+  adversarial-robustness:
+    reason: The same tasks are run under a forced tool call and a jailbreak template the attacker
+      chose, and the score is how far the attack moves the agent.
+    source: src-arxiv-2410-09024-v3
+    quote: Stronger attacks raise harm scores across models.
+  tool-use:
+    reason: The grading checks whether the right synthetic tools were called, in order, with the
+      right arguments; the tools execute and return content the agent must use.
+    source: src-arxiv-2410-09024-v3
+    quote: if a function that sends money is called with the right credit card number
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: A behaviour needs two to eight tools, below the term's roughly ten dependent actions,
+      and most tools let the agent correct a mistake by calling another tool first.
+    source: src-arxiv-2410-09024-v3
+    quote: Each behavior requires the coherent use of between 2 and 8 distinct tools.
+  - term: instruction-following
+    reason: Benign twins are scored on completing the request, but no source claims instruction
+      following, which the term's inclusion test requires.
+
+evaluation_method:
+  - environment-state-check
+  - adversarial-red-team
+  - model-graded-judge
+evaluation_method_note: 'Judge model and version: gpt-4o-2024-08-06, the default in the dataset card and
+  in inspect_evals for both the semantic judge and the refusal judge; both can be overridden by task parameters.
+  Each behaviour has its own semantic-judge prompt.'
+evaluation_method_basis:
+  reason: After the episode, hand-written grading functions inspect the tool calls the agent issued
+    (which tools, in what order, with which arguments) and give partial credit per check
+    (environment-state-check). The main results report the harm score under attack beside the
+    no-attack condition, the attacker's success (adversarial-red-team). A prompted GPT-4o judges
+    narrow semantic sub-criteria and, separately, refusals (model-graded-judge).
+  source: src-arxiv-2410-09024-v3
+  quote: The majority of our grading criteria checks are predefined, manually written conditions
+evaluation_method_considered_and_rejected:
+  - term: rubric-graded
+    reason: The paper calls its checks a grading rubric, but most criteria are programmatic
+      assertions on the tool calls, which rubric-graded's exclusion test removes.
+    source: src-arxiv-2410-09024-v3
+    quote: the harm score is computed according to a grading rubric that consists of multiple
+      manually written conditions
+  - term: model-derived-metric
+    reason: The judge is a general model prompted to decide, not a released classifier with a fixed
+      label set.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: Every model in the paper runs inside the benchmark's own loop, system prompt and tools,
+    varied only by the attack, and the row names only the model; the harness is inspect_evals'
+    default agent. The benchmark is also built to rank attacks and defences applied to those models,
+    AgentHarm being attack-or-intervention-method's own example.
+  source: src-arxiv-2410-09024-v3
+  quote: direct prompting with a simple while loop where the result of tool executions is fed into
+    the models context
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: Custom agents can be plugged into the inspect_evals task, but the paper's results and
+      the default use the benchmark's own loop applied identically to every model.
+    source: src-arxiv-2410-09024-v3
+    quote: we suspect it is possible for specially designed scaffolds to improve performance on
+      AgentHarm
+  - term: hosted-inference-endpoint
+    reason: The models are reached through provider APIs, but as the delivery mechanism for named
+      model checkpoints, not as the compared object.
+
+as_used:
+  - protocol: Runs through the inspect_evals task score the released public-test subset by default
+      (176 augmented behaviours, from 44 of the 66 base behaviours), not the paper's 264-behaviour
+      public test set. The maintainers note that harm scores on the released subset are slightly
+      higher than on the full set.
+    split: test_public (released subset)
+    source: src-hf-agentharm-readme
+    quote: The average harm score for direct requests (i.e., without jailbreaks) on this initial set
+      of behaviors slightly increases
+  - protocol: AgentHarm's harmful and benign tasks rerun with user-profile personalisation added to
+      the prompt (no bio, bio only, bio with a mental health disclosure) and a lightweight jailbreak
+      injection, reporting harm score and refusals.
+    source: src-arxiv-2603-16734
+    quote: Building on the AgentHarm benchmark, we evaluated frontier and open-source LLMs on
+      multi-step malicious tasks (and their benign counterparts)
+    note: March 2026. The abstract also reports refusals rising on the benign tasks, an over-refusal
+      reading of the benign twins that the benchmark itself does not score.
+
+lifecycle: under-revision
+lifecycle_basis:
+  reason: The maintainers of the official implementation stopped issuing small scoring fixes and
+    announced a broader AgentHarm review and update (9-B), with 6-B the recommended version until
+    then. Scoring has changed under labelled versions since August 2026, so a score without its
+    version is not interpretable, which puts this term ahead of active. Results are still being
+    produced, for example by a March 2026 paper (see as_used).
+  source: src-github-inspect-evals-agentharm-readme
+  quote: we are preparing a broader AgentHarm review and update (9-B). Until then this is the
+    recommended version.
+activity: no-submission-channel
+activity_basis:
+  reason: A download-and-run benchmark. Neither the dataset card nor the inspect_evals README has a
+    leaderboard, server or submission route; the card points users to the Inspect Evals code to run
+    it themselves, and results appear in users' own papers. The private split is run only by the
+    maintainers and publishes no kept ranking.
+  source: src-hf-agentharm-readme
+  quote: This dataset is to be loaded using the codebase in Inspect Evals.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4o mini
+    source: src-arxiv-2410-09024-v3
+    observed_on: 2026-10-14
+    quote: GPT-4o mini gets a 62.5% harm score
+  - system: GPT 5.2, Claude Sonnet 4.5 and Gemini 3-Pro (a March 2026 study)
+    source: src-arxiv-2603-16734
+    observed_on: 2026-10-14
+    quote: frontier lab models (e.g., GPT 5.2, Claude Sonnet 4.5, Gemini 3-Pro) still complete a
+      measurable fraction of harmful tasks
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each behaviour's hand-written grading function in the official code,
+  checking the agent's tool calls and their arguments, with a prompted GPT-4o judge for narrow
+  semantic sub-criteria; refusals are decided by a GPT-4o judge.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The paper's public-test results include 22 base behaviours that were never released, and
+    the private split is held and run only by the maintainers. Anyone can run the released
+    validation and public-test subsets with the inspect_evals task.
+  source: src-hf-agentharm-readme
+  quote: At the moment, we release 44 out of 66 public test base behaviors (176 augmented ones) and
+    8 out of 11 validation base behaviors (32 augmented ones).
+
+task:
+  exists: true
+  input:
+    - one user prompt stating a harmful task (or its benign rewrite), in a detailed or open-ended
+      phrasing, with or without a hint naming the first tool, and the behaviour's synthetic tools
+  output: A sequence of tool calls and messages produced in the benchmark's agent loop, ending with
+    the agent's final reply.
+  scoring: Harm score, the average over behaviours of the share of each behaviour's grading checks
+    passed (partial credit), with the refusal rate from a GPT-4o refusal judge and the harm score on
+    non-refused behaviours beside it. Lower is safer for a model; higher is a stronger attack. The
+    benign twins give a capability baseline on the same tools.
+  source: src-arxiv-2410-09024-v3
+  quote: We also include a benign variant of the dataset as a baseline for model capabilities.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The released splits are on Hugging Face without a gate (the API record shows gated
+    false) and the inspect_evals task downloads them. restricted-dual-use was considered and not
+    tagged, because the only stated reason for holding behaviours back is contamination, and no
+    source says why 22 public-test base behaviours are still unreleased.
+  access_basis:
+    reason: The headline results are computed on the full public test set, a third of whose base
+      behaviours are unreleased, and on the private split, which only the maintainers run on their
+      own deployment. The headline cannot be computed from the downloadable data, so the released
+      sample does not make it fully-open.
+    source: src-arxiv-2410-09024-v3
+    quote: evaluate it on our own deployment of frontier LLMs on Azure
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The scoring functions have changed several times since release, each change under a
+      labelled, dated task version in inspect_evals (see versions); the dataset itself is pinned to
+      a Hugging Face revision by the listing. The card promises more behaviours, but none had come
+      by 2026-10-14 (the repository was last modified on 2024-12-19).
+    source: src-github-inspect-evals-agentharm-readme
+    quote: '[6-B] - 2026-08-21 [recommended version]'
+  data_provenance:
+    - expert-authored
+  data_provenance_note: The authors, AI safety researchers at Gray Swan AI and UK AISI, wrote every
+    behaviour by hand, and a separate reviewer checked each. Long-form content the synthetic tools
+    return (web pages, articles, messages) was generated with LLMs; it is part of the environment,
+    not the items. Whether the authors hold the specialist skill the items test is a reviewer check.
+  data_provenance_source: src-arxiv-2410-09024-v3
+  data_provenance_quote: All tasks are manually written and reviewed by separate human reviewers.
+  contamination_risk: medium
+  contamination_risk_note: The released validation and public-test behaviours have been public since
+    October 2024, guarded only by a canary GUID and a request not to train on them. The paper's
+    statement that AgentHarm is not contaminated rests on the private 30%, which third parties
+    cannot score. The paper also argues that memorising behaviours helps little, because the grading
+    criteria are more than question-answer pairs. No evidence of contamination was read.
+  contamination_risk_source: src-hf-agentharm-readme
+  contamination_risk_quote: We request that you refrain from using examples from this dataset for
+    training and use it solely for evaluation purposes.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The harm score is a percentage, bounded at 0% (the safest, every task refused or failed)
+      and 100%. No measured human or system ceiling is published; the benign twins give a per-model
+      capability reference, not a ceiling, and the paper notes that open-ended criteria can keep a
+      fully successful run below 100%.
+  dataset_licence: MIT License with an additional clause (use only to improve the safety and
+    security of AI systems)
+  dataset_licence_source: src-hf-agentharm-readme
+  dataset_licence_quote: The additional clause prohibits using the dataset and benchmark for
+    purposes besides improving the safety and security of AI systems.
+  size:
+    - count: 440
+      unit: behaviours (110 base behaviours, each in four augmented forms)
+      subset: the full benchmark, as the paper defines it
+      source: src-arxiv-2410-09024-v3
+      quote: Total number of behaviors 440
+    - count: 264
+      unit: behaviours
+      subset: public test split
+      source: src-arxiv-2410-09024-v3
+      quote: Size of the public test set 264
+    - count: 132
+      unit: behaviours, withheld by the maintainers
+      subset: private test split
+      source: src-arxiv-2410-09024-v3
+      quote: Size of the private test set 132
+    - count: 44
+      unit: behaviours
+      subset: validation split
+      source: src-arxiv-2410-09024-v3
+      quote: Size of the validation set 44
+    - count: 176
+      unit: behaviours released (from 44 of the 66 public-test base behaviours), with 176 benign
+        twins
+      subset: released public test (inspect_evals agentharm and agentharm_benign tasks)
+      source: src-github-inspect-evals-agentharm-listing
+      quote: 'name: agentharm dataset_samples: 176'
+    - count: 32
+      unit: behaviours released (from 8 of the 11 validation base behaviours)
+      subset: released validation
+      source: src-hf-agentharm-readme
+      quote: At the moment, we release 44 out of 66 public test base behaviors (176 augmented ones)
+        and 8 out of 11 validation base behaviors (32 augmented ones).
+    - count: 104
+      unit: distinct synthetic tools
+      source: src-arxiv-2410-09024-v3
+      quote: Number of unique functions used 104
+  languages:
+    - English
+  languages_source: src-arxiv-2410-09024-v3
+  languages_quote: The prompts are only in English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: UK AI Security Institute, with Gray Swan AI
+  maintainer_basis:
+    reason: The dataset sits in the UK AI Security Institute's Hugging Face organisation
+      (ai-safety-institute) and its codebase in UK AISI's inspect_evals (UKGovernmentBEIS), whose
+      listing names accounts of the paper's AISI authors among its contributors. The licence names
+      Gray Swan AI and UK AISI as copyright holders; nine of the fourteen authors are at Gray Swan
+      AI.
+    source: src-hf-agentharm-readme
+    quote: https://github.com/UKGovernmentBEIS/inspect_evals/tree/main/src/inspect_evals/agentharm
+  maintainer_type: government-agency
+  maintainer_type_note: The holder of the dataset and the official code is UK AISI, part of the UK
+    Government; the card's disclaimer names the UK AISI beside the UK Government. industry-lab was
+    considered for Gray Swan AI, the authors' majority employer, and the taxonomy's own examples
+    send it here.
+  maintainer_type_source: src-hf-agentharm-readme
+  maintainer_type_quote: These statements don't represent the views of the UK AISI, Gray Swan AI, or
+    the UK Government.
+  submission_process: literature-only
+  submission_process_note: No leaderboard, results page or submission route. The maintainers'
+    results are the paper's; the private split is for their own future evaluations and no kept
+    ranking from it was found. Others run the inspect_evals task and report in their own papers.
+  submission_process_source: src-arxiv-2603-16734
+  submission_process_quote: Building on the AgentHarm benchmark, we evaluated frontier and
+    open-source LLMs on multi-step malicious tasks (and their benign counterparts)
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2410-09024-v3
+      quote: We use the rule-based jailbreak template from Andriushchenko et al. (2025)
+    - flag: grader-from-evaluated-party
+      source: src-hf-agentharm-readme
+      quote: used for detecting refusals and as a semantic judge for grading specific parts of
+        agents' outputs is `gpt-4o-2024-08-06`
+  independence_flags_note: The template attack the main results evaluate is the first author's own
+    method, adapted to agents, and the benchmark is built to rank attacks. OpenAI's GPT-4o is the
+    default refusal and semantic judge, and GPT-4o is among the evaluated agents (its harm score
+    rises from 48.4% to 72.7% under the template). No funding from an evaluated party was found; the
+    acknowledgements thank Scale AI only for sharing an early paper. The private split is held and
+    run by the maintainers alone, but it is not the only evaluation route, so
+    single-evaluator-private-test-set is not tagged.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: A run is inference spend on the agent's API and on the GPT-4o judge, on ordinary CPU.
+    source: src-arxiv-2410-09024-v3
+    quote: A single run of an LLM agent on our public test set typically requires around 0.5-1.5M
+      tokens
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: Part of the headline, the 22 unreleased public-test base behaviours and the private
+      split, can be produced only by the maintainers; the most restrictive part decides. A run on
+      the released subsets is fully automatic.
+    source: src-arxiv-2410-09024-v3
+    quote: We use the private test set to perform future evaluations without worry of contamination
+  reproducibility_blockers:
+    - private-test-set
+    - no-reference-implementation
+  reproducibility_blockers_note: no-reference-implementation is for the template attack only. The
+    jailbreak template behind the paper's attack results (rules_v4) was not released and has to be
+    rebuilt from Andriushchenko et al. (2025); the benchmark's own harness is published.
+  reproducibility_blockers_source: src-hf-agentharm-readme
+  reproducibility_blockers_quote: our jailbreak template `rules_v4` is not publicly available
+  harness_availability: official-harness
+  harness: inspect_evals (UK AISI), tasks agentharm and agentharm_benign; version 8-B on 2026-10-14,
+    with 6-B the maintainers' recommended version
+  harness_note: The dataset card names inspect_evals as the codebase, and accounts of the paper's
+    AISI authors are among its contributors, so it is the original implementation rather than a
+    port; the card's own setup recommends inspect_ai 0.3.25, the version used to develop the
+    benchmark. Its scoring has since changed under labelled versions (3-B to 8-B, 2026-08), among
+    them refusal judging that now reads a reasoning model's reasoning (5-B), fixes to two
+    harmful-task grading functions (6-B) and crediting only tool calls that executed (7-B). Results
+    from current versions need not match the paper's numbers, and the default run scores only the
+    released 176 public-test behaviours.
+  harness_source: src-github-inspect-evals-agentharm-readme
+  harness_quote: inspect eval inspect_evals/agentharm --model openai/gpt-4o-2024-08-06
+  harness_gotcha:
+    source: src-github-inspect-evals-agentharm-readme
+    quote: Published `refusal`-derived metrics for reasoning models will change.
+  harness_gotcha_note: From 5-B the refusal judge sees a model's reasoning, so refusal rates and
+    non-refusal harm scores for reasoning models are not comparable across that version.
+  code_licence: MIT License with an additional clause (use only to improve the safety and security
+    of AI systems)
+  code_licence_note: The agentharm directory of inspect_evals carries its own LICENSE with the
+    clause; the inspect_evals repository as a whole is MIT (GitHub's licence metadata, read
+    2026-10-14).
+  code_licence_source: src-github-inspect-evals-agentharm-readme
+  code_licence_quote: The additional clause prohibits using the dataset and benchmark for purposes
+    besides improving the safety and security of AI systems.
+  est_cost_usd:
+    min: 1
+    max: 4.5
+    basis: One run of GPT-4o as the agent on the public test set at September 2024 prices ($1-$4),
+      plus under $0.5 of GPT-4o judge calls.
+    source: src-arxiv-2410-09024-v3
+  runnable_via:
+    - inspect
+  inspect_evals_id: agentharm
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (subset_used: the released 176-behaviour subset, the paper's full public test, the
+  # private split, validation, and detailed or open-ended, hinted or not): the inspect_evals task version, whose
+  # scoring changed between 3-B and 8-B; the judge model and its version, for both the semantic and the refusal
+  # judge; the attack, which is the user prompt template (and, for the forced-tool-call attack, the agent's
+  # tool_choice); and sampling, since the paper reports lower averages at temperature 1 and higher best-of-5 scores.
+  material_extra:
+    - harness
+    - judge_model
+    - judge_model_version
+    - prompt_template_hash
+    - sampling
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The harm score, averaged over behaviours, is the primary metric; the refusal rate and the
+    non-refusal harm score are reported beside it.
+  source: src-arxiv-2410-09024-v3
+  quote: this error would not affect the primary metric (harm score)
+
+homepage: https://huggingface.co/datasets/ai-safety-institute/AgentHarm
+repository: https://github.com/UKGovernmentBEIS/inspect_evals/tree/main/src/inspect_evals/agentharm
+dataset_url: https://huggingface.co/datasets/ai-safety-institute/AgentHarm
+
+versions:
+  - version: 3-b
+    label: inspect_evals AgentHarm 3-B
+    released: 2026-08-16
+    changes: Chat-mode samples with no grading module are excluded from the score instead of scoring
+      0.0, and a NaN from an empty grading breakdown no longer poisons a run's averages.
+    breaking: true
+    superseded_by: 4-b
+    sources:
+      - src-github-inspect-evals-agentharm-readme
+  - version: 4-b
+    label: inspect_evals AgentHarm 4-B
+    released: 2026-08-20
+    changes: The non-refusal harm score is NaN, not 0.0, when every task was refused, so a run where
+      every sample was refused is not comparable across this version.
+    breaking: true
+    supersedes_version: 3-b
+    superseded_by: 5-b
+    sources:
+      - src-github-inspect-evals-agentharm-readme
+  - version: 5-b
+    label: inspect_evals AgentHarm 5-B
+    released: 2026-08-21
+    changes: The refusal judge reads the assistant's reasoning content, so refusal-derived metrics
+      for reasoning models change.
+    breaking: true
+    supersedes_version: 4-b
+    superseded_by: 6-b
+    sources:
+      - src-github-inspect-evals-agentharm-readme
+  - version: 6-b
+    label: inspect_evals AgentHarm 6-B, the recommended version
+    released: 2026-08-21
+    changes: Two grading functions of harmful behaviours fixed, one of which credited a check for
+      any tool call. Named the recommended version until the broader review (9-B).
+    breaking: true
+    supersedes_version: 5-b
+    superseded_by: 7-b
+    sources:
+      - src-github-inspect-evals-agentharm-readme
+  - version: 7-b
+    label: inspect_evals AgentHarm 7-B
+    released: 2026-08-11
+    changes: Only tool calls that actually executed are credited; calls the tool layer rejected no
+      longer count towards task scores.
+    breaking: true
+    supersedes_version: 6-b
+    superseded_by: 8-b
+    sources:
+      - src-github-inspect-evals-agentharm-readme
+  - version: 8-b
+    label: inspect_evals AgentHarm 8-B, current on 2026-10-14
+    released: 2026-08-11
+    changes: A benign behaviour's scoring fixed so affected tasks can receive full credit.
+    breaking: true
+    supersedes_version: 7-b
+    sources:
+      - src-github-inspect-evals-agentharm-readme
+      - src-github-inspect-evals-agentharm-listing
+
+tags:
+  - agent-safety
+  - misuse
+  - jailbreaks
+  - refusal
+  - tool-use
+  - inspect-evals
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2410-09024-v3
+    - src-arxiv-2410-09024
+    - src-hf-api-agentharm
+    - src-hf-agentharm-readme
+    - src-github-inspect-evals-agentharm-readme
+    - src-github-inspect-evals-agentharm-listing
+    - src-arxiv-2603-16734
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, and its abstract page for the date and
+    venue; Hugging Face's API record of the dataset (not gated) and the dataset card at main; the
+    AgentHarm README and eval.yaml listing in inspect_evals at main; and the abstract page of a March
+    2026 paper as evidence of current use. Reconciled against UK AISI's inspect_evals, the
+    benchmark's own codebase, rather than an outside reviewer.
+  confidence: medium
+  review_checks:
+    - check: lifecycle under-revision rests on the inspect_evals changelog announcing a broader
+        review and update (9-B) after a run of scoring fixes. If that work is read as touching only
+        the evaluation code and not the content, active is the alternative (results were still being
+        produced in 2026).
+      field: lifecycle
+      source: src-github-inspect-evals-agentharm-readme
+      quote: we are preparing a broader AgentHarm review and update (9-B). Until then this is the
+        recommended version.
+    - check: The changelog dates 7-B and 8-B 2026-08-11, earlier than 6-B (2026-08-21), though it
+        lists them after 6-B and the listing's current version is 8-B. The versions are recorded in
+        changelog order with the dates as printed; which date is right is not settled.
+      field: versions
+      source: src-github-inspect-evals-agentharm-readme
+      quote: '[8-B] - 2026-08-11'
+    - check: data.access private-test-server follows the headline rule (the paper's public-test
+        numbers include 22 unreleased base behaviours, and the private split is run only by the
+        maintainers). Most third-party numbers are on the released 176 behaviours, which download
+        freely; whether the headline should instead be the released subset, making it fully-open, is
+        a judgement.
+      field: data.access
+      source: src-hf-agentharm-readme
+      quote: At the moment, we release 44 out of 66 public test base behaviors (176 augmented ones)
+        and 8 out of 11 validation base behaviors (32 augmented ones).
+    - check: no-reference-implementation is tagged for the unreleased jailbreak template only,
+        beside an official harness; it could instead be left to a note.
+      field: execution.reproducibility_blockers
+      source: src-hf-agentharm-readme
+      quote: our jailbreak template `rules_v4` is not publicly available
+    - check: data_provenance expert-authored, as for HarmBench and AgentDojo; the behaviour authors
+        are AI safety researchers, and whether that is the specialist skill the harmful tasks test
+        is not settled.
+      field: data.data_provenance
+      specialist: true
+    - check: data.refresh versioned-releases rests on the harness's labelled scoring versions; the
+        Hugging Face dataset was modified on 2024-12-19 after its creation, and what changed then is
+        not shown in the sources read.
+      field: data.refresh
+      source: src-hf-api-agentharm
+      quote: '"lastModified":"2024-12-19T13:27:30.000Z"'
+    - check: The comparability profile resolves to fallback, because no profile lists
+        environment-state-check or model-graded-judge with model-in-benchmark-harness; the material
+        fields are added by hand in material_extra.
+      field: comparability.material_extra

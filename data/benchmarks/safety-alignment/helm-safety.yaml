@@ -1,0 +1,604 @@
+# data/benchmarks/safety-alignment/helm-safety.yaml
+#
+# P1-S9-T03, safety-alignment entry 8 of 9. Filled from Stanford CRFM's announcement post (2024-11-08); the
+# leaderboard's config script and release v1.17.0's summary, schema and groups records in the crfm-helm-public
+# bucket; the HELM README at main and two pages of HELM's documentation (Maintenance Mode Policy, Reproducing
+# Leaderboards); the HarmBench and Anthropic Red Team scenario code in stanford-crfm/helm at main; the HELM
+# paper's abstract page (arXiv 2211.09110), for the framework only; the abstract page and v1 PDF of a 2026
+# psychometric audit of HELM Safety (arXiv 2610.12409); and the XSTest and BBQ task READMEs in UK AISI's
+# inspect_evals. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+#
+# The five constituents are modelled as subsets, each with the facets it overrides. HarmBench and BBQ have
+# entries of their own (harmbench, bbq); this entry records how HELM runs them, which differs from their own
+# protocols (HarmBench is sent as direct requests, with no attack and no HarmBench classifier).
+
+id: helm-safety
+name: HELM Safety
+tagline: Stanford CRFM's leaderboard of five public safety benchmarks run on 87 language models,
+  scored mostly by two LLM judges.
+description: >
+  A standardised safety leaderboard from Stanford's Center for Research on Foundation Models (CRFM),
+  run on its HELM framework. It runs five existing public benchmarks, each chosen for a risk vector,
+  on models the maintainers select: HarmBench's 400 text behaviours, sent as direct requests;
+  SimpleSafetyTests' 100 clearly harmful prompts; XSTest's 450 prompts, 250 safe ones that should
+  be answered and 200 unsafe contrasts; the opening human turns of 1,000 of Anthropic's red-team
+  dialogues; and 1,000 BBQ questions on social bias. BBQ is scored by exact-match accuracy over
+  three options. The other four take an LM-evaluated safety score, the mean of two judges' ratings
+  (GPT-4o 2024-05-13 and Llama 3.1 405B Instruct Turbo) from 0 (worst) to 1 (best), and both
+  judges are also ranked on the board. The headline is the mean of the five scores. Version 1.0
+  (November 2024) covered 24 models; seventeen cumulative releases followed, to v1.17.0 (2025-11-24),
+  with 87 models. HELM entered maintenance mode on 2026-06-01, and no new evaluations are added to
+  its leaderboards.
+self_description:
+  source: src-helm-safety-blog
+  quote: We introduce HELM Safety v1.0 as a collection of 5 safety benchmarks spanning 6 risk
+    categories (violence, fraud, discrimination, sexual content, harassment, deception) and evaluate
+    24 prominent language models as an ongoing effort to standardize safety evaluations.
+released: 2024-11-08
+released_note: The announcement post's date, taken from the post's own citation URL. The bucket's
+  v1.0.0 release record carries the same date.
+released_source: src-helm-safety-blog
+released_quote: url = {https://crfm.stanford.edu/2024/11/08/helm-safety.html}
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/harmlessness-refusal
+  secondary:
+    - safety-alignment/bias-fairness
+domain_basis:
+  reason: Four of the five columns use one score, a judged rating of whether the response refuses an
+    unsafe request. XSTest also rewards answering its safe prompts, which the leaf's definition
+    covers. BBQ's social-bias column is bias-fairness. safety-alignment has no suite subdomain, and
+    ADR-0016's test for suites sends a suite to the subdomain that holds most of its tasks, with the
+    others secondary.
+  source: src-helm-safety-v1-17-0-schema
+  quote: LM Evaluated Safety score (mean of Llama3.1 and GPT4o ratings) representing whether the
+    output constitutes a successful refusal of unsafe actions (0 is worst, 1 is best).
+domain_considered_and_rejected:
+  - term: safety-alignment/jailbreak-robustness
+    reason: The announcement chose HarmBench "to measure the efficacy of jailbreaking techniques",
+      but HELM sends HarmBench's behaviours through its direct-request template, with no attack. The
+      GCG-transfer comparison in the post covered nine models once, and release v1.17.0's
+      HarmBenchGCGTransfer group holds no model.
+    source: src-github-helm-harm-bench-scenario
+    quote: we take the direct_request template from HarmBench for simplicity
+capability:
+  - harm-avoidance
+  - adversarial-robustness
+capability_basis:
+  harm-avoidance:
+    reason: The safety score rates whether each response is a successful refusal of an unsafe
+      request, on prompts sent as they are. That is refusal under ordinary use, on four of the five
+      columns.
+    source: src-helm-safety-v1-17-0-schema
+    quote: LM Evaluated Safety score (mean of Llama3.1 and GPT4o ratings) representing whether the
+      output constitutes a successful refusal of unsafe actions (0 is worst, 1 is best).
+  adversarial-robustness:
+    reason: The Anthropic Red Team column scores responses to prompts that human red-teamers wrote
+      to elicit harm, so attackers chose the inputs and the score is the model's resistance. HELM
+      keeps only each dialogue's opening human turn, and the attempts were not written against the
+      evaluated models.
+    source: src-helm-safety-blog
+    quote: AnthropicRedTeam to evaluate elicitation of harmful model behavior by human and
+      model-assisted red-teaming
+capability_considered_and_rejected:
+  - term: situational-awareness
+    reason: taxonomy/capabilities.yaml lists helm-safety as qualifying, for "deception and scheming
+      probes". None of the five scenarios tests whether a model behaves differently when observed.
+      Deception is one of the six risk categories the prompts cover, as harmful content to refuse.
+    source: src-helm-safety-blog
+    quote: We introduce HELM Safety v1.0 as a collection of 5 safety benchmarks spanning 6 risk
+      categories (violence, fraud, discrimination, sexual content, harassment, deception)
+  - term: context-integration
+    reason: BBQ's answer depends on the supplied context, so the BBQ subset takes this term. The
+      other four columns supply no material that decides the answer.
+
+evaluation_method:
+  - model-graded-judge
+  - multiple-choice
+  - composite
+evaluation_method_basis:
+  reason: Four columns are scored by two prompted general models, GPT-4o (2024-05-13) and Llama 3.1
+    405B Instruct Turbo, whose ratings are averaged. BBQ is a three-option choice (one option is
+    that the answer is unknown), so chance is 1/3, scored by exact-match accuracy. The headline
+    averages the five columns, so it combines the two methods.
+  source: src-helm-safety-blog
+  quote: We used exact match accuracy as the main metric for BBQ and a model-judge score, which is
+    determined by the mean score from two judges (Llama 3.1 405b Instruct Turbo and GPT-4o 0513),
+    for all other scenarios
+evaluation_method_considered_and_rejected:
+  - term: adversarial-red-team
+    reason: evaluation-methods.yaml lists helm-safety as qualifying. The published numbers, though,
+      are judged safety scores on fixed prompt sets, not attack success rates under an attack.
+      HarmBench is sent without attacks, and the GCG-transfer variant is not on the board. Release
+      v1.17.0's HarmBenchGCGTransfer group holds no model.
+    source: src-helm-safety-v1-17-0-groups
+    quote: '{ "value": "HarmBenchGCGTransfer", "markdown": true }, { "value": "", "markdown": false },
+      { "markdown": false }, { "markdown": false }, { "markdown": false }, { "markdown": false }, { "value":
+      0, "markdown": false }'
+  - term: model-derived-metric
+    reason: HarmBench's fine-tuned classifier is not used. The judges are general models prompted to
+      grade, which is model-graded-judge.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: Every model gets each prompt once, with no tools, loop or retries, and the score asks
+    whether it behaves as a safe assistant. Even the red-team scenario is cut to a single turn.
+  source: src-github-helm-anthropic-red-team-scenario
+  quote: Note that we are only using the first utterance of each dialogue, which is written by a
+    human.
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: Reasoning models are on the board, some at a named thinking budget (Claude 4 Sonnet with
+      10k extended thinking). The suite, though, is not built around a reasoning setting, which is a
+      condition of those rows rather than the subject, as mmlu-pro's near miss reads it.
+    source: src-helm-safety-v1-17-0-schema
+    quote: '"name": "anthropic/claude-sonnet-4-20250514-thinking-10k"'
+
+lifecycle: mature
+lifecycle_basis:
+  reason: The record is frozen. HELM entered maintenance mode on 2026-06-01 and adds no new
+    evaluations; the last release is v1.17.0 (2025-11-24). The instrument stays available and in
+    use, as helm-capabilities and medhelm do. A COLM 2026 workshop paper (October 2026) analyses
+    v1.17.0's per-item records.
+  source: src-arxiv-2610-12409-v1
+  quote: We use the most recent HELM Safety release at the time of writing (v1.17.0, accessed on 21
+    June 2026), which reports per-item judge scores for every evaluated model.
+activity: closed
+activity_basis:
+  reason: Maintenance mode formally stops new results on HELM's leaderboards, ADR-0019's case, as
+    for HELM Capabilities. Outsiders never submitted results. Contributions of notable models to the
+    HELM code are still welcome, but they are not a route onto the board.
+  source: src-helm-docs-maintenance-mode
+  quote: However, no new features will be added to HELM, and no new evaluations will be added to the
+    HELM leaderboards.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude 3.5 Sonnet (20240620)
+    source: src-helm-safety-blog
+    observed_on: 2026-10-14
+    quote: Claude 3.5 Sonnet (20240620) ranks highest according to aggregate scores.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: none
+ground_truth_source_note: Four of the five columns have no reference responses; two prompted judge
+  models rate each response. BBQ alone is scored against its labelled answers.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The HELM package, the run entries and the schema are public, and every constituent set is
+    public. The judges and most models are reached through providers' APIs, and a provider can
+    retire the GPT-4o snapshot the judging depends on.
+  source: src-helm-docs-reproducing-leaderboards
+  quote: You can use the HELM package to rerun evaluation runs and recreate a specific public
+    leaderboard.
+
+task:
+  exists: true
+  input:
+    - 'one single-turn prompt: a HarmBench behaviour (with its context string for contextual behaviours),
+      a SimpleSafetyTests prompt, an XSTest prompt (safe or unsafe), or the opening human turn of an Anthropic
+      red-team dialogue'
+    - for BBQ, a context, a question and three answer options, one of them that the answer is
+      unknown
+  output: A free-text response, or for BBQ one option.
+  scoring: Four columns take the LM-evaluated safety score, the mean of the two judges' ratings,
+    from 0 (worst) to 1 (best). BBQ takes exact-match accuracy. The leaderboard's Mean score
+    averages the five columns.
+  metric_range:
+    - 0
+    - 1
+  source: src-helm-safety-blog
+  quote: To aggregate results we take the mean over all benchmark scores and normalize all scores to
+    (0,1) with higher scores indicating less safety risks.
+scale:
+  at_publication:
+    source: src-helm-safety-blog
+    quote: We introduce HELM Safety v1.0 as a collection of 5 safety benchmarks spanning 6 risk
+      categories (violence, fraud, discrimination, sexual content, harassment, deception) and
+      evaluate 24 prominent language models
+    benchmarks: 5
+    risk_categories: 6
+    models: 24
+scale_note: At v1.17.0, the release the leaderboard serves, 87 models (the 2026 audit counts them).
+scale_source: src-arxiv-2610-12409-v1
+scale_quote: The leaderboard listed 87 models.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: HELM's scenario code downloads each constituent from a public copy pinned to a commit
+    or revision. HarmBench's behaviour CSV comes from its GitHub repository; SimpleSafetyTests and
+    Anthropic's red-team attempts come from ungated Hugging Face datasets. XSTest comes from
+    walledai/XSTest, a Hugging Face copy whose gate is automatic (the Hugging Face API reports gated
+    auto, read 2026-10-14). The XSTest authors' own copy was not read.
+  access_basis:
+    reason: The five constituent sets are public, and HELM's code fetches them; nothing behind the
+      headline is held by the maintainers.
+    source: src-github-helm-harm-bench-scenario
+    quote: behavior_datasets/harmbench_behaviors_text_all.csv
+  records_access: fully-open
+  records_access_basis:
+    reason: HELM releases its raw prompts and completions. The Safety releases keep per-item judge
+      scores for every model in the public bucket, which the 2026 audit analysed.
+    source: src-arxiv-2211-09110
+    quote: we release all raw model prompts and completions publicly for further analysis, as well
+      as a general modular toolkit
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Results come in numbered releases, each adding model runs to a cumulative list of
+      suites, and a score is fixed within its release. The five scenarios and their instance counts
+      are the same in v1.0.0 and v1.17.0 (both releases' schemas read).
+    source: src-helm-safety-v1-17-0-summary
+    quote: '"suites": [ "v1.0.0", "v1.1.0"'
+  data_provenance:
+    - inherited-from-constituents
+  data_provenance_note: Every item comes from one of five published benchmarks, subsampled to at
+    most 1,000 instances (BBQ from 58,492 questions, the red-team set from 38,961 attempts). Each
+    constituent's own paper documents how its items were written.
+  data_provenance_source: src-helm-safety-blog
+  data_provenance_quote: To select specific benchmarks that represent each risk category, we used
+    Rottger et al.
+  contamination_risk: medium
+  contamination_risk_note: All five sets are public. The red-team prompts come from a dataset
+    Anthropic released for research on helpfulness and harmlessness training, so a training route is
+    plausible. No source read here evidences one.
+  contamination_risk_source: src-github-helm-anthropic-red-team-scenario
+  contamination_risk_quote: data_dir="red-team-attempts"
+  contamination_evidence: []
+  dataset_licence: null
+  dataset_licence_note: The suite has no licence of its own; each constituent keeps its own.
+  upstream_licences: SimpleSafetyTests CC-BY-2.0, walledai/XSTest CC-BY-4.0 and Anthropic/hh-rlhf
+    MIT, from their Hugging Face metadata read 2026-10-14. HarmBench's and BBQ's data licences were
+    not read here.
+  size:
+    - count: 5
+      unit: constituent benchmarks
+      source: src-helm-safety-blog
+      quote: We introduce HELM Safety v1.0 as a collection of 5 safety benchmarks spanning 6 risk
+        categories
+    - count: 400
+      unit: HarmBench behaviours, sent as direct requests
+      subset: HarmBench (release v1.17.0)
+      source: src-helm-safety-v1-17-0-groups
+      quote: '{ "value": "HarmBench", "href": "?group=harm_bench", "markdown": false }, { "value": "HarmBench",
+        "markdown": true }, { "value": "generation", "markdown": false }, { "value": 400.0, "description":
+        "min=400, mean=400, max=400, sum=34800 (87)"'
+    - count: 100
+      unit: prompts
+      subset: SimpleSafetyTests (release v1.17.0)
+      source: src-helm-safety-v1-17-0-groups
+      quote: '{ "value": "SimpleSafetyTests", "markdown": true }, { "value": "generation", "markdown":
+        false }, { "value": 100.0'
+    - count: 450
+      unit: prompts (250 safe, 200 unsafe)
+      subset: XSTest (release v1.17.0)
+      source: src-helm-safety-v1-17-0-groups
+      quote: '{ "value": "XSTest", "markdown": true }, { "value": "generation", "markdown": false }, {
+        "value": 450.0'
+    - count: 1000
+      unit: questions, sampled from 58,492
+      subset: BBQ (release v1.17.0)
+      source: src-helm-safety-v1-17-0-groups
+      quote: '{ "value": "multiple_choice_joint", "markdown": false }, { "value": 1000.0, "description":
+        "min=1000, mean=1000, max=1000, sum=87000 (87)"'
+    - count: 1000
+      unit: opening human turns, sampled from 38,961 red-team attempts
+      subset: Anthropic Red Team (release v1.17.0)
+      source: src-helm-safety-v1-17-0-groups
+      quote: '{ "value": "Anthropic Red Team", "markdown": true }, { "value": "generation", "markdown":
+        false }, { "value": 1000.0, "description": "min=1000, mean=1000, max=1000, sum=87000 (87)"'
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Stanford Center for Research on Foundation Models (CRFM)
+  maintainer_basis:
+    reason: The leaderboard is one of HELM's flagship boards, HELM sits in the stanford-crfm
+      organisation, and the README names CRFM as its creator. Since 2026-06-01 volunteer maintainers
+      keep HELM on a best-effort basis.
+    source: src-github-helm-readme
+    quote: is an open source Python framework created by the [Center for Research on Foundation
+      Models (CRFM) at Stanford](https://crfm.stanford.edu/)
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: CRFM chose the models and ran every evaluation; no source describes a
+    route for a developer to submit. Maintenance mode stopped new evaluations on 2026-06-01.
+  submission_process_source: src-helm-safety-blog
+  submission_process_quote: selected on their performance on popular capability benchmarks
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-helm-safety-blog
+      quote: determined by the mean score from two judges (Llama 3.1 405b Instruct Turbo and GPT-4o
+        0513)
+  independence_flags_note: Both judges are themselves ranked. GPT-4o (2024-05-13) and Llama 3.1
+    Instruct Turbo (405B) are rows of the v1.17.0 board, and OpenAI and Meta have further models on
+    it. The announcement chose these two because other judges it tried refused to grade some harmful
+    outputs.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2610-12409-v1
+    quote: Across the HELM Safety pool, AnthropicRedTeam, SimpleSafetyTests, and the harmful XSTest
+      subset have mean pass rates between 0.92 and 0.94, with almost every model passing almost
+      every item.
+  known_limitation_note: The 2026 audit finds three of the four judge-scored sets saturated in the
+    v1.17.0 pool, and that HarmBench's score does not measure a single attribute. It also notes that
+    the overall mean folds these together. The announcement itself said the top scores indicate
+    potential saturation.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Models are reached through providers' APIs, and so are both judges. A run needs
+      inference spend and ordinary CPU, nothing more.
+    source: src-helm-docs-maintenance-mode
+    quote: many HELM scenarios and models rely on external APIs, which may change in
+      reverse-incompatible ways over time
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: HELM reruns the runs and rebuilds the leaderboard with no human step. The judging
+      depends on the two judge snapshots (GPT-4o 2024-05-13, Llama 3.1 405B Instruct Turbo) staying
+      available from their providers.
+    source: src-helm-docs-maintenance-mode
+    quote: Additionally, model providers may deprecate models over time.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: HELM (crfm-helm) with run_entries_safety.conf and schema_safety.yaml
+  harness_note: >
+    UK AISI's inspect_evals (its src/inspect_evals listing at main read 2026-10-14) implements two of
+    the five constituents, XSTest and BBQ. It has no HarmBench, SimpleSafetyTests or Anthropic Red
+    Team task, so it cannot reproduce the HELM Safety score. Neither of the two matches HELM's scoring:
+    inspect's XSTest reports a refusal rate per subset, graded by one scorer model, and its BBQ
+    reports choice accuracy over 3,680 samples of a Hugging Face copy. The xstest and bbq subsets
+    carry the evidence.
+  harness_source: src-helm-docs-reproducing-leaderboards
+  harness_quote: Safety export RUN_ENTRIES_CONF_PATH=run_entries_safety.conf export
+    SCHEMA_PATH=schema_safety.yaml export NUM_TRAIN_TRIALS=1 export NUM_EVAL_INSTANCES=1000
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for stanford-crfm/helm reports Apache-2.0 too, read
+    2026-10-14.
+  code_licence_source: src-helm-docs-maintenance-mode
+  code_licence_quote: comply with the terms of the Apache 2.0 License
+  runnable_via:
+    - helm
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profiles: HELM's own prompt construction, which fixes what a column means. It
+  # sends HarmBench as direct requests, caps each scenario at 1,000 instances and adds output-format
+  # instructions to BBQ. A score from another harness on the same datasets is a different number.
+  material_extra:
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The leaderboard's headline is a Mean score over the five columns, each normalised to 0-1.
+  source: src-helm-safety-blog
+  quote: To aggregate results we take the mean over all benchmark scores and normalize all scores to
+    (0,1) with higher scores indicating less safety risks.
+
+homepage: https://crfm.stanford.edu/helm/safety/latest/
+repository: https://github.com/stanford-crfm/helm
+leaderboard_url: https://crfm.stanford.edu/helm/safety/latest/
+maintainer_url: https://crfm.stanford.edu/
+
+versions:
+  - version: v1.0.0
+    label: HELM Safety v1.0
+    version_kind: revision
+    released: 2024-11-08
+    changes: The first release, with five benchmarks and the 24 models named in the announcement.
+    frozen: true
+    sources:
+      - src-helm-safety-blog
+  - version: v1.17.0
+    label: HELM Safety v1.17.0, the release the leaderboard serves
+    version_kind: revision
+    released: 2025-11-24
+    changes: The eighteenth and last release before maintenance mode. Releases v1.1.0 to v1.16.0
+      each added model runs, and v1.17.0 holds 87 models over the same five scenarios. It also
+      defines a HarmBenchGCGTransfer group that holds no model.
+    frozen: true
+    sources:
+      - src-helm-safety-leaderboard
+      - src-helm-safety-v1-17-0-summary
+      - src-helm-safety-v1-17-0-groups
+      - src-arxiv-2610-12409-v1
+
+subsets:
+  - id: helm-safety#harmbench
+    label: HarmBench
+    items: 400
+    scored_separately: true
+    capability_override:
+      - harm-avoidance
+    evidence:
+      - source: src-github-helm-harm-bench-scenario
+        quote: we take the direct_request template from HarmBench for simplicity
+      - source: src-arxiv-2610-12409-v1
+        quote: Standard behaviors are direct harmful requests (199 items), contextual behaviors
+          embed the request in a longer scenario (99 items), and copyright behaviors ask the model
+          to reproduce protected text (100 items).
+      - source: src-arxiv-2610-12409-v1
+        quote: HarmBench has a pass rate of 0.67
+    notes: HarmBench's text behaviours (standard, contextual with their context strings, and
+      copyright), loaded from its behaviour CSV at a pinned commit and sent as plain requests with
+      no attack. They are scored by HELM's two-judge safety score, not by HarmBench's classifier or
+      as attack success. HarmBench has its own entry (harmbench), whose primary is
+      jailbreak-robustness. The 2026 audit finds it the only judge-scored set that still separates
+      the v1.17.0 pool. inspect_evals has no HarmBench task.
+  - id: helm-safety#simple-safety-tests
+    label: SimpleSafetyTests
+    items: 100
+    scored_separately: true
+    capability_override:
+      - harm-avoidance
+    evidence:
+      - source: src-helm-safety-blog
+        quote: SimpleSafetyTests evaluates models on self-harm, physical harm, and child sexual
+          abuse material.
+    notes: Clearly harmful prompts that a model should refuse, scored by the safety score.
+      inspect_evals has no SimpleSafetyTests task.
+  - id: helm-safety#xstest
+    label: XSTest
+    items: 450
+    scored_separately: true
+    capability_override:
+      - harm-avoidance
+    evidence:
+      - source: src-helm-safety-blog
+        quote: XSTest evaluates the trade-off between helpfulness and harmlessness through examples
+          that test false refusal to benign prompts, and compliance with subtly harmful prompts.
+      - source: src-github-inspect-evals-xstest-readme
+        quote: It comprises 250 safe prompts across ten prompt types that well-calibrated models
+          should not refuse to comply with, and 200 unsafe prompts as contrasts
+      - source: src-github-inspect-evals-xstest-readme
+        quote: uv run inspect eval inspect_evals/xstest --model openai/gpt-5-nano
+      - source: src-github-inspect-evals-xstest-readme
+        quote: This benchmark uses a refusal_rate metric, which is the percentage of scored prompts
+          that are either partially or fully refused.
+      - source: src-github-inspect-evals-xstest-readme
+        quote: "The scorer model to use when grading samples (default: `'openai/gpt-4o'`)"
+    notes: Safe and unsafe prompts scored together by the two-judge safety score, so over-refusal
+      and harmful compliance both lower it. inspect_evals implements XSTest (inspect_evals/xstest)
+      but scores it differently. It runs the safe and unsafe subsets separately and reports a
+      refusal rate graded by one scorer model, GPT-4o by default, so its numbers are not HELM's.
+  - id: helm-safety#bbq
+    label: BBQ
+    items: 1000
+    scored_separately: true
+    domain_override:
+      primary: safety-alignment/bias-fairness
+    capability_override:
+      - harm-avoidance
+      - context-integration
+    evidence:
+      - source: src-helm-safety-blog
+        quote: BBQ is a template-based benchmark for measuring social bias with respect to protected
+          classes under US anti-discrimination law.
+      - source: src-helm-safety-blog
+        quote: guessing the correct, unbiased answer from the context despite the entailment of a
+          stereotype
+      - source: src-helm-safety-blog
+        quote: The model must select one of the two selected groups or answer with
+      - source: src-github-inspect-evals-bbq-readme
+        quote: uv run inspect eval inspect_evals/bbq --model openai/gpt-5-nano
+      - source: src-github-inspect-evals-bbq-readme
+        quote: Measures the percentage of correctly chosen answers.
+      - source: src-github-inspect-evals-bbq-readme
+        quote: Total Samples in Dataset:** 3,680
+    notes: Three-option multiple choice (chance 1/3), zero-shot, 1,000 questions sampled from all
+      categories, scored by exact-match accuracy. BBQ's ambiguous and unambiguous bias scores are
+      reported beside the accuracy but are not in the mean. BBQ has its own entry (bbq).
+      inspect_evals implements BBQ (inspect_evals/bbq) with choice accuracy, the same kind of
+      metric. It runs 3,680 samples of a Hugging Face copy rather than HELM's 1,000-question sample,
+      so the two numbers are not comparable.
+  - id: helm-safety#anthropic-red-team
+    label: Anthropic Red Team
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-github-helm-anthropic-red-team-scenario
+        quote: Note that we are only using the first utterance of each dialogue, which is written by
+          a human.
+      - source: src-helm-safety-blog
+        quote: AnthropicRedTeam, Ganguli et al. Sexual Content, Violence, Deception, Harassment,
+          Discrimination 38,961 red team attacks
+    notes: The opening human turn of red-team dialogues from Anthropic's red-team-attempts data,
+      capped at 1,000 and scored by the safety score; later turns are dropped. The one column whose
+      prompts attackers chose, which carries adversarial-robustness. inspect_evals has no task for
+      it.
+
+history:
+  - date: 2026-06-01
+    event: channel-closed
+    field: governance.submission_process
+    from: maintainer-run releases of new model evaluations
+    source: src-helm-docs-maintenance-mode
+    quote: HELM entered maintenance mode on June 1, 2026.
+    note: No new evaluations are added to HELM's leaderboards, so v1.17.0 (2025-11-24) is the last
+      HELM Safety release.
+
+tags:
+  - llm-safety
+  - refusal
+  - over-refusal
+  - social-bias
+  - llm-judge
+  - leaderboard
+  - suite
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-helm-safety-blog
+    - src-helm-safety-leaderboard
+    - src-helm-safety-v1-17-0-summary
+    - src-helm-safety-v1-17-0-schema
+    - src-helm-safety-v1-17-0-groups
+    - src-github-helm-readme
+    - src-helm-docs-maintenance-mode
+    - src-helm-docs-reproducing-leaderboards
+    - src-github-helm-harm-bench-scenario
+    - src-github-helm-anthropic-red-team-scenario
+    - src-arxiv-2211-09110
+    - src-arxiv-2610-12409
+    - src-arxiv-2610-12409-v1
+    - src-github-inspect-evals-xstest-readme
+    - src-github-inspect-evals-bbq-readme
+  sources_note: >
+    The announcement post and the two documentation pages with scripts and styles stripped. The
+    leaderboard's config script and release v1.17.0's summary, schema and groups JSON come from the
+    public bucket the page reads. The README and two scenario files are at main. The HELM paper's
+    abstract page is for the framework. The 2026 audit's abstract page and v1 PDF (a DOI, not
+    archived) are evidence of current use. The inspect_evals XSTest README is new here; the BBQ
+    README Source was written by the bbq entry and is cited as it stands.
+  confidence: medium
+  review_checks:
+    - check: Primary harmlessness-refusal rests on four of the five columns being a judged refusal
+        score, as ADR-0016's majority test reads a suite. safety-alignment has no suite subdomain
+        (ADR-0016 added them to three other families); if one is added, HELM Safety is its case.
+      field: domain
+    - check: taxonomy/capabilities.yaml lists helm-safety as qualifying for situational-awareness
+        ("deception and scheming probes"), and evaluation-methods.yaml for adversarial-red-team. The
+        sources show neither. Deception is a risk category of the prompts, and HarmBench is sent
+        without attacks. Both examples may need correcting in the taxonomy, not here.
+      field: capability
+      source: src-github-helm-harm-bench-scenario
+      quote: we take the direct_request template from HarmBench for simplicity
+    - check: adversarial-robustness rests on the Anthropic Red Team column alone. Its prompts are
+        the opening turns of red-team attempts written against other models, single-turn and not
+        adaptive; whether that is enough for the term is a judgement.
+      field: capability
+      source: src-github-helm-anthropic-red-team-scenario
+      quote: Note that we are only using the first utterance of each dialogue, which is written by a
+        human.
+    - check: Marin 8B Instruct, attributed to the Marin Community, is on the board. Whether that
+        project is linked to the maintainer, which would raise maintainer-competes-on-own-benchmark,
+        was not established from the sources read.
+      field: governance.independence_flags
+      source: src-helm-safety-v1-17-0-schema
+      quote: '"name": "marin-community/marin-8b-instruct", "display_name": "Marin 8B Instruct"'
+    - check: versions lists only v1.0.0 and v1.17.0. The sixteen releases between them (2025-02-13
+        to 2025-10-02, from their summary records) added models only, and each could be listed. The
+        announcement names 24 models for v1.0; the bucket's v1.0.0 schema lists 27.
+      field: versions
+    - check: data.access is fully-open, but the XSTest copy HELM loads (walledai/XSTest) is
+        auto-gated on Hugging Face, and the XSTest authors' own copy was not read.
+      field: data.access
+    - check: lifecycle mature rests on one 2026 paper that re-analyses the v1.17.0 records rather
+        than running models; no new HELM Safety runs can be produced on the board.
+      field: lifecycle

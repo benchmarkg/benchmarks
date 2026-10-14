@@ -1,0 +1,453 @@
+# data/benchmarks/safety-alignment/bbq.yaml
+#
+# P1-S9-T03, safety-alignment entry 9 of 9. Filled from the BBQ paper, arXiv 2110.08193 read as its v2 PDF
+# (2022-03-16), and its abstract page; the ACL Anthology page of its Findings of ACL 2022 version; the repository
+# README at main and the repository's bias-score script (analysis_scripts/BBQ_calculate_bias_score.R); the README of
+# the BBQ task in inspect_evals (UKGovernmentBEIS/inspect_evals); and the v1 PDF of QuantiBias (arXiv 2607.21063,
+# July 2026), a paper that reports BBQ results. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+#
+# Step 2 for this family is reconciliation against inspect_evals, not an outside reviewer: inspect_evals implements
+# BBQ as `inspect_evals/bbq`, scored by choice accuracy only, without the paper's bias score (execution and as_used).
+
+id: bbq
+name: BBQ
+aliases:
+  - Bias Benchmark for QA
+tagline: 58,492 hand-built three-choice questions on nine US social-bias categories, scored by
+  accuracy and a bias score.
+description: >
+  A question-answering benchmark for social bias, built by hand at New York University. Each of
+  its 325 templates, written by the authors around a bias documented as harmful, introduces two
+  people who differ on one attribute: age, disability status, gender identity, nationality,
+  physical appearance, race/ethnicity, religion, sexual orientation or socio-economic status,
+  with two intersectional categories beside them (race by gender, race by socio-economic status).
+  An ambiguous context does not say which person a question is about, so the correct answer is
+  an UNKNOWN option; with a disambiguating sentence added, one of the two people is the answer.
+  Each context is asked a negative question, which targets the stereotype, and a non-negative
+  one, and every item offers three choices: the two people and one of ten UNKNOWN expressions.
+  Filled from vocabulary lists, including stereotyped proper names for gender and race, the
+  templates give 58,492 examples, validated by crowdworkers on Mechanical Turk. Systems are scored
+  by accuracy per category and context, and by a bias score: the share of non-UNKNOWN answers
+  that follow the targeted bias, rescaled from -100 to 100, and in ambiguous contexts weighted by
+  the error rate. The paper limits its claims to biases of US English-speaking contexts.
+self_description:
+  source: src-arxiv-2110-08193-v2
+  quote: a dataset of question sets constructed by the authors that highlight attested social biases
+    against people belonging to protected classes along nine social dimensions relevant for U.S.
+    English-speaking contexts
+external_ids:
+  inspect_evals: bbq
+  arxiv: '2110.08193'
+paper:
+  title: 'BBQ: A Hand-Built Bias Benchmark for Question Answering'
+  arxiv: '2110.08193'
+  doi: 10.18653/v1/2022.findings-acl.165
+  version_read: v2
+  source: src-arxiv-2110-08193-v2
+released: 2021-10-15
+released_note: The paper's first arXiv version, as its abstract page dates it. The repository's data
+  and templates were committed the day before (GitHub API commit list, read 2026-10-14).
+released_source: src-arxiv-2110-08193
+released_quote: Submitted on 15 Oct 2021
+release_venue: Findings of ACL 2022 (Dublin, May 2022)
+release_venue_source: src-aclanthology-2022-findings-acl-165
+release_venue_quote: 'Findings of the Association for Computational Linguistics: ACL 2022'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/bias-fairness
+domain_basis:
+  reason: The scored quantity is bias, which the family's inclusion test names. Beside accuracy, the
+    paper introduces a bias score that measures how far a system's answers follow the targeted
+    stereotype, and the leaf is systematic differences in behaviour across social groups.
+  source: src-arxiv-2110-08193-v2
+  quote: we introduce a bias score to quantify the degree to which a model systematically answers
+    questions in a biased way
+domain_considered_and_rejected:
+  - term: language/understanding
+    reason: Items are in reading-comprehension form, a short context and a question it determines,
+      but the contexts are built to isolate one stereotype and the claim is about bias. The language
+      family's exclusion test sends a subject measured elsewhere to that family.
+capability:
+  - context-integration
+  - harm-avoidance
+capability_basis:
+  context-integration:
+    reason: The supplied context decides the answer. In ambiguous contexts it leaves the question
+      open, so UNKNOWN is correct; a disambiguating sentence makes one person the answer. Both
+      accuracy and the bias score measure whether the answer follows the context or the stereotype.
+    source: src-arxiv-2110-08193-v2
+    quote: The disambiguated contexts provide information about which of the individuals mentioned
+      in the ambiguous context is the answer to the negative/non-negative question
+  harm-avoidance:
+    reason: The scored behaviour under ordinary use is the absence of a harmful output, an answer
+      that attributes a stereotyped property to an individual. No attacker is involved.
+    source: src-arxiv-2110-08193-v2
+    quote: We focus on harms that arise when biased models are deployed as QA systems.
+capability_considered_and_rejected:
+  - term: honesty
+    reason: In ambiguous contexts the UNKNOWN option is the keyed answer and is scored as accuracy,
+      not as a separate admission of not knowing, which the term's inclusion test asks.
+  - term: calibration-uncertainty
+    reason: No confidence is elicited or scored; the released logits of the RoBERTa and DeBERTaV3
+      runs only pick each model's answer.
+
+evaluation_method:
+  - multiple-choice
+  - domain-metric
+evaluation_method_basis:
+  reason: Every item is a choice among three supplied options, with a chance baseline of 33.3%.
+    Accuracy is the mean of those choices; the bias score is a measure the paper defines for this
+    task, computed from the same choices as twice the share of non-UNKNOWN answers that follow the
+    bias, minus one, and scaled by one minus accuracy in ambiguous contexts.
+  source: src-arxiv-2110-08193-v2
+  quote: Each example is presented as a multiple-choice question with three choices.
+evaluation_method_considered_and_rejected:
+  - term: classification-metric
+    reason: The bias score is not a general statistic of the confusion matrix such as F1 or kappa;
+      its formula exists only for this kind of bias measurement.
+  - term: composite
+    reason: Accuracy and the bias score are reported side by side, not combined into one figure. The
+      ambiguous-context bias score uses accuracy inside its own formula, and both come from the same
+      multiple-choice selections.
+designed_for_subjects:
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: BBQ was built to test question-answering systems. The paper evaluates UnifiedQA 11B and
+    RoBERTa and DeBERTaV3 fine-tuned on RACE, each scored zero-shot as trained, with no BBQ training
+    split.
+  source: src-arxiv-2110-08193-v2
+  quote: preexisting QA systems, evaluated zero-shot with no prior exposure to our data
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: The paper's entrants are QA models scored as trained. Prompted assistants are what
+      current users run on it, which observed_subjects records.
+observed_subjects:
+  values:
+    - instruction-tuned-model
+  basis: A July 2026 paper runs BBQ as a multiple-choice control on prompted chat models
+    (Qwen3.6-27B at several quantisation levels, Gemma-4-31B), with reasoning on and off, and
+    inspect_evals' report runs gpt-4o-mini.
+  source: src-arxiv-2607-21063-v1
+as_used:
+  - protocol: Accuracy on the ambiguous-context items only, reported as a multiple-choice
+      bias-avoidance control beside open-ended bias probes; no bias score is reported.
+    split: ambiguous contexts
+    source: src-arxiv-2607-21063-v1
+    quote: multiple-choice bias avoidance under ambiguity (BBQ (Parrish et al., 2022))
+    note: QuantiBias (July 2026) reports BBQ accuracy under ambiguity near 0.97 for Qwen3.6-27B at
+      every quantisation rung and near 0.99 for Gemma-4-31B.
+  - protocol: inspect_evals' bbq task, which prompts with the context and question and scores choice
+      accuracy only, with no bias score.
+    source: src-github-inspect-evals-bbq-readme
+    quote: Measures the percentage of correctly chosen answers.
+    note: The README's July 2025 report for gpt-4o-mini ran 3,680 samples, the size of the paper's
+      Age category; the task takes a subsets parameter over the eleven category files.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced in 2026 by others, for example a July 2026 paper on
+    quantised models. The maintainers' repository was last committed to on 2022-07-07 and last
+    pushed on 2024-01-08 (GitHub API), which is maintenance evidence, not use.
+  source: src-arxiv-2607-21063-v1
+  quote: BBQ accuracy under ambiguity near 0.97, at every quantized rung
+activity: no-submission-channel
+activity_basis:
+  reason: BBQ is a download-and-run dataset. The repository holds the data, templates and the
+    paper's own results, and no source describes a leaderboard or a submission route; users publish
+    their numbers in their own papers.
+  source: src-github-bbq-readme
+  quote: This is the folder you would use to test BBQ.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: RoBERTa-Base fine-tuned on RACE
+    source: src-arxiv-2110-08193-v2
+    observed_on: 2026-10-14
+    quote: lowest for RoBERTa-Base at 61.4%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The gold label each template assigns (UNKNOWN in ambiguous contexts, one
+  of the two people in disambiguated ones), released with the data. Each template had to reach 4 of
+  5 crowdworkers agreeing with the gold label.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The examples, templates, vocabulary and the paper's model outputs are public under CC BY
+    4.0, and scoring needs only the chosen option and the released metadata.
+  source: src-arxiv-2110-08193-v2
+  quote: nyu-mll/BBQ and released under the CC-BY 4.0 license
+
+task:
+  exists: true
+  input:
+    - a short context naming two people who differ on one social attribute, either ambiguous or with
+      a disambiguating sentence, a negative or non-negative question, and three answer options (the
+      two people and an UNKNOWN expression)
+  output: One of the three options.
+  scoring: Accuracy per category and context condition, and a bias score per category and context
+    condition, from -100 to 100. In disambiguated contexts it is twice the share of non-UNKNOWN
+    answers that follow the targeted bias, minus one; in ambiguous contexts that value times one
+    minus accuracy. Chance accuracy is 33.3%.
+  source: src-arxiv-2110-08193-v2
+  quote: Each example is presented as a multiple-choice question with three choices.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The full dataset, with its templates and vocabulary, is on GitHub under CC BY 4.0, with
+      no gating.
+    source: src-arxiv-2110-08193-v2
+    quote: nyu-mll/BBQ and released under the CC-BY 4.0 license
+  refresh: versioned-releases
+  refresh_note: No release is labelled. After the October 2021 release the repository changed the
+    data in dated commits, "Fix missing info from one template" (2022-03-21) and "Fix minor metadata
+    errors on some examples" (2022-04-03), and the metadata the bias score uses was revised on
+    2022-07-07 (GitHub API commit list, read 2026-10-14; not a quoted Source). Nothing has changed
+    since.
+  refresh_basis:
+    reason: The maintainers' own scoring script acknowledges that the data exists in more than one
+      state, which rules out static. There is no live leaderboard, so the changes are pinned only by
+      the dates of the commits that carry them.
+    source: src-github-bbq-bias-score-script
+    quote: in some versions of the data, 16 examples need to be removed
+  data_provenance:
+    - expert-authored
+    - synthetic-procedural
+  data_provenance_note: The authors, NLP and linguistics researchers at NYU, wrote every template
+    from scratch around a bias attested in research, news, Wikipedia or first-hand accounts. The
+    repository's scripts then fill each template's slots from vocabulary lists to produce the
+    examples, with no model in the loop. Crowdworkers on Mechanical Turk only validated them.
+  data_provenance_source: src-arxiv-2110-08193-v2
+  data_provenance_quote: Each template is written from scratch by the authors and is inspired by an
+    attested bias.
+  contamination_risk: medium
+  contamination_risk_note: The full dataset has been public on GitHub since October 2021, and
+    Hugging Face copies exist (inspect_evals loads one). A route into training data is plausible and
+    a 2026 paper raises it as a possibility, but no source read evidences one.
+  contamination_risk_source: src-arxiv-2607-21063-v1
+  contamination_risk_quote: 'The stable multiple-choice scores may also be flattered by contamination:
+    if BBQ-style items sit in the training data'
+  contamination_evidence: []
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_basis:
+    reason: The paper estimates human accuracy on a random sample of 300 examples with Mechanical
+      Turk crowdworkers, 95.7% per rater and 99.7% by majority vote. The bias score has no human
+      anchor.
+    source: src-arxiv-2110-08193-v2
+    quote: raw human (crowdworker annotator) accuracy on BBQ is 95.7%
+  dataset_licence: CC-BY-4.0
+  dataset_licence_source: src-arxiv-2110-08193-v2
+  dataset_licence_quote: nyu-mll/BBQ and released under the CC-BY 4.0 license
+  size:
+    - count: 58492
+      unit: examples
+      source: src-arxiv-2110-08193-v2
+      quote: BBQ contains 58,492 unique examples.
+    - count: 325
+      unit: templates, expanding into about 175 examples each on average
+      source: src-arxiv-2110-08193-v2
+      quote: the 325 different templates in BBQ expand into an average of about 175 questions each
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The BBQ authors at New York University (GitHub organisation nyu-mll)
+  maintainer_basis:
+    reason: The authors are in NYU's Department of Linguistics, Center for Data Science and
+      Department of Computer Science, and the dataset is distributed from the nyu-mll organisation
+      on GitHub.
+    source: src-arxiv-2110-08193-v2
+    quote: nyu-mll/BBQ and released under the CC-BY 4.0 license
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: There is no leaderboard or submission route. The repository holds the
+    paper's own results (UnifiedQA, RoBERTa and DeBERTaV3), and others report their numbers in their
+    own papers.
+  submission_process_source: src-github-bbq-readme
+  submission_process_quote: This folder contains our results after running BBQ on UnifiedQA
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-arxiv-2110-08193-v2
+      quote: Samsung Research (under the project Improving Deep Learning using Latent Structure)
+  independence_flags_note: The acknowledged funders are Eric and Wendy Schmidt (Schmidt Futures),
+    Samsung Research and the US National Science Foundation; none made a model the paper evaluates
+    (UnifiedQA, RoBERTa, DeBERTaV3). The RoBERTa and DeBERTaV3 runs were fine-tuned on RACE with
+    code from an author's repository, as baselines, not as a system of the maintainers' own.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The data and gold labels are public, and accuracy and the bias score are computed
+      mechanically from each system's chosen option and the released metadata, with no human step.
+    source: src-github-bbq-bias-score-script
+    quote: This script provides an example of calculating bias score for BBQ
+  harness_availability: reference-implementation-only
+  harness: The repository's generation scripts and analysis_scripts/BBQ_calculate_bias_score.R, an
+    example that computes accuracy and the bias score over the paper's own model outputs; the
+    RoBERTa and DeBERTaV3 runs use the separate zphang/lrqa repository.
+  harness_source: src-github-bbq-bias-score-script
+  harness_quote: This script provides an example of calculating bias score for BBQ
+  code_licence: CC-BY-4.0
+  code_licence_note: GitHub's licence metadata for nyu-mll/BBQ, whose one LICENSE file covers the
+    scripts with the data, read 2026-10-14; not a quoted Source.
+  runnable_via:
+    - inspect
+    - custom
+  inspect_evals_id: bbq
+  inspect_evals_id_note: inspect_evals implements BBQ over all eleven category files and scores
+    choice accuracy only. It computes no bias score, so it reproduces the paper's accuracy but not
+    its bias scores. It loads a third-party Hugging Face copy of the data (heegyu/bbq, which its
+    README links as the dataset page) rather than the repository's files.
+  inspect_evals_id_source: src-github-inspect-evals-bbq-readme
+  inspect_evals_id_quote: inspect eval inspect_evals/bbq
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: how the item is put to the model (the paper's UnifiedQA results differ between
+  # its RACE-style and ARC-style input formats, and inspect_evals uses its own prompt), the harness (inspect_evals
+  # scores accuracy only), and shots and reasoning (a 2026 paper contrasts reasoning on and off). subset_used
+  # covers the category, the context condition and the proper-name templates, which are all reported apart.
+  material_extra:
+    - prompt_template_hash
+    - harness
+    - shots
+    - chain_of_thought
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper reports an overall accuracy for each model; bias scores are reported per
+    category and context condition, with no overall bias score.
+  source: src-arxiv-2110-08193-v2
+  quote: Overall accuracy on BBQ is highest for
+
+homepage: https://github.com/nyu-mll/BBQ
+repository: https://github.com/nyu-mll/BBQ
+
+subsets:
+  - id: bbq#age
+    label: Age
+    items: 3680
+  - id: bbq#disability-status
+    label: Disability status
+    items: 1556
+  - id: bbq#gender-identity
+    label: Gender identity (identity labels and proper names)
+    items: 5672
+  - id: bbq#nationality
+    label: Nationality
+    items: 3080
+  - id: bbq#physical-appearance
+    label: Physical appearance
+    items: 1576
+  - id: bbq#race-ethnicity
+    label: Race/ethnicity (identity labels and proper names)
+    items: 6880
+  - id: bbq#religion
+    label: Religion
+    items: 1200
+  - id: bbq#sexual-orientation
+    label: Sexual orientation
+    items: 864
+  - id: bbq#socio-economic-status
+    label: Socio-economic status
+    items: 6864
+  - id: bbq#race-by-gender
+    label: Race by gender (intersectional)
+    items: 15960
+    evidence:
+      - source: src-arxiv-2110-08193-v2
+        quote: 'We include two intersectional biases: gender by race/ethnicity and socio-economic status
+          by race/ethnicity.'
+    notes: Each template compares the bias target with three non-targets, matching on race, on
+      gender or on neither, so the category is larger than the others and analysed separately.
+  - id: bbq#race-by-ses
+    label: Race by socio-economic status (intersectional)
+    items: 11160
+    notes: Built like race by gender, with socio-economic status in place of gender.
+subsets_note: The nine categories and two intersectional ones are the repository's eleven data
+  files, with the paper's Table 3 counts, which sum to 58,492. Every category is scored apart and
+  also split by context condition (ambiguous, disambiguated); the gender and race categories hold 25
+  templates each that use proper names instead of identity labels, which the paper reports
+  separately.
+subsets_source: src-arxiv-2110-08193-v2
+subsets_quote: 3,680 1,556 5,672 3,080 1,576 6,880 1,200 864 6,864 15,960 11,160
+
+tags:
+  - social-bias
+  - stereotypes
+  - fairness
+  - question-answering
+  - multiple-choice
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T03)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2110-08193-v2
+    - src-arxiv-2110-08193
+    - src-aclanthology-2022-findings-acl-165
+    - src-github-bbq-readme
+    - src-github-bbq-bias-score-script
+    - src-github-inspect-evals-bbq-readme
+    - src-arxiv-2607-21063-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the first version's
+    date; the ACL Anthology page (a DOI) with scripts and styles stripped, for the venue and the published
+    DOI; the README and the bias-score script at main; the inspect_evals BBQ README at main, for the
+    reconciliation; and QuantiBias's v1 PDF (a DOI, not archived) as evidence of current use. The
+    repository's licence, commits and push date come from the GitHub API and are not quoted Sources.
+  confidence: medium
+  review_checks:
+    - check: refresh is versioned-releases on the strength of dated commits that changed one
+        template and some metadata in 2022, with no labelled release. static is ruled out by those
+        changes; the term's 'dated maintainer announcement' may not stretch to a commit, and nothing
+        has changed since July 2022.
+      field: data.refresh
+      source: src-github-bbq-bias-score-script
+      quote: in some versions of the data, 16 examples need to be removed
+    - check: domain-metric for the bias score. It is a measure defined for this benchmark (and
+        reused by its adaptations), not a general statistic, but whether a bias-measurement formula
+        counts as a discipline's metric is a judgement.
+      field: evaluation_method
+      source: src-arxiv-2110-08193-v2
+      quote: Bias score in ambiguous contexts
+    - check: harm-avoidance rests on the stereotyped answer being the harmful output whose absence
+        is scored; the term's examples are about refusal and harmful actions. context-integration
+        rests on the context deciding the answer.
+      field: capability
+      source: src-arxiv-2110-08193-v2
+      quote: We focus on harms that arise when biased models are deployed as QA systems.
+    - check: 'data_provenance expert-authored: the template authors are NLP and linguistics researchers
+        who sourced each bias from published evidence; whether that is the specialist skill the items
+        test. The paper says the dataset was validated by experts and crowdworkers.'
+      field: data.data_provenance
+    - check: ceiling_anchor_type crowd-average reads the paper's estimate of crowdworker accuracy
+        (95.7%, or 99.7% by majority vote, on 300 sampled examples) as the anchor for accuracy; the
+        paper does not say scores are read against it. No Baseline record was written.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2110-08193-v2
+      quote: raw human (crowdworker annotator) accuracy on BBQ is 95.7%
+    - check: maintainer_type academic-lab rests on the dataset sitting in the nyu-mll GitHub
+        organisation and the authors' NYU affiliations; no source read names the group behind that
+        organisation.
+      field: governance.maintainer_type
+    - check: runnable_via lists inspect (read) and custom. Whether HELM or lm-evaluation-harness run
+        BBQ was not checked here; the helm-safety entry is curated separately. Translated and
+        adapted versions in other languages are separate benchmarks, and no source read here states
+        their derivation, so lineage is empty.
+      field: execution.runnable_via
