@@ -1,0 +1,586 @@
+# data/benchmarks/vision/scannet.yaml
+#
+# P1-S8-T05, vision entry 2 of 8. Filled from the ScanNet paper, arXiv 1702.04405 read as its v2 PDF (2017-04-11,
+# CVPR 2017), and its abstract page; the ScanNet Benchmark server's documentation, 3D semantic label, 3D semantic
+# instance, scene type classification and Data Efficient pages, and one result page (scripts and styles stripped);
+# the CVPR 2023 ScanNet Indoor Scene Understanding Challenge page; the ScanNet changelog; the repository README at
+# master; the ScanNet Terms of Use (read, not signed); the v2 PDF of Volt (arXiv 2604.19609, ECCV 2026), a paper
+# reporting on the hidden test set; and the v1 PDF of ScanNet++ (arXiv 2308.11417), read for the identity call.
+# Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The entry is ScanNet and its benchmark server. The server's tasks, ScanNet200 and the Data Efficient tracks are
+# subsets, as are the CVPR workshop challenge tracks that ran on them. ScanNet++ is a separate benchmark and is not
+# included (see review_checks).
+
+id: scannet
+name: ScanNet
+aliases:
+  - ScanNet v2
+  - ScanNet Benchmark
+tagline: 'RGB-D scans of indoor rooms: 3D and 2D semantic and instance labelling, scored on 100 hidden
+  test scans by a server.'
+description: >
+  An RGB-D video dataset of indoor spaces captured with an iPad and a depth sensor by untrained users,
+  reconstructed into surface meshes and labelled by crowd workers with instance-level object
+  categories. The 2017 paper released 1,513 scans and three tasks of its own (3D object
+  classification, semantic voxel labelling and CAD model retrieval). Version 2 (June 2018) re-annotated
+  those scans and added 100 test scans whose raw data is released without annotations, behind the
+  ScanNet Benchmark server. Its tasks are 3D semantic labels per mesh vertex, scored by mean IoU over
+  20 NYUv2 classes, 3D instance masks scored by AP, the same two on 2D frames, and scene type
+  classification. ScanNet200 (200 categories on the same scans) and Data Efficient tracks (limited
+  annotations or reconstructions) were added to the server later. Entrants upload predictions; updates
+  to a method's test results are blocked for two weeks after each submission. The maintainers ran the
+  benchmark as a CVPR workshop challenge from 2019 to 2023, and the leaderboard stays open.
+self_description:
+  source: src-arxiv-1702-04405-v2
+  quote: we introduce ScanNet, an RGB-D video dataset containing 2.5M views in 1513 scenes annotated
+    with 3D camera poses, surface reconstructions, and semantic segmentations
+external_ids:
+  arxiv: '1702.04405'
+paper:
+  title: 'ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes'
+  arxiv: '1702.04405'
+  version_read: v2
+  source: src-arxiv-1702-04405-v2
+released: 2017-02-14
+released_note: The paper's first arXiv version, as its abstract page dates it. The benchmark server
+  and its hidden test set came with ScanNet v2 on 2018-06-11 (see versions).
+released_source: src-arxiv-1702-04405
+released_quote: Submitted on 14 Feb 2017
+release_venue: CVPR 2017
+release_venue_source: src-github-scannet-readme
+release_venue_quote: booktitle = {Proc. Computer Vision and Pattern Recognition (CVPR), IEEE}
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: vision/segmentation
+  secondary:
+    - vision/detection
+    - vision/classification
+domain_basis:
+  reason: The headline track labels every vertex of a scanned mesh with a semantic class, and its 2D
+    counterpart every pixel of a frame. The instance tracks detect and segment object instances, and
+    scene type classification labels a whole scan. vision/segmentation is defined on images; a mesh
+    is a 3D signal, and the leaf for 3D scene labelling that Stage 3 proposed was deferred by
+    ADR-0020, which keeps segmentation with a note.
+  source: src-scannet-benchmark-semantic-label-3d
+  quote: The 3D semantic labeling task involves predicting a semantic labeling of a 3D scan mesh.
+domain_considered_and_rejected:
+  - term: vision/3d-reconstruction
+    reason: The surface reconstructions are part of the released input; no track scores recovered
+      geometry, only labels on the given mesh.
+    source: src-scannet-benchmark-semantic-label-3d
+    quote: Predicted labels are evaluated per-vertex over the respective 3D scan mesh
+  - term: vision/driving-perception-3d
+    reason: The scenes are indoor rooms scanned with a handheld device, not road scenes from
+      vehicle-mounted sensors.
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: Every track scores what was recovered from captured RGB-D data -- per-vertex or
+      per-pixel classes, instance masks or a scene type -- against held-out labels.
+    source: src-scannet-cvpr2023-workshop
+    quote: In addition to the public train-val-test split, benchmarking is done on a hidden test set
+      whose raw data can be downloaded without annotations; in order to participate in the
+      benchmark, the predictions on the hidden test set are uploaded to the evaluation server, where
+      they are evaluated.
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: The data is spatial throughout, but the score is labelling quality on the scan, which is
+      what was recovered from the signal; no item turns on an inferred spatial relation.
+  - term: sample-efficiency
+    reason: Applies to the Data Efficient tracks only, which fix the labelled points, boxes or
+      scenes a method may train on; it is recorded on that subset, not on the entry.
+
+evaluation_method:
+  - domain-metric
+  - classification-metric
+evaluation_method_basis:
+  reason: The semantic tracks rank by IoU and the instance tracks by AP over overlap thresholds,
+    detection and segmentation measures named in domain-metric's own test. Scene type classification
+    ranks by recall averaged over 13 classes, a general statistic of the confusion matrix
+    (classification-metric); it is one small track.
+  source: src-scannet-benchmark-semantic-label-3d
+  quote: Our evaluation ranks all methods according to the PASCAL VOC intersection-over-union metric
+    (IoU).
+designed_for_subjects:
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: The entrants are 3D and 2D segmentation networks (point transformers, sparse convolutional
+    networks, multi-view fusion) trained on the released scans and scored as trained.
+  source: src-scannet-benchmark-documentation
+  quote: The 1513 scans of the ScanNet dataset release may be used for learning the parameters of
+    the algorithms.
+as_used:
+  - protocol: Hidden-test-set results on the server for a backbone trained jointly on ScanNet,
+      ScanNet200, ScanNet++ and ARKit LabelMaker, beside single-dataset results.
+    split: test
+    source: src-arxiv-2604-19609-v2
+    quote: For joint training, we combine these three datasets and additionally include ARKit
+      LabelMaker
+    note: Volt (arXiv 2604.19609), first on the 3D semantic label board at 0.805 mean IoU.
+      Multi-dataset training is the paper's headline setting; the server's result page for it lists
+      input types and hardware but not the training data.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the hidden test set. Volt, an April 2026 paper, reports
+    new best test-set scores, and its row was created on the server on 2026-02-18. ScanNet++ (2023)
+    has not replaced ScanNet for its purpose; papers report on both.
+  source: src-arxiv-2604-19609-v2
+  quote: achieving new best results of 80.5 mIoU on the ScanNet test set
+activity: leaderboard-live-no-round
+activity_note: The CVPR workshop challenge pages on scan-net.org exist for 2019 to 2023; those for
+  2024, 2025 and 2026 return 404. Only the 2023 page is a Source here.
+activity_basis:
+  reason: The benchmark has run rounds, the ScanNet Indoor Scene Understanding Challenge at CVPR
+    workshops up to 2023, and none is running. The standing leaderboard still takes results from
+    outside the maintainers; the one result page read was created in February 2026.
+  source: src-scannet-benchmark-volt-result
+  quote: Submission creation date 18 Feb, 2026
+  newest_submission: 2026-02-18
+events:
+  - name: ScanNet Indoor Scene Understanding Challenge, CVPR 2023 workshop
+    kind: workshop-challenge-on-the-benchmark    # the server's tasks, ranked for a workshop; not a separate benchmark
+    source: src-scannet-cvpr2023-workshop
+    quote: CVPR 2023 Workshop, Vancouver, Canada
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Volt ScanNet
+    source: src-scannet-benchmark-semantic-label-3d
+    observed_on: 2026-10-14
+    quote: Volt ScanNet 0.805 1
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Crowd-annotated instance and category labels on the reconstructed meshes
+  of 100 test scans, and their projections into the test frames, held by the maintainers.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The evaluation scripts are released, so the validation split can be scored locally, and
+    any registered user can submit test predictions to the server. The data itself needs signed
+    terms of use and the maintainers' approval.
+  source: src-scannet-benchmark-documentation
+  quote: The evaluation scripts used for each task are also provided.
+
+task:
+  exists: true
+  input:
+    - an RGB-D scan of an indoor space -- the RGB-D video with camera poses and its reconstructed
+      surface mesh -- or, for the 2D tracks, the scan's RGB-D frames; either modality may be used
+      for any track
+  output: Per track, a class for every vertex of the scan mesh (3D semantic labels) or every pixel
+    of a test frame (2D), instance masks with a class and a confidence (instance tracks), or one
+    scene type per scan.
+  scoring: Mean IoU over the 20-class NYUv2 subset, computed per vertex on the hidden test scans,
+    for the headline 3D semantic label track; AP at 25% and 50% overlap and over 0.5:0.95 for
+    instances, ranked by AP 50%; recall averaged over 13 scene types for scene classification.
+  source: src-scannet-benchmark-semantic-label-3d
+  quote: The 3D semantic labeling task involves predicting a semantic labeling of a 3D scan mesh.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The gate on the released data is heavy. A requester fills out the ScanNet Terms of
+    Use agreement, signed with a PI's name and e-mail, and sends it to the maintainers for approval.
+    Use is limited to non-commercial research and education. Under ADR-0020's access precedence the
+    withheld test labels decide, and gated-registration is the near miss.
+  access_basis:
+    reason: The 1,513 training and validation scans come with labels, and the 100 test scans' raw
+      data is released without annotations; test results come only from the evaluation server.
+    source: src-scannet-cvpr2023-workshop
+    quote: In addition to the public train-val-test split, benchmarking is done on a hidden test set
+      whose raw data can be downloaded without annotations; in order to participate in the
+      benchmark, the predictions on the hidden test set are uploaded to the evaluation server, where
+      they are evaluated.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The content changed in dated releases. v2 (2018-06-11) re-annotated every scan and added
+      the hidden test scans and the server's tasks. A dated fix to the 2D label images followed on
+      2018-09-02. The ScanNet200 and Data Efficient tracks were added later, on dates the sources
+      read do not give.
+    source: src-scannet-changelog
+    quote: 'ScanNet v2 (2018-06-11):'
+  data_provenance:
+    - real-world-instrument
+    - crowd-authored
+  data_provenance_note: Twenty untrained users scanned real indoor spaces with an iPad and a depth
+    sensor, and the paper's labels were painted on the meshes by Amazon Mechanical Turk workers
+    ("annotation HITs (Human Intelligence Tasks) are issued on the Amazon Mechanical Turk
+    crowdsourcing market", same Source). The changelog does not say who made v2's updated
+    annotations.
+  data_provenance_source: src-arxiv-1702-04405-v2
+  data_provenance_quote: A person uses an app on an iPad mounted with a depth camera to acquire
+    RGB-D video
+  contamination_risk: medium
+  contamination_risk_note: The test labels are withheld, the policy forbids tuning on the test set,
+    and a method's test results cannot be updated for two weeks after a submission. But the test
+    scans' raw data is released, and entrants now train on several datasets at once and on 2D
+    foundation models, so routes to the test scenes without their labels are plausible. No source
+    assesses contamination.
+  contamination_risk_source: src-scannet-benchmark-documentation
+  contamination_risk_quote: Evaluating on the test data via this evaluation server must only be done
+    once for the final system.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: The headline mean IoU is bounded at 1, and no source reports a human or
+    measured ceiling for it.
+  dataset_licence: ScanNet Terms of Use (non-commercial research and educational use only)
+  dataset_licence_source: src-scannet-terms-of-use
+  dataset_licence_quote: Researcher shall use the Database only for non-commercial research and
+    educational purposes.
+  size:
+    - count: 100
+      unit: test scans with hidden labels
+      subset: benchmark test set (v2)
+      source: src-scannet-changelog
+      quote: 100 new scans are now part of the evaluation test set!
+    - count: 1513
+      unit: labelled scans for training and validation
+      subset: v2 release
+      source: src-scannet-benchmark-documentation
+      quote: The 1513 scans of the ScanNet dataset release may be used for learning the parameters
+        of the algorithms.
+    - count: 2500000
+      unit: RGB-D frames (about 2.5 million), in the 1,513 scans of the paper
+      subset: v1 release
+      source: src-arxiv-1702-04405-v2
+      quote: we introduce ScanNet, an RGB-D video dataset containing 2.5M views in 1513 scenes
+        annotated with 3D camera poses, surface reconstructions, and semantic segmentations
+    - count: 312
+      unit: test scenes for the paper's semantic voxel labelling task (1,201 for training)
+      subset: v1 tasks (2017)
+      source: src-arxiv-1702-04405-v2
+      quote: from 312 test scenes
+  submission_limit:
+    max_submissions: 1
+    period_days: 14
+    per: method, on the test set (updates to its test results are blocked for two weeks after a
+      submission)
+    source: src-scannet-benchmark-documentation
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The ScanNet authors (Angela Dai's and Matthias Nießner's groups at the Technical
+    University of Munich, with Angel X. Chang and Manolis Savva)
+  maintainer_basis:
+    reason: The benchmark server runs on TUM's kaldir.vc.in.tum.de and the repository sits in the
+      ScanNet organisation. The 2023 challenge was organised by Dai and Nießner (TUM) with Chang and
+      Savva (Simon Fraser University). The terms of use grant access to the database at Stanford and
+      Princeton, where the paper was written.
+    source: src-scannet-cvpr2023-workshop
+    quote: Angela Dai Technical University of Munich Angel X. Chang Simon Fraser University Manolis
+      Savva Simon Fraser University Matthias Niessner Technical University of Munich
+  maintainer_type: academic-lab
+  maintainer_type_note: conference-workshop was considered. The challenge ran at CVPR workshops from
+    2019 to 2023, but the benchmark is a standing server held by the TUM groups, and the 2023
+    organisers are the dataset's own authors. Which institution holds the dataset is split between
+    the terms of use (Stanford and Princeton) and the server's host (TUM).
+  submission_process:
+    - held-out-server
+  submission_process_note: Entrants register on the server and upload a zip of predictions per test
+    scan or frame; the server scores them against the hidden labels. Updates to a method's test
+    results are blocked for two weeks after each submission.
+  submission_process_source: src-scannet-cvpr2023-workshop
+  submission_process_quote: In addition to the public train-val-test split, benchmarking is done on
+    a hidden test set whose raw data can be downloaded without annotations; in order to participate
+    in the benchmark, the predictions on the hidden test set are uploaded to the evaluation server,
+    where they are evaluated.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-scannet-benchmark-semantic-label-3d
+      quote: 'Angela Dai, Matthias Niessner: 3DMV: Joint 3D-Multi-View Prediction for 3D Semantic Scene
+        Segmentation'
+    - flag: funded-by-evaluated-party
+      source: src-arxiv-1702-04405-v2
+      quote: This project is funded by Google Tango, Intel, NSF
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2308-11417-v1
+      quote: Following ScanNet [9], labels of the test set will remain hidden.
+  independence_flags_note: The maintainers' own methods are ranked, 3DMV (Dai and Nießner) on the 3D
+    and 2D semantic label boards, 3D-SIS (Hou, Dai and Nießner) on the 3D instance board, and the
+    paper's own baseline. Google funded the project, and Virtual Multi-view Fusion, by Kundu et al.
+    with Thomas Funkhouser, a ScanNet author whom the 2023 challenge page lists as a principal
+    research scientist at Google, is ranked on the 3D semantic label board; the paper also thanks
+    Nvidia for hardware. The maintainers hold the test labels and their server scores every entry.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are test-set results, which only the maintainers' server can produce
+      because it holds the test labels. Validation scores can be computed by anyone with the
+      released scripts, once the data has been granted.
+    source: src-scannet-cvpr2023-workshop
+    quote: In addition to the public train-val-test split, benchmarking is done on a hidden test set
+      whose raw data can be downloaded without annotations; in order to participate in the
+      benchmark, the predictions on the hidden test set are uploaded to the evaluation server, where
+      they are evaluated.
+  reproducibility_blockers:
+    - private-test-set
+  reproducibility_blockers_note: The data needs signed terms of use and the maintainers' approval,
+    and is limited to non-commercial research, which slows reproduction without forbidding it, so
+    licence-restriction is not tagged.
+  harness_availability: official-harness
+  harness: BenchmarkScripts in the ScanNet repository (the evaluation scripts for each task)
+  harness_source: src-scannet-benchmark-documentation
+  harness_quote: The evaluation scripts used for each task are also provided.
+  submission_channel:
+    source: src-scannet-benchmark-documentation
+    quote: Evaluating on the test data via this evaluation server must only be done once for the
+      final system.
+  submission_channel_note: The ScanNet Benchmark server at kaldir.vc.in.tum.de/scannet_benchmark,
+    reached through a registered account.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for ScanNet/ScanNet reports Other (NOASSERTION), read
+    2026-10-14; the README states MIT for the code.
+  code_licence_source: src-github-scannet-readme
+  code_licence_quote: and the code is released under the MIT license
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which track and label set (ScanNet's 20 classes or ScanNet200's 200, 3D or 2D,
+  # full or data-efficient), which split (the server's hidden test set or the public validation scans), and what
+  # the method was trained on (ScanNet alone, or several datasets and 2D foundation models, as Volt and PPT do).
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: http://www.scan-net.org/
+repository: https://github.com/ScanNet/ScanNet
+leaderboard_url: https://kaldir.vc.in.tum.de/scannet_benchmark/
+
+versions:
+  - version: v1
+    label: ScanNet, the CVPR 2017 release
+    version_kind: edition
+    released: 2017-02-14
+    items: 312
+    changes: The first release, 1,513 scans with crowdsourced labels, and three tasks of the paper's
+      own (3D object classification, semantic voxel labelling and CAD model retrieval) on a 1,201
+      and 312 scene train and test split.
+    breaking: true
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-arxiv-1702-04405
+      - src-arxiv-1702-04405-v2
+  - version: v2
+    label: ScanNet v2 and the ScanNet Benchmark
+    version_kind: edition
+    released: 2018-06-11
+    items: 100
+    changes: New labels for all 1,513 scans (about 90% surface coverage, up from 63%), scene types
+      and axis alignments, and 100 new test scans with hidden labels behind the benchmark server's
+      2D and 3D semantic and instance tasks and scene type classification. A fix to the filtered 2D
+      label and instance images followed on 2018-09-02.
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-scannet-changelog
+
+subsets:
+  - id: scannet#semantic-label-3d
+    label: 3D Semantic Label
+    scored_separately: true
+    evidence:
+      - source: src-scannet-benchmark-semantic-label-3d
+        quote: Predicted labels are evaluated per-vertex over the respective 3D scan mesh
+    notes: The headline track. Mean IoU over 20 NYUv2 classes, per vertex of each test scan's mesh.
+  - id: scannet#semantic-instance-3d
+    label: 3D Semantic Instance
+    scored_separately: true
+    domain_override:
+      primary: vision/detection
+      secondary:
+        - vision/segmentation
+    evidence:
+      - source: src-scannet-benchmark-semantic-instance-3d
+        quote: The 3D semantic instance prediction task involves detecting and segmenting the object
+          in an 3D scan mesh.
+      - source: src-scannet-benchmark-semantic-instance-3d
+        quote: 'Metric: AP 50%'
+    notes: Vertex masks with a class and confidence for 18 classes (wall and floor ignored), scored
+      by AP 25%, AP 50% and AP over 0.5:0.95; the board sorts by AP 50%.
+  - id: scannet#semantic-label-2d
+    label: 2D Semantic Label
+    scored_separately: true
+    notes: Per-pixel classes on the test frames named by scannet_frames_test, scored by mean IoU
+      over the same 20 classes.
+  - id: scannet#semantic-instance-2d
+    label: 2D Semantic Instance
+    scored_separately: true
+    domain_override:
+      primary: vision/detection
+      secondary:
+        - vision/segmentation
+    notes: Instance masks on the test frames, scored by AP over 0.5:0.95 and AP 50%.
+  - id: scannet#scene-type
+    label: Scene Type Classification
+    scored_separately: true
+    domain_override:
+      primary: vision/classification
+    evidence:
+      - source: src-scannet-benchmark-scene-classification
+        quote: The Scene type classification task involves classifying a scan into 13 scene types.
+      - source: src-scannet-benchmark-scene-classification
+        quote: Our evaluation ranks all methods according to recall (TP/(TP+FN))
+    notes: One of 13 scene types per test scan, ranked by recall averaged over the types, with IoU
+      beside it.
+  - id: scannet#scannet200
+    label: ScanNet200
+    scored_separately: true
+    evidence:
+      - source: src-scannet-benchmark-documentation
+        quote: The ScanNet and ScanNet200 benchmarks are sharing the source data, but different in
+          the annotation parsing.
+      - source: src-scannet-cvpr2023-workshop
+        quote: In the ScanNet200 challenge, large-vocabulary scene understanding is challenged with
+          200 class categories
+    notes: The same scans and splits relabelled with 200 categories, split into head, common and
+      tail by frequency.
+  - id: scannet#scannet200-semantic-label-3d
+    label: ScanNet200 3D Semantic Label
+    parent: scannet#scannet200
+    scored_separately: true
+    notes: Mean IoU over 200 classes, with head, common and tail IoU beside it.
+  - id: scannet#scannet200-semantic-instance-3d
+    label: ScanNet200 3D Semantic Instance
+    parent: scannet#scannet200
+    scored_separately: true
+    domain_override:
+      primary: vision/detection
+      secondary:
+        - vision/segmentation
+    notes: AP 25%, AP 50% and AP over the 200 categories.
+  - id: scannet#data-efficient
+    label: ScanNet Data Efficient
+    scored_separately: true
+    capability_override:
+      - perception
+      - sample-efficiency
+    evidence:
+      - source: src-scannet-cvpr2023-workshop
+        quote: In the data efficient challenge, training is conducted on Limited Scene
+          Reconstructions (LR) or Limited Scene Annotations (LA)
+    notes: 3D semantic labels, 3D instances and 3D object detection, each trained under a fixed
+      budget of labels or scenes and scored on the test scans; each budget is its own board.
+  - id: scannet#data-efficient-limited-annotations
+    label: Limited Annotations
+    parent: scannet#data-efficient
+    scored_separately: true
+    capability_override:
+      - perception
+      - sample-efficiency
+    evidence:
+      - source: src-scannet-benchmark-data-efficient
+        quote: 'Trained points per scene: 20 points 20 points 50 points 100 points 200 points'
+      - source: src-scannet-benchmark-data-efficient
+        quote: 'Trained bounding boxes per scene: 1 bounding box 1 bounding box 2 bounding boxes 4 bounding
+          boxes 7 bounding boxes'
+    notes: 20 to 200 labelled points per scene for the segmentation tracks, 1 to 7 boxes per scene
+      for detection; ScanNet200 has limited-annotation boards too.
+  - id: scannet#data-efficient-limited-reconstructions
+    label: Limited Reconstructions
+    parent: scannet#data-efficient
+    scored_separately: true
+    capability_override:
+      - perception
+      - sample-efficiency
+    evidence:
+      - source: src-scannet-benchmark-data-efficient
+        quote: 'Percent of total scenes trained : 10% scenes 1% scenes 5% scenes 10% scenes 20% scenes'
+    notes: Training on 1%, 5%, 10% or 20% of the training scenes.
+
+tags:
+  - 3d-semantic-segmentation
+  - instance-segmentation
+  - rgb-d
+  - indoor-scenes
+  - leaderboard
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1702-04405-v2
+    - src-arxiv-1702-04405
+    - src-scannet-benchmark-documentation
+    - src-scannet-benchmark-semantic-label-3d
+    - src-scannet-benchmark-semantic-instance-3d
+    - src-scannet-benchmark-scene-classification
+    - src-scannet-benchmark-data-efficient
+    - src-scannet-benchmark-volt-result
+    - src-scannet-cvpr2023-workshop
+    - src-scannet-changelog
+    - src-github-scannet-readme
+    - src-scannet-terms-of-use
+    - src-arxiv-2604-19609-v2
+    - src-arxiv-2308-11417-v1
+  sources_note: >
+    The ScanNet paper's v2 PDF (a DOI, not archived) read as text, and its abstract page for the
+    date; five benchmark-server pages and one result page with scripts and styles stripped; the 2023
+    challenge page; the changelog; the README at master; the terms of use PDF, read and not signed;
+    Volt's v2 PDF as evidence of current use; and ScanNet++'s v1 PDF, read for the identity call.
+    The 2D label, 2D instance and ScanNet200 boards were fetched and read but are not Sources; the
+    metric details in those subsets' notes come from them.
+  confidence: medium
+  review_checks:
+    - check: Identity. The stress corpus's `scannet` record names ScanNet++ (arXiv 2308.11417, the
+        scannetpp repository), and its Stage 3 classification and the taxonomy examples citing
+        scannet or scannetpp (vision family, perception, spatial-reasoning, the none-known ceiling)
+        describe ScanNet++'s tracks, NVS among them. This entry is the 2017 ScanNet, as assigned.
+        ScanNet++ was judged a separate benchmark, not an edition -- new captures with a laser
+        scanner, DSLR and iPhone, its own paper and authors, its own server and hidden test sets,
+        and novel view synthesis tracks ScanNet does not have -- and is not curated here. The corpus
+        record and the examples need re-pointing, or ScanNet++ its own entry (e.g. scannetpp).
+      field: id
+      source: src-arxiv-2308-11417-v1
+      quote: Following ScanNet [9], we maintain a hidden test set and build an online public
+        evaluation website.
+    - check: domain.primary is vision/segmentation, defined on images, for labels on a 3D mesh, as
+        ADR-0020 kept it for ScanNet++. This is a second benchmark for the deferred
+        vision/3d-scene-understanding proposal; the tag gap was not logged from this task.
+      field: domain
+    - check: ScanNet200 is a later benchmark with its own authors (the server's about page, not a
+        Source here, names its author separately) and the Data Efficient tracks have their own
+        leaderboard; both are filed as subsets because they share the scans, the splits and the
+        server. Either could be an entry of its own.
+      field: subsets
+      source: src-scannet-benchmark-documentation
+      quote: The ScanNet and ScanNet200 benchmarks are sharing the source data, but different in the
+        annotation parsing.
+    - check: activity leaderboard-live-no-round rests on the CVPR workshop challenges (2019-2023)
+        being rounds; only the 2023 page is a Source. If the challenges count as events beside a
+        leaderboard that never ran in rounds, it is accepting-submissions.
+      field: activity
+    - check: funded-by-evaluated-party rests on Google Tango's funding and on Virtual Multi-view
+        Fusion being a Google system, which is inferred from one author's affiliation on the 2023
+        challenge page, not stated on the board.
+      field: governance.independence_flags
+      source: src-scannet-cvpr2023-workshop
+      quote: Tom Funkhouser is a principal research scientist at Google
+    - check: maintainer_type academic-lab against conference-workshop, and the holder split between
+        the terms of use (Stanford and Princeton) and the server's host (TUM).
+      field: governance.maintainer_type
+      source: src-scannet-terms-of-use
+      quote: at Stanford University and Princeton University
+    - check: contamination_risk medium follows COCO's reading of released test inputs with withheld
+        labels; low would also be arguable, as no route to the labels themselves is known.
+      field: data.contamination_risk
