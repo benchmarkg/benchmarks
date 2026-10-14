@@ -152,7 +152,10 @@ LICENCE_NOTES = {   # entry -> {dotted note field: its text}; the paper licences
 
 def swap(text: str, old: str, new: str) -> str:
     """`text` with the one run of words `old` (any whitespace between them) replaced by `new`; unchanged when
-    `new` is already there, so the plan of an applied migration is empty."""
+    `new` is already there, so the plan of an applied migration is empty. ABSENT stays ABSENT: migration 0026
+    (ADR-0026) moved curation.notes into curation.review_checks, and the text this edited went with it."""
+    if text is ABSENT:
+        return text
     hits = list(re.finditer(r'\s+'.join(map(re.escape, old.split())), text))
     if not hits and re.search(r'\s+'.join(map(re.escape, new.split())), text):
         return text
