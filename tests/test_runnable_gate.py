@@ -146,16 +146,17 @@ def test_the_committed_corpus():
     """SWE-bench, SWE-bench Verified, SciCode and ForecastBench clear the first three clauses and stop, undetermined,
     at the carve-out: the fact is not a schema field yet. RoboArena needs physical hardware, ARC-AGI-3's official scores
     come from a set only its maintainers run, so do the Virtual Cell Challenge's and CritPt's (and COCO's and OC20's test
-    servers', FOLIO's unreleased test split, and BEHAVIOR-1K's and the Habitat Challenge's hidden test instances),
-    LegalBench's hand-graded tasks need human raters, and CASP's tier is not curated."""
+    servers', FOLIO's unreleased test split, BEHAVIOR-1K's and the Habitat Challenge's hidden test instances, and
+    Brain-Score's private neural recordings), LegalBench's hand-graded tasks need human raters, and the tiers of CASP,
+    CAGI and CAMEO are not curated. BixBench, like the SWE-bench pair, stops at the carve-out."""
     g = gate.run(gate.load(ROOT))
     assert g.count == 0
     steps = {s.clause.number: s for s in g.steps}
-    assert steps[1].failed == ['arc-agi-3', 'behavior-1k', 'coco', 'critpt', 'folio', 'habitat-challenge', 'legalbench',
-                               'oc20', 'roboarena', 'virtual-cell-challenge']
-    assert steps[1].undetermined == ['casp']
-    assert steps[3].remaining == 4
-    assert steps[4].undetermined == ['forecastbench', 'scicode', 'swe-bench', 'swe-bench-verified']
+    assert steps[1].failed == ['arc-agi-3', 'behavior-1k', 'brain-score', 'coco', 'critpt', 'folio', 'habitat-challenge',
+                               'legalbench', 'oc20', 'roboarena', 'virtual-cell-challenge']
+    assert steps[1].undetermined == ['cagi', 'cameo', 'casp']
+    assert steps[3].remaining == 5
+    assert steps[4].undetermined == ['bixbench', 'forecastbench', 'scicode', 'swe-bench', 'swe-bench-verified']
 
 
 def test_the_gate_is_not_on_the_bench_surface():

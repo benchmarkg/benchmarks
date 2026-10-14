@@ -193,13 +193,14 @@ def test_findings_render_with_severity_rule_and_fix():
 
 def test_the_repository_corpus_loads_and_every_rule_runs():
     c = v.load_corpus()
-    assert set(c.benchmarks) == {'arc-agi-3', 'behavior-1k', 'calvin', 'casp', 'circuitnet', 'climatebench', 'coco',
-                                 'critpt', 'flores', 'folio', 'forecastbench', 'habitat-challenge', 'harmbench',
-                                 'humaneval', 'kaggle-game-arena', 'legalbench', 'libero', 'maniskill',
-                                 'matbench-discovery', 'medqa', 'minif2f', 'mmlu', 'mmmu', 'nle', 'oc20', 'paperbench',
-                                 'pdebench', 'proteingym', 'roboarena', 'robocasa', 'robotwin', 'scicode', 'simplerenv',
-                                 'superb', 'swe-bench', 'swe-bench-verified', 'tau-bench', 'the-well',
-                                 'virtual-cell-challenge', 'weatherbench-2'}
+    assert set(c.benchmarks) == {'arc-agi-3', 'behavior-1k', 'bixbench', 'brain-score', 'cafa', 'cagi', 'calvin',
+                                 'cameo', 'casp', 'circuitnet', 'climatebench', 'coco', 'critpt', 'flores', 'folio',
+                                 'forecastbench', 'habitat-challenge', 'harmbench', 'humaneval', 'kaggle-game-arena',
+                                 'legalbench', 'libero', 'maniskill', 'matbench-discovery', 'medqa', 'minif2f', 'mmlu',
+                                 'mmmu', 'nle', 'oc20', 'open-problems', 'paperbench', 'pdebench', 'proteingym',
+                                 'roboarena', 'robocasa', 'robotwin', 'scicode', 'simplerenv', 'superb', 'swe-bench',
+                                 'swe-bench-verified', 'tau-bench', 'the-well', 'virtual-cell-challenge',
+                                 'weatherbench-2'}
     findings = v.validate(c, 'full')
     assert all(f.rule in v.RULES and f.severity in ('blocking', 'warning') for f in findings)
 
