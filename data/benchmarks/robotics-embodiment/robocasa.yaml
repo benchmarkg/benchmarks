@@ -1,0 +1,340 @@
+# data/benchmarks/robotics-embodiment/robocasa.yaml
+#
+# P1-S5-T01, robotics-embodiment entry 4 of 9. Filled from the RoboCasa365 paper, arXiv 2603.04356 read as its v1
+# PDF (2026-03-04, ICLR 2026), and its abstract page; the original RoboCasa paper's abstract page (arXiv
+# 2406.02523, RSS 2024); the RoboCasa365 leaderboard page; and the repository README. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+
+id: robocasa
+name: RoboCasa
+aliases:
+  - RoboCasa365
+tagline: 'Simulated household mobile manipulation: 365 tasks in 2,500 kitchens, and a leaderboard for
+  generalist robot policies.'
+description: >
+  A simulation framework and benchmark for generalist robot policies, built on robosuite and MuJoCo: a
+  Franka Panda arm on an Omron mobile base performs everyday tasks in procedurally composed kitchens.
+  The
+  2024 release defined 100 tasks; RoboCasa365 (2026) has 65 atomic tasks, each one skill such as
+  pick-and-place or opening a drawer, and 300 composite tasks that chain skills, written from
+  activity lists generated with large language models. It ships human teleoperation demonstrations and
+  synthetic ones generated with MimicGen, and three benchmark settings: multi-task training, foundation
+  model training and lifelong learning. Each task is scored by binary success over 30 trials. The
+  leaderboard ranks policies on a 50-task multi-task benchmark in three splits, one of them composite
+  tasks held out from pretraining.
+self_description:
+  source: src-arxiv-2603-04356-v1
+  quote: we present RoboCasa365, a comprehensive simulation benchmark for household mobile
+    manipulation
+external_ids:
+  arxiv: '2603.04356'
+paper:
+  title: 'RoboCasa365: A Large-Scale Simulation Framework for Training and Benchmarking Generalist Robots'
+  arxiv: '2603.04356'
+  version_read: v1
+  source: src-arxiv-2603-04356-v1
+released: 2024-06-04
+released_note: The original RoboCasa paper's first arXiv version (RSS 2024), as its abstract page
+  dates it. RoboCasa365, the version the leaderboard ranks, was released on 2026-02-18 (see
+  versions).
+released_source: src-arxiv-2406-02523
+released_quote: Submitted on 4 Jun 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/mobile-manipulation
+  secondary:
+    - robotics-embodiment/embodied-instruction-following
+domain_basis:
+  reason: The robot is an arm on a mobile base acting across whole kitchens, and navigation is one
+    of the skills the tasks are built from. Each task carries a natural-language instruction, the
+    secondary leaf's case.
+  source: src-arxiv-2603-04356-v1
+  quote: we use the Franka Panda Emika robot, equipped with an Omron mobile base
+capability:
+  - sensorimotor-control
+  - compositional-generalization
+capability_basis:
+  sensorimotor-control:
+    reason: A policy issues actions to a simulated robot in closed loop, and a trial succeeds only
+      if the resulting physical state meets the task's success condition.
+    source: src-arxiv-2603-04356-v1
+    quote: If during this duration the agent achieves the task success condition (binary condition),
+      the episode is counted as a success; otherwise, a failure
+  compositional-generalization:
+    reason: The leaderboard's Composite-Unseen split holds out composite tasks from pretraining and
+      scores them zero-shot. Composite tasks are sequences of the foundational skills the atomic
+      tasks train, so the held-out tasks are new arrangements of trained skills.
+    source: src-robocasa-leaderboard
+    quote: Composite-Unseen tasks are held out from pretraining and evaluated zero-shot
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: Composite tasks chain several subtasks over hundreds of control steps, but a failed
+      grasp can be retried within the horizon, so an intermediate failure does not make full success
+      unattainable, which the term's inclusion test asks.
+  - term: continual-learning
+    reason: Lifelong learning is one of the paper's three settings, but the leaderboard and the
+      README's benchmarking support rank the multi-task setting only.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Every number is a success rate over trials run in the simulator, each trial a success or a
+    failure against the task's success condition.
+  source: src-arxiv-2603-04356-v1
+  quote: For each evaluation task, we run 30 trials for a specified maximum number of timesteps
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The entrants are learned visuomotor policies, from Diffusion Policy to
+    vision-language-action models such as GR00T and pi0, trained on the demonstrations and run in
+    the simulator. The vocabulary has no term of its own for vision-language-action models, and
+    LIBERO's entry tags them the same way.
+  source: src-robocasa-leaderboard
+  quote: 'includes the four baseline policy families: Diffusion Policy, π0, π0.5, and GR00T N1.5'
+
+lifecycle: active
+lifecycle_basis:
+  reason: RoboCasa365 was released in February 2026, its leaderboard opened in April 2026 and holds
+    18 policies, and the page was updated on 2026-10-13, the day this entry was read.
+  source: src-robocasa-leaderboard
+  quote: Updated 10/13/2026
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard takes community submissions as pull requests to its repository.
+  source: src-robocasa-leaderboard
+  quote: add a JSON file following the template in the README, and open a pull request that places
+    it in the submissions/ folder
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Awomo-0.5I
+    source: src-robocasa-leaderboard
+    observed_on: 2026-10-14
+    quote: Awomo-0.5I Awomo-WAM Team 64.4
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each task's binary success condition, checked on the simulator's state
+  within the task's time limit.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The simulator, tasks, kitchens, demonstrations and evaluation code are released, the
+    assets and datasets under CC BY 4.0.
+  source: src-github-robocasa-readme
+  quote: 'Assets and Datasets: [CC BY 4.0]'
+
+task:
+  exists: true
+  input:
+    - camera images and proprioception from a simulated mobile manipulator in a kitchen, with the
+      task's language instruction
+  output: Continuous base, arm and gripper actions, step by step, until the task succeeds or its
+    time limit ends.
+  scoring: Success rate per task over 30 trials; the leaderboard averages it over 50 tasks in three
+    splits (Atomic-Seen, Composite-Seen, Composite-Unseen).
+  source: src-arxiv-2603-04356-v1
+  quote: For each evaluation task, we run 30 trials for a specified maximum number of timesteps
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Code, tasks, kitchen assets and demonstrations are public, the assets and datasets under
+      CC BY 4.0.
+    source: src-github-robocasa-readme
+    quote: 'Assets and Datasets: [CC BY 4.0]'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The task set changed by release, 100 tasks in 2024 and 365 in RoboCasa365, and v1.0.1
+      changed every task's horizon.
+    source: src-github-robocasa-readme
+    quote: Updated horizon lengths (1.5x increase) across all tasks for consistency
+  data_provenance:
+    - simulation-generated
+    - model-generated
+  data_provenance_note: Tasks are scored in a physics simulator. The composite tasks' activities and
+    blueprints were generated with large language models; the training demonstrations come from
+    human teleoperation and from MimicGen's automated generation.
+  data_provenance_source: src-arxiv-2603-04356-v1
+  data_provenance_quote: We use large language models to generate a set of high-level activities
+  contamination_risk: unknown
+  contamination_risk_note: Training on the demonstrations is the protocol. Not assessed is whether
+    robot foundation models' pretraining mixtures include RoboCasa's demonstrations, target tasks
+    among them, which would undo the Composite-Unseen split's hold-out.
+  contamination_evidence: []
+  dataset_licence: CC-BY-4.0
+  dataset_licence_source: src-github-robocasa-readme
+  dataset_licence_quote: 'Assets and Datasets: [CC BY 4.0]'
+  size:
+    - count: 365
+      unit: tasks
+      subset: RoboCasa365
+      source: src-arxiv-2603-04356-v1
+      quote: RoboCasa365 introduces 365 everyday tasks across 2,500 diverse kitchen environments
+    - count: 50
+      unit: tasks in the leaderboard's multi-task benchmark (18 Atomic-Seen, 16 Composite-Seen, 16
+        Composite-Unseen)
+      subset: leaderboard
+      source: src-robocasa-leaderboard
+      quote: 'It aggregates three evaluation splits: Atomic-Seen (18 tasks), Composite-Seen (16 tasks),
+        and Composite-Unseen (16 tasks)'
+    - count: 100
+      unit: tasks
+      subset: the 2024 release
+      source: src-arxiv-2406-02523
+      quote: We design a set of 100 tasks for systematic evaluation
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The RoboCasa team (UT Austin, with NVIDIA Research)
+  maintainer_basis:
+    reason: The paper's authors are at UT Austin, and its last author also at NVIDIA Research; the
+      leaderboard is the RoboCasa Team's.
+    source: src-arxiv-2603-04356-v1
+    quote: The University of Texas at Austin, 2NVIDIA Research
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-verified
+    - maintainer-run
+    - publication-gated
+  submission_process_note: Submitters open a pull request with their results; the team reviews and
+    verifies each before it appears. The team ran the four baseline families itself. An arXiv paper
+    is required to be listed.
+  submission_process_source: src-robocasa-leaderboard
+  submission_process_quote: New entries are added after submission review and verification so
+    results remain consistent and trustworthy
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-robocasa-leaderboard
+      quote: GR00T N1.5 RoboCasa Team
+  independence_flags_note: The RoboCasa Team is the submitter of its baseline rows, among them two
+    of NVIDIA's GR00T models, and the paper's last author is at NVIDIA Research. The rows are
+    baselines the team ran, not a model it built for the board.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run is fully automatic, but only inside the robosuite and MuJoCo simulation RoboCasa
+      is built on.
+    source: src-arxiv-2603-04356-v1
+    quote: RoboCasa365 is built on top of RoboSuite (Zhu et al., 2020), which uses the MuJoCo
+      physics engine
+  harness_availability: official-harness
+  harness: robocasa (the package's environments and evaluation scripts)
+  harness_source: src-github-robocasa-readme
+  harness_quote: '**Benchmarking support**: popular policy learning methods including Diffusion Policy,
+    pi, and GR00T'
+  code_licence: MIT
+  code_licence_source: src-github-robocasa-readme
+  code_licence_quote: 'Code: [MIT License]'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which release and task set (2024's 100 tasks, RoboCasa365, v1.0 or v1.0.1's
+  # longer horizons), which split (atomic, composite seen or unseen), what the policy was pretrained on (the
+  # Human300 set, synthetic data, other robot data), and how many trials per task.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - n_samples
+
+homepage: https://robocasa.ai/
+repository: https://github.com/robocasa/robocasa
+
+versions:
+  - version: '2024'
+    label: RoboCasa, the RSS 2024 release
+    version_kind: edition
+    released: 2024-06-04
+    items: 100
+    changes: The first release, with 100 tasks.
+    breaking: true
+    superseded_by: v1.0
+    frozen: true
+    sources:
+      - src-arxiv-2406-02523
+  - version: v1.0
+    label: RoboCasa365
+    version_kind: edition
+    released: 2026-02-18
+    items: 365
+    changes: 365 tasks (65 atomic, 300 composite), 2,500 kitchen scenes, new demonstration datasets
+      and the three benchmark settings.
+    breaking: true
+    supersedes_version: '2024'
+    superseded_by: v1.0.1
+    frozen: true
+    sources:
+      - src-github-robocasa-readme
+      - src-arxiv-2603-04356
+      - src-arxiv-2603-04356-v1
+  - version: v1.0.1
+    label: RoboCasa365 with longer horizons
+    version_kind: revision
+    released: 2026-05-12
+    changes: Every task's horizon lengthened 1.5 times. Results before and after are not comparable;
+      the leaderboard re-evaluated GR00T N1.5 under it.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: true
+    sources:
+      - src-github-robocasa-readme
+      - src-robocasa-leaderboard
+
+history:
+  - date: 2026-04-06
+    event: channel-opened
+    field: governance.submission_process
+    to: maintainer-verified
+    source: src-github-robocasa-readme
+    quote: '**RoboCasa365 Leaderboard** published'
+    note: The leaderboard opened to community submissions; before it, results appeared in papers.
+
+tags:
+  - mobile-manipulation
+  - household
+  - simulation
+  - vision-language-action
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2603-04356-v1
+    - src-arxiv-2603-04356
+    - src-arxiv-2406-02523
+    - src-robocasa-leaderboard
+    - src-github-robocasa-readme
+  sources_note: >
+    The RoboCasa365 paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date;
+    the original paper's abstract page for the 2024 release; the leaderboard page with scripts and styles
+    stripped; and the README at main.
+  confidence: medium
+  review_checks:
+    - check: The entry is RoboCasa with RoboCasa365 as an edition; RoboCasa365 could instead be its
+        own entry, as its paper calls it a benchmark in its own right.
+      field: versions
+    - check: Whether baseline rows the maintainers ran count as
+        maintainer-competes-on-own-benchmark, and whether the NVIDIA link is better recorded another
+        way.
+      field: governance.independence_flags
+      source: src-robocasa-leaderboard
+      quote: GR00T N1.5 RoboCasa Team
+    - check: compositional-generalization rests on composite tasks being chains of the atomic
+        skills; the sources do not enumerate the Composite-Unseen tasks' skills.
+      field: capability

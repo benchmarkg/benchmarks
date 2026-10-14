@@ -1,0 +1,479 @@
+# data/benchmarks/robotics-embodiment/habitat-challenge.yaml
+#
+# P1-S5-T01, robotics-embodiment entry 8 of 9. Filled from the challenge's five yearly pages on aihabitat.org
+# (2019 to 2023, scripts and styles stripped); the repository README at main; EvalAI's public record of the 2023
+# challenge (challenge 1992), read beside its phase list and the records of challenges 254, 580, 802, 1615 and
+# 2100; the abstract page of ObjectNav Revisited (arXiv 2006.13171), the paper the 2020 and 2021 pages cite for
+# the ObjectNav track; and the v1 PDF of MCNav (arXiv 2605.19594, May 2026), a paper that reports on the 2022 and
+# 2023 editions' episodes. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+
+id: habitat-challenge
+name: Habitat Challenge
+aliases:
+  - Habitat Navigation Challenge
+tagline: Meta AI's yearly embodied navigation challenge in Habitat (2019-2023), PointNav, ObjectNav
+  and ImageNav scored by SPL.
+description: >
+  Meta AI's annual embodied navigation challenge, run in the Habitat simulator from 2019 to 2023
+  with results presented at the Embodied AI workshop at CVPR. An agent starts at a random pose in a
+  house it has not seen and must reach a goal: coordinates relative to its start (PointNav,
+  2019-2021), any instance of an object category such as a chair (ObjectNav, 2020-2023), or the
+  object instance shown in a goal image (Instance ImageNav, 2023). Each edition changed the task or
+  the data: 2020 took away PointNav's GPS+Compass sensor and added actuation noise, 2022 moved
+  ObjectNav to HM3D-Semantics v0.1, and 2023 to HM3D-Semantics v0.2 with a simulated Hello Robot
+  Stretch driven by continuous actions. Episodes are scored by success and by SPL, success weighted
+  by the ratio of the shortest path to the path taken. Participants push Docker images of their
+  agents to EvalAI, which runs them on test scenes they never see, in a test-standard phase that
+  served as the public leaderboard and a test-challenge phase that decided the winners. EvalAI's
+  records of the 2021-2023 challenges end on 2026-01-16, and no edition has run since 2023. The
+  same team's Habitat Rearrangement Challenge 2022 and HomeRobot OVMM Challenge 2023 share the site
+  and are not included here.
+self_description:
+  source: src-habitat-challenge-2019-site
+  quote: Habitat Challenge is an autonomous navigation challenge that aims to benchmark and
+    accelerate progress in embodied AI
+released: 2019-04-03
+released_note: The first edition's start date, as its page gives it; EvalAI's record of the 2019
+  challenge (254) starts the same day.
+released_source: src-habitat-challenge-2019-site
+released_quote: Challenge starts April 3, 2019
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/navigation
+domain_basis:
+  reason: Every track of every edition (PointNav, ObjectNav, ImageNav) scores an agent moving to a
+    goal in an environment it has not seen and has no map of.
+  source: src-habitat-challenge-2023-site
+  quote: A map of the environment is not provided and the agent must only use its sensory input to
+    navigate.
+domain_considered_and_rejected:
+  - term: robotics-embodiment/sim2real-transfer
+    reason: The 2020 and 2021 PointNav tracks were built for sim-to-real predictivity, and the top
+      five 2020 teams could go on to the Gibson Sim2Real Challenge's real-robot phase, but that
+      phase belongs to another challenge; Habitat scores simulation only.
+    source: src-habitat-challenge-2020-site
+    quote: Top-5 teams from the Habitat Test Standard phase will have a chance to participate in the
+      Gibson Sim2Real Challenge
+  - term: robotics-embodiment/mobile-manipulation
+    reason: The Habitat Rearrangement Challenge 2022 and the HomeRobot OVMM Challenge 2023 scored
+      it, but this entry does not include them (see review_checks).
+  - term: robotics-embodiment/embodied-instruction-following
+    reason: Goals are coordinates, one of a fixed set of object categories or an image, not
+      natural-language instructions.
+capability:
+  - sensorimotor-control
+  - spatial-reasoning
+  - search-exploration
+capability_basis:
+  sensorimotor-control:
+    reason: Actions drive a simulated robot body whose physics decides where it ends up. From 2020
+      the agent is sized like a LoCoBot, its actuation is noisy and a collision stops it instead of
+      letting it slide; in 2023 it is a Stretch driven by velocity commands.
+    source: src-habitat-challenge-2020-site
+    quote: we modify Habitat-Sim to disable sliding on collisions
+  spatial-reasoning:
+    reason: From 2020 the PointNav agent has no GPS+Compass, so it must infer its own displacement
+      from RGB-D input to keep track of a goal given only as coordinates from its start.
+    source: src-habitat-challenge-2020-site
+    quote: This change elevates the need to perform RGBD-based online localization.
+  search-exploration:
+    reason: ObjectNav and ImageNav goals must be found in an unmapped house, and SPL scores the
+      traversal, discounting success by how much longer the path was than the shortest path to the
+      nearest goal instance.
+    source: src-habitat-challenge-2023-site
+    quote: The only key difference is that the shortest path is computed to the object instance
+      closest to the agent start location
+capability_considered_and_rejected:
+  - term: perception
+    reason: The input is RGB-D images, but the score is whether and how efficiently the goal was
+      reached, not what was recovered from the images.
+  - term: distribution-shift-generalization
+    reason: Agents are tested in unseen houses, but the test scenes are held-out houses of the same
+      scene datasets under their standard splits, and no shifted condition is reported beside an
+      in-distribution one.
+    source: src-evalai-habitat-challenge-1992
+    quote: The uploaded agents are evaluated in novel (unseen) environments to test for
+      generalization.
+  - term: long-horizon-execution
+    reason: Episodes run to hundreds of steps, but a wrong turn can be undone later in the episode;
+      only a premature STOP makes success unattainable, which the term's inclusion test does not
+      cover.
+  - term: grounding
+    reason: ObjectNav goals come from a fixed set of category labels and ImageNav goals are images;
+      no linguistic expression is resolved to a referent.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Every number is computed over episodes run in Habitat-Sim, each a success or a failure,
+    and SPL is bounded by 1.
+  source: src-habitat-challenge-2023-site
+  quote: In 2023, we are hosting the ObjectNav and ImageNav challenge in the Habitat simulator
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The challenge ships reinforcement-learning baselines (DD-PPO) and training configs for
+    each track, and the entrants are trained navigation policies, from end-to-end RL to imitation
+    followed by RL (IRLNav) and map-based hybrids.
+  source: src-github-habitat-challenge-readme
+  quote: that includes a baseline using DD-PPO from Habitat-Lab
+as_used:
+  - protocol: Results reported on the released validation episodes of the 2022 and 2023 editions,
+      run locally in Habitat with the authors' own step caps and success thresholds, not on the
+      test-standard server that the challenge asked papers to report.
+    split: val
+    source: src-arxiv-2605-19594-v1
+    quote: HM3Dv1 (HM3D-Semantics-v0.1 from 2022 Habitat Challenge, 2000 episodes, 20 scenes, 6 goal
+      categories)
+    note: MCNav (May 2026), a zero-shot method built on Qwen2.5-VL-7B. Its ObjectNav runs cap
+      episodes at 500 steps with a 0.2 m success threshold, its own settings.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the challenge's own episode sets; a May 2026 paper
+    evaluates on the 2022 and 2023 editions' validation episodes. The submission servers closed on
+    2026-01-16 (activity), and the repository is archived, last pushed on 2023-04-24 (GitHub API),
+    which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2605-19594-v1
+  quote: HM3Dv2 (HM3D-Semantics-v0.2 from 2023 Habitat Challenge, 1000 episodes, 36 scenes, 6 goal
+    categories)
+activity: closed
+activity_note: EvalAI's records of the 2021 (802), 2022 (1615) and 2023 (1992) challenges all end on
+  2026-01-16 and are inactive, every phase with them; the 2019 and 2020 servers ended in 2020 and
+  2021. The aihabitat.org pages for 2024 and 2025 return 404.
+activity_basis:
+  reason: The EvalAI servers were the only route for results, and the last of them, which had stayed
+    open after each round as standing leaderboards, ended on 2026-01-16. No edition has run since
+    2023 and none is announced, so no route is open.
+  source: src-evalai-habitat-challenge-1992
+  quote: '"end_date":"2026-01-16T23:59:59Z"'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: IRLNav (team BadSeed, 2nd in ObjectNav 2022)
+    source: src-habitat-challenge-2022-site
+    observed_on: 2026-10-14
+    quote: 'presents IRLNav: Imitation and Reinforcement Learning for Effective ObjectNav approach'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Success is checked on the simulator's state when the agent calls STOP, and
+  SPL uses the simulator's shortest path to the goal.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The test scenes and episodes behind the official scores were never released, and the
+    servers that scored them have closed. Anyone can run the released validation episodes with the
+    same Docker setup.
+  source: src-habitat-challenge-2020-site
+  quote: The test scenes are used for the official challenge evaluation and are not provided to
+    participants.
+
+task:
+  exists: true
+  input:
+    - egocentric RGB or RGB-D images in an unseen simulated house, with GPS+Compass readings in the
+      editions and tracks that provide them
+    - 'the goal: coordinates relative to the start (PointNav), an object category (ObjectNav) or a goal
+      image (ImageNav)'
+  output: Discrete moves and turns (2019-2022) or continuous velocity commands (2023), ending with a
+    STOP action.
+  scoring: Success and SPL averaged over the test episodes, ranked by SPL, with soft SPL and
+    distance to goal beside them. ObjectNav succeeds when STOP is called within 1.0 m of any
+    instance of the goal category that an oracle could see from there; PointNav within 0.36 m of the
+    goal.
+  source: src-habitat-challenge-2023-site
+  quote: the agent is within 1.0m Euclidean distance from any instance of the target object category
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The README's episode downloads hold train and val splits only, and the HM3D scenes
+    come through Matterport's partner page. Since the servers closed on 2026-01-16 no route to the
+    test splits is open.
+  access_basis:
+    reason: Train and validation scenes and episodes are released, but the test splits behind the
+      leaderboard stay with the organisers, who ran each submitted container on them.
+    source: src-habitat-challenge-2020-site
+    quote: The test scenes are used for the official challenge evaluation and are not provided to
+      participants.
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: Each edition was ranked on its own evaluation data, apart from 2021, which kept 2020's
+      tasks; the 2020 episodes changed with the agent's size, 2022 brought HM3D-Semantics v0.1 and
+      2023 v0.2.
+    source: src-habitat-challenge-2022-site
+    quote: We are instantiating ObjectNav on a new dataset called HM3D-Semantics v0.1.
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Episodes run in Habitat-Sim on 3D scene datasets (Gibson, Matterport3D, HM3D
+    and HM3D-Semantics), with start poses drawn at random. How the scenes themselves were captured
+    is not described in the sources read.
+  data_provenance_source: src-habitat-challenge-2023-site
+  data_provenance_quote: In 2023, we are hosting the ObjectNav and ImageNav challenge in the Habitat
+    simulator
+  contamination_risk: low
+  contamination_risk_note: The test scenes and episodes were never released and the organisers ran
+    every agent on them inside its container, so no training route to the scored test sets is known.
+    Results now reported on the public validation episodes (as_used) have no such protection.
+  contamination_risk_source: src-habitat-challenge-2020-site
+  contamination_risk_quote: The test scenes are used for the official challenge evaluation and are
+    not provided to participants.
+  contamination_evidence: []
+  size:
+    - count: 216
+      unit: HM3D-Semantics v0.2 scenes (145 train, 36 val, 35 test)
+      subset: 2023 edition (ObjectNav and ImageNav)
+      source: src-habitat-challenge-2023-site
+      quote: The 2023 ObjectNav challenge uses 216 scenes from the Habitat-Matterport3D (HM3D)
+        Semantics v0.2
+    - count: 1000
+      unit: test episodes per submission
+      subset: 2023 edition
+      source: src-habitat-challenge-2023-site
+      quote: Your agent will be evaluated on 1000 episodes
+    - count: 120
+      unit: HM3D-Semantics v0.1 scenes (80 train, 20 val, 20 test)
+      subset: 2022 edition (ObjectNav)
+      source: src-habitat-challenge-2022-site
+      quote: The 2022 ObjectNav challenge uses 120 scenes from the Habitat-Matterport3D (HM3D)
+        Semantics v0.1
+    - count: 90
+      unit: Matterport3D scenes, with 21 goal categories
+      subset: 2020 ObjectNav
+      source: src-habitat-challenge-2020-site
+      quote: We use 90 of the Matterport3D scenes (MP3D)
+  submission_limit:
+    max_submissions: 10
+    period_days: 1
+    per: team, on the test-standard phase
+    source: src-habitat-challenge-2023-site
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Meta Platforms (its AI Habitat team)
+  maintainer_basis:
+    reason: Meta is the sponsor under the challenge's participation agreement, hosts it on
+      aihabitat.org and EvalAI, and keeps the code in facebookresearch/habitat-challenge.
+    source: src-evalai-habitat-challenge-1992
+    quote: Meta Platforms, Inc. and its Affiliates
+  maintainer_type: industry-lab
+  maintainer_type_note: conference-workshop was considered. Results were announced at the CVPR
+    Embodied AI workshop and the author lists change by edition, but one standing lab organised and
+    hosted every edition, which the term's exclusion sends to that lab's type.
+  submission_process:
+    - containerized-algorithm-submission
+  submission_process_note: Participants pushed Docker images of their agents to EvalAI, which ran
+    them on AWS GPU instances in three phases. Minival was for checks. Test-standard was the public
+    leaderboard, at up to 10 submissions a day. Test-challenge decided the winners, at 5 submissions
+    in all.
+  submission_process_source: src-evalai-habitat-challenge-1992
+  submission_process_quote: this is a challenge where participants upload code not predictions
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-habitat-challenge-2021-site
+      quote: '2nd Place: UCU MLab Team, Ruslan Partsey, Oles Dobosevych, Oleksandr Maksymets'
+    - flag: prize-sponsored-by-industry
+      source: src-habitat-challenge-2019-site
+      quote: The winning team for RGB and RGBD track will receive Google Cloud Platform (GCP)
+        credits worth $10k each
+    - flag: single-evaluator-private-test-set
+      source: src-habitat-challenge-2020-site
+      quote: The test scenes are used for the official challenge evaluation and are not provided to
+        participants.
+  independence_flags_note: Organisers are on placing teams. Oleksandr Maksymets, listed among the
+    2021 organisers, is on UCU MLab, second in PointNav 2021; Dhruv Batra is on Red Rabbit, first in
+    ObjectNav 2021, and on BadSeed, second in 2022. Google Cloud credits were the 2019 and 2020
+    prizes. Meta held the test scenes and ran every submitted agent.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are test-standard and test-challenge results, which only the
+      organisers' servers could produce because the test scenes were never released; the servers
+      closed on 2026-01-16. The validation episodes can be run by anyone.
+    source: src-habitat-challenge-2020-site
+    quote: The test scenes are used for the official challenge evaluation and are not provided to
+      participants.
+  reproducibility_blockers:
+    - private-test-set
+    - specific-simulator-build
+  reproducibility_blockers_note: Each edition pins its simulator build, a challenge Conda package of
+    Habitat-Sim and a challenge tag of Habitat-Lab.
+  reproducibility_blockers_source: src-github-habitat-challenge-readme
+  reproducibility_blockers_quote: You can install Habitat-Sim using our custom Conda package for
+    habitat challenge 2023
+  harness_availability: official-harness
+  harness: habitat-challenge (the Docker image and the scripts/test_local_{objectnav,imagenav}.sh
+    evaluation)
+  harness_source: src-github-habitat-challenge-readme
+  harness_quote: 'Note: this same command will be run to evaluate your agent for the leaderboard.'
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for facebookresearch/habitat-challenge, read
+    2026-10-14; not a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which edition and track (the tasks, sensors, agent body and scene dataset
+  # change by year), which split (test-standard, test-challenge or the released val episodes), and what the
+  # agent was trained on (the edition's training scenes, or none for zero-shot agents on pretrained models).
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://aihabitat.org/challenge/2023/
+repository: https://github.com/facebookresearch/habitat-challenge
+leaderboard_url: https://eval.ai/web/challenges/challenge-page/1992/overview
+
+versions:
+  - version: '2019'
+    label: Habitat Challenge 2019
+    version_kind: edition
+    released: 2019-04-03
+    changes: The first edition, PointGoal navigation in Gibson scenes in an RGB and an RGBD track,
+      with the goal's relative coordinates updated as the agent moved.
+    breaking: true
+    superseded_by: '2020'
+    frozen: true
+    sources:
+      - src-habitat-challenge-2019-site
+      - src-habitat-challenge-2020-site
+  - version: '2020'
+    label: Habitat Challenge 2020
+    version_kind: edition
+    released: 2020-02-24
+    changes: PointNav without the GPS+Compass sensor, with actuation and sensor noise, no sliding on
+      collision and a LoCoBot-sized agent, so the 2019 episodes changed. ObjectNav added, on 90
+      Matterport3D scenes with 21 goal categories.
+    breaking: true
+    supersedes_version: '2019'
+    superseded_by: '2021'
+    frozen: true
+    sources:
+      - src-habitat-challenge-2020-site
+      - src-arxiv-2006-13171
+  - version: '2021'
+    label: Habitat Challenge 2021
+    version_kind: edition
+    released: 2021-02-17
+    changes: PointNav and ObjectNav again, with the task specifications unchanged except the
+      PointNav camera's tilt.
+    breaking: true
+    supersedes_version: '2020'
+    superseded_by: '2022'
+    frozen: true
+    sources:
+      - src-habitat-challenge-2021-site
+  - version: '2022'
+    label: Habitat Challenge 2022
+    version_kind: edition
+    released: 2022-02-14
+    items: 1000
+    changes: ObjectNav only, on 120 HM3D-Semantics v0.1 scenes with 6 goal categories. PointNav was
+      retired from the challenge, its evaluation servers left open.
+    breaking: true
+    supersedes_version: '2021'
+    superseded_by: '2023'
+    frozen: true
+    sources:
+      - src-habitat-challenge-2022-site
+  - version: '2023'
+    label: Habitat Navigation Challenge 2023
+    version_kind: edition
+    released: 2023-03-13
+    items: 1000
+    changes: ObjectNav on HM3D-Semantics v0.2 (216 scenes) and a new Instance ImageNav track. The
+      agent became a simulated Hello Robot Stretch with continuous velocity actions, and every
+      episode can be navigated without changing floors.
+    breaking: true
+    supersedes_version: '2022'
+    frozen: true
+    sources:
+      - src-habitat-challenge-2023-site
+      - src-github-habitat-challenge-readme
+
+history:
+  - date: 2026-01-16
+    event: channel-closed
+    field: execution.submission_channel
+    from: EvalAI challenges 802, 1615 and 1992 (the 2021-2023 editions)
+    source: src-evalai-habitat-challenge-1992
+    quote: '"end_date":"2026-01-16T23:59:59Z"'
+    note: All three records share the end date; the 2023 record is the one cited.
+
+tags:
+  - navigation
+  - objectnav
+  - pointnav
+  - imagenav
+  - simulation
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-habitat-challenge-2019-site
+    - src-habitat-challenge-2020-site
+    - src-habitat-challenge-2021-site
+    - src-habitat-challenge-2022-site
+    - src-habitat-challenge-2023-site
+    - src-github-habitat-challenge-readme
+    - src-evalai-habitat-challenge-1992
+    - src-arxiv-2006-13171
+    - src-arxiv-2605-19594-v1
+  sources_note: >
+    The five yearly challenge pages with scripts and styles stripped; the README at main; EvalAI's
+    JSON record of the 2023 challenge; ObjectNav Revisited's abstract page, for the ObjectNav track's
+    2020 instantiation (the challenge has no paper of its own, so `paper` is left empty); and MCNav's
+    v1 PDF (a DOI, not archived) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: The entry is the navigation series (2019-2023). The Habitat Rearrangement Challenge
+        2022 (NeurIPS 2022, on a branch of the same repository) and the HomeRobot OVMM Challenge
+        2023 (NeurIPS 2023, where aihabitat.org/challenge/ now redirects) share the site's challenge
+        menu and EvalAI, and both score mobile manipulation. They could be editions here, adding
+        mobile-manipulation as a secondary domain with per_edition, or entries of their own.
+      field: versions
+      source: src-habitat-challenge-2023-site
+      quote: Challenge 2023 OVMM 2023 Nav 2022 Rearrange 2022 Nav 2021 Nav 2020 Nav 2019 Nav
+    - check: activity closed or between-rounds. No edition since 2023, no 2024 or 2025 page, the
+        repository archived, and the 2021-2023 servers all end on 2026-01-16, but no source
+        announces the series' end. With the servers closed, lifecycle could also be mature (a frozen
+        record) rather than active.
+      field: activity
+      source: src-evalai-habitat-challenge-1992
+      quote: '"end_date":"2026-01-16T23:59:59Z"'
+    - check: maintainer-competes-on-own-benchmark rests on organisers co-authoring placing teams'
+        work (Maksymets and Batra), not on Meta entering a system of its own.
+      field: governance.independence_flags
+      source: src-habitat-challenge-2021-site
+      quote: Organizers Oleksandr Maksymets Andrew Westbury Rishabh Jain Aaron Gokaslan Dhruv Batra
+    - check: search-exploration and spatial-reasoning rest on ObjectNav's unmapped search and on
+        PointNav without GPS+Compass; no source names either capability. distribution-shift was
+        rejected because the test scenes are held-out houses of the same datasets.
+      field: capability
+    - check: data_provenance has simulation-generated only. Whether real-world-instrument applies to
+        the scanned scene datasets (Gibson, Matterport3D, HM3D) is not settled by the sources read,
+        which name the datasets without describing their capture.
+      field: data.data_provenance
+    - check: Zero-shot agents built on vision-language models (MCNav on Qwen2.5-VL-7B) now report on
+        the validation episodes; whether observed_subjects should add agent-scaffold beside
+        rl-policy.
+      field: designed_for_subjects
+      source: src-arxiv-2605-19594-v1
+      quote: We use Qwen2.5-VL-7B as our LLM and VLM
