@@ -1,0 +1,499 @@
+# data/benchmarks/biology-genetics/brain-score.yaml
+#
+# P1-S5-T04, biology-genetics entry 8 of 9. Filled from the technical paper, bioRxiv 10.1101/407007 read as its
+# v2 PDF (2020-01-02, CC BY 4.0), and bioRxiv's API record of it (for the first version's date); the vision
+# repository's README at master; brain-score.org's home page, FAQ, Brain-Score 2.0 release page, the July 2026
+# blog post on the leaderboard's history views and the 2024 competition page (scripts and styles stripped); the
+# vision leaderboard's data, read from the page's content endpoint; and the site's terms of use (PDF). Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# Identity: this entry is Brain-Score Vision, which the repository README and the papers call Brain-Score.
+# Brain-Score Language shares the site and the submission system but has its own repository, model interface,
+# entrants and leaderboard, and is left for an entry of its own (see review_checks). The Neuron perspective
+# (2020, doi 10.1016/j.neuron.2020.07.040) is subscription-only and was not read.
+
+id: brain-score
+name: Brain-Score
+aliases:
+  - Brain-Score Vision
+tagline: Scores vision models on how well they predict primate neural recordings and behaviour,
+  normalised by noise ceilings.
+description: >
+  A platform that scores computational models of the primate ventral visual stream on how well
+  they predict neural and behavioural measurements. Each benchmark pairs an experimental dataset
+  with a metric. Neural benchmarks map a model's activations to recordings in V1, V2, V4 or IT
+  (single units, arrays, fMRI or EEG), by PLS or ridge regression scored on held-out images or by
+  comparing dissimilarity matrices; behavioural benchmarks compare the model's choices with human
+  or monkey response patterns. Each score is divided by the data's noise ceiling, so 1 means the
+  model explains as much as the data's reliability allows. The leaderboard ranks models by
+  average_vision, the mean of the neural and the behavioural averages; engineering benchmarks such
+  as ImageNet top-1 are shown beside it and are not part of the average. Models enter as plugins,
+  by zip upload or pull request, that the maintainers merge into the public repository and score
+  on their own servers, including on benchmarks whose data are not public. The 2018 release had
+  three benchmarks (V4 and IT predictivity on Majaj et al. 2015, and human I2n behaviour); new
+  benchmarks are added continuously, and a model that cannot run on a new benchmark scores 0 on
+  it. Brain-Score Language, which shares the site, is not included here.
+self_description:
+  source: src-github-brain-score-vision-readme
+  quote: Brain-Score is a platform to evaluate computational models of brain function on their match
+    to brain measurements in primate vision.
+paper:
+  title: 'Brain-Score: Which Artificial Neural Network for Object Recognition is most Brain-Like?'
+  doi: 10.1101/407007
+  version_read: v2
+  source: src-biorxiv-407007-v2
+released: 2018-09-05
+released_note: The technical paper's first bioRxiv version, as bioRxiv's record dates it. The
+  version read here is v2, posted 2020-01-02.
+released_source: src-biorxiv-407007
+released_quote: '"date":"2018-09-05","version":"1"'
+release_venue: bioRxiv (the technical paper, 2018); the README also asks users to cite the Neuron
+  perspective (2020)
+release_venue_source: src-github-brain-score-vision-readme
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/brain-model-alignment
+domain_basis:
+  reason: The neural benchmarks score how well a model's internal activations predict recorded
+    neural responses to the same images, which is the leaf's definition. The behavioural benchmarks
+    compare outputs with primate behaviour; the platform's claim is alignment with the brain, so
+    they stay under the same leaf (ADR-0020).
+  source: src-biorxiv-407007-v2
+  quote: 'Neural metrics assess the similarity of internally observable signals: image-evoked feature
+    activations in ANNs and image-evoked recorded neural activations in different primate brain regions.'
+domain_considered_and_rejected:
+  - term: vision/classification
+    reason: ImageNet top-1 and the other engineering benchmarks score classification, but they are
+      shown beside the ranking and are not part of the average that ranks models.
+    source: src-brain-score-faq
+    quote: which do not include biological data but typically test against ground truth, often for a
+      machine learning benchmark
+  - term: biology-genetics/neuroscience-decoding
+    reason: Nothing is recovered from neural activity; the models predict the recordings from the
+      stimulus, the opposite direction.
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: The platform's own account is that a model's predictions of a biological system's
+      responses, neural activity or behaviour, are scored against measurements of it. Neural
+      Predictivity fits the map on training images and scores the predicted responses to held-out
+      images.
+    source: src-brain-score-faq
+    quote: The score reflects how closely model predictions align with biological data, e.g. neural
+      activity or behavior
+capability_considered_and_rejected:
+  - term: perception
+    reason: The input is images, but the score is agreement with primate responses, not what was
+      recovered from the image; a model that classifies every image correctly does not score
+      perfectly on behaviour.
+    source: src-biorxiv-407007-v2
+    quote: One consequence of this is that ANNs that achieve 100% accuracy will not achieve a
+      perfect behavioral similarity score.
+  - term: distribution-shift-generalization
+    reason: Shifted-input benchmarks (ImageNet-C, ObjectNet, the Geirhos distortions scored by
+      top-1) sit in the engineering group, outside the ranking average.
+
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: Neural Predictivity is a Pearson correlation between predicted and measured responses on
+    held-out images, a median over recording sites, and I2n is a Pearson correlation between model
+    and human response patterns; both are divided by a noise ceiling.
+  source: src-biorxiv-407007-v2
+  quote: we compare predicted responses y with the measured neuroid responses y by computing the
+    Pearson correlation
+evaluation_method_considered_and_rejected:
+  - term: model-derived-metric
+    reason: The PLS map from activations to recordings is fitted afresh for each submitted model, so
+      no fixed scoring model exists; the term's exclusion sends this to the final statistic.
+  - term: composite
+    reason: average_vision averages benchmarks of the same kind of method (agreement with
+      measurements, ceiling-normalised), which the term's exclusion covers. See review_checks.
+designed_for_subjects:
+  - task-specific-supervised-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The entrants are vision networks trained for another task, ImageNet classification or
+    image-text pretraining, and scored as they stand; the 2018 paper ranks ImageNet-trained CNNs and
+    the board's top rows are ImageNet-fine-tuned CLIP models. The platform admits hand-crafted
+    predictors as well, and a pixels model with no learned parameters is ranked among them.
+  source: src-brain-score-faq
+  quote: Note that Brain-Score is agnostic to the exact model family, e.g. this could be an
+    artificial neural network or a hand-crafted predictor.
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: The models stand in for experiments in the platform's aims, but most entrants are
+      general image models scored against recordings they were not trained to emulate, which the
+      term's exclusion sends to task-specific-supervised-model.
+  - term: domain-specialist-model
+    reason: The entrants are general vision models, not models built or adapted for a scientific
+      discipline's own task.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Benchmarks are still being added, the latest on 2026-10-05, and the leaderboard's newest
+    model submissions are from 2026-10-09 (read from the page's data). The vision repository was
+    last pushed on 2026-10-13 (GitHub API).
+  source: src-brain-score-site
+  quote: Oct 5, 2026 Behavior under image perturbations (Kato2026) benchmarks added
+activity: leaderboard-live-no-round
+activity_basis:
+  reason: Models are taken at any time through the site, and Brain-Score has run competition rounds
+    (models in 2022, benchmarks in 2024), none of them open now, which the term's precedence rule
+    gives to this term over accepting-submissions.
+  source: src-brain-score-faq
+  quote: we had a model competition in 2022, as well as a benchmarking competition in 2024
+events:
+  - name: Brain-Score Competition 2022 (models)
+    kind: competition
+    source: src-brain-score-release-2-0
+    quote: In 2022, we organized the first Brain-Score competition for model submissions
+  - name: Brain-Score Competition 2024 (benchmarks)
+    kind: competition
+    source: src-brain-score-competition-2024
+    quote: This second edition of the Brain-Score Competition aims to find benchmarks on which the
+      predictions of our current top models break down.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: vit_large_patch14_clip_224:openai_ft_in1k
+    source: src-brain-score-leaderboard
+    observed_on: 2026-10-14
+    quote: '"rank": 1, "model": {"id": 2342, "name": "vit_large_patch14_clip_224:openai_ft_in1k"'
+    note: First on the vision leaderboard read on 2026-10-14, with an average_vision of 0.48.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: Neural recordings and behavioural responses from primate experiments, each
+  benchmark's data from its own study.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The public benchmarks run locally with the released package, but the full set, and so the
+    ranking average, is scored only on the maintainers' servers.
+  source: src-github-brain-score-vision-readme
+  quote: Note that you can only access a limited set of public benchmarks when running locally.
+
+task:
+  exists: true
+  input:
+    - stimulus images from each benchmark's experiment, presented to the model through the
+      BrainModel interface with the brain region to record from or the behavioural task to perform
+  output: Activations for the requested region (neural benchmarks), or behavioural responses such as
+    choices or class probabilities (behavioural benchmarks).
+  scoring: Each benchmark's metric, for example PLS-regression predictivity scored by Pearson r on
+    held-out images with the median over recording sites, divided by the data's noise ceiling. The
+    leaderboard averages benchmarks up a tree to neural_vision and behavior_vision, and
+    average_vision is their mean; a benchmark a model cannot run on counts as 0.
+  source: src-brain-score-faq
+  quote: A benchmark is composed of data, a metric, and an experimental protocol to test models.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: Public benchmarks (MajajHong2015public among them) download with the package and run
+    locally; the rest are held by the maintainers, who offer to keep contributed data private on
+    their S3. The ranking average needs both, which the term's mixed-headline rule gives to
+    private-test-server. The held benchmarks are reached by code, not predictions; the maintainers
+    run each merged plugin on them (sandboxed-rerun), a server-side route that the
+    private-server-submission rule's list does not name.
+  access_basis:
+    reason: The headline average includes benchmarks scored only on the maintainers' side.
+    source: src-github-brain-score-vision-readme
+    quote: Note that you can only access a limited set of public benchmarks when running locally.
+  refresh: rolling-live
+  refresh_basis:
+    reason: Benchmarks enter the average as they are added, without a version label for the set, so
+      a model's average and rank move although the model is unchanged. Individual benchmarks carry
+      their own version suffixes (for example _v1, _v3), and the board now keeps dated views.
+    source: src-brain-score-blog-leaderboard-remembers
+    quote: 'Sometimes the track changed: new benchmarks were added, the competitive field grew, or scoring
+      was updated.'
+  data_provenance:
+    - experimental-measurement
+    - synthetic-procedural
+  data_provenance_note: The ground truth is neural recordings and psychophysics, the outcomes of
+    designed experiments. The 2018 neural and behavioural benchmarks' images were rendered by
+    pasting 3D object models on natural backgrounds at random positions, poses and sizes; later
+    benchmarks add other stimulus sets.
+  data_provenance_source: src-biorxiv-407007-v2
+  data_provenance_quote: Two macaque monkeys were implanted three arrays each, with one array placed
+    in area V4 and the other two placed on the posterior-anterior axis of IT cortex.
+  contamination_risk: unknown
+  contamination_risk_note: Not assessed in the sources read. The public benchmarks' stimuli and
+    recordings are downloadable, so a model could be fitted to them; the private benchmarks are held
+    server-side, which works against that. The 2024 competition page lists, among common critiques
+    of the platform, that testing on the same data over and over can help modelers game it.
+  contamination_evidence: []
+  ceiling_anchor_type: noise-ceiling
+  ceiling_anchor_type_basis:
+    reason: Every score is divided by the ceiling of its data, estimated from the reliability of the
+      recordings or responses (split-half consistency), so 1 is the most the data's noise allows.
+    source: src-brain-score-faq
+    quote: 1 means the model matches the measurements at ceiling level such that no more data can be
+      explained due to noise in the signal
+  dataset_licence_note: No licence for the benchmark data is stated in the sources read; the
+    README's MIT licence covers the code. Each benchmark's data come from its own study, and some
+    are private.
+  size:
+    - count: 2560
+      unit: images, with responses from 88 V4 and 168 IT sites
+      subset: the 2018 neural benchmarks (Majaj et al. 2015)
+      source: src-biorxiv-407007-v2
+      quote: neural responses to 2,560 naturalistic stimuli in 88 V4 neurons and 168 IT neurons
+    - count: 240
+      unit: images in a 240 x 24 response matrix (images by objects)
+      subset: the 2018 behavioural benchmark (I2n, human)
+      source: src-biorxiv-407007-v2
+      quote: For this benchmark, we used 240 (10 per object) of these images
+  size_note: The vision leaderboard read on 2026-10-14 ranks 546 models on 138 benchmarks in the
+    average (77 neural, 61 behavioural), with 25 engineering benchmarks beside it, as counted from
+    the page's data; no source states the totals in words.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Brain-Score team, MIT (the DiCarlo lab, Department of Brain and Cognitive
+    Sciences)
+  maintainer_basis:
+    reason: brain-score.org is run under MIT's terms of use, and the technical paper's authors are
+      at MIT's Department of Brain and Cognitive Sciences; the code sits in the brain-score GitHub
+      organisation.
+    source: src-brain-score-terms
+    quote: which MIT may revise at any time
+  maintainer_type: academic-lab
+  maintainer_type_note: Contributors from many labs send plugins by pull request, and the 2024
+    competition's organisers were at EPFL and York University, but MIT is the stated holder of the
+    site; academic-lab's exclusion keeps a lab-held benchmark that takes outside contributions under
+    the holder's type. See review_checks.
+  submission_process:
+    - sandboxed-rerun
+    - open-source-gated
+    - maintainer-run
+  submission_process_note: A model arrives as a plugin, uploaded as a zip (converted to a pull
+    request) or opened as a pull request. Once the pull request passes the Jenkins tests it is
+    merged into the public repository and the maintainers score it on their servers, on all
+    benchmarks, private ones included; the score is published unless the submitter asked for it to
+    be private. Private code submissions are not supported. The Brain-Score Team also enters models
+    of its own choosing, and the 2018 paper's ranking was the authors' own runs.
+  submission_process_source: src-brain-score-faq
+  submission_process_quote: If this pull request passes all of the Jenkins tests, the PR will be
+    merged and the scoring of your plugin will begin.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-biorxiv-407007-v2
+      quote: We also tested CORnet-S, a new model that was developed with the goal of rivaling the
+        best models on Brain-Score
+    - flag: single-evaluator-private-test-set
+      source: src-github-brain-score-vision-readme
+      quote: Note that you can only access a limited set of public benchmarks when running locally.
+  independence_flags_note: CORnet-S, built by the same group to rival the best models on
+    Brain-Score, placed second in the 2018 ranking and is on today's board (rank 315 on 2026-10-14);
+    the 2018 paper also ranked an in-house family, the BaseNets. Only the maintainers can score the
+    private benchmarks. The funder of the 2024 competition's $10,000 prize pool is not named in the
+    sources read, and the sponsors page renders by script, so prize and funding flags were not
+    assessed.
+  independence_assessed: true
+  known_limitation:
+    source: src-brain-score-blog-leaderboard-remembers
+    quote: An unscored benchmark counts as zero, so the model's average drops even though nothing
+      about the model itself changed.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_basis:
+    reason: The official score on all benchmarks is computed on the maintainers' servers after a
+      plugin is merged, at no cost to the submitter. Public benchmarks can also be run locally, but
+      that path cannot produce the ranking average.
+    source: src-brain-score-faq
+    quote: The submission and scoring process can vary depending on server availability
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The ranking average includes private benchmarks that only the maintainers can score; a
+      score on a public benchmark alone can be reproduced with the package.
+    source: src-github-brain-score-vision-readme
+    quote: Note that you can only access a limited set of public benchmarks when running locally.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: brainscore_vision (pip install brainscore-vision; load_benchmark and the score command)
+  harness_source: src-github-brain-score-vision-readme
+  harness_quote: 'Test if the installation is successful by scoring a model on a public benchmark:'
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for brain-score/vision also reports MIT (read
+    2026-10-14).
+  code_licence_source: src-github-brain-score-vision-readme
+  code_licence_quote: MIT license
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the date of the leaderboard view (the benchmark set behind the average changes as
+  # benchmarks are added, and an unscored benchmark counts as 0), and the package and benchmark versions a local
+  # score was computed with. subset_used, the floor, carries public-only versus all benchmarks.
+  material_extra:
+    - date_evaluated
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The ranking figure is the platform's own average over all benchmarks, computed up the
+    benchmark tree to the neural and behavioural averages and their mean.
+  source: src-brain-score-site
+  quote: Models are ranked according to their average score across all the benchmarks because we
+    believe the best model of a domain should explain all neural and behavioral data.
+
+homepage: https://www.brain-score.org/
+repository: https://github.com/brain-score/vision
+leaderboard_url: https://www.brain-score.org/vision/leaderboard
+
+versions:
+  - version: '2018'
+    label: Brain-Score as first released
+    version_kind: revision
+    released: 2018-09-05
+    changes: Three benchmarks, V4 and IT neural predictivity on the Majaj et al. (2015) recordings
+      and I2n on human behaviour; the Brain-Score was their unweighted mean.
+    frozen: true
+    sources:
+      - src-biorxiv-407007-v2
+      - src-biorxiv-407007
+  - version: '2.0'
+    label: Brain-Score 2.0
+    version_kind: revision
+    changes: A plugin system for data, metrics, benchmarks and models, which deprecated the earlier
+      candidate_models usage; Brain-Score Language was added beside Vision. Benchmarks have kept
+      being added since, without a new version label.
+    breaking: true
+    frozen: false
+    sources:
+      - src-brain-score-release-2-0
+      - src-github-brain-score-vision-readme
+      - src-brain-score-site
+
+subsets:
+  - id: brain-score#neural
+    label: Neural benchmarks (V1, V2, V4 and IT)
+    scored_separately: true
+    evidence:
+      - source: src-brain-score-leaderboard
+        quote: '"parentField": "average_vision", "benchmarkId": "neural_vision_v0"'
+    notes: neural_vision, one of the two halves of average_vision; 77 benchmarks on the board read
+      2026-10-14.
+  - id: brain-score#behavioral
+    label: Behavioural benchmarks
+    scored_separately: true
+    evidence:
+      - source: src-brain-score-leaderboard
+        quote: '"parentField": "average_vision", "benchmarkId": "behavior_vision_v0"'
+    notes: behavior_vision, the other half of average_vision; 61 benchmarks on the board read
+      2026-10-14.
+  - id: brain-score#engineering
+    label: Engineering benchmarks (ImageNet, ImageNet-C, ObjectNet, Geirhos 2021, Hermann 2020)
+    scored_separately: true
+    evidence:
+      - source: src-brain-score-leaderboard
+        quote: '"parentField": null, "benchmarkId": "engineering_vision_v0"'
+    notes: Shown beside the ranking and not part of average_vision; 25 benchmarks scored against
+      ground-truth labels rather than biological data.
+
+tags:
+  - neuroai
+  - brain-alignment
+  - neural-predictivity
+  - primate-vision
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T04)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-biorxiv-407007-v2
+    - src-biorxiv-407007
+    - src-github-brain-score-vision-readme
+    - src-brain-score-site
+    - src-brain-score-faq
+    - src-brain-score-leaderboard
+    - src-brain-score-release-2-0
+    - src-brain-score-blog-leaderboard-remembers
+    - src-brain-score-competition-2024
+    - src-brain-score-terms
+  sources_note: >
+    The technical paper's v2 PDF (a DOI, not archived) read as text, and bioRxiv's API record of it for
+    the first version's date; the vision README at master; five brain-score.org pages with scripts and
+    styles stripped; the vision leaderboard's content endpoint, read raw because its rows are JSON
+    inside a script element; and the terms-of-use PDF read as text. The Neuron perspective is
+    subscription-only and was not read; the vision leaderboard page itself renders by script.
+  confidence: medium
+  review_checks:
+    - check: The entry is Brain-Score Vision. Brain-Score Language shares the site, team and plugin
+        submission, but has its own repository (brain-score/language, in alpha), model interface
+        (ArtificialSubject), entrants (pretrained language models, about 36 on its board) and
+        average, never combined with the vision average, so it is left for its own entry. It could
+        instead be a subset here.
+      field: description
+      source: src-brain-score-release-2-0
+      quote: which extends the Brain-Score platform from modeling the visual ventral stream to the
+        human language system
+    - check: scientific-prediction departs from the Stage-3 classification
+        (taxonomy/_corpus/classifications/brain-score.yaml), which rejected it because the claim is
+        brain-likeness, and ADR-0020 deferred a biological-fidelity term. It is tagged here because
+        the 2018 paper and the FAQ call the scored outputs predictions of neural responses.
+      field: capability
+      source: src-biorxiv-407007-v2
+      quote: Neural Predictivity is used to evaluate how well responses X to given images in a
+        source system (e.g., a deep ANN) predict the responses in a target system
+    - check: open-source-gated rests on the FAQ's statement that all submitted code is merged into
+        the public repository and private code submissions are not yet supported. Weights may be
+        hosted elsewhere, scores can be kept private, and the FAQ says private code is under
+        development, so the gate may lapse.
+      field: governance.submission_process
+      source: src-brain-score-faq
+      quote: at the moment, all submitted code is merged into our public GitHub repository
+    - check: maintainer-run rests on rows the Brain-Score Team entered itself, such as
+        regnet_y_400mf, and on the 2018 paper's own ranking. 228 rows are from Anonymous User, and
+        whether they are the maintainers' bulk runs is not stated.
+      field: governance.submission_process
+      source: src-brain-score-leaderboard
+      quote: '"name": "regnet_y_400mf", "submitter": "Brain-Score Team"}'
+    - check: maintainer_type academic-lab rests on MIT's terms of use for the site and the paper's
+        MIT affiliations. The 2024 competition was organised from EPFL and York University, and the
+        GitHub organisation takes plugins from many labs, so community-collective may fit better.
+      field: governance.maintainer_type
+      source: src-brain-score-competition-2024
+      quote: Organizers Martin Schrimpf EPFL Kohitij Kar York University
+    - check: composite was rejected because every benchmark scores agreement with measurements,
+        ceiling-normalised. Today's behavioural benchmarks use error consistency, accuracy deltas
+        and confusion similarity, whose definitions were not read; if any is a classification
+        metric, average_vision combines methods and is composite.
+      field: evaluation_method
+    - check: Brain-Score 2.0's release date is left empty. Its release page is dated 2024-04-04,
+        while the home page lists "Dec 1, 2024 Brain-Score 2.0 released".
+      field: versions
+      source: src-brain-score-release-2-0
+      quote: First published on 04-Apr-2024
+    - check: The 2024 competition had a $10,000 prize pool whose funder the sources read do not name
+        (the sponsors page renders by script), so prize-sponsored-by-industry and
+        funded-by-evaluated-party were not assessed.
+      field: governance.independence_flags
+      source: src-brain-score-competition-2024
+      quote: a $10,000 prize pool to the winning benchmarks
+    - check: synthetic-procedural rests on the 2018 benchmarks' rendered stimuli (Majaj et al. 2015
+        and the I2n set), still on the board; most later benchmarks use photographs.
+      field: data.data_provenance
+      source: src-biorxiv-407007-v2
+      quote: The image set was generated by pasting a 3D object model on a naturalist background.
+  personal_data_excluded:
+    - source: src-biorxiv-407007-v2
+      what: The correspondence line after the abstract, with three authors' e-mail addresses; the
+        windows stop short of it.
