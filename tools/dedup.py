@@ -147,7 +147,14 @@ def jaccard(a: set, b: set) -> float:
 
 
 def name_jaccard(a: Record, b: Record) -> float:
-    return max(jaccard(tokens(x), tokens(y)) for x in a.names for y in b.names)
+    """The best Jaccard over name pairs, edition and version tokens left out: those are same_stem's question, and
+    counting them made τ²-bench and GEO-Bench-2 half alike on {'bench', '2'} (P1-S7-T01)."""
+    return max(jaccard(core(x), core(y)) for x in a.names for y in b.names)
+
+
+def core(s: str) -> set[str]:
+    """A name's tokens without its edition or version tokens."""
+    return {t for t in tokens(s) if not VERSION.match(t)}
 
 
 def same_stem(a: Record, b: Record) -> bool:
