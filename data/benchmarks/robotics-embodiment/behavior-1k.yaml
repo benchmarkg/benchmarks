@@ -1,0 +1,509 @@
+# data/benchmarks/robotics-embodiment/behavior-1k.yaml
+#
+# P1-S5-T01, robotics-embodiment entry 5 of 9. Filled from the BEHAVIOR-1K paper, arXiv 2403.09227 read as its v1
+# PDF (2024-03-14), and its abstract page; the CoRL 2022 paper's PMLR page (volume 205); the 2026 BEHAVIOR
+# Challenge's home, Evaluation and Rules, and Submission Guidelines pages; the 2025 challenge's archived home page
+# and leaderboard; the README of the 2026 challenge leaderboard Space on Hugging Face (pinned at its commit); the
+# documentation's installation page; and the abstract page of the 2025 challenge's winning solution (arXiv
+# 2512.06951). Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+
+id: behavior-1k
+name: BEHAVIOR-1K
+aliases:
+  - BEHAVIOR
+  - BEHAVIOR Challenge
+aliases_note: >
+  The challenge pages say "BEHAVIOR" for the benchmark and "BEHAVIOR Challenge" for its yearly competition.
+  BEHAVIOR-100, the predecessor with 100 activities, is a separate benchmark. taxonomy/ cites the 2026
+  edition as `2026-behavior-challenge`, an id with no entry of its own; that edition is a version here.
+tagline: 1,000 household activities simulated in OmniGibson, with a yearly challenge on full-length
+  mobile-manipulation tasks.
+description: >
+  A simulation benchmark of 1,000 everyday activities chosen by a survey of what people want robots to
+  do for them. Each activity is defined in BDDL, a predicate logic of initial and goal conditions over
+  objects and their states, written by lay annotators, and is instantiated in 50 interactive scenes
+  (houses, gardens, restaurants, offices) with more than 9,000 annotated objects. Activities run in
+  OmniGibson, a simulator built on NVIDIA Omniverse that models rigid and deformable bodies, fluids and
+  object states such as temperature, cooked and sliced. Since 2025 it has run as the BEHAVIOR
+  Challenge, once a year: 50 tasks in 2025 (NeurIPS 2025, with a standard and a privileged-information
+  track) and 100 tasks in seven scenes in 2026 (CoRL 2026, one RGB-D track, the robot left to the
+  entrant). An episode is one full activity of several minutes, scored by the fraction of its BDDL goal
+  predicates satisfied at the end (Q) and averaged over tasks; simulated time, base distance and hand
+  displacement, normalised by human demonstrations, break ties. Entrants train on human teleoperation
+  demonstrations (200 per task), report results on public instances, and the organisers run the top
+  submissions on hidden instances for the final ranking.
+self_description:
+  source: src-arxiv-2403-09227-v1
+  quote: We present BEHAVIOR-1K, a comprehensive simulation benchmark for human-centered robotics
+external_ids:
+  arxiv: '2403.09227'
+paper:
+  title: 'BEHAVIOR-1K: A Human-Centered, Embodied AI Benchmark with 1,000 Everyday Activities and Realistic
+    Simulation'
+  arxiv: '2403.09227'
+  version_read: v1
+  source: src-arxiv-2403-09227-v1
+released: 2022-12-14
+released_note: The CoRL 2022 paper, taken at the conference's first day. PMLR's record of it gives
+  the conference dates ("month = {14--18 Dec}") and dates the proceedings volume 2023 (its citation
+  metadata, 2023-03-06); the arXiv version, the one the challenge cites, followed on 2024-03-14. No
+  source read here shows whether a version was public before the conference.
+released_source: src-arxiv-2403-09227
+released_quote: A preliminary version was published at 6th Conference on Robot Learning (CoRL 2022)
+release_venue: CoRL 2022 (PMLR 205, 80-93); the extended paper on arXiv (2403.09227, 2024)
+release_venue_source: src-pmlr-v205-li23a
+release_venue_quote: Proceedings of The 6th Conference on Robot Learning, PMLR 205:80-93, 2023.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/mobile-manipulation
+  secondary: []
+domain_basis:
+  reason: A robot must move through house-scale scenes, across rooms, and manipulate many objects in
+    them within one task; the paper's own keyword is mobile manipulation.
+  source: src-behavior-challenge-site
+  quote: BEHAVIOR tests whether embodied agents can combine high-level reasoning, long-horizon
+    navigation, and dexterous bimanual manipulation in house-scale scenes
+domain_considered_and_rejected:
+  - term: robotics-embodiment/bimanual-manipulation
+    reason: The home page names dexterous bimanual manipulation, but entrants may bring their own
+      robot, and the claim is household activities in house-scale scenes. taxonomy/domains.yaml
+      gives this benchmark as the leaf's near miss.
+    source: src-behavior-challenge-evaluation
+    quote: Participants may use the default R1Pro robot or provide their own OmniGibson-supported
+      robot through a custom robot configuration file
+  - term: robotics-embodiment/embodied-instruction-following
+    reason: Tasks are specified by BDDL goal conditions in predicate logic, which the scorer checks,
+      not by natural-language instructions. The 2026 demonstrations carry language annotations, but
+      they are training material, not the task specification.
+  - term: robotics-embodiment/sim2real-transfer
+    reason: The paper runs one initial study of a simulated policy on a real robot to characterise
+      the gap; nothing the benchmark scores is run on hardware.
+
+capability:
+  - sensorimotor-control
+  - long-horizon-execution
+capability_basis:
+  sensorimotor-control:
+    reason: A policy server receives the robot's observations and returns an action at every step,
+      the simulator responds, and the score is the physical state the episode ends in.
+    source: src-behavior-challenge-evaluation
+    quote: the policy server is responsible for receiving observations and returning robot actions
+  long-horizon-execution:
+    reason: One episode is a whole activity -- search across rooms, many objects, state changes --
+      over minutes of closed-loop control, and the simplest activities in the paper already need 6
+      to 16 primitive steps. Some state changes cannot be undone (the paper marks slicing
+      irreversible), so a wrong action can make full success unattainable; partial credit for
+      satisfied predicates does not disqualify the term (ADR-0020). The paper also finds memory of
+      the agent's own earlier progress decisive ("it needs additional information to know what
+      location has been cleaned already").
+    source: src-behavior-challenge-site
+    quote: satisfy symbolic BDDL goal conditions after several minutes of autonomous execution
+capability_considered_and_rejected:
+  - term: planning
+    reason: The challenge names high-level reasoning, but the score is whether the physical end
+      state meets the goal predicates; no plan is scored for validity or cost, and the efficiency
+      metrics only break ties. The sequencing is part of what long-horizon-execution records.
+  - term: memory-retention
+    reason: The memory the paper finds decisive is of state the agent produced earlier in the same
+      episode, which the taxonomy assigns to long-horizon-execution; nothing is carried across
+      episodes.
+  - term: distribution-shift-generalization
+    reason: Test instances differ from training ones in initial object states and robot poses,
+      sampled for the same tasks and scenes, which the term's exclusion treats as an ordinary split;
+      no score is reported for a deliberately shifted condition.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Each rollout runs in OmniGibson and is scored on a bounded scale, the fraction of the
+    task's goal predicates satisfied at episode end, averaged over tasks.
+  source: src-behavior-challenge-evaluation
+  quote: Partial successes = (Number of goal BDDL predicates satisfied at episode end) / (Total
+    number of goal predicates)
+evaluation_method_considered_and_rejected:
+  - term: environment-state-check
+    reason: Goal predicates are checked on the episode's end state, but the environment is a physics
+      simulator driven by a control policy, which taxonomy/evaluation-methods.yaml assigns to
+      simulation-rollout and names this benchmark as the near miss.
+designed_for_subjects:
+  - rl-policy
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The challenge is built for closed-loop controllers of any method. Learned policies --
+    imitation, reinforcement learning, robot foundation models such as the pi0.5 and GR00T N1.7
+    baselines -- are rl-policy; task and motion planning, named beside them and allowed by the
+    rules, can enter with no learned component, which classical-algorithm covers (ADR-0020 settled
+    this benchmark's subjects as both).
+  source: src-behavior-challenge-site
+  quote: The 2026 challenge is intended as a shared benchmark for testing robot foundation models,
+    imitation learning, reinforcement learning, task and motion planning, memory systems, SLAM, and
+    LLM-assisted policies
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: LLM-assisted policies are allowed, but the language model is a component of one policy
+      served behind the same websocket interface and held to the same observation rules; the entrant
+      is the controller.
+  - term: physical-robot-system
+    reason: Every scored rollout runs in simulation.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The 2025 challenge drew 18 teams and published a leaderboard whose held-out rows the
+    organisers verified, the 2026 challenge is running, and the repository was last pushed on
+    2026-10-13 (GitHub API).
+  source: src-behavior-challenge-2025
+  quote: we have received submissions from 18 teams across academia, industry, and individuals
+activity: accepting-submissions
+activity_basis:
+  reason: The 2026 round is open, with no registration required, until 16 October 2026; winners are
+    to be announced on 4 November 2026. After the deadline the value becomes results-pending.
+  source: src-behavior-challenge-site
+  quote: 'Submission Deadline: 10/16/2026'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Robot Learning Collective's policy built on pi0.5 (1st in the 2025 challenge)
+    source: src-arxiv-2512-06951
+    observed_on: 2026-10-14
+    quote: We present a vision-action policy that won 1st place in the 2025 BEHAVIOR Challenge
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each task's BDDL goal predicates, checked on the simulator's state at the
+  end of the episode.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The final ranking is produced only by the organisers, on instances they hold back. Results
+    on the public instances can be produced by anyone with the released simulator, tasks and
+    evaluator, within the simulator's run-to-run nondeterminism.
+  source: src-behavior-challenge-evaluation
+  quote: We will hold out 10 more instances for final evaluation
+
+task:
+  exists: true
+  input:
+    - RGB, depth and proprioception from the robot's head and wrist cameras in a house-scale scene
+      (official resolution 720 x 720 head, 480 x 480 wrist); the task's BDDL definition may be used
+  output: Robot actions returned step by step through a websocket policy server, until the episode's
+    timeout (1.5 times the mean human demonstration length in 2026).
+  scoring: Per episode, the fraction of the task's BDDL goal predicates satisfied at the end (Q),
+    averaged over the challenge's tasks; simulated time, base distance and hand displacement,
+    normalised by human averages over 200 demonstrations per task, break ties.
+  source: src-behavior-challenge-evaluation
+  quote: Partial successes = (Number of goal BDDL predicates satisfied at episode end) / (Total
+    number of goal predicates)
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: >
+    The tasks, scenes, training instances, the 200 human demonstrations per task, the public test
+    instances 0-19 and the evaluator are public, but the final ranking is computed on instances 20-39,
+    which the organisers keep and run. The leaderboard before the deadline reports instances 0-9. The
+    scene and object assets install only after accepting the BEHAVIOR Dataset License
+    (execution.harness_gotcha).
+  access_basis:
+    reason: The instances behind the final ranking never leave the organisers, who run the submitted
+      policies on them; the headline takes its most restrictive set.
+    source: src-behavior-challenge-evaluation
+    quote: Indices 0-19 are public test instances; indices 20-39 are hidden instances reserved for
+      final evaluation
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: The rankings come from yearly challenge editions, each with its own task set and hidden
+      instances; 2025 used 50 tasks, and 2026 uses 100 in seven scenes, four of them new.
+    source: src-behavior-challenge-site
+    quote: Join us for the second year of the BEHAVIOR Challenge
+  data_provenance:
+    - crowd-authored
+    - simulation-generated
+  data_provenance_note: The activity definitions were written in BDDL by lay annotators, over object
+    lists derived from WikiHow articles and object properties annotated by crowdworkers, students
+    and GPT-3; task instances are sampled and every episode is run and scored in OmniGibson. The
+    training demonstrations are human teleoperation, provided to the challenge by Simovation.
+  data_provenance_source: src-arxiv-2403-09227-v1
+  data_provenance_quote: BDDL is based on predicate logic and designed to be accessible for
+    laypeople to describe concrete initial and goal conditions for a given activity
+  contamination_risk: medium
+  contamination_risk_note: >
+    The final ranking's instances (20-39) are never exposed, which by itself would be low. But the
+    published leaderboard rows are self-evaluations on public instances 0-9, whose initial
+    configurations entrants hold, and the 2026 rules read here do not forbid collecting data on them.
+    Training on the tasks' demonstrations is the protocol, not contamination.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: Q is bounded at 1, every goal predicate satisfied. The human averages normalise only the
+      secondary efficiency metrics.
+    source: src-behavior-challenge-evaluation
+    quote: Secondary metrics will be normalized using human averages from 200 demonstrations per
+      task
+  dataset_licence: null
+  dataset_licence_note: The scene and object assets are distributed under a "BEHAVIOR Dataset
+    License" the installer asks the user to accept (src-behavior-1k-install), whose terms were not
+    read. The 2025 and 2026 challenge demonstration datasets on Hugging Face carry an MIT tag in
+    their metadata (read 2026-10-14), not a quoted Source.
+  size:
+    - count: 1000
+      unit: activities
+      source: src-arxiv-2403-09227
+      quote: The first is the definition of 1,000 everyday activities, grounded in 50 scenes
+    - count: 100
+      unit: tasks
+      subset: 2026 BEHAVIOR Challenge
+      source: src-behavior-challenge-site
+      quote: Tasks 100 full-length household tasks
+    - count: 50
+      unit: tasks
+      subset: 2025 BEHAVIOR Challenge
+      source: src-behavior-challenge-2025
+      quote: 50 full-length household tasks from our 1,000 activity collection
+    - count: 1000
+      unit: rollouts in a full submission (100 tasks, 10 public instances each, one rollout per
+        instance)
+      subset: 2026 BEHAVIOR Challenge
+      source: src-behavior-challenge-submission
+      quote: 'Full evaluation size: 100 tasks x 10 instances x 1 rollout = 1,000 rollout outputs.'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Stanford Vision and Learning Lab (SVL), Stanford University
+  maintainer_basis:
+    reason: The site, the documentation and the challenge pages are the lab's, and the code sits in
+      its StanfordVL/BEHAVIOR-1K repository. The challenge is hosted at NeurIPS 2025 and CoRL 2026
+      but organised by the lab, so conference-workshop does not apply.
+    source: src-behavior-challenge-site
+    quote: 2026 Stanford Vision and Learning Lab
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-verified
+    - containerized-algorithm-submission
+  submission_process_note: >
+    Entrants evaluate their policy once on public instances 0-9 and submit the metrics files, rollout
+    videos, observation wrapper and robot configuration; the organisers sanity-check the results and
+    inspect the wrapper before the leaderboard shows them. After the deadline they run the top
+    submissions on the hidden instances, from a Docker image that serves the policy or, alternatively,
+    by querying a policy server the entrant hosts (an IP address with at least 50 ports), a route no
+    term names. No paper or code release is required; open source is encouraged, with a prize of its
+    own.
+  submission_process_source: src-behavior-challenge-evaluation
+  submission_process_quote: We will update the leaderboard once we sanity-check the performance
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-behavior-challenge-2025
+      quote: 'New sponsor: NVIDIA! 💰 Prize pool updated: 1st: $1,000 + GeForce 5080'
+  independence_flags_note: >
+    NVIDIA joined the 2025 challenge as a sponsor, and its prizes were partly NVIDIA hardware and Brev
+    credits; NVIDIA Research's team Comet placed second in the standard track. NVIDIA's GR00T N1.7 is
+    a
+    2026 baseline, and OmniGibson runs on NVIDIA's Omniverse and Isaac Sim. Who funds 2026's $11,000
+    pool is not stated: the 2026 page thanks its sponsors with logos only (their image text names
+    Simovation, IMDA, Stanford HAI and the Schmidt Family Foundation), and Simovation, which collected
+    the demonstrations, is the only one named in text. No team from the maintaining lab is on the 2025
+    board, so maintainer-competes-on-own-benchmark is not adopted. single-evaluator-private-test-set is
+    not adopted either: the organisers alone run the hidden instances, but entrants run every public
+    evaluation themselves.
+  independence_assessed: true
+  participation:
+    source: src-behavior-challenge-2025
+    quote: we have received submissions from 18 teams across academia, industry, and individuals
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: OmniGibson on NVIDIA Isaac Sim, at a pinned BEHAVIOR-1K release (the v3.9.3
+    series in 2026). A submitted model should run on a single 24 GB GPU; the organisers measured
+    13.5 to 24.6 frames per second with random actions on an RTX 4090, and 150 to 300 seconds to
+    load a scene.
+  compute_tier_source: src-behavior-challenge-evaluation
+  compute_tier_quote: Run challenge evaluation from the v3.9.3 tag of BEHAVIOR-1K, not the older
+    v3.9.0 tag
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The final ranking comes only from the organisers' runs on hidden instances. Leaderboard
+      numbers on public instances are automatable with the simulator, but the most restrictive part
+      of the headline decides.
+    source: src-behavior-challenge-evaluation
+    quote: We will hold out 10 more instances for final evaluation
+  reproducibility_blockers:
+    - private-test-set
+    - specific-simulator-build
+  reproducibility_blockers_note: Rollouts are not repeatable even within one build, which the rules
+    state ("Because the simulator can be nondeterministic, different rollouts of the same policy may
+    produce different results for a given instance"); the taxonomy records that as
+    specific-simulator-build with this note.
+  harness_availability: official-harness
+  harness: OmniGibson's evaluator (python -m omnigibson.eval.eval) with a websocket policy server,
+    in the BEHAVIOR-1K repository
+  harness_source: src-behavior-challenge-evaluation
+  harness_quote: We provide OmniGibson/omnigibson/eval/eval.py as the command-line entry point for
+    running websocket-based evaluations
+  harness_gotcha:
+    source: src-behavior-1k-install
+    quote: auto-accepts Conda TOS, NVIDIA Isaac Sim EULA, and BEHAVIOR Dataset License
+  harness_gotcha_note: Installing the simulator and the scene and object assets needs acceptance of
+    NVIDIA's Isaac Sim EULA and the BEHAVIOR Dataset License, which the setup script prompts for.
+  submission_channel:
+    source: src-hf-behavior-1k-leaderboard-readme
+    quote: This Space hosts the public leaderboard and submission portal for the BEHAVIOR-1K 2026
+      Challenge
+  submission_channel_note: In 2025 results went through a Google Form; in 2026 through the Space's
+    portal. The Space's data/results.jsonl, its verified 2026 results, was empty on 2026-10-14.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for StanfordVL/BEHAVIOR-1K and its LICENSE file ("MIT
+    License", Copyright (c) 2023 Stanford Vision and Learning Group), read 2026-10-14; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulator build, subset, n_samples, ...): what the policy was trained on
+  # (privileged information is allowed in training, extra self-collected data is allowed), and the 2025
+  # edition's track (standard or privileged information). The edition and the instance set (public 0-9 or
+  # hidden 20-39) are subset_used; the evaluator release is simulator_version.
+  material_extra:
+    - training_data_policy
+    - eligibility_track
+
+homepage: https://behavior.stanford.edu/
+repository: https://github.com/StanfordVL/BEHAVIOR-1K
+leaderboard_url: https://huggingface.co/spaces/behavior-1k/2026-challenge-leaderboard
+
+versions:
+  - version: '2025'
+    label: The 1st BEHAVIOR Challenge (NeurIPS 2025)
+    version_kind: edition
+    released: 2025-09-02
+    items: 50
+    changes: 50 tasks; a standard track (RGB, depth, segmentation and proprioception) and a
+      privileged-information track; 10,000 teleoperated demonstrations. 18 teams entered; the top
+      five were run on hidden instances.
+    breaking: true
+    superseded_by: '2026'
+    frozen: true
+    sources:
+      - src-behavior-challenge-2025
+      - src-behavior-challenge-2025-leaderboard
+  - version: '2026'
+    label: The 2026 BEHAVIOR Challenge (CoRL 2026)
+    version_kind: edition
+    released: 2026-07-02
+    items: 100
+    changes: 100 tasks, some carried over from 2025, in seven scenes, four of them new; one track on
+      RGB, depth and proprioception; the robot is the entrant's choice; 20,000 demonstrations;
+      timeout 1.5 times the mean human length. Open until 2026-10-16; the evaluator release moved
+      during the round (from the v3.9.0 tag to v3.9.3).
+    breaking: true
+    supersedes_version: '2025'
+    frozen: false
+    sources:
+      - src-behavior-challenge-site
+      - src-behavior-challenge-evaluation
+      - src-behavior-challenge-submission
+
+history:
+  - date: 2025-09-02
+    event: channel-opened
+    field: governance.submission_process
+    to: maintainer-verified
+    source: src-behavior-challenge-2025
+    quote: 'Challenge Launch: September 2, 2025'
+    note: The first challenge opened a results channel; before it, results appeared only in papers.
+  - date: 2025-11-17
+    event: channel-closed
+    field: governance.submission_process
+    source: src-behavior-challenge-2025
+    quote: Submissions for the 2025 BEHAVIOR Challenge have officially closed!
+  - date: 2026-07-02
+    event: channel-opened
+    field: governance.submission_process
+    to: maintainer-verified
+    source: src-behavior-challenge-site
+    quote: 'Challenge Launch: 07/02/2026'
+    note: The second challenge reopened the channel, now through a portal on a Hugging Face Space
+      rather than a Google Form.
+
+tags:
+  - household
+  - mobile-manipulation
+  - long-horizon
+  - simulation
+  - competition
+  - vision-language-action
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2403-09227-v1
+    - src-arxiv-2403-09227
+    - src-pmlr-v205-li23a
+    - src-behavior-challenge-site
+    - src-behavior-challenge-evaluation
+    - src-behavior-challenge-submission
+    - src-behavior-challenge-2025
+    - src-behavior-challenge-2025-leaderboard
+    - src-hf-behavior-1k-leaderboard-readme
+    - src-behavior-1k-install
+    - src-arxiv-2512-06951
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date, the venue and
+    the licence; the CoRL 2022 paper's PMLR page; the 2026 challenge's home, rules and submission pages
+    and
+    the 2025 challenge's archived home page and leaderboard, all static documentation pages, read with
+    scripts and styles stripped; the leaderboard Space's README at commit d5cd72b (the Space renders by
+    script; its data files were read through the Hugging Face API, and the 2026 results file was empty);
+    the installation page; and the winning 2025 solution's abstract page, as evidence of a learned
+    entrant.
+  confidence: medium
+  review_checks:
+    - check: The entry is BEHAVIOR-1K with the yearly challenges as editions. taxonomy/ cites the
+        2026 edition as `2026-behavior-challenge`, and an edition entry of its own, with refresh,
+        access and activity read per edition, is the alternative.
+      field: versions
+    - check: long-horizon-execution rests on irreversible state changes making full success
+        unattainable after some errors; RoboCasa's entry rejects the term because a failed grasp can
+        be retried, and many BEHAVIOR errors can be retried too.
+      field: capability
+      source: src-arxiv-2403-09227-v1
+      quote: Binary state indicating whether the object has been sliced (irreversible)
+    - check: classical-algorithm follows the challenge naming task and motion planning; no
+        non-learned entrant is evidenced on the 2025 board, and TAMP systems often contain learned
+        parts.
+      field: designed_for_subjects
+      source: src-behavior-challenge-evaluation
+      quote: There are no restrictions on the type of policy used. Methods such as IL, RL, or TAMP
+        are all allowed.
+    - check: contamination_risk is medium because published leaderboard rows come from public
+        instances; the taxonomy's Stage 3 pilot read the hidden-instance ranking alone and chose
+        low.
+      field: data.contamination_risk
+    - check: The IP-address route to final evaluation, where the organisers query a policy server
+        the entrant hosts, fits no submission_process term (taxonomy failure
+        2026-behavior-challenge-006). The 2025 board labels its public rows self-reported although
+        the rules state a sanity check.
+      field: governance.submission_process
+      source: src-behavior-challenge-2025-leaderboard
+      quote: entries are self-reported on the public validation set
+    - check: prize-sponsored-by-industry rests on NVIDIA's 2025 sponsorship; 2026's prize funders
+        are not named in text, and NVIDIA Research also competed in 2025.
+      field: governance.independence_flags
+      source: src-behavior-challenge-site
+      quote: We gratefully acknowledge the support of our sponsors who make this challenge possible
+    - check: released is the first day of CoRL 2022 (14 December 2022), combined from the arXiv
+        comment and PMLR's conference dates; PMLR dates the volume 2023.
+      field: released
+      source: src-pmlr-v205-li23a
+      quote: month = {14--18 Dec}
