@@ -1,0 +1,415 @@
+# data/benchmarks/society-econ-law/financebench.yaml
+#
+# P1-S9-T05, society-econ-law entry 3 of 7. Filled from the FinanceBench paper, arXiv 2311.11944 read as its v1 PDF
+# (2023-11-20, the only version), and its abstract page; the repository README at main and its evaluation notebook
+# (evaluation_playground.ipynb); Hugging Face's API record of PatronusAI/financebench (not gated); Patronus AI's
+# launch announcement; and the v1 PDF of "Decomposing Retrieval Failures in RAG for Long-Document Financial Question
+# Answering" (arXiv 2602.17981, February 2026), a paper that reports results on the open sample. GitHub's API was
+# read for the licence, push date, contents and commit history. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: financebench
+name: FinanceBench
+tagline: 'Open-book QA over public company filings: 10,231 questions, 150 of them public, with answers
+  labelled by hand.'
+description: >
+  A benchmark from Patronus AI of questions about 40 US-listed companies, each to be answered from
+  one of 360 public filings (10-Ks, 10-Qs, 8-Ks and earnings reports, 2015-2023). Every item has a
+  question, a gold answer, an evidence string and the page it comes from. There are three kinds of
+  question: 25 generic domain-relevant questions asked of most companies, novel questions written by
+  finance annotators for each company and report, and metrics questions built from templates over
+  figures the annotators extracted from the financial statements. Two thirds of the labelled questions
+  need numerical reasoning. Of the 10,231 questions, 150 are public (50 of each kind); Patronus AI holds
+  the rest and offers evaluation on them by request. The paper runs 16 configurations of GPT-4,
+  GPT-4-Turbo, Claude 2 and Llama 2 on the 150 public cases: closed book, a vector store per filing, a
+  shared vector store over all filings, the whole filing in a long context window, and an oracle given
+  the evidence pages. A member of the research team labelled each answer correct, incorrect or a
+  failure to answer, allowing unit slips and small rounding errors. GPT-4-Turbo with a shared vector
+  store was correct on 19% of cases and with the filing in context on 79%. There is no leaderboard.
+self_description:
+  source: src-arxiv-2311-11944
+  quote: FinanceBench is a first-of-its-kind test suite for evaluating the performance of LLMs on
+    open book financial question answering (QA)
+external_ids:
+  huggingface: PatronusAI/financebench
+  arxiv: '2311.11944'
+paper:
+  title: 'FinanceBench: A New Benchmark for Financial Question Answering'
+  arxiv: '2311.11944'
+  version_read: v1
+  source: src-arxiv-2311-11944-v1
+released: 2023-11-16
+released_note: The day the open sample appeared on Hugging Face, as its API record dates it, and the
+  day of Patronus AI's launch announcement. The paper followed on arXiv on 2023-11-20.
+released_source: src-hf-api-financebench
+released_quote: '"createdAt":"2023-11-16T13:38:35.000Z"'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: society-econ-law/financial-analysis
+  secondary:
+    - language/retrieval-qa
+domain_basis:
+  reason: The questions are a financial analyst's questions about a company, answered from its
+    filings, the financial-analysis leaf's definition. The paper makes retrieval part of the test,
+    finding the evidence among the filings rather than being handed it, which is the retrieval-qa
+    leaf's case.
+  source: src-arxiv-2311-11944-v1
+  quote: it is critical that LLMs are tested for financial QA with an open-book setup, which
+    involves a clear retrieval component
+domain_considered_and_rejected:
+  - term: language/long-context
+    reason: Putting the whole filing in the prompt is one of the paper's five configurations, which
+      it calls impractical for production use; the benchmark's difficulty is not defined by input
+      length.
+  - term: language/information-extraction
+    reason: 28% of the labelled questions only extract a figure or a passage, but the output is an
+      answer to a question, not structured records.
+
+capability:
+  - context-integration
+  - quantitative-reasoning
+capability_basis:
+  context-integration:
+    reason: The answer to every question is in a filing the benchmark supplies, and each item
+      records the evidence and its page. Closed book is run only as a reference point.
+    source: src-arxiv-2311-11944-v1
+    quote: an evidence string (which contains the information needed to verify that the answer to
+      the question is correct) and a page number from the relevant document
+  quantitative-reasoning:
+    reason: Two thirds of the labelled questions require calculating or comparing figures, such as a
+      metric derived from two statement lines, and the answer is a number.
+    source: src-arxiv-2311-11944-v1
+    quote: 5,897 questions involve numerical reasoning (66%)
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: The protocol supplies the filings, and closed book is a reference configuration only.
+      The paper does note that many domain-relevant questions can be answered from world knowledge.
+    source: src-arxiv-2311-11944-v1
+    quote: many of the domain-relevant could be answered by using general world knowledge
+  - term: deductive-reasoning
+    reason: The paper's logical-reasoning type (6% of labelled questions) includes qualitative
+      judgements about a company, which are not decidable from stated premises alone.
+    source: src-arxiv-2311-11944-v1
+    quote: Logical reasoning refers to using logical deductions to evaluate, contrast, or make
+      judgments regarding the information in the filings.
+  - term: factual-precision
+    reason: Each answer gets one verdict against a short gold answer; particulars inside a longer
+      answer are not checked one by one.
+
+evaluation_method:
+  - human-expert-eval
+  - numeric-tolerance-match
+evaluation_method_basis:
+  reason: A member of the research team labelled each answer correct, incorrect or a failure to
+    answer against the gold answer and its evidence. The tolerance rule is a unit slip (billions for
+    millions) or a very small rounding error; a right number reached by logic that contradicts the
+    evidence is incorrect, and a different but valid answer is correct.
+  source: src-arxiv-2311-11944-v1
+  quote: we allow minor deviations, such as giving the answer in billions when the unit was given in
+    the question as millions. We also allow very small rounding errors.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Unit and rounding deviations are accepted, and so are different but valid answers.
+    source: src-arxiv-2311-11944-v1
+    quote: we consider different but valid answers to be correct
+  - term: model-graded-judge
+    reason: No judge model is used in the paper. The 2026 paper read here scores the open sample
+      automatically with ROUGE-L and a numeric match, not with a judge (as_used).
+  - term: rubric-graded
+    reason: The verdict is one of three labels, not named criteria checked separately and combined.
+designed_for_subjects:
+  - retrieval-augmented-system
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The configurations the paper calls realistic pair a chat model with a vector store
+    (LangChain, Chroma, OpenAI ada-002 embeddings) over the filings, so the index changes the
+    result. The closed-book, long-context and oracle configurations prompt a chat model directly.
+  source: src-arxiv-2311-11944-v1
+  quote: We construct a more realistic setting by creating a shared vector store for all documents.
+designed_for_subjects_considered_and_rejected:
+  - term: tool-augmented-model
+    reason: The paper suggests tools such as calculators as future work; no configuration offers
+      them.
+  - term: agent-scaffold
+    reason: Every configuration answers in one prompt; no loop decides what to retrieve next.
+as_used:
+  - protocol: The 150 public questions over a shared ChromaDB index of the filings, scored
+      automatically (page and chunk recall, ROUGE-L against the gold answer, and a numeric match
+      within numpy.isclose's atol and rtol of 0.03 on the 50 metrics questions) rather than by the
+      paper's human labelling.
+    split: the open-source sample (150)
+    source: src-arxiv-2602-17981-v1
+    quote: We use the open source subset of FinanceBench with 150 questions.
+    note: Decomposing Retrieval Failures in RAG for Long-Document Financial Question Answering
+      (February 2026), with Qwen-2.5-7B-Instruct as the generator. Its numeric match is not the
+      paper's tolerance rule.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the open sample by others; a February 2026 paper compares
+    retrieval strategies on its 150 questions. The maintainers' repository was last pushed on
+    2024-12-03 (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2602-17981-v1
+  quote: On a 150 question subset of FinanceBench, we reproduce and compare diverse retrieval
+    strategies
+activity: no-submission-channel
+activity_basis:
+  reason: There is no leaderboard or submission route. Evaluation on the full set is offered by
+    request, and the launch offered evaluation on Patronus AI's commercial platform; both are
+    private services that publish nothing, which the term's test does not count as a channel.
+  source: src-github-financebench-readme
+  quote: To evaluate your models on the full `FinanceBench` dataset
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4-Turbo (gpt-4-1106-preview), with the filing in a long context window
+    source: src-arxiv-2311-11944-v1
+    observed_on: 2026-10-14
+    quote: even the very best performing model that we test (GPT-4-Turbo with the long-context
+      window) is still only correct in 79% of cases
+evaluation_target: learned-system
+execution_mode: human-in-loop
+ground_truth_source: held-out-labels
+ground_truth_source_note: The gold answers and evidence written by the finance annotators, public
+  for the 150 open cases; a person decides whether a model's answer matches them.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The 150 cases with gold answers and evidence, the filings, the prompts, a notebook that
+    runs the configurations and the labelled completions are public; scoring needs a person to label
+    the answers.
+  source: src-github-financebench-readme
+  quote: This repository contains an open source sample of 150 annotated examples used in the
+    evaluation and analysis of models assessed in the FinanceBench paper.
+
+task:
+  exists: true
+  input:
+    - a question about one company's public filing, such as a figure for a fiscal year or a
+      judgement about its margins
+    - 'depending on the configuration: nothing (closed book), chunks retrieved from a vector store over
+      that filing or over all 360, the whole filing (truncated to about 95,000 tokens), or the evidence
+      pages (oracle)'
+  output: A free-text answer.
+  scoring: Each answer is labelled correct, incorrect or failure to answer against the gold answer
+    and its evidence, allowing unit slips and very small rounding errors; the score is the share
+    correct over the 150 cases, reported per configuration.
+  source: src-arxiv-2311-11944-v1
+  quote: A correct answer is considered a success.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Only the 150-case sample is public (GitHub and Hugging Face, no gate). Patronus AI
+    holds the other 10,081 questions; the README offers evaluation on the full set by request, and
+    the notebook says access to the closed part is by request. The term's test is met because the
+    paper's results are all computed on the public sample.
+  access_basis:
+    reason: The sample's questions, gold answers, evidence and filings are downloadable without an
+      account, and the paper's 16 configurations were scored on exactly these cases.
+    source: src-arxiv-2311-11944-v1
+    quote: The 150 evaluation cases are available open-source.
+  records_access: fully-open
+  records_access_source: src-github-financebench-readme
+  records_access_quote: we provide the human-annotated model completions of the evaluated model
+    configurations in the paper
+  refresh: null
+  refresh_note: The paper promises to expand the benchmark, and nothing labelled a version. The
+    commit history (GitHub API, read 2026-10-14, not a quoted Source) shows a gold label corrected
+    on 2024-09-05 ("Update gold label for entry 00070") and a corrupted filing PDF replaced on
+    2024-12-03, without an announcement; the Hugging Face copy was last modified on 2024-11-17.
+    static's exclusion applies, and no term fits unannounced changes without a leaderboard
+    (review_checks).
+  data_provenance:
+    - expert-authored
+  data_provenance_note: Annotators with finance experience wrote the domain-relevant and novel
+    questions and extracted the base metrics from the filings by hand. The metrics questions (7,983
+    of 10,231, 50 of the open 150) were then built from templates over those figures and metrics
+    derived from them programmatically; synthetic-procedural's exclusion sends real figures
+    re-assembled by a rule to their own provenance (review_checks).
+  data_provenance_source: src-arxiv-2311-11944-v1
+  data_provenance_quote: To join the project, annotators needed to have relevant experience and
+    education in finance, complete a short screening test
+  contamination_risk: medium
+  contamination_risk_note: The 150-case sample, with gold answers, has been public on GitHub and
+    Hugging Face since November 2023, and the filings are public web documents, so a training route
+    is plausible; no evidence of one was read. The held set has not been released.
+  contamination_risk_source: src-github-financebench-readme
+  contamination_risk_quote: This repository contains an open source sample of 150 annotated examples
+  contamination_evidence: []
+  dataset_licence: CC-BY-NC-4.0
+  dataset_licence_note: The Hugging Face copy's licence tag. The GitHub repository states no licence
+    (GitHub API, read 2026-10-14).
+  dataset_licence_source: src-hf-api-financebench
+  dataset_licence_quote: license:cc-by-nc-4.0
+  size:
+    - count: 10231
+      unit: questions, each with a gold answer and evidence
+      subset: the full set (public sample and held set)
+      source: src-arxiv-2311-11944-v1
+      quote: FINANCEBENCH is a benchmark dataset that comprises 10,231 questions, answers, and
+        evidence triplets.
+    - count: 150
+      unit: questions (50 domain-relevant, 50 novel, 50 metrics)
+      subset: the open-source sample, on which the paper's results are computed
+      source: src-arxiv-2311-11944-v1
+      quote: We created a dataset of 150 cases for human evaluation.
+    - count: 360
+      unit: public filings from 40 companies
+      subset: the full set
+      note: Section 3 of the paper counts 361 filings; its appendix and the vector-store description
+        count 360.
+      source: src-arxiv-2311-11944-v1
+      quote: The vector store indexes over all of the 360 documents that appear in FinanceBench.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Patronus AI
+  maintainer_basis:
+    reason: Patronus AI built the benchmark with finance annotators, launched it, and holds the
+      repository, the Hugging Face dataset and the unreleased questions.
+    source: src-patronus-financebench-announcement
+    quote: Developed by AI researchers at Patronus AI and 15 financial industry domain experts
+  maintainer_type: industry-lab
+  maintainer_type_note: Patronus AI, Inc. is a company selling AI evaluation; one author was at
+    Contextual AI and Stanford University.
+  submission_process:
+    - literature-only
+  submission_process_note: The maintainers published the paper's 16 configurations and their
+    labelled completions and keep no ranking. Evaluation on the full set by request, and on Patronus
+    AI's platform, publishes nothing. Others report their own numbers in their papers.
+  submission_process_source: src-github-financebench-readme
+  submission_process_quote: we provide the human-annotated model completions of the evaluated model
+    configurations in the paper
+  independence_flags:
+    - flag: evaluator-sells-evaluations
+      source: src-patronus-financebench-announcement
+      quote: customers can now evaluate their LLM system against FinanceBench on the Patronus AI
+        platform
+    - flag: single-evaluator-private-test-set
+      source: src-github-financebench-readme
+      quote: To evaluate your models on the full `FinanceBench` dataset
+  independence_flags_note: Patronus AI, which produced the paper's results, sells evaluation, and
+    the launch made FinanceBench a test on its platform. It alone holds and evaluates the 10,081
+    unreleased questions; the 150 public cases anyone can run.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: human-panel
+  compute_tier_note: A run needs API calls or a GPU for the model and an embedding service for the
+    vector stores, and a person to label every answer, since no automatic scorer is published.
+  reproducibility_tier: requires-human-raters
+  reproducibility_tier_basis:
+    reason: The score is a person's verdict on each answer, so reproducing it means recruiting a
+      grader who can check financial answers; the data and generation code are public.
+    source: src-arxiv-2311-11944
+    quote: and manually review their answers (n=2,400)
+  reproducibility_blockers:
+    - human-raters
+  harness_availability: reference-implementation-only
+  harness_availability_note: The notebook was added on 2024-05-23 (GitHub commit history, read
+    2026-10-14). It produces model answers but has no scoring; the official verdicts are the human
+    labels. taxonomy/execution.yaml's examples cite financebench under none (review_checks).
+  harness: evaluation_playground.ipynb, the repository's notebook that builds the vector stores and
+    generates answers in each configuration
+  harness_source: src-github-financebench-playground
+  harness_quote: 'FinanceBench: Evaluation Playground'
+  code_licence: null
+  code_licence_note: GitHub reports no licence for patronus-ai/financebench (API, read 2026-10-14),
+    and the README states none.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the human-judged profile: the configuration, which the paper shows moves GPT-4-Turbo from 9% (closed
+  # book) through 19% (shared store) and 50% (store per filing) to 79% (filing in context) and 85% (oracle), and
+  # the prompt order (context first or last). EvalConditions has no retrieval field, so `harness` carries it, as
+  # the notebook's eval_mode names it (review_checks).
+  material_extra:
+    - harness
+
+homepage: https://github.com/patronus-ai/financebench
+repository: https://github.com/patronus-ai/financebench
+dataset_url: https://huggingface.co/datasets/PatronusAI/financebench
+leaderboard_url: null
+maintainer_url: https://www.patronus.ai/
+
+tags:
+  - financial-qa
+  - sec-filings
+  - open-book
+  - retrieval
+  - long-context
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2311-11944-v1
+    - src-arxiv-2311-11944
+    - src-github-financebench-readme
+    - src-github-financebench-playground
+    - src-hf-api-financebench
+    - src-patronus-financebench-announcement
+    - src-arxiv-2602-17981-v1
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page; the README and the
+    evaluation notebook at main; Hugging Face's API record of the dataset (not gated); Patronus AI's
+    launch announcement with scripts and styles stripped; and the v1 PDF of a February 2026 paper as
+    evidence of current use. GitHub's API (licence, push date, contents, commits) was read but is not
+    a
+    quoted Source. docs.patronus.ai, where Patronus documents FinanceBench on its platform, disallows
+    all crawling in robots.txt and was not read.
+  confidence: medium
+  review_checks:
+    - check: harness_availability is reference-implementation-only because the repository has held
+        evaluation_playground.ipynb since 2024-05-23, which runs the five configurations without
+        scoring. taxonomy/execution.yaml's examples (none; no-reference-implementation) and the
+        Stage 3 classification say no code is published; one of them is wrong.
+      field: execution.harness_availability
+      source: src-github-financebench-playground
+      quote: 'FinanceBench: Evaluation Playground'
+    - check: data_provenance drops the classification's synthetic-procedural. The metrics questions
+        are templates over figures annotators extracted by hand, which synthetic-procedural's
+        exclusion (real records re-assembled by a rule) sends to the figures' provenance. A reviewer
+        may prefer to keep it for the templated question text and the programmatic derived metrics.
+      field: data.data_provenance
+      source: src-arxiv-2311-11944-v1
+      quote: The base metrics were then used programmatically to construct a series of derivative
+        metrics
+    - check: refresh is null. A gold label was corrected (2024-09-05) and a filing PDF replaced
+        (2024-12-03) in unannounced commits, so static is excluded, but versioned-releases wants a
+        labelled version or a dated announcement and rolling-live a leaderboard. Whether a dated
+        commit counts as a dated erratum (versioned-releases) is the call.
+      field: data.refresh
+    - check: data.access is fully-open because the paper's headline is computed on the 150 public
+        cases. If the benchmark is taken to be the full 10,231-question set, it is
+        private-test-server, and the tier becomes not-independently-reproducible with
+        private-test-set.
+      field: data.access
+      source: src-arxiv-2311-11944-v1
+      quote: The 150 evaluation cases are available open-source.
+    - check: single-evaluator-private-test-set holds for the 10,081 held questions only; anyone can
+        evaluate on the public 150, where the published results are.
+      field: governance.independence_flags
+    - check: human-expert-eval rests on the introduction calling the graders experts; section 4.1
+        says only that one of the research team labelled each response, without stating finance
+        qualifications.
+      field: evaluation_method
+      source: src-arxiv-2311-11944-v1
+      quote: experts manually checked the answers from each of the 16 model configurations
+    - check: EvalConditions has no field for the retrieval configuration (closed book, store per
+        filing, shared store, long context, oracle) or the prompt order, so `harness` carries it in
+        material_extra. A dedicated condition field may be the better home.
+      field: comparability.material_extra
