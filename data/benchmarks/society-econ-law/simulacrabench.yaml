@@ -1,0 +1,488 @@
+# data/benchmarks/society-econ-law/simulacrabench.yaml
+#
+# P1-S9-T05, society-econ-law entry 4 of 7. Filled from the competition site, simulacrabench.org (scripts and
+# styles stripped); the starter kit's README at main (SituatedEvals/public); Codabench's public JSON record of the
+# competition (17822), which its script-rendered page loads; and the NeurIPS blog's announcement of the 2026
+# competition track. SimulacraBench has no paper, and no 2025-2026 paper reporting results on it was found; the
+# Codabench record's participant and submission counts are the evidence of current use. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# Read and not cited: Codabench's development leaderboard (api/phases/29772/get_leaderboard, 127 rows, top Grand
+# Prize skill 0.65 on 2026-10-14), because its rows carry participants' names and affiliations; config.yml,
+# FAQ.md, LICENSE and baseline/external_model/ in the repository (GitHub API: MIT, pushed 2026-10-08).
+
+id: simulacrabench
+name: SimulacraBench
+aliases:
+  - Synthetic Humanitarian Surveys at Scale
+aliases_note: 'The NeurIPS 2026 competition track lists it as "Synthetic Humanitarian Surveys at Scale
+  (SimulacraBench): A Closed Evaluation via Unreleased UN Microdata" (src-neurips-2026-competitions-blog).'
+tagline: 'A NeurIPS 2026 competition: predict held-out survey answers on unreleased UNHCR, UNICEF and
+  World Bank microdata.'
+description: >
+  A NeurIPS 2026 competition that tests how well submitted systems stand in for hard-to-reach populations
+  in behavioural surveys. Three unpublished instruments supply the data: UNHCR's ERPIS household survey
+  of Syrian refugees in four countries of asylum, UNICEF's Faith & Immunisation survey of adults in ten
+  countries, and the World Bank's Skills Assessment of job seekers, mostly in South Africa; together about
+  40,000 respondents in 14 countries. Each instrument is a respondent-by-question grid. Some respondents
+  are visible in full; for the held-out ones only a few always-visible items are shown, and the system
+  returns a probability distribution over every remaining item's options, including the option that the
+  question was never asked under the survey's skip logic. Entrants upload code, not predictions, and the
+  organisers run it with no network on one H100 against data that never leaves them. Each blank cell is
+  scored by the log score, normalised per instrument so that a uniform guess scores 0 and perfection 1,
+  and the Grand Prize ranks the plain mean of the three instruments' skills. Development-phase scores
+  come back Laplace-noised and rounded to 0.01; the final phase scores one submission per team exactly,
+  on respondents the development phase never touched. The public starter kit holds the schemas (question
+  wording and options only), a generator of invented practice data, the grader and two baselines, a crowd
+  marginal and an LLM prior.
+self_description:
+  source: src-simulacrabench-site
+  quote: SimulacraBench is a NeurIPS competition to validate AI representations of hard-to-reach
+    populations, evaluated on unreleased UNHCR, UNICEF, and World Bank microdata.
+released: 2026-08-18
+released_note: The site's public launch. Codabench's development phase opened on 2026-08-17, and the
+  starter kit's repository was created on 2026-08-13 (GitHub API).
+released_source: src-simulacrabench-site
+released_quote: Public launch August 18, 2026
+release_venue: NeurIPS 2026 Competition Track
+release_venue_source: src-neurips-2026-competitions-blog
+release_venue_quote: 'Synthetic Humanitarian Surveys at Scale (SimulacraBench): A Closed Evaluation via
+  Unreleased UN Microdata'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: society-econ-law/social-simulation
+  secondary: []
+domain_basis:
+  reason: The scored behaviour is a stand-in for how members of specific populations answer surveys,
+    simulating social behaviour as the leaf defines it; the motivation is replacing or augmenting
+    field data on refugees, parents and job seekers.
+  source: src-simulacrabench-site
+  quote: using LLMs as simulacra of specific populations to pre-test instruments, impute
+    non-response, and run subgroup what-ifs
+domain_considered_and_rejected:
+  - term: society-econ-law/forecasting-prediction-markets
+    reason: The probabilities concern answers respondents have already given, withheld by the
+      organisers, not future events that resolve later.
+  - term: society-econ-law/policy-analysis
+    reason: The surveys inform UN and World Bank programming, but the scored quantity is a predicted
+      answer, not an analysis of policy options.
+capability:
+  - calibration-uncertainty
+capability_basis:
+  calibration-uncertainty:
+    reason: The system emits a probability distribution over each blank cell's options and the
+      grader applies a proper log score to it, which the inclusion test names. The site calls the
+      evaluation calibration-first.
+    source: src-simulacrabench-site
+    quote: Calibration-first, log-score evaluation. A proper rule that rewards truthful
+      probabilities, not accuracy on the modal class
+capability_considered_and_rejected:
+  - term: probabilistic-forecasting
+    reason: The exclusion reads "Do NOT tag this if the answer already exists and is merely
+      withheld", which is the case for every scored cell.
+  - term: knowledge-recall
+    reason: An LLM prior can bring knowledge of how people answer, but the visible respondents and
+      the always-visible items are supplied, and the exclusion rules out background knowledge on the
+      way to a different scored outcome.
+  - term: context-integration
+    reason: The supplied rows and items inform a prediction but do not determine the answer, which
+      the inclusion test asks.
+  - term: inductive-reasoning
+    reason: The score is the probability given to each held-out answer, not a rule or generalisation
+      inferred from the visible rows.
+
+evaluation_method:
+  - uncertainty-calibration-score
+evaluation_method_basis:
+  reason: Each blank cell's emitted distribution is scored by the log probability it gave the true
+    answer, a strictly proper rule, after mixing with a flat floor of 0.001; the skill rescales the
+    mean log score by the instrument's uniform reference.
+  source: src-github-situatedevals-public-readme
+  quote: The metric is a strictly proper scoring rule, so your best expected score comes from
+    reporting what you actually believe.
+evaluation_method_considered_and_rejected:
+  - term: prospective-resolution
+    reason: The exclusion reads "Do NOT tag this if the answer exists and is merely withheld from
+      entrants"; the answers were collected before the competition.
+  - term: composite
+    reason: The Grand Prize averages three instruments' skills, but all three are the same log
+      score, which the exclusion (datasets scored the same way) rules out.
+  - term: statistical-fit
+    reason: The exclusion reads "do NOT tag it where the quantity scored is calibration rather than
+      accuracy"; the answers are categorical, and a distribution is scored.
+
+designed_for_subjects:
+  - task-specific-supervised-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The organisers point entrants to statistical and psychometric models fitted on the schema
+    and on the visible rows, which ADR-0020 rules are task-specific-supervised-model. The baseline
+    to beat, the crowd marginal, predicts each item's smoothed visible shares, frequencies tabulated
+    from the data, which classical-algorithm's inclusion test admits.
+  source: src-github-situatedevals-public-readme
+  quote: Fit statistical or psychometric models (IRT, low-rank completion, tabular generative
+    models) on the schema and your own practice data
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: The site's motivation is LLMs as simulacra, and the second baseline reads an
+      instruction-tuned model's next-token distribution over each item's options as a prior. But the
+      LLM is a component of a submitted pipeline, run offline with no network, which excludes every
+      API-served model, and the protocol does not prompt a compliant assistant (see review_checks).
+
+lifecycle: active
+lifecycle_basis:
+  reason: The development phase is running and scoring submissions; Codabench's record counted 193
+    participants and 879 submissions on 2026-10-14.
+  source: src-codabench-simulacrabench
+  quote: '"participants_count":193,"submissions_count":879'
+activity: accepting-submissions
+activity_note: The development phase (2026-08-17 to 2026-11-13) takes one submission per team per
+  day; the final phase (2026-11-14 to 2026-11-18) takes one per team. The corpus record of
+  2026-09-23 and the classification of 2026-09-28 had the development phase ending on 30 October;
+  the site, config.yml and Codabench now give 13 November. The site also still carries its
+  pre-launch text, which its script swaps by date.
+activity_basis:
+  reason: A round is open now, with a daily submission quota.
+  source: src-simulacrabench-site
+  quote: Registration is open and the development phase is running through November 13, 2026
+planned_end: '2026-11-18'    # the final phase's last day (site, config.yml); no later edition is announced
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: LLM-prior baseline (the starter kit's baseline/external_model)
+    source: src-simulacrabench-site
+    observed_on: 2026-10-14
+    quote: The second is an LLM prior.
+    note: The organisers' second published baseline; its models.txt names Qwen/Qwen2.5-1.5B-Instruct
+      (read 2026-10-14, not a quoted Source). The leaderboard's rows name users, not systems.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_basis:
+  reason: Real respondents' answers to the three surveys, including whether an item was asked at
+    all, held by the organisers under the data providers' confidentiality agreements.
+  source: src-simulacrabench-site
+  quote: The microdata are never released to participants.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The grader, schemas and baselines are public, but a score exists only on the custodians'
+    data inside the organisers' runtime.
+  source: src-simulacrabench-site
+  quote: Microdata are not released.
+
+task:
+  exists: true
+  input:
+    - one instrument's schema (each item's wording, class, allowed answers and the earlier answer
+      that gates it)
+    - a frame of respondents, the visible ones complete and the held-out ones showing only the
+      always-visible (GIVEN) items, with every scored (PREDICT) cell blank
+  output: One probability vector per blank cell, in the schema's item order, over that item's
+    options plus a final slot for "never asked" (NA_GATED); predict() is called once per instrument.
+  scoring: >
+    The log of the probability given to the answer actually there, after renormalising and mixing with
+    a flat vector at a floor of 0.001, averaged over blank cells; skill = 1 + log score / U, where U is
+    the mean of log K over the instrument's scored items, so a uniform guess scores 0 and perfection 1.
+    The Grand Prize is the plain mean of the three instruments' skills. Development scores are Laplace-noised
+    and rounded to 0.01; final scores are exact, and teams not distinguishable under a pre-specified paired
+    bootstrap are tied.
+  tests_hidden_from_system: true
+  source: src-github-situatedevals-public-readme
+  quote: Every scored answer is categorical, drawn from that question's own options.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The repository holds the schemas and a generator of invented practice data with the
+    schemas' exact shape; no respondent's answers are released. Each phase's frame is built from the
+    microdata on the organisers' side, and the answer key never enters the submission's container.
+  access_basis:
+    reason: The respondents behind every score, not only their answers, stay with the organisers,
+      who run each submission on them.
+    source: src-simulacrabench-site
+    quote: The microdata are never released to participants.
+  refresh: static
+  refresh_basis:
+    reason: One edition with fixed respondent roles. The development phase scores DEV respondents
+      and the final phase TEST respondents, both assigned once when each dataset was built; no later
+      edition is announced.
+    source: src-github-situatedevals-public-readme
+    quote: assigned once when the dataset is built and never redrawn
+  data_provenance:
+    - unreleasable-confidential
+  data_provenance_note: Real respondents' answers to three behavioural surveys (UNHCR ERPIS, UNICEF
+    Faith & Immunisation, World Bank Skills Assessment), held under the data providers'
+    confidentiality agreements. ADR-0020 rules that this term and a note express survey microdata;
+    the obligations to respondents are a governance matter (re-identification attempts disqualify).
+  data_provenance_source: src-codabench-simulacrabench
+  data_provenance_quote: under separate confidentiality agreements
+  contamination_risk: low
+  contamination_risk_note: >
+    Low by construction: the microdata are unpublished, execution is network-isolated, and the answer
+    key never enters the container. The questions and options are public in the schemas, but not the answers.
+    Probing the development board is answered by Laplace noise and rounding, by the rules (feedback may
+    not be used to infer hidden labels), and by the final phase scoring TEST respondents the development
+    phase never shipped. Whether published aggregates of these surveys reached pretraining, which would
+    help an LLM prior with marginals but not with individual answers, is not addressed.
+  contamination_evidence:
+    - source: src-simulacrabench-site
+      stance: against
+      quote: Three unpublished datasets from UNHCR, UNICEF, and World Bank programs, not in any
+        pretraining corpus.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The skill is bounded at 1 by construction. Perfect prediction of individual answers is
+      not attainable, and no source reports a measured ceiling such as test-retest agreement.
+    source: src-simulacrabench-site
+    quote: normalised so a uniform guess scores 0 and perfection scores 1
+  dataset_licence: null
+  dataset_licence_note: The microdata are not released and carry no licence. The schemas, which hold
+    question wording and answer options only, ship in the MIT-licensed starter kit.
+  size:
+    - count: 40000
+      unit: respondents, approximately, across 14 countries (all three instruments)
+      note: The three instruments' totals in the site's table sum to 37,000.
+      source: src-simulacrabench-site
+      quote: ~40,000 respondents across 14 countries
+    - count: 10300
+      unit: respondents (two waves, four countries)
+      subset: simulacrabench#unhcr-erpis
+      source: src-simulacrabench-site
+      quote: N total 10,300 19,800 6,900
+    - count: 19800
+      unit: respondents (ten countries)
+      subset: simulacrabench#unicef-faith-immunisation
+      source: src-simulacrabench-site
+      quote: N total 10,300 19,800 6,900
+    - count: 6900
+      unit: respondents (three countries)
+      subset: simulacrabench#world-bank-skills-assessment
+      source: src-simulacrabench-site
+      quote: N total 10,300 19,800 6,900
+  submission_limit:
+    max_submissions: 1
+    period_days: 1
+    per: team, in the development phase (the final phase takes one submission per team)
+    source: src-simulacrabench-site
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Stanford Digital Economy Lab (Stanford HAI), with the UN Innovation Network
+  maintainer_basis:
+    reason: The site names the lab as the organiser and the three UN and World Bank bodies as data
+      partners. The organising team has sixteen members across Stanford, UNHCR, UNICEF, the World
+      Bank and the UN Innovation Network.
+    source: src-simulacrabench-site
+    quote: Organized from the Stanford Digital Economy Lab at Stanford HAI, with the UN Innovation
+      Network, and with UNHCR, UNICEF and the World Bank as data partners.
+  maintainer_type: academic-lab
+  maintainer_type_note: The Stanford lab hosts the competition and its harness; the starter kit sits
+    in the SituatedEvals GitHub organisation, whose LICENSE names three of the Stanford organisers.
+    UNHCR, UNICEF and the World Bank hold the evaluation data as data partners, and
+    taxonomy/governance.yaml gives simulacrabench as academic-lab's example and as the near miss of
+    conference-workshop and government-agency.
+  submission_process:
+    - sandboxed-rerun
+    - publication-gated
+  submission_process_note: >
+    A submission is a zip holding main.py (defining predict()) and requirements.txt, optionally models.txt
+    naming Hugging Face models and bundled weights, not a container image; the organisers build it, run
+    it with no network on one H100 and post the score. Codabench's Terms, which the README calls the participation
+    contract, require a 4-page method description with each final-phase submission, so publication-gated
+    is tagged for the final ranking; the site says instead that only winning teams supply one ("Everyone
+    else submits code alone.", src-simulacrabench-site). See review_checks. The sandboxed re-run is the
+    server-side route to the private data, which the validator's private-server-submission warning does
+    not list among its server-side terms.
+  submission_process_basis:
+    reason: Entrants submit code, and the organisers execute it in their own sandbox and return the
+      score it produces.
+    source: src-simulacrabench-site
+    quote: Organizers install your requirements, then run predict() on the held-out respondents with
+      the network removed.
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-simulacrabench-site
+      quote: Evaluation is closed. Code travels to the data; only aggregate scores travel back.
+  independence_flags_note: >
+    Searched the site, the README and the Codabench record on 2026-10-14. The organisers hold the microdata
+    and run every submission, the flag above. The prize sponsor is Schmidt Sciences, a philanthropic organisation,
+    so prize-sponsored-by-industry does not apply; the compute sponsor appears only as a logo linking
+    to modal.com, a cloud provider and not an evaluated party. The organisers publish two baselines in
+    the starter kit; no source shows them ranked on the board.
+  independence_assessed: true
+  funding:
+    source: src-simulacrabench-site
+    quote: With thanks to Schmidt Sciences for prize sponsorship.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_note: One H100, 16 GB of memory and 8 CPUs, with a wall-clock budget for all three
+    instruments together of 900 s in the development phase and 3,600 s in the final phase;
+    dependencies install in a build step outside the budget.
+  compute_tier_basis:
+    reason: Every official score comes from running the submission on hardware the organisers
+      supply.
+    source: src-simulacrabench-site
+    quote: Single H100 GPU, 16 GB. The compute budget is shared across all three instruments
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The grader and the sandbox generator are public, but a score exists only on the
+      custodians' data inside the organisers' runtime.
+    source: src-simulacrabench-site
+    quote: Microdata are not released.
+  reproducibility_blockers:
+    - unreleasable-data
+    - private-test-set
+  reproducibility_blockers_note: The microdata reach the organisers under confidentiality agreements
+    with the data providers, and the answer key never enters the submission's container.
+  reproducibility_blockers_source: src-github-situatedevals-public-readme
+  reproducibility_blockers_quote: The answer key is not among them and never enters the container.
+  harness_availability: official-harness
+  harness: score.py in SituatedEvals/public (Codabench's scoring programs are pinned to its revision
+    a3e0a2a7)
+  harness_source: src-codabench-simulacrabench
+  harness_quote: Pinned SituatedEvals/public role-based scoring program for Development (Phase 1),
+    revision a3e0a2a7.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for SituatedEvals/public also reports MIT (read
+    2026-10-14).
+  code_licence_source: src-simulacrabench-site
+  code_licence_quote: 'MIT-licensed: the three schemas, a sandbox generator, two baselines, a tutorial
+    notebook, and the grader itself.'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The resolved profile is the fallback: [uncertainty-calibration-score, task-specific-supervised-model] and
+  # [uncertainty-calibration-score, classical-algorithm] are unlisted pairs. Beyond subset_used (the instrument, and
+  # the phase: DEV respondents, noised and rounded, or TEST respondents, exact), what the pipeline was fitted on and
+  # which public pretrained weights it loads move the number.
+  material_extra:
+    - training_data_policy
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The Grand Prize ranks the plain mean of the three instruments' skills, and each
+    instrument's skill has its own column and track prize.
+  source: src-github-situatedevals-public-readme
+  quote: The skills across datasets are taken as a flat mean for the grand prize number.
+
+homepage: https://simulacrabench.org/
+repository: https://github.com/SituatedEvals/public
+leaderboard_url: https://www.codabench.org/competitions/17822/
+
+subsets:
+  - id: simulacrabench#unhcr-erpis
+    label: UNHCR ERPIS, a household survey of Syrian refugees in four countries of asylum
+    items: 213
+    scored_separately: true
+    evidence:
+      - source: src-simulacrabench-site
+        quote: The UNHCR ERPIS instrument is a household survey of Syrian refugees in four countries
+          of asylum.
+      - source: src-simulacrabench-site
+        quote: Scored (PREDICT) 213 12 73
+    notes: 213 scored items of 285 in the schema, 17 always visible; uniform reference 1.241 nats.
+  - id: simulacrabench#unicef-faith-immunisation
+    label: UNICEF Faith & Immunisation, adults in ten countries on religious influence and vaccine
+      uptake
+    items: 12
+    scored_separately: true
+    evidence:
+      - source: src-simulacrabench-site
+        quote: Scored (PREDICT) 213 12 73
+    notes: 12 scored items of 19 in the schema, 7 always visible; uniform reference 1.528 nats.
+  - id: simulacrabench#world-bank-skills-assessment
+    label: World Bank Skills Assessment, an online instrument for job seekers in South Africa,
+      Lesotho and Nigeria
+    items: 73
+    scored_separately: true
+    evidence:
+      - source: src-simulacrabench-site
+        quote: Scored (PREDICT) 213 12 73
+    notes: 73 scored items of 106 in the schema, 9 always visible; uniform reference 1.758 nats.
+
+history:
+  - date: 2026-08-17
+    event: channel-opened
+    field: governance.submission_process
+    to: sandboxed-rerun
+    source: src-codabench-simulacrabench
+    quote: '"start":"2026-08-17T00:00:00Z","end":"2026-11-14T07:55:00Z","name":"Development"'
+    note: Codabench's development phase opened; the final (Test) phase is recorded there as
+      2026-11-15 to 2026-11-19 UTC.
+
+tags:
+  - survey-microdata
+  - humanitarian
+  - competition
+  - closed-evaluation
+  - proper-scoring-rule
+  - code-submission
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-simulacrabench-site
+    - src-github-situatedevals-public-readme
+    - src-codabench-simulacrabench
+    - src-neurips-2026-competitions-blog
+  sources_note: >
+    The competition site with scripts and styles stripped; the starter kit's README at main; Codabench's
+    public JSON record of competition 17822 (its page renders by script); and the NeurIPS blog post announcing
+    the 2026 competition track. No paper exists, so `paper` is left empty, and no 2025-2026 paper reporting
+    results on SimulacraBench was found.
+  confidence: medium
+  review_checks:
+    - check: calibration-uncertainty is the only capability, assigned on its inclusion test (a
+        scored distribution). Its definition, a system's confidence in its own output, fits a
+        distribution over another person's answer loosely, and the benchmark's central claim,
+        faithful simulation of a population, has no term
+        (taxonomy/_failures/2026-09-28-simulacrabench-001 proposes population-response-modelling).
+      field: capability
+    - check: publication-gated rests on Codabench's Terms (rule 7). The site says only winning teams
+        supply a method description and everyone else submits code alone; if the site's reading
+        holds, the requirement is for prizes only and the term goes.
+      field: governance.submission_process
+      source: src-codabench-simulacrabench
+      quote: Each Test submission must be accompanied by a 4-page method description.
+    - check: taxonomy/governance.yaml gives simulacrabench as no-known-conflict's qualifying
+        example, but that term's inclusion test needs every other flag not to apply, and
+        single-evaluator-private-test-set does (the organisers hold the data and run every
+        submission, as for habitat-challenge and virtual-cell-challenge). The example or this entry
+        needs to change.
+      field: governance.independence_flags
+    - check: designed_for_subjects leaves out instruction-tuned-model although the site frames the
+        task as LLMs as simulacra and one baseline is an LLM prior. Adding it would resolve the
+        [uncertainty-calibration-score, instruction-tuned-model] pair to the forecasting profile,
+        making lead_time and resolution_window material for a benchmark that forecasts nothing; the
+        profile rule would need the fix, not a waiver.
+      field: designed_for_subjects
+      source: src-simulacrabench-site
+      quote: using LLMs as simulacra of specific populations to pre-test instruments, impute
+        non-response, and run subgroup what-ifs
+    - check: learned_entrant_evidence is the organisers' LLM-prior baseline, whose score on the real
+        data no source shows. The development board (127 rows on 2026-10-14) names users, not
+        systems, and is not cited because its rows carry participants' names and affiliations.
+      field: learned_entrant_evidence
+    - check: The headline size is the site's "~40,000 respondents"; the per-instrument totals it
+        tabulates sum to 37,000.
+      field: data.size
+      source: src-simulacrabench-site
+      quote: N total 10,300 19,800 6,900
+    - check: lifecycle active rests on the running development phase (noised scores only); the
+        competition is two months old, has no paper, and ends on 2026-11-18 with no later edition
+        announced. After that, mature or results-pending activity may fit.
+      field: lifecycle
