@@ -1,0 +1,833 @@
+# data/benchmarks/earth-climate/geo-bench.yaml
+#
+# P1-S7-T01, earth-climate entry 4 of 9. Filled from the GEO-Bench paper, arXiv 2306.03831 read as its v2 PDF
+# (2023-12-23; NeurIPS 2023 Datasets and Benchmarks), and its abstract page; the GEO-Bench-2 paper, arXiv 2511.15658
+# read as its v2 PDF (2026-02-02), and its abstract page; the READMEs of ServiceNow/geo-bench,
+# The-AI-Alliance/GEO-Bench-2 and The-AI-Alliance/GEO-Bench-2-Leaderboard at main; and the v3 PDF of "No One Knows
+# the State of the Art in Geospatial Foundation Models" (arXiv 2605.12678, 2026-09-10), an audit that reports how
+# GEO-Bench is used. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+#
+# One entry, two editions: GEO-Bench (2023, ServiceNow Research) and GEO-Bench-2 (2025, the AI Alliance with IBM,
+# ServiceNow and TUM), which the first one's README calls its successor. The stress corpus classified GEO-Bench-2 on
+# its own as `geo-bench-2`; the identity call is the first review check.
+#
+# Spatial resolution. EvalConditions has no field for ground sample distance, and this task may not write a
+# conditions record, so the resolution of every task is recorded on its subset (subsets[], with the table rows that
+# state it as evidence), GEO-Bench-2's two resolution capability groups are subsets of their own, and a claim names
+# its resolution through subset_used. The gap is a review check.
+
+id: geo-bench
+name: GEO-Bench
+aliases:
+  - GEO-Bench-2
+  - GEO-Bench V2
+aliases_note: GEO-Bench-2's repository calls it "GEO-Bench V2". "GeoBench" is not listed, because it
+  is also the name of the GeoGuessr benchmark catalogued as geobench-geoguessr.
+tagline: 'Pretrained Earth-observation models fine-tuned on satellite and aerial tasks: 12 in GEO-Bench,
+  19 in GEO-Bench-2.'
+description: >
+  A benchmark for pretrained models on Earth observation, built from public remote-sensing datasets that
+  the maintainers modified, subsampled and re-split. The 2023 edition, GEO-Bench, has six image classification
+  and six semantic segmentation tasks (detection and counting datasets were turned into segmentation),
+  from multispectral, SAR, hyperspectral and elevation data at 0.1 to 30 m per pixel. Users fine-tune
+  a backbone on each task within 16 hyperparameter trials, repeat the chosen setting over at least ten
+  seeds, and report normalised scores aggregated by interquartile mean with bootstrapped confidence intervals.
+  GEO-Bench-2 (2025; TMLR 2026, per its README's citation) is the successor: 19 datasets across classification,
+  pixel-wise regression, semantic segmentation, object detection and instance segmentation, three of them
+  carried over from GEO-Bench, ranked in nine overlapping capability groups (among them datasets under
+  and at or above 10 m ground sample distance, RGB/NIR against multispectral, and multi-temporal), with
+  a Hugging Face leaderboard fed by pull requests. Each task keeps its source dataset's sensor and resolution,
+  which the paper's own ablation shows moves the scores; the GEO-Bench README now recommends GEO-Bench-2
+  instead.
+self_description:
+  source: src-arxiv-2306-03831-v2
+  quote: To stimulate the development of foundation models for Earth monitoring, we propose a
+    benchmark comprised of six classification and six segmentation tasks
+external_ids:
+  arxiv: '2306.03831'
+paper:
+  title: 'GEO-Bench: Toward Foundation Models for Earth Monitoring'
+  arxiv: '2306.03831'
+  version_read: v2
+  source: src-arxiv-2306-03831-v2
+released: 2023-06-06
+released_note: GEO-Bench's first arXiv version, as its abstract page dates it. GEO-Bench-2 was
+  released on 2025-11-19 (see versions).
+released_source: src-arxiv-2306-03831
+released_quote: Submitted on 6 Jun 2023
+release_venue: NeurIPS 2023 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2306-03831-v2
+release_venue_quote: 37th Conference on Neural Information Processing Systems (NeurIPS 2023) Track
+  on Datasets and Benchmarks.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/remote-sensing
+  secondary:
+    - vision/classification
+    - vision/segmentation
+    - vision/detection
+  secondary_note: Detection is GEO-Bench-2's only; GEO-Bench turned its detection and counting
+    datasets into segmentation tasks.
+  per_edition: true
+domain_basis:
+  reason: Models extract information from satellite and airborne imagery, and the benchmark presents
+    itself as Earth observation, which the remote-sensing term makes primary although some labels
+    are objects seen from above (cattle, birds, buildings); the term sends the vision tasks to
+    secondary.
+  source: src-arxiv-2511-15658
+  quote: Geospatial Foundation Models (GeoFMs) are transforming Earth Observation (EO), but
+    evaluation lacks standardized protocols.
+domain_considered_and_rejected:
+  - term: earth-climate/agriculture
+    reason: Crop types and field boundaries are labels read off the imagery, which remote-sensing
+      covers; no task predicts an agricultural outcome such as yield.
+  - term: earth-climate/hazard-prediction
+    reason: Flood extent (KuroSiwo) and burn scars are mapped in imagery taken after the event,
+      which the remote-sensing term keeps for itself; nothing is forecast.
+  - term: earth-climate/ecology-biodiversity
+    reason: Tree species and wading birds are among the labels, but the claim is foundation models
+      for Earth observation, not biodiversity monitoring.
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: Every task scores what a model recovers from an image or image time series, as a class,
+      a label set, a per-pixel class or value, or object boxes and masks.
+    source: src-arxiv-2511-15658-v2
+    quote: GEO-Bench-2 addresses this with a comprehensive framework spanning classification,
+      segmentation, regression, object detection, and instance segmentation across 19
+      permissively-licensed datasets.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: Adapting a pretrained backbone is the benchmark's subject, but each dataset is
+      fine-tuned and tested within its own split; nothing is trained on one task and scored on a
+      deliberately different one.
+  - term: distribution-shift-generalization
+    reason: Splits are each dataset's own or spatially disjoint re-splits, not held out by sensor or
+      region. GEO-Bench-2's appendix coarsens the test images' ground sample distance while training
+      at the original one, a shifted condition, but as an ablation outside the scored protocol.
+    source: src-arxiv-2511-15658-v2
+    quote: This ablation applies a 14x14 kernel filter to increase the Ground Sampling Distance
+      (GSD) of validation and test images, while train images are kept at the original resolution.
+  - term: spatial-reasoning
+    reason: Geospatial throughout, but the score is what is recovered from the pixels; no answer
+      turns on an inferred spatial relation (the term's own near miss).
+  - term: sample-efficiency
+    reason: GEO-Bench ships official training subsets from 1% to 100% and reports results by
+      training size, but the headline protocol trains on the full split and GEO-Bench-2 drops the
+      subsets.
+    source: src-arxiv-2306-03831-v2
+    quote: As part of the benchmark, we also provide official subsets of the training sets with
+      train ratios of (0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1)
+
+evaluation_method:
+  - exact-match
+  - classification-metric
+  - domain-metric
+  - statistical-fit
+  - composite
+evaluation_method_basis:
+  reason: GEO-Bench-2 fixes one metric per task type. Single-label accuracy is exact-match over a
+    fixed label set; multi-label F1 is classification-metric; the Jaccard index (IoU) and mAP are
+    domain-metric; RMSE on BioMassters' biomass maps is statistical-fit. Each capability score
+    averages per-dataset scores normalised to [0, 1] across these methods, which is composite.
+    GEO-Bench used accuracy and IoU and aggregated each task set the same way.
+  source: src-arxiv-2511-15658-v2
+  quote: To report scores for a capability, we aggregate results across multiple datasets.
+evaluation_method_considered_and_rejected:
+  - term: entrant-relative-ranking
+    reason: Scores are normalised against reference points computed once from the maintainers' fixed
+      set of models, which every user reuses, so adding an entrant does not move the others'
+      numbers.
+    source: src-arxiv-2511-15658-v2
+    quote: These normalization factors, computed from our fixed set of models
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: Earth-observation foundation models and general vision backbones (ImageNet ConvNeXt,
+    DINOv3) are each fine-tuned on the Earth-observation tasks, and that fine-tuning is the
+    specialisation the benchmark tests; GEO-Bench-2 is the term's own example.
+  source: src-arxiv-2306-03831-v2
+  quote: Since this is more representative of practical usage, we encourage users of the benchmark
+    to report the results of fine-tuned models.
+as_used:
+  - protocol: Each paper's own recipe on GEO-Bench's tasks, mostly frozen-backbone probing (linear,
+      kNN or UperNet heads) and sometimes fine-tuning, rather than the paper's tuned fine-tuning
+      over repeated seeds; the recipes are not disclosed.
+    split: test
+    source: src-arxiv-2605-12678-v3
+    quote: the GEO-Bench probing pipeline used to evaluate a third-party backbone
+    note: Six of the audit's ten largest cross-paper disagreements (its Table 1) are on GEO-Bench
+      tasks (m-Cashew, m-BigEarthNet, m-SACropType), from papers such as OlmoEarth, TerraFM,
+      Panopticon and Galileo. AnySat's kNN-probe F1 on m-BigEarthNet is reported at 54.5 and at
+      85.3, and its fine-tuned mIoU on m-Cashew at 27.2 and at 80.4.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on both editions. GEO-Bench-2's paper was revised in February
+    2026 and its repository last pushed on 2026-09-04 (GitHub API); a 2026 audit finds several
+    papers reporting on GEO-Bench's tasks under its probing pipeline. GEO-Bench itself is superseded
+    by GEO-Bench-2 (see versions), which is the family's standing, not the entry's.
+  source: src-arxiv-2605-12678-v3
+  quote: GEO-Bench probing pipeline; the same three reproducing papers disagree on a
+activity: accepting-submissions
+activity_note: The three result sets on the leaderboard are the maintainers' own release experiments
+  (their additional_info.json files, read on GitHub 2026-10-14, say so); the leaderboard repository
+  was last pushed on 2026-01-19 and the Hugging Face Space last modified on 2025-11-20 (APIs).
+  GEO-Bench had no leaderboard; its paper asked authors to publish all seeds as CSV files.
+activity_basis:
+  reason: GEO-Bench-2 has never run in rounds, and its leaderboard takes results by pull request.
+  source: src-github-geo-bench-2-leaderboard-readme
+  quote: Create a pull request to main
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Clay-V1 ViT-B
+    source: src-arxiv-2511-15658-v2
+    observed_on: 2026-10-14
+    quote: Clay-V1 ViT-B achieves top Core performance with only 86M parameters.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each source dataset's own labels on its test split (land cover, crop type,
+  cloud and shadow, building footprints, biomass from airborne LiDAR and so on), kept from the
+  original release or re-split by the maintainers.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Data, code and leaderboard are public, and the test labels are released with the data.
+  source: src-arxiv-2511-15658-v2
+  quote: Code, data, and leaderboard for GEO-Bench-2 are publicly released under a permissive
+    license.
+
+task:
+  exists: true
+  input:
+    - a satellite or aerial image chip (a time series of chips for GEO-Bench-2's multi-temporal
+      datasets) in its source dataset's bands, multispectral, SAR, hyperspectral, elevation or RGB,
+      at that dataset's ground sample distance, 0.1 to 30 m
+  output: A class or label set per image, a class or continuous value per pixel, or object boxes and
+    instance masks, from a pretrained backbone fine-tuned on the task's training split.
+  scoring: Per task, accuracy, multi-label F1, Jaccard index (IoU), RMSE or mAP on the test split,
+    over repeated seeds (at least 10 in GEO-Bench, 5 in GEO-Bench-2) after at most 16 hyperparameter
+    trials. Scores are normalised to [0, 1] against fixed reference points and aggregated by
+    interquartile mean with a stratified bootstrap, per task set in GEO-Bench and per capability
+    group in GEO-Bench-2.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The test splits and their labels are downloaded with the data.
+  source: src-arxiv-2306-03831-v2
+  quote: we recommend adjusting hyperparameters, but within a maximum budget of 16 trials per task
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Both editions are on Hugging Face without a gate (recursix/geo-bench-1.0 and the
+    aialliance dataset repositories, API read 2026-10-14) and download with the packages'
+    geobench-download command.
+  access_basis:
+    reason: Data, labels and code are public for the current edition, which decides for a family.
+    source: src-arxiv-2511-15658-v2
+    quote: Code, data, and leaderboard for GEO-Bench-2 are publicly released under a permissive
+      license.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data is published as named versions (classification_v1.0 and segmentation_v1.0, then
+      GEO-Bench-2), and the leaderboard accepts results only on the official Hugging Face versions.
+    source: src-github-geo-bench-2-readme
+    quote: leaderboard submissions are solely accepted based on official dataset versions on
+  data_provenance:
+    - inherited-from-constituents
+    - real-world-instrument
+  data_provenance_note: Every task is a published remote-sensing dataset, subsampled, class-balanced
+    or re-split and reformatted (GEO-Bench-2 in the TACO format), keeping its own labels and
+    documenting its own provenance. The imagery is satellite and aerial capture.
+  data_provenance_basis:
+    reason: GEO-Bench-2 chose 19 of 35 candidate datasets; GEO-Bench modified every one it took.
+    source: src-arxiv-2511-15658-v2
+    quote: After experimentation and thorough analysis, we selected 19 that we believe enable
+      high-quality GeoFM evaluation
+  contamination_risk: medium
+  contamination_risk_note: The test images and labels are public, most for years before either
+    edition, and the evaluated foundation models are pretrained on public Sentinel, Landsat and
+    aerial archives that may hold the same scenes. No overlap check is reported, and no source
+    evidences a route, so a route is plausible and unevidenced.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: The normalised scores are anchored to the best result of the
+    maintainers' reference models, which a new model can exceed, so the scale is pool-relative (the
+    term's own GEO-Bench-2 example).
+  ceiling_anchor_type_source: src-arxiv-2306-03831-v2
+  ceiling_anchor_type_quote: Hence, if a future model were to achieve a score superior to 1, it
+    would imply that progress is being made on the benchmark.
+  dataset_licence: mixed, per dataset (CC-BY-4.0, CC-BY-SA-4.0, CDLA-Permissive-1.0, CC0-1.0, MIT,
+    Etalab Open Licence 2.0)
+  dataset_licence_note: Each task keeps its source dataset's licence; both papers took only
+    permissively licensed datasets. GEO-Bench's Table 1 lists CDLA-P-1.0, CC-BY-4.0, CC-BY-SA 4.0,
+    MIT and CC0 1.0 by task, while its Hugging Face bundle is tagged cc-by-sa-4.0 as a whole. For
+    GEO-Bench-2 the paper's Table 2, the repository's dataset_licenses.md and the Hugging Face tags
+    do not all agree (see review_checks).
+  dataset_licence_source: src-github-geo-bench-2-readme
+  dataset_licence_quote: All dataset are distributed under open-licenses. For license details please
+    see the respective Huggingface repository of each dataset.
+  size:
+    - count: 19
+      unit: datasets (classification, pixel-wise regression, semantic segmentation, object
+        detection, instance segmentation)
+      subset: GEO-Bench-2
+      source: src-arxiv-2511-15658-v2
+      quote: GEO-Bench-2 addresses this with a comprehensive framework spanning classification,
+        segmentation, regression, object detection, and instance segmentation across 19
+        permissively-licensed datasets.
+    - count: 9
+      unit: overlapping capability groups over the 19 datasets
+      subset: GEO-Bench-2
+      source: src-arxiv-2511-15658-v2
+      quote: GEO-Bench-2 instead evaluates nine overlapping capabilities designed to highlight
+        specific challenges in GeoFM development.
+    - count: 12
+      unit: tasks (6 classification, 6 segmentation)
+      subset: GEO-Bench (v1.0)
+      source: src-arxiv-2306-03831-v2
+      quote: GEO-Bench is composed of 6 classification tasks and 6 segmentation tasks.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The AI Alliance's GEO-Bench-2 team (IBM Research, ServiceNow Research, TUM); GEO-Bench
+    was ServiceNow Research's
+  maintainer_basis:
+    reason: GEO-Bench-2's repository and leaderboard sit in The-AI-Alliance's organisation account,
+      with IBM and ServiceNow named; GEO-Bench's repository is in ServiceNow's and its README calls
+      it a ServiceNow Research project (see history).
+    source: src-github-geo-bench-2-readme
+    quote: This project was developed as part of the AI Alliance with involvement from IBM and
+      ServiceNow.
+  maintainer_type: community-collective
+  maintainer_type_note: Held in a shared organisation account by contributors from IBM Research
+    Europe, ServiceNow, TUM, Clark, MBZUAI, NASA, ESA and Arizona State, with no legal form and no
+    single holder stated. industry-lab was considered (GEO-Bench was held by ServiceNow, and the
+    corresponding authors are at IBM and ServiceNow), and so was consortium, which needs a stated
+    legal form.
+  submission_process:
+    - maintainer-verified
+    - maintainer-run
+  submission_process_note: Entrants open a pull request with per-seed results and hyperparameters,
+    which the maintainers review and may reject (not following the protocol, not reproducible,
+    closed models, per-dataset over-engineering). The maintainers ran 14 backbones themselves for
+    the paper and the leaderboard, and their release runs are its only rows so far. GEO-Bench had no
+    submission route (history).
+  submission_process_source: src-arxiv-2511-15658-v2
+  submission_process_quote: Leaderboard submissions will be reviewed and may be flagged as
+    over-engineered if search spaces are excessively customized.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2511-15658-v2
+      quote: 'Juan Bernabe-Moreno, and Nicolas Longépé. Terramind: Large-scale generative multimodality
+        for earth observation'
+  independence_flags_note: Fraccaro and Bernabe-Moreno (IBM Research Europe) and Longépé (ESA) are
+    GEO-Bench-2 authors and TerraMind authors, and Fraccaro is a Prithvi-EO-2.0 author; both models
+    are among the evaluated backbones, and TerraMind-V1-Large leads the multi-spectral and
+    multi-temporal capabilities. The baseline protocol runs on IBM's TerraTorch. In GEO-Bench,
+    ServiceNow's SeCo (ResNet50-SECO-S2), whose authors include Lacoste, Vazquez and Rodriguez, was
+    among the 20 baselines.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2511-15658-v2
+    quote: Despite efforts toward global diversity, dataset coverage remains biased toward Europe
+      and North America.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not stated for the current edition. GEO-Bench says its results replicate on
+    single GPUs (quoted); GEO-Bench-2 gives detection fewer trials because of its "higher
+    computational requirements" and names no hardware.
+  compute_tier_source: src-arxiv-2306-03831-v2
+  compute_tier_quote: and all results can be replicated on single GPUs
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public data with test labels, public loaders and a public protocol; anyone can fine-tune
+      and score a new backbone end to end.
+    source: src-arxiv-2511-15658-v2
+    quote: It is recommended to use the leaderboard or the provided code for computing these scores
+      based on raw results to minimize the chance of mistakes.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: geobenchv2 (GEO-Bench-2's loaders) with TerraTorch-Iterate for the tuning-and-repeat
+    protocol, and the leaderboard's code for the normalised capability scores; for GEO-Bench, the
+    geobench package and geo-bench-experiments
+  harness_note: The 2026 audit counts the GEO-Bench probing and fine-tuning pipeline as an unpinned
+    choice behind cross-paper disagreements (as_used), and GEO-Bench's README points users to
+    torchgeo-bench, an independent harness, for GEO-Bench datasets. A claim should name its
+    pipeline.
+  harness_source: src-github-geo-bench-2-leaderboard-readme
+  harness_quote: It includes functionality to easily perform both hyperparameter tuning and
+    re-repeated experiments in the manner prescribed by the GEO-Bench protocol.
+  code_licence: Apache-2.0
+  code_licence_note: Both repositories and the leaderboard's are Apache-2.0 by GitHub's licence
+    metadata (read 2026-10-14).
+  code_licence_source: src-github-geo-bench-2-readme
+  code_licence_quote: This code is licensed under the Apache License 2.0.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The facets resolve to the static-text LLM profile, whose prompting fields mean nothing here and are waived. What
+  # moves a score: the edition, task or capability group (subset_used, which is also where a claim's ground sample
+  # distance is recorded); fine-tuned against frozen backbone, which GEO-Bench-2 ranks on separate leaderboards
+  # (eligibility_track); the number of repeated seeds (n_samples: 10 in GEO-Bench, 5 in GEO-Bench-2); and the
+  # fine-tuning or probing pipeline (harness). Resizing or coarsening the images changes the resolution and the score,
+  # and no field holds it (review_checks).
+  material_extra:
+    - eligibility_track
+    - n_samples
+    - harness
+  material_waived:
+    - field: shots
+      reason: Backbones are fine-tuned on each task's training split; there is no prompt and no
+        in-context examples.
+    - field: chain_of_thought
+      reason: The entrants are vision backbones that emit labels, values or masks, not text.
+    - field: reasoning_effort
+      reason: No reasoning setting exists for a fine-tuned vision backbone.
+    - field: tools_allowed
+      reason: The entrant is a backbone and a task head run on images; no tools are involved.
+    - field: retries_allowed
+      reason: Repeated runs are the protocol's fixed seeds (n_samples), not retries.
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The maintainers publish the normalisation factors and code, and the leaderboard ranks
+    models by normalised interquartile mean per capability group (per task set in GEO-Bench).
+  source: src-arxiv-2511-15658-v2
+  quote: All users should reuse these factors for consistency.
+
+homepage: https://the-ai-alliance.github.io/GEO-Bench-2/
+repository: https://github.com/The-AI-Alliance/GEO-Bench-2
+repository_note: GEO-Bench's repository is https://github.com/ServiceNow/geo-bench (see history).
+dataset_url: https://huggingface.co/collections/aialliance/geo-bench-2
+leaderboard_url: https://huggingface.co/spaces/aialliance/GEO-Bench-2-Leaderboard
+
+versions:
+  - version: v1.0
+    label: GEO-Bench (classification_v1.0 and segmentation_v1.0)
+    version_kind: edition
+    released: 2023-06-06
+    items: 12
+    changes: The first edition, six classification and six segmentation tasks from modified public
+      datasets, with no leaderboard.
+    breaking: true
+    superseded_by: v2
+    errata:
+      - scope: m-eurosat and m-brick-kiln
+        description: The stored metadata names the wrong Sentinel-2 band for most channels (the
+          pixel data is right); the Hugging Face data was not regenerated, so the README gives the
+          true channel order to apply on loading.
+        source: src-github-geo-bench-readme
+    frozen: true
+    sources:
+      - src-arxiv-2306-03831
+      - src-arxiv-2306-03831-v2
+      - src-github-geo-bench-readme
+  - version: v2
+    label: GEO-Bench-2
+    version_kind: edition
+    released: 2025-11-19
+    items: 19
+    changes: 19 datasets chosen from 35 candidates, three of them GEO-Bench's (m-so2sat,
+      m-forestnet, m-nz-cattle, the last recast as detection), adding pixel-wise regression, object
+      detection, instance segmentation, multi-temporal and multi-modal inputs. Results are ranked in
+      nine capability groups, with at least 5 seeds instead of 10, and a Hugging Face leaderboard.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: false
+    sources:
+      - src-arxiv-2511-15658
+      - src-arxiv-2511-15658-v2
+      - src-github-geo-bench-2-readme
+      - src-github-geo-bench-2-leaderboard-readme
+      - src-github-geo-bench-readme
+
+subsets:
+  - id: geo-bench#v1-classification
+    label: GEO-Bench classification (classification_v1.0)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2306-03831-v2
+        quote: Cite Sumbul et al. [2021] Zhu et al. [2019] Lee et al. [2021] Irvin et al. [2020]
+          Helber et al. [2019] Mayer et al. [2022]
+      - source: src-arxiv-2306-03831-v2
+        quote: RGB res Sensors 10.0 Sentinel-2 10.0 Sentinel-2 + Sentinel-1 10.0 Sentinel-2 15.0
+          Landsat-8 10.0 Sentinel-2 0.1 RGB
+      - source: src-arxiv-2306-03831-v2
+        quote: providing information such as the band name, spatial resolution, and spectral range
+      - source: src-arxiv-2306-03831-v2
+        quote: Sentinel-2 covers the whole Earth at 10-60 m/pixel resolution every 5 days
+    notes: >
+      Six tasks, aggregated together. Ground sample distance is Table 1's "RGB res" column, the resolution
+      of the RGB bands, read in the table's row order (the order of its citation column, quoted); bands
+      outside RGB can be coarser (Sentinel-2's run from 10 to 60 m), and the data schema records each
+      band's own resolution.
+  - id: geo-bench#m-bigearthnet
+    label: m-bigearthnet (BigEarthNet, multi-label land cover)
+    parent: geo-bench#v1-classification
+    notes: Sentinel-2, 10 m.
+  - id: geo-bench#m-so2sat
+    label: m-so2sat (So2Sat LCZ42, local climate zones)
+    parent: geo-bench#v1-classification
+    notes: Sentinel-2 and Sentinel-1, 10 m. Carried into GEO-Bench-2 unchanged.
+  - id: geo-bench#m-brick-kiln
+    label: m-brick-kiln (brick kilns in Bangladesh)
+    parent: geo-bench#v1-classification
+    notes: Sentinel-2, 10 m. Band metadata erratum (versions).
+  - id: geo-bench#m-forestnet
+    label: m-forestnet (drivers of deforestation in Indonesia)
+    parent: geo-bench#v1-classification
+    notes: Landsat-8, 15 m. Carried into GEO-Bench-2 unchanged.
+  - id: geo-bench#m-eurosat
+    label: m-eurosat (EuroSAT land use and land cover)
+    parent: geo-bench#v1-classification
+    notes: Sentinel-2, 10 m. Subsampled to 2,000 training images because most models saturate it;
+      band metadata erratum (versions).
+  - id: geo-bench#m-pv4ger
+    label: m-pv4ger (rooftop solar panels in Germany)
+    parent: geo-bench#v1-classification
+    notes: Aerial RGB, 0.1 m.
+  - id: geo-bench#v1-segmentation
+    label: GEO-Bench segmentation (segmentation_v1.0)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2306-03831-v2
+        quote: m-pv4ger-seg m-chesapeake-landcover m-cashew-plantation m-SA-crop-type m-nz-cattle
+          m-NeonTree
+      - source: src-arxiv-2306-03831-v2
+        quote: RGB res Sensors 0.1 RGB 1.0 RGBN 10.0 Sentinel-2 10.0 Sentinel-2 0.1 RGB 0.1 RGB +
+          Hyperspectral + Elevation
+      - source: src-arxiv-2306-03831-v2
+        quote: To maintain ease of use, detection and counting tasks were transformed into semantic
+          segmentation.
+    notes: >
+      Six tasks, aggregated together. Ground sample distance is Table 1's "RGB res" column in the order
+      of its name column (quoted).
+  - id: geo-bench#m-pv4ger-seg
+    label: m-pv4ger-seg (rooftop solar panel masks in Germany)
+    parent: geo-bench#v1-segmentation
+    notes: Aerial RGB, 0.1 m.
+  - id: geo-bench#m-chesapeake-landcover
+    label: m-chesapeake-landcover (Chesapeake Bay land cover)
+    parent: geo-bench#v1-segmentation
+    notes: Aerial RGBN, 1.0 m.
+  - id: geo-bench#m-cashew-plantation
+    label: m-cashew-plantation (cashew plantations in Benin)
+    parent: geo-bench#v1-segmentation
+    notes: Sentinel-2, 10 m.
+  - id: geo-bench#m-sa-crop-type
+    label: m-SA-crop-type (crop types in South Africa)
+    parent: geo-bench#v1-segmentation
+    notes: Sentinel-2, 10 m.
+  - id: geo-bench#m-nz-cattle
+    label: m-nz-cattle (cattle in New Zealand aerial imagery)
+    parent: geo-bench#v1-segmentation
+    notes: Aerial RGB, 0.1 m; a counting dataset turned into segmentation. GEO-Bench-2 recasts it as
+      object detection (nzcattle).
+  - id: geo-bench#m-neontree
+    label: m-NeonTree (tree crowns at NEON sites)
+    parent: geo-bench#v1-segmentation
+    notes: Aerial RGB at 0.1 m, with hyperspectral and elevation layers.
+  - id: geo-bench#v2-datasets
+    label: GEO-Bench-2's 19 datasets
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: BEN V2 [16] TreeSatAI [5] So2sat [38, 65] Forestnet [33, 38] BioMassters [44] CaFFe
+          [28] CloudSen12 [8] NASA Burn Scars [52] Dynamic EarthNet [53] FLAIR 2 [22] FTW [36]
+          KuroSiwo [13] PASTIS (R) [48] SpaceNet2 [56] SpaceNet7 [56] EverWatch [23] m-nzcattle [2]
+          PASTIS (R) panoptic [48] Substations [35]
+      - source: src-arxiv-2511-15658-v2
+        quote: GSD 10m 10m 10m 15m 10m 10m 10m 30m 3m 0.2m 10m 10m 10m 0.3m 3m 0.1m 0.1m 10m 10m
+      - source: src-arxiv-2511-15658-v2
+        quote: S1 SAR S1+S2 HLS Planet Aerial RGBN+DEM S2 S1+DEM+Slope S1+S2 Worldview Planet
+    notes: >
+      Each dataset is scored on its own and enters one or more capability groups. Ground sample distance
+      is Table 2's GSD column, one value per dataset, read in the order of its dataset column (both quoted);
+      the table gives one GSD per dataset, not per band or per modality. Modalities for the ten segmentation
+      datasets are the quoted run in the same order.
+  - id: geo-bench#v2-benv2
+    label: BigEarthNet V2 (multi-label land cover)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-1 and Sentinel-2, 10 m.
+  - id: geo-bench#v2-treesatai
+    label: TreeSatAI (multi-label tree species)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-2 time series, 10 m.
+  - id: geo-bench#v2-so2sat
+    label: So2Sat (local climate zones)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-2, 10 m; GEO-Bench's m-so2sat.
+  - id: geo-bench#v2-forestnet
+    label: ForestNet (drivers of deforestation)
+    parent: geo-bench#v2-datasets
+    notes: Landsat-8, 15 m; GEO-Bench's m-forestnet.
+  - id: geo-bench#v2-biomassters
+    label: BioMassters (above-ground biomass regression)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-1 and Sentinel-2 time series, 10 m; scored by RMSE.
+  - id: geo-bench#v2-caffe
+    label: CaFFe (glacier calving-front zones)
+    parent: geo-bench#v2-datasets
+    notes: SAR, 10 m.
+  - id: geo-bench#v2-cloudsen12
+    label: CloudSEN12 (cloud and shadow)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-1 and Sentinel-2, 10 m.
+  - id: geo-bench#v2-burn-scars
+    label: NASA Burn Scars
+    parent: geo-bench#v2-datasets
+    notes: Harmonized Landsat and Sentinel-2 (HLS), 30 m.
+  - id: geo-bench#v2-dynamic-earthnet
+    label: DynamicEarthNet (land use and land cover over time)
+    parent: geo-bench#v2-datasets
+    notes: Planet, 3 m.
+  - id: geo-bench#v2-flair2
+    label: FLAIR 2 (land cover in France)
+    parent: geo-bench#v2-datasets
+    notes: Aerial RGBN with elevation, 0.2 m.
+  - id: geo-bench#v2-fotw
+    label: Fields of The World (field boundaries)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-2, 10 m.
+  - id: geo-bench#v2-kuro-siwo
+    label: KuroSiwo (flood extent)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-1 with elevation and slope, 10 m.
+  - id: geo-bench#v2-pastis
+    label: PASTIS-R (crop type mapping, semantic)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-1 and Sentinel-2 time series, 10 m.
+  - id: geo-bench#v2-spacenet2
+    label: SpaceNet2 (building footprints)
+    parent: geo-bench#v2-datasets
+    notes: WorldView, 0.3 m.
+  - id: geo-bench#v2-spacenet7
+    label: SpaceNet7 (building footprints)
+    parent: geo-bench#v2-datasets
+    notes: Planet, 3 m.
+  - id: geo-bench#v2-everwatch
+    label: EverWatch (wading-bird detection)
+    parent: geo-bench#v2-datasets
+    notes: Aerial RGB, 0.1 m.
+  - id: geo-bench#v2-nzcattle
+    label: NZCattle (cattle detection)
+    parent: geo-bench#v2-datasets
+    notes: Aerial RGB, 0.1 m; GEO-Bench's m-nz-cattle recast as detection.
+  - id: geo-bench#v2-pastis-panoptic
+    label: PASTIS-R panoptic (crop parcels, instance segmentation)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-1 and Sentinel-2, 10 m.
+  - id: geo-bench#v2-substation
+    label: Substations (instance segmentation)
+    parent: geo-bench#v2-datasets
+    notes: Sentinel-2, 10 m.
+  - id: geo-bench#v2-core
+    label: GEO-Bench-2 Core capability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Core provides a balanced subset across all capabilities
+    notes: The balanced subset by which the paper orders its model ranking.
+  - id: geo-bench#v2-classification
+    label: GEO-Bench-2 Classification capability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Classification includes single- and multi-label image classification tasks.
+  - id: geo-bench#v2-pixel-wise
+    label: GEO-Bench-2 Pixel-wise capability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Pixel-wise predictions encompass semantic segmentation and regression, assigning
+          classes or continuous values per pixel.
+  - id: geo-bench#v2-detection
+    label: GEO-Bench-2 Detection capability
+    scored_separately: true
+    domain_override:
+      primary: earth-climate/remote-sensing
+      secondary:
+        - vision/detection
+        - vision/segmentation
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Detection evaluates object detection and instance segmentation with bounding boxes
+          and masks.
+    notes: The detection datasets enter only two capability groups, for their computational cost.
+  - id: geo-bench#v2-multi-temporal
+    label: GEO-Bench-2 Multi-Temporal capability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Multi-temporal datasets include multiple timestamps for change detection and temporal
+          modeling.
+  - id: geo-bench#v2-gsd-under-10m
+    label: GEO-Bench-2 capability, ground sample distance under 10 m
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: To study over-reliance on data coming from Sentinel or Landsat, we also create
+          subsets to study performances under and above 10 m GSD.
+    notes: The high-resolution group (aerial, Planet and WorldView data). Its members are the
+      checked rows of the paper's Table 3, whose text layer does not keep the column alignment; by
+      Table 2's GSD six datasets are under 10 m, and not every one need be in the group, since
+      detection datasets enter only two groups.
+  - id: geo-bench#v2-gsd-10m-and-above
+    label: GEO-Bench-2 capability, ground sample distance of 10 m and above
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: To study over-reliance on data coming from Sentinel or Landsat, we also create
+          subsets to study performances under and above 10 m GSD.
+    notes: The Sentinel and Landsat group. Members as for the group under 10 m.
+  - id: geo-bench#v2-rgb-nir
+    label: GEO-Bench-2 RGB/NIR capability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Spectrally, RGB/NIR includes basic visible and near-infrared data, while
+          Multi-spectral-dependent requires optical bands beyond RGB for task completion
+  - id: geo-bench#v2-multi-spectral
+    label: GEO-Bench-2 Multi-Spectral-dependent capability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2511-15658-v2
+        quote: Spectrally, RGB/NIR includes basic visible and near-infrared data, while
+          Multi-spectral-dependent requires optical bands beyond RGB for task completion
+    notes: Datasets whose scores dropped significantly when only RGB bands were given.
+subsets_note: Spatial resolution is recorded here because no conditions field holds it. A
+  GEO-Bench-2 paper ablation coarsened the test images' ground sample distance and scores fell
+  (quoted in capability_considered_and_rejected and review_checks), and GEO-Bench warns that
+  crop-and-resize augmentation lowers resolution, so a result is comparable only at the task's
+  native resolution and with the same resizing.
+
+lineage:
+  role: root
+
+history:
+  - date: 2025-11-19
+    event: maintainer-changed
+    field: governance.maintainer
+    from: ServiceNow Research (GEO-Bench)
+    to: The AI Alliance, with IBM, ServiceNow and TUM (GEO-Bench-2)
+    source: src-github-geo-bench-readme
+    quote: GEO-Bench-2 is the successor to GEO-Bench, published by the AI Alliance
+    note: Dated by GEO-Bench-2's first arXiv version (src-arxiv-2511-15658). GEO-Bench's README
+      calls it a ServiceNow Research project; Lacoste (ServiceNow) is the corresponding author of
+      both papers.
+  - date: 2025-11-19
+    event: repository-moved
+    field: repository
+    from: https://github.com/ServiceNow/geo-bench
+    to: https://github.com/The-AI-Alliance/GEO-Bench-2
+    source: src-github-geo-bench-readme
+    quote: We recommend using [GEO-Bench-2](https://the-ai-alliance.github.io/GEO-Bench-2/) instead
+      of
+    note: The old repository stays open (last pushed 2026-09-28, GitHub API) and recommends the new
+      one. The GEO-Bench-2 repository was created in May 2024, before its release.
+  - date: 2025-11-19
+    event: channel-opened
+    field: governance.submission_process
+    from: none (GEO-Bench asked authors to publish per-seed CSV files with their papers)
+    to: maintainer-verified
+    source: src-arxiv-2511-15658-v2
+    quote: an interactive leaderboard on Hugging Face for community engagement
+    note: Dated by the paper's release; the leaderboard's repository was created on 2025-08-19
+      (GitHub API).
+
+tags:
+  - earth-observation
+  - geospatial-foundation-models
+  - satellite-imagery
+  - ground-sample-distance
+  - fine-tuning
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2306-03831-v2
+    - src-arxiv-2306-03831
+    - src-arxiv-2511-15658-v2
+    - src-arxiv-2511-15658
+    - src-github-geo-bench-readme
+    - src-github-geo-bench-2-readme
+    - src-github-geo-bench-2-leaderboard-readme
+    - src-arxiv-2605-12678-v3
+  sources_note: >
+    Both papers' latest PDFs (DOIs, not archived) read as text, and their abstract pages for dates; the
+    three READMEs at main; and the audit's v3 PDF as evidence of current use. GitHub's and Hugging Face's
+    APIs were read for licences, push dates, gating and the leaderboard's result files, and are cited
+    in notes, not as Sources. The Hugging Face leaderboard Space is a Docker app and was not scraped.
+  confidence: medium
+  review_checks:
+    - check: The entry is GEO-Bench with GEO-Bench-2 as its second edition, as GEO-Bench's README
+        calls it the successor and Lacoste is the corresponding author of both. But the holder
+        changed (ServiceNow to the AI Alliance), only three datasets carried over, and the stress
+        corpus and taxonomy examples treat geo-bench-2 as its own id. It could instead be its own
+        entry with lineage.supersedes.
+      field: versions
+      source: src-github-geo-bench-readme
+      quote: GEO-Bench-2 is the successor to GEO-Bench, published by the AI Alliance
+    - check: Spatial resolution has no EvalConditions field, so it is recorded per task in subsets
+        and reaches a claim only through subset_used. Resizing, cropping or coarsening the images
+        changes it and the score (GEO-Bench-2's GSD ablation; GEO-Bench's warning on
+        crop-and-resize). A resolution field, or a ruling that subset_used suffices, is needed; this
+        task could not file a tag gap or write a conditions record.
+      field: comparability.material_extra
+      source: src-arxiv-2511-15658-v2
+      quote: Both figures highlight that increasing GSD tends to lower test metrics across all
+        models.
+    - check: Every per-task ground sample distance and sensor in subsets was read from the text
+        layer of the two papers' tables, matched by row order to the name column. Check each against
+        Table 1 (GEO-Bench) and Table 2 (GEO-Bench-2) in the PDFs. GEO-Bench gives the RGB bands'
+        resolution only, and GEO-Bench-2 one value per dataset.
+      field: subsets
+    - check: Dataset licences are mixed and the sources disagree. Read in row order, GEO-Bench-2's
+        Table 2 gives DynamicEarthNet CC-BY-4.0, PASTIS CC-BY-4.0, KuroSiwo MIT and SpaceNet2
+        CC-BY-SA-4.0, while the Hugging Face tags (API, 2026-10-14) give cc-by-sa-4.0, etalab-2.0,
+        cc and cc-by-4.0. GEO-Bench's bundle is tagged cc-by-sa-4.0 as a whole against Table 1's
+        per-task licences.
+      field: data.dataset_licence
+    - check: maintainer_type community-collective follows the stress corpus for the current edition;
+        GEO-Bench was held by ServiceNow (industry-lab), and the AI Alliance's legal form was not
+        looked up.
+      field: governance.maintainer_type
+    - check: accepting-submissions rests on the stated pull-request route, but the leaderboard's
+        only result sets are the maintainers' own release runs, its repository was last pushed on
+        2026-01-19, and no outside submission was seen.
+      field: activity
+      source: src-github-geo-bench-2-leaderboard-readme
+      quote: Create a pull request to main
+    - check: GEO-Bench-2 is marked not frozen and refresh versioned-releases, but several of its
+        Hugging Face datasets were modified in December 2025 and January 2026 (API lastModified),
+        after the paper, with no version label stated for the change.
+      field: data.refresh
+    - check: The independence flag rests on IBM authors of TerraMind and Prithvi-EO-2.0 being
+        GEO-Bench-2 authors (and, for GEO-Bench, ServiceNow's SeCo among the baselines); the rows
+        are the paper's baselines, not models built for the board.
+      field: governance.independence_flags
+      source: src-arxiv-2511-15658-v2
+      quote: Some examples include TerraMind-V1-Large for its multi-spectral and Multi-Temporal
+        capabilities
+    - check: sample-efficiency was rejected although GEO-Bench ships official training subsets (1%
+        to 100%) and the paper reports results along them.
+      field: capability
