@@ -1,0 +1,581 @@
+# data/benchmarks/code/livecodebench.yaml
+#
+# P1-S10-T01, code entry 6 of 8. Filled from the LiveCodeBench paper, arXiv 2403.07974 read as its v2 PDF
+# (2024-06-06), and its abstract page; OpenReview's record of the paper, for the ICLR 2025 venue; the project site
+# livecodebench.github.io (scripts and styles stripped); the leaderboard page, read with its script, and the
+# performances_generation.json it renders; the repository README and ERRATA.md at main and GitHub's API record of
+# the repository; Hugging Face's API record of livecodebench/code_generation_lite; and the v1 PDF of OBC-Prune
+# (arXiv 2609.17890, September 2026), a paper that reports LiveCodeBench results. Every quote below is checked by
+# the quote-substring validator against those Sources' committed extracts.
+
+id: livecodebench
+name: LiveCodeBench
+aliases:
+  - LCB
+tagline: Dated LeetCode, AtCoder and Codeforces problems, so code models are scored on problems
+  newer than their training cutoff.
+description: >
+  A benchmark of Python coding problems collected continuously from contests on LeetCode, AtCoder
+  and Codeforces and tagged with their contest dates. A score is computed over a window of release
+  dates: for a model with a training cutoff, only problems released after it are counted, which is
+  the benchmark's defence against contamination. Problems come in labelled cumulative releases,
+  release_v1 (400 problems, May 2023 to March 2024) through release_v6 (1,055 problems, May 2023 to
+  April 2025). The headline scenario is code generation: the model gets the problem statement with
+  its example tests and writes a program, which counts only if it passes every hidden test, and
+  pass@1 is averaged over the problems in the window. Three further scenarios use the same problems:
+  self-repair (fixing a failed program from its error feedback), code execution (predicting a
+  program's output on an input, after CRUXEval's setup) and test output prediction (predicting the
+  expected output for an input from the problem statement). Tests come from the platforms where
+  available and otherwise from input generators written with GPT-4-Turbo. The leaderboard ranks
+  code generation only, by pass@1 with Easy, Medium and Hard columns over a date window the viewer
+  sets, and leaves unranked any model whose recorded date falls on or after the window's start.
+self_description:
+  source: src-arxiv-2403-07974-v2
+  quote: we propose LiveCodeBench, a comprehensive and contamination-free evaluation of LLMs for
+    code
+external_ids:
+  huggingface: livecodebench/code_generation_lite
+  arxiv: '2403.07974'
+paper:
+  title: 'LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code'
+  arxiv: '2403.07974'
+  version_read: v2
+  source: src-arxiv-2403-07974-v2
+released: 2024-03-12
+released_note: The paper's first arXiv version, as its abstract page dates it. The v2 read here
+  (2024-06-06) describes the 511-problem release_v2.
+released_source: src-arxiv-2403-07974
+released_quote: Submitted on 12 Mar 2024
+release_venue: ICLR 2025 (poster)
+release_venue_source: src-openreview-livecodebench-iclr2025
+release_venue_quote: '"venue":{"value":"ICLR 2025 Poster"}'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/competitive-programming
+  secondary:
+    - code/code-understanding
+    - code/bug-repair
+domain_basis:
+  reason: Every problem is an algorithmic contest problem taken from a weekly contest and judged by
+    hidden tests, which for generated tests include large inputs alongside the platform's own. The
+    code execution and test output prediction scenarios ask about a given program or problem without
+    writing one (code-understanding); self-repair fixes a failed program from its failing test
+    (bug-repair).
+  source: src-arxiv-2403-07974-v2
+  quote: we collect problems from weekly contests on competition platforms and tag them with a
+    release date
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: LeetCode problems come with a function signature to complete, but AtCoder and Codeforces
+      problems are whole stdin programs, and every problem is a rated contest problem filtered by
+      its platform's difficulty rating, which is the competitive-programming leaf's material.
+    source: src-arxiv-2403-07974-v2
+    quote: we use problem difficulty ratings (sourced from the competition websites) for filtering
+      the harder problems
+capability: []
+capability_note: No capability term names writing a correct program from a specification, the gap
+  HumanEval's entry logged (taxonomy/_failures/2026-10-10-humaneval-001.yaml, which names
+  LiveCodeBench). The code-execution subset carries deductive-reasoning as its own capability, as
+  CRUXEval's entry does for the same task.
+capability_considered_and_rejected:
+  - term: deductive-reasoning
+    reason: It fits the code execution scenario, where the output is fixed by the program and its
+      input, but that is one of four scenarios and not the one the leaderboard ranks; it is recorded
+      on that subset instead (subsets).
+  - term: self-correction
+    reason: The self-repair scenario gives the model the failing test case or the exception from the
+      grader, an external oracle telling it what is wrong, which the term's exclusion test rules
+      out.
+    source: src-arxiv-2403-07974-v2
+    quote: the model is additionally provided with error feedback (either the exception message or a
+      failing test case in case of incorrect code generation)
+  - term: distribution-shift-generalization
+    reason: Problems released after a model's cutoff are held out in time to avoid contamination,
+      not drawn from a shifted distribution; the paper reads the post-cutoff score as performance on
+      unseen problems of the same kind.
+  - term: quantitative-reasoning
+    reason: Some problems involve arithmetic, but the scored artefact is a program, not a quantity.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: A generated program counts only if it passes every hidden test when run, and the code
+    execution scenario runs an assertion with the predicted output in place.
+  source: src-arxiv-2403-07974-v2
+  quote: The evaluation is performed based on functional correctness, using a set of unseen test
+    cases.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Only the test output prediction scenario compares a predicted value with a stored
+      output, by equivalence checks the paper does not spell out; the ranked scenario runs tests.
+    source: src-arxiv-2403-07974-v2
+    quote: use equivalence checks for grading as specified in Section 2
+designed_for_subjects:
+  - instruction-tuned-model
+  - base-model
+designed_for_subjects_basis:
+  reason: The paper prompts instruction-tuned models zero-shot in every scenario and base models
+    with a fixed one-shot example in code generation only, 34 and 18 models respectively.
+  source: src-arxiv-2403-07974-v2
+  quote: For the base models, we use a constant one-shot example
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: The paper predates reasoning budgets and sets none. The leaderboard now lists models
+      once per reasoning-effort or thinking setting, recorded in observed_subjects.
+  - term: model-in-benchmark-harness
+    reason: Self-repair feeds the grader's error back once, from stored code-generation outputs, but
+      it is a secondary scenario; the ranked scenario is a single prompt.
+observed_subjects:
+  values:
+    - reasoning-model
+  basis: The leaderboard's 28 rows are chat and reasoning models, several of them listed once per
+    reasoning-effort or thinking setting, such as O3-Mini (Low), (Med) and (High) and Claude-Opus-4
+    with and without thinking; read 2026-10-14.
+  source: src-livecodebench-leaderboard-data
+as_used:
+  - protocol: LiveCodeBench reported as pass@16 under sampled decoding (temperature 0.6, top-p 0.95,
+      up to 32,768 tokens), with no release version or problem date window named, for distilled
+      reasoning models before and after pruning.
+    source: src-arxiv-2609-17890-v1
+    quote: LiveCodeBench (Jain et al. 2024) (pass@16)
+    note: OBC-Prune (September 2026), on DeepSeek-R1-Distill-Qwen 1.5B, 7B and 14B. Without a window
+      every problem of the release counts, however old, which is what the benchmark's date filter
+      exists to exclude.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers still report LiveCodeBench in September 2026, for example OBC-Prune on pruned
+    reasoning models. The maintainers have added no problems since release_v6 (the dataset was last
+    modified on 2025-06-05) and last pushed to the repository on 2025-07-16, which is maintenance
+    evidence, not lifecycle.
+  source: src-arxiv-2609-17890-v1
+  quote: LiveCodeBench (Jain et al. 2024) (pass@16)
+activity: accepting-submissions
+activity_note: Submissions go by pull request to the LiveCodeBench/submissions repository, which
+  GitHub's API shows last pushed on 2025-08-01 (read 2026-10-14; not a quoted Source). The newest
+  leaderboard rows are models from mid-2025.
+activity_basis:
+  reason: The README, at main, says the leaderboard currently accepts code generation submissions by
+    pull request, and the leaderboard has never run in rounds.
+  source: src-github-livecodebench-readme
+  quote: We are currently only accepting submissions for only the code generation scenario.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: O4-Mini (High)
+    source: src-livecodebench-leaderboard-data
+    observed_on: 2026-10-14
+    quote: '"model_repr": "O4-Mini (High)"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each problem's tests, taken from the platform where available (AtCoder)
+  and otherwise built from input generators written with GPT-4-Turbo and run through the collected
+  correct solutions.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The problems and tests are in an ungated Hugging Face dataset, and the evaluation code is
+    public.
+  source: src-hf-api-livecodebench-code-generation-lite
+  quote: '"gated":false'
+
+task:
+  exists: true
+  input:
+    - a problem statement with its example input-output tests, and starter code for LeetCode
+      problems
+  output: A Python program, a function for LeetCode problems and a stdin program for AtCoder and
+    Codeforces.
+  scoring: A program is correct only if it passes all of the problem's hidden tests. pass@1 is the
+    fraction of correct programs among 10 samples at temperature 0.2, averaged over the problems in
+    the chosen release-date window. Self-repair scores the program after one repair step; code
+    execution and test output prediction score a predicted output.
+  tests_hidden_from_system: true
+  source: src-arxiv-2403-07974-v2
+  quote: We use the Pass@1 metric measured as the fraction of the problems for which the model was
+    able to generate a program passing all tests.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The code generation problems and their tests are in a public, ungated Hugging Face
+      dataset; the other scenarios have datasets of their own beside it.
+    source: src-hf-api-livecodebench-code-generation-lite
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_note: The default release_latest follows the newest release, so a score must name its
+    release or window. The README's code_generation_lite, the default, pruned many tests from the
+    original set, which stays available with a flag; the ERRATA file lists problems with faulty
+    tests, undated.
+  refresh_basis:
+    reason: New problems arrive in labelled cumulative releases, release_v1 to release_v6, each with
+      a stated date range and problem count, and a score can be pinned to one of them or to a date
+      window.
+    source: src-github-livecodebench-readme
+    quote: Since LiveCodeBench is a continuously updated benchmark
+  data_provenance:
+    - web-scraped
+    - model-generated
+  data_provenance_note: Problem statements, solutions and platform tests were scraped from LeetCode,
+    AtCoder and Codeforces. Where the platform's hidden tests were not available, test inputs come
+    from generators that GPT-4-Turbo wrote, run through collected correct programs.
+  data_provenance_source: src-arxiv-2403-07974-v2
+  data_provenance_quote: We have written HTML scrapers for each of the above websites to collect
+    problems and the corresponding metadata.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The design makes the route low for a model scored only on problems released after its training
+    cutoff, and the leaderboard leaves unranked any model whose recorded date falls on or after the window's
+    start.
+    But every problem and its tests are public, older windows are evidenced as contaminated for some
+    models (DeepSeek's on LeetCode problems), and no problem released after April 2025 has been
+    added, so a model trained since has no post-cutoff window in the released set. Results reported
+    without a window (as_used) have no protection at all.
+  contamination_evidence:
+    - source: src-arxiv-2403-07974-v2
+      stance: supports
+      quote: which suggests that the earlier problems might indeed be contaminated
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: pass@1 is bounded at 100%. The ERRATA file lists a few problems that cannot be solved
+      under the current tests (interactive problems, erroneous tests), so the reachable score on a
+      window that holds them is below the bound; no source measures it.
+    source: src-github-livecodebench-errata
+    quote: This problem cannot be solved correctly with the current test cases.
+  dataset_licence: null
+  dataset_licence_note: Hugging Face's record tags the dataset "license:cc" with no variant, and the
+    repository's MIT licence covers the code. No licence for the data itself was read.
+  upstream_licences: The problem statements, solutions and tests are LeetCode's, AtCoder's and
+    Codeforces' content, scraped from public pages under a fair-use rationale for academic use.
+  upstream_licences_source: src-arxiv-2403-07974-v2
+  upstream_licences_quote: we scrape only the problem statements, ground-truth solutions, and test
+    cases from competition websites
+  size:
+    - count: 1055
+      unit: code generation problems
+      subset: release_v6 (problems released May 2023 to April 2025)
+      source: src-github-livecodebench-readme
+      quote: problems released between May 2023 and Apr 2025 containing 1055 problems
+    - count: 479
+      unit: code execution samples, from 85 LeetCode problems
+      subset: code execution (as the paper describes it)
+      source: src-arxiv-2403-07974-v2
+      quote: Our final dataset consists of 479 samples from 85 problems.
+    - count: 442
+      unit: test output prediction instances, from 181 LeetCode problems
+      subset: test output prediction (as the paper describes it)
+      source: src-arxiv-2403-07974-v2
+      quote: Our final dataset consists of 442 problem instances from a total of 181 LeetCode
+        problems.
+  size_note: The leaderboard's data file holds 1,055 problems dated 2023-05-08 to 2025-04-07, 602
+    from AtCoder, 444 from LeetCode and 9 from Codeforces (counted from the file, 2026-10-14).
+  languages:
+    - Python
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The LiveCodeBench team (UC Berkeley, with MIT and Cornell)
+  maintainer_basis:
+    reason: The authors are at UC Berkeley, MIT and Cornell, the first author at Berkeley; the
+      repository and the Hugging Face datasets sit in LiveCodeBench organisation accounts.
+    source: src-livecodebench-site
+    quote: 1UC Berkeley 2MIT 3Cornell University
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-verified
+    - maintainer-run
+  submission_process_note: Submitters open a pull request with their model's generations, which the
+    maintainers review before adding the model. The maintainers also ran the paper's 52 models and
+    built the time-window interface that compares them.
+  submission_process_source: src-github-livecodebench-readme
+  submission_process_quote: We will review the submission and add the model to the leaderboard
+    accordingly.
+  independence_flags:
+    - flag: funded-by-evaluated-party
+      source: src-arxiv-2403-07974-v2
+      quote: SKY Lab industrial sponsors and affiliates Astronomer, Google, IBM, Intel
+  independence_flags_note: The paper's work was supported in part by Berkeley's SKY Lab sponsors,
+    Google among them, and Google's Gemini models are evaluated in the paper and on the leaderboard.
+    No maintainer model appears on the leaderboard. Tests for some problems were built with
+    GPT-4-Turbo, an evaluated model, but scoring is by test execution, not by a judge.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The harness queries closed models through their APIs and serves open ones locally; the
+      tests run on CPU.
+    source: src-github-livecodebench-readme
+    quote: For closed API models, `--multiprocess` flag can be used to parallelize queries to API
+      servers
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public problems and tests and an open harness that generates and scores in one command.
+    source: src-github-livecodebench-readme
+    quote: python -m lcb_runner.runner.main --model {model_name} --scenario codegeneration
+      --evaluate
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: lcb_runner (lcb_runner.runner.main, and lcb_runner.evaluation.compute_scores for a date
+    window)
+  harness_source: src-github-livecodebench-readme
+  harness_quote: flags (using the `YYYY-MM-DD` format) to get scores over the specified time window
+  harness_gotcha:
+    source: src-github-livecodebench-readme
+    quote: We have pruned a large number of test cases from the original benchmark and created
+      `code_generation_lite` which is set as the default benchmark
+  code_licence: MIT
+  code_licence_source: src-livecodebench-gh-api
+  code_licence_quote: '"license":{"key":"mit","name":"MIT License","spdx_id":"MIT"'
+  runnable_via:
+    - custom
+  runnable_via_note: Inspect Evals has a livecodebench_pro task, for LiveCodeBench Pro, and none for
+    LiveCodeBench itself (its src/inspect_evals listing at main, read 2026-10-14 through GitHub's
+    API). Other harnesses were not checked.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The problem date window is the material condition here: a pass@1 means nothing without the release version
+  # and the start and end release dates of the problems it averages over. It goes in subset_used (the fallback's
+  # one field), as text such as "release_v6, problems 2025-01-01 to 2025-04-30"; lead_time and
+  # resolution_window are forecasting fields and are not used (review_checks). No profile resolves for
+  # execution-tests with instruction-tuned-model or base-model, so the fields a prompted code model's score moves
+  # with are added: prompting (one-shot base, zero-shot instruct), reasoning effort (the leaderboard lists models
+  # per effort), the sampling and number of samples behind pass@1 (n = 10 at temperature 0.2) or a pass@k, and
+  # the harness (code_generation_lite's pruned tests or the original set).
+  material_extra:
+    - shots
+    - chain_of_thought
+    - reasoning_effort
+    - sampling
+    - n_samples
+    - k
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The headline is pass@1 averaged over the problems in the chosen window, with Easy, Medium
+    and Hard averages beside it on the leaderboard.
+  source: src-livecodebench-leaderboard
+  quote: Rank Model Pass@1 Easy Medium Hard
+
+homepage: https://livecodebench.github.io/
+repository: https://github.com/LiveCodeBench/LiveCodeBench
+dataset_url: https://huggingface.co/datasets/livecodebench/code_generation_lite
+leaderboard_url: https://livecodebench.github.io/leaderboard.html
+
+versions:
+  - version: release_v1
+    label: release_v1
+    version_kind: revision
+    items: 400
+    changes: The initial release, problems released May 2023 to March 2024.
+    breaking: true
+    superseded_by: release_v2
+    frozen: true
+    sources:
+      - src-github-livecodebench-readme
+  - version: release_v2
+    label: release_v2
+    version_kind: revision
+    items: 511
+    changes: Problems released May 2023 to May 2024; the release the paper's v2 describes.
+    breaking: true
+    supersedes_version: release_v1
+    superseded_by: release_v3
+    frozen: true
+    sources:
+      - src-github-livecodebench-readme
+      - src-arxiv-2403-07974-v2
+  - version: release_v3
+    label: release_v3
+    version_kind: revision
+    items: 612
+    changes: Problems released May 2023 to July 2024.
+    breaking: true
+    supersedes_version: release_v2
+    superseded_by: release_v4
+    frozen: true
+    sources:
+      - src-github-livecodebench-readme
+  - version: release_v4
+    label: release_v4
+    version_kind: revision
+    items: 713
+    changes: Problems released May 2023 to September 2024.
+    breaking: true
+    supersedes_version: release_v3
+    superseded_by: release_v5
+    frozen: true
+    sources:
+      - src-github-livecodebench-readme
+  - version: release_v5
+    label: release_v5
+    version_kind: revision
+    items: 880
+    changes: Problems released May 2023 to January 2025; the leaderboard's previous version.
+    breaking: true
+    supersedes_version: release_v4
+    superseded_by: release_v6
+    frozen: true
+    sources:
+      - src-github-livecodebench-readme
+      - src-livecodebench-leaderboard
+  - version: release_v6
+    label: release_v6
+    version_kind: revision
+    items: 1055
+    changes: Problems released May 2023 to April 2025, the 175 problems added since release_v5 among
+      them; the version the leaderboard ranks.
+    breaking: true
+    supersedes_version: release_v5
+    frozen: true
+    sources:
+      - src-github-livecodebench-readme
+      - src-hf-api-livecodebench-code-generation-lite
+      - src-livecodebench-leaderboard-data
+
+subsets:
+  - id: livecodebench#code-generation
+    label: Code generation
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07974-v2
+        quote: The model is given a problem statement, which includes a natural language description
+          and example tests (input-output pairs), and is tasked with generating a correct solution.
+    notes: The headline scenario and the only one the leaderboard ranks; its problem count is the
+      release's.
+  - id: livecodebench#self-repair
+    label: Self-repair
+    scored_separately: true
+    domain_override:
+      primary: code/bug-repair
+    evidence:
+      - source: src-arxiv-2403-07974-v2
+        quote: Self-Repair. Fix an incorrect program from execution information, evaluating the
+          ability to debug code from feedback.
+    notes: Built from the code generation outputs and their error feedback; scored by pass@1 after
+      the repair step.
+  - id: livecodebench#code-execution
+    label: Code execution
+    items: 479
+    scored_separately: true
+    domain_override:
+      primary: code/code-understanding
+    capability_override:
+      - deductive-reasoning
+    evidence:
+      - source: src-arxiv-2403-07974-v2
+        quote: the model generation is considered correct if assert f(input) == generated output
+          passes
+    notes: Human-written LeetCode solutions with a test input; the model predicts the output, which
+      an executed assertion checks. The output is fixed by the program and its input alone, hence
+      deductive-reasoning.
+  - id: livecodebench#test-output-prediction
+    label: Test output prediction
+    items: 442
+    scored_separately: true
+    domain_override:
+      primary: code/code-understanding
+    evidence:
+      - source: src-arxiv-2403-07974-v2
+        quote: it is tasked with generating the expected output for that input
+    notes: The model reads a LeetCode problem statement and a test input and predicts the expected
+      output, without a program.
+
+tags:
+  - competitive-programming
+  - code-generation
+  - contamination-resistant
+  - release-date-window
+  - python
+  - pass-at-k
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2403-07974-v2
+    - src-arxiv-2403-07974
+    - src-openreview-livecodebench-iclr2025
+    - src-livecodebench-site
+    - src-livecodebench-leaderboard
+    - src-livecodebench-leaderboard-data
+    - src-github-livecodebench-readme
+    - src-github-livecodebench-errata
+    - src-livecodebench-gh-api
+    - src-hf-api-livecodebench-code-generation-lite
+    - src-arxiv-2609-17890-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the date and the CC BY
+    licence; OpenReview's search record of the paper for the venue (its notes endpoint asked for a
+    challenge, which was not attempted); the project site with scripts and styles stripped (withheld from
+    archiving: it gives the first author's e-mail address); the leaderboard page read with its script,
+    which holds its ranking rule, and the JSON it loads; the README and ERRATA.md at main; GitHub's API
+    record of the repository; Hugging Face's API record of the code generation dataset; and OBC-Prune's
+    v1
+    PDF (a DOI, not archived) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: The problem date window is recorded in subset_used, as the release version and the
+        start and end release dates, because EvalConditions has no date-window field. lead_time and
+        resolution_window are the forecasting profile's fields and were not used. A structured
+        window (start, end) may deserve fields of its own.
+      field: comparability
+      source: src-github-livecodebench-readme
+      quote: flags (using the `YYYY-MM-DD` format) to get scores over the specified time window
+    - check: "Domain: competitive-programming primary rests on contest problems with hidden tests that
+        include large generated inputs, but no source says the platforms' original time limits are kept,
+        which the leaf's distinction from function-synthesis turns on. The secondaries and the subsets'
+        domain overrides (code-understanding, bug-repair) come from the three non-ranked scenarios."
+      field: domain
+    - check: capability is empty (the program-synthesis gap logged for HumanEval), with
+        deductive-reasoning only on the code-execution subset, as on CRUXEval's entry.
+      field: capability
+    - check: "The leaderboard's contamination flag compares each model's recorded date with the window
+        start, and those dates are the maintainers': every OpenAI and Gemini row, and most Claude rows,
+        carry 2023-04-30, so they are never flagged, while DeepSeek-V3 and Qwen3 carry 2024-06-30. Whether
+        contamination_risk should be medium, as drafted, or low (the design) or high (public windows predating
+        every current model's cutoff)."
+      field: data.contamination_risk
+      source: src-livecodebench-leaderboard-data
+      quote: '"model_name": "o4-mini__high", "model_repr": "O4-Mini (High)", "model_style": "OpenAIReason",
+        "release_date": 1682812800000'
+    - check: activity accepting-submissions rests on the README's present-tense statement; the
+        submissions repository was last pushed on 2025-08-01 and no release has followed release_v6,
+        so the channel may be dormant.
+      field: activity
+      source: src-github-livecodebench-readme
+      quote: We are currently only accepting submissions for only the code generation scenario.
+    - check: submission_process maintainer-verified assumes the maintainers review submitted
+        generations before listing them. If they score the submitted generations themselves against
+        the public tests, maintainer-scored-predictions fits better.
+      field: governance.submission_process
+    - check: funded-by-evaluated-party rests on Google among the Berkeley SKY Lab's sponsors
+        credited for supporting the paper's work, lab-level support rather than a grant for the
+        benchmark.
+      field: governance.independence_flags
+      source: src-arxiv-2403-07974-v2
+      quote: SKY Lab industrial sponsors and affiliates Astronomer, Google, IBM, Intel
+    - check: theoretical-maximum, although the ERRATA lists interactive problems and problems with
+        erroneous tests that no model can solve; that may read as a measured bound below 100%.
+      field: data.ceiling_anchor_type
+      source: src-github-livecodebench-errata
+      quote: These problems require the submission to interact with the judge to get the final
+        answer.
+    - check: 'Identity: one entry, with the four scenarios as subsets (they have separate Hugging Face
+        datasets) and code_generation_lite versus the original tests as a harness condition. LiveCodeBench
+        Pro, which Inspect Evals implements, is not included; its relation to LiveCodeBench was not read.'
+      field: subsets

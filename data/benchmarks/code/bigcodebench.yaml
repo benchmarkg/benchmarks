@@ -1,0 +1,552 @@
+# data/benchmarks/code/bigcodebench.yaml
+#
+# P1-S10-T01, code entry 7 of 8. Filled from the BigCodeBench paper, arXiv 2406.15877 read as its v4 PDF
+# (2025-04-01, ICLR 2025), and its abstract page; the repository README, ADVANCED_USAGE.md, the dataset loader
+# and the release notes (GitHub releases API) at main; GitHub's API record for bigcode-project/bigcodebench; the
+# Hugging Face API record for the bigcode/bigcodebench dataset; the leaderboard site (scripts and styles stripped)
+# and its results.json; the leaderboard Space's about.py (its Request tab); UK AISI inspect_evals' bigcodebench
+# README; and the v1 PDF of a 2026 paper that reports on BigCodeBench-Hard. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: bigcodebench
+name: BigCodeBench
+tagline: 1,140 Python tasks that call functions from 139 libraries, in Complete and Instruct
+  prompts, scored by unit tests.
+description: >
+  1,140 function-level Python programming tasks, each of which asks for a self-contained function that
+  uses several libraries (723 function calls from 139 libraries across 7 domains, such as data analysis,
+  networking and visualisation). Each task comes with a unittest class of 5.6 test cases on average, with
+  99% average branch coverage and set-ups such as database connections, created directories and mocked
+  requests. The tasks were synthesised by GPT-4 from Stack Overflow seed examples (ODEX), then refactored,
+  tested and
+  curated by 20 annotators with GPT-4's help. Every task has two prompts: Complete gives the function
+  header with a full PEP-257 docstring (parameters, returns, raises, required libraries, examples), and
+  Instruct gives a short natural-language instruction, for instruction-tuned models only. A task passes
+  when all of its tests pass; the leaderboard ranks calibrated pass@1 under greedy decoding, where
+  calibration restores imports and set-up a model left out. BigCodeBench-Hard is a 148-task subset of
+  harder, more user-facing tasks. The data is versioned on the Hugging Face Hub (v0.1.0 to v0.1.4).
+self_description:
+  source: src-arxiv-2406-15877-v4
+  quote: we introduce BigCodeBench, a benchmark that challenges LLMs to invoke multiple function
+    calls as tools from 139 libraries and 7 domains for 1,140 fine-grained tasks
+external_ids:
+  inspect_evals: bigcodebench
+  huggingface: bigcode/bigcodebench
+  arxiv: '2406.15877'
+paper:
+  title: 'BigCodeBench: Benchmarking Code Generation with Diverse Function Calls and Complex Instructions'
+  arxiv: '2406.15877'
+  version_read: v4
+  source: src-arxiv-2406-15877-v4
+released: 2024-06-18
+released_note: The release announced in the README with PyPI package 0.1.5, the dataset on the
+  Hugging Face Hub and the preprint; the paper's arXiv v1 is dated 2024-06-22.
+released_source: src-github-bigcodebench-readme
+released_quote: '[2024-06-18]** We release BigCodeBench, a new benchmark'
+release_venue: ICLR 2025 (Oral)
+release_venue_source: src-arxiv-2406-15877
+release_venue_quote: ICLR 2025 (Oral)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/function-synthesis
+domain_basis:
+  reason: Each task asks for one self-contained function from its docstring or instruction, judged
+    by running its unit tests, which is the leaf's definition; the README calls the tasks
+    HumanEval-like and function-level.
+  source: src-github-bigcodebench-readme
+  quote: The benchmark is designed for HumanEval-like function-level code generation tasks, but with
+    much more complex instructions and diverse function calls.
+domain_considered_and_rejected:
+  - term: agents-tooluse/software-agents
+    reason: The paper calls library functions tools, but the model writes one program in one turn,
+      with no environment to act in and no execution feedback; the paper sets the benchmark apart
+      from code-agent benchmarks.
+    source: src-arxiv-2406-15877-v4
+    quote: Our BigCodeBench focuses on evaluating the fundamental code generation capability of
+      LLMs, which is also an essential path toward strong code agents
+  - term: code/data-science-workflows
+    reason: Many tasks use pandas, numpy or matplotlib, but each is a function scored by unit tests
+      on inputs the tests construct, not an analysis of real data to a quantitative answer.
+capability: []
+capability_note: No capability term passes for writing a correct, library-using program from a
+  specification, the gap HumanEval's entry logged. The paper's two claims, diverse function calls
+  and complex instructions, map to tool-use and instruction-following, and both fail their inclusion
+  tests (capability_considered_and_rejected).
+capability_considered_and_rejected:
+  - term: tool-use
+    reason: The paper calls library functions "tools", but the model never invokes anything during
+      the evaluation and sees no results; it emits one program, and the calls run only when the
+      tests execute it. The protocol exposes no callable tools to the system, which the inclusion
+      test asks.
+    source: src-arxiv-2406-15877-v4
+    quote: we introduce BigCodeBench, a benchmark that challenges LLMs to invoke multiple function
+      calls as tools from 139 libraries and 7 domains for 1,140 fine-grained tasks
+  - term: instruction-following
+    reason: The paper claims to test following complex instructions, but the score is only whether
+      the program passes its tests; compliance is not scored apart from correctness, which the
+      exclusion test rules out.
+    source: src-arxiv-2406-15877-v4
+    quote: LLMs are not yet capable of following complex instructions to use function calls
+      precisely
+  - term: constraint-satisfaction
+    reason: Every test of a task must pass, but the tests check behaviour, not an enumerated list of
+      stated requirements, and the source does not claim constraint satisfaction.
+  - term: compositional-generalization
+    reason: Tasks combine at least two libraries, but no split holds out combinations of primitives
+      seen in training or in the prompt.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: The generated function is executed against its unittest cases, and a task counts as solved
+    only when all of them pass.
+  source: src-arxiv-2406-15877-v4
+  quote: to verify program behaviors instead of relying on simple input-output assertions
+designed_for_subjects:
+  - base-model
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The Complete prompt is a function header and docstring that a base model continues (the
+    harness's --direct_completion mode); the Instruct prompt is for instruction-tuned and chat
+    models only. The harness keeps a separate prompt for each.
+  source: src-github-bigcodebench-readme
+  quote: BigCodeBench uses different prompts for base and chat models.
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: Leaderboard rows record reasoning-effort settings (o1, o3-mini, Claude 3.7 Sonnet), but
+      the benchmark is not designed around a reasoning budget; the setting is a run condition
+      (comparability).
+as_used:
+  - protocol: Pass@1 on BigCodeBench-Hard's Instruct split with a Qwen3-8B actor, where a
+      verifier-driven method may revise each response once before it is scored, beside direct
+      generation (21.62%).
+    split: Hard, Instruct
+    source: src-arxiv-2610-17609-v1
+    quote: Code generation checked by execution, Instruct split
+    note: Verifier-Harness Co-Evolution (arXiv 2610.17609, October 2026). Its revised responses are
+      not single-sample model outputs, so they are not comparable with the leaderboard's greedy
+      pass@1.
+  - protocol: inspect_evals' port, which scores v0.1.2 with the Complete prompt prefaced by an
+      instruction to implement the function, for chat models; neither the Instruct prompt nor the
+      calibration step is used.
+    source: src-inspect-evals-bigcodebench-readme
+    quote: this implementation always uses the complete prompt, prefaced with the following
+      (customizable) instruction prompt
+    note: The README reports gpt-4o-mini at 55.4% in the port against 57.4% on the official
+      leaderboard.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against it; a paper of 2026-10-13 reports Pass@1 on
+    BigCodeBench-Hard, and inspect_evals' port was last changed on 2026-08-03. The maintainers'
+    repository is archived and was last pushed on 2026-01-03 (GitHub API), and the newest model on
+    the leaderboard dates from 2025-04-14, which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2610-17609-v1
+  quote: Accuracy for IFBench and Hard-MATH, Pass@1 for BigCodeBench-Hard.
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard has never run in rounds, and its Space's Request tab still invites
+    results, sent by e-mail with raw and sanitised generations, execution logs and pass rates, and
+    reviewed before they are added.
+  source: src-bigcodebench-leaderboard-space-about
+  quote: We welcome the community to submit the evaluation results or request for new models to be
+    added to the leaderboard.
+  caveat: The newest model in the leaderboard's results.json is dated 2025-04-14 (rows for April
+    2025 models have no Full-set score yet), the site's repository was last pushed on 2025-04-16,
+    and the code repository, where the README asks submitters to file a reminder issue, is archived
+    (GitHub API). Whether the e-mail route still adds rows is unconfirmed; closed would also be
+    defensible.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4o
+    source: src-arxiv-2406-15877-v4
+    observed_on: 2026-10-14
+    quote: the best performing LLM, GPT-4o, solves merely 60% of tasks on BigCodeBench-Complete
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's unittest TestCase class, written and refined by the annotators
+  with GPT-4's help and checked against the task's canonical solution.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Tasks, canonical solutions and tests are on the Hugging Face Hub without a gate, and the
+    harness runs them locally in the released evaluation image.
+  source: src-github-bigcodebench-advanced-usage
+  quote: docker run -v $(pwd):/app bigcodebench/bigcodebench-evaluate:latest --execution local
+
+task:
+  exists: true
+  input:
+    - 'Complete: a Python function header with its imports and a PEP-257 docstring giving the description,
+      parameters, returns, raised exceptions, required libraries and examples'
+    - 'Instruct: a short natural-language instruction, with the imports and header to start from'
+  output: A self-contained Python function (task_func), with its imports.
+  scoring: A task passes when every test in its unittest class passes. The leaderboard reports
+    calibrated pass@1 under greedy decoding (calibration adds the imports and set-up a generation
+    omitted), per prompt (Complete, Instruct) and per set (Full, Hard); the harness also computes
+    pass@k from n samples by the unbiased estimator.
+  tests_hidden_from_system: true
+  reference_solution: true
+  source: src-arxiv-2406-15877-v4
+  quote: we report Pass@1 with greedy decoding for the main experiments in the zero-shot setting
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The dataset, with each task's prompts, canonical solution and tests, is on the Hugging
+      Face Hub without a gate, under Apache-2.0.
+    source: src-hf-api-bigcodebench
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The tasks change only in labelled dataset versions (v0.1.0 to v0.1.4, each a split on
+      the Hub), and the package release that moved to v0.1.2 listed the tasks it fixed.
+    source: src-github-bigcodebench-releases
+    quote: The benchmark data has been bumped to `v0.1.2`
+  data_provenance:
+    - model-generated
+    - expert-authored
+  data_provenance_note: GPT-4 (gpt-4-0613) synthesised the tasks from ODEX's Stack Overflow seed
+    examples and, in Code Interpreter sessions steered by the annotators, refactored them and wrote
+    their tests. Twenty authors, three quarters with more than five years of Python, then added test
+    cases, fixed flaky tests and rewrote docstrings, so the humans wrote part of each item rather
+    than only filtering it.
+  data_provenance_source: src-arxiv-2406-15877-v4
+  data_provenance_quote: The construction is progressively contributed by 20 authors as annotators
+    for one year in total, with 75% of them having more than 5 years of experience in Python
+    programming
+  contamination_risk: medium
+  contamination_risk_note: >
+    The tasks, canonical solutions and tests have been public since June 2024. As a measure, the
+    maintainers published the data on the Hugging Face Hub rather than in the GitHub repository, to keep
+    it out of scraped GitHub code, and they acknowledge that prompts sent to closed APIs may be
+    collected. Their n-gram check against ODEX, a Stack Overflow archive and StarCoderData found at most
+    2.5% of tasks overlapping at 10-grams. The paper's plan for a private test set has not appeared in
+    any source read, and the leaderboard leaves contamination to model providers ("Model providers have
+    the responsibility to avoid data contamination"), marking open-data models so readers can check.
+  contamination_risk_source: src-arxiv-2406-15877-v4
+  contamination_risk_quote: we have decided to release the data on Hugging Face rather than directly
+    on GitHub
+  contamination_evidence:
+    - source: src-arxiv-2406-15877-v4
+      stance: against
+      quote: With a stricter 10-gram configuration, no more than 2.5% of BigCodeBench tasks
+        overlapped with the tested data sources.
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_basis:
+    reason: The paper reads model scores against human performance of 97%, from 11 annotators who
+      solved 33 sampled tasks (32 passed every test).
+    source: src-arxiv-2406-15877-v4
+    quote: significantly lower than the human performance of 97%
+  dataset_licence: Apache-2.0
+  dataset_licence_source: src-hf-api-bigcodebench
+  dataset_licence_quote: license:apache-2.0
+  size:
+    - count: 1140
+      unit: tasks, each with a Complete and an Instruct prompt
+      subset: Full
+      source: src-arxiv-2406-15877-v4
+      quote: Our benchmark contains 1,140 rich-context and multi-tool-use programming tasks in
+        Python, covering 723 function calls from 139 popular libraries across 7 domains
+    - count: 148
+      unit: tasks
+      subset: Hard
+      source: src-github-bigcodebench-readme
+      quote: We announce a subset of BigCodeBench, BigCodeBench-Hard, which includes 148 tasks
+  languages:
+    - Python
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: BigCode (the bigcode-project GitHub and bigcode Hugging Face organisations)
+  maintainer_basis:
+    reason: The repository sits in the bigcode-project organisation and the dataset and leaderboard
+      in the bigcode organisation on the Hub; the paper's arXiv comment credits the BigCode
+      community. Its lead author is at Monash University and CSIRO's Data61, and the senior authors
+      at Monash, ServiceNow Research and Hugging Face.
+    source: src-arxiv-2406-15877
+    quote: built with love by the BigCode community
+  maintainer_type: community-collective
+  maintainer_type_note: The artefacts are in BigCode's shared organisation accounts, and no source
+    read names one institution as their holder or gives BigCode a legal form.
+  submission_process:
+    - maintainer-run
+    - maintainer-verified
+  submission_process_note: The maintainers evaluated most rows themselves and published the samples
+    with each package release (139 models at v0.2.0, 163 by January 2025). Outside results go by
+    e-mail with raw and sanitised generations, execution logs and pass rates, and the maintainers
+    review them before adding them. An experimental route for submitting models to be run on the
+    Hugging Face cluster is described in about.py but not shown in the Space.
+  submission_process_source: src-bigcodebench-leaderboard-space-about
+  submission_process_quote: We will review and add the results to the leaderboard as soon as
+    possible.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-bigcodebench-leaderboard-data
+      quote: '"StarCoder2-15B-Instruct-v0.1": { "link": "https://huggingface.co/bigcode/starcoder2-15b-instruct-v0.1"'
+    - flag: funded-by-evaluated-party
+      source: src-arxiv-2406-15877-v4
+      quote: Google Research Scholar Program Award
+  independence_flags_note: BigCode's own StarCoder2 models (3B, 7B, 15B and 15B-Instruct, all under
+    huggingface.co/bigcode) are ranked on the leaderboard, as baselines rather than models built for
+    it. The paper's acknowledgements list a Google Research Scholar Program Award to its senior
+    author among the work's support, and Gemini models are ranked, Gemini-Exp-1206 first on the
+    Complete prompt. The tasks were also synthesised with OpenAI's GPT-4, an evaluated model, which
+    is a data-provenance matter, not a flag.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public tasks and tests and an open harness; execution runs locally in a Docker image or
+      on a remote sandbox, and scoring is automatic.
+    source: src-github-bigcodebench-advanced-usage
+    quote: docker run -v $(pwd):/app bigcodebench/bigcodebench-evaluate:latest --execution local
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: bigcodebench (the PyPI package's bigcodebench.evaluate, executing locally in the
+    bigcodebench/bigcodebench-evaluate Docker image or on the remote Gradio or E2B sandboxes)
+  harness_source: src-github-bigcodebench-readme
+  harness_quote: bigcodebench.evaluate
+  harness_gotcha:
+    source: src-github-bigcodebench-advanced-usage
+    quote: Due to the flakiness in the evaluation, the execution results may vary slightly (~0.2%
+      for Full set, and ~0.6% for Hard set) between runs.
+  harness_gotcha_note: Scores also move with settings that are easy to miss. Calibration is on by
+    default; base models that ship a chat template must be run with --direct_completion or they are
+    prompted in chat mode; batch inference can change greedy outputs; and the leaderboard strips
+    trailing newlines for StarCoder2 and Granite-Code.
+  code_licence: Apache-2.0
+  code_licence_source: src-bigcodebench-gh-api
+  code_licence_quote: '"spdx_id":"Apache-2.0"'
+  runnable_via:
+    - custom
+    - inspect
+  runnable_via_note: The inspect_evals port does not match the official scoring. It pins dataset
+    v0.1.2 rather than the harness's v0.1.4, always uses the Complete prompt behind an added
+    instruction, runs one pass@1 attempt with no calibration, and builds its own Docker image with
+    an unpinned tensorflow.
+  runnable_via_source: src-inspect-evals-bigcodebench-readme
+  runnable_via_quote: uv run inspect eval inspect_evals/bigcodebench
+  inspect_evals_id: bigcodebench
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (subset_used carries Complete or Instruct and Full or Hard): k and the number of
+  # samples behind it, the decoding (greedy pass@1 or sampled), the harness (official, calibrated by default, or a
+  # port such as inspect_evals'), the prompt template (direct completion or chat, with or without response
+  # prefilling), and the reasoning effort the leaderboard records per row. The dataset version is pinned on claims.
+  material_extra:
+    - k
+    - n_samples
+    - sampling
+    - harness
+    - prompt_template_hash
+    - reasoning_effort
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: Each board reports pass@1 averaged over the tasks of one prompt and one set.
+  source: src-bigcodebench-leaderboard
+  quote: Models are ranked according to (calibrated) Pass@1 using greedy decoding.
+
+homepage: https://bigcode-bench.github.io/
+repository: https://github.com/bigcode-project/bigcodebench
+dataset_url: https://huggingface.co/datasets/bigcode/bigcodebench
+leaderboard_url: https://huggingface.co/spaces/bigcode/bigcodebench-leaderboard
+
+versions:
+  - version: v0.1.0
+    label: v0.1.0 (the v0.1.0_hf split on the Hub)
+    version_kind: revision
+    released: 2024-06-18
+    items: 1140
+    changes: The first release, loaded from the Hugging Face Hub from package 0.1.5.
+    superseded_by: v0.1.1
+    frozen: true
+    sources:
+      - src-hf-api-bigcodebench
+      - src-github-bigcodebench-readme
+  - version: v0.1.1
+    label: v0.1.1
+    version_kind: revision
+    items: 1140
+    changes: A revision of the task data; no source read says what changed or when.
+    supersedes_version: v0.1.0
+    superseded_by: v0.1.2
+    frozen: true
+    sources:
+      - src-hf-api-bigcodebench
+  - version: v0.1.2
+    label: v0.1.2
+    version_kind: revision
+    released: 2024-10-06
+    items: 1140
+    changes: Fixes to seven tasks (BigCodeBench/16, 37, 178, 241, 267, 760 and 1006), among them
+      requirement lists, required plot titles, an import and test links. Made the default with
+      package v0.2.0; inspect_evals still pins it.
+    supersedes_version: v0.1.1
+    superseded_by: v0.1.3
+    frozen: true
+    sources:
+      - src-github-bigcodebench-releases
+      - src-hf-api-bigcodebench
+  - version: v0.1.3
+    label: v0.1.3
+    version_kind: revision
+    items: 1140
+    changes: A revision of the task data; no source read says what changed or when.
+    supersedes_version: v0.1.2
+    superseded_by: v0.1.4
+    frozen: true
+    sources:
+      - src-hf-api-bigcodebench
+  - version: v0.1.4
+    label: v0.1.4
+    version_kind: revision
+    items: 1140
+    changes: The newest split on the Hub and the harness's default; no source read says what changed
+      from v0.1.3.
+    supersedes_version: v0.1.3
+    frozen: true
+    sources:
+      - src-hf-api-bigcodebench
+      - src-github-bigcodebench-data-loader
+versions_note: The versions are the dataset's splits on the Hub, separate from the bigcodebench
+  package's own versions (0.1.5 to 0.2.5). Each holds 1,140 tasks, and the Hard subset is published
+  per version too.
+
+subsets:
+  - id: bigcodebench#complete
+    label: BigCodeBench-Complete
+    items: 1140
+    scored_separately: true
+    evidence:
+      - source: src-github-bigcodebench-readme
+        quote: Thes split is designed for code completion based on the comprehensive docstrings.
+    notes: Every task, prompted with the function header and its full structured docstring. Base and
+      instruction-tuned models both take it.
+  - id: bigcodebench#instruct
+    label: BigCodeBench-Instruct
+    items: 1140
+    scored_separately: true
+    evidence:
+      - source: src-github-bigcodebench-readme
+        quote: The split works for the instruction-tuned and chat models only
+      - source: src-arxiv-2406-15877-v4
+        quote: automatically transforms the original docstrings into short instructions only with
+          essential information
+    notes: The same tasks and tests, prompted with a short instruction instead of the docstring.
+  - id: bigcodebench#hard
+    label: BigCodeBench-Hard
+    items: 148
+    scored_separately: true
+    evidence:
+      - source: src-github-bigcodebench-readme
+        quote: We announce a subset of BigCodeBench, BigCodeBench-Hard, which includes 148 tasks
+      - source: src-arxiv-2406-15877-v4
+        quote: we deem tasks with a solve rate below 50% as hard tasks
+    notes: Tasks resembling real Stack Overflow queries, that need more than two libraries, have
+      longer than average solutions and were solved by under half of the leaderboard's models in
+      2024. Scored with both prompts, on its own leaderboard tab.
+subsets_note: Complete and Instruct are two prompts over the same tasks, and Full (all 1,140) and
+  Hard are crossed with both, so a score names one prompt and one set. The paper calls Hard dynamic
+  by design and open to periodic updates; no source read records a change to its 148 tasks.
+
+history:
+  - date: 2024-06-19
+    event: channel-opened
+    field: execution.submission_channel
+    to: the Hugging Face BigCodeBench Leaderboard
+    source: src-github-bigcodebench-readme
+    quote: We start the Hugging Face BigCodeBench Leaderboard!
+
+tags:
+  - code-generation
+  - python
+  - library-use
+  - pass-at-k
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-15877-v4
+    - src-arxiv-2406-15877
+    - src-github-bigcodebench-readme
+    - src-github-bigcodebench-advanced-usage
+    - src-github-bigcodebench-releases
+    - src-github-bigcodebench-data-loader
+    - src-bigcodebench-gh-api
+    - src-hf-api-bigcodebench
+    - src-bigcodebench-leaderboard
+    - src-bigcodebench-leaderboard-data
+    - src-bigcodebench-leaderboard-space-about
+    - src-inspect-evals-bigcodebench-readme
+    - src-arxiv-2610-17609-v1
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text and its abstract page for the date and venue;
+    the README, ADVANCED_USAGE.md and the dataset loader at main, and the release notes from GitHub's
+    releases API; GitHub's API record for the licence, the archived flag and the last push; the Hub's
+    API record for the dataset's versions, gate and licence; the leaderboard site with scripts and styles
+    stripped and its results.json; the leaderboard Space's about.py, whose SUBMISSION_TEXT_3 its app.py
+    shows in the Request tab; inspect_evals' README for the port; and a 2026 paper's v1 PDF as evidence
+    of current use. The README and about.py hold a person's e-mail address, so both are withheld from
+    archiving and their extracts keep it out. The Hugging Face dataset card was not cited for the same
+    reason; the API record carries what was needed from it.
+  confidence: medium
+  review_checks:
+    - check: activity accepting-submissions rests on the Space's Request tab, which still invites
+        e-mailed results. The newest model on the board dates from 2025-04-14 and the repository is
+        archived, so closed may be the truer state.
+      field: activity
+      source: src-bigcodebench-leaderboard-space-about
+      quote: We will review and add the results to the leaderboard as soon as possible.
+    - check: "capability is empty: tool-use was rejected because the model calls no tools during the evaluation,
+        although the paper frames library calls as tools; instruction-following because only test outcomes
+        are scored. A reviewer may weigh the paper's framing differently."
+      field: capability
+    - check: maintainer_type community-collective. The senior authors are at ServiceNow Research and
+        Hugging Face, and the lead author at Monash; none of the sources read says which
+        institution, if any, holds BigCode's accounts. industry-lab or academic-lab would follow if
+        one does.
+      field: governance.maintainer_type
+    - check: funded-by-evaluated-party rests on a Google Research Scholar award to the senior author
+        listed in the acknowledgements, with Gemini models ranked;
+        maintainer-competes-on-own-benchmark on BigCode's StarCoder2 baselines.
+      field: governance.independence_flags
+      source: src-arxiv-2406-15877-v4
+      quote: Google Research Scholar Program Award
+    - check: ceiling_anchor_type expert-average uses the paper's 97% human figure, measured on 33
+        sampled tasks; measured-ceiling (canonical solutions run against the tests, the harness
+        warning below a 0.95 ground-truth pass rate) is the alternative. inspect_evals reports task
+        111's canonical solution failing its tests.
+      field: data.ceiling_anchor_type
+      source: src-inspect-evals-bigcodebench-readme
+      quote: 'Task 111: The provided answer does not pass all test cases when run locally.'
+    - check: data_provenance model-generated plus expert-authored. The annotators added tests and
+        rewrote docstrings on GPT-4's drafts; if that counts only as review, expert-authored should
+        go.
+      field: data.data_provenance
+    - check: The versions are revisions marked non-breaking. v0.1.2 changed seven tasks'
+        requirements and tests, and what v0.1.1, v0.1.3 and v0.1.4 changed is not in the sources
+        read, so cross-version scores may differ slightly.
+      field: versions
+    - check: The entry is one benchmark with Complete, Instruct and Hard as subsets; Hard has its
+        own Hugging Face dataset (bigcode/bigcodebench-hard) and its own leaderboard tab and could
+        be an entry of its own.
+      field: subsets
