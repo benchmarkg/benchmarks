@@ -1,0 +1,511 @@
+# data/benchmarks/earth-climate/chaosbench.yaml
+#
+# P1-S7-T01, earth-climate entry 3 of 9. Filled from the ChaosBench paper, arXiv 2402.00712 read as its v5 PDF
+# (2024-11-20, the NeurIPS 2024 Datasets and Benchmarks camera-ready) and its v1 PDF (2024-02-01), and its abstract
+# page; the project site's leaderboard and dataset pages (scripts and styles stripped); the repository README;
+# Hugging Face's API record of the dataset; and the v1 PDF of OmniCast (arXiv 2510.18707, NeurIPS 2025), a paper that
+# reports results on ChaosBench. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# Lead time and spatial resolution, as weatherbench-2 records them. Lead time is material through the `forecasting`
+# profile and is also listed in comparability.material_extra, so it stays material if the facets change. Spatial
+# resolution has no EvalConditions field (weatherbench-2's conditions record says the same); it is stated with
+# quotes in task.scoring, versions and as_used, where OmniCast's 1.40625-degree run shows that it varies.
+
+id: chaosbench
+name: ChaosBench
+tagline: Global S2S forecasts to 44 days ahead, ML emulators beside four national agencies' models,
+  scored against reanalysis.
+description: >
+  A benchmark for extending data-driven weather emulators into the subseasonal-to-seasonal (S2S) range,
+  between medium-range weather and climate. It supplies more than 45 years of daily reanalysis at 1.5
+  degrees, ERA5 for the atmosphere, ORAS5 for ocean and sea ice and ERA5-Land for the land surface (124
+  variables in all), as training data and ground truth, and control and ensemble forecasts from four
+  national agencies (UKMO, NCEP, CMA and ECMWF) as physics-based baselines. Forecasts are scored against
+  ERA5 for each day ahead up to 44 days on the held-out year 2022, with deterministic metrics (RMSE, bias,
+  ACC, MS-SSIM), two spectral metrics of its own (SpecDiv and SpecRes, which measure how far a forecast's
+  power spectrum drifts from the target's) and probabilistic metrics for ensembles (CRPS, CRPSS, spread
+  and
+  spread/skill ratio). The paper runs PanguWeather, GraphCast, FourCastNetV2 and ViT/ClimaX beside the
+  agencies' forecasts and finds that most fall to climatology's skill beyond about 15 days. The
+  leaderboard plots the headline variables (t-850, z-500, q-700) by lead time for the maintainers' own
+  runs and takes no outside submissions.
+self_description:
+  source: src-arxiv-2402-00712-v5
+  quote: Thus, we propose ChaosBench, a challenging benchmark to extend the predictability range of
+    data-driven weather emulators to S2S timescale
+external_ids:
+  huggingface: LEAP/ChaosBench
+  arxiv: '2402.00712'
+paper:
+  title: 'ChaosBench: A Multi-Channel, Physics-Based Benchmark for Subseasonal-to-Seasonal Climate Prediction'
+  arxiv: '2402.00712'
+  version_read: v5
+  source: src-arxiv-2402-00712-v5
+released: 2024-02-01
+released_note: The first arXiv version's date, as the abstract page gives it. The protocol the
+  leaderboard uses is the fifth version's, of 2024-11-20 (see versions).
+released_source: src-arxiv-2402-00712
+released_quote: Submitted on 1 Feb 2024
+release_venue: NeurIPS 2024 Datasets and Benchmarks Track (oral)
+release_venue_source: src-arxiv-2402-00712
+release_venue_quote: NeurIPS 2024 D&B Track (Oral)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/weather-forecasting
+domain_basis:
+  reason: Forecasts start from a day's initial state and run to stated lead times up to 44 days, the
+    subseasonal-to-seasonal range, and are scored against reanalysis, with no emissions or forcing
+    scenarios. That is the leaf's inclusion test, and the taxonomy names chaosbench as its example.
+  source: src-arxiv-2402-00712-v5
+  quote: Physics-based forecasts are generated from four national weather agencies with 44-day
+    lead-time and serve as baselines to data-driven forecasts
+domain_considered_and_rejected:
+  - term: earth-climate/climate-projection
+    reason: The paper places S2S between weather and climate, sensitive to boundary conditions as
+      climate is, but nothing is projected under emissions or forcing scenarios over long horizons;
+      every forecast runs from an initial condition to at most 44 days ahead (see review_checks).
+    source: src-arxiv-2402-00712-v5
+    quote: being in between two extremes, it is doubly sensitive to (1) initial conditions (IC) as
+      in the case for short/medium-range weather, and (2) boundary conditions (BC) as in the case
+      for long-range climate
+  - term: physics/simulation-surrogates
+    reason: The data-driven entrants are emulators of numerical weather prediction, but they are
+      scored against reanalysis, not against the simulators they would replace, which the
+      subdomain's definition asks; the agencies' simulations are baselines here.
+    source: src-arxiv-2402-00712-v5
+    quote: there is a growing interest to apply data-driven models to emulate NWPs
+
+capability:
+  - scientific-prediction
+  - calibration-uncertainty
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict the future state of the atmosphere, and optionally of land, ocean and
+      sea ice, and are scored against reanalysis, an observation-constrained reference.
+    source: src-arxiv-2402-00712-v5
+    quote: It is framed as a high-dimensional sequential regression task that consists of 45+ years,
+      multi-system observations for validating physics-based and data-driven models, and training
+      the latter.
+  calibration-uncertainty:
+    reason: The probabilistic metrics (CRPS, CRPSS, spread, spread/skill ratio) consume the ensemble
+      an entrant emits, and the paper reads CRPS as rewarding forecasts whose stated uncertainty
+      matches the actual one.
+    source: src-arxiv-2402-00712-v5
+    quote: Low CRPS values require forecasts to be reliable, where the predicted uncertainty aligns
+      with the actual uncertainty, and a smaller uncertainty is preferable
+capability_considered_and_rejected:
+  - term: probabilistic-forecasting
+    reason: The outcomes already exist. Forecasts are hindcasts of 2022, whose ERA5 fields are
+      public, and the term's exclusion test reads "Do NOT tag this if the answer already exists and
+      is merely withheld"; here it is not even withheld. The probabilistic half is
+      calibration-uncertainty.
+    source: src-arxiv-2402-00712-v5
+    quote: All evaluations presented here are done on the held-out 2022 data.
+  - term: distribution-shift-generalization
+    reason: The test year is a chronological hold-out from the same reanalysis, and no shifted
+      condition is reported as a score of its own.
+  - term: generation-fidelity
+    reason: MS-SSIM and the spectral metrics compare a produced field with a target, but the term's
+      exclusion test sends a predicted state of a physical system scored against a reference to
+      scientific-prediction.
+
+evaluation_method:
+  - statistical-fit
+  - uncertainty-calibration-score
+evaluation_method_basis:
+  reason: statistical-fit for RMSE, bias, ACC and MS-SSIM, and for SpecDiv and SpecRes, which apply
+    a KL divergence and an RMSE to normalised power spectra; uncertainty-calibration-score for CRPS,
+    CRPSS, spread and spread/skill ratio on the emitted ensemble, the case the term's own text names
+    ChaosBench for. Every metric is latitude-weighted.
+  source: src-arxiv-2402-00712-v5
+  quote: We provide popular deterministic metrics in the machine learning and climate science
+    literature alike, including RMSE, Bias, ACC, and MS-SSIM.
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: SpecDiv and SpecRes are the paper's own, a KL divergence and an RMSE computed on the
+      high-wavenumber power spectrum, so general statistics on a derived quantity rather than
+      measures standardised within meteorology. CRPS is standard in forecasting but scores an
+      emitted distribution, which the taxonomy sends to uncertainty-calibration-score.
+    source: src-arxiv-2402-00712-v5
+    quote: Spectral Divergence (SpecDiv) follows principles from Kullback–Leibler (KL) divergence
+designed_for_subjects:
+  - scientific-surrogate-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The benchmark is built for data-driven weather emulators, learned models standing in for
+    numerical weather prediction (scientific-surrogate-model). The four agencies' physics-based
+    forecasts are scored against ERA5 like any entrant and serve as baselines, which the
+    classical-algorithm test admits ("whether it competes for the ranking or is included as a
+    baseline"), as it does for weatherbench-2's IFS rows.
+  source: src-arxiv-2402-00712-v5
+  quote: Physics-based forecasts are generated from four national weather agencies with 44-day
+    lead-time and serve as baselines to data-driven forecasts
+as_used:
+  - protocol: OmniCast's S2S results use ChaosBench's headline variables and 1-44 day lead times,
+      but on ERA5 downsampled to 1.40625 degrees (128 x 256 grid points) rather than ChaosBench's
+      1.5-degree data.
+    split: test (2022)
+    source: src-arxiv-2510-18707-v1
+    quote: For S2S prediction, we downsample the data to 1.40625
+    note: OmniCast (NeurIPS 2025) is by two of ChaosBench's authors. Its S2S inputs are 69 ERA5
+      variables at 13 pressure levels, not ChaosBench's set.
+  - protocol: The same paper keeps the 2022 test year but trains on 1979-2020 and validates on 2021,
+      where the ChaosBench paper trains on 1979-2015 and validates on 2016-2021.
+    split: test (2022)
+    source: src-arxiv-2510-18707-v1
+    quote: (128 × 256 grids) and follow ChaosBench to train on 1979–2020, validate on 2021, and test
+      on 2022 using 00UTC initializations.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; OmniCast (NeurIPS 2025, October 2025) reports
+    state-of-the-art S2S results on ChaosBench against its baselines. The repository was last pushed
+    on 2025-03-13 (GitHub API) and the dataset last modified on 2025-06-09 (Hugging Face API), which
+    is maintenance evidence, not lifecycle.
+  source: src-arxiv-2510-18707-v1
+  quote: We evaluate OmniCast on ChaosBench [31], a recent benchmark for subseasonal-to-seasonal
+    prediction.
+activity: no-submission-channel
+activity_basis:
+  reason: The leaderboard plots the maintainers' runs of the agencies' forecasts and of
+    PanguWeather, GraphCast and FourCastNetV2, and neither the leaderboard page nor the paper
+    describes a route for others to enter; feedback goes to the GitHub issue tracker. Others publish
+    their numbers in their own papers.
+  source: src-chaosbench-leaderboard
+  quote: We provide a leaderboard for both deterministic and probabilistic models/metrics.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GraphCast
+    source: src-arxiv-2402-00712-v5
+    observed_on: 2026-10-14
+    quote: we evaluate on a diverse set of physics-based forecasts from four national weather
+      agencies as baselines to our data-driven counterpart such as ViT/ClimaX, PanguWeather,
+      GraphCast, and FourCastNetV2
+  - system: OmniCast
+    source: src-arxiv-2510-18707-v1
+    observed_on: 2026-10-14
+    quote: We evaluate OmniCast on ChaosBench [31], a recent benchmark for subseasonal-to-seasonal
+      prediction.
+evaluation_target: learned-system
+evaluation_target_basis:
+  reason: The agencies' physics-based forecasts sit in the same plots, but as baselines; the
+    benchmark exists to extend the reach of data-driven emulators. `mixed` would say the numerical
+    methods are under test.
+  source: src-github-chaosbench-readme
+  quote: ChaosBench is a benchmark project to improve and extend the predictability range of deep
+    weather emulators to the subseasonal-to-seasonal (S2S) range.
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_basis:
+  reason: The ground truth is ERA5, a reanalysis, a model state held to observations by data
+    assimilation. Neither `simulation` nor `experimental` is exact; `simulation` is the closer, as
+    for weatherbench-2.
+  source: src-arxiv-2402-00712-v5
+  quote: ERA5 Reanalysis provides a comprehensive record of the global atmosphere combining physics
+    and observations for correction
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The reanalysis, the agencies' forecasts, the baselines' checkpoints and the evaluation
+    code are public, and scoring needs nothing else.
+  source: src-arxiv-2402-00712-v5
+  quote: All assets are hosted on GitHub and HuggingFace, which guarantees reliable and stable
+    storage.
+
+task:
+  exists: true
+  input:
+    - the ERA5 atmospheric state (60 variables) on an initialisation day, optionally with ERA5-Land
+      and ORAS5 variables as extra inputs and targets
+  input_source: src-arxiv-2402-00712-v5
+  input_quote: If land_vars and/or ocean_vars are set with entries from the acronyms in Tables S3
+    and S2, these will be used as additional inputs and targets, on top of ERA5 variables
+  output: Global daily forecast fields at 1.5 degrees for each day ahead up to 44 days, as one
+    control forecast or as an ensemble.
+  scoring: >
+    Latitude-weighted metrics against ERA5 per variable and per day ahead, 1 to 44, over the 2022
+    initialisations: RMSE, bias, ACC and MS-SSIM; SpecDiv and SpecRes on the high-wavenumber power
+    spectrum; and for ensembles CRPS, CRPSS (against climatology), spread and spread/skill ratio. The
+    data and the agencies' forecasts are on a common daily 1.5-degree grid. Headline variables are
+    t-850, z-500 and q-700, following WeatherBench 2; direct models are trained and scored at lead
+    times of 1, 5, 10, 15, 20, 25, 30, 35, 40 and 44 days.
+  scoring_source: src-arxiv-2402-00712-v5
+  scoring_quote: For each metric, unless otherwise noted, we apply a weighting scheme at each
+    latitude
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The 2022 reanalysis is in the released data (ERA5 1979-2023 on the
+    dataset page).
+  item_definition: One score is one (variable, lead time in days, metric) cell for the 2022
+    evaluation year.
+  item_definition_source: src-arxiv-2402-00712-v5
+  item_definition_quote: lead_time = [1, 5, 10, 15, 20, 25, 30, 35, 40, 44]
+  source: src-chaosbench-dataset-info
+  quote: All data has daily and 1.5-degree resolution.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The reanalysis, the agencies' forecasts, climatology and the baselines' checkpoints are
+      in an ungated Hugging Face dataset.
+    source: src-hf-api-chaosbench
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The protocol changed between dated arXiv versions. v1 scored 2022-2023 on 60 ERA5
+      variables with no probabilistic metrics; v5, which the leaderboard follows, scores 2022 on 124
+      variables and adds the ensemble metrics (versions).
+    source: src-arxiv-2402-00712-v1
+    quote: All benchmark scores for physics-based and data-driven models are computed for the year
+      2022-2023.
+  data_provenance:
+    - simulation-generated
+    - real-world-instrument
+  data_provenance_note: Inputs and ground truth are ERA5, ORAS5 and ERA5-Land reanalyses, model
+    states constrained by assimilated observations; the baselines are the agencies' numerical
+    forecasts.
+  data_provenance_source: src-arxiv-2402-00712-v5
+  data_provenance_quote: ERA5 Reanalysis provides a comprehensive record of the global atmosphere
+    combining physics and observations for correction
+  contamination_risk: medium
+  contamination_risk_note: The evaluation year's reanalysis is public and shipped with the
+    benchmark, so only each entrant's training window keeps it out. The paper's own models train on
+    1979-2015, OmniCast's on 1979-2020 (as_used); the pretrained medium-range models' windows are
+    not stated in the sources read. A route is plausible and none is evidenced.
+  contamination_risk_source: src-chaosbench-dataset-info
+  contamination_risk_quote: ERA5 Reanalysis for Surface-Atmosphere (1979-2023)
+  contamination_evidence: []
+  ceiling_anchor_type: operational-system
+  ceiling_anchor_type_basis:
+    reason: The ECMWF ensemble, an operational system scored against ERA5 like any entrant, is the
+      paper's gold standard and the best system it measures.
+    source: src-arxiv-2402-00712-v5
+    quote: we find that ECMWF high-resolution ensemble, dubbed as the gold standard, still has the
+      best performance in terms of CRPSS (vs ERA5 climatology)
+  dataset_licence: GPL-3.0
+  dataset_licence_note: The dataset card's licence. The agencies' forecasts come from the WWRP/WCRP
+    S2S database hosted at ECMWF, whose own terms were not read.
+  dataset_licence_source: src-hf-api-chaosbench
+  dataset_licence_quote: '"cardData":{"license":"gpl-3.0"'
+  size:
+    - count: 60
+      unit: ERA5 variables (six fields at ten pressure levels)
+      subset: surface-atmosphere (ERA5)
+      source: src-arxiv-2402-00712-v5
+      quote: totalling 60 variables
+    - count: 43
+      unit: ERA5-Land variables
+      subset: terrestrial (LRA5)
+      source: src-arxiv-2402-00712-v5
+      quote: for a total of 43 variables, including t2m, u10, v10, and tp
+    - count: 21
+      unit: ORAS5 variables
+      subset: ocean and sea ice (ORAS5)
+      source: src-arxiv-2402-00712-v5
+      quote: for a total of 21 variables, including sst and ssh
+    - count: 48
+      unit: variables in the agencies' forecasts
+      subset: physics-based baselines
+      source: src-arxiv-2402-00712-v5
+      quote: for a total of 48 variables
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The ChaosBench maintainers, under LEAP (the NSF Science and Technology Center Learning
+    the Earth with Artificial Intelligence and Physics)
+  maintainer_basis:
+    reason: The code sits in the leap-stc GitHub organisation and the data in the LEAP Hugging Face
+      organisation; the site is signed by the ChaosBench Maintainers. The first and last authors are
+      at Columbia University, and LEAP provided the work's computing and storage.
+    source: src-arxiv-2402-00712-v5
+    quote: The authors also acknowledge funding, computing, and storage resources from the NSF
+      Science and Technology Center (STC) Learning the Earth with Artificial Intelligence and
+      Physics (LEAP)
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: The leaderboard holds the agencies' forecasts and the maintainers' runs
+    of PanguWeather, GraphCast and FourCastNetV2, which they ran from the public checkpoints. No
+    route for outside results is described.
+  submission_process_source: src-arxiv-2402-00712-v5
+  submission_process_quote: We perform inference using their latest checkpoints using the API
+    provided here
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2402-00712-v5
+      quote: 'Tung Nguyen, Johannes Brandstetter, Ashish Kapoor, Jayesh K Gupta, and Aditya Grover. Climax:
+        A foundation model for weather and climate.'
+  independence_flags_note: Two of the paper's authors, Tung Nguyen and Aditya Grover, built ClimaX,
+    one of the data-driven models it evaluates, and later OmniCast, which reports state-of-the-art
+    results on ChaosBench (as_used). Separately, one author acknowledges support from Google, and
+    GraphCast is evaluated; funded-by-evaluated-party is not set, because no source read ties
+    GraphCast to Google (see review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2402-00712-v5
+    quote: Our input datasets have relatively coarse spatiotemporal resolution to match that of
+      physics-based S2S forecasts.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public data and public evaluation scripts; no human, physical or maintainer-only step.
+    source: src-arxiv-2402-00712-v5
+    quote: Once training is done, we can perform evaluation depending on the use case.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: ChaosBench's eval_iter.py (autoregressive), eval_direct.py (direct) and eval_ensemble.py
+    (ensembles), leap-stc/ChaosBench
+  harness_source: src-arxiv-2402-00712-v5
+  harness_quote: Third, if we have a probabilistic model that generates ensemble forecasts
+  code_licence: GPL-3.0
+  code_licence_note: The paper says GNU General Public License without a version; GitHub's licence
+    metadata for leap-stc/ChaosBench, read 2026-10-14, gives GPL-3.0.
+  code_licence_source: src-arxiv-2402-00712-v5
+  code_licence_quote: ChaosBench is published under the open source GNU General Public License.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Lead time is material through the `forecasting` profile (uncertainty-calibration-score with
+  # scientific-surrogate-model) and is listed here as well, so it stays material if the facets change: every
+  # score belongs to one day ahead, 1 to 44. Spatial resolution has no EvalConditions field; ChaosBench scores on
+  # a 1.5-degree grid (task.scoring), the paper offers 0.25-degree inputs, and OmniCast ran at 1.40625 degrees
+  # (as_used), so a claim should state it. The training window (training_data_policy) differs by paper too.
+  # resolution_window is waived: the evaluation year is a hindcast.
+  material_extra:
+    - lead_time
+  material_waived:
+    - field: resolution_window
+      reason: Hindcasts. The 2022 reanalysis exists before any forecast is scored, so nothing
+        resolves after submission.
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The leaderboard plots each metric for each headline variable by lead time and combines
+    them into no single score, following WeatherBench 2's design, which has no single ranking.
+  source: src-chaosbench-leaderboard
+  quote: This interactive page is inspired by the WeatherBench 2 design.
+headline_metric: null
+
+homepage: https://leap-stc.github.io/ChaosBench/
+repository: https://github.com/leap-stc/ChaosBench
+dataset_url: https://huggingface.co/datasets/LEAP/ChaosBench
+leaderboard_url: https://leap-stc.github.io/ChaosBench/leaderboard.html
+
+versions:
+  - version: v1
+    label: The first arXiv version's protocol
+    version_kind: revision
+    released: 2024-02-01
+    changes: 60 ERA5 variables regridded to 1.5 degrees; scores on 2022-2023; deterministic (called
+      vision-based) and spectral metrics only; two tasks, full and sparse dynamics prediction.
+    breaking: true
+    superseded_by: v5
+    frozen: true
+    sources:
+      - src-arxiv-2402-00712-v1
+      - src-arxiv-2402-00712
+  - version: v5
+    label: The NeurIPS 2024 camera-ready protocol, which the leaderboard follows
+    version_kind: revision
+    released: 2024-11-20
+    changes: ORAS5 and ERA5-Land added (124 variables); scores on 2022 only; the agencies' ensemble
+      forecasts and the probabilistic metrics (CRPS, CRPSS, spread, spread/skill ratio) added;
+      SpecDiv restated as a KL divergence. Versions 2 to 4 were not read, so which of them made each
+      change is not recorded.
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-arxiv-2402-00712-v5
+      - src-arxiv-2402-00712
+      - src-chaosbench-leaderboard
+
+lineage:
+  role: root
+
+tags:
+  - subseasonal-to-seasonal
+  - reanalysis-ground-truth
+  - ensemble-forecasting
+  - spectral-metrics
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T01)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2402-00712-v5
+    - src-arxiv-2402-00712-v1
+    - src-arxiv-2402-00712
+    - src-chaosbench-leaderboard
+    - src-chaosbench-dataset-info
+    - src-github-chaosbench-readme
+    - src-hf-api-chaosbench
+    - src-arxiv-2510-18707-v1
+  sources_note: >
+    The paper's v5 and v1 PDFs (DOI sources, not archived) read as text; its abstract page for the dates
+    and venue; the site's leaderboard and dataset pages with scripts and styles stripped (the leaderboard's
+    plots are Plotly figures in iframes, whose data were read but are not a Source); the README at main;
+    Hugging Face's public API record of the dataset; and OmniCast's v1 PDF as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: weather-forecasting or climate-projection. S2S sits between them, and the paper's title
+        says climate prediction; the entry follows the taxonomy, which names chaosbench as
+        weather-forecasting's example because forecasts run from initial conditions with no forcing
+        scenarios. climate-projection has no inclusion test yet.
+      field: domain
+      source: src-arxiv-2402-00712-v5
+      quote: being in between two extremes, it is doubly sensitive to (1) initial conditions (IC) as
+        in the case for short/medium-range weather, and (2) boundary conditions (BC) as in the case
+        for long-range climate
+    - check: Reference conditions were not written (this task may not write data/conditions). By
+        weatherbench-2's pattern they would hold lead_time "one stated lead time per score, daily
+        from 1 to 44 days" and training_data_policy open, and a claim would also need its grid
+        resolution, which EvalConditions cannot hold.
+      field: comparability
+    - check: maintainer-competes-on-own-benchmark rests on two of the seven authors (Nguyen and
+        Grover, UCLA) having built ClimaX, which the paper evaluates, and OmniCast, which reports on
+        ChaosBench; the repository and data sit with LEAP, so whether co-authors count as the
+        maintainer is open.
+      field: governance.independence_flags
+    - check: SpecDiv and SpecRes are filed under statistical-fit as general statistics on power
+        spectra; a forecast-verification specialist may read them as domain metrics.
+      field: evaluation_method
+      specialist: true
+    - check: aggregation_policy none-by-design rests on the leaderboard's per-lead-time plots and
+        its WeatherBench 2 model; no source says in so many words that no aggregate is intended.
+      field: aggregation_policy
+      source: src-chaosbench-leaderboard
+      quote: This interactive page is inspired by the WeatherBench 2 design.
+    - check: funded-by-evaluated-party is not set. One author acknowledges support from Google, and
+        GraphCast, a Google DeepMind model, is evaluated, but no source read names GraphCast's
+        developer, and the support is not stated to be for this work.
+      field: governance.independence_flags
+      source: src-arxiv-2402-00712-v5
+      quote: AG would like to acknowledge support from Google and Schmidt Sciences.
+    - check: lifecycle active rests on OmniCast (October 2025), by two of ChaosBench's authors. An
+        independent 2026 S2S paper found (AnisoCast, arXiv 2602.15040) adopts its metrics and agency
+        baselines on another test year and bi-weekly windows, so it was not cited as a result on
+        ChaosBench.
+      field: lifecycle
+    - check: maintainer_type academic-lab. The artefacts sit in LEAP's organisations; whether LEAP,
+        an NSF centre spanning several institutions, is better read as community-collective was not
+        settled by the sources read.
+      field: governance.maintainer_type
+    - check: refresh versioned-releases rests on arXiv v1 against v5; the Hugging Face dataset was
+        modified after both (2025-06-09) with no version label, and whether that changed anything
+        scored was not checked.
+      field: data.refresh
