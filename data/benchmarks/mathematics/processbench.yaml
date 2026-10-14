@@ -1,0 +1,479 @@
+# data/benchmarks/mathematics/processbench.yaml
+#
+# P1-S10-T05, mathematics entry 6 of 6. Filled from the ProcessBench paper, arXiv 2412.06559 read as its v4 PDF
+# (2025-05-26), and its abstract page; the ACL Anthology page of its ACL 2025 version; the repository README at
+# main (QwenLM/ProcessBench, with GitHub's API for its licence and pushed_at); Hugging Face's API record of the
+# dataset (Qwen/ProcessBench) and of its commits; and the v1 PDF of Unsupervised Process Reward Models (arXiv
+# 2605.10158, May 2026), a paper that reports results on it. Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+#
+# ProcessBench draws its problems from the test sets of GSM8K, MATH, OlympiadBench and Omni-MATH. That lineage is
+# recorded in the text as the paper states it; the Omni-MATH entry is another task's and is not touched here.
+
+id: processbench
+name: ProcessBench
+tagline: Find the first wrong step in 3,400 model-written competition maths solutions, for process
+  reward models and critic LLMs.
+description: >
+  A benchmark of judging, not solving. Each of its 3,400 test cases is a maths problem, most of them
+  at competition or olympiad level, with a step-by-step solution written by one of twelve open Qwen
+  and Llama models, and the
+  system must return the index of the earliest step that contains an error, or -1 if every step is
+  correct. The problems come from the test sets of GSM8K, MATH, OlympiadBench and Omni-MATH, one
+  subset each (400 cases from GSM8K, 1,000 from each of the others), balanced by whether the final
+  answer was right. Doctoral-level annotators labelled the earliest error, with three of up to five
+  having to agree. Per subset, accuracy on the erroneous and on the correct cases is reported, and
+  their harmonic mean, which the paper calls F1, ranks systems. The intended entrants are process
+  reward models, which score each step and from whose verdicts the first error is read off, and
+  general language models prompted as critics. Released by the Qwen team at Alibaba in December 2024
+  and published at ACL 2025; there is no leaderboard, and results appear in papers.
+self_description:
+  source: src-arxiv-2412-06559-v4
+  quote: we introduce PROCESSBENCH for measuring the ability to identify erroneous steps in
+    mathematical reasoning
+external_ids:
+  huggingface: Qwen/ProcessBench
+  arxiv: '2412.06559'
+paper:
+  title: 'ProcessBench: Identifying Process Errors in Mathematical Reasoning'
+  arxiv: '2412.06559'
+  version_read: v4
+  source: src-arxiv-2412-06559-v4
+released: 2024-12-09
+released_note: The paper's first arXiv version, as its abstract page dates it. The dataset was
+  uploaded to Hugging Face on 2024-12-11.
+released_source: src-arxiv-2412-06559
+released_quote: Submitted on 9 Dec 2024
+release_venue: ACL 2025 (Proceedings of the 63rd Annual Meeting of the ACL, Volume 1, Long Papers)
+release_venue_source: src-aclanthology-2025-acl-long-50
+release_venue_quote: 'Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics
+  (Volume 1: Long Papers)'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: mathematics/proof-verification
+domain_basis:
+  reason: The system is handed a maths solution and judges it, locating the first wrong step or
+    declaring every step correct; it writes no solution of its own. That is the leaf's definition,
+    deciding whether a supplied derivation is correct rather than producing one.
+  source: src-arxiv-2412-06559-v4
+  quote: given a math problem and a step-by-step solution, PROCESSBENCH requires models to either
+    identify the earliest-occurring error, or conclude that all steps are correct
+domain_considered_and_rejected:
+  - term: mathematics/competition-math
+    reason: The problems are competition and olympiad problems, but the leaf is solving them, and
+      here the system judges a solution it is given.
+  - term: mathematics/formal-theorem-proving
+    reason: No formal system is involved, and the leaf's exclusion test sends a supplied proof that
+      is only judged to proof-verification.
+  - term: safety-alignment/control-oversight
+    reason: The paper's motivation is scalable oversight, but the scored quantity is the accuracy of
+      locating ordinary mathematical errors, which the safety-alignment family's exclusion test
+      leaves out; no system is trying to evade the check.
+    source: src-arxiv-2412-06559
+    quote: paving the way toward scalable oversight of language models
+capability:
+  - deductive-reasoning
+capability_basis:
+  deductive-reasoning:
+    reason: A step is wrong when it does not follow from the problem and the steps before it, by an
+      invalid calculation, deduction or use of a concept, so the earliest error is decided from the
+      problem and the solution in front of the system.
+    source: src-arxiv-2412-06559-v4
+    quote: 'Logical errors: invalid deductions, unwarranted assumptions, or flawed reasoning steps'
+capability_considered_and_rejected:
+  - term: quantitative-reasoning
+    reason: Checking a step often means redoing a calculation, but the scored answer is a step
+      index, a label, which the term's exclusion test leaves out.
+  - term: self-correction
+    reason: The solutions are other models' outputs, written by twelve generators, and nothing is
+      revised; the term needs the system's own output.
+
+evaluation_method:
+  - exact-match
+  - classification-metric
+evaluation_method_basis:
+  reason: Each prediction, a step index or -1, is right only when it equals the expert label. Per
+    subset, the accuracies on erroneous and on correct cases are plain means of those verdicts
+    (exact match); the headline F1 is their harmonic mean, a statistic over both classes that no
+    single item carries, the case classification-metric's inclusion test names for F1 and balanced
+    accuracy.
+  source: src-arxiv-2412-06559-v4
+  quote: we calculate the accuracies on erroneous and correct samples, respectively, and
+    additionally compute their harmonic mean as the F1 score
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: Both accuracies come from the same exact-match verdicts, so the F1 combines one method
+      over two classes, not sub-scores of different methods.
+  - term: model-graded-judge
+    reason: Critic models are the entrants, not graders. The index a critic puts in its boxed answer
+      is compared with the label by the evaluation script.
+    source: src-arxiv-2412-06559-v4
+    quote: models are prompted to return the index of the paragraph where the earliest error occurs
+      as the final answer
+designed_for_subjects:
+  - task-specific-supervised-model
+  - instruction-tuned-model
+designed_for_subjects_note: The PRMs are mostly built on maths-tuned models (Qwen2.5-Math), but
+  mathematics is not one of domain-specialist-model's disciplines, the reason miniF2F's entry gives
+  for task-specific-supervised-model.
+designed_for_subjects_basis:
+  reason: The paper is built for two kinds of entrant. Process reward models are trained on step
+    labels and scored as trained, their step verdicts turned into the first error
+    (task-specific-supervised-model). Critic models are general language models prompted with one
+    template to review the solution paragraph by paragraph (instruction-tuned-model).
+  source: src-arxiv-2412-06559-v4
+  quote: 'involving two types of models: process reward models (PRMs) and critic models, where for the
+    latter we prompt general language models to critique each solution step by step'
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: QwQ-32B-Preview and o1-mini lead the release paper's table, but no reasoning-effort or
+      thinking-budget setting is part of the protocol; it is a run condition of those claims.
+    source: src-arxiv-2412-06559
+    quote: it still lags behind the reasoning-specialized o1-mini
+  - term: domain-specialist-model
+    reason: Mathematics is not one of the term's six disciplines.
+as_used:
+  - protocol: All four subsets, scored by the release paper's three metrics (accuracy on erroneous
+      and on correct cases, and their harmonic mean as F1), for a process reward model trained on
+      PRM800K's trajectories without their labels and for an LLM-as-a-Judge on the same base model
+      (Qwen2.5-14B-Instruct).
+    split: test (GSM8K, MATH, OlympiadBench, Omni-MATH)
+    source: src-arxiv-2605-10158-v1
+    quote: Following Zheng et al. [48], we report three metrics
+    note: Unsupervised Process Reward Models (EPFL, May 2026). Its method scores candidate positions
+      of the first error over positions 1 to T+1, its own parametrisation of the release paper's
+      index; the metrics are the same.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against it; a May 2026 paper from a group outside the
+    maintainer evaluates a new process reward model on all four subsets. The repository was last
+    pushed on 2025-05-20 and the dataset last changed on 2024-12-27 (GitHub and Hugging Face APIs),
+    which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2605-10158-v1
+  quote: We employ ProcessBench [48], a benchmark specifically designed to evaluate process reward
+    models on step-level error detection
+activity: no-submission-channel
+activity_basis:
+  reason: The repository offers the data and the evaluation code and nothing else; there is no
+    leaderboard, results page or submission route, and users report their own numbers in their
+    papers.
+  source: src-github-processbench-readme
+  quote: You can use the following code to preview the ProcessBench data
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: uPRM (an unsupervised process reward model on Qwen2.5-14B-Instruct, EPFL)
+    source: src-arxiv-2605-10158-v1
+    observed_on: 2026-10-14
+    quote: uPRM achieves up to 15% absolute accuracy improvements over the LLM-as-a-Judge in
+      identifying first erroneous steps on the ProcessBench dataset
+  - system: o1-mini, prompted as a critic
+    source: src-arxiv-2412-06559
+    observed_on: 2026-10-14
+    quote: it still lags behind the reasoning-specialized o1-mini
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each case's earliest-error index (or -1), as three agreeing expert
+  annotators labelled it; the labels are released with the cases.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The cases and labels are public on Hugging Face under Apache 2.0, ungated, and the
+    evaluation code and prompt template are in the repository.
+  source: src-hf-api-processbench
+  quote: '"gated":false'
+
+task:
+  exists: true
+  input:
+    - a maths problem and a model-written step-by-step solution, split into paragraphs indexed from
+      0
+  output: The index of the earliest paragraph that contains an error, or -1 if every paragraph is
+    correct. Critic models give it as a boxed final answer; a process reward model's step verdicts,
+    or its step scores cut at a threshold, are turned into it.
+  scoring: Per subset, accuracy on the cases with an error and on the cases without, and their
+    harmonic mean, F1, which ranks systems. The paper also averages F1 over the four subsets. For
+    scalar-scoring PRMs the paper picks the threshold that gives the best F1 on the GSM8K subset.
+  source: src-arxiv-2412-06559-v4
+  quote: The transformation threshold is determined as the one giving the highest F1 score on the
+    GSM8K subset
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The four subsets are public on Hugging Face, ungated, under Apache 2.0.
+    source: src-hf-api-processbench
+    quote: '"license":"apache-2.0"'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: One label was corrected after release, on 2024-12-27, in a dated commit that names the
+      user report it answered; that commit is the dataset's current revision, so the state a claim
+      used can be pinned. Nothing else has changed since the upload of 2024-12-11.
+    source: src-hf-api-processbench-commits
+    quote: fix one annotation as suggested in https://github.com/QwenLM/ProcessBench/issues/9
+  data_provenance:
+    - inherited-from-constituents
+    - model-generated
+    - expert-authored
+  data_provenance_note: The problems are taken from the test sets of GSM8K, MATH, OlympiadBench and
+    Omni-MATH. The solutions were generated by twelve open Qwen and Llama models and re-segmented
+    into steps by Qwen2.5-72B-Instruct, which also pre-checked final answers against the references
+    to balance each subset. The earliest-error labels were written by annotators with doctoral-level
+    mathematics, who had to pass a proficiency examination, with three of up to five agreeing.
+  data_provenance_source: src-arxiv-2412-06559-v4
+  data_provenance_quote: We collect math problems from the test sets of four public and widely used
+    datasets in mathematical reasoning tasks
+  contamination_risk: high
+  contamination_risk_note: "The release paper evidences a route: PRM800K, a common training set for process
+    reward models, is built on MATH problems, and some of its training samples share problems with ProcessBench.
+    The Qwen team removed those samples before training its own PRM; PRMs trained on PRM800K without that
+    filter have seen the problems, though not ProcessBench's own solutions or labels. Beyond that, all
+    four problem sources are public test sets and the cases and labels have been public since December
+    2024."
+  contamination_evidence:
+    - source: src-arxiv-2412-06559-v4
+      stance: supports
+      quote: To eliminate test data contamination, we also remove the PRM800K training samples that
+        have the same problems in PROCESSBENCH
+    - source: src-arxiv-2412-06559-v4
+      stance: supports
+      quote: PRM800K (Lightman et al., 2023) builds on the MATH problems (Hendrycks et al., 2021)
+  dataset_licence: Apache-2.0
+  dataset_licence_note: The licence is the Hugging Face dataset's. The four source datasets'
+    licences are not stated in the sources read.
+  dataset_licence_source: src-hf-api-processbench
+  dataset_licence_quote: '"license":"apache-2.0"'
+  size:
+    - count: 3400
+      unit: test cases (a problem, a step-by-step solution and its earliest-error label)
+      source: src-arxiv-2412-06559-v4
+      quote: PROCESSBENCH consists of 3,400 test cases, with all solutions annotated with error
+        locations by multiple human experts
+    - count: 400
+      unit: test cases (207 with an error, 193 without)
+      subset: GSM8K
+      source: src-arxiv-2412-06559-v4
+      quote: GSM8K error correct 207 193
+    - count: 1000
+      unit: test cases (594 with an error, 406 without)
+      subset: MATH
+      source: src-arxiv-2412-06559-v4
+      quote: MATH error correct 594 406
+    - count: 1000
+      unit: test cases (661 with an error, 339 without)
+      subset: OlympiadBench
+      source: src-arxiv-2412-06559-v4
+      quote: OlympiadBench error correct 661 339
+    - count: 1000
+      unit: test cases (759 with an error, 241 without)
+      subset: Omni-MATH
+      source: src-arxiv-2412-06559-v4
+      quote: Omni-MATH error correct 759 241
+  size_note: Each subset was sampled with equal numbers of right and wrong final answers (200 each
+    for GSM8K, 500 each for the others); the counts with and without an error differ because many
+    solutions with a right final answer still contain a wrong step.
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Qwen team (Alibaba)
+  maintainer_basis:
+    reason: The authors are the Qwen team at Alibaba, the dataset sits in the Qwen organisation on
+      Hugging Face and the code in QwenLM on GitHub.
+    source: src-arxiv-2412-06559-v4
+    quote: Qwen Team, Alibaba Inc.
+  maintainer_type: industry-lab
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route. Beyond the release
+    paper's own table, results appear in other papers, which follow its protocol.
+  submission_process_source: src-arxiv-2605-10158-v1
+  submission_process_quote: Following Zheng et al. [48], we report three metrics
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2412-06559
+      quote: our own trained PRM that is straightforwardly fine-tuned on the PRM800K dataset
+  independence_flags_note: The release paper ranks the Qwen team's own PRM (Qwen2.5-Math-7B-PRM800K)
+    and its Qwen2, Qwen2.5 and QwQ models beside other parties' systems. Qwen models also wrote part
+    of the solutions, and Qwen2.5-72B-Instruct segmented them into steps. Scoring is exact match
+    against human labels, so no grader has a stake.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2412-06559-v4
+    quote: PROCESSBENCH may still contain inaccurate labels of error locations, particularly for the
+      more challenging Olympiad-level math problems
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The labels are public and the score is a comparison of indices, so anyone can run a
+      model and score it end to end with the released code.
+    source: src-github-processbench-readme
+    quote: You can refer to the [code](./code) folder for the evaluation code and the prompt
+      templates we use in this work
+  harness_availability: official-harness
+  harness: ProcessBench's code folder (run_eval.py for critic models on vLLM, with the prompt
+    template; run_eval_prm_rlhflow.py for one PRM family)
+  harness_source: src-github-processbench-readme
+  harness_quote: You can refer to the [code](./code) folder for the evaluation code and the prompt
+    templates we use in this work
+  code_licence: null
+  code_licence_note: GitHub's licence metadata for QwenLM/ProcessBench reports none and the README
+    states none (read 2026-10-14); not a quoted Source.
+  runnable_via:
+    - custom
+  runnable_via_note: UK AISI's inspect_evals has no ProcessBench module (its src/inspect_evals
+    listing, read 2026-10-14).
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the profiles the two method-subject pairs resolve to: how many samples a critic drew and how they
+  # were combined (the release paper reports open models under majority voting over eight samples, GPT-4o
+  # greedy and o1-mini single-sample), the critic prompt template, and, for PRMs, what they were trained on
+  # (PRM800K overlaps the problems). A scalar-scoring PRM's threshold also moves the number; no condition field
+  # holds it, so it belongs in a claim's notes.
+  material_extra:
+    - n_samples
+    - selection_strategy
+    - prompt_template_hash
+    - training_data_policy
+
+homepage: https://github.com/QwenLM/ProcessBench
+repository: https://github.com/QwenLM/ProcessBench
+dataset_url: https://huggingface.co/datasets/Qwen/ProcessBench
+
+versions:
+  - version: '2024-12-11'
+    label: The Hugging Face release
+    version_kind: revision
+    released: 2024-12-11
+    items: 3400
+    changes: The four subsets as uploaded to Hugging Face two days after the paper's first arXiv
+      version. One label was corrected on 2024-12-27 (errata); the dataset has not changed since.
+    breaking: false
+    errata:
+      - date: 2024-12-27
+        scope: one label
+        description: One annotation fixed after a user's report (GitHub issue 9). The fix is the
+          dataset's current revision, 3bdcd537.
+        source: src-hf-api-processbench-commits
+    sources:
+      - src-hf-api-processbench
+      - src-hf-api-processbench-commits
+
+subsets:
+  - id: processbench#gsm8k
+    label: GSM8K
+    items: 400
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2412-06559-v4
+        quote: GSM8K error correct 207 193
+    notes: Grade-school word problems from GSM8K's test set; the only subset below competition
+      level.
+  - id: processbench#math
+    label: MATH
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2412-06559-v4
+        quote: MATH error correct 594 406
+    notes: Competition problems from MATH's test set.
+  - id: processbench#olympiadbench
+    label: OlympiadBench
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2412-06559-v4
+        quote: OlympiadBench error correct 661 339
+    notes: Olympiad-level problems from OlympiadBench's test set.
+  - id: processbench#omni-math
+    label: Omni-MATH
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2412-06559-v4
+        quote: 'four public and widely used datasets in mathematical reasoning tasks: GSM8K (Cobbe et
+          al., 2021), MATH (Hendrycks et al., 2021), OlympiadBench (He et al., 2024), and Omni-MATH (Gao
+          et al., 2024)'
+      - source: src-arxiv-2412-06559-v4
+        quote: Omni-MATH error correct 759 241
+    notes: Olympiad-level problems from Omni-MATH's test set (Gao et al., 2024), the subset with the
+      highest share of wrong steps behind right final answers.
+subsets_note: The Hugging Face splits are named gsm8k, math, olympiadbench and omnimath.
+
+tags:
+  - process-reward-models
+  - error-detection
+  - critique
+  - step-level
+  - competition-math
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T05)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2412-06559-v4
+    - src-arxiv-2412-06559
+    - src-aclanthology-2025-acl-long-50
+    - src-github-processbench-readme
+    - src-hf-api-processbench
+    - src-hf-api-processbench-commits
+    - src-arxiv-2605-10158-v1
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text; its abstract page for the dates and the
+    abstract; the ACL Anthology page for the venue (a DOI); the README at main; Hugging Face's API
+    records of the dataset and of its commits; and the v1 PDF of Unsupervised Process Reward Models
+    (a DOI) as evidence of current use. GitHub's API was read for the licence and pushed_at.
+  confidence: medium
+  review_checks:
+    - check: mathematics/proof-verification has a definition but no inclusion or exclusion test and
+        no examples. ProcessBench judges natural-language solutions to problems with answers, not
+        proofs of statements; whether such a solution counts as the leaf's supplied proof.
+      field: domain
+    - check: The paper's F1 is the harmonic mean of the accuracies on erroneous and on correct
+        cases, not precision and recall. It is tagged classification-metric beside exact-match, as a
+        balanced accuracy would be; exact-match alone is the other reading.
+      field: evaluation_method
+      source: src-arxiv-2412-06559-v4
+      quote: we calculate the accuracies on erroneous and correct samples, respectively, and
+        additionally compute their harmonic mean as the F1 score
+    - check: contamination_risk high rests on PRM800K sharing problems (not solutions or labels)
+        with ProcessBench, a route the paper closed only for the Qwen team's own PRM. Medium is the
+        other reading if problem overlap is not a route into the scored content.
+      field: data.contamination_risk
+      source: src-arxiv-2412-06559-v4
+      quote: To eliminate test data contamination, we also remove the PRM800K training samples that
+        have the same problems in PROCESSBENCH
+    - check: refresh versioned-releases rests on one label fixed in a dated Hugging Face commit;
+        static is excluded by any post-release change, but the change carries no version label.
+      field: data.refresh
+      source: src-hf-api-processbench-commits
+      quote: fix one annotation as suggested in https://github.com/QwenLM/ProcessBench/issues/9
+    - check: expert-authored is given for the earliest-error labels, which experts wrote on
+        model-written solutions; the term's exclusion of experts who only review items may apply.
+      field: data.data_provenance
+      source: src-arxiv-2412-06559-v4
+      quote: We recruit human experts with doctoral-level mathematical expertise for annotation
+    - check: Lineage to GSM8K, MATH, OlympiadBench and Omni-MATH (entry omni-math, curated
+        separately) is in the text only; the lineage block has no relation for a benchmark that
+        draws its problems from another's test set.
+      field: lineage
+    - check: Qwen models wrote part of the solutions and Qwen2.5-72B-Instruct segmented all of them,
+        and Qwen critics and the Qwen PRM are ranked on them. Whether that warrants a flag beyond
+        maintainer-competes-on-own-benchmark is not settled by the sources.
+      field: governance.independence_flags
