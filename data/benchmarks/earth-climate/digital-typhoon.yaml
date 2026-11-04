@@ -1,0 +1,720 @@
+# data/benchmarks/earth-climate/digital-typhoon.yaml
+#
+# P1-S7-T02, earth-climate entry 12. Filled from the three dataset papers by the Digital Typhoon project at the
+# National Institute of Informatics, each read as its v1 PDF: V1 (arXiv 2311.02665, NeurIPS 2023 Datasets and
+# Benchmarks), with its arXiv abstract page for the date and venue; V2, the multi-basin edition (arXiv 2411.16421,
+# November 2024); and V3, the multi-spectral edition (arXiv 2610.21654, October 2026). Also the project's English
+# dataset page and its V3 download page (scripts and styles stripped), the repository README pinned at commit
+# 421f837 (with GitHub's API for licence and last push, not quoted), and the v1 PDF of SciVid (arXiv 2507.03578,
+# July 2025), a paper by others that reports results on Digital Typhoon. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: digital-typhoon
+name: Digital Typhoon
+tagline: Typhoon intensity estimated and forecast from hourly Himawari infrared images since 1978,
+  scored against the best track.
+description: >
+  A satellite image dataset and benchmark for tropical cyclones, built by the Digital Typhoon project
+  at the National Institute of Informatics (NII) in Japan and released with a NeurIPS 2023 Datasets and
+  Benchmarks paper. Each hourly image is a 512 x 512 typhoon-centred crop, about 5 km per pixel and 1,250
+  km from the centre, of calibrated infrared brightness temperature from the Himawari geostationary satellites,
+  paired with the Japan Meteorological Agency's best track (grade, central pressure, maximum sustained
+  wind, position), interpolated to the hour. V1 held 1,099 Western North Pacific typhoons and 189,364
+  images from 1978 to 2022. The paper proposes three benchmarks on intensity: analysis (central pressure
+  or wind regressed from one image, and grade classification), forecasting (pressure some hours ahead)
+  and reanalysis (models trained and tested across satellite generations), scored by RMSE in hPa or knots
+  with splits by sequence or season. V2 (November 2024) added a Southern Hemisphere set around Australia
+  from the Bureau of Meteorology's best track, changed the map projection, and reported 24-hour intensity
+  and extra-tropical transition forecasting, typhoon centre estimation and models trained on one hemisphere
+  and tested on the other. V3 (October 2026) adds a second infrared, a water vapour and a near-infrared
+  channel, extends both basins to the 2025 season (1,680 cyclones, 818,881 images) and adopts a season
+  split that holds out the last two seasons, on which ResNet-18 baselines regress pressure and wind for
+  each basin and channel. There is no leaderboard; results appear in papers, including general video and
+  Earth-observation model evaluations that use it as one task.
+self_description:
+  source: src-arxiv-2311-02665
+  quote: This paper presents the official release of the Digital Typhoon dataset, the longest
+    typhoon satellite image dataset for 40+ years aimed at benchmarking machine learning models for
+    long-term spatio-temporal data.
+external_ids:
+  arxiv: '2311.02665'
+paper:
+  title: 'Digital Typhoon: Long-term Satellite Image Dataset for the Spatio-Temporal Modeling of Tropical
+    Cyclones'
+  arxiv: '2311.02665'
+  version_read: v1
+  source: src-arxiv-2311-02665-v1
+released: 2023-11-03
+released_note: The release date the project's dataset page gives Version 1. The paper's only arXiv
+  version was submitted on 2023-11-05, and it appeared at NeurIPS in December 2023.
+released_source: src-nii-digital-typhoon-dataset
+released_quote: Version 1 Northern Hemisphere (WP) Channel 1 November 3, 2023
+release_venue: NeurIPS 2023 Datasets and Benchmarks Track (Spotlight)
+release_venue_source: src-arxiv-2311-02665
+release_venue_quote: Accepted by NeurIPS 2023 Datasets and Benchmarks Track (Spotlight)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/remote-sensing
+  secondary:
+    - earth-climate/weather-forecasting
+    - vision/classification
+domain_basis:
+  reason: The headline task, and the whole of V3's benchmark, estimates a tropical cyclone's central
+    pressure or maximum wind from one infrared satellite image, the data-driven form of the Dvorak
+    technique. The labels are atmospheric quantities, which is remote-sensing's inclusion test, and
+    vision's exclusion test sends overhead imagery labelled with Earth-system quantities to
+    remote-sensing rather than to a vision primary. The forecasting tasks (pressure hours ahead,
+    extra-tropical transition 24 hours ahead) issue forecasts of the atmosphere at stated lead times
+    and score them against the best track, which is weather-forecasting, recorded as secondary and
+    as those subsets' domain_override. Grade classification is the vision task recorded as
+    secondary; regression, the headline operation, has no vision leaf.
+  source: src-arxiv-2311-02665-v1
+  quote: regression tasks, which take an image as input and estimate a pressure or wind value as
+    output
+domain_considered_and_rejected:
+  - term: earth-climate/hazard-prediction
+    reason: Tropical cyclones are a hazard and the papers cite disaster reduction, but every
+      benchmarked target is a property of a cyclone already in the image, its intensity, grade,
+      centre or transition. The tasks that would predict a hazard, formation of a cyclone and its
+      societal impact, are proposed and not benchmarked, and the paper says impact needs other data
+      sources. The leaf has no inclusion or exclusion test to say whether forecasting an existing
+      cyclone's intensity belongs here or to weather-forecasting (logged, see review_checks).
+    source: src-arxiv-2311-02665-v1
+    quote: hazards are measured by heavy rainfall or strong winds, disasters are measured by
+      landslides and flooding
+  - term: earth-climate/climate-projection
+    reason: Climate change is one of the proposed task areas, through reanalysis of a homogeneous
+      record, but nothing is projected under emissions or forcing scenarios.
+    source: src-arxiv-2311-02665-v1
+    quote: Understanding how a long-term tropical cyclone activity is impacted by climate change is
+      a crucial topic in society
+
+capability:
+  - perception
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  perception:
+    reason: Every task takes raw satellite brightness-temperature images as input, and the analysis
+      tasks score what is recovered from one image.
+    source: src-arxiv-2311-02665-v1
+    quote: It is clear that the Dvorak technique naturally fits into the machine learning framework
+      by using images as input and intensity values as output.
+  scientific-prediction:
+    reason: The forecasting tasks predict a cyclone's future central pressure or its transition to
+      an extra-tropical cyclone and score the prediction against the best track; the analysis tasks
+      infer intensity, which is not itself visible, from measurements of the cloud field.
+    source: src-arxiv-2311-02665-v1
+    quote: Forecasting The task is to produce future predictions based on current and past data.
+  distribution-shift-generalization:
+    reason: V2 trains on the Western North Pacific set and scores the same tasks on the Southern
+      Hemisphere set as a condition of its own, and V1's reanalysis benchmark trains on one
+      satellite generation and tests on each of the three. The task and label set stay fixed; the
+      basin, or the sensor generation, moves.
+    source: src-arxiv-2411-16421-v1
+    quote: we study how machine learning models can generalize across basins and hemispheres, by
+      training the model on the northern hemisphere data and testing it on the southern hemisphere
+      data
+    caveat: >
+      The two basins' labels come from different agencies (JMA and BoM), and V2 regrades the
+      BoM best track with JMA's wind thresholds; the paper reads part of the cross-basin gap as an
+      interagency label difference rather than a model failure.
+capability_considered_and_rejected:
+  - term: probabilistic-forecasting
+    reason: The forecasts are hindcasts of past seasons whose best track is public; nothing is
+      scored on resolution, and no probabilities are scored. The paper separates the benchmark from
+      real-time forecasting.
+    source: src-arxiv-2311-02665-v1
+    quote: this regulation does not apply to machine learning benchmarks for historical datasets
+  - term: transfer-learning
+    reason: The WP-to-AU experiment keeps the task and labels and moves only the inputs, which the
+      term's own test sends to distribution-shift-generalization, although V2 also says transfer.
+  - term: temporal-reasoning
+    reason: The forecasting tasks feed image sequences to the model, but no score isolates order or
+      duration; the scored quantity is a future intensity, which is scientific-prediction.
+  - term: calibration-uncertainty
+    reason: Every task scores a point estimate; no distribution or interval is emitted or scored.
+
+evaluation_method:
+  - statistical-fit
+  - classification-metric
+evaluation_method_basis:
+  reason: statistical-fit for the RMSE of central pressure (hPa) and wind (kt) in the analysis,
+    forecasting and reanalysis tasks of all three papers, and for V2's centre-estimation error in
+    km; classification-metric for V2's balanced accuracy and F1 on extra-tropical transition and its
+    per-grade precision on the cross-basin grade classification.
+  source: src-arxiv-2311-02665-v1
+  quote: To evaluate, we measured the root mean square error (RMSE) of the prediction from ground
+    truth and their standard deviations
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: V1's grade classification reports plain accuracy, a mean of per-image verdicts, but only
+      in an appendix; the paper puts regression forward as the benchmark because the grade
+      boundaries are ambiguous (see review_checks).
+    source: src-arxiv-2311-02665-v1
+    quote: we suggest that the regression task, especially on the central pressure, has a less
+      ambiguous definition of the task
+  - term: domain-metric
+    reason: RMSE, F1, precision and distance error are general statistics; no measure is defined
+      only within meteorology.
+  - term: uncertainty-calibration-score
+    reason: No emitted distribution is scored.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The entrants are models trained on the dataset for tropical cyclone intensity analysis and
+    forecasting, tasks meteorology defines (the Dvorak technique is their manual form). V2's
+    forecasting tables score a naive persistence forecast and the SHIPS-based TIFS method beside the
+    learned models, and SciVid adds persistence and mean-pressure baselines, the non-learned
+    comparators classical-algorithm admits as baselines.
+  source: src-arxiv-2311-02665-v1
+  quote: take advantage of the big data of tropical cyclones for developing data-driven approaches
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: Image regression is a general operation, but cyclone intensity estimation is a task an
+      earth-climate discipline defines, which the term's exclusion sends to domain-specialist-model.
+  - term: scientific-surrogate-model
+    reason: The models do not stand in for a simulation; they are scored against the best track, and
+      the paper sets them beside numerical simulation as a different approach.
+    source: src-arxiv-2311-02665-v1
+    quote: computational approaches represent a typhoon in a simulation model and compute the future
+      based on the theory of the atmosphere
+
+as_used:
+  - protocol: V1's pressure forecasting task (hourly central pressure for the next 12 hours from the
+      12 preceding infrared frames, on the first 24 hours of each sequence), but with a fixed
+      train/validation/test split instead of five random 80/20 splits, and scored as one number, the
+      RMSE averaged over steps 1, 2, 3, 6 and 12. Entrants are frozen video foundation models with a
+      trained readout.
+    split: SciVid's fixed test split of V1 (WP) sequences
+    source: src-arxiv-2507-03578-v1
+    quote: we generate a fixed 80%/20%/20% train/validation/test split
+    note: SciVid (Google DeepMind, July 2025), a five-task evaluation of video models in scientific
+      applications, of which Digital Typhoon is one. It reports 696 training samples for the task.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it. SciVid (July 2025) reports state-of-the-art results on
+    it with frozen video-model features, and the maintainers released V3 in October 2026, whose
+    paper lists 2024-2026 uses, among them TorchGeo shipping it as a built-in dataset. The
+    repository was last pushed on 2026-10-16 (GitHub API), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2507-03578-v1
+  quote: We reach state-of-the-art performance by training readouts on top of frozen features for
+    three out of five tasks (CalMS21, FlyVsFly and Digital Typhoon).
+activity: no-submission-channel
+activity_basis:
+  reason: The dataset page, the README and the papers describe downloads, the pyphoon library and
+    model weights, and no leaderboard, results page or submission route; the dataset page collects
+    use cases through a feedback button, not results.
+  source: src-arxiv-2311-02665-v1
+  quote: The GitHub page provides code to work with the dataset to train machine-learning models
+    used for benchmarking.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ResNet18 and ResNet50 regressors (V1 baselines)
+    source: src-arxiv-2311-02665-v1
+    observed_on: 2026-11-04
+    quote: We used the TorchVision [35] ResNet18 and ResNet50 models
+  - system: MoCo v2 ResNet34 encoder with an LSTM forecaster (V2)
+    source: src-arxiv-2411-16421-v1
+    observed_on: 2026-11-04
+    quote: We used the ResNet34 architecture with a cosine learning rate scheduler
+  - system: 4DS-L video model with a trained readout (SciVid)
+    source: src-arxiv-2507-03578-v1
+    observed_on: 2026-11-04
+    quote: On Digital Typhoon, interestingly, it is 4DS-L which leads, ahead of the larger 4DS-e,
+      with VJEPA-H following closely behind.
+evaluation_target: learned-system
+evaluation_target_note: Persistence, mean-pressure and TIFS rows appear as baselines to the learned
+  models; the benchmark is built for machine learning models.
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_basis:
+  reason: The labels are the agencies' best track, analysts' retrospective estimates by the Dvorak
+    technique, which the paper treats as ground truth while noting agencies disagree. The best track
+    is six-hourly; the hourly labels are interpolated (linear for pressure, persistence for grade
+    and wind), and V2 counts 78.8% of images as carrying interpolated values.
+  source: src-arxiv-2311-02665-v1
+  quote: Nonetheless, we regard the best track as the ground truth for most machine learning tasks,
+    because it is the best estimate available.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The images and best-track metadata are downloadable without registration under CC BY 4.0,
+    and the pyphoon libraries load them; anyone can train and score a model. V3's published numbers
+    were computed on V3-2025.R1, which is released only on request (versions).
+  source: src-nii-digital-typhoon-dataset-v3
+  quote: A typical benchmark study can be performed by V3-2025.R2-WP-1, which is the longest
+    dataset.
+
+task:
+  exists: true
+  input:
+    - a typhoon-centred infrared image, 512 x 512 pixels of brightness temperature at about 5 km per
+      pixel, reaching 1,250 km from the centre (Channel 1; V3 adds three channels), resized or
+      cropped to 224 x 224 in some baselines
+    - for the forecasting tasks, the preceding hourly or three-hourly images of the same cyclone,
+      optionally with best-track pressure, position and time
+  output: Central pressure (hPa) or maximum sustained wind (kt) at the image's time, or the JMA
+    grade; for forecasting, central pressure some hours ahead (1 to 12 in V1, 12 to 24 in V2) or
+    whether the cyclone has become extra-tropical 24 hours ahead; for V2's centre estimation, the
+    centre's pixel position.
+  scoring: RMSE against the best track over the evaluation set, in hPa for pressure and kt for wind,
+    reported as the mean and standard deviation over repeated runs, per task, basin, channel and
+    input type; V1's forecasting reports RMSE per lead time. V2 scores extra-tropical transition by
+    RMSE of the raw output, balanced accuracy and F1, cross-basin grade classification by per-grade
+    precision, and centre estimation by mean distance error. V1 and V2 split 80/20 or 70/15/15 by
+    sequence; V3 holds out the last two seasons (SS-L2, 2024-2025) and scores at epoch 50.
+  scoring_source: src-arxiv-2610-21654-v1
+  scoring_quote: Throughout the paper, we primarily use the SS-L2 split for the Digital Typhoon
+    Dataset V3.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: Every season's images and best track are in the public download,
+    the V3 evaluation seasons included.
+  item_definition: One hourly typhoon-centred image with its interpolated best-track values; splits
+    keep each cyclone's sequence, or each season, whole.
+  item_definition_source: src-arxiv-2311-02665-v1
+  item_definition_quote: Hence we apply random splits to the sequence level (split-by-sequence) or
+    the season level (split-by-season).
+  source: src-arxiv-2311-02665-v1
+  quote: possesses a spatial resolution of approximately 5km
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The V3 page links each basin-and-channel ZIP file directly, with its SHA256 hash, and
+      asks for no registration (read 2026-11-04). The release the V3 paper benchmarked on, R1, and
+      the obsolete V1 and V2 are available on request only.
+    source: src-nii-digital-typhoon-dataset-v3
+    quote: Please download files that you really need for your experiments.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data change in labelled versions (V1, V2, V3) and, from V3, in labelled annual
+      updates and corrections (V3-2025, V3-2026; .R suffixes for fixes within a year), which may
+      also revise past seasons' best track. Whether V1's own announced 2023-season update was issued
+      under a label was not checked (review_checks).
+    source: src-arxiv-2610-21654-v1
+    quote: From now on, we will use Semantic Versioning as follows.
+  data_provenance:
+    - real-world-instrument
+    - expert-authored
+  data_provenance_note: The images are Himawari (and GOES-9) geostationary observations, converted
+    to brightness temperature and inter-calibrated by the project's pipeline. The labels are the JMA
+    and BoM best tracks, analysts' retrospective estimates, interpolated to the hour by the project.
+  data_provenance_source: src-arxiv-2311-02665-v1
+  data_provenance_quote: based on the interpretation of meteorological experts following the
+    established procedure
+  contamination_risk: medium
+  contamination_risk_note: Every season's images and labels have been public since release, and the
+    best track is also published by the agencies and IBTrACS; under V1's random sequence splits and
+    V3's last-two-seasons split, only the entrant's own split keeps test cyclones out of training,
+    and V3's evaluation seasons move with each annual update. General video and Earth-observation
+    models now evaluated on it may have seen typhoon imagery in pretraining. No evidence of either
+    was read.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: V2 sets an operational statistical method, TIFS, beside its forecasting
+    results but says the row cannot be compared directly, since it covers other cyclones and years;
+    the labels themselves are expert analyses, whose agreement between agencies no source read gives
+    as a ceiling.
+  ceiling_anchor_type_source: src-arxiv-2411-16421-v1
+  ceiling_anchor_type_quote: This specific row cannot directly be compared with our results since
+    the testing sequences are not the same
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: Stated on the V3 page and in all three papers. The Himawari data were bought
+    from the Japan Meteorological Business Support Center or received at the University of Tokyo's
+    Institute of Industrial Science; V1 says the images are not copyrighted.
+  dataset_licence_source: src-nii-digital-typhoon-dataset-v3
+  dataset_licence_quote: is licensed under a Creative Commons Attribution 4.0 International License
+    (CC BY)
+  size:
+    - count: 818881
+      unit: hourly typhoon-centred images, all four channels and both basins
+      subset: V3-2025.R2
+      source: src-nii-digital-typhoon-dataset-v3
+      quote: by adding all channels, the total number of images is 818,881
+    - count: 1680
+      unit: tropical cyclones, both basins
+      subset: V3-2025.R2
+      source: src-nii-digital-typhoon-dataset-v3
+      quote: the total number of typhoons (tropical cyclones) is 1,680
+    - count: 202986
+      unit: Channel 1 images of 1,169 tropical cyclones
+      subset: V3-2025.R2, WP-1 (Western North Pacific, 1978-2025)
+      note: The row reads channel, WP cyclones, WP images, AU cyclones, AU images.
+      source: src-nii-digital-typhoon-dataset-v3
+      quote: 1 1,169 202,986 511 76,188
+    - count: 76188
+      unit: Channel 1 images of 511 tropical cyclones
+      subset: V3-2025.R2, AU-1 (around Australia, 1979-2025)
+      note: V3-2025.R1, on which the V3 paper's tables were computed, has 23 more.
+      source: src-nii-digital-typhoon-dataset-v3
+      quote: 1 1,169 202,986 511 76,188
+    - count: 189364
+      unit: images of 1,099 typhoons (Western North Pacific, 1978-2022)
+      subset: V1
+      source: src-arxiv-2311-02665-v1
+      quote: the dataset comprises a total of 1,099 typhoons and 189,364 images
+    - count: 192956
+      unit: Western North Pacific images (1,116 cyclones, 1978-2023)
+      subset: V2, WP
+      source: src-arxiv-2411-16421-v1
+      quote: the number of images increased from 189,364 to 192,956
+    - count: 70087
+      unit: images around Australia (480 cyclones, 1979-2024)
+      subset: V2, AU
+      source: src-arxiv-2411-16421-v1
+      quote: Bureau of Meteorology (BoM), Australia 480 70,087
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Digital Typhoon project (Kitamoto laboratory), National Institute of Informatics,
+    Japan
+  maintainer_basis:
+    reason: V1 names the project at NII as the maintainer; the dataset page and download sit on
+      NII's site, the repository in the kitamoto-lab GitHub organisation, and the DOI with DIAS.
+    source: src-arxiv-2311-02665-v1
+    quote: The Digital Typhoon dataset will be maintained by the Digital Typhoon project at the
+      National Institute of Informatics.
+  maintainer_type: academic-lab
+  maintainer_type_note: NII is a national research institute, not a university; no source read
+    states whether it is a public body, which government-agency would need, so the closest research
+    group type is used (see review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route. Beyond the baselines in
+    the three release papers, results appear in their authors' own papers.
+  independence_flags: []
+  independence_flags_note: None recorded. The maintainers' results are in the papers that release
+    each version (V2's and V3's include their own SSL, LSTM and weighting experiments), and no
+    ranking is kept. Two V1 authors were at Google DeepMind; SciVid, by other Google DeepMind
+    authors, reports state-of-the-art results on it (as_used).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2311-02665-v1
+    quote: that the interpretation of the observation data is not unique, or not the ground truth in
+      a strict sense
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public images and labels, a fixed metric and an open data loader; a model can be trained
+      and scored end to end with no human or physical step.
+    source: src-arxiv-2311-02665-v1
+    quote: pyphoon2 comes with a data loader and components to help build machine learning
+      pipelines.
+  reproducibility_blockers: []
+  harness_availability: reference-implementation-only
+  harness_availability_note: pyphoon2 (V1, V2) and pyphoon3 (V3) load the data and build pipelines;
+    no scorer is designated, and the split and epoch-selection rules sit in the papers.
+  harness: pyphoon2 (kitamoto-lab/digital-typhoon) for V1 and V2; pyphoon3 (kitamoto-lab/pyphoon3)
+    for V3
+  harness_source: src-arxiv-2610-21654-v1
+  harness_quote: All experiments in this paper can be reproduced with Pyphoon3 3.0.0 and V3-2025.R1
+    (available upon request).
+  code_licence: MIT
+  code_licence_note: V1 gives the MIT licence for the GitHub code and the Hugging Face model
+    weights. GitHub's licence metadata for kitamoto-lab/digital-typhoon is empty (read 2026-11-04),
+    and pyphoon3's repository was not read.
+  code_licence_source: src-arxiv-2311-02665-v1
+  code_licence_quote: The code is provided with the MIT license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # statistical-fit and classification-metric with domain-specialist-model or classical-algorithm resolve no
+  # profile, so the fallback (subset_used) applies; subset_used carries the task and basin (subsets below).
+  # Two more are listed. lead_time: the forecasting subsets score per lead time (1 to 12 hours in V1, 12, 18 and
+  # 24 in V2) or averaged over lead times (SciVid). training_data_policy: what the model trained on (the
+  # sequence or season split, ImageNet or self-supervised pretraining, best-track inputs beside the images).
+  # Several conditions that move a Digital Typhoon number have no EvalConditions field: the dataset release (V1,
+  # V2, V3-2025.R1 or .R2, and the last season included, which the V1 paper asks claims to state), the split
+  # rule (random by sequence or SS-L2 by season), the channel, the image type (full, resized or cropped) and,
+  # in V3, the epoch reported (epoch 50, or the median of the last ten epochs its appendix recommends).
+  material_extra:
+    - lead_time
+    - training_data_policy
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: Each task's number is one RMSE (or accuracy) over its evaluation set, averaged over
+    repeated runs; nothing combines tasks, basins or channels into one score. SciVid's average over
+    lead times is its own.
+  source: src-arxiv-2610-21654-v1
+  quote: We repeated each experiment five times using the same training and evaluation partitions
+    and report the mean RMSE and standard deviation across the five runs.
+
+homepage: https://agora.ex.nii.ac.jp/digital-typhoon/dataset/
+repository: https://github.com/kitamoto-lab/digital-typhoon
+dataset_url: https://doi.org/10.20783/DIAS.664
+
+versions:
+  - version: v1
+    label: Digital Typhoon Dataset V1, the NeurIPS 2023 release
+    version_kind: revision
+    released: 2023-11-03
+    changes: Western North Pacific only, Channel 1 (infrared), seasons 1978-2022, Lambert azimuthal
+      equal-area projection; pyphoon2. Now obsolete and available on request.
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-arxiv-2311-02665-v1
+      - src-nii-digital-typhoon-dataset
+  - version: v2
+    label: Digital Typhoon Dataset V2, the multi-basin edition
+    version_kind: revision
+    released: 2024-11-26
+    changes: The AU (Southern Hemisphere, BoM best track, regraded with JMA's thresholds) set added,
+      the 2023 WP season added, and the projection changed to azimuthal equidistant, so the whole
+      dataset was regenerated and V1 files cannot be mixed with it. Same format and loader.
+    breaking: true
+    supersedes_version: v1
+    superseded_by: v3-2025.r1
+    frozen: true
+    sources:
+      - src-arxiv-2411-16421-v1
+      - src-nii-digital-typhoon-dataset
+  - version: v3-2025.r1
+    label: Digital Typhoon Dataset V3-2025.R1, the release the V3 paper benchmarks on
+    version_kind: revision
+    changes: Channels 2 to 4 (a second infrared, water vapour and near infrared) added beside
+      Channel 1, the 2024 and 2025 seasons added for both basins, a new directory layout and
+      variable name for pyphoon3, and the SS-L2 season split as the benchmark protocol. Never
+      distributed; available on request.
+    breaking: true
+    supersedes_version: v2
+    superseded_by: v3-2025.r2
+    errata:
+      - scope: Channels 1-3, 4,102 images (579 of them already in V1, 616 in V2)
+        description: Blank images from missing recalibration coefficients or conversion tables, and
+          46 GOES-9 images over the 30% missing-area limit, corrected or removed in V3-2025.R2. None
+          is in the 2024-2025 evaluation seasons.
+        source: src-arxiv-2610-21654-v1
+    frozen: true
+    sources:
+      - src-arxiv-2610-21654-v1
+      - src-nii-digital-typhoon-dataset-v3
+  - version: v3-2025.r2
+    label: Digital Typhoon Dataset V3-2025.R2, the distributed V3 release
+    version_kind: revision
+    released: 2026-10-16
+    changes: The R1 corrections applied; the evaluation sets are identical to R1's and only the
+      training sets differ, by at most about 1% of a channel's images. Retraining five
+      configurations moved the median RMSE by about 0.1 hPa on WP and within run-to-run variation on
+      AU.
+    supersedes_version: v3-2025.r1
+    frozen: true
+    sources:
+      - src-arxiv-2610-21654-v1
+      - src-nii-digital-typhoon-dataset-v3
+      - src-nii-digital-typhoon-dataset
+
+subsets:
+  - id: digital-typhoon#intensity-regression
+    label: Intensity analysis, central pressure or maximum wind regressed from one image
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-02665-v1
+        quote: regression tasks, which take an image as input and estimate a pressure or wind value
+          as output
+      - source: src-arxiv-2610-21654-v1
+        quote: For single-channel models, we evaluated the Digital Typhoon Dataset V3 for pressure
+          and wind regression tasks.
+    notes: The headline task. V1 scores it with an 80/20 split by sequence (best pressure RMSE about
+      10.1 hPa); V3 scores it per basin (WP, AU) and per channel on the SS-L2 split (best 6.56 hPa
+      on WP-1, 7.20 hPa on AU-1).
+  - id: digital-typhoon#grade-classification
+    label: Intensity analysis, JMA grade classified from one image
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-02665-v1
+        quote: Here the target value is the categorical value of grades 2, 3, 4, 5, and 6.
+    notes: V1's appendix reports accuracy over five grades (about 70% at best); V2 classifies grades
+      2 to 5 and reports per-grade precision on both basins.
+  - id: digital-typhoon#intensity-forecasting
+    label: Intensity forecasting, central pressure hours ahead
+    scored_separately: true
+    domain_override:
+      primary: earth-climate/weather-forecasting
+      secondary:
+        - earth-climate/remote-sensing
+    capability_override:
+      - scientific-prediction
+      - perception
+    evidence:
+      - source: src-arxiv-2311-02665-v1
+        quote: 'Table 5: Results of pressure forecasting for 12-hours by ResNet18 (values in hPa).'
+      - source: src-arxiv-2411-16421-v1
+        quote: 'Table 2: RMSE of central pressure (hPa) for 12, 18, and 24 hours forecasting over 139
+          test sequences.'
+    notes: V1 predicts the next frames with a ConvLSTM from the 12 preceding hourly images and
+      regresses pressure from them, scored at 1, 2, 3, 6 and 12 hours; V2 forecasts pressure at 12,
+      18 and 24 hours from three images three hours apart, with persistence and TIFS baselines;
+      SciVid uses V1's protocol (as_used).
+  - id: digital-typhoon#ets-transition-forecasting
+    label: Extra-tropical transition forecasting, 24 hours ahead
+    scored_separately: true
+    domain_override:
+      primary: earth-climate/weather-forecasting
+      secondary:
+        - earth-climate/remote-sensing
+    capability_override:
+      - scientific-prediction
+      - perception
+    evidence:
+      - source: src-arxiv-2411-16421-v1
+        quote: a binary t + 24 forecasting as output (1 if the typhoon transitions to ETS, 0 if it
+          stays a Tropical Cyclone)
+    notes: V2 only, on the WP sequences that contain a transition to grade 6 (378/79/78 sequences
+      for training, validation and test; its Table 3 says 66 test sequences). Scored by RMSE of the
+      raw output, balanced accuracy and F1. The paper warns the task is very unbalanced.
+  - id: digital-typhoon#reanalysis
+    label: Reanalysis, pressure regression trained and tested across satellite generations
+    scored_separately: true
+    capability_override:
+      - perception
+      - distribution-shift-generalization
+    evidence:
+      - source: src-arxiv-2311-02665-v1
+        quote: we split the dataset into three buckets by satellite generations, namely the first
+          generation (1978-2004), the second generation (2005-2014), and the third generation
+          (2015-2022)
+    notes: V1's third benchmark, a 3 x 3 table of a model trained on one generation and tested on
+      each, meant to expose biases from changing sensors and annotation practice.
+  - id: digital-typhoon#center-estimation
+    label: Typhoon centre estimation from a randomly cropped image
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2411-16421-v1
+        quote: we will introduce the typhoon center estimation task; namely to identify the center
+          of the typhoon only from satellite images
+    notes: V2 only. A U-Net heatmap model locates the centre in a 256 x 256 crop; scored by mean
+      distance error per grade. This split shuffles images and does not keep sequences whole.
+  - id: digital-typhoon#cross-basin
+    label: Trained on the Western North Pacific, tested around Australia
+    scored_separately: true
+    capability_override:
+      - perception
+      - distribution-shift-generalization
+    evidence:
+      - source: src-arxiv-2411-16421-v1
+        quote: We use the split of the WP dataset to train all models.
+    notes: V2 only. Centre estimation, grade classification and pressure regression trained on WP
+      and scored on both test basins, with AU images flipped horizontally to align the direction of
+      circulation. V3 instead trains and scores each basin on its own data.
+subsets_note: V3 also benchmarks multi-channel inputs (Channel 1 + 2, 1 + 3, 1 + 2 + 3) on the
+  four-channel intersection of the data; those are input conditions of intensity-regression, not
+  subsets of the cyclones.
+
+lineage:
+  role: root
+
+tags:
+  - tropical-cyclones
+  - typhoon-intensity
+  - himawari
+  - infrared-satellite-imagery
+  - best-track-labels
+  - spatio-temporal
+  - held-out-basin
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2311-02665-v1
+    - src-arxiv-2311-02665
+    - src-arxiv-2411-16421-v1
+    - src-arxiv-2610-21654-v1
+    - src-nii-digital-typhoon-dataset
+    - src-nii-digital-typhoon-dataset-v3
+    - src-github-digital-typhoon-readme
+    - src-arxiv-2507-03578-v1
+  sources_note: >
+    The V1, V2 and V3 papers' v1 PDFs (DOI sources, not archived) read as text, and V1's arXiv abstract
+    page for the date and venue; the project's English dataset page and V3 page with scripts and styles
+    stripped; the README pinned at commit 421f837 (2026-10-16); and SciVid's v1 PDF as evidence of current
+    use. The V2 and V3 abstract pages were read for their licences and dates but are not Sources. The
+    DIAS record behind the DOI was not read.
+  confidence: medium
+  review_checks:
+    - check: remote-sensing primary rests on the headline task, intensity regressed from one image,
+        and on V3's benchmark being regression only. The forecasting subsets override to
+        weather-forecasting. Whether forecasting an existing cyclone's intensity or transition is
+        weather-forecasting or hazard-prediction is not decided by the taxonomy, since
+        hazard-prediction has no tests; an undefined-boundary record was logged.
+      field: domain
+    - check: scientific-prediction is assigned for the analysis tasks as well as the forecasting
+        ones, on the reading that central pressure is inferred from the cloud pattern rather than
+        seen, as flood extent is in sen1floods11 (where the term was rejected). A reviewer may keep
+        it for the forecasting subsets only.
+      field: capability
+    - check: exact-match is not tagged although V1's appendix reports plain grade accuracy; the
+        paper steers the benchmark to regression. V2's grade precision and ETS balanced accuracy and
+        F1 are classification-metric.
+      field: evaluation_method
+    - check: classical-algorithm rests on V2's persistence and TIFS rows and SciVid's persistence
+        and mean-pressure baselines, all in the forecasting subset; V1 names the Dvorak technique
+        and SHIPS but scores neither.
+      field: designed_for_subjects
+      source: src-arxiv-2411-16421-v1
+      quote: The first is a naive persistent forecast, which simply repeats the last known value for
+        central pressure.
+    - check: maintainer_type academic-lab. NII is a national research institute under a research
+        organisation, not a university; if a source confirming it as a public body is read,
+        government-agency fits better.
+      field: governance.maintainer_type
+    - check: independence_flags is empty. The V2 and V3 papers publish the maintainers' own
+        forecasting and weighting models beside baselines; they are release papers and no ranking is
+        kept, so maintainer-competes-on-own-benchmark was not set, as for sen1floods11's baselines.
+      field: governance.independence_flags
+    - check: The V3 paper's numbers were computed on V3-2025.R1, which is not distributed; the
+        paper's retraining on R2 shows small differences, but exact reproduction needs R1 on
+        request.
+      field: versions
+      source: src-nii-digital-typhoon-dataset-v3
+      quote: We don't release V3-2025.R1, which we used for benchmarking in the paper.
+    - check: versioned-releases rests on V1, V2 and V3 and V3's naming rule. V1 announced an
+        in-place update with the 2023 season for early 2024, replacing the ZIP file; whether it was
+        issued, and under what label, before V2 was not checked. If it was issued unlabelled,
+        rolling-live fits the V1 period.
+      field: data.refresh
+      source: src-arxiv-2311-02665-v1
+      quote: replace the current ZIP file with a new one
+    - check: Hourly labels are interpolated from a six-hourly best track (persistence for wind,
+        linear for pressure), so most scored images carry interpolated, not analysed, values; V2
+        counts 78.8%.
+      field: ground_truth_source
+      source: src-arxiv-2411-16421-v1
+      quote: 152,034 images, representing 78.8% of the whole dataset
+    - check: Several conditions that move a score (release and last season, split rule, channel,
+        image type, epoch reported) have no EvalConditions field, so claims that differ on them can
+        share a comparability key.
+      field: comparability
+    - check: code_licence MIT rests on V1's statement; GitHub reports no licence for the repository,
+        and pyphoon3, V3's library, sits in a repository that was not read.
+      field: execution.code_licence
+      source: src-github-digital-typhoon-readme
+      quote: is a machine-learning library for the Digital Typhoon Dataset.
+  personal_data_excluded:
+    - source: src-arxiv-2507-03578-v1
+      what: The corresponding authors' e-mail addresses in the PDF's author block; the extract's
+        windows leave them out.
+    - source: src-nii-digital-typhoon-dataset
+      what: The list of internship students' names in the page's acknowledgment; the extract's
+        windows leave it out.
