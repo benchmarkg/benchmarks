@@ -1,0 +1,740 @@
+# data/benchmarks/robotics-embodiment/navsim.yaml
+#
+# P1-S5-T02, robotics-embodiment entry 12. Filled from the NAVSIM v1 paper, arXiv 2406.15349 read as its v2 PDF
+# (2024-10-31, NeurIPS 2024 Datasets and Benchmarks), and its abstract page; the NAVSIM v2 paper (Pseudo-Simulation
+# for Autonomous Driving), arXiv 2506.04218 read as its v3 PDF (2026-03-20, CoRL 2025), and its abstract page; the
+# repository README and its metrics, splits, submission and installation documents, pinned at commit 0a380a9, and
+# the v1.1 branch's metrics document; the overview and the public leaderboard of the two Hugging Face boards (v2
+# navhard, v1 navtest), read as the JSON their Spaces load; OpenDriveLab's Autonomous Grand Challenge 2025 page;
+# Hugging Face's API record of the OpenScene dataset; and the abstract page of VITAL (arXiv 2610.20604, October
+# 2026), a paper that reports on NAVSIM v1 and v2. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+
+id: navsim
+name: NAVSIM
+aliases:
+  - NAVSIM v1
+  - NAVSIM v2
+  - Data-Driven Non-Reactive Autonomous Vehicle Simulation and Benchmarking
+  - Pseudo-Simulation for Autonomous Driving
+  - NAVSIM End-to-End Driving Challenge
+aliases_note: >
+  taxonomy/ cites this benchmark both as `navsim` (evaluation-methods.yaml) and as `navsim-v2` (the Stage
+  3 corpus record and the examples in capabilities, ceiling-anchors, data-properties, governance and subjects);
+  NAVSIM v2 is a version here, not an entry of its own.
+tagline: End-to-end driving planners scored on real nuPlan scenes by simulating their 4-second
+  trajectories, two-stage since v2.
+description: >
+  A benchmark and devkit for sensor-based autonomous-driving planners, from the University of Tübingen's
+  Autonomous Vision Group with NVIDIA Research, Bosch and OpenDriveLab. Each test sample is a real scene
+  from OpenScene, a 2 Hz redistribution of nuPlan, filtered for challenging situations. The planner sees
+  the cameras (and LiDAR in v1), its speed, acceleration and a discrete driving command, and outputs a
+  4-second trajectory. The devkit then tracks that trajectory with an LQR controller and a kinematic bicycle
+  model at 10 Hz in a bird's-eye-view abstraction of the scene, without querying the planner again, and
+  scores the result. NAVSIM v1 (2024) scores the PDM Score (PDMS): collision and drivable-area penalties
+  multiplying a weighted average of ego progress, time to collision and comfort, on the navtest split,
+  with background actors replaying their logs. NAVSIM v2 (2025) scores the Extended PDM Score (EPDMS),
+  which adds driving-direction, traffic-light, lane-keeping and comfort terms and switches off any penalty
+  the logged human driver also incurs, and makes background vehicles react through IDM. It adds a second
+  stage: the planner is scored again from synthetic observations pre-rendered with 3D Gaussian Splatting
+  around the human's 4-second endpoint, each weighted by its distance from where the planner's own first-stage
+  trajectory ended, and the two stages are multiplied. Results go to Hugging Face leaderboards (navtest
+  for v1 since 2024, navhard_two_stage for v2), which score submitted trajectory pickles and drop entries
+  without released code; NAVSIM also ran the end-to-end driving tracks of OpenDriveLab's Autonomous Grand
+  Challenge at CVPR 2024 and at CVPR and ICCV 2025 on private test splits.
+self_description:
+  source: src-arxiv-2406-15349-v2
+  quote: We combine these ideas to propose NAVSIM, a comprehensive tool for AV data curation,
+    simulation, and benchmarking.
+external_ids:
+  arxiv: '2506.04218'
+paper:
+  title: Pseudo-Simulation for Autonomous Driving
+  arxiv: '2506.04218'
+  version_read: v3
+  source: src-arxiv-2506-04218-v3
+released: 2024-04-21
+released_note: NAVSIM v1.0, the devkit release that added the standardised navtrain and navtest
+  splits and was the official version for the CVPR 2024 challenge, as the README's changelog dates
+  it. Earlier devkit versions (v0.1, 2024-02-20) were demos and challenge tooling; the v1 paper
+  followed on 2024-06-21 and the v2 paper on 2025-06-04 (see versions).
+released_source: src-github-navsim-readme
+released_quote: '[2024/04/21]`** [NAVSIM v1.0]'
+release_venue: NeurIPS 2024 Track on Datasets and Benchmarks (v1); CoRL 2025 (v2)
+release_venue_source: src-arxiv-2406-15349
+release_venue_quote: 'Comments: NeurIPS 2024 Datasets and Benchmarks'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/autonomous-driving-planning
+  secondary: []
+domain_basis:
+  reason: The entrant produces a driving trajectory and the score is the driving outcome of
+    executing it -- collisions, drivable-area and traffic-rule compliance, progress, comfort -- not
+    perception accuracy, which is the leaf's definition. The family's inclusion test asks for an
+    outcome produced by embodied action, here driving; the action is a committed plan that the
+    benchmark's own controller executes on a simulated vehicle rather than a closed control loop,
+    which taxonomy/capabilities.yaml settles for this benchmark as planning, not sensorimotor
+    control (see review_checks).
+  source: src-arxiv-2406-15349-v2
+  quote: Our benchmark evaluates trajectory outputs of sensor-based driving policies with
+    simulation-based metrics, considering collisions and map compliance.
+domain_considered_and_rejected:
+  - term: robotics-embodiment/navigation
+    reason: No goal location is reached or searched for. The route is given as a discrete command,
+      and each sample scores a 4-second plan in a mapped road scene.
+    source: src-arxiv-2406-15349-v2
+    quote: 'we provide the navigation goal as a one-hot vector with three categories: left, straight,
+      or right.'
+  - term: vision/driving-perception-3d
+    reason: The inputs are vehicle camera and LiDAR frames, and many entrants train perception
+      heads, but no perception output is scored; only the trajectory is.
+  - term: vision/novel-view-synthesis
+    reason: The v2 second-stage views are rendered by the maintainers with 3D Gaussian Splatting
+      before evaluation and given to the planner as inputs. Their fidelity (LPIPS) is the paper's
+      own validation, not something entrants are scored on.
+    source: src-arxiv-2506-04218-v3
+    quote: augments them with synthetic observations generated prior to evaluation using 3D Gaussian
+      Splatting
+
+capability:
+  - planning
+capability_basis:
+  planning:
+    reason: The scored object is the planned 4-second trajectory, which the devkit's controller
+      tracks with no further input from the planner. sensorimotor-control's 0.9.0 tie-break assigns
+      this case to planning, and capabilities.yaml gives this benchmark (as navsim-v2) as planning's
+      example.
+    source: src-arxiv-2506-04218-v3
+    quote: We consider a planning task where evaluation proceeds in two stages (Fig. 1).
+capability_considered_and_rejected:
+  - term: sensorimotor-control
+    reason: The planner is queried once per stage and its trajectory is executed open-loop over the
+      horizon, so the environment's response never reaches it. The term's exclusion test sends a
+      trajectory tracked by the benchmark's own controller to planning.
+    source: src-arxiv-2406-15349-v2
+    quote: This means driving agents are only queried in the initial frame of each scene.
+  - term: distribution-shift-generalization
+    reason: The v2 second stage starts the planner from states off the human's path, and the
+      leaderboard reports its subscores apart, but the states approximate where the planner's own
+      closed-loop drift would take it, and the headline multiplies both stages into one score. No
+      condition is drawn from a distribution the planner was not fitted to (see review_checks).
+    source: src-arxiv-2506-04218-v3
+    quote: suggesting their sensitivity to the distribution shifts introduced in Stage 2
+  - term: long-horizon-execution
+    reason: Each stage scores a 4-second horizon (8 seconds over both stages), and a poor first
+      stage only lowers the weights of the second; nothing makes later success unattainable.
+  - term: perception
+    reason: Planners take raw camera (and in v1 LiDAR) input, but what is scored is the plan, not a
+      percept.
+
+evaluation_method:
+  - composite
+  - constraint-check
+evaluation_method_basis:
+  reason: The headline is a product of rule-violation penalties (no at-fault collision, drivable
+    area, and since v2 driving direction and traffic lights), any of which can zero a sample
+    (constraint-check), times a weighted average of graded subscores (ego progress, time to
+    collision, comfort, lane keeping), averaged over samples; in v2 the two stages are multiplied
+    (composite). Each subscore is computed from a simulated execution of the trajectory (see
+    evaluation_method_considered_and_rejected).
+  source: src-github-navsim-metrics
+  quote: NAVSIM v1 introduced the PDM Score (PDMS), a combination of several subscores and
+    multiplicative penalties.
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: The subscores come from simulating the trajectory, but the planner is not run in the
+      simulator; its committed output is replayed with no feedback, and the score is a rule-based
+      product, not an episode's success or partial credit. taxonomy/evaluation-methods.yaml cites
+      this benchmark under composite. The missing term for pseudo-simulation is the open Stage 3
+      failure 2026-09-28-navsim-v2-002.
+    source: src-arxiv-2406-15349-v2
+    quote: Over this short horizon, no environmental feedback is provided to the driving agent
+designed_for_subjects:
+  - task-specific-supervised-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The entrants are end-to-end driving networks trained by imitation on navtrain (TransFuser,
+    Latent TransFuser, UniAD, PARA-Drive, NavFormer, the community's diffusion and scoring planners)
+    and scored open-loop on logged scenes, which subjects.yaml assigns to
+    task-specific-supervised-model. Rule-based planners are entered too -- the constant-velocity
+    baseline and PDM-Closed, the privileged planner that tops the paper's March 2026 navhard
+    snapshot -- which is classical-algorithm.
+  source: src-arxiv-2506-04218-v3
+  quote: Latent TransFuser (LTF) [11], the most established baseline for image-only planning for
+    nuPlan
+designed_for_subjects_considered_and_rejected:
+  - term: rl-policy
+    reason: The planners do not act in an environment; subjects.yaml names this benchmark as
+      rl-policy's near miss.
+  - term: instruction-tuned-model
+    reason: Vision-language models have entered since the first challenge, but as driving models
+      fine-tuned to output a trajectory, scored like any other planner; no prompt or instruction is
+      part of the task.
+    source: src-arxiv-2406-15349-v2
+    quote: The team that placed second employed a vision language model (VLM) for driving
+as_used:
+  - protocol: EPDMS reported on the v1 navtest split without the two-stage pseudo-simulation, beside
+      v1 PDMS on navtest and EPDMS on navhard. The v2 paper discourages such self-reported "NAVSIM
+      v2" numbers as unofficial.
+    split: navtest
+    source: src-arxiv-2610-20604
+    quote: Without retraining, it achieves 91.1 EPDMS on NAVSIM v2 navtest and 38.6 on navhard.
+    note: VITAL (October 2026). The v2 paper's sentence is "Therefore, we discourage the use of
+      self-reported and unofficial" splits such as EPDMS on navtest (src-arxiv-2506-04218-v3).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. Papers report on NAVSIM v1 and v2 in October 2026 (VITAL
+    among them), the navhard leaderboard's newest row is dated 2026-10-17 and the navtest
+    leaderboard's 2026-11-03. The repository was last pushed on 2025-10-27 (GitHub API), which is
+    maintenance evidence, not lifecycle.
+  source: src-arxiv-2610-20604
+  quote: VITAL achieves 90.8 PDMS on NAVSIM v1 navtest
+activity: leaderboard-live-no-round
+activity_basis:
+  reason: NAVSIM has run challenge rounds (CVPR 2024, CVPR and ICCV 2025), and its two standing
+    Hugging Face leaderboards still take entries from outside the maintainers, the newest on
+    2026-10-17 (navhard) and 2026-11-03 (navtest). No 2026 round is announced in the sources read;
+    OpenDriveLab's challenge2026 page returned 404 on 2026-11-04 (not a Source).
+  source: src-hf-navsim-navhard-leaderboard
+  quote: '2026-10-17 02:51:25'
+events:
+  - name: NAVSIM challenge 2024 (End-to-End Driving at Scale, Autonomous Grand Challenge, CVPR 2024
+      Workshop on Foundation Models for Autonomous Systems)
+    kind: online-challenge    # trajectories on a private test split, scored by the Hugging Face server
+    source: src-arxiv-2406-15349-v2
+    quote: hosted in conjunction with the CVPR 2024 Workshop on Foundation Models for Autonomous
+      Systems
+  - name: NAVSIM v2 End-to-End Driving Challenge 2025, CVPR 2025 phase (Autonomous Grand Challenge)
+    kind: online-challenge    # private_test_hard_two_stage, annotations withheld; one upload a day
+    source: src-github-navsim-readme
+    quote: The submission deadline is 2025-05-11 00:00:00 UTC
+  - name: NAVSIM v2 End-to-End Driving Challenge 2025, ICCV 2025 phase (warm-up track)
+    kind: online-challenge
+    source: src-opendrivelab-challenge2025
+    quote: Submission Deadline September 20
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: VITAL
+    source: src-arxiv-2610-20604
+    observed_on: 2026-11-04
+    quote: VITAL achieves 90.8 PDMS on NAVSIM v1 navtest
+  - system: Hydra-MDP (winner of the 2024 challenge)
+    source: src-arxiv-2406-15349-v2
+    observed_on: 2026-11-04
+    quote: The winning entry extended TransFuser and learned to predict proxy subscores
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each subscore is computed by the devkit from a simulated execution of the
+  submitted trajectory against the scene's annotated agents, map and traffic lights. Ego progress is
+  normalised by the progress of a privileged rule-based planner (PDM-Closed), and in v2 the logged
+  human trajectory switches off penalties it also incurs.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The headline navhard_two_stage split, its synthetic scenes and the devkit are public, and
+    the leaderboard's scores can be reproduced locally with the same evaluation scripts. The
+    challenge splits (private_test_hard_two_stage, the 2024 private set) were scored only by the
+    server.
+  source: src-github-navsim-install
+  quote: The `navhard_two_stage` split is used for local testing of your model's performance in a
+    two-stage pseudo closed-loop setup.
+
+task:
+  exists: true
+  input:
+    - camera images from the vehicle's eight cameras (and a merged LiDAR sweep in v1), the current
+      frame and up to three past frames at 2 Hz, with the ego status (speed, acceleration, motion
+      history) and a driving command (left, straight or right)
+    - in v2, the same inputs again for each pre-rendered synthetic follow-up observation of the
+      scene
+  output: A 4-second trajectory of future poses in the ego frame, once per observation; the devkit's
+    LQR controller and kinematic bicycle model execute it at 10 Hz.
+  scoring: Per sample, the product of the penalty subscores (NC, DAC; v2 adds DDC and TLC) times the
+    weighted average of the others (v1 TTC 5, EP 5, comfort 2; v2 TTC 5, EP 5, LK 2, HC 2, EC 2),
+    averaged over samples (PDMS, EPDMS, both in [0, 1]). In v2 the Stage 2 scores are averaged with
+    Gaussian weights on each start point's distance from the planner's Stage 1 endpoint and
+    multiplied by the Stage 1 score.
+  metric_range:
+    - 0
+    - 1
+  source: src-arxiv-2506-04218-v3
+  quote: generates a 4-second trajectory based on sensor inputs and a driving command [8].
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: >
+    The headline navhard_two_stage split (logs, real and synthetic sensor frames, scene pickles) downloads
+    from an ungated Hugging Face dataset and is scored locally with the devkit; navtest is a filter on
+    the public OpenScene test split. The 2025 challenge's private_test_hard_two_stage split released its
+    frames but not its annotations ("To ensure fairness in the competition, we do not provide datasets
+    with annotations", src-github-navsim-submission), and the 2024 challenge used a private split from
+    Motional; both were rounds beside the standing boards.
+  access_basis:
+    reason: The data behind the headline (the navhard leaderboard) is public and the score is
+      reproducible from it.
+    source: src-hf-api-openscene
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The devkit and its data change in labelled releases (v1.0 and v1.1; v2.0, v2.1, v2.1.1,
+      v2.1.2, v2.2), two of them named the official devkit for a challenge, and the yearly
+      challenges sit beside them; taxonomy/data-properties.yaml gives this benchmark (as navsim-v2)
+      as the term's example.
+    source: src-github-navsim-readme
+    quote: NAVSIM v2.2 release (official devkit version for
+  data_provenance:
+    - real-world-instrument
+    - model-generated
+    - simulation-generated
+  data_provenance_note: The scenes are nuPlan's recorded drives (cameras, LiDAR, annotated agents
+    and HD maps), redistributed at 2 Hz as OpenScene. v2's second-stage observations are rendered by
+    3D Gaussian Splatting reconstructions of those scenes ("augments them with synthetic
+    observations generated prior to evaluation using 3D Gaussian Splatting",
+    src-arxiv-2506-04218-v3), from start states found by simulating several 4-second plans ("The
+    follow-up scenes were pre-computed by rolling out several simulations",
+    src-github-navsim-metrics).
+  data_provenance_source: src-github-navsim-splits
+  data_provenance_quote: Corresponds to nuPlan and downsampled to 2HZ.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The headline navhard split, its annotations and the underlying nuPlan logs are public, so a training
+    route to the scored scenes exists. The rules forbid training on the test splits and remove entries
+    that use annotations at inference, but no source assesses whether that holds. navtest is drawn from
+    the same public test logs.
+  contamination_risk_source: src-github-navsim-readme
+  contamination_risk_quote: Using the
+    `test`/`navtest`/`navhard_two_stage`/`warmup_two_stage`/`private_test_two_stage` splits for
+    training your challenge submissions is not allowed.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Every multiplier and weighted subscore lies in [0, 1], so PDMS and EPDMS
+    are bounded at 1. The logged human driver is not a ceiling in the vocabulary's sense (it is
+    built into the v2 metric), but the v1 paper reports its navtest PDMS as 94.8 ("whereas the human
+    expert achieves a score of 95%", for the filtered data), and the navtest leaderboard's top row
+    is now above it (see review_checks).
+  ceiling_anchor_type_basis:
+    reason: The metric's own bound.
+    source: src-github-navsim-metrics
+    quote: No at-fault Collisions (NC) | multiplier | {0, 1/2, 1} |
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: The licence tag of the OpenScene dataset on Hugging Face, which hosts
+    NAVSIM's download archives. The README says the datasets "inherit their own distribution
+    licenses" from nuPlan and OpenScene, and the installation guide asks users to check nuPlan's
+    licence file before downloading; that file was not read.
+  dataset_licence_source: src-hf-api-openscene
+  dataset_licence_quote: '"cardData":{"license":"cc-by-nc-sa-4.0"}'
+  size:
+    - count: 450
+      unit: Stage 1 (real) observations, with 5,462 Stage 2 synthetic observations
+      subset: navhard_two_stage (NAVSIM v2 leaderboard)
+      source: src-arxiv-2506-04218-v3
+      quote: It uses a subset of nuPlan that we refer to as navhard, involving 450 Stage 1 and 5462
+        Stage 2 observations.
+    - count: 12000
+      unit: test samples (about 12k)
+      subset: navtest (NAVSIM v1 leaderboard)
+      source: src-arxiv-2406-15349-v2
+      quote: called navtrain and navtest, with 103k and 12k samples respectively
+    - count: 103000
+      unit: training samples (about 103k)
+      subset: navtrain
+      source: src-arxiv-2406-15349-v2
+      quote: called navtrain and navtest, with 103k and 12k samples respectively
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: team, on the navhard leaderboard (the 2025 challenge allowed one a day)
+    source: src-hf-navsim-navhard-info
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Autonomous Vision Group, University of Tübingen and Tübingen AI Center, with NVIDIA
+    Research, Robert Bosch GmbH and OpenDriveLab
+  maintainer_basis:
+    reason: The repository (autonomousvision/navsim) is the Tübingen group's, and Tübingen is the
+      first affiliation of both papers; NVIDIA Research, Bosch and OpenDriveLab are co-author
+      affiliations, and OpenDriveLab hosts the challenges within its Autonomous Grand Challenge and
+      the leaderboard Spaces.
+    source: src-github-navsim-readme
+    quote: 1University of Tübingen, Tübingen AI Center, 2NVIDIA Research, 3Robert Bosch GmbH
+  maintainer_type: academic-lab
+  maintainer_type_note: conference-workshop was considered, since each challenge ran at a CVPR or
+    ICCV workshop within OpenDriveLab's Autonomous Grand Challenge, but one standing group holds the
+    devkit, data and standing boards across editions, which sends the type to that group.
+  submission_process:
+    - maintainer-scored-predictions
+    - open-source-gated
+  submission_process_note: >
+    Entrants run their planner locally on the split and upload a pickle of trajectories as a Hugging Face
+    model repository; the server scores it with the official devkit, against annotations that are public
+    for navhard and navtest. Both standing boards periodically remove entries that do not release training
+    and inference code with checkpoints, and the navtest board encourages multi-seed entries (at least
+    3 seeds). The challenge rounds scored a private split with withheld annotations (held-out-server;
+    see history).
+  submission_process_source: src-hf-navsim-navhard-info
+  submission_process_quote: do not provide associated open-source training and inference code with
+    the corresponding pre-trained checkpoints
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2506-04218-v3
+      quote: we propose a new simple and robust baseline architecture called NavFormer
+  independence_flags_note: >
+    The maintainers enter their own planners: Latent TransFuser and TransFuser (the Tübingen group's),
+    NavFormer (released by OpenDriveLab) and PDM-Closed, the privileged rule-based planner from the same
+    group, which tops the paper's March 2026 navhard snapshot. NVIDIA won the CVPR 2025 phase while NVIDIA
+    Research is a co-author affiliation of both papers; the challenge rules bar a track's organisers from
+    its awards, and whether the winning team included any author was not checked. prize-sponsored-by-industry
+    is not adopted: the 2025 cash pool is not attributed to a sponsor in the text read. single-evaluator-private-test-set
+    fits the challenge rounds only, not the public standing boards.
+  independence_assessed: true
+  participation:
+    source: src-arxiv-2406-15349-v2
+    quote: We received 463 submissions from 143 teams
+  known_limitation:
+    source: src-arxiv-2506-04218-v3
+    quote: We do not yet demonstrate or claim direct correlation with performance metrics from
+      real-world vehicle deployment.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not stated. Scoring runs the devkit's own simulation on the organisers' server,
+    the entrant's run is inference of its own planner, and no source names an accelerator for either
+    (Stage 3 failure 2026-09-28-navsim-v2-011, still open). Training costs vary by entrant; the v1
+    paper reports 1 GPU-day for TransFuser against 80 GPUs for 3 days for PARA-Drive on navtrain.
+  compute_tier_source: src-arxiv-2406-15349-v2
+  compute_tier_quote: 80 GPUs for 3 days to train PARA-Drive versus 1 GPU for 1 day for TransFuser
+    on the navtrain split
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run is fully automatic from public data, but the score is defined only inside the
+      NAVSIM devkit's simulation at a given release, which the maintainers say moves the number with
+      details as small as the human filter or the numpy version; the official navhard number is the
+      leaderboard's.
+    source: src-arxiv-2506-04218-v3
+    quote: The goal of the leaderboard is to ensure standardized evaluation, as subtle differences
+      (e.g., enabling/disabling the human-based filtering mechanism, or using a newer numpy version)
+      can have an effect on the computed metrics.
+  reproducibility_blockers:
+    - specific-simulator-build
+  reproducibility_blockers_note: >
+    The simulator is the devkit itself: a bird's-eye-view simulation in which an LQR controller and a
+    kinematic bicycle model execute the trajectory at 10 Hz over 4 s, with background actors replaying
+    their logs (v1) or, in v2, vehicles reacting through IDM, on nuPlan maps (nuplan-maps-v1.0). The builds
+    the sources name are v1.0 for the 2024 challenge, the v1.1 branch for the navtest board, and v2.2
+    as the official devkit for the 2025 challenge; a metric bugfix to the human filter followed v2.2 on
+    main on 2025-09-29, and which build the navhard board's server runs is not stated. The v1 paper finds
+    the evaluation deterministic within a build ("NAVSIM is deterministic, and we obtain identical scores
+    when repeating evaluations of a deterministic driving agent").
+  reproducibility_blockers_source: src-github-navsim-readme
+  reproducibility_blockers_quote: NAVSIM v2.2 release (official devkit version for
+  harness_availability: official-harness
+  harness: navsim devkit (scripts/evaluation run_metric_caching.sh and
+    run_cv_pdm_score_evaluation.sh with the agent override; run_create_submission_pickle for
+    leaderboard files)
+  harness_source: src-github-navsim-metrics
+  harness_quote: 'To evaluate the PDM score for an agent you can run:'
+  submission_channel:
+    source: src-github-navsim-submission
+    quote: To submit to a leaderboard you need to create a pickle file that contains a trajectory
+      for each test scenario.
+  submission_channel_note: The pickle is uploaded as a Hugging Face model repository (private ones
+    are accepted) and linked in the leaderboard Space's submission form, after logging in with a
+    Hugging Face account.
+  code_licence: Apache-2.0
+  code_licence_source: src-github-navsim-readme
+  code_licence_quote: All assets and code in this repository are under the [Apache 2.0
+    license](./LICENSE) unless specified otherwise.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # No profile resolves for composite or constraint-check with these subjects, so the fallback (subset_used)
+  # applies. Beyond it: the simulator and its build, because the score is defined only inside the NAVSIM devkit's
+  # simulation (v1: LQR and kinematic bicycle, non-reactive replay; v2: the same with IDM-reactive vehicles and the
+  # two-stage aggregation) at a given release -- v1.0, v1.1, v2.2, or main after the 2025-09-29 human-filter
+  # fix; the split (navtest or navhard_two_stage, or a challenge split); what the planner trained on (navtrain,
+  # other public data; the test splits are excluded); and whether a navtest figure is one seed, the best seed or the
+  # mean over seeds.
+  material_extra:
+    - simulator
+    - simulator_version
+    - subset_used
+    - training_data_policy
+    - selection_strategy
+
+homepage: https://github.com/autonomousvision/navsim
+repository: https://github.com/autonomousvision/navsim
+leaderboard_url: https://huggingface.co/spaces/AGC2025/e2e-driving-navhard
+
+versions:
+  - version: v1
+    label: NAVSIM v1 (devkit v1.0 to v1.1; navtest and the PDM Score), NeurIPS 2024
+    version_kind: edition
+    released: 2024-04-21
+    changes: Standardised navtrain and navtest splits filtered from OpenScene, a 4-second
+      non-reactive simulation of the planner's trajectory, and the PDMS (NC and DAC multiplying TTC,
+      EP and comfort). v1.1 (2024-09-03) opened the navtest leaderboard on Hugging Face and released
+      baseline checkpoints; v1 lives on the v1.1 branch.
+    breaking: true
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-arxiv-2406-15349-v2
+      - src-arxiv-2406-15349
+      - src-github-navsim-readme
+      - src-github-navsim-v1-1-metrics
+      - src-hf-navsim-navtest-info
+  - version: v2
+    label: NAVSIM v2 (devkit v2.0 to v2.2; navhard_two_stage, the EPDMS and pseudo-simulation), CoRL
+      2025
+    version_kind: edition
+    released: 2025-02-28
+    items: 450
+    changes: The EPDMS (adding DDC, TLC, LK and EC, with penalties the human also incurs filtered
+      out), reactive IDM background vehicles, and a second stage on observations pre-rendered by
+      Gaussian Splatting, weighted by proximity and multiplied with the first; a new test split,
+      navhard_two_stage (450 Stage 1 and 5,462 Stage 2 observations). v2.1 (2025-04-08) added the
+      warm-up data and two-stage reactive traffic, v2.1.2 (2025-04-24) released navhard_two_stage
+      and updated the EPDMS, and v2.2 (2025-04-28) released the challenge's private split.
+    breaking: true
+    supersedes_version: v1
+    errata:
+      - date: 2025-04-28
+        scope: navhard_two_stage and warmup_two_stage metadata
+        description: The openscene_meta_datas of both splits were fixed in v2.2, and users who
+          evaluated on them were asked to download them again.
+        source: src-github-navsim-readme
+      - date: 2025-09-29
+        scope: EPDMS human filter
+        description: A bug in which some aggregated metrics were not excluded by the human filter
+          was fixed on main, after v2.2 and the 2025 challenge.
+        source: src-github-navsim-readme
+    frozen: false
+    sources:
+      - src-arxiv-2506-04218-v3
+      - src-arxiv-2506-04218
+      - src-github-navsim-readme
+      - src-github-navsim-metrics
+      - src-github-navsim-splits
+      - src-hf-navsim-navhard-info
+
+subsets:
+  - id: navsim#navhard-two-stage
+    label: navhard_two_stage (NAVSIM v2 leaderboard, EPDMS)
+    items: 450
+    scored_separately: true
+    evidence:
+      - source: src-github-navsim-splits
+        quote: Standard split for testing agents in NAVSIM v2 with real and synthetic driving
+          scenes.
+      - source: src-hf-navsim-navhard-info
+        quote: After the NAVSIM challenge 2025 CVPR phase, we have re-opened the leaderboard with
+          the `navhard_two_stage` split
+    notes: 450 real Stage 1 observations and 5,462 synthetic Stage 2 observations from nuPlan's test
+      logs; the headline board since mid-2025. Its top row on 2026-11-04 is 64.58 EPDMS; the paper's
+      March 2026 snapshot had PDM-Closed best at 56.6.
+  - id: navsim#navtest
+    label: navtest (NAVSIM v1 leaderboard, PDMS)
+    scored_separately: true
+    evidence:
+      - source: src-hf-navsim-navtest-info
+        quote: After the NAVSIM v1 challenge 2024, we have re-opened the leaderboard with the
+          `navtest` split.
+      - source: src-hf-navsim-navtest-leaderboard
+        quote: '| 1 | EABOT.AI | 96.1906 |'
+    notes: About 12k samples filtered from the OpenScene test split, scored with the v1 PDMS in a
+      one-stage non-reactive simulation, mean over seeds where several are submitted. Papers also
+      report EPDMS on it, which the v2 paper calls unofficial (as_used).
+  - id: navsim#private-test-hard-two-stage
+    label: private_test_hard_two_stage (2025 challenge)
+    scored_separately: true
+    evidence:
+      - source: src-github-navsim-splits
+        quote: Private test split for the challenge leaderboard on hugging face.
+      - source: src-opendrivelab-challenge2025
+        quote: The private test set is provided by nuPlan from Motional.
+    notes: The 2025 challenge's split, frames released and annotations withheld, scored only by the
+      challenge server; a warm-up split (warmup_two_stage) let entrants check their files locally
+      first.
+
+history:
+  - date: 2024-03
+    event: channel-opened
+    field: governance.submission_process
+    to: held-out-server
+    source: src-arxiv-2406-15349-v2
+    quote: NAVSIM challenge which ran from March - May 2024.
+    note: The CVPR 2024 challenge scored trajectories on a private split, with only sensor inputs
+      released ("we used a private dataset and only gave participants access to sensor inputs").
+  - date: 2024-05
+    event: channel-closed
+    field: governance.submission_process
+    from: held-out-server
+    source: src-arxiv-2406-15349-v2
+    quote: NAVSIM challenge which ran from March - May 2024.
+  - date: 2024-09-03
+    event: channel-opened
+    field: governance.submission_process
+    to: maintainer-scored-predictions
+    source: src-github-navsim-readme
+    quote: Leaderboard for `navtest` on [Hugging Face]
+    note: The navtest board, re-opened after the challenge with open-code and multi-seed rules ("we
+      re-opened a public evaluation server using navtest as the evaluation split",
+      src-arxiv-2406-15349-v2).
+  - date: 2025-04-28
+    event: channel-opened
+    field: governance.submission_process
+    to: held-out-server
+    source: src-github-navsim-readme
+    quote: '[2025/04/28]`** NAVSIM v2.2 release'
+    note: The 2025 challenge's CVPR phase on private_test_hard_two_stage, released with v2.2; one
+      upload a day.
+  - date: 2025-05-11
+    event: channel-closed
+    field: governance.submission_process
+    from: held-out-server
+    source: src-github-navsim-readme
+    quote: The submission deadline is 2025-05-11 00:00:00 UTC
+  - event: channel-opened
+    field: execution.submission_channel
+    to: https://huggingface.co/spaces/AGC2025/e2e-driving-navhard
+    source: src-hf-navsim-navhard-info
+    quote: After the NAVSIM challenge 2025 CVPR phase, we have re-opened the leaderboard with the
+      `navhard_two_stage` split
+    note: Undated in the sources read; Hugging Face's API dates the Space's creation to 2025-06-08
+      (from its object id, not a quoted Source).
+  - date: 2025-09-20
+    event: channel-closed
+    field: governance.submission_process
+    from: held-out-server
+    source: src-opendrivelab-challenge2025
+    quote: Submission Deadline September 20
+    note: The ICCV 2025 phase's deadline; it ran on a warm-up Space with registration (README,
+      2025-07-16).
+
+tags:
+  - autonomous-driving
+  - end-to-end-driving
+  - motion-planning
+  - pseudo-simulation
+  - nuplan
+  - gaussian-splatting
+  - competition
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2506-04218-v3
+    - src-arxiv-2506-04218
+    - src-arxiv-2406-15349-v2
+    - src-arxiv-2406-15349
+    - src-github-navsim-readme
+    - src-github-navsim-metrics
+    - src-github-navsim-splits
+    - src-github-navsim-submission
+    - src-github-navsim-install
+    - src-github-navsim-v1-1-metrics
+    - src-hf-navsim-navhard-info
+    - src-hf-navsim-navhard-leaderboard
+    - src-hf-navsim-navtest-info
+    - src-hf-navsim-navtest-leaderboard
+    - src-opendrivelab-challenge2025
+    - src-hf-api-openscene
+    - src-arxiv-2610-20604
+  sources_note: >
+    The two papers' PDFs (DOIs, not archived) read as text, and their abstract pages for dates and venues;
+    the README and four documents at commit 0a380a9 and the v1.1 branch's metrics document; the two leaderboard
+    Spaces read as the JSON their pages load (overview by GET, the public table by POST), since both render
+    by script; OpenDriveLab's 2025 challenge page with scripts and styles stripped; Hugging Face's API
+    record of OpenScene; and VITAL's abstract page as evidence of current use. The submission guide, both
+    leaderboard tables and the OpenDriveLab page are withheld from archiving for personal data.
+  confidence: medium
+  review_checks:
+    - check: Family inclusion. The scored outcome is the simulated execution of a committed 4-second
+        trajectory, not of closed-loop control, so whether it is "produced by embodied action" is
+        arguable. autonomous-driving-planning's definition (a trajectory scored on the driving
+        outcome) fits it, and the taxonomy files cite this benchmark as planning, not sensorimotor
+        control; no other family claims it.
+      field: domain
+      source: src-arxiv-2406-15349-v2
+      quote: This means driving agents are only queried in the initial frame of each scene.
+    - check: evaluation_method follows the corpus (composite and constraint-check).
+        simulation-rollout is the alternative, since every subscore comes from a simulated execution
+        and CARLA's driving score is that term's example; the missing pseudo-simulation term is open
+        failure 2026-09-28-navsim-v2-002.
+      field: evaluation_method
+    - check: Versions. v2 is an edition by the 04 S4 rule (same maintainer and task, new test
+        items), but it also changes the metric (EPDMS) and the simulation (IDM-reactive vehicles, a
+        second stage), and taxonomy/ cites the corpus item as `navsim-v2`. A separate navsim-v2
+        entry linked by lineage, or v1 and v2 as track-sets (both boards are live and both splits
+        are scored under v2's devkit), are the alternatives.
+      field: versions
+      source: src-arxiv-2506-04218-v3
+      quote: we release NAVSIM v2, a framework for benchmarking autonomous driving built upon our
+        proposed evaluation methodology
+    - check: Sources disagree on reactivity. The v2 paper and the 2025 challenge page make
+        background vehicles react through IDM, while the navhard board's overview still describes
+        NAVSIM as non-reactive, and v1's documents describe log replay. The description follows the
+        papers.
+      field: description
+      source: src-arxiv-2506-04218-v3
+      quote: Background vehicles (represented as oriented bounding boxes) respond to the ego agent
+        using a rule-based planner called the Intelligent Driver Model (IDM) [43].
+    - check: reproducibility_tier is automatable-with-simulator with the specific-simulator-build
+        blocker, treating the devkit's own simulation as the simulator (as ManiSkill's entry does);
+        the corpus record chose fully-automatable. compute_tier stays null (open failure
+        2026-09-28-navsim-v2-011).
+      field: execution.reproducibility_tier
+    - check: navtest looks saturated. The navtest board's top row (96.19 PDMS, 2026-10-17) is above
+        the logged human's 94.8 in the v1 paper's Table 1, and the v1 paper's own 10-point gap to
+        the human has closed. saturated is derived and needs claims; navhard (top 64.58 EPDMS) is
+        far from its bound.
+      field: lifecycle
+      source: src-arxiv-2406-15349-v2
+      quote: The 10 PDMS discrepancy to the human operator demonstrates that navtest poses
+        challenges even to well-studied end-to-end architectures.
+    - check: open-source-gated rests on a stated periodic removal (about every 6 months) on both
+        boards; whether it is enforced was not checked. The corpus record left the term off because
+        it read the rule only for the 2024 board; the navhard overview states it too.
+      field: governance.submission_process
+      source: src-hf-navsim-navhard-info
+      quote: do not provide associated open-source training and inference code with the
+        corresponding pre-trained checkpoints
+    - check: Independence. NVIDIA won the CVPR 2025 phase, and NVIDIA Research is a co-author
+        affiliation of both papers; the rules bar a track's organisers from its awards. Whether the
+        winning team overlaps the authors was not checked; maintainer-competes-on-own-benchmark
+        rests on the maintainers' baselines on their boards.
+      field: governance.independence_flags
+      source: src-opendrivelab-challenge2025
+      quote: The outstanding Champion goes to team NVIDIA.
+    - check: The metric changed after the challenge (the 2025-09-29 human-filter bugfix, on main
+        after v2.2), and which devkit commit each board's server runs is not stated, so navhard rows
+        before and after that date may not be comparable.
+      field: versions
+      source: src-github-navsim-readme
+      quote: '[2025/09/29]`** Bugfix'
+    - check: activity and lifecycle now rest on dated leaderboard rows and October 2026 papers,
+        which answers the corpus's open source-silent failures 2026-09-28-navsim-v2-007 (lifecycle)
+        and -008 (activity); the lead may close them. No 2026 round was found.
+      field: activity
+    - check: Both leaderboard tables were read by POST and are withheld (personal handles in rows),
+        so they cannot be archived; the entry's DOI sources carry the rest. dataset_licence is the
+        OpenScene repository's tag; nuPlan's own licence, which the installation guide points to,
+        was not read.
+      field: data.dataset_licence
