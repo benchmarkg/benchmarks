@@ -1,0 +1,635 @@
+# data/benchmarks/earth-climate/smart-buildings-challenge.yaml
+#
+# P1-S7-T02, earth-climate entry 18. Filled from the challenge's proposal, arXiv 2610.18511 read as its v1 PDF
+# (2026-10-13, written for the NeurIPS 2026 Competition Track), and its abstract page; the challenge site's home and
+# competition-description pages at smart-buildings-2026.github.io/competition/ (scripts and styles stripped); the
+# starter kit's README at commit 95cea5b (smart-buildings-2026/starter-kit); Kaggle's public JSON records of the
+# competition's pages (rules, description, evaluation, timeline, data, prizes) and of its header (dates, counts,
+# settings), which its script-rendered pages load; Kaggle's list of the competition's public notebooks (withheld:
+# its rows carry participants' names); and the v2 PDF of the Smart Buildings Control Suite paper (arXiv 2410.03756),
+# the simulator the challenge extends. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# Read and not cited: the site's scoring.html and submission.html (they repeat the paper and the Kaggle pages); the
+# google/sbsim README at commit 92fa312 (it describes the 2024 suite and its TFDS dataset, not the challenge); and
+# the GitHub API records of the two smart-buildings-2026 repositories (starter kit Apache-2.0, created 2026-10-13,
+# pushed 2026-10-19; site pushed 2026-10-29).
+#
+# A control task, not a prediction task (the recon note's stress point). Nothing is forecast and no label is
+# withheld: a policy acts in a simulator and the score is its accumulated reward, so no forecasting field applies and
+# the (episodic-return, rl-policy) pair resolves the `simulation` profile.
+
+id: smart-buildings-challenge
+name: Smart Buildings Challenge
+aliases:
+  - Smart Buildings Competition
+aliases_note: Kaggle's title for the competition (src-kaggle-smart-buildings-record); the site is
+  titled "Smart Buildings Competition 2026", and the proposal and the NeurIPS track call it the
+  Smart Buildings Challenge.
+tagline: 'A NeurIPS 2026 Kaggle competition: one HVAC control policy, scored in simulation on unseen buildings
+  and climates.'
+description: >
+  A NeurIPS 2026 competition, run on Kaggle, for a single HVAC control policy that transfers across commercial
+  buildings. Buildings come from a procedural generator built on an extended version of Google's Smart
+  Buildings Control Suite simulator: two to four floors, varied footprint, room layout and occupancy,
+  six envelope material properties, and air handlers (AHUs) each serving at most ten zones, with a VAV
+  box per zone and one hot-water system. Each building is a Gym-compatible environment. Every five minutes
+  the policy reads an observation whose length depends on the building (zone temperatures and setpoints,
+  AHU and hot-water state, occupancy, outside air temperature, time) and issues a hybrid action whose
+  shape also changes with the building: on/off commands for each AHU and the hot-water system, and continuous
+  setpoints for supply air, static pressure, recirculation, supply water, pump pressure, and each zone's
+  damper and reheat valve. It also receives the building's metadata (floor plan, AHU-to-zone map, action
+  indices, schedule). The per-step reward weights occupant comfort, energy cost and carbon at 0.6, 0.2
+  and 0.2; all three are penalties, and the comfort term falls without bound beyond 5 K outside the comfort
+  band. Each scenario is a 30-day episode of 8,640 steps, and the score is the mean over scenarios of
+  the magnitude of the mean per-step reward: lower is better, and zero (perfect comfort at no energy or
+  carbon cost) is unreachable. Entrants develop on 6 public buildings under 30 recorded 2023 weather strips
+  from five stations and may generate more buildings; the leaderboard scores 6 unseen buildings at 5 unseen
+  stations (30 scenarios), on a public subset during the competition and on the full private set at the
+  end. Submissions are Kaggle notebooks, re-run without internet against the hidden scenarios. Four hand-written
+  controllers (bang-bang, fixed setpoint, PID, PID with a hot-water reset) ship as a reference range,
+  and there is no learned baseline. A separate paper track awards prizes for write-ups judged on quality
+  and novelty, and the organisers plan to trial winning policies in real buildings after the competition.
+self_description:
+  source: src-arxiv-2610-18511-v1
+  quote: we propose a challenge for the development of building foundation models that easily adapt
+    to new buildings with minimal configuration
+external_ids:
+  arxiv: '2610.18511'
+paper:
+  title: 'The Smart Buildings Challenge: Learning Foundation Models for Real-World Optimization at Scale'
+  arxiv: '2610.18511'
+  version_read: v1
+  source: src-arxiv-2610-18511-v1
+released: 2026-10-13
+released_note: Kaggle's start date. The proposal went to arXiv the same day, Kaggle's record enabled
+  the competition at 20:06 UTC, and the starter kit's repository was created then (GitHub API).
+released_source: src-kaggle-smart-buildings
+released_quote: October 13, 2026** - Start Date.
+release_venue: NeurIPS 2026 Competition Track
+release_venue_source: src-smart-buildings-2026-site
+release_venue_quote: NeurIPS 2026 · Competition Track
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/energy-systems
+  secondary: []
+domain_basis:
+  reason: The scored behaviour is the operation of a building's heating and cooling plant to cut its
+    energy cost and carbon emissions, which is the leaf's "optimising energy ... demand". The
+    family's own examples name smart-buildings-challenge as qualifying ("Building energy
+    optimisation as a real-world control task"), and BuildingsBench, its forecasting neighbour, sits
+    in the same leaf.
+  source: src-arxiv-2610-18511-v1
+  quote: Building optimization, perhaps more so than any other optimization problem, has enormous
+    potential for Machine Learning (ML) driven impact on climate change
+domain_considered_and_rejected:
+  - term: engineering-design/process-control-optimization
+    reason: The leaf's definition, controlling or optimising a process against operating objectives,
+      fits the act, but its family's exclusion test sends a system that is operated rather than
+      designed elsewhere, and the family names this benchmark as its near miss ("the scored act is
+      operating a building's energy system, not designing one"). The engineering-design scoping
+      survey flagged building and grid control as this leaf's open boundary with energy-systems;
+      l2rpn takes the same reading (see review_checks).
+    source: src-kaggle-smart-buildings
+    quote: You are **not** predicting labels, and there is no test CSV.
+  - term: robotics-embodiment/continuous-control
+    reason: Closed-loop control with continuous setpoints in a simulator, but there is no body; the
+      family's inclusion test names manipulation, locomotion, navigation or driving, and a building
+      plant is none of them.
+
+capability:
+  - optimization
+  - distribution-shift-generalization
+capability_basis:
+  optimization:
+    reason: The benchmark states one objective, a fixed weighting of comfort, energy cost and
+      carbon, and ranks policies by how well they optimise it over each episode. The taxonomy names
+      this benchmark as the term's qualifying example.
+    source: src-arxiv-2610-18511-v1
+    quote: Because the transformation is monotone, minimizing MAE is identical to maximizing the
+      return on every individual scenario.
+  distribution-shift-generalization:
+    reason: Policies are scored only on buildings and weather stations held out from development,
+      with the task, the reward and the generator's parameter ranges unchanged; only the building
+      and its climate move. The source calls this transfer, which the term's test does not decide
+      (the fusion-equilibrium-challenge case).
+    source: src-arxiv-2610-18511-v1
+    quote: The agent will be evaluated on 6 unseen buildings from the same generator and parameter
+      ranges, at 5 climate stations that appear nowhere in the training set, so the transfer is
+      across both buildings and climates.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The objective and the reward are the same on every building, and the held-out buildings
+      come from the same generator and ranges, so by both terms' tests the move is a shift of
+      inputs. The one argument the other way is that the observation and action vectors change shape
+      per building, which could be read as a new embodiment (see review_checks).
+    source: src-smart-buildings-2026-competition
+    quote: both the observation and action vectors change shape per building, and there is no fixed
+      input or output mapping the policy can memorize
+  - term: sensorimotor-control
+    reason: Actions go to a simulated physical plant, the plant responds and the score depends on
+      the result, which is the inclusion test, but the term is closed-loop control of a body and its
+      examples are robots. Closed-loop control of a non-embodied plant has no term (logged with
+      bench tag-gap).
+  - term: long-horizon-execution
+    reason: Episodes run 8,640 steps, but every step is scored and a bad step is recoverable; no
+      intermediate error makes the episode's best score unattainable.
+  - term: scientific-prediction
+    reason: Nothing is predicted against a reference; the Kaggle page says so in as many words.
+    source: src-kaggle-smart-buildings
+    quote: You are **not** predicting labels, and there is no test CSV.
+  - term: sample-efficiency
+    reason: No budget is fixed; entrants may generate as many training buildings as they like.
+    source: src-arxiv-2610-18511-v1
+    quote: Organizers can sample fresh evaluation buildings to defeat memorization
+
+evaluation_method:
+  - episodic-return
+evaluation_method_basis:
+  reason: The score is the accumulated reward of a control episode in a simulator, every five-minute
+    step of 30 days, divided by the step count and averaged over 30 scenarios. The reward has only
+    penalty terms and the comfort penalty has no floor, so the return is unbounded on the losing
+    side and has no success or partial-credit scale. Its upper bound, zero, is an unreachable ideal
+    rather than a rescaling (see review_checks).
+  source: src-arxiv-2610-18511-v1
+  quote: Each scenario runs for 30 days at a 5-minute timestep and every step is scored
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: The episodes are simulated, but each is scored as accumulated reward, not as success,
+      the fraction of goals met or efficiency under a cap; the term's exclusion sends unbounded
+      cumulative reward to episodic-return. Both terms resolve the same comparability profile with
+      these subjects.
+    source: src-arxiv-2610-18511-v1
+    quote: the drop is linear up to 5 K outside the band and quadratic and unbounded beyond, so
+      abandoning comfort is never free
+  - term: statistical-fit
+    reason: Kaggle labels the metric mean absolute error, but the target is the constant zero, so it
+      is the magnitude of the mean per-step reward; no prediction is compared with an observation.
+    source: src-kaggle-smart-buildings-record
+    quote: '"leaderboardPercentage":33'
+  - term: composite
+    reason: Comfort, energy cost and carbon are combined into one reward, but they are terms of one
+      reward function computed by one simulator, not sub-scores produced by different methods.
+  - term: expert-panel-assessment
+    reason: The paper track's prizes are judged on quality, novelty and clarity, but they rank
+      write-ups, not the policies; the benchmark's score is the leaderboard's.
+    source: src-kaggle-smart-buildings
+    quote: Paper prizes are not based on the metric alone, but on overall quality and novelty of the
+      method, and writing clarity.
+
+designed_for_subjects:
+  - rl-policy
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: Each building is a Gym-compatible reinforcement learning environment, built for trained
+    control policies. Four hand-written controllers (bang-bang, fixed setpoint, PID and PID with a
+    hot-water reset) are scored beside an entrant's policy as its reference range, which the
+    classical-algorithm test admits for baselines; they do not enter the leaderboard metric. Public
+    notebooks on Kaggle enter both kinds.
+  source: src-arxiv-2610-18511-v1
+  quote: Each building is exposed as a Gym-compatible RL environment.
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: The proposal asks whether domain-specific models or generic foundation models will win,
+      but names no model class it is built for; the starter kit ships no learned baseline.
+    source: src-arxiv-2610-18511-v1
+    quote: whether domain specific models will win out[19], or whether generic foundation models
+      will generalize best.
+  - term: agent-scaffold
+    reason: A notebook may load public pretrained models, including language models, but it runs
+      with no internet and acts through get_action every step; nothing in the sources designs for a
+      prompted agent, and such an entrant would be a claim-level subject.
+    source: src-kaggle-smart-buildings
+    quote: Internet access disabled
+  - term: physical-robot-system
+    reason: The organisers plan live trials of winning policies in real buildings after the
+      competition, but no score comes from hardware.
+    source: src-arxiv-2610-18511-v1
+    quote: We will use a simulated environment for the contest, and will evaluate winning solutions
+      on real buildings after the contest ends.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The competition is three weeks old and being entered; Kaggle's record counted 547 teams
+    and 4,939 submissions on 2026-11-04.
+  source: src-kaggle-smart-buildings-record
+  quote: '"totalTeams":547,"totalCompetitors":590,"totalSubmissions":4939'
+activity: accepting-submissions
+activity_note: The round runs from 2026-10-13 to the final submission deadline of 2027-01-15; the
+  entry and team-merger deadline is 2027-01-03, and Kaggle's record gives the private leaderboard's
+  release as 2027-01-22. The first paper round closes on 2026-11-13. Kaggle's timeline puts every
+  deadline at 23:59 UTC, while its record holds 17:59:59 UTC on 2027-01-15 (see review_checks).
+activity_basis:
+  reason: A round is open now, with a daily submission quota per team.
+  source: src-kaggle-smart-buildings
+  quote: January 15, 2027** - Final Submission Deadline.
+planned_end: '2027-01-15'    # the final submission deadline (Kaggle timeline, site); no later edition is announced
+events:
+  - name: Round One paper deadline (NeurIPS poster), 13 November 2026
+    kind: paper-round
+    source: src-smart-buildings-2026-site
+    quote: Nov 13, 2026 Round One deadline (NeurIPS poster) Dec 13, 2026 NeurIPS Workshop in Paris
+      Jan 15, 2027 Final deadline
+  - name: NeurIPS 2026 workshop in Paris, 13 December 2026
+    kind: workshop
+    source: src-smart-buildings-2026-site
+    quote: Nov 13, 2026 Round One deadline (NeurIPS poster) Dec 13, 2026 NeurIPS Workshop in Paris
+      Jan 15, 2027 Final deadline
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Residual PPO policy (a public Kaggle notebook)
+    source: src-kaggle-smart-buildings-code
+    observed_on: 2026-11-04
+    quote: '"bestPublicScore":0.01107,"lastRunExecutionTimeSeconds":740,"medal":"BRONZE","title":"Yes,
+      RL Can Run a Building: Residual PPO"'
+    note: A public notebook with a linked submission, scoring 0.01107 on the public leaderboard
+      (lower is better). Its title names a PPO-trained residual policy; the notebook's code was not
+      read, and its author is not recorded. The organisers ship no learned baseline.
+evaluation_target: learned-system
+evaluation_target_basis:
+  reason: The hand-written controllers are a reference range, not the subject; the competition asks
+    for a learned building foundation model.
+  source: src-github-smart-buildings-starter-kit-readme
+  quote: There is no learned baseline. Bring your own.
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_basis:
+  reason: The score is computed by the simulator from the energy, carbon and zone temperatures the
+    policy produces; there is no stored answer. The simulator is deterministic, so one rollout per
+    scenario is the score.
+  source: src-arxiv-2610-18511-v1
+  quote: The simulator is deterministic, so a single rollout per pair carries no sampling noise
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The simulator, generator, training scenarios and local scorer are public, but the headline
+    score needs the held-out buildings and stations, which only the organisers hold until the
+    competition ends.
+  source: src-arxiv-2610-18511-v1
+  quote: The 6 held-out evaluation buildings and the 5 held-out stations are kept confidential by
+    the Organizers and released publicly only after the competition concludes.
+
+task:
+  exists: true
+  input:
+    - at construction, the building's metadata (floor plan, zone-to-AHU assignment, action indices,
+      observation field names, schedule and comfort windows, normalisation constants) and its action
+      spec
+    - every five minutes, a flat observation whose length scales with the building -- per zone air
+      temperature, setpoints, damper, reheat and airflow; per AHU supply-air temperature, static
+      pressure, airflow, recirculation, cooling requests and fan status; hot-water supply
+      temperature; occupancy and comfort-schedule flags; outside air temperature; time of day and
+      day of week
+  output: A dict per step with a discrete on/off action of shape K+1 (each AHU and the hot-water
+    system) and a continuous action of shape 3K+2+2V in [-1, 1] (three setpoints per AHU, two for
+    the hot-water system, damper and reheat per zone), for K AHUs and V zones.
+  scoring: >
+    Per step, r = 0.6 comfort - 0.2 energy cost - 0.2 carbon, with comfort 0 in band and falling linearly
+    to 5 K outside it, then quadratically without bound, summed over zones weighted by occupancy; r is
+    never positive. Each scenario's return over 8,640 steps (30 days) is divided by 8,640, and the score
+    is the mean over scenarios of its magnitude ("mean absolute error against zero"); lower is better.
+    The final score covers 6 held-out buildings x 5 held-out stations, one rollout each with equal weight;
+    the public leaderboard shows a subset (33% in Kaggle's record), and the organisers re-run the top
+    7 policies at a fixed simulator commit before final standings.
+  scoring_source: src-arxiv-2610-18511-v1
+  scoring_quote: The headline leaderboard score is the mean over all 30 scenarios, with no grouping
+    by building or weather.
+  tests_hidden_from_system: true
+  item_definition: One scenario, a (building, weather strip) pair run as a 30-day episode at a
+    five-minute step; a submission is scored on 30 of them.
+  item_definition_source: src-arxiv-2610-18511-v1
+  item_definition_quote: with T = 8640
+  source: src-github-smart-buildings-starter-kit-readme
+  quote: (weights 0.6 / 0.2 / 0.2)
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The generator, the six development buildings, the training weather strips, the
+    baselines and a local scorer are public in the starter kit; the held-out buildings'
+    configurations come from seeds only the organisers know, and each one's metadata reaches a
+    policy only at runtime inside the evaluation sandbox.
+  access_basis:
+    reason: The evaluation scenarios themselves, not only their outcomes, stay with the organisers
+      and are scored only by running the submitted notebook on their side.
+    source: src-arxiv-2610-18511-v1
+    quote: The held-out 30 scenarios are never released to participants, in any form, before the
+      competition closes.
+  access_by_phase:
+    during_edition: Development material public in the starter kit; the 6 evaluation buildings and 5
+      stations held by the organisers and scored inside Kaggle's sandbox.
+    after_edition: The evaluation buildings and stations are to be released publicly once the
+      competition concludes.
+    note: The release is a stated plan (proposal, section 1.4); it had not happened on 2026-11-04.
+  refresh: static
+  refresh_basis:
+    reason: One edition with one fixed held-out set, generated from withheld seeds. The proposal
+      notes that fresh evaluation buildings could be sampled, but no source says they are.
+    source: src-arxiv-2610-18511-v1
+    quote: Organizers can sample fresh evaluation buildings to defeat memorization
+  data_provenance:
+    - simulation-generated
+    - synthetic-procedural
+    - real-world-instrument
+  data_provenance_note: Buildings are drawn by a procedural generator (floors, footprint, layout,
+    occupancy, envelope materials, AHU count); their behaviour is the Smart Buildings Control Suite
+    simulator's; the weather is recorded 2023 hourly station data, cut into 30-day strips.
+  data_provenance_source: src-github-smart-buildings-starter-kit-readme
+  data_provenance_quote: Each strip replays a different 30-day window of recorded 2023 hourly
+    station data
+  contamination_risk: low
+  contamination_risk_note: >
+    Low by construction: nothing is predicted, the held-out buildings and stations are confidential until
+    the competition closes, a policy sees each evaluation building's metadata only at runtime, notebooks
+    run with no internet, and code is scanned for hard-coded building IDs. Two routes stay open: the public
+    leaderboard scores a subset of the evaluation pairs during development, which the private leaderboard
+    answers, and the held-out weather is recorded station data, which is public somewhere if the stations
+    could be guessed.
+  contamination_evidence:
+    - source: src-arxiv-2610-18511-v1
+      stance: against
+      quote: Policies are executed in an isolated container at evaluation time with no network
+        access, blocking external lookup tables or remote inference.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The score is bounded at its optimum by construction (zero, perfect comfort at no energy
+      or carbon cost), which no policy can reach, and no source reports a measured ceiling.
+    source: src-arxiv-2610-18511-v1
+    quote: it denotes perfect comfort delivered at no energy and no carbon cost, which is the
+      unattainable ideal of the control problem
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: The Kaggle record's licence and the rules' data-use term (non-commercial use
+    only). The starter kit, which holds the simulator, the generator, the six buildings and the
+    training scenarios, is Apache-2.0 (see execution.code_licence); the proposal says only that the
+    generator and development material are released under an open-source licence.
+  dataset_licence_source: src-kaggle-smart-buildings-record
+  dataset_licence_quote: '"license":{"id":3,"name":"CC BY-NC-SA 4.0"'
+  size:
+    - count: 30
+      unit: evaluation scenarios (6 held-out buildings x 5 held-out weather stations), one
+        8,640-step rollout each
+      subset: final (private) evaluation
+      source: src-arxiv-2610-18511-v1
+      quote: the evaluation set is 6 unseen buildings × 5 unseen stations, giving 30 scored rollouts
+        per submission
+    - count: 30
+      unit: development scenarios (6 public buildings x 5 stations, each building with one strip per
+        station)
+      subset: public training set
+      source: src-arxiv-2610-18511-v1
+      quote: Participants will be given 6 training buildings, each paired with one recorded weather
+        strip from each of five climate stations (30 training scenarios).
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: team (up to two submissions are selected for final judging)
+    source: src-kaggle-smart-buildings
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Smart Buildings Challenge organisers (NSF AI Institute in Dynamic Systems, Harvard
+    University, Columbia University, the University of Washington and Kajima Corporation), with the
+    University of Washington as Kaggle's competition sponsor
+  maintainer_note: The proposal's fourteen authors are at Columbia, Harvard, Princeton, Mila,
+    Syracuse, Google, Distyl AI, Autodesk Research and Kajima. Kaggle's record names the University
+    of Washington as host, and its rules name it the Competition Sponsor. The starter kit and site
+    sit in a dedicated GitHub account, smart-buildings-2026.
+  maintainer_basis:
+    reason: Kaggle's description names the hosting institutions.
+    source: src-kaggle-smart-buildings
+    quote: hosted by the NSF AI Institute in Dynamic Systems, Harvard University, Columbia
+      University, the University of Washington, and Kajima Corporation
+  maintainer_type: academic-lab
+  maintainer_type_note: The party that holds the evaluation data and is legally responsible for the
+    competition is a university, as Kaggle records it; the organising team spans universities and
+    companies, and the code sits in a dedicated account with no institution stated, which could be
+    read as community-collective (see review_checks).
+  maintainer_type_basis:
+    reason: Kaggle's record names the University of Washington as host.
+    source: src-kaggle-smart-buildings-record
+    quote: '"hostName":"University of Washington"'
+  submission_process:
+    - sandboxed-rerun
+  submission_process_note: A submission is a Kaggle notebook holding a Policy subclass; Kaggle's
+    gateway owns the simulator and re-runs the notebook against the hidden scenarios with internet
+    disabled, within 9 hours of CPU or GPU runtime. The proposal describes a fuller Entry (a module,
+    weights and a reproducibility bundle run through evaluate.py); the Kaggle pages ask for the
+    notebook alone. Paper prizes are a separate track on OpenReview. The sandboxed re-run is the
+    server-side route to the held-out scenarios, which the validator's private-server-submission
+    warning does not list among its server-side terms.
+  submission_process_basis:
+    reason: Entrants submit runnable code and the platform executes it in its own sandbox and
+      publishes the number it produces; a notebook is not a container image.
+    source: src-kaggle-smart-buildings
+    quote: When you submit, the same notebook is re-run against the hidden test scenarios.
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-arxiv-2610-18511-v1
+      quote: with the prize pool jointly sponsored by Kajima, Distyl, and KODE Labs
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2610-18511-v1
+      quote: The held-out 30 scenarios are never released to participants, in any form, before the
+        competition closes.
+  independence_flags_note: >
+    Searched the proposal, the site, the starter kit README and the Kaggle records on 2026-11-04. The
+    $40,000 prize pool comes from three companies, one of which (Distyl AI) employs an organiser and carries
+    a careers link on the site's home page ("Careers at Distyl AI", src-smart-buildings-2026-site). The
+    organisers hold the evaluation set and Kaggle runs every evaluation until the planned release after
+    the competition. The simulator is Google's and two organisers are at Google, but no evaluated system
+    is Google's, so funded-by-evaluated-party does not apply. The organisers' only scored policies are
+    the hand-written reference controllers, which do not enter the metric, so maintainer-competes-on-own-benchmark
+    is not set.
+  independence_assessed: true
+  funding:
+    source: src-kaggle-smart-buildings-record
+    quote: '"reward":{"id":"USD","quantity":40000'
+  known_limitation:
+    source: src-arxiv-2610-18511-v1
+    quote: We will use a simulated environment for the contest, and will evaluate winning solutions
+      on real buildings after the contest ends.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_note: Kaggle runs the notebook on its own CPU or GPU, 540 minutes at most; the
+    proposal also caps each rollout at 10 times the bang-bang baseline's runtime.
+  compute_tier_basis:
+    reason: Every official score comes from Kaggle's hardware running the submitted notebook.
+    source: src-kaggle-smart-buildings-record
+    quote: '"maxCpuRuntimeMinutes":540,"maxGpuRuntimeMinutes":540'
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The simulator and local scorer reproduce development scores on the public scenarios, but
+      the headline score exists only on the held-out set inside Kaggle's sandbox until its planned
+      release.
+    source: src-arxiv-2610-18511-v1
+    quote: The held-out 30 scenarios are never released to participants, in any form, before the
+      competition closes.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: smart_buildings.evaluate and score_leaderboard.py in smart-buildings-2026/starter-kit
+    (local); Kaggle's smart_buildings_inference_server gateway (official scoring)
+  harness_source: src-github-smart-buildings-starter-kit-readme
+  harness_quote: Turn a results tree into the single leaderboard number
+  code_licence: Apache-2.0
+  code_licence_note: The starter kit's README and GitHub's licence metadata for
+    smart-buildings-2026/starter-kit (read 2026-11-04) agree; it builds on Google's Apache-2.0
+    sbsim.
+  code_licence_source: src-github-smart-buildings-starter-kit-readme
+  code_licence_quote: Apache License 2.0
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The resolved profile is `simulation` ([episodic-return, rl-policy] and [episodic-return, classical-algorithm]):
+  # simulator and simulator_version (the organisers re-run the top policies at a fixed simulator commit, and the
+  # starter kit's simulator is an extended sbsim), hardware_platform, subset_used (the public leaderboard's subset,
+  # the private set, or the 30 public training scenarios scored locally), selection_strategy and n_samples. The
+  # episode length is fixed at 8,640 steps; the starter kit refuses to score any other. No forecasting field
+  # applies, because nothing is forecast.
+  material_extra: []
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One number, the flat mean over the 30 evaluation scenarios, ranks the leaderboard;
+    grouping by building or weather is avoided on purpose.
+  source: src-arxiv-2610-18511-v1
+  quote: The headline leaderboard score is the mean over all 30 scenarios, with no grouping by
+    building or weather.
+
+homepage: https://smart-buildings-2026.github.io/competition/
+repository: https://github.com/smart-buildings-2026/starter-kit
+leaderboard_url: https://www.kaggle.com/competitions/neurips-2026-smart-buildings/leaderboard
+
+history:
+  - date: 2026-10-13
+    event: channel-opened
+    field: governance.submission_process
+    to: sandboxed-rerun
+    source: src-kaggle-smart-buildings-record
+    quote: '"dateEnabled":"2026-10-13T20:06:22.087Z","deadline":"2027-01-15T17:59:59Z"'
+    note: Kaggle enabled the competition, a notebook-only code competition.
+
+tags:
+  - hvac-control
+  - buildings
+  - reinforcement-learning
+  - competition
+  - code-submission
+  - sim-to-real
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2610-18511-v1
+    - src-arxiv-2610-18511
+    - src-smart-buildings-2026-site
+    - src-smart-buildings-2026-competition
+    - src-github-smart-buildings-starter-kit-readme
+    - src-kaggle-smart-buildings
+    - src-kaggle-smart-buildings-record
+    - src-kaggle-smart-buildings-code
+    - src-arxiv-2410-03756-v2
+  sources_note: >
+    The proposal's v1 PDF (a DOI, not archived) read as text, its extract kept clear of the authors' e-mail
+    addresses; its abstract page for the date and the NeurIPS comment; the site's home and competition
+    pages with scripts and styles stripped; the starter kit's README at a pinned commit; Kaggle's public
+    JSON records of the competition's pages and header (its pages render by script), read without accepting
+    the rules; Kaggle's notebook list, withheld from archiving because every row names its author; and
+    the Smart Buildings Control Suite's v2 PDF for the simulator's lineage. No 2025-2026 paper reporting
+    results on the challenge exists yet; Kaggle's team and submission counts are the evidence of current
+    use.
+  confidence: medium
+  review_checks:
+    - check: Placement. The taxonomy names this benchmark as an earth-climate example, and
+        energy-systems reads "optimising energy ... demand", but the family's inclusion test asks
+        for energy "in a geophysical setting" and its exclusion sends a physical process outside an
+        Earth-system context to physics. engineering-design/process-control-optimization fits the
+        act by its definition and is rejected only through its family's operated-not-designed
+        exclusion. A building's HVAC plant is the stress case the recon note flagged; the entry
+        follows the taxonomy's examples, as l2rpn does.
+      field: domain
+    - check: episodic-return or simulation-rollout. The score is accumulated reward with no floor
+        (the comfort penalty is unbounded), which is episodic-return, but the reward is bounded
+        above by zero, and episodic-return's inclusion speaks of "no defined maximum".
+        ceiling_anchor_type is theoretical-maximum on the same bound. Both methods resolve the
+        simulation profile here, so only the facet and saturation handling change.
+      field: evaluation_method
+      source: src-arxiv-2610-18511-v1
+      quote: The reward is bounded above by zero.
+    - check: distribution-shift-generalization rather than transfer-learning. The task and reward
+        are fixed and the buildings come from the same generator, but the observation and action
+        spaces change shape per building, which a reviewer may read as a new embodiment and so
+        transfer-learning.
+      field: capability
+      source: src-smart-buildings-2026-competition
+      quote: Across the 6 training buildings, K runs from 3 to 9 and V from 28 to 85, so the
+        discrete space spans 4 to 10 bits and the continuous space 67 to 199 values.
+    - check: No capability term covers closed-loop control of a non-embodied physical plant;
+        sensorimotor-control is defined for a body. Logged with bench tag-gap (proposed
+        plant-control).
+      field: capability
+    - check: Prize split. The proposal gives $2K for Round One and $38K for the final deadline; the
+        site and Kaggle give $25,000 for the leaderboard and $15,000 for the paper track. The entry
+        follows the competition pages.
+      field: governance.funding
+      source: src-arxiv-2610-18511-v1
+      quote: Round One deadline (NeurIPS poster; $2K in prizes) Paris Workshop Final deadline ($38K
+        in prizes)
+    - check: Team size and submission form. The proposal allows teams of up to four and an Entry of
+        a module, weights and a reproducibility bundle; Kaggle's rules allow five and take a
+        notebook only.
+      field: governance.submission_process
+      source: src-kaggle-smart-buildings
+      quote: The maximum Team size is five (5).
+    - check: Final deadline time. Kaggle's timeline says every deadline is at 23:59 UTC, but its
+        record holds 17:59:59 UTC on 2027-01-15.
+      field: activity
+      source: src-kaggle-smart-buildings
+      quote: All deadlines are at 11:59 PM UTC on the corresponding day unless otherwise noted.
+    - check: Real-building trials. The proposal invites top teams to live trials at four physical
+        partner sites; Kaggle's description says three real buildings. Neither is scored, and no
+        date is given.
+      field: governance.known_limitation
+      source: src-kaggle-smart-buildings
+      quote: Winning solutions may have the opportunity to test their models on three real
+        buildings.
+    - check: learned_entrant_evidence is a public notebook whose title names residual PPO; its code
+        was not read, the organisers ship no learned baseline, and many of the top public notebooks
+        are PI or rule-based controllers. The leaderboard was not read because its rows name
+        participants.
+      field: learned_entrant_evidence
+    - check: maintainer_type academic-lab rests on Kaggle naming the University of Washington host
+        and sponsor; the organisers span five universities, Mila and four companies, and the code
+        sits in a dedicated account with no stated institution, which community-collective's test
+        may fit better.
+      field: governance.maintainer_type
+    - check: The reward differs from the Smart Buildings Control Suite's 3C reward, which is bounded
+        in [-1, 0]; the challenge's comfort term is unbounded and occupancy-weighted. Whether the
+        suite itself (a 2024-2025 benchmark of 11 real buildings) deserves an entry, with this
+        challenge linked to it, is open; lineage is not recorded.
+      field: lineage
+      source: src-arxiv-2410-03756-v2
+      quote: formulated as an approximate regret function, bounded in the range [-1,0]
+    - check: The NeurIPS blog's competition-track post (src-neurips-2026-competitions-blog, on main)
+        lists the challenge, but its extract has no window on that line, so release_venue cites the
+        site instead.
+      field: release_venue
+  unreachable:
+    - url: https://smart-buildings-2026.github.io/
+      http_status: 404
+      consequence: The address given for the challenge is GitHub Pages' 'Site not found' on
+        2026-11-04; the site lives at /competition/, which its canonical link confirms, and was read
+        there.
