@@ -1,0 +1,708 @@
+# data/benchmarks/agents-tooluse/toolbench.yaml
+#
+# P1-S9-T02, agents-tooluse entry 18. Filled from the ToolLLM paper, arXiv 2307.16789 read as its v2 PDF
+# (2023-10-03), and its abstract page; OpenReview's API record of the ICLR 2024 submission, for the venue; three
+# files of OpenBMB/ToolBench pinned at commit d56fdd8 (2025-05-21, the repository's newest): the README, the
+# ToolEval README, and the CSV the ToolEval leaderboard page (openbmb.github.io/ToolBench) loads; StableToolBench's
+# paper, arXiv 2403.07714 read as its v5 PDF (2025-03-05), its abstract page, and its README pinned at commit
+# aa4ed9f; the abstract page of arXiv 2305.16504, for the name clash; and the v1 PDF of The Menu Is an Execution
+# Prior (arXiv 2609.09395, September 2026), a paper that runs ToolBench tasks with ToolEval. Repository metadata
+# (licence, push dates, branches) was read through GitHub's API, not as quoted Sources. Every quote below is checked
+# by the quote-substring validator against those Sources' committed extracts.
+#
+# This is ToolBench of ToolLLM (Qin et al., Tsinghua University and OpenBMB): 16,464 RapidAPI APIs, scored by
+# ToolEval. Not to be confused with the earlier, unrelated "ToolBench" of "On the Tool Manipulation Capability of
+# Open-source Large Language Models" (arXiv 2305.16504, May 2023), an eight-task tool-manipulation benchmark
+# (review_checks).
+
+id: toolbench
+name: ToolBench
+aliases:
+  - ToolLLM
+aliases_note: >
+  ToolLLM is the paper's name for the framework (data construction, ToolLLaMA training and ToolEval) and
+  is how papers often cite the benchmark. "ToolBench" alone is a homograph: arXiv 2305.16504 released
+  an unrelated tool-manipulation benchmark under the same name two months earlier, so the alias table
+  (04 S10) should record the bare string as ambiguous once that benchmark has an entry. ToolEval, the
+  evaluator, is not listed as an alias.
+tagline: Instructions over 16,464 real RapidAPI APIs, run in an agent loop and judged by ChatGPT on
+  pass rate and win rate.
+description: >
+  A tool-use dataset and benchmark from the ToolLLM paper. Its authors crawled RapidAPI Hub and kept 16,464
+  REST APIs from 3,451 tools in 49 categories, then had ChatGPT (gpt-3.5-turbo-16k) write instructions
+  that need one tool (G1), several tools from one category (G2) or several from one collection (G3), and
+  search for solution paths with a depth-first decision tree (DFSDT); the 126,486 solved pairs are training
+  data. The test set is six groups of held-out instructions, 1,100 in all, that test generalisation to
+  unseen instructions, unseen tools in seen categories and unseen categories. A system gets an instruction
+  and the documentation of its relevant APIs (the ground-truth set, or a retriever's top five), calls
+  the live APIs through a server the maintainers host, and ends with a final answer or by giving up. There
+  is no reference answer: ToolEval, a ChatGPT evaluator, labels each run pass, fail or unsure by rules
+  that depend on whether the instruction is solvable (pass rate), and prefers one of two solution paths
+  by six criteria (win rate, against ChatGPT with ReACT); each verdict is a majority vote over repeated
+  calls, and the paper reports 87.1% and 80.3% agreement with human annotators. The paper runs ChatGPT,
+  GPT-4, Claude-2, Text-Davinci-003 and its own ToolLLaMA, a fine-tuned LLaMA-2 7B, inside ReACT and DFSDT
+  loops. Because the RapidAPI services change, StableToolBench found the published numbers could not be
+  reproduced months later and rebuilt the benchmark on cached and simulated APIs; most 2025-2026 papers
+  report that fork.
+self_description:
+  source: src-arxiv-2307-16789
+  quote: We first present ToolBench, an instruction-tuning dataset for tool use, which is
+    constructed automatically using ChatGPT.
+external_ids:
+  arxiv: '2307.16789'
+paper:
+  title: 'ToolLLM: Facilitating Large Language Models to Master 16000+ Real-world APIs'
+  arxiv: '2307.16789'
+  doi: 10.48550/arXiv.2307.16789
+  version_read: v2
+  source: src-arxiv-2307-16789-v2
+released: 2023-07-27
+released_note: The README's news list dates the release of the "new version" of ToolBench, the one
+  the paper describes, to 2023-07-27; the paper's first arXiv version followed on 2023-07-31, and an
+  earlier ToolBench sits on the repository's legacy branch (versions).
+released_source: src-github-toolbench-readme-d56fdd8
+released_quote: '- **[2023/7/27]** **New version** ToolBench is released.'
+release_venue: ICLR 2024
+release_venue_note: A spotlight at ICLR 2024, per OpenReview's record. The arXiv v2 PDF read here is
+  headed "Preprint", and the README's citation block is a plain arXiv entry.
+release_venue_source: src-openreview-api-toolllm
+release_venue_quote: '"venue":{"value":"ICLR 2024 spotlight"}'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/tool-api-calling
+  primary_basis:
+    reason: One model or agent under evaluation selects and calls real REST APIs against their live
+      backends, and the judged quantity is whether the instruction was completed through those
+      calls, the leaf's own inclusion case. No other family's example or exclusion names ToolBench,
+      and no corpus classification record exists for it.
+    source: src-arxiv-2307-16789-v2
+    quote: we prompt ChatGPT to search for a valid action sequence
+  secondary: []
+domain_considered_and_rejected:
+  - term: agents-tooluse/web-navigation
+    reason: The APIs are web services, but they are called as functions with parameters, not reached
+      by browsing pages.
+    source: src-arxiv-2307-16789-v2
+    quote: Developers can test and connect with various APIs by registering only a RapidAPI key.
+  - term: agents-tooluse/long-horizon-autonomy
+    reason: Multi-tool instructions take several calls, but no source states episode lengths, and an
+      interface subdomain describes the benchmark, which the term's distinction makes primary.
+  - term: agents-tooluse/multi-agent-coordination
+    reason: One system is evaluated per run; the evaluator and the reference ChatGPT-ReACT run are
+      not agents in the episode.
+  - term: agents-tooluse/agent-evaluation-suites
+    reason: Every group scores API calling, so one subdomain holds the benchmark.
+capability:
+  - tool-use
+  - distribution-shift-generalization
+capability_basis:
+  tool-use:
+    reason: The protocol exposes the relevant APIs as callable functions, the calls are executed
+      against the live services, and their responses feed the next step and the final answer the
+      evaluator judges.
+    source: src-arxiv-2307-16789-v2
+    quote: To let ChatGPT finish an action sequence, we define two additional functions
+  distribution-shift-generalization:
+    reason: The six test groups hold out instructions, tools and whole categories from the training
+      data, with the task unchanged, and each group is reported as a condition of its own. The shift
+      is relative to ToolBench's own training split, so it is a shift only for systems fitted to it
+      (review_checks).
+    source: src-arxiv-2307-16789-v2
+    quote: '(2) Tool: unseen tools that belong to the same (seen) category of the tools in the training
+      data, and (3) Cat.: unseen tools that belong to a different (unseen) category of tools in the training
+      data'
+capability_considered_and_rejected:
+  - term: planning
+    reason: Win rate's criteria include milestones reached and the APIs tried, properties of the
+      action sequence, but they feed one holistic preference beside the final answer's richness and
+      factuality, and the paper's planning claim is for DFSDT, its annotation method, not for what
+      the benchmark scores.
+    source: src-arxiv-2307-16789-v2
+    quote: '4. Milestone: calculating the number of milestones reached during execution.'
+  - term: honesty
+    reason: The pass-rate rules fail a hallucinated "completed" answer on an unsolvable instruction
+      and pass a refusal, but that is folded into one pass rate, not reported separately from
+      correctness.
+    source: src-arxiv-2307-16789-v2
+    quote: If the final answer is hallucinated by the model itself and provides a false positive
+      response
+  - term: search-exploration
+    reason: One win-rate criterion prefers the path that tried more potentially useful APIs, but it
+      is one of six inside a judge's verdict, and the budget is a limit, not a scored quantity.
+    source: src-arxiv-2307-16789-v2
+    quote: '5. Exploration: whether more potentially useful APIs were attempted during the execution process.'
+  - term: reliability-consistency
+    reason: The repetition is the evaluator's (a majority vote over repeated judge calls); each
+      system runs each instruction once.
+    source: src-arxiv-2307-16789-v2
+    quote: perform a majority vote to derive the final pass rate
+  - term: long-horizon-execution
+    reason: No source gives the number of calls per instruction, and a failed call can be followed
+      by others before the answer.
+  - term: transfer-learning
+    reason: The task and its output format stay the same across the groups; only the instructions
+      and tools move, which the term's exclusion sends to distribution-shift-generalization.
+
+evaluation_method:
+  - model-graded-judge
+evaluation_method_note: >
+  Pass rate: the evaluator first decides whether the instruction is solvable with the given APIs, then
+  labels the run Pass, Fail or Unsure from its finish type (final answer or giving up) and whether the
+  answer resolves the instruction; unsure runs are settled at random in the code StableToolBench describes.
+  Win rate: for two runs on the same instruction, a passed run beats a failed one; otherwise the evaluator
+  prefers one by information richness, factuality, reasoning, milestones, exploration and cost, against
+  ChatGPT-ReACT as the fixed reference, with ties split between win and lose. Each verdict is a majority
+  of repeated calls (four or more in the paper).
+evaluation_method_basis:
+  reason: Every score is a verdict of a prompted judge model (ChatGPT, gpt-3.5-turbo-16k in
+    ToolEval's default evaluator) on the run's solution path and final answer; no reference answer
+    or end state is checked.
+  source: src-arxiv-2403-07714-v5
+  quote: PR is calculated based on using gpt-3.5-turbo-16k to determine if a task is solvable and
+    whether the generated answer can solve the corresponding task.
+evaluation_method_considered_and_rejected:
+  - term: pairwise-preference-elo
+    reason: Win rate is a judge's A/B preference, but against one fixed reference run
+      (ChatGPT-ReACT), with no rating fitted to a pool, which the term's exclusion names.
+    source: src-arxiv-2307-16789-v2
+    quote: When calculating the win rate, each model is compared with ChatGPT-ReACT.
+  - term: entrant-relative-ranking
+    reason: The reference is the same for every entrant, so adding an entrant moves no one else's
+      win rate.
+  - term: environment-state-check
+    reason: The APIs are mostly read-only web services and nothing inspects their state after the
+      run; the judge reads the trajectory and the answer.
+  - term: exact-match
+    reason: There is no reference answer or solution path to match.
+    source: src-arxiv-2307-16789-v2
+    quote: it is infeasible to annotate a fixed ground-truth solution path for each test instruction
+  - term: rubric-graded
+    reason: Win rate's six criteria are listed in the evaluator's prompt, but the judge returns one
+      preference, not a score per criterion that is then aggregated.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_note: model-in-benchmark-harness for the paper's results and every leaderboard
+  row, which run a model (ChatGPT, GPT-4, Claude-2, Text-Davinci-003, ToolLLaMA) inside the
+  repository's ReACT or DFSDT loop, so a row names the model and the method. agent-scaffold for
+  entrants who bring a method of their own, which ToolEval accepts as converted answer files.
+designed_for_subjects_basis:
+  reason: The repository's inference pipeline drives every model in the same two loops, and the
+    ToolEval README tells users how to evaluate a method besides them.
+  source: src-github-toolbench-tooleval-readme-d56fdd8
+  quote: To evaluate with a new method besides ReACT and DFSDT, you should prepare your converted
+    answer
+designed_for_subjects_considered_and_rejected:
+  - term: retrieval-augmented-system
+    reason: One row (ToolLLaMA-DFSDT-Retriever) puts the authors' API retriever inside the system,
+      but the default protocol supplies the ground-truth API set to every entrant.
+    source: src-arxiv-2307-16789-v2
+    quote: Apart from ToolLLaMA-DFSDT-Retriever, all methods use the oracle API retriever (i.e.,
+      ground truth API).
+  - term: instruction-tuned-model
+    reason: Vicuna and Alpaca appear as prompted chat models, but inside the same ReACT and DFSDT
+      loops, and both score zero.
+    source: src-arxiv-2307-16789-v2
+    quote: Although we conduct prompt engineering extensively, both Vicuna and Alpaca fail to pass
+      any instruction
+  - term: task-specific-supervised-model
+    reason: ToolLLaMA is fine-tuned on ToolBench's training split, but it is run inside the same
+      agent loops as the prompted models and is scored on a general instruction-following task, not
+      as a single-task model.
+    source: src-arxiv-2307-16789-v2
+    quote: Based on ToolBench, we fine-tune LLaMA to obtain an LLM ToolLLaMA
+observed_subjects:
+  values:
+    - model-in-benchmark-harness
+  basis: All ten leaderboard rows are a model inside ReACT or DFSDT, run by the maintainers for the
+    paper (GPT-4, ChatGPT, ToolLLaMA, Text-Davinci-003, Claude-2); no outside row has been added
+    since 2023-09-29.
+  source: src-github-toolbench-leaderboard-csv-d56fdd8
+as_used:
+  - protocol: A frozen Qwen2.5-72B-AWQ agent with deterministic decoding, given an ordered menu of
+      32 tools built before execution instead of the ground-truth APIs, an 8-call budget and
+      standardised failure observations, scored by ToolEval's binary success on 304 released tasks.
+    split: 304 tasks in groups of 107, 134 and 63, after the official split loader and an
+      executable-tool filter
+    source: src-arxiv-2609-09395-v1
+    quote: The main comparison contains 304 released ToolBench tasks after applying the official
+      split loader and executable-tool filter.
+    note: The Menu Is an Execution Prior (September 2026). Its 0.737 and 0.898 are success rates
+      over its own filtered task set with a menu constructor in place of the API set, not the
+      paper's pass rate over 1,100 instructions. Many 2026 papers use ToolBench's catalogue as a
+      tool-retrieval benchmark (NDCG over the relevant APIs), and most end-to-end results are
+      reported on StableToolBench instead (lineage).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against ToolBench's tasks with its evaluator, as in a September
+    2026 paper. The leaderboard has not changed since 2023-09-29 and the repository was last pushed
+    on 2025-05-21 (GitHub API), which is maintenance evidence, not the instrument's standing.
+  source: src-arxiv-2609-09395-v1
+  quote: Our method solves 273 of the 304 ToolBench tasks, while the official menu solves 224.
+activity: accepting-submissions
+activity_note: The ToolEval README at main still invites converted answer files by e-mail or pull
+  request, which the maintainers say they will evaluate; the board's ten rows are all from the paper
+  and its CSV was last changed on 2023-09-29, so the route may be open on paper only
+  (review_checks).
+activity_basis:
+  reason: A route for entering results is stated now, and the board has never run in rounds.
+  source: src-github-toolbench-tooleval-readme-d56fdd8
+  quote: We will run the evaluation script to get the result and update the leaderboard.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ToolLLaMA (DFSDT)
+    source: src-github-toolbench-leaderboard-csv-d56fdd8
+    observed_on: 2026-11-04
+    quote: ToolLLaMA-DFSDT,60,57,61,62,77,77,66
+  - system: Qwen2.5-72B-AWQ (State-Path menu)
+    source: src-arxiv-2609-09395-v1
+    observed_on: 2026-11-04
+    quote: The execution agent is Qwen2.5-72B-AWQ with deterministic decoding.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: none
+ground_truth_source_note: No reference answer or solution path decides the score; the judge model
+  decides solvability and success. The 126,486 annotated paths are training data.
+ground_truth_source_source: src-arxiv-2307-16789-v2
+ground_truth_source_quote: it is infeasible to annotate a fixed ground-truth solution path for each
+  test instruction
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data, inference code and evaluator are public. A run needs RapidAPI access, through a
+    ToolBench key the maintainers grant on a form or through one's own RapidAPI account, and an
+    OpenAI key for the evaluator. The live APIs it calls have changed since release, so a run today
+    is not a rerun of the paper's (execution).
+  source: src-github-toolbench-readme-d56fdd8
+  quote: Inference With Your Own RapidAPI Account
+
+task:
+  exists: true
+  input:
+    - a natural-language instruction from one of six test groups
+    - the documentation of the instruction's relevant APIs (name, description, parameters, example
+      response), passed as callable functions, or the top five APIs from a retriever in the
+      open-domain setting
+    - the responses of the live RapidAPI services each call reaches, through the maintainers' server
+      or one's own RapidAPI key
+  output: A sequence of API calls with their arguments, ending in "Finish with Final Answer" (with
+    the answer) or "Finish by Giving Up".
+  scoring: Pass rate, the share of instructions the judge labels Pass after deciding whether each is
+    solvable, and win rate, the share of instructions on which the judge prefers the run to
+    ChatGPT-ReACT's; both per group and averaged over the six groups.
+  source: src-arxiv-2307-16789-v2
+  quote: '(1) Pass Rate: it calculates the proportion of successfully completing an instruction within
+    limited budgets.'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The data download needs no account. Calling the APIs needs a ToolBench key, granted
+    by the maintainers after a form is reviewed, or one's own RapidAPI key and subscriptions;
+    StableToolBench's README reports key applications left unanswered for a long time (execution).
+  access_basis:
+    reason: The instructions, test splits, tool documentation and reproduction data are published on
+      Google Drive and Tsinghua Cloud without registration.
+    source: src-github-toolbench-readme-d56fdd8
+    quote: 'Please download our dataset using the following link:'
+  refresh: versioned-releases
+  refresh_note: The live APIs behind the tasks change without any release (StableToolBench found
+    44.4% of calls still succeeding), which is not a change to the items but changes what a score
+    means; see reproducibility.
+  refresh_basis:
+    reason: The data changed in dated releases (2023-07-27, with data_0801, and the 2023-08-30
+      re-annotation) and the evaluator in a dated one (2023-09-29), each announced in the README's
+      news list.
+    source: src-github-toolbench-readme-d56fdd8
+    quote: Notice that `data_0801` is the old version data.
+  data_provenance:
+    - web-scraped
+    - model-generated
+  data_provenance_note: The APIs and their documentation were crawled from RapidAPI Hub and filtered
+    for working ones. The instructions were written by ChatGPT from sampled API documentation,
+    prompted with three of 12 (single-tool) or 36 (multi-tool) seed examples written by human
+    experts, and instructions naming APIs outside the sample were filtered out.
+  data_provenance_source: src-github-toolbench-readme-d56fdd8
+  data_provenance_quote: All the data is automatically generated by OpenAI API and filtered by us
+  contamination_risk: medium
+  contamination_risk_note: The test instructions and the reproduction runs are public, and the
+    training split comes from the same generator, tools and prompts, so a training route is
+    plausible; the held-out groups are defined against that split. No source read evidences a route
+    into the scored instructions. ChatGPT wrote the instructions and is also an entrant, the
+    reference run and the judge, which is an independence matter (governance), not contamination.
+  contamination_evidence: []
+  ceiling_anchor_type_note: Humans annotated pass and win labels only to check the evaluator's
+    agreement (87.1% and 80.3%); no human performance on the instructions is reported.
+  dataset_licence: Apache-2.0
+  dataset_licence_note: The README's statement for the dataset. The crawled API documentation and
+    the services' responses come from RapidAPI providers, whose terms no source read covers.
+  dataset_licence_source: src-github-toolbench-readme-d56fdd8
+  dataset_licence_quote: It is distributed under Apache License 2.0.
+  size:
+    - count: 1100
+      unit: test instructions in six groups (200 each, 100 for G3-instruction)
+      source: src-arxiv-2403-07714-v5
+      quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+    - count: 200
+      unit: instructions sampled per test group, as the README states it
+      subset: each test group
+      source: src-github-toolbench-readme-d56fdd8
+      quote: We sample 200 instances from every test set.
+    - count: 16464
+      unit: REST APIs (from 3,451 tools in 49 RapidAPI categories)
+      subset: the tool environment
+      source: src-arxiv-2307-16789-v2
+      quote: Finally, we only retain 3, 451 high-quality tools (16, 464 APIs).
+    - count: 126486
+      unit: instruction and solution-path pairs (training data)
+      subset: training data
+      source: src-arxiv-2307-16789-v2
+      quote: we generate 126, 486 (instruction, solution path) pairs
+  languages:
+    - English
+  languages_note: The instructions, the API documentation and the evaluator's prompts are English in
+    every example the sources print; no source states a language.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OpenBMB (the ToolLLM authors, Tsinghua University and ModelBest)
+  maintainer_basis:
+    reason: The paper points to the OpenBMB repository for its code, data and models; its authors
+      are mostly at Tsinghua University, with others at ModelBest, Renmin University, Yale, Tencent
+      and Zhihu (the affiliation line carries an e-mail address and is not quoted).
+    source: src-arxiv-2307-16789-v2
+    quote: The codes, trained models, and demo are publicly available at
+      https://github.com/OpenBMB/ToolBench.
+  maintainer_type: community-collective
+  maintainer_type_note: The dataset and repository sit in the OpenBMB organisation account, and no
+    source read names a single institution as their holder; the authors span six institutions.
+    academic-lab is the alternative if OpenBMB is read as Tsinghua's lab (review_checks).
+  submission_process:
+    - maintainer-scored-predictions
+    - maintainer-run
+  submission_process_note: An entrant sends converted answer files (its runs' solution paths) by
+    e-mail or pull request, and the maintainers run ToolEval on them and update the board; the
+    address is not recorded here. Every row on the board was run by the maintainers for the paper,
+    including other developers' models.
+  submission_process_source: src-github-toolbench-tooleval-readme-d56fdd8
+  submission_process_quote: To update the [ToolEval
+    Leaderboard](https://openbmb.github.io/ToolBench/), you should submit your converted answer file
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-toolbench-leaderboard-csv-d56fdd8
+      quote: ToolLLaMA-DFSDT,60,57,61,62,77,77,66
+    - flag: grader-from-evaluated-party
+      source: src-github-toolbench-tooleval-readme-d56fdd8
+      quote: You can refer to the `toolbench/tooleval/evaluators/tooleval_gpt-3.5-turbo_normalized`
+        folder for example.
+  independence_flags_note: >
+    The maintainers rank their own ToolLLaMA, trained on ToolBench's training split, beside other developers'
+    models. The default judge is OpenAI's gpt-3.5-turbo, ChatGPT, which is also a ranked entrant, the
+    fixed reference for win rate, the model that wrote the instructions and the teacher whose solution
+    paths ToolLLaMA was trained on. Two authors are at Tencent's WeChat AI and one at ModelBest; no system
+    of theirs is ranked. The v2 PDF has no funding statement.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2403-07714-v5
+    quote: has shown performance discrepancies that cannot be reproduced months after its release
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: A run is inference for the system under test plus repeated calls to the judge
+    (four in the ToolEval README, seven in the main README) for every run, and RapidAPI access.
+    Training or serving ToolLLaMA on GPUs is the entrant's choice.
+  compute_tier_source: src-github-toolbench-readme-d56fdd8
+  compute_tier_quote: Prepare your openai key to use our evaluator.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: >
+    A fresh run is automatic end to end, given RapidAPI access and an OpenAI key. But it calls live third-party
+    APIs that keep changing: StableToolBench found only 44.4% of the calls still succeeding and the paper's
+    pass rates unreproducible months after release, and the maintainers' server moved to a new IP in August
+    2024. That is the live-world-state blocker, which tier 3 forbids beside fully-automatable, so it is
+    recorded here as browsecomp and bfcl record it. The judge is a hosted model, which the vocabulary
+    has no blocker for.
+  reproducibility_tier_basis:
+    reason: Inference and evaluation are scripts in the repository; what cannot be held fixed is the
+      services the calls reach.
+    source: src-arxiv-2403-07714-v5
+    quote: only 44.4% of API calls are successful
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The ToolBench repository at commit d56fdd8 -- toolbench/inference/qa_pipeline.py (ReACT
+    and DFSDT loops) for runs, and ToolEval (eval_pass_rate.py, eval_preference.py, the
+    tooleval_gpt-3.5-turbo_normalized evaluator) for scores
+  harness_source: src-github-toolbench-readme-d56fdd8
+  harness_quote: for test_set in G1_instruction G1_category G1_tool G2_category G2_instruction
+    G3_instruction
+  harness_gotcha:
+    source: src-github-toolbench-readme-d56fdd8
+    quote: --evaluate_times 7
+  harness_gotcha_note: The main README runs the evaluator seven times per run and the ToolEval
+    README four times, and the paper says four or more; the number of judge votes changes the
+    scores, and the leaderboard does not say which it used. A run with an old checkout also misses
+    the server's August 2024 move.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for OpenBMB/ToolBench, read 2026-11-04; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the model-graded profile (judge model, version and prompt are material already): the method or scaffold
+  # (ReACT, DFSDT or an entrant's own), the harness and its version (ToolEval changed on 2023-09-29), the API set
+  # offered (the ground-truth APIs or a retriever's top five, as tools_allowed), the call budget (max_steps), and the
+  # API backend the calls reach (live RapidAPI through the maintainers' server, one's own key, or StableToolBench's
+  # cache and simulator), held in `sandbox` for want of a field. The number of judge votes has no field.
+  material_extra:
+    - scaffold
+    - harness
+    - tools_allowed
+    - max_steps
+    - sandbox
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper, the README and the board report each metric per group and as the average over
+    the six groups; the board ranks by average win rate. Its per-group columns, though labelled
+    WinRate, hold the README's pass rates (review_checks).
+  source: src-github-toolbench-leaderboard-csv-d56fdd8
+  quote: Method,WinRate,G1_instruction_WinRate,G1_tool_WinRate
+
+homepage: https://github.com/OpenBMB/ToolBench
+repository: https://github.com/OpenBMB/ToolBench
+leaderboard_url: https://openbmb.github.io/ToolBench/
+
+versions:
+  - version: legacy
+    label: The first ToolBench, on the legacy branch
+    version_kind: revision
+    changes: The README's "Old version" of ToolBench, kept on the repository's legacy branch (the
+      repository was created on 2023-05-28, GitHub API). Its contents were not read.
+    breaking: true
+    superseded_by: '0801'
+    frozen: true
+    sources:
+      - src-github-toolbench-readme-d56fdd8
+  - version: '0801'
+    label: The ToolLLM release (data_0801)
+    version_kind: revision
+    released: 2023-07-27
+    changes: The release the paper's first version describes, over 16,464 RapidAPI APIs;
+      ToolLLaMA-7b-v1 was trained on it. The README now calls it the old version data.
+    breaking: true
+    supersedes_version: legacy
+    superseded_by: '0830'
+    frozen: true
+    sources:
+      - src-github-toolbench-readme-d56fdd8
+      - src-arxiv-2307-16789
+  - version: '0830'
+    label: The re-annotated data
+    version_kind: revision
+    released: 2023-08-30
+    items: 1100
+    changes: Re-annotated data, with more than 120,000 solution paths (126,486 pairs) and their
+      intact reasoning, which ToolLLaMA-2-7b-v2 was trained on; the paper's v2 and the README report
+      results on it. The sources do not say whether the test instructions changed.
+    supersedes_version: '0801'
+    errata:
+      - date: 2023-09-29
+        scope: ToolEval
+        description: A new version of ToolEval, described as more stable and covering more models
+          including GPT-4; the README asks for ToolLLaMA-2-7b-v2 with it to reproduce the latest
+          results.
+        source: src-github-toolbench-readme-d56fdd8
+      - scope: the hosted RapidAPI server
+        description: In August 2024 the maintainers' RapidAPI server moved to a new IP, and the
+          README asks users to update their code to reach it.
+        source: src-github-toolbench-readme-d56fdd8
+    frozen: true
+    sources:
+      - src-github-toolbench-readme-d56fdd8
+      - src-arxiv-2307-16789-v2
+      - src-arxiv-2403-07714-v5
+
+subsets:
+  - id: toolbench#g1-instruction
+    label: G1 (I1) Instruction, unseen single-tool instructions
+    items: 200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07714-v5
+        quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+    notes: New instructions for tools seen in training.
+  - id: toolbench#g1-tool
+    label: G1 (I1) Tool, unseen tools in seen categories
+    items: 200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07714-v5
+        quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+  - id: toolbench#g1-category
+    label: G1 (I1) Category, unseen tools in unseen categories
+    items: 200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07714-v5
+        quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+  - id: toolbench#g2-instruction
+    label: G2 (I2) Instruction, unseen intra-category multi-tool instructions
+    items: 200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07714-v5
+        quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+  - id: toolbench#g2-category
+    label: G2 (I2) Category, intra-category multi-tool instructions in unseen categories
+    items: 200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07714-v5
+        quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+  - id: toolbench#g3-instruction
+    label: G3 (I3) Instruction, unseen intra-collection multi-tool instructions
+    items: 100
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-07714-v5
+        quote: I1-I I1-C I1-T I2-I I2-C I3-I Total Full 200 200 200 200 200 100 1,100
+      - source: src-github-toolbench-readme-d56fdd8
+        quote: refers to single-tool, intra-category multi-tool and intra-collection multi-tool data
+          respectively.
+    notes: The README's "200 instances from every test set" would make this 200; StableToolBench
+      counts 100.
+
+lineage:
+  role: root
+  forks:
+    - id: stabletoolbench
+      maintainer: THUNLP-MT (Tsinghua University)
+      source: src-arxiv-2403-07714
+      quote: we introduce StableToolBench, a benchmark evolving from ToolBench, proposing a virtual
+        API server and stable evaluation system
+lineage_note: >
+  StableToolBench keeps ToolBench's tools, queries and answer format, replaces the live APIs with a cache
+  and LLM-simulated responses (later MirrorAPI, a trained simulator), filters the test set to 765 queries
+  judged solvable, and scores Solvable Pass Rate and Solvable Win Rate with GPT-4-class judges. It is
+  recorded as a fork: it is held in THUNLP-MT's repository with its own paper and versions, although two
+  of ToolLLM's lead authors and its senior authors are on it and ToolBench's README announces it (review_checks).
+  It has no entry yet.
+
+tags:
+  - tool-calling
+  - api-calling
+  - rapidapi
+  - llm-judge
+  - pass-rate
+  - win-rate
+  - training-data
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2307-16789-v2
+    - src-arxiv-2307-16789
+    - src-openreview-api-toolllm
+    - src-github-toolbench-readme-d56fdd8
+    - src-github-toolbench-tooleval-readme-d56fdd8
+    - src-github-toolbench-leaderboard-csv-d56fdd8
+    - src-arxiv-2403-07714-v5
+    - src-arxiv-2403-07714
+    - src-github-stabletoolbench-readme-aa4ed9f
+    - src-arxiv-2305-16504
+    - src-arxiv-2609-09395-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, and its abstract page for the dates and abstract;
+    OpenReview's search API record for the venue (the forum page asks for a browser challenge); the README,
+    the ToolEval README and the leaderboard CSV at commit d56fdd89faf8c91fa135090b212bb9057ee5cfc2, the
+    CSV being what openbmb.github.io/ToolBench loads (its page script names the file); StableToolBench's
+    v5 PDF and abstract page (DOIs) and its README at commit aa4ed9f4737ad98bd706663f01d63623c3427812,
+    kept clear of a contact line; the abstract page of arXiv 2305.16504 for the homograph; and the v1
+    PDF of arXiv 2609.09395 (a DOI) as evidence of current use. The data archive, the legacy branch and
+    the evaluator's prompt files were not read.
+  confidence: medium
+  review_checks:
+    - check: Homograph. arXiv 2305.16504 (May 2023) released an unrelated tool-manipulation
+        benchmark also named ToolBench, two months before this one. taxonomy/homographs.yaml covers
+        only capability and subdomain ids, so the clash belongs in the benchmark alias table
+        (data/aliases/benchmarks.yaml), which this task could not edit; a bare "ToolBench" in
+        ingested data must not resolve here without checking which is meant.
+      field: aliases
+      source: src-arxiv-2305-16504
+      quote: we create the ToolBench, a tool manipulation benchmark consisting of diverse software
+        tools for real-world tasks
+    - check: StableToolBench is recorded as a fork (another maintainer), not a variant. It lives in
+        THUNLP-MT's repository with its own paper, but its authors include ToolLLM's two lead
+        authors and its senior authors, and ToolBench's README announces it, so a reviewer may read
+        the maintainer as the same group.
+      field: lineage
+      source: src-github-stabletoolbench-readme-aa4ed9f
+      quote: we developed this new benchmark aiming to balance the stability and reality, based on
+        [ToolBench](https://github.com/OpenBMB/ToolBench) (Qin et al., 2023).
+    - check: Test-set size. StableToolBench counts 1,100 test instructions with 100 in
+        G3-instruction, while the README says 200 were sampled from every test set; the paper does
+        not state the counts. The subsets follow StableToolBench.
+      field: data.size
+      source: src-github-toolbench-readme-d56fdd8
+      quote: We sample 200 instances from every test set.
+    - check: The leaderboard CSV's per-group columns are labelled WinRate but hold the README's pass
+        rates (for GPT-4 with DFSDT 60, 71.5, 67, 79.5, 77.5 and 71), and only the first column is a
+        win rate. The board page also labels the file's baseline ChatGPT-ReACT while the file name
+        ends in ChatGPT-DFSDT.
+      field: aggregation_policy
+      source: src-github-toolbench-leaderboard-csv-d56fdd8
+      quote: GPT4-DFSDT,70.4,60,71.5,67,79.5,77.5,71
+    - check: reproducibility_tier fully-automatable with the live-world-state blocker held in the
+        note (tier 3 forbids the pair). The live APIs and the maintainer-granted ToolBench key may
+        justify a stricter reading; StableToolBench reports key applications going unanswered.
+      field: execution.reproducibility_tier
+      source: src-github-stabletoolbench-readme-aa4ed9f
+      quote: Note that if you have applied a ToolBench key but did not get a response for a long
+        time
+    - check: activity accepting-submissions rests on the ToolEval README's stated route; the board
+        has only the paper's ten rows and has not changed since 2023-09-29, so `unknown` is the
+        alternative.
+      field: activity
+    - check: model-graded-judge needs reference_conditions naming the judge (gpt-3.5-turbo-16k per
+        StableToolBench, ToolEval's tooleval_gpt-3.5-turbo_normalized evaluator); no conditions
+        record exists, and the exact snapshot behind the paper's numbers is not stated.
+        StableToolBench argues this judge cannot reliably decide solvability.
+      field: reference_conditions
+      source: src-arxiv-2403-07714-v5
+      quote: gpt-3.5-turbo-16k can not assume the role of the automatic evaluator in tool learning
+    - check: distribution-shift-generalization rests on the held-out tool and category groups, which
+        are unseen only relative to ToolBench's own training split; for models not trained on it
+        (GPT-4, Claude-2) the groups are not a shift.
+      field: capability
+    - check: maintainer_type community-collective, since no source read names OpenBMB's holder;
+        academic-lab (Tsinghua's NLP lab) is the likely alternative.
+      field: governance.maintainer_type
+    - check: Versions. Whether 0830 changed the test instructions, and so whether it is breaking, is
+        not stated; the legacy branch was not read, so its kind and its relation to this benchmark
+        are unverified. The ToolEval change of 2023-09-29 and the server move of August 2024 are
+        recorded as errata.
+      field: versions
+      source: src-github-toolbench-readme-d56fdd8
+      quote: Data updation, with more than **120,000** solution path annotations
+    - check: The evaluator labels each instruction solvable or not on the fly with the API responses
+        it sees, so the pass rate's denominator and its rules shift as APIs fail; StableToolBench
+        fixes the solvable set instead. Whether that belongs in comparability beyond `sandbox` is
+        open.
+      field: comparability.material_extra
+      source: src-arxiv-2403-07714-v5
+      quote: the stability of API status for a significant portion of online tools (55.6% in
+        ToolBench) is inconsistent
