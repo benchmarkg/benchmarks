@@ -1,0 +1,662 @@
+# data/benchmarks/biology-genetics/neural-latents-benchmark.yaml
+#
+# P1-S5-T05, biology-genetics entry 15. Filled from the NLB'21 paper, arXiv 2109.04463 read as its v4 PDF
+# (2022-01-17, the NeurIPS 2021 Datasets and Benchmarks version) and its abstract page (for the version dates);
+# neurallatents.github.io's home, challenge and datasets pages (scripts and styles stripped); EvalAI challenge
+# 1256 read through its API records (the challenge, its phases, and the MC_Maze 5 ms test leaderboard), since
+# the challenge page renders by script; the nlb_tools README and LICENSE at commit 42f8410 (2026-01-27, the
+# commit that published the test data); DataCite's record of the MC_Maze dandiset (DANDI's own API is closed
+# to crawlers by robots.txt); and the abstract page of Langevin Flows (arXiv 2507.11531, v2 2026-03-10) for
+# current use. Every quote below is checked by the quote-substring validator against those Sources' extracts.
+#
+# Identity: the entry is the Neural Latents Benchmark, which its paper and site present as a series of
+# benchmark suites; NLB'21 is the first and only suite released, modelled as one `versions` row
+# (version_kind: edition). FALCON and the Computation-thru-Dynamics Benchmark, which the site lists as related
+# benchmarks by members of the group, are separate benchmarks and are not linked (see review_checks).
+
+id: neural-latents-benchmark
+name: Neural Latents Benchmark
+aliases:
+  - NLB
+  - NLB'21
+  - NLB 2021
+  - Neural Latents Benchmark '21
+tagline: Scores latent variable models of monkey cortical spiking by predicting held-out neurons'
+  activity (co-smoothing).
+description: >
+  A benchmark for latent variable models (LVMs) of neural population activity. Its first and only suite,
+  NLB'21 (2021), curates seven datasets of spike-sorted activity recorded with intracortical arrays in
+  rhesus macaques: MC_Maze (motor and premotor cortex, delayed reaching through a maze), MC_RTT (motor
+  cortex, self-paced reaching to random targets), Area2_Bump (somatosensory area 2, reaches with and without
+  arm perturbations) and DMFC_RSG (dorsomedial frontal cortex, a Ready-Set-Go timing task), plus three
+  smaller MC_Maze sessions (Large, Medium, Small: 500, 250 and 100 training trials) for data scaling.
+  Neurons are split into held-in and held-out sets; for test trials only the held-in neurons are given.
+  The primary metric, co-smoothing, scores the submitted firing rates of the held-out neurons by Poisson
+  log-likelihood in bits per spike relative to each neuron's mean rate. Secondary metrics are hand-velocity
+  decoding R2 by a fixed ridge regression from the submitted rates (for DMFC_RSG, the correlation of neural
+  speed with production time), R2 of trial-averaged rates against empirical PSTHs, and forward prediction
+  of the next 200 ms in bits per spike. Data are NWB files on DANDI. From September 2021 to January 2026
+  the held-out test data were kept on EvalAI, which scored submitted rates at 5 ms (and, on separate boards,
+  20 ms) resolution; two prize phases ended in January and April 2022. EvalAI stopped taking submissions
+  in January 2026, its leaderboard stays visible as it was, and the test evaluation data were published
+  in the nlb_tools repository for local scoring.
+self_description:
+  source: src-github-nlb-tools-readme
+  quote: Neural Latents Benchmark '21 (NLB'21) is a benchmark suite for unsupervised modeling of
+    neural population activity.
+paper:
+  title: "Neural Latents Benchmark '21: Evaluating latent variable models of neural population activity"
+  doi: 10.48550/arXiv.2109.04463
+  version_read: v4
+  source: src-arxiv-2109-04463-v4
+released: 2021-09-09
+released_note: The paper's first arXiv version. The EvalAI challenge opened three days earlier, on
+  2021-09-06 (src-evalai-nlb-challenge-1256). The version read is v4, posted 2022-01-17.
+released_source: src-arxiv-2109-04463
+released_quote: '[v1] Thu, 9 Sep 2021 17:58:35 UTC'
+release_venue: NeurIPS 2021, Track on Datasets and Benchmarks
+release_venue_source: src-arxiv-2109-04463-v4
+release_venue_quote: (NeurIPS 2021) Track on Datasets and Benchmarks.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/neuroscience-decoding
+domain_basis:
+  reason: The scored quantity is neural activity, which the family's inclusion test names. No leaf
+    fits the primary task, co-smoothing, which infers the firing rates of held-out neurons from the
+    recorded activity of the others; it is filed under neuroscience-decoding as the nearest leaf,
+    because the input is recorded activity and one of the scored metrics, hand-velocity decoding, is
+    the leaf's task. The gap is logged with bench tag-gap (missing-term, proposing
+    biology-genetics/neural-population-modelling).
+  source: src-arxiv-2109-04463-v4
+  quote: we included behavioral decoding accuracy given the inferred latent variables as a secondary
+    benchmark metric.
+domain_considered_and_rejected:
+  - term: biology-genetics/brain-model-alignment
+    reason: The paper sets NLB apart from Brain-Score. In brain-model-alignment a model given the
+      experiment's inputs is scored on how well its internal representations predict the recorded
+      responses; here no stimulus is given to the model and its internals are not compared with the
+      brain. The entrant is a model of the recordings themselves, scored on the neurons it was not
+      shown.
+    source: src-arxiv-2109-04463-v4
+    quote: Separately, Brain-Score evaluates the alignment of deep neural networks trained to
+      perform behavioral tasks and the brain areas associated with those tasks
+  - term: biology-genetics/systems-biology
+    reason: The models describe a population's activity, not a network or pathway of molecular
+      components.
+capability:
+  - scientific-prediction
+  - sample-efficiency
+capability_basis:
+  scientific-prediction:
+    reason: The entrant predicts the state of a biological system, the activity of neurons it was
+      not given, from measurements of the rest of the population, and the score compares the
+      prediction with the recorded spikes.
+    source: src-arxiv-2109-04463-v4
+    quote: high-performing models should be able to predict activity of neuron-time points that they
+      do not have direct access to
+  sample-efficiency:
+    reason: The MC_Maze scaling datasets fix the training budget at 500, 250 and 100 trials from
+      separate sessions and score each at its budget, on a leaderboard and with a prize of their
+      own. It describes that track only, not the four primary datasets.
+    source: src-arxiv-2109-04463-v4
+    quote: we introduce data scaling benchmarks that evaluate LVM performance on datasets of
+      different sizes
+capability_considered_and_rejected:
+  - term: probabilistic-forecasting
+    reason: Forward prediction scores the 200 ms after each test segment, but those spikes were
+      already recorded and are only withheld, which the term's exclusion names.
+  - term: calibration-uncertainty
+    reason: The entrant submits rates, which the benchmark scores under a Poisson observation model
+      it fixes itself; no confidence about the correctness of the output is reported or scored.
+  - term: perception
+    reason: Nothing is recovered from a sensory input; the input is recorded spiking.
+
+evaluation_method:
+  - domain-metric
+  - statistical-fit
+evaluation_method_basis:
+  reason: The ranking metric, co-bps, and the forward-prediction metric, fp-bps, are bits per spike,
+    a Poisson log-likelihood normalised against each held-out neuron's mean firing rate; the measure
+    is named and used within computational neuroscience (co-smoothing, leave-neuron-out). The
+    secondary metrics are goodness-of-fit statistics, R2 of decoded velocity and of trial-averaged
+    rates against PSTHs, and for DMFC_RSG a Pearson correlation.
+  source: src-arxiv-2109-04463-v4
+  quote: To normalize the log-likelihood score, we convert it to bits per spike using the mean
+    firing rates of each held-out neuron
+evaluation_method_considered_and_rejected:
+  - term: uncertainty-calibration-score
+    reason: Its inclusion names the log score, and co-bps is a Poisson log-likelihood. But the
+      entrant emits only a rate for each neuron and bin, the mean of a Poisson distribution the
+      benchmark fixes; no separate confidence, interval or spread is submitted, much as squared
+      error is the Gaussian log-likelihood of a point prediction. See review_checks.
+  - term: composite
+    reason: Each leaderboard is ranked by co-bps alone and the other metrics are shown beside it;
+      nothing combines them.
+    source: src-evalai-nlb-leaderboard-3188
+    quote: '"default_order_by":"co-bps"'
+  - term: entrant-relative-ranking
+    reason: The 2021-2022 competition gave its overall prize by average rank across the four primary
+      datasets, which is relative to the field, but that rank decided a prize and is not a published
+      score.
+    source: src-evalai-nlb-challenge-1256
+    quote: We will award an overall prize to the method achieving the highest average rank across
+      the four primary datasets.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are latent variable models built for neural population data and trained on
+    each dataset's training split, such as AutoLFADS and the Neural Data Transformer among the
+    seeded baselines; the protocol places no restriction on how they are trained.
+  source: src-arxiv-2109-04463-v4
+  quote: We seed the benchmark with 5 established methods for modeling neural population activity
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: The simplest baseline smooths spikes with a Gaussian kernel, but it then fits a GLM to
+      the held-out neurons, so a fitted model produces its output; GPFA and SLDS are likewise fitted
+      models.
+    source: src-arxiv-2109-04463-v4
+    quote: Spike smoothing, which simply fits a GLM from smoothed spikes to held-out spiking
+      activity
+  - term: scientific-surrogate-model
+    reason: The models describe recorded activity to reveal latent structure; they do not stand in
+      for a simulation or an assay.
+  - term: task-specific-supervised-model
+    reason: The task belongs to a scientific discipline, which the term's exclusion sends to
+      domain-specialist-model.
+as_used:
+  - protocol: Since January 2026 entrants score themselves locally with nlb_tools against the
+      published test evaluation data; new scores cannot be added to the EvalAI leaderboard.
+    split: test
+    source: src-neurallatents-challenge
+    quote: Though the EvalAI challenge is no longer accepting submissions, you can still evaluate
+      your methods on the now-public test data available in the repo for our codepack.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced on the instrument. A 2025 paper whose second version is
+    dated 2026-03-10 reports NLB scores in its abstract, and the leaderboard's newest rows before
+    the freeze are from July 2025.
+  source: src-arxiv-2507-11531
+  quote: On the Neural Latents Benchmark (NLB), the model achieves superior held-out neuron
+    likelihoods (bits per spike) and forward prediction accuracy across four challenging datasets.
+activity: closed
+activity_basis:
+  reason: The only submission route, the EvalAI challenge, stopped taking submissions in January
+    2026 (its phases ended 2026-01-31 and are inactive), and the maintainers say new models cannot
+    be shown on the board. The leaderboard stays visible as it was.
+  source: src-neurallatents-site
+  quote: To our understanding, the leaderboard will remain visible in its current state, but new
+    submission will no longer be accepted.
+events:
+  - name: NLB'21 Challenge, Phase 1 (ended 2022-01-07)
+    kind: competition
+    source: src-neurallatents-challenge
+    quote: Phase 1 of the challenge ended on 1/7/2022, won by AE Studio.
+  - name: NLB'21 Challenge, Phase 2 (ended 2022-04-03)
+    kind: competition
+    source: src-neurallatents-challenge
+    quote: Phase 2 of the challenge ended on 4/3/2022 and had multiple winners
+  - name: NLB Virtual Workshop (2022-02-27)
+    kind: workshop
+    source: src-neurallatents-site
+    quote: We hosted a virtual workshop on 2/27/2022
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: STNDT[Ensemble]
+    source: src-evalai-nlb-leaderboard-3188
+    observed_on: 2026-11-04
+    quote: '"submission__method_name":"STNDT[Ensemble]"'
+    note: First on the MC_Maze 5 ms test leaderboard by co-bps (0.386), submitted 2022-04-02; the
+      board is frozen as of January 2026.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: Spike-sorted recordings from intracortical microelectrode arrays in rhesus
+  macaques performing reaching and timing tasks; the held-out neurons' test-trial spikes are the
+  reference.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Since January 2026 the test split's evaluation data are public in the nlb_tools
+    repository, whose package holds the evaluation code, so anyone can compute every metric for a
+    new model. Before then only EvalAI could score the test split.
+  source: src-github-nlb-tools-readme
+  quote: contains the ground-truth evaluation data for the test split, made public in January 2026
+    with the end of the EvalAI challenge
+
+task:
+  exists: true
+  input:
+    - spike counts of all sorted units with behavioural and task data for the train split, and of
+      the held-in units only for the test split, from the NWB files on DANDI, binned at 5 ms (or 20
+      ms)
+  output: Firing-rate predictions, trial x time x neuron arrays in an HDF5 file, for held-in and
+    held-out units on train and test trials, and optionally for the 200 ms after each test segment
+    (forward prediction).
+  scoring: co-bps, the Poisson log-likelihood of the held-out units' test spikes under the submitted
+    rates, minus that under each unit's mean rate, per spike and in bits, ranks each dataset's
+    board. Beside it, vel R2 (a ridge regression fitted from train-split rates to hand or finger
+    velocity, at a fixed lag, scored on the test split; for DMFC_RSG the correlation of neural speed
+    with production time), psth R2 against empirical PSTHs (not for MC_RTT), and fp-bps for the
+    forward prediction.
+  source: src-evalai-nlb-challenge-1256
+  quote: The primary objective of this challenge is co-smoothing, or predicting the activity of
+    held-out units, which we evaluate with bits per spike of held-out rate predictions.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every split behind the leaderboard scores, the held-out test spikes included, is now
+      downloadable without an account, from DANDI and the GitHub repository.
+    source: src-github-nlb-tools-readme
+    quote: contains the ground-truth evaluation data for the test split, made public in January 2026
+      with the end of the EvalAI challenge
+  access_by_phase:
+    during_edition: From September 2021 to January 2026 the train split (all units, with behaviour)
+      and the test split's held-in units were on DANDI, and the held-out units' test spikes were
+      held on EvalAI's servers (train-open-test-held-out).
+    during_edition_source: src-arxiv-2109-04463-v4
+    during_edition_quote: Withheld test data are stored exclusively on EvalAI servers
+    after_edition: The test split's evaluation data are public in the nlb_tools repository since
+      January 2026.
+    after_edition_source: src-neurallatents-site
+    after_edition_quote: In response, we are publishing the previously-private evaluation data for
+      the benchmark test split.
+    note: >
+      The current state decides `access`. The file in the repository's data/ directory at commit 42f8410
+      is 134 bytes, which looks like a Git LFS pointer; the data were listed, not downloaded.
+  refresh: static
+  refresh_note: The DANDI versions DataCite records for the MC_Maze dandisets are dated 2022-01-13,
+    after the challenge opened, and the datasets page reports an error in MC_Maze's electrode
+    indices from the conversion. Whether either changed a scored file was not established. See
+    review_checks.
+  refresh_basis:
+    reason: The seven datasets, the held-in and held-out splits and the metrics have been the same
+      since the challenge opened in 2021, and no later suite has been released; the January 2026
+      change was to access, not content.
+    source: src-neurallatents-site
+    quote: The first benchmark suite, NLB 2021, evaluates models on 7 datasets of neural spiking
+      activity spanning 4 tasks and brain areas.
+  data_provenance:
+    - experimental-measurement
+  data_provenance_note: Electrophysiology from earlier studies in four labs, re-curated for the
+    benchmark (the sessions chosen had not been released before); spike-sorted, with units removed
+    on cross-correlation.
+  data_provenance_source: src-arxiv-2109-04463-v4
+  data_provenance_quote: All datasets contain electrophysiological measurements recorded using
+    intracortical microelectrode arrays.
+  contamination_risk: medium
+  contamination_risk_note: The risk is overfitting to the test split rather than pretraining
+    leakage. Until January 2026 the held-out test data were private and test-phase submissions were
+    rate-limited (5 a day); the maintainers say they saw no overfitting then. Since the test data
+    were published, anyone can tune against them, which the maintainers warn will make overfitting
+    easier. No source evidences it for any reported model.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: Bits per spike is 0 for each neuron's flat mean rate and has no
+    published upper anchor; the sources give no noise ceiling or oracle score, and the paper warns
+    that absolute scores cannot be compared across datasets.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: DataCite's record of the MC_Maze dandiset gives the same licence
+    (src-datacite-dandi-000128, rightsList cc_by_40), and the EvalAI terms licence the datasets and
+    the challenge under CC BY 4.0.
+  dataset_licence_source: src-arxiv-2109-04463-v4
+  dataset_licence_quote: The datasets are distributed under a Creative Commons Attribution 4.0
+    International license.
+  size:
+    - count: 7
+      unit: datasets (four primary, three MC_Maze scaling sessions)
+      subset: NLB'21
+      source: src-neurallatents-site
+      quote: The first benchmark suite, NLB 2021, evaluates models on 7 datasets of neural spiking
+        activity spanning 4 tasks and brain areas.
+    - count: 2869
+      unit: trials, with 182 neurons
+      subset: MC_Maze
+      source: src-arxiv-2109-04463-v4
+      quote: MC_Maze consists of one full session with 2869 total trials and 182 neurons
+    - count: 1351
+      unit: 600 ms segments of continuous reaching
+      subset: MC_RTT
+      source: src-arxiv-2109-04463-v4
+      quote: MC_RTT spans 15 minutes of continuous reaching, artificially split into 1351 600ms
+    - count: 462
+      unit: trials, with 65 neurons
+      subset: Area2_Bump
+      source: src-arxiv-2109-04463-v4
+      quote: Area2_Bump includes 462 total trials and 65 neurons
+    - count: 1289
+      unit: trials, with 54 neurons
+      subset: DMFC_RSG
+      source: src-arxiv-2109-04463-v4
+      quote: DMFC_RSG includes 1289 trials and 54 neurons
+    - count: 100
+      unit: test trials in each of MC_Maze_Large, _Medium and _Small (500, 250 and 100 training
+        trials)
+      subset: MC_Maze scaling
+      source: src-arxiv-2109-04463-v4
+      quote: containing 500, 250, and 100 training trials and 100 test trials each
+  size_note: The paper's appendix tables give the train/test split and the held-in and held-out unit
+    counts for each dataset; for MC_Maze, 2295 training and 574 test trials and 137 held-in and 45
+    held-out units.
+  submission_limit:
+    max_submissions: 5
+    period_days: 1
+    per: participant team, in the Test Phase (EvalAI, until January 2026)
+    source: src-evalai-nlb-challenge-1256-phases
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Neural Latents Benchmark team, led by the Systems Neural Engineering Lab (Georgia
+    Institute of Technology and Emory University)
+  maintainer_basis:
+    reason: The site names the lab as the benchmark's lead, with labs at other universities
+      collaborating; the code sits in the neurallatents GitHub organisation, and the EvalAI
+      challenge was hosted by a team called Neural Latents.
+    source: src-neurallatents-site
+    quote: The Neural Latents Benchmark is being led by the Systems Neural Engineering Lab in
+      collaboration with labs across several universities.
+  maintainer_type: academic-lab
+  maintainer_type_note: The datasets come from four other labs, and the paper's sixteen authors from
+    twelve institutions; academic-lab's exclusion keeps the stated lead lab as the holder.
+  submission_process:
+    - held-out-server
+  submission_process_note: Until January 2026 participants uploaded rate predictions as HDF5 files
+    to EvalAI, which scored them against the held-out test data. That route is closed (see history),
+    and results are now computed locally and reported in papers, which no term for a closed channel
+    records. See review_checks.
+  submission_process_source: src-arxiv-2109-04463-v4
+  submission_process_quote: To ensure consistent evaluation and to mitigate issues with overfitting
+    or hyperparameter hacking, model predictions are evaluated against private data that are
+    unavailable to developers.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-evalai-nlb-leaderboard-3188
+      quote: '"submission__participant_team__team_name":"Systems Neural Engineering Lab","submission__participant_team__team_url":"https://snel.gatech.edu/","submission__is_baseline":false'
+  independence_flags_note: The lead lab ranks its own models beside the baselines it seeded (team
+    Neural Latents, is_baseline true); on the MC_Maze 5 ms board it has two non-baseline rows,
+    SSLFADS (fourth, as SNEL) and autolfads-torch, and the AutoLFADS and NDT baselines are its own
+    methods. The 2021-2022 competition offered monetary prizes whose funder the sources do not name,
+    so prize-sponsored-by-industry and funded-by-evaluated-party were not assessed;
+    single-evaluator-private-test-set described the board until January 2026 and no longer applies.
+  independence_assessed: true
+  known_limitation:
+    source: src-neurallatents-site
+    quote: We note that this change will make it easier to overfit to the test split.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not stated. Scoring is a Python computation over rate arrays (nlb_tools), and
+    training the entrant is excluded from the tier; submitters' own reports on the board range from
+    0.02 hours on no GPU (spike smoothing) to 3.5 hours on 10 GPUs (NDT).
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: With the test data published and the evaluation code in the package, an independent
+      party can score a new model end to end, on every dataset and metric, with no maintainer step.
+    source: src-github-nlb-tools-readme
+    quote: has code to load and preprocess our dataset files, format data for modeling, and locally
+      evaluate results
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: nlb_tools (pip install nlb-tools; nlb_tools/evaluation.py, the code the EvalAI
+    challenge's evaluation tab links as its evaluation code)
+  harness_source: src-evalai-nlb-challenge-1256
+  harness_quote: Our evaluation code can be viewed here.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for neurallatents/nlb_tools also reports MIT (read
+    2026-11-04).
+  code_licence_source: src-github-nlb-tools-licence
+  code_licence_quote: MIT License Copyright (c) 2022 Neural Latents
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which dataset and resolution (5 ms or 20 ms) was scored, whether the model
+  # used the behavioural data or any test-split data in training (the protocol allows the first; the second
+  # became possible when the test data were published), and whether a score came from EvalAI or a local run
+  # after January 2026.
+  material_extra:
+    - training_data_policy
+    - date_evaluated
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Each dataset has its own leaderboards, ranked by co-bps, and nothing is averaged across
+    them; the paper warns that the scores are not comparable across datasets. The competition's
+    average rank over the four primary datasets decided a prize only.
+  source: src-evalai-nlb-challenge-1256
+  quote: Submissions for each dataset will be ranked by highest bits per spike of held-out rate
+    predictions.
+headline_metric: null
+
+homepage: https://neurallatents.github.io/
+repository: https://github.com/neurallatents/nlb_tools
+dataset_url: https://dandiarchive.org/dandiset/000128
+leaderboard_url: https://eval.ai/web/challenges/challenge-page/1256/leaderboard
+
+versions:
+  - version: nlb21
+    label: NLB'21
+    version_kind: edition
+    changes: The first suite of a planned series. Four primary datasets and three MC_Maze scaling
+      datasets, co-smoothing as the primary metric with three secondary metrics, scored on EvalAI at
+      5 ms and 20 ms from 2021-09-06; two prize phases ended on 2022-01-07 and 2022-04-03, and the
+      board took submissions until January 2026. No second suite has been released.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2109-04463-v4
+      - src-evalai-nlb-challenge-1256
+      - src-neurallatents-challenge
+
+subsets:
+  - id: neural-latents-benchmark#mc-maze
+    label: MC_Maze (motor and premotor cortex, delayed reaching)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2109-04463-v4
+        quote: MC_Maze consists of one full session with 2869 total trials and 182 neurons
+    notes: Its own leaderboards at 5 ms and 20 ms, with all four metrics.
+  - id: neural-latents-benchmark#mc-rtt
+    label: MC_RTT (motor cortex, random target task)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2109-04463-v4
+        quote: MC_RTT spans 15 minutes of continuous reaching, artificially split into 1351 600ms
+    notes: No PSTH metric, for lack of trial structure.
+  - id: neural-latents-benchmark#area2-bump
+    label: Area2_Bump (somatosensory area 2, perturbed reaching)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2109-04463-v4
+        quote: Area2_Bump includes 462 total trials and 65 neurons
+  - id: neural-latents-benchmark#dmfc-rsg
+    label: DMFC_RSG (dorsomedial frontal cortex, Ready-Set-Go timing)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2109-04463-v4
+        quote: DMFC_RSG includes 1289 trials and 54 neurons
+    notes: The behavioural metric is the correlation of neural speed with production time, not
+      velocity decoding.
+  - id: neural-latents-benchmark#mc-maze-scaling
+    label: MC_Maze scaling (Large, Medium, Small)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2109-04463-v4
+        quote: containing 500, 250, and 100 training trials and 100 test trials each
+    notes: The three sessions are submitted together and share leaderboards at 5 ms and 20 ms.
+  - id: neural-latents-benchmark#20ms
+    label: 20 ms resolution boards
+    scored_separately: true
+    evidence:
+      - source: src-evalai-nlb-challenge-1256
+        quote: While these results will be displayed on separate leaderboards, they will not be
+          considered when determining competition winners.
+    notes: A parallel evaluation at 20 ms bins for each dataset; the 5 ms boards are the main ones.
+
+history:
+  - date: 2026-01-16
+    event: channel-closed
+    field: governance.submission_process
+    from: EvalAI challenge 1256
+    source: src-evalai-nlb-challenge-1256
+    quote: further submissions to the challenge cannot be accepted and evaluated as of January 16,
+      2026
+    note: The record gives funding and pricing as the reason; its phases' end date is 2026-01-31.
+  - date: 2026-01
+    event: access-changed
+    field: data.access
+    from: train-open-test-held-out
+    to: fully-open
+    source: src-github-nlb-tools-readme
+    quote: contains the ground-truth evaluation data for the test split, made public in January 2026
+      with the end of the EvalAI challenge
+    note: The commit that added the data, 42f8410, is dated 2026-01-27 (GitHub API).
+
+tags:
+  - neuroscience
+  - latent-variable-models
+  - neural-population-dynamics
+  - spiking-data
+  - co-smoothing
+  - evalai
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T05)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2109-04463-v4
+    - src-arxiv-2109-04463
+    - src-neurallatents-site
+    - src-neurallatents-challenge
+    - src-neurallatents-datasets
+    - src-evalai-nlb-challenge-1256
+    - src-evalai-nlb-challenge-1256-phases
+    - src-evalai-nlb-leaderboard-3188
+    - src-github-nlb-tools-readme
+    - src-github-nlb-tools-licence
+    - src-datacite-dandi-000128
+    - src-arxiv-2507-11531
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text, and its abstract page for the version dates;
+    three neurallatents.github.io pages with scripts and styles stripped; three EvalAI API records, read
+    raw because the challenge page renders by script; the nlb_tools README and LICENSE pinned to commit
+    42f8410; DataCite's record of the MC_Maze dandiset, because api.dandiarchive.org's robots.txt disallows
+    all crawlers but Googlebot; and the Langevin Flows abstract page. The home page, README and leaderboard
+    record hold personal data and are withheld from archiving. Only one of the ten leaderboards (MC_Maze,
+    5 ms) was read.
+  confidence: medium
+  review_checks:
+    - check: No biology-genetics leaf names the primary task. neuroscience-decoding recovers
+        external variables, which here is only the secondary velocity metric; brain-model-alignment
+        needs a model's representations compared with responses to the same inputs. The gap is
+        logged (missing-term, biology-genetics/neural-population-modelling) and the entry is filed
+        under the nearest leaf.
+      field: domain.primary
+      source: src-arxiv-2109-04463-v4
+      quote: quantifies how well LVMs can describe neuronal population activity in an unsupervised
+        manner.
+    - check: The paper itself sets NLB apart from decoding benchmarks, which weakens the filing
+        under neuroscience-decoding; if the proposed leaf is not adopted, brain-model-alignment's
+        definition could be widened instead, but it would then also take Brain-Score-like stimulus
+        models.
+      field: domain.primary
+      source: src-arxiv-2109-04463-v4
+      quote: decoding externally-measurable variables from neural population activity in motor and
+        somatosensory cortices and hippocampus
+    - check: domain-metric over uncertainty-calibration-score for co-bps. The latter's inclusion
+        names the log score, and co-bps is a Poisson log-likelihood; it was rejected because only a
+        rate (the Poisson mean) is submitted. A reviewer reading the rate as an emitted distribution
+        would tag uncertainty-calibration-score, and calibration-uncertainty would then follow.
+      field: evaluation_method
+      source: src-arxiv-2109-04463-v4
+      quote: a positive bits per spike (bps) value indicates that the model infers a
+    - check: fully-open rests on the README and the site; the test file at commit 42f8410 is 134
+        bytes, apparently a Git LFS pointer, and was not downloaded. If the LFS object is not
+        served, train-open-test-held-out with no server would describe it.
+      field: data.access
+      source: src-github-nlb-tools-readme
+      quote: contains the ground-truth evaluation data for the test split, made public in January
+        2026 with the end of the EvalAI challenge
+    - check: refresh static assumes the scored files are unchanged since 2021. DataCite dates the
+        MC_Maze dandisets' published versions 2022-01-13, after the challenge opened, and the
+        datasets page reports an electrode-index error from the conversion; neither shows whether
+        spikes or splits changed.
+      field: data.refresh
+      source: src-neurallatents-datasets
+      quote: Due to an error in the dataset conversion process, the electrode indices for units from
+        M1 are incorrect, but you can determine the correct indices by adding 96 to each of the
+        incorrect indices.
+    - check: submission_process keeps held-out-server, the process the board's scores came through.
+        The channel closed in January 2026 and new results are self-scored and published in papers,
+        which literature-only describes but its exclusion blocks while the benchmark's own
+        leaderboard is still shown.
+      field: governance.submission_process
+      source: src-neurallatents-site
+      quote: EvalAI submissions closed as of January 2026
+    - check: activity closed, with lifecycle active. The leaderboard is visible but frozen, and
+        current use is evidenced by papers (Langevin Flows v2, 2026-03-10; an arXiv search also
+        returned 2511.17606, not read) rather than by new board rows.
+      field: activity
+      source: src-arxiv-2507-11531
+      quote: '[v2] Tue, 10 Mar 2026 08:48:24 UTC'
+    - check: maintainer-competes-on-own-benchmark rests on the lead lab's own non-baseline rows. The
+        prize funder for the 2021-2022 phases is not named (EvalAI's has_prize is false although the
+        description offers monetary prizes), and the Phase 1 winner, AE Studio, is a company;
+        neither was assessed further.
+      field: governance.independence_flags
+      source: src-evalai-nlb-challenge-1256
+      quote: We are offering monetary prizes for the top performers in NLB '21.
+    - check: Identity. The site lists FALCON (robust long-term decoding) and the
+        Computation-thru-Dynamics Benchmark as related benchmarks by members of the group, after
+        saying NLB was meant to grow into a collection. They use other data and tasks and are not
+        NLB editions or variants, so no lineage is set; either could be argued a Variant.
+      field: lineage
+      source: src-neurallatents-site
+      quote: NLB was originally intended to grow into a collection of benchmarks on neural latent
+        variable modeling.
+    - check: Only the MC_Maze 5 ms leaderboard was read (26 rows); the other nine boards' sizes,
+        leaders and newest rows were not checked, and the learned-entrant evidence and the July 2025
+        rows come from that board.
+      field: learned_entrant_evidence
+    - check: The EvalAI challenge record (organiser's account name in its creator block), the
+        challenge page (winners' individual names) and the datasets page (data providers' names) are
+        left pending for archiving, as earlier EvalAI records were; the lead may prefer to withhold
+        them.
+      field: curation.sources
+  personal_data_excluded:
+    - source: src-arxiv-2109-04463-v4
+      what: The corresponding author's e-mail address, beside the venue line; the windows stop short
+        of it.
+    - source: src-arxiv-2109-04463
+      what: The submitter line; the windows are cut to the version dates.
+    - source: src-neurallatents-site
+      what: Two team members' e-mail addresses, written out with [at] and [dot], and workshop
+        speakers' names.
+    - source: src-neurallatents-challenge
+      what: The names of individual researchers on winning and notable teams.
+    - source: src-neurallatents-datasets
+      what: The names of the researchers who provided each recording session.
+    - source: src-evalai-nlb-challenge-1256
+      what: The organiser's EvalAI account name in the creator block.
+    - source: src-evalai-nlb-leaderboard-3188
+      what: Submitters' personal pages and a personal code-hosting handle in team URLs and
+        submission metadata.
+    - source: src-github-nlb-tools-readme
+      what: A team member's e-mail address in the Slack line.
+    - source: src-datacite-dandi-000128
+      what: The names of the dataset's creators, contact person and data collectors.
+    - source: src-arxiv-2507-11531
+      what: The submitter line.
