@@ -1,0 +1,539 @@
+# data/benchmarks/robotics-embodiment/locomujoco.yaml
+#
+# P1-S5-T02, robotics-embodiment entry 16. Filled from the LocoMuJoCo paper, arXiv 2311.02496 read as its v2 PDF
+# (2023-11-30, NeurIPS 2023 Robot Learning workshop), and its abstract page; the repository at the v1.1.0 commit
+# (README, pyproject.toml, the environment overview and the AMASS installation guide); the v1.0.1 pyproject.toml
+# and the v0.1.0 requirements and reward module; GitHub's API record of the releases; two pages of the v0.3.0
+# documentation (the Unitree H1 environment and the imitation-learning tutorial); Hugging Face's API record of the
+# datasets repository and its LAFAN1 README; and two papers that report on it, RILe (arXiv 2406.08472, read as its
+# 2025 v4 PDF) and TRIRL (arXiv 2605.11020, ICML 2026, read as its v2 PDF). Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: locomujoco
+name: LocoMuJoCo
+aliases:
+  - LocoMujoco
+  - loco-mujoco
+tagline: Imitation learning of locomotion from motion capture, on simulated humanoid, quadruped and
+  human bodies in MuJoCo.
+description: >
+  A benchmark for imitation learning in locomotion, from TU Darmstadt's Intelligent Autonomous Systems
+  Group and Locomotion Laboratory. Its first release (late 2023) had 12 environments built on MuJoCo --
+  the Talos, Atlas and Unitree H1 humanoids, the Unitree A1 quadruped, and a torque-actuated and a muscle-actuated
+  human skeleton, each human model scalable to four ages -- and 27 tasks, each defined by a dataset of
+  the behaviour to imitate: real, noisy motion capture retargeted to the robot (so the demonstrator's
+  body differs from the agent's), ground-truth expert states and actions, and sub-optimal expert data.
+  Each task has a handcrafted reward, such as matching a target forward velocity, used to evaluate rather
+  than to train, and the experiment scripts report the mean undiscounted return over evaluation episodes;
+  baselines are GAIL, VAIL, GAIfO, IQ-Learn, LS-IQ and SQIL. Version 1 (2025) is a rewrite on JAX with
+  MuJoCo for single and MJX (since 1.1 also MuJoCo Warp) for parallel environments, 12 humanoid and 4
+  quadruped environments, over 22,000 motion capture datasets retargeted to each humanoid (its own, LAFAN1
+  and AMASS), JAX baselines (PPO, GAIL, AMP, DeepMimic) and trajectory metrics such as dynamic time warping.
+  There is no leaderboard; results appear in users' papers.
+self_description:
+  source: src-arxiv-2311-02496-v2
+  quote: we present LocoMuJoCo, a Python-based benchmark tailored for locomotion within the context
+    of imitation learning (IL)
+external_ids:
+  arxiv: '2311.02496'
+paper:
+  title: 'LocoMuJoCo: A Comprehensive Imitation Learning Benchmark for Locomotion'
+  arxiv: '2311.02496'
+  version_read: v2
+  source: src-arxiv-2311-02496-v2
+released: 2023-11-04
+released_note: The paper's first arXiv version, as its abstract page dates it. The repository's
+  first tagged release, v0.1.0, followed on 2023-12-21 (src-github-api-loco-mujoco-releases).
+released_source: src-arxiv-2311-02496
+released_quote: Submitted on 4 Nov 2023 (v1), last revised 30 Nov 2023 (this version, v2)
+release_venue: NeurIPS 2023 Workshop on Robot Learning (Pretraining, Fine-Tuning, and Generalization
+  with Large Scale Models)
+release_venue_source: src-arxiv-2311-02496-v2
+release_venue_quote: 'NeurIPS 2023 Workshop on Robot Learning: Pretraining, Fine-Tuning, and Generalization
+  with Large Scale Models'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/locomotion
+  secondary: []
+domain_basis:
+  reason: Every task is a simulated legged body -- humanoid robots, a quadruped, human skeleton
+    models -- moving across the ground without falling, and an episode ends when the body falls. The
+    family's mujoco-gymnasium near miss does not fit. That benchmark's claim is control algorithms
+    in the abstract; LocoMuJoCo is built against exactly that, faulting Gym-MuJoCo and the DeepMind
+    Control Suite for toy tasks with dynamics tuned for RL, and it ships models of real robots
+    (Talos, Atlas, Unitree H1, A1, and in 1.x G1, Go2, Spot, ANYmal C and others), motion capture
+    retargeted to each body, and domain randomisation aimed at the sim-to-real gap. The embodiment
+    is the point (see review_checks).
+  source: src-arxiv-2311-02496-v2
+  quote: Existing benchmarks for this setting either tackle toy tasks, are very far from realistic
+    settings and real robotic platforms or are not designed for IL
+domain_considered_and_rejected:
+  - term: robotics-embodiment/continuous-control
+    reason: The default score, matching a target centre-of-mass velocity, is a control objective,
+      but the leaf holds continuous control in the abstract, which the family's near miss keeps
+      apart; the paper sets itself against those benchmarks, and the tasks are gaits of specific
+      bodies, which locomotion names.
+    source: src-arxiv-2311-02496-v2
+    quote: Both of the benchmarks do not explicitly focus on the IL setting and only consider toy
+      tasks with dynamics fine-tuned for RL.
+  - term: robotics-embodiment/whole-body-humanoid-control
+    reason: The 1.x README calls the benchmark designed for whole-body control, and the humanoids
+      imitate whole-body motions, but the leaf needs tasks where balance and manipulation cannot be
+      solved separately. No task manipulates an object; the carry tasks hold a weight in front of
+      the robot while it walks.
+    source: src-github-loco-mujoco-readme
+    quote: is an **imitation learning benchmark** specifically designed for **whole-body control**.
+  - term: robotics-embodiment/cross-embodiment-transfer
+    reason: The motion capture is of people and is retargeted to each robot, so demonstrator and
+      agent differ in body, but that is a condition of learning; no policy trained on one body is
+      scored on another.
+    source: src-arxiv-2311-02496-v2
+    quote: Hence, we provide realistic motion capture datasets for all environments, which naturally
+      come with embodiment mismatches
+  - term: robotics-embodiment/sim2real-transfer
+    reason: Domain randomisation is offered to reduce the sim-to-real gap, but nothing the benchmark
+      scores runs on hardware.
+    source: src-arxiv-2311-02496-v2
+    quote: LocoMuJoCo allows the users to easily include domain randomization, reducing the
+      sim-to-real gap
+
+capability:
+  - sensorimotor-control
+capability_basis:
+  sensorimotor-control:
+    reason: A policy issues actions to a simulated body in closed loop, the simulator responds, and
+      the score is a reward computed on the resulting motion, such as how closely the centre of mass
+      keeps the expert's velocity, accumulated until the episode ends or the body falls.
+    source: src-loco-mujoco-docs-v030-unitreeh1
+    quote: The default reward function is based on the distance between the current center of mass
+      velocity and the desired velocity in the x-axis.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: Learning from another body's demonstrations (human motion capture for a robot) is built
+      in, but the task, objective and body are the same at training and scoring, and no transfer
+      quantity is reported.
+    source: src-arxiv-2311-02496-v2
+    quote: Hence, we provide realistic motion capture datasets for all environments, which naturally
+      come with embodiment mismatches
+  - term: distribution-shift-generalization
+    reason: Dynamics randomisation and partially observable variants (a randomised carry weight
+      hidden from the policy) are options a user switches on, not a held-out condition the benchmark
+      scores. RILe's test setting with unseen initial positions is that paper's own protocol (see
+      as_used).
+    source: src-arxiv-2311-02496-v2
+    quote: we construct Partially Observable Markov Decision Process (POMDP) environments by
+      randomizing the carry weight
+  - term: sample-efficiency
+    reason: The experiment scripts fix training epochs and steps per epoch as defaults, but the
+      benchmark scores no performance at a stated budget.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: The reported number is the mean undiscounted return of the task's handcrafted reward over
+    simulated evaluation episodes. The default reward, exp(-(v - v_target)^2) on the forward
+    velocity, is at most 1 per step, so an episode's return cannot exceed its length and the score
+    is bounded; papers set the expert at 1000 (RILe).
+  source: src-loco-mujoco-docs-v030-imitation-learning
+  quote: which are the mean undiscounted return, mean discounted return, and the mean length of an
+    episode the agent, respectively.
+evaluation_method_considered_and_rejected:
+  - term: episodic-return
+    reason: The score is a return, but of a reward bounded at 1 per step; the term is for returns
+      with no defined maximum.
+    source: src-github-loco-mujoco-v010-reward
+    quote: return np.exp(- np.square(x_vel - self._target_vel))
+  - term: reference-metric
+    reason: Version 1 adds trajectory comparison against the reference motion (Euclidean distance,
+      dynamic time warping, discrete Frechet distance), but the term is for similarity to reference
+      texts, and the release paper's metric is the task reward. No term covers a distance to a
+      reference trajectory (taxonomy failure 2026-11-04-locomujoco-001).
+    source: src-github-loco-mujoco-readme
+    quote: Powerful **trajectory comparison metrics** including dynamic time warping and discrete
+      Fréchet distance, all in JAX
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The entrants are imitation-learning algorithms, judged by the policies they train in the
+    simulator -- adversarial imitation and inverse RL in the baselines, behaviour cloning at the
+    simple end -- which rl-policy covers (LIBERO's entry tags behaviour-cloned policies the same
+    way); a custom reward also makes it a pure RL benchmark.
+  source: src-arxiv-2311-02496-v2
+  quote: we provide a set of baselines of classical IRL and adversarial IL approaches
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: The Unitree A1 datasets were generated with model predictive control, but MPC is the
+      source of demonstrations, not an entrant.
+    source: src-arxiv-2311-02496-v2
+    quote: we generated the datasets for the Unitree A1 using Model Predictive Control (MPC)
+  - term: physical-robot-system
+    reason: Every scored episode runs in MuJoCo.
+as_used:
+  - protocol: Training on 8 seeds and 8 fixed initial positions, scored on a validation setting that
+      repeats them and a test setting with unseen stable initial positions and new seeds, over seven
+      Atlas, Talos, Unitree H1 and humanoid walk and carry tasks, with the expert at 1000.
+    source: src-arxiv-2406-08472-v4
+    quote: We modify the initial positions of the robot by randomly initializing it in stable
+      configurations not included in the fixed set used during training.
+    note: The release defines no train/test protocol of its own; RILe's is one paper's.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. RILe reports test results on seven LocoMuJoCo tasks in
+    its 2025 revision, TRIRL (ICML 2026) trains its Unitree G1 walking and running agents on
+    LocoMuJoCo's motion capture, the maintainers released v1.1.0 on 2026-03-10, and the repository
+    was last pushed on 2026-10-22 (GitHub API).
+  source: src-arxiv-2406-08472-v4
+  quote: 'Table 4: Test results on seven LocoMujoco tasks.'
+activity: no-submission-channel
+activity_basis:
+  reason: The README, the documentation read and the release notes offer the package, datasets,
+    baselines and tutorials, and no leaderboard or submission route; results appear in users'
+    papers.
+  source: src-arxiv-2311-02496-v2
+  quote: the performance of the algorithm can be compared to the expert performance or the
+    performance of one of the provided baseline algorithms
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: RILe (Reinforced Imitation Learning)
+    source: src-arxiv-2406-08472-v4
+    observed_on: 2026-11-04
+    quote: RILe outperforms the AIL/IL/IRL baselines
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The task's reward, computed on the simulated body's state at each step
+  against the target the dataset gives (for walking, the expert's forward velocity), with the
+  episode ending when the body starts to fall.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The environments, the default and LAFAN1 datasets, the baselines and the training and
+    evaluation examples are released; the AMASS-derived datasets need each user to register with
+    AMASS and build the SMPL-H model themselves.
+  source: src-github-loco-mujoco-readme
+  quote: AMASS needs to be downloaded and installed separately due to their licensing.
+
+task:
+  exists: true
+  input:
+    - the simulated body's joint positions and velocities (some entries maskable to make the task
+      partially observable), with a dataset of the behaviour to imitate -- motion capture retargeted
+      to the body, or ground-truth expert states and actions
+  output: Joint torques or muscle activations (in 1.x also other control functions), step by step,
+    until the horizon or a fall.
+  scoring: Per task, the mean undiscounted return of the task's handcrafted reward over evaluation
+    episodes, compared with the expert's and the baselines'; for walking, the reward is exp(-(v -
+    v_target)^2) on the centre-of-mass forward velocity. Version 1 adds trajectory distances to the
+    reference motion.
+  task_distribution_drifts: false
+  source: src-arxiv-2311-02496-v2
+  quote: we define the reward to be the difference in the center of mass velocity between the agent
+    and the expert in the Talos walking task
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The default and LAFAN1 datasets download without an account from an ungated Hugging
+    Face repository. The AMASS datasets, part of the 1.x headline of over 22,000, need a
+    registration with AMASS and the SMPL-H model under its non-commercial licence, and the
+    MyoSkeleton model asks for its own licence acceptance; none of those terms was accepted for this
+    entry.
+  access_basis:
+    reason: The datasets the release paper's tasks use, and the 1.x default and LAFAN1 sets, are
+      public without a gate.
+    source: src-hf-api-loco-mujoco-datasets
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Changes reach users as tagged releases (v0.1.0 in 2023 to v1.1.0 in 2026), among them
+      new robots (Unitree G1 in v0.3.0, the MyoSkeleton in v0.4.1) and the 1.x rewrite.
+    source: src-github-api-loco-mujoco-releases
+    quote: '"name":"LocoMuJoCo v1.0.1"'
+  data_provenance:
+    - real-world-instrument
+    - simulation-generated
+  data_provenance_note: The motion capture was recorded with a Qualisys marker system and turned
+    into joint kinematics in OpenSim before retargeting to each body; the ground-truth expert data
+    and the Unitree A1 data (model predictive control) come from simulation, and every scored
+    episode runs in MuJoCo. Version 1 adds LAFAN1 (via Unitree's retargeted release) and AMASS.
+  data_provenance_source: src-arxiv-2311-02496-v2
+  data_provenance_quote: We collected the data via the Qualisys motion capture system
+  contamination_risk: unknown
+  contamination_risk_note: Training on the task's demonstrations is the protocol, not contamination,
+    and scoring is closed-loop. Not assessed is whether the motion libraries (LAFAN1, AMASS) are
+    also in the pretraining data of motion-tracking policies later evaluated here.
+  contamination_evidence: []
+  ceiling_anchor_type: null
+  ceiling_anchor_type_note: The reward is at most 1 per step, so the episode's length bounds the
+    return, but no source read states the evaluation horizon for the benchmark (TRIRL uses 1000-step
+    motion capture episodes and RILe sets the expert at 1000); the anchor is left unset.
+  dataset_licence: CC-BY-NC-ND-4.0
+  dataset_licence_note: The 1.x datasets repository on Hugging Face (default and LAFAN1 data) is
+    tagged cc-by-nc-nd-4.0. Its LAFAN1 folder is derived from Unitree's retargeted LAFAN1 release
+    and says it is under a different licence from that dataset (a "UNITREE LICENSE" file sits beside
+    it, unread). AMASS data are not redistributed; users obtain them under AMASS's own terms, and
+    the SMPL-H model under the non-commercial SMPL licence. No licence was found for the datasets
+    the 0.x releases downloaded.
+  dataset_licence_source: src-hf-api-loco-mujoco-datasets
+  dataset_licence_quote: '"cardData":{"license":"cc-by-nc-nd-4.0"}'
+  size:
+    - count: 27
+      unit: tasks, each defined by a dataset in one of 12 environments
+      subset: 0.x (the release paper)
+      source: src-arxiv-2311-02496-v2
+      quote: Currently, LocoMuJoCo encompasses 12 environments with a total of 27 tasks.
+    - count: 16
+      unit: environments (12 humanoid, 4 quadruped)
+      subset: 1.x
+      note: The quadrupeds have no motion capture datasets yet (pending in the environment
+        overview).
+      source: src-github-loco-mujoco-readme
+      quote: Includes **12 humanoid and 4 quadruped environments**, featuring 4 **biomechanical
+        human models**
+    - count: 22000
+      unit: motion capture datasets, retargeted for each humanoid (more than this number)
+      subset: 1.x
+      source: src-github-loco-mujoco-readme
+      quote: '**Over 22,000 motion capture datasets** (AMASS, LAFAN1, native LocoMuJoCo) retargeted for
+        each humanoid'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The paper's first author, on a personal GitHub and Hugging Face account; the paper is
+    from TU Darmstadt's Intelligent Autonomous Systems Group and Locomotion Laboratory
+  maintainer_basis:
+    reason: The code, the datasets and the documentation sit in one person's accounts (the robfiras
+      repository and Hugging Face namespace; the documentation's copyright line names the same
+      person), and no institution is stated as holding them, which the governance vocabulary records
+      as individual whatever university the authors list.
+    source: src-arxiv-2311-02496-v2
+    quote: 'The code and videos can be found here: https://github.com/robfiras/loco-mujoco.'
+  maintainer_type: individual
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or results page of the maintainer's; users report in their
+    own papers against the shipped baselines and the expert.
+  independence_flags: []
+  independence_flags_note: None recorded. With no ranking there is no board for the maintainers to
+    compete on. One of the paper's authors co-wrote TRIRL (2026), which trains on LocoMuJoCo's
+    motion capture; RILe (ETH Zurich and the Max Planck Institute for Intelligent Systems) is
+    independent of the maintainers.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: >
+    Every run needs MuJoCo, and the scores depend on its build and backend. The first release pinned mujoco==2.3.6
+    (v0.1.0; v0.4.1 pinned 2.3.7) with dm_control and Mushroom-RL; v1.0.1 pinned MuJoCo and MJX 3.2.7,
+    with a note that the MjSpec API changed in 3.3.0; v1.1.0 (current) requires MuJoCo, MJX and MuJoCo
+    Warp 3.5.0 or later, and JAX. A result should name the LocoMuJoCo release, the MuJoCo version and
+    whether it ran on MuJoCo, MJX or MjWarp. The README's DeepMimic example trained in 36 minutes on an
+    RTX 3080 Ti.
+  compute_tier_source: src-github-loco-mujoco-pyproject
+  compute_tier_quote: '"mujoco>=3.5.0", "mujoco-mjx>=3.5.0", "mujoco-warp>=3.5.0"'
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run is automatic, but only inside MuJoCo at the version the release pins; 1.0.1 pinned
+      an exact build because a later MuJoCo API change broke it.
+    source: src-github-loco-mujoco-v101-pyproject
+    quote: '"mujoco==3.2.7", # todo: MjSpec API changed in 3.3.0'
+  harness_availability: official-harness
+  harness: loco_mujoco (the package's environments with their default per-task rewards, and the
+    experiment and eval scripts in examples/)
+  harness_source: src-loco-mujoco-docs-v030-imitation-learning
+  harness_quote: The return is calculated based on the reward specified for each environment.
+  harness_gotcha:
+    source: src-github-loco-mujoco-smpl-readme
+    quote: you must read and accept the terms and conditions described
+  harness_gotcha_note: The AMASS datasets need registration on the AMASS site and the SMPL-H model,
+    whose licence is for non-commercial scientific research only; the MyoSkeleton environment needs
+    its own licence accepted (loco-mujoco-myomodel-init). The default and LAFAN1 datasets need
+    neither.
+  code_licence: MIT
+  code_licence_note: The pyproject classifier and the README's badge; GitHub's licence metadata for
+    robfiras/loco-mujoco also reports MIT (read 2026-11-04).
+  code_licence_source: src-github-loco-mujoco-pyproject
+  code_licence_quote: '"License :: OSI Approved :: MIT License"'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulator, simulator_version, subset_used, n_samples, ...): the scores depend
+  # on MuJoCo's version and on the backend (MuJoCo, MJX or MjWarp) of the LocoMuJoCo release used (0.x pinned
+  # mujoco 2.3.6-2.3.7, 1.0.1 pinned 3.2.7, 1.1.0 needs 3.5 or later), so simulator and simulator_version are
+  # restated here. Also material: which dataset defines the task (motion capture, ground-truth expert or
+  # sub-optimal; default, LAFAN1 or AMASS) and whether expert actions were used (training_data_policy), the
+  # evaluation episodes (n_samples) and their horizon (max_steps), and whether domain randomisation or a
+  # partially observable variant was on (subset_used).
+  material_extra:
+    - simulator
+    - simulator_version
+    - subset_used
+    - training_data_policy
+    - n_samples
+    - max_steps
+
+aggregation_policy: unknown
+aggregation_policy_note: The paper gives a reward per task and reports no aggregate over tasks; RILe
+  reports per-task tables.
+
+homepage: https://github.com/robfiras/loco-mujoco
+repository: https://github.com/robfiras/loco-mujoco
+dataset_url: https://huggingface.co/datasets/robfiras/loco-mujoco-datasets
+
+versions:
+  - version: 0.x
+    label: LocoMuJoCo 0.x (v0.1.0 to v0.4.1), the NeurIPS 2023 workshop release
+    version_kind: edition
+    released: 2023-11-04
+    items: 27
+    changes: The first release. 12 environments (Talos, Atlas, Unitree H1, Unitree A1, and torque-
+      and muscle-actuated human models at four ages) and 27 tasks, each defined by a dataset (real
+      motion capture, ground-truth expert or sub-optimal data); a handcrafted reward per task;
+      Gymnasium and Mushroom-RL interfaces; GAIL, VAIL, GAIfO, IQ-Learn, LS-IQ and SQIL baselines;
+      on mujoco 2.3.6. Later 0.x releases added the Unitree G1 (v0.3.0) and the MyoSkeleton
+      (v0.4.1).
+    breaking: true
+    superseded_by: 1.x
+    frozen: true
+    sources:
+      - src-arxiv-2311-02496-v2
+      - src-arxiv-2311-02496
+      - src-github-api-loco-mujoco-releases
+      - src-github-loco-mujoco-v010-requirements
+  - version: 1.x
+    label: LocoMuJoCo 1.x (v1.0.1 and later), the JAX rewrite
+    version_kind: edition
+    released: 2025-04-18
+    changes: A rewrite on JAX with MuJoCo for single and MJX for parallel environments; 12 humanoid
+      and 4 quadruped environments; over 22,000 motion capture datasets (default, LAFAN1, AMASS)
+      retargeted to each humanoid, with robot-to-robot retargeting; JAX PPO, GAIL, AMP and
+      DeepMimic; trajectory comparison metrics; terrain randomisation. v1.0.1 pinned MuJoCo and MJX
+      3.2.7; v1.1.0 (2026-03-10) added the MuJoCo Warp backend and requires MuJoCo, MJX and MjWarp
+      3.5 or later.
+    breaking: true
+    supersedes_version: 0.x
+    frozen: false
+    sources:
+      - src-github-api-loco-mujoco-releases
+      - src-github-loco-mujoco-readme
+      - src-github-loco-mujoco-v101-pyproject
+      - src-github-loco-mujoco-pyproject
+      - src-github-loco-mujoco-environments-readme
+
+tags:
+  - locomotion
+  - humanoid
+  - quadruped
+  - musculoskeletal
+  - imitation-learning
+  - motion-capture
+  - simulation
+  - mujoco
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2311-02496-v2
+    - src-arxiv-2311-02496
+    - src-github-loco-mujoco-readme
+    - src-github-loco-mujoco-pyproject
+    - src-github-loco-mujoco-environments-readme
+    - src-github-loco-mujoco-smpl-readme
+    - src-github-loco-mujoco-v101-pyproject
+    - src-github-loco-mujoco-v010-requirements
+    - src-github-loco-mujoco-v010-reward
+    - src-github-api-loco-mujoco-releases
+    - src-loco-mujoco-docs-v030-unitreeh1
+    - src-loco-mujoco-docs-v030-imitation-learning
+    - src-hf-api-loco-mujoco-datasets
+    - src-hf-loco-mujoco-datasets-lafan1-readme
+    - src-arxiv-2406-08472-v4
+    - src-arxiv-2605-11020-v2
+  sources_note: >
+    The paper's v2 PDF and the two reporting papers' PDFs (DOIs, not archived) read as text; the paper's
+    abstract page for its dates; the repository's README, pyproject, environment overview and AMASS guide
+    at the v1.1.0 commit, the v1.0.1 pyproject and the v0.1.0 requirements and reward module, all raw
+    at pinned commits; GitHub's releases API record; two v0.3.0 documentation pages with scripts and styles
+    stripped (the current documentation, /en/latest/, is disallowed by the site's robots.txt and was not
+    read); and Hugging Face's API record of the datasets repository and its LAFAN1 README. The AMASS,
+    SMPL and MANO sites were not visited.
+  confidence: medium
+  review_checks:
+    - check: Scope. The family's mujoco-gymnasium near miss was weighed and judged not to fit -- the
+        paper sets itself against Gym-MuJoCo and the DeepMind Control Suite for toy tasks and claims
+        realistic robot platforms, motion capture and a sim-to-real aim. A reviewer may still read
+        the benchmark's community as imitation-learning algorithm research in the abstract, which
+        would make it the near miss.
+      field: domain
+      source: src-arxiv-2311-02496-v2
+      quote: Both of the benchmarks do not explicitly focus on the IL setting and only consider toy
+        tasks with dynamics fine-tuned for RL.
+    - check: whole-body-humanoid-control was rejected as a secondary because no task manipulates
+        objects, although the 1.x README says the benchmark is designed for whole-body control and
+        the carry tasks load the arms.
+      field: domain.secondary
+      source: src-github-loco-mujoco-readme
+      quote: is an **imitation learning benchmark** specifically designed for **whole-body
+        control**.
+    - check: Versions. 1.x is modelled as an edition of the same benchmark (same maintainer and
+        repository, same task of imitating recorded locomotion, new environments, datasets,
+        algorithms and metrics). The 04 S4 call is not clear-cut -- the rewrite keeps few of 0.x's
+        27 task definitions as such, and a revision or a new entry are the alternatives.
+      field: versions
+      source: src-github-api-loco-mujoco-releases
+      quote: Explore a new collection of 12 humanoid and 4 quadruped environments.
+    - check: simulation-rollout rests on the default reward exp(-(v - v_target)^2) being at most 1
+        per step, read in the v0.1.0 code; other tasks' rewards and the 1.x reward classes were not
+        read, and if any is unbounded the method is episodic-return. 1.x also adds trajectory
+        distances, which may be what newer papers report.
+      field: evaluation_method
+      source: src-github-loco-mujoco-v010-reward
+      quote: return np.exp(- np.square(x_vel - self._target_vel))
+    - check: Evidence of current use is thin. RILe's results are in a 2025 revision of a 2024 paper;
+        TRIRL (2026) uses LocoMuJoCo's motion capture for its G1 environments, but the sources do
+        not show whether its environments are LocoMuJoCo's, and one of its authors is a LocoMuJoCo
+        author. No 2025-2026 paper was found reporting on the 1.x environments or metrics.
+      field: lifecycle
+      source: src-arxiv-2605-11020-v2
+      quote: motion capture dataset and train using a state-based discriminator
+    - check: maintainer_type individual follows the vocabulary's personal-account rule (repository,
+        datasets and documentation under the first author's accounts); academic-lab (TU Darmstadt
+        IAS) is the alternative if the lab is taken to hold it.
+      field: governance.maintainer_type
+    - check: dataset_licence CC-BY-NC-ND-4.0 is the Hugging Face card's tag for the 1.x repository.
+        The LAFAN1 folder says its licence differs from Unitree's original, whose file was not read;
+        AMASS and SMPL-H come under their own non-commercial terms, which were not read or accepted;
+        the 0.x datasets' licence was not found.
+      field: data.dataset_licence
+      source: src-hf-loco-mujoco-datasets-lafan1-readme
+      quote: This dataset is distributed under a different license than the original Unitree
+        dataset.
+    - check: The current (1.x) documentation could not be read because /en/latest/ is disallowed by
+        robots.txt; task, reward and evaluation facts come from the paper and the 0.x documentation,
+        and 1.x facts from the repository only.
+      field: task
+      source: src-loco-mujoco-docs-v030-unitreeh1
+      quote: 'Walking: The robot has to walk forward with a fixed speed of 1.25 m/s.'
+    - check: The 1.x size of over 22,000 datasets counts AMASS motions retargeted per humanoid,
+        which users must obtain under AMASS's terms; the Hugging Face repository itself holds 19
+        default and 40 LAFAN1 datasets per humanoid. Which count is the headline for 1.x is a
+        judgement.
+      field: data.size
+      source: src-github-loco-mujoco-readme
+      quote: '**Over 22,000 motion capture datasets** (AMASS, LAFAN1, native LocoMuJoCo) retargeted for
+        each humanoid'
