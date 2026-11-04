@@ -1,0 +1,595 @@
+# data/benchmarks/earth-climate/mapeval.yaml
+#
+# P1-S7-T02, earth-climate entry 17. Filled from the MapEval paper, arXiv 2501.00316 read as its v2 PDF (2025-06-06,
+# ICML 2025), and its abstract page; the project site (scripts and styles stripped), whose "Leaderboard" is the
+# paper's three tables; Hugging Face's API records of the three datasets (MapEval-Textual, MapEval-API and
+# MapEval-Visual, all ungated, no terms accepted); the v1 PDF of Spatial-Agent (arXiv 2601.16965, January 2026), an
+# independent paper that reports results on MapEval-API; and the abstract pages of MapAgent (arXiv 2509.05933, by
+# MapEval authors) and LiTS (arXiv 2603.00631, ACL 2026 Demo). The three GitHub repositories' contents, licences and
+# push dates were read through GitHub's API, not as quoted Sources. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# Not to be confused with "MapEval: Towards Unified, Robust and Efficient SLAM Map Evaluation Framework" (arXiv
+# 2411.17928), an unrelated point-cloud map metric suite that the arXiv search for this name also returns.
+
+id: mapeval
+name: MapEval
+tagline: Foundation models on 700 multiple-choice map questions, from Google Maps data given as
+  text, API tools or snapshots.
+description: >
+  A benchmark of geo-spatial reasoning over map services: 700 multiple-choice questions about places in
+  180 cities and 54 countries, in three tasks. MapEval-Textual (300 questions) gives an LLM a long context
+  fetched from Google Maps APIs (places, ratings, opening hours, distances, routes); MapEval-API asks
+  the same 300 questions without the context, and a ReAct agent must query map tools served from a cached
+  copy of the Google Maps responses (over 13,000 places); MapEval-Visual (400 questions) gives a VLM a
+  Google Maps snapshot at zoom 8 to 21. Questions fall into Place Info, Nearby, Routing, Trip planning
+  (text and API only), Counting (visual only) and Unanswerable, and each has 2 to 7 options (4.0 on average).
+  Questions were written by the authors' team from the map data, with items most LLMs answered easily
+  filtered out. Scoring is accuracy per task; no score spans the three tasks. Of 30 models the best is
+  Claude-3.5-Sonnet on every task (66.33% textual, tied with Gemini-1.5-Pro; 64.00% API; 61.65% visual),
+  against human scores of 86.67% (textual and API) and 82.23% (visual) from two team members' best attempts.
+self_description:
+  source: src-arxiv-2501-00316-v2
+  quote: We introduce MapEval, a novel benchmark designed to evaluate the geo-spatial reasoning
+    capabilities of foundation models and AI agents in complex map-based scenarios.
+external_ids:
+  arxiv: '2501.00316'
+paper:
+  title: 'MapEval: A Map-Based Evaluation of Geo-Spatial Reasoning in Foundation Models'
+  arxiv: '2501.00316'
+  version_read: v2
+  source: src-arxiv-2501-00316-v2
+released: 2024-12-31
+released_note: The first arXiv version's date, as the abstract page gives it. The Hugging Face
+  datasets were created on 2024-12-25 (API records' createdAt); v2 of the paper (2025-06-06) is the
+  ICML camera-ready.
+released_source: src-arxiv-2501-00316
+released_quote: Submitted on 31 Dec 2024 (v1), last revised 6 Jun 2025 (this version, v2)
+release_venue: ICML 2025 (Spotlight)
+release_venue_source: src-arxiv-2501-00316
+release_venue_quote: 'Comments: ICML 2025 (Spotlight)'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/geospatial-reasoning
+  secondary:
+    - multimodal/visual-qa
+    - agents-tooluse/tool-api-calling
+domain_basis:
+  reason: Every question asks about places and the spatial relations between them (direction,
+    distance, proximity, routes, multi-stop trips), which is the leaf's definition, reasoning over
+    geographic location and spatial relationships, and the benchmark's own claim is geo-spatial
+    reasoning across its three tasks. The leaf has no examples or tests yet; no other family's
+    example or exclusion names it. The reasoning-general family excludes reasoning applied to a
+    field with its own family, and homographs.yaml puts geospatial spatial reasoning here rather
+    than in reasoning-general. The task formats go to secondary - questions answered about a map
+    image (visual-qa) and the agent's calls to map APIs (tool-api-calling).
+  source: src-arxiv-2501-00316-v2
+  quote: no studies have rigorously tested the capabilities of foundation models in location or
+    geo-spatial reasoning
+domain_considered_and_rejected:
+  - term: earth-climate/remote-sensing
+    reason: The images are rendered digital map views with labels, routes and icons, not satellite
+      or airborne imagery, and the paper sets its visual task apart from remote sensing.
+    source: src-arxiv-2501-00316-v2
+    quote: this approach differs significantly from the task of reasoning over interactive digital
+      map views
+  - term: reasoning-general/spatial-reasoning
+    reason: Its definition is spatial relations presented textually or diagrammatically, which fits,
+      but the family's exclusion test sends reasoning applied to a field with its own family
+      elsewhere, and homographs.yaml names earth-climate/geospatial-reasoning as the place for
+      geographic spatial reasoning.
+  - term: reasoning-general/planning
+    reason: Trip questions ask for a multi-stop schedule, but they are 67 of the 300 text questions
+      and are answered by picking an option; plan construction is not the benchmark's subject.
+    source: src-arxiv-2501-00316-v2
+    quote: MapEval-Textual and MapEval-API exclusively feature Trip questions, which involve
+      planning multi-stop journeys across various POIs.
+capability:
+  - spatial-reasoning
+  - tool-use
+  - context-integration
+  - temporal-reasoning
+  - perception
+capability_basis:
+  spatial-reasoning:
+    reason: Answers turn on directions, straight-line distances, nearest places and route choices
+      that must be worked out from coordinates, distances or the map, not read off; the paper's
+      error analysis names distances and cardinal directions as the main failures.
+    source: src-arxiv-2501-00316-v2
+    quote: In spatial reasoning, they often fail with straight-line distances (Listing 1), cardinal
+      directions
+  tool-use:
+    reason: In MapEval-API the agent must choose among map tools (place search, place details,
+      nearby search, directions, travel time), fill their parameters and use what they return; wrong
+      parameters and request loops are the reported failure modes, so the score depends on the
+      calls.
+    source: src-arxiv-2501-00316-v2
+    quote: Incorrect parameter usage results in failures, such as missing key parameters, using
+      incompatible values, or entering infinite request loops when no valid results are found.
+  context-integration:
+    reason: MapEval-Textual supplies the map data the answer depends on, and the answer key was
+      built from that same context; Unanswerable items score recognising that the supplied context
+      does not settle the question.
+    source: src-arxiv-2501-00316-v2
+    quote: The ground truth answers were derived from the same context.
+  temporal-reasoning:
+    reason: Trip and Place Info questions depend on opening hours, visit durations and travel times,
+      such as fitting a three-hour museum visit, a coffee break and a park visit into an afternoon.
+    source: src-arxiv-2501-00316-v2
+    quote: Temporal reasoning challenges include inefficient trip planning and errors in travel
+      times or visit durations
+  perception:
+    reason: MapEval-Visual's 400 questions give a map snapshot and score what is recovered from it -
+      labelled places, ratings shown on the map, symbols, routes and counts of marked places.
+    source: src-arxiv-2501-00316-v2
+    quote: MapEval-Visual task requires the model to interpret and analyze map snapshots,
+      specifically digital map views from services like Google Maps.
+capability_considered_and_rejected:
+  - term: quantitative-reasoning
+    reason: Distances, durations and counts are computed along the way, but the scored answer is an
+      option, which the term's exclusion test (numbers only as options) rules out.
+  - term: planning
+    reason: Trip questions present candidate schedules as options; the score is the option chosen,
+      produced in one answer with no goal state checked, which the term's exclusion test leaves out.
+  - term: honesty
+    reason: Unanswerable questions (20 per task) reward recognising insufficient information, but
+      that is one option among the others, scored as accuracy like any other, not truthfulness
+      scored separately from correctness (see review_checks).
+    source: src-arxiv-2501-00316-v2
+    quote: MapEval includes questions where context is insufficient to provide an answer
+  - term: knowledge-recall
+    reason: Some questions need general knowledge (52 commonsense items in MapEval-Visual), but the
+      answers come from the supplied map data, which is context-integration.
+    source: src-arxiv-2501-00316-v2
+    quote: there are 52 commonsense QAs in MapEval-Visual
+  - term: grounding
+    reason: Visual questions name places and ask about them, but the score is the option chosen, not
+      a region or referent the model locates.
+
+evaluation_method:
+  - multiple-choice
+evaluation_method_basis:
+  reason: Every item is scored by whether the chosen option is the key, and each task's score is
+    accuracy over its items. Options per item run from 2 (yes/no) to 7, 4.004 on average, so the
+    chance rate varies by item and is about 25% on average; the paper does not state a chance
+    baseline.
+  source: src-arxiv-2501-00316-v2
+  quote: We evaluate all tasks using the accuracy metric, defined as the percentage of correct
+    choices selected by the model.
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: An appendix experiment removes the options and grades Claude-3.5-Sonnet's free answers
+      with o3-mini; it is a robustness check, not the benchmark's protocol, and the paper keeps the
+      multiple-choice format.
+    source: src-arxiv-2501-00316-v2
+    quote: The outputs were automatically graded using the o3-mini model.
+  - term: environment-state-check
+    reason: The API agent acts on map tools, but the tools only read, and the grader scores the
+      option the agent returns, not any state it left.
+  - term: composite
+    reason: The three tasks are reported separately, and no number combines them.
+designed_for_subjects:
+  - instruction-tuned-model
+  - model-in-benchmark-harness
+designed_for_subjects_basis:
+  reason: MapEval-Textual and MapEval-Visual prompt each LLM or VLM directly with the context or
+    image, the question and the options (instruction-tuned-model). MapEval-API runs every LLM inside
+    the same zero-shot ReAct agent with the benchmark's tools and prompts, so only the model varies
+    (model-in-benchmark-harness).
+  source: src-arxiv-2501-00316-v2
+  quote: We assess LLMs for MapEval-Textual, VLMs for MapEval-Visual, and ReACT agents
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: Later papers bring their own agents to MapEval-API (Spatial-Agent, MapAgent), and the
+      paper itself tries Chameleon on GPT-3.5-Turbo, but the designed protocol is the benchmark's
+      own ReAct loop; entrant scaffolds are recorded under as_used.
+    source: src-arxiv-2501-00316-v2
+    quote: Chameleon 54.69 54.21 51.51 43.28 25.00 49.33
+  - term: tool-augmented-model
+    reason: The paper also gives some text-task models a calculator for distance and direction
+      questions, as an analysis of 71 items, not the protocol; in the API task the agent loop
+      decides when to stop, which the term's exclusion test sends to model-in-benchmark-harness.
+  - term: domain-specialist-model
+    reason: Every model evaluated is a general LLM or VLM, and no geospatial model is among them.
+as_used:
+  - protocol: Spatial-Agent runs its own concept-graph agent, and ReAct, Reflexion and
+      Plan-and-Solve baselines, on MapEval-API with its own cached-data tools, and reports the four
+      categories Place Info, Nearby, Routing and Trip; Unanswerable is not among them.
+    split: MapEval-API
+    source: src-arxiv-2601-16965-v1
+    quote: 'The dataset comprises four task categories: Place Info (retrieving place attributes), Nearby
+      (finding nearby points of interest), Routing (computing directions and distances), and Trip (multi-stop
+      travel planning).'
+    note: Spatial-Agent (January 2026) is by authors at Emory, Rutgers and UT Austin, none of them
+      MapEval's. Its tools are its own wrappers over a cache, so its numbers are not the paper's
+      ReAct protocol.
+  - protocol: MapAgent, a hierarchical multi-agent framework by MapEval authors, reports on all
+      three MapEval tasks with its own planner and map-tool agent.
+    split: MapEval-Textual, MapEval-API and MapEval-Visual
+    source: src-arxiv-2509-05933
+    quote: We evaluate MapAgent on four diverse geospatial benchmarks-MapEval-Textual, MapEval-API,
+      MapEval-Visual, and MapQA-and demonstrate substantial gains over state-of-the-art
+      tool-augmented and agentic baselines.
+    note: Read from the abstract page only.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced against it; an independent January 2026 paper reports
+    MapEval-API accuracy for its agent on seven backbone models beside ReAct, Reflexion and the
+    paper's baselines, and a February 2026 framework paper (LiTS, ACL 2026 Demo) uses MapEval as its
+    tool-use task. The site was last modified on 2026-01-08 and the repositories last pushed in
+    2024-2025 (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2601-16965-v1
+  quote: When equipped with GPT-5, SpatialAgent reaches the best overall accuracy of 71.88%
+activity: no-submission-channel
+activity_basis:
+  reason: No route for outsiders exists. The site's "Leaderboard" button jumps to its own results
+    section, three images of the paper's Tables 3-5, and neither the site nor the paper describes a
+    submission; others report in their own papers.
+  source: src-mapeval-site
+  quote: 'Results Table 1: MapEval-Textual performances Table 2: MapEval-API performances Table 3: MapEval-Visual
+    performances'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude-3.5-Sonnet (in the paper's ReAct agent)
+    source: src-arxiv-2501-00316-v2
+    observed_on: 2026-11-04
+    quote: Claude-3.5-Sonnet led with 64.00% overall accuracy
+  - system: Spatial-Agent (GPT-5)
+    source: src-arxiv-2601-16965-v1
+    observed_on: 2026-11-04
+    quote: When equipped with GPT-5, SpatialAgent reaches the best overall accuracy of 71.88%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The answer key was written by the annotators from the same Google Maps
+  data that forms the context or snapshot, and checked by other team members; the keys are public
+  with the questions.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Questions, options, keys, contexts and snapshots are in three ungated Hugging Face
+    datasets, and the evaluation code for each task is in the MapEval GitHub organisation.
+    MapEval-API also needs the cached map environment, whose server the repository's tools expect on
+    localhost (see review_checks).
+  source: src-arxiv-2501-00316-v2
+  quote: We ensure the reproducibility of our results by providing the complete dataset and
+    evaluation codes used in our experiments
+
+task:
+  exists: true
+  input:
+    - 'MapEval-Textual: a question, its options and a long context of Google Maps data (places, ratings,
+      reviews, opening hours, distances, routes), up to 1,500 words'
+    - 'MapEval-API: the same question and options with tool documentation, and map tools (place search,
+      place details, nearby search, directions, travel time) answering from cached Google Maps responses'
+    - 'MapEval-Visual: a Google Maps snapshot (zoom 8 to 21) with a question and its options'
+  output: The number of one option, after any reasoning; in MapEval-API, after a sequence of tool
+    calls.
+  scoring: Accuracy per task over its items (300 textual, 300 API, 400 visual), also broken down by
+    category (Place Info, Nearby, Routing, Trip, Counting, Unanswerable). Options per item run from
+    2 to 7, so chance differs by item.
+  scoring_source: src-arxiv-2501-00316-v2
+  scoring_quote: Min, Max, Avg Choices 2, 7, 4.004
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The answer keys are in the public Hugging Face datasets with the
+    questions.
+  item_definition: One multiple-choice question with its context (textual), its tools (API) or its
+    snapshot (visual); the textual and API tasks share their 300 questions.
+  item_definition_source: src-arxiv-2501-00316-v2
+  item_definition_quote: For MapEval-API, the same questions were used as in MapEval-Textual, but
+    without textual contexts, requiring the language agents to interact with tools directly.
+  source: src-arxiv-2501-00316-v2
+  quote: In the MapEval-API task, an AI agent interacts with map-based APIs to retrieve data (e.g.,
+    nearby POIs, distance calculations).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: All three datasets are public and ungated on Hugging Face, with questions, options,
+      keys, the textual contexts and the map snapshots.
+    source: src-hf-api-mapeval-visual
+    quote: '"gated":false'
+  refresh: static
+  refresh_basis:
+    reason: The items were released once, in December 2024, and the API task answers from a frozen
+      cache of map responses so that keys do not drift with live data. The Visual dataset was
+      modified after the textual and API ones (2025-05-02, Hugging Face API), with no version label;
+      v1 of the paper was not read (see review_checks).
+    source: src-arxiv-2501-00316-v2
+    quote: MapQaTor caches all API call responses, creating a static database for evaluation
+      purposes.
+  data_provenance:
+    - expert-authored
+    - web-scraped
+  data_provenance_note: The authors' team wrote the questions, options and keys (the paper calls the
+    annotator an expert; see review_checks), resolved disagreements between annotators and filtered
+    out items most LLMs answered easily. The contexts and the API cache are Google Maps API
+    responses collected with MapQaTor, the authors' annotation tool, and the snapshots are Google
+    Maps screenshots of random locations. Neither web-scraped nor curated-public-database fits a
+    commercial map service's API exactly; web-scraped is the closer.
+  data_provenance_source: src-arxiv-2501-00316-v2
+  data_provenance_quote: where an expert gathers either visual snapshots or textual data from Google
+    Maps to create multiple-choice questions with ground truth labels
+  contamination_risk: medium
+  contamination_risk_note: Questions, contexts and keys have been public on Hugging Face since
+    December 2024, and the place data are Google Maps' public listings. No source read evidences an
+    overlap with a scored model's training data. The paper's own fine-tuning test, on 97 textual
+    items, is an experiment on a split it made, not a route into the benchmark's scores.
+  contamination_risk_source: src-arxiv-2501-00316-v2
+  contamination_risk_quote: fine-tune several open-source models on a subset of MapEval-Textual
+  contamination_evidence: []
+  ceiling_anchor_type: expert-best
+  ceiling_anchor_type_basis:
+    reason: Two team members who did not annotate answered the questions, and the higher-scoring
+      attempt is the human score (86.67% textual, also used for the API task; 82.23% visual). The
+      paper calls its annotators experts, so the best of two team members is read as expert-best;
+      crowd-best is the alternative (see review_checks).
+    source: src-arxiv-2501-00316-v2
+    quote: their highest-scoring attempts are reported as the human performance benchmark
+  dataset_licence: Apache-2.0
+  dataset_licence_note: The licence each of the three Hugging Face datasets declares. The contexts
+    and snapshots are Google Maps content, whose own terms were not read (upstream_licences).
+  dataset_licence_source: src-hf-api-mapeval-textual
+  dataset_licence_quote: '"cardData":{"license":"apache-2.0"'
+  upstream_licences: Google Maps Platform and Google Maps content terms, for the API responses in
+    the contexts and the cache and for the map screenshots; not read.
+  size:
+    - count: 700
+      unit: unique multiple-choice questions, over 180 cities in 54 countries
+      source: src-arxiv-2501-00316-v2
+      quote: through 700 multiple-choice questions spanning 180 cities and 54 countries
+    - count: 300
+      unit: questions with a textual context, asked again without it in MapEval-API
+      subset: MapEval-Textual and MapEval-API
+      source: src-arxiv-2501-00316-v2
+      quote: 700 300 (42.86%) 400 (57.14%) 54 180
+    - count: 400
+      unit: questions on map snapshots
+      subset: MapEval-Visual
+      source: src-arxiv-2501-00316-v2
+      quote: 700 300 (42.86%) 400 (57.14%) 54 180
+    - count: 13000
+      unit: places cached for the API environment (over 13,000)
+      subset: MapEval-API's pseudo-Google Maps environment
+      source: src-arxiv-2501-00316-v2
+      quote: Information for over 13,000 locations was cached using Google Maps place ids
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The MapEval authors (Bangladesh University of Engineering and Technology, with Monash
+    University and the Qatar Computing Research Institute), in the MapEval GitHub and Hugging Face
+    organisations
+  maintainer_basis:
+    reason: The code sits in the MapEval GitHub organisation and the data in the MapEval Hugging
+      Face organisation, and the site presents MapEval with the authors' two related works. Most
+      authors are at BUET; QCRI supplied API access and compute.
+    source: src-arxiv-2501-00316-v2
+    quote: We gratefully acknowledge the support of Qatar Computing Research Institute (QCRI) for
+      providing access to APIs and computational resources
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: The site's "Leaderboard" is the paper's three results tables, the 30
+    models the authors ran. No route takes outside results; others report in their own papers (see
+    review_checks).
+  submission_process_source: src-mapeval-site
+  submission_process_quote: Dataset Leaderboard MapQaTor MapQA Ecosystem
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2509-05933
+      quote: Authors:Md Hasebul Hasan, Mahir Labib Dihan, Tanzima Hashem, Mohammed Eunus Ali, Md
+        Rizwan Parvez
+  independence_flags_note: MapAgent, by four of MapEval's eight authors (with one other), reports
+    gains on all three MapEval tasks, and the site lists it in the same ecosystem. The paper itself
+    evaluates no model of the authors'. QCRI, which supplied API access, is not an evaluated party,
+    so funded-by-evaluated-party is not set; which APIs it gave access to is not stated.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2501-00316-v2
+    quote: updates to these APIs may render the dataset less relevant for real-time applications,
+      making it more suitable for archival purposes
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The closed models are called through their providers' APIs, and the API task
+    runs many calls per question; open models (up to 90B) need the entrant's own GPUs or a hosted
+    endpoint. The map environment is a local cache, not live Google Maps.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public items and keys, option matching for the score, and the API task's tools answering
+      from a cache rather than the live service; no human or maintainer-only step.
+    source: src-arxiv-2501-00316-v2
+    quote: To address consistency issues with real-time data updates, we created a controlled
+      evaluation environment.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The MapEval-Textual and MapEval-API repositories' main.py (one model wrapper per
+    evaluated model), and MapEval-Visual's evaluation.py, in the MapEval GitHub organisation
+  harness_source: src-arxiv-2501-00316-v2
+  harness_quote: We ensure the reproducibility of our results by providing the complete dataset and
+    evaluation codes used in our experiments
+  harness_gotcha:
+    source: src-arxiv-2501-00316-v2
+    quote: we leverage a Zero Shot React Agent
+  harness_gotcha_note: MapEval-API's Tools.py sends every tool call to a server at localhost:5000
+    (read at main, 2026-11-04, GitHub API) that the repository does not contain; it appears to be
+    the MapQaTor backend (a separate repository with a database dump), which was not checked to hold
+    the 13,000-place cache.
+  code_licence: null
+  code_licence_note: GitHub's licence metadata for MapEval-Textual, MapEval-API and MapEval-Visual
+    reports no licence (read 2026-11-04); the papers and READMEs read state none for the code.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond llm-static-text (multiple-choice with instruction-tuned-model): MapEval-API's number belongs to the model
+  # inside the paper's zero-shot ReAct agent and its tool wrappers, so a claim on the API task states the scaffold
+  # and the harness; Spatial-Agent and MapAgent bring their own (as_used). Which task (Textual, API, Visual) and which
+  # categories are scored is subset_used, already in the profile; Spatial-Agent drops Unanswerable.
+  material_extra:
+    - scaffold
+    - harness
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The paper reports each task's accuracy on its own, with different model types in each
+    (LLMs, VLMs, ReAct agents), and combines them into no single score; the site's results are the
+    three tables.
+  source: src-arxiv-2501-00316-v2
+  quote: aligning each task with appropriate model types
+headline_metric: null
+
+homepage: https://mapeval.github.io/
+repository: https://github.com/MapEval
+dataset_url: https://huggingface.co/MapEval
+
+subsets:
+  - id: mapeval#textual
+    label: MapEval-Textual
+    items: 300
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2501-00316-v2
+        quote: The objective of MapEval-Textual is to answer MCQs by decomposing complex queries and
+          extracting relevant information from long textual contexts.
+    notes: LLMs answer from a supplied Google Maps context; the best model scores 66.33% against
+      86.67% for the human baseline.
+  - id: mapeval#api
+    label: MapEval-API
+    items: 300
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2501-00316-v2
+        quote: For MapEval-API, the same questions were used as in MapEval-Textual, but without
+          textual contexts, requiring the language agents to interact with tools directly.
+    notes: The textual task's 300 questions, answered by a ReAct agent through cached map tools; 11
+      LLMs were run.
+  - id: mapeval#visual
+    label: MapEval-Visual
+    items: 400
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2501-00316-v2
+        quote: For the visual context, we capture map snapshots from Google Maps, covering random
+          locations across various cities and countries worldwide.
+    notes: VLMs answer from a map snapshot; Counting questions appear only here, Trip questions not
+      at all.
+
+lineage:
+  role: root
+
+tags:
+  - geospatial-reasoning
+  - map-services
+  - multiple-choice
+  - tool-use
+  - vision-language-models
+  - point-of-interest
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2501-00316-v2
+    - src-arxiv-2501-00316
+    - src-mapeval-site
+    - src-hf-api-mapeval-textual
+    - src-hf-api-mapeval-api
+    - src-hf-api-mapeval-visual
+    - src-arxiv-2601-16965-v1
+    - src-arxiv-2509-05933
+    - src-arxiv-2603-00631
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the dates and venue;
+    the project site with scripts and styles stripped, withheld from archiving because it prints an author's
+    e-mail address; Hugging Face's API records of the three datasets; Spatial-Agent's v1 PDF (a DOI) as
+    evidence of 2026 use; and the abstract pages of MapAgent and LiTS (DOIs). The three repositories'
+    contents, licences and last pushes (MapEval-API 2024-11-25, MapEval-Textual 2025-03-28, MapEval-Visual
+    2025-05-02) and MapEval-API's Tools.py were read through GitHub's API, not as quoted Sources.
+  confidence: medium
+  review_checks:
+    - check: "Primary domain: geospatial-reasoning follows the leaf's definition and the benchmark's claim,
+        but the earth-climate family's inclusion test asks for an Earth-system quantity (weather, climate,
+        land surface, hazard, ecology, energy), and MapEval's subject is human geography on a commercial
+        map service - places, ratings, opening hours and routes. Either the family's test should admit
+        geospatial reasoning over the built environment or the leaf belongs in another family; no other
+        family names such a benchmark."
+      field: domain.primary
+      source: src-arxiv-2501-00316-v2
+      quote: no studies have rigorously tested the capabilities of foundation models in location or
+        geo-spatial reasoning
+    - check: multimodal/visual-qa could be primary, since MapEval-Visual holds 400 of the 700 unique
+        questions, and agents-tooluse/tool-api-calling could be, since LiTS uses MapEval as its
+        tool-use task. Both were read as task formats under one geo-spatial claim.
+      field: domain.secondary
+      source: src-arxiv-2603-00631
+      quote: We demonstrate composability on MATH500 (language reasoning), Crosswords (environment
+        planning), and MapEval (tool use)
+    - check: MapEval-API's tools call a server on localhost:5000 that the MapEval-API repository
+        does not include. Whether the MapQaTor backend's database dump holds the 13,000-place cache,
+        and so whether the API task can be rerun as published, was not checked;
+        reproducible_by_third_party and reproducibility_tier assume it.
+      field: execution.harness_gotcha
+      source: src-arxiv-2501-00316-v2
+      quote: Information for over 13,000 locations was cached using Google Maps place ids
+    - check: data_provenance expert-authored rests on the paper calling its annotator an expert; the
+        annotators are the authors' team, and if they count as non-specialists answering everyday
+        map questions, crowd-authored applies. The same reading decides ceiling_anchor_type
+        expert-best against crowd-best.
+      field: data.data_provenance
+      source: src-arxiv-2501-00316-v2
+      quote: where an expert gathers either visual snapshots or textual data from Google Maps to
+        create multiple-choice questions with ground truth labels
+    - check: Items most LLMs answered easily were filtered out, and the filtering models are not
+        named, so scores for those models (and their successors) may be depressed by construction.
+      field: data.data_provenance
+      source: src-arxiv-2501-00316-v2
+      quote: We filtered out samples where the majority of the LLMs could easily provide the correct
+        answer
+    - check: maintainer-competes-on-own-benchmark rests on MapAgent, a later paper by four of the
+        eight authors that reports gains on MapEval; the release paper evaluates none of the
+        authors' own models.
+      field: governance.independence_flags
+      source: src-arxiv-2509-05933
+      quote: Authors:Md Hasebul Hasan, Mahir Labib Dihan, Tanzima Hashem, Mohammed Eunus Ali, Md
+        Rizwan Parvez
+    - check: submission_process maintainer-run rests on the site's "Leaderboard" button, which opens
+        images of the paper's own three tables; literature-only is the alternative if those count as
+        the release paper's baselines.
+      field: governance.submission_process
+      source: src-mapeval-site
+      quote: Dataset Leaderboard MapQaTor MapQA Ecosystem
+    - check: aggregation_policy none-by-design rests on the paper running different model types per
+        task and reporting no combined score; no source says in so many words that no aggregate is
+        intended.
+      field: aggregation_policy
+      source: src-arxiv-2501-00316-v2
+      quote: aligning each task with appropriate model types
+    - check: honesty was rejected although Unanswerable is a reported category in every task (20
+        items each), on the reading that choosing the "cannot answer" option is scored as plain
+        accuracy.
+      field: capability
+      source: src-arxiv-2501-00316-v2
+      quote: MapEval includes questions where context is insufficient to provide an answer
+    - check: refresh static rests on the December 2024 release and the frozen cache. v1 of the paper
+        was not read, and the Visual dataset was modified on 2025-05-02, after v1; whether its items
+        changed between versions was not checked.
+      field: data.refresh
+    - check: The contexts, the API cache and the snapshots are Google Maps content redistributed
+        under the datasets' Apache-2.0 declaration; Google's terms for that content were not read.
+      field: data.upstream_licences
