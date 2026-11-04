@@ -1,0 +1,505 @@
+# data/benchmarks/agents-tooluse/vending-bench-2.yaml
+#
+# P1-S9-T02, agents-tooluse entry 15. Promotes the Epoch stub data/benchmarks/_stubs/vending-bench-2.yaml (id
+# fixed by ingest/mappings/epoch/_id_allocation.yaml). Filled from Andon Labs' Vending-Bench 2 page, read through
+# the existing Source src-andonlabs-vending-bench-2 (the Wayback capture of 2026-09-17); the deprecated
+# Vending-Bench page and the Vending-Bench Arena page at andonlabs.com, read 2026-11-04 after robots.txt (the host
+# serves no robots file, so nothing is disallowed); the original Vending-Bench paper, arXiv 2502.15840 read as its
+# v1 PDF (the only version), and its abstract page; and the v3 PDF of EcoGym (arXiv 2602.09514, May 2026), a paper
+# that cites Vending-Bench v1 and v2 and adapts the original. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# Vending-Bench 2 has no paper of its own and no public code. The original Vending-Bench (February 2025) is a
+# separate, deprecated benchmark with no record yet (see lineage_note and review_checks).
+
+id: vending-bench-2
+name: Vending-Bench 2
+tagline: A model runs a simulated vending-machine business for a year through tools, scored on its
+  final money balance.
+description: >
+  A long-horizon agent benchmark from Andon Labs. A model is told to run a vending machine in San Francisco
+  for a simulated year, starting with $500 and paying a $2 daily fee; a run that cannot pay the fee for
+  more than 10 consecutive days is terminated early. The model finds suppliers by web search, orders from
+  them by e-mail and pays through an e-mail payment tool, moves delivered stock from storage into the
+  machine, and sets prices; customer sales are simulated from price, day of the week, season and weather,
+  with the same sales simulation as the original Vending-Bench. The suppliers are language models, some
+  adversarial (high quotes, bait-and-switch), deliveries can be late, suppliers can go out of business
+  and customers can demand refunds. The agent has note-taking and reminder tools, makes one tool call
+  at a time, works in a context window of about 69,000 tokens that is trimmed when full, and is charged
+  for its own output tokens. A full year runs to 3,000-6,000 messages. The score is the money balance
+  after the year, in dollars, averaged over 5 runs; the scale has no ceiling by design. Andon Labs runs
+  every model itself and publishes the leaderboard; no code or environment is released. Vending-Bench
+  Arena puts several models in the same environment at one location, competing, and is recorded as a variant.
+self_description:
+  source: src-andonlabs-vending-bench-2
+  quote: a benchmark for measuring AI model performance on running a business over long time
+    horizons
+released: 2025-11-18
+released_note: The deprecated Vending-Bench page dates the release; Epoch's metadata gives the same
+  date (2025-11-18), and the Arena's first round is dated to the same day.
+released_source: src-andonlabs-vending-bench
+released_quote: Vending-Bench 2 released November 18, 2025
+release_venue: null
+release_venue_note: No paper; Andon Labs asks for the page itself to be cited (a @misc entry with
+  the page URL, year 2025).
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/long-horizon-autonomy
+  primary_basis:
+    reason: The scored quantity is what an autonomous loop achieved with tools (search, e-mail,
+      payments, stock moves), read from the environment after a simulated year, so the family is
+      agents-tooluse. The benchmark's own claim is coherence over a year, and no interface or task
+      subdomain describes it -- the tools are a business's ordinary channels, not a GUI, a browser
+      or a shell -- so the horizon is primary, as long-horizon-autonomy's distinction allows when
+      none does.
+    source: src-andonlabs-vending-bench-2
+    quote: 'This is what Vending-Bench 2 measures: the ability of models to stay coherent and successfully
+      manage a simulated business over the course of a year.'
+  secondary:
+    - agents-tooluse/tool-api-calling
+    - agents-tooluse/negotiation
+    - society-econ-law/trading-market-interaction
+  secondary_basis:
+    reason: The agent acts only through callable tools (web search, e-mail, a payment tool, storage
+      and machine tools), which is tool-api-calling. Prices come from bargaining with supplier
+      models, and the page calls negotiation key, which is negotiation. The score is the outcome of
+      buying and selling in a simulated market, which is trading-market-interaction;
+      society-econ-law's exclusion keeps it out of primary because the subject is autonomous
+      operation.
+    source: src-andonlabs-vending-bench-2
+    quote: Negotiation is key to success.
+domain_considered_and_rejected:
+  - term: games-planning/open-ended-environments
+    reason: An episode against a responding environment, and the original paper calls the run a
+      game, but the environment is a simulated business with one stated goal (the year-end balance),
+      not a game, and open-ended-environments needs no single fixed goal. agents-tooluse's inclusion
+      test (an autonomous loop using tools, graded on the state it left) fits directly (see
+      review_checks).
+    source: src-arxiv-2502-15840-v1
+    quote: The primary score of the agent is its net worth at the end of the game
+  - term: society-econ-law/economics-simulation
+    reason: The environment simulates an economy, but the entrant is not modelling economic agents
+      or systems; it acts inside one, which trading-market-interaction names.
+  - term: agents-tooluse/multi-agent-coordination
+    reason: One agent is evaluated per run; the supplier and customer models are part of the
+      environment. Several evaluated agents share a location only in Vending-Bench Arena, the
+      variant.
+    source: src-andonlabs-vending-bench-arena
+    quote: Vending-Bench Arena uses the same environment as Vending-Bench 2, but puts agents head to
+      head.
+  - term: agents-tooluse/web-navigation
+    reason: The agent searches the internet through a search tool and never browses or acts on
+      pages.
+    source: src-andonlabs-vending-bench-2
+    quote: Models can search the internet to find suitable suppliers and then contact them through
+      e-mail to make orders.
+capability:
+  - long-horizon-execution
+  - tool-use
+  - autonomy
+  - optimization
+capability_basis:
+  long-horizon-execution:
+    reason: One scored episode is a simulated year of 3,000-6,000 messages, each tool call depending
+      on the state earlier calls built (orders, stock, cash), and bankruptcy ends the run early,
+      after which no later step can recover the score (see review_checks on "full success").
+    source: src-andonlabs-vending-bench-2
+    quote: Running a model for a full year results in 3000-6000 messages in total
+  tool-use:
+    reason: Every action is a tool call whose result the agent must use -- supplier e-mails, search
+      results, deliveries into storage, moves into the machine -- and the balance depends on them.
+    source: src-andonlabs-vending-bench-2
+    quote: Delivered items arrive at a storage facility, and the models are given tools to move
+      items between storage and the vending machine.
+  autonomy:
+    reason: The protocol rules out outside help by design and scores what the agent achieved
+      unattended; user turns are only reminders to continue.
+    source: src-andonlabs-vending-bench-2
+    quote: Vendings and Stuff will not provide any additional help or support, so you must rely on
+      your own capabilities to succeed.
+  optimization:
+    reason: The prompt states one objective, the balance after a year, and the leaderboard ranks
+      models by its value, with no bound.
+    source: src-andonlabs-vending-bench-2
+    quote: Your primary goal is to maximize profits and your bank account balance over the course of
+      one year.
+capability_considered_and_rejected:
+  - term: planning
+    reason: The page adds planning tools (notes, reminders) and the prompt says to plan, but the
+      score is the balance, not a property of an action sequence, and no source claims the benchmark
+      measures planning.
+    source: src-andonlabs-vending-bench-2
+    quote: Better planning tools, such as proper note-taking and reminder systems have been added as
+      well.
+  - term: memory-retention
+    reason: The context is trimmed at about 69,000 tokens, so supplier details must survive in
+      notes, but no Vending-Bench 2 source claims retention or scores it apart from the balance; the
+      original paper studied memory and found failures not tied to a full context.
+    source: src-andonlabs-vending-bench-2
+    quote: Your context window is limited to roughly 69000 tokens.
+  - term: adversarial-robustness
+    reason: Some supplier models try to exploit the agent, but the adversity is part of the
+      environment for every run, not inputs an attacker selects, and the score is the balance, not
+      resistance.
+    source: src-andonlabs-vending-bench-2
+    quote: Suppliers may be adversarial and actively try to exploit the agent
+  - term: reliability-consistency
+    reason: Each model runs 5 times and the leaderboard reports the mean with a spread; averaging is
+      the term's exclusion.
+    source: src-andonlabs-vending-bench-2
+    quote: Average across 5 runs
+  - term: communication
+    reason: Supplier replies shape prices, but the score is the joint business result, not whether a
+      message was received and acted on, which the term's exclusion covers.
+
+evaluation_method:
+  - episodic-return
+evaluation_method_note: The score is the agent's money balance at the end of one simulated year,
+  read from the environment, averaged over 5 runs and published with a spread (the leaderboard also
+  offers a geometric mean). It accumulates over the episode with no maximum, which Andon Labs states
+  by design; the metric is vending-bench-2-money-balance. The original Vending-Bench scored net
+  worth (cash plus stock at cost) after 2,000 messages instead.
+evaluation_method_basis:
+  reason: The balance is cumulative over the episode and unbounded above, the term's inclusion case;
+    it can never be marked saturated.
+  source: src-andonlabs-vending-bench-2
+  quote: a superintelligent AI could theoretically make almost infinite money
+evaluation_method_considered_and_rejected:
+  - term: environment-state-check
+    reason: The balance is read from the environment's state after the episode, but the term's
+      program decides task success or per-checkpoint credit; here no state is required and the
+      number is an unbounded quantity, which episodic-return names (see review_checks).
+  - term: simulation-rollout
+    reason: Sales are simulated, but the term needs a bounded per-episode score, and its exclusion
+      sends unbounded cumulative quantities to episodic-return.
+  - term: model-graded-judge
+    reason: Language models play the suppliers, but no model grades the agent; the balance is
+      computed by the environment.
+designed_for_subjects:
+  - model-in-benchmark-harness
+designed_for_subjects_note: Every leaderboard row names a model run inside Andon Labs' own agent,
+  system prompt and tools, identical for all; the entrant does not supply the loop. The original
+  Vending-Bench ran its agent in AISI's inspect-ai framework; Vending-Bench 2's harness is not
+  described.
+designed_for_subjects_basis:
+  reason: The maintainer runs each provider's model through that provider's API in its fixed
+    environment, so only the model varies.
+  source: src-andonlabs-vending-bench-2
+  quote: API to run Vending-Bench 2.
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: No entrant brings or modifies a loop; Andon Labs runs every model in its own.
+  - term: human-expert
+    reason: Vending-Bench 2 publishes no human baseline. The original Vending-Bench's single human
+      run (five hours) belongs to that benchmark; Andon Labs' $63k "good" strategy is an estimate.
+    source: src-arxiv-2502-15840-v1
+    quote: we had a human complete the task for five hours
+observed_subjects:
+  values:
+    - model-in-benchmark-harness
+  basis: Every row read names a provider model (GPT-6 Astra, Claude Opus 5, Grok 4.6, GLM-5.2),
+    split into frontier and open views; no agent system or scaffold is listed.
+  source: src-andonlabs-vending-bench-2
+
+lifecycle: active
+lifecycle_basis:
+  reason: The leaderboard read (captured 2026-09-17) marks GPT-6 Astra as a new entry, and the Arena
+    page read on 2026-11-04 reports rounds into September 2026 on the same environment, one at GPT-6
+    Astra's release.
+  source: src-andonlabs-vending-bench-arena
+  quote: 'GPT-6 Astra release Date: September 4, 2026'
+activity: no-submission-channel
+activity_note: Andon Labs runs the models it chooses through their providers' APIs and publishes the
+  results; neither Vending-Bench 2 page read offers a route for outsiders to enter a result. The
+  deprecated Vending-Bench page invited researchers to make contact to test a model on the original
+  (see review_checks).
+activity_basis:
+  reason: Every run is the maintainer's, and no source names a submission route for Vending-Bench 2.
+  source: src-andonlabs-vending-bench-2
+  quote: API to run Vending-Bench 2.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-6 Astra
+    source: src-andonlabs-vending-bench-2
+    observed_on: 2026-09-28
+    quote: 1 GPT-6 Astra New $15,514.70 ± $1,074
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The balance comes from the environment's own accounting of simulated
+  sales, supplier orders, fees and token charges; customer demand follows the original
+  Vending-Bench's sales equations, and the suppliers are language models.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: No code, environment or supplier prompts are published; only the agent's system prompt is.
+    A 2026 paper describes the original as closed-source and its protocol as proprietary.
+  source: src-arxiv-2602-09514-v3
+  quote: Vending Bench adheres to a strictly proprietary assessment protocol
+
+task:
+  exists: true
+  input:
+    - a system prompt casting the model as the operator of one vending machine in San Francisco,
+      with its e-mail, storage and machine addresses, the $2 daily fee, the token charge and the
+      context limit
+    - the replies of supplier models, delivery and sales notices, and the results of its own tool
+      calls
+  output: One tool call at a time over a simulated year -- web search, e-mail to suppliers, e-mail
+    payments, moving stock from storage into the machine, setting prices, notes and reminders --
+    with nights passing between days.
+  scoring: The money balance in dollars after one simulated year (a bankrupt run ends early),
+    averaged over 5 runs per model.
+  source: src-andonlabs-vending-bench-2
+  quote: Models are tasked with running a simulated vending machine business over a year and scored
+    on their bank account balance at the end.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The environment is held and run by the maintainer, and no server takes submissions;
+    the maintainer chooses and runs every model (submission_process maintainer-run), which the term
+    allows ("an evaluation the maintainer runs itself").
+  access_basis:
+    reason: The environment, the supplier and customer simulation and the scorer stay with Andon
+      Labs, which runs every evaluation itself; the system prompt is the only published component.
+    source: src-arxiv-2602-09514-v3
+    quote: Vending (adapted from the closed-source Vending-Bench, with full open-source release)
+  refresh: null
+  refresh_note: No source read says whether the environment or scoring has changed since release,
+    and nothing is versioned or released to compare. The leaderboard grows as models are added.
+  data_provenance:
+    - simulation-generated
+    - model-generated
+  data_provenance_note: The episode is generated by the environment -- customer sales from equations
+    of price, weekday, season and weather -- and by language models playing the suppliers; no fixed
+    item set exists.
+  data_provenance_source: src-andonlabs-vending-bench-2
+  data_provenance_quote: the suppliers are other LLMs who can be jailbroken to give away stuff for
+    free
+  contamination_risk: medium
+  contamination_risk_note: The system prompt is public, and the original paper describes the sales
+    simulation, which Vending-Bench 2 keeps and Andon Labs says can be gamed; a model trained on
+    them could exploit the equations. No source evidences such a route, and the environment itself
+    is not released.
+  contamination_risk_source: src-andonlabs-vending-bench-2
+  contamination_risk_quote: Vending-Bench 2 keeps the same sales simulation
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: The metric has no ceiling by design. Andon Labs estimates that a "good"
+    strategy would make roughly $63k in a year ($206 a day for 302 days), about four times the top
+    row read ($15,514.70), but the figure is built from stated assumptions, not measured.
+  ceiling_anchor_type_source: src-andonlabs-vending-bench-2
+  ceiling_anchor_type_quote: roughly $63k in a year
+  dataset_licence_note: Nothing is released; the page's footer reserves all rights.
+  size:
+    - count: 1
+      unit: task (one simulated business year per run)
+      source: src-andonlabs-vending-bench-2
+      quote: Models are tasked with running a simulated vending machine business over a year
+    - count: 5
+      unit: runs per model, averaged
+      source: src-andonlabs-vending-bench-2
+      quote: Average across 5 runs
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Andon Labs
+  maintainer_basis:
+    reason: Andon Labs, a company (Andon Labs Inc.), publishes the page and the leaderboard and
+      names itself as the citation's author.
+    source: src-andonlabs-vending-bench-2
+    quote: 2026 Andon Labs Inc. All rights reserved.
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: Andon Labs chooses the models, runs each 5 times through its provider's
+    API and publishes the mean; no participant submits anything.
+  submission_process_source: src-andonlabs-vending-bench-2
+  submission_process_quote: API to run Vending-Bench 2.
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2602-09514-v3
+      quote: Vending Bench adheres to a strictly proprietary assessment protocol
+  independence_flags_note: One party holds the environment and runs every evaluation, so no result
+    can be checked from outside. The pages show backers only as logos, so funded-by-evaluated-party
+    could not be assessed; whether Andon Labs sells evaluations was not read. No Andon Labs system
+    is ranked.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The maintainer's cost of a run is provider inference for a year of 3,000-6,000
+    messages, plus the supplier models; the page plots each model's score against its mean cost per
+    run.
+  compute_tier_source: src-andonlabs-vending-bench-2
+  compute_tier_quote: Score vs. mean cost per run
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: Only Andon Labs can produce a score, because it holds the environment, the supplier
+      simulation and the scorer.
+    source: src-arxiv-2602-09514-v3
+    quote: Vending Bench adheres to a strictly proprietary assessment protocol
+  reproducibility_blockers:
+    - no-reference-implementation
+    - private-test-set
+  harness_availability: none
+  harness: null
+  harness_note: No code is published for Vending-Bench 2. The original paper open-sourced only an
+    inspect-ai extension for sub-agents (multiagent-inspect), not the environment.
+  harness_source: src-arxiv-2502-15840-v1
+  harness_quote: we implement and open source an extension to inspect-ai
+  code_licence: null
+  code_licence_note: No code is released.
+  runnable_via:
+    - none
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # (episodic-return, model-in-benchmark-harness) has no profile, so the fallback (subset_used) applies. Material
+  # beyond it: Andon Labs' harness and its version (the prompt, tools and the ~69,000-token trimming window), the
+  # number of runs averaged (5), the provider-side reasoning setting Epoch records from model suffixes, and the
+  # supplier models, which act like a user simulator and change the number (user_simulator, ADR-0024).
+  material_extra:
+    - harness
+    - context_window_used
+    - n_samples
+    - reasoning_effort
+    - user_simulator
+    - date_evaluated
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline per model, the arithmetic mean of the balance over 5 runs, with a
+    geometric-mean view beside it.
+  source: src-andonlabs-vending-bench-2
+  quote: Arithmetic mean Geometric mean
+headline_metric: vending-bench-2-money-balance
+secondary_axes:
+  - cost
+
+homepage: https://andonlabs.com/evals/vending-bench-2
+repository: null
+leaderboard_url: https://andonlabs.com/evals/vending-bench-2
+metrics:
+  - vending-bench-2-money-balance
+
+lineage:
+  role: root
+  variants:
+    - id: vending-bench-arena
+      relation: multi-agent-competitive-extension
+      source: src-andonlabs-vending-bench-2
+      quote: 'Vending-Bench Arena is a version of Vending-Bench 2 that adds a crucial component: competition.'
+lineage_note: >
+  Vending-Bench 2 succeeds the original Vending-Bench (arXiv 2502.15840, February 2025), which Andon Labs
+  has deprecated in its favour and calls "our new benchmark". By 04 S4 it is a separate benchmark, not
+  a version: it is cited on its own, its scoring changed (net worth after 2,000 messages became money
+  balance after a year) and the environment gained adversarial suppliers, failed deliveries and refunds.
+  Not recorded as lineage.supersedes, because the original has no entry and tier 2 resolves the reference;
+  add it when Vending-Bench is curated, as a deprecated root. EcoGym's Vending environment (OPPO, 2026)
+  adapts the original, not Vending-Bench 2, so it is not a fork of this entry.
+
+tags:
+  - long-horizon
+  - business-simulation
+  - unbounded-score
+  - maintainer-run
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-andonlabs-vending-bench-2
+    - src-andonlabs-vending-bench
+    - src-andonlabs-vending-bench-arena
+    - src-arxiv-2502-15840-v1
+    - src-arxiv-2502-15840
+    - src-arxiv-2602-09514-v3
+  sources_note: >
+    The Vending-Bench 2 page through the existing Source (its Wayback capture of 2026-09-17, archived);
+    the deprecated Vending-Bench page and the Arena page, fetched 2026-11-04 with scripts and styles stripped
+    and windows kept clear of the contact address and of agents' simulated e-mail addresses; the original
+    paper's v1 PDF and abstract page (DOIs, not archived), windows kept clear of the authors' contact
+    line and the submitter line; and EcoGym's v3 PDF (a DOI) as a 2026 citation of v1 and v2. Epoch's
+    metadata row was not re-cited; the metric record vending-bench-2-money-balance already explains why
+    its 0-1 bounds are wrong for a dollar balance.
+  confidence: medium
+  review_checks:
+    - check: Identity (04 S4). Vending-Bench 2 is modelled as its own benchmark, with the original
+        as a separate, deprecated predecessor, because Andon Labs calls it a new benchmark, cites it
+        separately and changed the scoring and the environment. The same maintainer and the same
+        task (one vending machine, the same sales simulation) would also support one family entry
+        with an edition per release; if a reviewer prefers that, the family takes the stub's id
+        vending-bench-2 only by accident, and the id would need a human decision rather than a
+        change here.
+      field: lineage
+      source: src-andonlabs-vending-bench
+      quote: Vending-Bench is now deprecated in favor of our new benchmark for agentic long-term
+        coherence, creatively named Vending-Bench 2.
+    - check: The original Vending-Bench (arXiv 2502.15840, submitted 20 Feb 2025; net worth after
+        2,000 messages, one human baseline) needs its own record, as a deprecated root, before
+        lineage.supersedes can point at it; it has no Epoch stub.
+      field: lineage
+      source: src-arxiv-2502-15840
+      quote: Submitted on 20 Feb 2025
+    - check: Vending-Bench Arena is declared as a variant (vending-bench-arena), which reserves that
+        id without a record; it could instead be a Subset (a parallel track by the same maintainer,
+        released the same day), but it has its own page, rounds of three models and four runs, and a
+        multi-agent setting. The relation slug is the drafter's.
+      field: lineage.variants
+      source: src-andonlabs-vending-bench-arena
+      quote: Vending-Bench Arena is our first multi-agent eval
+    - check: Placement. games-planning's inclusion test (episodes against a responding environment)
+        also fits, and the original paper calls the run a game; agents-tooluse was chosen because
+        the environment is a business operated through tools, not a game. society-econ-law is
+        secondary only, by its own exclusion for autonomous operation.
+      field: domain
+      source: src-arxiv-2502-15840-v1
+      quote: The primary score of the agent is its net worth at the end of the game
+    - check: long-horizon-execution's test asks that an intermediate failure make full success
+        unattainable; with an unbounded score there is no full success, so the tag rests on early
+        termination after bankruptcy and on the episode's length.
+      field: capability
+    - check: episodic-return was chosen over environment-state-check, whose definition assumes a
+        success or checkpoint verdict; the balance is read from environment state, so a reviewer may
+        want both.
+      field: evaluation_method
+    - check: The closed-source and proprietary statements are EcoGym's, about "Vending-Bench"
+        without a version; no Andon Labs page says in so many words that Vending-Bench 2's
+        environment is withheld. access, reproducibility_tier, the harness and the independence flag
+        rest on that and on the absence of any repository.
+      field: data.access
+      source: src-arxiv-2602-09514-v3
+      quote: Vending (adapted from the closed-source Vending-Bench, with full open-source release)
+    - check: activity is no-submission-channel. The deprecated page asked researchers to make
+        contact to test a model on the original; whether Andon Labs evaluates on request for
+        Vending-Bench 2 (an on-request evaluation that publishes would be a channel) was not read.
+      field: activity
+      source: src-andonlabs-vending-bench
+      quote: Are you a researcher and want to test a model on Vending-Bench?
+    - check: The Vending-Bench 2 page was read only through its 2026-09-17 capture (the existing
+        Source); rows and model names may have changed since, and its cited_by needs
+        vending-bench-2.
+      field: learned_entrant_evidence
+    - check: No condition record names the reference run (harness version, context limit, supplier
+        models); the supplier models are not named in any source read, so user_simulator cannot be
+        filled.
+      field: reference_conditions
+    - check: Funding could not be assessed because the backers appear only as logos;
+        funded-by-evaluated-party stays unset rather than ruled out.
+      field: governance.independence_flags
