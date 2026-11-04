@@ -1,0 +1,719 @@
+# data/benchmarks/earth-climate/l2rpn.yaml
+#
+# P1-S7-T02, earth-climate entry 16. Filled from the NeurIPS 2020 retrospective, arXiv 2103.03104 read as its v2 PDF
+# (2021-10-21, PMLR); the first competition's paper, arXiv 1912.04211 read as its v1 PDF (2019-12-05, PSCC 2020); the
+# 2022 challenge design paper, arXiv 2207.10330 read as its v1 PDF; the L2RPN site's home and competitions pages
+# (l2rpn.chalearn.org, scripts and styles stripped); Grid2Op's README pinned at commit 07012c4 and its documentation
+# page of available environments (1.12.4); the L2RPN 2022 competition page on CodaLab's LISN server; TU Delft's news
+# item on L2RPN Delft 2023; Artelys's report on the 2023 Ile-de-France edition; Codabench's 2025 newsletter on
+# CodaLab's phase-out; and three 2025 papers, read as their v2 PDFs: a survey of RL for grid topology control
+# (arXiv 2504.08210), an ECML 2025 paper scored on the 2022 test environment (arXiv 2503.15190) and RL2Grid (arXiv
+# 2503.23101). Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+#
+# The entry is the competition series as one family (02 S11 rule 5): its editions are versions, the NeurIPS 2020
+# tracks are subsets, and L2RPN Delft 2023, a re-run of the 2022 edition, is an event. Grid2Op, the simulator every
+# edition from 2020 runs on, is the series' harness, not a separate benchmark. Domain: the taxonomy's energy-systems
+# definition names grid operation, and the family's own example admits an energy control task
+# (smart-buildings-challenge); the engineering-design survey left L2RPN as a boundary case (see review_checks).
+#
+# Forecasting fields do not arise: the facets resolve the simulation profile (simulation-rollout x rl-policy), not
+# the forecasting one, and nothing is forecast against an outcome.
+
+id: l2rpn
+name: Learning to Run a Power Network (L2RPN)
+aliases:
+  - L2RPN
+  - Learning to run a power network challenge
+tagline: RTE's competition series since 2019 in which agents operate a simulated power grid through
+  weekly Grid2Op scenarios.
+description: >
+  A series of competitions run since 2019 by RTE, the French transmission system operator, with ChaLearn
+  and partners, in which an agent operates a simulated power transmission grid in real time. Each scenario
+  plays production, consumption and maintenance time series ("chronics") at five-minute steps; the agent
+  observes the full grid state at every step and may change the grid's topology (bus splitting at substations,
+  line switching), redispatch generators and, from 2022, curtail renewables and use batteries, under operational
+  rules such as cooldowns and limits on simultaneous actions. Overloaded lines trip, which can cascade,
+  and the episode ends in a game over when demand is no longer met. Agents are submitted as code to CodaLab
+  and run on scenarios the participants never see. The score per scenario comes from the episode's operational
+  cost, normalised so that -100 is an immediate blackout, 0 the do-nothing agent, 80 a completed scenario
+  and 100 a further 20% cost saving; the leaderboard averages it over the test scenarios. The first edition
+  (IJCNN 2019) used the IEEE 14-bus grid on the pypownet platform. From WCCI 2020 the series runs on Grid2Op,
+  RTE's open-source simulator, on parts of the IEEE 118-bus grid: NeurIPS 2020 had a robustness track
+  against an adversarial opponent that disconnects loaded lines and an adaptability track over unseen
+  energy mixes; ICAPS 2021 added alarms for a human operator; WCCI 2022 moved to a near carbon-free 2050
+  energy mix with batteries; and a 2023 edition funded by the Ile-de-France region used a 2035 mix with
+  a three-area opponent. TU Delft ran the 2022 environment again in 2023. Winning entries have mixed reinforcement
+  learning, imitation, search and expert rules.
+self_description:
+  source: src-arxiv-2103-03104-v2
+  quote: challenge is a series of competitions that model the sequential decision-making
+    environments of real-time power network operations
+external_ids:
+  arxiv: '2103.03104'
+paper:
+  title: 'Learning to run a Power Network Challenge: a Retrospective Analysis'
+  arxiv: '2103.03104'
+  version_read: v2
+  source: src-arxiv-2103-03104-v2
+released: null
+released_note: The first competition ran for six weeks from May 2019 on CodaLab, at IJCNN 2019; no
+  source read gives the opening day. The paper on it (arXiv 1912.04211) is dated 2019-12-05.
+release_venue: IJCNN 2019
+release_venue_source: src-l2rpn-chalearn-competitions
+release_venue_quote: After a successful first competition at IJCNN 2019 on a reduced version of our
+  proposed challenge, two new competitions will run this year 2020 at WCCI and NeurIPS.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/energy-systems
+domain_basis:
+  reason: The scored act is operating a power transmission grid, which the subdomain's definition
+    names ("optimising energy generation, demand or grid operation"), and the family admits an
+    energy control task as its own example (smart-buildings-challenge). games-planning was weighed,
+    since scores come from episodes against an environment that responds, but none of its leaves
+    fits a grid simulator and the taxonomy places operated energy systems here.
+  source: src-arxiv-2103-03104-v2
+  quote: The goal of this competition was to control a power network to maintain a supply of
+    electricity to consumers on the network over a given time horizon by avoiding a blackout.
+domain_considered_and_rejected:
+  - term: engineering-design/process-control-optimization
+    reason: The leaf names controlling an industrial process, but its family's exclusion test sends
+      a system that is operated rather than designed elsewhere, and its near miss is
+      smart-buildings-challenge, operating a building's energy system. The engineering-design
+      scoping survey left L2RPN as a boundary decision.
+  - term: robotics-embodiment/sim2real-transfer
+    reason: The agent acts through a simulator, but on a grid's topology and generators, with no
+      body; robotics-embodiment's exclusion test covers environments without one.
+capability:
+  - optimization
+  - long-horizon-execution
+  - adversarial-robustness
+  - distribution-shift-generalization
+capability_basis:
+  optimization:
+    reason: The ranked quantity is the scenario's operational cost (energy losses, redispatching and
+      the cost of a blackout), normalised per scenario, and 20 of the 100 points reward lowering it
+      beyond merely surviving. The 2022 score keeps the same three costs.
+    source: src-arxiv-2103-03104-v2
+    quote: The score per scenario was based on the cumulative network operational cost
+  long-horizon-execution:
+    reason: One scored episode is a week of 2,016 five-minute steps (2019's were one to three days),
+      the agent acts on state its own earlier actions produced (topology, cooldowns), and a game
+      over ends the scenario with the blackout's cost, so full success is out of reach after it.
+    source: src-arxiv-2103-03104-v2
+    quote: Environments are episodic, running at 5-minute resolution over a week (2016 timesteps).
+  adversarial-robustness:
+    reason: In the NeurIPS 2020 robustness track an automated opponent picks lines to disconnect
+      among the most loaded, and the score is how well the agent keeps the grid running through the
+      attacks; the ICAPS 2021, WCCI 2022 and 2023 environments keep an opponent, which in 2023
+      attacks three areas at once.
+    source: src-arxiv-2103-03104-v2
+    quote: The opponent was heuristically designed, disconnecting one of the most loaded lines at
+      random times
+  distribution-shift-generalization:
+    reason: The NeurIPS 2020 adaptability track trained on five known energy-mix distributions (10%
+      to 30% renewables) and tested on unknown ones, one slightly outside the training range, with
+      the task and score unchanged; only the inputs move.
+    source: src-arxiv-2103-03104-v2
+    quote: At test time however, the agents had to respond to unknown energy mix distributions
+      within the 1x-3x range.
+capability_considered_and_rejected:
+  - term: planning
+    reason: Winning agents planned action sequences and the retrospective credits that ability, but
+      the benchmark claims to score grid operation, not plans; the score is the episode's cost and
+      survival. A reviewer reading the episode as the plan could tag it (planning's
+      interactive-episode clause).
+  - term: sensorimotor-control
+    reason: Closed-loop control, but of a power grid through a symbolic action interface; there is
+      no body.
+  - term: calibration-uncertainty
+    reason: The ICAPS 2021 edition scored alarms raised before a failure, a confidence signal, but
+      only in that edition; the series' score does not consume a stated probability.
+    source: src-arxiv-2504-08210-v2
+    quote: the agent can raise an alarm when the assistance of an operator is needed due to a risk
+      of failure
+  - term: transfer-learning
+    reason: The adaptability track moves the energy mix while the task, action space and score stay
+      the same, which the taxonomy sends to distribution-shift-generalization.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Each episode runs in the grid simulator and is scored on a bounded scale against fixed
+    anchors, the do-nothing agent at 0 and a completed scenario at 80, with -100 for an immediate
+    blackout and a time cap that scores -100 beyond it; the leaderboard averages the scenarios.
+  source: src-arxiv-2103-03104-v2
+  quote: '[-100,0,80,100] = [initial blackout, do-nothing agent score, scenario completed, additional
+    20%operational cost optimization]'
+evaluation_method_considered_and_rejected:
+  - term: episodic-return
+    reason: Participants design their own training rewards, but the ranked score is rescaled to a
+      bounded range per scenario, which the term's exclusion test sends to simulation-rollout.
+  - term: domain-metric
+    reason: Operational cost in money is a power-system quantity, but the headline is its normalised
+      per-scenario score against the do-nothing baseline, which simulation-rollout's inclusion test
+      names (efficiency against a baseline under a cap).
+  - term: composite
+    reason: The 2022 score averages three costs that share one unit and one method; ICAPS 2021 added
+      an alarm score, which belongs to that edition only.
+designed_for_subjects:
+  - rl-policy
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The series was built to bring reinforcement learning to grid operation, and most winners
+    are RL agents, but expert systems and optimisation agents enter on the same score and place high
+    (the second of the 2020 adaptability track, and the second and third of 2022 per the survey,
+    used no learning).
+  source: src-arxiv-2103-03104-v2
+  quote: This sets bounds on the added value of Machine Learning on those problems.
+designed_for_subjects_considered_and_rejected:
+  - term: multi-agent-system
+    reason: Artelys's 2023 entry combined specialised agents, but the environment is single-agent
+      and each team submits one controller.
+    source: src-artelys-l2rpn-2023-report
+    quote: Our solution is based on a multi-agent cooperation framework where specialised agents
+      based on different technologies (Reinforcement Learning, Optimisation and Expert System)
+  - term: human-expert
+    reason: Operators are the intended users of an AI assistant, and ICAPS 2021 scored alarms for
+      them, but no human is scored.
+
+as_used:
+  - protocol: Self-run evaluation on the 2022 edition's test environment, which RTE has provided
+      since the competition (52 weekly scenarios), over 20 random seeds, reporting the L2RPN 2022
+      score's mean, median and quartiles beside survival time; agents trained on the public
+      environment data.
+    split: WCCI 2022 test environment (52 scenarios)
+    source: src-arxiv-2503-15190-v2
+    quote: The test environment comprises 52 scenarios, each spanning 2016 time steps.
+    note: ECML 2025 (arXiv 2503.15190 v2). The scenarios are no longer hidden from the entrant, so
+      these scores are not blind as the competition's were.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on its environments and score. A 2025 ECML paper reports the
+    L2RPN 2022 score on the 2022 test environment, a 2025 survey compares methods across the
+    editions, and RL2Grid (2025) builds its tasks on the same Grid2Op environments. The Grid2Op
+    repository was last pushed on 2026-11-01 (GitHub API), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2503-15190-v2
+  quote: In this work, we utilize the L2RPN WCCI 2022 environment
+activity: between-rounds
+activity_note: The last editions found ran in 2023 (Ile-de-France; TU Delft's re-run of 2022). The
+  2022 competition's legacy phase closed on 2023-07-31, and CodaLab, where every edition and the
+  post-competition NeurIPS 2020 boards ran, was phased out at the end of 2025;
+  competitions.codalab.org did not answer on 2026-11-04. No source read announces a further edition
+  or declares the series ended.
+activity_basis:
+  reason: The series runs in editions, the latest results read are out, no phase is open, and no
+    standing leaderboard takes entries now that CodaLab is gone.
+  source: src-codabench-docs-codalab-in-2025
+  quote: CodaLab Competitions and its main servers were finally phased out at end of 2025
+events:
+  - name: L2RPN Delft 2023, a re-run of the WCCI 2022 competition for students and researchers in
+      the Netherlands, 7 June to 1 September 2023
+    kind: online-challenge    # organised by TU Delft's AI Energy Lab, co-facilitated by RTE, on the 2022 environment
+    source: src-tudelft-l2rpn-delft-2023
+    quote: The L2RPN Delft 2023 is a remake of L2RPN-WCCI 2022 competition and is co-facilitated by
+      RTE
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Baidu's RL agent (team RL_agent), PARL policy trained by evolutionary black-box
+      optimisation over a reduced action set
+    source: src-arxiv-2103-03104-v2
+    observed_on: 2026-11-04
+    quote: This team of experienced RL researchers from Baidu won both tracks.
+    note: Winner of both NeurIPS 2020 tracks; the retrospective's final leaderboard puts it at 59.26
+      (robustness) and 51.06 (adaptability).
+  - system: SoftGNN90% N-1 (graph-based soft-label imitation learning)
+    source: src-arxiv-2503-15190-v2
+    observed_on: 2026-11-04
+    quote: achieved the highest overall performance with a mean L2RPN score of 44.43
+    note: Self-run on the 2022 test environment (as_used), not a competition entry.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The score is computed from the agent's own episode as the simulator plays
+  it (AC power flow through Grid2Op's backend, pandapower by default), on the organisers' hidden
+  scenarios; there is no reference answer.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: Each edition's official scores came from hidden test scenarios run by the organisers on
+    CodaLab, now phased out. The simulator and training environments are open, and the 2022 test
+    environment is now used by others, so a third party can rerun the 2022 protocol but not the
+    other editions' rankings.
+  source: src-arxiv-2207-10330-v1
+  quote: RL agents capable of controlling the power network will be blind tested on the platform
+    with new scenarios not known to the participants.
+
+task:
+  exists: true
+  input:
+    - at every five-minute step, the complete observed state of the grid -- flows and usage of each
+      line, production and consumption at each node, topology, line disconnection and maintenance
+      durations -- and a simulate() call to test an action on the current state
+  output: One action per step, possibly none -- topology changes (bus splitting, line switching) and
+    generator redispatching, and from 2022 renewable curtailment and storage -- within the rules on
+    how often and how much may change at once.
+  scoring: Per scenario, the episode's operational cost normalised to [-100, 100] (-100 immediate
+    blackout, 0 the do-nothing agent, 80 a completed scenario, 100 a further 20% saving); the
+    leaderboard averages the hidden test scenarios (24 weekly scenarios per NeurIPS 2020 track)
+    under a run-time cap (20 minutes in 2019, 30 in 2020). The 2019 edition scored line margins
+    instead.
+  tests_hidden_from_system: true
+  item_definition: One scenario, a week of five-minute steps (2,016) from 2020 on, played until it
+    ends or a game over.
+  item_definition_source: src-arxiv-2103-03104-v2
+  item_definition_quote: The Game Over condition is triggered if total demand is not met anymore,
+    that is if some consumption is lost at a substation.
+  source: src-arxiv-2103-03104-v2
+  quote: Participants were evaluated over 24 independent weekly test scenarios, 2 over each month of
+    the year.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The private scenarios and the code submission go together here; the server runs each
+    submitted agent on them (governance.submission_process, sandboxed-rerun).
+  access_basis:
+    reason: The headline rankings were computed on scenarios that never left the organisers, by
+      running each submitted agent on them.
+    source: src-arxiv-2103-03104-v2
+    quote: computed during an automatic test phase on a new but similar hidden dataset
+  access_by_phase:
+    during_edition: The training environments (years of generated chronics) and the simulator are
+      public; the validation and test scenarios stay on the organisers' server, which runs the
+      submitted agents.
+    after_edition: For 2022, RTE provides the test environment, which later papers score on; for the
+      other editions no source read says whether the test scenarios were released.
+    after_edition_source: src-arxiv-2503-15190-v2
+    after_edition_quote: We evaluate our agents using the test environment of the 2022 challenge
+      [20] provided by RTE France.
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: Each edition brings a new grid, new generated scenarios or new rules, and ranks on test
+      scenarios of its own; Delft 2023 reused 2022's environment and is recorded as an event.
+    source: src-l2rpn-chalearn-competitions
+    quote: maintenance events and redispatching actions are successively introduced, while the grid
+      size increases
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: The scenarios (chronics) are generated time series of consumption, renewable
+    and conventional production and maintenance, drawn from RTE studies (Chronix2Grid from 2022), on
+    modified IEEE test grids; the episodes are played by the power-flow simulator.
+  data_provenance_source: src-arxiv-2103-03104-v2
+  data_provenance_quote: Realistic production and consumption scenarios were generated for the
+    network.
+  contamination_risk: low
+  contamination_risk_note: During each edition the test scenarios never left the organisers and
+    agents were run on them as submitted code, with validation and test drawn from the same
+    generator; there is no route from them to an agent's training. After the editions some test
+    environments are public (2022's), so later self-run results on them are not blind (as_used);
+    that is a protocol change, not contamination of the competition scores.
+  contamination_risk_source: src-arxiv-2103-03104-v2
+  contamination_risk_quote: computed during an automatic test phase on a new but similar hidden
+    dataset
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The normalised score tops out at 100 per scenario. No measured ceiling exists for the
+      editions from 2020; some scenarios may be infeasible and no one knows which in advance. The
+      2019 paper's oracle upper bound applies to that edition's different score only.
+    source: src-arxiv-2103-03104-v2
+    quote: Without any ground-truth, it is often hard apriori to know for some cases if they will
+      indeed be feasible
+  dataset_licence: null
+  dataset_licence_note: No source read states a licence for the environments' scenario data as
+    distinct from the Grid2Op code, which is MPL-2.0 (execution.code_licence).
+  size:
+    - count: 24
+      unit: weekly test scenarios per track
+      subset: NeurIPS 2020 (robustness, adaptability)
+      source: src-arxiv-2103-03104-v2
+      quote: Participants were evaluated over 24 independent weekly test scenarios, 2 over each
+        month of the year.
+    - count: 10
+      unit: secret test scenarios
+      subset: 2019 (IJCNN)
+      source: src-arxiv-1912-04211-v1
+      quote: participants were assessed on new 10 secret test scenarios similarly chosen
+    - count: 52
+      unit: weekly test scenarios of the released test environment
+      subset: WCCI 2022
+      source: src-arxiv-2503-15190-v2
+      quote: The test environment comprises 52 scenarios, each spanning 2016 time steps.
+    - count: 32
+      unit: years of training scenarios at five-minute resolution
+      subset: WCCI 2022 training environment
+      source: src-arxiv-2207-10330-v1
+      quote: we have generated 32 years of scenarios that are available to participants to train
+        their agents
+    - count: 832
+      unit: weekly training scenarios (16 years)
+      subset: 2023 Ile-de-France environment (l2rpn_idf_2023)
+      source: src-readthedocs-grid2op-available-envs
+      quote: It comes with 16 years worth of data, 1 year being divided in 52 weeks so 16 x 52 = 832
+        different scenarios
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: RTE (Reseau de Transport d'Electricite), the French transmission system operator,
+    through its AI lab, which designs each edition and develops Grid2Op; ChaLearn and partners
+    co-organise
+  maintainer_basis:
+    reason: The retrospective's and the 2022 design's authors are largely at RTE, the series' site
+      and environments are RTE's, Grid2Op's copyright is RTE's, and third parties describe RTE as
+      running the competition. ChaLearn co-organised and hosts the site; TU Delft ran the 2023 Delft
+      re-run with RTE.
+    source: src-artelys-l2rpn-2023-report
+    quote: French TSO, is animating the L2RPN competition (Learning to Run a Power Network)
+  maintainer_type: industry-lab
+  maintainer_type_note: RTE is a company (a state-owned transmission operator), not a public body,
+    so government-agency does not apply. Grid2Op now sits in its own Grid2op GitHub organisation
+    rather than rte-france (history); who holds it there was not read.
+  submission_process:
+    - sandboxed-rerun
+  submission_process_note: Participants submit their agent's code, which the CodaLab server runs on
+    the hidden scenarios to produce the ranked score; the feedback phase showed per-scenario
+    survival on validation scenarios. The 2019 winners had to open-source their code to receive the
+    prize, a condition of the prize, not of the ranking, so open-source-gated is not tagged.
+  submission_process_source: src-arxiv-2103-03104-v2
+  submission_process_quote: Participants had to submit code that could be executed on the evaluation
+    server, which is not an easy process.
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-arxiv-2103-03104-v2
+      quote: We thank our sponsors RTE, EPRI, Google Research, IQT Labs and UCL Energy Institute for
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2207-10330-v1
+      quote: RL agents capable of controlling the power network will be blind tested on the platform
+        with new scenarios not known to the participants.
+  independence_flags_note: >
+    The NeurIPS 2020 prizes ($30,000 over both tracks) were financed by sponsors including Google Research
+    and RTE; the 2022 competition offered $5,000, sponsor not read. The organisers publish baselines (an
+    expert system, a PPO agent in 2022) that sit beside the entrants but are not ranked for prizes, so
+    maintainer-competes-on-own-benchmark is not tagged. Artelys, a Grid2Op contributor by its own account,
+    reports ranking first in the 2023 Ile-de-France edition.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2103-03104-v2
+    quote: We thank our sponsors RTE, EPRI, Google Research, IQT Labs and UCL Energy Institute for
+  participation:
+    source: src-arxiv-2103-03104-v2
+    quote: attracting over 300 participants worldwide
+  known_limitation:
+    source: src-arxiv-2503-23101-v2
+    quote: Every competition relied on different time series, making effective comparisons far from
+      trivial.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs Grid2Op and a power-flow backend; the 2020 evaluation capped an
+    agent's run over the test scenarios at 30 minutes. Training is the entrant's own (the 2020
+    winner trained on 500 cores).
+  compute_tier_basis:
+    reason: Scoring an agent means playing its episodes through the grid simulator, whatever the
+      agent.
+    source: src-github-grid2op-readme
+    quote: Grid2Op relies on an open source powerflow solver
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The official edition scores need hidden scenarios that only the organisers held and ran;
+      the 2022 test environment, now available, makes that edition's protocol reproducible
+      (automatable-with-simulator) but not its blind ranking.
+    source: src-arxiv-2103-03104-v2
+    quote: computed during an automatic test phase on a new but similar hidden dataset
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: Grid2Op (its environments per edition, the Runner, and the L2RPN baselines), with each
+    edition's starting kit on CodaLab
+  harness_source: src-github-grid2op-readme
+  harness_quote: how to use the `Runner` class to assess how well an agent is performing rapidly
+  submission_channel:
+    source: src-arxiv-2103-03104-v2
+    quote: The competition eventually ran smoothly on Codalab competition platform
+  code_licence: MPL-2.0
+  code_licence_note: Grid2Op's README; GitHub's licence metadata for Grid2op/grid2op (read
+    2026-11-04) agrees. The 2019 edition ran on pypownet, whose licence was not read.
+  code_licence_source: src-github-grid2op-readme
+  code_licence_quote: This Source Code is subject to the terms of the Mozilla Public License (MPL)
+    v2
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulation-rollout x rl-policy, and classical-algorithm): the run-time budget,
+  # which caps search-heavy agents (20 minutes in 2019, 30 in 2020, beyond which the score is -100), and what the
+  # agent was trained on, since training with the opponent changed robustness results (the retrospective's WCCI/
+  # NeurIPS comparison). The edition, track and environment name (l2rpn_neurips_2020_track1, l2rpn_wcci_2022, ...)
+  # go under subset_used, and the Grid2Op version and backend under simulator and simulator_version.
+  material_extra:
+    - wall_clock_hours
+    - training_data_policy
+aggregation_policy: official-aggregate
+aggregation_policy_note: Per track and edition; no score spans tracks or editions.
+aggregation_policy_basis:
+  reason: The organisers average the per-scenario scores into one leaderboard score for each track.
+  source: src-arxiv-2103-03104-v2
+  quote: The leaderboard score was the average score over all 24 scenarios.
+
+secondary_axes:
+  - latency
+secondary_axes_basis:
+  reason: The 2019 leaderboard reported each agent's computation time beside its score, and every
+    edition read caps run time, so slow search-based agents trade score against time.
+  source: src-arxiv-1912-04211-v1
+  quote: 1a Final leaderboard of the L2RPN competition with cumulated scores and computation time
+
+homepage: https://l2rpn.chalearn.org/
+repository: https://github.com/Grid2op/grid2op
+dataset_url: https://grid2op.readthedocs.io/en/latest/available_envs.html
+
+versions:
+  - version: '2019'
+    label: L2RPN 2019 (IJCNN 2019)
+    version_kind: edition
+    changes: The first competition, six weeks from May 2019 on CodaLab, on the IEEE 14-bus grid with
+      wind and solar added, on the pypownet platform. Topology actions only, no maintenance or
+      contingencies; scored on line margins over 10 hidden scenarios of one to three days, under a
+      20-minute budget.
+    breaking: true
+    superseded_by: 2020-wcci
+    frozen: true
+    sources:
+      - src-arxiv-1912-04211-v1
+      - src-l2rpn-chalearn-competitions
+  - version: 2020-wcci
+    label: L2RPN WCCI 2020
+    version_kind: edition
+    changes: Grid2Op replaces pypownet; a 36-substation part of the IEEE 118-bus grid (59 lines, 22
+      generators, 37 loads), a year of scenarios with maintenance, and redispatching actions. The
+      environment is l2rpn_wcci_2020.
+    breaking: true
+    supersedes_version: '2019'
+    superseded_by: 2020-neurips
+    frozen: true
+    sources:
+      - src-readthedocs-grid2op-available-envs
+      - src-arxiv-2504-08210-v2
+      - src-l2rpn-chalearn-competitions
+  - version: 2020-neurips
+    label: L2RPN NeurIPS 2020, "in a sustainable world"
+    version_kind: edition
+    released: 2020-07-08
+    changes: Two tracks (subsets). Robustness, on the 36-substation grid with an opponent attacking
+      loaded lines (l2rpn_neurips_2020_track1); adaptability, on the full 118-substation grid over
+      five energy mixes of 10% to 30% renewables, tested on unseen ones (l2rpn_neurips_2020_track2).
+      The cost-based score normalised to [-100, 100] over 24 weekly test scenarios per track, with a
+      30-minute cap. Over 300 participants; winners announced on 30 October 2020.
+    breaking: true
+    supersedes_version: 2020-wcci
+    superseded_by: 2021-icaps
+    frozen: true
+    sources:
+      - src-arxiv-2103-03104-v2
+      - src-l2rpn-chalearn-competitions
+      - src-readthedocs-grid2op-available-envs
+  - version: 2021-icaps
+    label: L2RPN with trust (ICAPS 2021)
+    version_kind: edition
+    released: 2021-06-25
+    changes: The robustness track's 36-substation grid with maintenance and attacks, plus alarms the
+      agent raises for a human operator before a failure, scored by area and limited by an attention
+      budget. Winners announced on 10 October 2021. The environment is l2rpn_icaps_2021.
+    breaking: true
+    supersedes_version: 2020-neurips
+    superseded_by: 2022-wcci
+    frozen: true
+    sources:
+      - src-l2rpn-chalearn-competitions
+      - src-arxiv-2504-08210-v2
+      - src-readthedocs-grid2op-available-envs
+  - version: 2022-wcci
+    label: L2RPN 2022, Energies of the Future and Carbon Neutrality (WCCI 2022)
+    version_kind: edition
+    released: 2022-06-15
+    changes: A near carbon-free 2050 energy mix (under 3% fossil) generated with Chronix2Grid on the
+      118-substation grid (186 lines, 91 loads, 62 generators) with 7 batteries; curtailment and
+      storage actions added; the score averages the costs of losses, operation and blackout.
+      Development phase from 5 July, test phase from 14 September, and a legacy phase from 1 October
+      2022 to 31 July 2023. Won by AlphaZero-2022 per the survey. The environment is
+      l2rpn_wcci_2022.
+    breaking: true
+    supersedes_version: 2021-icaps
+    superseded_by: 2023-idf
+    frozen: true
+    sources:
+      - src-arxiv-2207-10330-v1
+      - src-codalab-lisn-l2rpn-2022
+      - src-arxiv-2504-08210-v2
+      - src-readthedocs-grid2op-available-envs
+  - version: 2023-idf
+    label: L2RPN 2023, Paris Region AI Challenge for Energy Transition
+    version_kind: edition
+    changes: Funded by the Ile-de-France region; the 118-substation grid adapted to a possible 2035
+      French energy mix (99 loads), 12-step-ahead forecasts, and an opponent that attacks three
+      lines in three areas at once, with the agent allowed one action per area. Artelys reports
+      ranking first. The environment is l2rpn_idf_2023; the competition's own page, dates and
+      scoring were not read.
+    breaking: true
+    supersedes_version: 2022-wcci
+    frozen: true
+    sources:
+      - src-readthedocs-grid2op-available-envs
+      - src-artelys-l2rpn-2023-report
+versions_note: The 2023 edition is recorded from Grid2Op's environment documentation and an
+  entrant's report only; its CodaLab or Codabench page was not found. The 2022 design paper calls
+  2022 the fourth edition, which counts the two 2020 competitions as one; this entry lists each
+  competition.
+
+subsets:
+  - id: l2rpn#neurips-2020-robustness
+    label: NeurIPS 2020, Robustness track (l2rpn_neurips_2020_track1)
+    items: 24
+    capability_override:
+      - optimization
+      - long-horizon-execution
+      - adversarial-robustness
+    evidence:
+      - source: src-arxiv-2103-03104-v2
+        quote: The opponent was heuristically designed, disconnecting one of the most loaded lines
+          at random times
+    notes: The 36-substation grid (59 lines, 22 generators, 37 loads) with an opponent; ranked on
+      its own leaderboard.
+  - id: l2rpn#neurips-2020-adaptability
+    label: NeurIPS 2020, Adaptability track (l2rpn_neurips_2020_track2)
+    items: 24
+    capability_override:
+      - optimization
+      - long-horizon-execution
+      - distribution-shift-generalization
+    evidence:
+      - source: src-arxiv-2103-03104-v2
+        quote: Note that mix04 was slightly out of training distribution range (10-30% renewables),
+          testing for an additional extrapolation capability
+    notes: The full 118-substation grid (186 lines, 62 generators, 99 loads), no opponent; ranked on
+      its own leaderboard.
+subsets_note: Only the NeurIPS 2020 tracks are recorded as subsets; the other editions had one track
+  each and are versions only. ICAPS 2021 ran separate leagues on CodaLab whose pages were not read.
+
+history:
+  - event: repository-moved
+    field: repository
+    from: github.com/rte-france/Grid2Op
+    to: github.com/Grid2op/grid2op
+    source: src-arxiv-2103-03104-v2
+    quote: Grid2op package https://github.com/rte-france/Grid2Op
+    note: Undated. The retrospective links rte-france/Grid2Op; on 2026-11-04 the GitHub API
+      redirected that repository to Grid2op/grid2op, whose README the entry reads.
+  - date: 2023-07-31
+    event: channel-closed
+    field: execution.submission_channel
+    from: The 2022 competition's legacy phase on CodaLab's LISN server (competition 5410)
+    source: src-codalab-lisn-l2rpn-2022
+    quote: Competition Ends July 31, 2023, midnight UTC
+  - date: 2025-12
+    event: channel-closed
+    field: execution.submission_channel
+    from: CodaLab Competitions, which hosted every edition and the NeurIPS 2020 tracks kept open as
+      benchmarks after the competition
+    source: src-codabench-docs-codalab-in-2025
+    quote: CodaLab Competitions and its main servers were finally phased out at end of 2025
+    note: The home page had said the NeurIPS 2020 competition "keeps running as a benchmark" on
+      competitions.codalab.org, which did not answer on 2026-11-04.
+
+tags:
+  - power-grid
+  - grid-operation
+  - reinforcement-learning
+  - topology-control
+  - competition
+  - grid2op
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2103-03104-v2
+    - src-arxiv-1912-04211-v1
+    - src-arxiv-2207-10330-v1
+    - src-l2rpn-chalearn-site
+    - src-l2rpn-chalearn-competitions
+    - src-github-grid2op-readme
+    - src-readthedocs-grid2op-available-envs
+    - src-codalab-lisn-l2rpn-2022
+    - src-tudelft-l2rpn-delft-2023
+    - src-artelys-l2rpn-2023-report
+    - src-codabench-docs-codalab-in-2025
+    - src-arxiv-2504-08210-v2
+    - src-arxiv-2503-15190-v2
+    - src-arxiv-2503-23101-v2
+  sources_note: >
+    The six arXiv PDFs (DOIs, not archived) were read as text, their extracts kept clear of the authors'
+    e-mail addresses and of participants' handles in the leaderboards; their abstract pages were read
+    for dates, venues and licences and are not quoted Sources. The L2RPN site's pages, the CodaLab, TU
+    Delft, Artelys and Codabench pages and the Grid2Op documentation were read with scripts and styles
+    stripped; the README at a pinned commit. All non-DOI Sources are pending archiving. The extracts were
+    built with the extract builder's windowing done on offsets mapped back from the casefolded text, because
+    the PDFs' ligatures shift raw offsets (see the report). Evidence of current use is the 2025 ECML paper,
+    with the 2025 survey and RL2Grid beside it; no 2026 paper was found in a short search.
+  confidence: medium
+  review_checks:
+    - check: Domain. earth-climate/energy-systems rests on the subdomain's "grid operation" and the
+        family's smart-buildings-challenge example. games-planning's inclusion test (episodes
+        against a responding environment) also fits literally, and the engineering-design scoping
+        survey listed L2RPN as a boundary case with process-control-optimization. Confirm the home.
+      field: domain
+    - check: Identity. The entry is the series, with editions as versions, the NeurIPS 2020 tracks
+        as subsets and Delft 2023 as an event. Grid2Op could be argued a separate benchmark (RL2Grid
+        and others build on it), and the editions differ enough (grid, actions, score) to be entries
+        of their own.
+      field: versions
+    - check: The 2023 Ile-de-France edition is recorded from Grid2Op's docs and Artelys's report
+        alone; its dates, scoring, winners and platform were not read. The survey says the 2023
+        repeat of the 2022 competition (Delft) was won by another team, with Artelys second, which
+        may be the Delft event rather than the Ile-de-France edition. No edition after 2023 was
+        found.
+      field: versions
+      source: src-arxiv-2504-08210-v2
+      quote: The competition of [33] was repeated in 2023 [36]
+    - check: activity between-rounds assumes the series may recur; with CodaLab gone and nothing
+        since 2023, closed could be argued if the organisers have ended it. released is null because
+        no source gives the 2019 opening day.
+      field: activity
+    - check: capability. adversarial-robustness and distribution-shift-generalization each rest on
+        one NeurIPS 2020 track (carried as subset capability_overrides); later environments keep an
+        opponent. planning was rejected because the source does not claim to score plans.
+      field: capability
+    - check: data.access is private-test-server for the editions' blind rankings, but RTE now
+        provides the 2022 test environment and later papers score on it; whether other editions'
+        test scenarios are public was not established. reproducible_by_third_party false follows the
+        editions, not the post-competition protocol.
+      field: data.access
+    - check: ceiling_anchor_type theoretical-maximum takes the normalised score's top of 100; no
+        entrant has come near it (the 20 cost-optimisation points went unclaimed in 2020), and some
+        scenarios may be infeasible.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2103-03104-v2
+      quote: But none won those points
+    - check: maintainer_type industry-lab for RTE, a state-owned company; ChaLearn (a nonprofit)
+        co-organises and hosts the site, and Grid2Op has moved to its own GitHub organisation,
+        possibly under another holder.
+      field: governance.maintainer_type
+    - check: The 2019 edition scored line margins with a different function and on pypownet; the
+        entry's task and evaluation describe the 2020-on cost-based score. Whether 2019 belongs in
+        the series entry as an edition, rather than as a predecessor, is a judgement.
+      field: task.scoring
