@@ -1,0 +1,676 @@
+# data/benchmarks/biology-genetics/runs-n-poses.yaml
+#
+# P1-S5-T05, biology-genetics entry 13.
+# Filled from the release paper as published, Skrinjar et al., "Evaluating generalization in protein-ligand
+# cofolding methods", Nature Structural & Molecular Biology 33, 782-794 (2026), read as the text of its open-access
+# PDF (the bioRxiv preprint 10.1101/2025.02.03.636309 answered 429 to an automated fetch, so its full text was not
+# read; bioRxiv's API record was read for its three versions and its link to the journal DOI); the repository
+# README and LICENSE at commit 197fafc (2025-08-13); Zenodo's API records of three of the dataset's six deposits
+# (the first, 2025-02-03; the August 2025 re-issue; the newest, 2026-01-25); the Polaris benchmark page; and the
+# v2 PDF of Pearl (arXiv 2510.24670, October 2025), a co-folding paper that reports on the benchmark. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: runs-n-poses
+name: Runs N' Poses
+aliases:
+  - Runs N Poses
+  - RnP
+tagline: Protein-ligand co-folding on 2,600 post-cutoff PDB systems, scored per bin of similarity to
+  the training set.
+description: >
+  A benchmark dataset for protein-ligand co-folding from the Schwede lab at the University of Basel's
+  Biozentrum and the SIB Swiss Institute of Bioinformatics. It was built by running the PLINDER pipeline
+  over X-ray PDB entries released between 30 September 2021, the training cutoff the evaluated methods
+  share, and 9 January 2025. Filters on structure quality and interaction statistics, then one system
+  per redundancy cluster, leave 2,600 systems with 3,047 proper ligands (not ions or artefacts). A method
+  gets each system's protein sequences, ligand SMILES and the released MSAs, and predicts the complex.
+  Each proper ligand is scored with OpenStructure, and it succeeds if its binding-site superposed, symmetry-corrected
+  RMSD is under 2 Å and its LDDT-PLI is over 0.8. PoseBusters validity, LDDT-LP and pocket F1 are reported
+  beside the success rate. The point is stratification. Every system carries its similarity to the closest
+  training system before the cutoff (SuCOS ligand-pose overlap times pocket coverage), and results are
+  read across eight similarity bins. A Parquet file of similarities to the whole PDB lets a later cutoff
+  be applied, such as Boltz-2's 1 June 2023 (1,028 systems). The release paper ran AlphaFold3, Boltz-1,
+  Chai-1 and Protenix (with Boltz-1x, Boltz-2 and RoseTTAFold All-Atom beside them) and found that accuracy
+  tracks similarity to training, which it reads as memorisation of ligand poses. Polaris hosts an ML-ready
+  preview of 2,073 of the systems, which takes no submissions. Unlike PoseBusters, a time split whose
+  complexes the paper finds mostly similar to training, Runs N' Poses measures that similarity for every
+  system.
+self_description:
+  source: src-github-runs-n-poses-readme
+  quote: This benchmark tests the ability of protein-ligand co-folding methods to generalize to
+    systems different from those in their training set.
+paper:
+  title: Evaluating generalization in protein–ligand cofolding methods
+  doi: 10.1038/s41594-026-01797-5
+  source: src-nature-s41594-026-01797-5
+paper_note: The journal version (published 2026-05-08) of the bioRxiv preprint "Have protein-ligand
+  co-folding methods moved beyond memorisation?" (10.1101/2025.02.03.636309; v1 2025-02-07, v3
+  2025-08-04), whose bioRxiv record links this DOI. The preprint's full text was not read
+  (review_checks).
+paper_source: src-biorxiv-api-2025-02-03-636309
+paper_quote: '"date":"2025-08-04","version":"3"'
+released: 2025-02-03
+released_note: The first Zenodo deposit of the dataset, the day the repository was created (GitHub
+  API) and the Polaris benchmark's creation date. The preprint's first version was posted on
+  2025-02-07.
+released_source: src-zenodo-14794786
+released_quote: '"publication_date": "2025-02-03"'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/protein-ligand-cofolding
+domain_basis:
+  reason: The scored quantity is the pose of a small molecule bound to a protein, predicted jointly
+    with the protein and scored against the deposited structure, which the leaf's inclusion test
+    covers. The leaf names runs-n-poses as its example, and both family exclusion tests keep a bound
+    pose in biology-genetics.
+  source: src-nature-s41594-026-01797-5
+  quote: Therefore, we define the success rate as a combination of LDDT-PLI (>0.8) and ligand pose
+    r.m.s.d. (<2 Å)
+domain_considered_and_rejected:
+  - term: biology-genetics/protein-structure-prediction
+    reason: The protein is predicted too, and LDDT-LP and pocket F1 are reported for it, but the
+      success rate is defined on the ligand's pose and its contacts, and the paper finds the
+      proteins well modelled across bins.
+  - term: biology-genetics/drug-target-interaction
+    reason: No binding strength is predicted; only the structure of the complex is scored.
+  - term: chemistry-materials/experimental-hit-finding
+    reason: No compound is nominated or assayed. The ground truth is a deposited crystal structure.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Methods predict the 3D structure of a protein-ligand complex from sequence and SMILES,
+      and the prediction is scored against the experimental structure.
+    source: src-nature-s41594-026-01797-5
+    quote: Therefore, we define the success rate as a combination of LDDT-PLI (>0.8) and ligand pose
+      r.m.s.d. (<2 Å)
+  distribution-shift-generalization:
+    reason: Every system postdates the training cutoff, and results are reported per bin of
+      similarity to the closest training system, so the low-similarity bins are a condition of their
+      own. The task is unchanged; only the inputs' distance from training moves.
+    source: src-github-runs-n-poses-readme
+    quote: This benchmark tests the ability of protein-ligand co-folding methods to generalize to
+      systems different from those in their training set.
+capability_considered_and_rejected:
+  - term: constraint-satisfaction
+    reason: PoseBusters validity is reported beside the success rate, not required by it, so no
+      prediction fails the headline for breaking a constraint.
+  - term: generation-fidelity
+    reason: The output is a predicted structure of a physical system scored against measurement,
+      which the term's exclusion sends to scientific-prediction.
+  - term: spatial-reasoning
+    reason: The scored quantity is how closely a predicted complex reproduces the deposited one,
+      reconstruction accuracy that the term excludes.
+  - term: transfer-learning
+    reason: The task and its scoring are the same in every bin; only the inputs move, which the
+      distribution-shift term's inclusion test claims.
+
+evaluation_method:
+  - domain-metric
+  - constraint-check
+evaluation_method_basis:
+  reason: The headline is the field's own success criterion, a binding-site superposed ligand RMSD
+    under 2 Å with an LDDT-PLI over 0.8, computed per ligand by OpenStructure (domain-metric). The
+    PoseBusters battery is run on every predicted model, and the share passing all checks is
+    reported (constraint-check).
+  source: src-nature-s41594-026-01797-5
+  quote: on all predicted models, and report the number of systems that pass all default checks
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: The answer is a structure, not a number; the thresholds apply to distances computed from
+      it, which the taxonomy reads as domain-metric, as for posebusters.
+  - term: composite
+    reason: The success criterion is a per-ligand conjunction of two thresholds, not a weighted or
+      averaged combination of sub-scores.
+  - term: statistical-fit
+    reason: RMSD and LDDT-PLI are thresholded per ligand and the successes counted; Polaris's mean
+      LDDT-PLI is an average of the same domain metric, not an error statistic.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The benchmark is built for all-atom deep-learning co-folding models trained on the PDB,
+    and the release paper evaluates four of them.
+  source: src-nature-s41594-026-01797-5
+  quote: Here we present a comprehensive evaluation of four leading all-atom cofolding methods
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: The paper adds GLIDE-SP docking and a template-transplant baseline on a subset, each
+      with idealised assumptions (a ground-truth receptor or pocket, best of 25 poses), as reference
+      points rather than entrants.
+    source: src-nature-s41594-026-01797-5
+    quote: Thus, we do not aim for this analysis to be a head-to-head comparison of cofolding and
+      docking
+  - term: scientific-surrogate-model
+    reason: A co-folding model does not stand in for a solver or an assay; the reference is a
+      deposited crystal structure, as in casp and posebusters.
+  - term: task-specific-supervised-model
+    reason: The task is defined by structural biology and drug discovery, which the term's exclusion
+      sends to domain-specialist-model.
+
+as_used:
+  - protocol: Co-folding models scored on the systems released after 2023-06-01 (702 structures), so
+      that Boltz-2 can be compared, with success as RMSD under 2 Å with or without PB-validity, best
+      of 5 of 20 samples. The other methods' numbers come from the predictions the benchmark
+      released.
+    split: Systems released after 2023-06-01
+    source: src-arxiv-2510-24670-v2
+    quote: the public RnP and PoseBusters datasets were subsetted to structures released after
+      2023-06-01 and 2021-10-01, respectively
+    note: Pearl (Genesis Molecular AI, October 2025). Success drops LDDT-PLI from the benchmark's
+      criterion, and it is reported over the whole subset rather than per similarity bin. Pearl's
+      best is 85.2% (RMSD under 2 Å and PB-valid, best of 5).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it. An October 2025 co-folding paper reports success rates
+    on the benchmark and reuses its released predictions (as_used), the paper was published in May
+    2026, and DeCAF (arXiv 2606.08375, June 2026) names it in its abstract. The repository was last
+    pushed on 2025-08-13 and the dataset re-deposited on 2026-01-25.
+  source: src-arxiv-2510-24670-v2
+  quote: RnP provides publicly released metrics for all baselines in which we are interested; we
+    report results for all these baselines based on this data.
+activity: no-submission-channel
+activity_basis:
+  reason: The Polaris benchmark is a preview that its client cannot submit to, and its board lists
+    only the release paper's four methods. The repository offers data and scripts, with no
+    submission route.
+  source: src-polaris-runs-n-poses
+  quote: Interacting with it through the Polaris client is currently not possible.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: AlphaFold3 (v3.0.0)
+    source: src-nature-s41594-026-01797-5
+    observed_on: 2026-11-04
+    quote: Following the protocol of the PoseBusters benchmark conducted by the authors of
+      AlphaFold323, AlphaFold3 (v.3.0.0), Boltz-1 (v.0.4.1)
+  - system: Pearl
+    source: src-arxiv-2510-24670-v2
+    observed_on: 2026-11-04
+    quote: success rate is a 14.5% relative improvement over the next best models, AlphaFold 3
+      (74.4%) and Boltz-1x (74.3%)
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: X-ray crystal structures from the PDB, kept only if they pass PLINDER's
+  validation criteria (resolution at most 3.5 Å, R-factor and Rfree limits, all ligand and pocket
+  atoms resolved, no alternative configurations, clash outliers or crystal contacts for the ligand).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The inputs, ground truth, MSAs, every method's predictions and the similarity scores are
+    on Zenodo under CC BY 4.0, and the scoring scripts are in the repository.
+  source: src-nature-s41594-026-01797-5
+  quote: Scripts to recreate the figures in this manuscript, prepare inputs for the different
+    methods and evaluate predictions are available via GitHub
+
+task:
+  exists: true
+  input:
+    - a PLINDER system's protein sequences (every protein chain of the bioassembly) and the SMILES
+      of its ligands, with the MSAs the paper used for all methods
+  output: Predicted complex models; the paper takes 25 per system (5 seeds, 5 diffusion samples) and
+    scores the top-ranked by ligand-protein chain-pair iPTM, and the best of 25 beside it.
+  scoring: Per proper ligand, success if the binding-site superposed symmetry-corrected RMSD is
+    under 2 Å and LDDT-PLI over 0.8 (OpenStructure), reported as a success rate per bin of
+    SuCOS-pocket similarity to the closest training system, with PoseBusters validity, LDDT-LP and
+    pocket F1 beside it.
+  source: src-nature-s41594-026-01797-5
+  quote: Therefore, we define the success rate as a combination of LDDT-PLI (>0.8) and ligand pose
+    r.m.s.d. (<2 Å)
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Inputs, ground truth, MSAs, annotations and predictions are an open Zenodo download
+      under CC BY 4.0, and an ML-ready version is on Polaris.
+    source: src-nature-s41594-026-01797-5
+    quote: The dataset for benchmarking use is available via Zenodo
+  records_access: fully-open
+  records_access_basis:
+    reason: Every evaluated method's predicted models, accuracy scores, confidence scores and
+      PoseBusters results are released with the dataset, which is how Pearl reuses them.
+    source: src-nature-s41594-026-01797-5
+    quote: For each method, we provide the prediction CIF files, CSV files containing the prediction
+      accuracies
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The dataset is one Zenodo concept record with six deposits, each with its own DOI. The
+      ground-truth file has the same checksum in all of them; the annotations changed once (August
+      2025) and the PoseBusters results once (January 2026), each in a new deposit (versions).
+    source: src-zenodo-18366081
+    quote: '"relations": {"version": [{"index": 5, "is_last": true'
+  data_provenance:
+    - experimental-measurement
+  data_provenance_note: The ground truth is X-ray crystal structures selected from the PDB by the
+    authors' PLINDER-based filters. curated-public-database was considered, but PDB entries are raw
+    structures, not curated annotations, as in posebusters.
+  data_provenance_source: src-nature-s41594-026-01797-5
+  data_provenance_quote: We ran the PLINDER ingestion pipeline30 on all entries in the PDB19
+    released after 30 September 2021 up to 9 January 2025
+  contamination_risk: low
+  contamination_risk_note: Every system was released after the 30 September 2021 cutoff of the
+    methods the paper evaluates. For a model trained later, the route is stated and the protocol
+    closes it by keeping only systems released after that model's cutoff (Boltz-2's 1 June 2023
+    leaves 1,028), which 0.9.0's low test reads as closed by construction (the taxonomy's near miss
+    on high). Near-duplicate similarity to training is not contamination here but the measured
+    variable; the paper finds 75% of system ligands above 50 SuCOS-pocket similarity.
+  contamination_risk_source: src-github-runs-n-poses-readme
+  contamination_risk_quote: This is a zero-shot benchmark, provided that your method uses a
+    structural training cutoff of 30 September 2021.
+  contamination_evidence:
+    - source: src-nature-s41594-026-01797-5
+      stance: against
+      quote: We ran the PLINDER ingestion pipeline30 on all entries in the PDB19 released after 30
+        September 2021 up to 9 January 2025
+    - source: src-github-runs-n-poses-readme
+      stance: against
+      quote: Here is how you can obtain the systems to use and corresponding similarity scores for a
+        different training cutoff, with the example of the 1 June 2023 cutoff used by Boltz-2
+    - source: src-nature-s41594-026-01797-5
+      stance: supports
+      quote: 75% system ligands have >50 SuCOS–pocket similarity
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The success rate is bounded at 100%, and no source reports an oracle or human ceiling.
+      The Redocking baseline (GLIDE-SP into the ground-truth receptor and pocket) shows the systems
+      dockable in principle but is a method, best of 25 on a subset, not a measured ceiling.
+    source: src-nature-s41594-026-01797-5
+    quote: Therefore, we define the success rate as a combination of LDDT-PLI (>0.8) and ligand pose
+      r.m.s.d. (<2 Å)
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: Every Zenodo deposit is CC BY 4.0. The AlphaFold3 predictions in it are also
+    subject to the AlphaFold3 Output Terms of Use, which the record carries as its own files
+    (OUTPUT_TERMS_OF_USE.md and Legally_Binding_Terms_of_Use.txt).
+  dataset_licence_source: src-zenodo-18366081
+  dataset_licence_quote: '"license": {"id": "cc-by-4.0"}'
+  size:
+    - count: 2600
+      unit: protein-ligand systems (2,585 PDB entries; 4,282 ligands, 3,047 of them proper ligands)
+      subset: the full dataset, as filtered (the paper's Table 2)
+      source: src-nature-s41594-026-01797-5
+      quote: These filtering steps resulted in 2,600 systems used as inputs for the four prediction
+        methods (Table 2).
+    - count: 3047
+      unit: proper ligands (the scored unit; ions and artefacts excluded)
+      subset: the full dataset
+      source: src-nature-s41594-026-01797-5
+      quote: resulting in 3,047 proper ligands across all the analyzed systems
+    - count: 2579
+      unit: protein-ligand systems
+      subset: the annotations from the August 2025 deposit on (21 systems with nucleic-acid chains
+        in the pocket dropped)
+      note: The paper's Fig. 2b counts 2,579 systems for the 2021 cutoff and says why 21 were
+        dropped ("we chose to drop these 21 systems for the presented analysis"). The curator's
+        comparison of the two annotations.csv files found 2,600 systems in the first and 2,579 in
+        the August 2025 one.
+      source: src-nature-s41594-026-01797-5
+      quote: 2,579 2,579 2,579 2,513
+    - count: 2077
+      unit: protein-ligand systems (2,311 proper ligands)
+      subset: the common subset all four main methods predicted
+      source: src-nature-s41594-026-01797-5
+      quote: resulting in a common subset of 2,311 proper ligands (3,288 including ions) across
+        2,077 systems
+    - count: 1028
+      unit: protein-ligand systems
+      subset: released after 1 June 2023 (Boltz-2's cutoff)
+      source: src-nature-s41594-026-01797-5
+      quote: Boltz-2 was only run on 1,028 systems released after its training cutoff of 1 June
+        2023.
+    - count: 2073
+      unit: protein-ligand systems
+      subset: the Polaris benchmark (at most 100 training systems with similar ligands)
+      source: src-polaris-runs-n-poses
+      quote: A protein-ligand co-folding benchmark with 2,073 high-resolution protein-ligand systems
+        released after 30 September 2021 with at most 100 similar ligands in the train set.
+  size_note: The 2,600 count is the systems that passed the filters and were given to the methods.
+    No method predicted all of them, and the paper's figures use the 2,077-system common subset. The
+    taxonomy's example cites 2,073, the Polaris subset.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Schwede lab, Biozentrum, University of Basel, with the SIB Swiss Institute of
+    Bioinformatics (repository in the plinder-org GitHub organisation)
+  maintainer_basis:
+    reason: The repository's licence names the Schwede lab as copyright holder, the paper's authors
+      are at the Biozentrum and SIB, and every creator on the Zenodo record gives the University of
+      Basel.
+    source: src-github-runs-n-poses-license
+    quote: Copyright 2024 Schwede Lab
+  maintainer_type: academic-lab
+  maintainer_type_note: community-collective was considered, because the repository sits in the
+    plinder-org organisation account shared with the PLINDER project, but the licence and the
+    dataset record name one university group as holder (review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: The only maintainer results are the release paper's, which the Polaris
+    preview's board repeats for four methods (AlphaFold3, Boltz-1, Chai-1, Protenix). Others run the
+    released scripts and report in their own papers.
+  submission_process_source: src-polaris-runs-n-poses
+  submission_process_quote: Interacting with it through the Polaris client is currently not
+    possible.
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-nature-s41594-026-01797-5
+      quote: J.E. is currently employed at Proxima, but was involved in this work while employed by
+        the Swiss Institute of Bioinformatics at the University of Basel.
+  independence_flags_note: The evaluated methods (AlphaFold3, Boltz-1, Boltz-1x, Boltz-2, Chai-1,
+    Protenix, RoseTTAFold All-Atom) are all third-party, and the authors enter no method of their
+    own. Funding is from SIB, the Biozentrum, the SNSF and Dompé farmaceutici, none of them an
+    evaluated party; the AlphaFold3 runs used weights provided to one author under AlphaFold3's
+    terms (review_checks).
+  independence_assessed: true
+  funding:
+    source: src-nature-s41594-026-01797-5
+    quote: Ambizione grant no. 223634 to J.D.) and Dompé farmaceutici
+  known_limitation:
+    source: src-nature-s41594-026-01797-5
+    quote: Because the dataset was constructed in an automated fashion, there may be a few complexes
+      that do not qualify as biologically relevant.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Scoring with OpenStructure and PoseBusters runs on CPU. A run means running the
+    co-folding method under test, and the paper ran each on one A100 40 GB GPU, but that is the
+    entrant's cost, which the single-gpu term excludes unless the protocol mandates it; no source
+    mandates it (review_checks).
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Inputs, ground truth and similarity scores are public, and the repository has scripts
+      for input preparation and scoring, with no human, physical or maintainer-only step.
+      Recomputing the similarities needs the whole PDB, PLINDER and much memory, but the processed
+      scores are released.
+    source: src-github-runs-n-poses-readme
+    quote: This requires an entire copy of the PDB, the PLINDER dataset, and large amounts of
+      memory.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The repository's scoring notebooks and scripts (extract_scores.ipynb, examples/analysis)
+    over OpenStructure's compare-ligand-structures action (v2.8.0 in the paper), with the
+    PoseBusters suite for validity
+  harness_source: src-github-runs-n-poses-readme
+  harness_quote: for instructions on how to run accuracy scoring and extract relevant accuracy
+    metrics for each method
+  harness_gotcha:
+    source: src-github-runs-n-poses-readme
+    quote: This requires a version of the Chemical Components Dictionary prepared for OpenStructure
+      and exported as an environment variable
+  code_licence: Apache-2.0
+  code_licence_source: src-github-runs-n-poses-license
+  code_licence_quote: Apache License Version 2.0, January 2004
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which systems were scored (the full 2,600, the common subset, the 2,073 Polaris
+  # subset, a post-cutoff subset, or the systems a method could predict), the method's training cutoff against which
+  # the similarity bins are recomputed, how the model is chosen (top-ranked of 25, best of 25, or best of 5 as in
+  # Pearl), and the scoring stack (OpenStructure version and its LDDT-PLI added-model-contacts flag, PoseBusters
+  # dock or redock configuration). The success criterion itself also varies: RMSD alone, or with LDDT-PLI.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - selection_strategy
+    - harness
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Results are read per similarity bin, the paper reports curves across bins rather than one
+    figure, and the Polaris board scores each bin as its own test set. The overall rates that users
+    such as Pearl report are their own aggregates (review_checks).
+  source: src-polaris-runs-n-poses
+  quote: The test set is further split in multiple subsets with increasing distance to the train set
+    to test for generalization.
+
+homepage: https://github.com/plinder-org/runs-n-poses
+repository: https://github.com/plinder-org/runs-n-poses
+dataset_url: https://doi.org/10.5281/zenodo.14794785
+
+versions:
+  - version: v1
+    label: First deposit (Zenodo 10.5281/zenodo.14794786), 2,600 systems
+    version_kind: revision
+    released: 2025-02-03
+    items: 2600
+    changes: The first release, with ground truth, inputs, annotations, the paper's predictions and
+      similarities to training systems before the 2021 cutoff (train_similarity_scores.parquet).
+      MSAs (2025-02-04) and prediction files (2025-05-07) were added in two further deposits that
+      leave these files unchanged.
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-zenodo-14794786
+  - version: v2
+    label: August 2025 deposit (Zenodo 10.5281/zenodo.16754298), annotations for 2,579 systems
+    version_kind: revision
+    released: 2025-08-06
+    items: 2579
+    changes: The annotations were re-issued. 21 systems with nucleic-acid chains in the pocket were
+      dropped, and columns for release dates and the 1 June 2023 cutoff's similarity were added. The
+      training-only similarity file was replaced by one against the whole PDB, and PoseBusters
+      results were released for the first time. The ground truth is unchanged (same checksum), and
+      so are the 2021-cutoff similarity values.
+    supersedes_version: v1
+    superseded_by: v3
+    frozen: true
+    sources:
+      - src-zenodo-16754298
+      - src-nature-s41594-026-01797-5
+      - src-github-runs-n-poses-readme
+  - version: v3
+    label: January 2026 deposit (Zenodo 10.5281/zenodo.18366081), PoseBusters in redock mode
+    version_kind: revision
+    released: 2026-01-25
+    items: 2579
+    changes: The PoseBusters checks were re-run in redock rather than dock mode, which adds checks
+      and changes PB-valid counts, and missing AlphaFold3 predictions were added. Annotations and
+      ground truth are unchanged. PB-valid rates under v2 and v3 are not comparable; the success
+      rate is unaffected.
+    supersedes_version: v2
+    frozen: true
+    sources:
+      - src-zenodo-18366081
+versions_note: Six Zenodo deposits, modelled as three revisions of the same items under 04 S4. The
+  ground-truth archive has one checksum throughout, and only the deposits that change what a score
+  means become versions. The newest deposit's change note counts from "v4", which does not match
+  Zenodo's six-deposit order (review_checks).
+
+subsets:
+  - id: runs-n-poses#post-2023-06-01
+    label: Systems released after 1 June 2023 (Boltz-2's training cutoff)
+    items: 1028
+    scored_separately: true
+    evidence:
+      - source: src-nature-s41594-026-01797-5
+        quote: Boltz-2 was only run on 1,028 systems released after its training cutoff of 1 June
+          2023.
+    notes: The paper's comparison of Boltz-1 and Boltz-2 (Fig. 2a), with bins recomputed for the
+      2023 cutoff; Pearl's subset (702 structures after its own filtering) is drawn from it.
+  - id: runs-n-poses#polaris
+    label: Polaris benchmark, 2,073 systems with at most 100 similar-ligand training systems
+    items: 2073
+    scored_separately: true
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: A protein-ligand co-folding benchmark with 2,073 high-resolution protein-ligand
+          systems released after 30 September 2021 with at most 100 similar ligands in the train
+          set.
+    notes: The ML-ready preview on Polaris, created 2025-02-03 and labelled V2 there; its eight bins
+      are listed below. Its header gives test sizes summing to 2,835, not 2,073 (review_checks).
+  - id: runs-n-poses#polaris-0-20
+    label: Similarity 0-20
+    parent: runs-n-poses#polaris
+    items: 76
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 0 to 20 (n=76)
+  - id: runs-n-poses#polaris-20-30
+    label: Similarity 20-30
+    parent: runs-n-poses#polaris
+    items: 106
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 20 to 30 (n=106)
+  - id: runs-n-poses#polaris-30-40
+    label: Similarity 30-40
+    parent: runs-n-poses#polaris
+    items: 149
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 30 to 40 (n=149)
+  - id: runs-n-poses#polaris-40-50
+    label: Similarity 40-50
+    parent: runs-n-poses#polaris
+    items: 272
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 40 to 50 (n=272)
+  - id: runs-n-poses#polaris-50-60
+    label: Similarity 50-60
+    parent: runs-n-poses#polaris
+    items: 301
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 50 to 60 (n=301)
+  - id: runs-n-poses#polaris-60-70
+    label: Similarity 60-70
+    parent: runs-n-poses#polaris
+    items: 364
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 60 to 70 (n=364)
+  - id: runs-n-poses#polaris-70-80
+    label: Similarity 70-80
+    parent: runs-n-poses#polaris
+    items: 328
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 70 to 80 (n=328)
+  - id: runs-n-poses#polaris-80-100
+    label: Similarity 80-100
+    parent: runs-n-poses#polaris
+    items: 477
+    evidence:
+      - source: src-polaris-runs-n-poses
+        quote: Test 80 to 100 (n=477)
+
+lineage:
+  role: root
+lineage_note: The systems are PLINDER systems, cut from the PDB by PLINDER's pipeline and validation
+  criteria, but Runs N' Poses is a dataset of its own with its own items and release, not a subset
+  or filter of the PLINDER splits, so no lineage relation is set. Nor is it a variant of
+  posebusters, whose checks it runs; the paper finds 87% of the PoseBusters set's complexes above 50
+  SuCOS-pocket similarity to training. CAMEO (cameo), from the same Basel group, is named as using
+  its data.
+lineage_source: src-nature-s41594-026-01797-5
+lineage_quote: In fact, 87% of the complexes in the commonly used PoseBusters benchmark dataset20
+  have a SuCOS–pocket similarity >50 to the training set
+
+tags:
+  - co-folding
+  - protein-ligand
+  - pose-prediction
+  - data-leakage
+  - memorisation
+  - plinder
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T05)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-nature-s41594-026-01797-5
+    - src-biorxiv-api-2025-02-03-636309
+    - src-github-runs-n-poses-readme
+    - src-github-runs-n-poses-license
+    - src-zenodo-14794786
+    - src-zenodo-16754298
+    - src-zenodo-18366081
+    - src-polaris-runs-n-poses
+    - src-arxiv-2510-24670-v2
+  sources_note: >
+    The journal paper's open-access PDF (a DOI, not archived), read as text, with windows that keep the
+    corresponding author's address, the correspondence line and the reviewers' names out; bioRxiv's API
+    record for the preprint's versions; the README and LICENSE at commit 197fafc; Zenodo's API JSON for
+    three of six deposits, in narrow windows that keep the creators' ORCIDs out; the Polaris benchmark
+    page as served; and Pearl's v2 PDF (a DOI) as evidence of current use. GitHub's API was read for the
+    repository's dates and licence metadata, and the other three Zenodo deposits' API records for their
+    file checksums; neither is kept as a Source.
+  confidence: medium
+  review_checks:
+    - check: The versions are a judgement under 04 S4. Six Zenodo deposits share one ground-truth
+        checksum; the entry makes three revisions (first deposit, August 2025 annotations, January
+        2026 PoseBusters re-run) and leaves the MSA and prediction-file additions out. Whether the
+        August and January changes are benchmark revisions or results-file updates, and whether
+        either is breaking, is not clear-cut. The new PoseBusters file first appears in the
+        2026-01-05 deposit (same checksum as 2026-01-25's), but only the later record carries the
+        change note.
+      field: versions
+      source: src-zenodo-18366081
+      quote: mode, which added additional checks and thus changed overall PB valid counts
+    - check: The 2,579 count and the dropped 21 systems rest on the curator's comparison of two
+        downloaded annotations.csv files plus the paper's Fig. 2b and its statement on the 21
+        systems; no source states the annotation change directly.
+      field: data.size
+    - check: aggregation_policy is none-by-design, read from per-bin reporting; no source says in so
+        many words that no single figure should be quoted. community-aggregate is the alternative.
+      field: aggregation_policy
+    - check: The pair (constraint-check, domain-specialist-model) resolves to the llm-static-text
+        profile, whose LLM fields mean nothing for a co-folding model, as posebusters' entry notes.
+        Nothing is waived.
+      field: comparability
+    - check: compute_tier is null where the corpus record has single-gpu, because the GPU serves the
+        entrant and no source mandates it.
+      field: execution.compute_tier
+    - check: maintainer_type academic-lab against community-collective. The repository is in the
+        shared plinder-org account; the LICENSE names the Schwede lab, and the Zenodo creators all
+        give the University of Basel.
+      field: governance.maintainer_type
+      source: src-github-runs-n-poses-license
+      quote: Copyright 2024 Schwede Lab
+    - check: no-known-conflict rests on the journal's competing-interests statement. Dompé
+        farmaceutici is a funder, and AlphaFold3 weights were provided to one author; neither looks
+        like support from an evaluated party, but a reviewer should confirm. The corpus record
+        quotes a different employer for the same author from the preprint.
+      field: governance.independence_flags
+    - check: The Polaris subset's eight bins sum to 2,073, but its header lists test sizes summing
+        to 2,835, probably ligands rather than systems; the page does not say.
+      field: subsets
+      source: src-polaris-runs-n-poses
+      quote: 'Test size: 95 + 122 + 169 + 302 + 356 + 444 + 454 + 893'
+    - check: The README dates the all-PDB similarity file to 5 January 2025, the paper's dataset
+        window to 9 January 2025.
+      field: data.size
+      source: src-github-runs-n-poses-readme
+      quote: Contains all calculated similarity metrics for Runs N' Poses dataset systems against
+        the entire PDB up until 5 January 2025.
+    - check: released is the first Zenodo deposit (2025-02-03), not the preprint's first version
+        (2025-02-07); the preprint's three versions were not read in full.
+      field: released
+    - check: Pearl's as_used protocol scores RMSD with PB-validity, best of 5, over a 702-structure
+        post-2023 subset, not the benchmark's LDDT-PLI criterion per similarity bin.
+      field: as_used
+      source: src-arxiv-2510-24670-v2
+      quote: We report the main results for the best@5 protocol
+  unreachable:
+    - url: https://www.biorxiv.org/content/10.1101/2025.02.03.636309v3.full.pdf
+      http_status: 429
+      consequence: The preprint's full text was not read; the journal version was read instead, and
+        the preprint's versions come from bioRxiv's API record.
+  personal_data_excluded:
+    - source: src-nature-s41594-026-01797-5
+      what: The corresponding author's e-mail address and the correspondence and peer-review lines.
+    - source: src-zenodo-18366081
+      what: The creators' ORCID identifiers.

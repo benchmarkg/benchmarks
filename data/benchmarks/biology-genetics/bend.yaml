@@ -1,0 +1,628 @@
+# data/benchmarks/biology-genetics/bend.yaml
+#
+# P1-S5-T05, biology-genetics entry 11. Filled from the BEND paper, arXiv 2311.12570 read as its v4 PDF (2024-04-09,
+# the ICLR 2024 version), its v1 and v3 PDFs (compared for the revision in versions) and its abstract page; the
+# repository README and LICENSE at main; and two papers that report on BEND, Greco and Rawlik's shuffling study
+# (arXiv 2510.12617, v2 PDF, December 2025) and DNAChunker (arXiv 2601.03019, v4 PDF, the ICML 2026 camera-ready
+# version). Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts. The corpus classification record (taxonomy/_corpus/classifications/bend.yaml) was read as a guide and
+# every value re-quoted; its open failures 2026-09-28-bend-002, -011 and -012 are cited where they bite, and no new
+# gap record was written.
+#
+# The data host the README links (sid.erda.dk) did not answer on 2026-11-04, so the downloadable files were not
+# read; their contents are the paper's word.
+
+id: bend
+name: BEND
+aliases:
+  - Benchmark for DNA Language Models
+  - 'BEND: Benchmarking DNA Language Models on Biologically Meaningful Tasks'
+tagline: Seven human-genome tasks probing frozen DNA language model embeddings, from gene finding to
+  noncoding variant effects.
+description: >
+  A benchmark for DNA language models on the human genome (GRCh38), from the University of Copenhagen
+  with Novozymes and Novo Nordisk. Seven tasks cover a range of length scales: gene finding (a label for
+  every nucleotide of genes up to 14,000 bp, from GENCODE), enhancer annotation (128-bp bins over 100,096
+  bp around a gene's TSS, from CRISPRi screens), chromatin accessibility in 125 cell types, histone
+  modification (18 ChIP-seq experiments in K562) and CpG methylation in 7 cell lines (all 512-bp windows
+  from ENCODE), and noncoding variant effects on expression (DeepSEA's eQTLs) and disease (ClinVar). The
+  language model is kept frozen. For the five supervised tasks a two-layer CNN is trained on its
+  embeddings, with chromosome-wise splits (80% identity for gene finding, 10-fold cross-validation for
+  enhancers); the two variant tasks are zero-shot, scored by the cosine distance between the reference
+  and the variant nucleotide's embeddings. Scores are multi-class MCC, AUPRC or label-averaged AUROC per
+  task, with no aggregate. The paper compares 13 DNA LMs, two of them the authors' own baselines, with
+  one-hot supervised CNNs and a published expert method per task (AUGUSTUS, Enformer, Basset, DeepSEA).
+  There is no leaderboard; users run the repository's scripts and report in their own papers.
+self_description:
+  source: src-arxiv-2311-12570-v4
+  quote: BEND aims to provide a standardized set of tasks that measure the ability of LMs to capture
+    the intricacies of genomic data
+external_ids:
+  arxiv: '2311.12570'
+paper:
+  title: 'BEND: Benchmarking DNA Language Models on biologically meaningful tasks'
+  arxiv: '2311.12570'
+  version_read: v4
+  source: src-arxiv-2311-12570-v4
+released: 2023-11-21
+released_note: The paper's first arXiv version, as its abstract page dates it. The ICLR 2024
+  proceedings version has no DOI of its own (the arXiv DOI is on the Sources); the repository was
+  created on 2023-06-07 (GitHub API).
+released_source: src-arxiv-2311-12570
+released_quote: Submitted on 21 Nov 2023 (v1), last revised 9 Apr 2024 (this version, v4)
+release_venue: ICLR 2024
+release_venue_source: src-arxiv-2311-12570
+release_venue_quote: to be published in ICLR 2024
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/regulatory-genomics
+  secondary:
+    - biology-genetics/genomics-variant-effect
+domain_basis:
+  reason: Four of the seven tasks (enhancer annotation, chromatin accessibility, histone
+    modification, CpG methylation) predict regulatory state from genomic sequence, the primary
+    leaf's definition and the majority (ADR-0016). The two noncoding variant tasks classify whether
+    a single-bp variant has an effect on expression or causes disease, which is variant-effect
+    prediction. Gene finding fits no leaf and is left out of the list (failure 2026-09-28-bend-011,
+    which proposes biology-genetics/genome-annotation).
+  source: src-arxiv-2311-12570-v4
+  quote: Chromatin accessibility prediction is a multilabel task where sequences are classified as
+    being in open or closed chromatin across a range of cell types.
+domain_considered_and_rejected:
+  - term: biology-genetics/transcriptomics
+    reason: No task takes expression measurements as input; every input is DNA sequence.
+  - term: biology-genetics/bioinformatics-analysis
+    reason: Gene finding is a genome-annotation task, but it is scored per nucleotide from a frozen
+      representation, not as a multi-step analysis over data files reaching a stated answer.
+    source: src-arxiv-2311-12570-v4
+    quote: does not allow us to evaluate how useful a model would be for gene finding over longer
+      ranges, a common task in genome annotation
+  - term: medicine-health/diagnosis-triage
+    reason: The disease task labels ClinVar variants benign or pathogenic, but no case is presented
+      and the scored quantity is a variant's effect, not a clinical outcome, which the
+      biology-genetics family's exclusion test keeps here.
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Each task predicts a biological state of a DNA sequence (gene structure, enhancer
+      membership, open chromatin, histone marks, methylation, a variant's effect) and scores it
+      against experimental or curated labels. The benchmark's own claim, how much a frozen
+      representation captures, has no capability term (failure 2026-09-28-bend-002, which proposes
+      representation-quality).
+    source: src-arxiv-2311-12570-v4
+    quote: LM weights are kept frozen and are not fine-tuned.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The paper puts transfer across organisms in future work; every task is scored on the
+      human genome, and the frozen-embedding probe is the protocol, not a reported transfer.
+    source: src-arxiv-2311-12570-v4
+    quote: so that generalization power can be tested in a transfer-learning setting
+  - term: distribution-shift-generalization
+    reason: Test sets are held-out chromosomes, or genes partitioned at 80% identity, which are
+      splits against leakage rather than a deliberately shifted condition reported as its own score.
+    source: src-arxiv-2311-12570-v4
+    quote: Samples were partitioned based on chromosomes.
+  - term: context-integration
+    reason: The paper stresses long-range context (100,096 bp for enhancers), but the flanking
+      sequence is the input itself, not supplied material whose use is scored apart from it;
+      memory-retention is excluded the same way (failure 2026-09-28-bend-002).
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: Gene finding is scored by multi-class MCC over all nucleotides, enhancer annotation by
+    AUPRC over all bins, the three epigenetic tasks by AUROC per label averaged over labels, and the
+    two variant tasks by AUROC of the cosine-distance score against binary labels.
+  source: src-arxiv-2311-12570-v4
+  quote: We compute the multi-class Matthews correlation coefficient (MCC) (Gorodkin, 2004) over all
+    bp.
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: MCC, AUPRC and AUROC are general statistics of the confusion matrix or score ranking,
+      which the domain-metric exclusion sends to classification-metric.
+  - term: statistical-fit
+    reason: Every label is a class (nine nucleotide classes, binary bins or multilabel vectors), so
+      no correlation between continuous values is computed.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are self-supervised DNA language models pretrained on genomes (Nucleotide
+    Transformer, DNABERT, HyenaDNA and others), probed on tasks genomics defines. The one-hot CNNs,
+    Basset and the expert methods are comparators trained without pre-training.
+  source: src-arxiv-2311-12570-v4
+  quote: We benchmark available LMs suitable for the human genome (Table 2).
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The supervised baselines (one-hot CNN, ResNet, Basset) fit it, but they are comparators,
+      and the term's exclusion sends a discipline's own task to domain-specialist-model.
+  - term: scientific-surrogate-model
+    reason: The models do not stand in for an assay or simulation run; they are representations
+      probed against labels.
+
+as_used:
+  - protocol: A new DNA LM scored on all seven tasks with the BEND configurations and ranked by its
+      average rank over the tasks, against baselines whose scores were copied from the BEND paper
+      and a 2026 paper rather than re-run.
+    source: src-arxiv-2601-03019-v4
+    quote: baseline scores are taken from Marin et al. (2024) and Del Vecchio et al. (2026)
+    note: DNAChunker (ICML 2026). The average rank is the paper's own; BEND defines no aggregate.
+  - protocol: Three LMs re-run on the supervised tasks with the training data pre-shuffled before
+      the embeddings are stored, from a fork of the repository, which raises CpG methylation AUROC
+      by up to 4% and changes the ranking of the three.
+    source: src-arxiv-2510-12617-v2
+    quote: Code is publicly available at https://github.com/baillielab/BEND.
+    note: Greco and Rawlik (University of Edinburgh, December 2025). See review_checks on whether
+      the fork is a lineage child.
+
+lifecycle: active
+lifecycle_basis:
+  reason: New DNA LMs are still scored on BEND; an ICML 2026 paper reports all seven tasks for its
+    model, and a December 2025 paper re-runs three models on it. The repository was last pushed on
+    2024-10-31 (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2601-03019-v4
+  quote: On the BEND benchmark, DNACHUNKER achieves the best average rank (1.9) across seven tasks,
+    surpassing the previous best baseline PATCHDNA (2.1) (Table 4).
+activity: no-submission-channel
+activity_basis:
+  reason: The README offers data, embedders and training scripts whose results land in the user's
+    own directory, with no leaderboard, server or submission route, and no source shows one ever
+    existed.
+  source: src-github-bend-readme
+  quote: 'The results of a run can be found at :'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Nucleotide Transformer (2.5B parameters, multispecies), NT-MS
+    source: src-arxiv-2311-12570-v4
+    observed_on: 2026-11-04
+    quote: NT-MS performs best (0.92) on all included cell lines
+  - system: DNAChunker
+    source: src-arxiv-2601-03019-v4
+    observed_on: 2026-11-04
+    quote: We pretrain DNACHUNKER on the human reference genome and evaluate it across five
+      benchmarks
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: ENCODE DNase-seq, ChIP-seq and bisulfite sequencing, CRISPRi enhancer
+  screens and eQTL studies; gene finding's labels are GENCODE annotations restricted to
+  experimentally supported transcripts, and the disease labels are ClinVar assertions.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The task files are a public download, and the repository holds the code, configs and
+    scripts for every experiment.
+  source: src-arxiv-2311-12570-v4
+  quote: Code, configs and scripts to extract data and run all experiments are provided at
+    https://github.com/frederikkemarin/BEND.
+
+task:
+  exists: true
+  input:
+    - genome coordinates (a bed file) from which DNA sequence is cut from GRCh38, from 512 bp to
+      100,096 bp by task, embedded by the frozen LM under test
+    - for the variant tasks, a variant position with its reference and alternative nucleotide and
+      512 bp of context
+  output: For the supervised tasks, the labels predicted by a two-layer CNN trained on the
+    embeddings (a class per nucleotide, a bit per 128-bp bin, or a multilabel vector per window);
+    for the variant tasks, the cosine distance between the reference and variant embeddings as the
+    effect score.
+  scoring: Per task, multi-class MCC (gene finding), AUPRC (enhancer annotation, 10-fold
+    cross-validation), AUROC averaged over labels (chromatin, histone, CpG) or AUROC (variant
+    effects); no aggregate.
+  source: src-arxiv-2311-12570-v4
+  quote: We train a lightweight supervised two-layer CNN model with 64 channels on top of the LM
+    embeddings for each task.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every task's bed and hdf5 files, labels and splits included, are a public download
+      linked from the README, with a download script in the repository.
+    source: src-github-bend-readme
+    quote: All data is available for download
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The one change found to the scored content came with a dated, numbered paper version.
+      arXiv v3 (2024-03-11) removed expression variants whose reference nucleotide does not match
+      GRCh38, taking the set from 106,221 to 105,263, and re-reported the variant scores (versions).
+      The data host keeps no version labels, and its files were not read (review_checks).
+    source: src-arxiv-2311-12570-v3
+    quote: Variants where the original reference nucleotide does not match the nucleotide at the
+      indicated position in GRCh38 were removed.
+  data_provenance:
+    - experimental-measurement
+    - curated-public-database
+    - inherited-from-constituents
+  data_provenance_note: BEND generated no data of its own. The chromatin, histone and CpG labels are
+    ENCODE experiments' readouts and the enhancer labels come from CRISPRi screens
+    (experimental-measurement). Gene finding draws on GENCODE annotation and the disease task on
+    ClinVar assertions with at least one star (curated-public-database). The expression task reuses
+    the SNPs of DeepSEA's published dataset, lifted to GRCh38 (inherited-from-constituents).
+  data_provenance_source: src-arxiv-2311-12570-v4
+  data_provenance_quote: As no new experimental data was acquired within this study
+  contamination_risk: medium
+  contamination_risk_note: The scored labels and coordinates are public, and the evaluated LMs were
+    pretrained self-supervised on the human reference genome (or on 1000 Genomes or multispecies
+    data including it), which contains the held-out test chromosomes, though not their labels. No
+    source evidences or assesses a route into the labels; DeepSEA's expression SNPs and ClinVar are
+    widely used in training variant predictors, which matters for supervised comparators more than
+    for zero-shot LMs.
+  contamination_risk_source: src-arxiv-2311-12570-v4
+  contamination_risk_quote: The dataset depends on the human reference genome GRCh38.
+  contamination_evidence: []
+  ceiling_anchor_type: null
+  ceiling_anchor_type_note: Abstained, as the Stage 3 record did. Scores are read against a
+    published task-specific expert method per task (AUGUSTUS, Enformer, Basset, DeepSEA), a research
+    model, which operational-system's exclusion leaves out and bend is its named near miss;
+    theoretical-maximum and the human anchors do not fit (failure 2026-09-28-bend-012, which
+    proposes specialist-method-reference).
+  ceiling_anchor_type_source: src-arxiv-2311-12570-v4
+  ceiling_anchor_type_quote: For all tasks where Basset is not applicable, we report the performance
+    of a previously published task-specific expert method on the benchmark dataset to put LM
+    performance into context.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The paper licenses the authors' contributions under CC BY 4.0 "as far as
+    applicable"; the underlying sources' own terms apply to the datasets, and the README asks that
+    each original publication be cited.
+  dataset_licence_source: src-arxiv-2311-12570-v4
+  dataset_licence_quote: As far as applicable, our contributions are licensed as CC BY 4.0.
+  upstream_licences: The use and redistribution terms of GENCODE, ENCODE, GRASP, the 1000 Genomes
+    Project, Gasperini et al. (GEO GSE120861), Fulco et al. and Avsec et al. apply to the provided
+    data (paper, A.3).
+  upstream_licences_source: src-arxiv-2311-12570-v4
+  upstream_licences_quote: the respective use/redistribution agreements and any copyright claims on
+    the underlying data sources
+  size:
+    - count: 7
+      unit: tasks
+      source: src-arxiv-2311-12570-v4
+      quote: Seven curated tasks and datasets, probing understanding of different DNA functional
+        elements over a variety of length scales.
+    - count: 5976
+      unit: genes (sequences of 1,433 to 14,000 bp), split 4,780/597/597
+      subset: gene finding
+      source: src-arxiv-2311-12570-v4
+      quote: There are a total of 5,976 instances with instance lengths ranging from 1,433 to 14,000
+        nucleotides
+    - count: 285
+      unit: gene sequences of 100,096 bp (782 bins each), 10-fold cross-validation
+      subset: enhancer annotation
+      source: src-arxiv-2311-12570-v4
+      quote: 5,976 285 2,005,617 612,081 959,039 105,263 295,495
+    - count: 2005617
+      unit: 512-bp windows, 125 cell-type labels
+      subset: chromatin accessibility
+      source: src-arxiv-2311-12570-v4
+      quote: There are 2,005,617 instances.
+    - count: 612081
+      unit: 512-bp windows, 18 labels (420,713 train, 70,801 validation, 120,567 test)
+      subset: histone modification
+      source: src-arxiv-2311-12570-v4
+      quote: test (chr1, chr8, chr9; 120,567 samples), validation (chr2, chr4; 70,801 samples) and
+        train (remaining chromsomes; 420,713 samples)
+    - count: 959039
+      unit: CpG sites in 512-bp windows, 7 cell-line labels
+      subset: CpG methylation
+      source: src-arxiv-2311-12570-v4
+      quote: obtaining 959,039 sites in total
+    - count: 105263
+      unit: SNPs, all test (zero-shot)
+      subset: noncoding variant effects (expression), from paper v3
+      source: src-arxiv-2311-12570-v4
+      quote: 5,976 285 2,005,617 612,081 959,039 105,263 295,495
+    - count: 295495
+      unit: SNPs, all test (zero-shot)
+      subset: noncoding variant effects (disease)
+      source: src-arxiv-2311-12570-v4
+      quote: 5,976 285 2,005,617 612,081 959,039 105,263 295,495
+  size_note: The counts are Table 1's. The datasheets do not all agree with it (review_checks). The
+    disease datasheet's 274,399 benign and 21,524 pathogenic SNPs sum to 295,923. The expression
+    datasheet still gives the pre-v3 98,221 background and 8,000 effect SNPs. Tables A1 and A2 give
+    n=625,229 (histone) and n=2,062,128 (chromatin).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The BEND authors (University of Copenhagen, Novozymes and Novo Nordisk, with Helmholtz
+    Munich and DTU), in the first author's personal GitHub account
+  maintainer_basis:
+    reason: The repository sits in the first author's personal account (frederikkemarin/BEND), and
+      its licence names the authors as a group as copyright holder; no institution is stated as
+      holding it.
+    source: src-github-bend-license
+    quote: Copyright (c) 2023, The BEND authors
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered for the University of Copenhagen authors, and
+    community-collective for an author group across institutions, but the term's holder rule reads a
+    personal-account host with no stated holding institution as individual whatever the authors'
+    affiliations. The data share is on sid.erda.dk, the University of Copenhagen's research data
+    archive, which was not reachable (review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: The paper's Table 3 is the only maintainer result set, and the README
+    keeps no results table; others run the scripts and report in their own papers, some copying the
+    paper's numbers as baselines (as_used).
+  submission_process_source: src-arxiv-2311-12570-v4
+  submission_process_quote: 'Result: DNA LMs approach expert method performance on some tasks.'
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2311-12570-v4
+      quote: Additionally, we train two simple baseline DNA LMs
+  independence_flags_note: The authors trained two of the ranked LMs, an AWD-LSTM and a dilated
+    ResNet LM ("A baseline LM used in BEND" in the README), and rank them with third-party LMs; they
+    are framed as baselines and are not the best on any task. Funding is from Innovation Fund
+    Denmark, the Novo Nordisk Foundation, the Pioneer Centre for AI, the Danish Data Science Academy
+    and the Helmholtz Association, and two authors' employers are Novozymes and Novo Nordisk, none
+    of whom has an evaluated LM, so funded-by-evaluated-party does not apply.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2311-12570-v4
+    quote: This work was funded in part by Innovation Fund Denmark
+  known_limitation:
+    source: src-arxiv-2510-12617-v2
+    quote: As a consequence, the results of BEND are biased to favour better resourced researchers,
+      and introduce complex biases towards different model architectures.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_basis:
+    reason: Every task's reference run, embedding the sequences with the frozen LM and training the
+      probe, ran on one GPU; the LM under test must run locally, since there is no service. The
+      authors' own LMs were pre-trained on more (one RTX 6000 for 35 days, four A40s for 14 days),
+      but that is training the entrant, which the term excludes.
+    source: src-arxiv-2311-12570-v4
+    quote: Computations for all tasks were performed on single GPUs of the types RTX 6000, RTX 8000,
+      V100, A40 and A100 on local clusters, depending on availability.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Labels and splits are public and the repository computes embeddings, trains the probes
+      and scores every task, with no human, physical or maintainer-only step.
+    source: src-arxiv-2311-12570-v4
+    quote: Code, configs and scripts to extract data and run all experiments are provided at
+      https://github.com/frederikkemarin/BEND.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The BEND repository (scripts/precompute_embeddings.py, then scripts/train_on_task.py with
+    the task's hydra config; scripts/predict_variant_effects.py for the zero-shot tasks)
+  harness_source: src-github-bend-readme
+  harness_quote: The `train_on_task.py` script calls a trainer class `bend.utils.task_trainer`.
+  code_licence: BSD-3-Clause
+  code_licence_note: GitHub's licence metadata for frederikkemarin/BEND also reports BSD-3-Clause
+    (read 2026-11-04). The paper's CC BY 4.0 statement covers the authors' data contributions.
+  code_licence_source: src-github-bend-license
+  code_licence_quote: BSD 3-Clause License
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the harness, because the probe's data-loading settings (workers, shuffle buffer)
+  # move scores by up to 4% for one model (src-arxiv-2510-12617-v2), the repository's code changed after the paper
+  # (a DNABERT fix in 2024), and a fine-tuned LM is a different protocol from the frozen probe; and the paper
+  # version, since the expression variant set changed in v3. subset_used, the floor, carries which of the seven
+  # tasks a figure is for.
+  material_extra:
+    - harness
+aggregation_policy: community-aggregate
+aggregation_policy_note: The paper reports each task apart and computes no combined figure.
+  DNAChunker (ICML 2026) ranks models by their average rank over the seven tasks, which no
+  maintainer defines.
+aggregation_policy_basis:
+  reason: Users combine the per-task scores themselves.
+  source: src-arxiv-2601-03019-v4
+  quote: We follow the BEND evaluation protocol and report per-task metrics alongside average rank
+
+homepage: https://github.com/frederikkemarin/BEND
+repository: https://github.com/frederikkemarin/BEND
+dataset_url: https://sid.erda.dk/cgi-sid/ls.py?share_id=aNQa0Oz2lY
+
+versions:
+  - version: v1
+    label: BEND as first released (the paper's arXiv v1 and v2, November 2023)
+    version_kind: revision
+    released: 2023-11-21
+    changes: The first release, seven tasks; the expression variant set held 106,221 SNPs, and 12
+      LMs were reported.
+    superseded_by: v3
+    frozen: true
+    sources:
+      - src-arxiv-2311-12570-v1
+      - src-arxiv-2311-12570
+  - version: v3
+    label: BEND as published at ICLR 2024 (the paper's arXiv v3 and v4)
+    version_kind: revision
+    released: 2024-03-11
+    changes: Expression variants whose reference nucleotide does not match GRCh38 removed, taking
+      the set from 106,221 to 105,263 SNPs; the variant-effect AUROCs re-reported (the disease
+      scores of some LMs also changed, with the disease set's size unchanged); GROVER added to the
+      evaluated LMs. Variant-effect scores from v1 and v3 are not comparable.
+    breaking: true
+    supersedes_version: v1
+    errata:
+      - date: 2024-04-09
+        scope: paper text (histone modification)
+        description: arXiv v4 corrected the histone task's label count in Table 1 and its datasheet
+          from 19 to 18; Table A1 lists 18 labels in every version, so the data did not change.
+        source: src-arxiv-2311-12570-v4
+    frozen: true
+    sources:
+      - src-arxiv-2311-12570-v3
+      - src-arxiv-2311-12570
+      - src-arxiv-2311-12570-v4
+
+subsets:
+  - id: bend#gene-finding
+    label: Gene finding (nucleotide-wise, 9 classes, MCC)
+    items: 5976
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: Gene finding is a multiclass problem where each nucleotide is either part of an exon
+    notes: GENCODE genes split at 80% protein identity; no domain leaf fits (failure
+      2026-09-28-bend-011), so it inherits the parent's.
+  - id: bend#enhancer-annotation
+    label: Enhancer annotation (128-bp bins, binary, AUPRC)
+    items: 285
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: Experimentally validated enhancer-gene pairs were taken from CRISPR interference
+          experiments
+    notes: Scored by 10-fold chromosome-wise cross-validation over all samples.
+  - id: bend#chromatin-accessibility
+    label: Chromatin accessibility (125 cell types, AUROC)
+    items: 2005617
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: Chromatin accessibility prediction is a multilabel task where sequences are
+          classified as being in open or closed chromatin across a range of cell types.
+  - id: bend#histone-modification
+    label: Histone modification (18 labels, K562, AUROC)
+    items: 612081
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: Histone ChIP-seq data for 11 histone marks and 18 replicates in the K562 cell line
+          was obtained from ENCODE.
+  - id: bend#cpg-methylation
+    label: CpG methylation (7 cell lines, AUROC)
+    items: 959039
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: obtaining 959,039 sites in total
+  - id: bend#variant-effects-expression
+    label: Noncoding variant effects, expression (zero-shot, AUROC)
+    items: 105263
+    scored_separately: true
+    domain_override:
+      primary: biology-genetics/genomics-variant-effect
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: We use the same SNPs included in DeepSEA (Zhou & Troyanskaya, 2015).
+    notes: DeepSEA's eQTLs and 1000 Genomes background SNPs lifted to GRCh38; 106,221 SNPs before
+      paper v3 (versions).
+  - id: bend#variant-effects-disease
+    label: Noncoding variant effects, disease (zero-shot, AUROC)
+    items: 295495
+    scored_separately: true
+    domain_override:
+      primary: biology-genetics/genomics-variant-effect
+    evidence:
+      - source: src-arxiv-2311-12570-v4
+        quote: We collected all variants annotated as single nucleotide variant with a review status
+          of at least one star.
+    notes: Noncoding ClinVar SNVs (variant summary of 2023-07-02), likely benign and benign against
+      likely pathogenic and pathogenic.
+
+tags:
+  - dna-language-models
+  - genomics
+  - embedding-probe
+  - regulatory-elements
+  - variant-effect
+  - long-range
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T05)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2311-12570-v4
+    - src-arxiv-2311-12570-v3
+    - src-arxiv-2311-12570-v1
+    - src-arxiv-2311-12570
+    - src-github-bend-readme
+    - src-github-bend-license
+    - src-arxiv-2510-12617-v2
+    - src-arxiv-2601-03019-v4
+  sources_note: >
+    The paper's v4, v3 and v1 PDFs (DOIs, not archived) read as text and compared for the revision; its
+    abstract page for the dates and the ICLR comment, with the submitter line kept out; the README and
+    LICENSE at main (pending archive); the shuffling study's v2 PDF, with its authors' addresses kept
+    out; and DNAChunker's v4 PDF as evidence of current use. GitHub's API was read for the repository's
+    location, last push, commits, licence and the absence of releases, and is not kept as a Source. The
+    data host, sid.erda.dk, timed out on 2026-11-04, and the documentation site was not read.
+  confidence: medium
+  review_checks:
+    - check: The data host (sid.erda.dk) did not answer on 2026-11-04, so the downloadable files,
+        their dates and whether the expression set there is the v1 or the v3 version were not
+        checked; the versions rest on the paper's tables.
+      field: data.refresh
+      source: src-github-bend-readme
+      quote: All data is available for download
+    - check: versions models one revision (v1 to v3) because the expression set lost 958 SNPs, same
+        items filtered, by the 04 section 4 rule. Some disease-task scores also changed between v1
+        and v3 with the set's size unchanged (HyenaDNA large reads 0.45/0.51 in v1 and 0.51/0.45 in
+        v3 for expression and disease, as if the columns were swapped), which no version states;
+        whether the disease scores are a correction or a re-run is not said.
+      field: versions
+      source: src-arxiv-2311-12570-v1
+      quote: HyenaDNA large 0.35 0.03 0.84 0.76 0.91 0.45 0.51
+    - check: refresh is versioned-releases on the strength of one change carried by a dated arXiv
+        version; the data host has no version labels, so static (if the files never changed) or a
+        null with failure 2026-09-28-bend-004 are the alternatives.
+      field: data.refresh
+    - check: The v4 results text says NT-MS and DNABERT reach 0.74 on histone modification against
+        Basset's 0.72, while Table 3 gives Basset 0.74 and NT-MS 0.78, DNABERT 0.79. The text looks
+        carried over from an earlier run.
+      field: description
+      source: src-arxiv-2311-12570-v4
+      quote: NT-MS and DNABERT show the highest performance (0.74), outperforming Basset (0.72).
+    - check: Table 1's sample counts and the datasheets disagree in three places (disease 295,495
+        against 274,399 + 21,524 = 295,923; histone 612,081 against Table A1's n=625,229; chromatin
+        2,005,617 against Table A2's n=2,062,128). data.size uses Table 1.
+      field: data.size
+      source: src-arxiv-2311-12570-v4
+      quote: There are 274,399 benign and 21,524 pathogenic SNPs in total.
+    - check: The shuffling study's fork (baillielab/BEND, University of Edinburgh) pre-shuffles the
+        data and changes scores and rankings. It is recorded in as_used and known_limitation, not as
+        a lineage fork, because it carries no name or version of its own and is a harness patch for
+        one paper; if it is maintained and cited as a separate benchmark it should become a Fork.
+      field: lineage
+      source: src-arxiv-2510-12617-v2
+      quote: However, using the default number of workers, which is 1, pre-shuffling increases the
+        CpG methylation performance by 4% compared to BEND.
+    - check: maintainer_type individual rests on the personal-account host. The licence holder is
+        "The BEND authors", a group across the University of Copenhagen, Novozymes, Novo Nordisk,
+        Helmholtz Munich and DTU, and the data sit on the University of Copenhagen's archive, so
+        academic-lab may fit better.
+      field: governance.maintainer_type
+      source: src-github-bend-license
+      quote: Copyright (c) 2023, The BEND authors
+    - check: Gene finding has no domain leaf (failure 2026-09-28-bend-011), the benchmark's own
+        claim of representation quality has no capability term (failure 2026-09-28-bend-002), and
+        the expert-method anchor has no ceiling term (failure 2026-09-28-bend-012). All three are
+        open Stage 3 records, so none was logged again.
+      field: domain
+    - check: The pair (classification-metric, domain-specialist-model) resolves to the fallback
+        profile; harness is added because the probe's data-loading settings and the post-paper code
+        changes move scores. Whether fine-tuned results (which some papers report on BEND tasks)
+        should be a separate condition is open.
+      field: comparability
+      source: src-arxiv-2510-12617-v2
+      quote: Here, we show that practical implementation choices made in BEND inadvertently
+        influence benchmark results.
+    - check: DNAChunker's BEND table copies most baseline scores from the BEND paper and a 2026
+        paper, so its ranking mixes numbers computed under different code versions; current-use
+        evidence, not a controlled comparison.
+      field: as_used
+      source: src-arxiv-2601-03019-v4
+      quote: baseline scores are taken from Marin et al. (2024) and Del Vecchio et al. (2026)
+  personal_data_excluded:
+    - source: src-arxiv-2311-12570
+      what: The arXiv submitter line in the submission history; the windows stop short of it.
+    - source: src-arxiv-2510-12617-v2
+      what: The two authors' e-mail addresses after the title; the windows start after them.

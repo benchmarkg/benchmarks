@@ -1,0 +1,679 @@
+# data/benchmarks/biology-genetics/caid.yaml
+#
+# P1-S5-T05, biology-genetics entry 17. Filled from the three assessment papers: CAID1 (Nature Methods 2021) and
+# CAID3 (Proteins 2025) as Europe PMC full text, and CAID2 (Proteins 2023) as the text of the publisher's PDF in
+# the University of Padova repository; the CAID Prediction Portal paper (Nucleic Acids Research 2023) as Europe
+# PMC full text; the CAID site, an Angular app read through the compiled bundle its pages load (home, challenge,
+# CAID 4 timeline, rules and results text); the README of BioComputingUP/CAID, the assessment code, at a pinned
+# commit; and Europe PMC's abstract records of two 2026 papers that use CAID3 (flDPnn3, Journal of Molecular
+# Biology, and the bioRxiv preprint "The Hidden Disorder Divide"). Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# One entry for the series, as the plan has it for CASP, CAFA and CAGI: the rounds CAID1 to CAID4 are
+# `versions[]` editions, each breaking, and the reference sets within a round (Disorder-NOX, Disorder-PDB,
+# Binding, Binding-IDR, Linker) are subsets.
+
+id: caid
+name: CAID
+aliases:
+  - Critical Assessment of protein Intrinsic Disorder prediction
+  - Critical Assessment of Protein Intrinsic Disorder
+  - Critical Assessment of Intrinsic protein Disorder
+tagline: Blind assessment of per-residue disorder, binding and linker predictors against newly
+  curated DisProt annotations.
+description: >
+  A community blind test, modelled on CASP and run in rounds since 2018, of software that predicts intrinsically
+  disordered regions of proteins from sequence. Participants hand their predictors to the organisers at
+  the University of Padova, who containerise them (since CAID3 most arrive as Singularity or Docker containers)
+  and run every method, from this and earlier rounds, on CPU-only nodes over proteins whose DisProt annotations
+  were curated but not yet public. Each predictor emits a score and a binary state per residue. The scores
+  are rated against several reference sets built from the new annotations: Disorder-NOX (DisProt disorder
+  without X-ray missing residues, the primary reference since CAID2), Disorder-PDB (negatives restricted
+  to residues observed in PDB structures), Binding, Binding-IDR (added in CAID3) and Linker (added in
+  CAID2). Each reference is ranked separately by AUC, with average precision and Fmax beside it, and runtimes
+  are reported as a second axis. CAID1 evaluated 43 methods on 646 proteins; CAID3 ran 68 programs (117
+  output flavours) on 204 to 319 proteins per disorder reference. The organisers publish an assessment
+  paper per round and interactive results, references and all predictions on the site, and CAID4 (2026)
+  is being assessed. Known weaknesses the sources name: DisProt annotation is incomplete, so the choice
+  of negatives decides the ranking; no method does well on both disorder references; and binding predictors
+  trained on DisProt score higher on CAID's sets than on other binding datasets.
+self_description:
+  source: src-caid-site
+  quote: The Critical Assessment of Protein Intrinsic Disorder Prediction (CAID) experiment was
+    established in 2018 as a community-based blind test to determine the state-of-the-art in
+    predicting intrinsically disordered regions and the subset of residues involved in binding.
+paper:
+  title: Critical assessment of protein intrinsic disorder prediction
+  doi: 10.1038/s41592-021-01117-3
+  source: src-natmethods-2021-caid1
+released: null
+released_note: No source gives a day. The site dates CAID's establishment to 2018, and CAID1's
+  targets were annotated between June and November 2018 (DisProt release 2018_11); its report
+  appeared on 2021-04-19.
+released_source: src-caid-site
+released_quote: experiment was established in 2018 as a community-based blind test
+release_venue: Nature Methods 18, 472-481 (2021), the CAID1 report
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/protein-function-prediction
+domain_basis:
+  reason: Predictors annotate each residue of a protein sequence (disordered or not; binding or not;
+    linker or not), and the score compares the annotation with DisProt's manually curated
+    annotations, which is the leaf's task shape and scoring. Binding and linker regions are function
+    annotations. Disorder itself is a structural state that no leaf names (logged with bench
+    tag-gap; review_checks).
+  source: src-proteins-2025-caid3
+  quote: The Critical Assessment of Protein Intrinsic Disorder (CAID) evaluates ID prediction
+    methods using diverse benchmarks derived from DisProt, a manually curated database of
+    experimentally validated annotations.
+domain_considered_and_rejected:
+  - term: biology-genetics/protein-structure-prediction
+    reason: Disorder is the absence of a fixed structure, and CASP assessed disorder prediction
+      until CASP10, but the leaf asks for a three-dimensional structure scored against an
+      experimental one. CAID's output is a score per residue, its positives are literature-curated
+      annotations, and PDB-observed residues serve only as negatives in Disorder-PDB.
+    source: src-natmethods-2021-caid1
+    quote: ID predictors were previously assessed from the fifth to the tenth editions of CASP, but
+      this was abandoned due to the lack of good reference data.
+  - term: biology-genetics/protein-protein-interaction
+    reason: The Binding references label residues inside disordered regions that DisProt annotates
+      as binding, of any partner type (protein, nucleic acid), and no partner or complex is
+      predicted.
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict a biological property of each residue, its propensity to be
+      intrinsically disordered (or to bind, or to be a linker), from the sequence, and the score
+      compares the prediction with experimentally supported annotations.
+    source: src-natmethods-2021-caid1
+    quote: Given a protein sequence, the task of an ID predictor is to assign a score to each
+      residue for its propensity of being intrinsically disordered at any stage of the protein
+capability_considered_and_rejected:
+  - term: calibration-uncertainty
+    reason: Predictors emit a score per residue, but it is consumed only through thresholds swept
+      over it (AUC, average precision, Fmax), so any order-preserving rescaling leaves the result
+      unchanged, and no source scores calibration.
+  - term: distribution-shift-generalization
+    reason: The targets are new to DisProt and of low sequence identity to the previous release, but
+      no shifted condition is set up and reported apart; that is the blind protocol, not a shift.
+  - term: probabilistic-forecasting
+    reason: The annotations exist in DisProt's private version when predictions are made; they are
+      withheld, not yet to resolve.
+
+evaluation_method:
+  - classification-metric
+  - expert-panel-assessment
+evaluation_method_note: expert-panel-assessment rests on CAID1's statement that each round ends in a
+  report in peer-reviewed journals beside a web page, quoted in review_checks; the organisers, not
+  an independent committee, write it.
+evaluation_method_basis:
+  reason: >
+    classification-metric because every reference is scored by the area under the ROC curve, the average
+    precision score along the precision-recall curve (since CAID2) and Fmax, the best F1 over 1,000 score
+    thresholds, against residue labels; CAID3 adds DeLong tests between methods' AUCs. expert-panel-assessment
+    because the authoritative output of each round is the organisers' assessment paper, with the site's
+    interactive results beside it.
+  source: src-natmethods-2021-caid1
+  quote: Fmax is the maximum point in the precision–recall curve while AUC is the area under the ROC
+    curve.
+evaluation_method_considered_and_rejected:
+  - term: prospective-resolution
+    reason: The benchmark proteins are the delta between DisProt's private and public versions, so
+      the annotations exist and are withheld when predictions are made rather than accruing
+      afterwards.
+    source: src-proteins-2023-caid2
+    quote: CAID benchmark proteins were obtained by calculating the delta between the public and
+      private versions of the DisProt database as of November 20, 2022.
+  - term: domain-metric
+    reason: AUC, average precision and F1 are general statistics; their exclusion keeps them out
+      even where a field standardises their use.
+  - term: entrant-relative-ranking
+    reason: Methods are sorted by their own AUC, and the DeLong heatmaps compare pairs; no published
+      number is rescaled against the pool.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The entrants are disorder and binding predictors built for this task, from neural networks
+    on evolutionary profiles to protein-language-model embeddings, which lead CAID3. Physicochemical
+    and energy-based predictors are entered beside them, and the non-learned baselines (shuffled and
+    random references, conservation, PDB-observed and Gene3D) are scored in the same tables, which
+    the classical-algorithm test counts.
+  source: src-natmethods-2021-caid1
+  quote: The best methods use deep learning techniques and notably outperform physicochemical
+    methods.
+designed_for_subjects_considered_and_rejected:
+  - term: scientific-surrogate-model
+    reason: A predictor is scored against curated annotations of a protein's state, not against what
+      an experiment or simulation would output for a given input.
+  - term: task-specific-supervised-model
+    reason: Its exclusion sends tasks of a scientific discipline to domain-specialist-model.
+as_used:
+  - protocol: A predictor entered in CAID3 reports its CAID3 results in its own paper, together with
+      low-sequence-similarity subsets of the CAID3 test data that the assessment does not publish.
+    split: CAID3 Disorder-NOX, with low-similarity subsets
+    source: src-jmb-2026-fldpnn3
+    quote: A side-by-side comparison in CAID3, including low-sequence-similarity subsets of the
+      CAID3 test data, reveals that our method matches the predictive quality of the best disorder
+      predictors.
+    note: flDPnn3 (Journal of Molecular Biology, 2026), from a group outside the organisers.
+  - protocol: Retrospective use of two CAID binding reference sets relabelled with the latest
+      DisProt annotations, beside a composite set from other databases, to compare binding-site
+      predictors after the rounds. The relabelled sets are not the rounds' references and are not
+      blind.
+    split: two CAID binding datasets, updated
+    source: src-biorxiv-2026-06-24-733783
+    quote: two CAID datasets updated with the latest DisProt annotations and a composite dataset
+      (DBs) assembled from DIBS, FuzDB, IDEAL, and MFIB
+    note: The Hidden Disorder Divide (bioRxiv, June 2026), co-authored by CAID organisers and
+      predictor developers.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The fourth round opened on 1 March 2026, took submissions until 30 June 2026 and is due to
+    present preliminary results at CASP17 in December 2026; two 2026 papers report on CAID3
+    (as_used).
+  source: src-caid-site
+  quote: title:"Challenge start",date:new Date(2026,2,1)
+activity: results-pending
+activity_note: CAID 4's timeline puts preliminary results at 1 December 2026, linked to the CASP17
+  conference, and publication of results at 1 July 2027 (the dates are JavaScript Date literals with
+  zero-based months; src-caid-site notes).
+activity_basis:
+  reason: The CAID 4 submission deadline has passed and its results are not yet presented, so the
+    round is closed to entry with results to come.
+  source: src-caid-site
+  quote: title:"Submission deadline (new!)",date:new Date(2026,5,30)
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: SPOT-Disorder2 (a consistent top-five disorder predictor in CAID1)
+    source: src-caid-site
+    observed_on: 2026-11-04
+    quote: SPOT-Disorder2 is a method for predicting intrinsically disordered residues in a protein
+      sequence. The method is made of five neural network models trained separately
+evaluation_target: learned-system
+execution_mode: automated
+execution_mode_note: The organisers run each submitted predictor in a container on their own cluster
+  and score the outputs with the CAID package; the round's assessment paper is written afterwards.
+ground_truth_source: experimental
+ground_truth_source_note: DisProt annotations, which biocurators take from published experiments
+  (circular dichroism, NMR, X-ray and others), for proteins newly annotated and not yet released;
+  Disorder-PDB adds PDB-observed residues as negatives.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: After a round the references and every method's predictions can be downloaded from the
+    results page without an account, and the assessment code is public, so archived or new
+    predictions can be rescored. The blind condition cannot be recreated once the annotations are
+    public.
+  source: src-github-caid-readme
+  quote: All the CAID challenge references can be downloaded from
+    https://caid.idpcentral.org/challenge/results.
+
+task:
+  exists: true
+  input:
+    - protein sequences in a FASTA file, one prediction per sequence
+    - optionally inputs the organisers precompute for every method (PSI-BLAST, HHblits or SPIDER2
+      results, protein-language-model embeddings, ColabFold or AlphaFold structures and MSAs)
+  output: Per residue, a score and a binary state for each output flavour of the predictor
+    (disorder, binding, linker), in the CAID format, with the execution time per sequence.
+  scoring: Per reference set, AUC, average precision score and Fmax over 1,000 thresholds (scores
+    rounded to three decimals); where a state is missing it comes from a threshold on the score.
+    CAID3 sorts each reference by AUC and compares methods with DeLong tests. Runtimes on CPU are
+    reported beside accuracy.
+  tests_hidden_from_system: true
+  source: src-proteins-2025-caid3
+  quote: The assessors ran the predictors and generated the results for a set of proteins for which
+    disorder annotations were not previously available.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: For the closed rounds, the reference FASTA files (sequence plus a label per residue) and
+      all collected predictions are open downloads on the results page, and CAID1's are also at
+      idpcentral.org and in a Code Ocean capsule. The current round's references are withheld until
+      its results (access_by_phase).
+    source: src-github-caid-readme
+    quote: All the CAID challenge references can be downloaded from
+      https://caid.idpcentral.org/challenge/results.
+  access_by_phase:
+    during_edition: The references are DisProt annotations curated but not yet released;
+      participants hand over software, never see the labels and receive no feedback.
+    after_edition: Reference FASTA files and the predictions of every method are posted on the
+      site's results page for anyone to download (checked for CAID2 and CAID3 on 2026-11-04); the
+      annotations enter a public DisProt release.
+    note: The labels of CAID4, the current edition, are not yet released; the term follows the
+      family rule for blind rounds and judges the data once a round has closed.
+  refresh: periodic-recompetition
+  refresh_note: Rounds so far are CAID1 (targets annotated in 2018, reported 2021), CAID2 (DisProt
+    delta as of November 2022), CAID3 (delta of December 2023 to June 2025) and CAID4 (2026), each
+    with new targets from a DisProt annotation round. The sources call it biennial; the gaps have
+    been two to four years.
+  refresh_basis:
+    reason: Each round scores every method on references built from the annotations added since the
+      previous public DisProt release.
+    source: src-proteins-2025-caid3
+    quote: The biennial challenge focuses on analyzing the problem of identifying IDR positions
+      within the protein sequence by assessing the prediction methods in terms of performance and
+      usability.
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: The labels are DisProt's manually curated annotations, taken from the
+    literature, plus PDB-observed residues for Disorder-PDB. DisProt is compiled for its own
+    purposes, but it is curated at the same Padova department that runs CAID, and the annotations
+    CAID uses are its newest, unreleased ones (review_checks).
+  data_provenance_source: src-proteins-2025-caid3
+  data_provenance_quote: DisProt is a manually curated database in which annotations are obtained
+    from the literature.
+  contamination_risk: low
+  contamination_risk_note: >
+    Low for what a round scores. The annotations are unreleased when the organisers run the predictors,
+    the targets differ from the previous DisProt release (mean sequence identity 22.2% in CAID1), and
+    the primary reference, Disorder-NOX, drops X-ray missing residues, the data most predictors are trained
+    on. Old methods re-run in later rounds were trained before the new annotations existed. Two routes
+    stay open in principle: the experiments behind a new annotation are often published years earlier,
+    and some target proteins have structures in the PDB. No source shows a scored method trained on a
+    round's references. The site warns that predictors trained on DisProt may have seen older DisProt
+    entries, which concerns user datasets in its repository, not the rounds' references.
+  contamination_evidence:
+    - source: src-natmethods-2021-caid1
+      stance: against
+      quote: Target proteins are not redundant at the sequence level, and are different from known
+        examples available in the previous DisProt release.
+    - source: src-proteins-2025-caid3
+      stance: against
+      quote: on a set of proteins for which disorder annotations were unavailable when methods were
+        developed
+    - source: src-proteins-2023-caid2
+      stance: against
+      quote: Indeed, missing residues are the type of ground truth data mainly used to train
+        disorder prediction methods.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: AUC, average precision and Fmax are bounded at 1. DisProt annotation is
+    incomplete, so a perfect predictor of true disorder would not reach 1 against Disorder-NOX; no
+    measured ceiling is published. CAID1's PDB Observed baseline, which mimics perfect structural
+    knowledge, beat every method on DisProt-PDB, a reference-specific anchor rather than a ceiling.
+  ceiling_anchor_type_basis:
+    reason: The headline metrics are bounded statistics of a score ranking against labels.
+    source: src-natmethods-2021-caid1
+    quote: Fmax is the maximum point in the precision–recall curve while AUC is the area under the
+      ROC curve.
+  dataset_licence: null
+  dataset_licence_note: No licence is stated for the reference files or predictions in any source
+    read. The site's "License & disclaimers" page and DisProt's own licence were not read.
+  size:
+    - count: 204
+      unit: proteins
+      subset: CAID3 Disorder-NOX, the primary disorder reference
+      source: src-proteins-2025-caid3
+      quote: contain 204 and 319 sequences, respectively
+    - count: 319
+      unit: proteins
+      subset: CAID3 Disorder-PDB
+      source: src-proteins-2025-caid3
+      quote: contain 204 and 319 sequences, respectively
+    - count: 52
+      unit: proteins each, and 31 in Linker
+      subset: CAID3 Binding and Binding-IDR
+      source: src-proteins-2025-caid3
+      quote: each include 52 sequences, while Linker has 31
+    - count: 348
+      unit: proteins (Disorder-NOX 210)
+      subset: CAID2 Disorder-PDB
+      source: src-proteins-2023-caid2
+      quote: The evaluation is reported for the Disorder-NOX (panels A and B, n = 210) and
+        Disorder-PDB (panels C and D, n = 348) reference sets.
+    - count: 78
+      unit: proteins (Linker 40)
+      subset: CAID2 Binding
+      source: src-proteins-2023-caid2
+      quote: The evaluation is reported for the Binding (panels A and B, n = 78) and Linker (panels
+        C and D, n = 40) reference sets.
+    - count: 646
+      unit: proteins, in every CAID1 reference
+      subset: CAID1
+      source: src-natmethods-2021-caid1
+      quote: A total of 43 methods were evaluated on a dataset of 646 proteins from DisProt.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: BioComputing UP, Department of Biomedical Sciences, University of Padova
+  maintainer_basis:
+    reason: The site carries the lab's name and department, the organising committee and every
+      assessment paper's assessors are from it, and the assessment code is in its GitHub
+      organisation (BioComputingUP). DisProt, which supplies the ground truth, is curated from the
+      same department with outside curators.
+    source: src-caid-site
+    quote: BioComputing UP - Department of Biomedical Sciences - University of Padua, Italy - 2023
+  maintainer_type: academic-lab
+  maintainer_type_note: community-collective was considered, because the papers call CAID
+    community-based and list CAID predictors and DisProt curators as authors, but one lab holds the
+    site, the code and the assessment.
+  submission_process:
+    - containerized-algorithm-submission
+    - maintainer-run
+  submission_process_note: Developers submit their predictor through an online form, as software
+    that runs offline on CPU within 48 GB of RAM and 24 threads (6 hours per sequence in the CAID4
+    rules; 4 hours and 47 GB in CAID2 and CAID3). Up to CAID2 the organisers containerised it; in
+    CAID3, 17 of 24 new methods arrived as containers. The organisers then run it against references
+    the developer never sees. maintainer-run is tagged beside it because the organisers also choose
+    systems nobody submitted for the round. Every method of earlier rounds is re-run, CAID3 added
+    two methods collected from the literature, and the organisers' own AlphaFold-disorder baselines
+    are ranked in the tables.
+  submission_process_source: src-proteins-2025-caid3
+  submission_process_quote: In CAID3, as in previous rounds, participants were required to submit
+    their prediction software to the assessors, containerized using either Singularity or Docker.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-proteins-2025-caid3
+      quote: we developed the AlphaFold3
+  independence_flags_note: Searched for every flag on 2026-11-04. The organisers built
+    AlphaFold-disorder (CAID2) and AlphaFold3-disorder (CAID3) as baselines, and they appear in the
+    ranked tables (AlphaFold-rsa third and AlphaFold3-rsa fifth on CAID3 Disorder-PDB). CAID1's
+    policy keeps the assessors' published methods out of the challenges, for reference only
+    (independence_policy), which is why the flag needs a ruling (review_checks). The ground truth is
+    curated by DisProt, whose curators include the organisers; no flag term covers that. Scoring is
+    programmatic, so grader-from-evaluated-party does not apply, and the funders named (EU
+    programmes, ELIXIR, COST, the Italian ministry) evaluate no systems.
+  independence_assessed: true
+  funding:
+    source: src-proteins-2025-caid3
+    quote: COST Action ML4NGP (CA21160), supported by COST (European Cooperation in Science and
+      Technology).
+  independence_policy:
+    source: src-natmethods-2021-caid1
+    quote: 'Prediction methods published by the assessors were not included in the challenges: their methods
+      are included for reference only.'
+  known_limitation:
+    source: src-natmethods-2021-caid1
+    quote: If the annotation of IDRs in a protein is not complete, how do we know which regions are
+      structured?
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Rescoring a closed round is automatic with the CAID package and the
+    downloadable references and predictions. Running the predictors themselves needs each method's
+    container and its databases, and a past round's blindness cannot be recreated, which is
+    live-world-state; as for CAFA, that blocker is not set beside this tier.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The CAID package (caid.py in BioComputingUP/CAID, wrapping vectorized_cls_metrics), with
+    the reference builder BioComputingUP/caid-reference
+  harness_source: src-github-caid-readme
+  harness_quote: Upon having predictions and reference sets, you can use this repository to generate
+    the evalutations and metrics.
+  harness_gotcha:
+    # A prediction file without the state column is thresholded at the F1-maximising cutoff by the scorer,
+    # which flatters state-based metrics (CAID1 fell back to the authors' threshold or 0.5).
+    source: src-github-caid-readme
+    quote: If the state is not provided, it will be automatically calculated using a threshold by
+      maximizing f1-score.
+  submission_channel:
+    source: src-caid-site
+    quote: In order to participate to the CAID challenge you have to complete an online form.
+  code_licence: CC-BY-3.0
+  code_licence_note: The README's licence for the CAID package; GitHub's licence metadata for the
+    repository is empty (read 2026-11-04).
+  code_licence_source: src-github-caid-readme
+  code_licence_quote: '[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: what the method was trained on. Predictors trained on DisProt lead
+  # Disorder-NOX and the CAID binding sets and those trained on the PDB complement lead Disorder-PDB, so the
+  # training data decide the ranking as much as the method. subset_used (which reference, which round, and
+  # AUC, APS or Fmax) comes from the fallback.
+  material_extra:
+    - training_data_policy
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Each reference set is ranked on its own, by AUC in CAID3 with APS and Fmax beside it, and
+    no figure combines references or metrics; the CAID2 paper finds that no method does well on both
+    disorder references.
+  source: src-proteins-2025-caid3
+  quote: presented in Tables 1 and 2, sorted by their AUC
+headline_metric: null
+secondary_axes:
+  - latency
+secondary_axes_note: Execution time per sequence (CAID2 and CAID3 normalise to a 1,000-residue
+  sequence) on CPU only, including the time to build precomputed inputs, plotted against AUC.
+secondary_axes_basis:
+  reason: Runtimes are assessed beside accuracy because they decide whether a predictor suits
+    proteome-scale use.
+  source: src-natmethods-2021-caid1
+  quote: In CAID, we evaluated the accuracy of the prediction methods as well as software runtimes,
+    which directly impact their suitability for large-scale analyses.
+
+homepage: https://caid.idpcentral.org/
+repository: https://github.com/BioComputingUP/CAID
+dataset_url: https://caid.idpcentral.org/challenge/results
+maintainer_url: https://caid.idpcentral.org/challenge
+
+versions:
+  - version: caid1
+    label: CAID1 (2018-2021)
+    version_kind: edition
+    items: 646
+    changes: The first round. 646 targets annotated in DisProt between June and November 2018, 43
+      methods run by the assessors on their servers, scored on DisProt, DisProt-PDB and
+      DisProt-binding by Fmax and AUC, with fully disordered proteins as a separate task. Ended in
+      April 2021 with the Nature Methods report; results also on OpenEBench.
+    breaking: true
+    superseded_by: caid2
+    frozen: true
+    sources:
+      - src-natmethods-2021-caid1
+      - src-caid-site
+  - version: caid2
+    label: CAID2 (2022-2023)
+    version_kind: edition
+    changes: Targets from the DisProt delta as of 20 November 2022. 46 programs in 71 flavours,
+      containerised in Singularity by the organisers, with 4 hours, 24 cores and 47 GB per sequence.
+      Disorder-NOX (210) becomes the primary reference beside Disorder-PDB (348); Binding (78) keeps
+      only proteins with a binding region; Linker (40) is new; average precision joins AUC and Fmax;
+      AlphaFold-disorder is added as a baseline.
+    breaking: true
+    supersedes_version: caid1
+    superseded_by: caid3
+    frozen: true
+    sources:
+      - src-proteins-2023-caid2
+      - src-caid-site
+  - version: caid3
+    label: CAID3 (2024-2025)
+    version_kind: edition
+    changes: Targets from the DisProt delta between December 2023 and June 2025. 24 new predictors
+      (17 of them submitted as containers, two collected from the literature) and every earlier
+      method, 68 programs in 117 flavours; Binding-IDR is new; DeLong tests between AUCs;
+      AlphaFold3-disorder added. References of 204 (Disorder-NOX), 319 (Disorder-PDB), 52 (Binding
+      and Binding-IDR) and 31 (Linker) proteins.
+    breaking: true
+    supersedes_version: caid2
+    superseded_by: caid4
+    frozen: true
+    sources:
+      - src-proteins-2025-caid3
+      - src-caid-site
+  - version: caid4
+    label: CAID4 (2026)
+    version_kind: edition
+    released: 2026-03-01
+    changes: Opened on 1 March 2026 with submissions until 30 June 2026 through an online form,
+      under new limits (CPU only, 48 GB of RAM, 24 threads, 6 hours a sequence); preliminary results
+      due at CASP17 in December 2026 and publication in July 2027. No reference sizes are published
+      yet.
+    breaking: true
+    supersedes_version: caid3
+    frozen: false
+    sources:
+      - src-caid-site
+
+subsets:
+  - id: caid#disorder-nox
+    label: Disorder-NOX
+    items: 204
+    scored_separately: true
+    evidence:
+      - source: src-proteins-2025-caid3
+        quote: The primary disorder benchmarking reference is called
+      - source: src-proteins-2025-caid3
+        quote: contain 204 and 319 sequences, respectively
+    notes: DisProt disorder as positives, all other residues negative, X-ray missing residues
+      excluded. The primary reference since CAID2 (CAID1's DisProt reference kept them). Items are
+      CAID3's.
+  - id: caid#disorder-pdb
+    label: Disorder-PDB
+    items: 319
+    scored_separately: true
+    evidence:
+      - source: src-natmethods-2021-caid1
+        quote: Since not all IDRs are yet in DisProt, we created the DisProt-Protein Database (-PDB)
+          dataset, where negatives are restricted to PDB Observed residues
+    notes: DisProt disorder as positives, negatives restricted to residues observed in PDB
+      structures, the rest masked; CAID1's DisProt-PDB. Items are CAID3's (348 in CAID2, 646 in
+      CAID1).
+  - id: caid#binding
+    label: Binding
+    items: 52
+    scored_separately: true
+    evidence:
+      - source: src-proteins-2023-caid2
+        quote: In contrast to CAID1, for the Binding dataset we considered only proteins with at
+          least one binding region.
+    notes: Residues DisProt annotates as binding inside disordered regions, any partner type,
+      against every other residue. CAID1's DisProt-binding kept proteins with no binding region (414
+      of 646). Items are CAID3's (78 in CAID2).
+  - id: caid#binding-idr
+    label: Binding-IDR
+    items: 52
+    scored_separately: true
+    evidence:
+      - source: src-proteins-2025-caid3
+        quote: each include 52 sequences, while Linker has 31
+    notes: Added in CAID3. The Binding proteins and positives, with negatives limited to disordered
+      residues not annotated as binding.
+  - id: caid#linker
+    label: Linker
+    items: 31
+    scored_separately: true
+    evidence:
+      - source: src-proteins-2025-caid3
+        quote: each include 52 sequences, while Linker has 31
+    notes: Added in CAID2 (40 proteins). DisProt flexible linkers between structured domains; every
+      disorder predictor is scored on it. Items are CAID3's.
+
+tags:
+  - intrinsic-disorder
+  - disprot
+  - blind-prediction
+  - community-challenge
+  - protein-annotation
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T05)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-caid-site
+    - src-natmethods-2021-caid1
+    - src-proteins-2023-caid2
+    - src-proteins-2025-caid3
+    - src-nar-2023-caid-portal
+    - src-github-caid-readme
+    - src-jmb-2026-fldpnn3
+    - src-biorxiv-2026-06-24-733783
+  sources_note: >
+    The CAID1 and CAID3 reports and the Prediction Portal paper as Europe PMC full-text XML; the CAID2
+    report as the text of the publisher's PDF in the Padova repository, because Wiley refused the request
+    and there is no PMC copy (all four DOIs, not archived); the site as its compiled bundle, because every
+    page renders by script; the CAID README at a pinned commit; and Europe PMC's abstract records of flDPnn3
+    and The Hidden Disorder Divide (DOIs, not archived). The reference FASTA files of CAID2 and CAID3
+    were downloaded to confirm the counts (348 and 319 Disorder-PDB proteins, 204 Disorder-NOX) and are
+    not Sources.
+  confidence: medium
+  review_checks:
+    - check: Domain. No leaf names residue-level disorder prediction. protein-function-prediction
+        was chosen for its task shape (annotate a sequence, score against curated annotations) over
+        protein-structure-prediction, whose definition asks for a three-dimensional structure. A
+        tag-gap record proposes protein-disorder-prediction; a specialist may prefer the structure
+        leaf, as CASP's old disorder category suggests.
+      field: domain.primary
+      specialist: true
+    - check: Identity. One entry for the series with four rounds as editions, and the five reference
+        sets as subsets carrying CAID3's sizes. The rounds re-run all earlier methods on each new
+        reference, so an edition is new items with a growing entrant pool. The CAID Prediction
+        Portal and its dataset repository are services built on CAID's predictors, not separate
+        benchmarks.
+      field: versions
+    - check: expert-panel-assessment assumes the organisers' assessment paper is the authoritative
+        output. The site's results pages (interactive curves and tables per round) could be read as
+        the published artifact instead, which the term's exclusion sends elsewhere.
+      field: evaluation_method
+      source: src-natmethods-2021-caid1
+      quote: '(4) Report: a report of the evaluation is produced and published in peer-reviewed journals
+        and on a web page that allows the reader to browse the evaluation of all CAID editions.'
+    - check: maintainer-competes-on-own-benchmark rests on the organisers' AlphaFold-disorder
+        packages being ranked in the CAID2 and CAID3 tables. The papers call them baselines and
+        CAID1's policy keeps assessors' methods for reference only, so the flag may be too strong.
+        ESpritz, whose paper (cited in CAID2) lists an organiser among its authors, is also among
+        the evaluated methods.
+      field: governance.independence_flags
+      source: src-proteins-2023-caid2
+      quote: To establish a comparison baseline, we also incorporated the AlphaFold-disorder
+        package,9
+    - check: submission_process tags containerized-algorithm-submission for all rounds. Before CAID3
+        no method arrived containerised and the organisers built the containers from submitted code,
+        which is closer to sandboxed-rerun; CAID3 is the first round where most entrants hand over
+        containers.
+      field: governance.submission_process
+      source: src-proteins-2025-caid3
+      quote: In this edition, 17 out of 24 (70%) new methods were submitted as containers.
+    - check: data.access fully-open is judged on the closed rounds, whose references and predictions
+        are open downloads. No licence is stated for them, and CAID4's references are not yet out.
+      field: data.access
+    - check: contamination_risk low. Medium could be argued, because the experiments behind new
+        DisProt annotations are often published long before, and The Hidden Disorder Divide shows
+        that binding predictors trained on DisProt score far higher on CAID's sets than on other
+        databases. That paper explains it as selection bias in literature-curated binding sites, not
+        leakage, which is why it is recorded under comparability and as_used rather than as
+        contamination evidence.
+      field: data.contamination_risk
+      source: src-biorxiv-2026-06-24-733783
+      quote: Predictors trained predominantly on DisProt data achieved substantially higher AUCs on
+        the CAID sets but performed poorly on the DBs.
+    - check: data_provenance curated-public-database, although DisProt is curated at the same
+        department and CAID uses its unreleased annotations. expert-authored could be argued if
+        DisProt's curators count as authors of the labels.
+      field: data.data_provenance
+    - check: The CAID2 report says OpenEBench will become the official platform for future rounds,
+        but CAID4 takes submissions through a web form and no source shows the move, so no history
+        event is recorded.
+      field: execution.submission_channel
+      source: src-proteins-2023-caid2
+      quote: which will become the official platform for running future CAID challenges
+    - check: The CAID4 dates come from the site's compiled JavaScript, read as zero-based months
+        (Date(2026,5,30) is 30 June 2026). A rendered page or the organisers should confirm them,
+        and the resource limits quoted for CAID4 (48 GB, 24 threads, 6 hours) are from the same
+        page.
+      field: versions
+      source: src-caid-site
+      quote: title:"Preliminary results",date:new Date(2026,11,1)
+    - check: No round has a start date in the papers except CAID1's annotation window, so only CAID4
+        carries `released`. CAID2's and CAID3's labels give years from their DisProt deltas and
+        papers.
+      field: versions
