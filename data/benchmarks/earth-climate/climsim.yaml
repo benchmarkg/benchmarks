@@ -1,0 +1,624 @@
+# data/benchmarks/earth-climate/climsim.yaml
+#
+# P1-S7-T02, earth-climate entry 10. Filled from the ClimSim paper, arXiv 2306.08754 read as its v6 PDF (2024-07-08,
+# retitled ClimSim-Online, the expanded version of the NeurIPS 2023 Datasets and Benchmarks paper, with its SI) and
+# its abstract page; the repository README at commit aec890f (with GitHub's API for licence and last push, not
+# quoted); Hugging Face's API records of the low- and high-resolution datasets; Kaggle's JSON records of the 2024
+# competition (its header record and its pages: overview, data, evaluation, rules); the v4 PDF and abstract page of
+# the competition's follow-up paper (arXiv 2511.20963, March 2026), which couples the winning teams' architectures
+# online; and the abstract of arXiv 2511.22004 (November 2025), which reports experiments on ClimSim. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# One entry for the dataset and its three protocols: the offline regression of the paper (v1), the Kaggle
+# competition of 2024 (an edition with its own variable list, hidden test rows and one weighted R2), and the online
+# hybrid evaluation that v6 adds (ClimSim-Online). The online score needs E3SM-MMF in the maintainers' container,
+# which is why the reproducibility tier is automatable-with-simulator, not fully-automatable.
+
+id: climsim
+name: ClimSim
+aliases:
+  - ClimSim-Online
+  - LEAP - Atmospheric Physics using AI (ClimSim)
+aliases_note: The second is the 2024 Kaggle competition's title, recorded as the kaggle-2024
+  version.
+tagline: Emulate a multi-scale climate model's subgrid physics column by column, offline and coupled
+  back into the host model.
+description: >
+  A dataset and benchmark for machine-learning parameterizations of subgrid atmospheric physics (storms,
+  clouds, turbulence, rainfall and radiation) for hybrid ML-physics climate models. The data are E3SM-MMF
+  simulations, in which a cloud-resolving model nested in every grid column of a host climate model resolves
+  convection: the inputs are one column's macro-scale state and boundary conditions before the nested
+  calculation, and the targets are the tendencies it produces and the surface fluxes the land model needs,
+  saved every 20 minutes for ten simulated years of present-day climate. Three simulations are released:
+  high resolution with real geography (21,600 columns, 5.7 billion samples, 41.2 TB), and low resolution
+  (384 columns, 100 million samples each) with real geography or as an aquaplanet. Offline, emulators
+  are scored per variable by MAE and R2 (with CRPS in the SI) on the last two simulated years; the paper's
+  six baselines are an MLP, a CNN, an encoder-decoder, heteroskedastic regression, a randomized prior
+  network and a conditional VAE. ClimSim-Online (v6, 2024) adds a containerized workflow that couples
+  a TorchScript emulator into E3SM-MMF and scores the hybrid run's monthly RMSE and zonal-mean bias against
+  a reference simulation; the MLP baseline crashed within two months, while the maintainers' U-Net with
+  cloud physics constraints ran stably for at least five years. A Kaggle competition in 2024 (693 teams,
+  $50,000 in prizes) scored one weighted R2 on hidden rows of the low-resolution data with the full variable
+  list, and a 2026 follow-up couples the winning teams' architectures online.
+self_description:
+  source: src-arxiv-2306-08754-v6
+  quote: We introduce ClimSim-Online, the largest and most physically comprehensive dataset and
+    end-to-end workflow for training and testing ML-based parameterizations of full subgrid-scale
+    physics
+external_ids:
+  huggingface: LEAP/ClimSim_high-res
+  arxiv: '2306.08754'
+paper:
+  title: 'ClimSim-Online: A Large Multi-scale Dataset and Framework for Hybrid ML-physics Climate Emulation'
+  arxiv: '2306.08754'
+  version_read: v6
+  source: src-arxiv-2306-08754-v6
+released: 2023-06-14
+released_note: The first arXiv version's date, as the abstract page gives it. Hugging Face's records
+  show the datasets created earlier (2023-04-12 high resolution, 2023-05-03 low resolution), before
+  the paper made them public as a benchmark.
+released_source: src-arxiv-2306-08754
+released_quote: Submitted on 14 Jun 2023 (v1), last revised 8 Jul 2024 (this version, v6)
+release_venue: NeurIPS 2023 Datasets and Benchmarks Track (Outstanding Datasets and Benchmarks Paper
+  award)
+release_venue_source: src-kaggle-leap-climsim
+release_venue_quote: which won the Outstanding Datasets and Benchmarks Paper award at NeurIPS 2023
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/climate-projection
+  secondary:
+    - physics/simulation-surrogates
+  secondary_note: >
+    The subdomain's definition, learned models that stand in for an expensive physical simulation, scored
+    against the simulator they replace, fits exactly: emulators replace E3SM-MMF's nested cloud-resolving
+    model and are scored against its output. The family exclusion test keeps a physical process in an
+    Earth-system context in earth-climate, so it is secondary.
+domain_basis:
+  reason: The scored quantities are the atmosphere's subgrid tendencies in a climate model, so the
+    family is earth-climate. No leaf names the emulation of a climate model's physics (a tag-gap is
+    logged). climate-projection is the nearest, since the stated goal is better climate models for
+    long-term projections, but its definition asks for projections under stated emissions or forcing
+    scenarios, and ClimSim has one present-day climate (2005-2014 climatological boundary
+    conditions) and no scenario (see review_checks).
+  source: src-arxiv-2306-08754-v6
+  quote: with the ultimate goal to help improve the performance and accuracy of climate models used
+    for long-term projections.
+domain_considered_and_rejected:
+  - term: earth-climate/weather-forecasting
+    reason: Nothing is forecast from initial conditions at a lead time and scored against
+      observations. Offline, each sample is one 20-minute model step of one column; online, a hybrid
+      run is scored on monthly and multi-year climate statistics against a reference simulation.
+    source: src-arxiv-2306-08754-v6
+    quote: These data were saved at 20-minute intervals (i.e., the time step of the host climate
+      model) for 10 simulated years
+
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: An emulator predicts the tendencies the nested cloud-resolving model produces for an
+      atmospheric column, and is scored against the simulator's output, offline per sample and
+      online through the climate statistics of the coupled run.
+    source: src-arxiv-2306-08754-v6
+    quote: The target vector contains the tendencies of the same state variables representing the
+      impact of unresolved processes
+capability_considered_and_rejected:
+  - term: calibration-uncertainty
+    reason: Three baselines are stochastic (HSR, RPN, cVAE) and the SI reports CRPS for all models,
+      but the paper's tables and figures, the online metrics and the Kaggle score all score point
+      predictions; CRPS is supplementary (see review_checks).
+    source: src-arxiv-2306-08754-v6
+    quote: We also report continuous ranked probability scores (CRPS) for all considered models in
+      SI.
+  - term: distribution-shift-generalization
+    reason: The test split is the last two years of the same present-day simulation, after a
+      one-month gap; the paper says climate change is absent from this version, and no shifted
+      condition is scored. Online runs can drift out of sample, but that is scored as error, not as
+      a condition of its own.
+    source: src-arxiv-2306-08754-v6
+    quote: Although the impacts of global climate change and inter-annual variability are absent in
+      this initial version of ClimSim
+  - term: long-horizon-execution
+    reason: An online hybrid run couples the emulator for one to five simulated years and a crash
+      ends it, but the emulator takes no actions; the score is error against a reference simulation,
+      and stability is reported beside it.
+
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: Offline, MAE and R2 per output variable, computed at each location and level and averaged;
+    online, monthly mass-weighted RMSE and multi-year zonal-mean bias of the hybrid run against the
+    reference E3SM-MMF run; on Kaggle, R2 on weighted predictions. All are goodness-of-fit
+    statistics on continuous fields.
+  source: src-arxiv-2306-08754-v6
+  quote: The mean absolute error (MAE) and the coefficient of determination (R2) are calculated
+    independently at each horizontal and vertical location
+evaluation_method_considered_and_rejected:
+  - term: uncertainty-calibration-score
+    reason: CRPS consumes the stochastic baselines' distributions, but it is reported in the SI
+      only; the headline offline, online and Kaggle scores are on point predictions. Tagging it
+      would also resolve the forecasting profile, whose lead time does not exist here.
+    source: src-arxiv-2306-08754-v6
+    quote: We also report continuous ranked probability scores (CRPS) for all considered models in
+      SI.
+  - term: simulation-rollout
+    reason: The online evaluation runs the emulator inside a climate simulator, but no policy acts
+      and no episode is scored on a bounded scale; the hybrid run's climate statistics are compared
+      with a reference run's by RMSE and bias.
+    source: src-arxiv-2306-08754-v6
+    quote: Climate statistics in these hybrid simulations are evaluated against those from pure
+      physical E3SM-MMF simulations.
+  - term: domain-metric
+    reason: Zonal-mean bias is a climate-science diagnostic, but it is a mean difference after
+      averaging over time and longitude, a general statistic; RMSE, MAE and R2 are general-purpose.
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are learned parameterizations that stand in for the nested cloud-resolving
+    simulator and are scored against what it produced, offline and when coupled to the host model.
+  source: src-arxiv-2306-08754-v6
+  quote: ClimSim is unique for its focus on learning ML parameterizations which can be used in
+    hybrid climate simulations.
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: The entrants are built for one field, but what they do is replace a simulator and be
+      scored against it, which scientific-surrogate-model names; the taxonomy keeps the surrogate
+      term for that case.
+as_used:
+  - protocol: The Kaggle follow-up trains on the full low-resolution training years without
+      subsampling and subsamples its test years every 12th timestep, where the paper keeps every 7th
+      sample throughout; its splits put the first month of the eighth year into training.
+    split: test (the last two simulated years)
+    source: src-arxiv-2511-20963-v4
+    quote: No subsampling was used to create the training dataset, but the validation dataset
+      subsamples every 7th timestep while the test dataset subsamples every 12th timestep.
+    note: By the maintainers' group (Lin, Hu, Pritchard and others) with members of the winning
+      Kaggle teams. It uses the expanded output list of Hu et al. (2025) and its microphysics
+      constraint.
+  - protocol: Its online runs start from a spun-up state with a different initial condition than the
+      one that made the ClimSim data, for both the hybrid runs and the reference E3SM-MMF run,
+      because the dataset ships no restart files.
+    source: src-arxiv-2511-20963-v4
+    quote: both hybrid runs and the MMF reference run used a different initial condition than that
+      used to create the original ClimSim dataset
+  - protocol: Its online comparisons use four-year runs between configurations and five-year runs
+      against Hu et al. (2025), where v6's case study scores one-year runs.
+    source: src-arxiv-2511-20963-v4
+    quote: we use four-year simulations when comparing configurations and five-year simulations when
+      directly comparing our online results
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it. The Kaggle follow-up (v4, March 2026) couples 90 trained
+    emulators online to the same E3SM-MMF configuration, and a November 2025 paper on mean-variance
+    regression reports experiments on the ClimSim dataset. The repository was last pushed on
+    2025-02-03 (GitHub API) and the data last modified on 2023-09-29 (Hugging Face API), which is
+    maintenance evidence, not lifecycle.
+  source: src-arxiv-2511-20963-v4
+  quote: All models were coupled online to the same MMF used to generate the ClimSim data
+activity: closed
+activity_note: Kaggle often keeps late submissions open after a competition ends; whether this one
+  does was not read, and late entries would not enter the ranking the competition published (see
+  review_checks).
+activity_basis:
+  reason: The one route for outside results was the Kaggle competition, open from 2024-04-18 to
+    2024-07-15, whose final leaderboard is verified. Otherwise ClimSim is download-and-run, and
+    others publish their numbers in their own papers.
+  source: src-kaggle-leap-climsim-record
+  quote: '"dateEnabled":"2024-04-18T22:46:20.837Z","deadline":"2024-07-15T23:59:00Z"'
+events:
+  - name: LEAP - Atmospheric Physics using AI (ClimSim), Kaggle, 2024-04-18 to 2024-07-15
+    kind: competition    # hidden test rows scored by weighted R2; 693 teams; $50,000 in prizes
+    source: src-kaggle-leap-climsim-record
+    quote: '"totalTeams":693,"totalCompetitors":877,"totalSubmissions":11059'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: MLP baseline (the paper's best offline baseline)
+    source: src-arxiv-2306-08754-v6
+    observed_on: 2026-11-04
+    quote: optimized via an extensive hyperparameter search with 8,257 trials
+  - system: Squeezeformer (the first-placed Kaggle team's architecture)
+    source: src-arxiv-2511-20963-v4
+    observed_on: 2026-11-04
+    quote: For our Kaggle architectures, we chose the Squeezeformer from the first place team
+  - system: Regularized mean-variance regression networks (Wong-Toi et al., 2025)
+    source: src-arxiv-2511-22004
+    observed_on: 2026-11-04
+    quote: Experiments on UCI datasets and the large-scale ClimSim dataset demonstrate robust
+      calibration performance
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: E3SM-MMF's own output, offline the nested model's tendencies and online a
+  reference E3SM-MMF run; nothing is compared with observations.
+ground_truth_source_basis:
+  reason: Offline targets are the multi-scale simulator's outputs, and online the hybrid run is
+    compared with a pure physical E3SM-MMF run.
+  source: src-arxiv-2306-08754-v6
+  quote: Climate statistics in these hybrid simulations are evaluated against those from pure
+    physical E3SM-MMF simulations.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data are ungated on Hugging Face, the preprocessing, baseline and evaluation code is
+    in the repository, and the online workflow ships as a container that takes a TorchScript model.
+  source: src-arxiv-2306-08754-v6
+  quote: Once the container is set up, users can easily launch hybrid simulations by providing the
+    trained ML model in TorchScript format
+
+task:
+  exists: true
+  input:
+    - one atmospheric column's macro-scale state on 60 levels (temperature and humidity in the
+      standard set; cloud water, cloud ice, winds and trace gases in the expanded one) with surface
+      and top-of-atmosphere boundary scalars, before the nested calculation
+  input_source: src-arxiv-2306-08754-v6
+  input_quote: The input represents the local vertical structure (in horizontal location and time)
+    of macro-scale state variables
+  output: The column's tendencies due to the nested cloud-resolving model (heating and moistening;
+    the expanded set adds cloud water, cloud ice and wind tendencies) and the surface fluxes and
+    precipitation the land model needs, 128 values in the standard set and 368 in the expanded one.
+  scoring: >
+    Offline: MAE and R2 for each output variable, computed at each horizontal and vertical location and
+    averaged, on the test years 0009-03 to 0011-02, with tendencies mass-weighted into W/m2; CRPS for
+    all models in the SI. Online (ClimSim-Online): the emulator is coupled into E3SM-MMF, and the hybrid
+    run is scored by the monthly global mass-weighted RMSE and the multi-year zonal-mean bias against
+    a reference E3SM-MMF run, beside whether it stays stable; three reruns of the reference give the atmosphere's
+    internal unpredictability. Kaggle (2024): predictions multiplied by a weighting file and scored by
+    R2 on hidden test rows, one number averaged over all targets.
+  scoring_source: src-arxiv-2306-08754-v6
+  scoring_quote: Our evaluation metrics are computed separately for each variable in the output
+    vector.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The test years of the paper's protocol are in the released data,
+    stored apart from the training years. The Kaggle competition's test targets were withheld until
+    it closed.
+  item_definition: One sample is one atmospheric column at one 20-minute host-model step; online,
+    the unit is a hybrid simulation of one to five years.
+  item_definition_source: src-arxiv-2306-08754-v6
+  item_definition_quote: an atmospheric column at a single timestep
+  source: src-arxiv-2306-08754-v6
+  quote: This task is a nonlinear regression problem
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The simulations are public Hugging Face datasets under CC-BY-4.0, and the records of the
+      high- and low-resolution ones show no gate (the aquaplanet record was not read); the Kaggle
+      copy of the low-resolution subset was CC0.
+    source: src-hf-api-climsim-high-res
+    quote: '"gated":false'
+  refresh: static
+  refresh_basis:
+    reason: One ten-year simulation per configuration, released once; Hugging Face's records were
+      last modified on 2023-09-29. The Kaggle competition replaced its own test file once, on
+      2024-06-18 (versions), which did not change the released data.
+    source: src-hf-api-climsim-low-res
+    quote: '"lastModified":"2023-09-29T20:31:55.000Z"'
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: E3SM-MMF runs on NVIDIA A100 GPUs (about 9,800 GPU-hours), saving every grid
+    column's state before and after the nested cloud-resolving calculation.
+  data_provenance_source: src-arxiv-2306-08754-v6
+  data_provenance_quote: We ran the E3SM-MMF multi-scale climate simulator
+  contamination_risk: medium
+  contamination_risk_note: The test years are public and shipped beside the training years, so only
+    an entrant's own split keeps them out; the one-month gap guards against temporal correlation,
+    not against training on the test years. A route is plausible and none is evidenced. Online
+    evaluation runs from new initial conditions (as_used), which no stored file answers.
+  contamination_risk_source: src-arxiv-2306-08754-v6
+  contamination_risk_quote: Both sets are stored separately in our data repositories.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The offline and Kaggle scores are R2 and MAE against the simulator, bounded at 1 and 0,
+      and no measured ceiling is published for them. Online errors are read against internal
+      unpredictability from reruns of the reference simulation, which is a noise ceiling for those
+      metrics (see review_checks).
+    source: src-kaggle-leap-climsim
+    quote: The highest R-squared possible is 1.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The README's licence for the data on Hugging Face, and the datasets'
+    cardData. The Kaggle competition's copy of the low-resolution subset was released under CC0.
+  dataset_licence_source: src-github-climsim-readme
+  dataset_licence_quote: ClimSim uses the Apache 2.0 license for code found on the associated GitHub
+    repo and the Creative Commons Attribution 4.0 license for data hosted on HuggingFace.
+  size:
+    - count: 5700000000
+      unit: input-output samples (one column at one timestep)
+      subset: high resolution, real geography (41.2 TB)
+      source: src-arxiv-2306-08754-v6
+      quote: the dataset comprises 5.7 billion high-resolution samples (41.2TB) and 100 million
+        low-resolution samples (744GB)
+    - count: 100000000
+      unit: input-output samples per simulation
+      subset: low resolution, real geography and aquaplanet (744 GB each)
+      source: src-arxiv-2306-08754-v6
+      quote: with only 384 grid columns spanning the globe, resulting in 100 million samples for
+        each simulation
+    - count: 21600
+      unit: grid columns
+      subset: high resolution
+      source: src-arxiv-2306-08754-v6
+      quote: with 21,600 grid columns spanning the globe
+    - count: 625000
+      unit: hidden test rows
+      subset: Kaggle competition (2024)
+      source: src-kaggle-leap-climsim-record
+      quote: '"totalSolutionRows":625000'
+    - count: 556
+      unit: input columns (25 variables), beside 368 target columns (14 variables)
+      subset: Kaggle competition (2024)
+      source: src-kaggle-leap-climsim
+      quote: There are 556 columns corresponding to 25 input variables and 368 columns corresponding
+        to 14 target variables.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: LEAP (the NSF Science and Technology Center Learning the Earth with Artificial
+    Intelligence and Physics), for a consortium of climate scientists and ML researchers
+  maintainer_basis:
+    reason: The code sits in the leap-stc GitHub organisation, the data in the LEAP Hugging Face
+      organisation, and LEAP hosted the Kaggle competition, with Columbia University as its legal
+      sponsor. The paper has 47 authors from some 25 institutions.
+    source: src-kaggle-leap-climsim
+    quote: The primary host organization for this competition is the Learning the Earth with
+      Artificial Intelligence and Physics
+  maintainer_type: academic-lab
+  maintainer_type_note: LEAP is an NSF centre based at Columbia University, which the competition
+    rules name as sponsor; the README calls the authors a consortium, which has no stated legal form
+    (community-collective was considered). ChaosBench, held by the same organisations, is recorded
+    the same way.
+  submission_process:
+    - held-out-server
+  submission_process_note: During the 2024 competition, Kaggle scored uploaded predictions against
+    hidden test rows, 20 per cent of them on the public leaderboard, with five submissions a day.
+    Outside it there is no results channel; the paper's and others' results appear in papers.
+  submission_process_source: src-kaggle-leap-climsim-record
+  submission_process_quote: '"leaderboardPercentage":20,"maxDailySubmissions":5'
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2511-20963-v4
+      quote: the winning solutions outperformed the U- Net submission by a considerable margin in
+        offline R2 skill
+  independence_flags_note: The maintainers' U-Net (Hu et al., 2025) was entered on the Kaggle
+    leaderboard, which the rules allowed ClimSim's authors to do without winning prizes, and v6 and
+    the follow-up rank it as the online state of the art. NVIDIA is the primary funder and several
+    authors, the U-Net's first author among them, are at NVIDIA; funded-by-evaluated-party is not
+    set because no NVIDIA product is evaluated (see review_checks). The follow-up declares no
+    conflicts. The prizes were offered by Columbia University, not an industry sponsor.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2306-08754-v6
+    quote: Primary support is by NVIDIA, the National Science Foundation (NSF) Science and
+      Technology Center (STC) Learning the Earth with Artificial Intelligence and Physics
+  independence_policy:
+    source: src-kaggle-leap-climsim
+    quote: may enter and participate in the Competition, but are not eligible to win any Prizes
+  known_limitation:
+    source: src-arxiv-2306-08754-v6
+    quote: The configuration of the multiscale climate simulator used to make ClimSim also has no
+      atmosphere-ocean coupling and ignores the radiative effects of aerosols.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: The online score needs a run of E3SM-MMF with the emulator coupled in, in the
+    maintainers' container; the paper says the low-resolution hybrid configuration runs on a single
+    cloud node or a laptop. The offline score needs only the data and the entrant's own training
+    compute (A100 GPUs in the papers).
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Offline scoring is end to end on public data. The online score, which the paper calls
+      the primary objective of evaluating an emulator, is defined inside the containerized E3SM-MMF
+      build.
+    source: src-arxiv-2306-08754-v6
+    quote: The primary objective of evaluating a machine learning model within hybrid climate
+      simulations is to measure the online error
+  reproducibility_blockers:
+    - specific-simulator-build
+  reproducibility_blockers_note: The online errors hold for one E3SM-MMF configuration (the
+    low-resolution hybrid setup in the container); the Kaggle follow-up ran a FTorch-coupled build
+    of its own. The E3SM-MMF reruns are not bitwise reproducible by design.
+  harness_availability: official-harness
+  harness: The ClimSim repository's preprocessing, baseline and evaluation code (leap-stc/ClimSim)
+    and the containerized hybrid-testing workflow (leap-stc/climsim-online)
+  harness_source: src-arxiv-2306-08754-v6
+  harness_quote: The containerized workflow of running hybrid simulations can be found at
+  code_licence: Apache-2.0
+  code_licence_note: The README's licence for the repository's code; GitHub's licence metadata for
+    leap-stc/ClimSim, read 2026-11-04, agrees. The licence of leap-stc/climsim-online was not read.
+  code_licence_source: src-github-climsim-readme
+  code_licence_quote: ClimSim uses the Apache 2.0 license for code found on the associated GitHub
+    repo and the Creative Commons Attribution 4.0 license for data hosted on HuggingFace.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the surrogate-fit profile (subset_used, training_data_policy): subset_used carries which simulation
+  # (low-resolution real geography, high resolution, aquaplanet), which variable list (124 inputs and 128 targets,
+  # the expanded 617 and 368, or Kaggle's 556 and 368), offline or online, and the test subsampling; the papers
+  # differ on each (as_used). Online scores also depend on the E3SM-MMF build and configuration, the initial
+  # condition and the run length, so the simulator fields are material.
+  material_extra:
+    - simulator
+    - simulator_version
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The Kaggle competition, hosted by the maintainers, ranked entrants by one R2 averaged over
+    all weighted targets. The paper itself reports each variable apart and combines nothing, and the
+    online metrics have no aggregate (see review_checks).
+  source: src-arxiv-2511-20963-v4
+  quote: a singular offline scalar metric (averaged R2 across all target variables)
+headline_metric: null
+headline_metric_note: The Kaggle weighted R2 has no Metric entity yet; this task may not write one.
+
+homepage: https://leap-stc.github.io/ClimSim/
+repository: https://github.com/leap-stc/ClimSim
+dataset_url: https://huggingface.co/datasets/LEAP/ClimSim_high-res
+leaderboard_url: https://www.kaggle.com/competitions/leap-atmospheric-physics-ai-climsim/leaderboard
+
+versions:
+  - version: v1
+    label: ClimSim, the dataset and offline benchmark of the NeurIPS 2023 paper
+    version_kind: revision
+    released: 2023-06-14
+    changes: Three E3SM-MMF simulations, offline regression from column state to tendencies scored
+      by MAE and R2 (CRPS in the SI) on the last two simulated years, and six baselines. Read
+      through v6's account; versions 1 to 5 were not read, so which of them made each change is not
+      recorded.
+    breaking: false
+    superseded_by: online
+    frozen: true
+    sources:
+      - src-arxiv-2306-08754
+      - src-arxiv-2306-08754-v6
+  - version: kaggle-2024
+    label: The Kaggle competition, LEAP - Atmospheric Physics using AI (ClimSim)
+    version_kind: edition
+    released: 2024-04-18
+    changes: A subset of the low-resolution real-geography data with the full variable list (556
+      input and 368 target columns), 625,000 hidden test rows, and one R2 on weighted predictions
+      averaged over targets. The test file and the weighting file were replaced on 2024-06-18, and
+      submissions made before then were invalidated. Closed on 2024-07-15.
+    breaking: true
+    frozen: true
+    sources:
+      - src-kaggle-leap-climsim-record
+      - src-kaggle-leap-climsim
+  - version: online
+    label: ClimSim-Online (arXiv v6)
+    version_kind: revision
+    released: 2024-07-08
+    changes: Adds the containerized workflow that couples an emulator into E3SM-MMF, the online
+      metrics (monthly RMSE, zonal-mean bias, stability) and a hybrid baseline; the offline task is
+      unchanged.
+    breaking: false
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-arxiv-2306-08754
+      - src-arxiv-2306-08754-v6
+
+lineage:
+  role: root
+
+history:
+  - date: 2024-04-18
+    event: channel-opened
+    field: execution.submission_channel
+    to: Kaggle competition leap-atmospheric-physics-ai-climsim
+    source: src-kaggle-leap-climsim-record
+    quote: '"dateEnabled":"2024-04-18T22:46:20.837Z","deadline":"2024-07-15T23:59:00Z"'
+  - date: 2024-07-15
+    event: channel-closed
+    field: execution.submission_channel
+    from: Kaggle competition leap-atmospheric-physics-ai-climsim
+    source: src-kaggle-leap-climsim-record
+    quote: '"finalLeaderboardHasBeenVerified":true'
+    note: The final submission deadline; the record shows the final leaderboard verified.
+
+tags:
+  - climate-emulation
+  - subgrid-parameterization
+  - hybrid-ml-physics
+  - e3sm-mmf
+  - kaggle
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2306-08754-v6
+    - src-arxiv-2306-08754
+    - src-github-climsim-readme
+    - src-hf-api-climsim-low-res
+    - src-hf-api-climsim-high-res
+    - src-kaggle-leap-climsim-record
+    - src-kaggle-leap-climsim
+    - src-arxiv-2511-20963-v4
+    - src-arxiv-2511-20963
+    - src-arxiv-2511-22004
+  sources_note: >
+    The paper's v6 PDF (a DOI source, not archived) read as text, and its abstract page for the dates
+    and the award note; the README at its last commit; Hugging Face's public API records of the low- and
+    high-resolution datasets (the aquaplanet dataset's was not read); Kaggle's JSON records of the competition
+    and its pages, read without accepting the rules; the follow-up paper's v4 PDF and abstract page; and
+    one November 2025 abstract as evidence of current use. The project site (leap-stc.github.io/ClimSim)
+    and the climsim-online repository were not read.
+  confidence: medium
+  review_checks:
+    - check: climate-projection or another home. ClimSim has no emissions or forcing scenarios (one
+        present-day climate, 2005-2014 boundary conditions), which the leaf's definition asks for;
+        it is filed there as the nearest leaf for climate-model emulation, and a tag-gap proposes a
+        leaf for it. physics/simulation-surrogates as primary was considered; the family exclusion
+        test keeps an Earth-system process in earth-climate.
+      field: domain
+      source: src-arxiv-2306-08754-v6
+      quote: which have been generated to reflect a climatological average of the 2005-2014 period
+    - check: One entry for three protocols (offline v1, the Kaggle edition, ClimSim-Online). Whether
+        the Kaggle competition, with its own variable list, hidden rows and single weighted R2,
+        should be its own entry, and whether version_kind edition fits a one-off competition.
+      field: versions
+    - check: aggregation_policy official-aggregate rests on the Kaggle score. The paper reports each
+        variable apart and the online metrics have no aggregate, so none-by-design or unknown are
+        defensible for the paper's protocol.
+      field: aggregation_policy
+    - check: calibration-uncertainty and uncertainty-calibration-score are rejected because CRPS is
+        SI-only; the stochastic baselines (HSR, RPN, cVAE) emit distributions, and a reviewer may
+        read CRPS as part of the protocol.
+      field: evaluation_method
+      specialist: true
+    - check: funded-by-evaluated-party is not set. NVIDIA is the primary funder, and the U-Net that
+        v6 and the follow-up treat as the online state of the art is by authors at NVIDIA; no NVIDIA
+        product is evaluated, but the U-Net could be read as an evaluated party's system.
+      field: governance.independence_flags
+      source: src-arxiv-2306-08754-v6
+      quote: Primary support is by NVIDIA, the National Science Foundation (NSF) Science and
+        Technology Center (STC) Learning the Earth with Artificial Intelligence and Physics
+    - check: activity closed assumes Kaggle's late-submission route, if open, does not count. The
+        competition pages and record read do not say whether late submissions are accepted.
+      field: activity
+    - check: reproducibility_tier automatable-with-simulator and compute_tier simulator-required
+        follow the online evaluation; if the offline R2 is taken as the headline, fully-automatable
+        and a GPU tier would apply.
+      field: execution.reproducibility_tier
+    - check: ceiling_anchor_type theoretical-maximum is for the offline and Kaggle R2; the online
+        errors are read against internal unpredictability from reruns of the reference simulation, a
+        noise-ceiling for those metrics.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2306-08754-v6
+      quote: Additionally, to estimate the inherent unpredictability of the atmospheric system, we
+        ran three additional pure physical simulations with the same initial conditions.
+    - check: The paper says several thousand participants entered the Kaggle competition; Kaggle's
+        record gives 877 competitors in 693 teams (5,177 users joined), and the follow-up says about
+        700 teams. The entry uses Kaggle's counts.
+      field: events
+      source: src-arxiv-2306-08754-v6
+      quote: global participants in a Kaggle ML competition based on the ClimSim dataset
+    - check: Current use beyond the maintainers is thin. The follow-up is by the maintainers' group,
+        and the November 2025 abstract's last author is a ClimSim author; an independent 2025-2026
+        result was not found through arXiv's and OpenAlex's searches (Semantic Scholar's API refused
+        with 429). The follow-up also says ClimSim holds a single climate and that a new dataset may
+        be needed, which may signal a successor.
+      field: lifecycle
+      source: src-arxiv-2511-20963-v4
+      quote: Unfortunately, ClimSim only contains data from a single climate.
+    - check: maintainer_type academic-lab follows chaosbench for LEAP's organisations; LEAP is an
+        NSF centre spanning several institutions and the README calls the authors a consortium, so
+        community-collective is the alternative.
+      field: governance.maintainer_type
+      source: src-github-climsim-readme
+      quote: developed by a consortium of climate scientists and ML researchers

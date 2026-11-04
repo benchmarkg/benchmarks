@@ -1,0 +1,549 @@
+# data/benchmarks/earth-climate/wildfirespreadts.yaml
+#
+# P1-S7-T02, earth-climate entry 14. Filled from the WildfireSpreadTS paper (Gerard, Zhao and Sullivan, NeurIPS 2023
+# Datasets and Benchmarks), read as the text of its proceedings PDF, and its proceedings abstract page for the venue
+# and DOI; Zenodo's record of the dataset (v1.0) and the datasheet filed with it; the repository README pinned at
+# commit f62dc49 (2026-02-09), with GitHub's API for licence and last push (not quoted); and the v3 PDF of the WSTS+
+# paper (arXiv 2502.12003, accepted at WACV 2026), which benchmarks models on WildfireSpreadTS and extends it. The
+# paper has no arXiv version, and its supplementary material (on OpenReview) was not read. Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The lead time is fixed at one day by the paper's task, but the data are time series from which other horizons can
+# be built, so lead_time is named in comparability.material_extra. Two more conditions move a score and have no
+# EvalConditions field: the number of input days and the feature set (see comparability and the review checks).
+
+id: wildfirespreadts
+name: WildfireSpreadTS
+aliases:
+  - WSTS
+tagline: Next-day active fire maps for 607 US wildfires from daily 23-channel time series, scored by
+  AP over held-out years.
+description: >
+  A dataset and benchmark for predicting how an active wildfire will spread over the next 24 hours, released
+  by KTH Royal Institute of Technology with a NeurIPS 2023 Datasets and Benchmarks paper. It holds 607
+  fire events in the western contiguous United States from 2018 to 2021, chosen from the GlobFire burned-area
+  database (fires over 1,000 hectares with VIIRS detections), as 13,607 daily images of 23 channels resampled
+  to 375 m: the VIIRS active fire map, VIIRS reflectance bands, NDVI and EVI2, GRIDMET weather, drought
+  and fire-danger variables, GFS weather forecasts, land cover, and elevation, slope and aspect. Each
+  event is a time series with four buffer days before and after the GlobFire dates. The task is to predict
+  the next day's binarised VIIRS active fire map, a proxy for the true fire spread, from one day or five
+  days of observations. Models are scored by test-set average precision of the fire class over all test
+  pixels, as the mean and standard deviation of a 12-fold cross-validation over every assignment of the
+  four years to training (two years), validation and test, with every test series starting at its sixth
+  day. The paper's baselines are fire persistence, logistic regression, a ResNet-18 U-Net, a ConvLSTM
+  and UTAE; UTAE with five days of vegetation features scores best (AP 0.372), and persistence scores
+  0.193. Fire pixels are about 0.1% of the total, and the labels carry noise from smoke, clouds and detection
+  errors. Later papers report on the same protocol; WSTS+ (2025) raised the best AP to about 0.48 and
+  extended the data to 2016-2023.
+self_description:
+  source: src-neurips-2023-wildfirespreadts-abstract
+  quote: We present a multi-temporal, multi-modal remote-sensing dataset for predicting how active
+    wildfires will spread at a resolution of 24 hours.
+paper:
+  title: 'WildfireSpreadTS: A dataset of multi-modal time series for wildfire spread prediction'
+  doi: 10.52202/075280-3258
+  source: src-neurips-2023-wildfirespreadts
+paper_note: The DOI is the one the proceedings abstract page gives for the paper; it was not
+  resolved, and the PDF read does not print it (see review_checks).
+released: 2023-10-25
+released_note: The publication date of the dataset's Zenodo record (v1.0), the earliest public date
+  read. The repository was created on 2023-06-05 (GitHub API), and the paper appeared at NeurIPS
+  2023 in December; the OpenReview submission, which may have been public earlier, was not read.
+released_source: src-zenodo-wildfirespreadts
+released_quote: Published October 25, 2023 | Version v1.0
+release_venue: NeurIPS 2023 Datasets and Benchmarks Track
+release_venue_source: src-neurips-2023-wildfirespreadts-abstract
+release_venue_quote: 'Advances in Neural Information Processing Systems 36 (NeurIPS 2023) Datasets and
+  Benchmarks Track DOI: 10.52202/075280-3258'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/hazard-prediction
+  secondary:
+    - earth-climate/remote-sensing
+domain_note: remote-sensing is secondary, not primary. Unlike sen1floods11, where the flood is
+  mapped from the image taken during it, the scored mask here is the next day's fire, which no input
+  image shows; the remote-sensing inclusion test keeps mapping a visible hazard and its exclusion
+  test sends forecasting an event to hazard-prediction.
+domain_basis:
+  reason: The scored quantity is where an active wildfire will be burning the next day, predicted
+    before it is observed; hazard-prediction's definition names wildfires, and remote-sensing's
+    exclusion test sends a task that forecasts an event before it happens to hazard-prediction. The
+    inputs and the labels are satellite and gridded Earth-observation products and the paper
+    presents the dataset as remote sensing, so remote-sensing is secondary.
+  source: src-neurips-2023-wildfirespreadts-abstract
+  quote: We present a multi-temporal, multi-modal remote-sensing dataset for predicting how active
+    wildfires will spread at a resolution of 24 hours.
+domain_considered_and_rejected:
+  - term: earth-climate/weather-forecasting
+    reason: GRIDMET weather and GFS forecasts are among the predictors, but no atmospheric state is
+      forecast; the leaf's exclusion test sends weather used only as a predictor for another target
+      to that target's leaf.
+  - term: vision/segmentation
+    reason: The models are segmentation networks and the output is a per-pixel mask, but the mask is
+      of a future state, not a labelling of the input image, and the labels are an Earth-system
+      quantity (active fire), which the taxonomy keeps in earth-climate.
+  - term: physics/simulation-surrogates
+    reason: The paper sets its task apart from networks trained to approximate fire simulators such
+      as FARSITE; models learn from satellite observations and are scored against observed
+      detections, not against a simulator.
+    source: src-neurips-2023-wildfirespreadts
+    quote: Such simulators have been used to generate training data, and train neural networks to
+      approximate the spread predictions made by the simulators
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Models predict the future state of an Earth-system process, the next day's active fire
+      extent, from measurements of the fire, fuel, weather and topography, and the score compares
+      the prediction with the satellite detections of that day.
+    source: src-neurips-2023-wildfirespreadts
+    quote: predict the output of the VIIRS active fire product, as a proxy for predicting the actual
+      ground truth fire spread
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: Each test fold is a held-out year, and the paper chose cross-validation over years
+      because yearly distributions differ, but the 12 folds are pooled into one mean and no shifted
+      condition is scored on its own, as for cy-bench's leave-one-year-out. WSTS+ later measured the
+      cross-year shift (see review_checks).
+    source: src-neurips-2023-wildfirespreadts
+    quote: This is necessary, because of the large differences between the yearly data distributions
+  - term: probabilistic-forecasting
+    reason: The fires of 2018-2021 have already burned and their detections ship with the dataset;
+      the forecasts are hindcasts, and AP ranks per-pixel scores rather than scoring a probability
+      on resolution.
+  - term: perception
+    reason: The inputs are rasters, but the score measures a prediction of the next day, not
+      structure recovered from the signal presented.
+  - term: temporal-reasoning
+    reason: Five-day inputs are offered, but the score is the agreement of a predicted fire map with
+      the observed one, not whether order or duration was judged correctly.
+  - term: calibration-uncertainty
+    reason: The paper names uncertainty estimation as a research direction the data invite, but AP
+      depends only on the ranking of pixel scores and no calibration is scored.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: Average precision, the area under the precision-recall curve of per-pixel fire scores
+    against the binarised next-day map, is a general statistic of a score ranking; the F1 score
+    reported for the persistence baseline is one too. The inclusion test names AUPRC and F1.
+  source: src-neurips-2023-wildfirespreadts
+  quote: To evaluate models, we use the test set average precision (AP).
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: This AP is the area under one precision-recall curve over pixels, not COCO's detection
+      mAP over IoU thresholds and categories; the term's exclusion test sends general statistics
+      used as standard in a field to classification-metric.
+  - term: statistical-fit
+    reason: The compared values are binary fire labels, not continuous measurements.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The benchmark is built for deep networks trained from scratch on its data for wildfire
+    spread prediction, a task fire and Earth science define (the paper's U-Net, ConvLSTM and UTAE,
+    and later papers' U-Nets, SegFormer and SwinUnet). Fire persistence, which predicts that today's
+    fire map holds tomorrow, has no learned component and is scored as a baseline in the same
+    tables.
+  source: src-neurips-2023-wildfirespreadts
+  quote: As a simple baseline, we use fire persistence, as in Huot et al., 2022.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The networks are generic segmentation and video architectures, but wildfire spread
+      prediction is a task the earth-climate discipline defines, which the term's exclusion test
+      sends to domain-specialist-model, as sen1floods11 is tagged.
+  - term: scientific-surrogate-model
+    reason: The models do not stand in for a fire-spread simulator; they are trained on and scored
+      against satellite observations, and the paper contrasts them with simulator-trained networks.
+
+as_used:
+  - protocol: The paper's 12-fold leave-one-year-out cross-validation scored by test AP, with one
+      and five input days and the vegetation, multi and all feature sets, but with models selected
+      on validation AP instead of F1, focal loss and pretrained encoders, hyperparameters searched
+      on one fold with the all-features set, and new models (Res50-U-Net, SwinUnet, SegFormer, UTAE
+      with a ResNet-18 encoder).
+    split: 12-fold cross-validation over 2018-2021
+    source: src-arxiv-2502-12003-v3
+    quote: We perform all experiments on the WildfireSpreadTS (WSTS) benchmark [17] because it is
+      the only public benchmark for time-series wildfire prediction
+    note: WSTS+ (Lahrichi, Bova, Johnson and Malof; v3 November 2025, accepted at WACV 2026), by
+      authors at the Universities of Missouri and Montana, none of them WildfireSpreadTS's. It
+      reports the paper's own baseline numbers beside its models.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; WSTS+ (v3 November 2025, accepted at WACV 2026) reports
+    new state-of-the-art models on the benchmark's protocol. The README was last updated in February
+    2026 with a known issue in the data loader (GitHub API), which is maintenance evidence, not
+    lifecycle.
+  source: src-arxiv-2502-12003-v3
+  quote: as evaluated on a large public benchmark for next-day wildfire spread, termed the
+    WildfireSpreadTS (WSTS) benchmark
+activity: no-submission-channel
+activity_basis:
+  reason: The datasheet says no repository collects the papers or systems that use the dataset, and
+    the README offers the data, the training code and the data loaders, with no leaderboard, results
+    page or submission route; results appear in their authors' papers.
+  source: src-zenodo-wildfirespreadts-datasheet
+  quote: Is there a repository that links to any or all papers or systems that use the dataset? No.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: UTAE (the paper's baseline, five input days, vegetation features)
+    source: src-neurips-2023-wildfirespreadts
+    observed_on: 2026-11-04
+    quote: The UTAE achieves a maximum AP of 0.372 on the vegetation features
+  - system: Res18-Unet (WSTS+'s retrained U-Net, one input day)
+    source: src-arxiv-2502-12003-v3
+    observed_on: 2026-11-04
+    quote: Our Res18-Unet also obtains the highest overall AP (0.468) for the T = 1 models
+    note: WSTS+'s Table 2 gives its UTAE with a ResNet-18 encoder 0.478 with five days of vegetation
+      features, the best number in the sources read; the table is not quoted because its plus-minus
+      signs decode badly in the paper's extract.
+evaluation_target: learned-system
+evaluation_target_note: Fire persistence sits in the tables as the parameter-free reference the
+  learned models must beat; the benchmark is built for the learned models.
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The next day's VIIRS active fire detections (medium and high confidence,
+  aggregated over the day and binarised), a satellite product the paper treats as a proxy for the
+  true fire spread. The labels are public and are held out only within each cross-validation fold.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data are an open Zenodo download and the training, data-loading and evaluation code is
+    in the repository, so anyone can train and score a model.
+  source: src-github-wildfirespreadts-readme
+  quote: This repository contains the code for recreating the experiments in the WildfireSpreadTS
+    paper.
+
+task:
+  exists: true
+  input:
+    - one or five consecutive days of 23-channel images at 375 m and 24 h, each day holding the
+      active fire map (with the hour of each pixel's last detection), VIIRS bands I1, I2 and M11,
+      NDVI and EVI2, GRIDMET weather, drought and energy release component, the GFS forecast for the
+      day, land cover class, and elevation, slope and aspect
+  input_note: The paper's experiments use one or five input days and three feature sets (vegetation,
+    multi and all), with the fire masks always included; the number of days and the feature set are
+    conditions of every number. The original resolutions run from 30 m (elevation) to about 28 km
+    (GFS); every channel is resampled to the fire maps' grid.
+  input_source: src-neurips-2023-wildfirespreadts
+  input_quote: All features were resampled to the spatial resolution of the active fire maps of
+    375m, and a temporal resolution of 24h.
+  output: A per-pixel fire score for the next day, against the binarised VIIRS active fire map of
+    that day, one day ahead of the last input day.
+  output_source: src-neurips-2023-wildfirespreadts
+  output_quote: based on either one day (mono-temporal) or five days of observations
+    (multi-temporal)
+  scoring: Test-set average precision over all test pixels, for each of the 12 assignments of the
+    four years to training (two years), validation and test (one each), reported as the mean and
+    standard deviation over the folds. Every test series starts at its sixth day, whatever the
+    number of input days, so that the test set is the same for one-day and five-day models; training
+    uses every day. The persistence baseline also gets an F1 score.
+  scoring_source: src-neurips-2023-wildfirespreadts
+  scoring_quote: For all experiments, we perform a full 12-fold cross-validation over all possible
+    permutations of years assigned to train/val/test set.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: Every year's labels are in the public dataset; a year is held out
+    only within its own fold.
+  item_definition: One target day of one fire event, a next-day fire map of the event's image (the
+    images vary from about 304 x 207 to 356 x 308 pixels), predicted from the preceding days of the
+    same event.
+  item_definition_source: src-neurips-2023-wildfirespreadts
+  item_definition_quote: to ensure that all testing starts on the target of day six, for each fire
+  source: src-neurips-2023-wildfirespreadts
+  quote: To evaluate models, we use the test set average precision (AP).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The whole dataset, labels included, is an open Zenodo download (48.4 GB of GeoTIFFs)
+      without an account.
+    source: src-github-wildfirespreadts-readme
+    quote: The dataset is freely available at
+  refresh: static
+  refresh_basis:
+    reason: One Zenodo version, v1.0, and the datasheet plans no regular updates. The record was
+      modified on 2024-07-11 without a new version, and the data loader in the repository was
+      corrected after the paper (versions); neither is recorded as a change to the data.
+    source: src-zenodo-wildfirespreadts-datasheet
+    quote: We currently do not plan to perform regular updates.
+  data_provenance:
+    - real-world-instrument
+    - simulation-generated
+    - curated-public-database
+  data_provenance_note: The inputs and the labels are taken from existing products, none collected
+    for the benchmark. The active fire maps, reflectance, vegetation indices, land cover and
+    elevation come from satellite and Shuttle radar instruments (VIIRS, MODIS, SRTM). The weather
+    comes from GRIDMET, a gridded product, and GFS, a numerical weather prediction model's
+    forecasts, which take simulation-generated with real-world-instrument. The fire events were
+    selected from GlobFire, a curated burned-area database built from MODIS for other purposes.
+  data_provenance_source: src-zenodo-wildfirespreadts-datasheet
+  data_provenance_quote: We did not collect any data ourselves, but selected matching data from
+    various existing datasets to compile this dataset.
+  contamination_risk: medium
+  contamination_risk_note: Every year's data and labels are public on Zenodo and in the source
+    products, and the cross-validation trains on two of the years and tests on another, so only the
+    protocol keeps a test year out of training. Pretraining on the same satellite archives, or
+    tuning across folds, is a plausible route; the WSTS+ models' pretrained encoders were not
+    checked for it, and no evidence of contamination was read.
+  contamination_evidence: []
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The licence of the dataset on Zenodo, also given in the paper and the
+    README.
+  dataset_licence_source: src-zenodo-wildfirespreadts
+  dataset_licence_quote: Rights License Creative Commons Attribution 4.0 International
+  upstream_licences: The datasheet says the source products are public domain or ask only for
+    citation; the products' own terms were not read.
+  upstream_licences_source: src-zenodo-wildfirespreadts-datasheet
+  upstream_licences_quote: The base datasets we use are either in the public domain or similarly
+    permissively licensed, only requesting citation of the original source.
+  size:
+    - count: 607
+      unit: fire events
+      subset: all (2018-2021); 948 candidate events from GlobFire were discarded
+      source: src-neurips-2023-wildfirespreadts
+      quote: In total, we retained 607 fire events and discarded 948.
+    - count: 13607
+      unit: daily images of 23 channels at 375 m
+      subset: all
+      note: The four buffer days before and after each event's GlobFire dates are included.
+      source: src-neurips-2023-wildfirespreadts
+      quote: with a total of 13607 daily images
+    - count: 23
+      unit: channels per image
+      subset: all
+      source: src-zenodo-wildfirespreadts-datasheet
+      quote: Each instance is one image consisting of 23 channels.
+    - count: 74
+      unit: fire events in 2019, the smallest year (2018 has 176, 2020 has 201, 2021 has 156, per
+        the paper's Table 1)
+      subset: '2019'
+      source: src-neurips-2023-wildfirespreadts
+      quote: The low number of 74 fire events for the year 2019
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The dataset's authors at KTH Royal Institute of Technology (Sebastian Gerard, Yu Zhao
+    and Josephine Sullivan)
+  maintainer_basis:
+    reason: The datasheet names the three authors at KTH as the dataset's creators; the repository
+      is in the first author's GitHub account and the data on Zenodo.
+    source: src-zenodo-wildfirespreadts-datasheet
+    quote: The dataset was created by Sebastian Gerard, Yu Zhao and Josephine Sullivan at KTH Royal
+      Institute of Technology.
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route exists; beyond the
+    paper's baselines, results appear in their authors' own papers, as WSTS+'s do.
+  independence_flags: []
+  independence_flags_note: None recorded. The only results the maintainers published are the release
+    paper's baselines, and no ranking is kept for anyone to compete on. The funder, Digital Futures
+    (a research centre of KTH and other Swedish institutions), is not an evaluated party.
+  independence_assessed: true
+  funding:
+    source: src-zenodo-wildfirespreadts-datasheet
+    quote: This work is funded by Digital Futures in the project EO-AI4GlobalChange.
+  known_limitation:
+    source: src-zenodo-wildfirespreadts-datasheet
+    quote: The influence of human fire-fighting activity has not been accounted for in the dataset.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier_note: Not set. The paper's experiments, hyperparameter searches included, took 1,278
+    hours on NVIDIA A40 GPUs, for all its models, feature sets and 12 folds; what one entrant's run
+    needs is not stated.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Open data, a fixed protocol and public training and evaluation code; a model can be
+      trained and scored end to end with no human, physical or maintainer-only step.
+    source: src-github-wildfirespreadts-readme
+    quote: which directly provides dataset loaders for train/val/test set
+  reproducibility_blockers: []
+  harness_availability: reference-implementation-only
+  harness_availability_note: The repository recreates the paper's experiments and provides the data
+    module that builds the folds; no scorer is designated as the official one, and WSTS+ ran its own
+    training code under the same protocol.
+  harness: train.py and src/dataloader/FireSpreadDataModule.py in SebastianGer/WildfireSpreadTS (the
+    paper's experiment code and data module)
+  harness_source: src-github-wildfirespreadts-readme
+  harness_quote: This repository contains the code for recreating the experiments in the
+    WildfireSpreadTS paper.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for SebastianGer/WildfireSpreadTS also reports MIT
+    (read 2026-11-04).
+  code_licence_source: src-neurips-2023-wildfirespreadts
+  code_licence_quote: Our code is available under the MIT license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # classification-metric with domain-specialist-model and classical-algorithm resolves the fallback profile
+  # (subset_used). Beyond it:
+  #   lead_time -- one day ahead in the paper's task (task.output_quote); the time series let users build longer
+  #     horizons, which would not compare.
+  #   training_data_policy -- the training years of the fold and anything else the model saw, such as pretrained
+  #     encoders (WSTS+) or WSTS+'s added years.
+  #   harness -- the code version: a data-loader bug was fixed after the paper, which the README says raises scores
+  #     slightly, and a known issue with the angle features stands since February 2026 (versions).
+  # subset_used carries the folds scored (all 12 for the headline mean, or a single year). Two further conditions
+  # have no EvalConditions field: the number of input days (one or five) and the feature set (vegetation, multi
+  # or all), both reported as separate columns and rows of every results table.
+  material_extra:
+    - lead_time
+    - training_data_policy
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper's number is the mean test AP over the 12 cross-validation folds, with its
+    standard deviation, per model, input length and feature set; nothing combines input lengths or
+    feature sets into one score.
+  source: src-neurips-2023-wildfirespreadts
+  quote: For all experiments, we perform a full 12-fold cross-validation over all possible
+    permutations of years assigned to train/val/test set.
+
+homepage: https://github.com/SebastianGer/WildfireSpreadTS
+repository: https://github.com/SebastianGer/WildfireSpreadTS
+dataset_url: https://doi.org/10.5281/zenodo.8006177
+
+versions:
+  - version: v1.0
+    label: WildfireSpreadTS v1.0, the Zenodo release with the paper
+    released: 2023-10-25
+    changes: The only data version. After the paper, the repository's data loader was corrected
+      (commit ab3c8f3), which the README says gives slightly higher scores with the same trends;
+      since February 2026 the README warns that angle features are encoded by sine only. Neither
+      change touches the data files.
+    frozen: true
+    sources:
+      - src-zenodo-wildfirespreadts
+      - src-github-wildfirespreadts-readme
+
+lineage:
+  role: root
+  forks:
+    - id: wsts-plus
+      maintainer: Lahrichi, Bova, Johnson and Malof (the WSTS+ authors, Universities of Missouri and
+        Montana)
+      source: src-arxiv-2502-12003-v3
+      quote: we create a new benchmark, WSTS+, by incorporating four additional years of historical
+        wildfire data into the WSTS benchmark
+lineage_note: WSTS+ adds 2016, 2017, 2022 and 2023 by the same collection script (with MTBS
+  perimeters for 2022-2023, after GlobFire ends) and scores it by four-fold cross-validation over
+  pairs of years; it has no entry. The paper says it is heavily inspired by Next Day Wildfire Spread
+  (Huot et al., 2022), a mono-temporal dataset at 1 km, which has no entry either.
+
+tags:
+  - wildfire-spread
+  - next-day-prediction
+  - active-fire
+  - viirs
+  - multi-temporal
+  - leave-one-year-out
+  - class-imbalance
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-neurips-2023-wildfirespreadts
+    - src-neurips-2023-wildfirespreadts-abstract
+    - src-zenodo-wildfirespreadts
+    - src-zenodo-wildfirespreadts-datasheet
+    - src-github-wildfirespreadts-readme
+    - src-arxiv-2502-12003-v3
+  sources_note: >
+    The paper's NeurIPS proceedings PDF read as text (withheld from archiving: its author block holds
+    the authors' e-mail addresses) and its proceedings abstract page with scripts stripped; Zenodo's
+    record page for v1.0 and the datasheet PDF filed in it (DOI sources, not archived; the record read
+    as a page because zenodo.org's robots.txt disallows /api); the README pinned at commit f62dc49; and
+    the WSTS+ v3 PDF (a DOI, not archived) as evidence of current use. The supplementary material on
+    OpenReview was not read; the datasheet is said to repeat it without the experiments.
+  confidence: medium
+  review_checks:
+    - check: hazard-prediction has no inclusion test or examples yet; this entry is its first
+        primary use, on the definition (which names wildfires) and remote-sensing's exclusion test
+        for forecasting an event. remote-sensing is secondary because the dataset presents itself as
+        remote sensing; vision/segmentation was rejected though the models are segmentation
+        networks.
+      field: domain
+    - check: distribution-shift-generalization was rejected because the 12 year-folds are pooled
+        into one mean, as for cy-bench. The paper chose year folds for their differing
+        distributions, and WSTS+ reports significant cross-year shift and per-year scores; a
+        specialist may read the held-out year as a deliberate shift.
+      field: capability
+      specialist: true
+      source: src-arxiv-2502-12003-v3
+      quote: We discover and analyze significant cross-year domain shift, a critical challenge for
+        the field.
+    - check: The sources disagree on how the paper's models were selected. The paper says it kept
+        the model with the highest validation loss (probably meaning the best), WSTS+ says the
+        original U-Net was selected on validation F1; selection on validation AP is one of WSTS+'s
+        gains.
+      field: as_used
+      source: src-neurips-2023-wildfirespreadts
+      quote: We keep the model with the highest validation loss, evaluated after each training epoch
+    - check: A data-loader bug was fixed after the paper (commit ab3c8f3), and the README says
+        scores rise slightly; whether WSTS+ ran the corrected loader, and so whether its numbers sit
+        beside the paper's on equal terms, was not checked. harness is named material for this
+        reason.
+      field: comparability
+      source: src-github-wildfirespreadts-readme
+      quote: the corrected dataset class leads to slightly higher performance, but the trends in the
+        results are basically the same as those reported in the paper
+    - check: The number of input days and the feature set change every score and have no
+        EvalConditions field, so claims that differ on them can share a comparability key. No
+        EvalConditions record was written (this task may not write data/conditions/); the proposed
+        reference is lead_time one day, all 12 folds, five input days and the vegetation features.
+      field: comparability
+      source: src-neurips-2023-wildfirespreadts
+      quote: Multi includes vegetation, land cover, topography and weather features.
+    - check: classical-algorithm rests on fire persistence, the only non-learned row in the tables
+        (logistic regression is learned). Drop it if a baseline that simple should not count as a
+        designed-for entrant.
+      field: designed_for_subjects
+    - check: The paper's DOI (10.52202/075280-3258, Curran's proceedings) was taken from the
+        abstract page and not resolved. The PDF Source carries no DOI and is withheld from archiving
+        for the authors' e-mail addresses, and the abstract page is pending; whether the PDF Source
+        should carry the DOI instead, which would make it citable without a capture.
+      field: paper
+    - check: data_provenance tags GRIDMET and the GFS forecasts as simulation-generated beside
+        real-world-instrument, and GlobFire as curated-public-database because the events were
+        selected from it; whether the predictors' provenance belongs in the field is a judgement, as
+        for cy-bench.
+      field: data.data_provenance
+    - check: refresh static rests on one Zenodo version and the datasheet's plan of no regular
+        updates; the record was modified on 2024-07-11 without a new version, and what changed was
+        not checked.
+      field: data.refresh
+      source: src-zenodo-wildfirespreadts
+      quote: Modified July 11, 2024
+    - check: The ground truth is the VIIRS active fire product, which the paper names a proxy for
+        the real spread; the abstract lists smoke, clouds and detection errors as label noise, and
+        the datasheet warns against using the data as ground truth for statistics of fire spread.
+      field: ground_truth_source
+      source: src-neurips-2023-wildfirespreadts-abstract
+      quote: d) noisy labels, due to smoke, clouds, and inaccuracies in the active fire detection
+  personal_data_excluded:
+    - source: src-neurips-2023-wildfirespreadts
+      what: The three authors' e-mail addresses in the PDF's author block, in a brace form; the
+        extract's windows leave them out and the Source is withheld from archiving.
+    - source: src-zenodo-wildfirespreadts-datasheet
+      what: The first author's e-mail address, given twice in the maintenance section as the
+        dataset's contact; the extract's 70-character windows leave it out.
+    - source: src-arxiv-2502-12003-v3
+      what: The four authors' e-mail addresses in the PDF's author block; the extract's windows
+        leave them out.

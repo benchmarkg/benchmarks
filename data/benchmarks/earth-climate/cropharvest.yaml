@@ -1,0 +1,611 @@
+# data/benchmarks/earth-climate/cropharvest.yaml
+#
+# P1-S7-T02, earth-climate entry 15. Filled from the paper (Tseng et al., NeurIPS 2021 Datasets and Benchmarks
+# Track, round 2), read as the text of its proceedings PDF, and its proceedings abstract page; the repository's
+# README, cropharvest/config.py and cropharvest/engineer.py, pinned at commit aa3c94a (2024-04-30, the last push;
+# with GitHub's API for licence and history, not quoted); Zenodo's record pages for the dataset's v14 (the
+# version the package downloads) and v8 (the version the paper cites); DataCite's record of the first Zenodo
+# version, for the release date; and the v2 PDF of TESSERA v2 (arXiv 2607.03949, August 2026), a paper that
+# scores the Togo and China tasks. The paper has no arXiv version or DOI, and the OpenReview copy refused the
+# request. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+
+id: cropharvest
+name: CropHarvest
+tagline: Crop-type and cropland classification of single-pixel satellite time series in four
+  regional tasks, by AUC ROC and F1.
+description: >
+  A global dataset of geo-referenced agricultural labels paired with satellite pixel time series,
+  with benchmark tasks, released by NASA Harvest and the University of Maryland with a NeurIPS 2021
+  Datasets and Benchmarks paper and the cropharvest Python package. The paper's release harmonises
+  90,480 labels from 20 datasets, each with a crop or non-crop label and about a third with a finer
+  agricultural class; the current release holds 95,186 from 21 datasets. Each label is a point or a
+  polygon's centroid, and its input is the nearest pixel's one-year series of 12 monthly steps and
+  18 bands: Sentinel-2 bands and NDVI, Sentinel-1 VV and VH, ERA5 precipitation and temperature,
+  and SRTM elevation and slope, all resampled to 10 m. The paper defines three binary tasks in
+  different agroecologies with small training sets: maize against the rest in Kenya, coffee against
+  the rest in Brazil, both scored on every pixel of test polygons in held-out bounding boxes, and
+  crop against non-crop in Togo, scored on 306 points. The package later added a fourth, crop
+  against non-crop in China. Scores are AUC ROC and F1 at a 0.5 threshold, averaged over ten seeds;
+  the paper's baselines are a random forest and an LSTM initialised randomly, by crop/non-crop
+  pre-training on the rest of the dataset, or by MAML. There is no leaderboard; Earth-observation
+  foundation model papers report the tasks in their own work, some by accuracy.
+self_description:
+  source: src-neurips-db-2021-cropharvest-abstract
+  quote: we present CropHarvest---a satellite dataset of more than 90,000 geographically-diverse
+    samples with agricultural labels
+paper:
+  title: 'CropHarvest: A global dataset for crop-type classification'
+  source: src-neurips-db-2021-cropharvest-pdf
+released: 2021-06-24
+released_note: The issue date of the dataset's first Zenodo version, 10.5281/zenodo.5021762, which
+  DataCite registered that day. Every later version carries the same Issued date. The paper appeared
+  in round 2 of the NeurIPS 2021 Datasets and Benchmarks Track, whose proceedings page carries no
+  date; the GitHub repository was created on 2021-06-17 (GitHub API).
+released_source: src-datacite-10-5281-zenodo-5021762
+released_quote: '"dates":[{"date":"2021-06-24","dateType":"Issued"}]'
+release_venue: NeurIPS 2021 Datasets and Benchmarks Track (round 2)
+release_venue_source: src-neurips-db-2021-cropharvest-abstract
+release_venue_quote: Part of Proceedings of the Neural Information Processing Systems Track on
+  Datasets and Benchmarks 1 (NeurIPS Datasets and Benchmarks 2021) round2
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: earth-climate/remote-sensing
+  secondary:
+    - earth-climate/agriculture
+  secondary_note: Agriculture is secondary, for the subject of the labels (crop types and cropland)
+    and the benchmark's own framing, a dataset "for agriculture". It is not primary, because the
+    leaf names predicted agricultural outcomes (yield, disease, soil condition), and the
+    remote-sensing exclusion sends imagery to agriculture only when it is a predictor for another
+    target, as in cy-bench. Here the label is the land use the pixel shows in that year, read from
+    the signal, not an outcome forecast from it.
+domain_basis:
+  reason: A model reads crop type, or cropland, off a satellite pixel time series. Crops are among
+    the Earth-system labels the remote-sensing inclusion test names, and the benchmark presents
+    itself as a remote sensing dataset, so remote sensing is primary.
+  source: src-github-cropharvest-readme
+  quote: CropHarvest is an open source remote sensing dataset for agriculture with benchmarks.
+domain_considered_and_rejected:
+  - term: vision/classification
+    reason: As secondary. The leaf assigns a whole image to categories, and CropHarvest's item is
+      one pixel's 12-step series of 18 bands, with no spatial extent. No vision task subdomain fits
+      single-pixel time series, so none is recorded.
+    source: src-github-cropharvest-readme
+    quote: The shape of `x` represents 12 timesteps and 18 bands.
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is a raw satellite signal, a pixel's multispectral, radar, weather and
+      elevation series, and the score measures the crop class recovered from it.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: For each label, a one-year time series with 12 timesteps is constructed, each
+      representing an aggregated value over 30 days.
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The paper names domain shift in space as a challenge the dataset enables, but each task
+      trains and tests in the same region. The Kenya and Brazil test polygons sit in bounding boxes
+      inside the region the training data cover and are removed from training to avoid spatial
+      autocorrelation, and Togo's test points come from the same dataset as its training set. No
+      task scores inputs drawn deliberately from a distribution the model was not fitted to.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: We removed the test polygons from the training sets to ensure there was no spatial
+      overlap between the training and test sets
+  - term: transfer-learning
+    reason: The paper's stronger baselines pre-train on the rest of the global dataset
+      (crop/non-crop or MAML) and fine-tune on each task, but that is an entrant's training choice;
+      the benchmark scores each regional task the same way whatever the entrant trained on, and
+      reports no transfer as a condition of its own.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: We used the entire dataset for training, excluding the test tasks.
+  - term: sample-efficiency
+    reason: The tasks were chosen across training-set sizes, and the Togo task adds a curve over
+      subsampled training sets, which the paper calls an additional experiment. But entrants may
+      train on the other ninety thousand labels as well, so no budget of labelled samples is fixed,
+      and the headline scores are at the full task training sets.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: We evaluated the models after training on a range of sizes subsampled from the original
+      training dataset
+  - term: scientific-prediction
+    reason: The crop class is what the pixel shows in the labelled season, read from the signal;
+      nothing beyond the observation is predicted. This is the line sen1floods11 draws between
+      mapping and prediction.
+  - term: temporal-reasoning
+    reason: The input is a time series, but the score is a class, not whether order or duration was
+      judged correctly.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: AUC ROC and F1 at a 0.5 threshold, general statistics of the score ranking and the
+    confusion matrix, which classification-metric's inclusion test names.
+  source: src-neurips-db-2021-cropharvest-pdf
+  quote: We report the area under the receiver operating characteristic curve (AUC ROC) and the F1
+    score using a threshold of 0.5 to classify a prediction as the positive or negative class.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Plain accuracy, a mean of per-item verdicts, is how one 2026 user reports the Togo and
+      China tasks (as_used), not the benchmark's metric.
+    source: src-arxiv-2607-03949-v2
+    quote: and accuracy (CropHarvest)
+  - term: domain-metric
+    reason: The package's scorer also returns the IoU of the positive class, but the paper reports
+      only AUC ROC and F1, and the scored values are binary labels.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The benchmark compares models trained for crop-type mapping, a task Earth observation
+    defines, from random forests to LSTMs pre-trained on the global dataset; its current entrants
+    are Earth-observation foundation models probed on the tasks.
+  source: src-neurips-db-2021-cropharvest-pdf
+  quote: We evaluated the performance of three neural network models and a random forest model on
+    the benchmark tasks.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: Binary classification is general, but crop-type mapping from satellite data is a task
+      the earth-climate discipline defines, which the term's exclusion sends to
+      domain-specialist-model, as sen1floods11 and GEO-Bench-2 are tagged.
+  - term: classical-algorithm
+    reason: The random forest is the paper's conventional remote sensing baseline, but a tree
+      ensemble is a trained model, which the term's exclusion names.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: Random forests are commonly used for remote sensing tasks
+
+as_used:
+  - protocol: Frozen embeddings of Earth-observation foundation models, scored on the Togo and China
+      crop/non-crop tasks by 1- and 3-nearest-neighbour classifiers and a linear probe (the best of
+      them reported), by accuracy over five seeds, and folded into a chance-adjusted composite of 14
+      held-out datasets; the paper's protocol is AUC ROC and F1 of a model trained on each task.
+    split: togo and china
+    source: src-arxiv-2607-03949-v2
+    quote: CropHarvest (Tseng crop / non-crop (accu- Togo; China / Two regional splits of a global
+      crop bench-
+    note: TESSERA v2 (University of Cambridge, v2 of 6 August 2026). Kenya and Brazil are not
+      reported.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; an August 2026 paper scores four embedding models on the
+    Togo and China tasks. The repository was last pushed on 2024-04-30 (GitHub API), which is
+    maintenance evidence, not lifecycle.
+  source: src-arxiv-2607-03949-v2
+  quote: On BioMassters and CropHarvest-Togo a baseline edges ahead, but in both cases the gap is
+    smaller than a seed standard deviation.
+activity: no-submission-channel
+activity_basis:
+  reason: The README points to the benchmark scripts and a guide for contributing datasets, and to
+    no leaderboard, results page or route for results; results appear in their authors' papers.
+  source: src-github-cropharvest-readme
+  quote: If you would like to contribute a dataset, please see the [contributing readme]
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: TESSERA v2 (a distilled pixel-wise embedding model), with TESSERA v1, AlphaEarth and
+      OlmoEarth beside it
+    source: src-arxiv-2607-03949-v2
+    observed_on: 2026-11-04
+    quote: On BioMassters and CropHarvest-Togo a baseline edges ahead, but in both cases the gap is
+      smaller than a seed standard deviation.
+  - system: LSTM classifiers initialised randomly, by crop/non-crop pre-training or by MAML, and a
+      random forest (the paper's baselines)
+    source: src-neurips-db-2021-cropharvest-pdf
+    observed_on: 2026-11-04
+    quote: We evaluated the performance of three neural network models and a random forest model on
+      the benchmark tasks.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Labels from the constituent datasets, field-collected or mapped by their
+  producers (PlantVillage for Kenya, the LEM+ dataset for Brazil, NASA Harvest for Togo). The test
+  labels ship in the public Zenodo record with the rest.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The labels, the processed training arrays and the test features are open downloads on
+    Zenodo, and the package that builds the tasks and scores them is on PyPI and GitHub.
+  source: src-zenodo-cropharvest
+  quote: test_features.tar.gz md5:be1d9e07ee69c7ef6a316a0edb3432bf 786.1 MB Download
+
+task:
+  exists: true
+  input:
+    - one pixel's one-year series of 12 monthly (30-day) steps and 18 bands, nearest the label's
+      point or polygon centroid; Sentinel-2 L1C bands (B1 and B10 dropped) and NDVI, Sentinel-1 VV
+      and VH, ERA5 monthly precipitation and 2 m temperature, and SRTM elevation and slope, all
+      resampled to 10 m
+  input_source: src-neurips-db-2021-cropharvest-pdf
+  input_quote: upsample all products to the same spatial resolution of 10 m/px
+  output: A probability that the pixel is the task's positive class (maize, coffee or crop).
+  scoring: Per task, AUC ROC and F1 with predictions thresholded at 0.5, averaged over ten runs with
+    different seeds and reported with standard errors. Kenya and Brazil are scored over every pixel
+    of the test polygons inside their bounding boxes, Togo over its test points. The package's
+    TestInstance.evaluate_predictions computes both, and the IoU of the positive class beside them.
+  scoring_source: src-github-cropharvest-engineer
+  scoring_quote: '"auc_roc": roc_auc_score(y_no_missing, preds_no_missing),'
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The test features and their labels are in the public Zenodo record
+    (test_features.tar.gz).
+  item_definition: One labelled pixel. For Kenya and Brazil, every pixel of a test polygon inside
+    the evaluation bounding boxes is an item; for Togo, each test point.
+  item_definition_source: src-neurips-db-2021-cropharvest-pdf
+  item_definition_quote: We then evaluated the model predictions for all pixels in the polygons
+    contained in the bounding box, rather than only evaluating each polygon centroid.
+  source: src-neurips-db-2021-cropharvest-pdf
+  quote: For each point label, the pixel with location nearest to the label location is selected.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The labels, features and test features are open downloads in the Zenodo record, without
+      an account.
+    source: src-zenodo-cropharvest
+    quote: test_features.tar.gz md5:be1d9e07ee69c7ef6a316a0edb3432bf 786.1 MB Download
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data change in numbered Zenodo versions, v1 (June 2021) to v14 (December 2023), and
+      the paper couples each package version to one data version so that results stay comparable.
+      New datasets and tasks are added; the paper says existing task definitions are not changed.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: We therefore couple the CropHarvest python package version with the constituent datasets
+      to ensure that models trained using the same version of CropHarvest will be trained using the
+      same data.
+  data_provenance:
+    - inherited-from-constituents
+    - curated-public-database
+    - real-world-instrument
+    - simulation-generated
+  data_provenance_note: The labels come from 20 datasets (21 now). Most were published as datasets
+    of their own (the LEM+ dataset, the Central Asia crop-type dataset, Radiant MLHub collections),
+    two are official registers (France's Registre parcellaire graphique and Canada's annual crop
+    inventory ground truth), and some, such as Rwanda's, were first released with the paper; how
+    those were collected is not stated. The inputs are Sentinel-1 and Sentinel-2 observations and
+    SRTM elevation, instrument products, beside ERA5 reanalysis, an observation-constrained model
+    product tagged simulation-generated as in cy-bench.
+  data_provenance_source: src-neurips-db-2021-cropharvest-pdf
+  data_provenance_quote: This dataset harmonizes 20 datasets with agricultural class labels,
+    including existing public datasets and new datasets released with this paper.
+  contamination_risk: medium
+  contamination_risk_note: The test labels have been public since 2021, in the same Zenodo record as
+    the training data, and Earth-observation foundation models are pretrained on Sentinel archives
+    that may hold the test pixels' scenes, unlabelled. Nothing keeps either out of an entrant's
+    training, and no evidence of either was read. The paper's own pre-trained baselines exclude the
+    test tasks.
+  contamination_evidence: []
+  dataset_licence: CC-BY-SA-4.0
+  dataset_licence_note: The licence of the dataset as a whole, in the paper, the README and the
+    Zenodo record from v8 on. DataCite's record of the first Zenodo version (June 2021) gives CC BY
+    4.0. Each constituent dataset keeps its own licence (upstream_licences).
+  dataset_licence_source: src-neurips-db-2021-cropharvest-pdf
+  dataset_licence_quote: The dataset is released under a CC BY-SA 4.0 license.
+  upstream_licences: The paper's Table 1 lists each constituent's licence, among them CC BY 4.0, CC
+    BY-SA 4.0, CC BY 3.0, the etalab Open License, the Open Government Licence (Canada) and
+    DL-DE->BY-2.0. The table's columns did not survive text extraction in order, so the pairing of
+    licence to dataset is not recorded here.
+  upstream_licences_source: src-neurips-db-2021-cropharvest-pdf
+  upstream_licences_quote: IGN. Registre parcellaire graphique (rpg).
+  size:
+    - count: 95186
+      unit: labelled points and polygons
+      subset: all (current release, README at commit aa3c94a)
+      source: src-github-cropharvest-readme
+      quote: The dataset consists of **95,186** datapoints, of which **33,205** (35%) have
+        multiclass labels.
+    - count: 70213
+      unit: labels paired with satellite and climate inputs
+      subset: all (current release)
+      source: src-github-cropharvest-readme
+      quote: '**70,213** (74%) of these labels are paired with remote sensing and climatology data'
+    - count: 90480
+      unit: labelled points and polygons, from 20 datasets
+      subset: all (the paper's release, Zenodo v8)
+      note: The paper also gives 30,899 with granular labels over 348 classes (343 in its Figure 1
+        caption), and satellite data for 65,690 of them.
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: We collected 90,480 datapoints from 20 datasets
+    - count: 1345
+      unit: training samples (266 maize, 1,079 rest)
+      subset: kenya
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: This dataset consists of a training set of 1,345 samples (266 maize and 1,079 rest)
+        collected in 2020-2021.
+    - count: 898
+      unit: test pixels (575 maize, 323 rest) in 45 polygons
+      subset: kenya
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: Kenya 898 575 (64.0%) 323 (36.0%) Brazil 682,559 174,026 (25.5%) 508,533 (74.5%) Togo
+        306 106 (34.6%) 200 (65.4%)
+    - count: 794
+      unit: training samples (21 coffee, 773 rest)
+      subset: brazil
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: The training set has 794 samples (21 coffee, 773 rest) collected in 2020-2021.
+    - count: 682559
+      unit: test pixels (174,026 coffee, 508,533 rest) in 66 polygons
+      subset: brazil
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: Kenya 898 575 (64.0%) 323 (36.0%) Brazil 682,559 174,026 (25.5%) 508,533 (74.5%) Togo
+        306 106 (34.6%) 200 (65.4%)
+    - count: 1319
+      unit: training samples
+      subset: togo
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: This dataset contains 1,319 samples in the training set 1,319 and 306 samples in the
+        test set.
+    - count: 306
+      unit: test points (106 crop, 200 non-crop)
+      subset: togo
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: This dataset contains 1,319 samples in the training set 1,319 and 306 samples in the
+        test set.
+  size_note: No source read gives the China task's training or test size.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: NASA Harvest, with the University of Maryland, College Park
+  maintainer_basis:
+    reason: The repository sits in the nasaharvest GitHub organisation, and the Zenodo record's
+      creators are affiliated with NASA Harvest and the University of Maryland, College Park, as are
+      the paper's authors. NASA Harvest is the consortium that funded the work.
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: This work was supported by the NASA Harvest Consortium (Award #80NSSC17K0625)
+  maintainer_type: academic-lab
+  maintainer_type_note: No source read states NASA Harvest's legal form or who holds the nasaharvest
+    organisation. NASA Harvest is NASA's food security and agriculture programme, led from the
+    University of Maryland (background knowledge, not a quoted Source), which makes the holder a
+    university group; consortium needs a stated legal form and member governance, and
+    government-agency would need NASA itself as the holder.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route exists; beyond the
+    paper's baselines and the repository's scripts that reproduce them, results appear in their
+    authors' own papers.
+  independence_flags: []
+  independence_flags_note: None recorded. The only results the maintainers published with the
+    benchmark are the release paper's baselines, by design, and no ranking is kept for anyone to
+    compete on. The funders named are NASA, the Lacuna Fund, the SwissRe Foundation, NASA Goddard
+    with USAID, and NASA SERVIR, none an evaluated party. Whether the maintainers' later models
+    report on the tasks was not checked.
+  independence_assessed: true
+  funding:
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: This work was supported by the NASA Harvest Consortium (Award #80NSSC17K0625)
+  known_limitation:
+    source: src-neurips-db-2021-cropharvest-pdf
+    quote: The agricultural classes in the dataset are not globally harmonized.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: trivial-cpu
+  compute_tier_note: Scoring is a pass of scikit-learn metrics over at most a few hundred thousand
+    pixels. Training an entrant is the entrant's cost; the paper's own baselines ran on a CPU
+    instance.
+  compute_tier_source: src-neurips-db-2021-cropharvest-pdf
+  compute_tier_quote: We ran all experiments on an AWS t2.xlarge instance.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Open data and the cropharvest package build every task's training and test data and
+      score predictions, with no human, physical or maintainer-only step; a fixed default seed fixes
+      the evaluation sets.
+    source: src-github-cropharvest-config
+    quote: so fixing this ensures the evaluation sets consist of the same data no matter
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The cropharvest Python package (pip install cropharvest; 0.7.0 in setup.py at commit
+    aa3c94a). CropHarvest.create_benchmark_datasets builds the tasks from TEST_REGIONS and
+    TEST_DATASETS in cropharvest/config.py, and TestInstance.evaluate_predictions in
+    cropharvest/engineer.py computes AUC ROC, F1 and IoU.
+  harness_source: src-github-cropharvest-engineer
+  harness_quote: 'def evaluate_predictions(self, preds: np.ndarray) -> Dict[str, float]:'
+  code_licence: CC-BY-SA-4.0
+  code_licence_note: The repository's LICENSE.txt, which the README names for CropHarvest as a
+    whole; GitHub's licence metadata reports CC-BY-SA-4.0 (read 2026-11-04). A Creative Commons
+    licence on code is unusual; the README does not distinguish code from data.
+  code_licence_source: src-github-cropharvest-readme
+  code_licence_quote: CropHarvest has a [Creative Commons Attribution-ShareAlike 4.0 International]
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The (classification-metric, domain-specialist-model) pair resolves to the fallback profile (subset_used).
+  # subset_used carries the task (kenya, brazil, togo or china, subsets below). Two more conditions move a
+  # CropHarvest number:
+  #   training_data_policy -- whether the model saw only the task's training set or also the rest of
+  #     CropHarvest (the paper's pre-trained and MAML baselines) or outside imagery (foundation-model
+  #     pretraining on Sentinel archives).
+  #   harness -- the cropharvest package version, which the paper couples to one data version; the labels
+  #     grew from 90,480 to 95,186 between the paper and v14, and the China task arrived with v14.
+  # The metric (AUC ROC and F1, or a later user's accuracy) has no EvalConditions field.
+  material_extra:
+    - training_data_policy
+    - harness
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The tasks were chosen to be distinct, and each is scored and reported on its own; the
+    paper's Table 3 gives AUC ROC and F1 per task and nothing combines them.
+  source: src-neurips-db-2021-cropharvest-pdf
+  quote: we selected three geographically and semantically distinct tasks with training data sizes
+    ranging from
+
+homepage: https://github.com/nasaharvest/cropharvest
+repository: https://github.com/nasaharvest/cropharvest
+dataset_url: https://doi.org/10.5281/zenodo.10251170
+
+versions:
+  - version: v8
+    label: Zenodo v8, the version the NeurIPS paper links
+    version_kind: revision
+    changes: The data as the paper describes them, 90,480 labels from 20 datasets, with the Kenya,
+      Brazil and Togo tasks. Zenodo dates the version's creation to 2021-09-28.
+    superseded_by: v14
+    frozen: true
+    sources:
+      - src-zenodo-cropharvest-5533193
+      - src-neurips-db-2021-cropharvest-pdf
+  - version: v14
+    label: Zenodo v14, the version the package downloads at main
+    version_kind: revision
+    released: 2023-12-04
+    changes: 95,186 labels from 21 datasets, and a fourth task, crop against non-crop in China,
+      added to the package's test datasets. Versions v9 to v13 (2021-2022) were not read.
+    supersedes_version: v8
+    frozen: true
+    sources:
+      - src-zenodo-cropharvest
+      - src-github-cropharvest-config
+      - src-github-cropharvest-readme
+
+subsets:
+  - id: cropharvest#kenya
+    label: Kenya, maize against the rest
+    scored_separately: true
+    evidence:
+      - source: src-neurips-db-2021-cropharvest-pdf
+        quote: Kenya (maize vs. rest) and Brazil (coffee vs. rest)
+      - source: src-github-cropharvest-config
+        quote: '"Kenya_maize_2020_0": BBox('
+    notes: PlantVillage labels; two 2020 test bounding boxes holding 45 polygons. Negatives are
+      undersampled to equal parts non-crop and other crops.
+  - id: cropharvest#brazil
+    label: Brazil, coffee against the rest
+    scored_separately: true
+    evidence:
+      - source: src-neurips-db-2021-cropharvest-pdf
+        quote: Kenya (maize vs. rest) and Brazil (coffee vs. rest)
+      - source: src-github-cropharvest-config
+        quote: '"Brazil_coffee_2021_0": BBox('
+    notes: LEM+ labels; one 4.2 km2 test bounding box with 66 polygons from 2020 and 2021. Only 21
+      coffee samples are in training.
+  - id: cropharvest#togo
+    label: Togo, crop against non-crop
+    scored_separately: true
+    evidence:
+      - source: src-neurips-db-2021-cropharvest-pdf
+        quote: to construct a binary crop vs. non-crop
+      - source: src-github-cropharvest-config
+        quote: "TEST_DATASETS = {\"Togo\": \"togo-eval\", \"People's Republic of China\": \"china-crop\"\
+          }"
+    notes: NASA Harvest's Togo labels; a fixed test set of 306 points (togo-eval). The paper also
+      reports this task against training-set size.
+  - id: cropharvest#china
+    label: China, crop against non-crop
+    scored_separately: true
+    evidence:
+      - source: src-github-cropharvest-config
+        quote: "TEST_DATASETS = {\"Togo\": \"togo-eval\", \"People's Republic of China\": \"china-crop\"\
+          }"
+      - source: src-github-cropharvest-readme
+        quote: A target label, which defines the class of the positive labels (if this is left to
+          `None`, then the positive class will be crops and the negative class will be non-crops)
+      - source: src-arxiv-2607-03949-v2
+        quote: CropHarvest (Tseng crop / non-crop (accu- Togo; China / Two regional splits of a
+          global crop bench-
+    notes: Not in the paper. A test dataset (china-crop) the package added later (GitHub history,
+      October 2023), built like Togo's with no target crop, so crop against non-crop. Its sizes and
+      label source were not found in any source read.
+subsets_note: The paper's three tasks are the benchmark as published; the China task arrived with
+  the package and data in v14.
+
+tags:
+  - crop-type-mapping
+  - cropland-mapping
+  - pixel-time-series
+  - sentinel-2
+  - sentinel-1
+  - earth-observation
+  - food-security
+  - smallholder
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-neurips-db-2021-cropharvest-pdf
+    - src-neurips-db-2021-cropharvest-abstract
+    - src-github-cropharvest-readme
+    - src-github-cropharvest-config
+    - src-github-cropharvest-engineer
+    - src-zenodo-cropharvest
+    - src-zenodo-cropharvest-5533193
+    - src-datacite-10-5281-zenodo-5021762
+    - src-arxiv-2607-03949-v2
+  sources_note: >
+    The paper's proceedings PDF read as text (withheld from archiving: its author block holds the
+    authors' e-mail addresses) and its proceedings abstract page with scripts stripped; the README,
+    config.py and engineer.py pinned at commit aa3c94a; Zenodo's record pages for v14 and v8 (DOIs,
+    not archived), read as pages because zenodo.org's robots.txt disallows /api; DataCite's JSON
+    record of the first Zenodo version (a DOI, not archived); and TESSERA v2's v2 PDF (a DOI, not
+    archived) as evidence of current use. The OpenReview forum and PDF answered HTTP 403 and were not
+    read.
+  confidence: medium
+  review_checks:
+    - check: Primary domain remote-sensing, with agriculture secondary. Crops are a remote-sensing
+        label by that leaf's inclusion test, and agriculture's examples are predicted outcomes; a
+        specialist may read crop-type mapping as an agricultural outcome and swap the two.
+      field: domain
+      specialist: true
+      source: src-github-cropharvest-readme
+      quote: CropHarvest is an open source remote sensing dataset for agriculture with benchmarks.
+    - check: No vision task subdomain is recorded, because the items are single-pixel time series,
+        not images. Whether a time-series classification method subdomain is missing from the
+        taxonomy, or vision/classification should stretch to cover it, is a taxonomy question.
+      field: domain
+    - check: distribution-shift-generalization was rejected because each task trains and tests in
+        the same region. The paper frames spatial domain shift as a challenge, and the regional
+        tasks could be read as held-out sites for a model pre-trained on the rest of the globe.
+      field: capability
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: handling domain shift in space (regional differences in agriculture and climate)
+    - check: sample-efficiency was rejected; the tasks were chosen across small training-set sizes
+        (21 coffee positives in Brazil) and Togo carries a training-size curve. Tag it if the task
+        training sets count as fixed budgets although entrants may pre-train on the rest.
+      field: capability
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: enable comparison of machine learning models in a wide range of agroecologies and
+        in-distribution dataset size regimes
+    - check: The China task rests on config.py and the README's description of a task with no target
+        label; no source read gives its size, its labels' origin or its first release. TESSERA v2
+        scores it as a crop/non-crop task. Whether it counts as part of the benchmark or as a
+        package extension.
+      field: subsets
+      source: src-github-cropharvest-config
+      quote: "TEST_DATASETS = {\"Togo\": \"togo-eval\", \"People's Republic of China\": \"china-crop\"\
+        }"
+    - check: maintainer_type academic-lab rests on background knowledge that NASA Harvest is led
+        from the University of Maryland; no source read states who holds the nasaharvest
+        organisation or NASA Harvest's form.
+      field: governance.maintainer_type
+    - check: The paper has no DOI and its only read copy, the proceedings PDF, is withheld from
+        archiving for the authors' e-mail addresses, so every paper quote rests on a Source with no
+        capture. The OpenReview copy (forum JtjzUXPEaCu) refused the request.
+      field: paper
+    - check: aggregation_policy none-by-design rests on the paper reporting each task separately and
+        choosing them to be distinct; the paper does not say in words that no aggregate is intended.
+        unknown is the alternative.
+      field: aggregation_policy
+    - check: v14 is recorded as non-breaking by default. The paper promises unchanged task
+        definitions, but the training pool grew from 90,480 to 95,186 labels, which changes what a
+        pre-trained entrant sees; v9 to v13 were not read.
+      field: versions
+      source: src-neurips-db-2021-cropharvest-pdf
+      quote: As new datasets are added, new benchmark tasks may also be added but existing task
+    - check: The dataset licence changed from CC BY 4.0 (Zenodo v1) to CC BY-SA 4.0 (v8 and the
+        paper); the repository applies CC BY-SA 4.0 to the code as well.
+      field: data.dataset_licence
+      source: src-datacite-10-5281-zenodo-5021762
+      quote: '"rights":"Creative Commons Attribution 4.0 International"'
+  personal_data_excluded:
+    - source: src-neurips-db-2021-cropharvest-pdf
+      what: The four authors' e-mail addresses in the PDF's author block; the extract's windows
+        leave them out and the Source is withheld from archiving.
