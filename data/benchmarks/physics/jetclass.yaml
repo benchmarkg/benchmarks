@@ -1,0 +1,411 @@
+# data/benchmarks/physics/jetclass.yaml
+#
+# P1-S6-T06, physics entry 10. Filled from the Particle Transformer paper, arXiv 2202.03772 read as its v3 PDF
+# (2024-01-29; ICML 2022), and its abstract page; the jet-universe/particle_transformer README at main; Zenodo's
+# record of the dataset (10.5281/zenodo.6619768); and the v1 PDF of PHAT-JeT (arXiv 2605.21789, May 2026), a
+# paper that reports results on the benchmark. GitHub's API supplied the licence and the last push; the
+# repository's train_JetClass.sh and weaver-core's metrics module were read for the harness and are not quoted
+# Sources. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+
+id: jetclass
+name: JetClass
+tagline: Ten-class tagging of 100M simulated LHC jets, scored by accuracy, AUC and background
+  rejection at fixed efficiency.
+description: >
+  A large-scale dataset and benchmark for jet tagging, identifying the particle that initiated a
+  jet, released with the Particle Transformer (ParT) paper by Huilin Qu (CERN), Congqiao Li and
+  Sitian Qian (Peking University) at ICML 2022. Jets are simulated with MadGraph5, Pythia
+  and Delphes with the CMS detector card, clustered with anti-kT (R = 0.8) at 500-1000 GeV
+  transverse momentum, without pileup. Ten classes: background jets from light quarks or gluons
+  (q/g) and nine signal types from top quarks and W, Z and Higgs bosons, among them H to b bbar,
+  H to c cbar, H to 4q, H to l nu q q' and t to b l nu, several of them never tagged before. Each
+  jet is its set of constituent particles, typically 10 to 100, with kinematics, particle
+  identification and track displacement. The splits are 100M training jets, 5M validation and
+  20M test, balanced across classes, on Zenodo under CC BY 4.0. The paper scores overall accuracy
+  and macro one-vs-one AUC, and for each signal type the background rejection (1/FPR against q/g)
+  at a fixed signal efficiency, 50% for most and 99% or 99.5% for the two leptonic types. There is
+  no leaderboard; results appear in papers. The older top-tagging and quark-gluon datasets that
+  the paper fine-tunes on are separate benchmarks.
+self_description:
+  source: src-arxiv-2202-03772-v3
+  quote: we present JETCLASS, a new comprehensive dataset for jet tagging
+external_ids:
+  arxiv: '2202.03772'
+paper:
+  title: Particle Transformer for Jet Tagging
+  arxiv: '2202.03772'
+  version_read: v3
+  source: src-arxiv-2202-03772-v3
+released: 2022-02-08
+released_note: The paper's first arXiv version, which presented the dataset. Zenodo's record of the
+  data, version 1.0.0, is dated 2022-06-16 (see versions); v3 of the paper (2024-01-29) only fixed a
+  typo.
+released_source: src-arxiv-2202-03772
+released_quote: Submitted on 8 Feb 2022
+release_venue: ICML 2022
+release_venue_source: src-arxiv-2202-03772
+release_venue_quote: Accepted to the 39th International Conference on Machine Learning (ICML), 2022
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/particle-physics
+  secondary: []
+domain_basis:
+  reason: The scored quantity is the type of particle that initiated a jet, recovered from the
+    detector-level particles of simulated LHC proton-proton collisions, which is the leaf's
+    definition; the physics family's own example in this leaf is the FAIR Universe Higgs challenge,
+    another collider task on Pythia and Delphes events.
+  source: src-arxiv-2202-03772-v3
+  quote: Jet tagging is the process of identifying the type of particle that initiates a jet.
+domain_considered_and_rejected:
+  - term: physics/simulation-surrogates
+    reason: The jets come from a simulation, but entrants classify them; no model stands in for the
+      generators or the detector simulation, and no score compares one with them. The paper names
+      generative fast simulation only as a possible further use of the data.
+    source: src-arxiv-2202-03772-v3
+    quote: we highlight that this dataset can serve as the basis for many important deep learning
+      researches in particle physics
+  - term: vision/classification
+    reason: Each jet is assigned to one of ten classes, and the vision family's point-cloud
+      architectures are adapted to it, but the input is a set of reconstructed particles from a
+      particle detector, not an image, video or 3D scene, so the vision family's inclusion test
+      fails.
+capability:
+  - scientific-prediction
+  - perception
+capability_basis:
+  scientific-prediction:
+    reason: The benchmark's claim is that systems identify which particle (a top quark, a W, Z or
+      Higgs boson in a given decay mode, or a light quark or gluon) initiated each jet, and the
+      score compares that with the class the simulation generated, as PLAsTiCC's entry tags
+      classifying astrophysical sources.
+    source: src-arxiv-2202-03772-v3
+    quote: Jet tagging is the process of identifying the type of particle that initiates a jet.
+  perception:
+    reason: The input is the jet's unordered, variable-sized set of detector-level particles, a
+      point-cloud-like signal, and the score measures what the tagger recovered from it.
+    source: src-arxiv-2202-03772-v3
+    quote: The prevailing ones represent a jet as a particle cloud, i.e., an unordered and
+      variable-sized set of the outgoing particles
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The paper fine-tunes JetClass-pretrained models on the top-tagging and quark-gluon
+      datasets, but those scores are computed on the other benchmarks' test sets; JetClass's own
+      score is in-distribution 10-class tagging.
+    source: src-arxiv-2202-03772-v3
+    quote: The pre-trained ParT models are also applied to two existing datasets with fine-tuning
+  - term: sample-efficiency
+    reason: The paper also trains on 2% and 10% of the training set, and later papers train on a
+      2M-jet subset, but the benchmark fixes no budget; the full 100M set is the protocol.
+    source: src-arxiv-2202-03772-v3
+    quote: we perform additional trainings using only 2% and 10% of the JETCLASS dataset
+
+evaluation_method:
+  - exact-match
+  - classification-metric
+evaluation_method_basis:
+  reason: >
+    Overall accuracy over the 10 classes is a mean of per-jet verdicts against the label
+    (exact-match). The AUC is macro-averaged one-vs-one over the class scores, and the background
+    rejection is 1/FPR at a fixed TPR for each signal type against q/g, on the two-class score
+    S/(S+B); both are statistics of the score ranking (classification-metric).
+  source: src-arxiv-2202-03772-v3
+  quote: Since jet tagging on this dataset is naturally framed as a multi-class classification task,
+    two common metrics, i.e., the accuracy and the area under the ROC curve
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: The paper calls background rejection the physics-oriented metric and a jet-tagging
+      standard, and the per-signal efficiencies are LHC conventions, but the statistic is 1/FPR at a
+      fixed TPR, a point on the ROC curve whose formula is the same in any field (see
+      review_checks).
+    source: src-arxiv-2202-03772-v3
+    quote: the background rejection metric, although rarely used in vision or language tasks, is
+      actually a standard metric for jet tagging
+  - term: composite
+    reason: The paper reports accuracy, AUC and nine rejections side by side; no source combines
+      them into one figure.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are jet-tagging networks trained from scratch on the training set for a task
+    particle physics defines, ParT against PFN, P-CNN (the CMS DeepAK8 architecture) and
+    ParticleNet.
+  source: src-arxiv-2202-03772-v3
+  quote: All the models are trained end-to-end on the JETCLASS dataset for the same number of
+    effective epochs for a direct comparison.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The models are supervised and trained for one task, but its classes and their physics
+      come from particle physics, which that term's exclusion test sends to domain-specialist-model.
+as_used:
+  - protocol: Resource-constrained taggers (about 1.2 to 1.5M FLOPs, 128 particles per jet) trained
+      on a 2M-jet subset of the training set and scored on the full test set, with background
+      rejection taken at a single 80% signal efficiency and averaged over signal types, not at the
+      paper's per-type efficiencies.
+    split: test (20M jets); training on a 2M-jet subset
+    source: src-arxiv-2605-21789-v1
+    quote: trained on a 2 M-jet subset of the 100 M-jet training set under the available compute
+      budget, and evaluated on the standard 20 M-jet test set
+    note: PHAT-JeT (May 2026), a trigger-oriented tagger. Its table cites ParT and L-GATr at their
+      2M-subset numbers from their own papers as unconstrained references.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the official splits; a May 2026 paper trains on the training
+    set and reports on the 20M-jet test set. The repository was last pushed on 2024-05-13 (GitHub
+    API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2605-21789-v1
+  quote: On JetClass, a much harder 10 class jet tagging benchmark, PHAT-JeT performs much better
+    than any other model at this compute range
+activity: no-submission-channel
+activity_basis:
+  reason: The repository and the Zenodo record distribute code, pre-trained models and data, with no
+    leaderboard, server or submission route; results are reported in users' papers.
+  source: src-github-particle-transformer-readme
+  quote: It includes the code, pre-trained models, and the JetClass dataset.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Particle Transformer (ParT), trained on the full 100M-jet training set
+    source: src-arxiv-2202-03772-v3
+    observed_on: 2026-10-14
+    quote: The proposed ParT architecture achieves the best performance on every metric
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Each jet's class is the process the simulation generated it from (a signal
+  jet's resonance and decay mode, or q/g); signal jets are kept only when all the decay quarks and
+  charged leptons fall inside the jet.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: All three splits, test labels included, are on Zenodo under CC BY 4.0, and the training
+    code and pre-trained models are public.
+  source: src-zenodo-jetclass
+  quote: It consists of 100M jets for training, 5M for validation and 20M for testing.
+
+task:
+  exists: true
+  input:
+    - one jet as its set of constituent particles, typically 10 to 100, each with up to 17 features
+      (kinematics, particle identification, and transverse and longitudinal impact parameters with
+      their errors)
+  output: A softmax score for each of the 10 classes.
+  scoring: Accuracy and macro one-vs-one AUC over the 20M-jet test set. For each of the nine signal
+    types, background rejection (1/FPR) against q/g jets on the two-class score S/(S+B), at a signal
+    efficiency of 50%, or 99% for H to l nu q q' and 99.5% for t to b l nu. The checkpoint is chosen
+    on the validation set by accuracy.
+  source: src-arxiv-2202-03772-v3
+  quote: The signal efficiency (TPR) for each signal type is chosen to be representative of actual
+    usages at the LHC experiments and is typically 50%
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The training, validation and test files, with their truth labels, download from Zenodo
+      without an account, under CC BY 4.0; the repository ships a download script.
+    source: src-zenodo-jetclass
+    quote: Creative Commons Attribution 4.0 International
+  refresh: static
+  refresh_basis:
+    reason: One release, Zenodo's version 1.0.0 of June 2022, with no later version; the paper's v3
+      changed only a typo in the model description.
+    source: src-zenodo-jetclass
+    quote: Published June 16, 2022 | Version 1.0.0
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Hard processes from MadGraph5, showering and hadronisation in Pythia, and
+    detector response from Delphes with its CMS card, with impact parameters smeared to the CMS
+    tracker's resolution. Multiple parton interactions are included and pileup is not.
+  data_provenance_source: src-arxiv-2202-03772-v3
+  data_provenance_quote: detector effects are simulated with DELPHES (de Favereau et al., 2014)
+    using the CMS detector configuration provided in DELPHES
+  contamination_risk: medium
+  contamination_risk_note: The test split and its labels have been public since 2022, so a model
+    trained or pretrained on JetClass files beyond the training split could have seen test jets. No
+    source evidences it; the paper and PHAT-JeT train on the official training split and select on
+    the validation split.
+  contamination_risk_source: src-zenodo-jetclass
+  contamination_risk_quote: It consists of 100M jets for training, 5M for validation and 20M for
+    testing.
+  contamination_evidence: []
+  dataset_licence: CC-BY-4.0
+  dataset_licence_source: src-zenodo-jetclass
+  dataset_licence_quote: Creative Commons Attribution 4.0 International
+  size:
+    - count: 100000000
+      unit: simulated jets, equally distributed over the 10 classes
+      subset: training set
+      source: src-arxiv-2202-03772-v3
+      quote: The training set consists of 100 M jets in total, equally distributed in the 10
+        classes.
+    - count: 20000000
+      unit: simulated jets, 2M per class
+      subset: test set
+      source: src-arxiv-2202-03772-v3
+      quote: a separate test set with 2 M jets in each class (in total 20 M) is provided
+    - count: 5000000
+      unit: simulated jets, 500k per class
+      subset: validation set
+      source: src-arxiv-2202-03772-v3
+      quote: An additional set of 500 k jets per class (in total 5 M) is intended for model
+        validation.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The JetClass authors, Huilin Qu (CERN) with Congqiao Li and Sitian Qian (Peking
+    University), through the jet-universe GitHub organisation and their Zenodo record
+  maintainer_basis:
+    reason: The three authors are the creators of the Zenodo record, and the code and models sit in
+      the jet-universe organisation, which no source ties to one institution.
+    source: src-zenodo-jetclass
+    quote: Qu, Huilin1 Li, Congqiao2 Qian, Sitian2 Show affiliations 1. CERN 2. Peking University
+  maintainer_type: community-collective
+  maintainer_type_note: The repository is in a shared organisation account (jet-universe) run by
+    authors from two institutions, CERN and Peking University, with no legal form or single holder
+    stated, which is this term's inclusion test. academic-lab was considered; no source names a
+    university group as the holder (see review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route of the benchmark's own.
+    The release paper's Table 1 holds the maintainers' runs, and later papers report their own
+    numbers and cite earlier ones from their papers.
+  submission_process_source: src-arxiv-2605-21789-v1
+  submission_process_quote: ParT and L-GATr are included as full-scale architecture references
+    trained on the 2 M-jet subset as reported in their original papers
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2202-03772-v3
+      quote: The proposed ParT architecture achieves the best performance on every metric
+  independence_flags_note: The dataset was released in the same paper as the authors' own
+    architecture, ParT, which leads every metric of the release table, as USPTO-50k's entry records
+    for its split. There is no ranking beyond that table. The paper names the National Natural
+    Science Foundation of China as funder of two authors, not an evaluated party.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2202-03772-v3
+    quote: The work of C. Li and S. Qian is supported by National Natural Science Foundation of
+      China under Grants No. 12061141002.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The data, test labels included, are public and the metrics are standard statistics of
+      the class scores, so anyone can train, test and score a tagger end to end with no human,
+      physical or maintainer-only step.
+    source: src-zenodo-jetclass
+    quote: JetClass_Pythia_test_20M.tar
+  harness_availability: reference-implementation-only
+  harness: jet-universe/particle_transformer (train_JetClass.sh on weaver-core)
+  harness_note: The repository's train_JetClass.sh runs weaver-core training of ParT, ParticleNet,
+    PFN and P-CNN and writes the test-set predictions; weaver-core computes accuracy and the
+    one-vs-one AUC, but its background-rejection function is commented out (both read 2026-10-14,
+    not quoted Sources), so the per-signal rejections are computed outside the published code.
+  harness_source: src-github-particle-transformer-readme
+  harness_quote: To run the training on the JetClass dataset
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for jet-universe/particle_transformer, read
+    2026-10-14; the README states no licence and is not quoted for it.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profile: which input features (the README's kin, kinpid and full sets, recorded as the
+  # track), and what the tagger was trained on (the full 100M training set, a 2M or 10M subset, or pretraining
+  # on other data). Which signal efficiency the rejection is taken at (the paper's per-type 50%, 99%, 99.5%, or
+  # one efficiency averaged over types as in PHAT-JeT) is a metric choice that no condition field holds.
+  material_extra:
+    - eligibility_track
+    - training_data_policy
+
+homepage: https://github.com/jet-universe/particle_transformer
+repository: https://github.com/jet-universe/particle_transformer
+dataset_url: https://doi.org/10.5281/zenodo.6619768
+
+versions:
+  - version: 1.0.0
+    label: JetClass 1.0.0 (Zenodo)
+    version_kind: revision
+    released: 2022-06-16
+    changes: The only release of the data, the 100M/5M/20M splits simulated with Pythia.
+    frozen: true
+    sources:
+      - src-zenodo-jetclass
+
+tags:
+  - particle-physics
+  - jet-tagging
+  - lhc
+  - particle-cloud
+  - simulation
+  - classification
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T06)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2202-03772-v3
+    - src-arxiv-2202-03772
+    - src-github-particle-transformer-readme
+    - src-zenodo-jetclass
+    - src-arxiv-2605-21789-v1
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, and its abstract page for the first
+    version's date and the venue; the README at main; Zenodo's record of the dataset (a DOI) with
+    scripts and styles stripped; and PHAT-JeT's v1 PDF (a DOI) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: The entry is JetClass's 10-class benchmark alone. The top-tagging and quark-gluon
+        datasets the paper fine-tunes on (TopLandscape and QuarkGluon in the README) are other
+        benchmarks, top-tagging drafted as its own entry; their fine-tuning results are not recorded
+        here. JetClass-II (arXiv 2405.12972, a 188-class set with pileup from the same group) was
+        not read and is not treated as a version.
+      source: src-github-particle-transformer-readme
+      quote: To download the JetClass/QuarkGluon/TopLandscape datasets
+    - check: Background rejection at fixed signal efficiency is tagged classification-metric (1/FPR
+        at a TPR). The paper calls it the physics-oriented metric, and the per-type efficiencies are
+        LHC conventions; domain-metric is the alternative.
+      field: evaluation_method
+      source: src-arxiv-2202-03772-v3
+      quote: the background rejection metric, although rarely used in vision or language tasks, is
+        actually a standard metric for jet tagging
+    - check: perception rests on the particle cloud being a comparable raw signal. The inputs are
+        reconstructed particle-flow candidates, not detector hits, and PLAsTiCC's entry rejected
+        perception for tabulated photometry.
+      field: capability
+    - check: maintainer_type community-collective follows the letter of its test (a shared
+        organisation account, authors from CERN and Peking University, no stated holder) for a
+        three-author team; academic-lab is the alternative.
+      field: governance.maintainer_type
+    - check: harness reference-implementation-only because the published code does not compute the
+        per-signal background rejections. official-harness would apply if weaver-core's accuracy and
+        AUC output is taken as the official scoring path.
+      field: execution.harness_availability
+    - check: maintainer-competes-on-own-benchmark follows USPTO-50k (a dataset released with the
+        authors' own model). USPTO-MIT and FLORES recorded no flag for the same pattern; the corpus
+        should settle one reading.
+      field: governance.independence_flags
+      source: src-arxiv-2202-03772-v3
+      quote: Together with the JETCLASS dataset, we propose the Particle Transformer (ParT) as a new
+        baseline for jet tagging.
+    - check: No leaderboard was found. A third-party results list (Papers with Code's "Jet Tagging
+        on JetClass", mirrored on hyper.ai) exists but renders by script and was not read; it is not
+        the benchmark's own process.
+      field: governance.submission_process
+    - check: The pair (exact-match, domain-specialist-model) resolves to the llm-static-text
+        profile, whose shots, chain_of_thought, reasoning_effort, tools_allowed and retries_allowed
+        do not apply to supervised taggers; (classification-metric, domain-specialist-model) is
+        unlisted. The profile rule needs a supervised-classifier case.
+      field: comparability

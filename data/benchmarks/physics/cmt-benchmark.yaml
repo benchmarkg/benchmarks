@@ -1,0 +1,447 @@
+# data/benchmarks/physics/cmt-benchmark.yaml
+#
+# P1-S6-T06, physics entry 17 of 18. Filled from CMT-Benchmark's paper, arXiv 2510.05228 read as its v2 PDF
+# (2026-02-27; ICLR 2026), and its abstract page; the dataset card of JVRoggeveen/cmt_benchmark on Hugging Face;
+# the evaluator module (src/cmtbench/evaluator.py) of the JamesRoggeveen/cmt_benchmark_data repository at main;
+# and the v1 PDF of an expert audit of six physics benchmarks (arXiv 2609.13009, September 2026) that reports
+# new results on it. Hugging Face's API supplied the gate, the files and the commit history, and GitHub's API the
+# repository's licence, contents and commit log; none of those is a quoted Source. Every quote below is checked
+# by the quote-substring validator against those Sources' committed extracts.
+
+id: cmt-benchmark
+name: CMT-Benchmark
+aliases:
+  - CMT Benchmark
+tagline: Fifty expert-written condensed-matter theory problems for language models, graded by SymPy
+  and numeric checks.
+description: >
+  Fifty original research-level problems in condensed matter theory, written and cross-checked by
+  an international panel of condensed-matter theorists to test whether a language model could work
+  as a research assistant. The problems span Hartree-Fock, exact diagonalization, the density matrix
+  renormalization group, quantum and variational Monte Carlo, projected entangled pair states,
+  statistical mechanics and model building. Authors wrote them in a shared Google Sheet whose
+  extension ran each draft through Gemini 2.0 Flash, 2.5 Flash, 2.5 Pro and GPT-4o, and a problem
+  was accepted only once every one of those models failed it and another author had checked it.
+  A model answers closed-book with a final boxed LaTeX expression: numbers, lettered options, an
+  algebraic expression or an expression in fermionic operators, which the grader reduces to normal
+  order. Each answer is right or wrong, with no partial credit, and the paper reports Pass@1; GPT-5
+  solved 30% and the mean over 17 models was 11.4%. The problems and answers are public on Hugging
+  Face under MIT. A September 2026 audit by other physicists found errors in 30 of the 50 problems
+  and repaired 29.
+self_description:
+  source: src-arxiv-2510-05228-v2
+  quote: we present CMT-Benchmark, a dataset of 50 original problems covering condensed matter
+    theory (CMT) at the level of an expert researcher
+external_ids:
+  huggingface: JVRoggeveen/cmt_benchmark
+  arxiv: '2510.05228'
+paper:
+  title: 'CMT-Benchmark: A Benchmark for Condensed Matter Theory Built by Expert Researchers'
+  arxiv: '2510.05228'
+  version_read: v2
+  source: src-arxiv-2510-05228-v2
+released: 2025-10-06
+released_note: The paper's first arXiv version. An anonymous copy of the dataset for the ICLR
+  submission (AnonBenchmark322/benchmark_data, which the paper cites) was last changed on
+  2025-09-25.
+released_source: src-arxiv-2510-05228
+released_quote: Submitted on 6 Oct 2025
+release_venue: ICLR 2026
+release_venue_source: src-arxiv-2510-05228
+release_venue_quote: International Conference on Learning Representations (ICLR) main conference
+  2026
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/condensed-matter
+  secondary:
+    - physics/physics-reasoning
+domain_basis:
+  reason: Every problem is condensed matter theory, asking for properties of lattice models of
+    interacting electrons and spins (ground-state energies and degeneracies, order parameters,
+    Goldstone modes, Fermi-surface topology, phase behaviour) or for judgements about the methods
+    that compute them, so the subject is the condensed-matter leaf's. The problems are posed in text
+    and scored on the answer with no simulation in the loop, the secondary leaf's case; CritPt takes
+    that leaf as primary because its problems span most of physics.
+  source: src-arxiv-2510-05228-v2
+  quote: The solution for these problems involve analytical and computational approaches commonly
+    used in quantum many-body physics and classical statistical mechanics
+domain_considered_and_rejected:
+  - term: physics/quantum-systems
+    reason: Most problems concern quantum many-body methods (exact diagonalization, DMRG, quantum
+      Monte Carlo, PEPS), but the model simulates no quantum system; it answers in text, and the
+      statistical mechanics problems are classical.
+  - term: mathematics/applied-modeling
+    reason: The 'Other' problems test model building, but each is scored on the physics answer once
+      the setup is stated, which physics-reasoning's distinction from applied modelling keeps in
+      physics.
+capability:
+  - quantitative-reasoning
+capability_basis:
+  quantitative-reasoning:
+    reason: Most answers are numbers, algebraic expressions or operator expressions the model must
+      derive, graded by value or by equivalence rather than by prose.
+    source: src-arxiv-2510-05228-v2
+    quote: We designed problems in multiple answer formats that can be automatically graded,
+      including multiple-choice, numerical values, algebraic expressions, and non-commutative
+      operator expressions
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: The protocol is closed-book, but the problems were refined until recalling the textbook
+      case fails; the score is a derived answer, and recall is a means to it.
+  - term: adversarial-robustness
+    reason: Problems were kept only if every model on the authors' sheet failed them, which is
+      adversarial filtering of items, but the score is correctness, not a system's resistance to
+      inputs an attacker selects against it.
+    source: src-arxiv-2510-05228-v2
+    quote: When a problem fails every model available on the sheet, another author would review the
+      problem and solution for correctness before the problem was accepted into the final benchmark
+      dataset.
+  - term: scientific-prediction
+    reason: Properties of physical systems are asked for, but the benchmark claims a reasoning
+      competence (readiness to assist research) in exam-style questions, which the term excludes.
+
+evaluation_method:
+  - symbolic-equivalence
+  - numeric-tolerance-match
+evaluation_method_note: In the evaluator, an answer with declared non-commuting operators or
+  functions is correct when its difference from the reference simplifies to zero; numeric answers,
+  and algebraic answers evaluated at random parameter values drawn from [1, 2] with a fixed seed,
+  must agree within rtol 1e-6 and atol 1e-12. The paper calls the whole numerical and symbolic
+  equivalence.
+evaluation_method_basis:
+  reason: The released evaluator decides operator and function answers by simplifying the difference
+    from the reference in SymPy, after reducing fermionic operators to normal order, and accepts
+    numeric answers within a relative tolerance of 1e-6.
+  source: src-github-cmt-benchmark-data-evaluator
+  quote: equivalent *= np.allclose(model_element, solution_element, rtol=1e-6, atol=1e-12)
+evaluation_method_considered_and_rejected:
+  - term: multiple-choice
+    reason: Some problems ask for one or more of several lettered options (over five for most), but
+      the options differ by problem, several may be right and no chance baseline is stated, and the
+      headline mixes them with free-form answers, as humanitys-last-exam's near miss reads.
+    source: src-arxiv-2510-05228-v2
+    quote: we ask for one or more choices from among many options (over 5 for most problems)
+  - term: model-graded-judge
+    reason: Only the September 2026 audit grades with an LLM judge (as_used); the benchmark's own
+      grader is programmatic.
+    source: src-arxiv-2609-13009-v1
+    quote: CMT-Benchmark has no public evaluator, so we adapt the HLE evaluation pipeline, including
+      its system prompt and LLM-judge prompt, to assess responses against the provided reference
+      solutions.
+  - term: human-expert-eval
+    reason: The authors hand-graded the few problems their parser failed on, a fallback rather than
+      the scoring method (see reproducibility_tier).
+    source: src-arxiv-2510-05228-v2
+    quote: The parser failed for a small number of problems, which were human-graded.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: A general-purpose model is prompted directly, closed-book and without tools, with the
+    author's prompt and fixed formatting instructions, and its last boxed expression is graded. The
+    17 models include reasoning models (GPT-5, o3, o4-mini), but no reasoning-effort setting is part
+    of the protocol.
+  source: src-arxiv-2510-05228-v2
+  quote: Each model is queried with the prompt written by the author, along with a fixed component
+    specifying formatting instructions
+designed_for_subjects_considered_and_rejected:
+  - term: tool-augmented-model
+    reason: The protocol offers no tools. The September 2026 audit ran two of its three models with
+      tools (as_used), which is a condition of those results, not the design.
+    source: src-arxiv-2609-13009-v1
+    quote: use Codex and Claude Code, respectively, with tools enabled
+
+as_used:
+  - protocol: Graded by an LLM judge adapted from Humanity's Last Exam's pipeline instead of the
+      paper's SymPy grader, with GPT-5.6-Sol and Claude Fable 5 run with tools (Codex, Claude Code)
+      and Gemini 3.1 Pro without, and scored as mean@4 and pass@4 over four attempts; corrected
+      scores are on the 49 problems kept after expert repair.
+    split: all 50 problems before the audit; 49 after it
+    source: src-arxiv-2609-13009-v1
+    quote: CMT-Benchmark has no public evaluator, so we adapt the HLE evaluation pipeline, including
+      its system prompt and LLM-judge prompt, to assess responses against the provided reference
+      solutions.
+    note: How Good Are Frontier Models at Physics? (arXiv 2609.13009, September 2026). Its
+      condensed-matter experts found benchmark errors in 30 of the 50 problems, repaired 29 and
+      excluded one; the same judge is used before and after the repair.
+
+lifecycle: active
+lifecycle_basis:
+  reason: A September 2026 paper evaluates three frontier models on it, and the abstract page says
+    the Gemini 3 Deep Think release of February 2026 referenced it. The dataset was last changed on
+    2026-07-01 (Hugging Face's commit history), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2609-13009-v1
+  quote: We evaluate three frontier models, GPT-5.6-Sol, Claude Fable 5, and Gemini 3.1 Pro, on
+    text-only physics questions.
+activity: no-submission-channel
+activity_basis:
+  reason: There is no leaderboard, server or submission route. The dataset card repeats the paper's
+    Pass@1 table, and others report in their own papers.
+  source: src-hf-cmt-benchmark-card
+  quote: The following table summarizes the Overall Pass@1 rates (%) as reported in the paper.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-5
+    source: src-arxiv-2510-05228-v2
+    observed_on: 2026-10-14
+    quote: The best performing models were GPT-5 (30.0%), GPT-o3 (26.0%), and GPT-5-mini (24.0%)
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each problem's answer supplied by its author and checked by another panel
+  member; the answers are released with the problems.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The problems, the reference answers and the evaluator are public, so anyone can query a
+    model and grade it; a response the parser cannot read needs a condensed-matter expert to grade,
+    as the authors did.
+  source: src-arxiv-2510-05228-v2
+  quote: Our dataset can be found in the Hugging Face repository
+
+task:
+  exists: true
+  input:
+    - one condensed-matter theory problem stated in text, with the parameters, variables and
+      functions its answer may use, and fixed formatting instructions
+  output: A final answer in a boxed LaTeX expression, which may be one or more numbers, a choice of
+    lettered options, an algebraic expression or an expression in non-commuting operators. Only the
+    last boxed expression is graded; the reasoning before it is discarded.
+  scoring: Pass@1 over the 50 problems, each correct or incorrect against the author's answer with
+    no partial credit, by a LaTeX-to-SymPy parser (evaluation_method_note); problems the parser
+    failed on were graded by hand.
+  source: src-arxiv-2510-05228-v2
+  quote: We then verify equivalence using standard Sympy symbolic equivalence checks
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: All 50 problems with their reference answers (each row's solution field) are on an
+      ungated Hugging Face dataset under MIT; Hugging Face's API reports it ungated, read
+      2026-10-14.
+    source: src-arxiv-2510-05228-v2
+    quote: Our dataset can be found in the Hugging Face repository
+  refresh: null
+  refresh_note: >
+    Left null. The content has changed since release, so it is not static: the data repository's
+    commit log (GitHub API, read 2026-10-14) fixes one reference answer on 2025-11-07, and Hugging
+    Face's commit history for JVRoggeveen/cmt_benchmark records an edit to problems 0 and 2 on
+    2026-07-01, so the anonymous copy the paper cites now differs from the current one in three fields.
+    No
+    change carries a version label (versioned-releases), and there is no leaderboard for them to
+    reach (rolling-live).
+  data_provenance:
+    - expert-authored
+  data_provenance_note: Written for the benchmark by condensed-matter theorists, postdocs and
+    faculty, each problem one its author would expect a strong graduate student to solve. Drafts
+    were made harder until four LLMs (Gemini 2.0 Flash, 2.5 Flash, 2.5 Pro and GPT-4o) failed them,
+    and another author reviewed each before acceptance.
+  data_provenance_source: src-arxiv-2510-05228-v2
+  data_provenance_quote: This dataset was constructed by an international panel of condensed matter
+    theorists including postdocs and faculties from top universities
+  contamination_risk: medium
+  contamination_risk_note: >
+    The problems are original, written for the benchmark in 2025, so no corpus from before then
+    holds them. Drafts were sent to Google's and OpenAI's models through the authors' sheet while
+    they were written, and the problems and answers are now public and MIT-licensed (the anonymous
+    copy last changed on 2025-09-25, the current one created on 2026-02-20), so a training or
+    retrieval route is plausible; no source evidences one. The September 2026 audit ran two of its
+    models with tools and does not say whether they could reach the public answers.
+  contamination_risk_source: src-arxiv-2510-05228
+  contamination_risk_quote: CMT-Benchmark dataset is available at this https URL
+  contamination_evidence: []
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_basis:
+    reason: Each author ran the reference answer through the grader before evaluation, and another
+      author reviewed each problem and its solution, so 100% is the checked limit. The September
+      2026 audit contests the check, finding errors in 30 of the 50 problems (known_limitation).
+    source: src-arxiv-2510-05228-v2
+    quote: Using the extension the panel could test their solutions against the parsing
+      infrastructure before evaluations, ensuring that ground truth solutions were compatible with
+      our grading framework.
+  dataset_licence: MIT
+  dataset_licence_source: src-hf-cmt-benchmark-card
+  dataset_licence_quote: 'license: mit'
+  size:
+    - count: 50
+      unit: problems
+      source: src-arxiv-2510-05228-v2
+      quote: we present CMT-Benchmark, a dataset of 50 original problems covering condensed matter
+        theory (CMT) at the level of an expert researcher
+    - count: 49
+      unit: problems, 29 of them repaired
+      subset: the September 2026 audit's corrected set
+      source: src-arxiv-2609-13009-v1
+      quote: The corrected evaluation retains 49 of the 50 original questions, 29 of them after
+        expert repair, and excludes one.
+  size_note: Eight problem types, 7 methods plus model building ('Other', 16 problems).
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: James V. Roggeveen (Harvard), for the nineteen CMT-Benchmark authors
+  maintainer_basis:
+    reason: The dataset sits in his own Hugging Face namespace (JVRoggeveen/cmt_benchmark; the
+      anonymous copy for the submission is under AnonBenchmark322) and the code in his own GitHub
+      account; neither names an institution as holder. The authors are at Cornell, Harvard,
+      Stanford, Rutgers, ETH Zurich, the University of Zurich, the Weizmann Institute and elsewhere,
+      with Eun-Ah Kim of Cornell as last author.
+    source: src-hf-cmt-benchmark-card
+    quote: '**Evaluation Code:** [Github Repository](https://github.com/JamesRoggeveen/cmt_benchmark_data)'
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered. The paper is the work of a multi-university
+    panel, but the dataset and repository sit in one person's own accounts and no institution is
+    stated as holding them, which the term's exclusion sends to individual (GPQA's near miss).
+  submission_process:
+    - literature-only
+  submission_process_note: The maintainers keep no ranking and take no submissions. Their results
+    are the paper's 17 models, one query each; everyone else reports in their own papers.
+  submission_process_source: src-hf-cmt-benchmark-card
+  submission_process_quote: The following table summarizes the Overall Pass@1 rates (%) as reported
+    in the paper.
+  independence_flags: []
+  independence_flags_note: None recorded. The funders the card names (NSF, ONR, the Swiss National
+    Science Foundation, NTT Research, the US Department of Energy) include no evaluated party, and
+    grading is programmatic. One author, Michael P. Brenner, lists Google Research beside Harvard,
+    Gemini models are among those evaluated, and three Gemini models were among the four the
+    problems were filtered against; the abstract page notes that the Gemini 3 Deep Think release
+    referenced the benchmark. No term in the vocabulary covers an author employed by an evaluated
+    party (review_checks).
+  independence_assessed: true
+  funding:
+    source: src-hf-cmt-benchmark-card
+    quote: '**Funded by:** NSF (Awards 2433348, OAC-2118310, DMR-2237522), US-ONR, Swiss National Science
+      Foundation, NTT Research, and the U.S. Department of Energy.'
+  known_limitation:
+    source: src-arxiv-2609-13009-v1
+    quote: This review identifies benchmark errors in 30 of the 50 questions.
+  known_limitation_note: The audit's experts found missing assumptions and wrong reference answers,
+    repaired 29 problems and excluded one, after which one model's mean@4 rose from 61.00% to 87.24%
+    under the same judge.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: requires-human-raters
+  reproducibility_tier_basis:
+    reason: The paper's headline numbers include hand grading of the problems its parser failed on,
+      and the most restrictive part of a headline score decides; a run whose every answer parses
+      needs no human.
+    source: src-arxiv-2510-05228-v2
+    quote: The parser failed for a small number of problems, which were human-graded.
+  reproducibility_blockers:
+    - human-raters
+  harness_availability: official-harness
+  harness: cmtbench, the data repository's query and evaluation scripts (scripts/query_models.py,
+    scripts/evaluate.py) with its LaTeX-to-SymPy parser and evaluator
+  harness_source: src-hf-cmt-benchmark-card
+  harness_quote: '**Evaluation Code:** [Github Repository](https://github.com/JamesRoggeveen/cmt_benchmark_data)'
+  harness_gotcha:
+    source: src-arxiv-2609-13009-v1
+    quote: Although the authors provide reference solutions, their automatic grading code was not
+      available to us.
+  harness_gotcha_note: The paper's v2 still says the grading code will be released later, yet the
+    evaluator has been in the data repository since 2025-09-21 (GitHub's commit log) and the dataset
+    card links it as the evaluation code. The September 2026 audit did not find it and graded with
+    an LLM judge, which is a different condition.
+  code_licence: null
+  code_licence_note: The repository has no licence file, and GitHub's licence metadata reports none
+    (read 2026-10-14). The README's YAML front matter declares MIT, but it is the Hugging Face card
+    header the repository pushes with the data.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: the grader (the maintainers' SymPy evaluator, or an LLM judge as the
+  # 2026 audit used, with that judge's identity), the number of attempts and how they are combined (the paper's
+  # single query per problem, the audit's mean@4 and pass@4), and the API snapshot, since the paper names
+  # models without dated snapshots and its configuration queries each provider's latest.
+  material_extra:
+    - harness
+    - judge_model
+    - n_samples
+    - selection_strategy
+    - provider_snapshot
+
+homepage: https://huggingface.co/datasets/JVRoggeveen/cmt_benchmark
+repository: https://github.com/JamesRoggeveen/cmt_benchmark_data
+
+tags:
+  - physics
+  - condensed-matter
+  - research-level
+  - expert-authored
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T06)
+  added_on: 2026-10-14
+  last_verified: 2026-10-14
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2510-05228-v2
+    - src-arxiv-2510-05228
+    - src-hf-cmt-benchmark-card
+    - src-github-cmt-benchmark-data-evaluator
+    - src-arxiv-2609-13009-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text; its abstract page for the dates, the
+    venue and the dataset link; the Hugging Face dataset card at main; the evaluator module at main;
+    and the audit's v1 PDF (a DOI) as evidence of current use. UK AISI's inspect_evals does not
+    implement the benchmark (its src/inspect_evals listing, read 2026-10-14).
+  confidence: medium
+  review_checks:
+    - check: Domain primary is physics/condensed-matter, with physics-reasoning secondary. CritPt,
+        whose problems span most of physics, takes physics-reasoning as primary; the call here
+        treats one physical subject as deciding the leaf, as the simulation-surrogates and
+        fluid-dynamics distinction does for surrogates. Neither leaf has inclusion tests yet. The
+        lattice models are not a molecule, crystal or material, so chemistry-materials was not
+        considered further.
+      field: domain
+    - check: maintainer_type individual, because the dataset and code sit in one author's own
+        Hugging Face and GitHub accounts. academic-lab (the Kim group at Cornell, or Harvard) would
+        follow if a reviewer reads the paper's panel as the holder.
+      field: governance.maintainer_type
+      source: src-hf-cmt-benchmark-card
+      quote: '**Evaluation Code:** [Github Repository](https://github.com/JamesRoggeveen/cmt_benchmark_data)'
+    - check: requires-human-raters rests on one sentence; it may mean that a few problems are always
+        graded by hand or only that unparseable responses were. If the latter, fully-automatable
+        with a gotcha may be the better tier.
+      field: execution.reproducibility_tier
+      source: src-arxiv-2510-05228-v2
+      quote: The parser failed for a small number of problems, which were human-graded.
+    - check: The paper says the grading code will be released later and the audit found no public
+        evaluator, yet the data repository has carried src/cmtbench/evaluator.py since 2025-09-21
+        and the card links it. Whether that code is the grader behind the paper's numbers is not
+        stated; official-harness assumes it is.
+      field: execution.harness_availability
+      source: src-arxiv-2510-05228-v2
+      quote: We will release the code to perform machine grading in the future.
+    - check: The audit's repaired 49-problem set is recorded as as_used and a size row. If it is
+        published as a set of its own, it may need a separate entry linked by variant_of.
+      field: as_used
+      source: src-arxiv-2609-13009-v1
+      quote: The corrected evaluation retains 49 of the 50 original questions, 29 of them after
+        expert repair, and excludes one.
+    - check: measured-ceiling rests on the authors running each reference answer through the grader
+        and peer review; the audit's finding of errors in 30 of the 50 problems suggests the check
+        did not establish that each problem is solvable as stated. theoretical-maximum is the
+        alternative.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2609-13009-v1
+      quote: This review identifies benchmark errors in 30 of the 50 questions.
+    - check: independence_flags is empty, but one author lists Google Research, Gemini models are
+        evaluated, and three of the four models the problems were filtered against are Gemini
+        models. No flag term covers an evaluated party's employee among the authors.
+      field: governance.independence_flags
+      source: src-arxiv-2510-05228-v2
+      quote: On the spreadsheet, authors had access to Gemini 2.0 Flash, Gemini 2.5 Flash, Gemini
+        2.5 Pro, and GPT-4o.
