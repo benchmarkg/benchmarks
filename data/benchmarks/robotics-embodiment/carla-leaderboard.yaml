@@ -1,0 +1,615 @@
+# data/benchmarks/robotics-embodiment/carla-leaderboard.yaml
+#
+# P1-S5-T02, robotics-embodiment entry 11. Filled from leaderboard.carla.org (robots.txt disallows nothing): the
+# home page; the evaluation pages for versions 1.0, 2.0 and 2.1; the get-started pages for 1.0, 2.0 and 2.1; the 2.1
+# submission guide; the About, Challenge and Previous Challenges pages, all with scripts and styles stripped; the
+# results page read as its raw body, because it fills its tables by script, and the 2.0 SENSORS JSON it loads;
+# EvalAI's API records of challenge 2098 and its phase list; the abstract page of the CARLA simulator paper (arXiv
+# 1711.03938); the abstract page of SimLingo (arXiv 2503.09594), the 2024 challenge winner; the v3 PDF of
+# Bench2Drive (arXiv 2406.03877), another group's benchmark built on Leaderboard 2.0; and the v1 PDF of VLAAD
+# (arXiv 2603.25946, March 2026), a paper that reports on the leaderboard. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: carla-leaderboard
+name: CARLA Autonomous Driving Leaderboard
+aliases:
+  - CARLA AD Leaderboard
+  - CARLA Leaderboard
+  - CARLA Leaderboard 2.0
+  - CARLA AD Challenge
+aliases_note: >
+  taxonomy/ cites the 2.0 version as `carla-leaderboard-2-0`, an id with no entry of its own; that version
+  is a `versions` row here. The yearly CARLA Autonomous Driving Challenge ran on the leaderboard and is
+  in `events`.
+tagline: Closed-loop driving in the CARLA simulator on secret routes, ranked by driving score;
+  versions 1.0, 2.0 and 2.1.
+description: >
+  The CARLA team's evaluation of autonomous driving agents in the CARLA simulator. An agent is placed
+  at the start of a route and must drive to its end, given sparse GPS or map waypoints with high-level
+  commands (turn left, change lane) and the sensors it asks for, in two tracks: SENSORS (cameras, LIDAR,
+  RADAR, GNSS, IMU, speedometer) and MAP, which adds the HD map as an OpenDRIVE string. Routes run through
+  towns, freeways and rural roads in varied weather, with traffic scenarios drawn from the NHTSA pre-crash
+  typology. Each route scores route completion times an infraction penalty for collisions, red lights,
+  stop signs and other infractions, and the ranking is the mean of this driving score over the routes,
+  out of 100. Entrants pushed Docker images to EvalAI, and the organisers ran them on routes they kept
+  secret. There have been three versions: 1.0 on CARLA 0.9.10.1; 2.0 (2023), with new towns, harder scenarios
+  and qualifier tracks, on a CARLA leaderboard build based on 0.9.14; and 2.1 (March 2025), the same routes
+  with a linear infraction penalty, after entrants learnt to stop early to avoid penalties. The annual
+  challenge, at CVPR or NeurIPS from 2019 to 2024, did not run in 2025. EvalAI's record of the 2.0 server
+  ended on 2026-01-16, and the results page now shows a static snapshot of the final tables.
+self_description:
+  source: src-carla-leaderboard-home
+  quote: The main goal of the CARLA Autonomous Driving Leaderboard is to evaluate the driving
+    proficiency of autonomous agents in realistic traffic scenarios.
+released: null
+released_note: Not dated in the sources read. The site's earliest challenge is 2019 (CVPR 2019), the
+  2020 challenge was entered by signing up on the leaderboard, and GitHub reports the
+  carla-simulator/leaderboard repository created on 2019-11-25 (GitHub API, not a quoted Source).
+  Leaderboard 2.0's EvalAI phases start on 2023-07-01 (see versions).
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/autonomous-driving-planning
+domain_basis:
+  reason: The leaderboard's claim is driving proficiency, and the score is the driving outcome of a
+    route (completion and infractions), not perception accuracy. Closed-loop control is carried by
+    evaluation_method, as ADR-0020 decided when it rejected a closed-loop-driving leaf (taxonomy
+    failure 2026-09-28-carla-leaderboard-2-0-001).
+  source: src-carla-leaderboard-home
+  quote: The main goal of the CARLA Autonomous Driving Leaderboard is to evaluate the driving
+    proficiency of autonomous agents in realistic traffic scenarios.
+domain_considered_and_rejected:
+  - term: robotics-embodiment/navigation
+    reason: Agents must reach a destination with only sparse waypoints, which meets navigation's
+      wording, but the subject is driving among traffic and the score counts traffic infractions;
+      the driving leaf is the narrower fit.
+    source: src-carla-leaderboard-evaluation-v2-1
+    quote: Do not rely on these as your principal mechanism to navigate the environment.
+  - term: vision/driving-perception-3d
+    reason: Agents perceive the road scene from vehicle sensors, but nothing perceptual is scored;
+      the driving score is computed from the route driven.
+  - term: robotics-embodiment/embodied-instruction-following
+    reason: The route comes as waypoints with high-level commands from a fixed set (RoadOption.LEFT
+      and so on), not as natural-language instructions.
+capability:
+  - sensorimotor-control
+capability_basis:
+  sensorimotor-control:
+    reason: The agent drives a simulated vehicle in closed loop from its own sensors, and the score
+      is what the simulator records of the drive; using the simulator's privileged information is
+      forbidden.
+    source: src-carla-leaderboard-evaluation-v2-1
+    quote: You are not allowed to make use of any privilege information offered by the CARLA
+      simulator, including planners or any type of ground truth.
+capability_considered_and_rejected:
+  - term: reliability-consistency
+    reason: Routes are repeated for statistical purposes, but the ranking is the arithmetic mean
+      over routes and repetitions, and the standard deviations are reported beside it, not ranked.
+      carla-leaderboard-2-0 is the term's near miss in taxonomy/capabilities.yaml.
+    source: src-carla-leaderboard-evaluation-v2-1
+    quote: The global section also includes the standard deviations of the evaluation metrics.
+  - term: perception
+    reason: Entrants must perceive from cameras, LIDAR and RADAR, but the score is the drive, not
+      what was recovered from the sensors.
+  - term: planning
+    reason: Agents must plan manoeuvres in traffic, but the score is the outcome of the executed
+      drive, not a property of a planned sequence.
+  - term: distribution-shift-generalization
+    reason: The evaluation routes are secret and, per a 2026 paper, in a town unseen in training,
+      but no shifted condition is scored beside an in-distribution one.
+    source: src-arxiv-2603-25946-v1
+    quote: we use the official CARLA Leaderboard validation routes in Town 13 as the held-out
+      dataset
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Each route's score is route completion discounted by an infraction penalty, bounded at
+    100, computed from a simulated drive; taxonomy/evaluation-methods.yaml gives
+    carla-leaderboard-2-0 as simulation-rollout's example of partial credit.
+  source: src-carla-leaderboard-evaluation-v2-1
+  quote: Main metric of the leaderboard, serving as the product between the route completion and the
+    infractions penalty.
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: The driving score multiplies two factors, but both come from the same rollout rather
+      than from different methods.
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The entrants are driving agents that act in the simulator, and the leaderboard ships
+    training routes and a training-database tool for learned agents. The leaders are learned
+    end-to-end models (CarLLaVA and TF++ on the 2.0 board; SimLingo, a vision-language model, won
+    the 2024 challenge; MaRLn, reinforcement learning, won 2020). rl-policy is the subjects
+    vocabulary's term for a learned controller scored by acting in an environment.
+  source: src-carla-leaderboard-get-started-v2-1
+  quote: Training database creation tools
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: The simulator was built to compare a modular pipeline with learned driving models, and
+      the leaderboard takes ROS-based stacks, but no source read names a non-learned entrant on the
+      board. Modular stacks with learned parts are the autonomy-stack term ADR-0020 deferred.
+    source: src-arxiv-1711-03938
+    quote: a classic modular pipeline, an end-to-end model trained via imitation learning, and an
+      end-to-end model trained via reinforcement learning
+  - term: task-specific-supervised-model
+    reason: Many entrants are trained by imitation, but they are scored by acting in closed loop,
+      which the subjects vocabulary sends to rl-policy.
+  - term: agent-scaffold
+    reason: SimLingo and CarLLaVA are built on vision-language models, but each is a trained driving
+      model, not a harness looping a model with tools.
+    source: src-arxiv-2503-09594
+    quote: Our model SimLingo is based on a vision language model (VLM) and works using only camera
+as_used:
+  - protocol: Run locally on the leaderboard's public Town 13 validation routes with the 2.1
+      infraction penalty, each closed-loop evaluation three times and averaged, not on the secret
+      evaluation routes.
+    split: validation
+    source: src-arxiv-2603-25946-v1
+    quote: We use the recently updated infraction score formula which was introduced in CARLA
+      Leaderboard 2.1 to remove the incentive for early stopping.
+    note: VLAAD (March 2026), a collision-aware module plugged into TransFuser++; the paper gives
+      its own numbers, and the published 2.0 scores it quotes are a reference only.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the leaderboard's routes and scoring; a March 2026 paper
+    evaluates on its validation routes with the 2.1 penalty. The entry is the leaderboard family, so
+    2.0's replacement by 2.1 is a version change, not superseded (the corpus record, which
+    catalogued 2.0 alone, chose superseded).
+  source: src-arxiv-2603-25946-v1
+  quote: We perform each closed-loop evaluation 3 times and report the average of each metric.
+activity: closed
+activity_note: The home page's terms still describe a monthly allowance of 20 submissions, and the
+  submit guide still describes pushing to EvalAI; both predate the server's end. EvalAI's record of
+  challenge 2098 ends on 2026-01-16 and is inactive and frozen, every 2.0 phase with it, and no 2.1
+  phase is listed.
+activity_basis:
+  reason: The results page's own script says the tables are a static snapshot of the final results
+    because the AWS and EvalAI endpoint is gone, and the only route for results was that endpoint.
+    The 2025 challenge did not run, and none is announced. Local runs remain possible but produce no
+    leaderboard result.
+  source: src-carla-leaderboard-leaderboard
+  quote: Static snapshot of the final leaderboard results (the AWS/EvalAI endpoint is no longer
+    available)
+events:
+  - name: CARLA Autonomous Driving Challenge 2019, CVPR 2019
+    kind: workshop-challenge-on-the-benchmark
+    source: src-carla-leaderboard-challenge
+    quote: CARLA Autonomous driving challenge 2019 - hosted at CVPR 2019
+  - name: CARLA Autonomous Driving Challenge 2020, Machine Learning for Autonomous Driving workshop,
+      NeurIPS 2020
+    kind: workshop-challenge-on-the-benchmark
+    source: src-carla-leaderboard-previous-challenges
+    quote: The CARLA Autonomous Driving Challenge 2020 was organized as part of the Machine Learning
+      for Autonomous Driving Workshop at NeurIPS 2020.
+  - name: CARLA Autonomous Driving Challenge 2021, NeurIPS 2021
+    kind: workshop-challenge-on-the-benchmark
+    source: src-carla-leaderboard-challenge
+    quote: CARLA Autonomous driving challenge 2021 - hosted at NeurIPS 2021
+  - name: CARLA Autonomous Driving Challenge 2022, NeurIPS 2022
+    kind: workshop-challenge-on-the-benchmark
+    source: src-carla-leaderboard-challenge
+    quote: CARLA Autonomous driving challenge 2022 - hosted at NeurIPS 2022
+  - name: CARLA Autonomous Driving Challenge 2023, Machine Learning for Autonomous Driving workshop
+    kind: workshop-challenge-on-the-benchmark
+    source: src-carla-leaderboard-challenge
+    quote: CARLA Autonomous driving challenge 2023 - hosted at Machine Learning for Autonomous
+      Driving
+  - name: CARLA Autonomous Driving Challenge 2024, CVPR 2024
+    kind: workshop-challenge-on-the-benchmark
+    source: src-carla-leaderboard-challenge
+    quote: CARLA Autonomous driving challenge 2024 - hosted at CVPR 2024
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: SimLingo (1st in the CARLA challenge 2024)
+    source: src-arxiv-2503-09594
+    observed_on: 2026-11-04
+    quote: SimLingo obtains state-of-the-art performance on the widely used CARLA simulator on the
+      Bench2Drive benchmark and is the winning entry at the CARLA challenge 2024.
+  - system: CarLLaVA (team LLM4AD, first on the 2.0 SENSORS table)
+    source: src-carla-leaderboard-lb2-sensors-json
+    observed_on: 2026-11-04
+    quote: '"team_name": "LLM4AD", "method_name": "CarLLaVA"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Route completion and every infraction (collisions, red lights, stop signs,
+  off-road driving, scenario timeouts, low speed) are recorded by the leaderboard's monitors on the
+  simulator's state.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The official scores come from routes only the organisers hold, run on their servers, which
+    have closed. Anyone can run the public training, validation and testing routes with the released
+    code and CARLA build.
+  source: src-carla-leaderboard-get-started-v2-1
+  quote: The routes used for the online evaluation are secret.
+
+task:
+  exists: true
+  input:
+    - the route as GPS or world-coordinate waypoints, up to hundreds of metres apart, each with a
+      high-level command
+    - the sensors the agent requests within its track's limits (up to 8 cameras, 2 LIDARs, 4 RADARs,
+      GNSS, IMU, speedometer in 2.x), plus the OpenDRIVE HD map in the MAP track
+  output: Vehicle control at every simulation step, until the route ends or a shutdown event (route
+    deviation of more than 30 m, 180 s blocked, a timeout or an agent error) stops it.
+  scoring: Per route, driving score = route completion (percent) times the infraction penalty, which
+    starts at 1.0 and falls with each infraction by severity (in 2.1, 1 / (1 + sum of coefficients
+    times counts); in 1.0 and 2.0, the product of per-infraction factors). The global driving score,
+    the mean over all routes, decides the ranking.
+  metric_range:
+    - 0
+    - 100
+  source: src-carla-leaderboard-evaluation-v2-1
+  quote: The global driving score is the main metric on which you will be classified with respect to
+    other participants.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The training, validation and testing routes ship with the code; the routes behind the
+    leaderboard were never released, and since the server closed no route to them is open.
+  access_basis:
+    reason: The evaluation routes never leave the organisers, who ran each submitted container on
+      them.
+    source: src-carla-leaderboard-get-started-v2-1
+    quote: The routes used for the online evaluation are secret.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The leaderboard changes in labelled versions (1.0, 2.0, 2.1), each with its own pages
+      and code branch. 2.1 changed only the infraction penalty, and the vocabulary counts a scoring
+      change under a new label as a versioned release (carla-leaderboard-2-0 is its example).
+    source: src-carla-leaderboard-home
+    quote: the routes used for training, validation and testing, along with the scenarios within
+      them
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Routes and their traffic scenarios are authored by the organisers in CARLA's
+    towns, and each drive is simulated; the scenarios follow the NHTSA pre-crash typology.
+  data_provenance_source: src-carla-leaderboard-home
+  data_provenance_quote: Agents will face multiple traffic scenarios based on the NHTSA typology.
+  contamination_risk: low
+  contamination_risk_note: The scored routes were never exposed, so no route by which an agent
+    trained on them is known. The public towns and scenario types are shared by training and
+    evaluation by design. Results on the public validation routes (as_used) have no such protection.
+  contamination_risk_source: src-carla-leaderboard-get-started-v2-1
+  contamination_risk_quote: Participants have access to a set of traffic scenarios that work on the
+    publicly available towns.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: A driving score of 100 means every route completed with no infraction.
+    The best 2.0 SENSORS entry in the final snapshot scores 6.865.
+  ceiling_anchor_type_source: src-carla-leaderboard-evaluation-v2-1
+  ceiling_anchor_type_quote: Has a maximum value of 100.
+  size:
+    - count: 20
+      unit: public testing routes (205.9 km), beside the secret evaluation routes, which are not
+        counted
+      subset: Leaderboard 2.0 and 2.1
+      source: src-carla-leaderboard-get-started-v2-1
+      quote: 'routes_testing.xml: 20 routes intended to be used as verification data (205.9 Km).'
+    - count: 20
+      unit: public validation routes (247.6 km)
+      subset: Leaderboard 2.0 and 2.1
+      source: src-carla-leaderboard-get-started-v2-1
+      quote: 'routes_validation.xml: 20 routes intended to be used as validation data (247.6 Km).'
+    - count: 90
+      unit: public training routes (780.6 km)
+      subset: Leaderboard 2.0 and 2.1
+      source: src-carla-leaderboard-get-started-v2-1
+      quote: 'routes_training.xml: 90 routes intended to be used as training data (780.6 Km).'
+    - count: 10
+      unit: routes, each in 2 weather conditions and repeated 5 times
+      subset: the CARLA AD Challenge
+      source: src-carla-leaderboard-challenge
+      quote: Teams will have to complete 10 routes in 2 weather conditions through 5 repetitions.
+  submission_limit:
+    max_submissions: 20
+    period_days: 30
+    per: team, a month, refilled monthly (EvalAI's phases also allow one a day)
+    source: src-carla-leaderboard-home
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The CARLA Team and the Embodied AI Foundation
+  maintainer_basis:
+    reason: The About page names both; EvalAI built the cloud infrastructure and the web interface
+      as a partner.
+    source: src-carla-leaderboard-about
+    quote: The CARLA Autonomous Driving Leaderboard is developed and maintained by the CARLA Team
+      and the Embodied AI Foundation.
+  maintainer_type: null
+  maintainer_type_note: The sources read do not say what the Embodied AI Foundation is or where the
+    CARLA Team sits; a nonprofit reading of "Foundation" would rest on the name alone. Taxonomy
+    failure 2026-09-28-carla-leaderboard-2-0-009 records the same silence, still open.
+  submission_process:
+    - containerized-algorithm-submission
+  submission_process_note: Entrants built a Docker image with the leaderboard's scripts and pushed
+    it to an EvalAI phase (SENSORS, MAP or their qualifiers) with the EvalAI CLI; the organisers
+    verified each team before it could submit, and ran the image on AWS. A minimum driving score on
+    the qualifier was needed before the main tracks. Results appeared on the board only when the
+    entrant ticked Show on Leaderboard.
+  submission_process_source: src-carla-leaderboard-submit-v2-1
+  submission_process_quote: it needs to be encapsulated within a docker image
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-carla-leaderboard-get-started-v2-1
+      quote: The routes used for the online evaluation are secret.
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-carla-leaderboard-lb2-sensors-json
+      quote: '"team_name": "CARLA_Leaderboard"'
+  independence_flags_note: The organisers held the secret routes and ran every submission. A row
+    from the CARLA_Leaderboard team, the host team that created EvalAI challenge 2098, sits fourth
+    on the final 2.0 SENSORS table (driving score 0.25), probably a reference entry; no source says
+    what it is. Sponsors are shown as logos only (MathWorks and Synkrotron by their link targets),
+    and no prize is described, so neither prize-sponsored-by-industry nor funded-by-evaluated-party
+    is adopted.
+  independence_assessed: true
+  funding:
+    source: src-carla-leaderboard-home
+    quote: offered for free as a service to the research community thanks to the generosity of our
+      sponsors and collaborators
+  participation:
+    source: src-carla-leaderboard-previous-challenges
+    quote: +45 teams participated in the challenge.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_note: Official runs were on the organisers' AWS g5.12xlarge instances, at no cost to
+    entrants, until the server closed. A local run needs the CARLA simulator build of the version
+    (CARLA 0.9.10.1 for 1.0; the CARLA leaderboard package, based on 0.9.14 with 0.9.15's Large
+    Maps, for 2.0 and 2.1) on the entrant's own GPU. taxonomy/execution.yaml gives
+    carla-leaderboard-2-0 as provided-allocation's example.
+  compute_tier_source: src-carla-leaderboard-home
+  compute_tier_quote: Each submission will be evaluated in AWS using a g5.12xlarge instance.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores were computed on secret routes only the organisers ran; a local run
+      on the public routes is automatable with the simulator but does not reproduce them, and the
+      most restrictive part decides.
+    source: src-carla-leaderboard-get-started-v2-1
+    quote: The routes used for the online evaluation are secret.
+  reproducibility_blockers:
+    - private-test-set
+    - specific-simulator-build
+  reproducibility_blockers_note: Each version pins its simulator. 1.0 ran on CARLA 0.9.10.1, the
+    exact build of the online servers ("This is the exact version used by the online servers"); 2.0
+    and 2.1 run on a packaged CARLA leaderboard release based on 0.9.14 with features of 0.9.15,
+    with the leaderboard and scenario_runner on matching leaderboard-2.0 or leaderboard-2.1
+    branches.
+  reproducibility_blockers_source: src-carla-leaderboard-get-started-v2-1
+  reproducibility_blockers_quote: The CARLA Leaderboard release is based on version 0.9.14.
+  harness_availability: official-harness
+  harness: carla-simulator/leaderboard (leaderboard_evaluator.py, run through run_leaderboard.sh)
+    with carla-simulator/scenario_runner, on the branch of the version
+  harness_source: src-carla-leaderboard-get-started-v2-1
+  harness_quote: which serves as the entry point to perform the simulation
+  submission_channel:
+    source: src-evalai-carla-challenge-2098
+    quote: '"end_date":"2026-01-16T23:59:59Z"'
+  submission_channel_note: EvalAI challenge 2098 (Leaderboard 2.0 SENSORS, MAP and the two
+    qualifiers), from 2023-07-01 to 2026-01-16; its record is inactive and frozen. The 2.1 pages
+    point to the same challenge.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for carla-simulator/leaderboard, read 2026-11-04; not
+    a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulator, simulator_version, hardware_platform, subset_used, selection_strategy,
+  # n_samples): the leaderboard version is the CARLA build (0.9.10.1 for 1.0; the leaderboard package based on 0.9.14
+  # for 2.x), and scores depend on that build and on the version's penalty, so 2.0 and 2.1 scores are not comparable.
+  # simulator and simulator_version are listed again to make the build explicit. subset_used records the route set
+  # (secret evaluation routes, public validation or testing routes, Bench2Drive's routes), n_samples the
+  # repetitions. Also material: the track (SENSORS or MAP, or a qualifier) and the training data (the public routes,
+  # the organisers' logs, or self-collected data).
+  material_extra:
+    - simulator
+    - simulator_version
+    - eligibility_track
+    - training_data_policy
+
+homepage: https://leaderboard.carla.org/
+repository: https://github.com/carla-simulator/leaderboard
+leaderboard_url: https://leaderboard.carla.org/leaderboard/
+
+versions:
+  - version: '1.0'
+    label: CARLA Leaderboard 1.0 (CARLA 0.9.10.1)
+    version_kind: edition
+    changes: The first version, on CARLA 0.9.10.1, with SENSORS and MAP tracks (up to 4 cameras, 1
+      LIDAR, 2 RADARs) and a geometric infraction penalty over five infraction types;
+      leaderboard-1.0 branch.
+    breaking: true
+    superseded_by: '2.0'
+    frozen: true
+    sources:
+      - src-carla-leaderboard-get-started-v1-0
+      - src-carla-leaderboard-evaluation-v1-0
+      - src-carla-leaderboard-leaderboard
+  - version: '2.0'
+    label: CARLA Leaderboard 2.0 (CARLA leaderboard package, based on 0.9.14)
+    version_kind: edition
+    released: 2023-07-01
+    changes: New routes in new towns (Town 12 for training, Town 13 for validation) with harder
+      scenarios, among them route obstacles, merging and crossing actor flows and yielding to
+      emergency vehicles; more sensors allowed (8 cameras, 2 LIDARs, 4 RADARs); qualifier tracks;
+      new infractions (failure to yield, scenario timeout, minimum speed); a new CARLA build. The
+      geometric penalty stayed. Released is the start of its EvalAI phases.
+    breaking: true
+    supersedes_version: '1.0'
+    superseded_by: '2.1'
+    frozen: true
+    sources:
+      - src-carla-leaderboard-get-started-v2-0
+      - src-carla-leaderboard-evaluation-v2-0
+      - src-evalai-carla-challenge-2098-phases
+      - src-arxiv-2406-03877-v3
+      - src-arxiv-2603-25946-v1
+  - version: '2.1'
+    label: CARLA Leaderboard 2.1
+    version_kind: revision
+    changes: From March 2025, the same routes and scenarios with the infraction penalty made linear
+      (1 / (1 + sum of coefficients times counts)) and its coefficients re-set, so that stopping
+      early no longer pays; scores rise overall and are not to be compared with 2.0. Same CARLA
+      build; leaderboard-2.1 branch.
+    breaking: true
+    supersedes_version: '2.0'
+    frozen: true
+    sources:
+      - src-carla-leaderboard-home
+      - src-carla-leaderboard-evaluation-v2-1
+      - src-carla-leaderboard-get-started-v2-1
+
+subsets:
+  - id: carla-leaderboard#sensors
+    label: SENSORS track
+    scored_separately: true
+    evidence:
+      - source: src-carla-leaderboard-evaluation-v2-1
+        quote: The leaderboard offers two participation modalities, SENSORS and MAP.
+    notes: Cameras, LIDAR, RADAR, GNSS, IMU and speedometer, within per-sensor limits. Each version
+      ranks it in its own table; 2.0 and 2.1 add a qualifier with a smaller sensor suite that gates
+      entry.
+  - id: carla-leaderboard#map
+    label: MAP track
+    scored_separately: true
+    evidence:
+      - source: src-carla-leaderboard-evaluation-v2-1
+        quote: Additionally, agents can request access to an HD map, which is provided as an
+          OpenDRIVE file parsed as a string.
+    notes: The SENSORS track's sensors plus the HD map as an OpenDRIVE string. The 2020 challenge
+      declared the MAP modality deserted.
+
+lineage:
+  role: root
+  forks:
+    # Another group's benchmark on CARLA and Leaderboard 2.0's scenarios, with its own short routes and training
+    # set; not maintained by the CARLA team.
+    - id: bench2drive
+      maintainer: The Bench2Drive authors (arXiv 2406.03877)
+      source: src-arxiv-2406-03877-v3
+      quote: CARLA Leaderboard V2 [28] lacks expert demonstration data.
+
+history:
+  - date: 2023-07-01
+    event: channel-opened
+    field: execution.submission_channel
+    to: EvalAI challenge 2098 (Leaderboard 2.0 phases)
+    source: src-evalai-carla-challenge-2098-phases
+    quote: '"start_date":"2023-07-01T00:00:00Z","end_date":"2026-01-16T23:59:59Z","challenge":2098'
+  - date: 2026-01-16
+    event: channel-closed
+    field: execution.submission_channel
+    from: EvalAI challenge 2098
+    source: src-evalai-carla-challenge-2098
+    quote: '"end_date":"2026-01-16T23:59:59Z"'
+    note: The results page now loads static JSON files of the final tables.
+
+tags:
+  - autonomous-driving
+  - closed-loop
+  - simulation
+  - carla
+  - challenge
+  - end-to-end-driving
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-carla-leaderboard-home
+    - src-carla-leaderboard-evaluation-v2-1
+    - src-carla-leaderboard-evaluation-v2-0
+    - src-carla-leaderboard-evaluation-v1-0
+    - src-carla-leaderboard-get-started-v2-1
+    - src-carla-leaderboard-get-started-v2-0
+    - src-carla-leaderboard-get-started-v1-0
+    - src-carla-leaderboard-submit-v2-1
+    - src-carla-leaderboard-leaderboard
+    - src-carla-leaderboard-lb2-sensors-json
+    - src-carla-leaderboard-about
+    - src-carla-leaderboard-challenge
+    - src-carla-leaderboard-previous-challenges
+    - src-evalai-carla-challenge-2098
+    - src-evalai-carla-challenge-2098-phases
+    - src-arxiv-1711-03938
+    - src-arxiv-2503-09594
+    - src-arxiv-2406-03877-v3
+    - src-arxiv-2603-25946-v1
+  sources_note: >
+    Thirteen leaderboard.carla.org pages and files, the static pages with scripts and styles stripped
+    and the results page as its raw body (its tables are filled by script from JSON files, one of which
+    was read); EvalAI's API records of challenge 2098 and its phases; the CARLA simulator paper's abstract
+    page (the leaderboard has no paper of its own, so `paper` is left empty); SimLingo's abstract page
+    for a learned entrant; Bench2Drive's v3 PDF for the fork; and VLAAD's v1 PDF as evidence of current
+    use. The arXiv Sources are DOIs and need no archive.
+  confidence: medium
+  review_checks:
+    - check: activity is closed on the results page's script comment and EvalAI's end date, against
+        the home page and submit guide, which still describe monthly submissions. The corpus record
+        (2026-09-28) chose leaderboard-live-no-round from the home page; if a 2.1 server exists
+        elsewhere, that holds.
+      field: activity
+      source: src-carla-leaderboard-home
+      quote: Teams are provided a finite number of submissions (currently 20 submissions) for a
+        given a month.
+    - check: 2.1 is a revision (same routes and scenarios, a new penalty), and 2.0 an edition (new
+        routes, towns, scenarios and simulator build). 1.0's release date is not in any source read,
+        and 2.0's is the start of its EvalAI phases, not an announcement.
+      field: versions
+      source: src-carla-leaderboard-home
+      quote: Starting on March 2025, the CARLA AD Leaderboard will be updated to the new version
+        2.1.
+    - check: No EvalAI phase is named 2.1, and the results page has 2.0 and 1.0 tables only, so
+        whether any official 2.1 result exists is unclear; 2.1 may have been used only locally, as
+        VLAAD does.
+      field: versions
+      source: src-evalai-carla-challenge-2098-phases
+      quote: '"name":"Leaderboard 2.0 - SENSORS Track"'
+    - check: maintainer-competes-on-own-benchmark rests on a CARLA_Leaderboard row on the 2.0 board,
+        which may be a reference baseline rather than a competing system.
+      field: governance.independence_flags
+      source: src-evalai-carla-challenge-2098
+      quote: '"team_name":"CARLA_Leaderboard"'
+    - check: maintainer_type is null, as taxonomy failure 2026-09-28-carla-leaderboard-2-0-009 left
+        it; the Embodied AI Foundation's legal form needs a source (nonprofit is the likely
+        reading).
+      field: governance.maintainer_type
+      source: src-carla-leaderboard-about
+      quote: The CARLA Autonomous Driving Leaderboard is developed and maintained by the CARLA Team
+        and the Embodied AI Foundation.
+    - check: Forks. Bench2Drive is recorded. Others' route sets on the 1.0 towns (Town05Long,
+        Longest6) and NAVSIM, drafted in parallel, were not linked; whether they belong in lineage
+        needs a reviewer.
+      field: lineage
+    - check: The CARLA paper's CoRL 2017 benchmark (four driving tasks in the simulator, by the same
+        team) predates the leaderboard; it could be a version 0 here or its own entry. Only the
+        abstract page was read.
+      field: versions
+      source: src-arxiv-1711-03938
+      quote: Published at the 1st Conference on Robot Learning (CoRL)
+    - check: SENSORS and MAP are subsets and also eligibility_track in comparability; the qualifiers
+        are not subsets. Bench2Drive's count of 39 scenarios in 2.0 is a third-party count; the
+        organisers' scenario page was not read for a count.
+      field: subsets
+      source: src-arxiv-2406-03877-v3
+      quote: The latest CARLA Leaderboard v2 introduces 39 challenging scenarios designed to
+        evaluate the robustness of AD systems in more intricate situations.
+    - check: rl-policy for entrants that are mostly imitation-trained end-to-end models and some
+        modular or hybrid stacks (ROS agents); ADR-0020 deferred an autonomy-stack subject.
+      field: designed_for_subjects
