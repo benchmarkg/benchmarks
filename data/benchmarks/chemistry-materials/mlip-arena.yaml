@@ -1,0 +1,701 @@
+# data/benchmarks/chemistry-materials/mlip-arena.yaml
+#
+# P1-S6-T02, chemistry-materials entry 19. Filled from the MLIP Arena paper, arXiv 2509.20630 read as its v2 PDF
+# (2025-11-12, the NeurIPS 2025 Datasets and Benchmarks version; CC BY 4.0) and its abstract page; the repository
+# README (.github/README.md, pinned to commit 6239aea of 2026-06-16) and GitHub's API record of atomind-ai/mlip-arena;
+# three files of the leaderboard Space atomind/mlip-arena read at the commit it serves (1508879, 2026-03-27):
+# serve/leaderboard.py, which builds the overall table and the Arena Rank, serve/ranks/homonuclear-diatomics.py,
+# and mlip_arena/tasks/registry.yaml, which lists the ranked tasks; Hugging Face's API records of that Space and of
+# the atomind/mlip-arena dataset; and the v1 PDF of MLIP Detective (arXiv 2609.08399, September 2026), a
+# third-party paper that uses the benchmark. The Space renders by script (Streamlit), so its source files stand in
+# for the page. Every quote below is checked by the quote-substring validator against those Sources' extracts.
+#
+# Neighbours. Matbench Discovery scores universal potentials as stability pre-filters against a PBE convex hull
+# and ranks them inside training-data tiers; OMol25 scores energies and forces against withheld wB97M-V labels and
+# labels each row with its training set. MLIP Arena's claim is the opposite move: its ranked metrics are
+# reference-free physical checks on each model's own curves and trajectories (smoothness, short-range repulsion,
+# energy conservation, MD survival and speed), its board ranks every model in one table by aggregated ranks, and
+# it shows the training set beside each row without splitting the board by it. So no
+# training_data_eligibility_tiers are recorded (comparability, below).
+
+id: mlip-arena
+name: MLIP Arena
+aliases:
+  - 'MLIP Arena: Advancing Fairness and Transparency in Machine Learning Interatomic Potentials via an
+    Open, Accessible Benchmark Platform'
+tagline: Universal interatomic potentials ranked on physical soundness, MD stability and reactivity
+  rather than on DFT error.
+description: >
+  A benchmark platform and Python package that score foundation machine-learning interatomic potentials
+  on whether they behave physically, not on their error against one DFT reference. Ranked tasks on the
+  leaderboard: potential energy curves of homonuclear diatomics across the periodic table, equations of
+  state and energy-volume scans of 1,000 WBM crystals, molecular-dynamics stability under heating to 3000
+  K and compression to 500 GPa on random mixture structures (RM24), and hydrogen combustion. Each task
+  is scored by physical and geometric measures of the model's own predictions (tortuosity, energy jumps,
+  force and derivative sign flips, Spearman monotonicity in the repulsive regime, deviation of forces
+  from the energy gradient, valid MD steps, MD steps per second, reaction enthalpy and centre-of-mass
+  drift), the measures are rank-aggregated into a task rank, and the task ranks into an overall Arena
+  Rank. The paper adds energy conservation and rotational equivariance under distribution shift, vacancy
+  migration, and three case studies (CO2 adsorption in MOFs, dynamical stability of 2D materials, a perovskite
+  phase transition). Tasks are Prefect workflows run with the model as an ASE calculator; the maintainers
+  run open-weight models and contributors add results by pull request. Known weaknesses the sources name:
+  without a DFT reference models are harder to compare on in-distribution data, and the aggregate diatomics
+  statistics do not compare binding at a given distance against any reference.
+self_description:
+  source: src-arxiv-2509-20630
+  quote: We introduce MLIP Arena, a benchmark platform that evaluates force field performance based
+    on physics awareness, chemical reactivity, stability under extreme conditions, and predictive
+    capabilities for thermodynamic properties and physical phenomena.
+external_ids:
+  arxiv: '2509.20630'
+paper:
+  title: 'MLIP Arena: Advancing Fairness and Transparency in Machine Learning Interatomic Potentials via
+    an Open, Accessible Benchmark Platform'
+  arxiv: '2509.20630'
+  version_read: v2
+  source: src-arxiv-2509-20630-v2
+released: 2025-09-25
+released_note: >
+  The arXiv v1 date, the earliest public release a source read here dates as a release. The platform is
+  older: the leaderboard Space was created on 2024-03-08 (src-hf-api-mlip-arena-space) and the repository
+  on 2024-03-24 (src-github-api-mlip-arena), and an earlier paper was an ICLR 2025 AI4Mat workshop spotlight
+  (src-github-mlip-arena-readme), none of which was read as a release of the benchmark (review_checks).
+released_source: src-arxiv-2509-20630
+released_quote: Submitted on 25 Sep 2025 (v1), last revised 12 Nov 2025 (this version, v2)
+release_venue: NeurIPS 2025 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2509-20630-v2
+release_venue_quote: 39th Conference on Neural Information Processing Systems (NeurIPS 2025) Track
+  on Datasets and Benchmarks.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/force-fields-potentials
+domain_basis:
+  reason: The entrants are learned interatomic potentials and every task scores the energies, forces
+    and dynamics they give for atomic systems (diatomic molecules, crystals, amorphous mixtures, a
+    hydrogen-oxygen gas), so the subject is matter at the molecular and crystalline scale and the
+    leaf is the potentials' own. The leaf's definition says "scored against reference
+    quantum-chemical calculations", which MLIP Arena deliberately avoids for its ranked metrics;
+    that boundary is logged with bench tag-gap. arXiv files the paper under physics.chem-ph and
+    cond-mat.mtrl-sci, but the physics family's exclusion sends molecules, crystals and materials
+    here.
+  source: src-arxiv-2509-20630-v2
+  quote: MLIP Arena focuses on assessing physical soundness to better evaluate the utility of MLIPs
+    for downstream applications.
+domain_considered_and_rejected:
+  - term: physics/simulation-surrogates
+    reason: The potentials stand in for DFT, but the physics family's exclusion reads that a
+      molecule, crystal or material is chemistry-materials "even when the method is physics", and
+      the term's test (scored against the simulator replaced) is the one MLIP Arena sets aside.
+    source: src-arxiv-2509-20630
+    quote: 'Subjects: Chemical Physics (physics.chem-ph); Materials Science (cond-mat.mtrl-sci)'
+  - term: physics/condensed-matter
+    reason: The EOS, vacancy and phase-transition tasks are condensed-matter physics in method, but
+      the scored system is a crystal or material, which the physics exclusion sends to
+      chemistry-materials.
+  - term: chemistry-materials/crystal-stability-discovery
+    reason: The 2D-materials case study classifies dynamical stability by F1, but it is a paper-only
+      case study that the board does not rank (its task is commented out of the registry), and it is
+      phonon stability of known monolayers, not thermodynamic screening of candidates.
+    source: src-hf-mlip-arena-tasks-registry
+    quote: '# Lattice thermal conductivity:'
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Entrants predict the energies, forces and trajectories of atomic systems, and the scores
+      compare them with what physics requires of those quantities (a smooth curve with one minimum,
+      strong short-range repulsion, forces equal to the negative energy gradient) and, for
+      combustion, with the measured reaction enthalpy. The term's test names measurement,
+      observation or reference computation; physical-law expectations are none of the three exactly
+      (review_checks).
+    source: src-arxiv-2509-20630-v2
+    quote: Smooth PECs with a single equilibrium point, like the Lennard-Jones pairwise PEC, have a
+      tortuosity strictly equal to 1.
+  distribution-shift-generalization:
+    reason: The paper's distribution-shift section measures each structure's distance from the
+      training distribution as a differential entropy and reports energy conservation and rotational
+      equivariance binned by it, with the task unchanged; hydrogen combustion is presented as an
+      out-of-distribution test. Neither is a ranked task on the board (subsets).
+    source: src-arxiv-2509-20630-v2
+    quote: To quantify how far a system is from the training distribution, we compute the
+      differential entropy
+capability_considered_and_rejected:
+  - term: reliability-consistency
+    reason: MD stability counts the fraction of valid runs and steps, but each structure is run once
+      and different structures are pooled; the term needs the same item repeated and agreement
+      across trials scored.
+    source: src-arxiv-2509-20630-v2
+    quote: Benchmarking metrics include the fraction of valid runs and runtime speed performance (MD
+      steps per second on a single A100 GPU).
+  - term: generation-fidelity
+    reason: No produced artifact is compared with a target; and a predicted state of a physical
+      system is scientific-prediction by the term's own exclusion.
+  - term: transfer-learning
+    reason: The extended case studies apply one potential to several downstream tasks, which is use,
+      not a reported transfer protocol; the distribution-shift tests move only the inputs.
+
+evaluation_method:
+  - domain-metric
+  - statistical-fit
+  - composite
+  - entrant-relative-ranking
+evaluation_method_basis:
+  reason: >
+    domain-metric for the atomistic-modelling measures with no meaning outside the field: tortuosity of
+    a potential energy curve, energy jumps, force and derivative flips, conservation deviation of forces
+    from the energy gradient, valid MD steps and centre-of-mass drift. statistical-fit for the Spearman
+    coefficients over continuous curves and the reaction-enthalpy error against experiment. composite
+    and entrant-relative-ranking together, because each task rank and the overall Arena Rank are ranks
+    of summed per-measure ranks across these different methods, so adding or removing a model moves every
+    other model's rank.
+  source: src-arxiv-2509-20630-v2
+  quote: propose metrics that enable robust and well-balanced ranking from multi-rank aggregation,
+    reducing susceptibility to overfitting on any single metric
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: The MD tasks run simulations, but the entrant is the force field that drives the
+      simulator, not a policy acting in a simulated environment, and the scores are survival
+      fractions, speeds and drifts rather than an episode outcome.
+  - term: constraint-check
+    reason: An MD step is valid if the structure exists and its energy is finite, a single condition
+      counted as a fraction, not a battery whose any failure invalidates the output.
+  - term: classification-metric
+    reason: F1 scores appear only in the paper's 2D-materials case study and misclassification
+      counts only in its MOF case study, neither of which the board ranks.
+    source: src-arxiv-2509-20630-v2
+    quote: we randomly selected 505 monolayers from the C2DB database
+  - term: numeric-tolerance-match
+    reason: No answer is checked within a tolerance; every number is a continuous error, a rank or a
+      count.
+
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: The entrants are learned interatomic potentials that stand in for electronic-structure
+    calculations; the board and the paper take open-weight models with any training set, run through
+    one ASE calculator interface.
+  source: src-hf-mlip-arena-leaderboard-py
+  quote: The platform's benchmarks are specifically designed to evaluate the readiness and
+    reliability of open-source, open-weight models
+designed_for_subjects_considered_and_rejected:
+  - term: classical-algorithm
+    reason: The package carries a ZBL screened-repulsion potential, used to relax the RM24
+      structures, but no source read here shows a classical potential ranked; every model in the
+      paper's Table S4 is learned.
+
+as_used:
+  - protocol: The homonuclear-diatomics task used as seed evidence for an agentic search for failure
+      modes, with committee models compared curve by curve beyond the benchmark's aggregate
+      statistics.
+    source: src-arxiv-2609-08399-v1
+    quote: Seeded by the MLIP Arena homonuclear-diatomics family
+    note: MLIP Detective (Preferred Networks, September 2026), third-party, which calls MLIP Arena
+      and Matbench Discovery the leaderboard benchmarks that are now primary evaluation tools for
+      universal MLIPs, and notes that the aggregate diatomics metrics are reference-free and do not
+      test binding at a given distance.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The repository was last pushed on 2026-07-02 and the benchmark's dataset on Hugging Face
+    was updated on 2026-06-20; a third-party paper of September 2026 uses it. The leaderboard Space
+    itself was last modified on 2026-03-27 (review_checks).
+  source: src-github-api-mlip-arena
+  quote: '"pushed_at":"2026-07-02T23:30:17Z"'
+activity: accepting-submissions
+activity_basis:
+  reason: Model developers add results at any time by running the evaluation scripts and opening a
+    pull request; there are no rounds.
+  source: src-hf-mlip-arena-leaderboard-py
+  quote: If you are a model developer, contribution to missing tasks is very appreciated by running
+    the evaluation scripts and submitting a pull request.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ORBv2
+    source: src-arxiv-2509-20630-v2
+    observed_on: 2026-11-04
+    quote: ORBv2 is the fastest and has the best scaling exponent among the tested MLIPs in both
+      heating and compression simulations.
+    note: One of the learned potentials in the paper's Table S4 (with MACE-MP, CHGNet, M3GNet,
+      MatterSim, SevenNet, eqV2, eSEN, EquiformerV2, eSCN, DeepMD and ALIGNN).
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: none
+ground_truth_source_note: The ranked metrics compare each model with physical expectations stated
+  analytically (a tortuosity of 1, Spearman coefficients of -1 under compression, forces equal to
+  the negative energy gradient, finite energies along MD), not with stored reference values; the
+  board shows PBE energy and force errors for the diatomics but excludes them from ranking.
+  Exceptions are the combustion task's reaction enthalpy, scored against the experimental -68.31
+  kcal/mol, and, in the paper only, experimental CO2 adsorption heats for MOFs and DFT data for
+  vacancy migration and 2D stability. `none` is the nearest value; the vocabulary has no term for a
+  physical-law reference, and bench tag-gap refuses this field (it is not a classified facet), so
+  the gap is a review check.
+ground_truth_source_basis:
+  reason: The paper names reference-agnosticism as the design.
+  source: src-arxiv-2509-20630-v2
+  quote: MLIP Arena is our first attempt to prioritize qualities that are essential to atomistic
+    modeling beyond any DFT reference
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The structures, the workflows and the per-model results are public, and the README gives
+    the script that runs the core suite for any model.
+  source: src-github-mlip-arena-readme
+  quote: This will dynamically distribute and run the core benchmarks (diatomics, EOS bulk, and E-V
+    scans) via a Dask-Jobqueue on your SLURM cluster.
+
+task:
+  exists: true
+  input:
+    - two atoms of one element in a vacuum box, at separations from 0.9 covalent radii to 3.1 van
+      der Waals radii, for each element (homonuclear diatomics)
+    - 1,000 crystal structures selected from WBM, relaxed and then strained isotropically (EOS) or
+      deformed without relaxation (energy-volume scans)
+    - random mixture structures of up to six elements built from Materials Project binaries and
+      ternaries (RM24), for NVT heating and NPT compression MD
+    - a box of hydrogen and oxygen molecules for annealing MD (combustion)
+  output: The energies, forces and, where the task needs them, stresses the potential predicts along
+    each task's workflow, run through the package's Prefect tasks with the model as an ASE
+    calculator; the scores are computed from the resulting curves and trajectories.
+  scoring: Per task, physical and geometric measures of the model's own curves and trajectories
+    (tortuosity, energy jumps, force and derivative flips, conservation deviation, Spearman
+    coefficients in compression and repulsion, valid runs and steps, MD steps per second and its
+    scaling exponent, reaction enthalpy error, final centre-of-mass drift, yield); each measure is
+    ranked across models, the ranks are summed into a task rank, and the task ranks are summed and
+    ranked again into the Arena Rank, with missing tasks ranked at the bottom.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The input structures are public, and the ranked measures need no
+    withheld label.
+  source: src-hf-mlip-arena-leaderboard-py
+  quote: leaderboard["Meta Rank Agg"] += leaderboard[col].rank(method="min", ascending=True,
+    na_option="bottom")
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Running the fairchem models needs download access to Meta's model repositories on
+    Hugging Face (the README names OMAT24, which the Space's record also lists); that conditions
+    some entrants' checkpoints, not the benchmark's data.
+  access_basis:
+    reason: The input structures are in the public repository and in an ungated Hugging Face
+      dataset, and no label is withheld.
+    source: src-hf-api-mlip-arena-dataset
+    quote: '"gated":false'
+  refresh: rolling-live
+  refresh_basis:
+    reason: Tasks are added to and taken off the live board by editing the task registry on the
+      repository's main branch, and models by editing the model registry, between and outside the
+      package's tagged releases; each task carries its own last-update date, and two finished tasks
+      are commented out of the board.
+    source: src-hf-mlip-arena-tasks-registry
+    quote: 'last-update: 2025-04-29'
+  data_provenance:
+    - curated-public-database
+    - synthetic-procedural
+    - simulation-generated
+  data_provenance_note: The EOS and energy-volume structures are selected from the WBM database, the
+    vacancy crystals from Angsten et al.'s database and the 2D monolayers from C2DB
+    (curated-public-database). RM24 is generated by pairing stable Materials Project binaries and
+    ternaries at random ratios and packing them (synthetic-procedural), then relaxed by MD with a
+    ZBL potential (simulation-generated). The combustion box and the diatomics are constructed.
+  data_provenance_source: src-arxiv-2509-20630-v2
+  data_provenance_quote: Each generated structure is then relaxed via FIRE optimizer and NVT MD
+    simulation at 1500 K for 10 ps
+  contamination_risk: medium
+  contamination_risk_note: >
+    The ranked measures are reference-free, so there is no label to leak, and the paper argues that diatomic
+    curves resist leakage because their DFT references are hard to compute. But the scored inputs are
+    public and some are drawn from databases that large training sets build on (WBM crystals, Materials
+    Project structures), and the paper itself proposes the workflows as reward data for training, so a
+    model can be fitted to what the board scores. No source read here checks any entrant's training data
+    against the task structures.
+  contamination_evidence:
+    - source: src-arxiv-2509-20630-v2
+      stance: against
+      quote: PECs have the benefit of being less vulnerable to data leakage as DFT references for
+        PECs are difficult to calculate
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Each measure has a physical ideal (tortuosity 1, Spearman coefficient -1
+    in compression, zero conservation deviation, zero rotated-force error, all MD runs valid), so a
+    perfect score is a physically consistent potential, not agreement with DFT or experiment. The
+    ranks themselves have no ceiling beyond first place, and MD speed has none.
+  ceiling_by_category:
+    - category: tortuosity of a potential energy curve
+      value: 1
+      source: src-arxiv-2509-20630-v2
+      quote: Smooth PECs with a single equilibrium point, like the Lennard-Jones pairwise PEC, have
+        a tortuosity strictly equal to 1.
+    - category: rotational equivariance, force MAE under rotation (paper only)
+      value: 0
+      source: src-arxiv-2509-20630-v2
+      quote: Perfect equivariance would result in a MAE of 0.0 regardless of the rotation angle.
+  dataset_licence: Apache-2.0
+  dataset_licence_note: The licence of the Hugging Face dataset that holds RM24 and the other task
+    inputs; the WBM, C2DB and Angsten structures carry their upstream databases' terms, which were
+    not read.
+  dataset_licence_source: src-hf-api-mlip-arena-dataset
+  dataset_licence_quote: '"cardData":{"license":"apache-2.0"'
+  size:
+    - count: 1000
+      unit: crystal structures
+      subset: equation of state
+      source: src-arxiv-2509-20630-v2
+      quote: Equation of state (EOS) benchmark on 1,000 WBM structures
+    - count: 1000
+      unit: crystal structures
+      subset: energy-volume scans
+      source: src-arxiv-2509-20630-v2
+      quote: Energy-volume scan of 1,000 WBM structures
+    - count: 1000
+      unit: random mixture structures (RM24)
+      subset: MD stability, the structure pool
+      source: src-arxiv-2509-20630-v2
+      quote: we generate 1,000 random mixture structures at arbitrary ratio of two stable materials
+        from Materials Project (v2024.12.18)
+    - count: 120
+      unit: RM24 structures
+      subset: MD stability, NVT heating (the first 120)
+      source: src-arxiv-2509-20630-v2
+      quote: First 120 structures from RM24 are used for NVT, and first 80 structures are used for
+        NPT.
+    - count: 80
+      unit: RM24 structures
+      subset: MD stability, NPT compression (the first 80)
+      source: src-arxiv-2509-20630-v2
+      quote: First 120 structures from RM24 are used for NVT, and first 80 structures are used for
+        NPT.
+    - count: 500
+      unit: MPTrj systems with their trajectories
+      subset: rotational equivariance under distribution shift (paper only)
+      source: src-arxiv-2509-20630-v2
+      quote: We uniformly sample 500 systems and their trajectories from the dataset.
+    - count: 114
+      unit: elemental crystals (57 FCC and 57 HCP)
+      subset: vacancy migration (paper only)
+      source: src-arxiv-2509-20630-v2
+      quote: 57 FCC and 57 HCP crystals from Angsten et al.
+    - count: 20
+      unit: metal-organic frameworks
+      subset: CO2 adsorption case study (paper only)
+      source: src-arxiv-2509-20630-v2
+      quote: we curated 20 MOFs with experimentally reported Qst values
+    - count: 505
+      unit: 2D monolayers
+      subset: dynamical stability case study (paper only)
+      source: src-arxiv-2509-20630-v2
+      quote: we randomly selected 505 monolayers from the C2DB database
+  size_note: The diatomics task covers the periodic table pairwise at 0.01 Angstrom spacing, with no
+    element count stated beyond that; the combustion task is one box of 128 H2 and 64 O2 molecules
+    (paper Figure S3). The tables in the paper cover the models it lists; the board's tables cover
+    the models in the registry at the Space's commit.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The MLIP Arena authors (UC Berkeley and Lawrence Berkeley National Laboratory),
+    publishing as atomind-ai on GitHub and atomind on Hugging Face
+  maintainer_basis:
+    reason: The repository belongs to the atomind-ai organisation and the Space and dataset to
+      atomind; the paper's authors are at UC Berkeley, LBNL, Imperial College London and KAIST, and
+      the work was funded inside the Materials Project programme. What atomind is beyond those
+      accounts was not established (review_checks).
+    source: src-github-api-mlip-arena
+    quote: '"owner":{"login":"atomind-ai"'
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+    - self-reported
+  submission_process_note: The maintainers choose and run open-weight models through the package
+    (the paper's first-class supported models), which is maintainer-run. Model developers can also
+    run the evaluation scripts themselves and add the results by pull request; no source read states
+    a check beyond merging the pull request and the repository's tests, so that route is recorded as
+    self-reported (review_checks).
+  submission_process_source: src-arxiv-2509-20630-v2
+  submission_process_quote: List of first-class supported open-source, open-weight models in MLIP
+    Arena.
+  independence_flags: []
+  independence_flags_note: >
+    No ranked model in the sources read is built by the maintainers; Table S4 cites each model to its
+    developers' paper and repository (Batatia et al., Deng et al., Chen and Ong, Yang et al., Neumann
+    et al., Park et al., Barroso-Luque et al., Fu et al., Liao et al. and others), none of them this paper.
+    Scoring is programmatic and the inputs are public, so no evaluator holds private labels. Not searched
+    further: whether any author contributed to a ranked model.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2509-20630-v2
+    quote: We acknowledge funding through the DOE, Office of Science, Office of Basic Energy
+      Sciences, Materials Sciences and Engineering Division
+  known_limitation:
+    source: src-arxiv-2509-20630-v2
+    quote: We acknowledge that moving away from DFT references makes it harder to directly compare
+      models
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_basis:
+    reason: The protocol fixes each run to one CPU core and one A100 GPU, and the speed measures are
+      defined on that GPU. The README's route for a full sweep distributes the runs over a SLURM
+      cluster, and the paper's runs used NERSC, so a full run in practice is many single-GPU jobs
+      (review_checks).
+    source: src-arxiv-2509-20630-v2
+    quote: we ensure each run has access to the same resource of 1 AMD EPYC 7763 (Milan) CPU core
+      and 1 NVIDIA A100 (Ampere) GPU.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Inputs, workflows and the ranking code are public. MD speed depends on
+    the GPU and on kernel settings (the paper disables cuEquivariance for MACE models), so the
+    throughput measures reproduce only on the stated hardware.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: mlip-arena Python package (atomind-ai/mlip-arena), its Prefect tasks and the
+    benchmarks/submit.py script
+  harness_source: src-github-mlip-arena-readme
+  harness_quote: This will dynamically distribute and run the core benchmarks (diatomics, EOS bulk,
+    and E-V scans) via a Dask-Jobqueue on your SLURM cluster.
+  harness_gotcha:
+    source: src-github-mlip-arena-readme
+    quote: due to compatibility issues between multiple popular MLIPs
+  submission_channel:
+    source: src-hf-mlip-arena-leaderboard-py
+    quote: If you are a model developer, contribution to missing tasks is very appreciated by
+      running the evaluation scripts and submitting a pull request.
+  submission_channel_note: Pull requests to github.com/atomind-ai/mlip-arena; the Space
+    atomind/mlip-arena serves the board from a copy of the repository (the repository's sync-to-hub
+    workflow, read but not made a Source).
+  code_licence: Apache-2.0
+  code_licence_source: src-github-api-mlip-arena
+  code_licence_quote: '"spdx_id":"Apache-2.0"'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # statistical-fit and domain-metric with scientific-surrogate-model resolve two profiles, surrogate-fit and
+  # eligibility-gated. MLIP Arena's board does not split entrants by training data: the overall table shows each
+  # model's training sets as a column ('"Training Set": meta.get("datasets", [])', src-hf-mlip-arena-leaderboard-py)
+  # and ranks every model in one table, and the README calls the platform "agnostic to the underlying model
+  # architectures and training datasets". So training_data_eligibility_tiers stays empty and the eligibility-gated
+  # profile's two track fields are waived; training_data_policy and decontamination_applied stay, since a model's
+  # training sets (MPTrj, Alexandria, OMat, OMol and others) are shown beside its rank and WBM-derived structures may
+  # sit in them. Added: the hardware, because MD steps per second enter two task ranks; the harness, because the
+  # package version fixes each task's protocol (strain range, temperature and pressure schedule, timeout and
+  # retries). The ranks are relative to the models in the registry, so a rating pool is required.
+  material_extra:
+    - hardware
+    - harness
+  material_waived:
+    - field: eligibility_track
+      reason: MLIP Arena runs no tracks; every model is ranked in one table, and subset_used carries
+        the task.
+    - field: training_data_eligibility
+      reason: No training-data tiers are defined (training_data_eligibility_tiers is empty); the
+        board shows a model's training sets without ranking by them, which training_data_policy
+        carries.
+  rating_pool_required: true
+
+aggregation_policy: official-aggregate
+aggregation_policy_note: A model missing a task is ranked at the bottom for that task ("The models
+  are ranked at the bottom for the missing tasks.", src-hf-mlip-arena-leaderboard-py), so the Arena
+  Rank rewards coverage as well as quality. PBE errors on the diatomics are displayed but excluded
+  from ranking.
+aggregation_policy_basis:
+  reason: The board's overall table sums each model's task ranks and ranks the sums as the Arena
+    Rank, sorted by it; each task's own rank is a rank of summed per-measure ranks. The paper's
+    tables report the measures and point to the board for the aggregated rankings.
+  source: src-hf-mlip-arena-leaderboard-py
+  quote: '# Final Arena Rank'
+headline_metric: null
+headline_metric_note: The Arena Rank has no Metric entity; it is a rank, not a score.
+no_legitimate_aggregate: false
+
+secondary_axes:
+  - throughput
+secondary_axes_basis:
+  reason: MD speed in steps per second, and its scaling with system size, is reported and enters the
+    stability and combustion ranks, measured on one fixed GPU.
+  source: src-arxiv-2509-20630-v2
+  quote: Benchmarking metrics include the fraction of valid runs and runtime speed performance (MD
+    steps per second on a single A100 GPU).
+
+homepage: https://huggingface.co/spaces/atomind/mlip-arena
+repository: https://github.com/atomind-ai/mlip-arena
+dataset_url: https://huggingface.co/datasets/atomind/mlip-arena
+leaderboard_url: https://huggingface.co/spaces/atomind/mlip-arena
+
+subsets:
+  - id: mlip-arena#homonuclear-diatomics
+    label: Homonuclear diatomics (Fundamentals)
+    scored_separately: true
+    evidence:
+      - source: src-hf-mlip-arena-tasks-registry
+        quote: 'Homonuclear diatomics: category: Fundamentals'
+      - source: src-hf-mlip-arena-diatomics-rank
+        quote: comparing models with PBE is not rigorous and thus these metrics are excluded from
+          rank aggregation.
+    notes: Ranked by conservation deviation, two Spearman coefficients, tortuosity, energy jump and
+      force flips; PBE energy and force MAEs are shown for reference only.
+  - id: mlip-arena#eos-bulk
+    label: Equation of state (Fundamentals)
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-20630-v2
+        quote: Equation of state (EOS) benchmark on 1,000 WBM structures
+  - id: mlip-arena#energy-volume-scans
+    label: Energy-volume scans (Fundamentals)
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-20630-v2
+        quote: Energy-volume scan of 1,000 WBM structures
+  - id: mlip-arena#stability
+    label: MD stability under heating and compression (Molecular Dynamics)
+    scored_separately: true
+    evidence:
+      - source: src-hf-mlip-arena-tasks-registry
+        quote: 'Stability: category: Molecular Dynamics'
+      - source: src-arxiv-2509-20630-v2
+        quote: First 120 structures from RM24 are used for NVT, and first 80 structures are used for
+          NPT.
+    notes: NVT from 300 K to 3000 K and NPT to 500 GPa over 10 ps; the board ranks the area under
+      each model's valid-run curve for heating and for compression and the scaling exponent of MD
+      speed with system size (serve/ranks/stability.py at the Space's commit, read but not made a
+      Source).
+  - id: mlip-arena#combustion
+    label: Hydrogen combustion (Molecular Dynamics)
+    scored_separately: true
+    evidence:
+      - source: src-hf-mlip-arena-tasks-registry
+        quote: 'rank-page: combustion'
+      - source: src-arxiv-2509-20630-v2
+        quote: The experimental reaction enthalpy of −68.31 kcal/mol is annotated in the bottom
+          panel
+    notes: A 1 ns annealing MD of hydrogen and oxygen; ranked by reaction enthalpy error against
+      experiment, final centre-of-mass drift, MD speed and water yield.
+  - id: mlip-arena#distribution-shift
+    label: Energy conservation and rotational equivariance under distribution shift (paper only)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-20630-v2
+        quote: Energy drifts are monitored over eight MD trajectory windows to evaluate conservation
+    notes: Not a ranked task on the board.
+  - id: mlip-arena#vacancy-migration
+    label: Vacancy formation and migration in elemental solids (paper only)
+    items: 114
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-20630-v2
+        quote: 57 FCC and 57 HCP crystals from Angsten et al.
+  - id: mlip-arena#case-studies
+    label: 'Extended case studies: CO2 adsorption in MOFs, dynamical stability of 2D materials, perovskite
+      phase transition (paper only)'
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-20630-v2
+        quote: we curated 20 MOFs with experimentally reported Qst values
+    notes: Lattice thermal conductivity and 2D materials are implemented as board pages but
+      commented out of the task registry at the Space's commit.
+subsets_note: The five ranked tasks are the board's, in the registry's two categories; the rest are
+  reported in the paper only. The repository tree (not a Source) also carries an alloy EOS notebook
+  and elasticity and phonon tasks that the board does not rank.
+
+lineage:
+  role: root
+
+tags:
+  - machine-learned-potentials
+  - molecular-dynamics
+  - reference-free
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2509-20630-v2
+    - src-arxiv-2509-20630
+    - src-github-mlip-arena-readme
+    - src-github-api-mlip-arena
+    - src-hf-mlip-arena-leaderboard-py
+    - src-hf-mlip-arena-diatomics-rank
+    - src-hf-mlip-arena-tasks-registry
+    - src-hf-api-mlip-arena-space
+    - src-hf-api-mlip-arena-dataset
+    - src-arxiv-2609-08399-v1
+  sources_note: >
+    The paper's v2 PDF and abstract page and the MLIP Detective PDF carry DOIs and are not archived. The
+    README is pinned to a commit; the three Space files are read at the commit the Space serves; the three
+    API records are read as served on 2026-11-04. The model registry (mlip_arena/models/registry.yaml),
+    which gives each model's training sets, was read but not made a Source because it names individual
+    contributors' handles; the facts drawn on here come from the paper's Table S4 and the leaderboard
+    code instead.
+  confidence: medium
+  review_checks:
+    - check: Domain boundary. The force-fields-potentials leaf is defined as potentials "scored
+        against reference quantum-chemical calculations", and MLIP Arena's ranked metrics
+        deliberately use no such reference. The leaf is assigned because the subject is the
+        potential and the matter it models; logged with bench tag-gap as an undefined boundary.
+      field: domain
+      specialist: true
+      source: src-arxiv-2509-20630-v2
+      quote: We specifically focus on the metrics agnostic to underlying DFT functional the model
+        has been trained on
+    - check: ground_truth_source is `none` for physical-law expectations (ideal tortuosity,
+        monotonic repulsion, conservative forces), with experiment for the combustion enthalpy. The
+        vocabulary has no value for an analytic physical reference (a proposed
+        `physical-invariant`); bench tag-gap does not take ground_truth_source, so the gap is
+        recorded here only.
+      field: ground_truth_source
+    - check: scientific-prediction rests on scoring against physical requirements rather than
+        against measurement or reference computation, which the term's test names; the combustion
+        enthalpy is the one ranked comparison with measurement.
+      field: capability
+      specialist: true
+    - check: domain-metric for tortuosity, energy jump, force flips and conservation deviation. They
+        are defined by this benchmark rather than standardised across the field, which the term's
+        test asks for; the alternative is statistical-fit alone. The choice also resolves the
+        eligibility-gated profile, whose two track fields are waived.
+      field: evaluation_method
+      specialist: true
+    - check: The leaderboard Space serves commit 1508879 of 2026-03-27, while the repository's main
+        branch had added PET models by June 2026 (commit 6239aea); the Space appears to lag main, so
+        a rank read from it and one computed from main may differ. lifecycle stays active on the
+        repository's activity.
+      field: lifecycle
+      source: src-hf-api-mlip-arena-space
+      quote: '"sha":"1508879571257075528db9522e845605256f6b74","lastModified":"2026-03-27T03:03:42.000Z"'
+    - check: submission_process self-reported for the pull-request route. A merge into the
+        repository and its tests may amount to a maintainer check (maintainer-verified), but no
+        source read states a review of submitted results.
+      field: governance.submission_process
+      source: src-github-mlip-arena-readme
+      quote: PRs are welcome! Please clone the repo and submit PRs with your changes.
+    - check: Maintainer identity. The accounts are atomind-ai and atomind; whether atomind is a lab
+        group, a project name or a company was not established, and maintainer_type academic-lab
+        rests on the authors' affiliations and the DOE funding.
+      field: governance.maintainer
+    - check: Versions. The ICLR 2025 AI4Mat workshop paper, the NeurIPS 2025 paper and the package's
+        tagged releases (v0.0.1a0 of 2024-09 to v0.2.0-alpha of 2026-03, GitHub API, not a Source)
+        are all the same benchmark with a board that moves on main, so no versions are listed and
+        refresh is rolling-live; a reviewer may prefer the package releases as versioned-releases.
+        released is the arXiv v1 date although the Space dates from 2024-03.
+      field: versions
+      source: src-github-mlip-arena-readme
+      quote: MLIP Arena is accepted as an ICLR AI4Mat Spotlight!
+    - check: compute_tier single-gpu from the per-run resource the paper fixes; a full sweep of all
+        tasks is many such jobs, which the README distributes over a SLURM cluster, and cluster is
+        the alternative reading.
+      field: execution.compute_tier
+    - check: contamination_risk medium. The ranked measures have no labels to leak, but the inputs
+        are public and the paper proposes the workflows as training reward data; low would need the
+        structure to exclude a route, which it does not.
+      field: data.contamination_risk
