@@ -1,0 +1,758 @@
+# data/benchmarks/chemistry-materials/massspecgym.yaml
+#
+# P1-S6-T02, chemistry-materials entry 18. Filled from the MassSpecGym paper, arXiv 2410.23326 read as its v3
+# PDF (2025-02-14; NeurIPS 2024 Datasets and Benchmarks, with its supplementary information and datasheet), and
+# its abstract page; the repository README and two of its six leaderboard tables (results/de_novo_bonus.csv,
+# results/simulation_bonus.csv), all pinned to commit f259fe3 (2026-05-08); Hugging Face's API record of the
+# dataset and its dataset card at sha 018a954 (2026-10-26), which describes the v1.5 update; the v2 PDF and
+# abstract page of MassSpecGym in the Wild (arXiv 2606.19624, October 2026), the audit that releases v1.5; and
+# the v2 PDF of DiffMS (arXiv 2502.09571, ICML 2025), a third-party paper that reports MassSpecGym results.
+# Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The leaderboard site the README links, massspecgym.onrender.com, answered 503 ("This service has been
+# suspended") on 2026-11-04 and has no Wayback capture, so the board is read from the repository tables that
+# fed it (curation.unreachable). It replaces LIT-PCBA in the family's twenty: LIT-PCBA scores binding, which the
+# family's exclusion test sends to biology-genetics. CASMI, the contest MassSpecGym compares itself with, is its
+# own entry, drafted separately (review_checks).
+
+id: massspecgym
+name: MassSpecGym
+aliases:
+  - 'MassSpecGym: A benchmark for the discovery and identification of molecules'
+tagline: Molecule identification from tandem mass spectra, in de novo generation, retrieval and
+  spectrum simulation challenges.
+description: >
+  A benchmark and Python package from the Pluskal lab (IOCB Prague) and collaborators for machine
+  learning on tandem mass spectrometry (MS/MS) of small molecules. Its dataset holds 231,104 labelled
+  MS/MS spectra of about 29,000 molecules, collected from MoNA, MassBank and GNPS and from the authors'
+  own newly measured MSnLib library, cleaned, standardised and split so that no molecule in one fold
+  lies within a maximum-common-edge-subgraph (MCES) edit distance of 10 of a molecule in another. Three
+  challenges are scored apart, each with a bonus variant that gives the chemical formula: de novo
+  generation of the molecule from its spectrum (top-k accuracy, MCES and Tanimoto similarity of the
+  best of k = 1 or 10 guesses), retrieval of the molecule from up to 256 candidates of the same mass
+  or formula (hit rate at 1, 5 and 20, MCES of the top hit), and simulation of the spectrum from the
+  molecule (cosine and Jensen-Shannon similarity of binned spectra, and retrieval by simulated
+  spectra). Results tables in the repository take entries by pull request; the leaderboard site that
+  displayed them was suspended by November 2026. In 2026 an audit by the maintainers and the Coley
+  group found evaluation problems in at least 18 of 26 papers reporting MassSpecGym results and
+  released v1.5, which re-canonicalises the SMILES strings that let models spot the true candidate,
+  adds pretraining sets filtered against the test molecules and pins the metric implementations.
+  Known weaknesses the sources name: shortcut learning from candidate sets, leakage through pretraining
+  data and shared components, metric implementations that diverge across codebases, and a ranking bias
+  in the candidate pools that v1.5 does not fix.
+self_description:
+  source: src-arxiv-2410-23326
+  quote: the first comprehensive benchmark for the discovery and identification of molecules from
+    MS/MS data
+external_ids:
+  arxiv: '2410.23326'
+paper:
+  title: 'MassSpecGym: A benchmark for the discovery and identification of molecules'
+  arxiv: '2410.23326'
+  version_read: v3
+  source: src-arxiv-2410-23326-v3
+released: 2024-10-30
+released_note: The paper's first arXiv version, as its abstract page dates it; v2 followed on
+  2025-01-14 and v3 on 2025-02-14. The Hugging Face dataset was created on 2024-06-12, before the
+  paper (src-hf-api-massspecgym), presumably for the track's review; no source dates its public
+  opening.
+released_source: src-arxiv-2410-23326
+released_quote: Submitted on 30 Oct 2024 (v1), last revised 14 Feb 2025 (this version, v3)
+release_venue: NeurIPS 2024 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2410-23326-v3
+release_venue_quote: 38th Conference on Neural Information Processing Systems (NeurIPS 2024) Track
+  on Datasets and Benchmarks
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/spectroscopy-interpretation
+  secondary:
+    - chemistry-materials/molecular-property-prediction
+  secondary_note: The de novo and retrieval challenges infer a molecular structure from a measured
+    spectrum, which is the primary leaf's definition. The spectrum simulation challenge runs the
+    other way, predicting the spectrum, a property of the molecule, from its structure; its subsets
+    carry molecular-property-prediction as their domain_override.
+domain_basis:
+  reason: Two of the three challenges, and the benchmark's stated purpose, take an MS/MS spectrum
+    and score the molecular structure a system infers from it against the molecule that was
+    measured.
+  source: src-arxiv-2410-23326-v3
+  quote: The task of de novo molecular generation is to generate a molecular structure from a mass
+    spectrum.
+domain_considered_and_rejected:
+  - term: chemistry-materials/generative-molecular-design
+    reason: The de novo challenge generates molecules, but each is scored by how close it is to the
+      one molecule that was measured, not against a property specification it should satisfy;
+      generating a new molecule that fits is the leaf's task, recovering a known one is not.
+    source: src-arxiv-2410-23326-v3
+    quote: we formulate the problem as predicting a set of k graphs
+  - term: biology-genetics/systems-biology
+    reason: arXiv files the paper under q-bio and its users are computational metabolomics, but no
+      pathway or network is modelled; the scored quantity is a small molecule's structure or
+      spectrum, which the biology family's exclusion test sends here. Molecules of biological origin
+      are the samples' subject, not the benchmark's.
+    source: src-arxiv-2410-23326-v3
+    quote: we first exhaustively collected MS/MS spectra from the largest publicly available
+      spectral libraries
+
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Systems predict a molecule's structure from its measured spectrum, or its spectrum from
+      its structure, and are scored against the measured molecule or the measured spectrum
+      (ADR-0014's term for a structure or property of a chemical system predicted from measurements
+      of it).
+    source: src-arxiv-2410-23326-v3
+    quote: spectrum simulation is the inverse problem of predicting an MS/MS spectrum
+  distribution-shift-generalization:
+    reason: The split is built so that test molecules are structurally distant from every training
+      molecule, by agglomerative clustering at an MCES threshold of 10, rather than by random or
+      InChIKey-disjoint sampling, and every reported score is on those held-out structures. There is
+      no in-distribution score beside it, which the term allows. DiffMS calls the setting out of
+      distribution.
+    source: src-arxiv-2410-23326-v3
+    quote: By setting the linkage distance threshold to 10, our approach ensures that no molecules
+      have an edge edit distance of less than 10 between different data folds.
+capability_considered_and_rejected:
+  - term: generation-fidelity
+    reason: The simulated spectrum is compared with the measured one by similarity, which reads like
+      the term's inclusion test, but the term's exclusion test sends a predicted property or
+      structure of a physical system scored against measurement to scientific-prediction.
+    source: src-arxiv-2410-23326-v3
+    quote: An evaluation metric for the quality of the prediction is the cosine similarity between
+      the predicted binned spectrum
+  - term: hypothesis-generation
+    reason: De novo returns k candidate molecules and retrieval a ranking, but the score only asks
+      whether the one measured molecule is among them (or how close the best one is); the k guesses
+      hedge a single determinate answer. In retrieval the candidates are supplied and only ranking
+      is asked, which the term's exclusion test rules out.
+    source: src-arxiv-2410-23326-v3
+    quote: we formulate the problem as predicting a set of k graphs
+  - term: perception
+    reason: The input is a measured signal, but one already reduced to a peak list of m/z and
+      intensity pairs, noise peaks removed and intensities normalised, and the benchmark's claim is
+      a chemical inference from it rather than recovery of structure from a raw sensory stream
+      (review check).
+    source: src-arxiv-2410-23326-v3
+    quote: We preprocessed the mass spectra by removing signals estimated to be instrument noise.
+  - term: creativity-novelty
+    reason: The molecules are new to the training data by construction of the split, but a generated
+      molecule earns credit only by matching the measured one; novelty is not rewarded.
+
+evaluation_method:
+  - exact-match
+  - domain-metric
+  - statistical-fit
+evaluation_method_basis:
+  reason: >
+    exact-match for de novo top-k accuracy and retrieval hit rate at k, the share of test spectra whose
+    measured molecule is among the k outputs, each item right or wrong (the audit pins the match to the
+    14-character InChIKey); domain-metric for the MCES edit distance on molecular graphs and the
+    Tanimoto similarity of Morgan fingerprints, cheminformatics measures with no meaning outside the
+    field; statistical-fit for the cosine and Jensen-Shannon similarity between binned predicted and
+    measured spectra.
+  source: src-arxiv-2410-23326-v3
+  quote: We evaluate molecule retrieval using standard information retrieval metrics, as well as the
+    molecular similarity of the top hit with the true molecule.
+evaluation_method_considered_and_rejected:
+  - term: classification-metric
+    reason: Hit rate at k is a ranking metric, but it is the mean of per-spectrum verdicts (is the
+      true molecule in the top k?), which the term's exclusion test sends to exact-match.
+    source: src-arxiv-2410-23326-v3
+    quote: The hit rate @ k ranges from 0 to 1, with 1 indicating perfect performance
+  - term: composite
+    reason: No figure combines the metrics or the challenges; every table reports them side by side
+      (aggregation_policy).
+designed_for_subjects:
+  - domain-specialist-model
+  - scientific-surrogate-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: >
+    The entrants are models built for mass spectrometry, trained on MassSpecGym's training fold: the
+    paper's MIST, DeepSets and transformer baselines and later work such as DiffMS
+    (domain-specialist-model). In the simulation challenge the model stands in for the instrument,
+    predicting the spectrum a measurement would give, and the paper names pseudolabeling with
+    synthetic spectra as a use (scientific-surrogate-model; subsets cannot carry a subject override,
+    so it is listed here). Non-learned baselines compete in the same tables: random chemical generation,
+    random candidate ranking and a single-peak precursor m/z spectrum (classical-algorithm).
+  source: src-arxiv-2410-23326-v3
+  quote: This baseline uses combinatorial and graph theory algorithms, drawing from statistics
+    derived from the training data.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The entrants are trained on the benchmark's split, but for a task chemistry defines,
+      which the term's exclusion test sends to domain-specialist-model.
+  - term: generative-media-model
+    reason: The generated outputs are molecular graphs and spectra, not images, video, audio or
+      speech.
+
+as_used:
+  - protocol: De novo generation is mostly reported in the bonus setting, with the chemical formula
+      given; the audit's corrected de novo leaderboard covers that setting only, and the
+      repository's de_novo.csv (formula not given) holds four rows against de_novo_bonus.csv's
+      eleven (read 2026-11-04).
+    split: test
+    source: src-arxiv-2606-19624-v2
+    quote: 'Table 5: Updated Leaderboard on the MassSpecGym de novo Generation Bonus Challenge.'
+    note: The audit also finds methods that assume a known formula reported on the mass-based
+      (formula not given) tracks, which leaks the formula (review_checks).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. The audit counts 26 papers reporting MassSpecGym results
+    before 2026-05-01 and calls it the field's major benchmark suite; the repository's tables carry
+    third-party rows up to 2025-09-16. v1.5 is released (versions), though the commit that brought
+    it to the repository is titled "part 1/2" (review check on under-revision).
+  source: src-arxiv-2606-19624-v2
+  quote: Over the last year, MassSpecGym [8] has quickly emerged as the major benchmarking suite for
+    machine learning in computational metabolomics.
+activity: accepting-submissions
+activity_note: The route is a pull request to the results tables; the leaderboard site that
+  displayed them answered 503 ("This service has been suspended") on 2026-11-04
+  (curation.unreachable). The benchmark has never run in rounds.
+activity_basis:
+  reason: The README invites anyone to add results from a paper by pull request, open at any time.
+  source: src-github-massspecgym-readme
+  quote: To submit new results from your paper, please open a pull request that updates the results
+    tables in the `results` folder.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: MIST (the paper's state-of-the-art retrieval baseline)
+    source: src-arxiv-2410-23326-v3
+    observed_on: 2026-11-04
+    quote: MIST assigns chemical subformulae to spectral peaks via energy-based modeling
+  - system: DiffMS (Bohde et al., ICML 2025)
+    source: src-arxiv-2502-09571-v2
+    observed_on: 2026-11-04
+    quote: only MADGEN and DiffMS generate any correct structures on MassSpecGym
+  - system: DiffMS, as listed in the de novo bonus table
+    source: src-github-massspecgym-de-novo-bonus-csv
+    observed_on: 2026-11-04
+    quote: DiffMS,0.0230,,,18.45,,,0.28,,,0.0425,,,14.73,,,0.39
+    note: Top-1 accuracy 2.30%, top-1 MCES 18.45, top-1 Tanimoto 0.28, then the same at top 10. The
+      audit recomputes DiffMS's MCES with the pinned threshold and reports 13.96 (review_checks).
+  - system: ICEBERG, in the spectrum simulation bonus table
+    source: src-github-massspecgym-simulation-bonus-csv
+    observed_on: 2026-11-04
+    quote: ICEBERG,0.58,0.57,0.59,0.48,0.48,0.49,45.95,44.32,47.59
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: For de novo and retrieval, the molecule a library or the authors' own
+  MSnLib measurement annotates each spectrum with; for simulation, the measured spectrum itself.
+  Spectra from MoNA, MassBank and GNPS are crowd-sourced library records the authors filtered,
+  standardised and re-annotated where metadata were missing or wrong.
+ground_truth_source_basis:
+  reason: The scored truth is measured MS/MS spectra and the molecules they were measured on, a
+    third of the molecules from the authors' own new measurements.
+  source: src-arxiv-2410-23326-v3
+  quote: 10 thousand molecules (33%) present in the dataset are derived from our newly measured
+    in-house data
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The dataset with its fold assignments, the candidate pools and the evaluation code are
+    public, and the package splits the data and computes the metrics.
+  source: src-github-massspecgym-readme
+  quote: automatically handles data splitting into training, validation, and testing folds
+
+task:
+  exists: true
+  input:
+    - 'de novo and retrieval: an MS/MS spectrum, a set of m/z and intensity peaks, intensities normalised
+      to the largest'
+    - 'bonus challenges: the chemical formula as well'
+    - "retrieval: up to 256 candidate molecules of the same mass (bonus: the same formula), sampled from
+      a 1M, a 4M and PubChem's 118M molecule pools"
+    - 'simulation: a molecular graph, the instrument type (QTOF or Orbitrap) and the collision energy,
+      restricted to [M+H]+ spectra'
+  output: 'De novo: up to k molecular graphs, scored at k = 1 and 10. Retrieval: a ranking of the candidates.
+    Simulation: a predicted spectrum, binned for scoring at 0.01 Da up to m/z 1005.'
+  scoring: 'De novo: top-k accuracy (the measured molecule among the k), and the smallest MCES distance
+    and largest Tanimoto similarity between the k and the measured molecule. Retrieval: hit rate at 1,
+    5 and 20, and the MCES distance of the top hit. Simulation: cosine and Jensen-Shannon similarity between
+    predicted and measured binned spectra, precursor peaks excluded, and hit rate at k when candidates
+    are ranked by the similarity of their simulated spectra to the measured one. All are averaged over
+    test spectra, with bootstrap confidence intervals.'
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The datasheet planned an evaluation API for the test data, but the
+    test fold, with its labels, ships in the public dataset and the package's data module serves it;
+    no source read describes the API.
+  tests_hidden_from_system_source: src-arxiv-2410-23326-v3
+  tests_hidden_from_system_quote: An API will be available for evaluation on the test data.
+  source: src-arxiv-2410-23326-v3
+  quote: To standardize the task across examples, we limit |C| ≤ 256 candidates per spectrum
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The dataset is an ungated Hugging Face repository under the MIT licence, downloadable
+      without an account or accepting terms; the package fetches it automatically.
+    source: src-hf-api-massspecgym
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data changed once, in v1.5, which adds new files beside the v1 ones under a version
+      label (data/MassSpecGym1.5.tsv beside data/MassSpecGym.tsv), so a claim can name the state it
+      was measured on (versions).
+    source: src-hf-massspecgym-card
+    quote: MassSpecGym v1.5 addresses several evaluation pitfalls identified in the "MassSpecGym in
+      the Wild" audit.
+  data_provenance:
+    - experimental-measurement
+    - curated-public-database
+  data_provenance_note: The spectra are instrument measurements, so experimental-measurement whoever
+    ran them; most were drawn from three crowd-sourced public spectral libraries (MoNA, MassBank,
+    GNPS, downloaded 2024-05-27) by filtering and standardisation, which is curated-public-database,
+    and a third of the molecules come from the authors' own MSnLib measurements.
+  data_provenance_source: src-arxiv-2410-23326-v3
+  data_provenance_quote: we first exhaustively collected MS/MS spectra from the largest publicly
+    available spectral libraries
+  contamination_risk: medium
+  contamination_risk_note: The test fold is public and its molecules are in public chemical
+    databases, including the PubChem pool the benchmark itself supplies for candidates. The split
+    keeps training molecules at MCES 10 or more from test molecules, and v1.0's unlabeled
+    4M-molecule set was filtered against the test fold. The audit evidences routes through what
+    entrants add (decoders and encoders pretrained on sets that overlap the test set or exclude only
+    exact matches, spectral simulators trained on test spectra, formula annotators trained on test
+    data), in many of the 26 papers it reviewed. Each route belongs to the entrants that took it,
+    which leaves the benchmark at medium; whether so many entrants make it high is a review check.
+  contamination_evidence:
+    - source: src-arxiv-2606-19624-v2
+      stance: supports
+      quote: using decoders (§4.1) or encoders (§4.2) pretrained on data overlapping with the
+        MassSpecGym test set
+    - source: src-arxiv-2410-23326-v3
+      stance: against
+      quote: The molecular dataset has been refined by excluding any molecules with an MCES distance
+        of less than two from any molecule in the test fold of MassSpecGym.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Accuracy, hit rate, Tanimoto and cosine similarity are bounded at 1
+    (MCES at 0), and no source measures an attainable ceiling. The paper notes that a spectrum may
+    not hold enough information to fix the structure, so the attainable de novo score is below the
+    bound by an unmeasured amount. The paper's baselines scored zero de novo accuracy; in the
+    audit's corrected tables (its Tables 3 and 5) the best de novo bonus top-1 accuracy is 9.05%
+    (FRIGID) and the best bonus retrieval hit rate at 1 is 40.31% (MIST 4M-aug).
+  ceiling_anchor_type_source: src-arxiv-2410-23326-v3
+  ceiling_anchor_type_quote: the spectrum may not contain all the necessary information to fully
+    reconstruct the molecular structure as the spectrum is a partial view of the measured compound
+  dataset_licence: MIT
+  dataset_licence_note: The dataset card's front matter also declares MIT. The licences of the three
+    source libraries (MoNA, MassBank, GNPS), several of them Creative Commons with attribution or
+    share-alike terms, were not read; the datasheet says no third party imposed restrictions.
+  dataset_licence_source: src-arxiv-2410-23326-v3
+  dataset_licence_quote: we have made our dataset publicly available under the MIT license
+  size:
+    - count: 231104
+      unit: labelled MS/MS spectra (the paper rounds it to 231 thousand)
+      note: The exact count is the sum of the split table's folds (194,119 + 19,429 + 17,556).
+      source: src-arxiv-2410-23326-v3
+      quote: Our dataset provides a standardized collection of 231 thousand high-quality mass
+        spectra representing 29 thousand unique molecular structures
+    - count: 17556
+      unit: test spectra, of 3,170 molecules in 2,202 MCES clusters
+      subset: test fold (de novo and retrieval)
+      source: src-arxiv-2410-23326-v3
+      quote: Testing 17,556 (8%) 3,170 (10%) 2,202 (29%)
+    - count: 194119
+      unit: training spectra (with 19,429 validation)
+      subset: training fold
+      source: src-arxiv-2410-23326-v3
+      quote: Num. spectra 194,119 (84%) 19,429 (8%)
+    - count: 10159
+      unit: test spectra with all metadata (101,573 training, 9,975 validation)
+      subset: test fold of the simulation challenge
+      source: src-arxiv-2410-23326-v3
+      quote: Training Validation Testing 101,573 (84%) 9,975 (8%) 10,159 (8%)
+  size_note: The paper's figure for molecules is 29 thousand. v1.5 keeps the same spectra; the
+    package's v1.5 loader round-trips 231,104 rows (GitHub's commit list, read 2026-11-04; not a
+    quoted Source). Unlabeled extras are not counted here, namely 24 million GeMS-A10 spectra and
+    molecule pools of 1M, 4M and 118M (v1.0) and 2.5M and 50M (v1.5).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Pluskal lab (IOCB Prague) with Josef Sivic's group (Czech Technical University),
+    in the pluskal-lab GitHub organisation
+  maintainer_basis:
+    reason: The code is in the pluskal-lab organisation and the dataset in its first author's
+      Hugging Face account; the paper's first two and last two authors are at IOCB Prague and CTU,
+      and the datasheet says the authors maintain it. The v1.5 audit adds the Coley group (MIT) and
+      Enveda Biosciences as co-authors, but its release is in the same repositories.
+    source: src-arxiv-2410-23326-v3
+    quote: MassSpecGym is publicly available at https://github.com/pluskal-lab/MassSpecGym.
+  maintainer_type: academic-lab
+  submission_process:
+    - self-reported
+  submission_process_note: Entrants add their paper's numbers to the results CSV files by pull
+    request, each row citing a paper and DOI, and a maintainer merges it; no source states a check
+    of the numbers before listing. The README asks for results "from your paper", which reads like
+    publication-gated, but no rule makes a paper a condition. The v1.5 audit re-checked published
+    results after the fact and corrected several in its own tables, which the repository's CSV files
+    do not yet carry.
+  submission_process_source: src-github-massspecgym-readme
+  submission_process_quote: To submit new results from your paper, please open a pull request that
+    updates the results tables in the `results` folder.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2410-23326-v3
+      quote: DeepSets + Fourier features enhances DeepSets by using Fourier features enabling more
+        accurate modeling of m/z values [20]
+  independence_flags_note: The paper's reference 20 is the maintainers' own DreaMS work ("Emergence
+    of molecular structures from repository-scale self-supervised learning on tandem mass spectra"),
+    and the v1.5 model zoo releases a retrained DreaMS beside MIST, MIST-CF, ICEBERG and GLACIER.
+    The v1.5 audit is co-authored by the Coley group, whose MIST, ICEBERG, GLACIER and DiffMS are
+    entrants it re-ranks. The paper's competing-interests statement names authors' companies in mass
+    spectrometry data processing (mzio GmbH, Bright Giant GmbH); no system the tables rank is
+    attributed to them in the sources read. These are baselines and audits by people close to the
+    board, not models built for it, as with RoboCasa's baseline rows.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2606-19624-v2
+    quote: remains an open design problem inherent to the retrospective nature of this, or any,
+      benchmark
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not guessed. Training runs on the 194k training spectra, and the MCES metric is
+    NP-hard and solved heuristically, but no source read states what an evaluation costs.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, splits, candidate pools and evaluation code are public, and the package scores a
+      model with no human, physical or maintainer-only step.
+    source: src-github-massspecgym-readme
+    quote: Finally, MassSpecGym defines evaluation metrics by implementing abstract subclasses of
+      `LightningModule` for each of the MassSpecGym challenges
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: massspecgym Python package (PyPI; pluskal-lab/MassSpecGym), with DeNovo-, Retrieval- and
+    SimulationMassSpecGymModel base classes on PyTorch Lightning
+  harness_source: src-github-massspecgym-readme
+  harness_quote: pip install massspecgym
+  harness_gotcha:
+    source: src-arxiv-2606-19624-v2
+    quote: Pinned, standardized metric implementations should be used
+  harness_gotcha_note: The audit finds MCES thresholds, fingerprint settings and InChIKey matching
+    that differ across papers' codebases enough to reorder rankings with predictions held fixed; it
+    recomputes three methods' MCES with a threshold of 15 instead of 100. A claim should name the
+    package version or the metric settings used.
+  submission_channel:
+    source: src-github-massspecgym-readme
+    quote: To submit new results from your paper, please open a pull request that updates the
+      results tables in the `results` folder.
+  submission_channel_note: Pull requests to results/*.csv in pluskal-lab/MassSpecGym, six tables,
+    one per challenge and bonus variant. The paper planned Papers With Code as the board (history).
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for pluskal-lab/MassSpecGym also reports MIT (read
+    2026-11-04).
+  code_licence_source: src-arxiv-2410-23326-v3
+  code_licence_quote: The data and code are distributed with an MIT license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The resolved profiles: llm-static-text (exact-match with a domain-specialist model) and surrogate-fit
+  # (statistical-fit with a scientific surrogate). Beyond them: what the model was trained or pretrained on
+  # beyond the training fold (the audit's leakage routes are all there), and the harness, since metric
+  # implementations differ across codebases. The data version (v1.0 or v1.5) goes on the claim's benchmark
+  # ref, and the bonus setting is a subset. The prompt-side fields of llm-static-text do not apply.
+  material_extra:
+    - training_data_policy
+    - harness
+  material_waived:
+    - field: shots
+      reason: Entrants are models trained on the training fold and run on spectra or molecules;
+        there is no prompt and no in-context examples.
+    - field: chain_of_thought
+      reason: The entrants emit molecular graphs, candidate rankings or spectra, not text.
+    - field: reasoning_effort
+      reason: No reasoning setting exists for a trained spectrum or molecule model.
+    - field: tools_allowed
+      reason: The entrant is a trained model run by the package's harness; no tools are involved.
+    - field: retries_allowed
+      reason: Each test spectrum is scored once from the model's k outputs; k is part of the metric.
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The three challenges and their bonus variants are kept in separate tables, each with its
+    own metrics, and no source publishes a score across them.
+  source: src-arxiv-2410-23326
+  quote: 'defines three MS/MS annotation challenges: de novo molecular structure generation, molecule
+    retrieval, and spectrum simulation'
+headline_metric: null
+
+homepage: https://github.com/pluskal-lab/MassSpecGym
+repository: https://github.com/pluskal-lab/MassSpecGym
+dataset_url: https://huggingface.co/datasets/roman-bushuiev/MassSpecGym
+leaderboard_url: https://massspecgym.onrender.com/
+leaderboard_url_note: Linked from the README and the dataset card, and suspended on 2026-11-04 (HTTP
+  503); the tables it showed are in the repository's results folder.
+
+versions:
+  - version: v1.0
+    label: MassSpecGym v1.0, the NeurIPS 2024 release
+    version_kind: revision
+    released: 2024-10-30
+    items: 231104
+    changes: The release the paper describes. The audit calls it v1.0; its query SMILES keep the
+      source libraries' PubChem-standardised forms while the retrieval candidates are
+      RDKit-canonical, the artifact v1.5 removes. Its files stay on Hugging Face beside v1.5's.
+    breaking: false
+    superseded_by: v1.5
+    frozen: true
+    sources:
+      - src-arxiv-2410-23326-v3
+      - src-arxiv-2410-23326
+      - src-hf-api-massspecgym
+  - version: v1.5
+    label: MassSpecGym v1.5, released with the MassSpecGym in the Wild audit
+    version_kind: revision
+    released: 2026-06-17
+    items: 231104
+    changes: Same spectra and candidates, with every SMILES re-standardised by RDKit
+      canonicalisation (the schema is unchanged); two new pretraining sets (2.5M and 50M molecules)
+      filtered to Tanimoto below 0.7 from every test molecule; a corrected description of the v1.0
+      4M set; pinned metric implementations; and retrained data-safe MIST, MIST-CF, ICEBERG, GLACIER
+      and DreaMS models. Dated by v1 of the audit, which announces it; the dataset card's update is
+      dated 2026-10-26 by Hugging Face. Breaking because retrieval scores that exploited the old
+      canonicalisation do not survive it.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: false
+    sources:
+      - src-arxiv-2606-19624-v2
+      - src-arxiv-2606-19624
+      - src-hf-massspecgym-card
+      - src-hf-api-massspecgym
+
+subsets:
+  - id: massspecgym#de-novo
+    label: De novo molecule generation (formula not given)
+    items: 17556
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2410-23326-v3
+        quote: The task of de novo molecular generation is to generate a molecular structure from a
+          mass spectrum.
+      - source: src-arxiv-2606-19624-v2
+        quote: These corrected results are evaluated on all 17,556 test spectra
+    notes: Top-k accuracy, MCES and Tanimoto at k = 1 and 10. Items are the test spectra, from
+      data.size.
+  - id: massspecgym#de-novo-bonus
+    label: De novo generation with the chemical formula given (bonus)
+    parent: massspecgym#de-novo
+    items: 17556
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2410-23326-v3
+        quote: we propose an additional, simpler, challenge where chemical formulae are provided as
+          input
+      - source: src-github-massspecgym-readme
+        quote: Bonus chemical formulae challenge** (MS/MS spectrum + chemical formula → molecular
+          structure)
+      - source: src-github-massspecgym-de-novo-bonus-csv
+        quote: Method,Top-1 Accuracy,Top-1 Accuracy CI Low
+    notes: The setting most de novo papers report (as_used). Its own table,
+      results/de_novo_bonus.csv.
+  - id: massspecgym#retrieval
+    label: Molecule retrieval among candidates of the same mass
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2410-23326-v3
+        quote: To standardize the task across examples, we limit |C| ≤ 256 candidates per spectrum
+    notes: Hit rate at 1, 5 and 20 and MCES at 1. The audit calls this the mass-based track. No
+      source read states the number of test spectra retrieval scores.
+  - id: massspecgym#retrieval-bonus
+    label: Molecule retrieval among candidates of the same formula (bonus)
+    parent: massspecgym#retrieval
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2606-19624-v2
+        quote: Moreover, it introduces two explicit tracks of competition
+    notes: The formula-based track, where the candidates share the true molecule's formula. The
+      audit's updated retrieval leaderboard (its Table 3) is for this setting.
+  - id: massspecgym#simulation
+    label: Spectrum simulation
+    items: 10159
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/molecular-property-prediction
+    evidence:
+      - source: src-arxiv-2410-23326-v3
+        quote: spectrum simulation is the inverse problem of predicting an MS/MS spectrum
+      - source: src-arxiv-2410-23326-v3
+        quote: Training Validation Testing 101,573 (84%) 9,975 (8%) 10,159 (8%)
+    notes: Cosine and Jensen-Shannon similarity of binned spectra, and retrieval by simulated
+      spectra (hit rate at k). Scored on the metadata-complete [M+H]+ subset; items from data.size.
+  - id: massspecgym#simulation-bonus
+    label: Spectrum simulation, retrieval among candidates of the same formula (bonus)
+    parent: massspecgym#simulation
+    items: 10159
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/molecular-property-prediction
+    evidence:
+      - source: src-github-massspecgym-readme
+        quote: evaluated on the retrieval of molecular structures with ground-truth chemical
+          formulae
+      - source: src-github-massspecgym-simulation-bonus-csv
+        quote: Method,Cosine Similarity,Cosine Similarity CI Low
+    notes: The spectra are predicted as in the main challenge; only the candidate set of the
+      retrieval step changes, to formula-matched molecules, so the cosine and Jensen-Shannon columns
+      repeat the main table's.
+subsets_note: The three challenges are parallel tasks of one release, and each bonus variant changes
+  an input or the candidate set and is reported in its own table, so all six are subsets (04 S4).
+
+lineage:
+  role: root
+
+history:
+  - event: channel-moved
+    field: execution.submission_channel
+    from: The Papers With Code leaderboard (the paper's plan)
+    to: Pull requests to the results tables in pluskal-lab/MassSpecGym, shown on
+      massspecgym.onrender.com
+    source: src-github-massspecgym-readme
+    quote: To submit new results from your paper, please open a pull request that updates the
+      results tables in the `results` folder.
+    note: Undated in the sources. The paper (v3, 2025-02-14) still says entrants "submit their
+      results to the Papers With Code leaderboard" (src-arxiv-2410-23326-v3). The site that
+      displayed the tables was suspended by 2026-11-04 (curation.unreachable), while the
+      pull-request route stays open.
+
+tags:
+  - mass-spectrometry
+  - ms-ms
+  - metabolomics
+  - structure-elucidation
+  - molecule-retrieval
+  - spectrum-simulation
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2410-23326-v3
+    - src-arxiv-2410-23326
+    - src-github-massspecgym-readme
+    - src-github-massspecgym-de-novo-bonus-csv
+    - src-github-massspecgym-simulation-bonus-csv
+    - src-hf-api-massspecgym
+    - src-hf-massspecgym-card
+    - src-arxiv-2606-19624-v2
+    - src-arxiv-2606-19624
+    - src-arxiv-2502-09571-v2
+  sources_note: >
+    The papers' PDFs and abstract pages carry DOIs and are not archived; the README, the two results
+    tables (pinned to commit f259fe3), the Hugging Face API record and the dataset card (pinned to sha
+    018a954) are pending archive. The other four results tables (de_novo.csv, retrieval.csv,
+    retrieval_bonus.csv, simulation.csv) were read at the same commit but are not Sources; nothing
+    below quotes them. The datasheet's contact addresses and the dataset account's handle are kept out
+    of the extracts.
+  confidence: medium
+  review_checks:
+    - check: CASMI against MassSpecGym, for the two entries' boundary. CASMI (the Critical
+        Assessment of Small Molecule Identification) is a periodic blind contest, run six times
+        since 2012, with a few hundred challenge spectra per edition and preprocessing that takes
+        mass-spectrometry expertise; it is an edition series. MassSpecGym is a fixed,
+        machine-learning-ready release with a public test fold of 17,556 spectra, a
+        structure-distance split and three tasks, scored continuously by anyone. MassSpecGym grew
+        out of a Dagstuhl seminar, not out of CASMI, and neither is a version, variant or fork of
+        the other, so no lineage link is recorded; correlates_with may suit if the CASMI entry finds
+        shared methods.
+      field: lineage
+      source: src-arxiv-2410-23326-v3
+      quote: However, the CASMI challenge is held only once every two years at best, limiting
+        opportunities for continuous evaluation and benchmarking.
+    - check: lifecycle active against under-revision. v1.5 is released (audit v1 of 2026-06-17,
+        dataset card updated 2026-10-26), but the commit that brought it to GitHub is titled
+        "MassSpecGym v1.5 (part 1/2)" (2026-05-08, GitHub's commit list; not a quoted Source), the
+        README does not mention v1.5, and the results tables lack the audit's corrected rows. If a
+        part 2 is announced, the term would be under-revision and v1.5's frozen false would stand.
+      field: lifecycle
+    - check: versions. v1.5 is modelled as a revision of the same items by the same maintainers
+        (Pluskal is one of the audit's corresponding authors, and the files are in the same
+        repositories), not as a fork by the Coley group or Enveda, who co-author the audit. breaking
+        true rests on retrieval results that exploited the v1.0 canonicalisation collapsing under
+        v1.5; the audit says honest de novo rankings barely move.
+      field: versions
+      source: src-arxiv-2606-19624-v2
+      quote: MassSpecGym v1.5 as a benchmark revision.
+    - check: contamination_risk medium. The audit evidences leakage through entrants' pretraining
+        sets, simulators and formula annotators, and finds evaluation issues in at least 18 of 26
+        papers. The vocabulary keeps a route evidenced for particular entrants on their claims, but
+        when most entrants take it, high may be the better reading.
+      field: data.contamination_risk
+      source: src-arxiv-2606-19624-v2
+      quote: We find evaluation issues in at least 18 of 26 papers reporting MassSpecGym benchmark
+        results in the first year of its adoption.
+    - check: The audit's abstract page says 17 of 26 papers; its v2 PDF says 18. The entry quotes
+        the PDF.
+      field: description
+      source: src-arxiv-2606-19624
+      quote: We find evaluation issues in at least 17 of 26 papers reporting MassSpecGym benchmark
+        results in the first year of its adoption.
+    - check: activity accepting-submissions while the leaderboard site answers 503 and the results
+        tables' newest third-party row is dated 2025-09-16. Whether the pull-request route is still
+        being acted on was not checked (open pull requests were not read).
+      field: activity
+    - check: Metric divergence makes table rows incomparable as listed. de_novo_bonus.csv gives
+        DiffMS a top-1 MCES of 18.45, from DiffMS's paper; the audit recomputes it with the pinned
+        myopic MCES threshold of 15 and reports 13.96. Whether the tables should be read as v1.0
+        results under the paper's metric code, and whether to record the audit's corrected rows as
+        the claims of record.
+      field: execution.harness_gotcha
+      source: src-arxiv-2606-19624-v2
+      quote: to correctly use a myopic threshold of 15 instead of 100
+    - check: evaluation_method and profile. exact-match for top-k accuracy and hit rate at k (a
+        per-item verdict on the 2D InChIKey), domain-metric for MCES and Tanimoto, statistical-fit
+        for spectral cosine and Jensen-Shannon similarity. Spectral cosine is the standard
+        similarity in mass spectrometry and could be read as domain-metric. The exact-match pair
+        resolves llm-static-text, whose five prompt fields are waived, as for uspto-50k.
+      field: evaluation_method
+      specialist: true
+    - check: capability. perception is rejected because the input is a processed peak list and the
+        claim is a chemical inference; hypothesis-generation because the k de novo guesses hedge one
+        determinate answer. A mass spectrometrist may read the spectrum as a raw signal.
+      field: capability
+      specialist: true
+    - check: training_data_eligibility_tiers left empty. The board does not split entrants by what
+        they may train on. The audit's tables mark methods that use data beyond MassSpecGym's
+        spectrum and molecule pairs, and v1.5 offers official filtered pretraining sets, but neither
+        is a rule that groups the ranking; if the maintainers make one, the tiers belong here and
+        the eligibility-gated profile would make them material.
+      field: training_data_eligibility_tiers
+      source: src-arxiv-2606-19624-v2
+      quote: The auxiliary data column marks methods that rely on data beyond the MassSpecGym
+        spectrum–molecule pairs.
+    - check: maintainer-competes-on-own-benchmark rests on the DeepSets + Fourier features baseline,
+        built on the maintainers' DreaMS work, and on the v1.5 audit re-ranking the Coley group's
+        models with the Coley group as co-authors; none is a model built to top the board.
+      field: governance.independence_flags
+  unreachable:
+    - url: https://massspecgym.onrender.com/
+      http_status: 503
+      consequence: The leaderboard site was not read; its body said "This service has been
+        suspended", Wayback holds no capture, and the board is read from the repository's results
+        tables that fed it.
+  personal_data_excluded:
+    - source: src-arxiv-2410-23326-v3
+      what: The datasheet's contact e-mail addresses, kept out of the extract's windows.
+    - source: src-arxiv-2606-19624-v2
+      what: The correspondence line with the corresponding authors' e-mail addresses.
+    - source: src-hf-api-massspecgym
+      what: The dataset account's personal handle, kept out of the extract's windows.
