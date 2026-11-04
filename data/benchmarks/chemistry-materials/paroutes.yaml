@@ -1,0 +1,640 @@
+# data/benchmarks/chemistry-materials/paroutes.yaml
+#
+# P1-S6-T02, chemistry-materials entry 16. Filled from the paper, Genheden and Bjerrum, "PaRoutes: towards a
+# framework for benchmarking retrosynthesis route predictions" (Digital Discovery 1, 527-539, 2022; DOI
+# 10.1039/D2DD00015F), read as the version of record's PDF through the Wayback Machine's raw capture of
+# 2025-08-01, because pubs.rsc.org and ChemRxiv both answered with a Cloudflare challenge; the repository's
+# README, data/README.md, data/download_data.py and analysis/route_quality.py at commit bc5e695 (the head of
+# main, 2024-08-05), and the diff of that commit; Zenodo's JSON records of the two data deposits, 6275421
+# (1.0.0, 2022-02-25) and 7341155 (2.0, 2022-11-22); and two later papers that report on PaRoutes,
+# DirectMultiStep (arXiv 2405.13983, v3 PDF and abstract page, March 2025) and Rachel (arXiv 2609.25118, v1 PDF
+# and abstract page, September 2026). The ChemRxiv preprint (10.26434/chemrxiv-2022-wk8c3) and the paper's ESI
+# were not read. GitHub's API (commit list, licence, tags) was read for dates and is not a Source. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The neighbour is USPTO-50k (chemistry-materials/uspto-50k.yaml), and the two differ in what is scored.
+# USPTO-50k scores one disconnection: given a product, are the recorded reactants among a model's first k
+# candidates. PaRoutes scores a whole route: given a target and a fixed stock, a planner (a search algorithm
+# over a one-step model) builds trees of reactions down to stock molecules, and the harness asks whether the
+# patent's whole route tree is among the top-ranked routes. A one-step model is a component of a PaRoutes
+# entrant, and PaRoutes ships its own USPTO training subset with the reference-route reactions removed, which
+# USPTO-50k does not. Both draw on Lowe's USPTO extraction; PaRoutes starts from Thakkar et al.'s subset, not
+# from Schneider et al.'s 50k.
+#
+# Versions: the two route sets of the paper (1.0, Zenodo 6275421) and the 2.0 sets (Zenodo 7341155) are both
+# called n1 and n5 but hold mostly different targets (counted below), so 2.0 is an edition, not a revision.
+# n1 and n5 are parallel sets of one release, so they are subsets.
+
+id: paroutes
+name: PaRoutes
+tagline: Multi-step retrosynthesis on two sets of 10,000 patent routes, scored by recovery of the
+  patent's route in the top n.
+description: >
+  A framework for benchmarking multi-step retrosynthesis (route prediction) from AstraZeneca's
+  Molecular AI group. Routes were extracted from reaction networks within US patents (a curated
+  USPTO subset), and two sets of 10,000 diverse, non-overlapping routes were selected: set-n1 (one
+  route per patent before the overlap check, shaped like the full pool) and set-n5 (five per patent,
+  longer and richer in convergent routes). Each set comes with its target molecules, a stock made of
+  all the reference routes' leaves (the stop criterion for the search), and a USPTO subset with the
+  reference reactions removed for training one-step models. A planner returns routes as trees of
+  molecules and reactions; the harness ranks them with a fixed route score, computes the tree edit
+  distance to the patent's route, and reports top-1, top-5 and top-10 accuracy (a distance of zero
+  within the first n ranks), the number of solved targets, and route diversity as the number of
+  clusters an LSTM distance model forms. No aggregate is published. Version 2.0 (November 2022)
+  re-extracted the routes and stocks from a re-processed USPTO set and keeps the set names; the
+  maintainers' 2.0 results table was corrected in August 2024.
+self_description:
+  source: src-rsc-d2dd00015f-pdf
+  quote: We introduce a framework for benchmarking multi-step retrosynthesis methods, i.e. route
+    predictions, called PaRoutes.
+paper:
+  title: 'PaRoutes: towards a framework for benchmarking retrosynthesis route predictions'
+  doi: 10.1039/D2DD00015F
+  source: src-rsc-d2dd00015f-pdf
+released: 2022-02-25
+released_note: The 1.0.0 data deposit on Zenodo, a day after the repository's first published commit
+  (2022-02-24, GitHub's commit list) and on the day the paper was received; the paper appeared on
+  2022-07-12.
+released_source: src-zenodo-6275421
+released_quote: '"publication_date": "2022-02-25"'
+release_venue: Digital Discovery (Royal Society of Chemistry), 2022
+release_venue_source: src-rsc-d2dd00015f-pdf
+release_venue_quote: 'Cite this: Digital Discovery, 2022, 1, 527'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/retrosynthesis
+domain_basis:
+  reason: The leaf is a route from a target back to purchasable starting materials, and that is
+    PaRoutes' item exactly; the stock of each set stands in for the purchasable compounds, and the
+    whole route, not one disconnection, is scored. USPTO-50k sits on the same leaf under ADR-0020's
+    deferral of a single-step leaf; PaRoutes needs no such note.
+  source: src-rsc-d2dd00015f-pdf
+  quote: One particular area of CASP is retrosynthesis analysis in which the aim is to predict the
+    necessary steps to synthesize a compound, i.e. a synthetic route
+domain_considered_and_rejected:
+  - term: chemistry-materials/reaction-prediction
+    reason: That leaf is the forward direction, products from reactants. PaRoutes works backwards
+      from the target, and a forward model appears only in a 2026 paper's post-hoc check of its
+      routes (Rachel), not in the protocol.
+    source: src-rsc-d2dd00015f-pdf
+    quote: The precursors produced by the one-step retrosynthesis can then be further broken down
+      recursively until a set of conditions are met.
+capability:
+  - planning
+  - search-exploration
+capability_basis:
+  planning:
+    reason: A route is a sequence of reactions that reaches a goal state, a tree whose leaves are
+      all in stock, and the score is a property of that sequence as a whole (its distance to the
+      patent's route, and whether its leaves are in stock), which is the term's test. The paper
+      frames the task as building the steps recursively until the stop conditions hold.
+    source: src-rsc-d2dd00015f-pdf
+    quote: The precursors produced by the one-step retrosynthesis can then be further broken down
+      recursively until a set of conditions are met.
+  search-exploration:
+    reason: The paper's metric set rewards how the search covered the space as well as where it
+      ended, with the number of distinct route clusters as the diversity measure, beside search time
+      to convergence and solved targets under a fixed iteration budget.
+    source: src-rsc-d2dd00015f-pdf
+    quote: the optimal number of clusters is viewed as a metric of diversity
+capability_considered_and_rejected:
+  - term: scientific-prediction
+    reason: The reference route is one recorded human choice, not a property of the target molecule;
+      the authors say other routes may be as good and only synthesis could tell, so recovering the
+      patent's route measures planning against a recorded plan, not the prediction of a chemical
+      quantity.
+    source: src-rsc-d2dd00015f-pdf
+    quote: but the only way to determine that is to perform the synthesis in the lab, which is not
+      practically feasible for large numbers of routes.
+  - term: hypothesis-generation
+    reason: The output is a ranked set of candidate routes, but top-n asks only whether the one
+      recorded route is in it, and the cluster count measures the set's spread, not whether its
+      routes are worth making; search-exploration carries the spread.
+    source: src-rsc-d2dd00015f-pdf
+    quote: we therefore limit the search problem to recovering the one route for each target that we
+      have knowledge about.
+  - term: long-horizon-execution
+    reason: Nothing is executed; the route is scored as a plan, and a wrong step costs the route but
+      is not acted on.
+  - term: distribution-shift-generalization
+    reason: Set-n5 is harder than set-n1 (longer, more convergent routes), but the paper presents it
+      as a harder set from the same patents, not as a shifted condition beside a matched one.
+    source: src-rsc-d2dd00015f-pdf
+    quote: Set-n5 consisting of a diverse set of 10 000 routes that are longer and enriched in
+      convergent routes.
+
+evaluation_method:
+  - exact-match
+  - model-derived-metric
+evaluation_method_basis:
+  reason: Top-n accuracy gives each target a verdict, right only if a predicted route has a tree
+    edit distance of zero to the reference route within the first n ranks, and averages them;
+    route_quality.py tests the distance against 1e-6 and takes the mean of best-n equal to 0. The
+    diversity metric is the number of clusters formed from distances that a released LSTM model
+    (chembl_10k_route_distance_model.ckpt, trained on routes for 10,000 ChEMBL compounds) computes
+    in place of TED, so the checkpoint is part of that number.
+  source: src-github-paroutes-route-quality
+  quote: topn = (stats[f"best-{rank}"] == 0).mean()
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: The tree edit distance between routes is specific to synthesis planning, but the
+      accuracy uses only whether it is zero, an identity test on the route tree; its magnitude is
+      not reported. The README's leaves-overlap and route-length columns are diagnostics, not
+      headline metrics.
+    source: src-github-paroutes-route-quality
+    quote: 'if dist < 1e-6:'
+  - term: constraint-check
+    reason: A target counts as solved when a route's leaves are all in stock, but the harness reads
+      that from the in_stock flags the entrant's software writes into its routes, and the paper
+      leaves both the timing and the solved check to that software; nothing in PaRoutes validates
+      the route against a battery.
+    source: src-rsc-d2dd00015f-pdf
+    quote: We consider the calculation of timings and if targets are solved to be part of the
+  - term: composite
+    reason: The metrics are reported side by side and the paper argues against one number.
+    source: src-rsc-d2dd00015f-pdf
+    quote: Relying on a single metric would be vulnerable to adversarial strategies and therefore we
+      will suggest a set of complementary evaluation metrics.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The paper's entrants are search algorithms (MCTS, Retro*, DFPN) driving a template-based
+    one-step model trained on the provided USPTO subset, a model built for a task chemistry defines;
+    the framework is also written for expert systems not derived from data, which use only the
+    targets and stock, and a hand-coded rule system with no learned part is what classical-algorithm
+    takes.
+  source: src-rsc-d2dd00015f-pdf
+  quote: If your one-step model is an expert system not derived from big-data extraction, you should
+    be able to use the provided targets and stock, and not consider the provided reaction datasets.
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: A tree search around a one-step model decides what to expand next, but it is not a
+      harness of tools, memory or retries around a model; the planner is the entrant as a whole,
+      with the search algorithm part of its identity. Rachel (2026), an LLM-driven planner with
+      validation tools, is recorded under observed_subjects.
+  - term: scientific-surrogate-model
+    reason: The entrant does not stand in for a solver or an assay; it proposes routes.
+observed_subjects:
+  values:
+    - domain-specialist-model
+    - agent-scaffold
+  basis: DirectMultiStep (2025) runs transformers trained on the 2.0 route pool, which generate
+    whole routes with no search, on the full n1 and n5 sets. Rachel (2026) puts GPT-5.5 inside a
+    planning loop that checks each proposed step and revises the plan, and is scored on 120 PaRoutes
+    targets by strict closure rather than top-n.
+  source: src-arxiv-2609-25118-v1
+as_used:
+  - protocol: Top-k accuracy (k = 1 to 5 and 10) and solved targets on the 2.0 n1 and n5 sets, with
+      each set's leaves as stock; some models are also given the route length or the starting
+      materials as input.
+    split: n1 and n5 test sets, 10,000 routes each, version 2.0
+    source: src-arxiv-2405-13983-v3
+    quote: These data are collected from the 2.0 version of PaRoutes in their GitHub repository
+      [44].
+    note: The paper (v3, March 2025) sets its models beside the README's 2.0 baselines as they read
+      before the 2024-08-05 correction (MCTS top-1 0.17 on n1, later 0.2372;
+      src-github-paroutes-commit-bc5e695-diff), so its 1.9x top-1 gain on n1 is against the
+      superseded figure; against the corrected one it is about 1.35x (0.32 / 0.2372, computed here).
+      Its search-performance table quotes the 1.0 paper's solved counts and timings beside 2.0 runs.
+  - protocol: PaRoutes120, 120 targets taken from the PaRoutes sets (51 from n1, 69 from n5), scored
+      by strict closure (a complete route whose every terminal precursor is independently resolved
+      to a source), not by recovery of the reference route.
+    split: 120 targets
+    source: src-arxiv-2609-25118-v1
+    quote: PaRoutes120 comprised 120 targets from the PaRoutes dataset
+    note: Rachel (v1, September 2026) compares an LLM-directed planner with direct GPT-5.5
+      prompting, AOT*, SyntheLite and single-step models under Retro* or MCTS; the PaRoutes
+      reference routes appear only as a comparison row in its forward-model check. The paper read
+      does not say which PaRoutes version or how the 120 were chosen.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results on the n1 and n5 sets with the PaRoutes protocol appear in DirectMultiStep (v3,
+    March 2025; J. Chem. Inf. Model.), and an LLM-directed planner is evaluated on 120 PaRoutes
+    targets in Rachel (September 2026). The repository's last commit (2024-08-05, a README results
+    correction) is maintenance evidence, not lifecycle.
+  source: src-arxiv-2405-13983-v3
+  quote: Our DMS Explorer XL model, which requires only target compounds as input, outperforms
+    state-of-the-art methods on the PaRoutes dataset with 1.9x and 3.1x improvements in Top-1
+    accuracy on the n1 and n5 test sets, respectively.
+activity: no-submission-channel
+activity_basis:
+  reason: The repository holds the data scripts, the scoring scripts and the maintainers' own two
+    results tables, with no leaderboard or submission route; others report in their own papers.
+  source: src-github-paroutes-readme
+  quote: '### Results with the 2.0 version'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: AiZynthFinder MCTS with a template-based one-step model (the maintainers' baseline)
+    source: src-rsc-d2dd00015f-pdf
+    observed_on: 2026-11-04
+    quote: Using MCTS on the set-n1, we arrive at a top-1 accuracy of 0.20
+  - system: DMS Explorer XL (DirectMultiStep)
+    source: src-arxiv-2405-13983-v3
+    observed_on: 2026-11-04
+    quote: Our DMS Explorer XL model, which requires only target compounds as input, outperforms
+      state-of-the-art methods on the PaRoutes dataset with 1.9x and 3.1x improvements in Top-1
+      accuracy on the n1 and n5 test sets, respectively.
+  - system: Rachel with GPT-5.5
+    source: src-arxiv-2609-25118
+    observed_on: 2026-11-04
+    quote: Without supplied reference routes or route-level solutions, GPT-5.5 achieved strict
+      closure for 111 of 120 PaRoutes120 targets
+    note: On the 120-target subset and its strict-closure measure, not on top-n (as_used).
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The route each patent records for the target, extracted from the patent's
+  reaction network; the reference routes (n1-routes.json, n5-routes.json) are public and are what
+  route_quality.py reads, so nothing is withheld from entrants.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Targets, stocks, reference routes, the training subset and the scoring scripts are public,
+    and the README gives the commands that score a route file.
+  source: src-github-paroutes-readme
+  quote: It will print out how many of the targets were solved and the top-1, top-5 and top-10
+    accuracies (by default).
+
+task:
+  exists: true
+  input:
+    - a target molecule as a SMILES string (n1-targets.txt or n5-targets.txt)
+    - the set's stock molecules as SMILES (n1-stock.txt or n5-stock.txt), the stop criterion for the
+      search
+    - optionally, the curated USPTO subset without the reference reactions, for training a one-step
+      model
+  output: Routes for each target as JSON trees of molecule nodes (SMILES, an optional in_stock flag)
+    and featureless reaction nodes.
+  scoring: The harness ranks each target's routes with a fixed route score (leaf cost 1 in stock and
+    10 out of it, reaction cost 1), so several routes can share a rank, then computes the tree edit
+    distance of each to the reference route. Top-n accuracy is the share of targets with a route at
+    distance zero among the first n ranks (n = 1, 5, 10). Solved targets counts targets with a route
+    whose leaves are all in stock; diversity is the median number of route clusters.
+  tests_hidden_from_system: false
+  source: src-rsc-d2dd00015f-pdf
+  quote: By doing this over all the 10 000 targets in the reference set one can compute top-n
+    accuracies, just as is standard when comparing one-step retrosynthesis methods.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Both data deposits are open Zenodo records under CC BY 4.0, and download_data.py fetches
+      either set without an account.
+    source: src-zenodo-7341155
+    quote: PaRoutes 2.0 reference routes and stocks.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Two releases, 1.0 (February 2022) and 2.0 (November 2022), each a separate Zenodo
+      deposit; the download script keeps both and fetches 2.0 by default. Nothing has been released
+      since.
+    source: src-github-paroutes-download-data
+    quote: version = sys.argv[1] if len(sys.argv) > 1 else "V2"
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: Reactions text-mined from US patents (Lowe's extraction), taken from Thakkar
+    et al.'s atom-mapped subset with templates; reactions whose template occurs fewer than four
+    times were dropped, three examples per template were held back for training, and routes were
+    extracted from each patent's reaction network with Mo et al.'s script, then filtered for
+    overlap, depth and diversity.
+  data_provenance_source: src-rsc-d2dd00015f-pdf
+  data_provenance_quote: To extract routes, we started from the subset of the USPTO dataset prepared
+    by Thakkar et al.
+  contamination_risk: high
+  contamination_risk_note: The reference routes' reactions are USPTO reactions, the corpus nearly
+    every one-step model is trained on, and the maintainers say their own earlier full-USPTO model
+    and many published one-step models saw them. PaRoutes ships a training subset without them, so
+    the risk lies in each entrant's training choice (training_data_policy). The routes have also
+    been public since 2022.
+  contamination_risk_source: src-rsc-d2dd00015f-pdf
+  contamination_risk_quote: Because many of the existing one-step models were trained on reactions
+    included in the reference route, we acknowledge that many of those models need to be re-trained
+    to fully exploit PaRoutes.
+  contamination_evidence:
+    - source: src-rsc-d2dd00015f-pdf
+      stance: supports
+      quote: but this model was trained on reactions found in the reference routes, making it
+        biased.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Top-n accuracy is bounded at 1.0, and no source measures an attainable
+    ceiling. Each target has one reference route and an equally good alternative counts as a miss;
+    in the paper about 45% of targets got a shorter top-1 route than the reference, and the top-1
+    leaves matched the reference's exactly for about a third, so the attainable score sits below the
+    bound by an unmeasured amount.
+  ceiling_anchor_type_source: src-rsc-d2dd00015f-pdf
+  ceiling_anchor_type_quote: but the only way to determine that is to perform the synthesis in the
+    lab, which is not practically feasible for large numbers of routes.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: Both Zenodo records, 1.0.0 (6275421) and 2.0 (7341155), state cc-by-4.0.
+    DirectMultiStep says the 2.0 route data is under Apache 2.0, which is the repository's code
+    licence. The licence of the upstream USPTO extraction was not read.
+  dataset_licence_source: src-zenodo-7341155
+  dataset_licence_quote: '"license": {"id": "cc-by-4.0"}'
+  size:
+    - count: 20000
+      unit: reference routes with their target molecules, 10,000 in each of set-n1 and set-n5
+      source: src-github-paroutes-readme
+      quote: Two sets of 10,000 routes
+    - count: 13633
+      unit: stock molecules (the leaves of the set-n1 routes)
+      subset: set-n1, version 1.0
+      source: src-rsc-d2dd00015f-pdf
+      quote: Stock-n1 consisting of the 13 633 leaves molecules in set-n1 and should be used as a
+        stock together with set-n1.
+    - count: 13783
+      unit: stock molecules (the leaves of the set-n5 routes)
+      subset: set-n5, version 1.0
+      source: src-rsc-d2dd00015f-pdf
+      quote: Stock-n5 consisting of the 13 783 leaves molecules in set-n5 and should be used as a
+        stock together with set-n5.
+    - count: 450000
+      unit: routes extracted from USPTO in the 2.0 pool (approximate), the set the reference routes
+        were drawn from
+      subset: version 2.0
+      source: src-github-paroutes-data-readme
+      quote: '`all_routes.json.gz` - all ~450k routes extracted from the USPTO dataset'
+  size_note: Lines counted in the Zenodo files on 2026-11-04 (not a quoted Source) give 10,000
+    targets in each set of both versions; stocks of 13,647 (n1) and 13,798 (n5) molecules in 1.0, a
+    few more than the paper's figures, and 13,432 and 13,328 in 2.0. The 1.0 pool held about 150,000
+    routes.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: AstraZeneca (Molecular AI, Discovery Sciences, R&D)
+  maintainer_basis:
+    reason: The repository is in the MolecularAI GitHub organisation, the paper's authors are in
+      AstraZeneca's Molecular AI group, and the 2.0 deposit's creator is affiliated with AstraZeneca
+      R&D. The repository was last changed on 2024-08-05.
+    source: src-zenodo-7341155
+    quote: '"affiliation": "AstraZeneca R&D"'
+  maintainer_type: industry-lab
+  submission_process:
+    - literature-only
+  submission_process_note: The README lists only the maintainers' own MCTS, Retro* and DFPN runs,
+    for 1.0 and 2.0, and keeps no ranking of others; the paper invites developers to run PaRoutes on
+    their own algorithms, and results appear in their papers.
+  submission_process_source: src-rsc-d2dd00015f-pdf
+  submission_process_quote: We will continue to update and expand the application of PaRoutes, and
+    we also encourage practitioners and developers to adapt PaRoutes to their algorithms
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-rsc-d2dd00015f-pdf
+      quote: As an illustration of the framework, we compare three template-based methods
+        implemented in the AiZynthFinder software
+  independence_flags_note: The benchmark was released with results for the maintainers' own
+    software, AiZynthFinder (AstraZeneca's open-source planner), and its baselines in the README are
+    AiZynthFinder runs; the paper presents them as an illustration, and no ranking of other systems
+    is kept.
+  independence_assessed: true
+  known_limitation:
+    source: src-rsc-d2dd00015f-pdf
+    quote: We focus PaRoutes on a narrow search problem
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Not set. Scoring is light, but a run is a search per target; the paper's
+    searches averaged about 300 s of single-CPU wall time per target with no GPU, of the order of
+    800 CPU-hours for one set of 10,000 targets, which is more than trivial-cpu's no meaningful cost
+    and needs no accelerator. A template-free one-step model would need a GPU.
+  compute_tier_source: src-rsc-d2dd00015f-pdf
+  compute_tier_quote: The average search time is 303, 301, 347 s for MCTS, Retro* and, DFPN,
+    respectively.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The targets, stocks and reference routes are public and the scoring scripts run on a
+      route file with no human or maintainer-only step.
+    source: src-github-paroutes-readme
+    quote: It will print out how many of the targets were solved and the top-1, top-5 and top-10
+      accuracies (by default).
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: analysis/route_quality.py (top-n, solved targets) and analysis/route_clusters.py (route
+    clusters), in the PaRoutes repository, on the route-distances package
+  harness_source: src-github-paroutes-readme
+  harness_quote: It will print out how many of the targets were solved and the top-1, top-5 and
+    top-10 accuracies (by default).
+  harness_gotcha:
+    source: src-rsc-d2dd00015f-pdf
+    quote: Therefore, we can have more than one route prediction at the same rank.
+  harness_gotcha_note: The harness does not use the entrant's order. It re-ranks the submitted
+    routes with its own route score (route_scorer), with fixed costs, and ties share a rank, so
+    "top-1" can hold several routes and two planners' rankings are not what is compared.
+  code_licence: Apache-2.0
+  code_licence_source: src-github-paroutes-readme
+  code_licence_quote: The software is licensed under the Apache 2.0 license (see LICENSE file), and
+    is free and provided as-is.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The facets resolve (exact-match, domain-specialist-model) to llm-static-text, whose shots,
+  # chain_of_thought, reasoning_effort, tools_allowed and retries_allowed mean nothing for a planner; the other
+  # pairs (model-derived-metric with either subject, exact-match with classical-algorithm) are unlisted and
+  # fall back to subset_used. Beyond those, four things change a PaRoutes number:
+  #   - n, since top-1 and top-10 differ by a factor of two or more (k);
+  #   - what the one-step model was trained on: the provided subset without the reference reactions, or a
+  #     corpus that holds them, which the paper calls biased (training_data_policy). PaRoutes does not run
+  #     tiers by training data, so there are no training_data_eligibility_tiers; it only advises;
+  #   - the search budget, 500 iterations for MCTS and Retro* and 750 for DFPN in the paper (max_steps is the
+  #     nearest field);
+  #   - extra inputs some entrants take, the route length or the starting materials (DirectMultiStep), which
+  #     are reported as separate rows on the same targets (eligibility_track).
+  # The version and the set go in subset_used: 1.0 and 2.0 n1 are different targets under one name. The search
+  # algorithm and the one-step model are both parts of the entrant's identity, not conditions.
+  material_extra:
+    - k
+    - training_data_policy
+    - max_steps
+    - eligibility_track
+
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The paper proposes a set of complementary metrics and no single figure, and the README
+    reports them side by side.
+  source: src-rsc-d2dd00015f-pdf
+  quote: Relying on a single metric would be vulnerable to adversarial strategies and therefore we
+    will suggest a set of complementary evaluation metrics.
+headline_metric: null
+
+homepage: https://github.com/MolecularAI/PaRoutes
+repository: https://github.com/MolecularAI/PaRoutes
+dataset_url: https://doi.org/10.5281/zenodo.7341155
+
+versions:
+  - version: '1.0'
+    label: PaRoutes 1.0, the paper's route sets
+    version_kind: edition
+    released: 2022-02-25
+    items: 20000
+    changes: Set-n1 and set-n5, 10,000 routes each, selected from about 150,000 routes extracted
+      from a curated USPTO subset, with stocks of the routes' leaves and per-set training subsets
+      and one-step models. The paper's results (Tables 1 and 2) are on this version. Zenodo record
+      6275421 (version 1.0.0); the repository's v1.0.0 tag is dated 2022-11-22 (GitHub API).
+    breaking: true
+    superseded_by: '2.0'
+    frozen: true
+    sources:
+      - src-zenodo-6275421
+      - src-rsc-d2dd00015f-pdf
+      - src-github-paroutes-download-data
+  - version: '2.0'
+    label: PaRoutes 2.0
+    version_kind: edition
+    released: 2022-11-22
+    items: 20000
+    changes: New reference routes and stocks under the same set names, extracted from a re-processed
+      USPTO set (about 450,000 routes), with one training subset and one-step model for both sets in
+      place of one per set. Only 1,398 of the 10,000 n1 targets and 1,641 of the n5 targets are the
+      same as in 1.0 (SMILES compared line by line in the Zenodo files, 2026-11-04; not a quoted
+      Source), so 1.0 and 2.0 scores are not comparable. The default download since the release.
+    breaking: true
+    supersedes_version: '1.0'
+    errata:
+      - date: 2024-08-05
+        scope: The maintainers' 2.0 results table in the README
+        description: Every top-n and solved-target figure for MCTS, Retro* and DFPN on 2.0 was
+          replaced, for example MCTS on n1 from top-1 0.17 and 9,691 solved to 0.2372 and 9,716;
+          route and cluster counts were unchanged. No reason is given beyond the commit message,
+          "Correct version 2.0 results". Papers that quote the earlier figures compare against
+          superseded baselines (as_used).
+        source: src-github-paroutes-commit-bc5e695-diff
+    frozen: true
+    sources:
+      - src-zenodo-7341155
+      - src-github-paroutes-data-readme
+      - src-github-paroutes-download-data
+      - src-github-paroutes-readme
+
+subsets:
+  - id: paroutes#n1
+    label: Set-n1 (one route per patent before the overlap check)
+    items: 10000
+    scored_separately: true
+    evidence:
+      - source: src-rsc-d2dd00015f-pdf
+        quote: Set-n1 consisting of a diverse set of 10 000 routes which show a similar distribution
+          in the number of molecules and reactions as the 150 K routes.
+    notes: Used with its own stock (n1-stock.txt). 3.0% of its 1.0 routes are convergent. In 2.0,
+      2,146 targets appear in both n1 and n5 (counted in the Zenodo files, not a quoted Source).
+  - id: paroutes#n5
+    label: Set-n5 (five routes per patent before the overlap check)
+    items: 10000
+    scored_separately: true
+    evidence:
+      - source: src-rsc-d2dd00015f-pdf
+        quote: Set-n5 consisting of a diverse set of 10 000 routes that are longer and enriched in
+          convergent routes.
+      - source: src-rsc-d2dd00015f-pdf
+        quote: There is a 48% overlap of the set-n1 and set-n5 stocks
+    notes: Used with its own stock (n5-stock.txt). 6.9% of its 1.0 routes are convergent, and every
+      method in the paper scores lower on it than on n1.
+
+lineage:
+  role: root
+
+tags:
+  - retrosynthesis
+  - multi-step-retrosynthesis
+  - synthesis-planning
+  - patents
+  - top-k-accuracy
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-rsc-d2dd00015f-pdf
+    - src-github-paroutes-readme
+    - src-github-paroutes-data-readme
+    - src-github-paroutes-download-data
+    - src-github-paroutes-route-quality
+    - src-github-paroutes-commit-bc5e695-diff
+    - src-zenodo-6275421
+    - src-zenodo-7341155
+    - src-arxiv-2405-13983-v3
+    - src-arxiv-2405-13983
+    - src-arxiv-2609-25118-v1
+    - src-arxiv-2609-25118
+  sources_note: >
+    The paper's version of record (a DOI, not archived) read through its Wayback capture because the publisher
+    and ChemRxiv refused this project's fetcher; four repository files and one commit diff at bc5e695
+    (pending archive); the two Zenodo JSON records (DOIs); and two later papers' PDFs and abstract pages
+    (DOIs) as evidence of current use. GitHub's API was read for commit dates, tags and the licence, and
+    the Zenodo target and stock files were downloaded and compared line by line; neither is a Source.
+  confidence: medium
+  review_checks:
+    - check: 2.0 is modelled as an edition (new items on the same task) because only about 14% of
+        its targets are 1.0's, but the counting is this curator's (line comparison of the Zenodo
+        files), not a quoted statement, and both releases fall in 2022 rather than in a new year.
+        The maintainers call 2.0 a version; if a reviewer reads a re-extraction by the same
+        maintainer as a revision, the version_kind changes but breaking stays true.
+      field: versions
+      source: src-zenodo-7341155
+      quote: PaRoutes 2.0 reference routes and stocks.
+    - check: The 2024-08-05 correction of the README's 2.0 table is recorded as an erratum on 2.0,
+        but it changes the maintainers' baselines, not the items. DirectMultiStep (2025) compares
+        against the pre-correction figures. A reviewer should check whether an erratum, a history
+        event or a ResultClaim correction is the right home.
+      field: versions
+      source: src-arxiv-2405-13983-v3
+      quote: 'Table 3: Top-K accuracy on route test set-n1 (10 000 routes). Top-1 0.17 0.15 0.11'
+    - check: exact-match was kept although the comparison is a tree edit distance of zero, which
+        goes beyond the term's whitespace-or-case normalisation (as with USPTO-50k's InChI
+        comparison); domain-metric is the other reading, if TED is taken as the metric rather than
+        the identity test on it.
+      field: evaluation_method
+      source: src-github-paroutes-route-quality
+      quote: 'if dist < 1e-6:'
+    - check: The facets resolve to llm-static-text (exact-match with domain-specialist-model) and
+        fallback, as for USPTO-50k; no profile fits a planner whose search budget, one-step training
+        data and extra inputs are the material conditions. max_steps (for the iteration budget) and
+        eligibility_track (for extra inputs) are stretches of those fields.
+      field: comparability
+    - check: capability is planning and search-exploration; hypothesis-generation was rejected
+        although the cluster count scores the set of candidate routes. A reviewer may weigh it
+        against search-exploration.
+      field: capability
+      source: src-rsc-d2dd00015f-pdf
+      quote: the optimal number of clusters is viewed as a metric of diversity
+    - check: designed_for_subjects keeps classical-algorithm on the paper's invitation to expert
+        systems; all of the paper's own entrants carry a learned one-step model. agent-scaffold was
+        rejected for tree search, and Rachel's LLM planner is under observed_subjects only.
+      field: designed_for_subjects
+      source: src-rsc-d2dd00015f-pdf
+      quote: If your one-step model is an expert system not derived from big-data extraction, you
+        should be able to use the provided targets and stock, and not consider the provided reaction
+        datasets.
+    - check: contamination_risk high follows USPTO-50k. It could be medium, since PaRoutes ships a
+        training subset without the reference reactions and the risk is each entrant's training
+        choice (training_data_policy).
+      field: data.contamination_risk
+    - check: The paper's stock sizes (13,633 and 13,783) differ from the 1.0 Zenodo files' line
+        counts (13,647 and 13,798), and the 2.0 stocks (13,432 and 13,328) are quoted by no source.
+        The 2.0 sizes and the ~450k pool come from the data README and file counts only.
+      field: data.size
+    - check: dataset_licence is CC-BY-4.0 from both Zenodo records; DirectMultiStep describes the
+        2.0 route data as Apache 2.0, the repository's code licence. The upstream USPTO extraction's
+        licence was not read.
+      field: data.dataset_licence
+      source: src-arxiv-2405-13983-v3
+      quote: The reaction route dataset is from the 2.0 version of PaRoutes in their GitHub
+        repository [44], available under the Apache License 2.0.
+    - check: The paper was read through a Wayback capture of the publisher's PDF, which drops the
+        fi, fl and ft ligatures in its text layer; the ChemRxiv preprint and the ESI (pseudo-code,
+        the cross-comparison tables) were not read. Rachel's PaRoutes120 does not state which
+        PaRoutes version its targets come from.
+      field: curation.sources
