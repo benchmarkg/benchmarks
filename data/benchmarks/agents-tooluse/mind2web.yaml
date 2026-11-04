@@ -1,0 +1,587 @@
+# data/benchmarks/agents-tooluse/mind2web.yaml
+#
+# P1-S9-T02, agents-tooluse entry 17. Filled from the Mind2Web paper, arXiv 2306.06070 read as its v3 PDF
+# (2023-12-09, NeurIPS 2023 Datasets and Benchmarks, with the supplementary material), and its abstract page; the
+# repository README at commit 33bd95c (2025-11-05); Hugging Face's API records of the osunlp/Mind2Web and
+# osunlp/Multimodal-Mind2Web datasets and the Multimodal-Mind2Web card; the Online-Mind2Web paper (arXiv
+# 2504.01382, v4 PDF) for how it and Mind2Web-Live were built from Mind2Web; the Mind2Web 2 abstract page (arXiv
+# 2506.21506); and the v1 PDF of Why Generate a Click? (arXiv 2610.20107, October 2026), a paper that reports
+# step success on the Multimodal-Mind2Web test splits. The project page repeats the README and the abstract and
+# is not cited. Every quote below is checked by the quote-substring validator against those Sources' extracts.
+
+id: mind2web
+name: Mind2Web
+tagline: 2,350 crowdsourced web tasks on 137 real sites, scored step by step offline on held-out
+  tasks, sites and domains.
+description: >
+  A dataset for developing and evaluating generalist web agents: 2,350 open-ended tasks on 137 real-world
+  websites across 31 domains, proposed and demonstrated by Amazon Mechanical Turk workers in a Playwright-based
+  annotation tool and verified by the authors. Each task is a high-level description, the demonstrated
+  sequence of actions, each a target element and an operation (click, type or select option, with a value
+  where needed), and snapshots of every page: HTML and DOM snapshots, screenshots, network traffic and
+  the trace. Evaluation is offline on the cached pages. At each step the system receives the task, the
+  current page and the reference history of earlier actions, and predicts the next action; element accuracy,
+  operation F1 and step success rate are averaged within each task and then over tasks, and a task succeeds
+  only if every step does. The 1,009 training tasks are public; the three test splits, Cross-Task (252),
+  Cross-Website (177, unseen websites) and Cross-Domain (912, the unseen Information and Service domains),
+  come in a password-protected zip. The paper's MindAct pairs a fine-tuned DeBERTa ranker that shortlists
+  candidate elements with a language model that picks among them as multiple choice. There is no leaderboard;
+  results appear in papers. Multimodal-Mind2Web, which pairs each page with its screenshot on human-verified
+  test tasks, Online-Mind2Web (300 tasks on live websites) and Mind2Web 2 (agentic search) come from the
+  same group and are separate benchmarks, as is Mind2Web-Live from another group.
+self_description:
+  source: src-arxiv-2306-06070-v3
+  quote: With over 2,000 open-ended tasks collected from 137 websites spanning 31 domains
+external_ids:
+  arxiv: '2306.06070'
+paper:
+  title: 'Mind2Web: Towards a Generalist Agent for the Web'
+  arxiv: '2306.06070'
+  version_read: v3
+  source: src-arxiv-2306-06070-v3
+released: 2023-06-09
+released_note: The paper's first arXiv version, as the abstract page dates it; the Hugging Face
+  dataset was created the next day (2023-06-10, API record).
+released_source: src-arxiv-2306-06070
+released_quote: Submitted on 9 Jun 2023 (v1), last revised 9 Dec 2023 (this version, v3)
+release_venue: NeurIPS 2023 (Datasets and Benchmarks track)
+release_venue_note: The abstract page's comments line adds "NeurIPS'23 Spotlight".
+release_venue_source: src-arxiv-2306-06070-v3
+release_venue_quote: Following NeurIPS Dataset and Benchmark track guidelines, we have shared the
+  following artifacts
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: agents-tooluse/web-navigation
+  primary_basis:
+    reason: The system completes tasks on real websites by choosing the element and operation for
+      each step on recorded pages, the leaf's "live or recorded web pages"; every task stays in a
+      browser.
+    source: src-arxiv-2306-06070-v3
+    quote: The objective is to accurately predict the subsequent action, which encompasses the
+      target element for interaction and the operation.
+domain_considered_and_rejected:
+  - term: agents-tooluse/computer-use-gui
+    reason: The pages are rendered web sites in a browser, which the term's exclusion assigns to
+      web-navigation.
+  - term: agents-tooluse/long-horizon-autonomy
+    reason: Each step is scored on its own with the reference history supplied, so no episode is run
+      and an error does not carry into later steps.
+    source: src-arxiv-2306-06070-v3
+    quote: Each step of the task is evaluated independently with the ground truth action history
+      provided.
+  - term: agents-tooluse/tool-api-calling
+    reason: The paper places itself beside tool learning, but the system acts on page elements, not
+      on functions or APIs it invokes.
+capability:
+  - grounding
+  - distribution-shift-generalization
+  - context-integration
+capability_basis:
+  grounding:
+    reason: Element accuracy scores whether the task's language was attached to the right element of
+      the presented page, and the paper claims the grounding challenge and places itself in grounded
+      language understanding (see review_checks).
+    source: src-arxiv-2306-06070-v3
+    quote: This poses a much greater yet realistic planning and grounding challenge for the agent.
+  distribution-shift-generalization:
+    reason: Cross-Website and Cross-Domain hold out websites and whole top-level domains from
+      training and are reported as conditions of their own beside Cross-Task, with the task
+      unchanged.
+    source: src-arxiv-2306-06070-v3
+    quote: the model is expected to generalize to an entirely new domain without having seen any
+      websites or tasks associated with that domain during training
+  context-integration:
+    reason: The next action is determined by the supplied page and action history; the right element
+      cannot be named without reading the page.
+    source: src-arxiv-2306-06070-v3
+    quote: At each step, it also receives the current webpage and the history of previous actions.
+capability_considered_and_rejected:
+  - term: planning
+    reason: The paper names a planning challenge, but nothing scores a sequence the system
+      constructs; each step is predicted from the reference history and scored alone.
+    source: src-arxiv-2306-06070-v3
+    quote: Each step of the task is evaluated independently with the ground truth action history
+      provided.
+  - term: long-horizon-execution
+    reason: Some tasks take a dozen or more actions, but steps are scored independently on the
+      reference history, so an early error does not make later steps unattainable.
+    source: src-arxiv-2306-06070-v3
+    quote: the task in Figure 1(b) would take 14 actions
+  - term: instruction-following
+    reason: The tasks are deliberately high-level goals rather than directions to obey, and the
+      score is whether the action matches the demonstration.
+    source: src-arxiv-2306-06070-v3
+    quote: We intentionally avoid low-level, step-by-step instructions
+  - term: tool-use
+    reason: No callable tool or API is exposed; the actions are clicks, typing and option selection
+      on page elements.
+    source: src-arxiv-2306-06070-v3
+    quote: 'We support three common operations: Click (also including Hover and Press Enter), Type, and
+      Select Option.'
+  - term: perception
+    reason: The paper's protocol and MindAct read HTML text; screenshots are in the raw dump and in
+      Multimodal-Mind2Web, a separate benchmark.
+  - term: transfer-learning
+    reason: The held-out websites and domains change the inputs, not the task or its action space,
+      which the term's exclusion sends to distribution-shift-generalization.
+
+evaluation_method:
+  - exact-match
+  - reference-metric
+evaluation_method_note: A step succeeds when the predicted element is one of the acceptable elements
+  (the labelled element, its nearest clickable ancestor and that ancestor's visible descendants,
+  found by a heuristic) and the predicted operation is correct; a task succeeds when all its steps
+  do (exact-match). Operation F1 is token-level F1 of the predicted operation and value against the
+  reference, partial credit that reference-metric carries, as it does SQuAD's token F1. Element
+  accuracy, operation F1 and step success rate are macro-averaged over tasks; step success rate is
+  the headline in the paper and in later papers.
+evaluation_method_basis:
+  reason: Element accuracy and both success rates are binary verdicts against the recorded reference
+    action, averaged; operation F1 is a fixed-formula overlap with the reference operation.
+  source: src-arxiv-2306-06070-v3
+  quote: A step is regarded as successful only if both the selected element and the predicted
+    operation are correct.
+evaluation_method_considered_and_rejected:
+  - term: environment-state-check
+    reason: No episode runs and no website state is inspected; each predicted action is compared
+      with the cached reference on recorded pages.
+    source: src-arxiv-2306-06070-v3
+    quote: we evaluate the system with cached offline environments
+  - term: multiple-choice
+    reason: MindAct casts element selection as multiple choice over its own ranker's candidates, but
+      that is the system's design; the benchmark fixes no option set or chance baseline.
+  - term: classification-metric
+    reason: Operation F1 is a token F1 per step, averaged, not a statistic over a confusion matrix,
+      so it goes to reference-metric.
+    source: src-arxiv-2306-06070-v3
+    quote: For evaluation, we first calculate Element Accuracy that compares the selected element
+      with all acceptable elements, and Operation F1 that calculates token-level F1 score for the
+      predicted operation.
+designed_for_subjects:
+  - task-specific-supervised-model
+  - instruction-tuned-model
+designed_for_subjects_note: task-specific-supervised-model for models fine-tuned on the 1,009
+  training tasks and scored as trained, such as MindAct's DeBERTa ranker and Flan-T5 action
+  predictors; the vocabulary's "learned planner scored open-loop on logged data" is this term.
+  instruction-tuned-model for GPT-3.5-turbo and GPT-4 prompted with three demonstrations. Each step
+  is one prediction from the supplied history, with no loop the system or the benchmark runs, so
+  agent-scaffold and model-in-benchmark-harness were not tagged.
+designed_for_subjects_basis:
+  reason: The paper scores both kinds and warns that they are not comparable.
+  source: src-arxiv-2306-06070-v3
+  quote: Note that this is not a fair comparison with the Flan-T5 models, which are fine-tuned on
+    the full training data.
+observed_subjects:
+  values:
+    - task-specific-supervised-model
+    - instruction-tuned-model
+  basis: Why Generate a Click? (October 2026) fine-tunes Qwen3-VL generators on the
+    Multimodal-Mind2Web training split among others, and its standard-protocol table copies prompted
+    GPT-4V (SeeAct) and fine-tuned systems (SeeClick, Aguvis) from their papers.
+  source: src-arxiv-2610-20107-v1
+as_used:
+  - protocol: Screenshot-based action prediction on the Multimodal-Mind2Web test splits, each step
+      cut to a 1280 x 1000 window that keeps the gold element visible with up to 64 candidate boxes;
+      a step succeeds when the chosen box is gold and the operation, with any text, matches. Steps
+      whose gold element cannot be shown are counted as failures.
+    split: The three Multimodal-Mind2Web test splits (cross-task, cross-website, cross-domain)
+    source: src-arxiv-2610-20107-v1
+    quote: We use the three Multimodal-Mind2Web (M2W) test splits, cross-task, cross-website and
+      cross-domain
+    note: The paper's Appendix G sets its rows beside published numbers (MindAct, SeeAct, Aguvis)
+      and warns that those use their own candidate sets or full pages, so the rows are not like for
+      like.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers still report on it in 2026; Why Generate a Click? (October 2026) reports step
+    success on the unseen-website split. The repository was last pushed on 2025-11-05 (GitHub API).
+  source: src-arxiv-2610-20107-v1
+  quote: raises step success on unseen Mind2Web websites by 3.1 and 1.8 points
+activity: no-submission-channel
+activity_note: No source read shows a leaderboard, server or results page; users download the data,
+  run the evaluation themselves and publish in their own papers.
+activity_basis:
+  reason: The README describes download-and-run evaluation with any model that exposes a generate
+    function, and no route for results.
+  source: src-github-mind2web-readme
+  quote: You can also implement your own model and use it for evaluation.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Qwen3-VL 4B and 8B generators with plug-in decision heads (Why Generate a Click?)
+    source: src-arxiv-2610-20107-v1
+    observed_on: 2026-11-04
+    quote: With Qwen3-VL 4B and 8B generators trained on 213k web steps
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The crowd workers' demonstrated actions, verified by the authors, with the
+  acceptable-element sets the evaluation heuristic derives from them; the test splits' references
+  are released in a password-protected zip.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The data, the candidate-generation scores, the trained models and the evaluation scripts
+    are released; prompted runs need API access for the model under test.
+  source: src-github-mind2web-readme
+  quote: You will need the dataset, candidate generation results, and your own openai_api key to run
+    evaluation with LLMs.
+
+task:
+  exists: true
+  input:
+    - a high-level task description for one website, such as booking a flight or finding a review
+    - at each step, the cached page before the action (raw and cleaned HTML; screenshots and DOM
+      snapshots in the raw dump) and the reference history of earlier actions
+  output: The next action, a target element on the page and an operation (click, type or select
+    option) with its value for type and select.
+  scoring: Element accuracy, operation F1 and step success rate per step, macro-averaged over tasks,
+    and task success rate (every step correct), on each of the three test splits.
+  source: src-arxiv-2306-06070-v3
+  quote: A task is regarded successful only if all steps have succeeded.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The training split is an ungated Hugging Face dataset, and the test splits are a zip in
+      the same repository whose password the README prints, an anti-contamination device rather than
+      a gate.
+    source: src-github-mind2web-readme
+    quote: unzip it with password `mind2web`
+  refresh: static
+  refresh_note: The dated updates since June 2023 add the raw dump, code and models, fix the
+    evaluation script to report the macro averages the paper defines (2023-10-30) and move the
+    artifact links to Hugging Face (2025-11-04); none changes the tasks (see review_checks).
+  refresh_basis:
+    reason: The README's update list records no change to the tasks or their references.
+    source: src-github-mind2web-readme
+    quote: '2025/11/4: Link for data artifacts are updated to Huggingface.'
+  data_provenance:
+    - crowd-authored
+  data_provenance_note: Amazon Mechanical Turk workers proposed the tasks and demonstrated them;
+    ChatGPT seed tasks were shown for inspiration only, and proposals close to them were rejected.
+    The authors chose the websites, screened the proposals and verified every demonstration,
+    discarding 61 of 2,411 tasks. The page snapshots were recorded from the live websites during
+    annotation; they are the environment, not the items.
+  data_provenance_source: src-arxiv-2306-06070-v3
+  data_provenance_quote: hire annotators through Amazon Mechanical Turk
+  contamination_risk: medium
+  contamination_risk_note: The test splits ship in a password-protected zip with a canary GUID and a
+    request not to redistribute them, but Multimodal-Mind2Web, from the same group, publishes its
+    test splits (with the reference actions) as plain Parquet files on Hugging Face, and the task
+    data has been public since 2023. No source read evidences leakage into a scored model.
+  contamination_risk_source: src-github-mind2web-readme
+  contamination_risk_quote: We only provide a zip file for the test splits to prevent potential data
+    contamination from large language models crawling the test set for training.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: No human was scored under the protocol; the reference actions are human
+    demonstrations, so a human ceiling would be near 100% by construction.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The Hugging Face record's licence tag; the paper's artifact table and the
+    README say CC BY 4.0 for the data and MIT for the code. The README also asks that the unzipped
+    test files not be redistributed online.
+  dataset_licence_source: src-hf-api-mind2web
+  dataset_licence_quote: '"license:cc-by-4.0"'
+  size:
+    - count: 2350
+      unit: tasks
+      source: src-arxiv-2306-06070-v3
+      quote: Among the 2,350 retained tasks
+    - count: 1009
+      unit: tasks
+      subset: train
+      source: src-github-mind2web-readme
+      quote: 'train: 1,009 instances'
+    - count: 252
+      unit: tasks
+      subset: Cross-Task
+      source: src-github-mind2web-readme
+      quote: 'Cross Task: 252 instances, tasks from the same website are seen during training'
+    - count: 177
+      unit: tasks
+      subset: Cross-Website
+      source: src-github-mind2web-readme
+      quote: 'Cross Website: 177 instances, websites are not seen during training'
+    - count: 912
+      unit: tasks
+      subset: Cross-Domain
+      source: src-github-mind2web-readme
+      quote: 'Cross Domain: 912 instances, entire domains are not seen during training'
+    - count: 50
+      unit: tasks per test split
+      subset: the GPT-4 subsets
+      source: src-arxiv-2306-06070-v3
+      quote: For GPT-4 we use 50 tasks for each setting with top-10 candidates due to limited
+        budget.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OSU NLP Group, The Ohio State University
+  maintainer_basis:
+    reason: All eight authors are at The Ohio State University, the repository and datasets sit in
+      the OSU-NLP-Group and osunlp organisations, and the paper commits the group to upkeep.
+    source: src-arxiv-2306-06070-v3
+    quote: The authors and the OSU NLP group are committed to ensuring its regular upkeep and
+      updates.
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: Beyond the release paper's own baselines, results appear only in the
+    papers that use it; no source shows anything collected or ranked.
+  submission_process_source: src-github-mind2web-readme
+  submission_process_quote: You can also implement your own model and use it for evaluation.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2306-06070-v3
+      quote: we propose MINDACT, a two-stage model
+  independence_flags_note: The release paper introduces MindAct, the maintainers' own system, and
+    reports it as the best on the benchmark. The group's later SeeAct agent is reported on
+    Multimodal-Mind2Web, a separate benchmark. The named funders (NSF, the Army Research Laboratory
+    and the Ohio Supercomputer Center) evaluate nothing.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2306-06070-v3
+    quote: This research was sponsored in part by NSF OAC 2112606
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The released candidate-generation scores let a prompted model be evaluated with
+    API calls alone; fine-tuning or running the open models (the README fine-tunes Flan-T5 on four
+    GPUs) is the entrant's choice.
+  compute_tier_source: src-github-mind2web-readme
+  compute_tier_quote: You will need the dataset, candidate generation results, and your own
+    openai_api key to run evaluation with LLMs.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Evaluation is offline against cached pages and stored references, so it
+    does not depend on the websites as they are now; Online-Mind2Web found 47% of a sample of
+    Mind2Web's tasks no longer valid on the live sites, which matters only for live use.
+  reproducibility_tier_basis:
+    reason: Scoring compares predictions with stored references on cached pages, with no human or
+      live dependency.
+    source: src-arxiv-2306-06070-v3
+    quote: we evaluate the system with cached offline environments
+  harness_availability: official-harness
+  harness: Mind2Web repository (candidate_generation/evaluate.py; action_prediction/evaluate.py and
+    evaluate_llm.py), at commit 33bd95c
+  harness_source: src-github-mind2web-readme
+  harness_quote: '2023/10/30: Update the evaluation script to report all metrics.'
+  harness_gotcha:
+    source: src-github-mind2web-readme
+    quote: The repo originally contains only `micro average accuracy`, which may bias towards tasks
+      with larger number of steps.
+  harness_gotcha_note: Numbers from the script before 2023-10-30 are micro averages and are not
+    comparable with the paper's macro averages. The candidate set also moves scores, top-50 in the
+    paper and top-10 for GPT-4, and later papers use their own candidate sets or full pages.
+  code_licence: MIT
+  code_licence_note: The README and GitHub's licence metadata for OSU-NLP-Group/Mind2Web (API, read
+    2026-11-04).
+  code_licence_source: src-github-mind2web-readme
+  code_licence_quote: Code under this repo is licensed under a MIT License.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the profiles resolved for exact-match (llm-static-text for the prompted models, the fallback for the
+  # fine-tuned ones): the harness, because the candidate set (the paper's DeBERTa top-50, top-10 for GPT-4, or a
+  # user's own windows and candidate lists) and the averaging (macro, or the old script's micro) both move step
+  # success rate. The input (HTML or screenshot) and the split (the three test splits, the GPT-4 50-task subsets)
+  # matter too; the split is subset_used, already in both profiles, and EvalConditions has no field for the input.
+  material_extra:
+    - harness
+
+homepage: https://osu-nlp-group.github.io/Mind2Web/
+repository: https://github.com/OSU-NLP-Group/Mind2Web
+dataset_url: https://huggingface.co/datasets/osunlp/Mind2Web
+
+subsets:
+  - id: mind2web#cross-task
+    label: Cross-Task test split
+    items: 252
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2306-06070-v3
+        quote: resulting in 252 tasks from 69 websites
+    notes: A random 20% of the tasks left after the other two splits; their websites are seen in
+      training.
+  - id: mind2web#cross-website
+    label: Cross-Website test split
+    items: 177
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2306-06070-v3
+        quote: TestCross-Website, with 10 websites from each remaining top-level domain, containing
+          177 tasks.
+    notes: Ten websites from each of the three remaining top-level domains, unseen in training.
+  - id: mind2web#cross-domain
+    label: Cross-Domain test split
+    items: 912
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2306-06070-v3
+        quote: TestCross-Domain, for which we hold out two top-level domains, Information and
+          Service, with 912 tasks from 73 websites.
+    notes: The Information and Service top-level domains, unseen in training.
+subsets_note: The paper reports every metric per test split and no pooled score. The 1,009 training
+  tasks are not scored.
+
+lineage:
+  role: root
+  variants:
+    # Same group (OSU NLP), each released and cited on its own.
+    - id: multimodal-mind2web
+      relation: multimodal-human-verified-subset
+      source: src-hf-multimodal-mind2web-card
+      quote: we align each HTML document in the dataset with its corresponding webpage screenshot
+        image from the Mind2Web raw dump
+    - id: online-mind2web
+      relation: live-website-reselection
+      n_items: 300
+      source: src-arxiv-2504-01382-v4
+      quote: we construct our dataset by selecting 167 tasks from the original Mind2Web dataset that
+        are as distinct as possible
+    - id: mind2web-2
+      relation: successor-new-task
+      n_items: 130
+      source: src-arxiv-2506-21506
+      quote: we introduce Mind2Web 2, a benchmark of 130 realistic, high-quality, and long-horizon
+        tasks that require real-time web browsing and extensive information synthesis
+  forks:
+    - id: mind2web-live
+      maintainer: The WebCanvas authors (Pan et al., 2024)
+      source: src-arxiv-2504-01382-v4
+      quote: The tasks in Mind2Web-Live (Pan et al., 2024b) are also adapted from Mind2Web
+lineage_note: Multimodal-Mind2Web (March 2024, released with the SeeAct paper) pairs each page with
+  its screenshot and keeps the test tasks whose elements were verified visible and rendered (177,
+  142 and 694 tasks in test_task, test_website and test_domain); later papers report on its splits.
+  Online-Mind2Web (COLM 2025) keeps 167 Mind2Web tasks, rewrites 24, takes 34 from Mind2Web-Live and
+  adds 75, run on live websites and judged by WebJudge, with its own leaderboard; HAL runs it.
+  Mind2Web 2 is 130 new agentic search tasks judged by Agent-as-a-Judge. Mind2Web-Live (WebCanvas)
+  adapts Mind2Web tasks to live evaluation. WebVoyager seeds its tasks with modified Mind2Web tasks
+  and is not linked (see review_checks). AgentBench's Web Browsing environment adapts Mind2Web
+  (agentbench#wb).
+
+tags:
+  - web-navigation
+  - web-agents
+  - offline-evaluation
+  - crowdsourced
+  - generalization-splits
+  - canary-guid
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T02)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2306-06070-v3
+    - src-arxiv-2306-06070
+    - src-github-mind2web-readme
+    - src-hf-api-mind2web
+    - src-hf-api-multimodal-mind2web
+    - src-hf-multimodal-mind2web-card
+    - src-arxiv-2504-01382-v4
+    - src-arxiv-2506-21506
+    - src-arxiv-2610-20107-v1
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text; its abstract page for the dates; the README
+    at commit 33bd95c, withheld from archiving because its Contact section prints authors' e-mail addresses;
+    Hugging Face's API records of osunlp/Mind2Web and osunlp/Multimodal-Mind2Web (no terms accepted, nothing
+    downloaded); the Multimodal-Mind2Web card, withheld for its point-of-contact address; the Online-Mind2Web
+    v4 PDF and the Mind2Web 2 abstract page (DOIs) for the lineage; and the v1 PDF of Why Generate a Click?
+    (a DOI) as evidence of current use. The project page repeats the README and was not cited; the Online-Mind2Web
+    repository and leaderboard belong to that benchmark's own entry and were not cited.
+  confidence: medium
+  review_checks:
+    - check: The family's inclusion test speaks of an autonomous loop whose end state or result is
+        checked; Mind2Web scores single-step predictions against recorded actions with no loop.
+        web-navigation's definition names "recorded web pages", and AgentBench's Mind2Web subset
+        already carries the leaf, so the entry stays here; a reviewer may judge offline action
+        prediction a poorer fit for the family than its leaf.
+      field: domain.primary
+      source: src-arxiv-2306-06070-v3
+      quote: Each step of the task is evaluated independently with the ground truth action history
+        provided.
+    - check: grounding rests on element accuracy (attaching the task's language to a page element)
+        and on the paper's own grounding claim; the task description names a goal, not the element,
+        so a reviewer may read element choice as action prediction rather than reference resolution.
+        planning was rejected although the paper claims it, because no constructed sequence is
+        scored.
+      field: capability
+      source: src-arxiv-2306-06070-v3
+      quote: Our work instead grounds natural language in the noisy and schemaless web environment.
+    - check: reference-metric is tagged for operation F1, a token F1 on a short operation string,
+        following squad's call for token F1; the term's own list is BLEU-like measures, and
+        operation F1 is diagnostic beside step success rate. exact-match carries element accuracy,
+        which accepts a heuristic set of equivalent elements rather than one string.
+      field: evaluation_method
+      source: src-arxiv-2306-06070-v3
+      quote: we employ heuristics to detect elements equivalent to the ground truth
+    - check: Multimodal-Mind2Web is modelled as a same-group variant (like SWE-bench Verified)
+        because it is a separately released dataset with fewer, human-verified test tasks and
+        screenshots. Later papers report on its splits under Mind2Web's name and beside MindAct's
+        numbers, so a reviewer may prefer a revision version of this entry; it has no record either
+        way.
+      field: lineage
+      source: src-hf-multimodal-mind2web-card
+      quote: have undergone human verification to confirm element visibility and correct rendering
+        for action prediction
+    - check: Online-Mind2Web is a variant (same group, about 64% of its tasks taken or rewritten
+        from Mind2Web) and not a version of this entry, because it changes the setting (live
+        websites, an LLM judge) and has its own repository, paper and leaderboard. The paper also
+        lists UC Berkeley authors, not recorded as co_maintainer because the affiliation line sits
+        beside e-mail addresses and was not quoted.
+      field: lineage
+      source: src-arxiv-2504-01382-v4
+      quote: rewriting another 24 tasks from Mind2Web, incorporating 34 tasks from Mind2Web-Live
+    - check: Mind2Web 2 shares the name and the senior authors but no items and a different task
+        (agentic search with cited answers); it is linked as a variant with relation
+        successor-new-task. Only the abstract was read, so its maintainer and co-maintainers are
+        unconfirmed.
+      field: lineage
+      source: src-arxiv-2506-21506
+      quote: we propose a novel Agent-as-a-Judge framework
+    - check: Mind2Web-Live is a fork; its maintainer is named only through the WebCanvas reference
+        in the Online-Mind2Web paper, and its own sources were not read. WebVoyager seeds its tasks
+        from modified Mind2Web tasks; whether that is a fork or no lineage at all is left open, and
+        neither has a record.
+      field: lineage.forks
+      source: src-arxiv-2504-01382-v4
+      quote: The tasks in WebVoyager are synthesized by using modified tasks from Mind2Web as seeds
+    - check: refresh static, although the evaluation script changed on 2023-10-30 to report the
+        macro averages; the paper defined macro averages from the start, so the scoring function as
+        published did not change. A strict reading of static's exclusion would make it
+        versioned-releases.
+      field: data.refresh
+      source: src-github-mind2web-readme
+      quote: For direct comparison with numbers in our paper, please use `macro average` results.
+    - check: contamination_risk medium. The password zip and canary protect the original test
+        splits, but Multimodal-Mind2Web's test splits sit as plain Parquet on an ungated dataset,
+        with licence openrail rather than CC BY 4.0.
+      field: data.contamination_risk
+      source: src-hf-api-multimodal-mind2web
+      quote: '"rfilename":"data/test_task-00000-of-00005-431389419142b606.parquet"'
+    - check: lifecycle active rests on 2026 papers that evaluate on Multimodal-Mind2Web's splits and
+        call the result Mind2Web step success. Online-Mind2Web argues the offline setting overstates
+        progress and finds many original tasks outdated on the live web; superseded was considered
+        and rejected because the offline benchmark is still used for its purpose.
+      field: lifecycle
+      source: src-arxiv-2504-01382-v4
+      quote: Our analysis shows that 47% of the tasks are either invalid or have outdated
+        ground-truth trajectories.
+    - check: maintainer-competes-on-own-benchmark rests on MindAct in the release paper; the
+        vocabulary gives no example for a benchmark without a leaderboard, where the maintainer's
+        own baseline is the usual case.
+      field: governance.independence_flags
