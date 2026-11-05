@@ -1,0 +1,623 @@
+# data/benchmarks/medicine-health/aci-bench.yaml
+#
+# P1-S6-T04, medicine-health entry 20. Filled from the ACI-Bench paper's version of record (Scientific Data 10:586,
+# 2023), read as Europe PMC's full-text XML (nature.com's robots.txt disallows AI agents); the arXiv preprint
+# 2306.02022 read as its v1 PDF, and its abstract page; the repository's README and SETUP.md at main; Figshare's API
+# record of the corpus (the zip was not downloaded); the MEDIQA-Chat 2023 overview paper from the ACL Anthology; the
+# MedHELM paper and leaderboard schema already on main (src-arxiv-2505-23802-v2, src-medhelm-leaderboard-v4-schema);
+# and the v1 PDF of Symphony for Text Generation (arXiv 2610.08161, October 2026), which uses the corpus. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts. The dialogues are
+# role-played and the notes describe fictitious patients, but no dialogue line or note text is quoted here.
+#
+# The MEDIQA-Chat 2023 and MEDIQA-Sum 2023 shared tasks ran on this corpus's test sets; they are recorded as events,
+# as the test-set subsets and as as_used rows, not as benchmarks of their own (see review_checks).
+
+id: aci-bench
+name: ACI-Bench
+aliases:
+  - ACI-BENCH
+  - Ambient Clinical Intelligence Benchmark
+tagline: Write the visit note from a doctor-patient conversation, scored against expert-checked
+  notes on 207 role-played visits.
+description: >
+  A corpus for benchmarking automatic visit-note generation from doctor-patient conversations, released
+  by authors at Microsoft Health AI, Nuance Communications and the University of Washington. It holds
+  207 role-played encounters, each a full visit transcript paired with its clinical note, in three subsets
+  that model three ways a note is produced: a doctor calling a virtual assistant (virtassist), a doctor
+  addressing a scribe with pre-ambles and dictation (virtscribe), and natural conversation (aci). The
+  virtassist and virtscribe transcripts were written by a team of medical experts; the aci encounters
+  were role-played by a certified doctor and a lay volunteer from symptom prompts. Notes were drafted
+  by an automatic note generation system and checked and rewritten by domain experts, and note text the
+  conversation does not support was annotated and removed. Fixed splits are train (67), validation (20)
+  and three test sets of 40, which are the test sets of MEDIQA-Chat 2023 Task B (full-note generation)
+  and Task C (note-to-dialogue generation) and of MEDIQA-Sum 2023 Task C. Notes are scored by ROUGE-1/2/L,
+  BERTScore, BLEURT and MEDCON (F1 over UMLS concepts), on the full note and on four SOAP-style divisions.
+  Data and code are public, the data under CC BY 4.0. MedHELM runs it as an LLM-jury scenario, and an
+  ambient-scribe vendor reported on it in October 2026.
+self_description:
+  source: src-scidata-aci-bench-2023
+  quote: Here we present the Ambient Clinical Intelligence Benchmark (aci-bench) corpus, the largest
+    dataset to date tackling the problem of AI-assisted note generation from visit dialogue
+external_ids:
+  arxiv: '2306.02022'
+paper:
+  title: 'ACI-BENCH: a Novel Ambient Clinical Intelligence Dataset for Benchmarking Automatic Visit Note
+    Generation'
+  arxiv: '2306.02022'
+  doi: 10.1038/s41597-023-02487-3
+  version_read: v1
+  source: src-arxiv-2306-02022-v1
+released: 2023-06-03
+released_note: The preprint's only arXiv version, as its abstract page dates it. The data had been
+  used in the MEDIQA-Chat 2023 shared tasks before the release; the preprint's data and code links
+  still read as to be updated, and the Figshare record was posted on 2023-07-08.
+released_source: src-arxiv-2306-02022
+released_quote: Submitted on 3 Jun 2023
+release_venue: Scientific Data (2023)
+release_venue_note: Published as Scientific Data 10:586 on 2023-09-06 (Europe PMC), received
+  2023-05-01 and accepted 2023-08-16.
+release_venue_source: src-github-aci-bench-readme
+release_venue_quote: Nature Scientific Data, 2023.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/clinical-dialogue
+  secondary:
+    - language/summarization
+domain_note: No medicine-health leaf describes clinical documentation, producing a clinical note
+  from a visit conversation; the gap is logged (taxonomy/_failures/, missing-term, proposing
+  medicine-health/clinical-documentation). clinical-dialogue is the nearest leaf by subject, the
+  doctor-patient conversation that every item is, and test set 2 was MEDIQA-Chat's note-to-dialogue
+  task, but its definition scores the conduct of an exchange, which ACI-Bench does not. The
+  secondary leaf records that the scored act is a summary of the conversation. It is secondary, not
+  primary, by the language family's exclusion test, since the language is the interface to clinical
+  documentation (notes structured into clinical divisions and scored partly by MEDCON on their
+  clinical concepts).
+domain_basis:
+  reason: The family is medicine-health, because the scored output is a clinical note, the record of
+    the visit for clinical care, written to clinical conventions and scored partly on its clinical
+    concepts, and the corpus was built and checked by medical experts. Within the family the claim
+    is note generation from a doctor-patient conversation, which no leaf names; the leaf is the
+    nearest one, as domain_note says.
+  source: src-scidata-aci-bench-2023
+  quote: the aci-bench corpus consists of three subsets representing common modes of note generation
+    from doctor-patient conversations
+domain_considered_and_rejected:
+  - term: medicine-health/radiology-report-generation
+    reason: The closest leaf by output, a clinical document scored against a clinician's reference
+      with the same metric families, but its definition requires an imaging study as the input, and
+      ACI-Bench's input is a conversation.
+  - term: medicine-health/treatment-planning
+    reason: The note's assessment and plan division records the plan the doctor states in the
+      conversation; the system documents a plan, it does not produce one for a described patient.
+  - term: medicine-health/clinical-task-suites
+    reason: One task, note generation, in one release; not a suite spanning several leaves.
+  - term: language/dialogue
+    reason: Nothing scores a conversation the system conducts; the dialogue is the input.
+capability:
+  - generation-fidelity
+  - factual-precision
+capability_basis:
+  generation-fidelity:
+    reason: Every metric compares the generated note with the reference note, by n-gram overlap
+      (ROUGE), embedding similarity (BERTScore) or a learned candidate-reference score (BLEURT).
+    source: src-scidata-aci-bench-2023
+    quote: For a model-based learned metric, we used BLEURT30, which is trained for scoring
+      candidate-reference similarity.
+  factual-precision:
+    reason: MEDCON extracts the UMLS concepts of the generated and reference notes, restricted to
+      clinical semantic groups (anatomy, drugs, devices, disorders and others), and scores their F1,
+      so each asserted clinical particular counts whatever the note's wording. The paper reads it as
+      clinical facts captured.
+    source: src-scidata-aci-bench-2023
+    quote: GPT-4 captured many relevant clinical facts and thus had the highest medcon.
+capability_considered_and_rejected:
+  - term: context-integration
+    reason: The note must come from the supplied conversation, and note text the conversation does
+      not support was removed from the references, but no score isolates use of the transcript, and
+      the sources make no claim that ACI-Bench tests it (02 S11 rule 2).
+    source: src-scidata-aci-bench-2023
+    quote: unsupported note sentences were removed. To study the effect of ASR errors
+  - term: communication
+    reason: Notes are written for the care team, but no reader's understanding or action is scored;
+      every metric compares against a reference note.
+  - term: instruction-following
+    reason: The paper's prompt names four sections, but sections are detected by a rule-based tagger
+      for division scoring, not scored as compliance with the instruction.
+
+evaluation_method:
+  - reference-metric
+  - model-derived-metric
+  - composite
+evaluation_method_note: MEDCON is a fixed formula, F1 over concept sets that QuickUMLS extracts by
+  string match against the UMLS (the 2022AA Metathesaurus in SETUP.md), so it is a reference metric
+  here; its value depends on that UMLS release and the semantic-group filter. BERTScore and BLEURT
+  are computed per division only, because of their 512-token limit. MEDIQA-Chat ranked Task B by
+  full-note ROUGE-1 and by the mean of ROUGE-1, BERTScore (microsoft/deberta-xlarge-mnli) and
+  BLEURT-20 per division; the paper's scorer checkpoints are not stated beyond the packages.
+evaluation_method_basis:
+  reason: ROUGE-1/2/L and MEDCON are fixed formulas against the reference note; BERTScore and BLEURT
+    are computed by released scoring models; the paper's final evaluation score averages ROUGE (the
+    mean of its three variants), BERTScore, BLEURT and MEDCON, sub-scores from different methods.
+  source: src-scidata-aci-bench-2023
+  quote: we first take the average of the three ROUGE submetrics as ROUGE, and the average of ROUGE,
+    BERTScore, BLEURT, and medcon scores as the final evaluation score
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: MEDCON is clinical in what it counts, but it is an F1, a general statistic, which the
+      term's exclusion test keeps out, and it is defined by this paper rather than standardised in
+      the field.
+  - term: model-graded-judge
+    reason: LLM judges score ACI-Bench in later use (MedHELM's jury, Symphony's pairwise
+      comparisons), recorded in as_used; the release protocol has none.
+  - term: human-expert-eval
+    reason: Experts checked and rewrote the reference notes, but no human rates the systems' notes
+      in the release protocol.
+designed_for_subjects:
+  - domain-specialist-model
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The splits are built for models fine-tuned on the 67 training notes and selected on the
+    validation set (BART, BioBART and LED variants, fine-tuned for clinical note generation), and
+    the paper benchmarks prompted general models beside them (Text-davinci-002 and -003, ChatGPT,
+    GPT-4) with one fixed prompt and no fine-tuning.
+  source: src-scidata-aci-bench-2023
+  quote: We fine-tune the models on the train set and select the best trained model based on
+    evaluation on the validation set.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The fine-tuned entrants are trained for a task that a clinical discipline defines, which
+      the term's exclusion sends to domain-specialist-model.
+  - term: full-product-pipeline
+    reason: Shipped ambient scribes are scored on it in 2026 (observed_subjects), but the release
+      protocol scores models it can rebuild.
+observed_subjects:
+  values:
+    - instruction-tuned-model
+    - full-product-pipeline
+  basis: Since 2023 most reported systems are prompted large language models (GPT-4 with retrieved
+    in-context examples won MEDIQA-Chat Task B; MedHELM runs general frontier models), and a 2026
+    vendor paper scores two commercial ambient scribes, generated through their web interfaces,
+    beside the vendor's own platform.
+  source: src-arxiv-2610-08161-v1
+as_used:
+  - protocol: "MEDIQA-Chat 2023 Task B: full-note generation on test set 1, at most three runs per team,
+      ranked by full-note ROUGE-1 and by the mean per-division score of ROUGE-1, BERTScore and BLEURT;
+      the organisers also checked each team's code."
+    split: test1 (40 encounters)
+    source: src-acl-2023-clinicalnlp-1-52
+    quote: a finegrained evaluation taking the mean of the section-based combined score of ROUGE-1,
+      BERTscore, BLEURT, equally weighed
+    note: Nine teams took part in Task B. The organisers include three ACI-Bench authors.
+  - protocol: 'MEDIQA-Chat 2023 Task C: the reverse direction, generating a doctor-patient conversation
+      from a full note, scored by ROUGE-1 against the original conversation.'
+    split: test2 (40 encounters)
+    source: src-acl-2023-clinicalnlp-1-52
+    quote: Task C - Evaluating the generated dialogues using ROUGE-1.
+    note: The ACI-Bench paper itself scores note generation on test 2 as well.
+  - protocol: A MedHELM scenario in its Clinical Note Generation category, scored by MedHELM's LLM
+      jury (three judge models rating accuracy, completeness and clarity), with ROUGE and BERTScore
+      as secondary metrics; clinicians rated a subset of its outputs to validate the jury.
+    split: not stated in the sources read
+    source: src-arxiv-2505-23802-v2
+    quote: We incorporated existing benchmarks from public or gated sources (e.g., MedQA, MIMIC-IV
+      Billing Code, ACI-Bench) to ensure broad subcategory coverage.
+    note: Recorded on the medhelm entry as the subset medhelm#aci-bench; the v4.0.0 leaderboard
+      names its metric ACI-Bench Jury Score.
+  - protocol: The aci subset only (112 encounters across all splits), five notes sampled per
+      encounter and system, scored by entailment-based groundedness, completeness and conciseness
+      and by LLM-judged pairwise comparisons on eight PDSQI-9 dimensions, with no reference-overlap
+      metric.
+    split: the aci subset, all splits
+    source: src-arxiv-2610-08161-v1
+    quote: We use the aci subset, since it most closely matches the ambient-scribe scenario
+      evaluated in this benchmark.
+    note: Symphony for Text Generation (Corti, October 2026) compares Corti's platform with the
+      Heidi and Tandem Health ambient scribes, and argues that surface-overlap metrics misjudge
+      clinical notes.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it outside the maintainers; a vendor paper posted on
+    2026-10-06 scores three ambient documentation systems on its aci subset, and MedHELM's final
+    release (January 2026) keeps it as a scenario. The repository was last pushed on 2026-01-28
+    (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2610-08161-v1
+  quote: five notes per encounter where sampled for each system on ACI-BENCH
+activity: closed
+activity_note: The data is download-and-run, and results now appear only in users' papers. The 2023
+  shared tasks' run submissions were the only route by which outsiders entered results onto an
+  official ranking; the sources read do not date the end of either submission window.
+activity_basis:
+  reason: A route existed, the MEDIQA-Chat 2023 and MEDIQA-Sum 2023 run submissions scored on test
+    sets 1 to 3, and none is open now; closed's inclusion test takes a route that existed and shut.
+  source: src-acl-2023-clinicalnlp-1-52
+  quote: We limited the number of submitted runs to three runs per task.
+
+events:
+  - name: MEDIQA-Chat 2023 shared tasks (ClinicalNLP workshop, ACL 2023), Tasks B and C
+    kind: shared-task
+    source: src-acl-2023-clinicalnlp-1-52
+    quote: The ACI-Bench dataset, used Tasks B & C consists of 207 pairs of full doctor-patient
+      conversations and associated clinical notes.
+  - name: MEDIQA-Sum 2023 (ImageCLEF 2023), Subtask C
+    kind: shared-task
+    source: src-scidata-aci-bench-2023
+    quote: Test 3 corresponds to CLEF MEDIQA-SUM 2023 Subtask C full-note generation.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4 (prompted, no fine-tuning)
+    source: src-scidata-aci-bench-2023
+    observed_on: 2026-11-04
+    quote: GPT-4 captured many relevant clinical facts and thus had the highest medcon.
+  - system: WangLab's GPT-4 with retrieved in-context examples (MEDIQA-Chat 2023 Task B)
+    source: src-acl-2023-clinicalnlp-1-52
+    observed_on: 2026-11-04
+    quote: used GPT-4 with in-context examples retrieved from the training set based on their
+      similarity to the test dialogues
+  - system: Corti Symphony, Heidi and Tandem Health ambient scribes
+    source: src-arxiv-2610-08161-v1
+    observed_on: 2026-11-04
+    quote: five notes per encounter where sampled for each system on ACI-BENCH
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The reference is each encounter's clinical note, drafted by an automatic
+  note generation system and checked and rewritten by domain experts, with unsupported text removed.
+  The test notes were unseen during the 2023 shared tasks and ship with the corpus now.
+ground_truth_source_source: src-scidata-aci-bench-2023
+ground_truth_source_quote: Clinical notes were generated using an automatic note generation system
+  and checked and re-written by domain experts
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The corpus, its splits and the code for pre-processing, baselines and evaluation are
+    public, so anyone can rerun the scoring; MEDCON needs a free UMLS account for the Metathesaurus
+    files.
+  source: src-scidata-aci-bench-2023
+  quote: Code for pre-processing, evaluation, and running baselines can be found in
+    https://github.com/wyim/aci-bench.
+
+task:
+  exists: true
+  input:
+    - a full doctor-patient visit transcript (human transcription for virtassist and virtscribe, ASR
+      for aci; ASR and corrected-ASR variants for experiments)
+  output: A clinical note for the visit, evaluated as a full note and as four divisions (subjective,
+    objective exam, objective results, assessment and plan) found by a rule-based section tagger.
+  scoring: ROUGE-1/2/L and MEDCON on the full note; ROUGE, BERTScore, BLEURT and MEDCON per
+    division, averaged into the final evaluation score; reported on each of the three test sets.
+  source: src-scidata-aci-bench-2023
+  quote: Because BERTScore and BLEURT are limited by their pre-trained embedding length, we only use
+    these evaluations for the division-based evaluation.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The corpus is a public Figshare download under CC BY 4.0, and the repository's data
+      folder carries the challenge and experiment files, test notes included.
+    source: src-figshare-api-aci-bench
+    quote: '"license": {"value": 1, "name": "CC BY 4.0"'
+  refresh: static
+  refresh_basis:
+    reason: One release; the Figshare record is at version 1, posted and last modified on
+      2023-07-08. The README notes swapped speaker tags in some transcripts that were deliberately
+      left uncorrected rather than revised.
+    source: src-figshare-api-aci-bench
+    quote: '"version": 1, "status": "public"'
+  data_provenance:
+    - expert-authored
+    - model-generated
+  data_provenance_note: The virtassist and virtscribe transcripts were written by medical experts
+    (doctors, physician assistants, medical scribes, clinical informaticians); the aci encounters
+    were role-played by a certified doctor and a lay volunteer, and their transcripts are ASR
+    output. The notes were drafted by an automatic note generation system and rewritten by domain
+    experts. The encounters were first made as Nuance marketing demonstrations, recorded in a
+    product demonstration studio by Nuance employees. No patient data was used.
+  data_provenance_source: src-scidata-aci-bench-2023
+  data_provenance_quote: Transcripts from subsets virtassist and virtscribe were created by a team
+    of 5+ medical experts
+  contamination_risk: medium
+  contamination_risk_note: The full corpus, test notes included, has been public under CC BY since
+    2023, on Figshare and in the GitHub repository, so a training route into every test item is
+    plausible for models trained on web data after mid-2023. No source read here evidences overlap.
+  contamination_risk_source: src-github-aci-bench-readme
+  contamination_risk_quote: The data here is published under a Creative Commons Attribution 4.0
+    International License (CC BY)
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: No human-written note is scored against the references as a baseline;
+    the references are themselves expert-rewritten notes.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The Figshare record and the README both give CC BY 4.0 for the data; the
+    paper asks that the data be used for benchmarking dialogue summarisation and not to train models
+    to make medical diagnoses.
+  dataset_licence_source: src-figshare-api-aci-bench
+  dataset_licence_quote: '"license": {"value": 1, "name": "CC BY 4.0"'
+  size:
+    - count: 207
+      unit: doctor-patient encounters (a full visit transcript with its clinical note)
+      source: src-scidata-aci-bench-2023
+      quote: role-played dialogue-note pairs 1302/55 490/49 207 Y
+    - count: 67
+      unit: encounters
+      subset: train
+      source: src-github-aci-bench-readme
+      quote: 'TRAIN: 67 VALID: 20 TEST1: 40 ( MEDIQA-CHAT TASK B test set ) TEST2: 40 ( MEDIQA-CHAT TASK
+        C test set ) TEST3: 40 ( MEDIQA-SUM TASK C test set )'
+    - count: 20
+      unit: encounters
+      subset: validation
+      source: src-github-aci-bench-readme
+      quote: 'TRAIN: 67 VALID: 20 TEST1: 40 ( MEDIQA-CHAT TASK B test set ) TEST2: 40 ( MEDIQA-CHAT TASK
+        C test set ) TEST3: 40 ( MEDIQA-SUM TASK C test set )'
+    - count: 120
+      unit: encounters in three test sets of 40
+      subset: test1, test2 and test3
+      source: src-github-aci-bench-readme
+      quote: 'TRAIN: 67 VALID: 20 TEST1: 40 ( MEDIQA-CHAT TASK B test set ) TEST2: 40 ( MEDIQA-CHAT TASK
+        C test set ) TEST3: 40 ( MEDIQA-SUM TASK C test set )'
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Wen-wai Yim and co-authors (Microsoft Health AI, Nuance Communications, University of
+    Washington)
+  maintainer_basis:
+    reason: The repository sits in the first author's personal GitHub account (wyim) and the
+      Figshare record is deposited by the six authors; no institution is named as holding either.
+      The authors were at Microsoft Health AI, Nuance Communications and the University of
+      Washington.
+    source: src-scidata-aci-bench-2023
+    quote: Code for pre-processing, evaluation, and running baselines can be found in
+      https://github.com/wyim/aci-bench.
+  maintainer_type: individual
+  maintainer_type_note: industry-lab's test names the holder of the dataset and repository, not the
+    authors' employer, and the holder here is a personal account and an author-deposited record.
+  submission_process:
+    - held-out-server
+  submission_process_note: In the 2023 shared tasks teams submitted up to three runs per task, and
+    the organisers scored them on test sets the participants had not seen, then re-ran each team's
+    shared code to check the outputs. That route is closed (see history); results since appear only
+    in users' own papers, which literature-only would describe.
+  submission_process_source: src-acl-2023-clinicalnlp-1-52
+  submission_process_quote: the evaluation of the participating systems on unseen test sets
+  independence_flags: []
+  independence_flags_note: The paper declares no competing interests, and the Figshare record lists
+    no funding; no funding statement for the work was found. The authors work for Microsoft and
+    Nuance, and the encounters come from Nuance's marketing demonstrations, but no Microsoft or
+    Nuance system is among the evaluated ones, and the maintainers enter no system of their own.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The repository's pipeline pre-processes the data, runs the baselines and generates and
+      runs an evaluation script, with no human or maintainer-only step.
+    source: src-github-aci-bench-setup
+    quote: Run the generated evaluation from the previous step.
+  reproducibility_blockers: []
+  reproducibility_blockers_note: MEDCON and the retrieval baseline need the UMLS 2022AA
+    Metathesaurus, which needs a UMLS account; the account is free and has no blocker term, but it
+    is a step every reproducer must take.
+  reproducibility_blockers_source: src-github-aci-bench-setup
+  reproducibility_blockers_quote: In order to use this you will need to setup a UMLS account
+  harness_availability: official-harness
+  harness: wyim/aci-bench (pre-process and post-process notebooks, sectiontagger.py, and the
+    generated baselines/evaluation_script.sh over the evaluation scripts, with rouge-score,
+    bert-score 0.3.12, BLEURT and QuickUMLS)
+  harness_source: src-github-aci-bench-setup
+  harness_quote: ./baselines/evaluation_script.sh
+  code_licence: null
+  code_licence_note: GitHub's licence metadata for wyim/aci-bench reports none (read 2026-11-04),
+    and the README's CC BY 4.0 statement names the data, not the code.
+  runnable_via:
+    - custom
+    - helm
+  runnable_via_note: HELM runs it as MedHELM's aci_bench scenario, scored by the LLM jury rather
+    than the release metrics (as_used).
+  runnable_via_source: src-medhelm-leaderboard-v4-schema
+  runnable_via_quote: '"display_name": "ACI-Bench Jury Score"'
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profiles: whether the system was fine-tuned on the 67 training notes or only prompted, and
+  # with what prompt (the paper's OpenAI baselines use one fixed prompt; MEDIQA-Chat's winner retrieved in-context
+  # examples). Also material, with no field of its own: full-note or division-level scoring, the transcript version
+  # (human, ASR or corrected ASR), and the scorer versions (BERTScore encoder, BLEURT checkpoint, the UMLS release
+  # behind MEDCON).
+  material_extra:
+    - training_data_policy
+    - prompt_template_hash
+aggregation_policy_note: The paper's final evaluation score is the mean of ROUGE (itself the mean of
+  ROUGE-1, -2 and -L), BERTScore, BLEURT and MEDCON, per division; full notes are reported metric by
+  metric. MEDIQA-Chat ranked Task B by full-note ROUGE-1 and by the per-division aggregate.
+
+homepage: https://github.com/wyim/aci-bench
+repository: https://github.com/wyim/aci-bench
+dataset_url: https://doi.org/10.6084/m9.figshare.22494601
+
+subsets:
+  - id: aci-bench#test1
+    label: Test set 1 (MEDIQA-Chat 2023 Task B)
+    items: 40
+    evidence:
+      - source: src-scidata-aci-bench-2023
+        quote: Test sets 1 and 2 correspond to the test sets from ACL ClinicalNLP MEDIQA-Chat 2023
+          TaskB full-note generation and TaskC dialogue generation, respectively.
+    notes: The paper's main results table is on test 1.
+  - id: aci-bench#test2
+    label: Test set 2 (MEDIQA-Chat 2023 Task C)
+    items: 40
+    evidence:
+      - source: src-scidata-aci-bench-2023
+        quote: Test sets 1 and 2 correspond to the test sets from ACL ClinicalNLP MEDIQA-Chat 2023
+          TaskB full-note generation and TaskC dialogue generation, respectively.
+    notes: Used in MEDIQA-Chat for note-to-dialogue generation; the paper scores note generation on
+      it.
+  - id: aci-bench#test3
+    label: Test set 3 (MEDIQA-Sum 2023 Subtask C)
+    items: 40
+    evidence:
+      - source: src-scidata-aci-bench-2023
+        quote: Test 3 corresponds to CLEF MEDIQA-SUM 2023 Subtask C full-note generation.
+  - id: aci-bench#virtassist
+    label: virtassist (doctor uses a virtual assistant)
+    items: 55
+    evidence:
+      - source: src-scidata-aci-bench-2023
+        quote: the aci-bench corpus consists of three subsets representing common modes of note
+          generation from doctor-patient conversations
+    notes: Human transcription. 20 train, 5 validation and 10 in each test set (the paper's Table 3,
+      summed here).
+  - id: aci-bench#virtscribe
+    label: virtscribe (doctor addresses a scribe)
+    items: 40
+    notes: Human transcription and an ASR version. 12 train, 4 validation and 8 in each test set
+      (Table 3, summed here).
+  - id: aci-bench#aci
+    label: aci (natural conversation)
+    items: 112
+    evidence:
+      - source: src-scidata-aci-bench-2023
+        quote: Subset aci was created with a certified doctor and a volunteer lay person, who must
+          role-play a real doctor-patient encounter, given a list of symptom prompts.
+    notes: ASR and corrected-ASR versions. 35 train, 11 validation and 22 in each test set (Table 3,
+      summed here); Symphony's 112 aci encounters agree.
+
+history:
+  - event: channel-closed
+    field: activity
+    from: run submissions to MEDIQA-Chat 2023 (test sets 1 and 2) and MEDIQA-Sum 2023 (test set 3)
+    to: closed
+    source: src-acl-2023-clinicalnlp-1-52
+    quote: We limited the number of submitted runs to three runs per task.
+    note: Undated; the sources read do not give either shared task's submission deadline. The
+      MEDIQA-Chat overview was presented on 2023-07-14.
+
+tags:
+  - clinical-note-generation
+  - ambient-clinical-intelligence
+  - doctor-patient-dialogue
+  - summarization
+  - shared-task
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-scidata-aci-bench-2023
+    - src-arxiv-2306-02022-v1
+    - src-arxiv-2306-02022
+    - src-github-aci-bench-readme
+    - src-github-aci-bench-setup
+    - src-figshare-api-aci-bench
+    - src-acl-2023-clinicalnlp-1-52
+    - src-arxiv-2505-23802-v2
+    - src-medhelm-leaderboard-v4-schema
+    - src-arxiv-2610-08161-v1
+  sources_note: >
+    The Scientific Data version of record read as Europe PMC's full-text XML (a DOI, not archived), with
+    windows that keep out the worked examples of note text; the preprint's v1 PDF and its abstract page
+    (DOIs); the README at main, withheld from archiving because it spells out two people's e-mail addresses,
+    and SETUP.md at main; Figshare's API record (a DOI); the MEDIQA-Chat 2023 overview paper's PDF (a
+    DOI), with windows clear of its example conversations; MedHELM's paper and v4.0.0 schema, already
+    on main; and Symphony's v1 PDF (a DOI) as evidence of current use.
+  confidence: medium
+  review_checks:
+    - check: Domain. No leaf describes clinical documentation (note generation from a conversation
+        or a record). clinical-dialogue is filed as the nearest leaf, but its definition scores the
+        conduct of an exchange; radiology-report-generation is closer by output and requires
+        imaging. A missing-term gap proposing medicine-health/clinical-documentation is logged;
+        MedHELM's six Clinical Note Generation scenarios (DischargeMe, MIMIC-BHC and others) would
+        share the leaf.
+      field: domain.primary
+      source: src-medhelm-leaderboard-v4-schema
+      quote: '"subgroups": [ "dischargeme", "aci_bench", "mtsamples_procedures", "mimic_rrs", "mimic_bhc",
+        "chw_care_plan" ]'
+    - check: Family. medicine-health is primary with language/summarization secondary, on the
+        language exclusion test (language as the interface to clinical documentation). The paper
+        calls the task dialogue summarisation and the data was built for benchmarking summarisation
+        methods, which argues for language/summarization primary if the reviewer reads the
+        competence as summarisation itself.
+      field: domain
+      source: src-scidata-aci-bench-2023
+      quote: The data here is intended to be used for benchmarking methods related to
+        clinician-patient dialogue summarization.
+    - check: Identity. MEDIQA-Chat 2023 and MEDIQA-Sum 2023 are editions of the MEDIQA shared-task
+        series, organised by an overlapping group (three ACI-Bench authors among MEDIQA-Chat's
+        organisers), and ran on ACI-Bench's test sets before the corpus was released. They are
+        modelled here as events, subsets and as_used rows by the 04 S4 rule (the same items, scored
+        separately), not as editions of ACI-Bench. If MEDIQA is catalogued as a family, its 2023
+        edition should link here. MEDIQA-Sum's overview paper was not read.
+      field: events
+      source: src-scidata-aci-bench-2023
+      quote: Test 3 corresponds to CLEF MEDIQA-SUM 2023 Subtask C full-note generation.
+    - check: activity closed rests on the shared tasks' run submissions being ACI-Bench's channel.
+        If they are MEDIQA's channel rather than the benchmark's, no-submission-channel (download
+        and run, results in users' papers) fits better, and submission_process becomes
+        literature-only.
+      field: activity
+      source: src-acl-2023-clinicalnlp-1-52
+      quote: we added a new requirement to submit the code for a second evaluation of the outputs
+    - check: Test set 2 served MEDIQA-Chat Task C, note-to-dialogue generation, the reverse task,
+        while the paper scores note generation on all three test sets. The task block describes note
+        generation only; whether dialogue generation should be a subset with its own task was not
+        decided.
+      field: task
+      source: src-acl-2023-clinicalnlp-1-52
+      quote: This task addresses data augmentation through the generation of synthetic
+        doctor-patient conversations from full clinical notes.
+    - check: MEDCON is tagged reference-metric (a string-match F1 over UMLS concepts) and backs
+        factual-precision. Concept-set F1 with no assertion status counts a negated finding as a
+        match, so whether it checks asserted particulars one by one, as factual-precision's test
+        asks, is arguable.
+      field: capability
+      source: src-scidata-aci-bench-2023
+      quote: is performed using a string match algorithm applied to the UMLS concept database
+        through the QuickUMLS package
+    - check: designed_for_subjects lists domain-specialist-model and instruction-tuned-model, from
+        the paper's fine-tuned and prompted baselines; the paper does not say which it was designed
+        for.
+      field: designed_for_subjects
+    - check: data_provenance. model-generated rests on the notes being drafted by an automatic note
+        generation system before expert rewriting, and on the aci transcripts being ASR output;
+        expert-authored's exclusion (experts only reviewed items from elsewhere) could be read as
+        applying to the notes.
+      field: data.data_provenance
+      source: src-scidata-aci-bench-2023
+      quote: Our final dataset was distilled from encounters originally created for marketing
+        demonstration purposes.
+    - check: maintainer_type individual follows the holder test (a personal GitHub account and an
+        author-deposited Figshare record); the README's contacts are Microsoft staff, and
+        industry-lab may be the truer description of who keeps it.
+      field: governance.maintainer_type
+    - check: The paper compares ACI-Bench with real encounters and finds it shorter and probably
+        slightly easier, and the README reports uncorrected swapped speaker tags in some
+        transcripts. Neither is a revision, but users correcting the tags change the input.
+      field: data.refresh
+      source: src-github-aci-bench-readme
+      quote: Some ACI-BENCH subsets include swapped speaker tags (e.g., [patient], [doctor]) that
+        originate from the Automatic Speech Recognition (ASR) process.
+    - check: The size rows for the splits and the subset item counts come from the README and the
+        paper's Table 3; the corpus zip was not downloaded to count them.
+      field: data.size
+  personal_data_excluded:
+    - source: src-github-aci-bench-readme
+      what: The README's contact section, two named people's e-mail addresses spelled out with 'at'
+        and 'dot', and a third party's personal GitHub handle in a link. Both are kept out of the
+        extract and this entry, and the Source is withheld from archiving.
+    - source: src-figshare-api-aci-bench
+      what: The first creator's ORCID in the record's author list, kept out of the extract.
