@@ -1,0 +1,564 @@
+# data/benchmarks/medicine-health/kits.yaml
+#
+# P1-S6-T04, medicine-health entry 13. Filled from the KiTS19 challenge report (Heller et al., Medical Image
+# Analysis 2021), read as the text of its arXiv v2 PDF (1912.01054); the KiTS21 challenge report (arXiv
+# 2307.01984, v1 PDF); the KiTS23 and KiTS21 home pages on kits-challenge.org, scripts and styles stripped; the
+# KiTS23 MICCAI 2023 leaderboard, the JSON inside the iframe the KiTS23 page embeds; the READMEs of the three
+# official repositories (neheller/kits19, kits21 and kits23), each pinned at its 2026-05-13 head commit;
+# Hugging Face's API record of the imaging dataset those repositories download from; and the abstract page of a
+# 2025-2026 paper that evaluates on KiTS23 (arXiv 2511.04334). The kits19, kits21 and kits23 sites on
+# grand-challenge.org were opened for discovery only and are not cited. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+
+id: kits
+name: KiTS
+aliases:
+  - Kidney and Kidney Tumor Segmentation Challenge
+  - Kidney Tumor Segmentation Challenge
+  - KiTS19
+  - KiTS21
+  - KiTS23
+tagline: 'MICCAI kidney tumour challenge (2019, 2021, 2023): kidney, tumour and cyst segmentation in contrast-enhanced
+  CT.'
+description: >
+  The Kidney and Kidney Tumor Segmentation challenge, held with MICCAI in 2019 (Shenzhen), 2021
+  (Strasbourg) and 2023 (Vancouver) by a team based at the University of Minnesota, with
+  DKFZ's Helmholtz Imaging and the Cleveland Clinic from 2021. Systems segment the kidneys and kidney
+  tumours, and from 2021 renal cysts, in the preoperative contrast-enhanced CT of patients who had
+  surgery (and in 2023 also cryoablation) for a suspected renal malignancy. Each edition released a
+  labelled training set and kept a test set's labels: 210 training and 90 test cases in 2019, the same
+  300 cases for training and 100 test cases from the Cleveland Clinic in 2021, and 489 training and 110
+  new test cases in 2023, which added the nephrogenic contrast phase to the corticomedullary (late
+  arterial) one. KiTS19 ranked teams by the mean of kidney and tumour Dice. From 2021 the scores are
+  Dice and Surface Dice on three hierarchical evaluation classes (kidney and masses, masses, tumour),
+  averaged over cases and merged rank-then-aggregate. Teams receive the test imaging for a short window,
+  return predictions, and must submit a method paper first. KiTS19 kept an open leaderboard on
+  grand-challenge.org after the conference, but its test cases are now in the public training set; the
+  2021 and 2023 test labels are not in the public dataset. Papers in 2025-2026 report five-fold
+  cross-validation on the KiTS23 training set.
+self_description:
+  source: src-kits-challenge-kits23
+  quote: The 2023 Kidney and Kidney Tumor Segmentation challenge (abbreviated KiTS23) is a
+    competition in which teams compete to develop the best system for automatic semantic
+    segmentation of kidneys, renal tumors, and renal cysts.
+paper:
+  title: 'The state of the art in kidney and kidney tumor segmentation in contrast-enhanced CT imaging:
+    Results of the KiTS19 Challenge'
+  arxiv: '1912.01054'
+  doi: 10.1016/j.media.2020.101821
+  version_read: v2
+  source: src-arxiv-1912-01054-v2
+released: 2019-03-15
+released_note: The release of the KiTS19 training data, the first public step of the first edition;
+  the satellite event was at MICCAI 2019 in Shenzhen, on a date no cited source gives.
+released_source: src-arxiv-1912-01054-v2
+released_quote: The training data was released in full on March 15
+release_venue: MICCAI 2019
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/medical-imaging-segmentation
+  secondary:
+    - vision/segmentation
+domain_basis:
+  reason: Every edition scores voxel masks of clinically defined structures (kidney, tumour, cyst)
+    in clinical CT against reference segmentations drawn under expert review, which the
+    medicine-health inclusion test keeps primary although Dice is a vision metric.
+    vision/segmentation is secondary, as the vocabulary's rule for medical masks allows.
+  source: src-kits-challenge-kits23
+  quote: 'Kidney and Masses: Kidney + Tumor + Cyst Kidney Mass: Tumor + Cyst Tumor: Tumor only'
+domain_considered_and_rejected:
+  - term: vision/medical-imaging-cv
+    reason: KiTS calls itself a benchmark for 3D semantic segmentation methods too, but its targets
+      are clinically defined (kidneys, tumours suspected malignant, cysts) and clinicians set the
+      reference, which the term's exclusion test sends to medicine-health.
+  - term: medicine-health/medical-imaging-diagnostic
+    reason: Tumours and cysts are delineated and scored as masks, not detected as findings or
+      classified; the tumour-versus-cyst call enters only through the mask labels.
+capability:
+  - perception
+  - distribution-shift-generalization
+capability_basis:
+  perception:
+    reason: The input is a raw CT volume and the score measures the anatomy and lesions recovered
+      from it, voxel by voxel.
+    source: src-github-kits19-readme
+    quote: In the segmentation, a value of 0 represents background, 1 represents kidney, and 2
+      represents tumor.
+  distribution-shift-generalization:
+    reason: KiTS21 trained on University of Minnesota patients and scored every team on 100 patients
+      treated at a different institution, the Cleveland Clinic, with the label set unchanged, so
+      only the inputs move; KiTS23 adds a contrast phase absent from all earlier cases. The 2019
+      edition had no such shift (see review_checks).
+    source: src-arxiv-2307-01984-v1
+    quote: the KiTS21 test set was collected from an outside institution, challenging participants
+      to develop methods that generalize well to new populations
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The task and its label set stay fixed across the training and test institutions; the
+      vocabulary sends a move of inputs alone to distribution-shift-generalization.
+  - term: calibration-uncertainty
+    reason: KiTS21 released three annotations per region and sampled among them at test time, but
+      systems submit one hard label map and nothing scores an emitted uncertainty.
+
+evaluation_method:
+  - domain-metric
+  - entrant-relative-ranking
+evaluation_method_basis:
+  reason: Sorensen-Dice and Surface Dice are segmentation metrics with no meaning outside the field.
+    From 2021 the published place is rank-then-aggregate over the two metrics' rankings, so adding
+    or removing a team moves the others' places (entrant-relative-ranking); KiTS19's published
+    figure was the mean Dice itself.
+  source: src-kits-challenge-kits23
+  quote: The final leaderboard place will be determined by averaging the leaderboard places between
+    the two rankings
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: The ranking merges Dice and Surface Dice, but both are segmentation overlap metrics of
+      one method, which the term's exclusion test leaves out; the kidney and tumour Dice averaged in
+      2019 are one metric over two classes.
+  - term: human-expert-eval
+    reason: Clinicians set and review the reference masks, but no expert judges a submission; the
+      scoring is automatic.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: Entrants are automatic segmentation systems trained for this clinical task on the
+    challenge's training set; the vocabulary names tumour segmentation as this term's case.
+  source: src-kits-challenge-kits23
+  quote: The 2023 Kidney and Kidney Tumor Segmentation challenge (abbreviated KiTS23) is a
+    competition in which teams compete to develop the best system for automatic semantic
+    segmentation of kidneys, renal tumors, and renal cysts.
+as_used:
+  - protocol: Five-fold cross-validation on the 489 KiTS23 training cases, Dice reported per
+      hierarchical evaluation class and compared with the published KiTS23 results, with nothing
+      submitted to any board.
+    split: KiTS23 training set, in five folds
+    source: src-arxiv-2511-04334
+    quote: We evaluate the method on the KiTS23 renal cancer CT dataset using 5-fold
+      cross-validation.
+    note: A submanifold sparse convolutional network (arXiv 2511.04334, v1 November 2025, v2 May
+      2026). The test labels of the 2021 and 2023 editions are not public, so results after an
+      edition come from the training set.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers still produce results on the KiTS23 data; a paper first posted in November 2025 and
+    revised in May 2026 reports cross-validated Dice per evaluation class and compares it with the
+    KiTS23 entrants. The organisers moved the image downloads to Hugging Face in May 2026.
+  source: src-arxiv-2511-04334
+  quote: competitive with top KiTS23 approaches
+activity: leaderboard-live-no-round
+activity_note: The only standing board is KiTS19's on grand-challenge.org, scored on the 2019 test
+  cases whose labels have been public since KiTS21's training set. KiTS21 used grand-challenge.org
+  only for its submission round, and KiTS23 shows a static MICCAI 2023 leaderboard. No edition after
+  2023 is announced in the sources read.
+activity_basis:
+  reason: The KiTS19 README, unchanged on this point at its May 2026 head, points to a live
+    leaderboard for new submissions, and the KiTS19 report describes an indefinite open-leaderboard
+    phase. That board's page renders by script and its submission form needs an account, so whether
+    it takes entries today was not seen (see review_checks).
+  source: src-github-kits19-readme
+  quote: the live leaderboard for new submissions can be found [on grand-challenge.org]
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: A residual 3D U-Net in the nnU-Net framework (German Cancer Research Center), first in
+      KiTS19
+    source: src-arxiv-1912-01054-v2
+    observed_on: 2026-11-04
+    quote: they won by a considerable margin by submitting the predictions of the baseline+residual
+      connections model alone
+  - system: A coarse-to-fine nnU-Net cascade with a surface loss (Shanghai Jiao Tong University),
+      first in KiTS21
+    source: src-arxiv-2307-01984-v1
+    observed_on: 2026-11-04
+    quote: it was an nnU-Net trained with a sum of cross entropy and surface loss that ultimately
+      won the competition
+  - system: The NVIDIA team's entry, first on the KiTS23 MICCAI 2023 leaderboard (mean Dice 0.835,
+      mean Surface Dice 0.723)
+    source: src-kits-challenge-kits23-results
+    observed_on: 2026-11-04
+    quote: '"affiliations": "NVIDIA", "average_rank": 1.0, "mean_average_dice": 0.83543322, "mean_average_sd":
+      0.72346772,'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Reference segmentations drawn by trained annotators and reviewed or guided
+  by experts (attending radiologists, urologic cancer surgeons and oncology fellows), withheld for
+  each edition's test cases. KiTS21 drew three delineations per region and scored against a random
+  sample of their combinations.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: Teams can run the official metric and ranking code on the training set, but the scores
+    that rank an edition need the test labels, which the organisers keep for 2021 and 2023; the
+    public imaging dataset holds only the training cases.
+  source: src-hf-api-kits-challenge-imaging
+  quote: '{"rfilename":"segmentations/case_00588.nii.gz"}],"createdAt":"2026-05-13T13:03:16.000Z"'
+
+task:
+  exists: true
+  input:
+    - one patient's preoperative contrast-enhanced abdominal CT volume (NIfTI), in the late arterial
+      (corticomedullary) phase, or from 2023 also the nephrogenic phase
+  output: A voxel label map of the same shape and affine as the input, 0 background, 1 kidney, 2
+    tumour and, as a third class from 2021, cyst (3 in KiTS23).
+  scoring: Per test case, Sorensen-Dice and Surface Dice on the hierarchical evaluation classes
+    (kidney and masses, masses, tumour), averaged over cases; teams are ranked on each average and
+    the two ranks averaged, with tumour Dice breaking ties. KiTS19 ranked by the mean of kidney and
+    tumour Dice over the 90 test cases.
+  tests_hidden_from_system: true
+  source: src-kits-challenge-kits23
+  quote: The final leaderboard place will be determined by averaging the leaderboard places between
+    the two rankings
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The KiTS23 training imaging is on Hugging Face without a gate and its segmentations
+    in the GitHub repository, both CC BY-NC-SA 4.0; no registration is needed. During each edition
+    the test imaging went to teams for a short window (two weeks in 2019, 48 hours in 2021, 24 hours
+    in 2023) with its labels withheld.
+  access_basis:
+    reason: Teams receive the test imaging and return predictions, which the organisers score
+      against labels the teams never see; the inputs leave the organisers, the labels do not.
+    source: src-kits-challenge-kits23
+    quote: After receiving it, you must then return your predictions by replying with an attachment
+      within 24 hours.
+  access_by_phase:
+    during_edition: Training images and labels public; test imaging released to teams for a short
+      submission window, test labels withheld.
+    after_edition: KiTS19's 90 test cases were released with labels as part of the KiTS21 training
+      set. The KiTS21 and KiTS23 test cases are not in the public dataset (Hugging Face lists case
+      numbers 0-299 and 400-588, the 489 KiTS23 training cases), and no source read says they will
+      be.
+    after_edition_source: src-hf-api-kits-challenge-imaging
+    after_edition_quote: '{"rfilename":"segmentations/case_00299.nii.gz"},{"rfilename":"segmentations/case_00400.nii.gz"}'
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: Three dated editions, each ranked on a test set new to it (KiTS19's 90 cases, KiTS21's
+      100 from another institution, KiTS23's 110), with earlier test cases folded into the next
+      training set.
+    source: src-kits-challenge-kits23
+    quote: The 110 cases in the KiTS23 test set, on the other hand, have not yet been used for any
+      challenge.
+  data_provenance:
+    - real-world-instrument
+    - crowd-authored
+  data_provenance_note: Routine clinical CT, often acquired at referring hospitals before surgery at
+    M Health Fairview (and, for the KiTS21 test set, the Cleveland Clinic). The contours were drawn
+    by students under the clinical chair's supervision (2019), by laypeople following trainees'
+    guidance pins under expert review (2021), and by trainees (residents, medical students,
+    undergraduates) with experts consulted (2023), which the vocabulary reads as annotators who
+    learned the domain for the task.
+  data_provenance_source: src-kits-challenge-kits23
+  data_provenance_quote: These same Trainees then place 2D contours around each region of interest.
+    In case of any doubt, experts are consulted.
+  contamination_risk: medium
+  contamination_risk_note: Each edition's test labels were withheld during its round, and the KiTS23
+    test set was new. But KiTS19's test cases are in every later training set, so the open KiTS19
+    board scores cases whose labels are public, and anyone training on KiTS23 data has seen them.
+    Teams ran their own models on the test imaging, so only the 2023 top five's containers were
+    checked against their predictions. The KiTS21 and KiTS23 labels have not been seen in public.
+  contamination_evidence:
+    - source: src-arxiv-2307-01984-v1
+      stance: supports
+      quote: It is important to note that these 300 cases were the same 300 that were split between
+        the training (210) and test (90) sets for the KiTS19 challenge
+    - source: src-kits-challenge-kits23
+      stance: against
+      quote: The 110 cases in the KiTS23 test set, on the other hand, have not yet been used for any
+        challenge.
+  ceiling_anchor_type: noise-ceiling
+  ceiling_anchor_type_basis:
+    reason: The reports compare the winners with the agreement between annotators on the reference
+      masks, measured on 30 re-annotated KiTS19 cases (kidney Dice 0.983, tumour 0.923), and KiTS21
+      cites a tumour inter-rater agreement of 0.88.
+    source: src-arxiv-1912-01054-v2
+    quote: The winning team achieved a Dice of 0.974 for kidney and 0.851 for tumor, approaching the
+      inter-annotator performance on kidney (0.983) but falling short on tumor (0.923).
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: The same licence for every edition (KiTS19's report gives it too); the
+    organisers say training a model only to compete is not commercial use, and invite industry
+    teams.
+  dataset_licence_source: src-kits-challenge-kits23
+  dataset_licence_quote: The image and segmentation data are available under a CC BY-NC-SA 4.0
+    license.
+  size:
+    - count: 599
+      unit: cases (489 training, 110 test)
+      subset: KiTS23
+      source: src-kits-challenge-kits23
+      quote: The dataset is composed of 599 cases with 489 allocated to the training set and 110 in
+        the test set.
+    - count: 100
+      unit: test cases (Cleveland Clinic); the 300 training cases are KiTS19's
+      subset: KiTS21
+      source: src-arxiv-2307-01984-v1
+      quote: The test set used for the KiTS21 challenge consisted of 100 cases of patients who had
+        been treated with partial or radical nephrectomy for fear of renal malignancy at the
+        Cleveland Clinic.
+    - count: 300
+      unit: patients (210 training, 90 test)
+      subset: KiTS19
+      source: src-arxiv-1912-01054-v2
+      quote: This left the 300 patients comprising the KiTS19 dataset.
+  submission_limit:
+    max_submissions: 1
+    period_days: 0
+    per: team, to the KiTS19 final leaderboard (two approximate scores on half the test set were
+      allowed before it); the 2021 and 2023 rules read state no number
+    source: src-arxiv-1912-01054-v2
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The KiTS organisers at the University of Minnesota Robotics Institute, with Helmholtz
+    Imaging at the German Cancer Research Center (DKFZ) and the Cleveland Clinic's Urologic Cancer
+    Program from 2021
+  maintainer_basis:
+    reason: The KiTS23 and KiTS21 pages name the same three-institution collaboration and largely
+      the same organisers; KiTS19 was run from Minnesota with its clinical chair. The repositories
+      and the imaging dataset sit in the lead organiser's own GitHub and Hugging Face accounts.
+    source: src-kits-challenge-kits23
+    quote: This project is a collaboration between the University of Minnesota Robotics Institute
+      (MnRI)
+  maintainer_type: academic-lab
+  maintainer_type_note: conference-workshop was considered, as a MICCAI challenge, but the
+    organising team stays largely the same across the three editions rather than re-forming.
+    individual was considered because the repositories and the imaging dataset are in one person's
+    accounts; the pages state the University of Minnesota-led collaboration as the project.
+  submission_process:
+    - held-out-server
+    - publication-gated
+  submission_process_note: Teams download the test imaging in a window and send predictions, which
+    the organisers score against the withheld labels. A method paper is a condition of being scored
+    (a manuscript of at least one page in 2019, a peer-reviewed short paper in 2021, a paper draft
+    by 14 July in 2023). KiTS21 planned containerised submission on grand-challenge.org and dropped
+    it during the round (history). In 2023 only the top five provided a container, to verify their
+    predictions before the report.
+  submission_process_source: src-arxiv-2307-01984-v1
+  submission_process_quote: KiTS21 instituted a policy that short papers accompanying submissions to
+    the challenge would undergo a peer review process
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-1912-01054-v2
+      quote: On July 15, the test imaging was released (without labels) and the submission period
+        was opened until July 29.
+    - flag: prize-sponsored-by-industry
+      source: src-arxiv-2307-01984-v1
+      quote: The monetary prize for the winning team was graciously sponsored by Histosonics, Inc.
+  independence_flags_note: The organisers hold the test labels and score every entry. KiTS21's
+    $5,000 prize was paid by Histosonics, a medical-device company; KiTS23 also awarded $5,000, with
+    no sponsor named, and acknowledges a research collaboration with Johnson & Johnson Enterprise
+    Innovation and a Cisco grant. Industry teams entered (Lenovo, IBM and NVIDIA in 2019; NVIDIA won
+    2023), but no source shows an entrant funding the challenge.
+    maintainer-competes-on-own-benchmark was weighed and not flagged (see review_checks).
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Teams train and run their models on their own hardware and submit predictions,
+    and no edition fixes a machine; KiTS21's planned containers hit grand-challenge.org's time and
+    memory limits and were dropped. Not guessed.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The edition rankings rest on test labels that only the organisers hold; the public
+      dataset ends at the training cases.
+    source: src-hf-api-kits-challenge-imaging
+    quote: '{"rfilename":"segmentations/case_00299.nii.gz"},{"rfilename":"segmentations/case_00400.nii.gz"}'
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: The kits23 package's metric and ranking code (kits23_compute_metrics for Dice and Surface
+    Dice per HEC, ranking.py for rank-then-aggregate); KiTS21's lives in that repository's
+    evaluation folder
+  harness_note: Read, not run. The KiTS23 page points to /kits23/evaluation/ for the implementation
+    of the metrics and ranking used on the test set.
+  harness_source: src-github-kits23-readme
+  harness_quote: We provide a reference implementation for the metrics and the ranking scheme so
+    that participants know exactly how their algorithm is going to be validated.
+  code_licence: MIT
+  code_licence_note: The kits23 README states MIT, and GitHub's metadata gives MIT for kits21 and
+    NOASSERTION for kits19 (read 2026-11-04).
+  code_licence_source: src-github-kits23-readme
+  code_licence_quote: The code in this repository is under an MIT License.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which edition (the classes, contrast phases, test institution, metrics and
+  # ranking change between 2019, 2021 and 2023) and which split (an edition's hidden test set, the KiTS19 open
+  # board, or cross-validation on a training set that contains KiTS19's test cases); and what the entrant was
+  # trained on (KiTS23 allowed outside data and weights public before 14 April 2023).
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://kits-challenge.org/kits23/
+
+versions:
+  - version: '2019'
+    label: KiTS19 (MICCAI 2019, Shenzhen)
+    version_kind: edition
+    released: 2019-03-15
+    items: 300
+    changes: The first edition, kidney and tumour labels in late arterial CT of 300 surgical
+      patients, 210 training and 90 test cases, ranked by mean kidney and tumour Dice; an open
+      leaderboard on grand-challenge.org afterwards.
+    breaking: true
+    superseded_by: '2021'
+    frozen: true
+    sources:
+      - src-arxiv-1912-01054-v2
+      - src-github-kits19-readme
+  - version: '2021'
+    label: KiTS21 (MICCAI 2021, Strasbourg)
+    version_kind: edition
+    released: 2021-07-01
+    items: 400
+    changes: All 300 KiTS19 cases as training data and 100 new test cases from the Cleveland Clinic;
+      a cyst class added (ureters, arteries and veins dropped from the plan); three delineations per
+      region, annotated in public view; Dice and Surface Dice on hierarchical evaluation classes,
+      ranked rank-then-aggregate. The training set went through dataset versions to 2.2.3, frozen on
+      15 July 2021.
+    breaking: true
+    supersedes_version: '2019'
+    superseded_by: '2023'
+    frozen: true
+    sources:
+      - src-arxiv-2307-01984-v1
+      - src-github-kits21-readme
+      - src-kits-challenge-kits21
+  - version: '2023'
+    label: KiTS23 (MICCAI 2023, Vancouver)
+    version_kind: edition
+    released: 2023-04-14
+    items: 599
+    changes: 489 training cases (KiTS21's 300 and the KNIGHT challenge's test cases among them) and
+      110 new test cases; nephrogenic-phase scans beside corticomedullary ones; one delineation per
+      region; the same classes, HECs and metrics as 2021; outside public data allowed.
+    breaking: true
+    supersedes_version: '2021'
+    frozen: true
+    sources:
+      - src-kits-challenge-kits23
+      - src-github-kits23-readme
+      - src-hf-api-kits-challenge-imaging
+
+history:
+  - event: channel-moved
+    field: governance.submission_process
+    from: containerized-algorithm-submission on grand-challenge.org, as KiTS21 planned
+    to: held-out-server, predictions returned within a 48-hour test-imaging window
+    source: src-arxiv-2307-01984-v1
+    quote: More than half of the teams who submitted their containers exhausted either the time or
+      memory constraints
+    note: During the KiTS21 submission period (late August to September 2021); the report does not
+      date the switch more closely. KiTS23 kept prediction submission and asked containers only of
+      the top five.
+
+tags:
+  - kidney
+  - kidney-tumour
+  - ct
+  - segmentation
+  - urologic-oncology
+  - challenge
+  - miccai
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1912-01054-v2
+    - src-arxiv-2307-01984-v1
+    - src-kits-challenge-kits23
+    - src-kits-challenge-kits23-results
+    - src-kits-challenge-kits21
+    - src-github-kits19-readme
+    - src-github-kits21-readme
+    - src-github-kits23-readme
+    - src-hf-api-kits-challenge-imaging
+    - src-arxiv-2511-04334
+  sources_note: >
+    The two challenge reports (arXiv PDFs, DOIs, not archived) read as text with windows that keep the
+    contact line and the authors' names out. The KiTS23 and KiTS21 pages on kits-challenge.org (no
+    robots.txt) were read with scripts and styles stripped and are withheld from archiving for the
+    organiser's e-mail address they print; the KiTS23 leaderboard frame is withheld for the submitters'
+    names in its rows, and the kits23 README for the e-mail address beside its data licence. The kits19
+    and kits21 READMEs and the Hugging Face record are pending archive. kits-challenge.org's root
+    redirects to the KiTS23 page. The grand-challenge.org sites were opened for discovery only.
+  confidence: medium
+  review_checks:
+    - check: One entry for the series, with KiTS19, KiTS21 and KiTS23 as editions. Each brought new
+        test data on the same task, so none is a revision, although KiTS21 also changed the label
+        set (cysts), the annotation protocol and the metrics. The KNIGHT challenge (a classification
+        task whose cases KiTS23 reuses) was not read; confirm it is a separate benchmark rather than
+        a KiTS edition or subset.
+      field: versions
+    - check: activity leaderboard-live-no-round rests on the KiTS19 README and report. The
+        grand-challenge.org board renders by script and its submission form needs an account, so
+        whether it accepts entries now was not seen; that board scores cases whose labels are
+        public. If it no longer takes entries, closed (or between-rounds if a further edition is
+        planned; none was found, and kits-challenge.org's root redirects to KiTS23).
+      field: activity
+      source: src-github-kits19-readme
+      quote: the live leaderboard for new submissions can be found [on grand-challenge.org]
+    - check: distribution-shift-generalization rests on KiTS21's test set from another institution
+        (and KiTS23's new contrast phase); the score on those cases is the edition's whole test
+        score, not reported beside an in-distribution one. KiTS19 had no shift, and the KiTS23 test
+        cases' institution was not read. Confirm the term at the family level.
+      field: capability
+      source: src-arxiv-2307-01984-v1
+      quote: the KiTS21 test set was collected from an outside institution, challenging participants
+        to develop methods that generalize well to new populations
+    - check: Test-set labels. KiTS19's were released inside the KiTS21 training set; the KiTS21 and
+        KiTS23 test cases are absent from the Hugging Face dataset, but no source read states a
+        release policy, and the case numbers 300-399 being KiTS21's test set is an inference from
+        the gap. No KiTS23 challenge report was found (its leaderboard shows the paper as coming
+        soon).
+      field: data.access_by_phase
+      source: src-hf-api-kits-challenge-imaging
+      quote: '{"rfilename":"segmentations/case_00299.nii.gz"},{"rfilename":"segmentations/case_00400.nii.gz"}'
+    - check: crowd-authored rests on the contours being drawn by laypeople (2021) and trainees (2019
+        and 2023) under expert supervision. The 2023 trainees include residents, whom a reviewer may
+        count as specialists, which would add expert-authored.
+      field: data.data_provenance
+      source: src-kits-challenge-kits23
+      quote: 'Trainees: Residents, medical students, and undergraduates planning to study medicine.'
+    - check: maintainer_type academic-lab against individual (the repositories and the imaging
+        dataset are in the lead organiser's personal accounts) and conference-workshop (a MICCAI
+        challenge whose team stays largely the same).
+      field: governance.maintainer_type
+    - check: maintainer-competes-on-own-benchmark not flagged. The KiTS19 winners were at DKFZ,
+        whose Helmholtz Imaging co-organised KiTS21 and KiTS23, and the nnU-Net framework from the
+        same group dominated both later leaderboards; no source read shows an organiser's team
+        ranked in an edition it ran.
+      field: governance.independence_flags
+    - check: compute_tier is null; no edition sets the hardware, and KiTS21's container limits on
+        grand-challenge.org were not stated in the sources read.
+      field: execution.compute_tier
+    - check: The MICCAI venue dates and the KiTS21 and KiTS23 challenge proposals (KiTS21's on
+        Zenodo, doi:10.5281/zenodo.3714971) were not read; the KiTS19 satellite-event date appears
+        only on the grand-challenge.org page, which is discovery-only here.
+      field: versions
+  personal_data_excluded:
+    - source: src-kits-challenge-kits23
+      what: The lead organiser's e-mail address and the organisers' and annotation team's names.
+    - source: src-kits-challenge-kits23-results
+      what: The submitters' names in every leaderboard row.
+    - source: src-github-kits23-readme
+      what: The lead organiser's e-mail address in the licence section.
+    - source: src-arxiv-1912-01054-v2
+      what: The corresponding author's telephone number and e-mail address.
