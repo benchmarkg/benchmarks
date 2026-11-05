@@ -1,0 +1,534 @@
+# data/benchmarks/audio-speech/birdset.yaml
+#
+# P1-S7-T04, audio-speech entry 19. Filled from the paper's v6 PDF (the ICLR 2025 version, arXiv 2403.10380v6) and
+# its abstract page; the repository README at commit 86a0777; the Hugging Face dataset card at revision f1e476b and
+# the dataset's API record (not gated, no terms accepted); the BirdSet Leaderboard Space's API record and its
+# src/about.py at commit 0d9920f; the API record of the leaderboard's results dataset; and the v2 PDF of Perch 2.0
+# (arXiv 2508.04665v2, January 2026) as evidence of current use. GitHub's repository metadata, the Space's
+# src/envs.py, the requests dataset's API record and the abstract pages of v1, v3 and v4 were read and are not
+# quoted Sources. The OpenReview record (ICLR 2025) answered with a challenge page and was not read. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The entry is the benchmark as its paper defines it: segment-based multi-label species classification on seven
+# strongly labelled soundscape test sets (with POW for validation), after training on Xeno-canto focal recordings
+# in one of three scenarios. The test sets are subsets; five of them were BirdCLEF test data in 2019-2022 (see
+# review_checks on lifeclef).
+
+id: birdset
+name: BirdSet
+aliases:
+  - BirdSet benchmark
+tagline: Bird species in 5-second soundscape segments from eight sites, after training on 528k
+  Xeno-canto focal recordings.
+description: >
+  A benchmark dataset collection for audio classification in avian bioacoustics, from the DBD research
+  group (the Deep Bird Detect project; University of Kassel, Kiel University and Fraunhofer IEE), published
+  at ICLR 2025. Training data is a curated snapshot of Xeno-canto, the citizen-science platform for bird
+  recordings: 528,434 focal recordings of 9,734 species (XCL), a 409-species subset covering the test
+  sets (XCM), and a dedicated subset for each test set. Evaluation uses fully annotated passive acoustic
+  monitoring soundscapes from eight project sites, released earlier on Zenodo by their own authors: seven
+  test sets (Amazon Basin, Colombia and Costa Rica, Hawai'i, High Sierra Nevada, NIPS4BPlus, Sapsucker
+  Woods, Sierra Nevada) and Powdermill for validation. Each soundscape is cut into 5-second segments labelled
+  from the annotation timestamps, and a model scores every species in a segment; the paper reports class-mean
+  average precision, AUROC and top-1 accuracy per test set and averaged over them, in three training scenarios
+  (large on XCL, medium on XCM, dedicated fine-tuning). Training on focal recordings and testing on soundscapes
+  builds a covariate and task shift into every result. Data and a codebase are on Hugging Face and GitHub,
+  with a Hugging Face leaderboard Space that holds only the maintainers' baselines and Perch. Five of
+  the test sets were BirdCLEF test data in 2019-2022.
+self_description:
+  source: src-arxiv-2403-10380-v6
+  quote: Therefore, we introduce BirdSet, a largescale benchmark dataset for audio classification
+    focusing on avian bioacoustics.
+external_ids:
+  huggingface: DBD-research-group/BirdSet
+  arxiv: '2403.10380'
+paper:
+  title: 'BirdSet: A Large-Scale Dataset for Audio Classification in Avian Bioacoustics'
+  arxiv: '2403.10380'
+  version_read: v6
+  source: src-arxiv-2403-10380-v6
+released: 2024-03-15
+released_note: arXiv v1. The Hugging Face dataset repository was created on 2024-02-01
+  (src-hf-api-birdset), before the paper; v1 was titled "BirdSet - A Multi-Task Benchmark for
+  Classification in Avian Bioacoustics" (abstract page of v1, not a quoted Source).
+released_source: src-arxiv-2403-10380
+released_quote: '[Submitted on 15 Mar 2024 (v1), last revised 18 May 2025 (this version, v6)]'
+release_venue: ICLR 2025 (spotlight)
+release_venue_source: src-arxiv-2403-10380
+release_venue_quote: 'Comments: accepted as spotlight @ICLR2025'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: audio-speech/bioacoustics
+  secondary:
+    - earth-climate/ecology-biodiversity
+domain_basis:
+  reason: The scored task is identifying bird species from field-recorded audio, the bioacoustics
+    leaf's definition, and the benchmark's own claim is audio classification, one method in one
+    modality. ecology-biodiversity's exclusion test sends a single species-call task scored as audio
+    to bioacoustics with ecology secondary, as the family's birdclef-plus example does; the paper
+    ties the task to biodiversity monitoring.
+  source: src-arxiv-2403-10380-v6
+  quote: The primary task in avian bioacoustics is the multi-label classification in PAM, comparable
+    to classification in AudioSet.
+domain_considered_and_rejected:
+  - term: audio-speech/audio-event-understanding
+    reason: BirdSet presents itself as a resource for general audio classification and compares
+      itself with AudioSet, but its labels are bird species in field recordings, which the
+      bioacoustics leaf names.
+  - term: audio-speech/audio-event-detection-localization
+    reason: The unprocessed test split carries each vocalisation's start and end, and event
+      detection is named as a further use, but the benchmark scores fixed 5-second segments with no
+      onset or boundary in the score.
+capability:
+  - perception
+  - distribution-shift-generalization
+capability_basis:
+  perception:
+    reason: The input is a soundscape segment's audio and the score measures which species were
+      recovered from it.
+    source: src-arxiv-2403-10380-v6
+    quote: Each segment is an independent test sample containing none (0-vector), one or multiple
+      species.
+  distribution-shift-generalization:
+    reason: Models train on focal recordings (directional microphone, one bird) and are scored only
+      on passive soundscapes from eight held-out sites, with each test set reported on its own. The
+      species label set is unchanged; the inputs move.
+    source: src-arxiv-2403-10380-v6
+    quote: This gap is particularly pronounced in avian bioacoustics due to the use of focals for
+      training and soundscapes for testing.
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: The paper names a task shift from multi-class focals to multi-label soundscapes, and AST
+      and EAT start from AudioSet weights, but the species label set stays and only the inputs move,
+      which the term's exclusion test gives to distribution-shift-generalization; no transfer is
+      reported as a quantity.
+  - term: sample-efficiency
+    reason: Few-shot learning is listed among further uses, but no training budget is fixed or
+      scored.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: Class-mean average precision, AUROC and top-1 accuracy over each test set's segments, all
+    threshold-free statistics of the score ranking against the segment labels, with no IoU sweep.
+  source: src-arxiv-2403-10380-v6
+  quote: We use threshold-free metrics to assess generalization without threshold-tuning
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: cmAP is the bioacoustics community's name, but it is clip-level average precision per
+      class averaged over classes, not mAP over IoU thresholds, which is the only mAP the
+      domain-metric term keeps.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The intended entrants are bird-sound classifiers trained on the benchmark's Xeno-canto
+    sets (large, medium or dedicated) or bioacoustic models such as Perch, a task defined by avian
+    ecology, a discipline in the earth-climate family; general audio models (AST, EAT, Wav2Vec2)
+    enter only after training on the bird data.
+  source: src-arxiv-2403-10380-v6
+  quote: In large training (LT) and medium training (MT), we train models on XCL and XCM,
+    respectively.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The entrants are supervised classifiers trained on the benchmark's own training sets,
+      but the term's exclusion test sends a task a discipline defines to domain-specialist-model, as
+      lifeclef's BirdCLEF+ classification did.
+as_used:
+  - protocol: Perch 2.0's pretrained classification head applied directly to the test segments, with
+      no fine-tuning, reporting mean AUROC, cmAP and top-1 accuracy over the test sets and per set
+      in an appendix.
+    split: The paper calls BirdSet six datasets; its per-dataset table lists PER, NES, UHH, HSN, NBP
+      and SSW.
+    source: src-arxiv-2508-04665-v2
+    quote: In our evaluations we forgo fine-tuning and simply use the predictions of our prototype
+      learning classifier predictions directly.
+    note: Google DeepMind's January 2026 v2. Its comparison table mixes protocols, and it flags that
+      the BirdMAE-L row it reports was tuned on HSN, so the rows are not like for like
+      (comparability).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the benchmark by others, for example Perch 2.0 (Google
+    DeepMind, v2 of January 2026), which reports a new best AUROC on it. The maintainers' own
+    leaderboard has had no new row since September 2024, which is activity and maintenance evidence,
+    not lifecycle.
+  source: src-arxiv-2508-04665-v2
+  quote: Perch 2.0 obtains state-of-the-art performance on the BirdSet and BEANS benchmarks.
+activity: closed
+activity_note: The README still invites submissions to the Hugging Face leaderboard, but the Space
+  that takes them was in a runtime error on 2026-11-05, last modified 2025-02-20, and its results
+  dataset holds only the maintainers' rows and Perch, unchanged since 2024-09-30. No maintainer
+  statement of a pause was found; see review_checks.
+activity_basis:
+  reason: A submission route existed (a request form on the Space, checked by the maintainers) and
+    none can be used now, since the Space does not run.
+  source: src-hf-api-birdset-leaderboard
+  quote: '"stage":"RUNTIME_ERROR"'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Perch 2.0 (Google DeepMind), pretrained head, random-window variant
+    source: src-arxiv-2508-04665-v2
+    observed_on: 2026-11-05
+    quote: Perch 2.0 - Random Pre 0.908 0.431 0.665
+  - system: ConvNeXt trained on XCL (the paper's large-training baseline)
+    source: src-arxiv-2403-10380-v6
+    observed_on: 2026-11-05
+    quote: The AUROC metric shows that our ConvNext implementation consistently outperforms other
+      models across datasets in the LT scenario
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The expert annotations of the soundscape datasets (time and frequency
+  boxes per vocalisation), turned into 5-second segment labels. They are published with the test
+  audio, not withheld.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The training and test sets download from Hugging Face without an account, and the codebase
+    carries the training and evaluation protocols; anyone can train and score.
+  source: src-arxiv-2403-10380-v6
+  quote: with standardized training and evaluation protocols enables reproducing our results
+
+task:
+  exists: true
+  input:
+    - a 5-second segment of a passive acoustic monitoring soundscape, resampled to 32 kHz
+  output: A score for each species in the test set's class list; a segment can hold none, one or
+    several species.
+  scoring: Class-mean average precision (macro over classes), AUROC and top-1 accuracy over each
+    test set's segments, reported per test set and averaged over them. At inference the model's
+    logits are restricted to the species present in the test sets.
+  source: src-arxiv-2403-10380-v6
+  quote: we divide each recording into 5-second segments and assign the labels based on ground truth
+    timestamps
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The whole collection, training and test audio with labels, is a public, ungated Hugging
+      Face dataset, loaded by name with no account or agreement.
+    source: src-hf-api-birdset
+    quote: '"gated":false'
+  refresh: static
+  refresh_basis:
+    reason: The paper fixes the test sets for comparability and plans no updates. The dataset card's
+      changelog records added taxonomy metadata (2024-11-27), a download fix (2024-12-06) and a
+      loader update (2025-09-10), none of which changes the test segments or their labels.
+    source: src-arxiv-2403-10380-v6
+    quote: Updates to the dataset have not yet been planned to ensure the comparability of the
+      benchmark.
+  data_provenance:
+    - inherited-from-constituents
+    - curated-public-database
+  data_provenance_note: The test and validation soundscapes are existing datasets, used as their
+    authors released them on Zenodo (NIPS4BPlus from GitHub), each annotated by ornithologists or
+    other experts. The training sets are a curated 2024-03-10 snapshot of Xeno-canto, whose
+    recordings and species labels come from citizen-science recordists, with all no-derivatives
+    licences dropped.
+  data_provenance_source: src-arxiv-2403-10380-v6
+  data_provenance_quote: The data was obtained from third-party sources, primarily the open-source
+    platforms XC for training and Zenodo for testing datasets.
+  contamination_risk: medium
+  contamination_risk_note: The test soundscapes have been public on Zenodo since before the
+    benchmark, and five were BirdCLEF test data, so a bioacoustic model trained on BirdCLEF or
+    Zenodo soundscapes may have seen them. The paper itself left BirdNET out of its baselines for
+    this reason. Xeno-canto focal training data does not contain the soundscapes. No measurement was
+    found.
+  contamination_risk_source: src-arxiv-2403-10380-v6
+  contamination_risk_quote: exclude BirdNET (Kahl et al., 2021b) due to potential test data leakage
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: cmAP, AUROC and top-1 accuracy are bounded at 1, and no human, measured
+    or oracle ceiling is published. Annotations of dense dawn choruses are imperfect and segment
+    labels are assigned by a 0.5-second rule, so the achievable score is below 1 by an unmeasured
+    amount.
+  dataset_licence: CC-BY-NC-4.0
+  dataset_licence_note: The Hugging Face repository declares CC BY-NC 4.0, but the paper states the
+    collection is CC BY-NC-SA, with each Xeno-canto training recording under its own CC licence (no
+    ND), the test sets CC BY 4.0 and the validation set CC0 1.0 (see review_checks).
+  dataset_licence_source: src-hf-api-birdset
+  dataset_licence_quote: '"license:cc-by-nc-4.0"'
+  size:
+    - count: 8
+      unit: strongly labelled soundscape evaluation datasets (seven test sets and POW for
+        validation)
+      source: src-arxiv-2403-10380-v6
+      quote: across eight strongly labeled evaluation datasets
+    - count: 322000
+      unit: 5-second evaluation segments (rounded)
+      note: The paper's rounded figure. The per-set test_5s counts sum to 317,756 over the seven
+        test sets and 322,316 with POW's 4,560 (see subsets).
+      source: src-arxiv-2403-10380-v6
+      quote: BirdSet (eval) 322k 5s
+    - count: 170000
+      unit: annotated vocalisations in over 400 hours of soundscapes (rounded)
+      source: src-arxiv-2403-10380-v6
+      quote: over 400 hours of PAM recordings with 170,000 annotated vocalizations across eight
+        unique project sites for evaluation
+    - count: 528434
+      unit: focal training recordings over 9,734 species
+      subset: XCL (complete Xeno-canto snapshot)
+      source: src-github-birdset-readme
+      quote: Complete Xeno-Canto snapshot with focals for large (pre-) training. | 528,434 | - | - |
+        9,734 |
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The DBD research group (Deep Bird Detect project; University of Kassel, with Kiel
+    University and Fraunhofer IEE)
+  maintainer_basis:
+    reason: The paper names the group as host and maintainer; it owns the GitHub organisation and
+      the Hugging Face dataset and Space.
+    source: src-arxiv-2403-10380-v6
+    quote: The dataset will be supported, hosted, and maintained by the DBD-researchgroup, initiated
+      by the Deep Bird Detect project.
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-verified
+  submission_process_note: Entrants evaluate their own model and file a request on the Space; the
+    maintainers check it, and ask for a public model so they can check the result, before approving.
+    In practice the board holds only the maintainers' rows, and most results appear in papers.
+  submission_process_source: src-hf-birdset-leaderboard-about
+  submission_process_quote: We will then check your request and approve it if everything is alright.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-hf-api-birdset-leaderboard-results
+      quote: '"rfilename":"DBD-research-group-ConvNeXT-XCL/'
+  independence_flags_note: Fifteen of the leaderboard's sixteen result folders are the maintainers'
+    own models (five architectures in three training scenarios); the sixteenth is Perch, which the
+    maintainers ran. A BirdSet co-author leads the BirdCLEF overviews whose test data BirdSet
+    reuses.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, labels, code and checkpoints are public, and training and scoring run without a
+      human or maintainer step. Large training needs 480 GB of XCL and multi-GPU time, which is
+      cost, not a blocker.
+    source: src-github-birdset-readme
+    quote: Additionally, the datasets are quite large (90GB for XCM and 480GB for XCL).
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: DBD-research-group/BirdSet (PyTorch Lightning and Hydra; birdset/train.py and
+    birdset/eval.py with the paper's experiment configs)
+  harness_source: src-github-birdset-readme
+  harness_quote: provides comprehensive support tool for data preparation, model training, and
+    evaluation
+  code_licence: BSD-3-Clause
+  code_licence_note: GitHub's licence metadata for DBD-research-group/BirdSet, read 2026-11-05; not
+    a quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the training scenario (LT on XCL, MT on XCM, dedicated fine-tuning, or outside
+  # pretraining such as Perch's, which the leaderboard labels separately) and which test sets enter the average
+  # (the paper's seven; Perch 2.0 averages six, and one comparator was tuned on HSN).
+  material_extra:
+    - training_data_policy
+    - subset_used
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper reports each metric per test set and a score averaged over the test sets for
+    each training scenario; the leaderboard takes per-set and average ('avg') submissions. No single
+    metric is named the headline.
+  source: src-arxiv-2403-10380-v6
+  quote: we compute the aggregate performance score averaged across the complete benchmark
+headline_metric: null
+
+homepage: https://huggingface.co/datasets/DBD-research-group/BirdSet
+repository: https://github.com/DBD-research-group/BirdSet
+dataset_url: https://huggingface.co/datasets/DBD-research-group/BirdSet
+leaderboard_url: https://huggingface.co/spaces/DBD-research-group/BirdSet-Leaderboard
+
+subsets:
+  - id: birdset#per
+    label: PER, Amazon Basin (Peru) soundscapes
+    items: 15120
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: was partly used for the 2020 BirdCLEF competition
+    notes: 132 species, 14,798 labels in 21 hours; items are test_5s segments.
+  - id: birdset#nes
+    label: NES, Colombia and Costa Rica coffee-farm soundscapes
+    items: 24480
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: was partially featured in the 2021 BirdCLEF competition
+    notes: 89 species, 6,952 labels in 34 hours.
+  - id: birdset#uhh
+    label: UHH, Hawai'i Island soundscapes
+    items: 36637
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: It was utilized in the 2022 BirdCLEF competition
+    notes: 27 species, 59,583 labels in nearly 51 hours.
+  - id: birdset#hsn
+    label: HSN, High Sierra Nevada soundscapes
+    items: 12000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: This dataset was featured in the 2020 BirdCLEF competition
+    notes: 21 species, 10,296 labels in 100 ten-minute recordings.
+  - id: birdset#nbp
+    label: NBP, NIPS4BPlus (France and Spain)
+    items: 563
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: is an enhanced version of the dataset NIPS4B 2013
+    notes: 51 species, 5,493 labels; processed towards class balance, so easier than the others.
+  - id: birdset#ssw
+    label: SSW, Sapsucker Woods (Ithaca, New York) soundscapes
+    items: 205200
+    scored_separately: true
+    evidence:
+      - source: src-github-birdset-readme
+        quote: Sapsucker Woods soundscape test dataset and class-dedicated focal training. | 28,403
+          | 205,200 | 0.77 | 81 |
+      - source: src-arxiv-2403-10380-v6
+        quote: It has also been instrumental in the 2019, 2020, and 2021 BirdCLEF
+    notes: 81 species, 50,760 labels in 285 hour-long recordings; the largest test set, 65% of the
+      test segments.
+  - id: birdset#sne
+    label: SNE, Sierra Nevada (Lassen and Plumas) soundscapes
+    items: 23756
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: The dataset was part of the 2021 BirdCLEF
+    notes: 56 species, 20,147 labels in 33 hour-long recordings.
+  - id: birdset#pow
+    label: POW, Powdermill Nature Reserve soundscapes (validation)
+    items: 4560
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2403-10380-v6
+        quote: we employ POW as a soundscape validation dataset for LT and MT
+    notes: 48 species, 16,052 labels; used for checkpoint selection in LT and MT and reported as
+      'Val', outside the test average.
+
+history:
+  - date: 2024-09-30
+    event: channel-opened
+    field: governance.submission_process
+    to: request form on the BirdSet Leaderboard Space, checked by the maintainers
+    source: src-hf-api-birdset-leaderboard
+    quote: '"createdAt":"2024-09-30T10:31:51.000Z"'
+  - event: channel-closed
+    field: governance.submission_process
+    from: request form on the BirdSet Leaderboard Space
+    source: src-hf-api-birdset-leaderboard
+    quote: '"stage":"RUNTIME_ERROR"'
+    note: Undated. Observed on 2026-11-05; the Space was last modified on 2025-02-20 and no
+      maintainer statement was found.
+
+tags:
+  - bird-sounds
+  - passive-acoustic-monitoring
+  - soundscapes
+  - multi-label
+  - xeno-canto
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T04)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2403-10380-v6
+    - src-arxiv-2403-10380
+    - src-github-birdset-readme
+    - src-hf-birdset-card
+    - src-hf-api-birdset
+    - src-hf-api-birdset-leaderboard
+    - src-hf-birdset-leaderboard-about
+    - src-hf-api-birdset-leaderboard-results
+    - src-arxiv-2508-04665-v2
+  sources_note: >
+    The paper's v6 PDF (the latest, 2025-05-18, and the ICLR 2025 version; a DOI, not archived), read
+    as text with the corresponding author's contact line kept out, and its abstract page for the version
+    history. The README at commit 86a0777, the dataset card at revision f1e476b and three Hugging Face
+    API records (dataset, Space, results dataset), all pending archive. The Space's src/about.py at commit
+    0d9920f. Perch 2.0's v2 PDF (a DOI). The OpenReview record returned a challenge page and was not read;
+    the Space itself was in a runtime error.
+  confidence: medium
+  review_checks:
+    - check: Relation to BirdCLEF (lifeclef). Five of BirdSet's seven test sets were BirdCLEF test
+        data (PER and HSN 2020, NES and SNE 2021, UHH 2022, SSW 2019-2021), taken from their Zenodo
+        releases, and a BirdSet co-author leads the BirdCLEF overviews. BirdSet presents itself as a
+        fixed-protocol complement to the yearly competition, not an edition of it, so it is a
+        separate benchmark with no lineage link; lifeclef's versions start in 2024, so nothing there
+        shares items with BirdSet. A reviewer may want a correlates_with or a note on lifeclef.
+      field: lineage
+      source: src-arxiv-2403-10380-v6
+      quote: complementing BirdCLEF as a foundation for future challenges
+    - check: Primary domain. bioacoustics with ecology-biodiversity secondary, by ecology's own
+        exclusion test (one audio method task) and birdclef-plus's example. The paper's claim is
+        broader audio classification, which argued for audio-event-understanding; it lost to the
+        species labels.
+      field: domain
+      source: src-arxiv-2403-10380-v6
+      quote: This serves as a crucial application since fluctuations in bird populations indicate
+        broader shifts in biodiversity
+    - check: activity closed rests on the Space's runtime error and a results dataset unchanged
+        since 2024-09-30, with the README still inviting submissions and no stated pause. unknown
+        (the board could not be read) and accepting-submissions (the invitation stands) were
+        weighed; a reviewer who finds the Space running again should make it accepting-submissions.
+      field: activity
+      source: src-github-birdset-readme
+      quote: by submitting new results and comparing performance across models
+    - check: The dataset licence disagrees between sources. The Hugging Face repository says CC
+        BY-NC 4.0; the paper says CC BY-NC-SA, with test sets CC BY 4.0 and validation CC0. The
+        entry takes the repository's declaration.
+      field: data.dataset_licence
+      source: src-arxiv-2403-10380-v6
+      quote: is available under the creative commons (CC) CC-BY-NC-SA license
+    - check: Perch 2.0 describes BirdSet as six datasets and its table lists PER, NES, UHH, HSN, NBP
+        and SSW, while the paper has seven test sets (SNE included). Averages from the two are not
+        over the same sets; recorded in as_used and comparability (subset_used).
+      field: as_used
+      source: src-arxiv-2508-04665-v2
+      quote: consists of six fully-annotated datasets from the continental United States
+    - check: designed_for_subjects domain-specialist-model treats avian species identification as a
+        discipline's task (ecology), as lifeclef's BirdCLEF+ did; the paper's framing as general
+        audio classification would argue for task-specific-supervised-model.
+      field: designed_for_subjects
+    - check: No versions are recorded. The paper went through six arXiv versions under three titles
+        (v1 'A Multi-Task Benchmark', v3 'A Dataset and Benchmark', v4 on 'A Large-Scale Dataset'),
+        and the dataset card logs three revisions (taxonomy metadata, a download fix, a loader
+        update). The test sets are stated to be fixed; whether v1-v3 scored the same test sets or
+        metrics was not read.
+      field: versions
+      source: src-hf-birdset-card
+      quote: Additional bird taxonomy metadata, including "Genus," "Species Group," and "Order," is
+        provided using the 2021 eBird taxonomy
+    - check: The headline is left null. The paper reports cmAP, AUROC and top-1 accuracy side by
+        side and the leaderboard shows all three; Perch 2.0 argues AUROC is the most stable. A
+        reviewer could set AUROC.
+      field: headline_metric
+      source: src-arxiv-2508-04665-v2
+      quote: Although the BirdSet benchmark calculates several scores, we believe that the ROC-AUC
+        score is the most stable and informative
+    - check: Relation to BEANS (drafted in parallel). The paper sets BirdSet against BEANS as a
+        larger, multi-label, bird-only benchmark, and Perch 2.0 reports both; they share no test
+        data in the sources read.
+      field: lineage
+      source: src-arxiv-2403-10380-v6
+      quote: While BEANS covers various animal sounds, it lacks volume
