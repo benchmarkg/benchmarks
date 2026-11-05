@@ -1,0 +1,576 @@
+# data/benchmarks/chemistry-materials/moses.yaml
+#
+# P1-S6-T02, chemistry-materials entry 17. Filled from the MOSES paper read twice: the arXiv v5 PDF
+# (2020-10-28) for the dataset and split counts, and the version of record in Frontiers in Pharmacology
+# (18 December 2020, DOI 10.3389/fphar.2020.565644) for the metric definitions, which the PDF sets with
+# ligatures; the arXiv abstract page for the first version's date and the five-version history; the
+# repository README at master, whose metrics table is the board, with GitHub's API record of
+# molecularsets/moses for its licence, last commit and last push; and the v1 PDF of a December 2025
+# generative-model paper (arXiv 2512.02667) that reports MOSES scores on the official splits as evidence
+# of current use. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+
+id: moses
+name: MOSES
+aliases:
+  - Molecular Sets
+  - 'Molecular Sets (MOSES): A Benchmarking Platform for Molecular Generation Models'
+tagline: Distribution-learning benchmark for molecular generation, on a 1.9M-molecule ZINC Clean
+  Leads set with eleven metrics.
+description: >
+  An open-source Python platform (the molsets package) that standardises the distribution-learning
+  half of molecular generation: a model is trained on one prescribed dataset, samples at least
+  30,000 molecules, and the package scores the valid ones against a held-out reference set. The
+  dataset is ZINC Clean Leads filtered to 1.9M molecules and split into train, a random test set
+  and a scaffold test set whose Bemis-Murcko scaffolds appear in neither of the others. Eleven
+  metrics are reported, each on its own: validity, uniqueness at 1k and 10k, novelty against the
+  training set, the share passing the medicinal-chemistry and PAINS filters used to build the
+  dataset, two internal-diversity numbers, and four comparisons with the reference set, Frechet
+  ChemNet Distance, similarity to a nearest neighbour, and fragment and scaffold similarity, the
+  last four reported twice, once against each reference set. Four property distributions (molecular
+  weight, logP, synthetic accessibility and QED) are compared by 1D Wasserstein-1 distance. There is
+  no aggregate and no leaderboard: the README's table holds the maintainers' eight baselines, from
+  CharRNN, VAE, AAE, JTN-VAE and LatentGAN to an n-gram model, a hidden Markov model and a
+  combinatorial fragment generator, and everyone else reports in their own papers. MOSES scores
+  nothing goal-directed, which is where it differs from GuacaMol, whose goal-directed half it
+  deliberately leaves alone.
+self_description:
+  source: src-frontiers-fphar-2020-565644
+  quote: we introduce a benchmarking platform called Molecular Sets (MOSES) to standardize training
+    and comparison of molecular generative models
+external_ids:
+  arxiv: '1811.12823'
+paper:
+  title: 'Molecular Sets (MOSES): A Benchmarking Platform for Molecular Generation Models'
+  arxiv: '1811.12823'
+  doi: 10.3389/fphar.2020.565644
+  version_read: v5
+  source: src-arxiv-1811-12823-v5
+released: 2018-11-29
+released_note: The paper's first arXiv version, as its abstract page dates it; four revisions
+  followed, the last on 2020-10-28, and the journal version in December 2020 (release_venue).
+released_source: src-arxiv-1811-12823
+released_quote: Submitted on 29 Nov 2018
+release_venue: Frontiers in Pharmacology (2020)
+release_venue_source: src-frontiers-fphar-2020-565644
+release_venue_quote: Front. Pharmacol., 18 December 2020
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: chemistry-materials/generative-molecular-design
+domain_basis:
+  reason: Every metric scores a set of molecules a model generated, as a distribution against a
+    held-out reference set of drug-like molecules; the scored quantities are properties of those
+    molecules and of their fragments and scaffolds.
+  source: src-frontiers-fphar-2020-565644
+  quote: In MOSES, we study distribution learning models
+domain_considered_and_rejected:
+  - term: chemistry-materials/molecular-property-prediction
+    reason: Four computed properties (molecular weight, logP, synthetic accessibility, QED) are
+      compared, but as distributions of a generated set against a test set by a Wasserstein-1
+      distance; no property of a given molecule is predicted or scored.
+    source: src-frontiers-fphar-2020-565644
+    quote: we compute a 1D Wasserstein-1 distance between property distributions of generated and
+      test sets
+  - term: chemistry-materials/drug-discovery-admet
+    reason: The dataset is a clean-leads library and the filters remove reactive and PAINS
+      substructures, but no absorption, distribution, metabolism, excretion or toxicity property is
+      predicted or scored; the filters are substructure rules applied when the dataset was built.
+    source: src-github-moses-readme
+    quote: The molecules were filtered via medicinal chemistry filters (MCFs) and PAINS filters
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: Every metric that ranks a model compares the generated set with a reference set, by
+      Frechet ChemNet Distance between neural activations, Tanimoto similarity to the nearest
+      reference molecule, cosine similarity of BRICS fragment and Bemis-Murcko scaffold frequencies,
+      and Wasserstein distances between property distributions.
+    source: src-frontiers-fphar-2020-565644
+    quote: Each metric depends on a generated set G and a test (reference) set R
+capability_considered_and_rejected:
+  - term: optimization
+    reason: No objective is stated and nothing is maximised. The paper's own framing is that it
+      standardises the distribution-learning problem and leaves the goal-directed one to GuacaMol,
+      so there is no objective whose value is the score.
+    source: src-arxiv-1811-12823-v5
+    quote: We focus on standardizing metrics and data for the distribution learning problem
+  - term: creativity-novelty
+    reason: Novelty counts the generated molecules absent from the training set and the two
+      internal-diversity numbers measure variety, both without any usefulness criterion, which the
+      term's exclusion test rules out; low novelty is read as overfitting rather than novelty being
+      the goal, and the suggested general metric rewards matching the training distribution.
+    source: src-frontiers-fphar-2020-565644
+    quote: Novelty is the fraction of the generated molecules that are not present in the training
+      set
+  - term: distribution-shift-generalization
+    reason: The scaffold test set holds Bemis-Murcko scaffolds absent from train and test and every
+      comparison metric is reported against it separately, which looks like a held-out shift. But a
+      generative model is given no inputs, and what changes is the reference set the output is
+      compared with, not a distribution the system was fitted to and must hold up on, which the
+      term's inclusion test requires (review check).
+    source: src-arxiv-1811-12823-v5
+    quote: Scaffold similarity from the training set to the scaffold test set (TestSF) is zero by
+      design
+
+evaluation_method:
+  - domain-metric
+  - model-derived-metric
+  - statistical-fit
+evaluation_method_basis:
+  reason: >
+    domain-metric for the chemoinformatics measures: fragment and scaffold similarity as cosine
+    similarities of BRICS fragment and Bemis-Murcko scaffold frequencies, similarity to a nearest
+    neighbour as a Tanimoto similarity of Morgan fingerprints, internal diversity, the share passing
+    the medicinal-chemistry and PAINS filters, and validity as an RDKit parse. model-derived-metric
+    for the Frechet ChemNet Distance, computed from the penultimate-layer activations of ChemNet, a
+    released network, so its checkpoint and the FCD library version are part of the number.
+    statistical-fit for the four property comparisons, 1D Wasserstein-1 distances between the
+    generated and test distributions of molecular weight, logP, synthetic accessibility and QED.
+  source: src-frontiers-fphar-2020-565644
+  quote: is calculated using activations of the penultimate layer of a deep neural network ChemNet
+    trained to predict biological activities of drugs
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: No published figure combines the metrics. The paper suggests one of them, FCD against
+      the random test set, as the single number to read for a general comparison, but that is one
+      metric rather than a combination of several, which the term requires.
+    source: src-frontiers-fphar-2020-565644
+    quote: For a general evaluation, we suggest using FCD/Test metric that captures multiple aspects
+      of other metrics in a single number
+  - term: constraint-check
+    reason: The Filters metric does apply a battery of enumerated conditions (the
+      medicinal-chemistry filters, PAINS, ring size, charge and atom types) in which one violation
+      rejects a molecule. But MOSES scores a sampled set rather than items, and the reported number
+      is the share of the 30,000 samples that pass, in the same shape as validity and uniqueness,
+      and no item is ranked (review check).
+    source: src-frontiers-fphar-2020-565644
+    quote: Filters is the fraction of generated molecules that pass filters applied during dataset
+      construction
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The platform is built for generative models trained on its own molecular dataset, with
+    five neural baselines (CharRNN, VAE, AAE, JTN-VAE, LatentGAN) implemented in the package, and it
+    enters three non-neural generators beside them in the same table.
+  source: src-arxiv-1811-12823-v5
+  quote: We implemented several models that cover different approaches to molecular generation, such
+    as character-level recurrent neural networks (CharRNN)
+designed_for_subjects_considered_and_rejected:
+  - term: generative-media-model
+    reason: The output is molecules as SMILES strings, not images, video, audio or speech.
+  - term: task-specific-supervised-model
+    reason: Nothing is labelled and nothing is predicted from an input. The models are fitted to a
+      molecular distribution and sampled from, which is the specialisation the platform tests.
+    source: src-frontiers-fphar-2020-565644
+    quote: In MOSES, we study distribution learning models
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the platform. A December 2025 paper trains on MOSES's
+    official split and reports its metric table for several earlier models and its own. The
+    repository's last commit on master is of 2023-06-22 and its last push of 2024-07-08 (GitHub API,
+    read 2026-11-04), which is maintenance evidence rather than lifecycle.
+  source: src-arxiv-2512-02667-v1
+  quote: For MOSES and GuacaMol, we adhere to their officially defined data splits to ensure fair
+    comparison with previous work
+activity: no-submission-channel
+activity_note: The README's table is the only results board, and it holds the eight baselines the
+  maintainers ran. The paper and README tell a contributor to train on the MOSES train set, sample
+  30,000 molecules, compute the metrics with the package and keep them in their own repository,
+  which is not a route onto the board; the repository takes pull requests, and one 2020 commit on
+  master updated the JTN-VAE row that way (GitHub API, read 2026-11-04), so whether the repository
+  counts as a submission channel is a review check.
+activity_basis:
+  reason: No source read gives an outsider a route by which a result enters a MOSES ranking. The
+    instruction is to compute the metrics locally and publish them yourself.
+  source: src-github-moses-readme
+  quote: Add generated samples and metrics to your repository. Run the experiment multiple times to
+    estimate the variance of the metrics
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: CharRNN (the paper's best baseline)
+    source: src-arxiv-1811-12823-v5
+    observed_on: '2026-11-04'
+    quote: CharRNN currently performs the best in terms of the key metrics
+  - system: GVT, a VQ-VAE and autoregressive transformer (arXiv 2512.02667)
+    source: src-arxiv-2512-02667-v1
+    observed_on: '2026-11-04'
+    quote: our model sets a new state-of-the-art in distribution similarity with an FCD score of
+      0.16
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: There is no measured or labelled truth. The reference sets are the
+  held-out random test set and the scaffold test set, and every comparison metric is an agreement
+  between the generated set and one of them; the package computes the numbers, so repository-tests
+  was weighed and describes the mechanism rather than the truth (review check).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The dataset, the splits, the metric implementations and the baseline models are in the
+    repository and on PyPI, with a prebuilt Docker image, and the metrics run on a generated SMILES
+    list with one call.
+  source: src-github-moses-readme
+  quote: metrics = moses.get_all_metrics(list_of_generated_smiles)
+
+task:
+  exists: true
+  input:
+    - the MOSES training split, 1,584,664 molecules as SMILES strings, which the platform asks a
+      model to be trained on
+    - 'a reference set to score against: the random test set, or the scaffold test set whose scaffolds
+      appear in neither train nor test'
+  output: SMILES strings. At least 30,000 sampled molecules per run, of which the valid ones form
+    the generated set G; the maintainers ask for at least three runs with different random seeds.
+  scoring: Eleven metrics, each reported on its own. Validity, uniqueness at 1,000 and 10,000,
+    novelty against the training set, the share passing the dataset's filters, and two
+    internal-diversity numbers are computed on the generated set; Frechet ChemNet Distance,
+    similarity to a nearest neighbour, fragment similarity and scaffold similarity are computed
+    against a reference set and reported twice, once for each. Four property distributions are
+    compared by 1D Wasserstein-1 distance.
+  metric_range_note: The metrics do not share a range. Validity, uniqueness, novelty, filters,
+    internal diversity, fragment and scaffold similarity and nearest-neighbour similarity lie in [0,
+    1] and are higher-better; FCD and the four property distances are non-negative and lower-better,
+    so no single range is recorded.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: Both reference sets ship with the package and are downloadable with
+    moses.get_dataset, so nothing is withheld; what the platform asks is that only the train split
+    be trained on.
+  source: src-frontiers-fphar-2020-565644
+  quote: We suggest generating 30, 000 molecules and obtaining G as valid molecules from this set
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The dataset file is in the repository and the three splits are fetched by a function
+      call with no account, licence click or registration.
+    source: src-github-moses-readme
+    quote: train = moses.get_dataset('train')
+  refresh: static
+  refresh_note: One dataset release (dataset_v1.csv) and one metric set. The molsets package's
+    released versions run from 0.1.0 (March 2019) to 0.3.1 (March 2020) on PyPI, read 2026-11-04 and
+    not committed as a Source; whether the FCD and RDKit versions those pin change the numbers is a
+    review check.
+  refresh_basis:
+    reason: The splits the December 2025 paper trains and scores on are the ones the 2018 release
+      defined, which it calls the officially defined splits.
+    source: src-arxiv-2512-02667-v1
+    quote: For MOSES and GuacaMol, we adhere to their officially defined data splits to ensure fair
+      comparison with previous work
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: ZINC Clean Leads, filtered by the authors to molecules of 250-350 Da with at
+    most 7 rotatable bonds and XlogP at most 3.5, then stripped of charged atoms, of elements
+    outside C, N, S, O, F, Cl, Br, H, of rings larger than 8 atoms, and of matches to the authors'
+    own medicinal-chemistry filters and to PAINS. The filters are the authors' work, but no source
+    read describes them as expert-authored items, so that term is not tagged.
+  data_provenance_source: src-frontiers-fphar-2020-565644
+  data_provenance_quote: The proposed dataset used for training and testing is based on the ZINC
+    Clean Leads
+  contamination_risk: medium
+  contamination_risk_note: The two reference sets are public SMILES files in the repository, and the
+    platform's only rule about training data is that a model be trained on the train split, which
+    nothing checks. A model pretrained on ZINC or another large library can have seen the reference
+    molecules, and no source read assesses that route.
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: There is no headline metric and the metrics run in both directions, so
+    no one anchor applies. FCD is unbounded above with its optimum at zero, while the similarity and
+    fraction metrics are bounded at 1. The README's board carries a Train row, the training set
+    scored as though it had been generated, which is the nearest thing to a per-metric data
+    reference, and those values are recorded in ceiling_by_category.
+  ceiling_by_category:
+    - category: the training set scored as a generated set, Frechet ChemNet Distance against the
+        random test set (lower is better)
+      value: 0.008
+      metric: FCD (Test)
+      source: src-github-moses-readme
+      quote: Train 1.0 1.0 1.0 0.008 0.4755 0.6419 0.5859 1.0 0.9986 0.9907 0.0 0.8567 0.8508 1.0
+        1.0
+    - category: the training set scored as a generated set, scaffold similarity against the random
+        test set
+      value: 0.9907
+      metric: Scaf (Test)
+      source: src-github-moses-readme
+      quote: Train 1.0 1.0 1.0 0.008 0.4755 0.6419 0.5859 1.0 0.9986 0.9907 0.0 0.8567 0.8508 1.0
+        1.0
+    - category: the training set scored as a generated set, scaffold similarity against the scaffold
+        test set, which is zero by construction
+      value: 0.0
+      metric: Scaf (TestSF)
+      source: src-arxiv-1811-12823-v5
+      quote: Scaffold similarity from the training set to the scaffold test set (TestSF) is zero by
+        design
+  dataset_licence_note: Neither the README nor the paper states a licence for the ZINC-derived
+    dataset, which sits in the repository beside MIT-licensed code (GitHub's licence metadata, read
+    2026-11-04); ZINC's own terms were not read.
+  size:
+    - count: 1936963
+      unit: molecules
+      subset: whole dataset
+      source: src-arxiv-1811-12823-v5
+      quote: dataset contains 1,936,963 molecules, with internal diversity IntDiv1 = 0.857
+    - count: 1584664
+      unit: molecules
+      subset: train
+      source: src-arxiv-1811-12823-v5
+      quote: 'We provide recommended split into three non-intersecting parts: train (1,584,664 molecules),
+        test (176,075 molecules) and scaffold test (176,226 molecules)'
+    - count: 176075
+      unit: molecules
+      subset: test
+      source: src-arxiv-1811-12823-v5
+      quote: 'We provide recommended split into three non-intersecting parts: train (1,584,664 molecules),
+        test (176,075 molecules) and scaffold test (176,226 molecules)'
+    - count: 176226
+      unit: molecules
+      subset: scaffold test
+      source: src-arxiv-1811-12823-v5
+      quote: 'We provide recommended split into three non-intersecting parts: train (1,584,664 molecules),
+        test (176,075 molecules) and scaffold test (176,226 molecules)'
+  size_note: The headline count is the paper's. The README gives one molecule fewer, 1,936,962, for
+    the same dataset, and gives the splits only as 1.6M, 176k and 176k; the sources disagree and the
+    CSV was not counted (review check). The same dataset holds 448,854 unique Bemis-Murcko scaffolds
+    and 58,315 unique BRICS fragments, and was filtered from a collection of 4,591,276 molecules.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The molecularsets organisation on GitHub (MOSES platform and the molsets package)
+  maintainer_basis:
+    reason: The dataset, the metric implementations and the baselines are published from that
+      organisation's repository and as its PyPI package, and the paper points to both.
+    source: src-frontiers-fphar-2020-565644
+    quote: The dataset, metrics and baseline models are provided in a GitHub repository
+      https://github.com/molecularsets/moses and as a PyPI package molsets
+  maintainer_type: industry-lab
+  maintainer_type_note: consortium was weighed for the six-organisation author list and rejected,
+    because no source states a legal form or member governance. community-collective was weighed
+    too, as for MoleculeNet's deepchem organisation, and rejected because nothing shows the
+    organisation is run by a group of contributors rather than by the company that released it
+    (review check).
+  maintainer_type_basis:
+    reason: The paper's competing-interests statement puts five of its authors, including the
+      corresponding author and the first author, at Insilico Medicine, and six more at Neuromation;
+      the rest are at a pharmaceutical company and at universities. No source names a holder for the
+      molecularsets organisation, so the type follows the company that led the release.
+    source: src-frontiers-fphar-2020-565644
+    quote: work for Insilico Medicine, a commercial artificial intelligence company
+  submission_process:
+    - maintainer-run
+  submission_process_note: The README's metrics table ranks eight models the maintainers
+    implemented, trained and scored themselves, with no column for an outside entry; the instruction
+    to a contributor is to compute the metrics and keep the samples in their own repository.
+    literature-only was weighed and rejected because the maintainers do keep that table (the term
+    excludes a results table the maintainer fills with its own runs), and everyone else's numbers do
+    appear only in their own papers.
+  submission_process_source: src-frontiers-fphar-2020-565644
+  submission_process_quote: To contribute a new model, one should train a model on MOSES train set,
+    generate 30, 000 samples and compute metrics using the provided utilities
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-frontiers-fphar-2020-565644
+      quote: AAE-based models for molecular design were studied in
+  independence_flags_note: The AAE baseline is the authors' own line of work. The paper cites three
+    earlier adversarial-autoencoder papers for it, two of which carry MOSES authors' surnames (the
+    byline is kept out of every extract as personal data, so this rests on the paper's own author
+    list as read). They are baselines the maintainers implemented and ran, not models built to win a
+    board, as with GuacaMol's SMILES LSTM. The hyperparameters of every baseline were chosen by
+    random search on FCD, the metric the paper then recommends, which a reviewer may want recorded
+    separately (review check).
+  independence_assessed: true
+  known_limitation:
+    source: src-frontiers-fphar-2020-565644
+    quote: Note that SA score does not adequately assess up-to-date chemical structures
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, splits, metrics and baselines are public and the scoring runs with no human,
+      physical or maintainer-only step; a Docker image reproduces the environment.
+    source: src-github-moses-readme
+    quote: docker pull molecularsets/moses
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: molsets Python package (moses.get_dataset, moses.get_all_metrics; scripts/run.py for the
+    baselines)
+  harness_source: src-github-moses-readme
+  harness_quote: metrics = moses.get_all_metrics(list_of_generated_smiles)
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for molecularsets/moses, read 2026-11-04; the README
+    states no licence.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The (domain-metric, domain-specialist-model) pair resolves to the fallback profile, so only
+  # subset_used is material by the lookup. Beyond it: what the model was trained on (the MOSES train
+  # split the platform asks for, or a larger corpus, which nothing checks), and the harness, since FCD
+  # depends on the ChemNet checkpoint the FCD library ships and the package pins its dependencies.
+  # MOSES runs no tracks by training data, so there are no training_data_eligibility_tiers to record.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - harness
+
+aggregation_policy: none-by-design
+aggregation_policy_note: The paper reports every metric separately and suggests reading one of them,
+  FCD against the random test set, when a single number is wanted; it publishes no aggregate, and
+  the README's table has a column per metric.
+aggregation_policy_basis:
+  reason: Each metric is defined and reported on its own against a reference set, with no weighting
+    or total.
+  source: src-frontiers-fphar-2020-565644
+  quote: Each metric depends on a generated set G and a test (reference) set R
+headline_metric: null
+
+homepage: https://github.com/molecularsets/moses
+repository: https://github.com/molecularsets/moses
+dataset_url:
+  https://media.githubusercontent.com/media/molecularsets/moses/master/data/dataset_v1.csv
+
+subsets:
+  - id: moses#test
+    label: Random test set (Test)
+    items: 176075
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1811-12823-v5
+        quote: The test set is a random subset of the remaining molecules in the dataset
+      - source: src-github-moses-readme
+        quote: Besides standard uniqueness and validity metrics, MOSES provides other metrics to
+          access the overall quality of generated molecules
+    notes: The in-distribution reference set. FCD, nearest-neighbour similarity, fragment similarity
+      and scaffold similarity are each reported against it, as the board's Test columns.
+  - id: moses#test-scaffolds
+    label: Scaffold test set (TestSF)
+    items: 176226
+    scored_separately: true
+    evidence:
+      - source: src-frontiers-fphar-2020-565644
+        quote: The scaffold test set has all molecules containing a Bemis-Murcko scaffold from a
+          random subset of scaffolds
+      - source: src-arxiv-1811-12823-v5
+        quote: Scaffold similarity from the training set to the scaffold test set (TestSF) is zero
+          by design
+    notes: The same four metrics against a reference set whose scaffolds appear in neither train nor
+      test, which is what makes a model's novel scaffolds visible; the training set itself scores
+      zero on scaffold similarity here. Reported as the board's TestSF columns.
+
+tags:
+  - molecular-generation
+  - distribution-learning
+  - de-novo-design
+  - zinc
+  - smiles
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T02)
+  added_on: '2026-11-04'
+  last_verified: '2026-11-04'
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-frontiers-fphar-2020-565644
+    - src-arxiv-1811-12823-v5
+    - src-arxiv-1811-12823
+    - src-github-moses-readme
+    - src-arxiv-2512-02667-v1
+  sources_note: >
+    The journal version of record (a DOI, not archived), read through the DOI redirect, for the metric
+    and dataset definitions, the platform paragraph, the publication date and the competing-interests
+    statement; the arXiv v5 PDF (a DOI) for the dataset and split counts, which the journal page
+    renders as images, and for the baseline and result statements; the abstract page for the first
+    version's date and the revision history, with narrow windows that keep the author list out; the
+    README at master, archive pending, whose metrics table is the board; and a December 2025 paper's
+    v1 PDF (a DOI) as evidence of current use. GitHub's API record (licence, last commit, last push)
+    and PyPI's molsets record (released versions) were read for notes only and are not Sources.
+  confidence: medium
+  review_checks:
+    - check: ground_truth_source held-out-labels is the nearest value for metrics computed against a
+        held-out set of molecules that carries no labels at all; repository-tests, which GuacaMol
+        took for the same shape, describes who computes the number rather than what the truth is.
+        Whether the vocabulary needs a term for a reference distribution.
+      field: ground_truth_source
+    - check: The two sources give different dataset sizes, 1,936,963 in the paper and 1,936,962 in
+        the README, and the README gives the splits only to the nearest 100k. The CSV was not
+        counted, so the headline size rests on the paper alone.
+      field: data.size
+      source: src-github-moses-readme
+      quote: The dataset contains 1,936,962 molecular structures
+    - check: evaluation_method rejects constraint-check for the Filters metric, which really is a
+        battery of enumerated conditions (medicinal-chemistry filters, PAINS, ring size, charge,
+        atom types) where one violation rejects a molecule. The rejection rests on MOSES scoring a
+        sampled set rather than ranking items; a reviewer may read the metric the other way.
+      field: evaluation_method
+      source: src-frontiers-fphar-2020-565644
+      quote: Filters is the fraction of generated molecules that pass filters applied during dataset
+        construction
+    - check: capability carries generation-fidelity alone. distribution-shift-generalization was
+        rejected because a generative model takes no input, so the scaffold test set shifts the
+        reference rather than the input; if the facet is read as covering a shifted evaluation
+        distribution, the scaffold split qualifies and the term belongs here and on
+        moses#test-scaffolds.
+      field: capability
+    - check: activity no-submission-channel rests on the absence of any route onto the README's
+        table, while the repository takes pull requests and one 2020 commit on master updated a
+        baseline's row that way (GitHub API, not a Source). Whether a repository that accepts a
+        model and its numbers by pull request is a submission channel, which would make this
+        self-reported and open-source-gated instead.
+      field: activity
+      source: src-github-moses-readme
+      quote: Add generated samples and metrics to your repository. Run the experiment multiple times
+        to estimate the variance of the metrics
+    - check: maintainer_type industry-lab follows the company that led the release, not a stated
+        holder, because no source names who holds the molecularsets organisation, and the author
+        list spans six organisations including a pharmaceutical company and three universities.
+        consortium and community-collective were both weighed.
+      field: governance.maintainer_type
+      source: src-frontiers-fphar-2020-565644
+      quote: work for Insilico Medicine, a commercial artificial intelligence company
+    - check: Identity and lineage. MOSES and GuacaMol are contemporaries that split the same field,
+        MOSES taking distribution learning and leaving the goal-directed benchmarks to GuacaMol, and
+        the two share FCD and the validity, uniqueness and novelty metrics. Neither derives from the
+        other, so no lineage link is recorded; whether the pair deserves a correlates_with or a
+        see_also once Metric entities exist.
+      field: lineage
+      source: src-arxiv-1811-12823-v5
+      quote: Brown et al. [27] proposed to evaluate generative models on goal-oriented and
+        distribution learning tasks with a focus on the former
+    - check: No versions are recorded. The paper went through five arXiv versions over two years
+        before the journal version, and the molsets package through seven releases, while the
+        dataset file stayed dataset_v1; v1 of the preprint was not read, so whether the metric set
+        or the baselines changed between versions (which would be a revision under 04 S4) is
+        unverified.
+      field: versions
+      source: src-arxiv-1811-12823
+      quote: last revised 28 Oct 2020 (this version, v5)
+    - check: refresh static, while FCD depends on the ChemNet checkpoint the FCD library ships and
+        the package pins RDKit and other dependencies; a 2021 commit on master changed a dependency
+        constraint. Whether FCD numbers computed under different pins are comparable, which is why
+        harness is in material_extra.
+      field: data.refresh
+    - check: A 2025 paper that uses the benchmark mislabels its metrics, calling SNN scaffold
+        similarity and Scaf scaffold uniqueness, and reports Scaf as a percentage while MOSES
+        defines it in [0, 1]. Its MOSES numbers are read here only as evidence of current use, not
+        as results.
+      field: lifecycle
+      source: src-arxiv-2512-02667-v1
+      quote: The MOSES benchmark provides a more holistic suite, including Scaffold Similarity (SNN)
+        and Scaffold Uniqueness (Scaf) for scaffold-level
+    - check: The baselines' hyperparameters were selected by random search on FCD, the metric the
+        paper then recommends as the single general number, which couples the board's best FCD
+        values to the metric used to tune for them.
+      field: governance.independence_flags
+      source: src-arxiv-1811-12823-v5
+      quote: We used random search over multiple architectures for every model and selected the
+        architecture that produced the best value of FCD
