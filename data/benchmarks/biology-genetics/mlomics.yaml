@@ -1,0 +1,601 @@
+# data/benchmarks/biology-genetics/mlomics.yaml
+#
+# P1-S5-T06, biology-genetics entry 23. Filled from the MLOmics paper, Scientific Data 12:913 (2025-05-30) read as Europe
+# PMC full text (PMC12125382; nature.com disallows AI agents), its arXiv abstract page (v3) and its v1 PDF (2024-09-02,
+# then titled CMOB, compared for versions); the repository README and its classical-classifier runner pinned at commit
+# fdb9da0 (2026-10-24); the Hugging Face API record of the dataset and the figshare API record of its deposit; the NCI
+# Genomic Data Commons page on open and controlled access; and CMGL (Bioinformatics, 2026), a method paper evaluated
+# on MLOmics, as evidence of current use. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts. No corpus classification record or Epoch stub exists for this benchmark.
+#
+# The Scientific Data XML holds no table text, so the per-dataset sample counts come from the v1 PDF's Table 1 and the
+# feature counts from the current README; the two disagree (versions, review_checks).
+
+id: mlomics
+name: MLOmics
+aliases:
+  - CMOB
+  - 'CMOB: Large-Scale Cancer Multi-Omics Benchmark with Open Datasets, Tasks, and Baselines'
+  - 'MLOmics: Cancer Multi-Omics Database for Machine Learning'
+  - Cancer Multi-Omics Benchmark
+tagline: Twenty TCGA cancer multi-omics datasets for classifying, clustering and imputing patients'
+  profiles.
+description: >
+  A machine-learning-ready cancer multi-omics resource built from TCGA through the Genomic Data Commons,
+  by groups at Kyoto University, Osaka University, the University of Tokyo and the University of Illinois
+  Urbana-Champaign. It holds 8,314 patients over all 32 TCGA cancer types, each with four uniformly processed
+  omics (mRNA expression, miRNA expression, DNA methylation and copy number), at three feature scales
+  (Original; Aligned, genes shared across cancers; Top, ANOVA-selected). Twenty datasets define the tasks:
+  pan-cancer classification of a patient's cancer type (one dataset); classification into gold-standard
+  molecular subtypes for five cancers (GS-BRCA, GS-COAD, GS-GBM, GS-LGG, GS-OV); clustering of nine rarer
+  cancers into subtypes without labels; and imputation of randomly masked values (30, 50 or 70%) in five
+  cohorts. Classification is scored by precision, recall and F1 (and NMI and ARI against the labels),
+  clustering by the silhouette coefficient and the log-rank p-value of survival between clusters, and
+  imputation by error on the masked entries. The release ships 10 baselines per classification and clustering
+  task and 7 for imputation, with runners and downstream analysis tools (survival, enrichment, STRING
+  and KEGG mappings). No train/test split is fixed in the data, there is no aggregate, and no leaderboard
+  takes submissions; the README keeps the maintainers' baseline tables. First released on arXiv as CMOB
+  in September 2024, renamed MLOmics in 2025, and refreshed in July 2026.
+self_description:
+  source: src-mlomics-scidata-2025
+  quote: we introduce MLOmics, an open cancer multi-omics database aiming at serving better the
+    development and evaluation of bioinformatics and machine learning models.
+external_ids:
+  arxiv: '2409.02143'
+paper:
+  title: 'MLOmics: Cancer Multi-Omics Database for Machine Learning'
+  arxiv: '2409.02143'
+  doi: 10.1038/s41597-025-05235-x
+  source: src-mlomics-scidata-2025
+released: 2024-09-02
+released_note: The preprint's first arXiv version, then titled CMOB; it was renamed MLOmics in v2
+  (2025-03-03) and published in Scientific Data on 2025-05-30. The repository was created on
+  2024-06-06 (GitHub API), which is not a release.
+released_source: src-arxiv-2409-02143
+released_quote: Submitted on 2 Sep 2024 (v1), last revised 16 Jun 2025 (this version, v3)
+release_venue: Scientific Data (2025), as the version of record of the arXiv preprint
+release_venue_source: src-arxiv-2409-02143
+release_venue_quote: 'Comments: This work has been published in Scientific Data'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/transcriptomics
+domain_basis:
+  reason: Every dataset is bulk tumour profiling of TCGA patients, two of whose four omics are bulk
+    expression (mRNA and miRNA sequencing), and 15 of the 20 datasets ask for the patient's cancer
+    type or molecular subtype, a biological state, either as a label (6) or as clusters (9), the
+    primary leaf's definition and the majority (ADR-0016). The five imputation datasets recover
+    masked omics values and fit no leaf; they inherit the parent's. Methylation and copy number are
+    not expression, and no leaf names multi-omics integration (review_checks).
+  source: src-mlomics-scidata-2025
+  quote: 'All samples were uniformly processed to contain four omics types: mRNA expression, microRNA
+    expression, DNA methylation, and copy number variations'
+domain_considered_and_rejected:
+  - term: medicine-health/diagnosis-triage
+    reason: The paper frames the classification tasks as aids to early diagnosis, and the clustering
+      is partly scored on survival, but no clinical case is presented and the labels are TCGA cancer
+      types and molecular subtypes, a biological state of the tumour rather than a clinical
+      endpoint, which the biology-genetics family's exclusion test keeps here (review_checks).
+    source: src-mlomics-scidata-2025
+    quote: These two classification tasks potentially improve cancer early diagnostic accuracy and
+      treatment outcomes.
+  - term: biology-genetics/single-cell-analysis
+    reason: Every profile is a bulk tumour sample from TCGA, not single-cell or spatial data; that
+      leaf's exclusion test sends bulk expression here.
+  - term: biology-genetics/genomics-variant-effect
+    reason: Copy-number profiles are one of four input omics, but no task predicts a variant's
+      consequence.
+  - term: biology-genetics/systems-biology
+    reason: STRING and KEGG mappings are shipped for downstream analysis, but no task scores a
+      network or pathway model.
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: The classification tasks predict a tumour's cancer type or molecular subtype from its
+      measured omics and score the prediction against TCGA's labels; the imputation tasks predict
+      measured values that were masked. The clustering tasks score a partition without labels
+      (review_checks).
+    source: src-mlomics-scidata-2025
+    quote: We re-label patient samples to support subtyping evaluation.
+capability_considered_and_rejected:
+  - term: hypothesis-generation
+    reason: The paper presents subtype clustering as discovery of new subtypes, but the score is a
+      cluster-quality and survival statistic, not a judged or tested hypothesis.
+    source: src-mlomics-scidata-2025
+    quote: Cancer subtyping remains an open question under fierce debate for most cancers,
+      especially rare types.
+  - term: sample-efficiency
+    reason: The paper notes the small subtype cohorts (typically under 100 patients a class), but no
+      task varies the training data to report learning from few samples; CMGL's subsampling runs are
+      its own protocol (as_used).
+    source: src-mlomics-scidata-2025
+    quote: Since clustering is the primary focus of the subtyping task, due to the limited sample
+      size (typically
+  - term: distribution-shift-generalization
+    reason: No split, cohort or platform shift is defined; the data carry no train/test partition at
+      all.
+
+evaluation_method:
+  - classification-metric
+  - statistical-fit
+evaluation_method_basis:
+  reason: >
+    Classification (pan-cancer and gold-standard subtypes) is scored by precision, recall and F1, with
+    NMI and ARI between the predicted groups and the true labels, all statistics of predicted labels against
+    a key. Imputation is scored by error between imputed and masked measured values (MSE in the paper;
+    MAE and RMSE in the current README), which is statistical-fit. The nine clustering datasets are scored
+    by the silhouette coefficient and the log-rank p-value of survival between clusters, which compare
+    with no labelled key and have no term (failure 2026-11-05-mlomics-001); they are left out of the list.
+  source: src-mlomics-scidata-2025
+  quote: For classification evaluation, we opt for precision (Pre), recall (Re), and F1-score (F1).
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: Precision, recall, F1, NMI, ARI, MSE and the silhouette are general statistics, and the
+      log-rank test is general survival statistics, none defined only within oncology.
+  - term: composite
+    reason: No figure combines metrics; each dataset is reported per metric.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The entrants are models built for cancer multi-omics tasks, trained from scratch on each
+    dataset, such as Subtype-GAN, DCAP, MAUI, XOmiVAE, CustOmics and DeepCC for classification and
+    MCluster-VAEs for clustering; general learners (XGBoost, SVM, random forest, logistic
+    regression) are fitted to the same tasks. Several imputation baselines contain no learned
+    component, such as mean imputation.
+  source: src-mlomics-scidata-2025
+  quote: Mean Imputation that imputes the missing entry with mean values of entries around it (Mean)
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: XGBoost, SVM, random forest and logistic regression fit it as learners, but the tasks
+      are defined by cancer genomics, which the term's exclusion sends to domain-specialist-model.
+  - term: scientific-surrogate-model
+    reason: The models classify, cluster and fill in measurements; none emulates an assay or a
+      simulation.
+
+as_used:
+  - protocol: Four gold-standard subtype tasks and the pan-cancer task, each under five-fold
+      stratified cross-validation with 70/10/20 train, validation and test partitions per fold,
+      scored by accuracy, macro- and weighted-F1, macro-recall, macro-AUC and macro-AUPRC.
+    source: src-cmgl-bioinformatics-2026
+    quote: benchmark experiments follow five-fold stratified cross-validation. In each fold, 70% of
+      each cohort is used for training, 10% for validation, and 20% for testing.
+    note: CMGL (Bioinformatics, 2026). Neither the partitions nor most of the metrics are MLOmics'
+      own; the paper defines none of the partitions (review_checks).
+
+lifecycle: active
+lifecycle_basis:
+  reason: New methods are still evaluated on MLOmics; CMGL (Bioinformatics, first published
+    2026-10-01) reports four of its subtype tasks and the pan-cancer task. The maintainers refreshed
+    the resources in July 2026 and last pushed the repository on 2026-10-24 (GitHub API), which is
+    maintenance evidence, not lifecycle.
+  source: src-cmgl-bioinformatics-2026
+  quote: On four MLOmics cancer-subtype tasks and the 32-class pan-cancer task, CMGL consistently
+    improves over the strongest baseline
+activity: no-submission-channel
+activity_basis:
+  reason: The README keeps tables of the maintainers' own baseline runs and offers runners whose
+    results land in the user's own directory; no leaderboard, server or submission route exists.
+  source: src-github-mlomics-readme
+  quote: These tables are reference points for comparison, not an exhaustive SOTA contest.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: XOmiVAE
+    source: src-github-mlomics-readme
+    observed_on: 2026-11-05
+    quote: '| XOmiVAE | 0.894 | 0.795 | 0.774 |'
+    note: Pan-cancer PREC, NMI and ARI in the README's classification table.
+  - system: CMGL
+    source: src-cmgl-bioinformatics-2026
+    observed_on: 2026-11-05
+    quote: On four MLOmics cancer-subtype tasks and the 32-class pan-cancer task, CMGL consistently
+      improves over the strongest baseline
+evaluation_target: learned-system
+evaluation_target_note: Classical baselines, such as mean imputation, are reported beside the
+  learned ones (designed_for_subjects).
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Cancer-type labels and gold-standard subtype labels from TCGA annotations
+  for classification, and the measured values behind the masked entries for imputation. The
+  clustering tasks have no labels; they are scored by the silhouette and by survival separation
+  (Cancer_survival files).
+ground_truth_source_basis:
+  source: src-mlomics-scidata-2025
+  quote: During the test, the masked missing values are used for evaluating the model performance
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The datasets are a public, ungated download, and the repository holds the preprocessing,
+    the baselines and the metrics.
+  source: src-mlomics-scidata-2025
+  quote: All codes and resources of MLOmics are publicly available under the CC-BY-4.0. The code for
+    preprocessing
+
+task:
+  exists: true
+  input:
+    - per-patient feature tables (CSV, features by samples) of mRNA expression, miRNA expression,
+      DNA methylation and copy number for one dataset, at the Original, Aligned or Top feature scale
+    - for imputation, the same tables with entries masked uniformly at random at a missing rate of
+      0.3, 0.5 or 0.7
+  output: A cancer type or gold-standard subtype per patient (classification), a cluster assignment
+    per patient (clustering), or values for the masked entries (imputation).
+  scoring: Precision, recall and F1, with NMI and ARI, against the labels for classification;
+    silhouette coefficient and log-rank p-value of survival between clusters for clustering; error
+    on the masked entries (MSE in the paper; MAE and RMSE in the README) for imputation. Reported
+    per dataset and metric, with no aggregate and no fixed train/test split.
+  source: src-mlomics-scidata-2025
+  quote: MLOmics provides datasets in three feature scales for 20 classification, clustering, and
+    omics imputation learning tasks.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The datasets, labels and survival tables included, are a public download from Hugging
+      Face (not gated) and figshare under CC BY 4.0, with no registration. They are processed from
+      TCGA data the GDC releases as open access (upstream_licences); no controlled-access file is
+      redistributed according to the sources read (review_checks).
+    source: src-hf-api-mlomics
+    quote: '"gated":false'
+  refresh: null
+  refresh_note: Not set. The content has changed since v1 (the Top scale held 2,000 features per
+    omics in v1 and 5,000 in the current README), and the July 2026 refresh is a dated announcement,
+    but the data files on Hugging Face were also re-uploaded on 2026-09-22 with no note, and none of
+    the files carries a version label, so versioned-releases cannot be shown and static does not
+    hold (versions, review_checks).
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: All omics, labels and survival records are reprocessed from TCGA through the
+    GDC Data Portal (log-transformed FPKM expression, filtered miRNA, promoter methylation,
+    recurrent somatic copy-number regions); MLOmics generated no measurements. The gold-standard
+    subtype labels are TCGA's published subtypes, re-labelled onto the samples.
+  data_provenance_source: src-mlomics-scidata-2025
+  data_provenance_quote: The data were sourced from TCGA via the Genomic Data Commons (GDC) Data
+    Portal
+  contamination_risk: unknown
+  contamination_risk_note: All labels and measurements are public, and TCGA is among the most used
+    training sets in cancer omics, so a pretrained omics model may have seen the scored samples and
+    their labels; with no fixed test split, held-out data are whatever each user holds out. Not
+    assessed.
+  contamination_evidence: []
+  ceiling_anchor_type: null
+  ceiling_anchor_type_note: No ceiling or human anchor is stated; scores are read against the
+    maintainers' baselines.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The paper, the figshare deposit and the Hugging Face card all state CC BY
+    4.0 for the main datasets.
+  dataset_licence_source: src-mlomics-scidata-2025
+  dataset_licence_quote: The MLOmic main datasets are now accessible under the Creative Commons 4.0
+    Attribution (CC-BY-4.0)
+  upstream_licences: TCGA data from the NCI Genomic Data Commons, whose open tier (high-level,
+    non-identifiable genomic data and most clinical elements) needs no authorisation, while its
+    controlled tier needs dbGaP authorisation. The paper does not state which tier each input came
+    from.
+  upstream_licences_source: src-gdc-data-access-processes
+  upstream_licences_quote: Open access data generally includes high level genomic data that is not
+    individually identifiable
+  size:
+    - count: 8314
+      unit: patients over 32 cancer types, each with four omics
+      source: src-mlomics-scidata-2025
+      quote: MLOmics contains 8,314 patient samples covering all 32 cancer types with four omics
+        types, stratified features, and extensive baselines.
+    - count: 20
+      unit: datasets, one task each (1 pan-cancer, 5 gold-standard subtype, 9 clustering, 5
+        imputation)
+      source: src-mlomics-scidata-2025
+      quote: MLOmics provides datasets in three feature scales for 20 classification, clustering,
+        and omics imputation learning tasks.
+    - count: 1704
+      unit: patients in the five gold-standard subtype datasets (COAD 260, BRCA 671, GBM 243, LGG
+        246, OV 284), the same cohorts as the imputation datasets
+      subset: arXiv v1 Table 1
+      source: src-arxiv-2409-02143-v1
+      quote: 8314 260 671 243 246 284
+  size_note: The Scientific Data XML holds no table text, so the per-dataset counts are v1's Table
+    1; CMGL's 2026 table also gives 671 for BRCA. The nine clustering cohorts run from 119 (THYM) to
+    450 patients in v1's table.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The MLOmics authors, with the repository in a personal GitHub account (chenzRG) and
+    the data in the AIBIC Hugging Face organisation and on figshare
+  maintainer_basis:
+    reason: The README links the code repository and the Hugging Face dataset as the benchmark's
+      homes; no source read names an institution as holding either, and what AIBIC stands for is not
+      stated.
+    source: src-github-mlomics-readme
+    quote: '- [Hugging Face dataset](https://huggingface.co/datasets/AIBIC/MLOmics)'
+  maintainer_type: individual
+  maintainer_type_note: The repository sits in one author's personal account and no organisation is
+    stated as holding it, which the term's holder rule reads as individual whatever the authors'
+    affiliations (Kyoto University, Osaka University and others). The data sit in a Hugging Face
+    organisation account (AIBIC) whose holder is not stated; if it is a lab's, academic-lab fits
+    better (review_checks).
+  submission_process:
+    - maintainer-run
+  submission_process_note: The README keeps classification and imputation tables of baselines the
+    maintainers chose and ran themselves, and the paper says baselines will be added; nobody
+    submits. Others report their own numbers in their own papers (as_used).
+  submission_process_source: src-mlomics-scidata-2025
+  submission_process_quote: MLOmics will be continuously updated with baselines and evaluations on
+    the defined learning tasks.
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-mlomics-scidata-2025
+      quote: The authors declare no competing interests.
+  independence_flags_note: The ranked baselines (SNF, NEMO, CIMLR, iClusterBayes, moCluster,
+    Subtype-GAN, DCAP, MAUI, XOmiVAE, MCluster-VAEs, CustOmics, DeepCC and the general learners and
+    imputers) are third-party methods; the authors' own subtyping method, cited in the paper's
+    introduction, is not among them. Funding is from JSPS, JST and the US NSF, none of which has an
+    evaluated system.
+  independence_assessed: true
+  funding:
+    source: src-mlomics-scidata-2025
+    quote: NSF award SCH-2205289, SCH-2014438, and IIS-2034479
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data and labels are public, and the repository's runners train and score every baseline
+      with no human, physical or maintainer-only step. Some deep baselines need extra packages.
+    source: src-github-mlomics-readme
+    quote: Public datasets, documentation, and unified runners under `scripts/`
+  harness_availability: official-harness
+  harness: The repository's runners (scripts/run_classification.sh, run_clustering.sh,
+    run_imputation.sh) over utils/data_loader.py, with the baselines and metrics under
+    Baseline_and_Metric/
+  harness_source: src-github-mlomics-readme
+  harness_quote: Reproducible evaluation protocols (PREC, NMI, ARI, SIL, LPS, MAE, RMSE)
+  code_licence: CC-BY-4.0
+  code_licence_note: The paper states CC BY 4.0 for all code and resources, but the repository
+    carries no LICENSE file and GitHub reports no licence (read 2026-11-05); bundled third-party
+    baselines (CustOmics, DeepCC, MAUI, XOmiVAE) keep their own LICENSE files.
+  code_licence_source: src-mlomics-scidata-2025
+  code_licence_quote: All codes and resources of MLOmics are publicly available under the CC-BY-4.0.
+    The code for preprocessing
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the harness, because no split is fixed (the classical runner draws a seeded 80/20
+  # stratified split; CMGL uses five-fold 70/10/20), the feature scale (Original, Aligned or Top, whose Top changed
+  # from 2,000 to 5,000 features) is chosen per run, and the metric set differs between the paper, the README and
+  # the runners. subset_used, the floor, carries which of the 20 datasets a figure is for.
+  material_extra:
+    - harness
+aggregation_policy: none-by-design
+aggregation_policy_note: Results are reported per dataset and metric, in the paper's figure and the
+  README's tables; no combined figure is defined.
+aggregation_policy_source: src-github-mlomics-readme
+aggregation_policy_quote: These tables are reference points for comparison, not an exhaustive SOTA
+  contest.
+
+homepage: https://github.com/chenzRG/Cancer-Multi-Omics-Benchmark
+repository: https://github.com/chenzRG/Cancer-Multi-Omics-Benchmark
+dataset_url: https://huggingface.co/datasets/AIBIC/MLOmics
+
+versions:
+  - version: cmob-v1
+    label: CMOB, as first released (the preprint's arXiv v1, September 2024)
+    version_kind: revision
+    released: 2024-09-02
+    items: 8314
+    changes: The first release, as CMOB; 20 datasets over 32 cancer types and four omics at three
+      feature scales, the Top scale holding 2,000 features per omics (200 for miRNA).
+    superseded_by: '2025'
+    frozen: true
+    sources:
+      - src-arxiv-2409-02143-v1
+      - src-arxiv-2409-02143
+  - version: '2025'
+    label: MLOmics as published in Scientific Data (arXiv v2 and v3, 2025)
+    version_kind: revision
+    released: 2025-05-30
+    items: 8314
+    changes: Renamed MLOmics (arXiv v2, 2025-03-03) and published on 2025-05-30, with the main
+      datasets deposited on figshare (v2, 2025-05-25) and Hugging Face under CC BY 4.0. The same 20
+      datasets and 8,314 patients. Whether the feature tables changed from v1 in this release or in
+      2026 was not established (review_checks).
+    supersedes_version: cmob-v1
+    superseded_by: 2026-07
+    frozen: true
+    sources:
+      - src-mlomics-scidata-2025
+      - src-arxiv-2409-02143
+      - src-figshare-28729127
+  - version: 2026-07
+    label: The July 2026 refresh
+    version_kind: revision
+    released: 2026-07-21
+    changes: Resources refreshed after community feedback, with a redesigned README and unified
+      runners; the Hugging Face files were re-uploaded on 2026-07-21 and again on 2026-09-22 without
+      a note. The README now gives the Top scale as 5,000 features per omics (200 for miRNA) and
+      scores imputation by MAE and RMSE.
+    supersedes_version: '2025'
+    frozen: false
+    sources:
+      - src-github-mlomics-readme
+      - src-hf-api-mlomics
+
+subsets:
+  - id: mlomics#pan-cancer-classification
+    label: Pan-cancer classification (32 cancer types)
+    items: 8314
+    scored_separately: true
+    evidence:
+      - source: src-mlomics-scidata-2025
+        quote: 'MLOmics provides six labeled datasets: one pan-cancer dataset and five gold-standard subtype
+          datasets (GS-COAD, GS-BRCA, GS-GBM, GS-LGG, and GS-OV).'
+      - source: src-github-mlomics-readme
+        quote: '| Pan-cancer classification | 10 | PREC, NMI, ARI |'
+  - id: mlomics#subtype-classification
+    label: Gold-standard subtype classification (GS-BRCA, GS-COAD, GS-GBM, GS-LGG, GS-OV)
+    items: 1704
+    scored_separately: true
+    evidence:
+      - source: src-mlomics-scidata-2025
+        quote: Some subtypes have been well-studied in prior research and widely accepted as the
+          golden standard.
+      - source: src-mlomics-scidata-2025
+        quote: we provide normalized mutual information (NMI) and adjusted rand index (ARI) to
+          evaluate the agreement between the clustering results obtained by different methods and
+          the true labels.
+    notes: Five datasets scored separately; 1,704 patients in v1's Table 1.
+  - id: mlomics#subtype-clustering
+    label: Cancer subtype clustering (nine rarer cancers, unlabelled)
+    scored_separately: true
+    evidence:
+      - source: src-mlomics-scidata-2025
+        quote: MLOmics provides nine unlabeled rare cancer datasets (ACC, KIRP, KIRC, LIHC, LUAD,
+          LUSC, PRAD, THCA, and THYM) for this learning task.
+      - source: src-mlomics-scidata-2025
+        quote: log-rank test p-value on survival time (LPS)
+    notes: Scored by silhouette and survival log-rank p-value, for which no evaluation-method term
+      exists (failure 2026-11-05-mlomics-001).
+  - id: mlomics#omics-imputation
+    label: Omics data imputation (Imp-BRCA, Imp-COAD, Imp-GBM, Imp-LGG, Imp-OV)
+    items: 1704
+    scored_separately: true
+    evidence:
+      - source: src-mlomics-scidata-2025
+        quote: MLOmics provides five omics datasets with missing values (Imp-BRCA, Imp-COAD,
+          Imp-GBM, Imp-LGG, and Imp-OV).
+      - source: src-github-mlomics-readme
+        quote: '| Omics data imputation | 7 | MAE, RMSE |'
+    notes: Values masked uniformly at random at rates of 0.3, 0.5 and 0.7, Top scale only. No domain
+      leaf fits recovering masked measurements; it inherits the parent's.
+subsets_note: The four task groups of the paper, each holding one or more of the 20 datasets, which
+  are scored separately per dataset and feature scale; the datasets are not recorded as subsets of
+  their own.
+
+tags:
+  - multi-omics
+  - tcga
+  - cancer
+  - bulk-rna-seq
+  - subtyping
+  - clustering
+  - imputation
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T06)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-mlomics-scidata-2025
+    - src-arxiv-2409-02143
+    - src-arxiv-2409-02143-v1
+    - src-github-mlomics-readme
+    - src-github-mlomics-run-classifiers
+    - src-hf-api-mlomics
+    - src-figshare-28729127
+    - src-gdc-data-access-processes
+    - src-cmgl-bioinformatics-2026
+  sources_note: >
+    The Scientific Data paper read through Europe PMC's REST full text (nature.com disallows AI agents),
+    with narrow windows that keep the author list, ORCIDs and the corresponding author's address out;
+    the arXiv abstract page (v3) for the dates, with the submitter line kept out, and the v1 PDF for the
+    CMOB release; the README and the classical runner pinned at commit fdb9da0 (pending archive); the
+    Hugging Face and figshare API records of the data; the GDC access page (pending archive); and CMGL's
+    Europe PMC full text as evidence of current use. GitHub's API was read for the repository's dates,
+    licence and files, and Hugging Face's commit history for the upload dates, and neither is kept as
+    a Source. The project page (chenzrg.github.io) and the Hugging Face dataset card page were not read.
+  confidence: medium
+  review_checks:
+    - check: Primary leaf. transcriptomics is defined on bulk gene expression, and two of MLOmics'
+        four omics are bulk expression; methylation and copy number are not, and every baseline
+        integrates all four. No leaf names bulk multi-omics integration.
+        medicine-health/diagnosis-triage was rejected because the labels are TCGA cancer types and
+        molecular subtypes rather than a clinical endpoint, but the paper frames classification as
+        diagnostic and the clustering is partly scored on survival.
+      field: domain
+      source: src-mlomics-scidata-2025
+      quote: These two classification tasks potentially improve cancer early diagnostic accuracy and
+        treatment outcomes.
+    - check: Benchmark status. The journal paper calls MLOmics a database (a Data Descriptor), and
+        no train/test split is fixed in the released data. The classical runner draws its own
+        stratified 80/20 split with seed 42, and CMGL uses five-fold 70/10/20 cross-validation, so
+        scores from different papers are not computed on the same test data.
+      field: task
+      source: src-github-mlomics-run-classifiers
+      quote: X, y_enc, test_size=args.test_size, random_state=42, stratify=y_enc)
+    - check: The metric set differs between documents. The paper names precision, recall and F1
+        (with NMI and ARI) for classification and MSE for imputation; the README's classification
+        table ranks the clustering methods (SNF to MCluster-VAEs) by PREC, NMI and ARI and gives MAE
+        and RMSE for imputation; the classical runner reports accuracy and macro-F1. Which is
+        canonical is not stated.
+      field: evaluation_method
+      source: src-github-mlomics-run-classifiers
+      quote: f1 = f1_score(y_te, y_pred, average='macro')
+    - check: versions models three revisions. v1's Table 1 gives the Top scale 2,000 features per
+        omics and different Original feature counts from the README's current table (5,000 at Top),
+        but the Scientific Data XML holds no tables, so when the change came (v2/v3 in 2025, or the
+        July 2026 refresh) was not established. The Hugging Face files were re-uploaded on
+        2026-07-21 and 2026-09-22, the second with no announcement, which is why data.refresh is
+        null.
+      field: versions
+      source: src-arxiv-2409-02143-v1
+      quote: Top Features 2K+ genes, etc.
+    - check: data.access is fully-open on the strength of MLOmics' own ungated, CC BY 4.0 files. The
+        paper does not say which GDC access tier each input came from. The GDC page puts high-level,
+        non-identifiable genomic data and most clinical elements in the open tier, but the tier of
+        each input file (the copy-number calls especially) and of the clinical annotation file was
+        not checked file by file.
+      field: data.access
+      source: src-gdc-data-access-processes
+      quote: Open access data generally includes high level genomic data that is not individually
+        identifiable
+    - check: maintainer_type individual rests on the personal-account repository (chenzRG). The data
+        sit in a Hugging Face organisation (AIBIC) whose holder is not stated in any source read; if
+        it is a university lab's, academic-lab fits better.
+      field: governance.maintainer_type
+    - check: The clustering tasks (9 of 20 datasets) are scored by the silhouette and a survival
+        log-rank p-value, which no evaluation-method term covers (failure 2026-11-05-mlomics-001);
+        the list carries only the classification and imputation methods.
+      field: evaluation_method
+      source: src-mlomics-scidata-2025
+      quote: To evaluate the goodness of clustering we opt for the classic Silhouette coefficient
+        (SIL)
+    - check: code_licence CC-BY-4.0 is the paper's statement; the repository has no LICENSE file and
+        GitHub reports none, and CC BY is not a software licence. The bundled third-party baselines
+        carry their own licences.
+      field: execution.code_licence
+    - check: Current use rests on one 2026 paper, CMGL, which uses its own partitions and metrics.
+        Europe PMC lists about 20 works citing MLOmics in 2025-2026; the others (CMIGAT,
+        CancerSubtypeXplore, a multi-omic imputation preprint and reviews) were not read.
+      field: lifecycle
+      source: src-cmgl-bioinformatics-2026
+      quote: We build our experiments upon the MLOmics multi-omics cancer database (Yang et al.
+        2025)
+    - check: designed_for_subjects puts the general learners (XGBoost, SVM, random forest, logistic
+        regression) under domain-specialist-model with the multi-omics models, because the tasks
+        belong to cancer genomics; clustering algorithms such as SNF and NEMO, which fit no network,
+        may be closer to classical-algorithm.
+      field: designed_for_subjects
+  personal_data_excluded:
+    - source: src-mlomics-scidata-2025
+      what: The author list with ORCIDs, the corresponding author's e-mail address and the
+        author-contribution names; the 60-character windows stop short of them.
+    - source: src-arxiv-2409-02143
+      what: The arXiv submitter line in the submission history.
+    - source: src-arxiv-2409-02143-v1
+      what: The title block's author names and e-mail addresses.
+    - source: src-github-mlomics-readme
+      what: The Contact section's e-mail address.
+    - source: src-figshare-28729127
+      what: The record's author list.
+    - source: src-cmgl-bioinformatics-2026
+      what: The author list and ORCIDs.
