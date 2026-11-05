@@ -1,0 +1,630 @@
+# data/benchmarks/biology-genetics/moleculeace.yaml
+#
+# P1-S5-T06, biology-genetics entry 18. Filled from the release paper, J. Chem. Inf. Model. 62(23), 5938-5951
+# (2022), read as Europe PMC's full-text XML of PMC9749029; Crossref's record of the first ChemRxiv posting
+# (2022-03-28), for the date the work appeared and the maintaining group's name; the repository README at main,
+# the repository record from the GitHub API (licence, dates, owner) and its release list (the three releases and
+# their notes); and the SemiMol paper (arXiv 2601.04507, January 2026) as evidence of current use. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The chemistry-materials round dropped this benchmark because that family's exclusion test sends a small molecule
+# scored for how it binds a protein, as a predicted affinity, to biology-genetics. The scored quantity here is a
+# compound's potency against a named macromolecular target, so the primary is biology-genetics/drug-target-interaction
+# and no chemistry-materials leaf is primary or secondary (review_checks).
+#
+# Personal data: the paper's author block, its corresponding address, the acknowledgments' names and the reference
+# list are outside the Source's 50-character windows; the Crossref record's names and ORCIDs are outside its
+# 15-character windows; the release list's author account and an asset filename built from a surname are outside
+# its 40-character windows. No individual is named in this file.
+
+id: moleculeace
+name: MoleculeACE
+aliases:
+  - Molecule Activity Cliff Estimation
+  - Activity Cliff Estimation
+tagline: Bioactivity regression on 30 ChEMBL target sets, scored separately on activity-cliff
+  compounds and the whole test set.
+description: >
+  A benchmark and Python package for the edge case that breaks the similarity principle in ligand-based
+  drug discovery: activity cliffs, pairs of structurally near-identical molecules whose potency differs
+  by an order of magnitude or more. It ships 30 curated per-target bioactivity data sets pulled from ChEMBL
+  v29, each a single macromolecular target (GPCRs, kinases, nuclear receptors, transporters, proteases)
+  with either Ki or EC50 values, 48,707 molecule records in all and between 615 and 3,657 molecules per
+  target. A pair counts as a cliff when any of three similarity measures (Tanimoto on extended-connectivity
+  fingerprints, Tanimoto on scaffold fingerprints, scaled Levenshtein distance on SMILES) reaches 0.9
+  and the reported potencies differ more than tenfold; a molecule in at least one such pair is an activity-cliff
+  compound, and the share runs from 7% of a set to 52%. Each set is split 80/20 within five structural
+  clusters, stratified on the cliff label, so train-test similarity is preserved. A model predicts pKi
+  or pEC50 for the test molecules and is scored twice: RMSE over the whole test set and RMSEcliff over
+  the cliff compounds alone. The release paper ran 24 strategies, sixteen descriptor-based machine learning
+  combinations and seven neural networks on graphs or SMILES plus an ECFP multilayer perceptron, 720 models
+  in all, and found descriptor-based methods ahead of deep learning on cliffs. There is no leaderboard:
+  users install the package, score their own model with calc_cliff_rmse and publish the numbers themselves.
+self_description:
+  source: src-github-moleculeace-readme
+  quote: is a tool for evaluating the predictive performance on activity cliff compounds of machine
+    learning models
+paper:
+  title: Exposing the Limitations of Molecular Machine Learning with Activity Cliffs
+  doi: 10.1021/acs.jcim.2c01073
+  source: src-jcim-2022-moleculeace
+released: 2022-03-28
+released_note: The date the work first appeared, as the Crossref record of its first ChemRxiv
+  posting dates it; the repository was created two days earlier, on 2022-03-26
+  (src-github-api-moleculeace). The journal version is release_venue, and the benchmark's own
+  releases start in 2023 (versions).
+released_source: src-crossref-10-26434-chemrxiv-2022-mfq52
+released_quote: '"posted":{"date-parts":[[2022,3,28]]}'
+release_venue: Journal of Chemical Information and Modeling 62(23), 5938-5951 (2022)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/drug-target-interaction
+domain_basis:
+  reason: Each data set is one macromolecular target, and what a model predicts is how strongly a
+    compound acts on that target, as a Ki or EC50 the assay reported. That is the leaf's definition
+    (whether a compound binds a specified biological target and how strongly), and the
+    chemistry-materials family's exclusion test names a small molecule scored for a predicted
+    affinity as biology-genetics, so no chemistry-materials leaf is primary or secondary
+    (review_checks).
+  source: src-jcim-2022-moleculeace
+  quote: We benchmarked a total of 24 machine and deep learning approaches on curated bioactivity
+    data from 30 macromolecular targets for their performance on activity cliff compounds
+domain_considered_and_rejected:
+  - term: chemistry-materials/molecular-property-prediction
+    reason: The paper frames the task as molecular property prediction and QSAR, and the leaf's
+      definition (a physical, chemical or biological property of a molecule from its structure)
+      would cover it. But the property is potency against a named protein, which both families'
+      tests send to biology-genetics, and the leaf's family exclusion is explicit about a predicted
+      affinity.
+    source: src-jcim-2022-moleculeace
+    quote: Molecular property prediction has the principle of similarity at its heart
+  - term: chemistry-materials/drug-discovery-admet
+    reason: Nothing absorption-, distribution-, metabolism-, excretion- or toxicity-related is
+      predicted. The leaf's own not_to_be_confused_with sends target binding to
+      biology-genetics/drug-target-interaction even for a drug candidate.
+  - term: chemistry-materials/experimental-hit-finding
+    reason: No compound is nominated and then synthesised or assayed. Every label is a measurement
+      already in ChEMBL when the split is made.
+    source: src-jcim-2022-moleculeace
+    quote: compound bioactivity values were collected from ChEMBL
+  - term: biology-genetics/protein-ligand-cofolding
+    reason: No structure or pose is predicted, and no protein structure is given; the input is the
+      compound alone, with the target implied by which data set it belongs to.
+  - term: biology-genetics/protein-fitness-prediction
+    reason: The mutated entity in that leaf is the protein. Here the protein is fixed per data set
+      and the small molecule varies.
+capability:
+  - scientific-prediction
+capability_basis:
+  scientific-prediction:
+    reason: Models predict a measured biological property of a compound, its potency on a named
+      target, and the score is the error against the value the assay reported.
+    source: src-jcim-2022-moleculeace
+    quote: The overall model performance was quantified via the root-mean-square error (RMSE)
+      computed on the bioactivity values
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: RMSEcliff is reported as its own condition beside RMSE, which looks like the term's
+      shape, but the cliff compounds are not drawn from a distribution the model was not fitted to;
+      the split deliberately keeps highly similar training molecules for them, and the difficulty is
+      that similar inputs carry distant labels. The term's inclusion test asks for inputs from a
+      shifted distribution.
+    source: src-jcim-2022-moleculeace
+    quote: For each cluster, 80% of molecules were assigned to the training data and 20% were
+      assigned to the test data by stratified splitting
+  - term: adversarial-robustness
+    reason: The hard subset is naturally occurring in the assay data and selected by a structural
+      and potency rule, not chosen by an attacker to defeat a system.
+  - term: sample-efficiency
+    reason: Low-data regimes are the paper's recurring theme and a later user counts 12 of 30 sets
+      with at most 1,000 training molecules, but no sample budget is imposed or swept; each set is
+      simply as large as ChEMBL made it.
+    source: src-arxiv-2601-04507-v1
+    quote: In particular, 12 of 30 datasets in MoleculeCAE have no more than 1K molecules in the
+      training set, indicating a standard lowdata regime.
+  - term: reliability-consistency
+    reason: Nothing is repeated. The term needs the same item scored across repeated trials; here
+      every test molecule is predicted once.
+
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: Both reported numbers are root-mean-square error in log-potency units against the measured
+    pKi or pEC50 -- RMSE over the whole test set and RMSEcliff over the test molecules in at least
+    one activity-cliff pair. A general goodness-of-fit statistic on continuous values is this term.
+  source: src-jcim-2022-moleculeace
+  quote: The performance on activity cliffs compounds was quantified by computing the
+    root-mean-square error (RMSEcliff) only on compounds that belonged to at least one activity
+    cliff pair
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: RMSEcliff is RMSE computed over a selected subset, not a measure with a name and meaning
+      of its own inside medicinal chemistry; the term's exclusion keeps a general statistic out even
+      where a field standardises how it is used.
+  - term: composite
+    reason: RMSE and RMSEcliff are published side by side per data set and never combined into one
+      weighted or averaged figure; the paper declines even to normalise RMSE across data sets.
+    source: src-jcim-2022-moleculeace
+    quote: or normalized RMSE values, were not considered to avoid the introduction of undesired
+      biases related to the different range of the training/test set responses across data sets
+  - term: classification-metric
+    reason: No class is predicted. The cliff label selects which molecules RMSEcliff is computed
+      over; it is never an output.
+  - term: entrant-relative-ranking
+    reason: The release paper's global ranking is a PCA over the methods' RMSEcliff values,
+      stretched between the best and worst result of the pool, which would meet the term's "scale
+      fitted jointly across entrants" test. It is an analysis in that one paper, not a figure the
+      package computes or later users reproduce, and the scored quantities stay the two RMSEs
+      (review_checks).
+    source: src-jcim-2022-moleculeace
+    quote: rows capturing the best and worst RMSEcliff for each data set were added to stretch the
+      PCA results
+designed_for_subjects:
+  - scientific-surrogate-model
+designed_for_subjects_basis:
+  reason: Each entrant is fitted on a target's measured potencies and then predicts the potency the
+    assay would report for compounds it has not seen, which is the term's "stands in for a
+    laboratory assay, and is scored against what that process would have produced". The paper's
+    motivation is exactly that substitution, virtual screening in place of measurement.
+  source: src-jcim-2022-moleculeace
+  quote: The mean Ki or EC50 value for each molecule was computed and subsequently converted into
+    pEC50/pKi values
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: The 24 strategies are built for medicinal chemistry's QSAR task, which would fit, but
+      the term's exclusion sends an artifact that emulates a measurement in place of the measurement
+      to scientific-surrogate-model. Noted as a close call because the pretrained entrants (a
+      ChemBERTa transformer, a SMILES LSTM) are chemistry-specialised models fine-tuned onto the
+      assay.
+    source: src-jcim-2022-moleculeace
+    quote: We used the pretrained ChemBERTa model weights based on 10M compounds from PubChem.
+  - term: task-specific-supervised-model
+    reason: Entrants are refitted on each data set's training split, which the term's inclusion test
+      describes, but its exclusion sends a task belonging to a scientific discipline elsewhere.
+  - term: classical-algorithm
+    reason: Every one of the 24 strategies is fitted to the training split, k-nearest neighbour and
+      the tree ensembles included; none is a non-learned solver or heuristic.
+    source: src-jcim-2022-moleculeace
+    quote: SVM coupled with ECFPs resulted in the best method on activity cliffs on average
+
+as_used:
+  - protocol: All 30 data sets, scored on the activity-cliff molecules and on all test molecules
+      separately, to evaluate a semi-supervised regression framework with graph-neural-network
+      backbones against the paper's machine- and deep-learning baselines.
+    split: all 30 data sets
+    source: src-arxiv-2601-04507-v1
+    quote: All our evaluations in this section are performed on datasets from MoleculeACE (Activity
+      Cliff Estimation), which is an open-access benchmarking platform
+    note: SemiMol (arXiv 2601.04507, January 2026). It reports the two slices separately, as the
+      benchmark intends, and counts 12 of the 30 sets as low-data. Whether its authors overlap the
+      maintainers was not checked (review_checks).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the 30 data sets, and a January 2026 paper evaluates on
+    all of them (as_used). The repository's last push is 2025-02-15 and its last release 2023-09-29,
+    which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2601-04507-v1
+  quote: Extensive experiments on 30 activity cliff datasets demonstrate that SemiMol significantly
+    enhances graphbased ML architectures
+activity: no-submission-channel
+activity_basis:
+  reason: The README offers installation and two usage recipes, one for the included data sets and
+    one for a user's own model, and no source shows a leaderboard, results page or submission route;
+    the only maintainer results are the release paper's, kept in the repository.
+  source: src-github-moleculeace-readme
+  quote: Any regression model can be evaluated on activity cliff performance using MoleculeACE on
+    third party data or the 30 included molecular bioactivity data sets.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Support vector regression on extended-connectivity fingerprints
+    source: src-jcim-2022-moleculeace
+    observed_on: 2026-11-05
+    quote: SVM coupled with ECFPs resulted in the best method on activity cliffs on average
+  - system: SemiMol (a semi-supervised framework over graph neural networks)
+    source: src-arxiv-2601-04507-v1
+    observed_on: 2026-11-05
+    quote: Extensive experiments on 30 activity cliff datasets demonstrate that SemiMol
+      significantly enhances graphbased ML architectures
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: Ki and EC50 measurements reported in ChEMBL v29 for human targets,
+  averaged per molecule after Dixon's Q test for outliers and after dropping molecules whose
+  replicate annotations scatter by more than one log unit, then converted to pKi or pEC50. The
+  labels are measurements, curated from a public database rather than made for the benchmark.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The 30 data sets with their fixed splits and cliff labels, the optimised hyperparameters
+    for all 24 strategies and the scripts that reproduce the study are all in the public repository,
+    and the two metrics are two function calls.
+  source: src-jcim-2022-moleculeace
+  quote: All data sets and scripts to replicate this study can be found here as well.
+
+task:
+  exists: true
+  input:
+    - one target data set's training molecules as SMILES strings with their measured pKi or pEC50
+      values, and the test molecules' SMILES
+    - or a user's own train and test SMILES with labels, for which the package computes the cliff
+      labels on the fly
+  output: A predicted pKi or pEC50 for every test molecule.
+  scoring: Per data set, the RMSE over all test molecules and the RMSEcliff over the test molecules
+    belonging to at least one activity-cliff pair, in log-potency units, lower better; the two are
+    reported side by side and not combined.
+  tests_hidden_from_system: false
+  source: src-jcim-2022-moleculeace
+  quote: The performance on activity cliffs compounds was quantified by computing the
+    root-mean-square error (RMSEcliff) only on compounds that belonged to at least one activity
+    cliff pair
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The 30 curated data sets, labels and splits included, are a folder in the public
+      repository, under no registration or agreement.
+    source: src-jcim-2022-moleculeace
+    quote: The curated data sets are available at the following URL
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The content changed once after release, under a version label. v3.0.0 fixed a bug in the
+      train-test split caused by mislabelled activity-cliff pairs and corrected the data and
+      results. An undated README update later added a pEC50/pKi column computed from molar
+      concentrations beside the original labels, which does not change what the labels mean
+      (review_checks).
+    source: src-github-api-moleculeace-releases
+    quote: After publication, it came to our attention that a software bug affected the split
+      between training and test set, due to incorrect labeling of certain activity cliffs pairs.
+  data_provenance:
+    - experimental-measurement
+    - curated-public-database
+  data_provenance_note: The labels are bioactivity measurements from published assays. They reach
+    the benchmark through ChEMBL v29, a database compiled for its own purposes, and the authors' own
+    curation pipeline (sanitisation, salt and mixture removal, outlier and replicate-scatter
+    filters) sits on top. inherited-from-constituents was considered and rejected, because no
+    earlier benchmark is reused whole.
+  data_provenance_source: src-jcim-2022-moleculeace
+  data_provenance_quote: compound bioactivity values were collected from ChEMBL
+  contamination_risk: medium
+  contamination_risk_note: >
+    The honest default for a public static set. Every label is public twice over, in ChEMBL and in the
+    repository, so nothing stops a model from training on the test molecules' measured potencies, and
+    the molecules themselves sit in the pretraining corpora the deep-learning entrants use. No source
+    evidences a scored method that trained on a test split: the release paper's own pretraining used either
+    the merged training sets or PubChem structures without potency labels. Later users who pretrain on
+    ChEMBL would reopen the route, and none of the sources read assesses that.
+  contamination_risk_source: src-jcim-2022-moleculeace
+  contamination_risk_quote: The curated data sets are available at the following URL
+  contamination_evidence:
+    - source: src-jcim-2022-moleculeace
+      stance: supports
+      quote: We used the pretrained ChemBERTa model weights based on 10M compounds from PubChem.
+    - source: src-jcim-2022-moleculeace
+      stance: against
+      quote: LSTM models were pretrained on SMILES obtained by merging all training sets with no
+        repetitions (36,281 molecules)
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: noise-ceiling was considered and rejected. The paper warns that the
+    public bioactivity data carry undetectable experimental noise, which means zero RMSE is not
+    reachable, and it drops molecules whose replicate annotations scatter by more than one log unit;
+    but it publishes no reliability figure for the retained measurements, so there is no anchor to
+    use (review_checks).
+  ceiling_anchor_type_basis:
+    reason: Both headline numbers are RMSE in log units, bounded at zero error, and no source
+      publishes a human, system or measured anchor that scores are read against.
+    source: src-jcim-2022-moleculeace
+    quote: The overall model performance was quantified via the root-mean-square error (RMSE)
+      computed on the bioactivity values
+  dataset_licence: null
+  dataset_licence_note: No source read states a licence for the data. The repository is MIT
+    (execution.code_licence) and the data folder sits inside it, but the measurements come from
+    ChEMBL and the README's licence line speaks of MoleculeACE and the model packages, not the data.
+    ChEMBL's own terms were not read (review_checks).
+  size:
+    - count: 48707
+      unit: molecule records (35,632 of them unique molecules)
+      subset: all 30 data sets after curation
+      source: src-jcim-2022-moleculeace
+      quote: The curated collection contains a total of 48,707 molecules (of which 35,632 were
+        unique)
+    - count: 30
+      unit: per-target bioactivity data sets, each a macromolecular target with Ki or EC50 labels
+      source: src-jcim-2022-moleculeace
+      quote: we collected and curated data on 30 macromolecular targets from ChEMBL
+    - count: 3657
+      unit: molecules
+      subset: largest data set, the dopamine D3 receptor
+      source: src-jcim-2022-moleculeace
+      quote: from small (e.g., 615 molecules for Janus Kinase 1 [JAK1]) to large (e.g., 3657
+        molecules, dopamine D3 receptor [DRD3])
+    - count: 615
+      unit: molecules
+      subset: smallest data set, Janus kinase 1
+      source: src-jcim-2022-moleculeace
+      quote: from small (e.g., 615 molecules for Janus Kinase 1 [JAK1]) to large (e.g., 3657
+        molecules, dopamine D3 receptor [DRD3])
+  size_note: A fifth of each set is its test split, and the share of activity-cliff compounds runs
+    from 7% of a set (Janus kinase 1) to 52% (orexin receptor 2), with the test split's share within
+    a point of the whole set's in every row of the paper's Table 1. The paper's abstract and the
+    README quote the collection as "more than 35,000 molecules", the unique count.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: molML, the Molecular Machine Learning group at Eindhoven University of Technology
+  maintainer_basis:
+    reason: The package, the data and the study's scripts sit in the molML organisation account on
+      GitHub (the repository record's organisation login), and the Crossref record of the preprint
+      gives that group and university as the first and last authors' affiliation.
+    source: src-crossref-10-26434-chemrxiv-2022-mfq52
+    quote: Molecular Machine Learning group, Eindhoven University of Technology
+  maintainer_type: academic-lab
+  maintainer_type_note: The holder is a university research group's own organisation account.
+    community-collective was considered and rejected, because the account is one group's, not a
+    shared one across institutions. individual was considered and rejected too, since the repository
+    is not in a personal namespace, although its licence file names an individual as copyright
+    holder.
+  submission_process:
+    - literature-only
+  submission_process_note: No ranking, results page or submission route exists. The only maintainer
+    results are the release paper's comparison of 24 strategies, kept as a results file in the
+    repository and corrected twice with the releases; everyone else installs the package and reports
+    in their own paper, as the January 2026 user does (as_used).
+  submission_process_source: src-github-moleculeace-readme
+  submission_process_quote: All 24 machine learning strategies covered in our benchmark study can be
+    used out of the box.
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-jcim-2022-moleculeace
+      quote: The authors declare no competing financial interest.
+  independence_flags_note: Searched for every flag on 2026-11-05. All 24 scored strategies are
+    third-party algorithms and the authors enter no method of their own, so
+    maintainer-competes-on-own-benchmark does not apply. Scoring is two arithmetic functions, so
+    grader-from-evaluated-party does not either. The paper's funding acknowledgment names a
+    fellowship and a research centre, but it sits between personal names and was left outside the
+    Source's windows, so governance.funding is unset (review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-jcim-2022-moleculeace
+    quote: As this work relies on public bioactivity data, which might be affected by undetectable
+      experimental noise
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: Scoring is two arithmetic functions on CPU, but a run means training the model
+    under test on each of 30 sets, which ranges from a support vector machine on fingerprints to
+    graph networks and a fine-tuned transformer with Bayesian hyperparameter search over 50
+    configurations. No source states hardware, runtime or cost.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, splits, cliff labels, hyperparameters and scoring functions are all public, and no
+      human, physical or maintainer-only step stands between a model and its two numbers.
+    source: src-github-moleculeace-readme
+    quote: Activity cliffs are calculated on the fly
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: MoleculeACE (the pip package; Data and get_benchmark_config load a set and its tuned
+    hyperparameters, calc_rmse and calc_cliff_rmse compute the two scores)
+  harness_source: src-github-moleculeace-readme
+  harness_quote: from MoleculeACE import MPNN, Data, Descriptors, calc_rmse, calc_cliff_rmse,
+    get_benchmark_config
+  harness_gotcha:
+    # calc_cliff_rmse recomputes the cliff labels from its similarity and potency_fold arguments, so a user who
+    # changes either is scoring a different set of molecules under the same metric name.
+    source: src-github-moleculeace-readme
+    quote: in_log10=True, similarity=0.9, potency_fold=10
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for the repository reports MIT as well
+    (src-github-api-moleculeace). The README adds that the models themselves carry the licences of
+    the packages they come from.
+  code_licence_source: src-github-moleculeace-readme
+  code_licence_quote: MoleculeACE is under MIT license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the surrogate-fit profile (subset_used, training_data_policy): activity_threshold, because
+  # calc_cliff_rmse recomputes which molecules are cliff compounds from the similarity and potency-fold
+  # arguments it is given, and harness, because the package version decides the splits -- v3.0.0 changed them
+  # and only v2.0.1 reproduces the paper.
+  material_extra:
+    - activity_threshold
+    - harness
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Nothing is published as one number per model. Each data set carries its own RMSE and
+    RMSEcliff, and the paper refuses even to normalise RMSE across sets because their response
+    ranges differ; its cross-set view is a PCA figure rather than an average.
+  source: src-jcim-2022-moleculeace
+  quote: or normalized RMSE values, were not considered to avoid the introduction of undesired
+    biases related to the different range of the training/test set responses across data sets
+
+liveness:
+  repo_last_commit: 2025-02-15
+  reproduction_script_present: true
+  last_checked: 2026-11-05
+
+homepage: https://github.com/molML/MoleculeACE
+repository: https://github.com/molML/MoleculeACE
+dataset_url: https://github.com/molML/MoleculeACE/tree/main/MoleculeACE/Data/benchmark_data
+
+versions:
+  - version: v2.0.1
+    label: The code and results of the release paper
+    version_kind: revision
+    released: 2023-03-16
+    changes: The first tagged release, labelled Original, holding the code that produced the paper's
+      numbers. It is the release to use to reproduce them.
+    superseded_by: v2.0.2
+    frozen: true
+    sources:
+      - src-github-api-moleculeace-releases
+  - version: v2.0.2
+    label: Consecutive-patience early stopping, results refreshed
+    version_kind: revision
+    released: 2023-03-16
+    changes: Early stopping changed from non-consecutive to consecutive patience, which moved
+      individual results slightly (models became slightly better on average) with no change to the
+      paper's conclusions; the results file was updated with it. Scores are not comparable with the
+      paper's.
+    supersedes_version: v2.0.1
+    superseded_by: v3.0.0
+    frozen: true
+    sources:
+      - src-github-api-moleculeace-releases
+  - version: v3.0.0
+    label: Corrected train-test splits
+    version_kind: revision
+    released: 2023-09-29
+    changes: A bug that mislabelled some activity-cliff pairs, and so misdivided the train and test
+      sets, was fixed; every model was retrained and the data, figures and results in the repository
+      corrected. The same findings and conclusions held. The splits a score is computed on changed,
+      so scores are not comparable with either earlier release.
+    breaking: true
+    supersedes_version: v2.0.2
+    frozen: true
+    sources:
+      - src-github-api-moleculeace-releases
+      - src-jcim-2022-moleculeace
+versions_note: The README's badge reads v. 3.0.1, one patch past the newest GitHub release, and a
+  later undated README update added a pEC50/pKi column computed from molar concentrations beside the
+  original log-nM labels; neither has a release of its own and neither is listed (review_checks).
+  The journal record carries two correction notices, 2023-03-30 and 2023-10-18, which line up in
+  date order with v2.0.2 and v3.0.0.
+
+subsets_note: The 30 per-target data sets are the parallel tracks, each scored on its own, and they
+  are not enumerated here, because they carry no labels beyond their ChEMBL target and response
+  type, their counts are in the paper's Table 1, and the headline sizes are in data.size. The cliff
+  and whole-test-set slices are two metrics over one test split rather than tracks (review_checks).
+
+tags:
+  - activity-cliffs
+  - qsar
+  - bioactivity-prediction
+  - chembl
+  - drug-discovery
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T06)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-jcim-2022-moleculeace
+    - src-crossref-10-26434-chemrxiv-2022-mfq52
+    - src-github-moleculeace-readme
+    - src-github-api-moleculeace
+    - src-github-api-moleculeace-releases
+    - src-arxiv-2601-04507-v1
+  sources_note: >
+    The release paper as Europe PMC's full-text XML of PMC9749029, read with 50-character windows that
+    keep the author block, the corresponding address, the acknowledgments and the reference list out;
+    Crossref's record of the first ChemRxiv posting, with 15-character windows that keep the author names
+    and ORCIDs out, for the date and the maintaining group; the README at main; the repository record
+    and the release list from the GitHub API; and the SemiMol v1 PDF as evidence of 2026 use. The LICENCE
+    file was fetched and not kept as a Source: it adds only a copyright holder's name to what the README
+    and the API record already state.
+  confidence: medium
+  review_checks:
+    - check: The primary leaf. The chemistry-materials round dropped this entry because that
+        family's exclusion test sends a predicted protein affinity to biology-genetics, and
+        drug-target-interaction is the only leaf whose definition covers a compound's potency on a
+        named target. But the leaf's not_to_be_confused_with contrasts it only with ADMET and
+        hit-finding, and the paper's own framing is molecular property prediction, which is a
+        chemistry-materials leaf. If the reviewer reads the scored quantity as the molecule's own
+        property, the entry belongs in chemistry-materials; nothing else in the taxonomy forces the
+        call.
+      field: domain.primary
+    - check: No capability term names what the benchmark actually claims to measure, accuracy on the
+        activity-cliff slice of a test set. The three candidates all fail their own inclusion tests
+        (capability_considered_and_rejected), so capability carries only scientific-prediction.
+        Logged as taxonomy/_failures/2026-11-05-moleculeace-001 with a proposed term.
+      field: capability
+    - check: Whether chemistry-materials/molecular-property-prediction should be a secondary leaf
+        rather than only rejected. It was left off because the family exclusion test is written
+        against exactly this case, but a secondary tag would make the entry findable from the QSAR
+        side.
+      field: domain.secondary
+    - check: designed_for_subjects is scientific-surrogate-model, not domain-specialist-model, which
+        decides the comparability profile (surrogate-fit rather than fallback). The entrants are
+        fitted on the target's own measured potencies and predict what the assay would report, which
+        is the surrogate test; but two of them are chemistry-pretrained models fine-tuned onto the
+        assay, which reads as specialisation. ProteinGym rejected the surrogate term for predictors
+        scored against assays they were not trained to emulate; here they are trained on them, which
+        is why the call differs.
+      field: designed_for_subjects
+      source: src-jcim-2022-moleculeace
+      quote: We used the pretrained ChemBERTa model weights based on 10M compounds from PubChem.
+    - check: entrant-relative-ranking is rejected. The release paper's global ranking is a PCA over
+        the pool's RMSEcliff values stretched between the pool's best and worst, which the term's
+        inclusion test describes, and adding a method would move the picture. It is treated as one
+        paper's analysis rather than the benchmark's scoring because the package computes only the
+        two RMSEs.
+      field: evaluation_method
+      source: src-jcim-2022-moleculeace
+      quote: we performed a principal component analysis (PCA) on the obtained RMSEcliff values
+    - check: aggregation_policy is none-by-design on the paper's refusal to normalise RMSE across
+        data sets, but the paper itself compares methods "on average" across the 30 sets throughout,
+        and later users report mean RMSE over them. Whether the catalogue should record that
+        community mean as a community-aggregate instead.
+      field: aggregation_policy
+    - check: data.refresh is versioned-releases, resting on v3.0.0's labelled correction. The extra
+        pEC50/pKi column the README announces carries no date and no release label; the README says
+        model errors are unchanged because the labels are shifted by a constant 9, which is why this
+        is not read as rolling-live.
+      field: data.refresh
+      source: src-github-moleculeace-readme
+      quote: we added an extra column to the datasets containing pEC50 and pKi values calculated
+        from Molar concentrations alongside the original training labels used in the study
+    - check: The data licence is null. The repository is MIT and the data folder is inside it, but
+        the measurements are ChEMBL's and ChEMBL's own terms (CC BY-SA) were not read, so whether
+        the benchmark data may be redistributed is unresolved.
+      field: data.dataset_licence
+    - check: ceiling_anchor_type is theoretical-maximum (zero RMSE). The paper's warning about
+        undetectable experimental noise, and its one-log-unit replicate-scatter filter, point at a
+        noise ceiling that nobody has quantified for the retained data. A reviewer with the
+        replicate-level ChEMBL data could put a number on it.
+      field: data.ceiling_anchor_type
+      specialist: true
+    - check: contamination_risk is medium. The labels are public in ChEMBL and in the repository, so
+        a later entrant that pretrains on ChEMBL bioactivities would have seen the test molecules'
+        potencies. No source read assesses this for any scored method, and the benchmark has no
+        training-data policy to breach.
+      field: data.contamination_risk
+    - check: The 30 per-target data sets are not enumerated as subsets, as MMLU's 57 subjects are
+        not. If the reviewer wants per-target rows, the paper's Table 1 has every target, response
+        type, size, test size and cliff share.
+      field: subsets
+    - check: Whether the January 2026 user's authors overlap the maintainers. The paper was read
+        through windows that keep its author block out, so independence of that use is unverified;
+        the flag list rests only on the release paper's conflict statement.
+      field: as_used
+    - check: Derivative benchmarks are not recorded. Several later activity-cliff benchmarks exist
+        (one for antimicrobial peptides, one classification-framed set), and whether any is a fork
+        or variant of these 30 data sets, rather than an independent construction, was not
+        established, so lineage is unset.
+      field: lineage
+    - check: governance.funding is unset although the paper carries an acknowledgment of a
+        fellowship and a research centre. The sentence sits immediately after personal names, so
+        quoting it would have pulled them into the Source extract.
+      field: governance.funding
+  personal_data_excluded:
+    - source: src-jcim-2022-moleculeace
+      what: the author block and the corresponding author's e-mail address, the acknowledgments'
+        personal names and the whole reference list, all outside the 50-character windows
+    - source: src-crossref-10-26434-chemrxiv-2022-mfq52
+      what: the authors' given and family names and their ORCIDs, outside the 15-character windows
+    - source: src-github-api-moleculeace-releases
+      what: the release author's GitHub account and a release asset filename built from a surname,
+        outside the 40-character windows

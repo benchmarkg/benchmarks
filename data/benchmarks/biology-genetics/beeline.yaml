@@ -1,0 +1,634 @@
+# data/benchmarks/biology-genetics/beeline.yaml
+#
+# P1-S5-T06, biology-genetics entry 21. Filled from the Nature Methods paper (2020) read as its PubMed Central author
+# manuscript through Europe PMC's full-text XML (nature.com disallows AI agents in robots.txt and was not fetched);
+# Europe PMC's record of the bioRxiv preprint 642926 (May 2019), for its date and its abstract; the Murali-group/Beeline
+# README at master, GitHub's release record of the repository (v1.0 and v1.1.0) and the documentation's landing page;
+# the Zenodo records of the data's version 3 (2020) and version 4 (2026); and DAZZLE (PLOS Computational Biology,
+# October 2025) and GRNFormer (Bioinformatics, March 2026) as Europe PMC full text, for current use. Every quote below
+# is checked by the quote-substring validator against those Sources' committed extracts. No corpus classification
+# record and no Epoch stub exist for this id.
+#
+# Identity: one entry for the framework, its three kinds of dataset (synthetic networks, curated Boolean models,
+# experimental scRNA-seq) as subsets, and the two code releases (v1.0, v1.1) as revisions.
+
+id: beeline
+name: BEELINE
+aliases:
+  - 'BEELINE: Benchmarking gEnE reguLatory network Inference from siNgle-cEll transcriptomic data'
+tagline: GRN inference from single-cell expression, scored by AUPRC and early precision against
+  simulated and curated networks.
+description: >
+  A framework from the Murali group at Virginia Tech for benchmarking algorithms that infer gene
+  regulatory networks (GRNs) from single-cell gene expression. An algorithm takes an expression
+  matrix (and, for most, a pseudotime or simulation time per cell) and returns a ranked list of
+  regulator-target edges, which is scored against a ground-truth network by AUPRC and AUROC and by
+  early precision, the fraction of true edges among the top k, k being the number of edges in the
+  ground truth; both are also reported as ratios to a random predictor. Three kinds of dataset are
+  scored apart: six synthetic networks and four published Boolean models (mammalian cortical area
+  development, ventral spinal cord, hematopoietic stem cells, gonadal sex determination), each
+  simulated with the authors' BoolODE into more than 400 datasets, some with induced dropouts; and
+  five experimental scRNA-seq datasets from GEO (seven cell types, human and mouse) scored against
+  cell-type-specific ChIP-seq, non-specific regulatory databases and STRING. The framework also
+  measures stability across runs and datasets, network motifs and running time. Each algorithm runs in
+  its own Docker image. The paper compared 12 unsupervised algorithms; v1.1 (2026) wraps 14. There is
+  no leaderboard; GRN method papers run its datasets and metrics and report in their own work,
+  sometimes on preprocessed copies with other gene sets than the paper's, or with supervised train
+  and test splits that the paper did not define.
+self_description:
+  source: src-beeline-nature-methods-2020
+  quote: We have developed BEELINE, a comprehensive evaluation framework to assess the accuracy,
+    robustness, and efficiency of GRN inference techniques for single-cell gene expression data
+    based on well-defined benchmark datasets
+paper:
+  title: Benchmarking algorithms for gene regulatory network inference from single-cell
+    transcriptomic data
+  doi: 10.1038/s41592-019-0690-6
+  source: src-beeline-nature-methods-2020
+released: 2019-05-20
+released_note: The bioRxiv preprint's first publication date, as Europe PMC records it. The preprint
+  evaluated synthetic networks and Boolean models only; the five experimental datasets came with the
+  journal version, published online on 2020-01-06 (Nature Methods 17(2):147-154), and the
+  repository's first release, v1.0, on 2020-03-02. The repository was created on 2019-03-14 (GitHub
+  API).
+released_source: src-biorxiv-642926
+released_quote: '"firstPublicationDate":"2019-05-20"'
+release_venue: Nature Methods (2020)
+release_venue_source: src-github-beeline-readme
+release_venue_quote: _Nature Methods_, 17, 147
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/systems-biology
+  secondary:
+    - biology-genetics/single-cell-analysis
+domain_basis:
+  reason: The scored object is a whole regulatory network, its edges between transcription factors
+    and their targets, recovered from expression data and compared with a known network edge by
+    edge; nothing is predicted about a single gene or a single cell. That is the systems-biology
+    leaf's definition, a network modelled as a system rather than properties of its components. The
+    inputs are single-cell expression measurements (simulated or from scRNA-seq), so
+    single-cell-analysis is secondary; it is not primary because its inclusion test asks that most
+    tasks score cell-level results (labels, trajectories, integration), and here none does
+    (review_checks).
+  source: src-beeline-nature-methods-2020
+  quote: In such a GRN, each edge connects a transcription factor (TF) to a gene it regulates.
+domain_considered_and_rejected:
+  - term: biology-genetics/regulatory-genomics
+    reason: The leaf predicts regulatory activity directly from genomic sequence. No sequence is
+      input here; the algorithms read expression matrices, and methods using transcription-factor
+      binding databases were excluded on purpose.
+    source: src-beeline-nature-methods-2020
+    quote: or used additional information, e.g., a database of transcription factors and their
+      targets
+  - term: biology-genetics/transcriptomics
+    reason: The leaf takes bulk expression and infers a state or condition; the inputs here are
+      single-cell, and the output is a network, not a state.
+  - term: biology-genetics/perturbation-response-prediction
+    reason: No perturbation response is predicted or scored. The paper simulated the inferred
+      networks only to count their steady states, a secondary analysis.
+capability:
+  - scientific-prediction
+  - causal-reasoning
+  - reliability-consistency
+capability_basis:
+  scientific-prediction:
+    reason: The claim is that algorithms recover the regulatory structure of a biological system
+      from measurements of it, scored against a reference network that is known by construction
+      (simulated networks and Boolean models) or compiled from experiments (ChIP-seq, curated
+      databases).
+    source: src-beeline-nature-methods-2020
+    quote: As the ground truth for assessing accuracy, we use synthetic networks with predictable
+      trajectories, literature-curated Boolean models, and diverse transcriptional regulatory
+      networks.
+  causal-reasoning:
+    reason: An edge is correct only if it is a regulatory interaction in the reference, so
+      co-expression that is not regulation scores as a false positive. The paper reads its low early
+      precision as methods predicting indirect interactions (paths of length two in the ground
+      truth) and questions whether statistical association corresponds to regulation. The functional
+      STRING networks and the undirected outputs of two methods weaken this reading (review_checks).
+    source: src-beeline-nature-methods-2020
+    quote: Ideally, the edge is directed from the TF to the target gene, represents direct rather
+      than indirect regulation, and corresponds to activation or inhibition.
+  reliability-consistency:
+    reason: Each algorithm is run ten times on the same dataset and the agreement of the ranked edge
+      lists (Spearman correlation) is reported as stability across runs, one of four stability
+      measures in the paper's summary figure. It is a secondary measure beside accuracy.
+    source: src-beeline-nature-methods-2020
+    quote: We executed each algorithm 10 times on a dataset to ask if the inferred networks changed
+      from one run to another.
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The Boolean-model datasets are scored again with induced dropouts (q = 50 and 70), but
+      the algorithms are unsupervised and fitted to nothing beforehand, and their parameters were
+      swept on the scored data; the condition is robustness to noise, not a shift from a fitted
+      distribution.
+  - term: temporal-reasoning
+    reason: Eight algorithms take pseudotime or simulation time as input, and the paper shuffles it
+      to test sensitivity, but no score is about ordering or timing itself.
+  - term: knowledge-recall
+    reason: Methods that read regulatory databases were excluded; nothing is recalled.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: Every accuracy score is a general statistic of a ranked edge list against the ground-truth
+    edge set -- AUPRC, AUROC, and early precision (precision in the top k) -- reported raw or
+    divided by a random predictor's value (the network's edge density). AUPRC is the main statistic
+    because the networks are sparse.
+  source: src-beeline-nature-methods-2020
+  quote: Since the GRN inference problem for these networks is moderately imbalanced, we focus on
+    AUPRC scores in the main text
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: Early precision and its ratio are precision at a cut-off divided by the edge density,
+      general statistics with no definition specific to the discipline.
+    source: src-beeline-nature-methods-2020
+    quote: We defined early precision as the fraction of true positives in the top-k edges.
+  - term: statistical-fit
+    reason: The Spearman correlations and Jaccard indices measure agreement between an algorithm's
+      own outputs across runs or datasets, not error against ground truth.
+  - term: composite
+    reason: The summary figure lays accuracy, stability and scalability side by side and orders the
+      algorithms by median early precision ratio, but combines nothing into one score.
+  - term: simulation-rollout
+    reason: The paper simulated inferred networks to compare their steady states with the ground
+      truth, but that is an analysis, not a score the framework computes.
+designed_for_subjects:
+  - classical-algorithm
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The paper's 12 entrants are unsupervised GRN inference algorithms. Most contain no learned
+    component (partial correlation in PPCOR, information theory in PIDC, linear ODE regression in
+    SCODE, Granger causality in SINCERITIES), and v1.1 adds a Pearson correlation baseline. GENIE3
+    and GRNBoost2 fit tree ensembles to each dataset to predict each gene from the others, and since
+    2020 the protocol has been used mostly by deep-learning GRN methods trained for this task
+    (learned_entrant_evidence), a task systems biology defines.
+  source: src-beeline-nature-methods-2020
+  quote: This R package computes the partial and semi-partial correlation coefficients for every
+    pair of variables
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: Its refitted-procedure clause fits GENIE3 and GRNBoost2, but GRN inference is defined by
+      a scientific discipline, which the term's exclusion sends to domain-specialist-model.
+  - term: scientific-surrogate-model
+    reason: The algorithms infer structure from data; they do not stand in for a simulator or an
+      experiment.
+
+as_used:
+  - protocol: The seven experimental cell-type datasets (mHSC counted as three lineages) against the
+      three ground-truth network types, with every gene in the copies used (692 to 1,620 genes per
+      dataset) rather than the paper's significant TFs plus 500 or 1000 most varying genes; scored
+      by AUPRC ratio and early precision ratio averaged over 10 runs, beside single runs and 10-run
+      ensembles. The synthetic and Boolean datasets were not used.
+    split: experimental scRNA-seq datasets only (beeline#experimental-scrna-seq)
+    source: src-europepmc-pmc12574904
+    quote: The BEELINE benchmark data was obtained from the authors of DeepSEM but could be
+      regenerated using the provided data and code from BEELINE
+    note: DAZZLE (PLOS Computational Biology, October 2025; Tufts University), a variational
+      autoencoder compared with DeepSEM, GENIE3, GRNBoost2 and PIDC. Taking the data from another
+      method's authors rather than from BEELINE's Zenodo record means the gene sets, and so the
+      random-predictor baselines of the ratios, may differ from the paper's.
+  - protocol: A graph transformer trained on five of the seven cell-type datasets (hESC, hHep, mDC,
+      mHSC-E, mHSC-GM) and tested on the other two (mESC, mHSC-L) against the three ground-truth
+      network types, with the paper's four gene sets (500 or 1000 most variable genes, with or
+      without all significant TFs); competing deep-learning methods trained and tested on
+      within-dataset splits. Scored by full test-set AUROC, AUPRC and EPR and by AUROC and AUPRC
+      over positives paired with an equal number of sampled negatives, averaged over 100 bootstraps.
+    split: train hESC, hHep, mDC, mHSC-E, mHSC-GM; test mESC, mHSC-L
+    source: src-europepmc-pmc13069479
+    quote: While BEELINE primarily targets unsupervised GRN inference, our benchmarking includes
+      both supervised and unsupervised methods; therefore, we extend the evaluation framework
+      through a unified clean negative pool to enable fair comparison across learning paradigms.
+    note: GRNFormer (Bioinformatics, March 2026; University of Missouri). The paper defines no
+      training split and evaluates unsupervised methods only, so supervised numbers on its datasets
+      are not comparable with its own tables.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on BEELINE's datasets and metrics; an October 2025 PLOS
+    Computational Biology paper and a March 2026 Bioinformatics paper benchmark new methods on them
+    (as_used); a Europe PMC search on 2026-11-05 (not kept as a Source) returned dozens more
+    2025-2026 GRN papers naming BEELINE. The maintainers released v1.1 on 2026-04-03, which is
+    maintenance evidence, not lifecycle.
+  source: src-europepmc-pmc12574904
+  quote: we follow the recommendations from the BEELINE paper and use Area Under the Precision
+    Recall Curve Ratio (AUPRC Ratio) and Early Precision Ratio as the main evaluation metrics
+activity: no-submission-channel
+activity_basis:
+  reason: The repository and documentation offer code, Docker images and data; there is no
+    leaderboard, server or results page, and none is described in any source. New algorithms can be
+    added to the framework's code (v1.1 credits one to a contributor), but adding a runner is not
+    entering a result.
+  source: src-beeline-docs
+  quote: a Python wrapper for 14 GRN inference algorithms with options to add new methods
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GENIE3 (random-forest regressions fitted to each dataset)
+    source: src-beeline-nature-methods-2020
+    observed_on: 2026-11-05
+    quote: It uses tree-based ensemble methods such as Random Forests to predict the expression
+      profile of each target gene from profiles of all the other genes.
+  - system: DAZZLE (variational autoencoder structural equation model)
+    source: src-europepmc-pmc12574904
+    observed_on: 2026-11-05
+    quote: we present DAZZLE, a stabilized and robust version of the autoencoder-based structure
+      equation model for GRN inference
+  - system: GRNFormer (graph transformer)
+    source: src-europepmc-pmc13069479
+    observed_on: 2026-11-05
+    quote: GRNFormer was trained once on general dataset spanning five cell types (hESC, hHep, mDC,
+      mHSC-E, mHSC-GM) and evaluated on two unseen cell types (mESC and mHSC-L)
+evaluation_target: mixed
+evaluation_target_note: Statistical and information-theoretic algorithms with no learned component
+  are scored beside tree-ensemble regressions in the paper and beside deep-learning methods in later
+  use, on the same metrics.
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: For the synthetic networks and Boolean models (over 400 of the paper's
+  datasets) the ground truth is the network that the BoolODE simulation was run from. For the five
+  experimental datasets it is ChIP-seq networks from ENCODE, ChIP-Atlas and ESCAPE (experimental),
+  regulatory databases (DoRothEA, RegNetwork, TRRUST) and STRING, which a single value cannot also
+  say (review_checks).
+ground_truth_source_basis:
+  source: src-beeline-nature-methods-2020
+  quote: Setting each network as the ground truth, we executed the 12 algorithms on every one of the
+    50 simulated datasets.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The datasets are on Zenodo, every algorithm runs from a public Docker image, and the
+    pipeline that runs, evaluates and plots is public; v1.1's documentation adds a page for
+    reproducing the paper's Figures 2 and 4.
+  source: src-zenodo-beeline-v4
+  quote: PlotSyntheticNetworks.yaml and PlotCuratedNetworks.yaml can be used to recreate Figures 2
+    and 4, respectively, from the original paper.
+
+task:
+  exists: true
+  input:
+    - a genes-by-cells expression matrix (simulated with BoolODE, or scRNA-seq restricted to
+      significantly varying TFs and the 500 or 1000 most varying genes), with pseudotime or
+      simulation time per cell for the algorithms that need it
+  output: A ranked list of regulator-target edges with confidence scores.
+  scoring: AUPRC and AUROC of the ranked list against the ground-truth edges (self-loops ignored),
+    and early precision over the top k edges, k being the ground truth's edge count, each also as a
+    ratio to a random predictor; reported per network or dataset as medians over replicate datasets.
+  source: src-beeline-nature-methods-2020
+  quote: We first identified top-k edges for each method, where k equaled the number of edges in the
+    ground truth network (excluding self-loops).
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The simulated datasets, the processed experimental datasets and (from version 3) the
+      ground-truth networks are an open Zenodo download, and the raw scRNA-seq data are on GEO.
+    source: src-beeline-nature-methods-2020
+    quote: The datasets simulated from the synthetic networks and curated models and the processed
+      experimental single-cell gene expression datasets are available on Zenodo at
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data change only in numbered Zenodo versions (version 3 added the experimental
+      ground truth networks in March 2020; version 4 restructured the directories for v1.1 in March
+      2026), and the code in tagged releases (v1.0, v1.1.0) that name the data version they need.
+    source: src-zenodo-beeline-v4
+    quote: This version will not work with versions of BEELINE before BEELINE v1.1.
+  data_provenance:
+    - simulation-generated
+    - curated-public-database
+  data_provenance_note: Over 400 datasets are stochastic simulations from BoolODE, the authors'
+    conversion of Boolean models into differential equations, run on six synthetic networks and four
+    published Boolean models. The experimental expression data are five scRNA-seq datasets selected
+    from GEO, and their ground truth is compiled from ChIP-seq archives, regulatory databases and
+    STRING. experimental-measurement was considered for the ChIP-seq networks, but they are drawn
+    from archives, which the curated-public-database test covers.
+  data_provenance_source: src-beeline-nature-methods-2020
+  data_provenance_quote: we searched the ENCODE, ChIP-Atlas, and ESCAPE databases for ChIP-Seq data
+    from the same or similar cell type
+  contamination_risk: medium
+  contamination_risk_note: The ground-truth networks and the data are public, and the experimental
+    references come from public databases (STRING, DoRothEA, RegNetwork, TRRUST, ChIP-Atlas) that a
+    method could read as priors; the paper excluded such methods, but its protocol cannot stop later
+    users. Later users take preprocessed copies from other methods' authors, and supervised users
+    train on part of a ground-truth network or on other cell types (as_used). The paper also tuned
+    each algorithm's parameters for the best median AUPRC on the datasets it scored (review_checks).
+    No source evidences a route into a scored split.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: AUPRC, AUROC and early precision are bounded at 1, and the ratios at their bound divided
+      by the random predictor's value; no oracle or measured ceiling is published.
+    source: src-beeline-nature-methods-2020
+    quote: is the edge density of the ground truth network
+  dataset_licence: CC-BY-NC-4.0
+  dataset_licence_note: From Zenodo version 3 (2020-03-27); versions 1 and 2 were released under GPL
+    (history). The raw scRNA-seq datasets keep GEO's terms.
+  dataset_licence_source: src-zenodo-beeline-v4
+  dataset_licence_quote: '"license": {"id": "cc-by-nc-4.0"}'
+  size:
+    - count: 400
+      unit: simulated datasets (more than 400; from six synthetic networks and four curated Boolean
+        models)
+      subset: the Nature Methods paper
+      source: src-beeline-nature-methods-2020
+      quote: We used BEELINE to evaluate these approaches on over 400 simulated datasets (across six
+        synthetic networks and four curated Boolean models)
+    - count: 50
+      unit: simulated datasets per synthetic network (10 parameter sets, 100 to 5,000 cells)
+      subset: beeline#synthetic-networks
+      source: src-beeline-nature-methods-2020
+      quote: to obtain 50 different expression datasets
+    - count: 120
+      unit: simulated datasets of 2,000 cells (30 per Boolean model, 10 each without dropout and at
+        two dropout rates)
+      subset: beeline#curated-models
+      source: src-beeline-nature-methods-2020
+      quote: We then ran each of the 12 algorithms on each of the 120 datasets (30 per model).
+    - count: 5
+      unit: experimental scRNA-seq datasets (two human, three mouse; seven cell types)
+      subset: beeline#experimental-scrna-seq
+      source: src-beeline-nature-methods-2020
+      quote: We selected five experimental single-cell RNA-Seq datasets, two in human and three in
+        mouse cells, comprising seven cell types
+    - count: 12
+      unit: GRN inference algorithms
+      subset: the Nature Methods paper and v1.0
+      source: src-beeline-nature-methods-2020
+      quote: BEELINE incorporates 12 diverse GRN inference algorithms.
+    - count: 14
+      unit: GRN inference algorithms wrapped
+      subset: v1.1
+      source: src-beeline-docs
+      quote: a Python wrapper for 14 GRN inference algorithms with options to add new methods
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Murali group, Department of Computer Science, Virginia Tech (the Murali-group
+    GitHub organisation)
+  maintainer_basis:
+    reason: The paper's authors are in Virginia Tech's computer science department and its genetics,
+      bioinformatics and computational biology programme, and the code, Docker images and data are
+      held in the group's GitHub organisation, Docker Hub organisation (grnbeeline) and Zenodo
+      record, which the same five authors created. v1.1 was prepared in the same organisation in
+      2026.
+    source: src-beeline-nature-methods-2020
+    quote: Department of Computer Science, Virginia Tech, Blacksburg
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: The maintainers' only results are the paper's comparison of 12
+    algorithms, and no ranking is kept. Others run the framework or reuse its datasets and report in
+    their own papers.
+  submission_process_source: src-beeline-nature-methods-2020
+  submission_process_quote: We hope that scientists will use BEELINE in conjunction with BoolODE as
+    they develop new approaches for GRN inference.
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-beeline-nature-methods-2020
+      quote: The authors declare no competing interests.
+  independence_flags_note: None of the paper's 12 algorithms is the authors' own; their own tool,
+    BoolODE, generates the simulated data rather than competing. Whether the authors of the
+    algorithms added in v1.1 (SCSGL, JUMP3) are connected to the maintainers was not checked.
+  independence_assessed: true
+  funding:
+    source: src-beeline-nature-methods-2020
+    quote: Grants from the National Science Foundation (CCF-1617678, DBI-1759858) and the National
+      Cancer Institute (UH2CA203768) supported this work.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: The algorithms run on CPU in Docker, mostly within 4 GB of RAM up to 2,000
+    genes, but running times range from minutes to nearly a day per dataset at 5,000 genes, and the
+    paper ran parameter sweeps besides; no source states a total cost.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Data, Docker images and the run, evaluate and plot scripts are public, and nothing needs
+      a human, a maintainer-only step or special hardware.
+    source: src-beeline-nature-methods-2020
+    quote: In order to obtain an efficient and reproducible pipeline, we Dockerized the
+      implementation of each algorithm.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: BLRunner.py, BLEvaluator.py and BLPlotter.py with a YAML config file (v1.1; v1.0's BLRun,
+    BLEval and BLPlot modules), with the algorithms' grnbeeline Docker images
+  harness_source: src-github-beeline-readme
+  harness_quote: Computes evaluation metrics by comparing each algorithm's ranked edge list to the
+    ground truth network.
+  code_licence: GPL-3.0
+  code_licence_note: The framework's own code. Of the 12 wrapped algorithms in the paper, two
+    (GRNVBEM, GRISLI) had no licence at all.
+  code_licence_source: src-beeline-nature-methods-2020
+  code_licence_quote: A Python implementation of the BEELINE framework is available under the GNU
+    General Public License v3
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: which dataset kind and network (and dropout rate, cell count, gene set and
+  # ground-truth network type for experimental data), whether the method was trained on any ground-truth
+  # edges (the paper's protocol is unsupervised), which gene set and data copy, and which BEELINE release
+  # and data version produced the score. Parameter tuning on the scored data also moves the number and has no
+  # conditions field.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - harness
+aggregation_policy: none-by-design
+aggregation_policy_note: Each kind of dataset is reported apart, by median AUPRC ratio for the
+  simulated networks and models and by median early precision ratio for the experimental datasets.
+  The summary figure orders the algorithms by those medians but publishes no number across kinds.
+aggregation_policy_source: src-beeline-nature-methods-2020
+aggregation_policy_quote: We have ordered the algorithms by their median EPR score across
+  experimental single-cell RNA-Seq datasets followed by median AURPCs in datasets from synthetic
+  networks.
+
+homepage: https://murali-group.github.io/Beeline/
+repository: https://github.com/Murali-group/Beeline
+dataset_url: https://doi.org/10.5281/zenodo.3378975
+
+versions:
+  - version: v1.0
+    label: BEELINE v1.0 (the Nature Methods paper's code), with Zenodo data version 3
+    version_kind: revision
+    released: 2020-03-02
+    changes: The first release, with Docker images of the paper's 12 algorithms and the BLRun,
+      BLEval and BLPlot modules; parameter search was left on a branch.
+    superseded_by: v1.1
+    frozen: true
+    sources:
+      - src-github-beeline-releases
+      - src-zenodo-beeline-v3
+  - version: v1.1
+    label: BEELINE v1.1, with Zenodo data version 4
+    version_kind: revision
+    released: 2026-04-03
+    changes: The same datasets in a new directory layout (data version 4), a new configuration
+      format that v1.0 files do not satisfy, rewritten evaluation and plotting, and a changed roster
+      of 14 algorithms (PEARSON, SCSGL and JUMP3 added; SCNS dropped for its running time).
+    supersedes_version: v1.0
+    frozen: true
+    sources:
+      - src-github-beeline-releases
+      - src-zenodo-beeline-v4
+      - src-github-beeline-readme
+
+subsets:
+  - id: beeline#synthetic-networks
+    label: Datasets from synthetic networks
+    scored_separately: true
+    evidence:
+      - source: src-beeline-nature-methods-2020
+        quote: Therefore, we started with six synthetic networks
+    notes: Linear, Linear Long, Cycle, Bifurcating, Bifurcating Converging and Trifurcating, from
+      the Dynverse comparison, simulated with BoolODE; algorithms that need time are given the
+      simulation time. Scored by median AUPRC ratio.
+  - id: beeline#curated-models
+    label: Datasets from curated Boolean models
+    scored_separately: true
+    evidence:
+      - source: src-beeline-nature-methods-2020
+        quote: we selected four published Boolean models
+    notes: mCAD, VSC, HSC and GSD, simulated with BoolODE, without dropouts and with dropout rates
+      of 50 and 70; pseudotime is computed with Slingshot. Scored by AUPRC ratio and early precision
+      ratio.
+  - id: beeline#experimental-scrna-seq
+    label: Experimental single-cell RNA-seq datasets
+    scored_separately: true
+    evidence:
+      - source: src-beeline-nature-methods-2020
+        quote: 'We collected three different types of ground truth networks: cell-type-specific ChIP-Seq,
+          non-specific ChIP-Seq, and functional interaction networks'
+    notes: hESC, hHep, mDC, mESC and mHSC (in three lineages), each scored against the three network
+      types with four gene sets. Scored by early precision ratio.
+subsets_note: The paper's three dataset kinds, each with its own figure and statistic. The
+  stability, dropout, pseudotime-shuffling and running-time analyses are measures over these
+  datasets, not subsets.
+
+history:
+  - date: 2020-03-27
+    event: licence-changed
+    field: data.dataset_licence
+    from: GPL
+    to: CC-BY-NC-4.0
+    source: src-zenodo-beeline-v3
+    quote: Changed license to CC BY-NC 4.0 from GPL v3.0 to account for the non-commercial clause
+      for the network data
+    note: Zenodo version 3 states the old licence as GPL v3.0, while the metadata of versions 1 and
+      2 (read through Zenodo's API, not kept as Sources) say gpl-2.0.
+
+tags:
+  - gene-regulatory-network
+  - network-inference
+  - single-cell
+  - boolean-models
+  - simulation
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T06)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-beeline-nature-methods-2020
+    - src-biorxiv-642926
+    - src-github-beeline-readme
+    - src-github-beeline-releases
+    - src-beeline-docs
+    - src-zenodo-beeline-v3
+    - src-zenodo-beeline-v4
+    - src-europepmc-pmc12574904
+    - src-europepmc-pmc13069479
+  sources_note: >
+    The paper as its PubMed Central author manuscript (a DOI, not archived), read as Europe PMC's full-text
+    XML with windows that keep the corresponding author's address out; the publisher's page was not fetched
+    (nature.com disallows AI agents). Europe PMC's record of the bioRxiv preprint for its date and abstract.
+    The README at master, GitHub's release record and the documentation's landing page. The Zenodo records
+    of data versions 3 and 4 (DOIs), with windows that keep the creators' ORCIDs out. DAZZLE's and GRNFormer's
+    full texts from Europe PMC as evidence of current use. GitHub's API was read for the repository's
+    dates and Zenodo's for versions 1 and 2, and neither is kept as a Source.
+  confidence: medium
+  review_checks:
+    - check: Domain. systems-biology is primary as the leaf whose definition covers a network
+        modelled as a whole, but the leaf has no inclusion test and speaks of a network's behaviour,
+        while BEELINE scores recovery of its structure. single-cell-analysis is the alternative
+        primary (all inputs are single-cell expression, and Open Problems keeps a GRN task in its
+        repositories); it is secondary because its inclusion test asks for cell-level results.
+        regulatory-genomics needs sequence input. This is the leaf's first entry.
+      field: domain.primary
+    - check: causal-reasoning rests on the reference being regulation rather than co-expression and
+        on the paper treating indirect edges as errors. Against it, the STRING networks count
+        functional interactions as true, two of the 12 algorithms output undirected edges, and
+        correlation methods score well, so the scoring may not separate cause from correlation as
+        the term asks.
+      field: capability
+      specialist: true
+      source: src-beeline-nature-methods-2020
+      quote: An interaction here is functional and need not correspond to transcriptional
+        regulation.
+    - check: reliability-consistency is tagged for the ten-run Spearman stability, which the paper
+        reports in its summary figure but which is not an accuracy score; drop it if the term should
+        require the agreement to be the headline.
+      field: capability
+    - check: ground_truth_source is simulation, the reference for over 400 of the datasets. The five
+        experimental datasets are scored against ChIP-seq networks and databases, which would be
+        experimental or held-out labels; the field takes one value.
+      field: ground_truth_source
+    - check: The paper tuned each algorithm's parameters for the best median AUPRC on the datasets
+        it then reported, so its numbers are tuned on the test data; later users' tuning is unknown.
+      field: data.contamination_risk
+      source: src-beeline-nature-methods-2020
+      quote: Six algorithms required one or more parameters to be specified. We performed a
+        parameter sweep to determine the values which gave the highest median AUPRC
+    - check: Users' protocols diverge from the paper's. The 2025 paper in as_used scores all genes
+        of copies obtained from another method's authors, not the paper's gene sets, and counts
+        seven datasets where the paper counts five datasets of seven cell types; no condition field
+        records the gene set.
+      field: as_used
+      source: src-europepmc-pmc12574904
+      quote: on the BEELINE single cell benchmark, which includes seven datasets (two from human and
+        five from mouse) and three sets of ground truth networks
+    - check: Supervised GRN methods train on part of BEELINE's ground-truth edges or on other cell
+        types and score against sampled negatives, none of which the paper defined; numbers from
+        these protocols and from the paper's unsupervised one are not comparable, and no condition
+        field records the split.
+      field: as_used
+      source: src-europepmc-pmc13069479
+      quote: In contrast competing deep-learning methods were trained and evaluated on
+        within-dataset splits of each test cell type
+    - check: v1.0 and v1.1 are revisions over the same datasets. v1.1 is not marked breaking, since
+        the incompatibility its notes declare is of configuration files and directory layout, but
+        its evaluation code was rewritten and its roster changed, and whether it reproduces v1.0's
+        numbers was not checked.
+      field: versions
+      source: src-github-beeline-releases
+      quote: Config files from v1.0 are not immediately compatible with v1.1.
+    - check: The preprint (May 2019) evaluated synthetic and Boolean data only, and the journal
+        version added the experimental datasets; the data's Zenodo versions 1 (2019-08-27) and 2
+        (2019-10-01) predate the first code release and are not modelled as versions.
+      field: versions
+      source: src-biorxiv-642926
+      quote: We use synthetic networks with predictable cellular trajectories as well as curated
+        Boolean models to serve as the ground truth for evaluating the accuracy of GRN inference
+        algorithms.
+    - check: aggregation_policy is none-by-design although the paper does not say so in words; its
+        summary figure orders the algorithms by median early precision ratio on the experimental
+        datasets, which could be read as an official ranking.
+      field: aggregation_policy
+    - check: The pair (classification-metric, domain-specialist-model or classical-algorithm) has no
+        comparability profile and resolves to fallback; training_data_policy and harness are added
+        through material_extra.
+      field: comparability
+    - check: no-known-conflict rests on the paper's competing-interests statement and on none of the
+        12 algorithms being the authors'; the provenance of the algorithms added in v1.1 was not
+        checked.
+      field: governance.independence_flags

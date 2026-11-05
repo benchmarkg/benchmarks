@@ -1,0 +1,678 @@
+# data/benchmarks/biology-genetics/flip.yaml
+#
+# P1-S5-T06, biology-genetics entry 25. Filled from the FLIP paper, read as the NeurIPS 2021 Datasets and
+# Benchmarks round-2 proceedings PDF, and that paper's proceedings page (for the venue and the published
+# abstract, which differs from the PDF's in two words); bioRxiv's API record for the preprint's posting date;
+# the repository's README, splits/README and LICENSE pinned at commit 62cace8 (the FLIPv2 release merge); the
+# FLIP2 project site at flip.protein.properties and the FLIP2 paper (ICML 2026, PMLR 306), which release the
+# 2026 edition; Zenodo's API record for the data deposit; and two papers that run FLIP, ProtLingo (September
+# 2026) and a January 2025 study of ESM-2 and SaProt on its splits. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# The old home, benchmark.protein.properties, redirects to a Google Sites sign-in page and was not read, so
+# whether the "Leaderboard" step of the paper's Figure 1 was ever a real board could not be checked. The data
+# host the README links (data.bioembeddings.com) and the downloadable split files were not read. There is no
+# Epoch stub for this id, and no corpus classification record.
+
+id: flip
+name: FLIP
+aliases:
+  - Fitness Landscape Inference for Proteins
+  - 'FLIP: Benchmark tasks in fitness landscape inference for proteins'
+  - Bio-Benchmarks for Protein Engineering
+tagline: Protein fitness landscapes split so training sees few mutations and the test set many, as
+  an engineering campaign does.
+description: >
+  A benchmark for protein fitness prediction built for protein engineering rather than for structure or
+  function annotation. The 2021 release takes three published landscapes -- the GB1 binding domain's four-position
+  combinatorial landscape, an AAV capsid VP-1 mutagenesis screen with up to 39 mutations including insertions
+  and deletions, and thermostability measurements from the Meltome Atlas across 13 species -- and cuts
+  15 train/test splits through them. The splits are deliberately not random: train on single mutants and
+  test on the rest, train on low fitness and test on high, train on sampled sequences and test on designed
+  ones, or cluster at 20% sequence identity and hold out whole clusters. Models take the whole amino-acid
+  sequence and predict the measured fitness; the score is Spearman correlation per split, with no aggregate.
+  The paper's own baselines are parameter-free (Levenshtein, BLOSUM62), supervised (ridge, CNN on one-hot)
+  and pretrained (ESM-1b, ESM-1v, untrained ESM) with three pooling choices, and show that pretraining
+  helps on the sequence-diverse thermostability splits but not on the mutational landscapes. The repository
+  carries six further split sets the paper does not describe (binding, SAVs, subcellular localisation,
+  secondary structure, conservation, Cas9), each split carrying a traffic-light semaphore that says whether
+  it may be used for performance claims. FLIP2 (ICML 2026) is the same group's next edition: seven new
+  datasets of enzymes, a light-sensitive protein and a protein-protein interaction, and 16 splits in five
+  families (number, position, mutation, fitness, wild type).
+self_description:
+  source: src-neurips-2021-flip
+  quote: we introduce Fitness Landscape Inference for Proteins (FLIP), a benchmark for function
+    prediction
+paper:
+  title: 'FLIP: Benchmark tasks in fitness landscape inference for proteins'
+  source: src-neurips-2021-flip
+released: 2021-11-11
+released_note: The preprint's posting date, as bioRxiv's record gives it (v1; v2 followed on
+  2022-01-19). The NeurIPS Datasets and Benchmarks proceedings page states no date of its own, and
+  the repository was created on 2021-05-13 (GitHub API).
+released_source: src-biorxiv-api-2021-11-09-467890
+released_quote: '"date":"2021-11-11","version":"1"'
+release_venue: NeurIPS 2021 Datasets and Benchmarks Track (round 2)
+release_venue_source: src-neurips-2021-flip-abstract
+release_venue_quote: Proceedings of the Neural Information Processing Systems Track on Datasets and
+  Benchmarks 1 (NeurIPS Datasets and Benchmarks 2021)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: biology-genetics/protein-fitness-prediction
+  secondary: []
+domain_basis:
+  reason: Every scored landscape gives the measured activity, binding or stability of mutated
+    protein sequences, and models predict that measurement from sequence, which is the primary
+    leaf's definition. The benchmark's own framing is protein engineering, where the quantity
+    optimised is fitness.
+  source: src-neurips-2021-flip
+  quote: we introduce Fitness Landscape Inference for Proteins (FLIP), a benchmark for function
+    prediction
+domain_considered_and_rejected:
+  - term: biology-genetics/protein-function-prediction
+    reason: The paper sets FLIP against CAFA's annotation task rather than joining it; no split
+      assigns functional annotations. The repository's subcellular-localisation and conservation
+      split sets would fit, but no source read here describes their tasks or labels (review_checks).
+    source: src-neurips-2021-flip
+    quote: Existing benchmarks like CASP or CAFA assess structure and function predictions of
+      proteins
+  - term: biology-genetics/protein-structure-prediction
+    reason: The repository holds a secondary-structure split set, but no structure is predicted or
+      scored in any split the paper describes, and the paper's point is that pretraining had been
+      judged on structure instead of on fitness.
+  - term: biology-genetics/genomics-variant-effect
+    reason: The variants are engineered protein mutants assayed in the laboratory, not human genetic
+      variants with clinical or expression consequences; no clinical label appears.
+capability:
+  - scientific-prediction
+  - distribution-shift-generalization
+capability_basis:
+  scientific-prediction:
+    reason: Each split asks for the experimentally measured fitness of a protein sequence and scores
+      the prediction against the assay's value by rank correlation.
+    source: src-neurips-2021-flip
+    quote: we collect three published landscapes and create 15 corresponding dataset splits
+  distribution-shift-generalization:
+    reason: The splits move the test distribution on purpose, and each is reported as its own score
+      -- more mutations than training had, fitness above the wild type when training saw only below
+      it, designed sequences when training saw sampled ones, held-out sequence-identity clusters.
+      The task and the label stay the same throughout, which is the term's discriminant.
+    source: src-neurips-2021-flip
+    quote: Simple random splits are notoriously misleading in classical protein sequence-to-function
+      prediction
+capability_considered_and_rejected:
+  - term: transfer-learning
+    reason: Pretrained language models are the subjects and a later paper calls the move transfer,
+      but the scored task and its labels are the same fitness prediction in every split; only the
+      sequences move, which the vocabulary's discriminant sends to
+      distribution-shift-generalization.
+    source: src-arxiv-2609-04793-v1
+    quote: FLIP evaluates how well pretrained protein representations transfer to supervised fitness
+      prediction under train
+  - term: sample-efficiency
+    reason: The paper claims the low-resource setting, and GB1's 1-vs-rest split leaves 29 training
+      sequences, but the training-set size falls out of the mutational criterion rather than being a
+      budget fixed and scored as the measured quantity; proteingym is the vocabulary's near miss for
+      this (review_checks).
+    source: src-neurips-2021-flip
+    quote: Our curated tasks, baselines, and metrics probe model generalization in settings relevant
+      for protein engineering
+  - term: compositional-generalization
+    reason: GB1's 1-vs-rest and 2-vs-rest splits do hold the primitives fixed -- the test variants
+      combine mutations seen singly -- but the AAV splits introduce unseen mutations, insertions and
+      deletions and the thermostability splits change the protein altogether, so the majority of
+      splits move the distribution rather than recombine a known set (review_checks).
+    source: src-neurips-2021-flip
+    quote: 'Train on single mutants (1-vs-rest): Wild type and single mutants are assigned to train, while
+      the rest are assigned to test.'
+evaluation_method:
+  - statistical-fit
+evaluation_method_basis:
+  reason: Every reported number is Spearman rank correlation between predicted and measured fitness
+    on a split's test set. The FLIP2 edition adds NDCG beside it, also computed from continuous
+    values.
+  source: src-neurips-2021-flip
+  quote: 'GB1 baselines (metric: Spearman correlation)'
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: Spearman correlation and NDCG are general statistics, not quantities defined inside
+      protein science under their own name, which the domain-metric exclusion sends to
+      statistical-fit.
+  - term: classification-metric
+    reason: No split the 2021 paper describes has class labels; fitness is continuous. FLIP2's NucB
+      dataset bins activity into four levels, but it is still scored by rank correlation.
+    source: src-pmlr-v306-didi26a
+    quote: normalized discounted cumulative gain (NDCG) on held-out test sets
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are protein sequence representations -- protein language models pretrained on
+    UniRef and the representation-learning methods that follow them -- probed on a task protein
+    engineering defines. The benchmark exists to compare those representations.
+  source: src-github-flip-readme
+  quote: The goal of the splits in this repository is to assess how well machine learning devices
+    using protein sequence inputs can represent different dimensions relevant for protein design.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: Ridge regression and a CNN on one-hot encodings are ranked and often win, but they are
+      the paper's comparators, and the term's exclusion sends a discipline's own task to
+      domain-specialist-model.
+    source: src-neurips-2021-flip
+    quote: Ridge regression model on one-hot encoding.
+  - term: scientific-surrogate-model
+    reason: The models do not stand in for a simulation or an assay run; they are representations
+      scored against measurements already taken.
+
+as_used:
+  - protocol: A new protein language model probed on five GB1, seven AAV and three Meltome splits
+      with frozen representations, reported as the unweighted mean of the split-level Spearman
+      correlations per landscape, beside ProteinGym and CASP15 contact prediction.
+    source: src-arxiv-2609-04793-v1
+    quote: We evaluate five GB1 splits, seven AAV splits, and three Meltome splits.
+    note: ProtLingo (September 2026). The per-landscape mean is the paper's own; FLIP defines no
+      aggregate. Some FLIP rows in its table are literature numbers rather than its own runs.
+  - protocol: ESM-2 at several sizes and SaProt trained on a chosen subset of the splits, reported
+      per split against the paper's baselines.
+    source: src-arxiv-2501-18223-v1
+    quote: by assessing the performance of state-of-the-art large protein language models, including
+      ESM-2 and SaProt on the FLIP dataset
+    note: January 2025, from a university group in Madrid. It expands the acronym as "Functional
+      Landscape of Interacting Proteins", which is not the benchmark's own name (review_checks).
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers released a new edition in 2026 (FLIP2, ICML 2026 and a Zenodo deposit),
+    and others are still scoring new models on the 2021 splits; a September 2026 paper reports GB1,
+    AAV and Meltome for its model. The repository's last push is 2026-04-23 (GitHub API), which is
+    maintenance evidence, not lifecycle.
+  source: src-pmlr-v306-didi26a
+  quote: FLIP2 includes seven datasets and 16 total splits
+activity: unknown
+activity_basis:
+  reason: No submission route was found -- the repository takes no results, and the FLIP2 site
+    offers downloads and the paper's own baseline figures. But the 2021 paper's Figure 1 names a
+    leaderboard step, and the home it points at (benchmark.protein.properties) now redirects to a
+    Google Sites sign-in page, which was not read, so no-submission-channel ("and it never had one")
+    cannot be asserted.
+  source: src-github-flip-readme
+  quote: The main place to find out about the splits is the `splits` folder.
+
+# --- Admissibility (00 S6 A5) -----------------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ESM-1v
+    source: src-neurips-2021-flip
+    observed_on: 2026-11-05
+    quote: 750M parameter transformer pretrained on UniRef90.
+  - system: ProtLingo
+    source: src-arxiv-2609-04793-v1
+    observed_on: 2026-11-05
+    quote: we report task scores on GB1, AAV, and Meltome using the same scoring protocol for
+      internally evaluated models
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: experimental
+ground_truth_source_note: Published assay measurements -- a combinatorial binding screen of the GB1
+  domain, an AAV capsid mutagenesis and design screen, and mass-spectrometry melting curves from the
+  Meltome Atlas. FLIP acquired no data of its own.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The splits are public CSV files with their train/test assignment, and the repository holds
+    the notebooks that build them and the code that computes the baselines.
+  source: src-neurips-2021-flip
+  quote: Code, data, and instructions needed to reproduce results can be found at
+
+task:
+  exists: true
+  input:
+    - a protein's full amino-acid sequence, for every sequence in a split's train, validation and
+      test parts (the mutated region is not marked, even where the landscape mutates a few
+      positions)
+  output: A predicted fitness value for each test sequence -- binding for GB1, capsid viability for
+    AAV, a melting temperature for thermostability.
+  scoring: Spearman rank correlation between predicted and measured fitness on the split's test set,
+    reported per split; no combined figure is defined.
+  source: src-neurips-2021-flip
+  quote: 'GB1 baselines (metric: Spearman correlation)'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every split is a public download, as a CSV with its set column, from the project site
+      and from an open Zenodo deposit; the raw landscapes are on the maintainers' own file host.
+    source: src-zenodo-18433203
+    quote: '"doi": "10.5281/zenodo.18433203", "publication_date": "2026-01-30", "access_right": "open"'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Content arrives in dated releases rather than continuously -- the 2021 splits, the
+      repository's later split sets, and the 2026 FLIP2 edition, whose data is deposited on Zenodo
+      as version v3 of a concept record.
+    source: src-zenodo-18433203
+    quote: '"key": "amylase/one_to_many.csv.gz"'
+  data_provenance:
+    - experimental-measurement
+    - inherited-from-constituents
+  data_provenance_note: Three published screens supply every measurement in the 2021 release
+    (experimental-measurement); FLIP's contribution is the standard format and the train/test
+    assignment over them (inherited-from-constituents). The GB1 data came from a paper's supplement
+    under CC BY 4.0, the other two by written permission from their authors.
+  data_provenance_source: src-neurips-2021-flip
+  data_provenance_quote: or were obtained with written permission from the authors
+  contamination_risk: unknown
+  contamination_risk_note: Every sequence, split and fitness value is public, and the evaluated
+    language models are pretrained on sequence databases that contain the wild types but not the
+    assay values. No source read here assesses a route from the labels into training, and no
+    entrant's training set was checked. The paper's own warning is about the random "sampled" splits
+    inflating scores, which is a protocol risk rather than contamination.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Spearman correlation is bounded at 1.0 at its optimum and no source
+    publishes a measured ceiling, which is the term's test. The paper's own parameter-free and
+    supervised baselines are research models, which operational-system's exclusion leaves out, and
+    the random "sampled" splits are reported precisely to show they overestimate rather than as an
+    anchor. Assay noise makes 1.0 unreachable in practice, but nobody measured by how much, so
+    noise-ceiling and experimental-replicate do not apply.
+  ceiling_anchor_type_source: src-neurips-2021-flip
+  ceiling_anchor_type_quote: 'GB1 baselines (metric: Spearman correlation)'
+  dataset_licence: AFL-3.0 (the 2021 task derivatives); CC-BY-4.0 for the FLIP2 data
+  dataset_licence_note: The 2021 paper licenses the splits it derives under the Academic Free
+    License v3, the licence the repository also carries, while the underlying screens keep their own
+    terms. The 2026 edition redistributes its data under CC BY 4.0, except the Amylase dataset,
+    which the site lists as MIT. Which licence the files on the maintainers' data host carry was not
+    checked (review_checks).
+  dataset_licence_source: src-neurips-2021-flip
+  dataset_licence_quote: Data derivatives proposed as tasks are licensed under AFL-3.
+  upstream_licences: The GB1 landscape was published as a paper's supplement under CC BY 4.0; the
+    AAV and Meltome landscapes were used with their authors' written permission, so their own terms
+    govern redistribution.
+  upstream_licences_source: src-neurips-2021-flip
+  upstream_licences_quote: or were obtained with written permission from the authors
+  size:
+    - count: 15
+      unit: train/test splits over three landscapes
+      subset: the 2021 release
+      source: src-neurips-2021-flip
+      quote: we collect three published landscapes and create 15 corresponding dataset splits
+    - count: 284009
+      unit: sequences (the sampled and designed pools together)
+      subset: AAV
+      source: src-neurips-2021-flip
+      quote: Total samples 284, 009 284, 009 82, 583
+    - count: 27951
+      unit: sequences in the Mixed split (Human 10,093; Human-cell 7,156)
+      subset: thermostability (Meltome)
+      source: src-neurips-2021-flip
+      quote: 82, 583 27, 951 10, 093 7, 156 8, 733
+    - count: 8733
+      unit: sequences after non-functional variants were downsampled
+      subset: GB1
+      source: src-neurips-2021-flip
+      quote: 82, 583 27, 951 10, 093 7, 156 8, 733
+    - count: 16
+      unit: train/test splits over seven datasets
+      subset: the FLIP2 edition (2026)
+      source: src-pmlr-v306-didi26a
+      quote: FLIP2 includes seven datasets and 16 total splits
+    - count: 228298
+      unit: variants, the largest FLIP2 dataset (Amylase 3,706; IRED 17,143; NucB 55,759; Hydro
+        24,935; Rhomax 884; PDZ3 734)
+      subset: FLIP2, TrpB
+      source: src-pmlr-v306-didi26a
+      quote: ntotal 3706 17143 55759 228298 24935 884 734
+  size_note: The 2021 counts are Table 2's, whose per-split totals repeat within a landscape; the
+    PDF text spaces thousands oddly ("284, 009"). The GB1 landscape as published measured 149,361 of
+    160,000 possible four-position combinations, from which the splits keep 8,733. The FLIP2 site
+    gives NucB 55,760 where the FLIP2 paper's table gives 55,759 (review_checks).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The J-SNACKKB organisation on GitHub (the FLIP authors, with FLIP2 added by a group at
+    NVIDIA, Microsoft Research, Caltech, Profluent Bio and Duke University)
+  maintainer_basis:
+    reason: The repository and the site's source both sit in the J-SNACKKB organisation account, as
+      the Sources' own URLs show (raw.githubusercontent.com/J-SNACKKB/FLIP and
+      J-SNACKKB/flip_webpage); no quote names a holder, no single institution is stated as holding
+      them, and the LICENSE leaves its copyright notice unfilled.
+    source: src-github-flip-readme
+    quote: This repository is for the paper submitted to the 2021 NeurIPS Benchmark track.
+  maintainer_type: community-collective
+  maintainer_type_note: academic-lab and industry-lab were both considered -- the 2021 authors were
+    at TUM, Caltech, MIT, Berkeley, Microsoft Research and Salesforce Research, and the 2026
+    edition's are mostly at NVIDIA and Microsoft -- but the term's holder rule reads a shared
+    organisation account across institutions, with no stated holder, as community-collective
+    (review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: The two papers' baseline tables are the only maintainer results; there is
+    no results page, server or submission route in any source read, and other groups publish their
+    own numbers in their own papers (as_used).
+  submission_process_source: src-github-flip-readme
+  submission_process_quote: contains code used to compute baselines
+  independence_flags: []
+  independence_flags_note: Not assessed. The 2026 edition's baselines include protein language
+    models that carry the authors' organisations' names, which may make
+    maintainer-competes-on-own-benchmark apply, but no source read here states who trained or owns
+    each baseline model, so no flag is set.
+  independence_assessed: false
+  known_limitation:
+    source: src-pmlr-v306-didi26a
+    quote: The FLIP benchmark established protocols for testing generalization under some domain
+      shifts, but it was limited to measurements of thermostability, binding, and viral capsid
+      viability.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_basis:
+    reason: The reference run embeds each split's sequences with the language model under test and
+      trains the downstream model on one accelerator; the paper notes that the most expensive
+      baseline would have taken about a month on four GPUs and was left out.
+    source: src-neurips-2021-flip
+    quote: Models are trained on a NVidia Quadro RTXA6000 GPU.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The splits carry their own labels and assignment, the metric is a standard rank
+      correlation, and no human, physical or maintainer-only step stands between a model and a
+      score.
+    source: src-neurips-2021-flip
+    quote: Code, data, and instructions needed to reproduce results can be found at
+  reproducibility_blockers: []
+  harness_availability: reference-implementation-only
+  harness: The FLIP repository's baselines/ (the paper's baseline models) and collect_splits/ (the
+    notebooks that build the splits from the raw landscapes)
+  harness_source: src-github-flip-readme
+  harness_quote: contains code used to compute baselines
+  code_licence: AFL-3.0
+  code_licence_note: The repository's LICENSE is the unmodified Academic Free License v3.0 text,
+    with no copyright holder filled in; GitHub's licence metadata reports AFL-3.0 (read 2026-11-05).
+  code_licence_source: src-github-flip-license
+  code_licence_quote: Academic Free License ("AFL") v. 3.0
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: subset_used is the floor and carries which split a number is for. harness is
+  # material because no scoring harness is published, so each user implements the probe and the paper's own
+  # pooling choice (per-residue, mean, mean over the mutated region) moves the number by tenths of a Spearman;
+  # training_data_policy because the same split is reported zero-shot, with frozen embeddings and fine-tuned.
+  material_extra:
+    - harness
+    - training_data_policy
+aggregation_policy: community-aggregate
+aggregation_policy_note: FLIP defines no aggregate -- the papers report every split on its own. A
+  2026 paper takes the unweighted mean of the split-level correlations within each landscape, which
+  no maintainer defines.
+aggregation_policy_basis:
+  reason: Users combine the per-split scores themselves.
+  source: src-arxiv-2609-04793-v1
+  quote: the reported GB1, AAV, and Meltome values are the unweighted arithmetic means of their
+    corresponding split-level correlations
+
+homepage: https://flip.protein.properties/
+repository: https://github.com/J-SNACKKB/FLIP
+dataset_url: https://doi.org/10.5281/zenodo.18433203
+
+versions:
+  - version: v1
+    label: FLIP as published (NeurIPS 2021 Datasets and Benchmarks)
+    version_kind: edition
+    released: 2021-11-11
+    changes: The first release -- three landscapes (GB1, AAV, thermostability) in 15 splits, with
+      parameter-free, supervised and pretrained baselines. The repository later added six split sets
+      the paper does not describe (binding, SAVs, subcellular localisation, secondary structure,
+      conservation, Cas9), with no dated source read for when (review_checks).
+    breaking: true
+    superseded_by: flip2
+    frozen: true
+    sources:
+      - src-neurips-2021-flip
+      - src-neurips-2021-flip-abstract
+      - src-github-flip-splits-readme
+  - version: flip2
+    label: FLIP2 (ICML 2026)
+    version_kind: edition
+    released: 2026-01-30
+    changes: Seven new datasets -- alpha amylase, imine reductase, nuclease B, tryptophan synthase
+      beta-subunit, a hydrophobic core across three proteins, rhodopsin and the PDZ3 domain -- in 16
+      splits of five kinds (number, position, mutation, fitness, wild type), with zero-shot
+      likelihood, ridge-regression and fine-tuned language-model baselines, and NDCG beside
+      Spearman. The data is redistributed under CC BY 4.0 with recorded provenance. The 2021
+      landscapes stay downloadable but the site says they are not part of FLIP2, so a 2021 number
+      and a FLIP2 number share no test set.
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-pmlr-v306-didi26a
+      - src-flip-protein-properties
+      - src-zenodo-18433203
+
+subsets:
+  # The split sets as the repository lists them, with the semaphore that says what each may be used for. The
+  # 2021 paper describes the first three; the rest appear only in the repository and on the site.
+  - id: flip#gb1
+    label: GB1 (four-position combinatorial binding landscape; 5 splits)
+    items: 8733
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`three_vs_rest`'
+      - source: src-neurips-2021-flip
+        quote: possible combinations of mutations at 4 positions
+    notes: one_vs_rest, two_vs_rest, three_vs_rest and low_vs_high are green; sampled is amber (a
+      random split, kept for discussion).
+  - id: flip#aav
+    label: AAV capsid VP-1 (mutagenesis and design screen; 7 splits)
+    items: 284009
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`seven_vs_many`'
+      - source: src-neurips-2021-flip
+        quote: a 28-amino acid window from position 561 to 588 of VP-1
+    notes: des_mut, mut_des, one_vs_many, two_vs_many, seven_vs_many and low_vs_high are green;
+      sampled is amber.
+  - id: flip#meltome
+    label: Thermostability from the Meltome Atlas (3 splits)
+    items: 27951
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`human_cell`'
+      - source: src-neurips-2021-flip
+        quote: measure protein melting curves across 13 species and 48,000 proteins
+    notes: mixed, human and human_cell are green, each holding out whole 20%-identity clusters; full
+      and clustered are red (obsolete).
+  - id: flip#bind
+    label: Bind (6 splits)
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`from_publication`'
+    notes: Repository-only -- the 2021 paper does not describe this set, and no source read here
+      says what it measures. All six splits are green.
+  - id: flip#sav
+    label: SAV, single amino-acid variants (3 splits)
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`only_savs`'
+    notes: Repository-only, all three splits green.
+  - id: flip#scl
+    label: SCL, subcellular localisation (6 splits)
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`mixed_vs_human_2`'
+    notes: Repository-only, all six green. The site calls it "Protein localization prediction",
+      which no domain leaf of this entry covers (review_checks).
+  - id: flip#secondary-structure
+    label: Secondary structure (1 split)
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: Secondary Structure
+    notes: Repository-only, one green split (sampled).
+  - id: flip#conservation
+    label: Conservation (1 split)
+    scored_separately: true
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: Conservation
+    notes: Repository-only, one green split (sampled).
+  - id: flip#cas
+    label: Cas9 (2 splits, both withdrawn)
+    scored_separately: false
+    evidence:
+      - source: src-github-flip-splits-readme
+        quote: '`positive_selection`'
+      - source: src-github-flip-readme
+        quote: splits that should not be used / considered obsolete. Please do not use these to
+          report performance.
+    notes: Both splits carry the red semaphore, so scored_separately is false -- the maintainers ask
+      that they not be used for performance claims.
+
+lineage:
+  role: root
+lineage_note: No fork or variant by another maintainer was found. FLIP2 is modelled as this entry's
+  second edition (versions), not a separate benchmark, because the same organisation account, site
+  and repository carry it and five of its ten authors are FLIP authors; a reviewer may disagree
+  (review_checks). TAPE, Envision, DeepSequence, PEER and ProteinGym are discussed in both papers as
+  other benchmarks, and none is linked here.
+
+tags:
+  - protein-fitness
+  - protein-engineering
+  - directed-evolution
+  - extrapolation-splits
+  - protein-language-models
+  - representation-learning
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T06)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-neurips-2021-flip
+    - src-neurips-2021-flip-abstract
+    - src-biorxiv-api-2021-11-09-467890
+    - src-github-flip-readme
+    - src-github-flip-splits-readme
+    - src-github-flip-license
+    - src-flip-protein-properties
+    - src-pmlr-v306-didi26a
+    - src-zenodo-18433203
+    - src-arxiv-2609-04793-v1
+    - src-arxiv-2501-18223-v1
+  sources_note: >
+    The NeurIPS 2021 round-2 proceedings PDF read as text, with windows that keep the eight authors' e-mail
+    addresses out, and its proceedings page for the venue and the published abstract; bioRxiv's API record
+    for the posting date; the README, splits/README and LICENSE at commit 62cace8; the FLIP2 site as served
+    HTML; the FLIP2 paper's PMLR PDF; Zenodo's API record, with narrow windows that keep the creators'
+    ORCIDs out; and two papers that run FLIP. GitHub's API was read for the repository's creation and
+    last push, its commits and dates and its licence metadata, and is not kept as a Source. benchmark.protein.properties,
+    data.bioembeddings.com and the split files themselves were not read.
+  confidence: medium
+  review_checks:
+    - check: FLIP2 is recorded as an edition in versions, by the 04 section 4 rule (same
+        maintainers' next release, new items, same task, carried on the same site and repository).
+        Against that, it has its own name, paper, citation and Zenodo DOI, and the site says the
+        2021 datasets are not part of it, which would make it a separate benchmark linked by
+        lineage. This is the entry's least clear-cut call.
+      field: versions
+      source: src-flip-protein-properties
+      quote: These legacy datasets are not part of the FLIP2 benchmark
+    - check: 'How FLIP and proteingym differ and overlap, as the two entries under biology-genetics/protein-fitness-prediction.
+        ProteinGym spans over 250 assays scored mostly zero-shot with random, contiguous and modulo cross-validation
+        and an official aggregate; FLIP has three (now ten) landscapes with engineering-motivated extrapolation
+        splits, supervised training and no aggregate. The GB1 and AAV capsid landscapes look likely to
+        appear in both corpora, which would make some assays shared: that was not confirmed from a Source
+        here, and whether the pair deserves a lineage.correlates_with link is open.'
+      field: lineage
+      source: src-pmlr-v306-didi26a
+      quote: results in the majority of datasets only containing single- and double- mutants
+        collected via deep mutational scanning experiments
+    - check: "activity is unknown rather than no-submission-channel: the paper's Figure 1 shows a \"Leaderboard\"\
+        \ step and the 2021 home (benchmark.protein.properties) redirects to a Google Sites sign-in page,
+        which was not read and not archived here. If a board never existed, no-submission-channel is right."
+      field: activity
+    - check: Six of the ten split sets in the repository (Bind, SAV, SCL, Secondary Structure,
+        Conservation, Cas9) are described in no source read here, so their subsets carry no item
+        count and no task description, and SCL and Secondary Structure would pull in domain leaves
+        this entry does not take (protein-function-prediction, protein-structure-prediction). Their
+        per-set READMEs on the data host were not read.
+      field: subsets
+      source: src-github-flip-splits-readme
+      quote: '`mixed_vs_human_2`'
+    - check: The published abstract on the proceedings page reads "curated splits" and "future
+        expansion to new splits" where the PDF reads "curated tasks" and "new tasks". No field here
+        depends on the difference, but a reviewer quoting the abstract should know the two differ.
+      field: self_description
+      source: src-neurips-2021-flip-abstract
+      quote: Our curated splits, baselines, and metrics probe model generalization in settings
+        relevant for protein engineering
+    - check: compositional-generalization was rejected on the majority of splits, but GB1's
+        1-vs-rest and 2-vs-rest fit its inclusion test exactly (the test variants recombine
+        mutations seen singly). If the facet should follow the headline splits rather than the
+        majority, it belongs in capability.
+      field: capability
+    - check: "sample-efficiency was rejected: the paper claims the low-resource setting and GB1 1-vs-rest
+        leaves 29 training sequences, but no budget is fixed as the measured quantity. proteingym is the
+        vocabulary's near miss for the same question, so the two entries should be decided together."
+      field: capability
+    - check: The FLIP2 site gives NucB 55,760 variants where the FLIP2 paper's Table 1 gives 55,759,
+        and the 2021 paper's Table 2 repeats a landscape's total for every split of it. data.size
+        follows the papers' tables.
+      field: data.size
+      source: src-pmlr-v306-didi26a
+      quote: ntotal 3706 17143 55759 228298 24935 884 734
+    - check: "dataset_licence is mixed and partly unchecked: AFL-3 for the 2021 derivatives, CC BY 4.0
+        for FLIP2's data, MIT for its Amylase dataset per the site. The files on data.bioembeddings.com
+        and the per-dataset READMEs were not read, so no file's own licence statement was seen."
+      field: data.dataset_licence
+      source: src-flip-protein-properties
+      quote: All data licensed under CC-BY 4.0 or MIT.
+    - check: 'harness_availability is reference-implementation-only: the repository ships baseline models
+        and the split-building notebooks, and no scoring script was read. If baselines/ holds code that
+        computes the official per-split Spearman, official-harness is right.'
+      field: execution.harness_availability
+      source: src-github-flip-readme
+      quote: contains code used to compute baselines
+    - check: ceiling_anchor_type is theoretical-maximum because Spearman is bounded at 1.0 and
+        nothing measured is published. Assay noise puts the achievable score below 1.0 for every
+        landscape, and proteingym, the other entry under this leaf, leaves the field at its default
+        instead; the two should be decided together, and a reviewer may prefer none-known for a
+        correlation against noisy measurements.
+      field: data.ceiling_anchor_type
+    - check: maintainer_type community-collective rests on the shared J-SNACKKB organisation account
+        and the LICENSE naming no holder. Most of the 2026 edition's authors are at two companies,
+        so industry-lab, or a co-maintainer reading, may fit better. Nobody is named here.
+      field: governance.maintainer_type
+    - check: Independence was not assessed. The 2026 baselines include language models bearing the
+        authors' organisations' names, and no source read states who owns each; a reviewer with that
+        evidence should decide whether maintainer-competes-on-own-benchmark applies.
+      field: governance.independence_flags
+  unreachable:
+    - url: https://benchmark.protein.properties/
+      http_status: 302
+      consequence: The 2021 home redirects to a Google Sites sign-in page and was not read, so the
+        leaderboard question (activity) and the site's own description of the splits rest on the
+        paper and the repository.
+  personal_data_excluded:
+    - source: src-neurips-2021-flip
+      what: The eight authors' e-mail addresses under the title; every window starts after them.
+    - source: src-zenodo-18433203
+      what: The creators' ORCIDs in the record's creator list; the windows are narrowed to 30
+        characters to exclude them.
+    - source: src-biorxiv-api-2021-11-09-467890
+      what: The corresponding author's name and institution in the record; no quote here uses them.
