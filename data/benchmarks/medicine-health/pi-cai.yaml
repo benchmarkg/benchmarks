@@ -1,0 +1,700 @@
+# data/benchmarks/medicine-health/pi-cai.yaml
+#
+# P1-S6-T04, medicine-health entry 14. Filled from the study paper (Saha et al., The Lancet Oncology 25(7),
+# 2024), read as its NIH author manuscript on PubMed Central (PMC11587881); the BIAS study protocol (Zenodo
+# record 6667655, version 1.1, read as the text of its PDF); Zenodo's record of the Public Training and
+# Development Dataset (6624726, v2.0); seven public pages of pi-cai.grand-challenge.org (Overview & Goals,
+# Datasets, AI: Phases, Rules, AI: Tasks, Evaluation, Timeline, Announcements & News, Post-Challenge Setup),
+# scripts and styles stripped; the JSON behind its four leaderboards, which render by script; and the READMEs
+# of DIAGNijmegen/picai_eval, picai_baseline and picai_labels at pinned commits. robots.txt was read first;
+# Grand Challenge's API, which it disallows, was not called, and nothing was registered or signed in to. Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: pi-cai
+name: PI-CAI
+aliases:
+  - Prostate Imaging - Cancer AI
+  - PI-CAI Challenge
+  - 'PI-CAI: Prostate Imaging: Cancer AI'
+tagline: 'Clinically significant prostate cancer in biparametric MRI: AI on a hidden 1,000-case cohort,
+  against 62 radiologists.'
+description: >
+  A grand challenge and paired diagnostic accuracy study for clinically significant prostate cancer
+  (csPCa, ISUP grade group 2 or higher) in MRI, organised from the Diagnostic Image Analysis Group of
+  Radboud University Medical Center with Ziekenhuis Groep Twente, University Medical Center Groningen
+  and the Norwegian University of Science and Technology, and hosted on grand-challenge.org. For each
+  biparametric MRI exam (T2-weighted, diffusion-weighted and ADC, with age, PSA, prostate volume and
+  scanner metadata) a system outputs a 3D detection map of csPCa lesions, each with a likelihood, and
+  one patient-level likelihood. Patient diagnosis is scored by AUROC and lesion detection by average
+  precision, a predicted lesion counting as a hit at 0.10 IoU or more with the reference lesion; the
+  ranking score is their mean. Systems are submitted as offline Docker containers and run on the
+  platform, so no evaluation image or label leaves the organisers. The 2022 edition had three stages.
+  In the open development phase (June to November 2022) teams trained on 1,500 public exams, tuned
+  against a hidden cohort of 100 and submitted one algorithm each for the hidden testing cohort of 1,000
+  exams from four centres, 197 of them from a centre unseen in training; 293 algorithms were submitted.
+  In the closed testing phase the organisers retrained the top five on 9,107 exams (adding 7,607
+  sequestered ones) and re-tested them on the same 1,000. In the reader study, 62 radiologists from 45
+  centres in 20 countries read 400 of the testing cases with PI-RADS 2.1. The reference standard is
+  histopathology with at least three years of follow-up for negatives. The Lancet Oncology paper
+  reports the ensembled top five at AUROC 0.91 against the readers' 0.86 on those 400 cases. The test
+  labels are not released; the tuning board stays open, and the testing board takes submissions on
+  application.
+self_description:
+  source: src-picai-site
+  quote: In the end, PI-CAI aims to benchmark state-of-the-art AI algorithms developed in the grand
+    challenge, against prostate radiologists participating in the reader study
+paper:
+  title: 'Artificial intelligence and radiologists in prostate cancer detection on MRI (PI-CAI): an international,
+    paired, non-inferiority, confirmatory study'
+  doi: 10.1016/S1470-2045(24)00220-1
+  source: src-pmc-11587881
+released: 2022-05-05
+released_note: The day the Public Training and Development Dataset was released, as the timeline
+  gives it; the tuning leaderboard opened on 2022-06-12, with a re-release of the dataset with
+  fixes. The protocol was preregistered on Zenodo (v1.0 on 2022-05-05, v1.1 on 2022-06-19) and at
+  ClinicalTrials.gov (NCT05489341).
+released_source: src-picai-timeline
+released_quote: '5 May 2022: Release of Public Training and Development Dataset.'
+release_venue: grand-challenge.org, with no associated conference; the study paper in The Lancet
+  Oncology 25(7), 879-887 (2024)
+release_venue_source: src-zenodo-6667655-pdf
+release_venue_quote: This challenge is not associated with any conference.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/medical-imaging-diagnostic
+  secondary:
+    - vision/detection
+    - vision/classification
+domain_basis:
+  reason: Systems detect csPCa lesions in prostate MRI and assign each patient a likelihood of
+    csPCa, scored against a reference standard of histopathology and clinical follow-up, which the
+    leaf's inclusion test takes whatever the metric. The two vision operations behind it, lesion
+    detection (AP) and case classification (AUROC), are recorded as secondaries, as the family's
+    exclusion test directs.
+  source: src-picai-tasks-evaluation
+  quote: produce clinically significant lesion detections, their likelihood scores of harboring
+    csPCa, and an overall patient-level score for csPCa diagnosis
+domain_considered_and_rejected:
+  - term: medicine-health/medical-imaging-segmentation
+    reason: Lesions are output as 3D maps and the hit criterion is an overlap, but the mask is only
+      the means of locating a detection; no delineation is scored. The protocol says segmentation is
+      not evaluated and the tasks page that IoU is not used to score.
+    source: src-zenodo-6667655-pdf
+    quote: We do not evaluate segmentation or the exact spatiant extent of csPCa, predicted by
+      radiologists or AI.
+  - term: vision/medical-imaging-cv
+    reason: The claim is clinical, AI against radiologists at csPCa diagnosis with a histopathology
+      and follow-up reference standard, not a vision method tested on medical images.
+    source: src-zenodo-6667655-pdf
+    quote: The study hypothesizes that state-of-the-art AI algorithms, trained using thousands of
+      patient exams, are non-inferior to radiologists reading bpMRI.
+  - term: medicine-health/diagnosis-triage
+    reason: Each patient receives a diagnostic likelihood, but the input is an imaging study and
+      findings are scored as lesion detections, which is the imaging leaf's ground; diagnosis-triage
+      takes a presented case such as a vignette or record.
+
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is a volumetric multi-sequence MRI exam, and both scores depend on which
+      cancerous lesions were found in it and how confidently.
+    source: src-picai-tasks-evaluation
+    quote: predict a 3D detection map of non-overlapping, non-connected csPCa lesions (with the same
+      dimensions and resolution as the T2W image)
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The hidden testing cohort holds 197 cases from a centre unseen in training, but the
+      leaderboards and the paper's primary analysis report one score over all 1,000 cases; no
+      held-out-centre score is reported as a condition of its own in the sources read (the paper's
+      appendix was not read).
+    source: src-pmc-11587881
+    quote: The hidden testing cohort included prostate MRI examinations from 1000 patients across
+      four centres, including 197 cases from an external unseen centre.
+  - term: calibration-uncertainty
+    reason: Every lesion and patient carries a likelihood that the scorer consumes, which the term's
+      inclusion test reads literally, but AUROC and AP depend only on the ranking of those values,
+      so no stated confidence is scored for calibration.
+  - term: spatial-reasoning
+    reason: Localisation is scored as an overlap hit, a perceptual output; no spatial relation has
+      to be inferred.
+
+evaluation_method:
+  - composite
+  - classification-metric
+  - domain-metric
+evaluation_method_basis:
+  reason: The ranking score is the mean of two sub-scores made by different methods, patient-level
+    AUROC (a general statistic, classification-metric) and lesion-level average precision under an
+    IoU hit criterion (a detection measure, domain-metric), so composite applies with both
+    constituents tagged.
+  source: src-picai-tasks-evaluation
+  quote: Patient-level diagnosis performance is evaluated using the Area Under Receiver Operating
+    Characteristic (AUROC) metric. Lesion-level detection performance is evaluated using the Average
+    Precision (AP) metric.
+evaluation_method_considered_and_rejected:
+  - term: entrant-relative-ranking
+    reason: Each submission's score is computed against the reference standard alone and does not
+      move when other teams enter; the paper's permutation tests between the top five are analyses,
+      not the leaderboard figure.
+  - term: human-expert-eval
+    reason: Radiologists are a compared arm, read against the same reference standard, not the
+      graders of the systems' outputs.
+designed_for_subjects:
+  - domain-specialist-model
+  - human-expert
+designed_for_subjects_basis:
+  reason: The AI study is built for csPCa detection systems trained on the challenge's prostate MRI,
+    deep learning models from the entrant teams and the organisers' nnU-Net and nnDetection
+    baselines; detecting a cancer that radiology defines is a clinical task, which
+    task-specific-supervised-model's exclusion test sends here. The reader study admitted
+    radiologists, recruited through the same open call, who read 400 of the same testing cases
+    unaided and are scored by the same AUROC, which human-expert's inclusion test takes.
+  source: src-pmc-11587881
+  quote: Algorithm developers and radiologists were invited to participate through referrals,
+    outreach programmes of clinical and technical societies, presentations at conferences, and
+    through an open call on the grand-challenge.org platform.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The entrants are task-trained detectors, but the task, csPCa detection and diagnosis in
+      MRI, is defined by a clinical discipline.
+  - term: human-ai-team
+    reason: The study compares stand-alone AI with unaided readers; AI-assisted reading is outside
+      it.
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the hidden cohorts. The tuning leaderboard holds 503
+    entries, the newest read dated 2026-11-03, and the testing leaderboard took entries in November
+    and December 2025 through its on-application route; the paper says the challenge will be hosted
+    until at least May 2027.
+  source: src-picai-leaderboard-tuning
+  quote: Prostate AI Task120 External Check | 3 Nov. 2026 | 0.836
+activity: leaderboard-live-no-round
+activity_note: The tuning board takes submissions directly, at a reduced rate since the open phase
+  ended; the testing board takes them on application to the organisers, with a supporting document;
+  the closed-testing final ranking is closed to entrants. No new edition has been announced.
+activity_basis:
+  reason: The 2022 edition's rounds are over, and the post-challenge page keeps the tuning
+    leaderboard live for continuous submissions from outside the organisers.
+  source: src-picai-post-challenge-guidelines
+  quote: While the Open Development Phase – Tuning Leaderboard will remain live for continuous
+    submissions
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: The top five algorithms of the open development phase (deep learning models from teams
+      at the University of Sydney, University of Science and Technology in Hefei, Guerbet Research,
+      Istanbul Technical University and Stanford University), retrained and ensembled into the
+      paper's AI system
+    source: src-pmc-11587881
+    observed_on: 2026-11-04
+    quote: the top five highest performing algorithms were deep learning models developed by teams
+      primarily based at the University of Sydney
+  - system: UMamba-ProSSL (first on the Open Development Phase - Testing board, score 0.780)
+    source: src-picai-leaderboard-testing
+    observed_on: 2026-11-04
+    quote: 1st | UMamba-ProSSL | 11 Nov. 2025 | 0.780 | 0.905 | 0.655
+evaluation_target: learned-system
+evaluation_target_note: The radiologists of the reader study are a compared human arm on 400 of the
+  testing cases (designed_for_subjects), and their mean is the ceiling anchor; every leaderboard
+  entry is a learned system.
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: For the tuning and testing cohorts, csPCa positives are histologically
+  confirmed (ISUP 2 or higher) and negatives are histopathology (ISUP 1 or lower) or MRI (PI-RADS 2
+  or lower) negatives confirmed by at least three years of follow-up. Lesions were delineated by
+  trained investigators or a resident under the supervision of expert radiologists. The training
+  sets use the same standard without follow-up. No evaluation label is released.
+ground_truth_source_source: src-picai-data
+ground_truth_source_quote: histologically-confirmed (ISUP ≥ 2) positives, and histopathology (ISUP ≤
+  1) or MRI (PI-RADS ≤ 2) negatives, with follow-up (≥ 3 years)
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: Neither the evaluation images nor their labels are released; an official score comes only
+    from running a container on the organisers' platform, and the testing cohort only on
+    application.
+  source: src-picai-data
+  quote: Annotations for the Private/Sequestered Training Dataset, Hidden Tuning Cohort and Hidden
+    Testing Cohort will not be released publicly.
+
+task:
+  exists: true
+  input:
+    - a prostate biparametric MRI exam (axial, sagittal and coronal T2-weighted, axial high b-value
+      diffusion-weighted and ADC, as .mha), co-registered by the organisers for the hidden cohorts
+    - per case, patient age, PSA, PSA density, prostate volume, scanner manufacturer and model, and
+      the diffusion b-value
+    - for training, the 1,500 public exams with expert lesion delineations, AI-derived delineations
+      and whole-gland segmentations (picai_labels)
+  output: A 3D detection map at the T2-weighted image's dimensions holding non-overlapping lesion
+    detections, each a single likelihood between 0 and 1, and one patient-level csPCa likelihood
+    between 0 and 1, produced inside an offline Docker container on the platform.
+  scoring: Patient-level AUROC and lesion-level average precision, a predicted lesion counting as a
+    true positive at 0.10 IoU or more in 3D with a reference lesion (the largest-overlap prediction
+    counts, other overlapping ones are discarded without penalty). The ranking score is (AUROC + AP)
+    / 2, with 95% confidence intervals; sensitivity at radiologists' PI-RADS false-positive rates
+    (Sens3 to Sens5) and FROC curves are secondary. The reader study scores radiologists' case-level
+    likelihoods by AUROC on 400 cases.
+  metric_range:
+    - 0.0
+    - 1.0
+  tests_hidden_from_system: true
+  source: src-picai-tasks-evaluation
+  quote: it must share a minimum overlap of 0.10 IoU in 3D with the ground-truth annotation
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The 1,500 public training exams are open on Zenodo under CC BY-NC 4.0, with their
+    annotations on GitHub; joining the challenge on Grand Challenge was the stated route during the
+    challenge. The 7,607 sequestered training exams, and benchmarking on the testing cohort, are
+    available on application with investigator support.
+  access_basis:
+    reason: The tuning and testing cohorts' images, not only their labels, stay with the organisers;
+      submitted containers are run on the platform, which the rules give as what keeps every
+      evaluation image unseen.
+    source: src-picai-phases-rules
+    quote: During evaluation, algorithms are executed on the grand-challenge.org platform, their
+      performance is estimated on the Hidden Tuning Cohort
+  refresh: static
+  refresh_note: The tuning and testing cohorts, the tasks and the scoring have not changed since the
+    edition opened. The public training data has been revised beside them; it was re-released with
+    fixes on 2022-06-12 as Zenodo v2.0, expert annotations for its 205 AI-annotated positives were
+    added on 2025-07-01, and routine-practice PI-RADS scores for its 1,500 cases on 2026-07-13.
+  refresh_basis:
+    reason: One hidden testing cohort of 1,000 cases and one tuning cohort of 100 behind every board
+      since 2022; the revisions read touch the training data only.
+    source: src-github-picai-labels-readme
+    quote: we now have expert-derived annotations for the 205 positive cases that were previously
+      annotated by an AI system only
+  data_provenance:
+    - real-world-instrument
+    - expert-authored
+  data_provenance_note: Prostate MRI exams acquired in routine care between 2012 and 2021 at four
+    European centres on Siemens and Philips scanners (real-world-instrument), de-identified, with
+    the institutional review boards waiving consent. Lesions were delineated by trained
+    investigators under expert radiologists' supervision (expert-authored), and labels come from
+    histopathology and registry follow-up. patient-clinical-record was considered; the items are
+    images from routine care, but the term has no inclusion test to apply, and the data is released
+    anonymised.
+  data_provenance_source: src-picai-data
+  data_provenance_quote: by one of 10 trained investigators or 1 radiology resident, under
+    supervision of one of 3 expert radiologists
+  contamination_risk: low
+  contamination_risk_note: The evaluation images and labels never leave the organisers, containers
+    run offline, and testing submissions need the organisers' approval. The residual route is
+    adaptive overfitting to the 100-case tuning cohort through the board's many entries, which does
+    not reach the testing cohort. The public training set includes 328 ProstateX cases; no source
+    read says whether any patient in it also appears in the testing cohort.
+  contamination_evidence:
+    - source: src-picai-post-challenge-guidelines
+      stance: against
+      quote: This step is necessary to preserve the integrity of the hidden testing cohort (by
+        preventing repeated submissions and overfitting).
+    - source: src-picai-data
+      stance: against
+      quote: Annotations for the Private/Sequestered Training Dataset, Hidden Tuning Cohort and
+        Hidden Testing Cohort will not be released publicly.
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_note: The pool of 62 radiologists reading PI-RADS 2.1 on 400 testing cases,
+    with multiparametric MRI (they saw DCE sequences that AI did not), had a mean AUROC of 0.86; the
+    paper's AI system passed it at 0.91. It is measured on the reader-study subset, not on all 1,000
+    cases, and on AUROC only, not on the ranking score. AUROC and AP are bounded at 1.
+  ceiling_anchor_type_source: src-pmc-11587881
+  ceiling_anchor_type_quote: the AI system showed a statistically superior and non-inferior AUROC of
+    0·91 (95% CI 0·87–0·94; p<0·0001), in comparison to the pool of 62 radiologists with an AUROC of
+    0·86 (0·83–0·89)
+  dataset_licence: CC-BY-NC-4.0
+  dataset_licence_note: For the public training images (Zenodo) and their annotations
+    (picai_labels). The tuning, testing and sequestered training data are not released under any
+    licence.
+  dataset_licence_source: src-zenodo-6624726
+  dataset_licence_quote: Rights License Creative Commons Attribution Non Commercial 4.0
+    International
+  size:
+    - count: 1000
+      unit: bpMRI exams, one per patient, from four centres (197 from an unseen centre)
+      subset: hidden testing cohort
+      source: src-picai-data
+      quote: 'Hidden Testing Cohort (1000 cases): Used to determine the top 5 AI algorithms at the end
+        of the Open Development Phase.'
+    - count: 400
+      unit: exams of the testing cohort, read by the 62 radiologists
+      subset: reader study
+      source: src-picai-data
+      quote: 'A subset of 400 cases from this cohort is used to facilitate the PI-CAI: Reader Study.'
+    - count: 100
+      unit: bpMRI exams
+      subset: hidden tuning cohort
+      source: src-picai-data
+      quote: 'Hidden Tuning Cohort (100 cases): Used for a live, public leaderboard that enables model
+        selection and tuning, during the Open Development Phase.'
+    - count: 1500
+      unit: bpMRI exams from 1,476 patients at three Dutch centres, with annotations
+      subset: public training and development dataset
+      source: src-zenodo-6624726
+      quote: It contains 1500 anonymized prostate biparametric MRI scans from 1476 patients,
+        acquired between 2012-2021, at three centers
+    - count: 7607
+      unit: bpMRI exams, used by the organisers only, to retrain the top five
+      subset: sequestered training dataset
+      source: src-picai-data
+      quote: 'Private/Sequestered Training Dataset (7607 cases): Used exclusively by the organizers to
+        retrain the top-ranking 5 AI algorithms'
+    - count: 10207
+      unit: MRI exams from 9,129 patients in all
+      subset: complete study cohort
+      source: src-pmc-11587881
+      quote: we trained and externally validated an AI system (developed within an international
+        consortium) for detecting Gleason grade group 2 or greater cancers using a retrospective
+        cohort of 10 207 MRI examinations from 9129 patients
+  submission_limit:
+    max_submissions: 1
+    period_days: 7
+    per: verified user, on the Open Development Phase - Tuning leaderboard since the open phase
+      ended (one per day during it); one algorithm per team on the testing leaderboard
+    source: src-picai-announcements
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The PI-CAI organisers, at the Diagnostic Image Analysis Group of Radboud University
+    Medical Center (Nijmegen), with Ziekenhuis Groep Twente, University Medical Center Groningen and
+    the Norwegian University of Science and Technology
+  maintainer_basis:
+    reason: The home page names the four organising centres, and the annotations repository is
+      managed by the Diagnostic Image Analysis Group at Radboud University Medical Center, where the
+      organisers' DIAGNijmegen repositories, the evaluation code and the Zenodo records sit. Grand
+      Challenge hosts the site.
+    source: src-github-picai-labels-readme
+    quote: '### Managed By Diagnostic Image Analysis Group, Radboud University Medical Center, Nijmegen,
+      The Netherlands'
+  maintainer_type: academic-lab
+  maintainer_type_note: The data, code and site are held by the Diagnostic Image Analysis Group, a
+    research group of a university medical centre. consortium was considered for the four-centre
+    organising team and the PI-CAI consortium of the paper, but no source gives it a legal form.
+  submission_process:
+    - containerized-algorithm-submission
+  submission_process_note: Teams upload inference containers, which the platform runs offline on the
+    hidden cohorts; for the closed testing phase the top five handed over training containers and
+    the organisers retrained them on their own compute. Testing-board submissions now need the
+    organisers' approval of a supporting document, and the top five had to post a short arXiv paper
+    and their code. Fully automated methods only.
+  submission_process_source: src-picai-phases-rules
+  submission_process_quote: This challenge only supports the submission of fully automated methods
+    in Docker containers.
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-picai-data
+      quote: Annotations for the Private/Sequestered Training Dataset, Hidden Tuning Cohort and
+        Hidden Testing Cohort will not be released publicly.
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-picai-leaderboard-testing
+      quote: 'PI-CAI: Baseline nnU-Net (semi-supervised) | 8 Nov. 2022 | 0.721'
+    - flag: prize-sponsored-by-industry
+      source: src-zenodo-6667655-pdf
+      quote: Teams that are responsible for developing the top-performing 3 AI algorithms will
+        receive cash prizes and/or Amazon Web Services (AWS) credits (exact details pending ongoing
+        discussions with sponsors).
+  independence_flags_note: The organisers hold every evaluation label and produce every score. Their
+    official baselines (U-Net, nnU-Net, nnDetection) are ranked on the testing and closed-testing
+    boards; the rules let members of the organising centres take part but bar them from prizes and
+    the closed-phase final ranking. Amazon Web Services sponsored the challenge, and the protocol
+    named AWS credits among the prizes then under discussion; the prize page the submission guide
+    links was not read. The study was funded by the EU (ProCAncer-I) and Health~Holland.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The official score needs the hidden cohorts, which only the organisers' platform holds;
+      the testing cohort is reached only on application.
+    source: src-pmc-11587881
+    quote: We have provided the means for independent researchers and developers to access the full
+      sequestered training dataset of 9107 cases or benchmark their algorithms across the
+      sequestered testing cohort of 1000 cases, in a fully masked, standardised manner with
+      investigator support, on a per-application basis.
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: picai_eval (pip install picai_eval), the evaluation code of the official pipeline, with
+    the statistical tests; the organisers' baselines and container templates in picai_baseline
+  harness_source: src-github-picai-eval-readme
+  harness_quote: It is used for the official evaluation pipeline of the
+  submission_channel:
+    source: src-picai-post-challenge-guidelines
+    quote: interested teams can only make submissions to the Open Development Phase – Testing
+      Leaderboard upon request to the organizers with a brief supporting document
+  submission_channel_note: Inference containers are uploaded as Grand Challenge algorithms and
+    submitted to a phase. The tuning board stays open; the closed-testing final ranking is closed.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for DIAGNijmegen/picai_eval and picai_baseline, read
+    2026-11-04; not a quoted statement.
+  runnable_via:
+    - custom
+  runnable_via_note: picai_eval scores detection maps against annotations anyone holds, such as
+    cross-validation folds of the public data; the official scores need the platform.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (subset_used: tuning or testing cohort, open or closed phase, reader-study
+  # subset): what the system was trained on. The open phase allowed public data plus permissively published
+  # external data for prize contenders and any private data for others, flagged in the algorithm's name; the
+  # closed phase retrained on the organisers' 9,107 exams. The paper's AI system is an equal-weight ensemble of
+  # five retrained models, each trained 5-10 times.
+  material_extra:
+    - subset_used
+    - training_data_policy
+
+homepage: https://pi-cai.grand-challenge.org/
+repository: https://github.com/DIAGNijmegen/picai_eval
+dataset_url: https://zenodo.org/records/6624726
+leaderboard_url: https://pi-cai.grand-challenge.org/evaluation/challenge/leaderboard/
+
+versions:
+  - version: '2022'
+    label: The 2022 edition (AI study, closed testing phase and reader study)
+    version_kind: edition
+    released: 2022-05-05
+    items: 1000
+    changes: The first and so far only edition, on bpMRI with a 100-case tuning cohort and a
+      1,000-case testing cohort. The public training data was re-released with fixes as v2.0 before
+      the tuning board opened; the evaluation cohorts did not change. The organisers say future
+      iterations may add full mpMRI or more external centres; none is announced.
+    breaking: true
+    frozen: true
+    sources:
+      - src-picai-site
+      - src-picai-timeline
+      - src-picai-post-challenge-guidelines
+
+subsets:
+  - id: pi-cai#odp-tuning
+    label: Open Development Phase - Tuning (hidden tuning cohort)
+    items: 100
+    scored_separately: true
+    evidence:
+      - source: src-picai-data
+        quote: 'Hidden Tuning Cohort (100 cases): Used for a live, public leaderboard that enables model
+          selection and tuning, during the Open Development Phase.'
+      - source: src-picai-leaderboard-tuning
+        quote: 100 of 503 rows served, ordered by rank.
+    notes: The live board for model selection, open since 2022-06-12 and still taking entries (503
+      rows, the first 100 by rank read).
+  - id: pi-cai#odp-testing
+    label: Open Development Phase - Testing (hidden testing cohort)
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-picai-phases-rules
+        quote: At the end of this phase, each team can choose to submit a single AI algorithm
+          (presumably their top-performing model) for evaluation on the Hidden Testing Cohort.
+      - source: src-picai-leaderboard-testing
+        quote: 29 of 29 rows served, ordered by rank.
+    notes: One algorithm per team, trained on public (and declared external) data. It set the top
+      five for the closed phase and has taken post-challenge entries on application; 29 rows.
+  - id: pi-cai#closed-testing
+    label: Closed Testing Phase - Testing (Final Ranking)
+    items: 1000
+    scored_separately: true
+    evidence:
+      - source: src-picai-site
+        quote: In the closed testing phase, organizers retrain the top-ranking 5 AI algorithms using
+          a larger dataset of 9107 bpMRI scans (including additional training scans from a private
+          dataset).
+      - source: src-picai-leaderboard-final
+        quote: 14 of 14 rows served, ordered by rank.
+    notes: The same 1,000 cases, scored for algorithms the organisers retrained on 9,107 exams; the
+      final ranking of the challenge, closed to entrants. 14 rows, including the organisers'
+      baselines and entries dated 2025.
+  - id: pi-cai#closed-tuning
+    label: Closed Testing Phase - Tuning
+    scored_separately: true
+    evidence:
+      - source: src-picai-leaderboard-closed-tuning
+        quote: 14 of 14 rows served, ordered by rank.
+    notes: A board of the retrained algorithms (14 rows, dated 2024-2025). No page read says which
+      cohort it scores; its name and columns match the tuning board's.
+  - id: pi-cai#reader-study
+    label: 'PI-CAI: Reader Study (radiologists and AI on 400 testing cases)'
+    items: 400
+    scored_separately: true
+    evidence:
+      - source: src-picai-site
+        quote: 'Reader Study: 50+ international prostate radiologists perform a reader study using a subset
+          of 400 scans from the hidden testing cohort.'
+      - source: src-pmc-11587881
+        quote: Each case was read in two sequential rounds, without a washout period in between.
+    notes: Held on grand-challenge.org from August 2022 to February 2023; 62 radiologists in a
+      split-plot design of four 100-case blocks, first on bpMRI and then with mpMRI. Only the mpMRI
+      readings were analysed, against the closed phase's ensembled AI system, by MRMC
+      non-inferiority with a 0.05 margin. Not open to new readers.
+
+history:
+  - date: 2022-11-29
+    event: channel-closed
+    field: execution.submission_channel
+    from: the Open Development Phase - Testing leaderboard, one algorithm per team (closed for the
+      round on 2022-11-22)
+    to: submissions on application to the organisers
+    source: src-picai-announcements
+    quote: Meanwhile, the Open Development Phase - Testing Leaderboard will reopen in early 2023 and
+      accept submissions on a per-application basis to the PI-CAI consortium via e-mail.
+  - date: 2023-04-30
+    event: channel-closed
+    field: execution.submission_channel
+    from: the Closed Testing Phase - Final Ranking leaderboard
+    source: src-picai-timeline
+    quote: '30 April 2023: Closing submissions for Closed Testing Phase - Final Ranking.'
+    note: The post-challenge page keeps it closed, as it ranks algorithms trained on the private
+      data.
+
+tags:
+  - prostate-cancer
+  - biparametric-mri
+  - lesion-detection
+  - reader-study
+  - challenge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-pmc-11587881
+    - src-zenodo-6667655-pdf
+    - src-zenodo-6624726
+    - src-picai-site
+    - src-picai-data
+    - src-picai-phases-rules
+    - src-picai-tasks-evaluation
+    - src-picai-timeline
+    - src-picai-announcements
+    - src-picai-post-challenge-guidelines
+    - src-picai-leaderboard-tuning
+    - src-picai-leaderboard-testing
+    - src-picai-leaderboard-final
+    - src-picai-leaderboard-closed-tuning
+    - src-github-picai-eval-readme
+    - src-github-picai-baseline-readme
+    - src-github-picai-labels-readme
+  sources_note: >
+    The paper read as its PMC author manuscript (a DOI, withheld from archiving for the corresponding
+    author's address); Europe PMC's full-text XML returned HTTP 500 and the publisher's page was not tried.
+    The protocol PDF and the dataset record are Zenodo DOIs. Seven pages of the challenge site and the
+    four leaderboards' JSON, each withheld because the HTML carries an organiser's e-mail address or the
+    JSON its submitters' user names; the three READMEs, withheld for the maintainers' addresses. The Radiologists
+    page (its table names every reader) and the AI: Algorithm Submissions page (organisers' addresses
+    in its text) were read but not cited; the protocol's Zenodo record page was read for its licence.
+    The paper's supplementary appendix and the prize page were not read.
+  confidence: medium
+  review_checks:
+    - check: The 2022 round is one edition (versions) with its stages as subsets. The tuning and
+        testing boards differ by cohort, the closed-testing boards by training data
+        (organiser-retrained on 9,107 exams), and the reader study is a 400-case subset scored for
+        humans. The closed phase could instead be an as_used-style condition of pi-cai#odp-testing,
+        since its cases are the same 1,000.
+      field: subsets
+      source: src-picai-site
+      quote: The 2022 edition of PI-CAI will focus on validating AI at automated 3D detection and
+        diagnosis of csPCa in bpMRI.
+    - check: designed_for_subjects adds human-expert for the reader study, on the reading that
+        radiologists sat the same cases under the protocol, as paperbench's humans did. HealthBench
+        rejected the term for a physician baseline; if the reader study counts as a baseline only,
+        drop it and keep expert-average as the ceiling.
+      field: designed_for_subjects
+    - check: Lesion-level AP under a 0.10 IoU hit criterion is read as domain-metric (a detection
+        measure, like mAP) and AUROC as classification-metric, so the mean is composite. If AP over
+        lesion candidates is read as AUPRC, the constituents are one method and composite falls.
+      field: evaluation_method
+    - check: data.access is private-test-server because the evaluation images, not only their
+        labels, stay with the organisers. The protocol's word "hidden" and the platform-run
+        containers support it; no page read says outright that the images are never released.
+      field: data.access
+    - check: maintainer-competes-on-own-benchmark rests on the organisers' official baselines being
+        ranked on the testing and closed-testing boards; they may be reference rows rather than
+        competing entries. The closed boards' 2025 rows (named for a SCALE study) could not be
+        attributed.
+      field: governance.independence_flags
+      source: src-github-picai-baseline-readme
+      quote: In turn, these models serve as the official baseline AI solutions for the
+    - check: prize-sponsored-by-industry rests on the protocol's AWS credits "pending ongoing
+        discussions with sponsors" and the home page's AWS sponsorship; the prizes as finally
+        awarded were not read.
+      field: governance.independence_flags
+      source: src-picai-site
+      quote: sponsored by Amazon Web Services
+    - check: distribution-shift-generalization was rejected because the unseen centre's 197 cases
+        are scored inside the 1,000, not as their own condition. The paper's appendix, not read, may
+        report them separately.
+      field: capability
+    - check: ceiling expert-average compares AI on bpMRI with readers on mpMRI (with DCE), on AUROC
+        only and on 400 cases, so headroom on the ranking score has no human anchor.
+      field: data.ceiling_anchor_type
+      source: src-pmc-11587881
+      quote: Within the context of this study, only multiparametric MRI readings were considered for
+        analysis
+    - check: refresh is static although the public training labels were extended in 2025 and 2026;
+        the evaluation cohorts did not change. versioned-releases would fit if training-data changes
+        count as content.
+      field: data.refresh
+      source: src-github-picai-labels-readme
+      quote: scores assigned during routine practice for each of the 1500 cases spanning the
+    - check: ProstateX, the predecessor the home page names (328 of its cases are in the public
+        training set), has no entry, and its maintainer differs, so no lineage is recorded.
+      field: lineage
+      source: src-picai-site
+      quote: Prior to the release of this challenge, the only public benchmark of csPCa
+        detection/diagnosis was the ProstateX Challenge, which used a testing set of 140 mpMRI exams
+        to evaluate and compare AI algorithms.
+    - check: submission_limit records the reduced tuning rate announced in November 2022; the
+        post-challenge page says only that the board stays live, so the current rate is not
+        confirmed.
+      field: data.submission_limit
+      source: src-picai-announcements
+      quote: All teams can continue to make submissions to the Open Development Phase - Tuning
+        Leaderboard, albeit at a reduced rate (once per week per verified user).
+  personal_data_excluded:
+    - source: src-picai-site
+      what: An organiser's e-mail address in the page's mailto links, and the organisers' and
+        contributors' names beside the quoted passages.
+    - source: src-picai-data
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-picai-phases-rules
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-picai-tasks-evaluation
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-picai-timeline
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-picai-announcements
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-picai-post-challenge-guidelines
+      what: An organiser's e-mail address in the page's mailto links.
+    - source: src-picai-leaderboard-tuning
+      what: Submitters' Grand Challenge user names and avatar links in every row.
+    - source: src-picai-leaderboard-testing
+      what: Submitters' Grand Challenge user names and avatar links in every row, and individuals'
+        names inside some algorithm names.
+    - source: src-picai-leaderboard-final
+      what: Submitters' user names, and individuals' names inside most algorithm names.
+    - source: src-picai-leaderboard-closed-tuning
+      what: Submitters' user names, and individuals' names inside most algorithm names.
+    - source: src-pmc-11587881
+      what: The corresponding author's e-mail address, and the authors' declarations of interests.
+    - source: src-zenodo-6667655-pdf
+      what: The contact persons' e-mail addresses (Item 4b).
+    - source: src-github-picai-eval-readme
+      what: The maintainers' e-mail addresses in the contact section.
+    - source: src-github-picai-baseline-readme
+      what: The maintainers' e-mail addresses.
+    - source: src-github-picai-labels-readme
+      what: The maintainers' e-mail addresses, and one case's study identifiers given as an example.
