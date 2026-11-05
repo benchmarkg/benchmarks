@@ -1,0 +1,674 @@
+# data/benchmarks/audio-speech/hear.yaml
+#
+# P1-S7-T04, audio-speech entry 11. Filled from the HEAR paper, arXiv 2203.03022, read as its v3 PDF (the version in
+# PMLR 176, the NeurIPS 2021 Competitions and Demonstrations Track), its abstract page and its PMLR page; the
+# hearbenchmark.com Tasks + Data, Submit and API pages (scripts and styles stripped) and the leaderboard CSV that the
+# leaderboard page renders by script; hear-eval-kit's README at its newest commit; Zenodo's records of the HEAR
+# datasets at version 2021.1 (the one the paper cites) and 2021.3 (the latest); the v2 PDF and abstract page of
+# VocSim, arXiv 2512.10120 (ICML 2026), a paper that reports results on HEAR tasks; and the v2 PDF of X-ARES, arXiv
+# 2505.16369 (Interspeech 2025), for its account of HEAR. Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+#
+# hearbenchmark.com has no robots.txt. Its homepage lists the organising team by name and was not used. The site
+# repository's pull-request history and the GitHub repositories' licences and commits were read from the GitHub API
+# and are cited in notes, not as Sources.
+
+id: hear
+name: HEAR
+aliases:
+  - Holistic Evaluation of Audio Representations
+  - HEAR 2021
+tagline: Nineteen speech, environmental-sound and music tasks that score one frozen audio embedding
+  through shallow probes.
+description: >
+  The Holistic Evaluation of Audio Representations, launched as a NeurIPS 2021 shared challenge. An entrant
+  is an audio embedding model wrapped in a common API that returns a scene embedding per clip and timestamp
+  embeddings at regular intervals. The organisers' evaluation code freezes the embeddings and trains a
+  shallow MLP per task, with no fine-tuning, on nineteen tasks derived from sixteen datasets: music (pitch,
+  genre, percussion strokes and tonics, piano transcription), environmental sound (tagging, office sound
+  event detection, beehive states, gunshot microphone location, vocal imitations) and speech (spoken commands,
+  emotion, language, speaker count). Five tasks were open during the challenge and fourteen were secret.
+  Each task is scored on its own metric (mostly accuracy; mAP, AUCROC and onset F-measure for some), and
+  no aggregate is published. Twenty-nine models from thirteen external teams were evaluated in 2021. The
+  datasets, the evaluation kit and the submitted models are public, and the leaderboard has taken results
+  by pull request since the challenge ended.
+self_description:
+  source: src-arxiv-2203-03022
+  quote: The aim of the HEAR benchmark is to develop a general-purpose audio representation that
+    provides a strong basis for learning in a wide variety of tasks and scenarios.
+external_ids:
+  arxiv: '2203.03022'
+paper:
+  title: 'HEAR: Holistic Evaluation of Audio Representations'
+  arxiv: '2203.03022'
+  doi: 10.48550/arXiv.2203.03022
+  version_read: v3
+  source: src-arxiv-2203-03022-v3
+released: null
+released_note: The challenge ran in 2021 with the open tasks released early in it, and no source
+  read dates the release of the open tasks. The paper's first arXiv version is dated 2022-03-06
+  (src-arxiv-2203-03022, "Submitted on 6 Mar 2022 (v1)").
+release_venue: NeurIPS 2021 Competitions and Demonstrations Track
+release_venue_source: src-pmlr-v176-turian22a
+release_venue_quote: Proceedings of the NeurIPS 2021 Competitions and Demonstrations Track, PMLR
+  176:125-145, 2022.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: audio-speech/music-understanding
+  secondary:
+    - audio-speech/audio-event-understanding
+    - audio-speech/audio-event-detection-localization
+    - audio-speech/speech-recognition
+    - audio-speech/speaker-tasks
+domain_basis:
+  reason: The nineteen tasks span music, environmental sound and speech, and the claim is breadth
+    across all three. No leaf holds most of them, which is ADR-0016's case for a suite leaf that
+    audio-speech does not have (logged, as for superb). Music understanding is the largest leaf
+    group, seven of nineteen (NSynth Pitch 5h and 50h, GTZAN Genre, Beijing Opera Percussion,
+    Mridangam Stroke and Tonic, MAESTRO 5h), so it is primary. Clip-level sound classification
+    (ESC-50, FSD50K, Vocal Imitations, GTZAN Music Speech), onset-timed office sound event detection
+    (DCASE 2016 Task 2), limited-vocabulary spoken commands and speaker counting (LibriCount) are
+    secondary. Emotion recognition (CREMA-D) and spoken language identification (VoxLingua107 Top
+    10) have no leaf.
+  source: src-arxiv-2203-03022-v3
+  quote: 'These tasks encompass multiple audio domains: speech, environmental sound, and music, with tasks
+    that involve short and long time spans.'
+domain_considered_and_rejected:
+  - term: audio-speech/bioacoustics
+    reason: Beehive States classifies a hive as queen-less or normal from its sound. That is a
+      colony state, not a species or a vocalisation, and it is one task of nineteen.
+  - term: general-intelligence/agi-composite-suites
+    reason: The breadth is inside one field, audio, and ADR-0016 keeps that family for cross-field
+      suites.
+  - term: multimodal/audio-language
+    reason: Nothing relates audio to text. The tasks score labels predicted from audio embeddings.
+capability:
+  - perception
+  - transfer-learning
+  - sample-efficiency
+capability_basis:
+  perception:
+    reason: Every task starts from raw audio, and the score measures what the embedding lets a
+      shallow classifier recover from it, such as pitch, genre, sound class, onset times, command,
+      emotion, language or speaker count.
+    source: src-hearbenchmark-api
+    quote: 'Scene embeddings: return a single embedding for a entire audio clip.'
+  transfer-learning:
+    reason: One frozen representation, trained however the entrant chose, is carried to nineteen
+      tasks it was not tuned for, fourteen of them secret during the challenge. How far it transfers
+      across them is what HEAR reports.
+    source: src-arxiv-2203-03022-v3
+    quote: the novelty of the HEAR benchmark is that the same representation must be used to solve
+      all of them
+  sample-efficiency:
+    reason: Two open tasks are scored at a fixed 5-hour training budget beside their full versions
+      (Speech Commands 5h and full, NSynth Pitch 5h and 50h), and Gunshot Triangulation has 88 clips
+      in all.
+    source: src-arxiv-2203-03022-v3
+    quote: We also provide a 5-hour subset of the training data.
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The tasks change, not only the input population, and the vocabulary sends a move to new
+      tasks to transfer-learning.
+
+evaluation_method:
+  - exact-match
+  - classification-metric
+  - domain-metric
+evaluation_method_basis:
+  reason: Fourteen tasks are scored by accuracy over a fixed label set, pitch accuracy among them
+    (exact match). FSD50K and Vocal Imitations use mAP over a multilabel or retrieval ranking, and
+    Beehive States uses AUCROC, which are general statistics of a score ranking (classification
+    metric). DCASE 2016 Task 2 and MAESTRO 5h use onset F-measure with an onset tolerance, computed
+    with sed_eval, a measure of the sound event detection and music transcription fields (domain
+    metric).
+  source: src-hearbenchmark-tasks
+  quote: MAESTRO 5hr T L 5-fold 120.0 185 Onset FMS
+designed_for_subjects: []
+designed_for_subjects_note: Left empty and logged. The entrant is a frozen embedding model probed
+  through shallow MLPs that the organisers' code trains per task. base-model presumes continuation
+  or prompting, and task-specific-supervised-model presumes training for the scored task. The gap is
+  the one superb logged (2026-10-10-superb-002).
+as_used:
+  - protocol: Frozen Whisper-encoder embeddings scored on seven HEAR tasks (Beijing Opera, GTZAN
+      Music Speech, Gunshot Triangulation, Mridangam Stroke and Tonic, CREMA-D, Speech Commands 5h)
+      with HEAR's official folds and splits. The downstream model is a logistic-regression probe,
+      not HEAR's MLP grid, and the results are compared with the best HEAR leaderboard score per
+      task.
+    split: Seven of the nineteen tasks, official K-fold splits (train/validation/test for Speech
+      Commands 5h)
+    source: src-arxiv-2512-10120-v2
+    quote: We evaluated our frozen Whisper embeddings on the HEAR benchmark (Turian et al., 2022)
+      using the official linear evaluation protocol.
+    note: VocSim, ICML 2026 (v1 December 2025). The paper calls its probe the official protocol;
+      HEAR's evaluation code trains an MLP selected over a hyperparameter grid, so the numbers are
+      not like-for-like with the leaderboard.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the instrument. An ICML 2026 paper scores a new model
+    on seven HEAR tasks with HEAR's splits and compares it with the leaderboard's best scores. The
+    challenge's formal ending, and the leaderboard's standstill since 2023, are recorded in activity
+    (ADR-0019).
+  source: src-arxiv-2512-10120-v2
+  quote: Our frozen Whisper embedding achieves SOTA on 5/7 tasks
+activity: leaderboard-live-no-round
+activity_note: The 2021 challenge is the only round, and none is announced. The Submit page still
+  invites results at any time by pull request to the site repository's CSV. But the newest
+  leaderboard row is dated 2023-09-26, and the repository's last merged pull request is from that
+  day; two pull requests from early 2023 are still open (GitHub API, read 2026-11-05). Whether a new
+  pull request would be merged is a reviewer check.
+activity_basis:
+  reason: A benchmark that ran a competition round keeps a standing leaderboard that invites outside
+    results while no round is open.
+  source: src-hearbenchmark-submit
+  quote: Submissions to the HEAR benchmark leaderboard are welcome at any time.
+  newest_submission: 2023-09-26
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: CP-JKU PaSST (Patchout spectrogram transformer, AudioSet-pretrained), a 2021 challenge
+      entry
+    source: src-arxiv-2203-03022-v3
+    observed_on: 2026-11-05
+    quote: the CP-JKU PaSST models achieve a new state-of-the-art on FSD50K despite no
+  - system: Whisper encoder embeddings (VocSim's configuration), on seven HEAR tasks
+    source: src-arxiv-2512-10120-v2
+    observed_on: 2026-11-05
+    quote: Our frozen Whisper embedding achieves SOTA on 5/7 tasks
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each task's labels come from its source dataset (pitch, genre, class,
+  onset annotations, command, emotion, language, speaker count). The fourteen secret tasks' data was
+  withheld during the challenge, and all labels are now published with the datasets.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The preprocessed datasets with their splits, the evaluation code and the submitted models
+    are all public, so anyone can rerun a leaderboard row or score a new model.
+  source: src-github-hear-eval-kit-readme
+  quote: We've released pre-processed versions of all HEAR 2021 open and secret tasks on Zenodo
+
+task:
+  exists: true
+  input:
+    - an audio clip, from 0.3 seconds to 10 minutes long depending on the task, given to the
+      entrant's embedding model
+  output: A scene embedding per clip, or timestamped embeddings at regular intervals for the two
+    timed tasks. The organisers' code then trains a shallow MLP on them, which outputs a class, a
+    set of labels or timed events.
+  scoring: Each task on its own metric over its test split or folds, mostly accuracy, with mAP for
+    FSD50K and Vocal Imitations, AUCROC for Beehive States and onset F-measure for DCASE 2016 Task 2
+    and MAESTRO 5h. The downstream MLP's hyperparameters are chosen on validation over a fixed grid
+    with a fixed seed. The nineteen scores are reported separately.
+  source: src-arxiv-2203-03022-v3
+  quote: the audio representation is frozen and used as the input feature vector to a shallow
+    downstream MLP
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: All nineteen tasks, open and secret, are on Zenodo as preprocessed archives with their
+      splits and labels, downloadable without an account. Other sample rates are on requester-pays
+      cloud buckets.
+    source: src-github-hear-eval-kit-readme
+    quote: We've released pre-processed versions of all HEAR 2021 open and secret tasks on Zenodo
+  access_by_phase:
+    during_edition: train-open-test-held-out. Five open tasks were released early. The fourteen
+      secret tasks were not shown to participants, whose models the organisers ran on them.
+    during_edition_source: src-arxiv-2203-03022-v3
+    during_edition_quote: 14 additional were secret tasks for evaluation, to which participants were
+      completely blind
+    after_edition: fully-open. Every task, with labels and splits, is on Zenodo.
+    after_edition_source: src-github-hear-eval-kit-readme
+    after_edition_quote: We've released pre-processed versions of all HEAR 2021 open and secret
+      tasks on Zenodo
+  refresh: static
+  refresh_basis:
+    reason: One fixed set of nineteen tasks. The dataset package was corrected in three Zenodo
+      versions in early 2022 (see versions), and no task has been added since. The paper invites new
+      tasks, but none is recorded.
+    source: src-arxiv-2203-03022-v3
+    quote: We are eager to help onboard new tasks into the HEAR benchmark suite
+  data_provenance:
+    - inherited-from-constituents
+  data_provenance_note: Every task is derived from an existing dataset (Speech Commands v2, NSynth,
+    DCASE 2016 Task 2, the beehive recordings, the Beijing Opera Percussion Instrument Dataset,
+    CREMA-D, ESC-50, FSD50K, the gunshot recordings, GTZAN Genre and Music Speech, LibriCount,
+    MAESTRO, the Mridangam Stroke Dataset, Vocal Imitations and VoxLingua107), with each source's
+    provenance. HEAR resampled them, fixed clip lengths and set splits; eleven tasks are novel
+    framings not comparable to the literature.
+  data_provenance_source: src-arxiv-2203-03022-v3
+  data_provenance_quote: Our 19 tasks were derived from 16 datasets
+  contamination_risk: medium
+  contamination_risk_note: Every task's test split and labels are public, and several source
+    datasets are widely used for pretraining. The Submit page forbids training on test splits but
+    checks nothing. One 2021 entry, IUT-CSE's audiomlp, was pretrained with supervision on the open
+    tasks' datasets. No source shows a test split used in training.
+  contamination_risk_source: src-arxiv-2203-03022-v3
+  contamination_risk_quote: audiomlp is pretrained with supervision on HEAR open task datasets
+  contamination_evidence: []
+  ceiling_anchor_type_note: No human or measured ceiling is given. The paper asks whether one
+    representation can match the human ear, but it measures no human.
+  dataset_licence: Per dataset. The Zenodo record is labelled CC BY 4.0, and its LICENSE.txt gives
+    each dataset's own open licence.
+  dataset_licence_source: src-zenodo-6332517
+  dataset_licence_quote: '"license": {"id": "cc-by-4.0"}'
+  upstream_licences: Each source dataset keeps its own licence, some of which permit commercial use.
+    The GTZAN corpora's licence status is unknown.
+  upstream_licences_source: src-arxiv-2203-03022-v3
+  upstream_licences_quote: They all have open licenses (some of which permit commercial use), with
+    the exception of the GTZAN corpora which are widely used but of unknown license status.
+  size:
+    - count: 19
+      unit: tasks, derived from 16 datasets
+      source: src-arxiv-2203-03022
+      quote: Twenty-nine models by thirteen external teams were evaluated on nineteen diverse
+        downstream tasks derived from sixteen datasets.
+    - count: 51185
+      unit: clips (FSD50K, the largest task)
+      subset: FSD50K
+      source: src-hearbenchmark-tasks
+      quote: FSD50K S L TVT 0.3-30.0 51185 mAP
+    - count: 88
+      unit: clips (Gunshot Triangulation, the smallest task)
+      subset: Gunshot Triangulation
+      source: src-hearbenchmark-tasks
+      quote: Gunshot Triangulation S C 7-fold 1.5 88 Accuracy
+    - count: 576
+      unit: clips of up to 10 minutes (Beehive States, the longest clips)
+      subset: Beehive States
+      source: src-hearbenchmark-tasks
+      quote: Beehive States S C TVT 600.0 576 AUCROC
+  size_note: The Tasks page gives each task's clip count. The Zenodo archives at 48 kHz total about
+    103 GB (the record's file sizes, read 2026-11-05).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The HEAR organising team (the hearbenchmark organisation on GitHub)
+  maintainer_basis:
+    reason: The paper's authors and the organisers come from many universities and companies. The
+      evaluation kit, baselines, datasets tooling, submitted models and the website sit in one
+      shared GitHub organisation, and no source names a holding institution.
+    source: src-pmlr-v176-turian22a
+    quote: Proceedings of the NeurIPS 2021 Competitions and Demonstrations Track, PMLR 176:125-145,
+      2022.
+  maintainer_type: community-collective
+  maintainer_type_note: conference-workshop was considered and rejected, because the challenge ran
+    once under NeurIPS and the committee did not re-form for further editions.
+  submission_process:
+    - self-reported
+    - containerized-algorithm-submission
+  submission_process_note: During the 2021 challenge, participants submitted their embedding models
+    as installable code with weights, following the common API, and the organisers ran them on the
+    open and secret tasks on Google Cloud (containerized-algorithm-submission, the nearest term; the
+    models were pip packages, not containers). Since then, entrants run hear-eval-kit themselves and
+    append their scores to the leaderboard CSV by pull request, and no source describes a check
+    before merging (self-reported).
+  submission_process_source: src-hearbenchmark-submit
+  submission_process_quote: Submit your results to the leaderboard by appending them to the CSV file
+    located in the GitHub repository for this website and then create a pull request with the
+    updated CSV file.
+  independence_flags: []
+  independence_flags_note: Not assessed. Two flags were weighed and not set, because each needs a
+    fact no source read states. maintainer-competes-on-own-benchmark would rest on an organiser
+    leading AMAAI Lab at SUTD, which entered two models; funded-by-evaluated-party would rest on
+    YAMNet, entered by Soundsensing, being Google's model while Google sponsored HEAR and provided
+    the compute. The organisers' own baselines (wav2vec2, CREPE, OpenL3) also sit on the
+    leaderboard. No prize is mentioned. Both questions are review checks.
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The datasets, splits and labels are public, and the evaluation kit computes embeddings
+      and trains the downstream models end to end with a fixed seed and grid. A full run of one
+      model can take a GPU day per large task.
+    source: src-hearbenchmark-submit
+    quote: 'Use hear-eval-kit to: a) Compute embeddings for all HEAR tasks using your model b) Evaluate
+      embeddings by training a shallow downstream classifier'
+  harness_availability: official-harness
+  harness: hear-eval-kit (the heareval package), with hear-validator for API conformance and
+    hear-baseline for example wrappers
+  harness_source: src-github-hear-eval-kit-readme
+  harness_quote: pip3 install heareval
+  submission_channel:
+    source: src-hearbenchmark-submit
+    quote: Submit your results to the leaderboard by appending them to the CSV file located in the
+      GitHub repository for this website and then create a pull request with the updated CSV file.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for hearbenchmark/hear-eval-kit (read 2026-11-05),
+    quoted in src-github-hear-eval-kit-readme's licence_basis rather than in an extract. The newest
+    commit on main is from 2022-06-03.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+  maintainer_rerun_policy_note: The 2021 entries were run by the organisers. Later rows are
+    entrants' own runs, and no source says the maintainers rerun them.
+
+comparability:
+  # Beyond the fallback profile (subset_used, since follow-up papers drop tasks): the downstream training regime that
+  # turns embeddings into scores (HEAR's MLP grid, seed and early stopping, or a paper's own probe), and the
+  # training-data rule (no test splits, which the Submit page states and nothing enforces).
+  material_extra:
+    - harness
+    - training_data_policy
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The paper declines a single score, and the leaderboard has one column per task and no
+    aggregate. Its summary figures use normalised scores only to visualise.
+  source: src-arxiv-2203-03022-v3
+  quote: Although it is tempting to give a single score for every model, we believe that would strip
+    out important nuances shown in the full score table
+
+homepage: https://hearbenchmark.com/
+repository: https://github.com/hearbenchmark/hear-eval-kit
+dataset_url: https://doi.org/10.5281/zenodo.6332517
+leaderboard_url: https://hearbenchmark.com/hear-leaderboard.html
+
+versions:
+  - version: '2021.1'
+    label: HEAR 2021 datasets, Zenodo version 2021.1
+    version_kind: revision
+    changes: The dataset package the paper cites. Its three TFDS-built tasks (CREMA-D, GTZAN Genre,
+      GTZAN Music Speech) were retracted for a preprocessing bug.
+    breaking: false
+    superseded_by: '2021.2'
+    errata:
+      - scope: the CREMA-D, GTZAN Genre and GTZAN Music Speech archives
+        description: Retracted for a preprocessing bug, with fixed versions promised.
+        source: src-zenodo-5885750
+    frozen: true
+    sources:
+      - src-zenodo-5885750
+      - src-arxiv-2203-03022-v3
+  - version: '2021.2'
+    label: HEAR 2021 datasets, Zenodo version 2021.2
+    version_kind: revision
+    changes: Updates the three TFDS-built tasks.
+    breaking: true
+    supersedes_version: '2021.1'
+    superseded_by: '2021.3'
+    frozen: true
+    sources:
+      - src-zenodo-6332517
+  - version: '2021.3'
+    label: HEAR 2021 datasets, Zenodo version 2021.3
+    version_kind: revision
+    changes: Adds the Vocal Imitations task at 48 kHz to the Zenodo archive, completing the nineteen
+      tasks there. The record tells users to download this version.
+    breaking: false
+    supersedes_version: '2021.2'
+    frozen: true
+    sources:
+      - src-zenodo-6332517
+
+subsets:
+  - id: hear#dcase-2016-task-2
+    label: DCASE 2016 Task 2 (open task)
+    domain_override:
+      primary: audio-speech/audio-event-detection-localization
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: Adapted from DCASE 2016, Task 2 office sound event detection.
+    notes: Timestamp embeddings; onset F-measure; 72 clips of 120 s, with HEAR's own splits.
+  - id: hear#nsynth-pitch-5h
+    label: NSynth Pitch 5h (open task)
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: The goal of this task is to classify instrumental sounds from the NSynth Dataset into
+          one of 88 pitches.
+    notes: Pitch accuracy on a 5-hour training subset; 5,000 clips.
+  - id: hear#nsynth-pitch-50h
+    label: NSynth Pitch 50h (open task)
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: The goal of this task is to classify instrumental sounds from the NSynth Dataset into
+          one of 88 pitches.
+    notes: Pitch accuracy; 49,060 clips.
+  - id: hear#speech-commands-5h
+    label: Speech Commands 5h (open task)
+    domain_override:
+      primary: audio-speech/speech-recognition
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: 'This task was described in Speech Commands: A Dataset for Limited-Vocabulary Speech Recognition.'
+    notes: Command accuracy on a 5-hour training subset of Speech Commands v2.
+  - id: hear#speech-commands-full
+    label: Speech Commands full (open task)
+    domain_override:
+      primary: audio-speech/speech-recognition
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: Classification of known spoken commands, with additional categories for silence and
+          unknown commands.
+    notes: Command accuracy; 100,503 clips. The one task SUPERB shares.
+  - id: hear#beehive-states
+    label: Beehive States
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: 'The beehives are in one of two states: a Queen-less beehive'
+    notes: Binary hive-state classification by AUCROC; 576 clips of up to 10 minutes. No leaf fits.
+  - id: hear#beijing-opera-percussion
+    label: Beijing Opera Percussion
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: This is a novel audio classification task developed using the Beijing Opera
+          Percussion Instrument Dataset.
+    notes: Instrument accuracy over 5 folds; 236 clips.
+  - id: hear#crema-d
+    label: CREMA-D
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: CREMA-D is a dataset for emotion recognition.
+    notes: Speech emotion accuracy over 5 folds; 7,438 clips. No audio-speech leaf covers emotion
+      recognition.
+  - id: hear#esc-50
+    label: ESC-50
+    domain_override:
+      primary: audio-speech/audio-event-understanding
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: This is a multiclass classification task on environmental sounds.
+    notes: 50-class accuracy over the dataset's 5 folds; 2,000 clips.
+  - id: hear#fsd50k
+    label: FSD50K
+    domain_override:
+      primary: audio-speech/audio-event-understanding
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: Evaluation is done using mean average precision (mAP).
+    notes: 200-class multilabel tagging by mAP on the predefined splits; 51,185 clips.
+  - id: hear#gunshot-triangulation
+    label: Gunshot Triangulation
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: The goal of this task is to classify audio by the iPod Touch that recorded it, i.e.,
+          to identify the location of the microphone.
+    notes: Accuracy over 7 folds; 88 clips. Microphone position by classification, which no leaf
+      names.
+  - id: hear#gtzan-genre
+    label: GTZAN Genre
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: categorized into ten genres (100 tracks per genre)
+    notes: Genre accuracy over 10 folds, not the artist-conditional splits; 1,000 clips.
+  - id: hear#gtzan-music-speech
+    label: GTZAN Music Speech
+    domain_override:
+      primary: audio-speech/audio-event-understanding
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: GTZAN Music Speech is a binary classification task, where the goal is to distinguish
+          between music and speech.
+    notes: Accuracy over 10 folds; 128 clips.
+  - id: hear#libricount
+    label: LibriCount
+    domain_override:
+      primary: audio-speech/speaker-tasks
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: The goal of this task is to classify how many speakers are present in each of the
+          recordings.
+    notes: Speaker-count accuracy (0 to 10) over 5 folds; 5,720 clips.
+  - id: hear#maestro-5h
+    label: MAESTRO 5h
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: This is a novel music transcription task adapted from MAESTRO.
+    notes: Timestamp embeddings; note-onset F-measure over 5 folds; 185 clips of 120 s.
+  - id: hear#mridangam-stroke
+    label: Mridangam Stroke
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: 'for two novel multiclass classification tasks: Stroke classification and Tonic classification'
+    notes: Stroke accuracy over 5 folds; 6,977 clips.
+  - id: hear#mridangam-tonic
+    label: Mridangam Tonic
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: 'for two novel multiclass classification tasks: Stroke classification and Tonic classification'
+    notes: Tonic accuracy over 5 folds; the same 6,977 clips.
+  - id: hear#vocal-imitations
+    label: Vocal Imitations
+    domain_override:
+      primary: audio-speech/audio-event-understanding
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: the goal is to match a vocal imitation of a sound with the sound that is being
+          imitated
+    notes: mAP over 3 folds; 5,601 imitations of 302 reference sounds.
+  - id: hear#voxlingua107-top10
+    label: VoxLingua107 Top 10
+    evidence:
+      - source: src-hearbenchmark-tasks
+        quote: The goal of the task is to identify the spoken language in an audio file.
+    notes: Language accuracy over 5 folds; 972 clips. No audio-speech leaf covers language
+      identification.
+
+history:
+  - event: channel-moved
+    field: execution.submission_channel
+    from: Models submitted to the organisers, who ran them on the open and secret tasks (the 2021
+      challenge)
+    to: Entrants' own hear-eval-kit runs, appended to the leaderboard CSV by pull request
+    source: src-arxiv-2203-03022
+    quote: each participant submitted an audio embedding model following a common API
+    note: Not dated. The leaderboard's first post-challenge rows are dated 2023-01-05.
+  - event: access-changed
+    field: data.access
+    from: train-open-test-held-out
+    to: fully-open
+    source: src-arxiv-2203-03022-v3
+    quote: 14 additional were secret tasks for evaluation, to which participants were completely
+      blind
+    note: The secret tasks were released after the challenge; Zenodo's first version is dated
+      2021-12-24 in its versions listing (API, read 2026-11-05).
+
+tags:
+  - audio-representation
+  - frozen-embeddings
+  - self-supervised-learning
+  - multi-task
+  - challenge
+  - music
+  - environmental-sound
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S7-T04)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2203-03022-v3
+    - src-arxiv-2203-03022
+    - src-pmlr-v176-turian22a
+    - src-hearbenchmark-tasks
+    - src-hearbenchmark-submit
+    - src-hearbenchmark-api
+    - src-hearbenchmark-leaderboard-csv
+    - src-github-hear-eval-kit-readme
+    - src-zenodo-5885750
+    - src-zenodo-6332517
+    - src-arxiv-2512-10120
+    - src-arxiv-2512-10120-v2
+    - src-arxiv-2505-16369-v2
+  sources_note: >
+    The paper's v3 PDF and abstract page (DOI sources, not archived) and its PMLR page. Three hearbenchmark.com
+    pages and the leaderboard CSV, with the leaderboard page as its rendered URL. hear-eval-kit's README
+    at its newest commit. Zenodo's records of dataset versions 2021.1 and 2021.3 (DOI sources). VocSim's
+    v2 PDF and abstract page as evidence of current use, and X-ARES's v2 PDF for its account of HEAR.
+    The non-DOI Sources are pending archiving.
+  confidence: medium
+  review_checks:
+    - check: Primary domain. No audio-speech leaf holds most of the nineteen tasks, and
+        music-understanding wins only as the largest group (7 of 19) under ADR-0016's fallback.
+        Environmental sound has as many tasks, split across leaves. A reviewer may prefer
+        audio-event-understanding, the broadest leaf. A suite leaf would settle it (logged with
+        superb's).
+      field: domain.primary
+      source: src-arxiv-2203-03022-v3
+      quote: 'These tasks encompass multiple audio domains: speech, environmental sound, and music, with
+        tasks that involve short and long time spans.'
+    - check: Overlap with superb. Both score a frozen pretrained model through small per-task heads.
+        SUPERB covers speech processing, HEAR covers speech, environmental sound and music, and they
+        share only Speech Commands. The paper calls them complementary, so they are separate
+        entries. Their domain and subject gaps are the same two records.
+      field: domain.primary
+      source: src-arxiv-2203-03022-v3
+      quote: these two evaluation activities are complementary to each other
+    - check: lifecycle active rests on one ICML 2026 paper that scores seven of the nineteen tasks
+        with its own logistic-regression probe. The leaderboard has not moved since 2023-09-26. If
+        partial-suite use with another probe does not count as results on the instrument, mature (a
+        settled record, still available) is the alternative.
+      field: lifecycle
+      source: src-arxiv-2512-10120-v2
+      quote: Logistic Regression classifier on the frozen embeddings.
+    - check: activity leaderboard-live-no-round rests on the Submit page's open invitation. No row
+        has been added since 2023-09-26, and two pull requests from early 2023 are still open. If
+        the maintainers no longer merge, closed applies.
+      field: activity
+      source: src-hearbenchmark-leaderboard-csv
+      quote: ',2023-09-26,'
+    - check: Whether X-ARES (Xiaomi, Interspeech 2025), built on HEAR with 22 tasks, is replacing
+        it. It is another maintainer's new suite, not a fork, so no lineage is recorded. Its paper
+        notes that follow-up work drops HEAR's noisiest tasks, which is why subset_used matters.
+      field: lifecycle
+      source: src-arxiv-2505-16369-v2
+      quote: which have led to many follow-up works discarding those tasks
+    - check: Neither independence flag is set. funded-by-evaluated-party would need a source that
+        YAMNet, entered by Soundsensing, is Google's model (Google sponsored HEAR and its compute),
+        and maintainer-competes-on-own-benchmark a source that an organiser leads AMAAI Lab at SUTD,
+        which entered two models. Set each if a source confirms it.
+      field: governance.independence_flags
+      source: src-arxiv-2203-03022-v3
+      quote: Soundsensing YAMNet 2-D MobileNet (Howard et al., 2017). Pretrained to tag AudioSet.
+    - check: Versions are the Zenodo dataset revisions, because the challenge ran once. No source
+        read says which revision the 2021 leaderboard scores used for CREMA-D and the two GTZAN
+        tasks. 2021.2 is marked breaking because it changed those archives after a preprocessing
+        bug. Zenodo's first version (2021) appears only in the versions listing and has no row.
+      field: versions
+      source: src-zenodo-5885750
+      quote: had a preprocessing bug and are retracted
+    - check: designed_for_subjects is empty. A frozen embedding model probed through
+        organiser-trained heads fits no subject term. The gap is logged, as for superb.
+      field: designed_for_subjects
+    - check: submission_process containerized-algorithm-submission for the 2021 phase is the nearest
+        term. The models were pip-installable packages with weights, which the organisers installed
+        and ran, not containers.
+      field: governance.submission_process
+      source: src-arxiv-2203-03022
+      quote: each participant submitted an audio embedding model following a common API
+    - check: released is null. No source read dates the release of the open tasks in 2021, and the
+        PMLR page gives no publication day.
+      field: released
