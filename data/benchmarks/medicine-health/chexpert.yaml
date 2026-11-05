@@ -1,0 +1,622 @@
+# data/benchmarks/medicine-health/chexpert.yaml
+#
+# P1-S6-T04, medicine-health entry 12. Filled from the CheXpert paper (Irvin et al., AAAI 2019), arXiv 1901.07031
+# read as its v1 PDF, and its abstract page; the competition page on stanfordmlgroup.github.io as served on
+# 2026-11-04, and the same page at commit ec5c40a (2022-09-20) of the repository that builds it, the last version
+# before the competition closed; that repository's evaluation script (evaluate-v1.0.py) and CodaLab leaderboard
+# configuration (codalab-v1.0.json) at commit 4f887a3; the README of the released test set labels
+# (rajpurkarlab/cheXpert-test-set-labels) and GitHub's API record of that repository; Stanford AIMI's dataset
+# page; the CheXpert Plus paper (arXiv 2405.19538, v2 PDF), to settle how it relates; and the v1 PDF of C2A
+# (arXiv 2608.09774, August 2026) as evidence of current use. The data sit behind a Stanford AIMI registration
+# that was not entered; the AIMI download portal and the CodaLab worksheets render by script and were not read.
+# Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: chexpert
+name: CheXpert
+aliases:
+  - Chest eXpert
+tagline: Chest radiograph findings against a five-radiologist reference standard, scored by mean
+  AUROC on five pathologies.
+description: >
+  A dataset and competition for automated chest radiograph interpretation from the Stanford ML Group (Irvin,
+  Rajpurkar et al., AAAI 2019). The dataset holds 224,316 chest radiographs of 65,240 patients from Stanford
+  Hospital (October 2002 to July 2017), each study labelled for 14 observations as positive, negative
+  or uncertain by the CheXpert labeler, a rule-based tool that reads the report's Impression section.
+  The scored benchmark is the competition's test set: 500 studies from 500 patients outside the training
+  data, which eight board-certified radiologists annotated from the images. The majority vote of five
+  of them is the ground truth, and the other three are the comparison radiologists. A separate 200-study
+  validation set, labelled by three radiologists, ships with the data. Systems output one probability
+  per observation per study; the competition scores five of them (Atelectasis, Cardiomegaly, Consolidation,
+  Edema and Pleural Effusion) by AUROC, averaged over the five, and counts how many of the three radiologists'
+  operating points lie on or below each ROC curve, also averaged. The test set was hidden: teams submitted
+  executable code on CodaLab Worksheets, which ran it on test images they could not read, with at most
+  20 submissions allowed. The leaderboard holds 208 ranks, from the Stanford baseline (0.907, January
+  2019) to DeepAUC-v1 (0.930, August 2020). The competition closed in October 2022 and the test labels
+  were then released on GitHub, with the test images on the Stanford AIMI portal, so the score can now
+  be computed with the official script. The CheXpert labeler is a tool, not a benchmark, and CheXpert
+  Plus (2024) is a separately released dataset that adds the report text, DICOM images and demographics
+  to the same studies without a scoring protocol of its own.
+self_description:
+  source: src-arxiv-1901-07031-v1
+  quote: We release the dataset to the public as a standard benchmark to evaluate performance of
+    chest radiograph interpretation models.
+external_ids:
+  arxiv: '1901.07031'
+paper:
+  title: 'CheXpert: A Large Chest Radiograph Dataset with Uncertainty Labels and Expert Comparison'
+  arxiv: '1901.07031'
+  version_read: v1
+  source: src-arxiv-1901-07031-v1
+released: 2019-01-21
+released_note: The paper's arXiv date, its only version. The leaderboard's Stanford Baseline row is
+  dated 23 January 2019; the competition page's first commit is of 2019-01-14 (GitHub API, not a
+  Source).
+released_source: src-arxiv-1901-07031
+released_quote: '[Submitted on 21 Jan 2019]'
+release_venue: AAAI Conference on Artificial Intelligence (AAAI 2019)
+release_venue_source: src-arxiv-1901-07031
+release_venue_quote: 'Comments: Published in AAAI 2019'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/medical-imaging-diagnostic
+  secondary:
+    - vision/classification
+domain_basis:
+  reason: Systems detect clinical findings (Atelectasis, Cardiomegaly, Consolidation, Edema, Pleural
+    Effusion) in chest radiographs and are scored against the majority vote of five board-certified
+    radiologists, which the leaf's inclusion test takes whatever the metric (it names AUC). Each
+    study gets a probability per finding, a multi-label image classification, recorded as the vision
+    secondary as the medicine-health family's exclusion test directs.
+  source: src-arxiv-1901-07031-v1
+  quote: The majority vote of 5 radiologist annotations serves as a strong ground truth
+domain_considered_and_rejected:
+  - term: vision/medical-imaging-cv
+    reason: The claim is clinical, interpretation at the level of radiologists against a radiologist
+      reference standard on clinically selected tasks, not a vision method tested on medical images.
+      Many papers use CheXpert's images to test methods (fairness, federated learning, pretraining),
+      which is use of the dataset, not the benchmark's own claim.
+    source: src-stanfordmlgroup-chexpert-competition
+    quote: Will your model perform as well as radiologists in detecting different pathologies in
+      chest X-rays?
+  - term: medicine-health/radiology-report-generation
+    reason: The output is a probability per observation, and the reports are only where the training
+      labels come from. Report text was released later in CheXpert Plus, a separate dataset
+      (lineage), and report generation on it is scored elsewhere (ReXrank).
+  - term: medicine-health/diagnosis-triage
+    reason: The findings are read from images against an imaging reference standard, which the more
+      specific imaging leaf takes; no case history is presented, and the paper notes that neither
+      readers nor model saw one.
+    source: src-arxiv-1901-07031-v1
+    quote: neither the radiologists nor the model had access to patient history or previous
+      examinations
+  - term: vision/detection
+    reason: The model's attention maps are shown in the paper, but no localisation is scored, only a
+      probability per study.
+
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is one or more radiographs of a study, and the score measures which findings
+      were recovered from them.
+    source: src-arxiv-1901-07031-v1
+    quote: We train models that take as input a single-view chest radiograph and output the
+      probability of each of the 14 observations.
+capability_considered_and_rejected:
+  - term: calibration-uncertainty
+    reason: The scorer consumes a probability per finding, which the term's inclusion test reads
+      literally, but AUROC and the radiologist count depend only on the ranking of the
+      probabilities, so any order-preserving rescaling leaves both unchanged. The paper measured
+      calibration (scaled Brier score) for its own model only; no board column scores it. The
+      uncertainty labels are a training-data property, not a scored output.
+    source: src-arxiv-1901-07031-v1
+    quote: We also measure calibration of the model before and after applying postprocessing
+      calibration techniques
+  - term: distribution-shift-generalization
+    reason: The test studies are a random sample of patients from the same hospital and period as
+      the training data; no shifted site, scanner or population is scored.
+    source: src-arxiv-1901-07031-v1
+    quote: The test set consists of 500 studies from 500 patients randomly sampled from the 1000
+      studies in the report test set.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: The ranking number is AUROC per finding against the radiologists' binarised labels,
+    averaged over the five tasks, a general statistic of the score ranking that the term names. The
+    second column, the radiologists below the ROC curve, is read off the same curve at three fixed
+    operating points.
+  source: src-github-stanfordmlgroup-chexpert-evaluate-4f887a3
+  quote: auc = roc_auc_score(task_annotations, task_predictions)
+evaluation_method_considered_and_rejected:
+  - term: human-distribution-percentile
+    reason: The radiologist count compares the curve with three fixed radiologists' operating
+      points, hard-coded in the script. The comparators are fixed and few, not a measured population
+      distribution that places the system in it.
+    source: src-github-stanfordmlgroup-chexpert-evaluate-4f887a3
+    quote: '# Radiologist specificity/sensitivity scores.'
+  - term: composite
+    reason: Both columns come from one ROC analysis of the same predictions. The board's rank order
+      does not strictly follow the displayed AUC (review_checks), but no source read defines a
+      combined score.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: The entrants are chest radiograph classifiers trained on CheXpert's own images and labels,
+    DenseNet-style CNNs and their ensembles from the Stanford baseline on. Chest radiograph
+    interpretation is a task a clinical discipline defines, which task-specific-supervised-model's
+    exclusion test sends here.
+  source: src-arxiv-1901-07031-v1
+  quote: We experimented with several convolutional neural network architectures, specifically
+    ResNet152, DenseNet121, Inception-v4, and SEResNeXt101
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The entrants are task-trained CNNs, but the task, reading findings from chest
+      radiographs, is defined by radiology.
+as_used:
+  - protocol: Five-task mean AUROC on the 200-study validation set that ships with the data, not on
+      the 500-study test set; trained on the CheXpert training images with uncertain labels mapped
+      to positive (U-Ones). Nothing is submitted to the leaderboard, which is closed.
+    split: the official validation set (200 studies)
+    source: src-arxiv-2608-09774-v1
+    quote: Following standard evaluation protocols, we focus on the five competition tasks selected
+      for their clinical severity and high prevalence
+    note: C2A (arXiv 2608.09774, August 2026, IEEE MLSP 2026), a co-occurrence-aware class attention
+      head, reporting 0.895 mean AUROC. The validation set has been the usual reporting split
+      because the test set was hidden until 2022.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on CheXpert's competition tasks; a paper of August 2026 reports
+    mean AUROC on them (as_used), though on the validation set. The competition ended in October
+    2022 (activity), which records the end of the board, not of the instrument.
+  source: src-arxiv-2608-09774-v1
+  quote: On CheXpert, C2A achieves a superior 0.895 macro-mean AUROC
+activity: closed
+activity_basis:
+  reason: The page replaced its participation instructions with a closing notice in a commit of
+    2022-10-01 (history); no submission route remains.
+  source: src-stanfordmlgroup-chexpert-competition
+  quote: 'Update: the competition is now closed.'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: DeepAUC-v1 (ensemble), first on the leaderboard with mean AUROC 0.930
+    source: src-stanfordmlgroup-chexpert-competition
+    observed_on: 2026-11-04
+    quote: 1 Aug 31, 2020 DeepAUC-v1 ensemble https://arxiv.org/abs/2012.03173 0.930 2.8
+  - system: Stanford Baseline (ensemble), the paper's DenseNet121 ensemble
+    source: src-stanfordmlgroup-chexpert-competition
+    observed_on: 2026-11-04
+    quote: 98 Jan 23, 2019 Stanford Baseline (ensemble) Stanford University
+      https://arxiv.org/abs/1901.07031 0.907 1.8
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Eight board-certified radiologists annotated each test study from the
+  images as present, uncertain likely, uncertain unlikely or absent; the labels were binarised
+  (present and uncertain likely as positive) and the majority vote of five readers is the ground
+  truth. The labels were withheld until October 2022 and are now public (data.access_by_phase).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The test set's ground truth and the comparison radiologists' annotations are public, the
+    test images are on the Stanford AIMI portal behind a registration, and the official evaluation
+    script is public, so anyone registered can compute both numbers. The leaderboard itself takes no
+    entries.
+  source: src-github-chexpert-test-set-labels-readme-a03eb34
+  quote: The majority vote ground truth is given in groundtruth.csv.
+
+task:
+  exists: true
+  input:
+    - the frontal and lateral chest radiographs of one study (one or more views), one of the 500
+      test studies
+    - for training, the 224,316 radiographs with the labeler's 14 observations (positive, negative,
+      uncertain or blank) and the 200-study validation set
+  output: A CSV with one row per study and a probability for each of the five competition tasks; the
+    paper's models take each view separately and output the maximum probability across views.
+  scoring: For each of Atelectasis, Cardiomegaly, Consolidation, Edema and Pleural Effusion, AUROC
+    of the predictions against the five-radiologist majority over the 500 test studies, and the
+    number of the three comparison radiologists (0 to 3) whose operating point lies on or below the
+    ROC curve. The board shows the mean AUROC and the mean radiologist count over the five tasks.
+  metric_range:
+    - 0.0
+    - 1.0
+  source: src-github-stanfordmlgroup-chexpert-evaluate-4f887a3
+  quote: results_dict["Average_NumRadsUnderROC"] = np.mean(
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: gated-registration
+  access_note: The test set's labels sit in a public GitHub repository with no account needed, but
+    its images are on the Stanford AIMI shared-datasets portal, reached after registering and
+    accepting a research use agreement, so every official copy of the evaluation data needs an
+    account. The portal renders by script and was not entered; the terms it now shows were not read.
+    While the competition ran, the test images and labels stayed on CodaLab (access_by_phase).
+  access_basis:
+    reason: The evaluation labels are released (groundtruth.csv), and the images they belong to are
+      released behind the AIMI registration, which the inclusion test takes.
+    source: src-github-chexpert-test-set-labels-readme-a03eb34
+    quote: The actual images corresponding to the test set are now available here
+  access_by_phase:
+    during_edition: private-test-server, January 2019 to October 2022. The test images and labels
+      were not publicly readable; submitted code ran on them on CodaLab Worksheets.
+    during_edition_source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+    during_edition_quote: Teams submit their executable code on Codalab, which is then run on a test
+      set that is not publicly readable.
+    after_edition: gated-registration from October 2022. The labels and the three comparison
+      radiologists' annotations are on GitHub, and the images on the Stanford AIMI portal.
+    after_edition_source: src-stanfordmlgroup-chexpert-competition
+    after_edition_quote: The test set labels (and image links) are available on this GitHub
+      repository.
+  refresh: static
+  refresh_basis:
+    reason: One test set of 500 studies, one validation set of 200, and one evaluation script, last
+      changed in February 2019 before most entries; the data is v1.0. CheXpert Plus adds formats and
+      text to the studies without changing the competition's items or scoring.
+    source: src-stanfordmlgroup-chexpert-competition
+    quote: The test set consists of 500 studies from 500 unseen patients.
+  data_provenance:
+    - real-world-instrument
+    - expert-authored
+  data_provenance_note: Chest radiographs from routine inpatient and outpatient examinations at
+    Stanford Hospital (real-world-instrument). The test and validation labels are board-certified
+    radiologists' annotations of the images, made for the benchmark (expert-authored); the training
+    labels are the CheXpert labeler's output on the clinical reports. patient-clinical-record was
+    weighed for the reports, which are not part of the scored items in v1.0; the research use
+    agreement forbids re-identification.
+  data_provenance_source: src-arxiv-1901-07031-v1
+  data_provenance_quote: We retrospectively collected chest radiographic studies from Stanford
+    Hospital, performed between October 2002 and July 2017 in both inpatient and outpatient centers,
+    along with their associated radiology reports.
+  contamination_risk: medium
+  contamination_risk_note: Every leaderboard row was scored while the test set was hidden. Since
+    October 2022 the test labels and images are public, so tuning on them or training on them is a
+    plausible route for any result computed since, and the validation set, public since 2019, is
+    both a common model-selection set and the usual reporting split (as_used). No source read
+    evidences a route.
+  contamination_risk_source: src-github-chexpert-test-set-labels-readme-a03eb34
+  contamination_risk_quote: The majority vote ground truth is given in groundtruth.csv.
+  contamination_evidence: []
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_note: Three board-certified radiologists read the same 500 studies and were
+    scored against the same five-reader majority, and the board's second column counts how many of
+    them lie below each model's ROC curve. The top rows have 2.8 of 3 below the curve on average;
+    the paper's model beat all three radiologists on three tasks but not their majority vote. AUROC
+    itself is bounded at 1.
+  ceiling_anchor_type_source: src-arxiv-1901-07031-v1
+  ceiling_anchor_type_quote: The remaining 3 radiologist annotations were used to benchmark
+    radiologist performance.
+  dataset_licence: Stanford University School of Medicine CheXpert Dataset Research Use Agreement
+    (personal, non-commercial research use; no redistribution or derivative works)
+  dataset_licence_note: The agreement as the competition page printed it in September 2022. The
+    current AIMI page's License section is empty and the portal's terms were not read; the test set
+    labels repository states no licence.
+  dataset_licence_source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+  dataset_licence_quote: Permission is granted to view and use the CheXpert Dataset without charge
+    for personal, non-commercial research purposes only.
+  size:
+    - count: 500
+      unit: test studies, one per patient, labelled by five-radiologist majority
+      subset: test (the competition's scored set)
+      source: src-arxiv-1901-07031-v1
+      quote: The test set consists of 500 studies from 500 patients randomly sampled from the 1000
+        studies in the report test set.
+    - count: 200
+      unit: validation studies, one per patient, labelled by three-radiologist majority
+      subset: validation
+      source: src-arxiv-1901-07031-v1
+      quote: The validation set contains 200 studies from 200 patients randomly sampled from the
+        full dataset with no patient overlap with the report evaluation set.
+    - count: 224316
+      unit: chest radiographs of 65,240 patients, labelled for 14 observations by the CheXpert
+        labeler
+      subset: complete dataset
+      source: src-arxiv-1901-07031-v1
+      quote: We present CheXpert, a large dataset that contains 224,316 chest radiographs of 65,240
+        patients.
+    - count: 5
+      unit: competition tasks scored, of the 14 observations
+      subset: scoring
+      source: src-arxiv-1901-07031-v1
+      quote: We focus on the evaluation of 5 observations which we call the competition tasks,
+        selected based of clinical importance and prevalence in the validation set
+  submission_limit:
+    max_submissions: 20
+    period_days: 0
+    per: submitter, as the configuration's total; it also allows 5 per submission period, and states
+      neither the period nor the unit
+    source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Stanford ML Group (Stanford University), with the Stanford Center for Artificial
+    Intelligence in Medicine & Imaging (AIMI) distributing the data
+  maintainer_basis:
+    reason: The competition page is the Stanford ML Group's, on its GitHub Pages site, and the AIMI
+      dataset page names it as the canonical URL; the authors are from Stanford's departments of
+      computer science, medicine and radiology. The released test labels sit in the rajpurkarlab
+      GitHub organisation, and AIMI hosts the images.
+    source: src-aimi-stanford-chexpert
+    quote: Canonical URL http://stanfordmlgroup.github.io/competitions/chexpert/
+  maintainer_type: academic-lab
+  maintainer_type_note: A university research group holds the page, the leaderboard and the
+    evaluation script; the data is distributed by a Stanford research centre.
+  submission_process:
+    - sandboxed-rerun
+  submission_process_note: Teams uploaded executable code to CodaLab Worksheets; the leaderboard's
+    'mimic' step re-ran the submitted prediction run with the hidden test bundles in place of the
+    public ones, the official script scored its predictions.csv, and the scores were added to the
+    board. containerized-algorithm-submission was weighed; CodaLab runs each bundle in a Docker
+    image, but entrants handed over code and a command, not an image (review_checks).
+  submission_process_source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+  submission_process_quote: Once your model has been evaluated officially, your scores will be added
+    to the leaderboard.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-stanfordmlgroup-chexpert-competition
+      quote: 98 Jan 23, 2019 Stanford Baseline (ensemble) Stanford University
+        https://arxiv.org/abs/1901.07031 0.907 1.8
+    - flag: single-evaluator-private-test-set
+      source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+      quote: CheXpert uses a hidden test set for official evaluation of models.
+  independence_flags_note: The paper's own ensemble is ranked on the board as the Stanford Baseline,
+    and other rows list Stanford as institution. Every board score was produced by the maintainers'
+    CodaLab run on a test set only they held; since October 2022 anyone can recompute it, so the
+    second flag describes the leaderboard's numbers, not today's access. No sponsor or prize appears
+    on the pages read.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: With the test labels and images released and the evaluation script public, an
+      independent party can run a system on the 500 studies and score it end to end. The data's
+      research use agreement forbids redistribution, so each party must obtain the images itself.
+    source: src-github-chexpert-test-set-labels-readme-a03eb34
+    quote: Test set annotations from each of the individual radiologists, divided into the benchmark
+      radiologists, and the groundtruth.
+  reproducibility_blockers:
+    - licence-restriction
+  reproducibility_blockers_note: The images may not be redistributed or shared, so a reproduction
+    cannot ship them; it needs each party's own registration.
+  harness_availability: official-harness
+  harness: The competition's evaluate-v1.0.py, which the CodaLab leaderboard ran as evaluate.py on
+    the test labels and each submission's predictions
+  harness_source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+  harness_quote: '"command": "python evaluate.py test.csv predictions.csv",'
+  submission_channel:
+    source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+    quote: Teams submit their executable code on Codalab, which is then run on a test set that is
+      not publicly readable.
+  submission_channel_note: Closed in October 2022 (history); the CodaLab submission tutorial the
+    page linked renders by script and was not read.
+  code_licence: null
+  code_licence_note: The site repository holding the script reports no licence (GitHub API, read
+    2026-11-04). The CheXpert labeler's repository is MIT-licensed by its GitHub metadata, but the
+    labeler is not the scorer.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (subset_used): which split was scored, the hidden 500-study test set (every
+  # leaderboard row), the released test set after October 2022, or the 200-study validation set that most
+  # papers report on (as_used); and what the system was trained on, CheXpert's training images alone, how its
+  # uncertain labels were mapped (U-Ones, U-Zeros, U-MultiClass and so on), or outside chest X-ray data and
+  # pretraining.
+  material_extra:
+    - subset_used
+    - training_data_policy
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The board's AUC column is the unweighted mean of the five tasks' AUROCs, which the
+    evaluation script computes and the CodaLab configuration reads as the first score; the per-task
+    numbers were recorded but are not shown on the page.
+  source: src-github-stanfordmlgroup-chexpert-evaluate-4f887a3
+  quote: results_dict["Average_AUROC"] = np.mean(
+
+homepage: https://stanfordmlgroup.github.io/competitions/chexpert/
+repository: https://github.com/rajpurkarlab/cheXpert-test-set-labels
+repository_note: The released test set labels, the comparison radiologists' annotations, the
+  labelers' outputs and some leaderboard models' predictions. The evaluation script and the CodaLab
+  configuration are in the site repository (stanfordmlgroup/stanfordmlgroup.github.io,
+  competitions/chexpert/); the labeler is stanfordmlgroup/chexpert-labeler.
+dataset_url: https://aimi.stanford.edu/datasets/chexpert-chest-x-rays
+dataset_url_note: Stanford AIMI's dataset page, with a DataCite DOI for the dataset; its download
+  button leads to the registration-gated AIMI portal.
+dataset_url_source: src-aimi-stanford-chexpert
+dataset_url_quote: 'please reference the following DOI: https://doi.org/10.71718/y7pj-4v93'
+leaderboard_url: https://stanfordmlgroup.github.io/competitions/chexpert/
+
+subsets:
+  - id: chexpert#atelectasis
+    label: Atelectasis
+    scored_separately: true
+    evidence:
+      - source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+        quote: '"name": "atelectasis_auroc", "key": "/stdout:Atelectasis_AUROC"'
+    notes: AUROC and radiologists below the curve recorded per task by the CodaLab run; the page
+      shows only the five-task means.
+  - id: chexpert#cardiomegaly
+    label: Cardiomegaly
+    scored_separately: true
+    evidence:
+      - source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+        quote: '"name": "cardiomegaly_auroc", "key": "/stdout:Cardiomegaly_AUROC"'
+  - id: chexpert#consolidation
+    label: Consolidation
+    scored_separately: true
+    evidence:
+      - source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+        quote: '"name": "consolidation_auroc", "key": "/stdout:Consolidation_AUROC"'
+  - id: chexpert#edema
+    label: Edema
+    scored_separately: true
+    evidence:
+      - source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+        quote: '"name": "edema_auroc", "key": "/stdout:Edema_AUROC"'
+  - id: chexpert#pleural-effusion
+    label: Pleural Effusion
+    scored_separately: true
+    evidence:
+      - source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+        quote: '"name": "effusion_auroc", "key": "/stdout:Effusion_AUROC"'
+lineage:
+  role: root
+lineage_note: >
+  Two related resources are not linked as lineage, by 04 S4's rule. The CheXpert labeler
+  (stanfordmlgroup/chexpert-labeler) is a tool that produced the training labels, also used for
+  MIMIC-CXR, and has no scored task of its own: not a benchmark. CheXpert Plus (Chambon et al.,
+  2024, Stanford AIMI) re-releases the same studies, less 186 whose reports could not be recovered,
+  with the report text, DICOM images, demographics and new labels, under its own paper and DOI and a
+  different author team led from AIMI. It changes neither the competition's items nor its scoring,
+  so it is not a version, and it defines no test protocol or board of its own, so it is a separate
+  dataset rather than a variant; report generation on its validation set is scored by ReXrank.
+  Other work built on the test set, such as CheXternal, which the test labels README names, was not
+  read.
+history:
+  - date: 2022-10-01
+    event: channel-closed
+    field: execution.submission_channel
+    from: code submission on CodaLab Worksheets, run on the hidden test set
+    source: src-stanfordmlgroup-chexpert-competition
+    quote: 'Update: the competition is now closed.'
+    note: Dated by the site repository's commit b6517aa of 2022-10-01, 'Remove contact + competition
+      status update', which replaced the participation section with this notice (GitHub API commit
+      list, read but not a Source). The board also carries rows dated after it, to 2 November 2022.
+  - date: 2022-10-21
+    event: access-changed
+    field: data.access
+    from: private-test-server
+    to: gated-registration
+    source: src-github-api-chexpert-test-set-labels
+    quote: '"created_at":"2022-10-21T14:34:08Z"'
+    note: The day the test set labels repository was created and its README pointed to the test
+      images on the AIMI portal (src-github-chexpert-test-set-labels-readme-a03eb34).
+
+tags:
+  - chest-x-ray
+  - radiography
+  - multi-label-classification
+  - radiologist-comparison
+  - uncertainty-labels
+  - competition
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1901-07031-v1
+    - src-arxiv-1901-07031
+    - src-stanfordmlgroup-chexpert-competition
+    - src-github-stanfordmlgroup-chexpert-page-ec5c40a
+    - src-github-stanfordmlgroup-chexpert-evaluate-4f887a3
+    - src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+    - src-github-chexpert-test-set-labels-readme-a03eb34
+    - src-github-api-chexpert-test-set-labels
+    - src-aimi-stanford-chexpert
+    - src-arxiv-2405-19538-v2
+    - src-arxiv-2608-09774-v1
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, with windows clear of the brace-form address
+    under the title, and its abstract page; the live competition page and the same page at commit ec5c40a,
+    both withheld from archiving because leaderboard rows name individual submitters; the evaluation
+    script and CodaLab configuration at commit 4f887a3; the test set labels README at a03eb34 and the
+    repository's API record; Stanford AIMI's dataset page; CheXpert Plus's v2 PDF and C2A's v1 PDF (DOIs,
+    not archived). Read but not cited: the board's results.json (submitter user names), the page's pug
+    source, resolution-v1.0.py, the GitHub commit lists for the page's files, CheXpert Plus's abstract
+    page and C2A's. Not read: the AIMI download portal and the CodaLab worksheets (script-rendered; no
+    registration made).
+  confidence: medium
+  review_checks:
+    - check: data.access is gated-registration on the strength of the test images being on the AIMI
+        portal behind a login, which the notes of src-aimi-stanford-chexpert record but no quote
+        states for today; the registration step is quoted only from the September 2022 page. If the
+        portal now needs an approval, credentialed-dua would fit; if the labels alone counted,
+        fully-open.
+      field: data.access
+      source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+      quote: Once you register to download the CheXpert dataset, you will receive a link to the
+        download over email.
+    - check: The board's rank order does not strictly follow the displayed mean AUROC (rank 133 at
+        0.894 above rank 134 at 0.895). The page's data file has a score field that tracks mean
+        AUROC plus 0.001 times the radiologist count; no source read defines it, so
+        aggregation_policy records the mean AUROC only and composite is rejected.
+      field: aggregation_policy
+      source: src-stanfordmlgroup-chexpert-competition
+      quote: MM1 ensemble 0.894 1.6 134 May 07, 2021 MVD121 single model 0.895 1.2
+    - check: submission_process is sandboxed-rerun because entrants handed over CodaLab code bundles
+        and a command, which CodaLab ran on bundles they never saw. CodaLab runs each bundle in a
+        Docker image of the entrant's choosing, so containerized-algorithm-submission is arguable.
+      field: governance.submission_process
+      source: src-github-stanfordmlgroup-chexpert-codalab-4f887a3
+      quote: '"predict": { "mimic": ['
+    - check: lifecycle active rests on C2A, which reports the five competition tasks on the
+        validation set, not on the test set. Whether results against the released test set are still
+        produced was not checked; if the competition tasks on the validation set do not count as the
+        instrument, mature may fit better.
+      field: lifecycle
+    - check: ceiling_anchor_type is expert-average for the three comparison radiologists, scored as
+        operating points against the five-reader majority. The headline metric is AUROC, which an
+        operating point does not have, so theoretical-maximum with the radiologists under
+        ceiling_by_category is the alternative reading.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-1901-07031-v1
+      quote: We examine whether the radiologist operating points lie below the curves to determine
+        if the model is superior to the radiologists.
+    - check: CheXpert Plus is treated as a separate dataset, not a version or variant, because it
+        changes neither items nor scoring and has no test protocol of its own. Its authors overlap
+        with CheXpert's only in part and it is led from AIMI rather than the ML Group, but it calls
+        itself an enhanced version; a reviewer may prefer a lineage variant once it has an entry of
+        its own.
+      field: lineage
+      source: src-arxiv-2405-19538-v2
+      quote: Building upon the foundational CheXpert dataset introduced in 2019, which comprised
+        224,316 chest radiographs from 65,240 patients annotated for 14 observations
+    - check: The channel-closed date, 2022-10-01, comes from a commit date in the GitHub API, not
+        from a quoted Source; the board nonetheless lists rows dated 4 October to 2 November 2022.
+        Whether those were runs submitted before closing could not be read.
+      field: history
+      source: src-stanfordmlgroup-chexpert-competition
+      quote: Oct 21, 2022 KD-Prune10 (Single model) MPU 0.909
+    - check: maintainer is the Stanford ML Group, but the released test labels sit in the
+        rajpurkarlab organisation and the data on AIMI's portal, so maintenance is split across
+        three Stanford or Stanford-descended holders; whether the ML Group still maintains the page
+        beyond link updates (last commit 2026-04-24) was not established.
+      field: governance.maintainer
+    - check: The paper's limitations note that model and readers saw no patient history and that no
+        significance test compared model and radiologists; the board's radiologist count inherits
+        both.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-1901-07031-v1
+      quote: no statistical test was performed to assess whether the difference between the
+        performance of the model and the radiologists is statistically
+    - check: The dataset licence is the research use agreement printed on the 2022 page. The current
+        AIMI terms, and any change since (the Plus paper describes a Stanford University Dataset
+        Research Use Agreement), were not read, and the test labels repository carries no licence.
+      field: data.dataset_licence
+      source: src-arxiv-2405-19538-v2
+      quote: It is associated with a Stanford University Dataset Research Use Agreement, which
+        specifies that CHEXPERT PLUS may not be used for any commercial purposes and is only
+        available for research uses.
+  personal_data_excluded:
+    - source: src-arxiv-1901-07031-v1
+      what: The two first authors' brace-form e-mail address under the title.
+    - source: src-stanfordmlgroup-chexpert-competition
+      what: Leaderboard rows carrying individual submitters' names or user handles as model or
+        institution names.
+    - source: src-github-stanfordmlgroup-chexpert-page-ec5c40a
+      what: Leaderboard rows carrying individual submitters' names or user handles as model or
+        institution names.
