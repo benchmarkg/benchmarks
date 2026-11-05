@@ -1,0 +1,813 @@
+# data/benchmarks/medicine-health/agentclinic.yaml
+#
+# P1-S6-T04, medicine-health entry 16. Filled from AgentClinic's paper, arXiv 2405.07960 read as its v5 PDF
+# (2025-05-25, the latest arXiv version), its v4 PDF (2024-10-20, the first with the extended case sets) and its
+# v1 PDF (2024-05-13), and its abstract page; the version of record in npj Digital Medicine (2026), read as Europe
+# PMC's full-text XML; the README and agentclinic.py of SamuelSchmidgall/AgentClinic pinned to b6fbe22
+# (2026-10-03); the project site agentclinic.github.io; and the v3 PDF of Cura 1T (arXiv 2607.15314, October
+# 2026), a study that runs the benchmark. Every quote below is checked by the quote-substring validator against
+# those Sources' committed extracts.
+#
+# Identity: one benchmark with two data releases, the May 2024 sets (107 MedQA cases, then 15 NEJM cases) and the
+# August 2024 extended sets (215 and 120, with MIMIC-IV), modelled as editions; the five case sets are subsets.
+# MedQA (its own entry, medqa) supplies the questions AgentClinic-MedQA is rebuilt from; that entry is not edited.
+
+id: agentclinic
+name: AgentClinic
+tagline: A doctor agent interviews an LLM-simulated patient, orders tests and names a diagnosis that
+  a GPT-4 moderator checks.
+description: >
+  A benchmark of language models as doctors in a simulated consultation. Four language agents take part:
+  the doctor agent under test, a patient agent that knows the case's history and symptoms but not the
+  diagnosis, a measurement agent that returns examination and test results from the case file when the
+  doctor asks for them ("Request Test"), and a moderator. The doctor starts from a one-line objective,
+  has up to 20 turns (each question or test order uses one) and ends with "Diagnosis Ready" and a free-text
+  diagnosis. The moderator, GPT-4 in the paper, is shown the correct diagnosis and the doctor's statement
+  and answers Yes or No to whether they are the same disease; the score is diagnostic accuracy, reported
+  per case set. Cases are structured OSCE-style files that GPT-4 populated and the authors checked by
+  hand. AgentClinic-MedQA rebuilds USMLE questions from MedQA (107 cases in May 2024, 215 since August
+  2024); AgentClinic-NEJM is 120 NEJM image challenges, answered open-ended, with the image given at the
+  start or on request; AgentClinic-MIMIC-IV is 200 single-diagnosis patients from MIMIC-IV, behind PhysioNet
+  credentialing; AgentClinic-Spec is 260 MedMCQA case reports in nine specialties; AgentClinic-Lang is
+  749 MedQA-derived cases in seven languages. The paper also perturbs the doctor or patient with 23 instructed
+  cognitive and implicit biases, adds an agent toolbox (chain-of-thought, reflection, adaptive retrieval
+  over the web or textbooks, a notebook that persists across cases), has the patient agent rate its confidence,
+  compliance and willingness to return, and has three clinicians rate dialogue realism and empathy. Three
+  physicians sat the MedQA set under the same constraints. The repository releases the MedQA and NEJM
+  files under MIT; the MIMIC-IV, Spec and Lang sets are not in it. Published in npj Digital Medicine in
+  April 2026 under a new title.
+self_description:
+  source: src-arxiv-2405-07960-v5
+  quote: Here, we introduce AgentClinic, a multimodal agent benchmark for evaluating LLMs in
+    simulated clinical environments that include patient interactions, multimodal data collection
+    under incomplete information, and the usage of various tools
+external_ids:
+  arxiv: '2405.07960'
+paper:
+  title: 'AgentClinic: a multimodal agent benchmark to evaluate AI in simulated clinical environments'
+  arxiv: '2405.07960'
+  doi: 10.1038/s41746-026-02674-7
+  version_read: v5
+  source: src-arxiv-2405-07960-v5
+paper_note: The DOI is the npj Digital Medicine version of record (src-npj-2026-agentclinic),
+  retitled as a multimodal benchmark for tool-using clinical AI agents; arXiv v5 is the version read
+  in full, and the two agree on the case sets and the protocol.
+released: 2024-05-13
+released_note: The paper's first arXiv version and the README's first release note (05/13/2024). The
+  repository was created on 2024-05-10 and its case file committed on 2024-05-12 (GitHub API).
+released_source: src-arxiv-2405-07960
+released_quote: Submitted on 13 May 2024 (v1), last revised 25 May 2025 (this version, v5)
+release_venue: npj Digital Medicine
+release_venue_note: Volume 9, article 499, published 2026-04-27 (Crossref, read 2026-11-04), after
+  arXiv v1-v5 (2024-05-13 to 2025-05-25). The project site names the same venue.
+release_venue_source: src-npj-2026-agentclinic
+release_venue_quote: Received 2025 Apr 19; Accepted 2026 Apr 14
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/diagnosis-triage
+  secondary:
+    - medicine-health/clinical-dialogue
+domain_basis:
+  reason: What is scored is a diagnosis reached from a presented case, which is diagnosis-triage's
+    definition. The case is presented through a conversation rather than all at once, but the only
+    quantity the harness computes, and the headline of every table, is whether the moderator judges
+    the final diagnosis to match the case's. clinical-dialogue asks to be scored on the conduct of
+    the exchange; AgentClinic scores the exchange only through what it yields, plus two analyses
+    that do score conduct (the patient agent's confidence, compliance and consultation ratings, and
+    three clinicians' realism and empathy ratings of 20 dialogues), so it is secondary.
+  source: src-arxiv-2405-07960-v5
+  quote: Moderator agent compares conclusion to ground truth diagnosis at the end of the simulation.
+domain_considered_and_rejected:
+  - term: medicine-health/clinical-agent-workflows
+    reason: The doctor gathers information over many steps, but not against a health information
+      system. Tests are ordered by a one-line command that a language model answers from the case
+      file, where MedAgentBench's agent calls FHIR functions on an EHR server.
+    source: src-npj-2026-agentclinic
+    quote: requesting a laboratory test or imaging study is simplified to a single structured
+      command
+  - term: medicine-health/clinical-qa
+    reason: The cases come from QA sets, but the answer is an open diagnosis elicited through
+      interaction and judged by a model; the benchmark is built as the contrast with static QA.
+    source: src-arxiv-2405-07960-v5
+    quote: Overall, MedQA accuracy was only weakly predictive of accuracy on AgentClinic-MedQA.
+  - term: medicine-health/medical-imaging-diagnostic
+    reason: Only AgentClinic-NEJM (120 of the cases) carries images, and there the diagnosis comes
+      from dialogue and an image together. It is recorded as that subset's domain_override.
+  - term: medicine-health/clinical-task-suites
+    reason: The five case sets are one task (diagnose through an encounter) on cases from different
+      sources, not tasks across several subdomains.
+  - term: agents-tooluse/tool-api-calling
+    reason: The doctor's actions are text commands to role-played agents, not function or API calls
+      against a backend, and the scored quantity is a clinical diagnosis, which this family's
+      inclusion test sends to medicine-health.
+  - term: agents-tooluse/multi-agent-coordination
+    reason: Four agents take part, but only the doctor is under evaluation; the patient, measurement
+      and moderator agents are supplied identically to every entrant, which the term's distinction
+      treats as environment.
+    source: src-arxiv-2405-07960-v5
+    quote: The doctor agent serves as the model whose performance is being evaluated, and the other
+      three agents serve to provide this evaluation.
+capability:
+  - abductive-reasoning
+  - context-integration
+  - collaboration
+  - tool-use
+  - memory-retention
+capability_basis:
+  abductive-reasoning:
+    reason: The doctor must settle on the diagnosis that best explains the findings it has gathered,
+      with no options offered (NEJM's multiple-choice answers are withheld), and that choice is the
+      scored quantity; the term's own example names AgentClinic.
+    source: src-arxiv-2405-07960-v5
+    quote: They are then instructed to investigate the patients symptoms via dialogue and data
+      collection to arrive at a diagnosis.
+  context-integration:
+    reason: The findings that decide the diagnosis are supplied by the environment, the patient's
+      answers and the measurement agent's results, and the paper ties accuracy to how much of that
+      material the doctor extracted (67% coverage on average, 72% in correct cases against 63%).
+    source: src-arxiv-2405-07960-v5
+    quote: These results suggest that the ability to extract more complete information is a key
+      factor in accurate diagnoses in AgentClinic-MedQA.
+  collaboration:
+    reason: The diagnosis is reached jointly with a simulated patient who reveals symptoms only when
+      asked, and the patient model alone moves the doctor's accuracy (GPT-4 52%, GPT-3.5 48%,
+      Mixtral 46% with the same doctor); the npj version recommends a panel of patient agents for
+      that reason. The term's own example names AgentClinic (review_checks).
+    source: src-arxiv-2405-07960-v5
+    quote: the choice of patient agent affects accuracy, with GPT-4 (52%) patient agents leading to
+      higher diagnostic accuracy than GPT-3.5 (48%) or Mixtral (46%) agents
+  tool-use:
+    reason: The npj version presents AgentClinic as a benchmark for tool-using agents and its Agent
+      Toolbox as a differentiator; adaptive retrieval over web and textbook databases and the
+      notebook are executed and their output fed back, and accuracy is reported per tool. In the
+      base protocol the "tool" is the test order the measurement agent answers (review_checks).
+    source: src-npj-2026-agentclinic
+    quote: We introduce and evaluate a comprehensive Agent Toolbox to demonstrate that the ability
+      to leverage external capabilities is a critical differentiator among agents.
+  memory-retention:
+    reason: Within an episode, findings gathered over up to 20 turns (40 lines of dialogue) must
+      still be in use at the diagnosis; across episodes, the toolbox's notebook carries notes from
+      case to case, the episode boundary the term names, and it moves Llama-3 by up to 92%. The
+      term's own example names AgentClinic; the cross-case claim holds only for the notebook
+      condition (review_checks).
+    source: src-arxiv-2405-07960-v5
+    quote: Strikingly, Llama-3 shows up to 92% relative improvements with the notebook tool that
+      allows for writing and editing notes that persist across cases.
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: Medical knowledge is needed to interpret findings, but the findings that decide the case
+      are supplied through the patient and measurement agents; the term's exclusion sends knowledge
+      needed on the way to a different scored outcome elsewhere.
+  - term: search-exploration
+    reason: The doctor has a budget of 20 questions and test orders, and coverage of the case's
+      facts is measured, but only in one analysis; the score is the final diagnosis, not how the
+      case was explored.
+    source: src-arxiv-2405-07960-v5
+    quote: When test results are requested, this also is counted toward the number of questions
+      remaining.
+  - term: planning
+    reason: No property of the question and test sequence is scored, only the diagnosis it led to.
+  - term: communication
+    reason: The patient agent's ratings of confidence, compliance and willingness to return depend
+      on how the doctor came across to it, which is the term's case, but they are an analysis of the
+      bias conditions with no reliability check, not the benchmark's score.
+    source: src-npj-2026-agentclinic
+    quote: No additional inter-run reliability analysis was performed for these scalar ratings.
+  - term: adversarial-robustness
+    reason: The 23 bias prompts are a fixed catalogue drawn from the clinical literature, not inputs
+      an attacker chose to make the doctor fail. Robustness to them has no term
+      (taxonomy/_failures).
+    source: src-arxiv-2405-07960-v5
+    quote: We instructed these agents to exhibit 23 different biases, with either the doctor or
+      patient presenting bias.
+  - term: distribution-shift-generalization
+    reason: Under the bias conditions the case and its answer are unchanged and only an instructed
+      behaviour moves; AgentClinic-Lang changes the language of the same cases, but no system is
+      fitted to a source distribution the score is measured away from.
+  - term: perception
+    reason: Images appear only in AgentClinic-NEJM, recorded as that subset's capability_override.
+  - term: long-horizon-execution
+    reason: At most 20 doctor turns, and a poor question can be followed by better ones; nothing
+      makes full success unattainable after an intermediate error.
+  - term: reliability-consistency
+    reason: Repeated runs are averaged into a mean with a confidence interval; agreement across runs
+      is not scored.
+    source: src-arxiv-2405-07960-v5
+    quote: The 95% confidence intervals were calculated based on the standard error of the mean
+      accuracy across multiple runs for each model.
+
+evaluation_method:
+  - model-graded-judge
+evaluation_method_basis:
+  reason: The verdict on each case comes from a prompted judge model, the moderator, which is given
+    the case's correct diagnosis and the doctor's diagnosis statement and answers Yes or No to
+    whether they are the same disease; accuracy is the share of Yes. The paper names GPT-4
+    (gpt-4-0613) as the moderator; the harness's default "gpt4" calls gpt-4-turbo-preview
+    (review_checks).
+  source: src-arxiv-2405-07960-v5
+  quote: You are responsible for determining if the corrent diagnosis and the doctor diagnosis are
+    the same disease. Please respond only with Yes or No.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Each case has a stored reference diagnosis, but a match is decided by the moderator's
+      reading of a free-text statement (abbreviations, synonyms), not by string equality.
+  - term: human-expert-eval
+    reason: Three clinicians rated 20 dialogues for realism and empathy, an analysis of the
+      simulation; no reported score comes from them.
+    source: src-arxiv-2405-07960-v5
+    quote: who rated dialogues from 20 agents on AgentClinic-MedQA from 1-10 across four axes
+  - term: simulation-rollout
+    reason: The episode runs in a simulated clinic, but the simulation is language agents rather
+      than a physical or game environment driven by a policy, and the score is a judged final
+      answer.
+  - term: environment-state-check
+    reason: Nothing inspects what the doctor changed; only its final diagnosis is graded.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - human-expert
+designed_for_subjects_basis:
+  reason: Every doctor model runs inside the benchmark's own loop, prompts, command formats and turn
+    limit, with the patient, measurement and moderator agents held fixed, so only the doctor model
+    varies; the toolbox's tools are the benchmark's own, offered identically. Three physicians sat
+    AgentClinic-MedQA under the same instructions and constraints (54% ± 28.5), and the harness has
+    a human-doctor mode, which is human-expert.
+  source: src-arxiv-2405-07960-v5
+  quote: We also evaluate human physician performance collected from three physicians, provided the
+    same instructions and constraints as the LLMs.
+designed_for_subjects_considered_and_rejected:
+  - term: multi-agent-system
+    reason: An appendix runs two multi-agent frameworks (Multi-Agent Debate, MedAgents) as the
+      doctor, but the benchmark is built around one doctor agent, and its other agents are supplied
+      identically to every entrant, which the term's exclusion treats as environment.
+    source: src-arxiv-2405-07960-v5
+    quote: To explore the role of multi-agent collaboration in clinical diagnosis
+  - term: domain-specialist-model
+    reason: Medical models (OpenBioLLM-70B, Meditron-70B, MedLlama3-8B, PMC-Llama) are among the
+      entrants, but the benchmark is not built around them and general models are the main subjects.
+  - term: retrieval-augmented-system
+    reason: Adaptive retrieval is one of the benchmark's own toolbox conditions, applied identically
+      to the doctor models, which is model-in-benchmark-harness.
+observed_subjects:
+  values:
+    - agent-scaffold
+  basis: Cura 1T (October 2026) replaces the free-text control protocol with its own tool-native
+    harness (order_test and submit_diagnosis tools) for every model it reports, so its numbers are
+    of a model inside an entrant-chosen loop.
+  source: src-arxiv-2607-15314-v3
+as_used:
+  - protocol: A tool-native harness in place of the original free-text commands, with an order_test
+      tool for findings and a submit_diagnosis tool to end the encounter, NEJM images attached in
+      the opening turn, and the original moderator grading the diagnosis; pass@1 at temperature 1.0.
+    split: the four released sets (MedQA, MedQA-Ext, NEJM, NEJM-Ext), per subset and overall
+    source: src-arxiv-2607-15314-v3
+    quote: We replace the original free-text control protocol with two native tools.
+    note: Cura 1T (arXiv 2607.15314, v3, October 2026). It also used AgentClinic scores to decide
+      which training rounds to keep, so its AgentClinic numbers are development measurements as well
+      as results. The patient and moderator models are not named.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. Cura 1T (July to October 2026) reports AgentClinic per
+    subset beside MedAgentBench and HealthBench, and arXiv lists further 2026 studies that evaluate
+    on it (TrustMed-RL, ResidencyRL; abstracts only, not cited). The maintainer added a case to the
+    extended MedQA file on 2026-10-03 (GitHub API).
+  source: src-arxiv-2607-15314-v3
+  quote: Cura 1T scores highest on MedAgentBench, HealthBench Professional, HealthBench Hard,
+    MedXpertQA text, and AgentClinic
+activity: no-submission-channel
+activity_basis:
+  reason: The README is a run guide whose script prints each case's verdict and the running
+    accuracy; there is no leaderboard, results page or submission route on the repository or the
+    project site.
+  source: src-github-agentclinic-readme
+  quote: Just change modify the following parameters in the CLI
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: o1-preview
+    source: src-arxiv-2405-07960-v5
+    observed_on: 2026-11-04
+    quote: We find that o1-preview dramatically outperforms all models with an accuracy of 80.6 ±
+      5.6.
+    note: On AgentClinic-MedQA, in an appendix; Claude 3.5 Sonnet (62.1%) leads the main comparison.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each case file's correct diagnosis, shown only to the moderator. For MedQA
+  and MedMCQA it is the exam's keyed answer, for NEJM the pathology-confirmed diagnosis of the
+  published challenge, and for MIMIC-IV the patient's single recorded diagnosis. The released files
+  are public, so the labels are withheld from the doctor agent, not from the entrant.
+ground_truth_source_source: src-npj-2026-agentclinic
+ground_truth_source_quote: compared the output to the pathology-confirmed ground truth diagnosis
+  provided in the original NEJM case
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The MedQA and NEJM case files, the prompts and the harness are public under MIT, and the
+    patient, measurement and moderator agents are API models any entrant can call; the README gives
+    the command. The MIMIC-IV set needs PhysioNet credentialing, and the Spec and Lang sets were not
+    found in the repository.
+  source: src-github-agentclinic-readme
+  quote: python3 agentclinic.py --openai_api_key "YOUR_OPENAIAPI_KEY" --inf_type "llm"
+
+task:
+  exists: true
+  input:
+    - a one-line objective for the doctor (the presenting complaint), with the case's history and
+      symptoms held by a patient agent and its examination and test results by a measurement agent
+    - for AgentClinic-NEJM, a clinical image, given at the start or returned on request
+  output: Up to 20 turns of questions to the patient or "Request Test" orders, ending with
+    "Diagnosis Ready" and a free-text diagnosis.
+  scoring: The moderator (GPT-4 in the paper) answers whether the doctor's diagnosis and the case's
+    correct diagnosis are the same disease; accuracy is the share of cases judged correct, reported
+    per case set with a confidence interval over runs. Running out of turns without a diagnosis
+    counts as wrong.
+  reference_solution: false
+  source: src-arxiv-2405-07960-v5
+  quote: The doctor agent is allowed N=20 patient and measurement interactions before a diagnosis
+    must be made.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The repository holds the MedQA (107), MedQA-Ext (215) and NEJM (15), NEJM-Ext (120)
+    case files. The NEJM files link each image on NEJM's content server rather than copying it. The
+    MIMIC-IV set (200) needs PhysioNet credentialed access; its file was committed and removed
+    within minutes on 2024-08-17 (GitHub API), and the npj paper says it is available on request
+    after PhysioNet training. The Spec (260) and Lang (749) sets were not found in the repository.
+  access_basis:
+    reason: The headline MedQA and NEJM sets are public files in the repository, released under MIT,
+      with no account or agreement; the credentialed MIMIC-IV set is the one gated subset.
+    source: src-npj-2026-agentclinic
+    quote: MIMIC-IV based datasets can be requested by the authors upon completion of PhysioNet
+      training
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Two dated releases, each with its own labelled files that the harness selects by name
+      (MedQA and NEJM; MedQA_Ext and NEJM_Ext), announced in the README's release notes; the older
+      files are still shipped. One case was added to the extended MedQA file on 2026-10-03 (GitHub
+      API).
+    source: src-github-agentclinic-readme
+    quote: More AgentClinic-MedQA cases [107] → [215]
+  data_provenance:
+    - exam-derived
+    - inherited-from-constituents
+    - model-generated
+  data_provenance_note: The cases are rebuilt from published datasets -- USMLE questions from MedQA
+    (its own entry, medqa), case reports from MedMCQA, NEJM image challenges and MIMIC-IV records --
+    into structured OSCE files that GPT-4 populated and the authors validated by hand; the Lang
+    cases were translated by GPT-4 and corrected by native speakers without medical training.
+    patient-clinical-record was not tagged, because the MIMIC-IV records are deidentified and that
+    set is not distributed (review_checks).
+  data_provenance_source: src-arxiv-2405-07960-v5
+  data_provenance_quote: We initially use an LLM (GPT-4) to populate the structured JSON, and then
+    manually validate each of the case scenarios.
+  contamination_risk: medium
+  contamination_risk_note: MedQA's questions and answers have been public since 2020 and the
+    AgentClinic case files since 2024, and the paper names leakage of MedQA into proprietary models'
+    training as a limitation; the npj version argues the interactive format reduces its effect. No
+    source read here shows training on AgentClinic's cases. Cura 1T steered its training by
+    AgentClinic scores, which is selection on the benchmark rather than training on it.
+  contamination_risk_source: src-arxiv-2405-07960-v5
+  contamination_risk_quote: potentially giving them an unfair advantage due to data leakage
+  contamination_evidence: []
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_basis:
+    reason: Three physicians diagnosed AgentClinic-MedQA cases under the doctor agent's instructions
+      and constraints, and the paper sets their mean beside the models'. Claude 3.5 Sonnet (62.1%)
+      and o1-preview (80.6%) exceed it; the npj version warns the sample is three clinicians. It
+      anchors the MedQA set only.
+    source: src-arxiv-2405-07960-v5
+    quote: Human Physicians 54 ± 28.5
+  dataset_licence: MIT
+  dataset_licence_note: The npj paper's data availability statement; the repository's LICENSE.txt is
+    MIT (GitHub API). The NEJM images are linked from NEJM's site, not redistributed, and
+    MIMIC-IV-derived cases fall under PhysioNet's credentialed-access terms, not MIT.
+  dataset_licence_source: src-npj-2026-agentclinic
+  dataset_licence_quote: The data from the AgentClinic benchmark is open under an MIT license.
+  size:
+    - count: 215
+      unit: cases (USMLE questions from MedQA, rebuilt as OSCE files)
+      subset: AgentClinic-MedQA (extended, since 2024-08)
+      source: src-arxiv-2405-07960-v5
+      quote: We design 120 multimodal language agents which require an understanding of both
+        language and images and 215 language agents based on cases from the USMLE.
+    - count: 120
+      unit: cases with images (NEJM image challenges)
+      subset: AgentClinic-NEJM (extended, since 2024-08)
+      source: src-arxiv-2405-07960-v5
+      quote: We randomly sample 120 challenges from a sample of 932 total cases for
+        AgentClinic-NEJM.
+    - count: 200
+      unit: patients with a single diagnosis
+      subset: AgentClinic-MIMIC-IV
+      source: src-arxiv-2405-07960-v5
+      quote: we select the first 200 patients out of a total
+    - count: 260
+      unit: case reports in nine specialties (MedMCQA)
+      subset: AgentClinic-Spec
+      source: src-arxiv-2405-07960-v5
+      quote: We also introduce 260 patient cases from 9 medical specialties and 749 patient cases
+        from 7 multilingual environments.
+    - count: 749
+      unit: cases in seven languages
+      subset: AgentClinic-Lang
+      source: src-arxiv-2405-07960-v5
+      quote: We also introduce 260 patient cases from 9 medical specialties and 749 patient cases
+        from 7 multilingual environments.
+    - count: 107
+      unit: cases
+      subset: AgentClinic-MedQA (first release, 2024-05)
+      source: src-arxiv-2405-07960-v1
+      quote: For AgentClinic-MedQA, we first select from a random sample of 107 questions from the
+        MedQA dataset
+    - count: 15
+      unit: cases with images
+      subset: AgentClinic-NEJM (first release)
+      source: src-arxiv-2405-07960-v1
+      quote: For AgentClinic-NEJM we select a curated sample of 15 questions from NEJM case
+        challenges
+  languages:
+    - English
+    - Chinese
+    - Hindi
+    - Korean
+    - Spanish
+    - French
+    - Persian
+  languages_note: English for every released set; the other six only in AgentClinic-Lang, which is
+    not in the repository.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The AgentClinic authors (Johns Hopkins, Stanford, ETH Zurich), on the first author's
+    personal GitHub account
+  maintainer_basis:
+    reason: The tasks, code and README sit in SamuelSchmidgall/AgentClinic, a personal account,
+      which the npj paper names as the home of the data and code; no institution is stated as
+      holding them. The project site is a separate GitHub Pages site (agentclinic.github.io).
+    source: src-npj-2026-agentclinic
+    quote: All code, prompts, and evaluation scripts are available under an MIT license
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered, since the authors are at Johns Hopkins,
+    Stanford and ETH Zurich, but the term's exclusion sends a benchmark held in one person's own
+    account, with no institution stated as holder, to individual.
+  submission_process:
+    - literature-only
+  submission_process_note: No board or results page of the maintainers'. Beyond the paper's
+    baselines, results appear in others' papers (Cura 1T, 2026; an adaptive-reasoning agent paper,
+    2024; further 2026 studies on arXiv).
+  submission_process_source: src-github-agentclinic-readme
+  submission_process_quote: Just change modify the following parameters in the CLI
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2405-07960-v5
+      quote: Otherwise, for the patient, measurement, and moderator agent we use GPT-4.
+  independence_flags_note: The moderator that grades every case is OpenAI's GPT-4, which is also one
+    of the evaluated doctor models, beside GPT-4o and GPT-3.5; the patient and measurement agents
+    are GPT-4 as well, and the paper notes models may favour their own text. The maintainers rank no
+    system of their own. The npj version declares no competing interests and names only an NSF
+    graduate fellowship grant; no API credits or industry support are stated.
+  independence_assessed: true
+  funding:
+    source: src-npj-2026-agentclinic
+    quote: This material is based upon work supported by the National Science Foundation under Grant
+      No. DGE 2139757.
+  known_limitation:
+    source: src-npj-2026-agentclinic
+    quote: the sensitivity of our benchmark results to variations in the moderator agent
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: Every case calls the patient, measurement and moderator models (GPT-4 by
+    default) through OpenAI's API, up to 20 doctor turns per case, besides the doctor model; open
+    doctor models can run through Replicate or locally through Hugging Face. The paper left
+    o1-preview out of most sets because of its inference cost.
+  compute_tier_source: src-github-agentclinic-readme
+  compute_tier_quote: parser.add_argument('--moderator_llm', type=str, default='gpt4',
+    choices=['gpt4'])
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Automatable end to end, but every score depends on hosted GPT-4
+    snapshots playing three of the four roles, and the harness's "gpt4" (gpt-4-turbo-preview) is not
+    the gpt-4-0613 the paper names. No blocker term covers a hosted simulator or judge
+    (taxonomy/execution.yaml defers hosted-judge-dependency). The MIMIC-IV set needs credentialing,
+    and the Spec and Lang sets are not released.
+  reproducibility_tier_source: src-github-agentclinic-script
+  reproducibility_tier_quote: model="gpt-4-turbo-preview",
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: agentclinic.py (--agent_dataset MedQA, MedQA_Ext, NEJM, NEJM_Ext or MIMICIV;
+    --doctor_bias and --patient_bias; --total_inferences 20)
+  harness_note: The default case set is MedQA, the 107-case first release, not the 215 cases the
+    paper reports; the extended sets need agent_dataset=MedQA_Ext or NEJM_Ext. The toolbox
+    (retrieval, notebook, reflection) is not among the README's options.
+  harness_source: src-github-agentclinic-readme
+  harness_quote: The extended MedQA and NEJM datasets are available through setting the keyword
+    `agent_dataset=NEJM_Ext` and `agent_dataset=MedQA_Ext`
+  harness_gotcha:
+    source: src-github-agentclinic-script
+    quote: 'if dataset == "NEJM":'
+  harness_gotcha_note: Images are passed to the doctor only when the case set is named "NEJM", so a
+    run on NEJM_Ext, the 120 cases the paper reports, sends no images; the MIMICIV loader reads
+    agentclinic_mimiciv.jsonl, which is not in the repository.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for SamuelSchmidgall/AgentClinic (LICENSE.txt, added
+    2024-06-04) also reports MIT, read 2026-11-04.
+  code_licence_source: src-npj-2026-agentclinic
+  code_licence_quote: All code, prompts, and evaluation scripts are available under an MIT license
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the resolved profile: the case set and release (MedQA's 107 or 215, NEJM's 15 or 120, with
+  # images at the start or on request), the harness (the original free-text commands or a tool-native port
+  # like Cura 1T's), the moderator's model and version, the patient agent's model (which alone moves accuracy
+  # by several points) and the turn limit (accuracy falls from 52% to 25% at 10 turns). The measurement agent's
+  # model, the bias condition and the toolbox tool used have no condition field; they go in a claim's notes.
+  material_extra:
+    - subset_used
+    - harness
+    - judge_model
+    - judge_model_version
+    - user_simulator
+    - user_simulator_version
+    - max_steps
+    - tools_allowed
+
+aggregation_policy: none-by-design
+aggregation_policy_note: The paper reports accuracy per case set and never combines them; Cura 1T's
+  "overall" pass@1 over four sets is its own.
+aggregation_policy_basis:
+  reason: Every result is given per case set (MedQA, MIMIC-IV, NEJM, Spec by specialty, Lang by
+    language, toolbox by tool), in separate figures and tables.
+  source: src-arxiv-2405-07960-v5
+  quote: Reducing the number of interactions from N=20 to N=10 significantly decreases accuracy from
+    52% to 25%
+headline_metric: null
+
+homepage: https://agentclinic.github.io/
+repository: https://github.com/SamuelSchmidgall/AgentClinic
+dataset_url: https://github.com/SamuelSchmidgall/AgentClinic
+leaderboard_url: null
+
+versions:
+  - version: 2024-05
+    label: The first release (arXiv v1-v3; agentclinic_medqa.jsonl, then agentclinic_nejm.jsonl)
+    version_kind: edition
+    released: 2024-05-13
+    items: 122
+    changes: AgentClinic-MedQA's 107 cases with the paper (May 2024), and AgentClinic-NEJM's 15
+      multimodal cases committed on 2024-06-28 with vision-model support (GitHub API); 23 bias
+      options. arXiv v2 and v3 (22 and 30 May 2024) revised the paper only.
+    breaking: true
+    superseded_by: 2024-08
+    frozen: true
+    sources:
+      - src-arxiv-2405-07960
+      - src-arxiv-2405-07960-v1
+      - src-github-agentclinic-readme
+  - version: 2024-08
+    label: The extended release (arXiv v4-v5, npj 2026; agentclinic_medqa_extended.jsonl and
+      agentclinic_nejm_extended.jsonl)
+    version_kind: edition
+    released: 2024-08-17
+    changes: MedQA grew from 107 to 215 cases (the 107 kept, unchanged) and NEJM from 15 to 120, and
+      AgentClinic-MIMIC-IV (200, credentialed) was added (README, 08/17/2024). arXiv v4 (2024-10-20)
+      first reports these with AgentClinic-Spec (260) and AgentClinic-Lang (749), which were not
+      released; v5 (2025-05-25) and the npj version (2026-04-27) keep the same sets. The extended
+      MedQA file held 214 cases until 2026-10-03, when a 215th was added (GitHub API). The first
+      release's files are still shipped and remain the harness default.
+    breaking: true
+    supersedes_version: 2024-05
+    frozen: false
+    sources:
+      - src-github-agentclinic-readme
+      - src-arxiv-2405-07960-v4
+      - src-arxiv-2405-07960-v5
+      - src-npj-2026-agentclinic
+
+subsets:
+  - id: agentclinic#medqa
+    label: AgentClinic-MedQA
+    items: 215
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2405-07960-v5
+        quote: We design 120 multimodal language agents which require an understanding of both
+          language and images and 215 language agents based on cases from the USMLE.
+      - source: src-github-agentclinic-readme
+        quote: More AgentClinic-MedQA cases [107] → [215]
+    notes: USMLE questions from MedQA (its own entry, medqa) rebuilt as dialogue cases; the main
+      set, on which the models, the physicians, the bias conditions, the toolbox and the turn limit
+      are compared. The first release's 107 cases (agentclinic_medqa.jsonl) are all inside the
+      extended file (agentclinic_medqa_extended.jsonl), which held 214 cases until one was added on
+      2026-10-03 (compared item by item, GitHub API).
+  - id: agentclinic#nejm
+    label: AgentClinic-NEJM
+    items: 120
+    scored_separately: true
+    domain_override:
+      primary: medicine-health/diagnosis-triage
+      secondary:
+        - medicine-health/medical-imaging-diagnostic
+        - medicine-health/clinical-dialogue
+    capability_override:
+      - abductive-reasoning
+      - context-integration
+      - collaboration
+      - tool-use
+      - memory-retention
+      - perception
+    evidence:
+      - source: src-arxiv-2405-07960-v5
+        quote: We randomly sample 120 challenges from a sample of 932 total cases for
+          AgentClinic-NEJM.
+      - source: src-npj-2026-agentclinic
+        quote: 'The mechanism for receiving image input in AgentClinic-NEJM is supported in two ways:
+          provided initially to the doctor agent upon initialization and as feedback from the instrument
+          agent upon request.'
+      - source: src-npj-2026-agentclinic
+        quote: we chose to not provide these options to the doctor agent and instead keep the
+          problems open-ended
+    notes: NEJM image challenges answered open-ended, scored in two conditions (image at the start,
+      or only when the doctor requests it). The first release had 15 (agentclinic_nejm.jsonl, June
+      2024); their images reappear among the 120 (agentclinic_nejm_extended.jsonl), though no record
+      is identical. Images are linked from NEJM's content server.
+  - id: agentclinic#mimic-iv
+    label: AgentClinic-MIMIC-IV
+    items: 200
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2405-07960-v5
+        quote: we select the first 200 patients out of a total
+      - source: src-github-agentclinic-readme
+        quote: based on real clinical cases from MIMIC-IV (requires approval from
+          https://physionet.org/content/mimiciv/2.2/)
+    notes: The first 200 MIMIC-IV patients with a single diagnosis, with their lab and microbiology
+      events, so test orders return fuller results than in the MedQA set. Behind PhysioNet
+      credentialing and not in the repository.
+  - id: agentclinic#spec
+    label: AgentClinic-Spec
+    items: 260
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2405-07960-v5
+        quote: Specialist cases use case report questions from the MedMCQA dataset
+      - source: src-arxiv-2405-07960-v5
+        quote: We also introduce 260 patient cases from 9 medical specialties and 749 patient cases
+          from 7 multilingual environments.
+    notes: MedMCQA case reports in nine patient-facing specialties, reported per specialty. First
+      described in arXiv v4; not found in the repository.
+  - id: agentclinic#lang
+    label: AgentClinic-Lang
+    items: 749
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2405-07960-v5
+        quote: Multilingual patient cases are converted from AgentClinic-MedQA to the the target
+          language using GPT-4 and then manually corrected by native speakers.
+      - source: src-arxiv-2405-07960-v4
+        quote: We also introduce 260 patient cases from 9 medical specialties and 749 patient cases
+          from 7 multilingual environments.
+    notes: AgentClinic-MedQA cases in English, Chinese, Hindi, Korean, Spanish, French and Persian,
+      reported per language. 749 is 107 times 7, which suggests the first release's 107 cases in
+      seven languages; no source says so (review_checks). First described in arXiv v4; not found in
+      the repository.
+
+lineage:
+  role: root
+
+tags:
+  - clinical-simulation
+  - simulated-patient
+  - diagnosis
+  - llm-judge
+  - multimodal
+  - bias
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2405-07960-v5
+    - src-arxiv-2405-07960-v4
+    - src-arxiv-2405-07960-v1
+    - src-arxiv-2405-07960
+    - src-npj-2026-agentclinic
+    - src-github-agentclinic-readme
+    - src-github-agentclinic-script
+    - src-agentclinic-site
+    - src-arxiv-2607-15314-v3
+  sources_note: >
+    The paper's v5, v4 and v1 PDFs (DOIs, not archived) read as text, with windows that keep the contact
+    line and the example case study out; the abstract page for the version dates; the npj version of record
+    (a DOI) as Europe PMC's XML; the README and agentclinic.py pinned to b6fbe22; the project site; and
+    Cura 1T's v3 PDF (a DOI) as evidence of current use. Also read, not cited: the four released case
+    files and the repository's commit list (GitHub API), Crossref's and Europe PMC's records of the npj
+    paper, and arXiv abstracts of 2026 studies that evaluate on AgentClinic.
+  confidence: medium
+  review_checks:
+    - check: Primary is diagnosis-triage, with clinical-dialogue secondary. The case is presented
+        through a multi-turn conversation, and the paper presents patient-perception and clinician
+        realism ratings that do score conduct, but the only quantity the harness computes and every
+        headline table reports is whether the moderator accepts the diagnosis. If ADR-0021 widens
+        clinical-dialogue to multi-turn encounters scored on their outcome, the two could swap.
+      field: domain
+      source: src-arxiv-2405-07960-v5
+      quote: Moderator agent compares conclusion to ground truth diagnosis at the end of the
+        simulation.
+    - check: The moderator's model. The paper names GPT-4 (gpt-4-0613) for the patient, measurement
+        and moderator agents, but the harness maps "gpt4" to gpt-4-turbo-preview (gpt-4-turbo when
+        an image is sent), so a rerun with the shipped code does not use the paper's judge. No
+        reference_conditions is written, so the reference-grader rule cannot see either.
+      field: reference_conditions
+      source: src-github-agentclinic-script
+      quote: model="gpt-4-turbo-preview",
+    - check: The harness sends images only when the case set is named NEJM, the 15-case first
+        release; NEJM_Ext, the 120 cases the paper reports, runs text-only in the shipped code, and
+        Cura 1T rewrote the harness to attach them. Whether the paper's NEJM numbers came from other
+        code is not stated.
+      field: execution.harness
+      source: src-github-agentclinic-script
+      quote: 'if dataset == "NEJM":'
+    - check: collaboration, memory-retention and tool-use follow the taxonomy's own AgentClinic
+        examples and the npj title, but each is stretched. The patient agent has no objective of its
+        own beyond answering when asked (collaboration's exclusion), the cross-case retention is the
+        notebook condition only, and in the base protocol the "tools" are test orders answered by a
+        language model. A reviewer may prefer to keep only abductive-reasoning and
+        context-integration.
+      field: capability
+      source: src-npj-2026-agentclinic
+      quote: We recognize that the tool-use commands in AgentClinic are abstractions of real-world
+        clinical workflows.
+    - check: Robustness to the 23 instructed biases is central to the paper but has no capability
+        term; logged as a missing term (taxonomy/_failures, perturbation-robustness proposed). The
+        project site says 24 biases, the papers 23, and the README offers 12 doctor and 11 patient
+        options.
+      field: capability
+      source: src-agentclinic-site
+      quote: AgentClinic embeds 24 cognitive and implicit biases in both doctor and patient agents
+    - check: Versions. The two data releases are modelled as editions (2024-05, 2024-08), with the
+        case sets as subsets and the paper's five arXiv versions and the npj version noted in the
+        rows. The extended set keeps every first-release MedQA case, so 2024-08 could be read as a
+        revision rather than an edition; and the 2026-10-03 addition of a 215th MedQA-Ext case (the
+        paper had reported 215 since October 2024) is recorded only in prose, with no Source of its
+        own.
+      field: versions
+      source: src-github-agentclinic-readme
+      quote: More AgentClinic-MedQA cases [107] → [215]
+    - check: The npj paper says all data is in the repository, but the Spec (260) and Lang (749)
+        sets are not there, and MIMIC-IV is on request. data.access fully-open describes the
+        released MedQA and NEJM files only; the size rows for Spec and Lang describe sets nobody
+        outside the authors can run.
+      field: data.access
+      source: src-npj-2026-agentclinic
+      quote: The data from the AgentClinic benchmark is open under an MIT license.
+    - check: AgentClinic-Lang's 749 cases equal 107 times 7, which suggests the first release's 107
+        MedQA cases in seven languages (English included), not the extended 215; no source says
+        which.
+      field: subsets
+      source: src-arxiv-2405-07960-v4
+      quote: We also introduce 260 patient cases from 9 medical specialties and 749 patient cases
+        from 7 multilingual environments.
+    - check: data_provenance leaves out patient-clinical-record. AgentClinic-MIMIC-IV is built from
+        deidentified MIMIC-IV records under PhysioNet's credentialed terms, and the term asks for
+        identifiable records; a clinical-data specialist should decide, as for medagentbench.
+      field: data.data_provenance
+      specialist: true
+      source: src-github-agentclinic-readme
+      quote: based on real clinical cases from MIMIC-IV (requires approval from
+        https://physionet.org/content/mimiciv/2.2/)
+    - check: maintainer_type individual follows the term's rule for a personal account; the
+        benchmark is a multi-institution academic project, and a reviewer may prefer academic-lab.
+      field: governance.maintainer_type
+    - check: MedQA link. AgentClinic-MedQA rebuilds MedQA's questions as dialogue cases and the
+        paper compares the two; the medqa entry was not edited and carries no lineage. It could list
+        agentclinic (or the AgentClinic-MedQA subset) as a derived benchmark by other maintainers.
+      field: lineage
+      source: src-arxiv-2405-07960-v5
+      quote: Overall, MedQA accuracy was only weakly predictive of accuracy on AgentClinic-MedQA.
+  unreachable: []
+  personal_data_excluded:
+    - source: src-arxiv-2405-07960-v5
+      what: the corresponding author's e-mail address on the first page, and the example patient
+        case in Appendix J
+    - source: src-arxiv-2405-07960-v1
+      what: the corresponding author's e-mail address under the affiliations
+    - source: src-arxiv-2405-07960
+      what: the arXiv submitter line
+    - source: src-npj-2026-agentclinic
+      what: the author and corresponding-author block
+    - source: src-agentclinic-site
+      what: the website template's credit to a named person
