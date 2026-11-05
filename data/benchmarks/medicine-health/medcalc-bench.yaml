@@ -1,0 +1,708 @@
+# data/benchmarks/medicine-health/medcalc-bench.yaml
+#
+# P1-S6-T04, medicine-health entry 18. Filled from the MedCalc-Bench paper, arXiv 2406.12036 read as its v4 PDF
+# (2024-06-30, the latest version), and its abstract page; the NeurIPS 2024 proceedings page; the ncbi-nlp/MedCalc-Bench
+# README at main's head commit and the repository's release list (GitHub API); Hugging Face's API records of the v1.2
+# and v1.0 datasets (v1.0 is gated: no terms were accepted); the MedCalc-Bench Verified README and release list, the
+# successor the ncbi-nlp README points to; the v3 PDF of Ye et al. (arXiv 2512.19691), an independent audit of the
+# labels that also evidences current use; and MedHELM's v4.0.0 leaderboard schema, already a Source of medhelm, which
+# runs MedCalc-Bench as a scenario. The patient notes come from published case reports and are never quoted. Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: medcalc-bench
+name: MedCalc-Bench
+tagline: Computing one of 55 medical calculator values from a patient note, over 1,000 manually
+  reviewed instances.
+description: >
+  A benchmark of medical calculation from NCBI/NLM and collaborators: each instance is a patient
+  note, a question asking for one clinical calculator's value (CHA2DS2-VASc, CKD-EPI eGFR, LDL,
+  QTc, estimated due date and so on), a reference answer and a step-by-step explanation generated
+  from a template. The 55 calculators, all listed as popular on MDCalc, are 36 equation-based ones
+  (lab values, physical measures, dates and dosage conversions) and 19 rule-based ones (risk,
+  severity and diagnostic scores). The notes come mostly from Open-Patients (PMC-Patients case
+  reports, MedQA vignettes and TREC topics), with template-generated notes for ten calculators and
+  clinician-written or clinician-edited notes for eleven; GPT-4 extracted each calculator's
+  attributes, clinicians checked them, and Python implementations computed the answers. A response
+  is correct if it equals the reference for rule-based and date calculators, or lies within 5% for
+  decimal outputs. The NeurIPS 2024 release has 1,047 test and 10,053 training instances; v1.1 and
+  v1.2 (November 2025) fixed calculator implementations and replaced many notes (1,100 test
+  instances), and since December 2025 the first author has continued it as MedCalc-Bench Verified
+  in a new repository. An independent audit found at least 27% of the v1.0 test labels likely wrong
+  or incomputable.
+self_description:
+  source: src-arxiv-2406-12036-v4
+  quote: we propose MEDCALC-BENCH, a first-of-its-kind dataset focused on evaluating the medical
+    calculation capability of LLMs
+external_ids:
+  huggingface: ncbi/MedCalc-Bench
+  arxiv: '2406.12036'
+paper:
+  title: 'MedCalc-Bench: Evaluating Large Language Models for Medical Calculations'
+  arxiv: '2406.12036'
+  doi: 10.52202/079017-2690
+  version_read: v4
+  source: src-arxiv-2406-12036-v4
+released: 2024-06-17
+released_note: The paper's first arXiv version, as its abstract page dates it; v4 followed on
+  2024-06-30.
+released_source: src-arxiv-2406-12036
+released_quote: Submitted on 17 Jun 2024 (v1), last revised 30 Jun 2024 (this version, v4)
+release_venue: NeurIPS 2024, Datasets and Benchmarks track
+release_venue_note: The v4 PDF still reads as a preprint under review; the proceedings page gives
+  the track and the published version's DOI, recorded as paper.doi.
+release_venue_source: src-neurips-2024-medcalc-bench
+release_venue_quote: 'Advances in Neural Information Processing Systems 37 (NeurIPS 2024) Datasets and
+  Benchmarks Track DOI: 10.52202/079017-2690'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/clinical-qa
+  secondary:
+    - medicine-health/diagnosis-triage
+domain_note: diagnosis-triage is secondary for the 19 rule-based calculators (risk, severity and
+  diagnostic scores such as CURB-65, HEART or the PERC rule, 380 of v1.0's 1,047 instances), which
+  grade a presented case's risk or diagnostic likelihood; the rule-based subset carries it as its
+  primary (subsets). It is not the entry's primary, because the scored output is always a
+  calculator's value, not a diagnosis or an urgency call, and 36 of the 55 calculators compute lab
+  values, physical measures, dates or doses that assess nothing. MedHELM's entry files MedCalc-Bench
+  under diagnosis-triage.
+domain_basis:
+  reason: Every item is a medical question about a presented patient with one determinate reference
+    answer, a number, a date or a gestational age, which is clinical-qa's definition. The paper
+    places it beside MedQA and PubMedQA as medical question answering, differing in that the answer
+    is computed and no options are given.
+  source: src-arxiv-2406-12036-v4
+  quote: the format of multi-choice questions does not reflect the actual clinical settings where a
+    single answer or response must be determined without any options provided
+domain_considered_and_rejected:
+  - term: medicine-health/treatment-planning
+    reason: The two dosage calculators (morphine milligram equivalents and steroid conversion, 40
+      instances) convert a stated dose; no item asks for a treatment or care plan.
+  - term: mathematics/arithmetic
+    reason: The arithmetic is part of what is scored, but the subject is clinical and, by the
+      paper's own error analysis, the difficulty is mostly knowing the calculator and extracting its
+      inputs from the note, not the calculation. The mathematics family's exclusion sends a
+      calculation inside another field's question to that field.
+    source: src-arxiv-2406-12036-v4
+    quote: (2) identifying and extracting the relevant parameters within a long patient note, and
+      (3) conducting the arithmetic computation for the task correctly
+  - term: language/information-extraction
+    reason: Extracting the attributes from the note is a step, but only the computed value is
+      scored; the extracted attributes (Relevant Entities) are released as data, not graded.
+  - term: medicine-health/ehr-prediction
+    reason: The notes are free-text case reports and vignettes, not structured record data, and the
+      answer is a value computed from the note, not a future outcome.
+capability:
+  - quantitative-reasoning
+  - context-integration
+capability_basis:
+  quantitative-reasoning:
+    reason: Every answer is a quantity, a score summed from criteria, a value from a formula (with
+      unit conversions and, for some, exponents) or a date, and the path to it is arithmetic;
+      computation errors are one of the paper's three error types.
+    source: src-arxiv-2406-12036-v4
+    quote: (2) identifying and extracting the relevant parameters within a long patient note, and
+      (3) conducting the arithmetic computation for the task correctly
+  context-integration:
+    reason: The note supplies every attribute the answer depends on, averaging over 500 words with
+      synonyms and values that must be interpreted, and the score turns on whether the model used
+      the right values from it. Extraction errors are the second error type.
+    source: src-arxiv-2406-12036-v4
+    quote: Using GPT-3.5-Turbo, we identified patient notes for each calculator based on its
+      eligibility criteria. We then used GPT-4 to extract the attribute values needed for each
+      calculator from the eligible notes.
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: The paper names recall of the calculator's rule or equation as the first capability, and
+      zero-shot errors are mostly of that type. But the scored outcome is the computed value, and
+      knowledge-recall's exclusion leaves out background knowledge on the way to a different scored
+      outcome; in the one-shot setting the prompt also supplies a worked exemplar of the same
+      calculator (review_checks).
+    source: src-arxiv-2406-12036-v4
+    quote: (1) possessing the knowledge of the rules or equations for the medical calculation task
+  - term: deductive-reasoning
+    reason: The rules are not stated in the item; applying them needs clinical knowledge from
+      outside it, and many criteria need clinical judgement about the note, which
+      deductive-reasoning's inclusion test excludes.
+  - term: tool-use
+    reason: The repository also runs a code-interpreter setting for GPT-3.5 and GPT-4, but as an
+      extra experiment; the designed protocol has the model compute without tools.
+    source: src-github-medcalc-bench-readme
+    quote: we also prompted LLMs to write code to perform arithmetic instead of having the LLM do
+      this itself
+
+evaluation_method:
+  - exact-match
+  - numeric-tolerance-match
+evaluation_method_basis:
+  reason: Each item is scored correct or incorrect and accuracy is reported. Rule-based (integer)
+    and date answers must equal the reference; decimal answers of the equation-based lab, physical
+    and dosage calculators count if they fall within 5% of it, a rule stored per item as lower and
+    upper limits (95% and 105% of the reference).
+  source: src-arxiv-2406-12036-v4
+  quote: the predicted answer must be within 5% of the ground-truth answer
+evaluation_method_considered_and_rejected:
+  - term: multiple-choice
+    reason: No options are given; the model states the value itself, which the paper names as the
+      point of difference from MedQA and MedMCQA.
+  - term: model-graded-judge
+    reason: GPT-4 classifies the error types in the paper's analysis, but the score is a mechanical
+      comparison with the reference.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: Built to evaluate large language models prompted directly, with no tools, under three
+    prompting settings (direct answer, zero-shot chain of thought and one-shot chain of thought).
+    The baselines are instruction-tuned general models (GPT-4, GPT-3.5, Llama 3, Mistral, Mixtral)
+    and two medical models.
+  source: src-arxiv-2406-12036-v4
+  quote: 'Zero-shot Direct Prompting: In this setting, the LLM is prompted to directly output the answer
+    without any explanation'
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: Two of the eight baselines are medical models (PMC-LLaMA-13B and MEDITRON-70B), but the
+      benchmark is built for language models in general and the paper's claim is about LLMs at
+      large.
+    source: src-arxiv-2406-12036-v4
+    quote: Medical domain-specific LLMs include PMC-LLaMA-13B [59] and MEDITRON-70B [5]
+  - term: tool-augmented-model
+    reason: The code-interpreter runs are an extra experiment (capability_considered_and_rejected).
+as_used:
+  - protocol: One of MedHELM's Clinical Decision Support scenarios, run by the HELM maintainers on
+      the models they chose and scored by MedHELM's MedCalc accuracy, exact match for the risk,
+      severity and diagnosis categories and a range check for the others.
+    source: src-medhelm-leaderboard-v4-schema
+    quote: Comparison based on category. Exact match for categories risk, severity and diagnosis.
+      Check if within range for the other categories.
+    note: MedHELM (medhelm) carries it as the subset medhelm#medcalc-bench and is not edited here.
+      Which MedCalc-Bench version its scenario loads was not read.
+  - protocol: The v1.0 test split re-scored against labels recomputed by tool-augmented LLM agents
+      with physician adjudication, rather than against the released labels.
+    split: test (v1.0, 1,047 instances)
+    source: src-arxiv-2512-19691-v3
+    quote: Our analysis focuses on the peer-reviewed release of MedCalc-Bench (v1.0), which serves
+      as the standard baseline for current academic and industry evaluations
+    note: Ye et al. (Stanford, v3 2026-04-13), from outside the maintainers. They report that models
+      scored on the original labels are underestimated by 16 to 23 points.
+
+lifecycle: under-revision
+lifecycle_basis:
+  reason: The maintainers have reissued the content eleven times since November 2025 (v1.1, v1.2,
+    then MedCalc-Bench Verified v1.0.0 to v1.0.8), the latest on 2026-09-08, and the Verified README
+    promises new releases for further corrections, so a score without a version is not
+    interpretable. Results are still produced against it outside the maintainers (as_used; the audit
+    names it as one of two medical benchmarks in a 2026 product launch), which would make it active
+    but for the revisions.
+  source: src-github-medcalc-bench-verified-releases
+  quote: '"name":"v1.0.8","draft":false,"immutable":false,"prerelease":false,"created_at":"2026-09-08T16:31:17Z","updated_at":"2026-09-08T16:31:59Z","published_at":"2026-09-08T12:54:50Z"'
+activity: no-submission-channel
+activity_basis:
+  reason: The maintainers publish the data and the code that reproduces the paper's table; there is
+    no leaderboard or submission route, and results appear in users' papers and in MedHELM.
+  source: src-github-medcalc-bench-readme
+  quote: For reproducing the Table 2 from the paper, first `cd` into the `evaluation` folder.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4
+    source: src-arxiv-2406-12036-v4
+    observed_on: 2026-11-04
+    quote: GPT-4 achieved the best baseline performance of only 50.9% accuracy using one-shot
+      chain-of-thought prompting
+  - system: Qwen3-8B
+    source: src-arxiv-2512-19691-v3
+    observed_on: 2026-11-04
+    quote: We finetuned two identical copies of Qwen3-8B, an open-weights LLM
+    note: Trained by GRPO on original and on recomputed labels in the audit's controlled experiment.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each reference answer is computed by the maintainers' Python
+  implementation of the calculator from attribute values that GPT-4 extracted from the note and
+  medical professionals verified; the test answers are released with the data. The independent audit
+  judged at least 27% of the v1.0 test labels likely erroneous or incomputable (versions, errata).
+ground_truth_source_source: src-arxiv-2406-12036-v4
+ground_truth_source_quote: The extracted values were verified and corrected by medical
+  professionals.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The notes, questions, references and per-item tolerance limits are public, and scoring is
+    a comparison any script can make.
+  source: src-github-medcalc-bench-readme
+  quote: For equation-based calculators whose output is a decimal, this value is 95% of the ground
+    truth answer value.
+
+task:
+  exists: true
+  input:
+    - a patient note (a case report extract, an exam vignette or a synthetic note)
+    - a question asking for one calculator's value, with its unit where one applies
+    - optionally, one worked exemplar of the same calculator (one-shot setting)
+  output: The value, an integer score, a decimal, a date or a gestational age in weeks and days,
+    optionally after a step-by-step explanation.
+  scoring: Accuracy over the test split, exact match for rule-based and date calculators and within
+    5% of the reference for decimal outputs; the paper also reports accuracy per category.
+  source: src-arxiv-2406-12036
+  quote: Each instance in MedCalc-Bench consists of a patient note, a question requesting to compute
+    a specific medical value, a ground truth answer, and a step-by-step explanation showing how the
+    answer is obtained
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The current release, v1.2, is ungated on Hugging Face and in the repository, as is
+    MedCalc-Bench Verified. The re-posted v1.0 dataset on Hugging Face (ncbi/MedCalc-Bench-v1.0) is
+    gated by manual approval; v1.0 is also kept on the repository's version1.0 branch, which was not
+    opened here.
+  access_basis:
+    reason: Every split of the current version, test answers included, downloads without an account
+      or agreement, which is fully-open; the current edition decides for a family distributed
+      differently by version.
+    source: src-hf-api-medcalc-bench-v1-2
+    quote: '"id":"ncbi/MedCalc-Bench-v1.2","author":"ncbi","sha":"915b1aad1fd2aa67790f369658cc365dfd440e90","lastModified":"2025-12-20T18:22:44.000Z","private":false,"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Every change since the NeurIPS release is carried by a labelled release (version-1.1,
+      version-1.2, Verified v1.0.0 to v1.0.8) with notes, and the Hugging Face card and the Verified
+      README ask users to name the version they used.
+    source: src-hf-api-medcalc-bench-v1-2
+    quote: We recommend using v1.0-v1.2 for reproducibility purposes only. You should specify which
+      version you are using when using this dataset.
+  data_provenance:
+    - inherited-from-constituents
+    - synthetic-procedural
+    - model-generated
+  data_provenance_note: Most notes come from Open-Patients, the maintainers' aggregation of
+    PMC-Patients (case reports from PubMed Central), MedQA-USMLE vignettes and TREC Clinical
+    Decision Support and Clinical Trials topics, selected by GPT-3.5 against each calculator's
+    criteria. For ten equation-based calculators with no eligible note, Python templates generated
+    20 notes each (synthetic-procedural). For eleven rule-based ones the paper says clinicians
+    synthesized 20 notes each; the current README describes those notes as LLM-generated and then
+    edited or approved by a clinician (model-generated). The references are computed, not authored
+    (ground_truth_source).
+  data_provenance_source: src-arxiv-2406-12036-v4
+  data_provenance_quote: including anonymized real case reports from PMC-Patients [60], case
+    vignettes in MedQA-USMLE [21], synthetic cases in TREC Clinical Decision Support Tracks
+  contamination_risk: medium
+  contamination_risk_note: The test notes, questions and answers have been public on GitHub and
+    Hugging Face since June 2024, with a 10,000-instance training split from the same pipeline, and
+    most notes are published case reports and exam vignettes that circulate on the open web
+    independently of the benchmark. A training route is plausible. No source read here shows
+    contamination evidence; the Verified releases remove note text that stated the answer, which is
+    leakage within an item, not contamination.
+  contamination_evidence: []
+  dataset_licence: CC-BY-SA-4.0
+  dataset_licence_note: The README and the v1.2 card give CC-BY-SA 4.0, inherited from PMC-Patients.
+    The paper's licence appendix adds that the data can be distributed for non-commercial purposes,
+    which CC-BY-SA does not restrict, and the re-posted v1.0 card declares cc-by-4.0
+    (review_checks).
+  dataset_licence_source: src-github-medcalc-bench-readme
+  dataset_licence_quote: Hence, our source of notes, Open-Patients, and the dataset curated from it,
+    MedCalc-Bench, are both released under the CC-BY-SA 4.0 license.
+  size:
+    - count: 1100
+      unit: test instances (patient note and question pairs)
+      subset: v1.2 test split (also MedCalc-Bench Verified's)
+      source: src-hf-api-medcalc-bench-v1-2
+      quote: '"splits":[{"name":"train","num_examples":10543},{"name":"test","num_examples":1100}]'
+    - count: 55
+      unit: calculators (36 equation-based, 19 rule-based)
+      source: src-arxiv-2406-12036-v4
+      quote: they fall into two major categories, rule-based calculation (19 calculators) and
+        equation-based calculation (36 calculators)
+    - count: 1047
+      unit: test instances
+      subset: v1.0 (the NeurIPS release)
+      source: src-arxiv-2406-12036-v4
+      quote: From these three steps, we curated 1047 instances for MEDCALC-BENCH
+    - count: 10053
+      unit: training instances
+      subset: v1.0
+      source: src-arxiv-2406-12036-v4
+      quote: we also curated a training dataset of 10,053 instances
+    - count: 10543
+      unit: training instances
+      subset: v1.2
+      source: src-github-medcalc-bench-readme
+      quote: This dataset contains a training dataset of 10,543 instances and a testing dataset of
+        1,100 instances.
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The MedCalc-Bench first author, on personal GitHub and Hugging Face accounts
+    (MedCalc-Bench Verified); v1.0 to v1.2 are held by NCBI/NLM's Computational Biology Branch
+    (ncbi-nlp on GitHub, ncbi on Hugging Face)
+  maintainer_basis:
+    reason: The ncbi-nlp README and the v1.2 card now point users to MedCalc-Bench Verified for the
+      latest changes, and the Verified repository and dataset sit in the first author's own
+      accounts, apart from the NCBI organisations that hold v1.0 to v1.2 (history). The same account
+      published the ncbi-nlp releases.
+    source: src-github-medcalc-bench-readme
+    quote: MedCalc-Bench Verified is an update from v1.2 on this repository.
+  maintainer_type: individual
+  submission_process:
+    - literature-only
+  submission_process_note: No board, results page or submission route of the maintainers'. MedHELM
+    runs it as a scenario on its own board, which as literature-only's exclusion test says does not
+    change this.
+  independence_flags: []
+  independence_flags_note: None recorded. The baselines are other parties' models, and the work was
+    funded by the NIH intramural programme; no source read shows funding from an evaluated party.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public items with stored references and tolerance limits, scored by comparison; the
+      repository's script runs a model over the test split end to end.
+    source: src-github-medcalc-bench-readme
+    quote: For reproducing the Table 2 from the paper, first `cd` into the `evaluation` folder.
+  harness_availability: reference-implementation-only
+  harness_availability_note: The repository's run.py reproduces the paper's Table 2 for its eight
+    baseline models and three prompt styles and marks each answer correct or incorrect, but no
+    source names it as the scoring path for other entrants. The per-item lower and upper limits in
+    the data carry the scoring rule on their own (review_checks).
+  code_licence: null
+  code_licence_note: GitHub's licence metadata reports no licence for ncbi-nlp/MedCalc-Bench or for
+    the Verified repository (API, read 2026-11-04); the READMEs' licence sections cover the dataset
+    only.
+  runnable_via:
+    - custom
+    - helm
+  runnable_via_note: custom is the repository's evaluation scripts; helm is MedHELM's medcalc_bench
+    scenario.
+  runnable_via_source: src-medhelm-leaderboard-v4-schema
+  runnable_via_quote: '"subgroups": [ "medcalc_bench", "clear",'
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The llm-static-text profile already makes the prompting material: shots (zero-shot or the one-shot exemplar),
+  # chain_of_thought (direct answer or step-by-step, which moves GPT-4 from 20.8% to 37.9%), tools_allowed (the
+  # code-interpreter runs) and subset_used. The dataset version (v1.0, v1.1, v1.2 or a Verified release) is part of
+  # every claim's key already; it is what moves a number most here. No field beyond the profile is added.
+  material_extra: []
+
+homepage: https://github.com/nikhilk7153/MedCalc-Bench-Verified
+repository: https://github.com/nikhilk7153/MedCalc-Bench-Verified
+dataset_url: https://huggingface.co/datasets/nsk7153/MedCalc-Bench-Verified
+leaderboard_url: null
+
+versions:
+  - version: v1.0
+    label: The NeurIPS 2024 release (1,047 test instances)
+    version_kind: revision
+    released: 2024-06-17
+    items: 1047
+    changes: The release the paper describes, 1,047 test and 10,053 training instances over 55
+      calculators. It was tagged as a GitHub release only on 2025-09-17 (version1.0 branch) and
+      re-posted, gated, as ncbi/MedCalc-Bench-v1.0 on Hugging Face on 2025-11-12, where the
+      maintainers keep it for reproducibility only and call it highly unreliable.
+    superseded_by: v1.1
+    errata:
+      - date: 2025-09-17
+        scope: calculator implementations, extracted attributes and note choice
+        description: The maintainers' v1.0 release note says 12 calculator implementations were
+          later fixed, the Relevant Entities realigned with the notes and ill-fitting notes
+          replaced, and that v1.0 should be used only for reproducibility.
+        source: src-github-medcalc-bench-releases
+      - date: 2026-04-13
+        scope: test labels
+        description: An independent audit (Ye et al., v3) judges at least 27% of the 1,047 test
+          labels likely erroneous or incomputable, and finds that scoring on them underestimates
+          frontier models by 16 to 23 points.
+        source: src-arxiv-2512-19691-v3
+    frozen: true
+    sources:
+      - src-arxiv-2406-12036-v4
+      - src-arxiv-2406-12036
+      - src-github-medcalc-bench-releases
+      - src-hf-api-medcalc-bench-v1-0
+  - version: v1.1
+    label: version-1.1
+    version_kind: revision
+    released: 2025-11-17
+    changes: All calculator implementation mistakes fixed except Caprini, APACHE II and CCI; values
+      rounded to 5 decimal places; extracted attributes set to admission before treatment; notes
+      added so FENa, MELD Na, Framingham Risk and HOMA-IR have 20 each (taking the test split to
+      1,100, as v1.2 has, though the release does not state the count); synthetic notes replaced and
+      other notes swapped for better-matching ones; training instances for every calculator.
+    breaking: true
+    supersedes_version: v1.0
+    superseded_by: v1.2
+    frozen: true
+    sources:
+      - src-github-medcalc-bench-releases
+  - version: v1.2
+    label: version-1.2
+    version_kind: revision
+    released: 2025-11-18
+    items: 1100
+    changes: Fixes to the APACHE II, CCI and Caprini calculators and to the dosage calculators'
+      tolerance limits; clinically ineligible test notes replaced with training items; one-shot and
+      test examples re-annotated. 1,100 test and 10,543 training instances. Ye et al. estimate that
+      about 70% of v1.0's test instances and annotations were replaced by this version.
+    breaking: true
+    supersedes_version: v1.1
+    superseded_by: verified
+    frozen: true
+    sources:
+      - src-github-medcalc-bench-releases
+      - src-hf-api-medcalc-bench-v1-2
+      - src-github-medcalc-bench-readme
+      - src-arxiv-2512-19691-v3
+  - version: verified
+    label: MedCalc-Bench Verified (v1.0.0 to v1.0.8)
+    version_kind: revision
+    released: 2025-12-14
+    items: 1100
+    changes: Built from v1.2 in a new repository and Hugging Face dataset on the first author's
+      personal accounts, which the ncbi-nlp README and v1.2 card point to for the latest changes.
+      Its own releases run v1.0.0 (2025-12-14) to v1.0.8 (2026-09-08), each to be named when
+      reporting; they fix calculators and explanations, re-annotate items, add a one-shot split,
+      remove note text that gave the answer away, and (v1.0.3) adopt a correction the audit raised.
+      1,100 test and 10,538 training instances.
+    breaking: true
+    supersedes_version: v1.2
+    frozen: false
+    sources:
+      - src-github-medcalc-bench-verified-readme
+      - src-github-medcalc-bench-verified-releases
+      - src-github-medcalc-bench-readme
+      - src-arxiv-2512-19691-v3
+
+subsets:
+  - id: medcalc-bench#equation-based
+    label: Equation-based calculators
+    items: 667
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: they fall into two major categories, rule-based calculation (19 calculators) and
+          equation-based calculation (36 calculators)
+    notes: 36 calculators whose answer comes from a formula (a decimal, a date or a gestational
+      age); counts are v1.0's.
+  - id: medcalc-bench#lab
+    label: Lab values
+    parent: medcalc-bench#equation-based
+    items: 327
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Lab 19 327 891.0
+    notes: 19 calculators, e.g. LDL concentration; within 5%.
+  - id: medcalc-bench#physical
+    label: Physical measures
+    parent: medcalc-bench#equation-based
+    items: 240
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Physical 12 240 419.3
+    notes: 12 calculators, e.g. QTc by Bazett; within 5%.
+  - id: medcalc-bench#date
+    label: Dates
+    parent: medcalc-bench#equation-based
+    items: 60
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Date 3 60 25.3
+      - source: src-arxiv-2406-12036-v4
+        quote: For date-based equation calculations, the predicted dates should exactly match the
+          ground truth
+    notes: Estimated due date, date of conception and gestational age; exact match.
+  - id: medcalc-bench#dosage
+    label: Dosage conversions
+    parent: medcalc-bench#equation-based
+    items: 40
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Dosage 2 40 31.4
+    notes: Morphine milligram equivalents and steroid conversion; within 5%.
+  - id: medcalc-bench#rule-based
+    label: Rule-based calculators
+    items: 380
+    scored_separately: true
+    domain_override:
+      primary: medicine-health/diagnosis-triage
+      secondary:
+        - medicine-health/clinical-qa
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: For all rule-based calculators, the final answer must be the exact same as the
+          ground-truth answer
+      - source: src-arxiv-2406-12036-v4
+        quote: For equation-based calculators, the options are lab test, dosage, date, or physical
+          and for rule-based calculators, the options are risk, severity, and diagnosis.
+    notes: 19 calculators that sum points over criteria to an integer, scored by exact match; their
+      scores grade a presented case's risk, severity or diagnostic likelihood, hence the override.
+  - id: medcalc-bench#risk
+    label: Risk scores
+    parent: medcalc-bench#rule-based
+    items: 240
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Risk 12 240 422.1
+    notes: 12 calculators, e.g. the Caprini score for VTE.
+  - id: medcalc-bench#severity
+    label: Severity scores
+    parent: medcalc-bench#rule-based
+    items: 80
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Severity 4 80 262.6
+    notes: 4 calculators, e.g. the Pneumonia Severity Index.
+  - id: medcalc-bench#diagnosis
+    label: Diagnostic criteria
+    parent: medcalc-bench#rule-based
+    items: 60
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2406-12036-v4
+        quote: Diagnosis 3 60 625.6
+    notes: 3 calculators, e.g. the PERC rule for pulmonary embolism.
+
+lineage:
+  role: root
+  role_note: MedCalc-Bench Verified is a version of this record, not a variant or fork (versions;
+    review_checks). No other derivative was read.
+
+history:
+  - date: 2025-12-14
+    event: repository-moved
+    field: repository
+    from: https://github.com/ncbi-nlp/MedCalc-Bench
+    to: https://github.com/nikhilk7153/MedCalc-Bench-Verified
+    source: src-github-medcalc-bench-readme
+    quote: MedCalc-Bench Verified is an update from v1.2 on this repository.
+    note: Dated by Verified's first release (src-github-medcalc-bench-verified-releases); the
+      ncbi-nlp README's pointer was committed on 2025-12-18 (GitHub API).
+  - date: 2025-12-14
+    event: maintainer-changed
+    field: governance.maintainer_type
+    from: government-agency (NCBI/NLM's ncbi-nlp and ncbi organisations)
+    to: individual (the first author's personal accounts)
+    source: src-github-medcalc-bench-verified-readme
+    quote: We have corrected a lot of issues and so we recommend using MedCalc-Bench Verified over
+      prior versions since it is the most accurate version to date.
+
+tags:
+  - medical-calculators
+  - clinical-scores
+  - patient-notes
+  - numeric-answers
+  - chain-of-thought
+  - label-audit
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-12036-v4
+    - src-arxiv-2406-12036
+    - src-neurips-2024-medcalc-bench
+    - src-github-medcalc-bench-readme
+    - src-github-medcalc-bench-releases
+    - src-hf-api-medcalc-bench-v1-2
+    - src-hf-api-medcalc-bench-v1-0
+    - src-github-medcalc-bench-verified-readme
+    - src-github-medcalc-bench-verified-releases
+    - src-arxiv-2512-19691-v3
+    - src-medhelm-leaderboard-v4-schema
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text, with windows that keep the correspondence line
+    and the printed patient notes out; its abstract page for the dates; the NeurIPS proceedings page with
+    scripts and styles stripped; both READMEs at pinned commits and both release lists from the GitHub
+    API, unauthenticated, with the first author's account handles kept out of the extracts; Hugging Face's
+    API records of v1.2 and of the gated v1.0, with no terms accepted; Ye et al.'s v3 PDF (a DOI) as an
+    independent audit and evidence of current use; and MedHELM's v4.0.0 schema, already a Source of medhelm.
+  confidence: medium
+  review_checks:
+    - check: MedCalc-Bench Verified is modelled as a version (revision) of this record, as OSWorld
+        records OSWorld-Verified and tau-bench its move to tau2-bench. 04 S4 sends a derivative with
+        a different maintainer or its own version numbering to a new benchmark with a lineage link,
+        and Verified has both (the first author's personal accounts, v1.0.0 to v1.0.8). Against
+        that, the original README and card hand users over to it, it keeps v1.2's 1,100 test items,
+        task and scoring, the same account published the ncbi-nlp releases, and the audit calls it
+        another revision. If it becomes its own entry, the maintainer, repository and history here
+        revert to NCBI/NLM and government-agency.
+      field: versions
+      source: src-arxiv-2512-19691-v3
+      quote: 'MedCalc-Bench-Verified: another revision (GitHub link, December 14 snapshot), also posted
+        by an author of the original benchmark, with similarly extensive changes to the v1.0 release.'
+    - check: v1.1 and v1.2 are recorded as revisions of the same items, but the audit estimates that
+        about 70% of v1.0's test instances and annotations were replaced, which reads more like new
+        items on the same task (an edition). The calculators, questions and scoring are unchanged.
+      field: versions
+      source: src-arxiv-2512-19691-v3
+      quote: Our examination suggests that approximately 70% of test instances and annotations in
+        the original v1.0 release were replaced, making this a partially overlapping but
+        substantially different version of the same task.
+    - check: lifecycle is under-revision on the stream of Verified releases (latest 2026-09-08). If
+        the reviewer reads v1.0.8 as a finished release with no corrections in progress, active
+        fits; the README only promises releases should corrections be needed.
+      field: lifecycle
+    - check: The v1.0 labels are held-out-labels, but they were produced by GPT-4 extraction and
+        scripted aggregation, and the audit judges at least 27% likely wrong; no facet records
+        model-derived reference labels (logged with bench tag-gap). A specialist should judge the
+        audit's physician adjudication, which covers 50 instances.
+      field: ground_truth_source
+      specialist: true
+      source: src-arxiv-2512-19691-v3
+      quote: At least 27% of test labels are likely erroneous or incomputable.
+    - check: knowledge-recall is rejected because the score is the computed value, although the
+        paper names calculator recall as the first required capability and zero-shot errors are
+        mostly of that type. A reviewer may prefer to tag it, since in the zero-shot settings
+        nothing supplies the rule or equation.
+      field: capability
+      source: src-arxiv-2406-12036-v4
+      quote: we add a one-shot exemplar in the prompt, showing the model how to apply the requested
+        medical equations or rules
+    - check: The dataset licence is CC-BY-SA 4.0 by the README and the v1.2 card, but the paper says
+        the data can be distributed for any non-commercial purposes, which that licence does not
+        restrict, and the re-posted v1.0 card declares cc-by-4.0.
+      field: data.dataset_licence
+      source: src-arxiv-2406-12036-v4
+      quote: both the training and testing instances of the MEDCALC-BENCH dataset are released by
+        the CC-BY-SA 4.0 license and can be distributed for any non-commercial purposes
+    - check: The paper says clinicians synthesized the notes for eleven rule-based calculators; the
+        current README calls them LLM-generated and then edited or approved by a clinician, and v1.1
+        replaced the synthetic notes. model-generated follows the README; expert-authored would fit
+        the paper's description of v1.0.
+      field: data.data_provenance
+      source: src-github-medcalc-bench-readme
+      quote: synthesized by a clinician (LLM generated and then edited/approvied by a clinician)
+    - check: harness_availability is reference-implementation-only because run.py is the paper's
+        baseline reproduction for eight named models. It also scores each answer, so
+        official-harness is arguable.
+      field: execution.harness_availability
+    - check: diagnosis-triage is a secondary, and the rule-based subset's primary, on the reading
+        that risk, severity and diagnostic scores grade a presented case. MedHELM's entry puts the
+        whole benchmark under diagnosis-triage; the output is always a calculator value, so
+        clinical-qa stays primary here.
+      field: domain
+      source: src-arxiv-2406-12036-v4
+      quote: Medical calculators are statistical tools derived from high-quality clinical studies,
+        serving various purposes, including metric conversions [7], disease diagnosis [18], and
+        prognosis prediction [11].
+    - check: The subset counts are v1.0's (20 notes per calculator at most). v1.2 and Verified have
+        1,100 test items, but their per-category counts were not read.
+      field: subsets
+    - check: Which MedCalc-Bench version MedHELM's scenario and Anthropic's reported results use was
+        not read; the audit reports that the latter sit closer to v1.0 than to v1.2.
+      field: as_used

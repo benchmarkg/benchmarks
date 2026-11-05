@@ -1,0 +1,537 @@
+# data/benchmarks/medicine-health/ddxplus.yaml
+#
+# P1-S6-T04, medicine-health entry 17. Filled from the DDXPlus paper, arXiv 2205.09148 read as its v3 PDF (the
+# NeurIPS 2022 Datasets and Benchmarks camera-ready, 2022-10-13), and its abstract page; the NeurIPS 2022
+# proceedings page; the mila-iqia/ddxplus README and its project page (docs/index.html), both at commit 69e8cf5;
+# Figshare's API records of the French dataset (article 20043374, versions 15 and 14) and of the English release
+# (article 22687585, version 2), read on api.figshare.com because figshare.com answers robots.txt with a challenge;
+# and two papers from outside the maintainers that run it, MEDDxAgent (arXiv 2502.19175 v2, ACL 2025) and
+# multi-answer RL (arXiv 2603.24844 v1, 2026). Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+
+id: ddxplus
+name: DDXPlus
+tagline: Roughly 1.3 million synthetic patients, each with evidence, a pathology and a differential,
+  for automatic diagnosis.
+description: >
+  A dataset and benchmark for automatic symptom detection (ASD) and automatic diagnosis (AD) systems,
+  from Mila with Dialogue Health Technologies, released at NeurIPS 2022 (Datasets and Benchmarks). It
+  holds roughly 1.3 million synthetic patients from the chief complaint of cough, sore throat or breathing
+  issues, covering 49 pathologies, 110 symptoms and 113 antecedents, the evidence binary, categorical
+  or multi-choice. Each patient was sampled with Synthea from a proprietary medical knowledge base and
+  New York State census priors, then given a ranked, probabilistic differential diagnosis by Dialogue's
+  commercial rule-based diagnosis system, DXA; patients whose sampled pathology was missing from that
+  differential were discarded. No clinician labels any patient. The data is split 80/10/10, stratified
+  by pathology. An agent starts from a patient's age, sex and a fixed initial evidence, asks about further
+  symptoms and antecedents for at most 30 turns, and outputs a differential. On the test split it is scored
+  by interaction length, recall of the patient's positive evidence, the recall, precision and F1 of its
+  differential against the generated one, and whether the sampled pathology is in its differential (GTPA)
+  or at the top (GTPA@1). The original release is in French on Figshare, and an English re-encoding of
+  the same data followed in 2023, both under CC BY 4.0. Later work, much of it with language models, uses
+  it for differential diagnosis, often on a sample of the test split.
+self_description:
+  source: src-arxiv-2205-09148-v3
+  quote: we introduce DDXPlus, a large-scale synthetic dataset for building AD and ASD systems
+external_ids:
+  arxiv: '2205.09148'
+paper:
+  title: 'DDXPlus: A New Dataset For Automatic Medical Diagnosis'
+  arxiv: '2205.09148'
+  doi: 10.52202/068431-2270
+  version_read: v3
+  source: src-arxiv-2205-09148-v3
+released: 2022-05-18
+released_note: The paper's first arXiv version, as its abstract page dates it. Figshare dates the
+  dataset's first version 2022-06-09, and the paper's v3 followed on 2022-10-13.
+released_source: src-arxiv-2205-09148
+released_quote: Submitted on 18 May 2022
+release_venue: NeurIPS 2022, Datasets and Benchmarks track
+release_venue_source: src-neurips-2022-ddxplus
+release_venue_quote: Advances in Neural Information Processing Systems 35 (NeurIPS 2022) Datasets
+  and Benchmarks Track
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: medicine-health/diagnosis-triage
+  secondary:
+    - medicine-health/clinical-dialogue
+domain_basis:
+  reason: The scored output is a differential diagnosis, and whether it holds the patient's
+    pathology, produced from a presented case (age, sex, an initial evidence and the answers to the
+    agent's questions), which is diagnosis-triage's definition. The family's exclusions do not
+    apply; the subject is clinical diagnosis, not biological mechanism or images. The data being
+    synthetic is a data-property (synthetic-procedural), not a domain question. clinical-dialogue is
+    secondary for the evidence-acquisition half, where interaction length and positive-evidence
+    recall score the conduct of the questioning.
+  source: src-arxiv-2205-09148-v3
+  quote: Each patient provides their age, sex, and an initial evidence to the model at the beginning
+    of the interaction
+domain_considered_and_rejected:
+  - term: medicine-health/clinical-qa
+    reason: A patient has no single determinate answer; the reference is a probability distribution
+      over pathologies, and the differential metrics score the set.
+  - term: medicine-health/ehr-prediction
+    reason: The records are synthetic symptom and antecedent lists, not electronic health records,
+      and nothing is predicted forward in time.
+capability:
+  - abductive-reasoning
+  - search-exploration
+capability_basis:
+  abductive-reasoning:
+    reason: The agent settles on the pathologies that best account for the evidence it has gathered,
+      and GTPA@1 and GTPA score whether the sampled pathology is among them. The differential is
+      defeasible, as the paper's discard rule shows (a patient whose evidence did not lead the
+      generating system to the sampled pathology was dropped).
+    source: src-arxiv-2205-09148-v3
+    quote: the GTPA metric measures whether the differential diagnosis predicted by an agent
+      contains the pathology p a patient was simulated from
+  search-exploration:
+    reason: Evidence acquisition is scored on how the space of questions was covered under a budget
+      of 30 turns, by the recall of the patient's positive evidence (PER) beside the number of turns
+      used (IL). The paper does not report evidence precision, because asking negative questions is
+      sometimes necessary.
+    source: src-arxiv-2205-09148-v3
+    quote: we report on the interaction length (IL), and evaluate the evidence collection by
+      measuring the recall (PER)
+capability_considered_and_rejected:
+  - term: hypothesis-generation
+    reason: The output is a set of candidate pathologies and DDR, DDP and DDF1 score that set, which
+      the inclusion test names. But the candidates are a closed list of 49 pathologies shipped with
+      the data (release_conditions.json), so the system selects among supplied candidates, which the
+      exclusion test excludes.
+  - term: calibration-uncertainty
+    reason: The predicted differential is a distribution, but the metrics threshold it at 0.01 and
+      score the resulting set; no score consumes the probabilities themselves.
+  - term: knowledge-recall
+    reason: The training split carries the 49 pathologies' evidence patterns, and the paper's agents
+      learn them from it; nothing is answered from knowledge the system brought with it. Prompted
+      language models in later work (as_used) do draw on what they hold.
+  - term: context-integration
+    reason: The evidence is supplied, but the agent chooses which of it to reveal by asking; the
+      choice is scored under search-exploration, and the use of what is revealed under
+      abductive-reasoning.
+
+evaluation_method:
+  - classification-metric
+evaluation_method_basis:
+  reason: The differential is scored by recall, precision and F1 against the generated differential
+    (both thresholded at 0.01), and the pathology by GTPA and GTPA@1; evidence collection by
+    positive-evidence recall, with interaction length reported beside. All are on the test split,
+    averaged over 3 runs in the paper.
+  source: src-arxiv-2205-09148-v3
+  quote: Additionally, we calculate the recall (DDR), precision (DDP) and F1 score (DDF1) of the
+    differentials
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: Each patient is an episode against a simulated patient that answers from its record, but
+      the simulator is a lookup into the released data rather than a physical or game environment,
+      and the scores are set statistics over the whole test split, not a bounded per-episode
+      outcome.
+  - term: uncertainty-calibration-score
+    reason: The predicted distribution is thresholded into a set before scoring; no metric scores
+      the distribution itself.
+  - term: exact-match
+    reason: GTPA@1 is a mean of per-patient verdicts, but the headline differential metrics are
+      recall, precision and F1 over sets, which is classification-metric.
+designed_for_subjects:
+  - domain-specialist-model
+designed_for_subjects_basis:
+  reason: Built to train automatic symptom detection and diagnosis systems on its own training
+    split, a task the clinical discipline defines. The paper's two baselines are such systems, AARLC
+    (reinforcement-learned evidence acquisition with a supervised classifier) and BASD (a supervised
+    MLP), each trained to predict the pathology or the differential.
+  source: src-arxiv-2205-09148-v3
+  quote: an evidence acquisition branch, trained using RL, whose goal is to determine the next
+    evidence to inquire about
+designed_for_subjects_considered_and_rejected:
+  - term: rl-policy
+    reason: AARLC is a reinforcement-learned questioning policy, but BASD is supervised, and the
+      task belongs to a clinical discipline, which sends a model trained for it to
+      domain-specialist-model.
+  - term: task-specific-supervised-model
+    reason: Entrants are trained on the benchmark's split, but the task is clinical, which the
+      term's exclusion sends to domain-specialist-model.
+  - term: instruction-tuned-model
+    reason: Prompted language models are much of the later use (as_used), but the paper predates
+      that use and designs the task for trained agents.
+observed_subjects:
+  values:
+    - agent-scaffold
+    - domain-specialist-model
+  basis: MEDDxAgent (ACL 2025) drives GPT-4o and Llama 3.1 through its own orchestrator, history-
+    taking simulator and retrieval and diagnosis agents; multi-answer RL (2026) fine-tunes Qwen3-8B
+    on 25,000 DDXPlus examples. The paper's own entrants are trained AD/ASD agents.
+  source: src-arxiv-2502-19175-v2
+as_used:
+  - protocol: Interactive differential diagnosis by prompted language models inside MEDDxAgent's
+      framework, the patient played by a language-model history-taking simulator from the record, on
+      100 patients sampled at a fixed seed, in StreamBench's text format; scored by GTPA@1, GTPA@5
+      and the true pathology's average rank against the 49-pathology option list, not by the
+      differential metrics.
+    split: 100 patients sampled from the data (the split is not stated in the passages read)
+    source: src-arxiv-2502-19175-v2
+    quote: We sample 100 patients from each dataset at a fixed random seed
+    note: MEDDxAgent (ACL 2025) reports GPT-4o's GTPA@1 rising from 0.69 to 0.86 with its iterative
+      framework.
+  - protocol: 'Set-valued diagnosis by a language model fine-tuned with reinforcement learning: the model
+      writes K = 3 diagnoses in one output, scored by exact string match and by coverage of the generated
+      differential, treated as a set of gold answers, with calibration measured on the stated confidences.'
+    split: 25,000 training examples; 5,000 test examples
+    source: src-arxiv-2603-24844-v1
+    quote: We train on 25,000 examples, evaluate correctness using exact string match, and prompt
+      models to generate K = 3 diagnoses in a single output
+    note: Multi-answer RL (MIT, posted 2026-03-25) on Qwen3-8B.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results were still produced against it in 2026 by groups outside the maintainers; the
+    multi-answer RL paper, posted 2026-03-25, trains and scores on it. The maintainers' project page
+    lists papers and benchmarks built on it, refreshed monthly.
+  source: src-arxiv-2603-24844-v1
+  quote: Distribution of the number of unique diagnoses per question across 5,000 test examples of
+    DDXPLUS
+activity: no-submission-channel
+activity_basis:
+  reason: The maintainers publish the data and baseline code only. There is no leaderboard or
+    submission route; the project page's "As seen in" section lists citing papers, not results.
+  source: src-github-mila-ddxplus-project-page
+  quote: Papers and benchmarks built on DDXPlus.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: AARLC (trained on the differential)
+    source: src-arxiv-2205-09148-v3
+    observed_on: 2026-11-04
+    quote: Interaction length, ground truth pathology accuracy, evidence collection, and
+      differential diagnosis metrics of the trained agents as measured on the test set
+    note: Table 3 of the paper, which reports AARLC and BASD each trained on the pathology and on
+      the differential.
+  - system: GPT-4o (in MEDDxAgent)
+    source: src-arxiv-2502-19175-v2
+    observed_on: 2026-11-04
+    quote: For DDxPlus, GTPA@1 for GPT4o and Llama3.1-70B rise from 0.69 to 0.86
+  - system: Qwen3-8B (multi-answer RL)
+    source: src-arxiv-2603-24844-v1
+    observed_on: 2026-11-04
+    quote: Specifically, we use the Qwen3-8B base models
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The labels are generated, not clinical. The pathology is the one the
+  patient was sampled from; the differential is the output of Dialogue's commercial rule-based
+  diagnosis system (DXA), given all the patient's evidence at once, with pathologies outside the 49
+  removed and the rest renormalised. Doctors reviewed the knowledge base and vetted the system, but
+  no clinician labels any patient. The test split's labels are released with it. simulation was
+  weighed (a generator produced the labels) and not used, because the term is for physics and
+  environment simulators.
+ground_truth_source_source: src-arxiv-2205-09148-v3
+ground_truth_source_quote: using an existing commercial rule-based AD system
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The patients, the differentials, the splits and the initial evidence for each patient are
+    public under CC BY 4.0, and the repository holds the baselines' code and metrics.
+  source: src-arxiv-2205-09148-v3
+  quote: This is useful during model evaluation for a fair comparison of ASD/AD systems
+
+task:
+  exists: true
+  input:
+    - a synthetic patient's age, sex and one initial evidence (INITIAL_EVIDENCE, fixed per patient)
+    - answers to the agent's questions about further symptoms and antecedents, drawn from the
+      patient's evidence list, for at most 30 turns
+  output: A differential diagnosis, a probability distribution over the 49 pathologies, and the
+    sequence of questions asked.
+  scoring: On the test split, interaction length (IL), positive-evidence recall (PER), the
+    differential's recall, precision and F1 against the generated differential (DDR, DDP, DDF1), and
+    whether the sampled pathology is at the top of (GTPA@1) or anywhere in (GTPA) the predicted
+    differential. Both differentials drop pathologies at or below 0.01 first.
+  source: src-arxiv-2205-09148-v3
+  quote: We use T = 30 in all experiments
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: All three splits, with their pathologies and differentials, are open downloads on
+      Figshare with no account or agreement.
+    source: src-github-mila-ddxplus-project-page
+    quote: Same data and format as the French release, but with English names/codes throughout.
+  refresh: versioned-releases
+  refresh_note: Figshare dates the English record's first version 2023-04-24, two weeks before the
+    README's 9 May 2023. The French record's version 9 (2022-06-18) replaced the patient files with
+    ones of slightly different size, and its version 15 (2026-03-11) holds patient files with the
+    English record's checksums (see versions); neither change is announced in the sources read.
+  refresh_basis:
+    reason: The English release is a dated, labelled re-issue of the same patients beside the French
+      original, and each Figshare record carries numbered versions a claim can name. The maintainers
+      say the two give the same results.
+    source: src-github-mila-ddxplus-readme
+    quote: Starting from 9 May 2023, the **dataset** is also available in **English** for easier
+      use.
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: Patients are sampled by Synthea from a proprietary knowledge base (disease
+    incidence or prevalence by age, sex and region, and evidence probabilities per disease, compiled
+    from over 20,000 papers and reviewed by doctors) with 2010-2015 New York State census priors and
+    an assumed travel rate of 0.25. Disease rates were capped between 10% and 100% to balance the
+    pathologies. The differential comes from a rule-based system, and no learned model is in the
+    loop. expert-authored was weighed and not used, because doctors reviewed the knowledge base the
+    generator samples from but wrote and labelled no patient; patient-clinical-record does not
+    apply, because no patient is real (the paper's checklist answers the consent question with "We
+    curated a synthetic dataset.").
+  data_provenance_source: src-arxiv-2205-09148-v3
+  data_provenance_quote: we used the 2010-2015 US Census data from the State of New York
+  contamination_risk: medium
+  contamination_risk_note: Every split, labels included, has been public on Figshare since 2022 and
+    is mirrored on Hugging Face, and later work reformats it as text (StreamBench's format), so a
+    route into language-model training data is plausible. The patients are synthetic, so nothing
+    leaks about real people, but the generator's regularities are learnable from the training split
+    by design. No source read shows contamination evidence.
+  contamination_evidence: []
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The paper and the README release it "under the CC-BY licence"; both Figshare
+    records' licence field is CC BY 4.0. The knowledge base and the generating system stay
+    proprietary to Dialogue Health Technologies and are not released.
+  dataset_licence_source: src-figshare-api-ddxplus-fr
+  dataset_licence_quote: '"name": "CC BY 4.0"'
+  size:
+    - count: 1300000
+      unit: synthetic patients (roughly; no source read gives the exact count)
+      source: src-arxiv-2205-09148-v3
+      quote: We release a large-scale synthetic benchmark dataset of roughly 1.3 million patients
+        covering 49 pathologies, 110 symptoms and 113 antecedents
+    - count: 49
+      unit: pathologies
+      source: src-arxiv-2205-09148-v3
+      quote: This group contains 49 pathologies covering 110 symptoms and 113 antecedents
+    - count: 223
+      unit: evidences (110 symptoms and 113 antecedents)
+      source: src-arxiv-2205-09148-v3
+      quote: This group contains 49 pathologies covering 110 symptoms and 113 antecedents
+  size_note: Split 80/10/10 into train, validation and test, stratified by pathology ("We divide the
+    dataset into training, validation, and test subsets based on an 80%-10%-10% split"); the paper
+    gives no per-split counts.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Mila (Mila-Quebec AI Institute), the paper's authors, with Dialogue Health
+    Technologies supplying the knowledge base and the generating system
+  maintainer_basis:
+    reason: The repository and its project page sit in Mila's GitHub organisation (mila-iqia). The
+      repository started under an author's personal account and now answers at mila-iqia (the GitHub
+      API redirects the old path; the paper's v3 and CITATION.cff still give the old URL). Dialogue
+      provided the two proprietary components but does not publish the dataset.
+    source: src-github-mila-ddxplus-readme
+    quote: https://mila-iqia.github.io/ddxplus/
+  maintainer_type: academic-lab
+  maintainer_type_note: Mila is a research institute affiliated with Quebec universities;
+    academic-lab is the nearest term, nonprofit the alternative.
+  submission_process:
+    - literature-only
+  submission_process_note: No board, results page or submission route. The project page lists citing
+    papers; results appear in those papers.
+  independence_flags: []
+  independence_flags_note: Deliberately empty, not no-known-conflict. The ground truth is the output
+    of a commercial company's proprietary diagnosis system, supplied by Dialogue Health
+    Technologies, where one author worked; no flag term describes a benchmark whose labels are a
+    vendor system's output. The paper's baselines are the authors' adaptations of others' methods.
+  independence_flags_source: src-arxiv-2205-09148-v3
+  independence_flags_quote: Both the knowledge base and the rule-based AD system used throughout
+    this work are provided by Dialogue Health Technologies Inc.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_source: src-arxiv-2205-09148-v3
+  compute_tier_quote: Training is performed using a NVIDIA V100 GPU
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The data and the per-patient initial evidence are public, and scoring is set statistics
+      computed by the released metrics code; a run needs no human or physical step. Regenerating the
+      data is not possible, because the knowledge base and DXA are proprietary, but no score needs
+      it.
+    source: src-arxiv-2205-09148-v3
+    quote: The code contains a readme with instructions needed to reproduce the main experimental
+      results
+  harness_availability: reference-implementation-only
+  harness_availability_note: The repository's code trains and evaluates the paper's two baselines
+    (code/aarlc, code/basd, each with its own metrics module); it is not a scorer designated for
+    other entrants, and later work writes its own (MEDDxAgent inherits StreamBench's format).
+  harness_source: src-github-mila-ddxplus-readme
+  harness_quote: Code for reproducing results in the paper can be found in
+  code_licence: null
+  code_licence_note: The repository has no licence file and GitHub's licence metadata is empty (API,
+    read 2026-11-04). The paper says the code's licence was attached in the supplementary material,
+    which was not read.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile's subset_used (which split, and how many patients were sampled from it): the turn
+  # budget (30 in the paper; MEDDxAgent's simulator has its own), recorded as max_steps; who plays the patient
+  # (a lookup into the record, as in the paper, or a language-model simulator, as in MEDDxAgent); and whether the
+  # system was trained on DDXPlus's training split or prompted without it.
+  material_extra:
+    - max_steps
+    - user_simulator
+    - training_data_policy
+
+aggregation_policy: none-by-design
+aggregation_policy_note: The paper reports the seven metrics side by side in Table 3 and computes no
+  figure that combines them; it says which metrics matter for which training target.
+aggregation_policy_basis:
+  reason: GTPA@1 is said to matter for agents trained on the pathology and GTPA with the
+    differential metrics for agents trained on the differential, so no single number ranks both.
+  source: src-arxiv-2205-09148-v3
+  quote: Additionally, we calculate the recall (DDR), precision (DDP) and F1 score (DDF1) of the
+    differentials
+headline_metric: null
+
+homepage: https://mila-iqia.github.io/ddxplus/
+repository: https://github.com/mila-iqia/ddxplus
+dataset_url: https://figshare.com/articles/dataset/DDXPlus_Dataset_English_/22687585
+dataset_url_note: The English release, which the project page recommends. The French original is
+  https://figshare.com/articles/dataset/DDXPlus_Dataset/20043374.
+leaderboard_url: null
+
+versions:
+  - version: french
+    label: French original (Figshare article 20043374)
+    version_kind: revision
+    released: 2022-06-09
+    changes: The original release, with French names for evidences, values and pathologies, on which
+      every result in the paper was obtained. Figshare holds 15 versions of the record. Up to
+      version 14 (2022-10-12) the patient files are the French ones, re-uploaded once in version 9
+      (2022-06-18) with slightly different sizes. Version 15 (2026-03-11) lists patient files whose
+      checksums match the English release's, while its README describes a french_version and an
+      english_version folder.
+    frozen: false
+    sources:
+      - src-github-mila-ddxplus-readme
+      - src-figshare-api-ddxplus-fr-v14
+      - src-figshare-api-ddxplus-fr
+  - version: english
+    label: English release (Figshare article 22687585)
+    version_kind: revision
+    released: 2023-04-24
+    changes: The same patients in the same format, with English names and non-semantic codes (E_ for
+      evidences, V_ for values) in place of the French names. The maintainers say it should give the
+      same results as the French version. Version 2 of the record (2026-03-09) replaced the
+      conditions file and kept the patient files.
+    frozen: true
+    sources:
+      - src-github-mila-ddxplus-readme
+      - src-figshare-api-ddxplus-en
+      - src-github-mila-ddxplus-project-page
+
+tags:
+  - differential-diagnosis
+  - automatic-symptom-detection
+  - synthetic-patients
+  - interactive-diagnosis
+  - telemedicine
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S6-T04)
+  added_on: 2026-11-04
+  last_verified: 2026-11-04
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2205-09148-v3
+    - src-arxiv-2205-09148
+    - src-neurips-2022-ddxplus
+    - src-github-mila-ddxplus-readme
+    - src-github-mila-ddxplus-project-page
+    - src-figshare-api-ddxplus-fr
+    - src-figshare-api-ddxplus-fr-v14
+    - src-figshare-api-ddxplus-en
+    - src-arxiv-2502-19175-v2
+    - src-arxiv-2603-24844-v1
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, with windows that keep the authors' contact
+    lines and the printed synthetic patients out; its abstract page for the dates and venue comment; the
+    NeurIPS proceedings page for the track and the published DOI; the README and the project page's HTML
+    at commit 69e8cf5, with scripts and styles stripped; Figshare's API records of both datasets (the
+    French at versions 15 and 14, with versions 1 to 13 compared by checksum only), read on the API host
+    because figshare.com challenges robots.txt; and MEDDxAgent's and multi-answer RL's PDFs as evidence
+    of use outside the maintainers.
+  confidence: medium
+  review_checks:
+    - check: ground_truth_source is held-out-labels, but every label is a generator's output, the
+        sampled pathology and DXA's differential, not a clinician's. simulation was weighed and not
+        used because the vocabulary keeps it for physics and environment simulators; whether a
+        vendor rule-based system's output needs its own term is open (bench tag-gap refuses
+        ground_truth_source as not a classified field, so it is recorded here only). Patients whose
+        sampled pathology DXA left out were discarded, which ties the data to that system's
+        behaviour.
+      field: ground_truth_source
+      source: src-arxiv-2205-09148-v3
+      quote: We further proceed by verifying if the underlying synthesized disease is part of the
+        generated differential diagnosis
+    - check: The README calls the generating system "a commercial rule-based ASD system"; the paper
+        and both Figshare records call it a rule-based AD system. The paper's account was used.
+      field: data.data_provenance
+      source: src-github-mila-ddxplus-readme
+      quote: a proprietary medical knowledge base and a commercial rule-based ASD system
+    - check: The French Figshare record's current version 15 (2026-03-11) lists patient zips whose
+        computed_md5 equals the English record's (e.g. the test split's), while version 14's differ.
+        The README and project page still call the French record the original on which the paper's
+        results were obtained. Whether version 15 replaced the French patient files with the English
+        ones by mistake was not established; a claim on the French data should pin version 14 or
+        earlier.
+      field: versions
+      source: src-figshare-api-ddxplus-fr
+      quote: '"computed_md5": "6fd53d331cf19ed4439bf4f46b92ee94"'
+    - check: The French and English releases are modelled as two revisions of one benchmark (same
+        maintainer, same patients, changed names), not as an edition or a separate benchmark. The
+        French record's 15 Figshare versions are not modelled one by one; only version 9's change to
+        the patient files (sizes differ by 266 bytes per file) touched the data before 2026, and
+        what it changed is not documented.
+      field: versions
+      source: src-figshare-api-ddxplus-fr-v14
+      quote: '"computed_md5": "8d56376b0312ae59c0a90f186f3db7ad"'
+    - check: clinical-dialogue is secondary for the questioning, scored by IL and PER. The
+        interaction is a sequence of structured symptom queries answered from a record, not
+        natural-language conversation; if the term needs language, drop it.
+      field: domain.secondary
+    - check: search-exploration stands for evidence acquisition under a 30-turn budget (PER beside
+        IL). The vocabulary has no term for asking the questions that elicit missing information,
+        which is what DDXPlus and its LLM successors test; logged as a missing term with bench
+        tag-gap.
+      field: capability
+      source: src-arxiv-2502-19175-v2
+      quote: provided with partial patient information and is expected to proactively ask questions
+        and gather information
+    - check: The paper says the data is for research and that a model trained on it should not be
+        deployed without rigorous evaluation; it covers one chief complaint (49 of the knowledge
+        base's 440 pathologies) and a New York census population. Generalisation beyond either is
+        not scored.
+      field: description
+      source: src-arxiv-2205-09148-v3
+      quote: the released dataset is meant for research purposes
+    - check: Later work runs DDXPlus on small samples (MEDDxAgent 100 patients) or in other formats
+        (StreamBench's text, exact-string coverage), and scores the pathology rather than the
+        differential, so its numbers are not comparable with Table 3's. Derivatives built on it
+        (StreamBench's DDXPlus task, MedEinst's 49-disease counterfactual pairs) were not read and
+        have no lineage rows.
+      field: as_used
+      source: src-arxiv-2502-19175-v2
+      quote: For DDxPlus, we inherit the format from StreamBench
+    - check: released is the arXiv v1 date (2022-05-18), the templates' convention. Figshare dates
+        the data's first version 2022-06-09, and the abstract page's v3 comment calls it the camera
+        ready.
+      field: released
+      source: src-arxiv-2205-09148
+      quote: 'Comments: Camera ready. NeurIPS 2022 Datasets and Benchmarks Track'
+    - check: The paper says the code's licence came with the supplementary material, which was not
+        read, and the public repository carries none; code_licence is null.
+      field: execution.code_licence
