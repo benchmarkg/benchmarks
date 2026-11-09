@@ -1,0 +1,658 @@
+# data/benchmarks/robotics-embodiment/bench2drive.yaml
+#
+# P1-S5-T03, robotics-embodiment entry 20. Filled from the Bench2Drive paper (arXiv 2406.03877, NeurIPS 2024 Datasets
+# and Benchmarks), read in full as its v3 PDF (2024-11-27, the latest version), whose Source (committed for
+# carla-leaderboard) had its extract rebuilt to hold this entry's passages too, and its abstract page; the repository
+# README and the 0.0.4 update notes, pinned at commit 7ec25d1 (the 0.0.4 release), with the repository's LICENSE file
+# and GitHub's API records of its branches, commits and route files read but not made Sources; Hugging Face's API
+# record of the Base training set (no terms accepted); the abstract pages of Bench2Drive-R (arXiv 2412.09647) and
+# Bench2Drive-Speed (arXiv 2603.25672), read to decide lineage; and the abstract pages of two October 2026 papers,
+# Comfortably Stuck (arXiv 2610.21741), an audit of the protocol, and DriveMind (arXiv 2610.32069), which reports
+# scores, with SimLingo's abstract page (arXiv 2503.09594) and CARLA's evaluation page (both committed for
+# carla-leaderboard). Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+
+id: bench2drive
+name: Bench2Drive
+aliases:
+  - Bench2Drive-220
+  - bench2drive220
+aliases_note: >
+  Papers call the evaluation routes "Bench2Drive-220" or "bench2drive220", the name of the original route
+  file; the README uses the latter. The derivatives named Bench2Drive-R, -Speed, -Robust and -VL are separate
+  benchmarks (see lineage), not aliases.
+tagline: Closed-loop end-to-end driving in CARLA on 220 short routes, five per scenario, with an
+  official training set.
+description: >
+  A benchmark for end-to-end autonomous driving models in closed loop, from Shanghai Jiao Tong University's
+  ReThinkLab (Thinklab), built on CARLA and the scenarios of the CARLA Leaderboard 2.0. Instead of the
+  leaderboard's routes of 7 to 10 km, it scores 220 routes of about 150 m, five for each of 44 interactive
+  scenarios (Leaderboard 2.0's scenarios plus five of its own) in different towns and weathers, so that
+  each route tests one skill. The agent drives from a start to a destination given target waypoints and
+  its raw sensors, and each route scores route completion times a Leaderboard 2.0 infraction penalty.
+  The headline is the driving score (the mean over routes) and the success rate (the share of routes completed
+  with no infraction); five skill groups (merging, overtaking, emergency braking, giving way, traffic
+  signs), driving efficiency and comfort are reported beside them. It also releases an official training
+  set collected in CARLA by the maintainers' reinforcement-learning expert, Think2Drive (Mini 10, Base
+  1,000 and Full 13,638 clips, about 2 million annotated frames), so that methods can be compared at the
+  algorithm level. Users run the released harness on CARLA 0.9.15 themselves; there is no submission server,
+  and the README keeps a results table. Version 0.0.4 (August 2026) added a new 220-route set, on which
+  the README's current table is computed, and a training set of 1,100 routes uniform over the scenarios.
+self_description:
+  source: src-arxiv-2406-03877
+  quote: we present Bench2Drive, the first benchmark for evaluating E2E-AD systems' multiple
+    abilities in a closed-loop manner.
+external_ids:
+  arxiv: '2406.03877'
+paper:
+  title: 'Bench2Drive: Towards Multi-Ability Benchmarking of Closed-Loop End-To-End Autonomous Driving'
+  arxiv: '2406.03877'
+  version_read: v3
+  source: src-arxiv-2406-03877-v3
+released: 2024-06-05
+released_note: The release of the Full training set, the evaluation tools, the baseline code and the
+  benchmark results, as the README's news dates it. The Mini and Base training splits came first
+  (2024-04-27), and arXiv v1 followed on 2024-06-06.
+released_source: src-github-bench2drive-readme
+released_quote: '[2024/06/05] Bench2Drive realases the Full dataset (10000 clips), evaluation tools, baseline
+  code, and benchmark results.'
+release_venue: NeurIPS 2024 Track on Datasets and Benchmarks
+release_venue_source: src-arxiv-2406-03877
+release_venue_quote: 'Comments: Accepted by NeurIPS 2024 Datasets and Benchmarks Track.'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/autonomous-driving-planning
+  secondary: []
+domain_basis:
+  reason: The agent drives a simulated vehicle along a route in traffic and is scored on the driving
+    outcome (route completion, infractions, success), not on perception accuracy, which is the
+    leaf's definition; closed-loop control is carried by evaluation_method, as for
+    carla-leaderboard.
+  source: src-arxiv-2406-03877
+  quote: Its evaluation protocol requires E2E-AD models to pass 44 interactive scenarios under
+    different locations and weathers which sums up to 220 routes
+domain_considered_and_rejected:
+  - term: robotics-embodiment/navigation
+    reason: Each route is a drive from a source to a destination, but the destination is given as
+      target waypoints on a road, and the score counts traffic infractions in a scenario; the
+      driving leaf is the narrower fit, as for carla-leaderboard.
+  - term: vision/driving-perception-3d
+    reason: The official training set carries 3D boxes, depth, segmentation and maps, and many
+      entrants train perception heads, but nothing perceptual is scored; only the drive is.
+  - term: robotics-embodiment/embodied-instruction-following
+    reason: The route comes as waypoints; no natural-language instruction is part of the task.
+      Bench2Drive-VL, which adds language, is a separate benchmark (lineage).
+
+capability:
+  - sensorimotor-control
+capability_basis:
+  sensorimotor-control:
+    reason: The agent is queried at every simulation step from its own sensors, the simulated
+      traffic reacts to it, and the score is what the simulator records of the drive. Many entrants
+      output a trajectory that their agent code turns into controls with a PID controller, but the
+      loop stays closed, so the exclusion for a plan tracked open-loop in a non-reactive simulation
+      does not apply.
+    source: src-arxiv-2406-03877
+    quote: we present Bench2Drive, the first benchmark for evaluating E2E-AD systems' multiple
+      abilities in a closed-loop manner.
+capability_considered_and_rejected:
+  - term: planning
+    reason: Methods plan trajectories, but the scored object is the executed closed-loop drive, not
+      a planned sequence; the planning tie-break is for NAVSIM-style open-loop plans.
+  - term: perception
+    reason: Entrants must perceive from cameras and LiDAR, but no percept is scored.
+  - term: reliability-consistency
+    reason: The short routes were designed to lower the variance of the driving score, but the
+      ranking is a mean, and no consistency across repeated runs is scored.
+    source: src-arxiv-2406-03877
+    quote: they are tested in fixed routes (e.g., Town05Long and Longest6 in CARLA) with the driving
+      score as metrics, which is known for high variance
+  - term: long-horizon-execution
+    reason: Each route is about 150 m with one scenario, so failure early in a long route cannot
+      compound; that is the design's point.
+    source: src-arxiv-2406-03877-v3
+    quote: The evaluation protocol includes 220 short routes, each only around 150 meters in length
+      and containing a single specific scenario.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Each route's score is route completion discounted by an infraction penalty, and success is
+    completing it with no infraction, both computed from a simulated drive in CARLA by the harness's
+    monitors; taxonomy/evaluation-methods.yaml gives CARLA's driving score as simulation-rollout's
+    example of partial credit.
+  source: src-arxiv-2406-03877-v3
+  quote: This metric follows CARLA [28] official metric as reference. It considers both route
+    completion and penalty for infractions.
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: The driving score multiplies completion and penalty, and the README reports skill,
+      efficiency and comfort beside it, but all come from the same rollouts and none is combined
+      with the headline.
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The entrants are driving models that act in the simulator, trained by imitation on the
+    official training set or their own CARLA data (UniAD, VAD, TCP, ThinkTwice, DriveAdapter,
+    DriveTransformer) or built on vision-language models (SimLingo, Drive-π0, DriveMind), and the
+    data comes from a reinforcement-learning expert. rl-policy is the subjects vocabulary's term for
+    a learned controller scored by acting in an environment, as for carla-leaderboard.
+  source: src-github-bench2drive-readme
+  quote: '| [LEAD](https://arxiv.org/abs/2512.20563) | **95.59** | **87.28** |'
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: Most entrants are imitation-trained, but they are scored by acting in closed loop, which
+      the subjects vocabulary sends to rl-policy (its exclusion covers only open-loop scoring on
+      logs).
+  - term: classical-algorithm
+    reason: The rule-based PDM-Lite expert can drive the routes, but no source read lists a
+      rule-based system on the board; the paper's expert, Think2Drive, is a learned RL policy using
+      privileged information and is the data collector, not an entrant.
+    source: src-arxiv-2406-03877-v3
+    quote: Notably, after the release of Bench2Drive, the rule-based expert PDM-Lite [61]2 is open
+      sourced
+  - term: agent-scaffold
+    reason: SimLingo and DriveMind build on vision-language models, but each is a driving model run
+      in the harness, not a harness looping a model with tools.
+    source: src-arxiv-2610-32069
+    quote: On Bench2Drive, adding belief tracking to the same driving pipeline improves the Driving
+      Score (DS) from 68.50 to 81.37 and the Success Rate (SR) from 41.36% to 54.09%.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers report Bench2Drive scores every month of 2026 (an arXiv search on 2026-11-05 lists
+    over thirty since August), DriveMind among them in October, and an October 2026 audit calls it
+    the dominant closed-loop benchmark. The maintainers released 0.0.4 in August 2026.
+  source: src-arxiv-2610-21741
+  quote: Bench2Drive, built on the CARLA simulator, has become the dominant benchmark for it.
+activity: no-submission-channel
+activity_basis:
+  reason: Users run the harness locally on the public routes and compute the metrics with the
+    released scripts; no source describes a server, form or pull-request route by which outsiders
+    enter results. The README's table is the maintainers' (see governance).
+  source: src-github-bench2drive-readme
+  quote: Make sure there are exactly 220 routes in your json.
+events: []
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: LEAD (first in the README's 0.0.4 table)
+    source: src-github-bench2drive-readme
+    observed_on: 2026-11-05
+    quote: '| [LEAD](https://arxiv.org/abs/2512.20563) | **95.59** | **87.28** |'
+  - system: DriveMind
+    source: src-arxiv-2610-32069
+    observed_on: 2026-11-05
+    quote: On Bench2Drive, adding belief tracking to the same driving pipeline improves the Driving
+      Score (DS) from 68.50 to 81.37 and the Success Rate (SR) from 41.36% to 54.09%.
+  - system: SimLingo
+    source: src-arxiv-2503-09594
+    observed_on: 2026-11-05
+    quote: SimLingo obtains state-of-the-art performance on the widely used CARLA simulator on the
+      Bench2Drive benchmark
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Route completion, the infractions (collisions, red lights, stop signs,
+  failure to yield, scenario timeouts, route deviation, blocking) and the speed checks for
+  efficiency are recorded by the harness's monitors on the simulator's state; comfort is computed
+  from the logged ego trajectory against nuPlan-derived bounds. Since 0.0.2 the speed check runs at
+  20 checkpoints and is kept out of the driving score.
+ground_truth_source_source: src-arxiv-2406-03877-v3
+ground_truth_source_quote: we increase the number of checkpoints to 20. Speed check is now performed
+  every 5% of the total route length, and it is excluded from the driving score calculation.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The routes, the harness and the CARLA build are public, and every published score is a
+    local run on them; nothing is held back.
+  source: src-github-bench2drive-v004-update
+  quote: The xml file is at `leaderboard/data/bench2drive_0.0.4_val.xml`
+
+task:
+  exists: true
+  input:
+    - the route as target waypoints from a source location to a destination in one town and weather
+    - the raw sensors the agent's code requests from CARLA; the official training set uses a
+      nuScenes-like suite (6 cameras, 1 LiDAR, 5 radars, IMU and GNSS) and an HD map
+  output: Vehicle control at every simulation step until the route ends, the agent is blocked, it
+    deviates from the route, or a timeout stops it.
+  scoring: Per route, route completion (percent) times the product of the Leaderboard 2.0 penalty
+    factors of its infractions (pedestrian collision 0.5, vehicle 0.6, other 0.65, red light,
+    scenario timeout, too slow and failure to yield 0.7); the minimum-speed penalty was removed in
+    0.0.2. The driving score is the mean over the 220 routes (a missing or crashed route counts as
+    0); the success rate is the share of routes completed with no infraction. Skill scores are
+    percentages over the scenarios of each of five groups, and efficiency (ego speed against nearby
+    vehicles at 20 checkpoints) and comfort (smooth segments of the trajectory) are reported beside
+    them.
+  scoring_source: src-arxiv-2406-03877-v3
+  scoring_quote: Pedestrian Collision 0.50 Vehicles Collision 0.60 Other Collision 0.65 Running Red
+    Light 0.70 Scenario Timeout 0.70 Too Slow 0.70 No Give Way 0.70
+  metric_range:
+    - 0
+    - 100
+  item_definition: A route of about 150 m in one town and weather, containing one scenario; success
+    means reaching the destination with no infraction.
+  item_definition_source: src-arxiv-2406-03877-v3
+  item_definition_quote: A route is deemed successful if the ego vehicle reaches its destination
+    without any rule infractions.
+  source: src-arxiv-2406-03877-v3
+  quote: The evaluation protocol includes 220 short routes, each only around 150 meters in length
+    and containing a single specific scenario.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The route files ship in the repository (bench2drive220.xml, and since 0.0.4
+    bench2drive_0.0.4_val.xml), and the training sets download from ungated Hugging Face datasets
+    (Base; Full in two repositories; 0.0.4 with and without depth) or Baidu Cloud.
+  access_basis:
+    reason: The scored routes and the training data are public and every score is computed locally.
+    source: src-hf-api-bench2drive
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The routes, the metric code and the training data change in labelled versions (0.0.1 to
+      0.0.4), each with a code commit or branch, and the README names the version in use.
+    source: src-github-bench2drive-readme
+    quote: V0.0.4(Currently in use)
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: The routes are authored by the maintainers on CARLA's towns, placing
+    Leaderboard 2.0's scenarios (and five new ones, see size) where a traversal of the maps finds
+    they can trigger; every drive is simulated. The training clips are drives by the Think2Drive
+    expert in CARLA, kept only when free of infractions and filtered by hand for rendering bugs
+    (paper, Appendix A), and the training set comes from the same expert ("Bench2Drive has an
+    official training dataset collected by state-of-the-art expert model Think2Drive [31]",
+    src-arxiv-2406-03877-v3).
+  data_provenance_source: src-arxiv-2406-03877
+  data_provenance_quote: Bench2Drive's official training data consists of 2 million fully annotated
+    frames, collected from 13638 short clips uniformly distributed under 44 interactive scenarios
+  contamination_risk: medium
+  contamination_risk_note: >
+    The scored routes are public, and the official training set is collected in the same towns and scenarios
+    by design, so a route by which methods are tuned or trained on the scored routes is plausible; the
+    maintainers themselves suggest the 10-route Dev10 subset for ablations to avoid overfitting the 220
+    routes, and 0.0.4 added a separate 220-route set "for more reliable evaluation". No source evidences
+    that any method trained on the scored routes.
+  contamination_risk_source: src-github-bench2drive-readme
+  contamination_risk_quote: It is suggested to be used for ablation study to avoid overfitting the
+    whole bench2drive220 routes.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: A driving score of 100 means every route completed with no infraction,
+    which is also a 100% success rate. Bench2Drive's driving score follows CARLA's official metric
+    ("This metric follows CARLA [28] official metric as reference", src-arxiv-2406-03877-v3), whose
+    bound the leaderboard states. The top 0.0.4 row (LEAD) is 95.59 driving score and 87.28%
+    success.
+  ceiling_anchor_type_basis:
+    reason: The metric's own bound, inherited from the CARLA leaderboard's driving score.
+    source: src-carla-leaderboard-evaluation-v2-1
+    quote: Has a maximum value of 100.
+  dataset_licence: Apache-2.0
+  dataset_licence_note: The Hugging Face datasets are tagged apache-2.0, and the paper's Appendix I
+    puts all data, code and checkpoints under Apache License 2.0 (see review_checks). The README
+    instead puts "All assets and code" under CC-BY-NC-ND "unless specified otherwise", which the
+    Hugging Face tag may be.
+  dataset_licence_source: src-hf-api-bench2drive
+  dataset_licence_quote: '"cardData":{"license":"apache-2.0","viewer":false}'
+  size:
+    - count: 220
+      unit: evaluation routes (44 scenarios x 5, each about 150 m, one scenario per route)
+      subset: bench2drive220 (0.0.1 to 0.0.3)
+      source: src-arxiv-2406-03877
+      quote: Its evaluation protocol requires E2E-AD models to pass 44 interactive scenarios under
+        different locations and weathers which sums up to 220 routes
+    - count: 220
+      unit: evaluation routes (44 scenarios x 5), a new set
+      subset: bench2drive_0.0.4_val (0.0.4)
+      source: src-github-bench2drive-v004-update
+      quote: We released a new evaluation set with 220 routes (44 scenarios * 5) in it.
+    - count: 44
+      unit: interactive scenarios (Leaderboard 2.0's, plus 5 designed by the maintainers)
+      subset: all versions
+      source: src-arxiv-2406-03877-v3
+      quote: Further, we design 5 more scenarios beyond Leaderboard V2 to enhance behavior diversity
+    - count: 13638
+      unit: training clips (about 2 million annotated frames at 10 Hz)
+      subset: Full training set (0.0.1 to 0.0.3)
+      source: src-arxiv-2406-03877
+      quote: Bench2Drive's official training data consists of 2 million fully annotated frames,
+        collected from 13638 short clips uniformly distributed under 44 interactive scenarios
+    - count: 1000
+      unit: training clips
+      subset: Base training set (the baselines' set; Mini is 10 clips)
+      source: src-github-bench2drive-readme
+      quote: '[2024/04/27] Bench2Drive releases the Mini (10 clips) and Base (1000 clips) split of the
+        official training data.'
+    - count: 1100
+      unit: training routes (44 scenarios x 25)
+      subset: 0.0.4 training set
+      source: src-github-bench2drive-v004-update
+      quote: We released a new training set collected by Think2Drive, containing 44 scenarios * 25
+        routes = 1100 routes.
+    - count: 10
+      unit: routes selected from the 220
+      subset: Dev10
+      source: src-github-bench2drive-readme
+      quote: The 10 clips are carefully selected from the official 220 routes, to be both difficult
+        and representative with low variance.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: ReThinkLab (Thinklab), Shanghai Jiao Tong University
+  maintainer_basis:
+    reason: The paper's datasheet names the authors and ReThinkLab at Shanghai Jiao Tong University
+      as the dataset's maintainers; the repository is in the Thinklab-SJTU organisation and the
+      datasets under the rethinklab account on Hugging Face ('"author":"rethinklab"',
+      src-hf-api-bench2drive).
+    source: src-arxiv-2406-03877-v3
+    quote: All authors and potentially new members of ReThinLab in Shanghai Jiao Tong University
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: >
+    No route takes outsiders' results. The README keeps one results table for the version in use (0.0.4:
+    ten methods, including outside ones such as LEAD, SimLingo and Drive-π0, with skill, efficiency and
+    comfort scores) and images of the deprecated versions' tables. The 0.0.4 numbers are on a route set
+    released in August 2026, after the outside methods' papers, which suggests the maintainers ran them,
+    but no source says who ran each row (see review_checks). Most results appear only in their authors'
+    papers.
+  submission_process_source: src-github-bench2drive-readme
+  submission_process_quote: V0.0.4(Currently in use)
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-bench2drive-readme
+      quote: In our latest work [DriveTransformer (ICLR25)]
+  independence_flags_note: The maintainers' own methods are on their board (DriveTransformer, which
+    the README calls their work; the paper's baselines), and the official training data comes from
+    their own expert, Think2Drive. Whether ThinkTwice and DriveAdapter are also the maintainers'
+    work is not stated in the sources read. No sponsor or prize is described.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2610-21741
+    quote: We show that its evaluation protocol itself contains pitfalls that can misrepresent the
+      models scored on it.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs CARLA 0.9.15 with its additional maps on the user's GPUs,
+    launched by the harness. The paper's Table 5 puts an evaluation of the 220 routes at 4 A6000
+    GPUs for 6 hours (AD-MLP, TCP) to 8 H800 GPUs for 2 days (VAD, UniAD); the README recommends one
+    GPU for two parallel tasks.
+  compute_tier_source: src-github-bench2drive-readme
+  compute_tier_quote: Download and setup CARLA 0.9.15
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run is automatic from public routes and code, but it needs the CARLA build, which the
+      maintainers call unstable; routes on which CARLA crashes count as failures, so a score can
+      depend on the run as well as on the agent.
+    source: src-github-bench2drive-readme
+    quote: It is normal that certain model can not finsih certain routes, no matter how many times
+      we restart the evaluation.
+  reproducibility_blockers:
+    - specific-simulator-build
+  reproducibility_blockers_note: The setup pins CARLA 0.9.15 (the Linux release with
+    AdditionalMaps), with the repository's own copies of the leaderboard and scenario_runner code,
+    which change the metric between versions (0.0.2 removed the minimum-speed penalty and doubled
+    TickRunTime from 2000 to 4000). The paper names "CARLA v2" and no build number.
+  reproducibility_blockers_source: src-github-bench2drive-readme
+  reproducibility_blockers_quote: Download and setup CARLA 0.9.15
+  harness_availability: official-harness
+  harness: Thinklab-SJTU/Bench2Drive (leaderboard/scripts/run_evaluation_multi_uniad.sh and
+    run_evaluation_debug.sh with the team agent; tools/merge_route_json.py,
+    tools/ability_benchmark.py and tools/efficiency_smoothness_benchmark.py for the metrics)
+  harness_source: src-github-bench2drive-readme
+  harness_quote: '# Merge eval json and get driving score and success rate'
+  code_licence: CC-BY-NC-ND-4.0
+  code_licence_note: The README's licence statement; the LICENSE file is the
+    Attribution-NonCommercial-NoDerivatives 4.0 International text (read 2026-11-05, not a quoted
+    Source), GitHub's licence metadata reports NOASSERTION, and the paper says Apache License 2.0
+    (see review_checks).
+  code_licence_source: src-github-bench2drive-readme
+  code_licence_quote: All assets and code are under the [CC-BY-NC-ND](./LICENSE) unless specified
+    otherwise.
+  est_runtime_hours:
+    min: 6
+    max: 48
+    basis: The paper's Table 5 for evaluating the 220 routes, 4 A6000 GPUs for 6 hours (AD-MLP, TCP)
+      to 8 H800 GPUs for 2 days (VAD, UniAD), with evaluation speeding up linearly with more GPUs.
+    source: src-arxiv-2406-03877-v3
+  est_runtime_hours_source: src-arxiv-2406-03877-v3
+  est_runtime_hours_quote: 4 A6000 * 6 hours 4 A6000 * 6 hours 8 H800 * 2 days 8 H800 * 2 days
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The simulation profile (simulator, simulator_version, hardware_platform, subset_used, selection_strategy,
+  # n_samples) resolves for simulation-rollout x rl-policy. simulator and simulator_version are listed again to make
+  # the CARLA build explicit (0.9.15, with the repository's leaderboard and scenario_runner at the version's commit),
+  # since the metric code changed between versions: 0.0.1 scores carry the minimum-speed penalty and the 2000-tick
+  # limit, and 0.0.4 scores are on a different route set. subset_used records the route set (bench2drive220,
+  # bench2drive_0.0.4_val, or Dev10). Also material: the training data (the official Base, Full or 0.0.4 sets,
+  # or self-collected data such as PDM-Lite's), since an algorithm-level comparison on the official data was the
+  # benchmark's purpose.
+  material_extra:
+    - simulator
+    - simulator_version
+    - subset_used
+    - training_data_policy
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The driving score and the success rate are means over all 220 routes. The five skill
+    scores and their mean, efficiency and comfort are reported beside them, not folded in.
+  source: src-arxiv-2406-03877-v3
+  quote: 'we summarize 5 advanced skills for urban driving: Merging, Overtaking, Give Way, Traffic Sign,
+    Emergency Brake as in Table 2 and report the score of each skill.'
+
+homepage: https://thinklab-sjtu.github.io/Bench2Drive/
+repository: https://github.com/Thinklab-SJTU/Bench2Drive
+dataset_url: https://huggingface.co/datasets/rethinklab/Bench2Drive
+
+versions:
+  - version: 0.0.1
+    label: Bench2Drive 0.0.1 (initial version, bench2drive220)
+    version_kind: edition
+    released: 2024-06-05
+    items: 220
+    changes: The first version, with the 220 evaluation routes, the Mini, Base and Full training
+      sets, the evaluation toolkit and the paper's baselines; driving score with Leaderboard 2.0's
+      minimum-speed penalty and a 2000-tick limit, success rate and multi-ability scores. Code at
+      commit ee62902.
+    breaking: true
+    superseded_by: 0.0.2
+    frozen: true
+    sources:
+      - src-github-bench2drive-readme
+      - src-arxiv-2406-03877
+      - src-arxiv-2406-03877-v3
+  - version: 0.0.2
+    label: Bench2Drive 0.0.2 (efficiency and smoothness metrics)
+    version_kind: revision
+    released: 2024-08-19
+    items: 220
+    changes: The same routes with the driving score changed (the minimum-speed penalty removed,
+      TickRunTime raised from 2000 to 4000) and driving efficiency and smoothness (comfort) added;
+      the UniAD and VAD agents' back-camera extrinsic fixed. All baselines were re-run (results
+      2024-08-27); the paper's v3 reports these. Code at commit cd1883c.
+    breaking: true
+    supersedes_version: 0.0.1
+    superseded_by: 0.0.3
+    frozen: true
+    sources:
+      - src-github-bench2drive-readme
+  - version: 0.0.3
+    label: Bench2Drive 0.0.3 (ability-calculation fix)
+    version_kind: revision
+    released: 2024-10-14
+    items: 220
+    changes: Typos in the multi-ability calculation corrected and the skill results updated; driving
+      score and success rate unchanged. The README calls it the last major version before 0.0.4;
+      branch 0.0.3.
+    breaking: false
+    supersedes_version: 0.0.2
+    superseded_by: 0.0.4
+    frozen: true
+    sources:
+      - src-github-bench2drive-readme
+  - version: 0.0.4
+    label: Bench2Drive 0.0.4 (new 220-route set and uniform training set)
+    version_kind: edition
+    released: 2026-08-06
+    items: 220
+    changes: A new evaluation set of 220 routes (44 scenarios x 5, bench2drive_0.0.4_val.xml) on
+      which the README's table was re-made for ten methods, and a new Think2Drive training set of
+      1,100 routes (25 per scenario) with 3D occupancy, depth as npz and annotation fixes;
+      skill-calculation code changed in the same commit. The README marks it "currently in use";
+      bench2drive220.xml stays in the repository. Branch 0.0.4 (commit 7ec25d1).
+    breaking: true
+    supersedes_version: 0.0.3
+    frozen: false
+    sources:
+      - src-github-bench2drive-readme
+      - src-github-bench2drive-v004-update
+
+subsets:
+  - id: bench2drive#dev10
+    label: Dev10 (10 routes from the 220, for development)
+    items: 10
+    scored_separately: true
+    evidence:
+      - source: src-github-bench2drive-readme
+        quote: The 10 clips are carefully selected from the official 220 routes, to be both
+          difficult and representative with low variance.
+    notes: Proposed with DriveTransformer (ICLR 2025) for quick development and ablations; papers
+      report it apart from the 220-route score.
+
+lineage:
+  role: fork
+  variants:
+    - id: bench2drive-speed
+      relation: extension for desired-speed conditioned driving, with its own metrics and dataset
+      source: src-arxiv-2603-25672
+      quote: we present Bench2Drive-Speed, a benchmark with metrics, dataset, and baselines for
+        desired-speed conditioned autonomous driving.
+    - id: bench2drive-robust
+      relation: extension scoring driving under deployment perturbations (camera-stream failures,
+        ego-state errors, latency)
+      source: src-github-bench2drive-readme
+      quote: Check [Bench2Drive-Robust](https://github.com/Thinklab-SJTU/Bench2Drive-Robust), which
+        analyze models' performance under real deployment issues
+    - id: bench2drive-vl
+      relation: extension for closed-loop question answering with vision-language models
+      source: src-github-bench2drive-readme
+      quote: Check [Bench2Drive-VL](https://github.com/Thinklab-SJTU/Bench2Drive-VL), which enables
+        closed-loop QA of VLM4AD.
+lineage_note: >
+  A fork of carla-leaderboard: another maintainer's benchmark on CARLA and Leaderboard 2.0's scenarios,
+  with its own short routes, five added scenarios and an official training set, which carla-leaderboard's
+  lineage.forks records with this id and the same quote. Bench2Drive does not supersede the leaderboard
+  and is versioned on its own. The three variants are separate benchmarks by the same maintainer (each
+  a Thinklab-SJTU repository linked from the README), with their own papers and metrics, so 04 S4 makes
+  each a new benchmark, not a version. Bench2Drive-R (arXiv 2412.09647) shares the name but evaluates
+  on real-world data in nuPlan through a generative renderer; no source read states its maintainer or
+  a shared task, so it is not linked (see review_checks).
+lineage_source: src-arxiv-2406-03877-v3
+lineage_quote: CARLA Leaderboard V2 [28] lacks expert demonstration data.
+
+tags:
+  - autonomous-driving
+  - closed-loop
+  - end-to-end-driving
+  - simulation
+  - carla
+  - imitation-learning
+  - multi-ability
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T03)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-03877-v3
+    - src-arxiv-2406-03877
+    - src-github-bench2drive-readme
+    - src-github-bench2drive-v004-update
+    - src-hf-api-bench2drive
+    - src-arxiv-2412-09647
+    - src-arxiv-2603-25672
+    - src-arxiv-2610-21741
+    - src-arxiv-2610-32069
+    - src-arxiv-2503-09594
+    - src-carla-leaderboard-evaluation-v2-1
+  sources_note: >
+    The v3 PDF was read in full as pdftotext output; its Source, first committed for carla-leaderboard,
+    had its extract rebuilt from the same file with narrow windows so that it holds carla-leaderboard's
+    quotes and this entry's, clear of the author list, the datasheet's curator names and its contact lines.
+    The README and update notes are pinned at commit 7ec25d1; the Hugging Face record was read through
+    the API without accepting terms; the arXiv Sources are DOIs and need no archive. CARLA's evaluation
+    page (committed for carla-leaderboard) gives the driving score's bound.
+  confidence: medium
+  review_checks:
+    - check: Versions. 0.0.4 is called an edition because it scores a new set of 220 routes (and a
+        new training set), which the README marks as in use; but the README also calls it a
+        "separate validation set", bench2drive220.xml stays in the repository, and papers still
+        report on the original 220. Which set a paper used is not always stated, so 0.0.3 and 0.0.4
+        scores may be mixed in the literature.
+      field: versions
+      source: src-github-bench2drive-readme
+      quote: '**Separate validation set** of 220 routes (44 scenarios × 5) for more reliable evaluation.'
+    - check: Licences disagree. The README puts all assets and code under CC-BY-NC-ND unless
+        specified otherwise (and the LICENSE file is that text), while the Hugging Face datasets are
+        tagged apache-2.0 and the paper's Appendix I says Apache 2.0 for data, code and checkpoints.
+        dataset_licence follows the dataset tag and code_licence the README; a reviewer may read the
+        README as governing both.
+      field: data.dataset_licence
+      source: src-arxiv-2406-03877-v3
+      quote: I License All data, codes, and checkpoints are in GitHub and Huggingface under Apache
+        License 2.0.
+    - check: submission_process is maintainer-run on the README's table, which holds outside methods
+        re-scored on the 0.0.4 set; no source says whether the maintainers ran them or copied
+        authors' numbers. If copied, literature-only fits better.
+      field: governance.submission_process
+      source: src-github-bench2drive-v004-update
+      quote: We released a new evaluation set with 220 routes (44 scenarios * 5) in it.
+    - check: Known limitation. An October 2026 audit finds the comfort metric mostly measures time
+        standing still, and that the harness's default controller can replace a model's steering and
+        supply a target point unlike training. The README's comfort column (and the 0.0.4 table) may
+        therefore not mean what its name says. The paper defines comfort as the ratio of smooth
+        trajectory segments to all segments.
+      field: governance.known_limitation
+      source: src-arxiv-2610-21741
+      quote: the default controller can replace a model's own steering with an angle toward the
+        route target point
+    - check: Lineage. Bench2Drive-R was not linked; its maintainer is not stated in a quotable
+        source (the arXiv author lists overlap, which is not quoted here), and it evaluates in
+        nuPlan with a generative renderer rather than on Bench2Drive's routes. A reviewer may add it
+        as a variant. A 2026 cross-benchmark study of NAVSIM and Bench2Drive (arXiv 2605.00066)
+        could ground a correlates_with edge to navsim; it was not read.
+      field: lineage
+      source: src-arxiv-2412-09647
+      quote: We further integrate Bench2Drive-R into nuPlan and evaluate the generative qualities
+        with closed-loop simulation results.
+    - check: 0.0.3 is marked breaking false because driving score and success rate did not change;
+        skill scores before and after it are not comparable.
+      field: versions
+      source: src-github-bench2drive-readme
+      quote: This update will **not affect driving score and success rate**.
+    - check: The ceiling's bound is quoted from CARLA's evaluation page (another benchmark's
+        Source); Bench2Drive's paper says only that its driving score follows CARLA's metric and
+        states no bound of its own.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2406-03877-v3
+      quote: This metric follows CARLA [28] official metric as reference.
+    - check: maintainer-competes-on-own-benchmark rests on DriveTransformer, which the README calls
+        "our latest work"; ThinkTwice, DriveAdapter and TCP may also be the maintainers' work
+        (shared authors in the paper's references), which was not adopted as a fact.
+      field: governance.independence_flags

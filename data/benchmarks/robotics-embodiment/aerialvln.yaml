@@ -1,0 +1,532 @@
+# data/benchmarks/robotics-embodiment/aerialvln.yaml
+#
+# P1-S5-T03, robotics-embodiment entry 24. Filled from the AerialVLN paper (ICCV 2023), arXiv 2308.06735 read as its v1
+# PDF (the only version) and its abstract page; CVF's ICCV 2023 open-access page for the paper; the AirVLN/AirVLN README
+# pinned at commit 1c2fb6f (2026-03-25), with GitHub's licence metadata and root listing; Kaggle's public API records
+# of the three datasets the README links (the AerialVLN and AerialVLN-S annotations and the simulator builds) and the
+# AerialVLN file list; the v1 PDF of AirAnchor (arXiv 2609.08442, September 2026), a zero-shot agent evaluated on
+# AerialVLN-S; and the v1 PDF of an April 2026 survey of aerial VLN (arXiv 2604.07705), read for how CityNav, OpenFly
+# and OpenUAV relate to AerialVLN. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts. Authors are not named here.
+
+id: aerialvln
+name: AerialVLN
+aliases:
+  - AirVLN
+aliases_note: AirVLN is the name of the GitHub organisation and repository. AerialVLN-S, the paper's
+  small-scene variant, is not an alias; it is the subset aerialvln#aerialvln-s.
+tagline: A simulated UAV follows long route instructions through 25 city scenes in AirSim on Unreal
+  Engine 4; success rate.
+description: >
+  Vision-and-language navigation for UAVs, from Northwestern Polytechnical University and the University
+  of Adelaide (ICCV 2023). A simulated multirotor starts at a pose in a city-scale outdoor scene and must
+  fly to the destination a crowd-written instruction describes (on average 83 words naming about 9.7 landmarks),
+  from front-view RGB and depth images, with eight discrete actions: move forward, left or right by 5
+  m, turn 15 degrees, ascend or descend 2 m, and stop. There is no navigation graph. An episode succeeds
+  if the agent stops within 20 m of the goal; the paper also reports oracle success, navigation error
+  and success-weighted nDTW (SDTW). The 8,446 reference paths were flown by licensed UAV pilots in a simulator
+  built on Microsoft AirSim and Unreal Engine 4, and each has three Amazon Mechanical Turk instructions
+  (25,338 in all). The 25 scenes are split into train and val-seen (17 scenes) and val-unseen and test
+  (8 scenes); the test goals are withheld for an evaluation server. AerialVLN-S, the same splits over
+  17 smaller scenes with paths about half as long, is the variant later papers report on, mostly on its
+  validation splits and increasingly with zero-shot agents built on multimodal LLMs.
+self_description:
+  source: src-arxiv-2308-06735
+  quote: we propose a new task named AerialVLN, which is UAV-based and towards outdoor environments
+external_ids:
+  arxiv: '2308.06735'
+paper:
+  title: 'AerialVLN: Vision-and-Language Navigation for UAVs'
+  arxiv: '2308.06735'
+  doi: 10.48550/arXiv.2308.06735
+  version_read: v1
+  source: src-arxiv-2308-06735-v1
+released: 2023-08-13
+released_note: The paper's first (and only) arXiv version, as the abstract page dates it.
+released_source: src-arxiv-2308-06735
+released_quote: Submitted on 13 Aug 2023
+release_venue: ICCV 2023
+release_venue_source: src-cvf-aerialvln-iccv2023
+release_venue_quote: Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV),
+  2023, pp. 15384-15394
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/navigation
+  secondary:
+    - robotics-embodiment/embodied-instruction-following
+    - robotics-embodiment/drone-uav
+domain_basis:
+  reason: The scored outcome is whether a simulated multirotor reaches the destination of a route in
+    a city scene it must perceive as it flies, which is the navigation leaf. The goal is given only
+    through a natural-language route description, so embodied-instruction-following is secondary.
+    The body is a UAV with vertical actions and 3D obstacles (drone-uav, secondary), but the eight
+    discrete actions abstract flight dynamics away, so the drone-uav leaf's definition ("flight
+    dynamics and airspace constraints define the task") does not hold for the primary, unlike
+    a2rl-drone-championship, where speed through gates is scored. CALVIN takes
+    embodied-instruction-following as primary; here the headline success rate scores the stop
+    location, and route fidelity enters only through SDTW (see review_checks).
+  source: src-arxiv-2308-06735-v1
+  quote: the proposed AerialVLN task requires an intelligent agent (a multirotor in virtual
+    environments) to fly to the destination by following a given natural language instruction
+domain_considered_and_rejected:
+  - term: robotics-embodiment/sim2real-transfer
+    reason: The paper argues its dynamic weather and lighting narrow the sim-to-real gap, but no
+      real flight is scored.
+capability:
+  - sensorimotor-control
+  - spatial-reasoning
+  - distribution-shift-generalization
+capability_basis:
+  sensorimotor-control:
+    reason: Actions are issued to a simulated multirotor in a continuous 3D environment with no
+      navigation graph, the simulator moves it and it can collide with or get stuck on buildings and
+      trees, and the score depends on where it ends up.
+    source: src-arxiv-2308-06735-v1
+    quote: Fourth, intelligent agents must learn to avoid getting stuck on objects in 3D space.
+  spatial-reasoning:
+    reason: Instructions pick out landmarks by their spatial relations as seen from the air (fly
+      over the building, land in front of the one with a red billboard), which the agent must infer
+      from first-person views; the paper names spatial relationship reasoning as what makes the sky
+      harder than the ground.
+    source: src-arxiv-2308-06735-v1
+    quote: An intelligent agent is required to distinguish referred buildings/objects by their
+      spatial relationship from a bird-view
+  distribution-shift-generalization:
+    reason: Val-unseen and test use 8 city scenes held out from the 17 training scenes, and every
+      result is reported on val-seen and val-unseen side by side, so the held-out-scene condition
+      has a score of its own.
+    source: src-arxiv-2308-06735-v1
+    quote: The val unseen and the test split are both assigned 8 scenes
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: Paths average 204 actions and the paper asks for work on long time horizons, but a
+      deviation can still be corrected later in the episode; only a premature Stop makes success
+      unattainable, which the term's inclusion test does not cover (the same call as
+      habitat-challenge).
+    source: src-arxiv-2308-06735-v1
+    quote: We hope future researchers employ AerialVLN to tackle long path length 3D VLN tasks in
+      the unseen environment
+  - term: grounding
+    reason: The instructions are referring expressions and the paper aligns sub-paths to
+      sub-instructions for training, but no metric scores whether an expression was attached to its
+      referent; the score is the stop location (the libero near miss).
+  - term: instruction-following
+    reason: The headline success rate ignores the route taken; compliance with the described route
+      enters only through SDTW, and no source frames the score as instruction compliance in the
+      vocabulary's sense (directions checkable apart from the content's quality).
+  - term: perception
+    reason: The inputs are RGB and depth images, but the score is where the agent stops, not what
+      was recovered from the images.
+  - term: planning
+    reason: The executed action sequence is scored only by where it ends and by its similarity to
+      the pilot's path; no source claims planning.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Every number comes from episodes run in the AirSim/Unreal Engine 4 simulator. Success
+    (stop within 20 m of the goal) and oracle success are bounded per episode, SDTW is bounded by 1,
+    and navigation error is a distance.
+  source: src-arxiv-2308-06735-v1
+  quote: The navigation is recognised as a success if the agent stops at a location that is less
+    than 20 units to the target location
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The release trains navigation policies on the training split (Seq2Seq and CMA by teacher
+    forcing and dataset aggregation, and the authors' look-ahead guidance), which rl-policy's test
+    covers as learned controllers acting in the environment.
+  source: src-arxiv-2308-06735-v1
+  quote: This demonstrates exploring non-groundtruth actions helps learn more from training data and
+    increases generalisation ability.
+observed_subjects:
+  values:
+    - rl-policy
+    - agent-scaffold
+  basis: Recent results come from zero-shot agents that wrap a multimodal LLM in their own loop,
+    memory and planner and are not trained on the environment (AirAnchor on Qwen3.6-Plus with an A*
+    motion planner, beside reproduced TypeFly, PIVOT, SPF and FineCog-Nav), alongside the trained
+    Seq2Seq, CMA and LAG baselines.
+  source: src-arxiv-2609-08442-v1
+as_used:
+  - protocol: Zero-shot evaluation on AerialVLN-S validation seen and unseen, reporting SR, OSR, NE
+      and SDTW after the paper, with an MLLM backbone called through an API, an A* low-level planner
+      instead of the paper's eight primitive actions, and an object memory kept across the episodes
+      of a scene in the split's canonical order.
+    split: AerialVLN-S val seen and val unseen
+    source: src-arxiv-2609-08442-v1
+    quote: We evaluate AirAnchor on the AerialVLN-S dataset of the challenging AerialVLN (Liu et
+      al., 2023b) benchmark.
+    note: AirAnchor (September 2026). Its zero-shot baselines are reproduced on the same backbone,
+      so its table's learning-based rows and zero-shot rows were run under different action
+      interfaces.
+  - protocol: A survey's cross-method comparison on AerialVLN-S validation seen and unseen (SR, OSR,
+      SDTW, NE), gathered from the methods' papers; no test-split rows.
+    split: AerialVLN-S val seen and val unseen
+    source: src-arxiv-2604-07705-v1
+    quote: 'TABLE X: Performance comparison of selected methods on the AerialVLN-S dataset.'
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against AerialVLN-S; a September 2026 paper evaluates on it,
+    and an April 2026 survey counts it among the four aerial VLN benchmarks mature enough to compare
+    methods on. The repository's last push was 2026-03-25 (GitHub API), a README edit.
+  source: src-arxiv-2609-08442-v1
+  quote: 'Table 1: Overall performance comparison on the AerialVLN-S benchmark.'
+activity: unknown
+activity_note: The paper promises an evaluation server for test-split trajectories, but neither the
+  README nor any other source read names or links it, no leaderboard was found, and the 2026 papers
+  read report validation splits only. Whether the server exists or takes submissions could not be
+  established.
+activity_basis:
+  reason: The only route the sources describe is the test-split server, whose location and state no
+    source read shows.
+  source: src-arxiv-2308-06735-v1
+  quote: Instead, we provide an evaluation server where UAV trajectories can be uploaded for
+    scoring.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: AirAnchor (zero-shot agent on Qwen3.6-Plus)
+    source: src-arxiv-2609-08442-v1
+    observed_on: 2026-11-05
+    quote: We implement AirAnchor with Qwen3.6-Plus (Alibaba Cloud, 2026) as the MLLM backbone via
+      its online API.
+  - system: LAG (CMA with look-ahead guidance, the release's own baseline)
+    source: src-arxiv-2308-06735-v1
+    observed_on: 2026-11-05
+    quote: We combine the aforementioned CMA model and our look-ahead guidance as our new baseline,
+      denoted as LAG.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: Success compares the stop position in the simulator with the goal of the
+  pilot-flown reference path; SDTW compares the trajectory with that path.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The test goals were never released and the server that scores them could not be found, so
+    the paper's test-unseen numbers cannot be reproduced outside the maintainers. The validation
+    splits, which current papers use, can be run by anyone with the simulator builds.
+  source: src-arxiv-2308-06735-v1
+  quote: Please note that the test split is built on unseen scenes as well and the goal locations
+    for the test set will not be released.
+
+task:
+  exists: true
+  input:
+    - a natural-language route instruction (on average 83 words)
+    - front-view RGB and depth images from the simulated multirotor at each step (depth to 100 m)
+  output: A sequence of discrete actions (move forward, left or right 5 m; turn left or right 15
+    degrees; ascend or descend 2 m), ending with Stop or at the maximum number of actions.
+  scoring: Success rate (stop within 20 m of the goal) with oracle success rate, navigation error
+    (distance from the goal in metres) and SDTW, per split (val seen, val unseen, test unseen).
+  source: src-arxiv-2308-06735-v1
+  quote: Navigation ends when the agent predicts a Stop action or reaches a pre-defined maximum
+    action number.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The annotations of both AerialVLN and AerialVLN-S are on Kaggle (and a Baidu Netdisk
+    mirror), each with a test.json beside train and val files, and the simulator builds (about 35 GB
+    by the README, 40.5 GB on Kaggle) are a separate download. Downloads were not opened, so what
+    test.json holds was not checked; the paper says the test goals are withheld.
+  access_basis:
+    reason: The training and validation splits and the test episodes are distributed, while the test
+      goal locations are kept for an evaluation server.
+    source: src-arxiv-2308-06735-v1
+    quote: Please note that the test split is built on unseen scenes as well and the goal locations
+      for the test set will not be released.
+  refresh: static
+  refresh_note: One release with the paper. Kaggle lists the AerialVLN annotations at version 8 and
+    AerialVLN-S at version 3 (both last updated 2024-10-19) and the simulators at version 2, but no
+    source read says what changed between those versions (see review_checks).
+  data_provenance:
+    - expert-authored
+    - crowd-authored
+    - simulation-generated
+  data_provenance_note: The reference paths were flown in the simulator by UAV pilots holding the
+    AOPA certificate (expert-authored), the instructions were written by Amazon Mechanical Turk
+    workers watching the flight videos and checked by another group of workers (crowd-authored), and
+    the episodes and observations come from the AirSim/Unreal Engine scenes (simulation-generated).
+  data_provenance_source: src-arxiv-2308-06735-v1
+  data_provenance_quote: Our AerialVLN dataset consists of 8,446 flying paths obtained by
+    experienced human UAV pilots who hold the AOPA (Aircraft Owners and Pilots Association)
+    certificate.
+  contamination_risk: unknown
+  contamination_risk_note: The test goals are withheld, but current results are on the public
+    validation splits, whose instructions and paths have been on Kaggle since 2024, and recent
+    agents run on general multimodal LLMs. No source read checks for leakage.
+  contamination_evidence: []
+  ceiling_anchor_type: null
+  ceiling_anchor_type_note: The paper reports a human row (SR 80.8% on test unseen against at most
+    1.6% for the baselines on the full dataset) and reads the baselines against it, but the text
+    read does not say who the humans were (the supplementary material was not read), so no anchor
+    type was chosen.
+  ceiling_anchor_type_source: src-arxiv-2308-06735-v1
+  ceiling_anchor_type_quote: the success rate is still rather low compared to human performance
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: Kaggle's records give CC BY 4.0 for the AerialVLN and AerialVLN-S
+    annotations and CC BY-NC 4.0 for the simulator builds, which every evaluation needs (see
+    execution.reproducibility_blockers). The repository declares no licence.
+  dataset_licence_source: src-kaggle-api-aerialvln
+  dataset_licence_quote: '"licenseName":"Attribution 4.0 International (CC BY 4.0)"'
+  upstream_licences: The simulator builds are under CC BY-NC 4.0 on Kaggle.
+  size:
+    - count: 25338
+      unit: instructions (three per path, 83 words on average)
+      subset: AerialVLN, all splits
+      source: src-arxiv-2308-06735-v1
+      quote: We totally collected 25,338 instructions with a vocabulary of 4,470 words.
+    - count: 8446
+      unit: pilot-flown paths in 25 city scenes
+      subset: AerialVLN, all splits
+      source: src-arxiv-2308-06735-v1
+      quote: Our AerialVLN dataset consists of 8,446 flying paths obtained by experienced human UAV
+        pilots who hold the AOPA (Aircraft Owners and Pilots Association) certificate.
+    - count: 4830
+      unit: test-unseen instructions (1,610 paths in 8 scenes); val unseen has 2,310 (770 paths)
+      subset: AerialVLN test
+      source: src-arxiv-2308-06735-v1
+      quote: AerialVLN Scene Path Instr. 17 5,460 16,380 17 606 1,818 8 770 2,310 8 1,610 4,830
+    - count: 771
+      unit: test instructions (257 paths in 5 scenes); val unseen has 531
+      subset: AerialVLN-S test
+      source: src-arxiv-2308-06735-v1
+      quote: 531 instructions are assigned for validation unseen and 771 instructions for the test
+        set
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Northwestern Polytechnical University and the University of Adelaide (the AirVLN
+    GitHub organisation)
+  maintainer_basis:
+    reason: The paper's authors are at the two universities, and the dataset, simulators and code
+      are released through the AirVLN organisation on GitHub and the first author's Kaggle account.
+    source: src-arxiv-2308-06735-v1
+    quote: 1Northwestern Polytechnical University 2University of Adelaide
+  maintainer_type: academic-lab
+  submission_process:
+    - held-out-server
+  submission_process_note: The paper's design, test trajectories uploaded to a server that scores
+    them against withheld goals. The server was not found in any source read, and the 2026 results
+    read are on validation splits, run and reported by their authors (see activity).
+  submission_process_source: src-arxiv-2308-06735-v1
+  submission_process_quote: Instead, we provide an evaluation server where UAV trajectories can be
+    uploaded for scoring.
+  independence_flags: []
+  independence_flags_note: Not assessed. The release's strongest baseline (LAG) is the maintainers'
+    own method, as is usual for a benchmark paper; whether later work by the same groups appears in
+    the comparisons was not checked.
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs the AerialVLN simulator builds (packaged Unreal Engine Linux
+    binaries, one per scene, served through an AirSim plugin) on Ubuntu with NVIDIA GPUs; the
+    example scripts start the simulator server on eight GPUs.
+  compute_tier_source: src-github-airvln-readme
+  compute_tier_quote: Ubuntu Operating System - Nvidia GPU(s)
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The paper's test-unseen results are part of its headline table and need the withheld
+      goals and the maintainers' server, and the most restrictive part decides. Validation results,
+      which are what current papers report, are automatable-with-simulator.
+    source: src-arxiv-2308-06735-v1
+    quote: Please note that the test split is built on unseen scenes as well and the goal locations
+      for the test set will not be released.
+  reproducibility_blockers:
+    - private-test-set
+    - specific-simulator-build
+  reproducibility_blockers_note: Results are defined inside the AerialVLN scenes built on Unreal
+    Engine 4 with Microsoft AirSim plugins, distributed as Kaggle's AerialVLN-Simulators (version 2,
+    2024-10-08) and driven through the airsim 1.7.0 Python client the README pins. The Unreal Engine
+    minor version and the AirSim plugin version inside the builds are not stated in any source read.
+  reproducibility_blockers_source: src-arxiv-2308-06735-v1
+  reproducibility_blockers_quote: AerialVLN is implemented using Unreal Engine 4 [14] and Microsoft
+    AirSim plugins [31], which enables continuous navigation and near-realistic rendering.
+  harness_availability: reference-implementation-only
+  harness: AirVLN/AirVLN (scripts/eval.sh, which starts airsim_plugin/AirVLNSimulatorServerTool.py
+    and runs src/vlnce_src/train.py with --run_type eval)
+  harness_note: The repository trains and evaluates the release's baselines on the released splits.
+    The official test score comes from the server, and no source designates the repository's
+    evaluation as the official scoring path, although later papers report "following AerialVLN".
+  harness_source: src-github-airvln-readme
+  harness_quote: Please see the examples in [scripts]
+  code_licence: null
+  code_licence_note: No licence is declared. GitHub's licence metadata for AirVLN/AirVLN is empty
+    and the repository root has no LICENSE file (both read 2026-11-05), although the README shows a
+    licence badge linking one.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The simulation profile (simulation-rollout with rl-policy or agent-scaffold) makes simulator, simulator_version,
+  # hardware_platform, subset_used, selection_strategy and n_samples material. simulator and simulator_version are
+  # listed again to make the build explicit: the AerialVLN scenes on Unreal Engine 4 with AirSim plugins, Kaggle's
+  # simulator version 2, with the airsim 1.7.0 client. subset_used carries AerialVLN or AerialVLN-S and the split
+  # (val seen, val unseen, test unseen). Also material: what the agent trained on (the training split, other data,
+  # or nothing for zero-shot MLLM agents); the scaffold, because zero-shot agents replace the eight primitive
+  # actions with their own skills and planners (AirAnchor uses A*) and keep memory across a scene's episodes; and
+  # the maximum number of actions per episode, which the paper calls pre-defined without giving it.
+  material_extra:
+    - simulator
+    - simulator_version
+    - training_data_policy
+    - scaffold
+    - max_steps
+
+homepage: https://github.com/AirVLN/AirVLN
+repository: https://github.com/AirVLN/AirVLN
+dataset_url: https://www.kaggle.com/datasets/shuboliu/aerialvln
+
+subsets:
+  - id: aerialvln#aerialvln-s
+    label: AerialVLN-S (17 smaller scenes)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2308-06735-v1
+        quote: Besides the standard dataset setting (with all 25 scenes), we also present a variant
+          for small scenes, AerialVLN-S.
+      - source: src-arxiv-2308-06735-v1
+        quote: It preserves the same split, but it has 17 scenes with a smaller scale and
+          evenly-distributed path length
+      - source: src-kaggle-api-aerialvln-s
+        quote: '"licenseName":"Attribution 4.0 International (CC BY 4.0)"'
+    notes: >
+      3,916 paths and 11,748 instructions over 17 scenes (12 for train and val seen, 5 for val unseen
+      and test), with paths 51.5% shorter on average (321.3 m against 661.8 m); the goal can sometimes
+      be seen from the start. Released with the paper, by the same maintainers, and reported in its own
+      table rows; a separate Kaggle dataset under CC BY 4.0. The paper proposes the full set for long-horizon
+      research and AerialVLN-S as the benchmark for general 3D aerial VLN, and nearly all later results
+      are on AerialVLN-S.
+
+lineage:
+  role: root
+lineage_note: >
+  No derivative of AerialVLN's data was found. CityNav (real point-cloud cities from SensatUrban), OpenFly
+  (scenes from Unreal Engine, GTA V and Google Earth) and OpenUAV (continuous 6-DoF trajectories) are
+  later aerial VLN benchmarks by other groups with their own environments and trajectories; the April
+  2026 survey describes them as emerging independently, so they are related work, not lineage. R2R is
+  the ground VLN dataset the paper measures itself against (instruction landmarks, splits and metrics
+  follow VLN practice), not a parent.
+
+tags:
+  - vision-and-language-navigation
+  - uav
+  - aerial
+  - airsim
+  - unreal-engine
+  - simulation
+  - outdoor
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T03)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2308-06735-v1
+    - src-arxiv-2308-06735
+    - src-cvf-aerialvln-iccv2023
+    - src-github-airvln-readme
+    - src-kaggle-api-aerialvln
+    - src-kaggle-api-aerialvln-s
+    - src-kaggle-api-aerialvln-simulators
+    - src-kaggle-api-aerialvln-files
+    - src-arxiv-2609-08442-v1
+    - src-arxiv-2604-07705-v1
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, and its abstract page for the date; CVF's open-access
+    page for the venue; the README pinned at commit 1c2fb6f; Kaggle's public JSON records of the three
+    linked datasets and the AerialVLN file list, read anonymously; AirAnchor's v1 PDF as evidence of current
+    use; and the survey's v1 PDF for lineage. The paper's supplementary material, the README-ZH and the
+    downloads themselves were not read.
+  confidence: medium
+  review_checks:
+    - check: The prompt for this entry described AerialVLN as scored by success rate, SPL and nDTW.
+        The paper reports SR, OSR, NE and SDTW (success-weighted nDTW), with no SPL, and the 2026
+        paper read follows it. The survey says SR and SPL are reported near-universally across
+        aerial VLN, which is about the field, not this benchmark.
+      field: task.scoring
+      source: src-arxiv-2308-06735-v1
+      quote: Success rate weighted by Normalised Dynamic Time Warping (SDTW)
+    - check: Primary domain. navigation was chosen because the headline scores the stop location;
+        embodied-instruction-following (CALVIN's primary) is as defensible, since the instruction is
+        the only goal specification. drone-uav is a secondary for task step 2's aerial coverage,
+        although its definition (flight dynamics define the task) is only partly met by discrete 5 m
+        moves.
+      field: domain.primary
+    - check: The test-split evaluation server the paper promises was not found (not in the README,
+        no leaderboard in a web search), and the 2026 results read are on validation splits.
+        activity is unknown; if the server never ran publicly, activity is no-submission-channel,
+        submission_process literature-only, and reproducibility_tier automatable-with-simulator for
+        what is reported.
+      field: activity
+      source: src-arxiv-2308-06735-v1
+      quote: Instead, we provide an evaluation server where UAV trajectories can be uploaded for
+        scoring.
+    - check: AerialVLN-S is modelled as a subset (same release, same maintainers, same splits, its
+        own table rows). Whether its 3,916 paths are drawn from the full set's 8,446 or flown
+        separately is not stated in the text read; if they are separate, the subset still holds
+        under the 04 S4 rule, but a reviewer may prefer two subsets (full and S) with the full set
+        as headline.
+      field: subsets
+      source: src-arxiv-2308-06735-v1
+      quote: Besides the standard dataset setting (with all 25 scenes), we also present a variant
+        for small scenes, AerialVLN-S.
+    - check: Zero-shot agents (AirAnchor and its reproduced baselines) swap the paper's eight
+        primitive actions for skills with an A* planner and keep memory across a scene's episodes,
+        so their numbers are not comparable with the trained baselines' even on the same split.
+        material_extra adds scaffold and max_steps for this; a reviewer may want the action
+        interface as a condition of its own.
+      field: comparability.material_extra
+      source: src-arxiv-2609-08442-v1
+      quote: Each scene starts with an empty SOKB, which is updated online and retained across
+        episodes within the same scene.
+    - check: The simulator build is identified only as Unreal Engine 4 with AirSim plugins and
+        Kaggle's version 2 of the builds (2024-10-08); the README pins the airsim 1.7.0 client. The
+        UE4 minor version and plugin version are unknown, and whether Kaggle's version 1 differed
+        from version 2 is not stated.
+      field: execution.reproducibility_blockers
+      source: src-github-airvln-readme
+      quote: pip install airsim==1.7.0
+    - check: Kaggle shows the AerialVLN annotations at version 8 and AerialVLN-S at version 3 with
+        no changelog; refresh is static on the paper's single release. If the versions changed
+        episodes, refresh would be versioned-releases with revision rows.
+      field: data.refresh
+      source: src-kaggle-api-aerialvln
+      quote: '"currentVersionNumber":8'
+    - check: Licences diverge. The annotations are CC BY 4.0 on Kaggle, the simulator builds CC
+        BY-NC 4.0, the paper CC BY-NC-SA 4.0 on arXiv, and the code declares none although the
+        README badge links a LICENSE file that is not in the repository.
+      field: data.dataset_licence
+      source: src-kaggle-api-aerialvln-simulators
+      quote: '"licenseName":"Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)"'
+    - check: The human row (SR 80.8% on test unseen) could anchor the ceiling, but who the humans
+        were is in the supplementary material, which was not read; ceiling_anchor_type is null.
+      field: data.ceiling_anchor_type
+    - check: Capabilities. long-horizon-execution was rejected on habitat-challenge's reasoning
+        (deviations are recoverable) although paths average 204 actions and the paper aims at long
+        horizons; grounding and instruction-following were rejected because no metric scores the
+        binding of expressions or compliance step by step. distribution-shift-generalization rests
+        on the seen/unseen scene split reported side by side.
+      field: capability
+    - check: Lineage. CityNav, OpenFly and OpenUAV were judged related work, not lineage, from the
+        survey's account (independent environments and trajectories); their own papers were not
+        read.
+      field: lineage
+      source: src-arxiv-2604-07705-v1
+      quote: Several benchmarks have emerged independently, including AerialVLN [13], CityNav [47],
+        OpenFly [33], and OpenUAV [45]
