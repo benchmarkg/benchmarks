@@ -1,0 +1,664 @@
+# data/benchmarks/code/gso.yaml
+#
+# P1-S10-T02, code entry 10. Promotes the Epoch stub data/benchmarks/_stubs/gso.yaml. Filled from the GSO paper,
+# arXiv 2505.23671 read as its v3 PDF (2025-10-24), and its abstract page; the project site's front page, which
+# holds the leaderboard and its changelog (scripts and styles stripped), and the leaderboard.json it renders, read
+# at a pinned commit of the site's repository; the gso-bench/gso README at a pinned commit and GitHub's API list of
+# the harness releases, v0.1.1 to v0.1.9, with their notes; Hugging Face's API record of gso-bench/gso; the v2 PDF
+# of "Are Performance-Optimization Benchmarks Reliably Measuring Coding Agents?" (arXiv 2607.01211, July 2026), an
+# audit that replays GSO's reference patches and rescores its public submissions; and Epoch's benchmark export,
+# which lists GSO-Bench in its capabilities index. The Hack Detector blog post (a Notion page) was not read. Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: gso
+name: GSO
+aliases:
+  - GSO-Bench
+  - Global Software Optimization
+tagline: 102 expert speedups from 10 open-source repositories; an agent must match each while
+  keeping outputs unchanged.
+description: >
+  A benchmark of software performance optimization by coding agents, from UC Berkeley. An automated
+  pipeline scanned the commit histories of popular GitHub repositories with an LLM judge for
+  performance-improving commits, had an LLM write performance tests for each candidate that exercise a
+  real workload and check the outputs before and after the commit for equivalence, and kept commits that
+  made several tests markedly faster; a manual review then removed tasks with weak tests or ones that
+  trivial tricks such as memoisation could pass. The result is 102 tasks from 10 codebases (NumPy 36,
+  pandas 34, Pillow and Pillow-SIMD 11, the rest four or fewer each: Pydantic, Tornado, tokenizers,
+  transformers, datasets, llama.cpp), about 60% of which need edits outside Python (C, C++, Cython, Rust,
+  SIMD). The agent gets the repository at the commit before the expert's, its build commands and one
+  performance test as the specification, and must return a patch. The patch is scored on all the task's
+  performance tests: it must apply, keep every equivalence check passing and reach at least 95% of the
+  expert commit's speedup, measured as the harmonic mean of per-test speedups (OPT@1, estimated from three
+  rollouts in the paper). The maintainers run every model themselves inside the OpenHands scaffold and
+  publish raw OPT@1 beside a hack-adjusted score, in which an LLM Hack Detector penalises deceptive
+  optimizations such as memoisation or harness hijacking. Since release they have hardened the task
+  environment against ground-truth leaks (stripping git refs to the expert commit, removing hidden test
+  scripts from the Docker images, cutting containers off from GitHub after models were seen fetching
+  upstream commits) and twice changed the elicitation. Top scores rose from under 5% in May 2025 to 88.2%
+  in September 2026.
+self_description:
+  source: src-arxiv-2505-23671
+  quote: We introduce GSO, a benchmark for evaluating language models' capabilities in developing
+    high-performance software.
+external_ids:
+  epoch: GSO-Bench
+  huggingface: gso-bench/gso
+  arxiv: '2505.23671'
+paper:
+  title: 'GSO: Challenging Software Optimization Tasks for Evaluating SWE-Agents'
+  arxiv: '2505.23671'
+  doi: 10.48550/arXiv.2505.23671
+  version_read: v3
+  source: src-arxiv-2505-23671-v3
+released: 2025-05-29
+released_note: The paper's first arXiv version, as its abstract page dates it, and the date Epoch's
+  export and the stub carry. The README dates the initial release, with the Hugging Face dataset and
+  the Docker images, the next day; the dataset record was created on 2025-05-16.
+released_source: src-arxiv-2505-23671
+released_quote: Submitted on 29 May 2025 (v1), last revised 24 Oct 2025 (this version, v3)
+release_venue: NeurIPS 2025
+release_venue_note: From a later paper's table of benchmarks and its reference to GSO (Advances in
+  Neural Information Processing Systems, vol. 38, 2025); the v3 PDF read here is headed "Preprint",
+  and no proceedings page was read.
+release_venue_source: src-arxiv-2607-01211-v2
+release_venue_quote: selected to compare NeurIPS 2025 repos base and reference optimization commits
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/code-performance-optimization
+  secondary:
+    - code/repository-scale-se
+    - agents-tooluse/software-agents
+domain_note: repository-scale-se is secondary, not primary, because the paper sets GSO apart from
+  SWE-bench's issue resolution and the verdict turns on runtime, which only the
+  performance-optimization leaf records. software-agents is secondary because the grader runs tests
+  on the patch rather than checking the machine's end state (02 S12.11).
+domain_basis:
+  reason: The entrant authors a patch and the grader runs it, checking equivalence and measuring
+    runtime against the expert commit's; a correct patch that is not fast enough fails, which is the
+    leaf's "scored on speedup rather than on correctness alone". The change is made inside a whole
+    real repository, where finding the bottleneck is part of the task (repository-scale-se), by an
+    agent that edits files, rebuilds and runs tests itself (software-agents, secondary because tests
+    judge the patch).
+  source: src-arxiv-2505-23671-v3
+  quote: SWE-Agents receive a performance test as task specification and must produce an
+    optimization patch that improves runtime efficiency while maintaining correctness.
+domain_considered_and_rejected:
+  - term: code/bug-repair
+    reason: The base code is correct; nothing is broken, and the specification is a performance test
+      rather than an issue or a failing test.
+    source: src-arxiv-2505-23671-v3
+    quote: performance tests natively provide precise specifications for correctness and efficiency
+  - term: code/ml-engineering
+    reason: Some codebases are ML libraries (transformers, tokenizers, llama.cpp), but the task is
+      to speed up their code, not to train a model whose predictions are scored.
+
+capability:
+  - context-integration
+capability_note: No capability names making existing code faster while keeping its behaviour, the
+  claim GSO is built to measure; the gap is logged as taxonomy/_failures/2026-11-09-gso-001.yaml
+  (proposed performance-engineering).
+capability_basis:
+  context-integration:
+    reason: The supplied repository and performance test decide what must change; the agent has to
+      find the bottleneck in that codebase, and the expert edit averages over 100 lines across about
+      four files.
+    source: src-arxiv-2505-23671-v3
+    quote: Each task consists of an initial codebase snapshot, performance tests measuring runtime
+      and correctness, a build script for environment setup, and a reference human commit
+      establishing the target performance threshold.
+capability_considered_and_rejected:
+  - term: optimization
+    reason: Runtime is the objective, but the score is not its value. OPT@1 is the share of tasks
+      whose patch passes a fixed threshold, 95% of a human speedup, and the paper keeps raw speedups
+      as a secondary metric.
+    source: src-arxiv-2505-23671-v3
+    quote: we denote OPT@K as the OPT0.95@K metric that uses a 95% threshold for evaluating success
+      against the human target
+  - term: long-horizon-execution
+    reason: An attempt runs for up to three hours over many steps, but a failed build or a slow
+      patch can be reverted and retried within it, so an intermediate error does not make success
+      unattainable, which the term's inclusion test asks.
+    source: src-arxiv-2505-23671-v3
+    quote: we configure the agent with a 3-hour time limit per task and a 20-minute timeout per step
+  - term: tool-use
+    reason: The tools (a file editor and a bash terminal) are OpenHands'; the score is the patch's
+      speedup, not whether tools were called correctly.
+    source: src-arxiv-2505-23671-v3
+    quote: The scaffold provides access to a file-editor tool and a bash terminal tool to the agent
+  - term: search-exploration
+    reason: Parallel rollouts help (OPT@10 against OPT@1), but the headline scores one attempt, and
+      no search budget is scored.
+  - term: autonomy
+    reason: Runs are unattended, but no source states a rule against human intervention or measures
+      it, which the term's inclusion test asks.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: The patch is applied and the task's performance tests run; success needs a clean apply,
+    every equivalence assertion passing and a measured runtime at the threshold, all outcomes of
+    executing the code.
+  source: src-arxiv-2505-23671-v3
+  quote: Success requires that the patch (1) applies cleanly, (2) passes all correctness checks, and
+    (3) matches or exceeds the target human commit
+evaluation_method_considered_and_rejected:
+  - term: domain-metric
+    reason: Speedup, the harmonic mean of per-test runtime ratios, is a general measure from systems
+      benchmarking, and it enters the score only as a pass/fail gate against the human commit.
+    source: src-arxiv-2505-23671-v3
+    quote: we compute speedup using the harmonic mean of individual test speedups which is more
+      robust to extreme positive outliers
+  - term: model-graded-judge
+    reason: The Hack Detector is an LLM (GPT-5.4 at xhigh effort since 2026-04-27; the v0.1.9
+      harness defaults to GPT-5.6-Sol) that reads the patch against the oracle solution and tests,
+      but it sets only the hack-adjusted column; the threshold curves use raw scores, and the
+      leaderboard ranks by the raw score (its script, read but not quoted).
+    source: src-gso-bench-site
+    quote: The "Hack-Adjusted" column shows scores after this penalty.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The paper and the leaderboard run every model in one maintainer-chosen OpenHands
+    configuration with GSO's own task prompt, so only the model varies. The harness itself scores a
+    file of patches from any agent, and the maintainers have released integrations for other
+    scaffolds, Harbor among them.
+  source: src-gso-bench-site
+  quote: 'Scaffold: All models are run with the OpenHands scaffold unless otherwise specified.'
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: No single-prompt protocol exists; every result comes from a multi-step agent run with
+      tools.
+observed_subjects:
+  values:
+    - reasoning-model
+  basis: The leaderboard's 34 rows are frontier chat and reasoning models in OpenHands, several with
+    a recorded reasoning effort (high or xhigh) and GPT 5.4 listed at both; read 2026-11-09.
+  source: src-gso-bench-leaderboard-data
+as_used:
+  - protocol: GSO's released per-task outputs for eight public submissions re-aggregated with
+      SWE-fficiency's harmonic-mean speedup-ratio rule in place of GSO's binary reference-level
+      gate, and GSO's 102 reference patches replayed on four Google Cloud machine types in three
+      rounds.
+    source: src-arxiv-2607-01211-v2
+    quote: harmonic scoring to available GSO per-task submission reports
+    note: The audit (July 2026) finds the rescored ranking correlates with SWE-fficiency's at
+      Spearman 0.238, and that only 39 of the 102 reference patches meet GSO's own task-inclusion
+      rule in all twelve replays; it reports the four tasks that would not run to the maintainers.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers keep adding models (four rows dated 2026-09-27, the file's last update),
+    and outside papers still use it, such as the July 2026 audit read here.
+  source: src-gso-bench-leaderboard-data
+  quote: '"last_updated": "2026-09-27", "total_tasks": 102'
+activity: no-submission-channel
+activity_note: Every one of the 34 leaderboard rows is the maintainers' own run (submission_org_name
+  GSO), and neither the site nor the README describes a way to submit; the README's invitation to
+  file pull requests and issues concerns the code. The audit calls the rows "public submissions" in
+  the sense of agent configurations.
+activity_basis:
+  reason: Only the maintainers enter results; no submission route is stated anywhere read.
+  source: src-gso-bench-leaderboard-data
+  quote: '"submission_org_name": "GSO"'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude Fable 5.1 in OpenHands
+    source: src-gso-bench-leaderboard-data
+    observed_on: 2026-11-09
+    quote: '"name": "Claude Fable 5.1", "model_org": "Anthropic", "scaffold": "OpenHands", "setting":
+      "Opt@1", "score": 88.24, "score_hack_control": 87.25, "date": "2026-09-27"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: The performance tests an LLM generated from each commit's context and kept
+  after execution, with assertions that the outputs match the pre-commit code's; the target is the
+  runtime of the expert developer's commit on the same tests, in the same environment.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The tasks, the expert diffs and all performance tests are in an ungated Hugging Face
+    dataset, with prebuilt Docker images and an open harness.
+  source: src-hf-api-gso-bench-gso
+  quote: '"gated":false'
+
+task:
+  exists: true
+  input:
+    - the repository at the commit before the expert's, built in a Docker container
+    - its build and install commands
+    - one performance test, as the specification of the workload to speed up
+    - a task prompt asking for general improvements, not ones fitted to the test's inputs
+  output: A unified patch to the repository's non-test files.
+  scoring: The patch is applied and every performance test of the task run. A task counts if the
+    patch applies, all equivalence checks pass and its speedup over the base code, the harmonic mean
+    across tests, is at least 95% of the expert commit's. OPT@1 is the fraction of the 102 tasks
+    solved in one attempt, estimated from three rollouts at temperature 0.1 in the paper; OPT@K
+    takes the best of K. The leaderboard adds a hack-adjusted OPT@1 after the Hack Detector's
+    penalty.
+  tests_hidden_from_system: true
+  tests_hidden_from_system_note: The agent sees one specification test; the others run at grading.
+    They are hidden only inside the container (until v0.1.4 their scripts sat in the Docker images),
+    since the public dataset carries every test.
+  tests_hidden_from_system_source: src-github-gso-releases
+  tests_hidden_from_system_quote: 'fix: remove hidden test scripts from Docker images'
+  reference_solution: true
+  source: src-arxiv-2505-23671-v3
+  quote: We apply the generated patch and execute all associated performance tests.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The public dataset holds, for every task, the base and expert commit hashes, the
+    expert commit's message and diff (gt_diff, added in v0.1.1, 2025-08-26), the specification test
+    and all grading tests; prebuilt Docker images are on Docker Hub.
+  access_basis:
+    reason: The dataset is public and ungated on Hugging Face, and the README loads it by name.
+    source: src-hf-api-gso-bench-gso
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_note: The 102 tasks have not changed in any source read, but the task environment and the
+    scoring have, through numbered harness releases and dated changelog entries (versions). Rows
+    from every protocol stay side by side on the leaderboard, so a score must name its date or
+    harness version. The Hub shows dataset uploads on 2025-07-16, 2025-08-28 and 2026-03-23 with no
+    stated change (review_checks).
+  refresh_basis:
+    reason: Each change to grading or to the environment comes in a labelled harness release (or a
+      dated changelog entry), such as v0.1.9's lower speedup cutoff.
+    source: src-github-gso-releases
+    quote: Lower the minimum speedup cutoff from 1.2 to 1.1 to match the grading used for the latest
+      published results.
+  data_provenance:
+    - web-scraped
+    - model-generated
+  data_provenance_note: The codebases, base commits and expert commits come from public GitHub
+    histories found by an LLM judge; the performance tests were written by an LLM through
+    execution-based rejection sampling and kept when they showed the commit's speedup; a manual
+    review chose the final 102.
+  data_provenance_basis:
+    reason: Tasks are mined from GitHub repositories' commit histories, and their tests are
+      LLM-generated.
+    source: src-arxiv-2505-23671-v3
+    quote: We generate performance tests via execution-based rejection sampling using an LLM
+      prompted with the commit context.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The answer to every task is public twice over: the expert commit sits in its repository's GitHub
+    history, and the dataset publishes its diff. The maintainers have closed three run-time routes to
+    it, each after release: hidden test scripts left in the Docker images (removed in v0.1.4,
+    2026-01-31); git refs that let an agent reach the expert commit inside the container (stripped in
+    v0.1.7, 2026-04-26); and network access, after newer models were seen fetching upstream commits
+    and PR diffs (containers isolated from GitHub and GitLab and MCP disabled on 2026-07-12). Rows
+    scored before each fix remain on the board. Reward hacking is a separate, recorded problem: the
+    construction pass removed tasks that memoisation or cached calls could pass, and since 2025-11-03
+    an LLM Hack Detector penalises deceptive patches in a second column, which lowers some rows
+    sharply (O3 8.82 to 3.92, GPT-5.6 Sol 76.47 to 70.59). No source evidences the expert commits in a
+    model's training data; the paper's argument against it, that low scores rule contamination out,
+    predates scores near 90%. medium rather than high because the evidenced routes are run-time
+    leaks the maintainers have closed (review_checks).
+  contamination_evidence:
+    - source: src-gso-bench-site
+      stance: supports
+      quote: '2026-07-12: Task hardened with network filters (containers isolated from github/gitlab;
+        MCP disabled) after we observed newer models were sometimes using arbitrary techniques to fetch
+        upstream commits/PR diffs.'
+    - source: src-github-gso-releases
+      stance: supports
+      quote: 'feat: harden repo setup against ground-truth leaks; bump hack detector model'
+    - source: src-github-gso-releases
+      stance: supports
+      quote: 'fix: remove hidden test scripts from Docker images'
+    - source: src-hf-api-gso-bench-gso
+      stance: supports
+      quote: '{"name":"gt_diff","dtype":"string"}'
+    - source: src-arxiv-2505-23671-v3
+      stance: against
+      quote: The current low performance suggests contamination is not a risk for existing LLMS
+        despite our tasks being collected from GitHub repositories.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: The paper treats speedups beyond the expert's as unbounded, a secondary
+    metric; the headline OPT@1 is a fraction of tasks. The July 2026 audit finds that only 39 of the
+    102 expert patches meet GSO's own inclusion rule (every test at least 1.2x faster than base) in
+    all twelve cross-machine replays, and that four tasks would not run, so the reachable score on a
+    given machine may be below 100% (review_checks).
+  ceiling_anchor_type_basis:
+    reason: OPT@K is a fraction of tasks, bounded at 1, and no source measures an oracle run of the
+      expert patches against the OPT@1 gate.
+    source: src-arxiv-2505-23671-v3
+    quote: We compute OPTp@K as the fraction of tasks where at least one successful solution exists
+      among K attempts
+  dataset_licence: MIT
+  dataset_licence_source: src-hf-api-gso-bench-gso
+  dataset_licence_quote: '"license":"mit"'
+  upstream_licences: Each task's codebase keeps its own licence, which the paper tabulates as BSD
+    3-Clause (NumPy, pandas), HPND (Pillow, Pillow-SIMD), MIT (Pydantic, llama.cpp) and Apache 2.0
+    (Tornado, tokenizers, transformers, datasets).
+  upstream_licences_source: src-arxiv-2505-23671-v3
+  upstream_licences_quote: GSO is collected entirely from public repositories with licenses that
+    permit software usage
+  size:
+    - count: 102
+      unit: optimization tasks from 10 codebases
+      source: src-arxiv-2505-23671-v3
+      quote: we extract 102 challenging tasks across 10 codebases, spanning diverse domains and
+        languages including Python, C, and SIMD
+    - count: 42
+      unit: tasks whose expert commit edits Python only
+      subset: Python-only tasks (the paper's language breakdown)
+      source: src-arxiv-2505-23671-v3
+      quote: Py only (42) non-Py only (60)
+    - count: 60
+      unit: tasks whose expert commit edits non-Python code
+      subset: non-Python tasks (the paper's language breakdown)
+      source: src-arxiv-2505-23671-v3
+      quote: Py only (42) non-Py only (60)
+  size_note: The README says "100+" tasks; the dataset record and the leaderboard file both give
+    102. Tasks carry 12.45 performance tests on average (at most 20).
+  languages:
+    - Python
+    - C
+    - C++
+    - Cython
+    - Rust
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The GSO team (gso-bench), UC Berkeley
+  maintainer_basis:
+    reason: The paper lists all six authors at UC Berkeley, and the dataset, the harness repository
+      and the site sit in the gso-bench organisation accounts.
+    source: src-hf-api-gso-bench-gso
+    quote: '"author":"gso-bench"'
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers choose the models, run them in OpenHands and post the
+    results, re-running some under a new protocol (Claude Opus 4.6 appears at 33.33 from 2026-02-11
+    and at 41.18 from 2026-04-27). The two Opt@10 rows are the paper's.
+  submission_process_source: src-gso-bench-leaderboard-data
+  submission_process_quote: '"submission_org_name": "GSO"'
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-gso-bench-site
+      quote: '2026-04-27: Upgraded the Hack Detector model to GPT-5.4 (xhigh).'
+  independence_flags_note: The Hack Detector, which sets the published hack-adjusted column, is an
+    OpenAI model, GPT-5.4 at xhigh effort on the board since 2026-04-27, and the v0.1.9 harness
+    defaults to GPT-5.6-Sol; both are ranked on the same board (GPT 5.4 at 31.37 and 25.49, GPT-5.6
+    Sol at 76.47). The ranked raw OPT@1 is programmatic. The maintainers submit no system of their
+    own. The paper's support from the SKY Lab's industry sponsors is unnamed, so
+    funded-by-evaluated-party is left unset (taxonomy/_failures/2026-11-09-gso-002.yaml).
+  independence_assessed: true
+  known_limitation:
+    source: src-gso-bench-site
+    quote: "2025-11-03: Introduced the Hack Detector: penalizes deceptive optimizations (e.g., memoization,
+      harness hijacking) by comparing the model's patch against the oracle solution and test cases."
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: Models are served through their APIs, and the tasks are CPU-only, but the paper
+    runs every task's container on one 64-vCPU, 256 GB Google Cloud VM, with up to three hours per
+    attempt and rebuilds of C and C++ code; it argues OPT@K is resilient to the machine provided
+    each task gets enough resources. The Hack Detector adds OpenAI API spend.
+  compute_tier_source: src-arxiv-2505-23671-v3
+  compute_tier_quote: All tasks are run on a single Google Cloud n2-standard-64 VM (64 vCPUs, 256 GB
+    Memory).
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public tasks, prebuilt images and an open harness that builds the environments, applies
+      predictions and computes OPT@K, with no human step.
+    source: src-github-gso-readme
+    quote: uv run src/gso/harness/opt_at_k.py
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: gsobench (the gso-bench/gso package; src/gso/harness/prepare_images.py and opt_at_k.py,
+    with the Hack Detector), v0.1.9 as of 2026-09-29
+  harness_source: src-github-gso-readme
+  harness_quote: uv run src/gso/harness/opt_at_k.py
+  harness_gotcha:
+    source: src-github-gso-releases
+    quote: Lower the minimum speedup cutoff from 1.2 to 1.1 to match the grading used for the latest
+      published results.
+  harness_gotcha_note: Harness versions before v0.1.9 graded with a stricter minimum speedup than
+    the published results use, and those before v0.1.7 and v0.1.4 left the expert commit and the
+    hidden test scripts reachable inside the container; a reproduction should name its harness
+    version.
+  code_licence: MIT
+  code_licence_source: src-github-gso-readme
+  code_licence_quote: MIT license. Check `LICENSE` file.
+  runnable_via:
+    - custom
+  runnable_via_note: The README announces integrations with Harbor and other scaffolds (the
+    gso-bench/scaffolds repository, not read). Whether Inspect Evals or another general harness
+    implements GSO was not checked.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # (execution-tests, agent-scaffold) resolves to the agentic profile: scaffold, harness, tools, sandbox,
+  # selection and n_samples, with reasoning effort (the board lists GPT 5.4 at high and xhigh, 25.49 and 31.37).
+  # What GSO adds: the step budget (max_iterations raised to 200 on 2026-04-27, after which Claude Opus 4.6 moved
+  # from 33.33 to 41.18), the three-hour time limit, k (Opt@1 against Opt@10), the machine (raw speedups vary by
+  # machine; the paper argues OPT@K does not), and for the hack-adjusted column the detector model and its
+  # version (GPT-5, then GPT-5.4, then GPT-5.6-Sol). The harness version also carries the environment hardening
+  # (versions), which falls under harness and sandbox.
+  material_extra:
+    - max_steps
+    - wall_clock_hours
+    - k
+    - hardware
+    - judge_model
+    - judge_model_version
+    - provider_snapshot
+
+aggregation_policy: official-aggregate
+aggregation_policy_note: One OPT@1 per model over the 102 tasks, with the hack-adjusted OPT@1 beside
+  it; the site also plots OPTp@1 over thresholds p from 0 (correctness only) beyond 1 (beating the
+  expert), from raw scores. A task contributes success or nothing, with no partial credit for a
+  correct but slower patch.
+aggregation_policy_basis:
+  reason: The headline is the fraction of tasks reaching the threshold, at p = 0.95 by default.
+  source: src-gso-bench-site
+  quote: p=0.95 is the leaderboard default.
+
+homepage: https://gso-bench.github.io/
+repository: https://github.com/gso-bench/gso
+dataset_url: https://huggingface.co/datasets/gso-bench/gso
+leaderboard_url: https://gso-bench.github.io/
+
+versions:
+  - version: '2025-05-30'
+    label: The initial release (paper, dataset, Docker images and leaderboard)
+    version_kind: revision
+    released: 2025-05-30
+    items: 102
+    changes: The release the paper's results are on, in OpenHands CodeActAgent v0.35.0 with a
+      three-hour limit per task. The hack-adjusted column was added on 2025-11-03 and the expert
+      diff to the dataset in v0.1.1 (2025-08-26) without a new label.
+    superseded_by: v0.1.4
+    frozen: true
+    sources:
+      - src-github-gso-readme
+      - src-arxiv-2505-23671-v3
+  - version: v0.1.4
+    label: Harness v0.1.4, hidden test scripts removed from the Docker images
+    version_kind: revision
+    released: 2026-01-31
+    items: 102
+    changes: The Docker images no longer contain the grading tests' scripts, which an agent could
+      read before.
+    supersedes_version: '2025-05-30'
+    superseded_by: v0.1.7
+    frozen: true
+    sources:
+      - src-github-gso-releases
+  - version: v0.1.7
+    label: Harness v0.1.7, ground-truth leak hardening
+    version_kind: revision
+    released: 2026-04-26
+    items: 102
+    changes: The setup strips refs that are not ancestors of the base commit, so git log --all and
+      git show no longer reach the expert commit, and the Hack Detector moves from GPT-5 (high) to
+      GPT-5.4 (xhigh). The site's changelog for the next day raises max_iterations to 200 for new
+      runs and sets a reasoning effort for Claude models.
+    breaking: true
+    supersedes_version: v0.1.4
+    superseded_by: v0.1.8
+    frozen: true
+    sources:
+      - src-github-gso-releases
+      - src-gso-bench-site
+  - version: v0.1.8
+    label: Harness v0.1.8, network-isolated containers
+    version_kind: revision
+    released: 2026-07-12
+    items: 102
+    changes: The release notes give only a compare link; the site's changelog for the same day
+      isolates the containers from GitHub and GitLab and disables MCP, after models were seen
+      fetching upstream commits and PR diffs.
+    supersedes_version: v0.1.7
+    superseded_by: v0.1.9
+    frozen: true
+    sources:
+      - src-github-gso-releases
+      - src-gso-bench-site
+  - version: v0.1.9
+    label: Harness v0.1.9, the current protocol
+    version_kind: revision
+    released: 2026-09-29
+    items: 102
+    changes: The minimum speedup cutoff falls from 1.2 to 1.1 to match the published grading, hack
+      detection becomes resumable and needs complete vote coverage, and the default judge becomes
+      GPT-5.6-Sol. The site's changelog for 2026-09-27 adds an elicitation asking models to keep
+      measuring and improving after their first speedup.
+    breaking: true
+    supersedes_version: v0.1.8
+    frozen: true
+    sources:
+      - src-github-gso-releases
+      - src-gso-bench-site
+
+lineage:
+  role: root
+  role_note: No verified, lite, held-out or private line of GSO exists in any source read; one
+    public set of 102 tasks is the only set, and the paper's Python-only and non-Python splits are
+    an analysis, not separately released subsets. SWE-Perf and SWE-fficiency, which the audit
+    compares with GSO, are other maintainers' benchmarks built independently, not forks. The audit's
+    39 replay-valid tasks are a third party's diagnostic, not a released variant.
+
+tags:
+  - performance-optimization
+  - repository-level
+  - agents
+  - speedup
+  - reward-hacking
+  - multilingual-code
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2505-23671-v3
+    - src-arxiv-2505-23671
+    - src-gso-bench-site
+    - src-gso-bench-leaderboard-data
+    - src-github-gso-readme
+    - src-github-gso-releases
+    - src-hf-api-gso-bench-gso
+    - src-arxiv-2607-01211-v2
+    - src-epoch-benchmark-data
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, and its abstract page for the dates and the
+    CC BY licence; the site's front page with scripts and styles stripped (withheld from archiving: it
+    links an author's e-mail address), whose leaderboard is rendered from leaderboard.json, read at commit
+    a1476be6 of the site's repository; the README at commit 32d78b33 and GitHub's API list of releases;
+    Hugging Face's API record of the dataset; the audit's v2 PDF (a DOI) as evidence of current use; and
+    Epoch's export for the GSO-Bench string. Not read: the Hack Detector blog post on Notion, the
+    gso-bench/scaffolds and gso-experiments repositories, and the dataset rows themselves. The scaffolded
+    Source src-gso-bench-github-io-leaderboard-html (Epoch's link, a redirect to the front page) has no
+    extract and is not cited.
+  confidence: medium
+  review_checks:
+    - check: versions model the harness releases that changed the environment or grading (v0.1.4,
+        v0.1.7, v0.1.8, v0.1.9) as revisions of the same 102 tasks, after an initial release
+        labelled by its date because GSO names none. The alternative is a single version with the
+        harness version as a comparability condition only. The pairing of each release with the site
+        changelog entry of the same days is by date; v0.1.8's notes are empty.
+      field: versions
+      source: src-github-gso-releases
+      quote: '"tag_name":"v0.1.8"'
+    - check: breaking is true for v0.1.7 and v0.1.9 (elicitation and grading changed; Claude Opus
+        4.6 rose from 33.33 to 41.18 when re-run) and false for v0.1.4 and v0.1.8, which only close
+        leaks and so should not move an honest entrant's score. Rows from all protocols are ranked
+        together on one board.
+      field: versions
+      source: src-gso-bench-leaderboard-data
+      quote: '"score": 41.18, "score_hack_control": 37.25, "date": "2026-04-27"'
+    - check: contamination_risk medium against high. The expert commits are public in their
+        repositories and in the dataset (gt_diff), and models were observed fetching them at run
+        time; each route was closed after release, but earlier rows stay on the board. The
+        training-data route is unevidenced, and the paper's counter-argument rests on scores under
+        5%.
+      field: data.contamination_risk
+      source: src-gso-bench-site
+      quote: '2026-07-12: Task hardened with network filters (containers isolated from github/gitlab;
+        MCP disabled) after we observed newer models were sometimes using arbitrary techniques to fetch
+        upstream commits/PR diffs.'
+    - check: The Hugging Face dataset was re-uploaded on 2025-07-16, 2025-08-28 (the gt_diff columns
+        of v0.1.1) and 2026-03-23 with no stated change. Whether tasks or tests changed was not
+        checked by diffing the parquet files; if they did, refresh is rolling-live or the versions
+        need entries.
+      field: data.refresh
+      source: src-hf-api-gso-bench-gso
+      quote: '"lastModified":"2026-03-23T22:10:08.000Z"'
+    - check: grader-from-evaluated-party rests on the Hack Detector (GPT-5.4, now GPT-5.6-Sol)
+        setting a published column while OpenAI models are ranked; the ranked raw score is
+        programmatic. Whether a secondary column counts as the official scoring path is the
+        reviewer's call.
+      field: governance.independence_flags
+      source: src-gso-bench-site
+      quote: '2026-04-27: Upgraded the Hack Detector model to GPT-5.4 (xhigh).'
+    - check: activity no-submission-channel rests on every row being the maintainers' run and on no
+        submission route being stated; the sources do not say outsiders cannot submit, so unknown is
+        the alternative.
+      field: activity
+      source: src-gso-bench-leaderboard-data
+      quote: '"submission_org_name": "GSO"'
+    - check: ceiling_anchor_type theoretical-maximum, although the audit finds only 39 of 102 expert
+        patches meet GSO's own inclusion rule in every cross-machine replay and four tasks fail to
+        run; the reachable OPT@1 on a given machine may be measurably below 100%.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2607-01211-v2
+      quote: Most tasks remain executable, but only 39/102 GSO tasks
+    - check: compute_tier api-credits-only although the paper runs tasks on a 64-vCPU, 256 GB VM,
+        beyond ordinary CPU; no tier names a large CPU machine.
+      field: execution.compute_tier
+      source: src-arxiv-2505-23671-v3
+      quote: All tasks are run on a single Google Cloud n2-standard-64 VM (64 vCPUs, 256 GB Memory).
+    - check: release_venue NeurIPS 2025 comes only from a later paper's table and reference; the GSO
+        PDF read (v3) is headed "Preprint", and the proceedings page and track were not read.
+      field: release_venue
+      source: src-arxiv-2607-01211-v2
+      quote: selected to compare NeurIPS 2025 repos base and reference optimization commits
+    - check: capability holds context-integration only, with the performance-engineering gap logged
+        (taxonomy/_failures/2026-11-09-gso-001.yaml); optimization was rejected because the score is
+        a pass rate at a threshold, not the objective's value. A reviewer may read optimization as
+        fitting.
+      field: capability
+    - check: designed_for_subjects carries agent-scaffold beside model-in-benchmark-harness so that
+        the agentic profile resolves; the paper and the board use only OpenHands, and other
+        scaffolds rest on the README's integrations announcement.
+      field: designed_for_subjects
+      source: src-github-gso-readme
+      quote: Released integrations with frameworks like Harbor and other scaffolds

@@ -1,0 +1,600 @@
+# data/benchmarks/code/algotune.yaml
+#
+# P1-S10-T02, code entry 11. Promotes the Epoch stub data/benchmarks/_stubs/algotune.yaml. Filled from the
+# AlgoTune paper, arXiv 2507.15887 read as its v4 PDF (2025-10-24, NeurIPS 2025 Datasets and Benchmarks), and its
+# abstract pages for v4, v1 (155 tasks) and v2 (154 tasks); the project site algotune.io, whose leaderboard and
+# per-task results are static HTML (scripts and styles stripped); the oripress/AlgoTune README and
+# aws/launch-batch.sh at commit dff9914, GitHub's API record of the repository and its list of the 100 most
+# recent commits (withheld from archiving: it carries committers' e-mail addresses); Hugging Face's API record of
+# the oripress/AlgoTune dataset; the v1 PDFs of SEDIMA (arXiv 2610.02361) and EPOCH (arXiv 2610.06986), two
+# October 2026 papers that report AlgoTune results; and Epoch's benchmark export, which lists AlgoTune outside its
+# capabilities index. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+
+id: algotune
+name: AlgoTune
+aliases: []
+tagline: 154 numerical library functions; a model must make each faster while a verifier still
+  accepts its outputs.
+description: >
+  A benchmark of code optimisation. Each of 154 tasks, in 13 categories from matrix operations and convex
+  optimisation to graphs, signal processing, ODEs and cryptography, is a Python class with an input generator,
+  a reference solver (usually a call into NumPy, SciPy, CVXPY, scikit-learn, NetworkX or OR-Tools) and
+  a solution verifier. The entrant writes a faster solve function. On each task the submission is run
+  on held-out test inputs sized so the reference takes about 100 ms on one CPU core; if the verifier accepts
+  every output, the task score is the ratio of reference runtime to submission runtime (the minimum of
+  ten timed runs), and an invalid or slower solution scores 1x. The AlgoTune score is the harmonic mean
+  over all tasks, a metric with no upper bound. Tasks were contributed by 21 library committers and academics
+  and each reviewed by two others. The maintainers also built AlgoTuner, a SWE-agent-like loop with a
+  $1 budget per task, and the site's leaderboard ranks models run inside it (GPT-5.2 at 2.05x on 2026-11-09).
+  The task count fell from 155 to 154 in the paper's second version, and since January 2026 the maintainers
+  have tightened several verifiers against exploits, without version labels.
+self_description:
+  source: src-arxiv-2507-15887-v4
+  quote: we introduce AlgoTune, a benchmark designed to assess the ability of LM systems to optimize
+    the runtime of 154 functions in a wide variety of domains
+external_ids:
+  epoch: AlgoTune
+  huggingface: oripress/AlgoTune
+  arxiv: '2507.15887'
+paper:
+  title: 'AlgoTune: Can Language Models Speed Up General-Purpose Numerical Programs?'
+  arxiv: '2507.15887'
+  version_read: v4
+  source: src-arxiv-2507-15887-v4
+released: 2025-07-19
+released_note: The paper's first arXiv version, as its abstract page dates it, and the date Epoch's
+  export and the stub carry. The repository was created on 2025-07-02 (GitHub API).
+released_source: src-arxiv-2507-15887
+released_quote: Submitted on 19 Jul 2025 (v1), last revised 24 Oct 2025 (this version, v4)
+release_venue: NeurIPS 2025 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2507-15887-v4
+release_venue_quote: 39th Conference on Neural Information Processing Systems (NeurIPS 2025) Track
+  on Datasets and Benchmarks.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/code-performance-optimization
+domain_basis:
+  reason: The entrant writes code, the verifier runs it on test inputs and must accept every output,
+    and the score is the speedup over the reference implementation, which is the leaf's definition
+    (faster while preserving behaviour, scored on speedup rather than correctness alone).
+  source: src-arxiv-2507-15887-v4
+  quote: We score an AI system based on how much faster its generated implementations are relative
+    to our reference implementations.
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: Each task is a self-contained function written to a specification, but a correct
+      solution that is no faster scores the floor of 1x; correctness is the gate, not the score.
+  - term: code/competitive-programming
+    reason: Both reward efficient algorithms, but these are library functions with a reference
+      solver to beat, not contest problems under their original limits, and speed is the score
+      rather than a pass/fail limit.
+  - term: code/repository-scale-se
+    reason: The entrant replaces one solve function in a task class; there is no repository to
+      navigate or change in place. GSO, drafted for the same leaf, is the repository-scale case
+      (review_checks).
+  - term: agents-tooluse/software-agents
+    reason: AlgoTuner is an agent loop, but it edits one solver file in a sandbox rather than
+      working in a real repository or toolchain, and the grader judges the code's outputs and
+      runtime, which keeps the family code (02 S12.11).
+capability:
+  - optimization
+capability_basis:
+  optimization:
+    reason: The benchmark states its objective, runtime relative to the reference under a
+      correctness gate, and ranks systems by how far they push it, with no bound on the score.
+    source: src-arxiv-2507-15887-v4
+    quote: In AlgoTune, we score systems based on the speed of their synthesized code relative to a
+      reference implementation, a metric with no absolute upper bound.
+capability_considered_and_rejected:
+  - term: creativity-novelty
+    reason: The paper hopes for algorithmic discovery and reports finding none, but scoring does not
+      reward departure from known solutions; a faster call into another library scores the same as a
+      new algorithm.
+    source: src-arxiv-2507-15887-v4
+    quote: We did not observe AlgoTuner finding any novel algorithmic improvements across any of the
+      LMs tested.
+  - term: search-exploration
+    reason: AlgoTuner iterates under a $1 budget, but the score is the speed of the one submitted
+      solver, not how the space was traversed; the budget belongs to the harness.
+  - term: autonomy
+    reason: AlgoTuner runs unattended, but the protocol neither prohibits nor measures human
+      intervention, and code from any source can be evaluated without the agent.
+  - term: tool-use
+    reason: AlgoTuner's profile and reference commands are the harness's; tool calls are not scored.
+  - term: constraint-satisfaction
+    reason: The verifier's acceptance is a gate every scored solution must pass, but the difficulty
+      scored is speed, not finding a feasible output.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_note: No term names a measured runtime ratio against a reference implementation,
+  the quantity AlgoTune scores; execution-tests records the run-and-verify gate it rests on, and the
+  gap is logged (taxonomy/_failures/2026-11-09-algotune-001.yaml).
+evaluation_method_basis:
+  reason: The submitted code is executed on the test inputs, and only if the task's verifier accepts
+    every output is a speedup assigned; an invalid solution scores the 1x floor.
+  source: src-arxiv-2507-15887-v4
+  quote: 'If the task verifier deems all outputs valid, we assign the model a speedup score: the ratio
+    between reference code runtime and LM code runtime over the test inputs.'
+evaluation_method_considered_and_rejected:
+  - term: constraint-check
+    reason: Each verifier asserts properties of an output (shape, orthonormality, an objective
+      within tolerance), but the code must be run to produce the output and its runtime, which the
+      term's exclusion test sends to execution-tests.
+    source: src-arxiv-2507-15887-v4
+    quote: The solution verifier validates an LM-proposed solution for the given problem instance,
+      returning a boolean value.
+  - term: domain-metric
+    reason: Speedup is a general measure, not one defined within a discipline.
+  - term: composite
+    reason: The harmonic mean combines one metric, the speedup, over tasks scored the same way,
+      which the term's exclusion test rules out.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The paper and the leaderboard run every model inside the maintainers' AlgoTuner loop with
+    the same commands and a $1 budget per task, and rows name only the model. The benchmark itself
+    takes code from any system, and the README evaluates solver code placed in its results directory
+    without the agent, which is how papers bring their own search harnesses (as_used).
+  source: src-arxiv-2507-15887-v4
+  quote: We evaluate all LMs with a fixed budget of $1 for each task.
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: No single-prompt protocol is defined; every reported result comes from an iterative loop
+      that runs, times and verifies code.
+observed_subjects:
+  values:
+    - reasoning-model
+  basis: All 18 leaderboard rows are chat models run at a named reasoning effort, 17 at high and
+    GPT-5 Pro at medium; read 2026-11-09.
+  source: src-algotune-site
+as_used:
+  - protocol: AlgoTune's harmonic-mean speedup as the fitness of evolutionary search harnesses
+      (OpenEvolve and ShinkaEvolve) with five models, each run limited to 100 evolution steps of one
+      evaluated child, in place of AlgoTuner and its $1 budget.
+    source: src-arxiv-2610-02361-v1
+    quote: Each run is limited to 100 evolution steps with one evaluated child per step.
+    note: SEDIMA (October 2026), which reports a 5.5% average gain on AlgoTune from its memory
+      module. Its scores come from another harness and budget than the leaderboard's and are not
+      comparable with it.
+  - protocol: A frozen 12-task subset, five search methods with a budget of 48 semantic calls and
+      three seeds, reported as a mean normalized score rather than the harmonic-mean speedup.
+    split: 12 tasks (affine transform to SVM)
+    source: src-arxiv-2610-06986-v1
+    quote: On a frozen 12-task AlgoTune subset, five methods receive the same budget of 48 semantic
+      calls and are run with three seeds
+    note: EPOCH (October 2026). Its headline, 0.65 against 0.53, is on its own normalisation of a
+      subset, and cites the repository at pinned task and data revisions given in its supplement,
+      which was not read.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Papers report AlgoTune results in October 2026 under their own harnesses (SEDIMA, EPOCH),
+    and the maintainers added leaderboard rows and tightened verifiers up to March 2026.
+  source: src-arxiv-2610-06986-v1
+  quote: substantially exceeding the strongest baseline in mean normalized score (0.65 vs. 0.53)
+activity: no-submission-channel
+activity_note: The maintainers choose the models and run AlgoTuner themselves; no source read gives
+  outsiders a route onto the leaderboard. The newest rows (GPT-5.4, Gemini 3.1 Pro Preview) were
+  added in February and March 2026 (commits), and the repository was last pushed on 2026-06-24.
+activity_basis:
+  reason: The site's leaderboard and per-task results are the maintainers' own AlgoTuner runs,
+    published with their trajectories, and the README offers local evaluation only.
+  source: src-algotune-site
+  quote: This site contains AlgoTuner trajectories for all AlgoTune tasks.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-5.2 (high) in AlgoTuner
+    source: src-algotune-site
+    observed_on: 2026-11-09
+    quote: Leaderboard Model Name AlgoTune Score GPT-5.2 (high) 2.05x
+  - system: o4-mini (high) in AlgoTuner
+    source: src-algotune-site
+    observed_on: 2026-11-09
+    quote: o4-mini (high) 1.72x
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's is_solution verifier in the repository decides validity, often
+  by re-running the reference solver and comparing objectives within a tolerance; the reference
+  solver's runtime is the baseline the speedup is measured against.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The tasks, verifiers, agent and timing harness are open, and the instance data is an
+    ungated Hugging Face dataset that the harness downloads or regenerates locally. Timings depend
+    on the machine, so speedups reproduce only on comparable hardware (comparability).
+  source: src-github-algotune-readme
+  quote: AlgoTuner streams datasets from HuggingFace.
+
+task:
+  exists: true
+  input:
+    - a task description with input and output formats and an example
+    - the reference solve function and the is_solution verifier, as code
+    - development inputs (100 per task) for timing and checking during work
+  output: A Solver class whose solve function returns a valid output for each problem instance, in
+    Python, optionally compiled (Cython, Numba); compilation time is not counted.
+  scoring: The solver runs on the task's test inputs; if the verifier accepts every output, the task
+    score is reference runtime over solver runtime (minimum of ten timed runs after a warm-up, on
+    one CPU core), otherwise or below 1x it is 1x. The AlgoTune score is the harmonic mean of the
+    task scores over all 154 tasks.
+  tests_hidden_from_system: false
+  tests_hidden_from_system_note: The verifier's code is shown to the model; the test inputs are held
+    out from AlgoTuner during work but sit in the public Hugging Face dataset, and the input
+    generators are public in the repository.
+  tests_hidden_from_system_source: src-arxiv-2507-15887-v4
+  tests_hidden_from_system_quote: In essence, everything apart from the problem generating function
+    is shown to the LM.
+  reference_solution: true
+  source: src-arxiv-2507-15887-v4
+  quote: The overall AlgoTune score for a specific model is the harmonic mean of its scores on all
+    tasks.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The "held-out" test inputs are held out from the agent's loop, not from the public;
+    their files are in the dataset beside the development inputs.
+  access_basis:
+    reason: The instance data is an ungated MIT-tagged Hugging Face dataset, and the tasks,
+      generators, verifiers and harness are in the public MIT repository.
+    source: src-hf-api-algotune
+    quote: '"gated":false,"cardData":{"license":"mit"},"lastModified":"2026-02-02T17:08:22.000Z"'
+  refresh: rolling-live
+  refresh_note: No version label exists. One task left the set between the paper's v1 (155 tasks)
+    and v2 (154); no quoted Source names it. From January to March 2026 the maintainers tightened
+    verifiers and a generator against exploits while adding leaderboard rows (versions, errata); the
+    Hugging Face dataset was created on 2025-12-30 and last modified on 2026-02-02.
+  refresh_basis:
+    reason: Scoring changed on the live leaderboard through unlabelled commits, so a score needs its
+      measurement date to be read; the commits are dated but are not announcements a claim can cite
+      as a version (review_checks).
+    source: src-github-api-algotune-commits
+    quote: '"date":"2026-03-10T10:08:53Z"},"message":"Harden validator anti-cheat checks"'
+  data_provenance:
+    - expert-authored
+    - synthetic-procedural
+  data_provenance_note: Each task (generator, reference solver and verifier) was written by one of
+    21 contributors, committers to the libraries used and academics in the task's field, and
+    reviewed by two others. The instances are drawn from each task's seeded generator at a size
+    chosen so the reference takes about 100 ms.
+  data_provenance_source: src-arxiv-2507-15887-v4
+  data_provenance_quote: To build our benchmark, we recruited 21 contributors, both committers to
+    the software packages used in AlgoTune, as well as academics who contributed tasks from their
+    field of expertise.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The paper argues contamination away because there are no answers to leak, only reference solvers that
+    are public and shown in the prompt anyway. But the fastest solutions are public: the site publishes
+    every AlgoTuner trajectory, and the repository's results directory (seen in its file tree, not a quoted
+    Source) holds each model's code, so a model trained on them could reproduce the leaderboard's speedups
+    without optimising anything. No source evidences that route. Distinct from contamination, the sources
+    state reward hacking: during development models passed the tests through verifier loopholes (a vector-quantisation
+    verifier that did not check optimality), and the paper concedes that incomplete verifiers can still
+    pass incorrect code. The maintainers' commits from January to March 2026 close exploits in integer_factorization
+    (a Fermat shortcut), gzip_compression (__len__ spoofing), spectral_clustering and PCA, after leaderboard
+    rows had been scored (versions, errata; review_checks).
+  contamination_evidence:
+    - source: src-arxiv-2507-15887-v4
+      stance: against
+      quote: AlgoTune bypasses this issue by not having answers.
+    - source: src-algotune-site
+      stance: supports
+      quote: This site contains AlgoTuner trajectories for all AlgoTune tasks.
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_basis:
+    reason: The headline is a harmonic mean of speedup ratios with no upper bound, so no best end
+      exists to anchor headroom; its floor is 1x by construction. Epoch's export gives a score
+      ceiling of 1.0, which cannot be AlgoTune's own scale (review_checks).
+    source: src-arxiv-2507-15887-v4
+    quote: In AlgoTune, we score systems based on the speed of their synthesized code relative to a
+      reference implementation, a metric with no absolute upper bound.
+  dataset_licence: MIT
+  dataset_licence_note: The Hugging Face card tags the dataset MIT, the repository's licence. The
+    reference solvers call third-party libraries under their own licences, which are not
+    redistributed.
+  dataset_licence_source: src-hf-api-algotune
+  dataset_licence_quote: '"cardData":{"license":"mit"}'
+  size:
+    - count: 154
+      unit: tasks in 13 categories
+      subset: the test set
+      source: src-arxiv-2507-15887-v4
+      quote: The AlgoTune test set consists of 154 tasks in 13 categories
+    - count: 5
+      unit: tasks
+      subset: development set for agent prototyping, outside the 154
+      source: src-arxiv-2507-15887-v4
+      quote: Our development set consists of 5 tasks.
+    - count: 15
+      unit: tasks
+      subset: AlgoTune Lite (a launcher preset)
+      source: src-github-algotune-launch-batch
+      quote: PRESET_TASKS=( lp_mdp ode_hodgkinhuxley power_control dynamic_assortment_planning
+        ode_brusselator ode_seirs articulation_points wasserstein_dist minimum_spanning_tree
+        count_connected_components pde_burgers1d cumulative_simpson_1d robust_kalman_filter
+        multi_dim_knapsack spectral_clustering )
+  size_note: The unexpanded Hugging Face record lists, for each of the 154 task directories, a train
+    and a test JSONL of 100 instances each (counted from the file list, 2026-11-09; not a quoted
+    Source).
+  languages:
+    - Python
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The AlgoTune team (University of Tübingen and Princeton University)
+  maintainer_basis:
+    reason: The experiments and data processing were done at Tübingen and Princeton, with Meta in an
+      advisory role; the repository and the Hugging Face dataset are held under the first author's
+      personal accounts.
+    source: src-arxiv-2507-15887-v4
+    quote: All experimentation and data processing, including the use of open source models and
+      datasets, was conducted at the University of
+  maintainer_type: academic-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers choose the models, run them in AlgoTuner and publish the
+    scores and trajectories on the site. No route for outside submissions was found (activity).
+  submission_process_source: src-algotune-site
+  submission_process_quote: This site contains AlgoTuner trajectories for all AlgoTune tasks.
+  independence_flags: []
+  independence_flags_note: Not assessed. The paper names Meta (FAIR) among the authors' affiliations
+    and says Meta advised only; the funders named are public and philanthropic research bodies; and
+    no model on the leaderboard is attributed to a maintainer's organisation in the sources read.
+    Whether any evaluated model's developer supported the runs (API credits for the 2026 rows) is
+    not stated, so no-known-conflict is not set (review_checks).
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The canonical AlgoTuner run spends $1 of model API per task, about $154 per
+    model; timing runs on CPU (the paper's numbers on an AMD EPYC 9454 with 14GB of memory), and the
+    README adds SLURM and AWS Batch launchers.
+  compute_tier_basis:
+    reason: Models are reached through an API under a fixed spend, and the evaluation needs a CPU,
+      not a GPU.
+    source: src-github-algotune-readme
+    quote: AlgoTune can now be easily run on AWS with just an OpenRouter API key and AWS
+      credentials.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Generation, timing and verification run without a human step, but
+    speedups are wall-clock measurements, so they move with the CPU, its load and the library
+    versions; the paper pins one machine.
+  reproducibility_tier_source: src-arxiv-2507-15887-v4
+  reproducibility_tier_quote: We run all measurements on an AMD EPYC 9454 CPU with 14GB of memory.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: algotune.sh (AlgoTuner agent runs, ./algotune.sh evaluate for solver code without the
+    agent, generate for local datasets), with SLURM and AWS Batch launchers
+  harness_source: src-github-algotune-readme
+  harness_quote: You can add code for each task in directories (following the `./results/`
+    structure) and it will be compiled and evaluated.
+  harness_gotcha:
+    source: src-github-api-algotune-commits
+    quote: '"date":"2026-01-26T23:37:19Z"},"message":"Generate independent random primes in integer_factorization
+      to prevent Fermat exploit"'
+  harness_gotcha_note: Verifiers and at least one generator changed in January to March 2026 with no
+    version label, so a run on an older checkout scores against weaker verifiers; a claim should
+    name the commit. EPOCH pins task and data revisions for this reason.
+  code_licence: MIT
+  code_licence_source: src-github-api-algotune
+  code_licence_quote: '"license":{"key":"mit","name":"MIT License","spdx_id":"MIT"'
+  runnable_via:
+    - custom
+  runnable_via_note: Inspect Evals and other harnesses were not checked.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # (execution-tests, agent-scaffold) resolves the agentic profile; the AlgoTuner view
+  # (execution-tests, model-in-benchmark-harness) is in no profile. Beyond the agentic fields, speedups are
+  # wall-clock timings, so the machine is material (`hardware`); AlgoTuner's spend cap of $1 per task
+  # (`cost_usd`) moved scores in the paper's budget curves; the sampling (temperature 0, top_p 0.95); and the
+  # date, because verifiers were tightened between January and March 2026 without a version label
+  # (`date_evaluated`). Papers that swap AlgoTuner for an evolutionary harness or a task subset are caught by
+  # harness and subset_used.
+  profile: agentic
+  material_extra:
+    - hardware
+    - cost_usd
+    - sampling
+    - date_evaluated
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The headline is the harmonic mean of the per-task speedups over all tasks, with each
+    task's speedup also published.
+  source: src-algotune-site
+  quote: The AlgoTune score for each model is the harmonic mean of its speedups across all AlgoTune
+    tasks.
+
+homepage: https://algotune.io/
+repository: https://github.com/oripress/AlgoTune
+dataset_url: https://huggingface.co/datasets/oripress/AlgoTune
+leaderboard_url: https://algotune.io/
+
+versions:
+  # No maintainer labels exist; the tags name the task count. 04 S4: the same maintainer revised the same task
+  # set in place, so both are revisions.
+  - version: 155-tasks
+    label: The paper's first version, 155 tasks
+    version_kind: revision
+    released: 2025-07-19
+    items: 155
+    changes: The release of the paper and the repository.
+    breaking: true
+    superseded_by: 154-tasks
+    frozen: true
+    sources:
+      - src-arxiv-2507-15887-v1-abs
+  - version: 154-tasks
+    label: 154 tasks, from the paper's second version on
+    version_kind: revision
+    released: 2025-08-14
+    items: 154
+    changes: One task removed (no quoted Source names it); the set every leaderboard score is on.
+      Verifiers and a generator were tightened in place in 2026 (errata).
+    breaking: true
+    supersedes_version: 155-tasks
+    errata:
+      - date: 2026-01-26
+        scope: integer_factorization, gzip_compression
+        description: The integer_factorization generator was changed to draw independent random
+          primes, to prevent a Fermat-factorisation exploit, and the gzip_compression verifier now
+          canonicalises bytes to stop __len__ spoofing.
+        source: src-github-api-algotune-commits
+      - date: 2026-02-08
+        scope: spectral_clustering
+        description: Quality gates were tightened and near-hack gating added to the
+          spectral_clustering verifier.
+        source: src-github-api-algotune-commits
+      - date: 2026-03-10
+        scope: all verifiers, pca
+        description: Validator anti-cheat checks were hardened (2026-03-10) and the PCA verifier
+          tightened against rotated-subspace shortcuts (2026-03-12).
+        source: src-github-api-algotune-commits
+    frozen: false
+    sources:
+      - src-arxiv-2507-15887-v2-abs
+      - src-arxiv-2507-15887
+      - src-github-api-algotune-commits
+
+subsets:
+  - id: algotune#lite
+    label: AlgoTune Lite
+    items: 15
+    scored_separately: false
+    evidence:
+      - source: src-github-algotune-launch-batch
+        quote: '# Curated subset exposed as a launcher preset.'
+      - source: src-github-api-algotune-commits
+        quote: '"date":"2026-03-11T20:57:26Z"},"message":"Add GPT-5.4 xhigh and AlgoTune Lite"'
+    notes: A 15-task preset in the AWS launcher, added on 2026-03-11. No source reports scores on it
+      or says how its tasks were chosen; the leaderboard ranks the full set.
+
+lineage:
+  role: root
+
+tags:
+  - code-optimization
+  - speedup
+  - numerical-computing
+  - python
+  - agents
+  - reward-hacking
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2507-15887-v4
+    - src-arxiv-2507-15887
+    - src-arxiv-2507-15887-v1-abs
+    - src-arxiv-2507-15887-v2-abs
+    - src-algotune-site
+    - src-github-algotune-readme
+    - src-github-algotune-launch-batch
+    - src-github-api-algotune
+    - src-github-api-algotune-commits
+    - src-hf-api-algotune
+    - src-arxiv-2610-02361-v1
+    - src-arxiv-2610-06986-v1
+    - src-epoch-benchmark-data
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text, its windows kept clear of the author block
+    and the acknowledged individuals; its abstract pages for v4, v1 and v2, for the dates and the task
+    counts; the project site, whose leaderboard is static HTML; the README and the AWS launcher at commit
+    dff9914; GitHub's API record of the repository and its list of the 100 most recent commits (withheld
+    from archiving for the committers' e-mail addresses); Hugging Face's API record of the dataset; SEDIMA's
+    and EPOCH's v1 PDFs (DOIs) as evidence of current use; and Epoch's export. The task classes, the verifiers
+    and EPOCH's supplement were not read.
+  confidence: medium
+  review_checks:
+    - check: GSO, drafted for the same leaf by another agent, also scores runtime speedups on Python
+        code. The paper describes it as optimising the runtime of functions inside popular Python
+        repositories (NumPy, pandas, Pydantic), and sets AlgoTune apart as end-to-end algorithms
+        across many domains. Each AlgoTune task is a self-contained class whose reference solver is
+        a library call, scored as a harmonic mean of speedups over 154 such tasks, with no
+        repository to work in. Both fit code-performance-optimization as primary, and gso.yaml adds
+        repository-scale-se. The facets differ on purpose. GSO rejects optimization because its
+        OPT@1 counts patches past 95% of a human speedup, while AlgoTune's score is the speedup
+        itself, so optimization is tagged here. GSO logs its gap as a capability (gso-001,
+        performance-engineering) and this entry as an evaluation method (algotune-001); the two
+        records should be triaged together.
+      field: domain
+      source: src-arxiv-2507-15887-v4
+      quote: Our approach complements their work since we focus on implementing end-to-end
+        algorithms from a wide variety of domains
+    - check: No evaluation_method term names a runtime ratio against a reference; execution-tests
+        stands for the correctness gate, and the gap is logged as
+        taxonomy/_failures/2026-11-09-algotune-001. KernelBench, which the paper names as concurrent
+        work scored on speed, would meet the same gap.
+      field: evaluation_method
+      source: src-arxiv-2507-15887-v4
+      quote: Concurrently, KernelBench (Ouyang et al., 2025) challenges LMs to develop CUDA GPU
+        kernels, evaluated on their speed.
+    - check: Versions follow 04 S4 as two revisions by one maintainer (155 then 154 tasks). The name
+        of the removed task comes from the commit history (2025-08-10), which is not a quoted
+        Source. The 2026 verifier changes are errata on 154-tasks rather than a third revision; if
+        leaderboard rows from 2025 (o4-mini's 1.72x, the paper's) were not re-run against the
+        hardened verifiers, the board mixes two scoring states and a separate revision may be
+        better. Whether old rows were re-run was not found.
+      field: versions
+      source: src-arxiv-2507-15887-v1-abs
+      quote: Our AlgoTune benchmark consists of 155 coding tasks collected from domain experts
+    - check: refresh rolling-live rests on unlabelled verifier changes against the live leaderboard.
+        The commits are dated and public, which could be read as dated announcements
+        (versioned-releases).
+      field: data.refresh
+      source: src-github-api-algotune-commits
+      quote: '"date":"2026-03-12T14:59:30Z"},"message":"Tighten PCA validator against rotated subspace
+        shortcuts"'
+    - check: contamination_risk medium. No source evidences a training route, but the best code for
+        every task is published (the site's trajectories), which is a plausible one; the
+        reward-hacking evidence (loopholes during development, exploits closed in 2026) is recorded
+        in the note and errata because no field holds it. A reviewer may want a structured place for
+        reward-hacking events.
+      field: data.contamination_risk
+      source: src-arxiv-2507-15887-v4
+      quote: it would turn out to be a solution that passed our tests by finding a loophole and
+        without actually solving the given task.
+    - check: Epoch lists AlgoTune outside its index (in_eci False) with a score ceiling of 1.0 and a
+        random baseline of 0.0, while AlgoTune's score is an unbounded speedup with a floor of 1x.
+        Epoch's rows may be on a rescaled metric; check before comparing them with the site's.
+      field: data.ceiling_anchor_type
+      source: src-epoch-benchmark-data
+      quote: AlgoTune,False,,,1.0,0.0,1.0,2025-07-19,
+    - check: independence_assessed is false. Meta (FAIR) is an author affiliation and advised only,
+        and no leaderboard model was matched to a maintainer's organisation in the sources; that
+        match, and whether any developer funded the 2026 runs, needs a reviewer before
+        no-known-conflict is set.
+      field: governance.independence_flags
+      source: src-arxiv-2507-15887-v4
+      quote: Meta was involved only in an advisory role.
+    - check: activity no-submission-channel. The site and README show only the maintainers' runs and
+        local evaluation; an issue or pull-request route for outside results may exist and was not
+        searched.
+      field: activity
+    - check: designed_for_subjects carries both model-in-benchmark-harness (AlgoTuner, the
+        leaderboard) and agent-scaffold (any system's code can be evaluated, and the papers using it
+        bring their own harnesses). The agentic profile is set explicitly, since the AlgoTuner pair
+        resolves to none.
+      field: designed_for_subjects
+    - check: Personal data. The repository and the Hugging Face dataset are held under the first
+        author's personal accounts, the site's header lists the 24 authors, and the README ends with
+        a contact address. The windows keep names and addresses out, but the site, README and API
+        records are pending archiving; the commit list is withheld.
+      field: curation.sources

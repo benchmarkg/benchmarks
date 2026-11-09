@@ -1,0 +1,699 @@
+# data/benchmarks/code/swe-bench-pro.yaml
+#
+# P1-S10-T02, code entry 9. Filled from the SWE-Bench Pro paper, arXiv 2509.16941 read as its v2 PDF (2025-11-14),
+# and its abstract page (src-swebench-pro-arxiv, already on main, which swe-bench.yaml cites for the fork); the
+# SWE-Bench Pro V2 paper, arXiv 2610.24206 read as its v1 PDF (2026-10-16); the scaleapi/SWE-bench_Pro-os README and
+# v2/README.md at commit 66f92766 (2026-09-22) and GitHub's API record of the repository; Hugging Face's API record of
+# ScaleAI/SWE-bench_Pro; Scale's two leaderboard pages, the deprecated v1 board (public and private tabs) and the V2
+# board (Full and HARD tabs), read after scale.com's robots.txt with their inline scripts kept; the abstract page of
+# SWE-Bench Pro Verified (arXiv 2609.08149), a derivative by other authors; and the v1 PDF of a Surge AI paper
+# (arXiv 2610.00890, October 2026) that reports SWE-Bench Pro results. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# One benchmark with three concurrent sets. The public set (731 tasks, then 642 in V2) is released; the held-out set
+# (858) is private and publishes no score; the commercial set (276, from 18 startups' purchased repositories) is
+# private and scored only by Scale, whose results appear on a tab of their own. They are subsets of one release by
+# one maintainer (04 S4). V2 (2026-09-22) repairs and retires tasks of the public set on the same repositories and
+# base commits, so it is a breaking revision, not a new benchmark. SWE-Bench Pro itself is Scale AI's fork of
+# SWE-bench (lineage).
+
+id: swe-bench-pro
+name: SWE-Bench Pro
+aliases:
+  - SWE-bench Pro
+  - SWE-Bench Pro (Public Dataset)
+  - SWE-Bench Pro V2
+tagline: Long-horizon tasks from copyleft and purchased startup repositories; an agent's patch must
+  pass hidden tests.
+description: >
+  Scale AI's successor in design to SWE-bench: 1,865 tasks from 41 actively maintained repositories (business
+  applications, B2B services, developer tools) in Python, Go, JavaScript and TypeScript. Each task pairs
+  a repository at a base commit, in a Docker image built by professional engineers, with a human-rewritten
+  problem statement, a list of requirements and, where needed, the interface the tests expect; the system
+  must write a patch, which counts as resolved only if the task's fail-to-pass tests now pass and its
+  pass-to-pass tests still do. Trivial edits are excluded; reference solutions average 107.4 lines across
+  4.1 files. The tasks are split three ways. The public set, from 11 GPL-style copyleft repositories,
+  is released openly; the held-out set, from 12 other copyleft repositories, is kept private to check
+  for overfitting; the commercial set, from 18 startups' proprietary repositories bought for the purpose,
+  is kept private and scored by Scale, which publishes those results separately. The copyleft licences
+  and the private codebases are the design's defence against contamination. V2 (September 2026, with Reflection
+  AI) revised the public set to 642 tasks with a 51-task Hard split and a locked protocol (agent offline
+  but for the model endpoint, every patch re-graded in a clean container) after agents were found retrieving
+  upstream fixes and forging dependencies. The paper ran every model in the SWE-Agent scaffold; the V2
+  board reports each system as model, scaffold and effort.
+self_description:
+  source: src-arxiv-2509-16941-v2
+  quote: provides a contamination-resistant testbed that more faithfully captures the complexity and
+    diversity of real-world software development
+external_ids:
+  huggingface: ScaleAI/SWE-bench_Pro
+  arxiv: '2509.16941'
+paper:
+  title: 'SWE-Bench Pro: Can AI Agents Solve Long-Horizon Software Engineering Tasks?'
+  arxiv: '2509.16941'
+  version_read: v2
+  source: src-arxiv-2509-16941-v2
+released: 2025-09-21
+released_note: The paper's first arXiv version. The Hugging Face dataset was created on 2025-08-26
+  and the repository on 2025-09-05, both before it. The V2 paper (src-arxiv-2610-24206-v1) is a
+  second paper on the revised public set, not a new benchmark.
+released_source: src-swebench-pro-arxiv
+released_quote: Submitted on 21 Sep 2025
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/repository-scale-se
+  primary_basis:
+    reason: The system gets a whole repository at a base commit and a task description, finds where
+      to change it and writes a patch, typically across several files, which the task's tests judge.
+      That is the leaf's definition, and the code family's exclusion test keeps a benchmark here
+      when tests judge a patch, however agentic the harness.
+    source: src-arxiv-2509-16941-v2
+    quote: The model must generate a patch file to resolve the issue and pass a suite of
+      human-reviewed tests as validation.
+  secondary:
+    - agents-tooluse/software-agents
+    - code/bug-repair
+  secondary_basis:
+    reason: software-agents because the protocol itself is agentic, unlike SWE-bench's paper
+      protocol -- the paper runs every model in the SWE-Agent scaffold for up to 50 turns, and V2's
+      locked protocol runs agents in a sandbox -- but tests judge the patch, so it is secondary (02
+      S12.11). bug-repair because the tasks include bug fixes beside feature requests, optimisations
+      and refactoring; no source gives the share.
+    source: src-arxiv-2509-16941-v2
+    quote: We include a diverse selection of feature requests as well as bug fixes
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: No task is a self-contained function; every task is a change inside a repository whose
+      location the system must find, and trivial edits were excluded.
+    source: src-arxiv-2509-16941-v2
+    quote: To ensure task complexity, we exclude trivial edits (1–10 lines of code) and retain only
+      problems requiring substantial, multi-file modifications.
+capability:
+  - context-integration
+capability_basis:
+  context-integration:
+    reason: Each task supplies the requirements and interface that the hidden tests check, and the
+      paper's ablation shows resolve rates falling steeply without them, so the supplied material
+      determines success.
+    source: src-arxiv-2509-16941-v2
+    quote: Without the requirements and interface, both models tested (GPT-5 and CLAUDE OPUS 4.1)
+      show significantly degraded performance.
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: The paper calls the tasks long-horizon (hours to days for an engineer) and agents run
+      for 50 to 250 turns, but only the final patch is scored and an agent can revert a wrong edit
+      before the deadline, so an intermediate error does not make full success unattainable, which
+      the term's inclusion test needs.
+  - term: tool-use
+    reason: The tools are the scaffold's (SWE-Agent, mini-swe-agent, Claude Code, Codex); the
+      benchmark fixes only the network policy and scores the patch, not how tools were used.
+  - term: planning
+    reason: The score is the patch's test outcome, an artifact of the rollout, which the term's
+      exclusion test rules out.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: The patch is applied in the task's container and its fail-to-pass and pass-to-pass tests
+    are run; the resolve rate is the headline.
+  source: src-arxiv-2509-16941-v2
+  quote: Every task includes human-reviewed test suites with fail2pass tests that verify issue
+    resolution and pass2pass tests that ensure existing functionalities remain intact.
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: The paper's GPT-5 judge only sorts failed trajectories into failure modes for analysis;
+      no score depends on it.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The paper runs every model in one scaffold (SWE-Agent, its default prompt, 50 turns), so
+    only the model varies, which is model-in-benchmark-harness. The V2 paper and board report each
+    result as a system -- model, scaffold and reasoning effort, with Claude Code, Codex and
+    mini-swe-agent -- which is agent-scaffold.
+  source: src-arxiv-2610-24206-v1
+  quote: Because results depend on the scaffold and effort setting as well as the model, we report
+    them per system, defined as the combination of the three.
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: No protocol prompts a model directly for a patch; every reported run is inside an agent
+      loop.
+observed_subjects:
+  values:
+    - agent-scaffold
+    - reasoning-model
+  basis: The V2 board's rows name model, scaffold and effort, such as "Opus 5 (Claude Code) xhigh"
+    and "Kimi-K3 (mini-swe-agent) max"; the v1 board marks mini-swe-agent runs and lists reasoning
+    settings such as "gpt-5.4 (xHigh)" (read 2026-11-09).
+  source: src-scale-leaderboard-swe-bench-pro-v2
+as_used:
+  - protocol: SWE-Bench Pro reported as pass@1 from one run on the 731-task public split, v1.0,
+      under mini-swe-agent at maximum reasoning effort, for Kimi K2.7 Code before and after RL.
+    split: public set, v1.0 (731 tasks)
+    source: src-arxiv-2610-00890-v1
+    quote: 731 Issue resolution in 11 repositories (public split)
+    note: Surge AI (October 2026), after V2's release; the paper names no version, and the task
+      count is v1.0's. Its scores (60.1 to 64.8) are not comparable with the V2 board.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Scale released V2 in September 2026 and was still adding rows to its board in November
+    2026; papers in October 2026 report SWE-Bench Pro results (as_used). V2's Full set is near
+    saturation for frontier systems (99.4%), which is computed from claims, not set here.
+  source: src-scale-leaderboard-swe-bench-pro-v2
+  quote: \"createdAt\":\"2026-11-06T00:07:33.000Z\"
+activity: no-submission-channel
+activity_basis:
+  reason: Scale chooses and runs the systems and publishes the results on its boards; no source read
+    names a route by which others enter a result (review_checks).
+  source: src-scale-leaderboard-swe-bench-pro
+  quote: We ran frontier models on Pro using the SWE-Agent scaffold
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Opus 5 in Claude Code, xhigh effort
+    source: src-scale-leaderboard-swe-bench-pro-v2
+    observed_on: 2026-11-09
+    quote: \"label\":\"SWE-Bench Pro V2 Full\",\"entries\":[{\"model\":\"Opus 5 (Claude Code)
+      xhigh\",\"version\":\"\",\"rank\":1,\"score\":99.4
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each task's fail-to-pass and pass-to-pass tests, taken from the commit
+  that resolved the issue and checked by human reviewers, who dropped irrelevant or too-broad tests.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The public set, with its tests and reference patches, is in an ungated Hugging Face
+    dataset, the images are public and the evaluation code is in the repository. The held-out and
+    commercial scores cannot be reproduced by anyone but Scale.
+  source: src-hf-api-swe-bench-pro
+  quote: '"gated":false'
+task:
+  exists: true
+  input:
+    - a human-rewritten problem statement in the repository's issue style, with a list of
+      requirements and, where the tests expect new classes or functions, their interface
+    - the repository at the base commit, in a Docker image with its dependencies installed
+  output: A patch to the repository.
+  scoring: The patch is applied in the task's environment and the fail-to-pass and pass-to-pass
+    tests are run; resolved if all pass. The resolve rate (Pass@1) is the share of tasks resolved.
+    V2 applies the patch to a fresh container and runs the unchanged verifier there.
+  tests_hidden_from_system: true
+  source: src-arxiv-2509-16941-v2
+  quote: We report Pass@1 as the resolve rate.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: >
+    Public: the public set, 731 tasks in v1.0 and 642 in V2 with the 51-task Hard split, in an ungated
+    Hugging Face dataset with problem statements, requirements, interfaces, reference and test patches
+    and the fail-to-pass and pass-to-pass lists, plus public container images, the Harbor task directories
+    and the evaluation code; and the results on all sets Scale scores. Withheld: the held-out set (858
+    tasks from 12 copyleft repositories), on which no score is published, and the commercial set (276
+    tasks from 18 startups' repositories), whose codebases cannot be released for legal reasons and which
+    only Scale runs, publishing its results on the v1 board's private tab.
+  access_basis:
+    reason: The headline scores, the paper's and both boards' public tabs, are computed on the
+      public set, which anyone can download with its labels. The held-out set only guards against
+      overfitting and publishes nothing, which the private-test-server term's exclusion test (and
+      its Humanity's Last Exam near miss) sets aside. The commercial set is private-test-server in
+      itself but is scored as a separate line, not inside the headline (review_checks).
+    source: src-arxiv-2509-16941-v2
+    quote: Problems in the held-out and the commercial set are not publicly accessible, but we
+      release results on the commercial set.
+  refresh: versioned-releases
+  refresh_note: The v1.0 public set also took undated changes between versions -- outdated unit
+    tests removed, slow tutao instances fixed -- announced in the README by month and day only
+    (versions, errata).
+  refresh_basis:
+    reason: The public set changed in one labelled revision, V2 on 2026-09-22, with v1 kept as its
+      own Hugging Face config and tag, so a claim can name the set it was measured on.
+    source: src-github-swe-bench-pro-readme
+    quote: The HuggingFace `default` config is now V2; v1 is kept as config `v1` / tag `v1.0`.
+  data_provenance:
+    - web-scraped
+    - expert-authored
+  data_provenance_note: The problems are commit pairs harvested from public copyleft repositories
+    and from startups' purchased codebases; human experts rewrote each problem statement and wrote
+    its requirements and interface, and professional engineers built the environments. The
+    commercial set cannot be released at all, but it is scored as a separate line, so
+    unreleasable-confidential, which the validator ties to an unreleasable-data blocker on the
+    headline, is not tagged (review_checks).
+  data_provenance_source: src-scale-leaderboard-swe-bench-pro
+  data_provenance_quote: 'Human experts organize unstructured commits and issue metadata into two artifacts:
+    a problem statement and a requirements brief with an optional interface.'
+  contamination_risk: medium
+  contamination_risk_note: >
+    The design's defence is legal and structural: copyleft repositories, which it argues commercial training
+    corpora avoid, and private codebases for the commercial set. Neither excludes a training route for
+    the public set, whose tasks and fixes have been public since 2025, and the V2 paper concedes that
+    its protocol stops retrieval at test time, not memorisation in training; no source evidences memorisation.
+    What is evidenced is solution leakage at test time on the v1 public set: container git history held
+    the fixing commits, and with the network open a frontier model copied reference solutions from GitHub
+    (351 solved tasks, 237 held up with GitHub blocked), while another open-network run found 32 of 642
+    trajectories calling code hosts. V2 scrubbed the history, closed the agent's network and re-grades
+    every patch in a clean container, which closes those routes for the scored set; v1.0 results, still
+    on the deprecated board and in third-party papers, carry them. Medium, not high, because the evidenced
+    routes were closed before V2 scoring (review_checks).
+  contamination_evidence:
+    - source: src-arxiv-2610-24206-v1
+      stance: supports
+      quote: the repository state shipped in the container leaked future commits containing the fix,
+        first in SWE-bench [24] and later in SWE-Bench Pro [25, 26]
+    - source: src-arxiv-2610-24206-v1
+      stance: supports
+      quote: after a frontier model copied reference solutions verbatim from GitHub on 351 solved
+        tasks, only 237 of which held up with GitHub blocked
+    - source: src-scale-leaderboard-swe-bench-pro-v2
+      stance: supports
+      quote: In an earlier open-network run, 32 of 642 trajectories called code hosts and 4
+        retrieved the fixing commit's SHA.
+    - source: src-arxiv-2609-08149
+      stance: supports
+      quote: 'its evaluation is undermined by two sources of unreliability: reward hacking, enabled by
+        leakage of gold solutions or hidden evaluation information'
+    - source: src-arxiv-2610-24206-v1
+      stance: supports
+      quote: The public repositories and their fixes predate the evaluated models. The protocol
+        stops retrieval at test time, not memorization during training.
+    - source: src-arxiv-2509-16941-v2
+      stance: against
+      quote: By exclusively using repositories with GPL and other copyleft licenses, we ensure
+        benchmark content is unlikely to appear in proprietary model training sets
+    - source: src-arxiv-2509-16941-v2
+      stance: against
+      quote: In addition, we use commercial repositories purchased from startups, which are private.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The resolve rate is bounded at 100%, and V2's release gate shows it reachable on every
+      task, the reference patch passing and the empty patch failing each one; every V2 task was also
+      solved by at least one frontier system. On v1.0 the V2 audit found 480 of 731 tasks needing
+      repair or removal, so v1's reachable score is below the bound, unmeasured.
+    source: src-arxiv-2610-24206-v1
+    quote: On the assembled 642-task set, the reference patch passes every task and the empty patch
+      fails every task.
+  dataset_licence: null
+  dataset_licence_note: Hugging Face's record declares no licence for the data, and the repository's
+    MIT licence covers its code. The V2 paper says the tasks come from the open-source repositories
+    under their original licences.
+  upstream_licences: The public and held-out sets come from repositories under strong copyleft
+    licences (GPL and others), chosen for that reason; the commercial set's codebases were purchased
+    from startups and are not released.
+  upstream_licences_source: src-arxiv-2509-16941-v2
+  upstream_licences_quote: exclusively selecting repositories distributed under strong copyleft
+    licenses (GPL) to construct a public set (11 repositories) and a held-out set (12 repositories)
+  size:
+    - count: 1865
+      unit: tasks
+      subset: all three sets (public, held-out, commercial), as the paper describes them
+      source: src-arxiv-2509-16941-v2
+      quote: SWE-BENCH PRO contains 1,865 problems sourced from a diverse set of 41 actively
+        maintained repositories spanning business applications, B2B services, and developer tools.
+    - count: 41
+      unit: repositories
+      subset: all three sets
+      source: src-arxiv-2509-16941-v2
+      quote: SWE-BENCH PRO contains 1,865 problems sourced from a diverse set of 41 actively
+        maintained repositories
+    - count: 642
+      unit: tasks
+      subset: public set, V2 (Hugging Face config default)
+      source: src-hf-api-swe-bench-pro
+      quote: '"num_examples":642'
+    - count: 51
+      unit: tasks
+      subset: Hard split of the V2 public set (config hard)
+      source: src-hf-api-swe-bench-pro
+      quote: '"num_examples":51'
+    - count: 731
+      unit: tasks
+      subset: public set, v1.0 (config v1)
+      source: src-arxiv-2509-16941-v2
+      quote: We release 731 instances openly on HuggingFace and report the relevant statistics and
+        model performances in this paper.
+    - count: 276
+      unit: tasks
+      subset: commercial set, private
+      source: src-arxiv-2509-16941-v2
+      quote: For the commercial set of 276 problems sourced from startup repositories, we keep it
+        private but report results publicly in this paper and will update in the leaderboard.
+    - count: 858
+      unit: tasks
+      subset: held-out set, private
+      source: src-arxiv-2509-16941-v2
+      quote: We hold out a set of 858 problems mirroring the public set but use a separate set of
+        repositories.
+  size_note: The paper gives the public set 11 repositories, the held-out set 12 and the commercial
+    set 18. Each repository contributes 50 to 100 tasks, capped at 100. The Hugging Face description
+    gives V2's languages as Go 256, Python 237 and JavaScript 145, the rest TypeScript (truncated in
+    the API record, not quoted).
+  languages:
+    - Python
+    - Go
+    - JavaScript
+    - TypeScript
+  languages_source: src-arxiv-2509-16941-v2
+  languages_quote: Although SWE-BENCH PRO includes multiple programming languages (Python,
+    JavaScript, TypeScript, Go)
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Scale AI (V2 co-developed with Reflection AI)
+  maintainer_basis:
+    reason: Scale AI wrote the paper, holds the dataset and the repository under its organisation
+      accounts (ScaleAI on Hugging Face, scaleapi on GitHub) and runs the boards; it co-developed V2
+      with Reflection AI, whose authors share the V2 paper.
+    source: src-scale-leaderboard-swe-bench-pro-v2
+    quote: We're releasing SWE-Bench Pro V2, a refreshed public split with a modified benchmark and
+      a locked evaluation protocol, co-developed with Reflection.
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-run
+  submission_process_note: Scale runs every system on its boards, with the SWE-Agent scaffold in the
+    paper and under mini-swe-agent, Claude Code or Codex since; v1 rows were first run with a cost
+    cap and 50 turns and later uncapped with 250. The repository lets anyone reproduce public-set
+    scores, but no route to a board was found. Only Scale can score the commercial and held-out
+    sets.
+  submission_process_source: src-scale-leaderboard-swe-bench-pro
+  submission_process_quote: Models and results that are grayed out were run with a capped cost limit
+    and turn limit of 50. All other Models on this page were run with an uncapped cost and with a
+    turn limit of 250.
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2509-16941-v2
+      quote: For the commercial set of 276 problems sourced from startup repositories, we keep it
+        private but report results publicly in this paper and will update in the leaderboard.
+  independence_flags_note: The flag is the commercial set's, which only Scale holds and runs; the
+    public set is open. No Scale or Reflection AI system appears on the boards read, so
+    maintainer-competes-on-own-benchmark is not set. Whether Scale sells evaluations, and whether
+    Reflection AI's models are evaluated elsewhere on the set, is not stated in any source read
+    (review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2610-24206-v1
+    quote: Gemini fabricated go.sum and go.work.sum entries or edited the shared module cache in
+      place in 3 tasks
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Agents call hosted model APIs and the tasks run in CPU containers (Modal in the official
+      setup, or local Docker); the V2 paper reports a few dollars of API spend per task. Serving
+      open weights on GPUs, as the paper did with vLLM, is the entrant's choice.
+    source: src-arxiv-2610-24206-v1
+    quote: Mean API spend per task on V2 was $2.9 for the Claude Code runs
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The public set's tasks, images, verifiers and protocol tooling are public, and one
+      command runs and re-grades a model; the commercial and held-out scores are Scale's alone.
+    source: src-arxiv-2509-16941-v2
+    quote: All environments will be released as pre-built docker images to ensure that they are
+      fully reproducible.
+  reproducibility_blockers: []
+  reproducibility_blockers_note: None for the public headline. The commercial set's codebases cannot
+    be released and the held-out set is private, so their scores are Scale's alone
+    (unreleasable-data and private-test-set for those lines).
+  harness_availability: official-harness
+  harness: V2, Harbor (0.22 or later) task directories with the v2/tooling locked-protocol agents
+    and the patch_replay re-grader; v1, swe_bench_pro_eval.py with run_scripts and the SWE-agent
+    submodule
+  harness_source: src-github-swe-bench-pro-v2-readme
+  harness_quote: each shipped here as a self-contained
+    [Harbor](https://github.com/laude-institute/harbor) task directory with its verifier
+  harness_gotcha:
+    source: src-github-swe-bench-pro-v2-readme
+    quote: Report the re-graded number; publish both.
+  code_licence: MIT
+  code_licence_source: src-github-api-swe-bench-pro-os
+  code_licence_quote: '"license":{"key":"mit","name":"MIT License","spdx_id":"MIT"'
+  runnable_via:
+    - custom
+  runnable_via_note: Through the repository's own scripts on Harbor; whether Inspect Evals or other
+    harnesses implement SWE-Bench Pro was not checked.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The agentic profile ([execution-tests, agent-scaffold]) makes the scaffold, harness, reasoning effort,
+  # tools, sandbox and subset_used material. subset_used must name the set and version (public v1.0 731, V2 642,
+  # Hard 51, commercial 276): the versions differ by up to tens of points for one system. Added here: the turn
+  # limit (max_steps), since v1 rows were run at 50 turns with a $2 cap and at 250 uncapped, and the model snapshot,
+  # since the paper pins "the latest versions as of September 18th, 2025" and the boards do not.
+  material_extra:
+    - max_steps
+    - provider_snapshot
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline per set and version, the share of tasks resolved, with a confidence interval
+    beside each board row.
+  source: src-scale-leaderboard-swe-bench-pro
+  quote: The primary metric is Resolve Rate, which is the percentage of tasks an agent successfully
+    resolves.
+
+homepage: https://scale.com/leaderboard/swe_bench_pro_public_v2
+repository: https://github.com/scaleapi/SWE-bench_Pro-os
+dataset_url: https://huggingface.co/datasets/ScaleAI/SWE-bench_Pro
+leaderboard_url: https://scale.com/leaderboard/swe_bench_pro_public_v2
+
+versions:
+  - version: v1.0
+    label: SWE-Bench Pro v1.0 (public set of 731 tasks; Hugging Face config v1, tag v1.0)
+    version_kind: revision
+    released: 2025-09-21
+    items: 731
+    changes: The release the paper describes. Its board, with public and private tabs, is still
+      online and marked deprecated; the commercial set's results are only there.
+    breaking: false
+    superseded_by: v2
+    errata:
+      - scope: unit tests
+        description: The README's 2/9 news item (year not given) removed outdated unit tests, some
+          requiring the year 2025, and tests not meant to be included.
+        source: src-github-swe-bench-pro-readme
+      - scope: tutao instances
+        description: The README's 1/7 news item fixed tutao instances that took a long time to
+          evaluate, with updated run scripts.
+        source: src-github-swe-bench-pro-readme
+      - scope: leaderboard
+        description: The README's 05/18 news item says issues with the leaderboard were found and
+          were being addressed; it does not say what they were.
+        source: src-github-swe-bench-pro-readme
+    frozen: true
+    sources:
+      - src-arxiv-2509-16941-v2
+      - src-hf-api-swe-bench-pro
+      - src-scale-leaderboard-swe-bench-pro
+  - version: v2
+    label: SWE-Bench Pro V2 (public set of 642 tasks with the Hard split; Hugging Face config
+      default)
+    version_kind: revision
+    released: 2026-09-22
+    items: 642
+    changes: The v1.0 public set audited by agents and adjudicated by 23 engineers, on the same
+      repositories and base commits; 89 tasks discarded and 391 repaired (instructions rewritten so
+      every graded assertion is stated, test lists, parsers and run scripts fixed, images rebuilt),
+      with no reference solution changed. Adds the 51-task Hard split and a locked protocol (agent
+      network limited to the model endpoint, git history scrubbed, every patch re-graded in a fresh
+      container), and a 50-minute budget per task. Co-developed with Reflection AI. No source says
+      whether the held-out or commercial sets were revised.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: true
+    sources:
+      - src-arxiv-2610-24206-v1
+      - src-github-swe-bench-pro-v2-readme
+      - src-github-swe-bench-pro-readme
+      - src-hf-api-swe-bench-pro
+      - src-scale-leaderboard-swe-bench-pro-v2
+
+subsets:
+  - id: swe-bench-pro#public
+    label: Public set
+    items: 642
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16941-v2
+        quote: We release 731 instances openly on HuggingFace and report the relevant statistics and
+          model performances in this paper.
+      - source: src-github-swe-bench-pro-v2-readme
+        quote: '731 -> 642 tasks: 89 dropped after review. Same repositories, same base commits.'
+    notes: Eleven copyleft repositories; 731 tasks in v1.0 and 642 in V2. The set behind the
+      headline and both boards' public tabs.
+  - id: swe-bench-pro#hard
+    label: HARD-51 (Hard split of V2)
+    parent: swe-bench-pro#public
+    items: 51
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2610-24206-v1
+        quote: A task qualified if at least two of five model families fail on it across runs.
+    notes: Selected by model failures under the locked protocol (54 candidates, 3 removed as
+      ambiguous), so it is filtered against the models that chose it; a tab of its own on the V2
+      board.
+  - id: swe-bench-pro#commercial
+    label: Commercial set (the boards' private dataset)
+    items: 276
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16941-v2
+        quote: This is the only set containing proprietary repositories from startups, which we
+          cannot release for legal reasons.
+      - source: src-scale-leaderboard-swe-bench-pro
+        quote: \"label\":\"SWE-Bench Pro (Private Dataset)\",\"entries\":[{\"model\":\"Muse Spark
+          1.1*\",\"version\":\"\",\"rank\":1,\"score\":51.5
+    notes: Eighteen startups' proprietary repositories, purchased by Scale. Private; Scale runs the
+      systems and publishes the results, on the v1 board's private tab (14 rows, the newest dated
+      2026-07-09).
+  - id: swe-bench-pro#held-out
+    label: Held-out set
+    items: 858
+    scored_separately: false
+    evidence:
+      - source: src-scale-leaderboard-swe-bench-pro
+        quote: This entire dataset is held-out for future analysis and internal evaluations.
+          Therefore, the results for this set will not be published on the public leaderboards.
+    notes: Twelve copyleft repositories, mirroring the public set; kept private to test for
+      overfitting to the public set, with no published score.
+
+lineage:
+  role: fork
+  forks:
+    - id: swe-bench-pro-verified
+      maintainer: The authors of arXiv 2609.08149, outside Scale AI
+      source: src-arxiv-2609-08149
+      quote: We present SWE-Bench Pro Verified, a verified version of SWE-Bench Pro that addresses
+        both problems.
+lineage_note: >
+  SWE-Bench Pro is Scale AI's derivative of SWE-bench (swe-bench), which lists it under lineage.forks:
+  it takes SWE-bench's design (issue, repository at a base commit, patch judged by fail-to-pass and pass-to-pass
+  tests) but none of its items, so it is a new benchmark by another maintainer. The V2 paper says it was
+  designed as SWE-bench Verified's successor; no source says SWE-bench Verified is retired, so lineage.supersedes
+  is not set. SWE-Bench Pro Verified (arXiv 2609.08149, September 2026) repairs tasks and blocks leakage
+  channels in the public set independently of Scale; the V2 paper calls it contemporaneous work. Its id
+  is proposed here and has no entry (review_checks).
+lineage_source: src-arxiv-2509-16941-v2
+lineage_quote: builds upon the best practices of SWE-Bench [19], but is explicitly designed to
+  capture realistic, complex, enterprise-level problems beyond the scope of SWE-Bench.
+
+tags:
+  - repository-level
+  - issue-resolution
+  - agents
+  - contamination-resistant
+  - private-test-set
+  - copyleft
+  - multi-language
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2509-16941-v2
+    - src-swebench-pro-arxiv
+    - src-arxiv-2610-24206-v1
+    - src-github-swe-bench-pro-readme
+    - src-github-swe-bench-pro-v2-readme
+    - src-github-api-swe-bench-pro-os
+    - src-hf-api-swe-bench-pro
+    - src-scale-leaderboard-swe-bench-pro
+    - src-scale-leaderboard-swe-bench-pro-v2
+    - src-arxiv-2609-08149
+    - src-arxiv-2610-00890-v1
+  sources_note: >
+    The paper's v2 PDF and the V2 paper's v1 PDF (DOIs, not archived) read as text; the paper's abstract
+    page (on main) for the release date; the README and v2/README.md at commit 66f92766 and GitHub's API
+    record of the repository; Hugging Face's API record of the dataset; Scale's v1 and V2 boards, read
+    with their inline scripts because the private and Full tabs live there (the README's commercial-board
+    link serves the v1 page); SWE-Bench Pro Verified's abstract page (a DOI) for the fork; and the Surge
+    AI paper's v1 PDF (a DOI) as evidence of current use. scale.com/research/swe_bench_pro, the project
+    page the paper names, was not read: scale.com's robots.txt disallows /research.
+  confidence: medium
+  review_checks:
+    - check: data.access fully-open, because the headline (the paper's tables and both boards'
+        public tabs) is computed on the public set, and the held-out set publishes no score. If the
+        commercial set's private tab counts as a headline beside the public one, the precedence rule
+        makes it private-test-server. The same set fits data_provenance unreleasable-confidential,
+        left out because the validator then demands an unreleasable-data blocker that contradicts
+        the public headline's fully-automatable tier.
+      field: data.access
+      source: src-arxiv-2509-16941-v2
+      quote: Problems in the held-out and the commercial set are not publicly accessible, but we
+        release results on the commercial set.
+    - check: contamination_risk medium rather than high. Solution leakage at test time is evidenced
+        on the v1.0 public set (git history in the images, open network) and was closed by V2's
+        locked protocol, but v1.0 scores are still reported by others (as_used) and sit on the
+        deprecated board. Training-time memorisation is conceded as possible and not evidenced; the
+        copyleft defence is a legal argument, not a measurement.
+      field: data.contamination_risk
+      source: src-arxiv-2610-24206-v1
+      quote: after a frontier model copied reference solutions verbatim from GitHub on 351 solved
+        tasks, only 237 of which held up with GitHub blocked
+    - check: "The two V2 sources describe the open-network runs differently: the board says 32 of 642
+        trajectories called code hosts and 4 retrieved the fixing commit's SHA; the paper says 32 of 642
+        Opus 5 trajectories contacted code hosts and 25 downloaded the task's repository. The board's
+        69 tasks with contradicting instructions also does not match the paper's 15 spec-test contradictions."
+      field: data.contamination_evidence
+      source: src-arxiv-2610-24206-v1
+      quote: 32 of 642 Claude Opus 5 trajectories contacted code hosts, and 25 downloaded the task
+    - check: 'Versions: V2 is modelled as a breaking revision of the public set (same repositories and
+        base commits, 89 tasks retired, instructions, tests and verifiers changed), with v1.0 and V2 running
+        as concurrent lines on two boards. The tags v1.0 and v2 follow the Hugging Face configs; the release
+        merge is named v2.0.0 on GitHub (not a quoted Source). No source says whether the commercial and
+        held-out sets were revised for V2.'
+      field: versions
+      source: src-github-swe-bench-pro-v2-readme
+      quote: '731 -> 642 tasks: 89 dropped after review. Same repositories, same base commits.'
+    - check: "Lineage: swe-bench-pro-verified is listed as a fork with a proposed id, which is the lead's
+        to allocate or drop. SWE-Bench ProMax, which an October 2026 arXiv abstract (2610.33851) names,
+        was not read. swe-bench.yaml's fork entry cites src-swebench-pro-arxiv, which needs swe-bench-pro
+        in its cited_by."
+      field: lineage
+      source: src-arxiv-2610-24206-v1
+      quote: In contemporaneous work, SWE-Bench Pro Verified [29] blocks code hosts, hides test
+        artifacts, and refines 102 tasks collected from public reports [30]
+    - check: "Independence: Scale AI sells data and evaluation services and bought the commercial set's
+        codebases, but no source read says so of evaluations, so evaluator-sells-evaluations is not set.
+        Reflection AI co-developed V2; none of its models is on the boards read, so maintainer-competes-on-own-benchmark
+        is not set either."
+      field: governance.independence_flags
+    - check: activity no-submission-channel rests on Scale running every row and no source naming a
+        route for others; if labs can ask Scale to run their models, the board takes entries and
+        accepting-submissions fits.
+      field: activity
+      source: src-scale-leaderboard-swe-bench-pro
+      quote: We ran frontier models on Pro using the SWE-Agent scaffold
+    - check: "Comparability: board rows mix scaffolds (SWE-Agent, mini-swe-agent, Claude Code, Codex),
+        turn limits (50 capped, 250 uncapped) and efforts, and the v1 paper reports two tables for the
+        same public set under different caps. The boards' company metadata also mislabels some rows (Gemini
+        4 Argon and Minimax M3p1 Flash under openai), so observed_subjects was read from the model strings."
+      field: comparability
+    - check: HARD-51 was chosen by the failures of five model families, Opus 5's among them, which
+        then scores 98.0% on it; it is a model-filtered subset whose difficulty is relative to those
+        models. V2's Full set is at 99.4% for the best system, which the V2 paper itself calls near
+        saturation.
+      field: subsets
+      source: src-arxiv-2610-24206-v1
+      quote: Hard does not separate the top four systems from each other, and ranking them would
+        require harder tasks than the public split currently contains.
+    - check: ceiling theoretical-maximum is shown reachable for V2 by its release gate. For v1.0 the
+        V2 audit found 480 of 731 tasks needing repair or removal, so v1.0's reachable ceiling is
+        below 100% and unmeasured.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2610-24206-v1
+      quote: 480 of the 731 tasks (66%) were repaired or removed
+    - check: release_venue is unset. The Surge AI paper's reference list cites SWE-Bench Pro as ICML
+        2026, which no primary source read confirms. The secondary code/bug-repair rests on bug
+        fixes being one of several task types, with no share given.
+      field: release_venue

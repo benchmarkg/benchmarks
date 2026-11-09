@@ -1,0 +1,657 @@
+# data/benchmarks/code/dabstep.yaml
+#
+# P1-S10-T02, code entry 15. Filled from the DABstep paper, arXiv 2506.23719 read as its v1 PDF (2025-06-30, its only
+# version), and its abstract page; the launch post on the Hugging Face blog (2025-02-04); Hugging Face's public API
+# record of the adyen/DABstep dataset (no gate) and three of its files at commit 73c12f6 (the task list, the dev
+# set, and the o4-mini baseline's per-task scores); the leaderboard Space adyen/DABstep's content.py, leaderboard.py
+# and scorer.py, raw at its commit d4431c2, and the JSON configuration the running Space serves, which holds both
+# leaderboard tables; and the v4 PDF of DS-STAR (arXiv 2509.21825, February 2026), a paper that reports DABstep
+# results. Every quote below is checked by the quote-substring validator against those Sources' committed
+# extracts.
+#
+# No Epoch stub exists; the id is proposed here. DiscoveryBench, DSBench, DA-Code, DS-1000 and BLADE were the
+# other candidates for this leaf (review_checks says why DABstep was chosen).
+
+id: dabstep
+name: DABstep
+aliases:
+  - DABStep
+  - Data Agent Benchmark for Multi-step Reasoning
+tagline: 450 data-analysis questions over one payments dataset and its manual, each scored on one
+  hidden factoid answer.
+description: >
+  Adyen and Hugging Face's benchmark of data-analysis agents, launched with a live leaderboard in
+  February 2025 and described in a June 2025 paper. Its 450 questions are drawn from analysts' work at
+  Adyen, anonymised and expanded from 95 core questions by varying merchants, dates and thresholds.
+  Every question is answered from the same seven context files: a payments table of about 138,000
+  transactions, merchant and fee tables in CSV and JSON, and Markdown documentation, including a manual
+  of fee rules. The launch post says the data were generated synthetically. 72 questions are Easy,
+  mostly one table, and 378 are Hard, needing several files, the manual and multi-step code; each comes
+  with guidance fixing the answer's format. A system's final answer (a number, a short string or a
+  list) is scored by quasi exact match, with a numeric tolerance, order-free lists and fuzzy string
+  matching. The 450 questions are published without answers and a 10-question dev set with them; the
+  Space scores uploaded answer files against a private copy of the keys and reports Easy and Hard
+  accuracy, ranked on Hard. DABstep prescribes no agent loop, and rows name an agent and its model. The
+  board has a Validated tab, for top-10 entries checked by the maintainers, and an Unvalidated one. The
+  maintainers stopped validating on 2026-07-22, announcing a v2. The unvalidated tab still takes
+  entries, and 15 of its rows score 100% on both levels. The per-task results of every submission,
+  answers included, are public in the same dataset.
+self_description:
+  source: src-arxiv-2506-23719
+  quote: We introduce DABstep, a novel benchmark for evaluating AI agents on realistic multi-step
+    data analysis tasks.
+external_ids:
+  huggingface: adyen/DABstep
+  arxiv: '2506.23719'
+paper:
+  title: 'DABstep: Data Agent Benchmark for Multi-step Reasoning'
+  arxiv: '2506.23719'
+  version_read: v1
+  source: src-arxiv-2506-23719-v1
+released: 2025-02-04
+released_note: The launch post's date. The leaderboard's earliest rows are the maintainers'
+  baselines dated 2025-01-23, and the dataset and Space repositories were created on 2024-12-21 and
+  2024-12-23 (Hugging Face API records); whether they were public before the post is not stated. The
+  paper followed on 2025-06-30, and is the only arXiv version.
+released_source: src-hf-blog-dabstep
+released_quote: Published February 4, 2025
+release_venue: null
+release_venue_note: The paper's abstract page gives no venue ("13 pages, 5 figures"); it reads as a
+  preprint.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/data-science-workflows
+  secondary:
+    - society-econ-law/financial-analysis
+domain_basis:
+  reason: The entrant writes and runs code over the supplied data files to compute each answer, and
+    the grader scores what that analysis computes, the code family's "analysis result" case, and the
+    data-science-workflows leaf's analysis reaching a quantitative answer. The questions are
+    payments analysis (fees, fraud rates, merchant costs), which the secondary leaf records. It is
+    not primary, since the claim is data analysis by agents, the domain knowledge needed is supplied
+    in the manual, and the launch post calls the data synthetic, which society-econ-law's exclusion
+    of a general competence using economic content as material covers.
+  source: src-arxiv-2506-23719
+  quote: requiring models to combine code-based data processing with contextual reasoning over
+    heterogeneous documentation
+domain_considered_and_rejected:
+  - term: agents-tooluse/web-navigation
+    reason: GAIA, which also scores one factoid answer per question on a Hugging Face board, is
+      filed in agents-tooluse because its answers are found by operating the web. Here the answer is
+      computed by code over supplied files, and the agents-tooluse exclusion sends an analysis the
+      agent built to code. No agents-tooluse leaf fits as secondary either; tool-api-calling scores
+      the calls themselves.
+    source: src-arxiv-2506-23719-v1
+    quote: Especially in the Hard split (84% of tasks), no question can be answered through a single
+      direct execution.
+  - term: code/ml-engineering
+    reason: No model is trained or scored; each answer is a computed value checked against a key.
+capability:
+  - quantitative-reasoning
+  - context-integration
+capability_basis:
+  quantitative-reasoning:
+    reason: Most answers are numbers (fees, rates, counts, deltas) reached by filtering, aggregating
+      and applying fee formulas, rounded as the guidance asks.
+    source: src-hf-dabstep-tasks-all
+    quote: 'what is the total fees (in euros) that Belles_cookbook_store should pay?", "answer": "", "guidelines":
+      "Answer must be just a number rounded to 2 decimals.'
+  context-integration:
+    reason: The answers depend on the supplied files, and the Hard questions on fee rules defined
+      only in the benchmark's own manual, which an agent must read and apply.
+    source: src-arxiv-2506-23719-v1
+    quote: demanding both technical data analysis skills (using code) and domain-specific
+      understanding learned from the provided context
+capability_considered_and_rejected:
+  - term: tool-use
+    reason: The protocol offers no tools of its own; entrants bring a Python environment, and the
+      score is the final answer, not whether calls were made correctly.
+  - term: planning
+    reason: The paper names planning as the failure mode of the Hard questions, but the score is the
+      final answer, which the term's exclusion sends elsewhere.
+  - term: instruction-following
+    reason: Each question carries format guidance, and the paper reports format errors, but only
+      answer correctness is scored; the scorer's normalisation is meant to keep formatting out of
+      the score.
+  - term: autonomy
+    reason: No source prohibits or measures human intervention; validation only confirmed that a top
+      result came from an agent, and it has stopped.
+    source: src-hf-dabstep-space-content
+    quote: confirms that a submission's results were achieved using a novel approach involving data
+      analysis agents
+
+evaluation_method:
+  - numeric-tolerance-match
+  - exact-match
+evaluation_method_basis:
+  reason: Each question has one answer. The scorer lowercases and trims both strings; numbers are
+    compared after stripping commas and currency signs, within a relative and absolute tolerance of
+    1e-4, or after rounding to the shorter of the two decimal expansions; lists are split on commas
+    or semicolons, sorted and compared element by element; other strings must match once punctuation
+    and spaces are removed, or one-word answers may be a subset of the other, or reach a similarity
+    ratio above 0.95. Accuracy per level is the share of questions marked correct.
+  source: src-hf-dabstep-space-scorer
+  quote: return math.isclose(num1, num2, rel_tol=1e-4, abs_tol=1e-4)
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: The paper chose factoid answers to avoid a judge model; the scorer is deterministic, and
+      it agreed with two annotators on all 75 answers checked.
+    source: src-arxiv-2506-23719-v1
+    quote: Our scoring function matched human judgment on all 75 examples, achieving 100% accuracy.
+  - term: execution-tests
+    reason: The entrant's code is never run by the grader; only the answer it produced is compared.
+designed_for_subjects:
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: DABstep supplies questions and files, not a loop; the entrant's agent decides what code to
+    run and when to answer. Leaderboard rows give an agent name beside a model family, and the
+    maintainers' ReAct baseline is offered for reproduction, not required.
+  source: src-hf-dabstep-space-content
+  quote: Reproduce the baseline results with the agent code we open sourced
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The paper's baselines ran one standard ReAct wrapper (Hugging Face's smolagents, its
+      reference 36) for every model, but submissions bring their own agents, and the board ranks
+      them together with the baselines.
+    source: src-arxiv-2506-23719-v1
+    quote: The entire setup consisted of a lightweight wrapper [36] around the LLM API
+  - term: tool-augmented-model
+    reason: Both the baselines and the leaderboard agents run their own multi-step loop to an
+      answer.
+observed_subjects:
+  values:
+    - agent-scaffold
+  basis: The 28 validated rows (read 2026-11-09) are named agent systems over a model family, such
+    as NVIDIA's KGMON Data Explorer on Claude Haiku 4.5 and Google Cloud's DS-STAR on Gemini 2.5
+    Pro, and the maintainers' own rows are a ReAct agent over each model.
+  source: src-hf-dabstep-leaderboard-config
+as_used:
+  - protocol: DS-STAR's agent, up to 20 rounds per task with Gemini-2.5-Pro, submitted to the
+      leaderboard (its validated row, 87.50 Easy and 45.24 Hard, is dated 2025-07-08), compared with
+      other rows copied from the board; the 10 dev tasks were used for a cost analysis.
+    split: the 450 scored questions (Easy and Hard), and the 10-question dev set
+    source: src-arxiv-2509-21825-v4
+    quote: DS-STAR runs for a maximum of 20 rounds per task with Gemini-2.5-Pro as the base LLM.
+    note: Google Cloud and KAIST, v4 of 2026-02-24. The paper also evaluates on DABStep-Research, a
+      report-generation suite from another group (review_checks).
+
+lifecycle: under-revision
+lifecycle_note: No v2 was visible on 2026-11-09, almost four months after the "coming weeks" notice;
+  the adyen organisation on Hugging Face lists only this dataset and this Space (Hugging Face API
+  listings, read 2026-11-09; review_checks).
+lifecycle_basis:
+  reason: The maintainers closed validation on 2026-07-22 because a v2 is launching, so an
+    unversioned score may not be interpretable once it ships. Results are still produced on v1
+    (unvalidated rows to 2026-11-07; DS-STAR in 2026), and under-revision takes precedence over
+    active.
+  source: src-hf-dabstep-space-content
+  quote: With DABStep-v2 launching in the coming weeks, we are no longer accepting new validation
+    requests.
+activity: accepting-submissions
+activity_basis:
+  reason: The Space still scores uploaded answer files at once and lists them on the Unvalidated
+    tab; it has never run in rounds. Only the Validated tab is closed.
+  source: src-hf-dabstep-space-content
+  quote: The Unvalidated Leaderboard remains open
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: NVIDIA KGMON (NeMo Agent Toolkit) Data Explorer with Claude Haiku 4.5
+    source: src-hf-dabstep-leaderboard-config
+    observed_on: 2026-11-09
+    quote: '["**NVIDIA KGMON (NeMo Agent Toolkit) Data Explorer**",87.5,89.95,"NVIDIA LLM-tech Agent Research"'
+    note: The top validated row, dated 2026-02-22.
+  - system: DS-STAR with Gemini-2.5-Pro
+    source: src-hf-dabstep-leaderboard-config
+    observed_on: 2026-11-09
+    quote: '["**DS-STAR**",87.5,45.24,"Google Cloud AI Research"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: One answer per question, computed by the maintainers (the launch post
+  shows a 220-line human reference solution to one Hard question); the scored keys sit in a private
+  dataset, adyen/DABstep-internal, that the Space loads to score submissions. The dev set's 10
+  answers are public.
+ground_truth_source_source: src-hf-dabstep-space-leaderboard
+ground_truth_source_quote: HF_INTERNAL_DATASET_PATH = f"{OWNER}/DABstep-internal"
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The official score needs the keys only the Space holds. Anyone can run and score the 10
+    dev questions, and the public per-task results of other submissions reveal many keys in practice
+    (data.contamination_risk_note), which is not a reproduction route the maintainers offer.
+  source: src-arxiv-2509-21825-v4
+  quote: The ground-truth labels for these tasks are hidden, and evaluation is performed by
+    submitting results to an official server, ensuring a blind assessment.
+
+task:
+  exists: true
+  input:
+    - a question, with guidance fixing the answer's format and a request to answer 'Not Applicable'
+      where no answer applies
+    - its level (Easy or Hard)
+    - the seven shared context files (payments.csv and its readme, acquirer_countries.csv,
+      fees.json, merchant_category_codes.csv, merchant_data.json and manual.md)
+  output: A factoid answer per question (a number, one or a few words, or a comma-separated list),
+    with an optional reasoning trace that is not scored.
+  scoring: Quasi exact match per question after type-specific normalisation, with a numeric
+    tolerance and fuzzy string matching (evaluation_method_basis); the board reports the percentage
+    correct on Easy and on Hard and ranks rows by Hard accuracy, then Easy. A submission must answer
+    every one of the 450 questions.
+  tests_hidden_from_system: true
+  tests_hidden_from_system_source: src-arxiv-2509-21825-v4
+  tests_hidden_from_system_quote: The ground-truth labels for these tasks are hidden
+  source: src-hf-dabstep-space-content
+  quote: 'Mandatory fields are: `task_id` and `agent_answer`.'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The questions and the context files are on an ungated Hugging Face dataset; its tasks
+    config has a default split of 450 questions with empty answers and a dev split of 10 with
+    answers. The paper says the hidden set holds "the majority" of the tasks, but the Space scores
+    all 450. Six of the 10 dev task ids recur in the 450, five with the same wording (task 5 among
+    them) and one reworded, so their keys are public; the other four are not in the 450.
+  access_basis:
+    reason: The 450 scored questions are released with their answer fields empty, and the
+      maintainers keep the keys and score uploaded answers against them.
+    source: src-hf-dabstep-tasks-all
+    quote: "please respond with 'Not Applicable'.\", \"level\": \"easy\", \"answer\": \"\"} {\"task_id\"\
+      : \"2522\""
+  records_access: fully-open
+  records_access_note: Every submission's answer file and its per-task scores are uploaded to the
+    public dataset's submissions and task_scores splits (2,288 and 2,295 files in the dataset's full
+    API record on 2026-11-09), under the dataset's CC BY 4.0. Each task_scores row gives the task,
+    whether it was marked correct and the answer submitted.
+  records_access_source: src-hf-dabstep-space-leaderboard
+  records_access_quote: path_in_repo = f"data/task_scores/{filename_id}.jsonl"
+  records_licence: CC-BY-4.0
+  refresh: null
+  refresh_note: Left unset (review_checks). The only labelled version is v1, and v2 is announced but
+    not released; whether the tasks, keys or scorer changed after release without a label is not
+    shown by the sources read.
+  data_provenance:
+    - expert-authored
+  data_provenance_note: The questions come from Adyen's analysts' internal queries, anonymised, and
+    were expanded from 95 core questions by varying parameters (time ranges, merchants, thresholds).
+    The context data are a different matter; the paper calls the payments data anonymised
+    transactions, while the launch post says the data and the whole business context were generated
+    synthetically, by a method neither states, so no provenance term for the data is set
+    (review_checks).
+  data_provenance_source: src-arxiv-2506-23719-v1
+  data_provenance_quote: The tasks were selected from real but anonymized internal queries
+  contamination_risk: medium
+  contamination_risk_note: >
+    The maintainers hid the keys to keep them out of future training corpora, and expanded core
+    questions into parameterised variants against memorised answers. Two routes reach the scored keys
+    anyway. The public task_scores split publishes, for every one of more than two thousand
+    submissions, each task's verdict beside the submitted answer, so any answer marked true is a key:
+    the o4-mini baseline alone was marked correct on 110 of the 450. And six dev questions with public
+    answers are scored questions. Both routes are read here from the files, not stated as a leak by any
+    source; the 15 unvalidated rows at 100% on both levels, the first dated 2025-12-12, are consistent
+    with them but explained by no source (review_checks). Because no source states the leak, the
+    rating is medium rather than high.
+  contamination_evidence:
+    - source: src-hf-dabstep-task-scores-o4-mini
+      stance: supports
+      quote: '"task_id": "5", "score": true, "level": "easy", "agent_answer": "NL"'
+    - source: src-hf-dabstep-tasks-dev
+      stance: supports
+      quote: "please respond with 'Not Applicable'\", \"level\": \"easy\", \"answer\": \"NL\"} {\"task_id\"\
+        : \"49\""
+    - source: src-arxiv-2506-23719-v1
+      stance: against
+      quote: by hiding the test ground truths, we maintain the long-term integrity of the benchmark
+        and reduce the risk of leakage into the training corpora of future models
+    - source: src-arxiv-2506-23719-v1
+      stance: against
+      quote: or memorization of answers potentially seen during pre-training
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The headline is accuracy, bounded at 100%, and no source gives a measured human or
+      reference score for the Hard level that results are read against. The launch post's human
+      figure is for the Easy level only (ceiling_by_category).
+    source: src-arxiv-2506-23719-v1
+    quote: There is only one correct ground truth answer for each task.
+  ceiling_by_category:
+    - category: Easy level
+      value: 62
+      metric: accuracy (%)
+      source: src-hf-blog-dabstep
+      quote: On average, humans achieve a 62% baseline on these tasks after 3+ hours of work
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The dataset card declares cc-by-4.0, as the paper states for the core
+    dataset; the Space declares the same.
+  dataset_licence_source: src-hf-api-dabstep
+  dataset_licence_quote: '"cardData":{"license":"cc-by-4.0"'
+  size:
+    - count: 450
+      unit: questions, answers private
+      source: src-arxiv-2506-23719-v1
+      quote: Concretely, out of the 450 total questions, 95 of those are core questions.
+    - count: 378
+      unit: questions, permuted from 23 core questions
+      subset: Hard
+      source: src-arxiv-2506-23719-v1
+      quote: 'Hard Tasks: 378 tasks (approximately 84% of the total and permuted from 23 core questions).'
+    - count: 72
+      unit: questions
+      subset: Easy
+      source: src-arxiv-2506-23719-v1
+      quote: 'Easy Tasks: 72 tasks (approximately 16% of the total).'
+    - count: 10
+      unit: questions, answers public
+      subset: dev
+      source: src-arxiv-2509-21825-v4
+      quote: We evaluate DS-STAR on 10 development tasks from the DABStep benchmark
+    - count: 7
+      unit: shared context files
+      source: src-arxiv-2509-21825-v4
+      quote: DABStep is composed of 450 tasks (72 easy and 378 hard) that require analyzing a shared
+        set of seven data files.
+    - count: 138000
+      unit: payment transactions in payments.csv (a lower bound)
+      note: The paper's Section 3.1 says over 100,000; its Table 3 and the launch post say 138,000.
+      source: src-arxiv-2506-23719-v1
+      quote: Anonymized payments dataset containing over 138,000 transactions
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Adyen and Hugging Face, through the adyen organisation on Hugging Face
+  maintainer_basis:
+    reason: The launch post and the paper are by Adyen and Hugging Face authors, and the dataset and
+      the leaderboard Space sit in the adyen organisation.
+    source: src-hf-blog-dabstep
+    quote: Adyen and Hugging Face built the Data Agent Benchmark for Multi-step Reasoning (DABstep)
+      together.
+  maintainer_type: industry-lab
+  submission_process:
+    - held-out-server
+    - maintainer-verified
+  submission_process_note: An entrant logs in with a Hugging Face account and uploads a JSON-lines
+    file of answers to all 450 questions, with an agent name, a model family, an organisation and a
+    contact address kept privately. The Space scores it at once against the private keys and lists
+    it as unvalidated; it refuses only an organisation and agent name already submitted, and no
+    daily limit or all-correct check is in the code read. The maintainers validated top-10 entries
+    with their submitters until 2026-07-22, when validation closed; maintainer-verified describes
+    the Validated tab's frozen record only.
+  submission_process_source: src-hf-dabstep-space-content
+  submission_process_quote: to validate any entries that rank within the top 10
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-hf-dabstep-leaderboard-config
+      quote: '["**Claude 4 Sonnet ReACT Baseline**",81.94,19.84,"Hugging Face"'
+    - flag: single-evaluator-private-test-set
+      source: src-hf-dabstep-space-leaderboard
+      quote: tasks_with_gt=internal_tasks_df,
+  independence_flags_note: Adyen's and Hugging Face's own rows (January to June 2025) are ReAct and
+    reasoning-prompt baselines over third-party models, run with Hugging Face's smolagents library;
+    neither maintainer lists a model of its own. The maintainers hold the keys, score every
+    submission and decided which rows were validated.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: A run needs a model and a Python runtime; the protocol mandates no hardware, and scoring
+      is string comparison on the Space. The paper's open-weight baselines ran on four A100s, which
+      is the entrant's choice.
+    source: src-arxiv-2506-23719-v1
+    quote: requiring only a standard Python runtime for task execution
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores can be produced only by the maintainers' Space, which alone holds
+      the keys as the benchmark is designed; the dev set's 10 questions can be scored by anyone.
+    source: src-hf-dabstep-space-leaderboard
+    quote: HF_INTERNAL_DATASET_PATH = f"{OWNER}/DABstep-internal"
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: dabstep_benchmark/evaluation/scorer.py (question_scorer) in the adyen/DABstep Space, at
+    commit d4431c2, with the baseline agent in baseline/. It scores answers only; DABstep ships no
+    required agent loop.
+  harness_source: src-hf-dabstep-space-content
+  harness_quote: evaluation is done via quasi exact match between a model
+  harness_gotcha:
+    source: src-arxiv-2506-23719-v1
+    quote: fuzzy string matching (e.g., using Levenshtein distance or a similar metric) is employed
+  harness_gotcha_note: The paper's Section A.2 and Algorithm 1 describe the scorer differently from
+    the code (a 1e-2 tolerance in the pseudocode, Levenshtein matching); the code uses a 1e-4
+    tolerance, difflib's similarity ratio and a subset rule for one-word answers. A local
+    re-implementation from the paper will not reproduce the Space's verdicts.
+  submission_channel:
+    source: src-hf-dabstep-space-content
+    quote: 'Mandatory fields are: `task_id` and `agent_answer`.'
+  code_licence: CC-BY-4.0
+  code_licence_note: The Space's card declares cc-by-4.0 (its README front matter and its Hugging
+    Face API record, read 2026-11-09), and its LICENSE file says the same; not a quoted Source.
+  est_cost_usd:
+    min: 2
+    max: 435
+    basis: The paper's Table 1, the estimated API cost of one full run of each proprietary baseline
+      at Q1 2025 prices, from GPT-4o-mini and DeepSeek V3 ($2) to o1 ($435); open models run locally
+      are counted as free.
+    source: src-arxiv-2506-23719-v1
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # (numeric-tolerance-match or exact-match, agent-scaffold) has no profile, so the fallback holds subset_used
+  # alone (the Easy and Hard levels are reported apart). Beyond it: the scaffold, which is what most rows vary
+  # (DS-STAR lifts Gemini 2.5 Pro's Hard accuracy from 12.70% to 45.24%); the harness and its prompt (the paper
+  # found reasoning models near 0% under its ReAct prompt until a reasoning prompt was written); the step budget
+  # (10 steps for the paper's baselines, 20 rounds for DS-STAR); the tools given; how runs are chosen and how
+  # many are run, since nothing limits resubmission under new names; the model's reasoning effort; and whether a
+  # human helped, which only the closed validation checked.
+  material_extra:
+    - scaffold
+    - harness
+    - prompt_template_hash
+    - max_steps
+    - tools_allowed
+    - selection_strategy
+    - n_samples
+    - reasoning_effort
+    - human_in_loop
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The board reports Easy and Hard accuracy side by side and ranks rows by Hard accuracy,
+    then Easy; there is no combined score.
+  source: src-hf-dabstep-space-leaderboard
+  quote: by=["Hard Level Accuracy (%)", "Easy Level Accuracy (%)"],
+
+homepage: https://huggingface.co/spaces/adyen/DABstep
+repository: https://huggingface.co/spaces/adyen/DABstep
+dataset_url: https://huggingface.co/datasets/adyen/DABstep
+leaderboard_url: https://huggingface.co/spaces/adyen/DABstep
+
+versions:
+  - version: v1
+    label: DABstep v1, the release every leaderboard result is on
+    version_kind: revision
+    released: 2025-02-04
+    items: 450
+    changes: The launch, 450 questions in two levels over seven context files, with a 10-question
+      dev set. The paper calls this release v1, and the Space prefixes every stored submission v1__.
+      A v2 was announced on 2026-07-22 and was not released by 2026-11-09.
+    frozen: true
+    sources:
+      - src-hf-blog-dabstep
+      - src-arxiv-2506-23719-v1
+      - src-hf-dabstep-space-leaderboard
+
+subsets:
+  - id: dabstep#hard
+    label: Hard level
+    items: 378
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-23719-v1
+        quote: 'Hard Tasks: 378 tasks (approximately 84% of the total and permuted from 23 core questions).'
+    notes: Several files, the manual's domain rules and multi-step code. The board ranks on this
+      level's accuracy.
+  - id: dabstep#easy
+    label: Easy level
+    items: 72
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-23719-v1
+        quote: 'Easy Tasks: 72 tasks (approximately 16% of the total).'
+    notes: Mostly one table with little use of the documentation; the paper calls them sanity
+      checks.
+  - id: dabstep#dev
+    label: Dev set (answers public)
+    items: 10
+    scored_separately: false
+    evidence:
+      - source: src-hf-blog-dabstep
+        quote: we have also released a dev set, which is a representative subset of the full test
+          set, including answers
+    notes: Three Easy and seven Hard questions for setting up a pipeline locally; not scored on the
+      board. Six of the ten ids are also scored questions (data.access_note).
+
+lineage:
+  role: root
+
+history:
+  - date: 2026-07-22
+    event: channel-closed
+    field: execution.submission_channel
+    from: validation of top-10 entries for the Validated tab
+    source: src-hf-dabstep-space-content
+    quote: The Validated Leaderboard is now closed to new entries; previously validated submissions
+      remain as-is.
+    note: Dated by the Space's commit "Edit validation message" (Hugging Face API, read 2026-11-09).
+      The Unvalidated tab stays open, so only the validation route closed.
+
+tags:
+  - data-analysis
+  - data-agents
+  - finance
+  - payments
+  - leaderboard
+  - held-out-answers
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2506-23719-v1
+    - src-arxiv-2506-23719
+    - src-hf-blog-dabstep
+    - src-hf-api-dabstep
+    - src-hf-dabstep-tasks-all
+    - src-hf-dabstep-tasks-dev
+    - src-hf-dabstep-task-scores-o4-mini
+    - src-hf-dabstep-space-content
+    - src-hf-dabstep-space-leaderboard
+    - src-hf-dabstep-space-scorer
+    - src-hf-dabstep-leaderboard-config
+    - src-arxiv-2509-21825-v4
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date and abstract;
+    the Hugging Face launch post; the dataset's API record (ungated; no terms exist to accept), its task
+    list, dev set and one maintainer baseline's task_scores file at commit 73c12f6; the Space's
+    content.py, leaderboard.py and scorer.py raw at commit d4431c2; the running Space's /config JSON
+    for the two leaderboard tables, the board itself being rendered by Gradio; and DS-STAR's v4 PDF (a
+    DOI) as evidence of current use. The private adyen/DABstep-internal dataset was not, and cannot
+    be, read.
+  confidence: medium
+  review_checks:
+    - check: maintainer-competes-on-own-benchmark rests on the maintainers' own baseline rows, ReAct
+        and reasoning-prompt agents over third-party models in Hugging Face's smolagents library,
+        not on a model of their own. The flag's definition (the maintainer submits systems evaluated
+        by it) fits the rows literally; a reviewer may hold that baselines are not competing
+        entries.
+      field: governance.independence_flags
+      source: src-hf-dabstep-leaderboard-config
+      quote: '["**Claude 4 Sonnet ReACT Baseline**",81.94,19.84,"Hugging Face"'
+    - check: Candidate choice for code/data-science-workflows. DABstep was chosen over DSBench (its
+        data-analysis half is ModelOff spreadsheet questions graded in part by a GPT-4 judge, and
+        its modelling half is Kaggle-style, closer to ml-engineering), DA-Code (it also scores
+        computed outputs, and DS-STAR reports on it, but its own board was not checked here, and
+        many of its outputs are charts and model predictions, nearer ml-engineering), DS-1000
+        (completions of StackOverflow snippets judged by tests, which is function-synthesis), and
+        BLADE (it scores analysis decisions against expert ones, not a quantitative answer).
+        DiscoveryBench was set aside as instructed. Its grader checks only the final answer, so the
+        code exclusion ("code is the means to a result in another field") was weighed; the answer is
+        what the agent's analysis computes, the inclusion test's own case, and the claim is data
+        analysis, not finance.
+      field: domain
+      source: src-arxiv-2506-23719
+      quote: requiring models to combine code-based data processing with contextual reasoning over
+        heterogeneous documentation
+    - check: The leaf asks for an analysis "over real data". The paper calls the tasks real-world
+        and the payments data anonymised transactions; the launch post's footnote says the data and
+        the business context were generated synthetically. data_provenance records the questions
+        only. Which description holds, and how the data were generated, needs the maintainers. The
+        missing term for data synthesised by an unstated method is logged as
+        taxonomy/_failures/2026-11-09-dabstep-002.
+      field: data.data_provenance
+      source: src-hf-blog-dabstep
+      quote: Tasks are realistic, the data has been generated synthetically.
+    - check: contamination_risk is medium, lowered in review from the draft's high, because the leak
+        routes are read from the files rather than stated by a source. The task_scores split shows
+        each submission's answer beside its verdict, so every answer marked true is a scored key in
+        public (o4-mini's file alone marks 110 correct), and six dev answers are scored questions.
+        15 unvalidated rows score 100% on both levels, the first on 2025-12-12. High is the
+        alternative if a reviewer takes the public keys as enough.
+      field: data.contamination_risk
+      source: src-hf-dabstep-leaderboard-config
+      quote: '["**openGauss Data Agent**",100.0,100.0,"Agent of openGauss'
+    - check: lifecycle under-revision rests on the 2026-07-22 notice of a v2 "in the coming weeks",
+        which had not appeared by 2026-11-09. Whether v2 reissues these questions (under-revision)
+        or adds a new set beside a finished v1, and whether it will be its own entry, is not known;
+        active is the alternative if the v2 work has stopped.
+      field: lifecycle
+      source: src-hf-dabstep-space-content
+      quote: With DABStep-v2 launching in the coming weeks, we are no longer accepting new
+        validation requests.
+    - check: Saturation. The validated top is 89.95% Hard and 87.5% Easy (2026-02-22), below the
+        0.95 headroom line, while the open tab has rows at 100%. Which board measures headroom, and
+        whether the unvalidated rows should count, needs a ruling; the launch post expected the
+        benchmark to be solved in its current state.
+      field: lifecycle
+      source: src-hf-blog-dabstep
+      quote: we foresee that the benchmark will eventually be considered solved in its current state
+    - check: data.refresh is unset. The Space's commit list shows a commit fixing the evaluation and
+        the scorer test on 2025-04-20, after launch, which would rule out static if it changed
+        verdicts, and no version label marks it; the commit diff was not read.
+      field: data.refresh
+    - check: The paper's scorer description (Levenshtein, a 1e-2 tolerance in Algorithm 1) differs
+        from the code, which also accepts a one-word answer that is a subset of the key or the
+        reverse; exact-match is tagged beside numeric-tolerance-match although fuzzy and subset
+        matching go beyond its whitespace-or-case normalisation
+        (taxonomy/_failures/2026-11-09-dabstep-001).
+      field: evaluation_method
+      source: src-hf-dabstep-space-scorer
+      quote: return set(words1).issubset(set(words2)) or set(words2).issubset(set(words1))
+    - check: submission_process lists maintainer-verified for the Validated tab, which is now
+        frozen, beside held-out-server for the open route. Whether a frozen validation record should
+        still be tagged, or recorded in history only, is a modelling call.
+      field: governance.submission_process
+    - check: The secondary leaf society-econ-law/financial-analysis is defined over financial
+        documents and statements; DABstep's material is payment transactions, fee tables and a
+        processing manual. It may not fit, in which case no secondary applies.
+      field: domain
+    - check: Lineage. DS-STAR evaluates on DABStep-Research (Zhang et al., 2025), a
+        report-generation suite whose name suggests it derives from DABstep; its maintainer and
+        relation were not read, so no fork is recorded. The paper's own size statement ("the
+        majority" of tasks hidden) also differs from the Space, which scores all 450.
+      field: lineage
+      source: src-arxiv-2509-21825-v4
+      quote: DABStep-Research (Zhang et al., 2025) to evaluate open-ended report generation
