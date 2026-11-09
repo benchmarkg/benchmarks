@@ -1,0 +1,541 @@
+# data/benchmarks/robotics-embodiment/r2r.yaml
+#
+# P1-S5-T03, robotics-embodiment entry 18. Filled from the R2R paper (CVPR 2018), arXiv 1711.07280 read as its v3
+# PDF and its abstract page; bringmeaspoon.org, the project site (robots.txt read first); the Matterport3D Simulator
+# README, its tasks/R2R README and the R2R download script, all pinned at commit 589d091 (2021-09-08); EvalAI's public
+# API records of challenge 97 (the challenge, its three phases and the Test leaderboard, phase split 270), read
+# without an account; the v1 PDF of an April 2026 VLN paper (arXiv 2604.19064) that reports R2R test-unseen results;
+# and, for lineage, the abstract pages of R4R (1905.12255), RxR (2010.07954) and VLN-CE (2004.02857) and the VLN-CE
+# README pinned at commit 729d141. The Matterport3D data was not requested and its terms were not accepted. Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts. Authors are not
+# named here.
+
+id: r2r
+name: Room-to-Room (R2R)
+aliases:
+  - R2R
+  - Room-to-Room
+  - Vision and Language Navigation
+aliases_note: Vision and Language Navigation is the title of the R2R test server on EvalAI
+  (challenge 97); VLN is also the name of the task family, so the alias is ambiguous outside that
+  context.
+tagline: Crowd-written route instructions followed in unseen Matterport3D buildings, scored by
+  success rate and SPL.
+description: >
+  The first benchmark for vision-and-language navigation in real buildings (CVPR 2018). An agent is placed
+  in a building it has not seen, in the Matterport3D Simulator, and must follow a crowd-written route
+  instruction (on average 29 words) to the goal and stop there. The simulator is built from the Matterport3D
+  scans, 10,800 panoramic RGB-D views of 90 buildings, and the agent moves between panoramic viewpoints
+  along a navigation graph, adjusting its camera heading and elevation; actions are deterministic. The
+  7,189 paths are shortest paths of 4 to 6 edges sampled on that graph, each with three Amazon Mechanical
+  Turk instructions (21,567 in all). An episode succeeds if the agent stops within 3 m of the goal, measured
+  along the graph, and the path taken is not scored. Success rate and SPL are the primary metrics, beside
+  navigation error, trajectory length and oracle success. The splits are train (61 buildings), val-seen
+  (the same buildings), val-unseen (11 buildings) and test (18 buildings); test goals are withheld, and
+  participants run their agent locally and submit trajectories to a server on EvalAI that has been open
+  since 2018. Crowd workers reached 86.4% success on the test set and the first seq2seq baseline 20.4%.
+  R4R, RxR and VLN-CE, all by other maintainers, grew out of it and are separate benchmarks.
+self_description:
+  source: src-bringmeaspoon-site
+  quote: R2R is the first benchmark dataset for visually-grounded natural language navigation in
+    real buildings.
+external_ids:
+  arxiv: '1711.07280'
+paper:
+  title: 'Vision-and-Language Navigation: Interpreting visually-grounded navigation instructions in real
+    environments'
+  arxiv: '1711.07280'
+  doi: 10.48550/arXiv.1711.07280
+  version_read: v3
+  source: src-arxiv-1711-07280-v3
+released: 2017-11-20
+released_note: The paper's first arXiv version, as the abstract page dates it. The EvalAI test phase
+  opened on 2018-03-13.
+released_source: src-arxiv-1711-07280
+released_quote: Submitted on 20 Nov 2017 (v1), last revised 5 Apr 2018 (this version, v3)
+release_venue: CVPR 2018
+release_venue_source: src-arxiv-1711-07280
+release_venue_quote: 'Comments: CVPR 2018 Spotlight presentation'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/navigation
+  secondary:
+    - robotics-embodiment/embodied-instruction-following
+domain_basis:
+  reason: The scored outcome is whether the agent, moving through a building it must perceive as it
+    goes, stops within 3 m of a goal location, which is the navigation leaf's definition. The goal
+    is given only through a natural-language route instruction, so embodied-instruction-following is
+    secondary. That leaf was weighed as primary (calvin takes it so) and lost, because the score is
+    where the agent stops, not whether the instructed route was carried out, and R4R was built by
+    other authors to score that fidelity (lineage). The same call as aerialvln in this round.
+  source: src-arxiv-1711-07280-v3
+  quote: We consider an episode to be a success if the navigation error is less than 3m.
+domain_considered_and_rejected:
+  - term: multimodal/visual-grounding
+    reason: The paper frames the task as a vision-and-language problem akin to VQA, but the leaf is
+      locating the image region an expression refers to, and R2R scores a navigation outcome
+      produced by the agent's moves, which the robotics-embodiment family's inclusion test claims.
+  - term: robotics-embodiment/sim2real-transfer
+    reason: The paper motivates real imagery by transfer to robots, but no physical trial is scored.
+capability:
+  - grounding
+  - distribution-shift-generalization
+capability_basis:
+  grounding:
+    reason: The instruction is a referring description of a route and goal in a presented world, and
+      success is whether the agent reached the location it describes. The benchmark's own claim is
+      the interpretation of visually grounded instructions in previously unseen real imagery, which
+      distinguishes it from the libero near miss, whose sources never claim grounding. See
+      review_checks (aerialvln rejected the term).
+    source: src-arxiv-1711-07280-v3
+    quote: What distinguishes the VLN challenge is that the agent is required to interpret a
+      previously unseen natural-language navigation command in light of images generated by a
+      previously unseen real environment.
+  distribution-shift-generalization:
+    reason: Val-unseen (11 buildings) and test (18 buildings) are buildings held out from the 61
+      training buildings, and results are reported for val-seen and val-unseen side by side; the
+      paper reports the seen-unseen gap as its most surprising result.
+    source: src-arxiv-1711-07280-v3
+    quote: (38.6% vs. 21.8% success for studentforcing)
+capability_considered_and_rejected:
+  - term: sensorimotor-control
+    reason: The agent teleports between panoramic viewpoints on a precomputed navigation graph with
+      deterministic actions; there is no dynamics, collision or localisation error in the loop.
+      VLN-CE was built to drop exactly these assumptions.
+    source: src-arxiv-2004-02857
+    quote: Specifically, our setting drops the presumptions of known environment topologies,
+      short-range oracle navigation, and perfect agent localization.
+  - term: instruction-following
+    reason: The paper claims instruction following as the task, but the score is the stop location;
+      compliance with the described route is not checked (the term's exclusion for answer-only
+      scoring), which is the shortcoming R4R's authors raise.
+    source: src-arxiv-1905-12255
+    quote: We also show that the existing paths in the dataset are not ideal for evaluating
+      instruction following because they are direct-to-goal shortest paths.
+  - term: spatial-reasoning
+    reason: Instructions use spatial relations (turn left after the stairs), but no source read
+      claims spatial reasoning or scores it apart from reaching the goal.
+  - term: long-horizon-execution
+    reason: Paths are shortest paths of 4 to 6 graph edges, about 10 m on average, and a wrong move
+      can be undone later in the episode.
+  - term: perception
+    reason: The input is panoramic RGB(-D) imagery, but the score is where the agent stops, not what
+      was recovered from the images.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Episodes are run in the Matterport3D Simulator (by the participant, for the test split),
+    and each is a success or a failure, with SPL bounded by 1; navigation error and trajectory
+    length are distances reported beside them. The EvalAI server scores the submitted trajectories
+    against the withheld goals and does not run a simulator itself.
+  source: src-evalai-r2r-challenge-97
+  quote: The primary evaluation metrics of interest are Success Rate (success), and Success rate
+    weighted by normalized inverse Path Length (SPL).
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The simulator is presented as a reinforcement-learning environment, and the release's
+    entrants are navigation policies trained on the training split (the seq2seq baseline by teacher-
+    and student-forcing; DUET and NavGPT-2 backbones in the 2026 paper read), which rl-policy's test
+    covers as learned controllers acting in the environment.
+  source: src-arxiv-1711-07280-v3
+  quote: The simulator is a large-scale interactive reinforcement learning (RL) environment
+    constructed from the Matterport3D dataset
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: Zero-shot navigators built on prompted language models are reported on R2R in the
+      literature, but none of the sources read shows one, and the release is designed for trained
+      policies. See review_checks.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against R2R. The EvalAI test leaderboard's newest row is dated
+    2026-10-17 and 27 of its 229 rows are dated 2026, and an April 2026 paper reports val-unseen and
+    test-unseen results with the official splits and evaluation scripts. The repository's last push
+    was 2024-07-12 (GitHub API), which is maintenance evidence, not lifecycle.
+  source: src-arxiv-2604-19064-v1
+  quote: Table II reports results on R2R under the standard validation unseen and test unseen
+    splits.
+activity: accepting-submissions
+activity_note: The Test phase has run since 2018-03-13 with an end date of 2099-12-31 and is active;
+  the challenge has never run in rounds ("open-ended").
+activity_basis:
+  reason: A continuously open server with no rounds, still taking submissions.
+  source: src-evalai-r2r-leaderboard-270
+  quote: '"submission__submitted_at":"2026-10-17T03:16:02.961432Z"'
+  newest_submission: 2026-10-17
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: DUET with SDB (Stability-Diversity Balance), April 2026
+    source: src-arxiv-2604-19064-v1
+    observed_on: 2026-11-05
+    quote: PERFORMANCE COMPARISON ON THE R2R DATASET FOR VALIDATION UNSEEN AND TEST UNSEEN SPLITS.
+  - system: Seq2Seq Baseline (the paper's student-forcing agent)
+    source: src-evalai-r2r-leaderboard-270
+    observed_on: 2026-11-05
+    quote: '"result":[8.129539141865857,7.848103907755416,0.26575605080277975,0.20369039060627844,0.1793329067313378]'
+    note: The leaderboard row of team "Seq2Seq Baseline" (2018-09-08), 20.4% success and 0.18 SPL,
+      matching the paper's first test result.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The goal of each test path is withheld and scored on the server; success
+  is the shortest-path distance on the simulator's navigation graph from the stop point to that
+  goal. simulation was considered, but the reference answer is a stored goal viewpoint, not a state
+  the simulator decides.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The test goals were never released and only the EvalAI server scores test trajectories;
+    anyone with Matterport3D access can run the train and validation splits with the released
+    evaluation script.
+  source: src-arxiv-1711-07280-v3
+  quote: Following best practice, goal locations for the test set will not be released.
+
+task:
+  exists: true
+  input:
+    - a natural-language route instruction (one of three per path), written by a crowd worker
+    - at each step, the RGB (optionally depth) view from the agent's panoramic viewpoint and pose,
+      and the set of viewpoints reachable from it on the navigation graph
+  output: A trajectory of viewpoints with camera heading and elevation, ending when the agent
+    selects stop; for the test split, submitted to EvalAI as a JSON array of trajectories.
+  scoring: Success (stop within 3 m of the goal along the navigation graph) and SPL averaged over
+    the test instructions, with navigation error, trajectory length and oracle success beside them;
+    the leaderboard orders by success. Beam search, and solving instructions that share a goal
+    together, are not permitted, and any exploration must be included in the submitted trajectory.
+  tests_hidden_from_system: true
+  source: src-arxiv-1711-07280-v3
+  quote: The episode ends when the agent selects the special stop action
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The test instructions and start poses are released, but not the goals. The R2R files
+    are plain downloads (Dropbox links in the repository's script), but every run needs the
+    Matterport3D scans, released only on request under Matterport's terms of use; those terms were
+    not accepted for this entry.
+  access_basis:
+    reason: The test split's inputs are public and its answers (goal locations) are scored only on
+      the server.
+    source: src-evalai-r2r-challenge-97
+    quote: All dataset splits can be downloaded but the test set download contains only the
+      instructions and the trajectory starting points
+  refresh: static
+  refresh_basis:
+    reason: No revision of the instructions, paths or splits is announced in any source read. The
+      February 2019 simulator update (batching, depth output, Docker) changed the API, not the data;
+      the first release is tagged v0.1.
+    source: src-github-matterport3dsimulator-readme-589d091
+    quote: '*NEW February 2019*: We have released several updates.'
+  data_provenance:
+    - crowd-authored
+    - real-world-instrument
+  data_provenance_note: Instructions were written by Amazon Mechanical Turk workers (over 400) for
+    paths sampled programmatically as shortest paths on each building's navigation graph; the
+    environments are Matterport3D's real RGB-D scans of 90 buildings.
+  data_provenance_source: src-arxiv-1711-07280-v3
+  data_provenance_quote: For each path, we collect three associated navigation instructions using
+    Amazon Mechanical Turk (AMT).
+  contamination_risk: low
+  contamination_risk_note: The test goals have never been released and are scored only on the
+    server. The test buildings' scans are in the public Matterport3D release, so an agent may
+    pre-explore them; the rules allow this only when the exploration is counted in the submitted
+    trajectory, which lowers SPL. Results on the public validation splits have no such protection.
+  contamination_risk_source: src-evalai-r2r-challenge-97
+  contamination_risk_quote: To maintain the integrity of the test set goal locations, test set
+    evaluations are obtained by submitting to the challenge test server.
+  contamination_evidence: []
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_basis:
+    reason: The paper reads results against crowd workers' success on 1,390 test instructions
+      (86.4%), and the leaderboard's top row is that human run (0.765 SPL). The best system row,
+      from June 2026, reaches 84.6% success with 0.801 SPL, above the human SPL.
+    source: src-arxiv-1711-07280-v3
+    quote: In comparison, AMT workers achieve 86.4% success on the test set
+  dataset_licence: Matterport3D Terms of Use
+  dataset_licence_note: The README places the Matterport3D data and data derived from it, which
+    includes R2R's paths, under the Matterport3D Terms of Use; the terms themselves were not opened.
+  dataset_licence_source: src-github-matterport3dsimulator-readme-589d091
+  dataset_licence_quote: The Matterport3D dataset, and data derived from it, is released under the
+    [Matterport3D Terms of Use]
+  size:
+    - count: 21567
+      unit: navigation instructions (three per path, 7,189 paths)
+      source: src-arxiv-1711-07280-v3
+      quote: we collect the Room-to-Room (R2R) dataset containing 21,567 openvocabulary,
+        crowd-sourced navigation instructions with an average length of 29 words
+    - count: 4173
+      unit: instructions in 18 buildings
+      subset: test (goals withheld)
+      source: src-arxiv-1711-07280-v3
+      quote: The test set consists of 18 scenes, and 4,173 instructions.
+    - count: 2349
+      unit: instructions in 11 buildings
+      subset: val-unseen
+      source: src-arxiv-1711-07280-v3
+      quote: We reserve an additional 11 scenes and 2,349 instructions for validating in unseen
+        environments (val unseen).
+    - count: 14025
+      unit: instructions in 61 buildings (1,020 more in the same buildings form val-seen)
+      subset: train
+      source: src-arxiv-1711-07280-v3
+      quote: The remaining 61 scenes are pooled together, with instructions split 14,025 train /
+        1,020 val seen.
+    - count: 7189
+      unit: paths
+      source: src-arxiv-1711-07280-v3
+      quote: In total we sample 7,189 paths capturing most of the visual diversity in the dataset.
+  submission_limit:
+    max_submissions: 5
+    period_days: 0
+    per: participant, on the Test phase, at most one a day
+    source: src-evalai-r2r-challenge-97-phases
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The R2R authors (the first author's GitHub repository and EvalAI host team)
+  maintainer_basis:
+    reason: The simulator, task code and download script sit in the first author's personal GitHub
+      account, the R2R files are Dropbox links, and the project site carries the 2018 copyright of
+      the Australian Centre for Robotic Vision. No source names an organisation as holding the data.
+    source: src-github-matterport3dsimulator-r2r-download-589d091
+    quote: wget https://www.dropbox.com/s/w4pnbwqamwzdwd1/R2R_test.json
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered, because bringmeaspoon.org is copyright the
+    Australian Centre for Robotic Vision, which also funded the work. But the repository and data
+    sit in one person's accounts with no institution stated as their holder, which is the individual
+    term's test and its key-person risk. See review_checks.
+  submission_process:
+    - held-out-server
+  submission_process_note: Participants run their agent locally in the simulator and upload the test
+    trajectories as JSON; EvalAI scores them against the withheld goals at once, and Test-phase
+    results are public. Val-Seen and Val-Unseen phases, with private results, are for format checks.
+  submission_process_source: src-evalai-r2r-challenge-97
+  submission_process_quote: To maintain the integrity of the test set goal locations, test set
+    evaluations are obtained by submitting to the challenge test server.
+  independence_flags: []
+  independence_flags_note: Not assessed. The challenge has no prize ("has_prize":false), and the
+    withheld test goals are scored by the maintainers' one server, which would bear on
+    single-evaluator-private-test-set. Whether the maintainers' own later methods appear on the
+    leaderboard was not checked, because that would mean matching team names to people.
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline test score can only come from the EvalAI server, which holds the goals. The
+      validation splits can be scored locally with the released evaluation script.
+    source: src-arxiv-1711-07280-v3
+    quote: Following best practice, goal locations for the test set will not be released.
+  reproducibility_blockers:
+    - private-test-set
+    - licence-restriction
+  reproducibility_blockers_note: Every run needs the Matterport3D scans, which are released only on
+    request under Matterport's terms of use.
+  reproducibility_blockers_source: src-github-matterport3dsimulator-readme-589d091
+  reproducibility_blockers_quote: which is available after requesting access [here]
+  harness_availability: official-harness
+  harness: Matterport3DSimulator tasks/R2R (eval.py, with the seq2seq and learning-free baselines);
+    test scoring on EvalAI challenge 97
+  harness_source: src-github-matterport3dsimulator-r2r-readme-589d091
+  harness_quote: '`eval.py`: Evaluation script.'
+  code_licence: MIT
+  code_licence_note: Stated in the README ("Our code is released under the MIT license"); GitHub's
+    licence metadata reports NOASSERTION (API, read 2026-11-05).
+  code_licence_source: src-github-matterport3dsimulator-readme-589d091
+  code_licence_quote: Our code is released under the MIT license.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The simulation profile already makes simulator, simulator_version, hardware_platform, subset_used,
+  # selection_strategy and n_samples material. simulator and simulator_version are listed again to make them
+  # explicit: R2R's score is defined on the Matterport3D Simulator's navigation graph (the v0.1 release of 2018 or
+  # the batched, dockerized release of February 2019), and the paper notes the data could be used with other
+  # Matterport3D simulators; R2R ported into Habitat's continuous environments is VLN-CE, a separate benchmark
+  # whose scores are not comparable. selection_strategy carries single-run against beam-search or pre-explored
+  # trajectories: the server forbids beam search now, but 15 older leaderboard rows report mean trajectories over
+  # 100 m with SPL near 0.01. Also material: the training data, since the rules allow training on train and both
+  # validation splits and most recent methods pretrain on augmented instruction-trajectory data.
+  material_extra:
+    - simulator
+    - simulator_version
+    - training_data_policy
+
+homepage: https://bringmeaspoon.org/
+repository: https://github.com/peteanderson80/Matterport3DSimulator
+leaderboard_url: https://eval.ai/web/challenges/challenge-page/97/leaderboard
+
+subsets:
+  - id: r2r#test
+    label: Test (18 unseen buildings; goals withheld, scored on EvalAI)
+    items: 4173
+    scored_separately: true
+    evidence:
+      - source: src-evalai-r2r-challenge-97-phases
+        quote: This phase evaluates Vision and Language Navigation agents on the test split of the
+          Room-to-Room (R2R) navigation dataset. Your submission will be made public
+    notes: The headline split and the only public leaderboard. The EvalAI guidelines ask papers to
+      report it.
+  - id: r2r#val-unseen
+    label: Validation unseen (11 buildings held out from training)
+    items: 2349
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1711-07280-v3
+        quote: We reserve an additional 11 scenes and 2,349 instructions for validating in unseen
+          environments (val unseen).
+  - id: r2r#val-seen
+    label: Validation seen (training buildings)
+    items: 1020
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1711-07280-v3
+        quote: The remaining 61 scenes are pooled together, with instructions split 14,025 train /
+          1,020 val seen.
+
+lineage:
+  role: root
+  forks:
+    # All three are separate benchmarks by other maintainers (04 S4, last row), not variants or versions.
+    - id: r4r
+      maintainer: The R4R paper's authors (ACL 2019)
+      source: src-arxiv-1905-12255
+      quote: We join existing short paths to form more challenging extended paths to create a new
+        data set, Room-for-Room (R4R).
+    - id: rxr
+      maintainer: The RxR paper's authors (EMNLP 2020), R2R's first author among them
+      source: src-arxiv-2010-07954
+      quote: It emphasizes the role of language in VLN by addressing known biases in paths
+    - id: vln-ce
+      maintainer: The VLN-CE paper's authors (arXiv 2004.02857), on the Habitat platform
+      source: src-github-vln-ce-readme-729d141
+      quote: The R2R_VLNCE dataset is a port of the Room-to-Room (R2R) dataset
+lineage_note: R4R joins R2R's paths into longer ones and adds a fidelity metric (CLS); VLN-CE ports
+  R2R's instructions and paths from the navigation graph to continuous control in Habitat, and is
+  reported as R2R-CE. Both reuse R2R's items under new maintainers and are independently cited, so
+  each is its own benchmark. RxR is a new multilingual dataset with new paths and instructions in
+  the same simulator and buildings, written partly to fix R2R's shortest-path bias; it shares no
+  items with R2R, so it is listed as a derivative of the design (see review_checks). None of the
+  three has an entry yet.
+
+history:
+  - date: 2018-03-13
+    event: channel-opened
+    field: execution.submission_channel
+    to: EvalAI challenge 97 (Vision and Language Navigation), Test phase
+    source: src-evalai-r2r-challenge-97-phases
+    quote: '"start_date":"2018-03-13T00:00:00Z","end_date":"2099-12-31T00:00:00Z","challenge":97'
+    note: All three phases share these dates; only the Test phase's leaderboard is public.
+
+tags:
+  - vision-and-language-navigation
+  - navigation-graph
+  - matterport3d
+  - crowdsourced-instructions
+  - evalai
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T03)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1711-07280-v3
+    - src-arxiv-1711-07280
+    - src-bringmeaspoon-site
+    - src-github-matterport3dsimulator-readme-589d091
+    - src-github-matterport3dsimulator-r2r-readme-589d091
+    - src-github-matterport3dsimulator-r2r-download-589d091
+    - src-evalai-r2r-challenge-97
+    - src-evalai-r2r-challenge-97-phases
+    - src-evalai-r2r-leaderboard-270
+    - src-arxiv-2604-19064-v1
+    - src-arxiv-1905-12255
+    - src-arxiv-2010-07954
+    - src-arxiv-2004-02857
+    - src-github-vln-ce-readme-729d141
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, and its abstract page for the dates and venue;
+    the project site with scripts and styles stripped; the simulator README, the tasks/R2R README and
+    the download script at commit 589d091; EvalAI's public JSON records of challenge 97, its phases and
+    its Test leaderboard (no account, nothing accepted); the v1 PDF of an April 2026 paper (a DOI) as
+    evidence of current use; and the R4R, RxR and VLN-CE abstract pages and the VLN-CE README for lineage.
+    The Matterport3D scans were not requested.
+  confidence: medium
+  review_checks:
+    - check: Primary navigation, secondary embodied-instruction-following. R2R is the founding
+        vision-and-language navigation benchmark and the task statement fits both leaves; navigation
+        leads because only the stop location is scored. calvin, the instruction-following leaf's
+        entry, scores whole chains of instructions; aerialvln in this round made the same call as
+        here.
+      field: domain
+      source: src-arxiv-1711-07280-v3
+      quote: as many instructions do not specify the path that should be taken
+    - check: Whether robotics-embodiment holds at all. The agent teleports between panoramas on a
+        navigation graph with deterministic actions and no dynamics, which is why
+        sensorimotor-control was rejected; the family's exclusion ("symbolic with no body") was
+        judged not to apply because the agent has a pose and camera in real imagery. A reviewer may
+        prefer a note that VLN-CE is the embodied form.
+      field: domain.primary
+      source: src-arxiv-2004-02857
+      quote: this setting lifts a number of assumptions implicit in prior work that represents
+        environments as a sparse graph of panoramas with edges corresponding to navigability
+    - check: grounding is tagged on the paper's own claim (visually grounded instructions), although
+        the score is the stop location; aerialvln rejected grounding on the libero near miss for the
+        same kind of score. The two entries should agree.
+      field: capability
+    - check: Lineage. R4R and VLN-CE reuse R2R's items under other maintainers, so they are forks
+        under 04 S4. RxR shares no items, only the simulator, buildings and task, and R2R's first
+        author is among its authors; it could instead be unrelated in lineage, or noted only as a
+        successor dataset. Ids r4r, rxr and vln-ce are proposed here, and none has an entry.
+      field: lineage.forks
+      source: src-arxiv-2010-07954
+      quote: We introduce Room-Across-Room (RxR), a new Vision-and-Language Navigation (VLN)
+        dataset.
+    - check: maintainer_type individual rests on the repository and Dropbox links sitting in one
+        person's accounts; the site's copyright line names the Australian Centre for Robotic Vision,
+        which would make it academic-lab if that centre is taken as the holder.
+      field: governance.maintainer_type
+      source: src-bringmeaspoon-site
+      quote: © 2018 Australian Centre for Robotic Vision.
+    - check: The best system row (84.6% success, 0.801 SPL, June 2026) has reached the crowd
+        workers' 86.4% success and passed their SPL. saturated is derived and needs claims; the
+        headroom left is small.
+      field: data.ceiling_anchor_type
+      source: src-evalai-r2r-leaderboard-270
+      quote: '"result":[10.703935932157377,1.74210147454204,0.8727534148094895,0.8461538461538461,0.8011862326141211]'
+    - check: The submission limit is stated per user (5 in all, one a day), while EvalAI enforces
+        limits per participant team; the guidelines forbid extra accounts. Leaderboard rows are not
+        verified by the host (no row is marked verified), and the beam-search rows from before the
+        rule are still listed.
+      field: data.submission_limit
+      source: src-evalai-r2r-challenge-97
+      quote: the number of submissions per user is limited to 1 upload per day and a maximum of 5
+        submissions per user
+    - check: designed_for_subjects is rl-policy only. Zero-shot agents on prompted language models
+        are widely reported on R2R validation subsets, but no source read here shows one;
+        observed_subjects could add agent-scaffold once one is read.
+      field: designed_for_subjects
+    - check: dataset_licence follows the README (Matterport3D terms cover data derived from the
+        scans). The terms were not opened, so whether the R2R instruction files themselves are under
+        them is the README's statement only.
+      field: data.dataset_licence
+    - check: No versions are recorded. The simulator's v0.1 tag (2018) and its February 2019 release
+        differ in API, not in R2R's items; whether results depend on the simulator release is not
+        stated, so it is carried in comparability rather than as a version.
+      field: versions
+      source: src-github-matterport3dsimulator-readme-589d091
+      quote: to mark the first release we have tagged it as [v0.1]
