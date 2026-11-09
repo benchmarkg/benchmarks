@@ -1,0 +1,536 @@
+# data/benchmarks/reasoning-general/counterbench.yaml
+#
+# P1-S11-T02, reasoning-general entry 11. Filled from the CounterBench paper, arXiv 2502.11008 read as its v2 PDF
+# (2026-04-11, revised after AAAI-26) and its v1 PDF (2025-02-16, the first release), and its abstract page; the
+# AAAI-26 proceedings page; Hugging Face's API records of the dataset and of the CounterBench account that holds it;
+# the dataset card at main; and the HTML of UniCo (arXiv 2605.24873, v1 May 2026), a paper that reports results on
+# it. The two released data files, the Hub's commit history and CLadder's v1.5 file on Hugging Face were read beside
+# them and are not quoted Sources. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+
+id: counterbench
+name: CounterBench
+tagline: Yes/no counterfactual questions over deterministic causal chains with nonsense variable
+  names, in five query types.
+description: >
+  A dataset of yes/no counterfactual questions answered by formal rules rather than world knowledge. Each
+  item states a deterministic causal structure over five to nine events whose names are invented words
+  ("Ziklo causes Blaf, Blaf causes Trune ..."), sometimes with an observed event, and asks whether the
+  outcome would occur had one or more antecedents been different ("Would Lumbo occur if not Ziklo instead
+  of Ziklo?"). The questions come in five types: basic (one antecedent changed), joint (several changed
+  at once), nested (a change assumed on top of an earlier one), conditional (a change under an observed
+  condition) and backdoor (a change where a confounder opens a backdoor path). V1 has 1,000 questions,
+  250 per type in the first four types, balanced between yes and no; V2 adds 200 backdoor questions in
+  a separate file, for 1,200. The score is accuracy overall and by type, with chance at 50%. The paper
+  finds most models near chance under plain prompting and introduces CoIn, its own prompting procedure
+  (abduction, intervention, forward inference and back-tracking validation), which it reports near 90%
+  with several models. Two causal-inference PhD students scored 97.75% on 200 sampled questions.
+self_description:
+  source: src-arxiv-2502-11008-v2
+  quote: we introduce a new benchmark dataset, CounterBench, comprising 1.2K counterfactual
+    reasoning questions
+external_ids:
+  huggingface: CounterBench/CounterBench
+  arxiv: '2502.11008'
+paper:
+  title: 'CounterBench: Evaluating and Improving Counterfactual Reasoning in Large Language Models'
+  arxiv: '2502.11008'
+  doi: 10.1609/aaai.v40i36.40287
+  version_read: v2
+  source: src-arxiv-2502-11008-v2
+released: 2025-02-16
+released_note: The paper's first arXiv version, as its abstract page dates it. The Hugging Face
+  dataset was created the same day, with the V1 file uploaded then (its API record's createdAt, and
+  the Hub's commit history).
+released_source: src-arxiv-2502-11008
+released_quote: Submitted on 16 Feb 2025 (v1), last revised 11 Apr 2026 (this version, v2)
+release_venue: AAAI-26 (Proceedings of the AAAI Conference on Artificial Intelligence 40(36),
+  Natural Language Processing I track)
+release_venue_source: src-aaai-2026-counterbench
+release_venue_quote: 'Vol. 40 No. 36: AAAI-26 Technical Tracks 36'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: reasoning-general/counterfactual
+  secondary:
+    - reasoning-general/causal-inference
+  secondary_note: The backdoor type (200 of V2's 1,200) asks the model to tell a causal effect from
+    a spurious association through a confounder, which is the causal-inference leaf's definition;
+    that subset carries a domain_override with causal-inference as its primary. Causal-inference
+    loses the primary because every query is a counterfactual one, where CLadder (causal-inference
+    primary) spreads its items over all three rungs; the paper itself compares against CLadder's
+    counterfactual subset only (review_checks).
+domain_basis:
+  reason: The paper's object of study is counterfactual reasoning as a reasoning form, posed as
+    questions about what an outcome would have been under a changed antecedent in a stated
+    structural causal model, which is the leaf's definition. Every one of the five query types is a
+    counterfactual query (Yx(u) and its joint, nested and conditional forms); none asks for an
+    association or an interventional effect alone.
+  source: src-arxiv-2502-11008-v2
+  quote: we specifically assess their ability to perform counterfactual inference using a set of
+    formal rules
+domain_considered_and_rejected:
+  - term: reasoning-general/logical-deduction
+    reason: The answers follow from the stated deterministic rules, but the reasoning form under
+      study is evaluating a changed antecedent in a causal model, which has its own leaf.
+  - term: reasoning-general/commonsense
+    reason: The variable names are invented words so that everyday knowledge cannot help; everything
+      a question needs is stated in it.
+    source: src-arxiv-2502-11008-v2
+    quote: variable names are replaced by nonsensical, artificially generated words
+capability:
+  - causal-reasoning
+  - deductive-reasoning
+capability_basis:
+  causal-reasoning:
+    reason: Each answer is the value the outcome takes in the model after the antecedents are set by
+      intervention while the factual context is held fixed, which is predicting the effect of an
+      intervention that was not observed; the backdoor type adds a confounder to be separated from
+      the causal path.
+    source: src-arxiv-2502-11008-v2
+    quote: Each query is derived from a deterministic Structural Causal Model (SCM)
+  deductive-reasoning:
+    reason: The causal rules and observations are stated in the item, and the answer follows from
+      them alone; invented variable names remove any help from world knowledge.
+    source: src-arxiv-2502-11008-v2
+    quote: In this way, we force LLMs to engage in causal reasoning rather than using prior
+      knowledge in pretraining data.
+capability_considered_and_rejected:
+  - term: abductive-reasoning
+    reason: CoIn's procedure has an abduction step (inferring the exogenous values from the facts),
+      but in a deterministic model they follow necessarily, which the term's exclusion test sends to
+      deduction; abduction is also a property of the authors' method, not of the scored items.
+  - term: quantitative-reasoning
+    reason: No arithmetic is scored; the answer is yes or no, and only the backdoor items state a
+      probability at all.
+  - term: compositional-generalization
+    reason: Difficulty grows with the number of events (five to nine), but no item is held out as a
+      new arrangement of primitives seen in training or in the prompt.
+
+evaluation_method:
+  - exact-match
+evaluation_method_basis:
+  reason: Each question has a stored yes or no answer, and the score is accuracy over per-item
+    verdicts, overall and by type. Responses that are neither yes nor no are classed as
+    incomprehensible and score as wrong. Both answers are equally frequent in V1, so chance is 50%.
+  source: src-arxiv-2502-11008-v2
+  quote: We employ inference accuracy as our primary performance metric.
+evaluation_method_considered_and_rejected:
+  - term: multiple-choice
+    reason: The answer is one of two labels, but no options are supplied with the question; kept as
+      exact-match for consistency with CLadder's entry, whose yes/no questions are scored the same
+      way.
+    source: src-arxiv-2502-11008-v2
+    quote: a set of counterfactual queries and corresponding binary answers
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The protocol prompts a chat model at temperature 0 for a yes or no answer, with or without
+    a reasoning instruction (standard, CausalCoT, a tool-calling solver, CoIn). The paper's models
+    are API-served chat models, with two base GPT-3 models beside them.
+  source: src-arxiv-2502-11008-v2
+  quote: The tested LLM models include GPT3.5 turbo, GPT-4o, GPT-4o mini, Davinci-002, Babbage-002
+designed_for_subjects_considered_and_rejected:
+  - term: base-model
+    reason: Davinci-002 and Babbage-002 are run, but as part of a list of chat models under the same
+      prompted protocol, not as a raw-continuation track.
+  - term: tool-augmented-model
+    reason: The solver baseline routes questions to causal-inference tools, but it is one comparison
+      strategy; the benchmark's protocol does not supply tools.
+as_used:
+  - protocol: Both data files together (V1's 1,000 questions and V2's 200 backdoor questions) as one
+      out-of-distribution test of models trained on other causal data, scored by plain accuracy
+      beside six other causal benchmarks. No per-type scores.
+    split: V1 and V2 together (1,200 questions)
+    source: src-arxiv-2605-24873-html
+    quote: 'We include both two subsets: a comprehensive V1 subset and a backdoor-only V2 subset.'
+    note: UniCo (UIUC and the University of Chicago, 24 May 2026) reports Qwen3-4B, Qwen3-8B,
+      Olmo3-7B-Instruct and their fine-tuned versions; CounterBench is the seventh column of its
+      Table 3.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced in 2026; UniCo (May 2026) scores open models on it as one of
+    its out-of-distribution benchmarks. The dataset was last modified on 2025-08-04, which is
+    maintenance evidence, not lifecycle.
+  source: src-arxiv-2605-24873-html
+  quote: UniCo 55.2 74.6 70.3 79.0 76.7 47.7 73.2 68.1
+activity: no-submission-channel
+activity_basis:
+  reason: Neither the paper nor the dataset card describes a leaderboard, server or submission
+    route; users download the files and report accuracy in their own papers.
+  source: src-arxiv-2605-24873-html
+  quote: This gives 1,200 examples altogether, and the reported metric is accuracy.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4o (with the authors' CoIn prompting)
+    source: src-arxiv-2502-11008-v2
+    observed_on: 2026-11-09
+    quote: Our strategy improves the accuracy of the model from 75.8% to 89.4%
+  - system: Qwen3-4B
+    source: src-arxiv-2605-24873-html
+    observed_on: 2026-11-09
+    quote: Qwen3-4B Original 46.0 72.9 59.3 71.2 59.3 32.3 67.6 58.4
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Stored yes/no answers, derived from each item's causal structure and
+  released with the questions in the same files; they are public, not withheld.
+ground_truth_source_basis:
+  reason: Each item is a query paired with its answer, generated from templates over causal graphs.
+  source: src-arxiv-2502-11008-v2
+  quote: a set of counterfactual queries and corresponding binary answers
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The questions and answers are on Hugging Face, ungated, and scoring is accuracy on yes/no
+    answers; a third party writes its own prompt and parser, since no code is published.
+  source: src-hf-api-counterbench
+  quote: '"gated":false'
+
+task:
+  exists: true
+  input:
+    - 'background: a chain of deterministic causal statements over five to nine events with invented names,
+      for some types an observed event, and for the backdoor type a Bernoulli prior on the confounder'
+    - a yes/no question asking whether the outcome would occur under one or more changed antecedents
+  output: Yes or No.
+  scoring: Accuracy against the stored answers, overall and by query type (basic, conditional,
+    joint, nested, backdoor); responses that are neither yes nor no count as wrong. Chance is 50%.
+  source: src-arxiv-2502-11008-v2
+  quote: Within our evaluation framework, responses are classified into three distinct categories
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Both data files, answers included, are on Hugging Face, whose record is ungated.
+    source: src-hf-api-counterbench
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The data changed once, by adding a second file labelled V2 (the backdoor questions)
+      beside the V1 file, and the paper's v2 and the AAAI version report the five-type set. Users
+      name the two files as subsets.
+    source: src-arxiv-2605-24873-html
+    quote: 'We include both two subsets: a comprehensive V1 subset and a backdoor-only V2 subset.'
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: The items are built from causal graphs and story templates with invented
+    variable names; no model writes the questions, and the answers follow from the stated structure.
+    The released files' metadata (story_id, graph_id, model_id, rung, query_type det-counterfactual)
+    has the same fields as CLadder's generator output, and the standard prompt opens with CLadder's
+    preamble (see lineage_note).
+  data_provenance_source: src-arxiv-2502-11008-v2
+  data_provenance_quote: The background is constructed with causal graphs and story templates
+  contamination_risk: medium
+  contamination_risk_note: Every question and answer has been public and ungated on Hugging Face
+    since February 2025 (V2 since August 2025), with no canary string in the files read, so a
+    training route into the scored items is plausible; none is evidenced. The invented names guard
+    against memorised world knowledge, not against training on the released items.
+  contamination_risk_source: src-arxiv-2502-11008-v2
+  contamination_risk_quote: In this way, we force LLMs to engage in causal reasoning rather than
+    using prior knowledge in pretraining data.
+  contamination_evidence: []
+  ceiling_anchor_type: expert-average
+  ceiling_anchor_type_basis:
+    reason: Two PhD students with expertise in causal inference answered 200 randomly sampled
+      questions under the task's conditions and averaged 97.75% (inter-annotator agreement about
+      95%). The sample's split between V1 and V2 is not stated.
+    source: src-arxiv-2502-11008-v2
+    quote: They achieved an average accuracy of 97.75% and required four hours to complete them
+  dataset_licence: MIT
+  dataset_licence_note: The dataset card's front matter and the Hub's licence tag both say MIT; the
+    paper states no licence.
+  dataset_licence_source: src-hf-counterbench-readme
+  dataset_licence_quote: 'license: mit'
+  size:
+    - count: 1200
+      unit: questions, in five types
+      subset: V1 and V2 together
+      source: src-arxiv-2502-11008-v2
+      quote: The dataset consists of 1,200 questions, categorized into five distinct types, with
+        each type containing 200 or 250 questions.
+    - count: 1000
+      unit: questions, 250 in each of four types, half with the answer yes
+      subset: V1 (basic, conditional, joint, nested)
+      source: src-arxiv-2502-11008-v1
+      quote: The dataset consists of 1,000 questions, categorized into four distinct types, with
+        each type containing 250 questions.
+    - count: 200
+      unit: questions
+      subset: V2 (backdoor)
+      source: src-arxiv-2502-11008-v2
+      quote: The dataset consists of 1,200 questions, categorized into five distinct types, with
+        each type containing 200 or 250 questions.
+  size_note: The backdoor count is the 1,200 total less V1's four 250-question types; the paper does
+    not state it alone. The released files hold 1,000 and 200 questions (counted 2026-11-09).
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The CounterBench authors (Rutgers University and Case Western Reserve University),
+    through the CounterBench Hugging Face account
+  maintainer_basis:
+    reason: The dataset sits in an account named after the benchmark, which Hugging Face records as
+      a user account with no organisation membership; no institution is stated as holding it. The
+      paper's authors are at Rutgers and Case Western Reserve.
+    source: src-hf-api-counterbench-user
+    quote: '"orgs":[]'
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered, since the authors are a university group, but
+    no institution is stated as holding the data, and the account is a single Hugging Face user
+    account (the Hub's commit history shows the first upload from a personal account before the
+    project account took over), so the key-person risk the individual term records applies. No code
+    repository exists.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or results page; beyond the paper's own tables, results
+    appear in users' papers.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2502-11008-v2
+      quote: Experiments on CounterBench demonstrate that CoIn achieves an accuracy of 89.9%
+  independence_flags_note: The authors introduce CoIn, their own prompting procedure, and report it
+    as the best strategy on their benchmark with every model. The v2 PDF has no acknowledgement or
+    funding statement, so funding by an evaluated party could not be assessed.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: null
+  reproducibility_tier_note: A run is automatic once a prompt and an answer parser are written,
+    which reads as fully-automatable, but no implementation is published (the blocker below) and 02
+    S11 forbids that tier beside it, so the tier abstains as MusicCaps' and LIT-PCBA's do.
+  reproducibility_blockers:
+    - no-reference-implementation
+  reproducibility_blockers_note: Neither the paper nor the dataset card links code. The prompts
+    appear only as figures in the paper's appendix, and the rule that sorts responses into yes, no
+    and incomprehensible is described in prose.
+  harness_availability: none
+  harness_availability_note: No repository is linked from the paper, the AAAI page or the dataset
+    card, and a GitHub search for the name (2026-11-09, not a quoted Source) found only unrelated
+    projects. UK AISI's inspect_evals has no CounterBench task (its src/inspect_evals/_registry.py
+    at main, read 2026-11-09; not a quoted Source).
+  harness: null
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: which files were scored (V1 alone, as the paper's v1 did, or V1 and V2,
+  # as v2 and UniCo do; the averages differ), and the prompt (standard, CausalCoT, solver or CoIn), which moves
+  # the same model from near chance to near 90%.
+  material_extra:
+    - prompt_template_hash
+    - subset_used
+
+homepage: https://huggingface.co/datasets/CounterBench/CounterBench
+repository: null
+dataset_url: https://huggingface.co/datasets/CounterBench/CounterBench
+
+versions:
+  - version: v1
+    label: CounterBench V1 (four types, 1,000 questions)
+    version_kind: revision
+    released: 2025-02-16
+    items: 1000
+    changes: The first release, data_balanced_alpha_V1.json, with basic, conditional, joint and
+      nested questions, 250 of each, balanced between yes and no and across five difficulty levels
+      of 200. The paper's v1 reports its results on it.
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-arxiv-2502-11008-v1
+      - src-arxiv-2502-11008
+      - src-hf-api-counterbench
+  - version: v2
+    label: CounterBench V2 (adds the backdoor type, 1,200 questions)
+    version_kind: track-set
+    released: 2025-08-04
+    items: 1200
+    changes: Adds data_balanced_backdoor_V2.json, 200 backdoor questions, beside the unchanged V1
+      file (the Hub's commit history, not a quoted Source, dates the upload 2025-08-04). The AAAI-26
+      paper and the arXiv v2 report five-type results with an average over all five, so averages are
+      not comparable with v1's four-type ones. The dataset card's field list still names four types.
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-arxiv-2502-11008-v2
+      - src-aaai-2026-counterbench
+      - src-hf-api-counterbench
+      - src-hf-counterbench-readme
+
+subsets:
+  - id: counterbench#basic
+    label: Basic counterfactual
+    items: 250
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2502-11008-v2
+        quote: The basic counterfactual type addresses simple
+    notes: One antecedent changed, Yx(u).
+  - id: counterbench#conditional
+    label: Conditional counterfactual
+    items: 250
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2502-11008-v2
+        quote: This type introduces observed conditions into the counterfactual world
+    notes: A change under an observed condition, Yx(u) given Zx(u) = z.
+  - id: counterbench#joint
+    label: Joint counterfactual
+    items: 250
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2502-11008-v2
+        quote: This type involves a counterfactual scenario in which multiple variables are set
+          simultaneously.
+    notes: Several antecedents changed at once, Yx,z(u).
+  - id: counterbench#nested
+    label: Nested counterfactual
+    items: 250
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2502-11008-v2
+        quote: Nested counterfactual involves sequential dependencies between variables.
+    notes: A change assumed on top of an earlier counterfactual one.
+  - id: counterbench#backdoor
+    label: Backdoor counterfactual (V2)
+    items: 200
+    scored_separately: true
+    domain_override:
+      primary: reasoning-general/causal-inference
+      secondary:
+        - reasoning-general/counterfactual
+    evidence:
+      - source: src-arxiv-2502-11008-v2
+        quote: In our dataset, backdoor counterfactuals test whether LLMs can distinguish between
+          genuine causal effects and spurious correlations when reasoning about alternative
+          scenarios.
+    notes: Added in v2. A confounder opens a backdoor path between the changed antecedent and the
+      outcome; the items state a Bernoulli prior on it.
+subsets_note: The paper reports accuracy by type, so the five types are listed. It also stratifies
+  by difficulty (five to nine events, 200 questions per level in V1 and 240 in V1 and V2 together)
+  and reports a difficulty breakdown for one model only, so the levels are not listed as subsets.
+
+lineage:
+  role: root
+lineage_note: CounterBench is not modelled as a fork of CLadder (cladder). Its items are new (none
+  of its 1,200 backgrounds occurs in CLadder's v1.5 file, checked 2026-11-09), it is held by another
+  group, and no source read says it was built from CLadder. But CLadder's rung 3 already has a
+  det-counterfactual query type in the same "Would Y if not X instead of X?" template, the released
+  metadata has CLadder's fields, and the paper's standard prompt opens with CLadder's preamble, so a
+  derivation of the generator is likely (review_checks).
+
+tags:
+  - counterfactuals
+  - structural-causal-models
+  - synthetic
+  - yes-no-questions
+  - nonsense-variable-names
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2502-11008-v2
+    - src-arxiv-2502-11008-v1
+    - src-arxiv-2502-11008
+    - src-aaai-2026-counterbench
+    - src-hf-api-counterbench
+    - src-hf-counterbench-readme
+    - src-hf-api-counterbench-user
+    - src-arxiv-2605-24873-html
+  sources_note: >
+    The paper's v2 PDF (the AAAI-26 version's content) and v1 PDF (the first release), both DOIs and not
+    archived, read as text; the abstract page for the dates and versions; the AAAI-26 proceedings page
+    for the venue and DOI; Hugging Face's API records of the dataset (ungated, MIT tag, dates) and of
+    the CounterBench account (a user account with no organisation); the dataset card at main; and UniCo's
+    HTML as evidence of current use and of a third-party quality inspection. HTML pages were read with
+    scripts and styles stripped. The two data files were downloaded and counted, not quoted.
+  confidence: medium
+  review_checks:
+    - check: "Candidates weighed for the counterfactual leaf: CRASS (LREC 2022, arXiv 2112.11941; everyday
+        \"what if\" conditionals, multiple choice; the data repository is a GitHub user account bearing
+        a person's name, with a BIG-bench copy as crass_ai; only an arXiv DOI; 11 citing works since 2025
+        in OpenAlex, none checked for results), IfQA (EMNLP 2023, DOI 10.18653/v1/2023.emnlp-main.515;
+        counterfactual presuppositions in open-domain QA, so retrieval is half the task and language/retrieval-qa
+        competes; code on a personal GitHub account, with a third-party Hugging Face copy crediting AI2's
+        Aristo; 11 citing works since 2025 in OpenAlex, none found reporting results), and CounterBench
+        (AAAI-26 DOI; counterfactual queries only; a project-named Hugging Face account; 25 citing works
+        since 2025 in OpenAlex, UniCo reporting results). CounterBench was chosen; CRASS is the closest
+        alternative for everyday counterfactuals."
+      field: domain.primary
+    - check: "Counterfactual, not causal-inference, as primary: every CounterBench query is a counterfactual
+        (rung 3) query in a stated SCM, and the paper defines its object against commonsense causal reasoning,
+        whereas CLadder spreads its items over all three rungs. A reviewer could still argue that deterministic
+        counterfactual evaluation is a part of causal inference, as CLadder's entry records with an override
+        on its rung-3 subset."
+      field: domain.primary
+      source: src-arxiv-2502-11008-v2
+      quote: In contrast to previous studies that primarily focus on commonsense causal reasoning,
+        where LLMs often rely on prior knowledge for inference
+    - check: "Lineage with CLadder: no source says CounterBench derives from it, and its items are new,
+        but CLadder's rung 3 holds a det-counterfactual query type with the same template, the released
+        metadata uses CLadder's fields (story_id, graph_id, model_id, rung, query_type), and the standard
+        prompt opens with CLadder's preamble. If the authors confirm they extended CLadder's generator,
+        a Fork record on cladder (or a lineage note there) may be wanted."
+      field: lineage
+      source: src-arxiv-2502-11008-v2
+      quote: 'Figure 9: Standard Instruction Example Question: Imagine a self-contained, hypothetical
+        world with only the following conditions'
+    - check: "Id proposal: counterbench. An alternative is counterbench-deterministic, from the dataset
+        card's title (CounterBench-Deterministic-Counterfactual-1K-Dataset), which would leave room for
+        unrelated projects of the same name (several GitHub repositories called counterbench exist)."
+      field: name
+    - check: v2 modelled as a track-set version adding the backdoor subset, breaking because the
+        five-type average replaces the four-type one. An edition (new items, same task) could be
+        argued, and the V2 release date (2025-08-04) comes only from the Hub's commit history.
+      field: versions
+      source: src-arxiv-2605-24873-html
+      quote: 'We include both two subsets: a comprehensive V1 subset and a backdoor-only V2 subset.'
+    - check: Data quality. UniCo's Appendix D reports ambiguous CounterBench items, quoting a
+        backdoor question whose deterministic reading is not stated; the backdoor items also carry a
+        Bernoulli prior although the paper frames the set as deterministic. A count of the released
+        V2 file (2026-11-09) finds 105 no and 95 yes, against the paper's statement that each type
+        is balanced. Neither is a maintainer erratum, so versions[].errata is empty.
+      field: versions
+      source: src-arxiv-2605-24873-html
+      quote: The example relies on a compact causal shorthand whose semantics are not fully
+        specified.
+    - check: "maintainer_type individual: the CounterBench account is a Hugging Face user account named
+        after the benchmark, not a person, and the Hub's commit history shows a personal account made
+        the first upload. academic-lab (the Rutgers group) could be argued; no institution is stated as
+        the holder."
+      field: governance.maintainer_type
+      source: src-hf-api-counterbench-user
+      quote: '"type":"user"'
+    - check: expert-average rests on two PhD students answering 200 sampled questions; whether the
+        sample included backdoor items, and so whether 97.75% anchors V2, is not stated.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2502-11008-v2
+      quote: we asked two Ph.D. students with expertise in causal inference to answer 200 randomly
+        selected questions
+    - check: maintainer-competes-on-own-benchmark rests on the authors' CoIn prompting being
+        reported as the best strategy with every model; the benchmark has no ranking of its own. No
+        funding statement was found in the v2 PDF.
+      field: governance.independence_flags
+    - check: "The headline numbers depend on the prompt: GPT-4o's best result without CoIn is CausalCoT's
+        75.8%. Users of the benchmark should record the prompt (prompt_template_hash) and the files scored
+        (subset_used)."
+      field: comparability
+      source: src-arxiv-2502-11008-v2
+      quote: The best performance model in the CausalCoT is GPT-4o, achieved an accuracy of only
+        75.8%.
