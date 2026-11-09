@@ -1,0 +1,486 @@
+# data/benchmarks/code/dafnybench.yaml
+#
+# P1-S10-T02, code entry 14. Filled from the DafnyBench paper, arXiv 2406.08467 read as its v1 PDF (2024-06-12,
+# the only version), and its abstract page; the repository README at main and GitHub's API record of the
+# repository; Hugging Face's API record of the dataset; and the v1 PDF of DafnyPro (arXiv 2601.05385, January
+# 2026, the Dafny Workshop at POPL 2026), a paper that reports on DafnyBench, repairs 70 of its base programs and
+# gives its workshop venue. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+
+id: dafnybench
+name: DafnyBench
+tagline: 782 Dafny programs with their assertions and invariants removed; restore hints so Dafny
+  proves the unchanged spec.
+description: >
+  782 stand-alone Dafny programs, each in a ground_truth version that Dafny 4.3.0 verifies and a hints_removed
+  version with every assert and loop-invariant statement deleted from the method bodies, without marking
+  where. The model is given the hints_removed program and must return the whole program with hints filled
+  back in. An attempt succeeds if Dafny verifies the result, every requires and ensures clause is kept,
+  and neither {:verify false} nor assume false is used. The paper's protocol gives each model up to 10
+  attempts at temperature 0.3, feeding back Dafny's error message after each failure, and reports the
+  success rate over all programs. 556 programs come from a deduplicated scrape of public Dafny files on
+  GitHub from before the end of 2023, 62 from the Clover benchmark and 164 from dafny-synthesis, whose
+  programs are GPT-4 translations of MBPP problems. Dafny alone verifies 26.9% of the programs with no
+  hints added; Claude 3 Opus, the best of five models in the paper, reaches about 68%. Later work reports
+  far higher rates with its own scaffolds, and one 2026 paper repairs 70 base programs that do not compile.
+self_description:
+  source: src-arxiv-2406-08467
+  quote: We introduce DafnyBench, the largest benchmark of its kind for training and evaluating
+    machine learning systems for formal software verification.
+external_ids:
+  huggingface: wendy-sun/DafnyBench
+  arxiv: '2406.08467'
+paper:
+  title: 'DafnyBench: A Benchmark for Formal Software Verification'
+  arxiv: '2406.08467'
+  version_read: v1
+  source: src-arxiv-2406-08467-v1
+released: 2024-06-12
+released_note: The paper's first and only arXiv version, as the abstract page dates it. The
+  repository was created on 2024-05-29 and the dataset uploaded on 2024-06-05 (GitHub's commits API,
+  not a Source).
+released_source: src-arxiv-2406-08467
+released_quote: Submitted on 12 Jun 2024
+release_venue: The 4th Workshop on Mathematical Reasoning and AI at NeurIPS 2024
+release_venue_source: src-arxiv-2601-05385-v1
+release_venue_quote: 'DafnyBench: A Benchmark for Formal Software Verification. In The 4th Workshop on
+  Mathematical Reasoning and AI at NeurIPS'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/program-verification
+domain_basis:
+  reason: Each item asks for the annotations that let a program verifier prove a program's own
+    specification (its methods' requires and ensures clauses), so what is proved is a property of
+    the program, which the leaf's note against mathematics/formal-theorem-proving makes decisive.
+  source: src-arxiv-2406-08467-v1
+  quote: asked LLM to fill hints back in so that the resulting program could be verified with Dafny
+domain_considered_and_rejected:
+  - term: mathematics/formal-theorem-proving
+    reason: Dafny is the tool, not the subject. The specifications are pre- and postconditions of
+      methods over arrays, sequences and integers; the GitHub-scraped programs also carry lemmas
+      (1.40 per program on average), some of which may state mathematical facts, but the paper does
+      not separate them.
+  - term: code/function-synthesis
+    reason: The implementation is given and must not change; the model writes only verification
+      hints, and no tests are run.
+  - term: code/bug-repair
+    reason: The given programs are correct and verify once their hints are restored; nothing is
+      fixed in their behaviour.
+
+capability:
+  - deductive-reasoning
+capability_basis:
+  deductive-reasoning:
+    reason: Whether an answer counts is decided by the verifier deriving the unchanged
+      postconditions from the program, its preconditions and the inserted hints, with nothing
+      outside the item consulted.
+    source: src-arxiv-2406-08467-v1
+    quote: 1) The reconstructed program is verified with Dafny; 2) LLM preserves all preconditions
+      (requires statements) and postconditions (ensures statements)
+capability_considered_and_rejected:
+  - term: self-correction
+    reason: The protocol retries with Dafny's error message, but that is an external oracle saying
+      what is wrong, which the term's exclusion test names, and only success within ten attempts is
+      scored.
+    source: src-arxiv-2406-08467-v1
+    quote: If the model failed on any of the intermediate attempts, it received the Dafny error
+      message and was asked to filled in the hints again with the error message taken into
+      consideration.
+  - term: constraint-satisfaction
+    reason: Keeping the specification and avoiding the two escape hatches are conditions on a valid
+      answer, but the difficulty is finding invariants strong enough for the proof, not satisfying a
+      list of stated requirements.
+  - term: knowledge-recall
+    reason: Dafny's syntax and verifier behaviour must be known, but what is scored is a proof of
+      the given program, not recall.
+
+evaluation_method:
+  - formal-proof-check
+evaluation_method_basis:
+  reason: The Dafny verifier, an SMT-backed program verifier, accepts or rejects the reconstructed
+    program, and the check that the requires and ensures clauses were kept and no verification was
+    switched off is part of the same verdict, as the term's inclusion test allows.
+  source: src-arxiv-2406-08467-v1
+  quote: 1) The reconstructed program is verified with Dafny; 2) LLM preserves all preconditions
+    (requires statements) and postconditions (ensures statements)
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: No program is run and no test is executed; correctness is proved for all inputs by the
+      verifier.
+  - term: constraint-check
+    reason: The checks on the specification are not a battery validating a structure; they guard a
+      proof obligation the verifier discharges.
+designed_for_subjects:
+  - model-in-benchmark-harness
+designed_for_subjects_basis:
+  reason: The benchmark's own scripts drive every model through the same loop of up to ten attempts,
+    returning Dafny's error message after each failure, with near-identical prompts (adjusted per
+    model family) and fixed hyperparameters, so only the model varies between the paper's rows.
+  source: src-arxiv-2406-08467-v1
+  quote: If the model failed on any of the intermediate attempts, it received the Dafny error
+    message and was asked to filled in the hints again with the error message taken into
+    consideration.
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: The models are prompted as assistants, but a harness drives them across turns, which the
+      term excludes.
+  - term: agent-scaffold
+    reason: The loop is the benchmark's, not the entrant's. Later work such as DafnyPro brings its
+      own loop, which is recorded in as_used.
+  - term: classical-algorithm
+    reason: Dafny run on the hints_removed programs is a no-LLM baseline that sets the floor
+      (26.9%), not a designed-for entrant.
+    source: src-arxiv-2406-08467-v1
+    quote: Dafny succeeds in auto-verifying some programs even without hints
+  - term: hosted-inference-endpoint
+    reason: The paper reaches the closed models through their providers' APIs, but the subject is
+      the model, as for frontiermath.
+as_used:
+  - protocol: An entrant-built framework (DafnyPro) around Claude 3.5 and 3.7 Sonnet, with a
+      diff-checker, an invariant pruner and retrieved proof strategies, run on a copy of DafnyBench
+      in which 70 non-compiling base programs were repaired.
+    source: src-arxiv-2601-05385-v1
+    quote: Using it, we fixed all 70 of 782 base programs that had compilation errors
+    note: DafnyPro (January 2026) reports 86% for Claude 3.5 Sonnet with its framework, on its
+      repaired copy rather than the base programs as released.
+  - protocol: Fine-tuned 7B and 14B models scored on a held-out split of 197 DafnyBench programs,
+      after training on attempts at the other programs.
+    split: 197 held-out programs
+    source: src-arxiv-2601-05385-v1
+    quote: Evaluation uses a held-out test split of 197 programs from DafnyBench.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against it; DafnyPro (January 2026) reports on it, and an arXiv
+    search on 2026-11-09 found 2026 papers reporting DafnyBench results through October 2026 (not
+    read as Sources). The repository was last pushed on 2024-12-12, which is maintenance evidence,
+    not lifecycle.
+  source: src-arxiv-2601-05385-v1
+  quote: on DafnyBench, the most challenging benchmark, Claude Sonnet 3.5 enhanced with DafnyPro
+    achieves 86% correct proofs, a 16 pp improvement over the base model
+activity: no-submission-channel
+activity_basis:
+  reason: There is no leaderboard or submission route. The repository holds the paper's own results
+    for its five models, and users report their numbers in their own papers.
+  source: src-github-dafnybench-readme
+  quote: Dataframes that summarize LLMs' success on every test program
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude 3 Opus
+    source: src-arxiv-2406-08467-v1
+    observed_on: 2026-11-09
+    quote: Claude 3 Opus performed best, achieving a success rate
+  - system: DafnyPro with Claude 3.5 Sonnet
+    source: src-arxiv-2601-05385-v1
+    observed_on: 2026-11-09
+    quote: on DafnyBench, the most challenging benchmark, Claude Sonnet 3.5 enhanced with DafnyPro
+      achieves 86% correct proofs, a 16 pp improvement over the base model
+    note: On DafnyPro's repaired copy of the programs (as_used).
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: formal-verifier
+ground_truth_source_note: The Dafny verifier's verdict on the reconstructed program, with the
+  requires and ensures clauses checked against the original, is the truth; the ground_truth programs
+  show that each item can be verified but are not compared with the answer.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The programs in both versions, their metadata and the evaluation scripts are public, and
+    Dafny is open source.
+  source: src-arxiv-2406-08467-v1
+  quote: Our benchmark contains the 782 ground_truth programs and the corresponding hints_removed
+    programs.
+
+task:
+  exists: true
+  input:
+    - a stand-alone Dafny program with its specification (requires and ensures clauses) and code,
+      from which every assert and loop-invariant statement has been removed, with no mark where
+  output: The complete program with hints (assertions, loop invariants and the like) filled back in.
+  scoring: Success if Dafny verifies the returned program, every requires and ensures clause is
+    kept, and neither {:verify false} nor assume false is used; up to 10 attempts with Dafny's error
+    message returned after each failure; the success rate over the 782 programs.
+  reference_solution: true
+  reference_solution_source: src-arxiv-2406-08467-v1
+  reference_solution_quote: Our benchmark contains the 782 ground_truth programs and the
+    corresponding hints_removed programs.
+  source: src-arxiv-2406-08467-v1
+  quote: We do not demarcate from where these hints have been removed
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The programs are in the public repository and in an ungated Hugging Face dataset tagged
+      Apache-2.0.
+    source: src-hf-api-dafnybench
+    quote: '"gated":false'
+  refresh: static
+  refresh_basis:
+    reason: One fixed set of 782 programs. The dataset was last modified on 2024-06-06 and the
+      repository's later commits touch the README, results and a revert, with no new release.
+    source: src-hf-api-dafnybench
+    quote: '"lastModified":"2024-06-06T01:42:20.000Z"'
+  data_provenance:
+    - web-scraped
+    - inherited-from-constituents
+  data_provenance_note: 556 programs are public Dafny files scraped from GitHub (before the end of
+    2023), deduplicated, kept if they verified with Dafny 4.3.0 and had both ensures clauses and
+    hints. 226 come from two earlier benchmarks, reformatted with their hints removed, 62 from
+    Clover (human-written textbook programs) and 164 from dafny-synthesis, whose programs GPT-4
+    translated from MBPP. Nothing was authored for the benchmark.
+  data_provenance_source: src-arxiv-2406-08467-v1
+  data_provenance_quote: We scraped all publicly available Dafny files on GitHub published on the
+    before the end of 2023.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The scored programs are public GitHub code from before 2024, and their ground_truth versions with
+    all hints sit beside the hints_removed versions in the repository and dataset, so a training route
+    is plausible; the paper names it and asks that models not be trained on the scraped repositories,
+    but no source read here shows a model trained on the scored programs. The paper also offers the rest
+    of its GitHub scrape as training data without guaranteeing it is dissimilar to the benchmark. DafnyPro
+    trained its fine-tuned models on attempts at DafnyBench programs and scored them only on 197 held-out
+    programs, a route for that entrant that it closed for its own numbers.
+  contamination_evidence:
+    - source: src-arxiv-2406-08467-v1
+      quote: Scraping data from platforms such as GitHub introduces risks of leveraging previous
+        models
+    - source: src-arxiv-2406-08467-v1
+      quote: we cannot at this time provide strong guarantees on similarity between such training
+        problems and the benchmark problems
+    - source: src-arxiv-2601-05385-v1
+      stance: against
+      quote: Neither these programs nor any LLM-generated attempts on them were used during
+        finetuning, preventing data leakage.
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_basis:
+    reason: Every ground_truth program was checked with the verifier and kept only if it verified,
+      so each item has a known solution that passes.
+    source: src-arxiv-2406-08467-v1
+    quote: local installation of Dafny 4.3.0, and removed any files that did not verify
+  dataset_licence: Apache-2.0
+  dataset_licence_note: Hugging Face's record carries the license:apache-2.0 tag and GitHub reports
+    Apache-2.0 for the repository; the paper says the derivative repository is released under Apache
+    2.0 and the GPL v3.0, without saying whether that is a choice or both at once.
+  dataset_licence_source: src-hf-api-dafnybench
+  dataset_licence_quote: license:apache-2.0
+  upstream_licences: The scraped programs come from repositories under Microsoft open-source, MIT,
+    GPL v3.0, CC0 and Apache 2.0 licences, or none; the paper lists every repository and its
+    licence.
+  upstream_licences_source: src-arxiv-2406-08467-v1
+  upstream_licences_quote: the repositories have either Microsoft open-source licenses, MIT
+    licenses, GNU General Public License v3.0 licenses, Creative Commons Zero v1.0 Universal, Apache
+    2.0 licenses
+  size:
+    - count: 782
+      unit: Dafny programs, each in a ground_truth and a hints_removed version
+      note: The abstract and README round the count to "over 750"; the paper's body, the README's
+        usage section and the 782-program experiments agree on 782.
+      source: src-arxiv-2406-08467-v1
+      quote: In total, our DafnyBench benchmark contains 782 ground_truth stand-alone Dafny programs
+        that compile.
+    - count: 556
+      unit: programs from the GitHub scrape
+      subset: GitHub scrape
+      source: src-arxiv-2406-08467-v1
+      quote: We removed the union of these sets, which left us with 556 ground_truth files.
+    - count: 62
+      unit: textbook programs from Clover
+      subset: Clover
+      source: src-arxiv-2406-08467-v1
+      quote: We added 62 ground truth textbook Dafny programs provided by the Clover dataset [9].
+    - count: 164
+      unit: programs from dafny-synthesis, translated from MBPP
+      subset: dafny-synthesis
+      source: src-arxiv-2406-08467-v1
+      quote: we included 164 Dafny programs provided by the dafny-synthesis benchmark. These
+        problems have been translated from the MBPP benchmark [10].
+  languages:
+    - Dafny
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The paper's authors, through a personal GitHub account and a personal Hugging Face
+    namespace
+  maintainer_basis:
+    reason: The repository is owned by a user account, not an organisation, and the dataset sits in
+      a personal Hugging Face namespace; no organisation is stated as holding either.
+    source: src-dafnybench-gh-api
+    quote: '"type":"User"'
+  maintainer_type: individual
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or results route; the repository's results are the paper's
+    own five models, and later results (DafnyPro and others) appear only in their authors' papers.
+  submission_process_source: src-github-dafnybench-readme
+  submission_process_quote: Dataframes that summarize LLMs' success on every test program
+  independence_flags: []
+  independence_flags_note: Not assessed. The paper states no funding and no API-credit support
+    either way, so a search for funded-by-evaluated-party cannot be completed from the sources read;
+    its acknowledgements thank individuals only.
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The verifier runs on an ordinary machine, and the paper's cost of a run is API spend;
+      its open model ran on a GPU, which is the entrant's choice.
+    source: src-arxiv-2406-08467-v1
+    quote: others looking to reproduce this work should not expect to spend more than $300 for a
+      full run of GPT4-o on DafnyBench
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public programs, an open verifier and the maintainers' evaluation scripts; a run needs
+      no human step.
+    source: src-github-dafnybench-readme
+    quote: Evaluate LLMs on DafnyBench by asking models to fill in missing hints in a test file from
+      the
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: DafnyBench eval scripts (fill_hints.py and run_eval.sh)
+  harness_source: src-github-dafnybench-readme
+  harness_quote: Contains scripts to evaluate LLMs on DafnyBench
+  harness_gotcha:
+    source: src-github-dafnybench-readme
+    quote: Set up environment variable for path to Dafny executable on your machine
+  harness_gotcha_note: The README points at a locally installed Dafny without naming a version,
+    while the paper verified the ground truth with Dafny 4.3.0; no source tests whether verdicts
+    change across verifier versions. DafnyPro also found 70 hints_removed programs that do not
+    compile, which the released scripts score as given.
+  code_licence: Apache-2.0
+  code_licence_note: The paper adds the GPL v3.0 beside Apache 2.0 for the derivative repository.
+  code_licence_source: src-dafnybench-gh-api
+  code_licence_quote: '"spdx_id":"Apache-2.0"'
+  runnable_via:
+    - custom
+  runnable_via_note: Neither Inspect Evals (src/inspect_evals) nor lm-evaluation-harness
+    (lm_eval/tasks) has a DafnyBench task, from their directory listings at main read through
+    GitHub's API on 2026-11-09 (not Sources).
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: no profile resolves for formal-proof-check with model-in-benchmark-harness. The
+  # number belongs to the model inside the harness: the attempt budget with error feedback (the paper's n = 10; the
+  # first try alone gave about 54% for the best models), the prompts (adjusted per model family), the sampling
+  # temperature and the output-token cap. The Dafny version has no conditions field and goes in the harness string.
+  material_extra:
+    - harness
+    - retries_allowed
+    - prompt_template_hash
+    - sampling
+    - max_output_tokens
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The headline is one success rate over all 782 programs, a program counting as solved if
+    any of its attempts succeeds.
+  source: src-arxiv-2406-08467-v1
+  quote: We gave each model up to n = 10 attempts at a given file.
+
+homepage: https://github.com/sun-wendy/DafnyBench
+repository: https://github.com/sun-wendy/DafnyBench
+dataset_url: https://huggingface.co/datasets/wendy-sun/DafnyBench
+
+lineage:
+  role: fork
+lineage_note: >
+  DafnyBench grew out of two earlier Dafny benchmarks by other groups, Clover (66 human-written programs)
+  and dafny-synthesis (GPT-4 translations of MBPP problems), which it subsumes with their authors' permission,
+  and adds 556 programs scraped from GitHub, so 226 of its 782 programs are inherited. Neither constituent
+  nor MBPP has an entry, so no link is set; it is not a variant of MBPP, whose task (writing Python against
+  tests) it does not share. Later derivatives (DafnyPro's repaired copy, dafny-annotator's DafnySynth,
+  an assertion-removal extension) are other maintainers' work and would be forks of this entry.
+lineage_source: src-arxiv-2406-08467-v1
+lineage_quote: we cite the existing verifiable programming benchmarks that we subsume in DafnyBench
+
+tags:
+  - dafny
+  - formal-verification
+  - loop-invariants
+  - verifier-feedback
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2406-08467-v1
+    - src-arxiv-2406-08467
+    - src-github-dafnybench-readme
+    - src-dafnybench-gh-api
+    - src-hf-api-dafnybench
+    - src-arxiv-2601-05385-v1
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text; its abstract page for the date, abstract and
+    licence; the README at main; GitHub's API record of the repository; Hugging Face's API record of the
+    dataset; and DafnyPro's v1 PDF (a DOI, not archived) as evidence of current use, of the 70 repaired
+    programs and of the workshop venue. The repository and dataset sit in personal accounts, and the paper's
+    author block carries e-mail addresses, so every extract uses narrow windows.
+  confidence: medium
+  review_checks:
+    - check: "Choice among the candidates for code/program-verification: DafnyBench was taken for the
+        most 2025-2026 use (an arXiv search on 2026-11-09 found nine later papers naming it in their abstracts,
+        five of them in 2026), open ungated Apache-2.0 data and a full harness. Its repository has not
+        been pushed since 2024-12-12, while CLEVER's (trishullab/clever) was pushed on 2026-08-26; FVAPPS's
+        was last pushed in May 2025. Verus-Bench and VerifyThisBench were not looked up. If maintenance
+        should outweigh use, CLEVER is the alternative."
+      field: id
+    - check: The id dafnybench is proposed, not allocated (04 S3); no Epoch stub exists.
+      field: id
+    - check: 'Domain: program-verification holds for the items as a whole, but the scraped programs carry
+        lemmas (1.40 per program on average) and the paper does not say how many state mathematical rather
+        than program facts; if many do, mathematics/formal-theorem-proving is a secondary.'
+      field: domain
+    - check: lineage role fork, by the MMLU-Pro precedent (grew out of earlier benchmarks and
+        subsumes them), although 556 of 782 programs are new; root is arguable. No link targets
+        exist, as Clover, dafny-synthesis and MBPP have no entries.
+      field: lineage
+      source: src-arxiv-2406-08467-v1
+      quote: we cite the existing verifiable programming benchmarks that we subsume in DafnyBench
+    - check: The constituents' counts do not match the paper's own description of them, 62 programs
+        taken from a Clover of 66 and 164 from a dafny-synthesis of 153; no source explains either
+        difference.
+      field: data.size
+      source: src-arxiv-2406-08467-v1
+      quote: dafny-synthesis translates 153 MBPP problems from Python to Dafny using GPT-4
+    - check: measured-ceiling rests on every ground_truth program verifying with Dafny 4.3.0.
+        DafnyPro reports that 70 hints_removed programs do not compile, which the released version
+        still contains; whether all 782 remain solvable from their hints_removed form, and under
+        later Dafny versions, is untested in any source.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2601-05385-v1
+      quote: several base programs in the existing DafnyBench dataset are not compilable
+    - check: DafnyPro's repair of 70 base programs is a third party's corrected copy, not a
+        maintainer revision, so no version is recorded; if the repaired copy is published and
+        adopted, it is a fork with its own entry.
+      field: versions
+    - check: contamination medium. The scored programs predate every current model's cutoff and the
+        hinted solutions are public beside them, which makes high arguable, but no source evidences
+        a model trained on them.
+      field: data.contamination_risk
+      source: src-arxiv-2406-08467-v1
+      quote: To mitigate data contamination, models run on our benchmark should ideally not be
+        trained on data from the repositories listed in Appendix D.
+    - check: dataset_licence Apache-2.0 follows the Hugging Face tag and GitHub's metadata; the
+        paper names Apache 2.0 and the GPL v3.0 together, and the scraped files keep their own
+        licences, some with none.
+      field: data.dataset_licence
+      source: src-arxiv-2406-08467-v1
+      quote: we release our derivative DafnyBench repository under an Apache 2.0 license and a GNU
+        General Public License v3.0
+    - check: release_venue comes from DafnyPro's reference list (a NeurIPS 2024 workshop); the
+        DafnyBench paper and README do not name a venue, and the workshop's own page was not read.
+      field: release_venue
+    - check: "maintainer_type individual: the repository and dataset sit in personal accounts, although
+        the paper's authors are an academic collaboration. The repository README, its BibTeX block and
+        both API records name or carry personal handles; the lead should decide what to withhold."
+      field: governance.maintainer_type
