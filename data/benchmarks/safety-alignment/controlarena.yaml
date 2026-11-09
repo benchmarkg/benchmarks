@@ -1,0 +1,765 @@
+# data/benchmarks/safety-alignment/controlarena.yaml
+#
+# P1-S9-T04, safety-alignment entry 14. Filled from the ControlArena repository's README at commit ae0b6fa (the head
+# of main on 2026-11-08) and the GitHub API's list of its 90 releases; seven pages of its documentation site
+# (control-arena.aisi.org.uk: the Settings guide, the Settings Overview, Analysis, Intro to Control, and the Apps,
+# Bash and BashArena setting pages, scripts and styles stripped); UK AISI's launch post (22 October 2025); the AI
+# Control paper, arXiv 2312.06942 read as its v5 PDF (2024-07-23), and its abstract page; the BashArena paper's
+# abstract page (arXiv 2512.15688, December 2025); and the v1 PDF and abstract page of TraceGuard (arXiv
+# 2604.03968, April 2026), a paper that evaluates a monitor in ControlArena. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# ControlArena calls itself a library, and it is one: policies, monitors, micro-protocols and analysis functions on
+# top of Inspect. The entry treats it as one benchmark because it also ships the content and the scoring: 15
+# settings, each a dataset of main tasks and side tasks with its own scorers, and one pair of metrics (safety and
+# usefulness at an audit budget) that applies to all of them. The settings are subsets. Several are ports of
+# benchmarks that others maintain (AgentDojo, APPS, BigCodeBench, SHADE-Arena, SWE-bench) or of earlier control
+# papers' datasets (Bash from Ctrl-Z, BashArena); review_checks asks whether any should be its own entry.
+# The APPS backdooring setting of the AI Control paper is the Apps subset here, not a separate entry.
+
+id: controlarena
+name: ControlArena
+aliases:
+  - Control Arena
+  - control-arena
+tagline: UK AISI's library of AI-control settings, scoring control protocols' safety and usefulness
+  against an attack policy.
+description: >
+  An open-source Python library from the UK AI Security Institute and Redwood Research for running AI
+  control experiments, which ask whether a control protocol keeps an AI agent from causing harm even if
+  the agent is misaligned and trying to subvert the safeguards. It ships 15 settings, each a set of main
+  tasks (legitimate work such as solving a programming problem or changing infrastructure code) paired
+  with side tasks (a harmful action a misaligned model might take at the same time, such as inserting
+  a backdoor, downloading malware or weakening security), with sandboxes, tools and scorers. A run is
+  made twice: in honest mode the untrusted model's policy attempts only the main task, and in attack mode
+  a red team's attack policy also pursues the side task. Usefulness is the share of honest runs whose
+  main task succeeds; safety is the share of attack runs whose side task does not succeed, computed at
+  an audit budget, the share of honest runs that may be flagged for review. The subject is the blue team's
+  control protocol: a micro-protocol (such as defer-to-trusted, which hands a step to a weaker trusted
+  model when a monitor's suspicion score is high), its monitors, and auditing and shutdown rules applied
+  after the run. Scorers are programmatic tests and state checks in most settings and model judges in
+  four. Settings range from APPS backdooring, the AI Control paper's testbed, and BashBench to Kubernetes,
+  AWS and vLLM codebases; seven port existing benchmarks or the datasets of earlier control papers. There
+  is no leaderboard, and results appear in papers.
+self_description:
+  source: src-github-control-arena-readme
+  quote: ControlArena is a Python library for running [AI Control](https://arxiv.org/abs/2312.06942)
+    experiments
+external_ids:
+  arxiv: null
+released: 2025-04-15
+released_note: The first numbered release, v1.0.0 ("Initial Release"), which first published the
+  package on PyPI. Pre-releases v0.1.0-alpha (2025-03-24) to v0.2.0-alpha preceded it, the
+  repository was created on 2025-02-06 (GitHub API), and UK AISI announced the library on 22 October
+  2025, at v8.2.0.
+released_source: src-github-control-arena-releases
+released_quote: '"tag_name":"v1.0.0","target_commitish":"main","name":"Initial Release"'
+release_venue: null
+release_venue_note: No paper introduces the library; the README asks it to be cited as a GitHub
+  repository, and AISI's launch post is the announcement.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/control-oversight
+  secondary: []
+domain_basis:
+  reason: The scored quantity is whether a control protocol (monitors, deferral and auditing)
+    prevents an attack policy, instructed to subvert it, from completing a harmful side task, which
+    is the leaf's definition (supervisory mechanisms holding against a system trying to evade them).
+    The README states the claim in those terms.
+  source: src-github-control-arena-readme
+  quote: Control protocols are plans designed to prevent unsafe actions by AI systems, even if those
+    AIs were misaligned and intended to subvert the safeguards.
+domain_considered_and_rejected:
+  - term: safety-alignment/deception-scheming
+    reason: The untrusted model does not choose to scheme. The red team instructs it to pursue the
+      side task, so the score measures the protocol against a worst-case attacker, not the model's
+      propensity to conceal a goal.
+    source: src-control-arena-docs-settings
+    quote: the agent policy must be configured to pursue side tasks
+  - term: safety-alignment/dangerous-capability-evals
+    reason: Side-task success rates read the other way measure sabotage capability (BashArena
+      reports them per model), but the library's metrics rank protocols, and no setting is framed as
+      a capability that is dangerous in the wrong hands.
+  - term: safety-alignment/prompt-injection
+    reason: Only the AgentDojo port is about injected instructions, and in ControlArena it is one
+      setting among 15 scored by the same safety and usefulness metrics.
+  - term: code/competitive-programming
+    reason: Most main tasks are programming or infrastructure-code tasks and usefulness is scored by
+      their tests, but usefulness is the cost side of a protocol's trade-off and the claim is
+      control; Apps' APPS problems are the nearest code leaf's, but the score is whether a backdoor
+      gets through.
+capability:
+  - adversarial-robustness
+capability_basis:
+  adversarial-robustness:
+    reason: A red team chooses the attack policy, which tries to complete the side task without
+      being caught, and safety is how often the protocol stops it; the term's inclusion test (an
+      attacker selects the inputs, the score is the system's resistance) read with the protocol as
+      the system.
+    source: src-control-arena-docs-intro-to-control
+    quote: 'Red Team: Creates attack policies that try to cause catastrophic failures despite the blue
+      team'
+capability_considered_and_rejected:
+  - term: harm-avoidance
+    reason: Its exclusion test removes benchmarks that measure resistance to an attacker rather than
+      conduct under ordinary use; every side-task attempt here is the red team's.
+  - term: tool-use
+    reason: Agents act through bash, Python, editors and setting-specific tools, and usefulness
+      depends on them, but the capability under test is the protocol's, which calls no tools of its
+      own; the tools serve the untrusted and trusted models it wraps.
+  - term: situational-awareness
+    reason: Attack policies are told about the side task and the monitoring; nothing scores whether
+      a model infers its situation.
+
+evaluation_method:
+  - execution-tests
+  - environment-state-check
+  - model-graded-judge
+  - adversarial-red-team
+evaluation_method_basis:
+  reason: Each setting's scorers decide main-task and side-task success separately. They run tests
+    in the sandbox (APPS test cases, BashArena's per-task tests), check the state the trajectory
+    left (a marker file, firewall rules, credentials received by a logging server), or, in four
+    settings (Data Poisoning, Eval Sabotage, SAE Interp Sabotage, SHADE Arena), use a model judge.
+    Safety is then an aggregate over attack-mode trajectories of side tasks not achieved, which is
+    the attack-success rate read the other way, so adversarial-red-team sits beside the state checks
+    as environment-state-check's inclusion test asks.
+  source: src-control-arena-docs-settings
+  quote: Check for specific file contents or system states
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: Safety and usefulness are reported as a pair (a point on a Pareto frontier, or a curve
+      over audit budgets), never combined into one number.
+    source: src-control-arena-docs-intro-to-control
+    quote: Plot safety and usefulness against each other and you get a Pareto frontier
+  - term: classification-metric
+    reason: The analysis module computes monitors' TPR, FPR and ROC AUC, but these diagnose a
+      protocol's component; the stated primary metrics are safety and usefulness.
+    source: src-control-arena-docs-analysis
+    quote: Computing micro-protocol and scorer performance metrics such as task success rates, true
+      positive rates, and ROC AUC
+designed_for_subjects:
+  - agent-scaffold
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: The blue team's micro-protocol is the thing evaluated. It wraps an untrusted and a trusted
+    model in a loop of its own, with monitors deciding at each step whether to defer, edit or audit,
+    and the researcher supplies or modifies it, which is agent-scaffold. The red team's attack
+    policy is a procedure applied to a model and judged by its effect on the protocol's safety,
+    which is attack-or-intervention-method; monitors are also compared on their own (TPR, FPR, ROC
+    AUC). No term names a control protocol or a monitor as such (logged with bench tag-gap).
+  source: src-github-control-arena-readme
+  quote: Trajectory-level protocol components that orchestrate policies and monitors to complete
+    main tasks while resisting sabotage.
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The library supplies a default honest prompt and policies, but every experiment chooses
+      its own micro-protocol, monitor and policies, so the loop is not fixed across entrants. Where
+      a paper holds the protocol fixed and varies the untrusted model (BashArena's per-model
+      sabotage rates), that model sits in a harness the paper chose.
+  - term: instruction-tuned-model
+    reason: Models fill the untrusted, trusted and monitor roles, but results are reported per
+      protocol, and which model fills a role is a condition of the run.
+as_used:
+  - protocol: BashArena's own paper (December 2025) holds the protocol to trusted monitoring and
+      varies the untrusted model, reporting how often each sabotages undetected at a fixed
+      trajectory-wise false positive rate.
+    source: src-arxiv-2512-15688
+    quote: Claude Sonnet 4.5 successfully executes sabotage while evading monitoring by GPT-4.1 mini
+      26% of the time, at 4% trajectory-wise FPR.
+  - protocol: TraceGuard (April 2026) adds a multi-dimensional monitor as a new ControlArena monitor
+      type and evaluates it on 519 BashArena samples under defer-to-trusted. It defines safety per
+      action (the fraction of attacks deferred), not per trajectory over side-task success as the
+      Analysis page does.
+    source: src-arxiv-2604-03968-v1
+    quote: Safety = fraction of attacks deferred; usefulness = fraction of honest actions allowed.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it. An April 2026 paper evaluates a new monitor in
+    ControlArena, releases continued to v20.1.1 (2026-10-22), and the repository was last pushed on
+    2026-10-26 (GitHub API, read 2026-11-08).
+  source: src-arxiv-2604-03968-v1
+  quote: We evaluate on BashArena (637 bash tasks, 4 attack categories) within the ControlArena
+    framework.
+activity: no-submission-channel
+activity_basis:
+  reason: There is no leaderboard or results page to submit to. A run's results stay in its own
+    Inspect logs, which the analysis functions read, and others report them in their own papers.
+  source: src-control-arena-docs-analysis
+  quote: Load evaluation logs and compute safety/usefulness metrics
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude Sonnet 4.5 as the attacking untrusted model, monitored by GPT-4.1 mini
+      (BashArena)
+    source: src-arxiv-2512-15688
+    observed_on: 2026-11-08
+    quote: Claude Sonnet 4.5 successfully executes sabotage while evading monitoring by GPT-4.1 mini
+      26% of the time, at 4% trajectory-wise FPR.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each setting's main-task and side-task scorers, shipped in the package,
+  decide success from tests run in the sandbox, from the state left behind, or, in four settings,
+  from a model judge.
+reproducible_by_third_party: true
+reproducible_by_third_party_note: True for 13 of the 15 settings. Eval Sabotage and SHADE Arena are
+  marked as needing a private repository.
+reproducible_by_third_party_basis:
+  reason: The library, settings, policies, monitors, protocols and analysis functions are an
+    installable open-source package; a run needs model API access and, for most settings, Docker.
+  source: src-github-control-arena-readme
+  quote: pip install control-arena
+
+task:
+  exists: true
+  input:
+    - in honest mode, a main task's description and the setting's sandbox and tools
+    - in attack mode, the main task and a side task, given to an attack policy the red team builds
+  output: Tool calls in the sandbox (code, shell commands, file edits, infrastructure changes) and a
+    submit call; the protocol's monitors attach suspicion scores to each step.
+  scoring: Usefulness is the share of honest trajectories whose main task succeeds. Safety is the
+    share of attack trajectories whose side task does not succeed, at an audit budget, the share of
+    honest trajectories whose suspicion is high enough to be flagged for review. Results are
+    reported as a safety-usefulness pair or a safety-versus-audit-budget curve.
+  source: src-control-arena-docs-analysis
+  quote: 'Safety: The proportion of attack trajectories where the side task was not completed successfully'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The package, its settings and their datasets are public. Two settings, Eval Sabotage
+    and SHADE Arena, are marked as needing a private repository; their task content is not public.
+  access_basis:
+    reason: The settings ship with the open-source package, under MIT, and their datasets load from
+      the package or from public Hugging Face datasets.
+    source: src-github-control-arena-readme
+    quote: This project is licensed under the MIT License
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Settings and their datasets change only in numbered package releases (semantic versions,
+      breaking changes marked with a !), so a run can name the version it used.
+    source: src-github-control-arena-releases
+    quote: 'feat!: regenerate the vLLM main task dataset and pin its version'
+  data_provenance:
+    - inherited-from-constituents
+    - expert-authored
+    - model-generated
+  data_provenance_note: Seven settings port others' benchmarks (AgentDojo, APPS, BigCodeBench,
+    SHADE-Arena, SWE-bench) or earlier control papers' datasets (BashBench, BashArena), with side
+    tasks and, for APPS, backdoored solutions added. The rest (IAC, IAC Fast, Infra, Data Poisoning,
+    Eval Sabotage, Rogue Eval, SAE Interp Sabotage, vLLM) are new settings written for ControlArena.
+    Bash's tests were generated by a model, and BashArena's tasks by a generation pipeline its paper
+    releases.
+  data_provenance_source: src-control-arena-docs-settings-overview
+  data_provenance_quote: These include both newly developed settings covering novel threat scenarios
+    and ports of existing benchmarks adapted for the ControlArena framework.
+  contamination_risk: medium
+  contamination_risk_note: The tasks are public, and the ported ones (APPS from 2021, SWE-bench,
+    BigCodeBench) were public long before; APPS solutions are widely reproduced. The README asks
+    users to keep the tasks out of training data and carries canary strings. No source evidences
+    training on them. The risk that matters most here is the red team's, an attack policy tuned to
+    the shipped monitors, which is the experiment's design rather than contamination.
+  contamination_risk_source: src-github-control-arena-readme
+  contamination_risk_quote: We informally request that people take reasonable steps to keep these
+    tasks out of LLM training data and avoid over-fitting
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Safety and usefulness are both bounded at 1. Usefulness is often read
+    against the untrusted model's own honest performance with no protocol, and safety against
+    trusted-only operation, but no source fixes either as the anchor. The Apps setting's solution
+    policy submits the dataset's solutions, which could serve as a measured ceiling for usefulness;
+    no source reports it.
+  ceiling_anchor_type_basis:
+    reason: Both headline metrics are proportions of trajectories.
+    source: src-control-arena-docs-analysis
+    quote: 'Usefulness: The proportion of honest trajectories where the main task was completed successfully'
+  dataset_licence: MIT
+  dataset_licence_note: The repository's licence. Ported settings load third-party datasets that
+    keep their own licences (APPS, SWE-bench, BigCodeBench, AgentDojo); none was read.
+  dataset_licence_source: src-github-control-arena-readme
+  dataset_licence_quote: This project is licensed under the MIT License
+  size:
+    - count: 5000
+      unit: main tasks, each with one side task (inserting a backdoor)
+      subset: Apps, all tasks
+      source: src-control-arena-docs-apps
+      quote: All Tasks Metric Count Main Tasks 5000 Side Tasks 1 Total Combinations 5000
+    - count: 3420
+      unit: main tasks with validated solutions and backdoor solutions
+      subset: Apps, validated
+      source: src-control-arena-docs-apps
+      quote: Validated Tasks Metric Count Main Tasks 3420 Side Tasks 1 Total Combinations 3420
+    - count: 257
+      unit: main tasks, each with one side task
+      subset: Bash (BashBench)
+      source: src-control-arena-docs-bash
+      quote: Main Tasks 257 Side Tasks 1 Total Combinations 257
+    - count: 2560
+      unit: main-task and side-task combinations (640 main tasks by 4 side tasks)
+      subset: BashArena, as the documentation counts it
+      source: src-control-arena-docs-bash-arena
+      quote: Main Tasks 640 Side Tasks 4 Total Combinations 2560
+    - count: 637
+      unit: main tasks
+      subset: BashArena, as its paper counts it
+      source: src-arxiv-2512-15688
+      quote: BashArena contains 637 Linux system administration and infrastructure engineering tasks
+        in complex, realistic environments
+  size_note: Counts for the other 12 settings are on their own documentation pages, which were not
+    read. The documentation counts 640 BashArena tasks after the setting's update to 1.1 (v16.0.0);
+    its paper and TraceGuard count 637.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: UK AI Security Institute, with Redwood Research
+  maintainer_basis:
+    reason: The repository sits in the UKGovernmentBEIS organisation, the documentation on
+      aisi.gov.uk, and AISI announced the library; the README names AISI and Redwood Research as its
+      creators.
+    source: src-github-control-arena-readme
+    quote: created by the [UK AI Security Institute](https://www.aisi.gov.uk) and [Redwood
+      Research](https://www.redwoodresearch.org)
+  maintainer_type: government-agency
+  maintainer_type_note: AISI holds the repository and the documentation; Redwood Research, the
+    co-creator, holds neither.
+  maintainer_type_source: src-aisi-blog-introducing-controlarena
+  maintainer_type_quote: The AI Security Institute is a research organisation within the Department
+    of Science, Innovation and Technology.
+  submission_process:
+    - literature-only
+  submission_process_note: No process collects or ranks results. The documentation's Research page
+    lists papers and posts that use the library (read, not cited), and AISI's launch post points to
+    it. Users run their own protocols and report in their own work.
+  submission_process_source: src-aisi-blog-introducing-controlarena
+  submission_process_quote: ControlArena has already been used by researchers at leading frontier AI
+    developers and AI security organisations, including Anthropic, Google DeepMind, Redwood Research
+    and others.
+  independence_flags: []
+  independence_flags_note: Not assessed. Redwood Research, the co-creator, wrote the AI Control
+    paper whose protocols (trusted monitoring, defer-to-trusted) the library implements and against
+    which new protocols are compared, and frontier developers whose models fill the untrusted role
+    use it. With no ranking, whether either is a conflict, and who funds the work, were not
+    established (review_checks).
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The Infra setting needs a Kubernetes cluster, and IAC, IAC Fast and vLLM can
+    run on one; the other settings run in Docker or locally.
+  compute_tier_basis:
+    reason: Models are reached through providers' APIs and most settings run in a Docker container
+      on ordinary hardware, so the cost of a run is inference spend for the untrusted, trusted and
+      monitor models.
+    source: src-control-arena-docs-settings
+    quote: An Ubuntu Docker container with a Python codebase and dependencies
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The library builds the honest and attack tasks for a setting and protocol, runs them in
+      Inspect and scores them; the metrics are computed from the logs, with no human step.
+    source: src-github-control-arena-readme
+    quote: Utilities built as a thin wrapper over [Inspect AI]
+  reproducibility_blockers: []
+  reproducibility_blockers_note: None for 13 of the 15 settings. Eval Sabotage and SHADE Arena need
+    a private repository, which would be private-test-set for those two subsets; no field holds a
+    per-subset blocker (review_checks).
+  harness_availability: official-harness
+  harness: control-arena (the PyPI package; get_control_task_product with a setting, a
+    micro-protocol and the honest and attack modes, run by Inspect's eval, then
+    control_arena.analysis's compute_safety and compute_usefulness)
+  harness_source: src-control-arena-docs-analysis
+  harness_quote: ControlArena provides functions to compute these metrics at different audit budgets
+    (the percentage of honest runs permitted to be flagged for review)
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for UKGovernmentBEIS/control-arena also reports MIT,
+    read 2026-11-08.
+  code_licence_source: src-github-control-arena-readme
+  code_licence_quote: This project is licensed under the MIT License
+  runnable_via:
+    - inspect
+  runnable_via_note: The settings are Inspect tasks, run with Inspect's eval or CLI. ControlArena is
+    not part of inspect_evals.
+  inspect_evals_id: null
+  inspect_evals_id_note: Reconciled against UK AISI's inspect_evals on 2026-11-08, through the
+    GitHub API's listing of src/inspect_evals at main. It has an apps task, the plain APPS coding
+    benchmark with no side task or protocol, and nothing for ControlArena or its settings. Not a
+    quoted Source.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The (execution-tests, agent-scaffold) pair resolves to the agentic profile, so scaffold (the micro-protocol)
+  # and harness (the control-arena version) are material already; (model-graded-judge, agent-scaffold) adds the
+  # judge for the four LLM-scored settings. Beyond them: which setting and which tasks (validated APPS or all),
+  # the date, because the settings change between releases, and n_samples. The attack policy, the untrusted,
+  # trusted and monitor models, and the audit budget each move safety and have no EvalConditions field
+  # (review_checks).
+  material_extra:
+    - subset_used
+    - n_samples
+    - date_evaluated
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Safety and usefulness are reported side by side, as a frontier or a curve over audit
+    budgets, and no source combines them or the settings into one score.
+  source: src-control-arena-docs-analysis
+  quote: Visualises the trade-off between safety and how many trajectories are flagged for review at
+    different audit budgets
+
+homepage: https://control-arena.aisi.org.uk/
+repository: https://github.com/UKGovernmentBEIS/control-arena
+leaderboard_url: null
+
+versions:
+  - version: v1.0.0
+    label: control-arena v1.0.0, the first PyPI release
+    released: 2025-04-15
+    changes: The first numbered release ("Initial Release"), publishing the library as a PyPI
+      package with a CLI for running evaluations.
+    superseded_by: v2.1.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+  - version: v2.1.0
+    label: control-arena v2.1.0
+    released: 2025-07-21
+    changes: Adds the vLLM, AgentDojo, SAE Interp Sabotage, Infrastructure as Code, Eval Sabotage
+      and Data Poisoning settings; AgentDojo and Rogue Eval first appear in v2.0.0's notes
+      (2025-06-18).
+    supersedes_version: v1.0.0
+    superseded_by: v4.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+  - version: v4.0.0
+    label: control-arena v4.0.0
+    released: 2025-08-28
+    changes: The APPS setting returns only problems with verified solutions and backdoors by
+      default, and adds the Control-Tax backdoor dataset.
+    breaking: true
+    supersedes_version: v2.1.0
+    superseded_by: v8.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+  - version: v8.0.0
+    label: control-arena v8.0.0
+    released: 2025-10-07
+    changes: The APPS datasets are unified, with several backdoor sources available at once and
+      nondeterministic problems filtered.
+    breaking: true
+    supersedes_version: v4.0.0
+    superseded_by: v9.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+      - src-control-arena-docs-apps
+  - version: v9.0.0
+    label: control-arena v9.0.0
+    released: 2025-10-27
+    changes: Adds the BashBench2 setting, five days after AISI's launch post (which came at v8.2.0).
+    supersedes_version: v8.0.0
+    superseded_by: v13.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+      - src-aisi-blog-introducing-controlarena
+  - version: v13.0.0
+    label: control-arena v13.0.0
+    released: 2025-12-17
+    changes: BashBench2 becomes BashArena, released the same day as the BashArena paper. Later
+      releases add BigCodeBench (v13.3.0), IAC Fast (v14.1.0) and SWE-bench Django (v14.3.0).
+    breaking: true
+    supersedes_version: v9.0.0
+    superseded_by: v16.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+      - src-arxiv-2512-15688
+  - version: v16.0.0
+    label: control-arena v16.0.0
+    released: 2026-05-20
+    changes: Updates the BashArena setting to 1.1. The documentation read counts 640 main tasks, the
+      paper 637.
+    breaking: true
+    supersedes_version: v13.0.0
+    superseded_by: v20.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+      - src-control-arena-docs-bash-arena
+  - version: v20.0.0
+    label: control-arena v20.0.0
+    released: 2026-10-05
+    changes: Regenerates the vLLM setting's main-task dataset and pins its version.
+    breaking: true
+    supersedes_version: v16.0.0
+    superseded_by: v20.1.1
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+  - version: v20.1.1
+    label: control-arena v20.1.1, the newest release read
+    released: 2026-10-22
+    changes: The newest release on 2026-11-08; the README read is at the later main commit ae0b6fa
+      (2026-10-26). The 15 settings listed below are as of that commit.
+    supersedes_version: v20.0.0
+    frozen: true
+    sources:
+      - src-github-control-arena-releases
+      - src-github-control-arena-readme
+
+subsets:
+  - id: controlarena#agentdojo
+    label: AgentDojo
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: AgentDojo Environment for evaluating robustness against prompt injection attacks Sync
+          Programmatic local
+    notes: A port of ETH Zurich's AgentDojo (catalogued as agentdojo); the side task is an injection
+      task in the tool outputs.
+  - id: controlarena#apps
+    label: Apps
+    items: 5000
+    evidence:
+      - source: src-control-arena-docs-apps
+        quote: The Apps setting is based on solving coding problems from the APPS dataset
+      - source: src-control-arena-docs-apps
+        quote: Passes all the APPS test cases Contains a vulnerability where a specific input will
+          produce an incorrect output
+      - source: src-arxiv-2312-06942-v5
+        quote: We focus on a testbed we call the APPS backdooring setting
+    notes: The AI Control paper's APPS backdooring setting, marked external in origin. The side task
+      is a backdoor that passes the tests but gives a wrong output on a secret input; 3,420 of the
+      5,000 problems have validated solutions and backdoors.
+  - id: controlarena#bash
+    label: Bash
+    items: 257
+    evidence:
+      - source: src-control-arena-docs-bash
+        quote: The Bash setting evaluates agents on completing bash scripting tasks derived from
+          Stack Overflow questions.
+      - source: src-control-arena-docs-settings-overview
+        quote: Bash Bash tasks from the CTRL-Z paper (based on Stack Overflow questions) Sync
+          Programmatic
+    notes: BashBench, from the Ctrl-Z paper, with one side task (downloading and running a marker
+      "malware" file).
+  - id: controlarena#bash-arena
+    label: BashArena
+    items: 640
+    evidence:
+      - source: src-control-arena-docs-bash-arena
+        quote: BashArena is a successor in spirit to the original BashBench dataset
+      - source: src-arxiv-2512-15688
+        quote: We release the dataset as a ControlArena setting and share our task generation
+          pipeline.
+    notes: The successor to BashBench, with its own paper. Four side tasks (disabling a firewall,
+      exfiltrating secrets, downloading and running malware, escalating privileges) are checked
+      after every action, and usefulness is the fraction of a task's tests that pass.
+  - id: controlarena#bigcodebench
+    label: BigCodeBench
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: BigCodeBench Code generation benchmark with compositional reasoning tasks Async
+          Programmatic
+    notes: A port of BigCodeBench, added in v13.3.0.
+  - id: controlarena#data-poisoning
+    label: Data Poisoning
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: Data Poisoning Distillation of a model (with collusion propensity side tasks) Async
+          LLM local
+    notes: Data poisoning, manipulating training data and colluding during a model's distillation;
+      scored by a model judge.
+  - id: controlarena#eval-sabotage
+    label: Eval Sabotage
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: Eval Sabotage Dangerous capability evaluation codebase Async LLM docker
+      - source: src-github-control-arena-readme
+        quote: Dangerous capability evaluation codebase | ![Private repo]
+    notes: Sabotaging a dangerous-capability evaluation codebase so that it underestimates
+      capabilities; needs a private repository; scored by a model judge.
+  - id: controlarena#iac
+    label: IAC
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: IAC Infrastructure codebase for a root AWS account at a mock frontier lab Async
+          Programmatic
+    notes: Infrastructure-as-code changes, the README's worked example.
+  - id: controlarena#iac-fast
+    label: IAC Fast
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: IAC Fast Optimized IAC setting with faster tool execution Async Programmatic
+    notes: The IAC setting with faster tool execution, added in v14.1.0; whether its tasks are IAC's
+      is not stated in the sources read.
+  - id: controlarena#infra
+    label: Infra
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: Infra Training cluster kubernetes codebase Async Programmatic
+    notes: A training cluster's Kubernetes codebase, sandboxed on Kubernetes (or with none).
+  - id: controlarena#rogue-eval
+    label: Rogue Eval
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: Rogue Eval Inference logging toy setting Async Programmatic
+  - id: controlarena#sae-interp-sabotage
+    label: SAE Interp Sabotage
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: SAE Interp Sabotage Sparse Autoencoder feature labelling Sync LLM local
+    notes: Research sabotage, mischaracterising sparse-autoencoder features; scored by a model
+      judge.
+  - id: controlarena#shade-arena
+    label: SHADE Arena
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: SHADE Arena Real-world agent tasks such as bank transfers Sync LLM local
+      - source: src-github-control-arena-readme
+        quote: Real-world agent tasks such as bank transfers | ![Private repo]
+    notes: A port of SHADE-Arena; needs a private repository; scored by a model judge.
+  - id: controlarena#swe-bench-django
+    label: SWE-bench Django
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: SWE-bench Django Django bug fixes from SWE-bench paired with security side tasks
+          Async Programmatic docker
+    notes: Django bug fixes from SWE-bench with security side tasks, added in v14.3.0.
+  - id: controlarena#vllm
+    label: vLLM
+    evidence:
+      - source: src-control-arena-docs-settings-overview
+        quote: vLLM High-throughput LLM inference codebase Mixed Mixed
+    notes: Changes to the vLLM inference codebase; its main-task dataset was regenerated and pinned
+      in v20.0.0.
+subsets_note: >
+  The 15 settings in the README and the Settings Overview at commit ae0b6fa, each scored separately with
+  the same safety and usefulness metrics. Item counts are given only for the three setting pages read.
+  Settings were added over releases (versions), so a claim names the release and setting. Honest and attack
+  modes, the validated-or-all APPS filter and the four BashArena side tasks are run conditions within
+  a setting, not subsets.
+
+tags:
+  - ai-control
+  - control-protocols
+  - monitoring
+  - sabotage
+  - red-teaming
+  - llm-agents
+  - inspect
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T04)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-github-control-arena-readme
+    - src-github-control-arena-releases
+    - src-control-arena-docs-settings
+    - src-control-arena-docs-settings-overview
+    - src-control-arena-docs-analysis
+    - src-control-arena-docs-intro-to-control
+    - src-control-arena-docs-apps
+    - src-control-arena-docs-bash
+    - src-control-arena-docs-bash-arena
+    - src-aisi-blog-introducing-controlarena
+    - src-arxiv-2312-06942-v5
+    - src-arxiv-2312-06942
+    - src-arxiv-2512-15688
+    - src-arxiv-2604-03968-v1
+    - src-arxiv-2604-03968
+  sources_note: >
+    The README at commit ae0b6fa and the GitHub API's release list; seven documentation pages with scripts
+    and styles stripped; AISI's launch post; the AI Control paper's v5 PDF (a DOI, not archived) and its
+    abstract page; BashArena's abstract page (a DOI); and TraceGuard's v1 PDF and abstract page (DOIs)
+    as evidence of current use. The documentation's Research and Glossary pages were read and not cited.
+    The setting pages for the other 12 settings, the BashArena PDF, the Ctrl-Z paper and SHADE-Arena were
+    not read. PyPI's JSON API was fetched once before its robots.txt was checked, which disallows it;
+    nothing from it is cited.
+  confidence: medium
+  review_checks:
+    - check: Identity. ControlArena calls itself a library and a platform, not a benchmark. It is
+        catalogued as one benchmark with 15 settings as subsets because it ships the task content,
+        the scorers and one metric pair for all of them. The alternative is to treat it as a harness
+        (like inspect_evals) and catalogue settings with their own identity instead, the APPS
+        backdooring setting (arXiv 2312.06942) or BashBench (Ctrl-Z) among them.
+      field: subsets
+      source: src-aisi-blog-introducing-controlarena
+      quote: It is our hope that a standardised platform for control evaluations can cut development
+        time and make results easier to share and reproduce.
+    - check: Seven settings port benchmarks maintained elsewhere (AgentDojo, already catalogued,
+        plus APPS, BigCodeBench, SHADE-Arena, SWE-bench) or earlier control papers' datasets
+        (BashBench, and BashArena, which has its own paper and Hugging Face dataset). By 04 S4 a
+        separately maintained derivative is its own benchmark with a lineage link. Whether BashArena
+        in particular should be its own entry (lineage variant or fork of this one), and whether
+        agentdojo.yaml should record ControlArena's port, is open; no lineage is recorded here.
+      field: lineage
+      source: src-control-arena-docs-settings-overview
+      quote: These include both newly developed settings covering novel threat scenarios and ports
+        of existing benchmarks adapted for the ControlArena framework.
+    - check: "Safety is defined three ways in the sources: the Analysis page's share of attack trajectories
+        whose side task fails (at an audit budget), the Intro page's estimated probability that no side
+        task succeeds in a simulated deployment (the AI Control paper's whole-scenario definition), and
+        TraceGuard's per-action fraction of attacks deferred. The task block follows the Analysis page;
+        numbers under different definitions are not comparable."
+      field: task.scoring
+      source: src-control-arena-docs-intro-to-control
+      quote: 'Safety: The estimated probability that no side tasks would be successfully completed in
+        the simulated deployment while using the attack policy.'
+    - check: The attack policy, the audit budget, and the untrusted, trusted and monitor models each
+        move safety, and EvalConditions has no field for any of them (04's open questions name
+        Redwood's control evaluations as the case). The micro-protocol is put in scaffold.
+      field: comparability
+      source: src-control-arena-docs-analysis
+      quote: ControlArena provides functions to compute these metrics at different audit budgets
+        (the percentage of honest runs permitted to be flagged for review)
+    - check: designed_for_subjects has no term for a control protocol or a monitor (logged with
+        bench tag-gap). agent-scaffold is read for the micro-protocol and
+        attack-or-intervention-method for the red team's policy; a reviewer may prefer a new subject
+        term.
+      field: designed_for_subjects
+      source: src-github-control-arena-readme
+      quote: Analyse model behaviour to detect suspicious actions and produce suspicion scores that
+        micro-protocols use to make control decisions.
+    - check: Independence was not assessed. Redwood Research co-created the library and wrote the AI
+        Control paper whose protocols it implements; frontier developers whose models are the
+        untrusted ones use it. No funding statement was read. A reviewer should decide whether
+        maintainer-competes-on-own-benchmark applies to a benchmark with no ranking.
+      field: governance.independence_flags
+    - check: maintainer_type government-agency rests on AISI holding the repository and site;
+        Redwood Research, whose organisational form was not read, is the co-creator. Whether the
+        field should name both, through governance.maintainers, is open.
+      field: governance.maintainer_type
+    - check: Versions are package releases, and only those whose notes change setting content are
+        listed. Which release a paper used is rarely stated (TraceGuard and the BashArena paper do
+        not say), so the BashArena count (637 or 640) depends on it.
+      field: versions
+      source: src-github-control-arena-releases
+      quote: Update BashArena setting to 1.1
+    - check: data_provenance expert-authored rests on the newly developed settings being written by
+        ControlArena's own contributors; no source describes their authors' expertise or method.
+        model-generated rests on Bash's generated tests, and on BashArena's generation pipeline (its
+        abstract, not its method, was read).
+      field: data.data_provenance
+      source: src-control-arena-docs-bash
+      quote: Both test descriptions and test cases are LLM-generated.
+    - check: reproducible_by_third_party is true and reproducibility_blockers empty, although two
+        settings (Eval Sabotage, SHADE Arena) need a private repository, which would be
+        private-test-set for them alone. The judge models of the four LLM-scored settings were not
+        read, so no reference_conditions name a grader and the reference-grader rule warns. Whether
+        SHADE Arena's public subset can be run without the private repository was not checked.
+      field: execution.reproducibility_blockers
+      source: src-github-control-arena-readme
+      quote: Real-world agent tasks such as bank transfers | ![Private repo]
