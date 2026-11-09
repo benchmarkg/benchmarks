@@ -1,0 +1,681 @@
+# data/benchmarks/society-econ-law/finance-agent-benchmark.yaml
+#
+# P1-S9-T06, society-econ-law entry 11.
+# Filled from the Finance Agent Benchmark paper, arXiv 2508.00828 read as its v1 PDF (2025-05-20, the only version),
+# and its abstract page; Vals AI's pages for the four versions (v2.1, the current board, updated 2026-11-05; v2,
+# archived, 2026-10-29; v1.1 at the original URL, 2026-06-04; v1, archived, 2026-02-10), its methodology page and
+# its about page, all with scripts and styles stripped; the READMEs of the two harness repositories
+# (vals-ai/finance-agent at cd06ce7 and vals-ai/finance-agent-v2 at cb0fc56); Hugging Face's API record of the v1
+# public validation set; and the v2 PDF of the Mint-Agent paper (arXiv 2608.16386, August 2026), which reports
+# results on the public sets. GitHub's API was read for the licences, creation dates, commits and file trees (not
+# a quoted Source). Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# The id is a proposal from the paper's title (Vals' pages say "Finance Agent"); allocation is a human act (04 S3).
+# The entry is the family: v1, v1.1, v2 and v2.1 are versions of one Vals benchmark under one name, one page
+# family and one citation. Vals holds the test set of every version and runs the only leaderboard; the public
+# validation sets, the agent harness and the paper are open. FinanceBench (Patronus AI) is a separate benchmark:
+# the paper neither cites nor derives from it, so no lineage is recorded.
+
+id: finance-agent-benchmark
+name: Finance Agent Benchmark
+aliases:
+  - Finance Agent
+  - FAB
+  - FinanceAgentBench
+  - Vals AI Finance Agent
+tagline: Analyst questions over SEC filings, answered by a model with tools and judged against
+  expert rubrics; private test set.
+description: >
+  A benchmark from Vals AI of the research an entry-level financial analyst does on public companies'
+  SEC filings. Experts from banks, hedge funds and private equity wrote each question with a reference
+  answer, the documents needed and the steps to the answer, and a second expert reviewed it. A model
+  answers inside Vals' own agent harness, which gives it tools to search EDGAR and the web, fetch and
+  parse pages and query what it stored (v2 adds a calculator and price history), and its final answer
+  is graded by an LLM judge against rubric checks drawn from the expert's answer, with a check that
+  nothing contradicts it. v1 (May 2025) has 537 questions in nine categories, from quantitative
+  retrieval to market analysis; 50 are public under CC BY 4.0, 150 form a private validation set Vals
+  licenses, and 337 are a test set that never leaves Vals. v1.1 (early 2026) re-dated questions, moved
+  search to Tavily and judged by the mode of three GPT-5.2 calls. v2 replaced the questions and taxonomy
+  (27 public, 450 private validation, 450 test), added dealbreaker-gated partial credit and a
+  three-model jury, and runs each model three times; v2.1 (November 2026) fixed questions and rubrics,
+  changed the jury and fails hedged answers, on 449 test questions. Every published score is on the
+  private test set, run by Vals on its leaderboard. The paper's best model, o3, scored 46.8%; on v2.1
+  the top score is 67.85%.
+self_description:
+  source: src-arxiv-2508-00828
+  quote: We present the Finance Agent Benchmark, featuring challenging and diverse real-world
+    finance research problems that require LLMs to perform complex analysis using recent SEC
+    filings.
+external_ids:
+  huggingface: vals-ai/finance_agent_benchmark
+  arxiv: '2508.00828'
+paper:
+  title: 'Finance Agent Benchmark: Benchmarking LLMs on Real-world Financial Research Tasks'
+  arxiv: '2508.00828'
+  version_read: v1
+  source: src-arxiv-2508-00828-v1
+released: 2025-05-16
+released_note: The day the v1 public validation set appeared on Hugging Face, as its API record
+  dates it. The paper followed on arXiv on 2025-05-20; the harness repository was created on
+  2025-04-22 (GitHub API).
+released_source: src-hf-api-vals-finance-agent-benchmark
+released_quote: '"createdAt":"2025-05-16T03:15:08.000Z"'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: society-econ-law/financial-analysis
+  secondary:
+    - agents-tooluse/tool-api-calling
+    - language/retrieval-qa
+domain_basis:
+  reason: The scored quantity is the correctness of a financial analyst's answer about public
+    companies, checked criterion by criterion against an expert's answer, which is the
+    financial-analysis leaf's definition (analytical questions over financial documents and
+    statements). The family's exclusion for autonomous operation does not fit, because nothing about
+    the operation is scored. The harness is Vals' own and fixed for every model, tool calls and
+    turns are reported but not graded, and no environment state is checked; the paper's conclusion
+    states its finding as a limit of financial analysis capability. The model reaches the filings
+    only through API tools (tool-api-calling, as secondary), and it must find the evidence among
+    public filings before answering (retrieval-qa, as for FinanceBench).
+  source: src-arxiv-2508-00828-v1
+  quote: Finance Agent Benchmark demonstrates significant limitations in current AI financial
+    analysis capabilities.
+domain_considered_and_rejected:
+  - term: agents-tooluse/long-horizon-autonomy
+    reason: The agents-tooluse family was considered first as primary, against APEX-Agents, whose
+      tool-using professional tasks went there (tool-api-calling, kept here as secondary). Its
+      inclusion test's "result it returned" covers a final answer, but this grader scores the
+      answer's financial content against an expert rubric, not whether functions were selected and
+      invoked correctly, and Vals fixes the loop so that only the model varies; the v2.1 page states
+      the purpose as automating analysts' work (review_checks). Long-horizon autonomy in particular
+      is not scored either, since each item is judged on its final answer.
+    source: src-vals-ai-fabv2-1
+    quote: Finance Agent v2.1 measures how well AI can aid analysts in automating busy work
+  - term: agents-tooluse/research-agents
+    reason: The agent gathers from EDGAR and the web, but every v2 question has one determinate
+      answer, not an open research question, and the sources the agent cites are not scored.
+    source: src-arxiv-2508-00828-v1
+    quote: although we asked models to provide citations or sources for their answers, we did not
+      evaluate the accuracy or reliability of these sources.
+  - term: agents-tooluse/web-navigation
+    reason: Search and page fetching are API tools that return text; no page is navigated or acted
+      on.
+  - term: society-econ-law/economically-valuable-work
+    reason: The questions are analysts' work, and the paper compares the agents' time and cost with
+      the experts', but the leaf is defined by expert comparison against human work product, and
+      here an LLM judge checks rubric criteria; financial-analysis is the narrower fit.
+    source: src-arxiv-2508-00828-v1
+    quote: compared to human experts requiring 16.8 minutes and costing $25.66
+
+capability:
+  - tool-use
+  - quantitative-reasoning
+  - factual-precision
+capability_basis:
+  tool-use:
+    reason: The questions concern filings published from 2024 on, which the model can reach only
+      through the harness's EDGAR, search, parse and retrieve tools; the paper attributes the worst
+      results to misused tools (hallucinated documents, repeated failing calls).
+    source: src-arxiv-2508-00828-v1
+    quote: This harness allows the models to be evaluated in an environment where they had access to
+      a set of tools that is sufficient to produce an accurate response.
+  quantitative-reasoning:
+    reason: Most categories end in a computed figure (a CAGR, an adjusted EBITDA, a beat or miss
+      against guidance, M&A capacity), and the expert's solution steps include the calculation;
+      v1.1's prompt asks for two decimal places without rounding intermediate values.
+    source: src-arxiv-2508-00828-v1
+    quote: Each question underwent peer review by a different expert to verify calculations and
+      content validity.
+  factual-precision:
+    reason: The judge checks each key point of the expert's answer separately (figures, dates and
+      named facts), plus a check that nothing in the answer contradicts it, rather than one verdict
+      on the whole.
+    source: src-arxiv-2508-00828-v1
+    quote: Rather than evaluating answers holistically, we separate assessment into distinct rubrics
+      that align with specific key points from expert answers
+capability_considered_and_rejected:
+  - term: context-integration
+    reason: Nothing determining the answer is supplied; the model has to find the filings itself.
+  - term: knowledge-recall
+    reason: The experts wrote questions on documents published no earlier than 2024 so that the
+      answer comes from the filings, not from training data.
+    source: src-arxiv-2508-00828-v1
+    quote: The experts focused their question generation on documents published no earlier than 2024
+      (after most training cutoffs).
+  - term: long-horizon-execution
+    reason: Episodes run to a dozen turns and v2 allows two hours, but each item is scored on its
+      final answer and an early failed call can be retried, so no step is unrecoverable by design.
+  - term: autonomy
+    reason: The prompt forbids interacting with the user, but the score is the answer's correctness,
+      not unattended operation as such.
+
+evaluation_method:
+  - rubric-graded
+  - model-graded-judge
+evaluation_method_note: In v1 GPT-4o drafted each question's rubric from the expert's answer and the
+  authors reviewed it; the paper does not name the judge. v1.1 judges with GPT-5.2, taking the mode
+  of three calls. v2 weights checks, flags dealbreakers whose failure zeroes the question, and
+  grades with a jury of GPT-5.4, Gemini-3.1-Pro and Claude Sonnet 4.6; v2.1's jury is GPT-6.1 Sol,
+  Gemini 3.8 Flash and Claude Sonnet 5.5, and its prompt fails hedged answers.
+evaluation_method_basis:
+  reason: Named criteria from the expert's answer are checked one by one and combined (all must pass
+    in v1; a dealbreaker-gated, severity-weighted share in v2), and an LLM judge or jury applies
+    them, so both terms apply.
+  source: src-vals-ai-fabv2-1
+  quote: Each question is composed of weighted checks, and a subset are flagged as dealbreakers
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: v2 tightened rounding and precision tolerances, but the judge applies them inside each
+      check; no program compares a number with a tolerance.
+  - term: exact-match
+    reason: Simple numeric answers are compared directly by the judge, but nothing is
+      string-matched.
+  - term: human-expert-eval
+    reason: Experts wrote and reviewed the questions and answers; no published score comes from
+      them.
+designed_for_subjects:
+  - model-in-benchmark-harness
+designed_for_subjects_basis:
+  reason: Vals runs every model in its own ReAct-style harness with one prompt and toolset, and each
+    leaderboard row names a model; the methodology page states the purpose of the fixed harness.
+  source: src-vals-ai-methodology
+  quote: Models are called through a fixed harness that we control, so that differences in scores
+    reflect the model rather than the scaffold.
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: The v2 README says how to swap in one's own harness, and the v2.1 page says the time
+      limit lets different agent implementations be compared, but no row on the boards read varies
+      the loop.
+    source: src-vals-ai-fabv2-1
+    quote: A fixed time budget also allows us to normalize and compare performance across different
+      agent implementations.
+  - term: reasoning-model
+    reason: The v2.1 board plots accuracy at three reasoning efforts per model, but the main ranking
+      is one row per model configuration; the effort is a condition of each claim (comparability).
+  - term: tool-augmented-model
+    reason: The model decides its own tool calls and when to answer, which the term's exclusion
+      sends to model-in-benchmark-harness.
+as_used:
+  - protocol: The 50 public v1.1 questions and the 27 public v2 questions, run in the official
+      harnesses for v1.1 and v2 (v2 three times), scored by the authors' own LLM judge as correct
+      only when every correctness criterion passes and no contradiction is found, rather than on
+      Vals' test set and jury.
+    split: the public validation sets (50 for v1.1, 27 for v2)
+    source: src-arxiv-2608-16386-v2
+    quote: we use the 50 public v1.1 tasks and 27 public v2 tasks.
+    note: Mint-Agent (August 2026), a finance-native model family. Its numbers are on the public
+      sets, not comparable with the board's test-set scores.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Vals runs new models on v2.1 and updated its board on 2026-11-05; v1 and v2 are archived
+    and no longer run, which is version standing within an active family.
+  source: src-vals-ai-fabv2-1
+  quote: As of November 5, 2026, Claude Opus 5.5 ranks first on Finance Agent with 67.85%
+activity: no-submission-channel
+activity_note: Vals chooses the models and runs them; no page read offers a submission route. Its
+  methodology mentions custom scaffolds from teams it works with, and access to its platform needs
+  approval, which are private arrangements rather than a channel (review_checks).
+activity_basis:
+  reason: Every published score is Vals' own run on its private test set.
+  source: src-vals-ai-methodology
+  quote: 'Test Set: This dataset remains private at all times, and is the only dataset used for the proprietary
+    benchmark results we publish.'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude Opus 5.5
+    source: src-vals-ai-fabv2-1
+    observed_on: 2026-11-08
+    quote: As of November 5, 2026, Claude Opus 5.5 ranks first on Finance Agent with 67.85%
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: expert-panel
+ground_truth_source_basis:
+  reason: The reference answers, documents and solution steps are the experts' own, peer-reviewed by
+    a second expert; the judge applies rubrics drawn from them.
+  source: src-arxiv-2508-00828-v1
+  quote: Each entry includes the question, ground-truth answer, necessary source documents, and a
+    step-by-step solution approach.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: Every published score is on a test set only Vals holds, and the grader runs on Vals'
+    platform, whose access needs approval; anyone can run the harness on the public sets, which give
+    different numbers.
+  source: src-vals-ai-methodology
+  quote: 'Test Set: This dataset remains private at all times, and is the only dataset used for the proprietary
+    benchmark results we publish.'
+
+task:
+  exists: true
+  input:
+    - a question about one or more US public companies, such as a quarter's revenue, a GAAP to
+      non-GAAP bridge, a beat or miss against guidance, or a trading comps or precedent-transaction
+      analysis
+    - the harness's instruction prompt with the current date, and tools for EDGAR search, web
+      search, fetching and parsing an HTML page, and retrieving stored text (v2 adds a calculator
+      and daily price history)
+  output: Tool calls over several turns, then a final answer with its sources (in v1 after "FINAL
+    ANSWER:", from v1.1 through a submit call).
+  scoring: The judge checks each rubric criterion and a contradiction check against the expert's
+    answer. In v1 a question is correct when all pass, and the paper's headline is class-balanced
+    accuracy (the mean over the nine categories); the boards report accuracy. In v2 a failed
+    dealbreaker scores zero, otherwise the severity-weighted share of checks passed (Partial Credit,
+    primary) beside All-Pass, averaged over three runs. An answer not given within two hours scores
+    zero (v2).
+  source: src-arxiv-2508-00828-v1
+  quote: 'Class-Balanced accuracy: An average accuracy was computed for each category of question.'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: "Public: the paper; the v1 public validation set (50 questions with answers and rubrics,
+    CC BY 4.0, on GitHub and Hugging Face) and the v2 public set (27 questions with rubrics, on GitHub);
+    the agent harness for each (MIT); and the board's per-category results, tool-use statistics and sample
+    outputs. Licensed: the private validation sets (150 in v1, 450 in v2), which the paper offered to
+    researchers on request and the pages offer for licence. Never released: the test sets (337 in v1,
+    450 in v2, 449 in v2.1), the grader and its prompts."
+  access_basis:
+    reason: Every score Vals publishes is computed by Vals on a test set that never leaves it, which
+      the term's inclusion test covers; the public sets are samples on which no published score is
+      computed.
+    source: src-vals-ai-fabv2-1
+    quote: The Test set will remain private. All results reported on this page are based solely on
+      the Test set to prevent overfitting.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Each change to items, harness or grading has come under a labelled version (1, 1.1, 2,
+      2.1), each with its own page that lists its changes and its own board, and v2.1 says its
+      scores are not comparable with v2's.
+    source: src-vals-ai-fabv2-1
+    quote: Finance Agent v2.1 is a revision of Finance Agent v2, which built on Finance Agent v1.1,
+      with question and rubric fixes from expert reviews.
+  data_provenance:
+    - expert-authored
+  data_provenance_note: Finance professionals wrote the questions, answers, documents and solution
+    steps and reviewed each other's; the authors standardised formatting. GPT-4o drafted the rubrics
+    from the experts' answers, which the authors reviewed. For v1.1 AfterQuery's finance experts ran
+    quality control; v2's questions were written by financial experts the page does not number.
+  data_provenance_basis:
+    reason: The authors held finance experience before writing.
+    source: src-arxiv-2508-00828-v1
+    quote: The experts had at least 2-3 years of working experience at bulge bracket firms
+  data_provenance_source: src-arxiv-2508-00828-v1
+  data_provenance_quote: The experts then crafted 537 questions across nine task categories
+  contamination_risk: low
+  contamination_risk_note: The scored test sets have never been released, and the v1 questions are
+    on filings from 2024 on. Vals sends the test questions to each model provider's API when it runs
+    them, and the answers are in public filings the harness searches live; no source assesses either
+    route. The public sets are not scored on the board.
+  contamination_risk_source: src-arxiv-2508-00828-v1
+  contamination_risk_quote: 337 samples kept fully private to prevent future overfitting and
+    contamination issues
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: The paper reports the experts' time (16.8 minutes) and cost per
+    question, not an expert accuracy, and no run of the judge over the reference answers is
+    reported. The v1 page calls v1 saturated with a top score of 60.65%.
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The v1 public validation set only (the Hugging Face tag; the paper says the
+    same). The v2 public set sits in an MIT-licensed repository without a separate data licence. The
+    private validation and test sets are Vals' and licensed commercially or not at all.
+  dataset_licence_source: src-hf-api-vals-finance-agent-benchmark
+  dataset_licence_quote: license:cc-by-4.0
+  size:
+    - count: 449
+      unit: questions
+      subset: v2.1 test set (private), on which the current board is computed
+      source: src-vals-ai-fabv2-1
+      quote: Public (27 open-source samples), Private Validation (450 samples available for
+        license), and Test (449 samples)
+    - count: 27
+      unit: questions with rubrics
+      subset: v2 and v2.1 public set
+      source: src-vals-ai-fabv2-1
+      quote: Public (27 open-source samples), Private Validation (450 samples available for
+        license), and Test (449 samples)
+    - count: 450
+      unit: questions
+      subset: v2 and v2.1 private validation set (licensed)
+      source: src-vals-ai-fabv2-1
+      quote: Public (27 open-source samples), Private Validation (450 samples available for
+        license), and Test (449 samples)
+    - count: 450
+      unit: questions
+      subset: v2 test set (private)
+      source: src-vals-ai-fabv2
+      quote: Private Validation (450 samples available for license), and Test (450 samples)
+    - count: 537
+      unit: expert-authored questions in nine categories
+      subset: v1 and v1.1, all splits
+      source: src-arxiv-2508-00828-v1
+      quote: The experts then crafted 537 questions across nine task categories
+    - count: 337
+      unit: questions
+      subset: v1 and v1.1 test set (private)
+      source: src-arxiv-2508-00828-v1
+      quote: 337 samples kept fully private to prevent future overfitting and contamination issues
+    - count: 150
+      unit: questions
+      subset: v1 and v1.1 private validation set
+      source: src-arxiv-2508-00828-v1
+      quote: a private validation set (150 samples available to researchers upon request)
+    - count: 50
+      unit: questions with answers and rubrics
+      subset: v1 and v1.1 public validation set
+      source: src-arxiv-2508-00828-v1
+      quote: a public validation set (50 samples under the CC BY 4.0 License
+  size_note: The paper's own results are on all 537 v1 questions, since no split was public when it
+    ran them; the boards report the test set only.
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Vals AI, Inc.
+  maintainer_basis:
+    reason: Vals wrote and funded the paper, holds the datasets, the two harness repositories
+      (vals-ai on GitHub and Hugging Face) and the test sets, and runs the only leaderboard.
+    source: src-vals-ai-about
+    quote: These benchmarks, including Finance Agent, have rapidly become industry standards.
+  maintainer_type: industry-lab
+  maintainer_type_note: Vals AI, Inc. is a startup that builds and runs evaluations and calls itself
+    an independent evaluator; one author was at Stanford University.
+  submission_process:
+    - maintainer-run
+  submission_process_note: Vals selects the models, runs them in its harness on the test set (three
+    runs each from v2) and publishes the board with cost, latency and tool-use statistics. It stops
+    running a version when it archives it (v1 as saturated, v2 when v2.1 replaced it). Nobody else
+    submits, and with the test set withheld nobody else can produce a board score, which is why
+    private-test-server access sits beside a maintainer-run process here.
+  submission_process_source: src-vals-ai-finance-agent-v1
+  submission_process_quote: Since performance on this benchmark has saturated, we no longer run this
+    benchmark on new model releases.
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-vals-ai-methodology
+      quote: 'Test Set: This dataset remains private at all times, and is the only dataset used for the
+        proprietary benchmark results we publish.'
+    - flag: grader-from-evaluated-party
+      source: src-vals-ai-fabv2-1
+      quote: 'All responses are graded by a three-judge LLM jury consisting of three frontier models:
+        GPT-6.1 Sol, Gemini 3.8 Flash, and Claude Sonnet 5.5.'
+  independence_flags_note: All three v2.1 jurors are ranked on the same board (Claude Sonnet 5.5
+    fifth, Gemini 3.8 Flash seventh, GPT-6.1 Sol sixteenth); v1.1's judge, GPT-5.2, is ranked ninth
+    on the v1.1 board. Vals builds no evaluated model, so maintainer-competes is not set, and the
+    paper was funded by Vals itself. Vals licenses its private validation sets to companies for
+    their own validation and keeps a gated evaluation platform; no source read says it sells
+    evaluations of the systems it ranks, so evaluator-sells-evaluations is not set (review_checks).
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: A run is calls to the model's API, the judge models and the paid tool services (SEC-API,
+      Tavily or SerpAPI, and a price-data API in v2) on an ordinary machine.
+    source: src-arxiv-2508-00828-v1
+    quote: All experiments were lightweight in terms of memory and compute, as they primarily
+      involved API calls.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline scores are on a test set only Vals holds, which the tier's inclusion test
+      covers.
+    source: src-vals-ai-about
+    quote: Scores are based on our privately held test sets to preserve the integrity and signal of
+      our results.
+  reproducibility_blockers:
+    - private-test-set
+    - live-world-state
+  reproducibility_blockers_note: The tools search EDGAR and the web live, so a rerun meets different
+    search results and newer filings than the original run did; v1.1 fixed the questions' dates but
+    not the index. The grader is on Vals' platform, whose access needs approval.
+  reproducibility_blockers_source: src-arxiv-2508-00828-v1
+  reproducibility_blockers_quote: Our proposed FinanceAgent Benchmark addresses this gap with live
+    EDGAR access, expert-written contemporary tasks, and strict grounding in evidence.
+  harness_availability: reference-implementation-only
+  harness_availability_note: Both repositories hold the agent, its tools, the prompt and the public
+    questions, and their READMEs say the default configuration is the one Vals ran, but neither
+    holds a grader (GitHub API trees, read 2026-11-08); scoring goes through the Vals platform. The
+    paper's appendix says the repository has evaluation scripts, which the current trees do not bear
+    out (review_checks).
+  harness: vals-ai/finance-agent for v1 and v1.1, vals-ai/finance-agent-v2 for v2 and v2.1 (the
+    agent, built on Vals' model library)
+  harness_source: src-github-vals-finance-agent-v2-readme
+  harness_quote: The default configuration is the one we used to run the benchmark.
+  code_licence: MIT
+  code_licence_note: The paper's statement; GitHub's licence metadata reports MIT for both
+    repositories (API, read 2026-11-08).
+  code_licence_source: src-arxiv-2508-00828-v1
+  code_licence_quote: 'The dataset and code are released under permissive open-source licenses: CC BY
+    4.0 for the dataset and MIT License for the code.'
+  runnable_via:
+    - custom
+  inspect_evals_id: null
+  inspect_evals_id_note: Reconciled against UK AISI's inspect_evals on 2026-11-08, through the
+    GitHub API's listings of src/inspect_evals and register/ at main; neither has a Finance Agent
+    task. Not a quoted Source.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile ((rubric-graded, model-in-benchmark-harness) and (model-graded-judge,
+  # model-in-benchmark-harness) have no profile): the version (subset_used, in the fallback), whose questions,
+  # tools and grading all differ; the harness and its tools (SerpAPI in v1, Tavily from v1.1, calculator and
+  # price_history from v2); the reasoning effort the v2.1 board varies; the number of runs (one, three from v2);
+  # the judge or jury, its versions and prompt (unnamed in the paper; GPT-5.2 in v1.1; two different three-model
+  # juries in v2 and v2.1) and the rubric version; and the evaluation date, because the tools search a live web
+  # and EDGAR.
+  material_extra:
+    - harness
+    - tools_allowed
+    - reasoning_effort
+    - n_samples
+    - judge_model
+    - judge_model_version
+    - judge_prompt_hash
+    - grading_rubric_ref
+    - date_evaluated
+
+aggregation_policy: official-aggregate
+aggregation_policy_note: The paper ranks by class-balanced accuracy and reports naive accuracy
+  beside it; the v1 and v1.1 boards show one accuracy; v2 and v2.1 rank by Partial Credit, with
+  All-Pass and per-category results beside it.
+aggregation_policy_basis:
+  reason: One headline over the test set per version, with category breakdowns published beside it.
+  source: src-vals-ai-fabv2-1
+  quote: 'Partial Credit (primary): the dealbreaker-gated, severity-weighted average of per-check scores.'
+
+homepage: https://www.vals.ai/benchmarks/fabv2-1
+repository: https://github.com/vals-ai/finance-agent-v2
+dataset_url: https://huggingface.co/datasets/vals-ai/finance_agent_benchmark
+leaderboard_url: https://www.vals.ai/benchmarks/fabv2-1
+maintainer_url: https://www.vals.ai/
+
+versions:
+  - version: '1'
+    label: Finance Agent v1, the paper's release
+    version_kind: revision
+    released: 2025-05-20
+    items: 537
+    changes: 537 questions in nine categories (50 public, 150 private validation, 337 test), four
+      tools with SerpAPI search, judged by an unnamed LLM against GPT-4o-drafted rubrics. Archived
+      as saturated; the board was last updated on 2026-02-10.
+    superseded_by: '1.1'
+    frozen: true
+    sources:
+      - src-arxiv-2508-00828-v1
+      - src-arxiv-2508-00828
+      - src-vals-ai-finance-agent-v1
+      - src-hf-api-vals-finance-agent-benchmark
+  - version: '1.1'
+    label: Finance Agent v1.1
+    version_kind: revision
+    items: 537
+    changes: A refresh at the beginning of 2026. AfterQuery's finance experts ran quality control
+      and many relative dates became absolute; search moved from SerpAPI to Tavily, answers are
+      submitted through a tool call and the prompt asks for two decimal places; the judge became
+      GPT-5.2, taking the mode of three evaluations; every model was re-run. The page says 537
+      questions in the same three splits.
+    breaking: true
+    supersedes_version: '1'
+    superseded_by: '2'
+    sources:
+      - src-vals-ai-finance-agent
+      - src-github-vals-finance-agent-readme
+  - version: '2'
+    label: Finance Agent v2
+    version_kind: edition
+    items: 927
+    changes: New questions at the depth of a 2nd or 3rd-year investment banking analyst, in a new
+      nine-category taxonomy (comparables, precedents, earnings and disclosure analysis among them),
+      with 27 public, 450 private validation and 450 test questions; calculator and price-history
+      tools; weighted checks with dealbreakers, Partial Credit and All-Pass; a jury of GPT-5.4,
+      Gemini-3.1-Pro and Claude Sonnet 4.6; three runs per model. A new repository (created
+      2026-04-01). Archived on being superseded by v2.1.
+    breaking: true
+    supersedes_version: '1.1'
+    superseded_by: '2.1'
+    frozen: true
+    sources:
+      - src-vals-ai-fabv2
+      - src-github-vals-finance-agent-v2-readme
+  - version: '2.1'
+    label: Finance Agent v2.1, the current board
+    version_kind: revision
+    items: 926
+    changes: Question and rubric fixes after expert review, with some test questions reworded or
+      removed (449 test); a new jury (GPT-6.1 Sol, Gemini 3.8 Flash, Claude Sonnet 5.5); the judge
+      prompt fails hedged answers and the agent prompt asks for one conclusive answer per item.
+      Scores are not comparable with v2.
+    breaking: true
+    supersedes_version: '2'
+    frozen: false
+    sources:
+      - src-vals-ai-fabv2-1
+versions_note: The paper is the only dated source for v1; v1.1's page says only "the beginning of
+  2026", and no source dates v2's or v2.1's release (the boards' update dates are 2026-10-29 and
+  2026-11-05), so their released fields are null. Item counts sum the three splits each page gives.
+
+subsets_note: >
+  Each version reports results per question category (nine in v1 and v1.1, a different nine in v2 and
+  v2.1), but the categories change between versions, so they are not modelled as subsets.
+
+lineage:
+  role: root
+  role_note: The four versions are one Vals benchmark under one name and one citation, so none is a
+    separate entry. FinanceBench, an earlier Patronus AI benchmark of questions over SEC filings, is
+    not cited or derived from by the paper, so no lineage is recorded with it.
+
+tags:
+  - financial-analysis
+  - sec-filings
+  - llm-agents
+  - expert-rubrics
+  - llm-judge
+  - private-test-set
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T06)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2508-00828-v1
+    - src-arxiv-2508-00828
+    - src-vals-ai-fabv2-1
+    - src-vals-ai-fabv2
+    - src-vals-ai-finance-agent
+    - src-vals-ai-finance-agent-v1
+    - src-vals-ai-methodology
+    - src-vals-ai-about
+    - src-github-vals-finance-agent-readme
+    - src-github-vals-finance-agent-v2-readme
+    - src-hf-api-vals-finance-agent-benchmark
+    - src-arxiv-2608-16386-v2
+  sources_note: >
+    The paper's v1 PDF and abstract page (DOIs, not archived); Vals AI's four version pages, its methodology
+    page and its about page, server-rendered and read with scripts and styles stripped; the two harness
+    READMEs at pinned commits; Hugging Face's API record of the v1 public set (not gated); and the Mint-Agent
+    v2 PDF as evidence of use in 2026. GitHub's API (licences, dates, commits, file trees) and UK AISI's
+    inspect_evals listings were read but are not quoted Sources. The public CSVs were opened for their
+    columns only. A web search also turned up a June 2026 paper proposing an IPO Finance Agent variant
+    beyond v2 (arXiv 2606.23032), which was not read.
+  confidence: medium
+  review_checks:
+    - check: Family. The entry is placed in society-econ-law/financial-analysis with
+        agents-tooluse/tool-api-calling secondary, although APEX-Agents, also expert-rubric grading
+        of what a tool-using agent returned on finance work, was placed in agents-tooluse. The
+        difference drawn here is that the scored quantity is the financial answer's correctness
+        against an expert's, the loop is Vals' fixed harness, and no environment state or tool use
+        is graded. A reviewer may rule that the agents-tooluse inclusion test ("the result it
+        returned") takes it.
+      field: domain.primary
+      source: src-vals-ai-methodology
+      quote: Models are called through a fixed harness that we control, so that differences in
+        scores reflect the model rather than the scaffold.
+    - check: Identity. v2 has new questions, a new taxonomy, new grading and its own repository, so
+        it could be a separate benchmark linked by lineage; it is kept a version (edition) because
+        the maintainer, the name, the page family and the citation are the same and v2.1 calls
+        itself a revision built on v1.1. The id is proposed from the paper's title; Vals' pages say
+        "Finance Agent".
+      field: versions
+      source: src-vals-ai-fabv2-1
+      quote: Finance Agent v2.1 is a revision of Finance Agent v2, which built on Finance Agent
+        v1.1, with question and rubric fixes from expert reviews.
+    - check: v1.1 is recorded as a revision of v1's 537 questions on the page's split counts, but
+        the page says quality control changed the data; whether any items were replaced is not
+        stated.
+      field: versions
+      source: src-vals-ai-finance-agent
+      quote: AfterQuery ran quality control on the benchmark data using finance experts
+    - check: evaluator-sells-evaluations is not set. Vals licenses the private validation sets to
+        companies for internal validation and runs a gated evaluation platform, which is close to
+        selling evaluation; no page read says it sells evaluations of the ranked systems.
+      field: governance.independence_flags
+      source: src-vals-ai-methodology
+      quote: 'Private Validation Set: A larger, privately held dataset, which we license to companies
+        for their own internal validation.'
+    - check: grader-from-evaluated-party rests on the v2.1 jurors appearing on the same board. The
+        v1 judge is not named in the paper, so v1 cannot be checked.
+      field: governance.independence_flags
+      source: src-vals-ai-fabv2-1
+      quote: 5 Claude Sonnet 5.5 67.28%
+    - check: The paper says the private validation set is available to researchers upon request; the
+        pages and the methodology say it is licensed to companies. The access note records both; a
+        reviewer may want a dated history entry.
+      field: data.access
+      source: src-arxiv-2508-00828-v1
+      quote: a private validation set (150 samples available to researchers upon request)
+    - check: harness_availability is reference-implementation-only because neither repository holds
+        a grader and both READMEs require the gated Vals platform. The paper's appendix describes
+        evaluation scripts in the repository; if they were there once, the history is unrecorded.
+      field: execution.harness_availability
+      source: src-github-vals-finance-agent-readme
+      quote: Access to the Vals platform is gated and requires approval.
+    - check: contamination_risk low rests on the test set never being released. The test questions
+        go to every provider's API on each run, and their answers are in public filings; no source
+        weighs either, and medium is arguable.
+      field: data.contamination_risk
+    - check: activity no-submission-channel. Vals' methodology mentions custom scaffolds from teams
+        it works with and evaluating products, and its contact form invites builders; none is a
+        stated route for entering a result.
+      field: activity
+    - check: model-graded-judge needs reference_conditions naming the judge and its version (v2.1's
+        jury of GPT-6.1 Sol, Gemini 3.8 Flash and Claude Sonnet 5.5; GPT-5.2 for v1.1); no
+        conditions record exists, and writing one was outside this task's write scope.
+      field: reference_conditions
+      source: src-vals-ai-finance-agent
+      quote: The evaluator model was upgraded to GPT-5.2.
+    - check: Lineage. An IPO Finance Agent benchmark "beyond Finance Agent v2" (arXiv 2606.23032)
+        was found by search and not read; if it is another maintainer's derivative, it is a fork to
+        record.
+      field: lineage
