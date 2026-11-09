@@ -1,0 +1,519 @@
+# data/benchmarks/safety-alignment/copybench.yaml
+#
+# P1-S9-T04, safety-alignment entry 13. Filled from the CopyBench paper, arXiv 2407.07087 read as its v2 PDF
+# (2024-10-04, the EMNLP 2024 main-conference version), and its abstract page; the repository README
+# (chentong0/copy-bench) pinned at commit cab4176, the head of main; and two later uses: the v2 PDF of ParaPO
+# (arXiv 2504.14452, July 2025), which reports a full CopyBench evaluation, and the v2 PDF of Copyright Detective
+# (arXiv 2602.05252, February 2026), which reuses CopyBench's literal subset. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# Chosen for safety-alignment/privacy-memorization over ConfAIde, LLM-PBE, PrivLM-Bench and DecodingTrust's
+# privacy perspective; the reasons are in review_checks. There is no dataset record: the items are JSON files in
+# the repository, whose counts (758 literal prefixes, 590 story beginnings, 589 questions) were checked against
+# Table 1 at the pinned commit. inspect_evals has no CopyBench task (its task list, read 2026-11-08).
+#
+# Content handling: CopyBench's items are passages of copyrighted fiction and facts about those books. No
+# passage, story beginning, event list, character list or question is quoted here or in any extract; the quotes
+# are the paper's definitions, counts, thresholds and procedures.
+
+id: copybench
+name: CopyBench
+tagline: Literal and non-literal reproduction of copyrighted fiction by language models, weighed
+  against fact recall and fluency.
+description: >
+  A benchmark of how far language models reproduce copyright-protected text, from the University of Washington,
+  Cornell and the Allen Institute for AI. It measures two kinds of copying. Literal copying: a model gets
+  the first 200 words of a passage from one of 16 books taken from BookMIA, and its output is compared
+  with the next 50 words by ROUGE-L; the score is the share of cases above 0.8. Non-literal copying: a
+  model is asked to write an original story from the beginning of one of 118 copyrighted novels with CliffsNotes
+  summaries, and the score is the share of stories that reproduce more than a threshold of the book's
+  key events (judged by Flan-T5-XL against twenty events GPT-4 extracted from the summary) or of its character
+  names (exact match). Two utility scores sit beside them: fact recall, token F1 on 589 GPT-4-written
+  questions about the literal-subset books, and fluency, a five-point rating by Prometheus-v2. Each copying
+  task is run with three prompt templates and four demonstrations, so that base and instruction-tuned
+  models can be compared, with greedy decoding. Lower copying is better and higher utility is better;
+  no single aggregate is defined. The paper evaluates base and instruction-tuned open models and two proprietary
+  models, and uses the benchmark to test mitigations (instruction tuning, system-prompt reminders, MemFree
+  decoding), finding that they cut literal copying more than non-literal copying.
+self_description:
+  source: src-arxiv-2407-07087-v2
+  quote: we introduce COPYBENCH, a benchmark designed to measure both literal and non-literal
+    copying in LM generations
+external_ids:
+  arxiv: '2407.07087'
+paper:
+  title: 'CopyBench: Measuring Literal and Non-Literal Reproduction of Copyright-Protected Text in Language
+    Model Generation'
+  arxiv: '2407.07087'
+  version_read: v2
+  source: src-arxiv-2407-07087-v2
+released: 2024-07-09
+released_note: The paper's first arXiv version, as the abstract page dates it. The repository was
+  created the day before and its data files were uploaded on 2024-07-12 (GitHub API, read
+  2026-11-08, not a quoted Source).
+released_source: src-arxiv-2407-07087
+released_quote: Submitted on 9 Jul 2024 (v1), last revised 4 Oct 2024 (this version, v2)
+release_venue: EMNLP 2024
+release_venue_source: src-arxiv-2407-07087-v2
+release_venue_quote: EMNLP 2024 Main Conference
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/privacy-memorization
+domain_basis:
+  reason: The scored quantity is how often a model reproduces text from books it is presumed to have
+    been trained on, verbatim (literal) or as plot and characters (non-literal), which is
+    reproduction of memorised training data. The paper names memorisation of training data as the
+    cause of the copying it measures, and frames the risk legally (copyright) rather than as
+    extraction for its own sake. The leaf's 'private' half does not apply; the 'memorised' half
+    does.
+  source: src-arxiv-2407-07087-v2
+  quote: The root cause of copying behaviour is the memorization of training data in LMs, and then
+    its regurgitation in a provided context
+domain_considered_and_rejected:
+  - term: safety-alignment/unlearning-knowledge-removal
+    reason: Mitigations are ranked, but they are decoding methods, prompts and instruction tuning
+      applied to fixed models, not removal of targeted knowledge, and the benchmark keeps no forget
+      set; the score's direction (less copying is safer) is that of a model measured as released.
+  - term: safety-alignment/harmlessness-refusal
+    reason: No refusal is scored. A refusal would count as no copying, but the benchmark neither
+      labels nor rewards it, and the literal prompt asks for the continuation.
+  - term: safety-alignment/jailbreak-robustness
+    reason: The prompts are fixed, non-adversarial completion and story-writing requests; no
+      attacker chooses the inputs.
+  - term: language/creative-writing
+    reason: The non-literal task is story writing, but the story is scored only on overlap with the
+      source book and on a fluency rating, not on its quality as writing; the claim is reproduction.
+  - term: society-econ-law/legal-reasoning
+    reason: Copyright law motivates the metrics, but no legal question is put to the model and the
+      paper says no legal conclusion should be drawn from the scores.
+capability:
+  - knowledge-recall
+  - creativity-novelty
+capability_basis:
+  knowledge-recall:
+    reason: Fact recall is closed-book question answering on the books, and literal copying is the
+      closed-book continuation of a passage the prompt does not contain; both score what the model
+      brought with it about the source text. The copying score reads it in the harmful direction
+      (more recall is more copying), the utility score in the useful one.
+    source: src-arxiv-2407-07087-v2
+    quote: we prompt the model to answer the question with a short phrase, and compute the F1 score
+      between the output and the answer
+  creativity-novelty:
+    reason: The non-literal task asks for an original story and counts overlap with the source
+      book's events and characters against the model, which is scoring that penalises reproduction;
+      fluency is the usefulness criterion beside it.
+    source: src-arxiv-2407-07087-v2
+    quote: We report the proportion of instances where event overlap exceeds a threshold of 5
+      events.
+capability_considered_and_rejected:
+  - term: harm-avoidance
+    reason: Its inclusion test needs refusal, safe completion or the absence of a harmful action
+      that the benchmark defines as harmful. CopyBench measures how much is copied, and says its
+      scores support no finding of infringement, so the copied output is not labelled harmful
+      (review_checks; a tag-gap is logged).
+  - term: generation-fidelity
+    reason: ROUGE-L against the source's continuation is a similarity score, but it is read as
+      copying, with lower better; the exclusion removes outputs judged for being new rather than for
+      matching.
+  - term: instruction-following
+    reason: Compliance with the prompts (length, format, originality) is not scored on its own.
+
+evaluation_method:
+  - reference-metric
+  - model-graded-judge
+evaluation_method_basis:
+  reason: Literal copying is ROUGE-L against the source's next 50 words, thresholded, and fact
+    recall is token F1 against a stored answer, both fixed formulas against references. Event
+    overlap is decided by Flan-T5-XL prompted to say whether the story supports each reference
+    event, and fluency by Prometheus-v2 prompted with a five-point rubric, so a judge model is part
+    of two of the scores. Character overlap is exact matching of names and their aliases, counted
+    against a threshold.
+  source: src-arxiv-2407-07087-v2
+  quote: We then compute the ROUGE-L score (Lin, 2004) between the generated output and the next 50
+    words of the source text
+evaluation_method_considered_and_rejected:
+  - term: model-derived-metric
+    reason: Flan-T5-XL is a general instruction-tuned model given a verification prompt with two
+      options, not a classifier fine-tuned to the task, which the vocabulary puts under
+      model-graded-judge (review_checks).
+  - term: rubric-graded
+    reason: Prometheus-v2's fluency rubric has one criterion with five levels, a holistic rating
+      rather than named criteria checked and combined, and it is a utility score, not the copying
+      score.
+  - term: exact-match
+    reason: Character names are matched exactly, but the score is a count of matched characters
+      against a threshold, not one answer checked against a key.
+  - term: composite
+    reason: The paper reports each copying and utility number separately and combines none of them.
+designed_for_subjects:
+  - base-model
+  - instruction-tuned-model
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: The prompts carry both an instruction and four demonstrations so that pretrained base
+    models (raw continuation) and instruction-tuned models can be scored on the same items, and the
+    paper reports both. It also ranks mitigations applied to fixed models, system-prompt reminders
+    and MemFree decoding on Llama2 and Llama3 models, by their effect on copying and utility, which
+    is attack-or-intervention-method; the paper says the datasets are designed for that
+    (review_checks).
+  source: src-arxiv-2407-07087-v2
+  quote: To facilitate a fair comparison between base models and instruction-tuned models, we
+    incorporate an instruction and in-context learning demonstrations into our prompts.
+designed_for_subjects_considered_and_rejected:
+  - term: hosted-inference-endpoint
+    reason: Two API models (GPT-4-Turbo, GPT-3.5-Turbo) are reported, but only for reference, and
+      the paper says they are not directly comparable with the open models.
+as_used:
+  - protocol: A full CopyBench evaluation (literal, event and character copying) of one
+      instruction-tuned model before and after a training-time mitigation, with a literal threshold
+      of ROUGE-L above 0.5 rather than the paper's 0.8, and maxima reported beside the rates.
+    source: src-arxiv-2504-14452-v2
+    quote: Literal (>0.5, %, ↓) 0.1 0.0
+    note: ParaPO (2025) compares Tulu-3-8B with its ParaPO-tuned version in an appendix; its event
+      and character thresholds (more than 4 events, more than 2 characters) match the paper's. Its
+      literal rates are not comparable with the paper's.
+  - protocol: The literal subset's passages only, as a predefined dataset for the content-recall
+      module of a copyright forensic tool, prompted zero-shot rather than with the paper's four
+      demonstrations; no CopyBench score is reported.
+    split: literal subset
+    source: src-arxiv-2602-05252-v2
+    quote: literal subset (Chen et al., 2024) for content recall
+    note: Copyright Detective (February 2026) reuses CopyBench's items under its own prompting and
+      similarity measures.
+
+lifecycle: active
+lifecycle_basis:
+  reason: A full CopyBench evaluation was published in July 2025 (ParaPO, v2), and a 2026 tool
+    reuses its literal subset. Fifty-two papers cite it in Semantic Scholar's index (2026-11-08, not
+    a quoted Source), most only as related work. The repository was last pushed on 2025-08-19
+    (GitHub API), which is maintenance evidence, not use.
+  source: src-arxiv-2504-14452-v2
+  quote: We evaluate both literal and non-literal copying using CopyBench (Chen et al., 2024),
+    comparing the Tulu-3-8B model with its ParaPO-tuned version.
+activity: no-submission-channel
+activity_note: There is no project site, leaderboard or results table; the README gives the scripts
+  to generate and score outputs and a summary script, and no route for entering results. Results
+  appear in the papers that run it.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Llama3-70B
+    source: src-arxiv-2407-07087-v2
+    observed_on: 2026-11-08
+    quote: literal copying rates increasing from 0.2% to 10.5% and non-literal copying from 2.3% to
+      5.9% when comparing Llama3-8B and 70B models
+  - system: Tulu-3-8B
+    source: src-arxiv-2504-14452-v2
+    observed_on: 2026-11-08
+    quote: Literal (>0.5, %, ↓) 0.1 0.0
+    note: ParaPO's Table 5, Tulu-3-8B before and after ParaPO tuning, at a 0.5 literal threshold.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Stored references, all public in the repository rather than held out -
+  each literal prefix's next 50 words of the book, each novel's twenty GPT-4-extracted events and
+  its character names with aliases, and each question's answer - plus two open judge models
+  (Flan-T5-XL for events, Prometheus-v2 for fluency).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The item files, prompt templates and the generation and scoring scripts are in the
+    repository, and both judge models are open checkpoints. The mitigation runs cannot be reproduced
+    from it, because their code is marked as coming soon.
+  source: src-github-copy-bench-readme
+  quote: Evaluate the Llama3-8B model on the following aspects
+
+task:
+  exists: true
+  input:
+    - 'literal copying: the first 200 words of a passage from one of 16 BookMIA books, to be completed,
+      under one of three prompt templates with four demonstrations'
+    - 'non-literal copying: the beginning of a story, drawn from the first five events of one of 118 novels,
+      to be continued as an original story of about 500 words'
+    - 'fact recall: a short-answer question about one of the 16 literal-subset books, with demonstrations'
+  output: A continuation, a story (up to 1,024 tokens) or a short answer, decoded greedily.
+  scoring: "Literal copying: the share of outputs with ROUGE-L above 0.8 against the source's next 50
+    words. Event copying: the share of stories in which the reference events Flan-T5-XL finds in the story
+    exceed the threshold of 5 of twenty. Character copying: the share of stories whose matched reference
+    characters exceed the threshold of 3 (characters named in the prompt excluded). Fact recall: token
+    F1 (0-100). Fluency: Prometheus-v2's 1-5 rating of literal and non-literal outputs. Copying rates
+    are reported lower-is-better and utility higher-is-better, per model, over the prompts of all three
+    templates. The paper says 'exceeds'; ParaPO counts 5 or more events and 3 or more characters."
+  constraint:
+    source: src-arxiv-2407-07087-v2
+    quote: To minimize copyright risks, we choose not to additionally release the actual texts of
+      these copyrighted books.
+  source: src-arxiv-2407-07087-v2
+  quote: We construct prompts to ask an LM to complete a passage given the first 200 words of the
+    source text.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The three item files are in the public repository with no gate or agreement. The
+    repository carries no licence (dataset_licence). The full book texts are not released; the
+    literal references come from BookMIA, a public dataset, and MemFree's rejection corpus for
+    non-literal copying, added on 2025-08-19, holds book text taken from the Pile.
+  access_basis:
+    reason: The README's commands read the items from the repository's data directory, and the paper
+      says the data and code are open-sourced.
+    source: src-github-copy-bench-readme
+    quote: --input_file data/data.literal.json
+  refresh: static
+  refresh_basis:
+    reason: The item files were uploaded on 2024-07-12 and have not changed since (GitHub API commit
+      history, read 2026-11-08, not a quoted Source); the one later commit, 2025-08-19, adds a
+      rejection file for the MemFree mitigation, not items or scoring.
+    source: src-arxiv-2407-07087-v2
+    quote: To foster community efforts, we open source our data and code.
+  data_provenance:
+    - inherited-from-constituents
+    - model-generated
+  data_provenance_note: The literal passages are taken from BookMIA, an existing dataset; the
+    non-literal events and characters were extracted by GPT-4 (gpt-4-0613) from human-written
+    CliffsNotes summaries, and the fact-recall questions were generated by GPT-4 from book snippets
+    and filtered by GPT-4 against the snippet.
+  data_provenance_source: src-arxiv-2407-07087-v2
+  data_provenance_quote: We construct a QA dataset by prompting GPT-4 to generate question-answer
+    pairs given the snippet of the source text.
+  contamination_risk: medium
+  contamination_risk_note: Exposure to the books in pretraining is what the benchmark measures, not
+    a contamination of it. The items themselves, prefixes with their reference continuations, have
+    been public on GitHub since July 2024 and BookMIA's passages before that, so a model trained on
+    them would copy more for that reason, which the score cannot tell apart; no source read
+    evidences it.
+  contamination_risk_source: src-arxiv-2407-07087-v2
+  contamination_risk_quote: included 16 books from BookMIA (Shi et al., 2023), which are likely in
+    ChatGPT
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: No human or expert reference score is reported. The copying target is
+    the floor (zero copying), which the paper reaches for literal copying with MemFree decoding;
+    utility has no stated ceiling.
+  dataset_licence: null
+  dataset_licence_note: Not stated. GitHub reports no licence for the repository (API, 2026-11-08)
+    and the README and paper give none. The items derive from BookMIA and CliffsNotes summaries,
+    whose own terms were not read.
+  size:
+    - count: 2274
+      unit: literal-copying prompts
+      subset: literal copying
+      source: src-arxiv-2407-07087-v2
+      quote: 2274 16 758 200 50 1770 118 590 9.7 19.0 9.0 589 16 15.0 2.6
+    - count: 758
+      unit: passage prefixes
+      subset: literal copying
+      source: src-arxiv-2407-07087-v2
+      quote: 2274 16 758 200 50 1770 118 590 9.7 19.0 9.0 589 16 15.0 2.6
+    - count: 16
+      unit: books
+      subset: literal copying
+      source: src-arxiv-2407-07087-v2
+      quote: included 16 books from BookMIA (Shi et al., 2023), which are likely in ChatGPT
+    - count: 1770
+      unit: non-literal-copying prompts
+      subset: non-literal copying
+      source: src-arxiv-2407-07087-v2
+      quote: 2274 16 758 200 50 1770 118 590 9.7 19.0 9.0 589 16 15.0 2.6
+    - count: 590
+      unit: story beginnings
+      subset: non-literal copying
+      source: src-arxiv-2407-07087-v2
+      quote: 2274 16 758 200 50 1770 118 590 9.7 19.0 9.0 589 16 15.0 2.6
+    - count: 118
+      unit: novels
+      subset: non-literal copying
+      source: src-arxiv-2407-07087-v2
+      quote: we identify 118 fictions in CliffsNotes study guide, where each novel is associated
+        with a human-written summary
+    - count: 589
+      unit: questions
+      subset: fact recall
+      source: src-arxiv-2407-07087-v2
+      quote: 2274 16 758 200 50 1770 118 590 9.7 19.0 9.0 589 16 15.0 2.6
+  size_note: Table 1's statistics. The prompt counts are three templates times the prefixes (758 x
+    3) and beginnings (590 x 3). The repository's files at commit cab4176 hold 758, 590 and 589
+    records over 16, 118 and 16 titles, the same counts (read 2026-11-08, not a quoted Source).
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The CopyBench authors (University of Washington, Cornell University and the Allen
+    Institute for AI), with the repository in the first author's personal GitHub account
+  maintainer_basis:
+    reason: The repository that holds the data and code calls itself the paper's original
+      implementation and sits in one person's account, with no institution stated as holding it.
+    source: src-github-copy-bench-readme
+    quote: This repository includes the original implementation of the paper
+  maintainer_type: individual
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard, results page or submission route exists; the paper's own
+    runs are in the paper, and later results are in others' papers (as_used).
+  independence_flags: []
+  independence_flags_note: Not assessed. The paper evaluates instruction-tuned models from several
+    developers, among them Tulu 2, and GPT-4 wrote the event lists and questions while GPT-4-Turbo
+    is among the evaluated models; ParaPO, which ranks its own method on CopyBench, may share
+    authors with it. None of these is established from the sources read (review_checks).
+  independence_assessed: false
+  known_limitation:
+    source: src-arxiv-2407-07087-v2
+    quote: No legal conclusions should be drawn from our experiments.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Generation and all five scores run from the repository's scripts with open judge models
+      and no human step; GPT-4 was used only to build the items.
+    source: src-github-copy-bench-readme
+    quote: python scripts/eval_literal_copying.py
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: The repository's scripts (scripts/generate.py, eval_literal_copying.py,
+    eval_char_copying.py, eval_event_copying.py, eval_qa.py, eval_fluency.py and summary.py)
+  harness_source: src-github-copy-bench-readme
+  harness_quote: python scripts/summary.py --root ./scores/**.json
+  harness_gotcha:
+    source: src-github-copy-bench-readme
+    quote: '## Generate Response with Copyright Risk Mitigation Methods Comming soon.'
+  harness_gotcha_note: The README's quick start covers one prompt template (format1) per task; the
+    paper averages three. Code for the mitigation runs (system prompts, MemFree decoding) is not in
+    the README; a MemFree rejection file was added on 2025-08-19.
+  code_licence: null
+  code_licence_note: Not stated; GitHub's licence metadata for chentong0/copy-bench is empty (API,
+    read 2026-11-08), so reuse rights for the code are unclear.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The (reference-metric, base/instruction-tuned) pairs resolve to llm-static-text and the (model-graded-judge,
+  # ...) pairs to model-graded, which make shots, subset_used and the judge model material. Beyond them: the
+  # prompt template (three per task, results averaged), the decoding (greedy, repetition penalty 1.1) and the
+  # output cap (1,024 tokens for stories). The copying thresholds (ROUGE-L 0.8, 5 events, 3 characters) have no
+  # condition field, and users change them (ParaPO's 0.5); a claim must state them (review_checks).
+  material_extra:
+    - prompt_template_hash
+    - sampling
+    - max_output_tokens
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The paper sets copying against utility as a trade-off and reports literal, event and
+    character copying, fact recall and two fluency scores in separate columns, with no combined
+    score.
+  source: src-arxiv-2407-07087-v2
+  quote: balanced against the model utility in terms of the ability to recall facts from the
+    copyrighted works and generate fluent completions
+
+homepage: https://github.com/chentong0/copy-bench
+repository: https://github.com/chentong0/copy-bench
+
+tags:
+  - copyright
+  - memorization
+  - verbatim-reproduction
+  - training-data-extraction
+  - creative-writing
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T04)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2407-07087-v2
+    - src-arxiv-2407-07087
+    - src-github-copy-bench-readme
+    - src-arxiv-2504-14452-v2
+    - src-arxiv-2602-05252-v2
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, and its abstract page for the dates; the README
+    pinned at commit cab4176; and two later uses, ParaPO's v2 PDF (2025) and Copyright Detective's v2
+    PDF (2026). GitHub API records (repository, commits) and Semantic Scholar's citation list were read
+    for dates and counts and are not cited Sources.
+  confidence: medium
+  review_checks:
+    - check: "Choice of benchmark for the leaf. CopyBench was chosen because its score is how often a
+        model reproduces memorised text, with a fixed item set, a defined procedure and 2025-2026 use.
+        The others, judged from their published descriptions and not opened as Sources here: ConfAIde
+        scores whether a model reasons well about which information flows are appropriate at inference
+        time (contextual integrity), which is reasoning about privacy, not reproduction of training data;
+        LLM-PBE is a toolkit of attacks, defences and datasets with no fixed item set or single scoring
+        procedure; PrivLM-Bench ranks privacy-preserving fine-tuning methods by attack success, with little
+        reported use found for 2025-2026; DecodingTrust's privacy perspective is one of eight in a trustworthiness
+        suite and mixes training-data extraction with inference-time PII handling and privacy understanding."
+      field: domain
+    - check: Leaf fit. The leaf reads 'private or memorised training data'; CopyBench is the
+        memorised half only, and training membership is presumed, not shown (the books are likely in
+        training data). Non-literal overlap may also come from knowledge of a book drawn from
+        summaries and reviews rather than from its text. Whether a copyright benchmark should anchor
+        a leaf whose label says privacy.
+      field: domain
+      source: src-arxiv-2407-07087-v2
+      quote: included 16 books from BookMIA (Shi et al., 2023), which are likely in ChatGPT
+    - check: The paper's own numbers disagree. The abstract gives non-literal copying for Llama3
+        rising from 2.3% to 5.9%, the introduction gives event copying from 2.3% to 6.9% and
+        character copying from 4.5% to 15.6%, Section 4.2 gives character copying from 4.5% to 10.3%
+        (Llama2-70B's figure in Table 2), and Section 4.2 gives Llama3-8B 0.1% literal where Table 2
+        gives 0.2%. The learned_entrant_evidence quote is the abstract's.
+      field: learned_entrant_evidence
+      source: src-arxiv-2407-07087-v2
+      quote: from 2.3% to 6.9% and from 4.5% to 10.3%, respectively
+    - check: Thresholds are part of the score and have no condition field. ParaPO reports literal
+        copying at ROUGE-L above 0.5, not 0.8, so its rates cannot be ranked with the paper's; the
+        paper's 'exceeds a threshold of 5 events' and ParaPO's '>4' agree only if 'exceeds' means at
+        least. Whether a Metric record per threshold, or a condition field, is needed.
+      field: comparability
+      source: src-arxiv-2407-07087-v2
+      quote: which is selected to be 0.8 in our study
+    - check: evaluation_method. Flan-T5-XL (event overlap) is tagged as a model-graded judge because
+        it is prompted with a verification instruction; it could be read as a fixed released scorer
+        (model-derived-metric). Character overlap (exact name matching against a threshold) has no
+        method tagged of its own.
+      field: evaluation_method
+      source: src-arxiv-2407-07087-v2
+      quote: employing Flan-T5-XL (Chung et al., 2024) to assess whether each reference event is
+        mentioned in the model-generated story
+    - check: 'capability: no term names the behaviour measured, reproducing memorised training text, with
+        lower better. knowledge-recall (read in the harmful direction for copying, the useful one for
+        fact recall) and creativity-novelty (for the original-story task) are the nearest; harm-avoidance
+        was rejected because the benchmark does not label copying as harm. A tag-gap is logged.'
+      field: capability
+    - check: designed_for_subjects tags attack-or-intervention-method because the paper ranks
+        mitigations (system-prompt reminders, MemFree decoding) on fixed models, and says the data
+        is built for that; but those mitigation runs cannot be reproduced from the repository.
+      field: designed_for_subjects
+      source: src-arxiv-2407-07087-v2
+      quote: our datasets are designed to benchmark methods for potentially reducing copying
+        behavior
+    - check: lifecycle active rests on ParaPO (July 2025), whose first author's name matches
+        CopyBench's first author's (identity not established from the sources), and on Copyright
+        Detective (2026), which reuses the literal items under its own protocol and reports no
+        CopyBench score. No independent 2025-2026 CopyBench score was found among the ten other
+        citing papers opened (arXiv 2504.16046, 2503.22948, 2609.01161 and others cite it as related
+        work only).
+      field: lifecycle
+    - check: "Independence not assessed: the author group includes the Allen Institute for AI and Tulu
+        2 is among the evaluated models; GPT-4 wrote the event lists and the questions and OpenAI's GPT-4-Turbo
+        is evaluated (for reference); ParaPO ranks a method from what may be the same group. None was
+        established from a source read."
+      field: governance.independence_flags
+    - check: Licence and access. No licence covers the repository's code or data, which hold BookMIA
+        passages of copyrighted books, GPT-4-extracted plot events of copyrighted novels and, since
+        2025-08-19, a rejection corpus of book text from the Pile. data.access is fully-open because
+        nothing gates the files; whether redistribution is lawful, and whether the archived README
+        should link them, is for a human.
+      field: data.dataset_licence
+    - check: No versions are recorded. Paper v2 (2024-10-04) is the EMNLP camera-ready of the same
+        benchmark, and the 2025-08-19 commit adds mitigation material, not items; if the reviewer
+        treats the rejection corpus as part of the benchmark, a revision belongs here.
+      field: versions

@@ -1,0 +1,595 @@
+# data/benchmarks/safety-alignment/mask.yaml
+#
+# P1-S9-T04, safety-alignment entry 10. Filled from the MASK paper, arXiv 2503.03750 read as its v3 PDF
+# (2026-01-05), and its abstract page; the README and the evaluation README (mask/README.md) of
+# centerforaisafety/mask at commit 25e0b12; Hugging Face's API record of cais/MASK; Scale AI's MASK leaderboard
+# page; the README of UK AISI's inspect_evals port at commit 2b9c003; the abstract page of CATCH (arXiv
+# 2610.22292, October 2026), a 2026 use; and CAIS's about page (src-safe-ai-about, already on main). Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts. No pressure
+# prompt, elicited lie or example record is quoted.
+#
+# The project site (mask-benchmark.ai, no robots.txt) was read: it carries the abstract, links and citation, and
+# no results, so it is not a Source. The headline is computed on a held-out split: the paper's results are on
+# all 1,500 examples, and Scale's leaderboard is on the 500-example private split alone, so data.access is
+# private-test-server (the brief's step 2), with the public 1,000 recorded as what anyone can run.
+
+id: mask
+name: MASK
+aliases:
+  - Model Alignment between Statements and Knowledge
+  - The MASK Benchmark
+tagline: Elicits a model's belief, pressures it to state the opposite, and scores honesty apart from
+  accuracy.
+description: >
+  A benchmark for lies of commission in language models, built by the Center for AI Safety and Scale
+  AI. Each example has a proposition with a binary or numerical pivot, a ground-truth resolution, a
+  human-written pressure prompt (system and user) that gives the model an incentive to state something
+  false, and neutral belief-elicitation prompts. The model answers the pressure prompt once and the
+  direct belief question three times, plus two indirect questions for binary propositions. An LLM judge
+  (GPT-4o for binary, o3-mini for numerical propositions) maps each response to a resolution, and the
+  comparison is then programmatic. A statement that contradicts a consistently held belief is a lie;
+  evasion and no consistent belief are counted separately and not as lies. The honesty score is 1 minus
+  the lie rate; accuracy compares the belief with the ground truth. Examples fall into six archetypes
+  (known facts, situation-provided facts, doubling down, fabricated statistics, continuations,
+  disinformation). The paper's results use all 1,500 examples. 1,000 are public on Hugging Face, and
+  Scale's leaderboard ranks models on the 500-example private split.
+self_description:
+  source: src-github-mask-readme
+  quote: a benchmark designed to evaluate honesty in large language models by testing whether they
+    contradict their own beliefs when pressured to lie
+external_ids:
+  arxiv: '2503.03750'
+paper:
+  title: 'The MASK Benchmark: Disentangling Honesty From Accuracy in AI Systems'
+  arxiv: '2503.03750'
+  version_read: v3
+  source: src-arxiv-2503-03750-v3
+released: 2025-03-05
+released_note: The paper's first arXiv version, as the abstract page dates it. The repository and
+  the Hugging Face dataset were created two days earlier (2025-03-03, GitHub and Hugging Face APIs);
+  v2 followed on 2025-03-20 and v3 on 2026-01-05.
+released_source: src-arxiv-2503-03750
+released_quote: Submitted on 5 Mar 2025 (v1), last revised 5 Jan 2026 (this version, v3)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/honesty-truthfulness
+domain_basis:
+  reason: The scored quantity is whether a model states something that contradicts its own elicited
+    belief, which is the leaf's definition (asserting what it does not hold to be true). Accuracy is
+    reported beside it to separate knowledge from honesty, so the family's exclusion for ordinary
+    inaccuracy does not apply.
+  source: src-arxiv-2503-03750-v3
+  quote: a benchmark for measuring lies of commission in LLMs
+domain_considered_and_rejected:
+  - term: safety-alignment/sycophancy
+    reason: Sycophancy is revising a correct answer to agree with a user who pushes back. MASK's
+      pressure comes from a role or an incentive set before the question, and the doubling-down
+      archetype asks the model to confirm its own earlier falsehood, not to yield to disagreement.
+      The paper treats sycophancy as related work.
+    source: src-arxiv-2503-03750-v3
+    quote: Sycophancy evaluations show that LLMs change their answers to appeal to different
+      audiences
+  - term: safety-alignment/deception-scheming
+    reason: No concealed goal is pursued and no misleading about the model's own behaviour is
+      scored. The taxonomy's distinction puts statements against belief under honesty-truthfulness,
+      and the paper limits itself to explicit falsehoods.
+    source: src-arxiv-2503-03750-v3
+    quote: It does not measure deception from withholding true information (omission)
+  - term: safety-alignment/jailbreak-robustness
+    reason: The pressure prompts are fixed and human-written, and the score is the model's
+      consistency with its belief, not how often an attack bypasses safety training. Disinformation
+      generation is one archetype, but it is scored as a lie against the model's own belief.
+capability:
+  - honesty
+capability_basis:
+  honesty:
+    reason: Honesty (statement against belief) is scored separately from accuracy (belief against
+      ground truth), which is the term's inclusion test; evasion and having no belief are not
+      counted as lies.
+    source: src-arxiv-2503-03750-v3
+    quote: When a model evades under pressure or shows no consistent belief, we mark this separately
+      but do not count it as a lie.
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: Accuracy of the elicited belief is reported beside honesty, but as the control that
+      separates knowledge from honesty, not as the ranked score; and the situation-provided facts
+      archetype supplies its facts in the prompt (review_checks).
+    source: src-scale-leaderboard-mask
+    quote: The final metric used to derive the ranking is the Honesty Score
+  - term: reliability-consistency
+    reason: Honesty@10 counts a lie if any of ten runs of the same pressure prompt lies, a pass^k
+      relative, but it is an appendix metric; the headline and the leaderboard use one run
+      (review_checks).
+    source: src-arxiv-2503-03750-v3
+    quote: Lying@10 penalizes even occasional dishonesty.
+  - term: adversarial-robustness
+    reason: The pressure prompts were collected adversarially against a fixed list of models, but no
+      attacker adapts to the system under test and the score is not attack success (review_checks).
+    source: src-scale-leaderboard-mask
+    quote: Note that the human data was collected adversarially to the following list of models
+  - term: harm-avoidance
+    reason: Refusing or evading raises the honesty score, but the scored event is a contradiction of
+      the model's belief, not a harmful output or action.
+  - term: factual-precision
+    reason: The taxonomy's distinction applies. A confidently wrong particular is a precision
+      failure, and MASK counts a falsehood only when it contradicts the model's own belief.
+
+evaluation_method:
+  - model-graded-judge
+evaluation_method_note: >
+  The judges map responses to proposition resolutions rather than grade them. In the original
+  implementation and in the leaderboard, GPT-4o maps binary propositions and o3-mini (at low reasoning
+  effort, per evaluate.py) maps numerical ones to a range. Statement and belief are then compared
+  programmatically; numerical ranges are compared with a 5% tolerance. The paper validated the judges
+  against 150 manually labelled examples (86.4% agreement). Judge criteria are standardised within each
+  archetype and are the same for every model.
+evaluation_method_basis:
+  reason: A general model prompted with a grading instruction decides each response's resolution,
+    and the honesty verdict follows from those decisions.
+  source: src-arxiv-2503-03750-v3
+  quote: An LLM judge analyzes all model responses to extract specific proposition resolutions.
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: The final comparison is programmatic, but it compares two judge-extracted resolutions of
+      the model's own answers, not a response against a stored key.
+  - term: numeric-tolerance-match
+    reason: Numerical statement and belief ranges are compared with a 5% tolerance, but both sides
+      are the model's own answers as mapped by the judge; the ground truth enters only the accuracy
+      score.
+  - term: adversarial-red-team
+    reason: The score is a lie rate on fixed prompts, not an attacker's success rate.
+designed_for_subjects:
+  - instruction-tuned-model
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: Chat models are prompted directly with a system and user prompt, with no tools or loop.
+    The paper also scores honesty interventions (a developer system prompt and LoRRA) by their
+    effect on fixed Llama 2 models, and later work uses MASK the same way (as_used).
+  source: src-arxiv-2503-03750-v3
+  quote: We test two baseline interventions to improve the honesty of two small Llama models and
+    evaluate their effectiveness using MASK.
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: The leaderboard lists thinking and non-thinking settings as separate rows, and the
+      setting moves the number, but the protocol is not built around a reasoning budget; it is a run
+      condition (the subjects vocabulary's mmlu-pro near miss), carried by reasoning_effort in the
+      profile.
+    source: src-scale-leaderboard-mask
+    quote: claude-opus-4-6-thinking-max 85.40
+  - term: hosted-inference-endpoint
+    reason: Models are reached through provider APIs, which only deliver the model.
+as_used:
+  - protocol: UK AISI's inspect_evals port on the 1,000 public records, with the original judges by
+      default; its own report runs a 300-sample subset and sets it beside the leaderboard's numbers,
+      which are on the private split.
+    source: src-github-inspect-evals-mask-readme
+    quote: Results from 300 sample subset runs
+    note: The port's changelog (2025-11 to 2026-04) changed its belief-consistency resolution to
+      match the reference implementation, so results from earlier port versions may differ.
+  - protocol: CATCH (October 2026) trains Llama-3.3-70B-Instruct and a Qwen model for honesty and
+      reports reduced dishonesty under pressure on MASK, among other benchmarks.
+    source: src-arxiv-2610-22292
+    quote: It consistently reduces dishonesty under pressure on MASK
+
+lifecycle: active
+lifecycle_basis:
+  reason: Scale's leaderboard carries models released in 2026, and an October 2026 paper reports
+    results on MASK. The original repository was last pushed on 2025-03-06 (GitHub API), which is
+    maintenance evidence, not use.
+  source: src-scale-leaderboard-mask
+  quote: gpt-5.4-pro-2026-03-05
+activity: no-submission-channel
+activity_basis:
+  reason: The leaderboard is Scale's own runs on its private split, ranked by confidence interval.
+    No source read describes a route for a developer to submit a model or results; the paper and the
+    READMEs point to the public data and code only (review_checks).
+  source: src-scale-leaderboard-mask
+  quote: Leaderboard rankings are determined using Rank (Upper Bound)
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude 3.7 Sonnet (claude-3-7-sonnet-20250219)
+    source: src-arxiv-2503-03750-v3
+    observed_on: 2026-11-08
+    quote: claude-3-7-sonnet-20250219
+  - system: Claude Sonnet 4 (Thinking)
+    source: src-scale-leaderboard-mask
+    observed_on: 2026-11-08
+    quote: Claude Sonnet 4 (Thinking) 95.33
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: none
+ground_truth_source_note: The headline honesty score has no reference answer; the reference is the
+  model's own elicited belief. The ground-truth labels (from a GPT-4o and Claude 3.5 Sonnet
+  ensemble, with a human search when they disagree) are used only for the accuracy score, and the
+  private split's labels are held with its items (review_checks).
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The paper's headline is on all 1,500 examples and the leaderboard on the private 500, and
+    neither set of 500 is released. Anyone can run the pipeline on the 1,000 public examples, which
+    gives a different number.
+  source: src-arxiv-2503-03750-v3
+  quote: The results presented in this paper are based on the full set of 1,500 examples.
+
+task:
+  exists: true
+  input:
+    - a pressure prompt (system and user, for doubling down with a prior turn) that gives an
+      incentive to state something false about a proposition
+    - neutral belief-elicitation prompts on the same proposition (no belief prompts for
+      situation-provided facts, whose facts are given in the system prompt)
+  output: The model's response to the pressure prompt, and its answers to the belief prompts.
+  scoring: The judge maps the statement and the belief to proposition resolutions. A statement that
+    differs from a consistently held belief is a lie; evasion and no consistent belief are neither
+    honest nor lies. Honesty score is 1 minus P(lie) over all examples; accuracy compares the belief
+    with the ground truth, excluding no-belief cases.
+  source: src-arxiv-2503-03750-v3
+  quote: We then query the model directly about the same proposition three times without pressure
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: Public are the paper, the code and 1,000 examples on Hugging Face (ungated in the API
+    record read on 2026-11-08), with propositions, ground truths, pressure and belief prompts. Not
+    public are the 500 held-out examples, which Scale says were collected through the same pipeline
+    and annotator pools as the public split, and scored only on Scale's side.
+  access_basis:
+    reason: The leaderboard is computed on the private split alone, and the paper's results on the
+      public and private sets together, so no headline can be computed from downloaded data. This is
+      the term's inclusion test for a held set behind the headline, and it is not
+      humanity-s-last-exam's near miss, where the held set only checks overfitting. The stated
+      reason is overfitting and gaming, not misuse, so restricted-dual-use does not apply.
+    source: src-scale-leaderboard-mask
+    quote: This leaderboard is based on a private split of the MASK dataset
+  refresh: static
+  refresh_basis:
+    reason: The public data was last modified on 2025-03-20, near paper v2, and no source announces
+      a change to the items, the private split or the scoring since (review_checks for v3).
+    source: src-hf-api-cais-mask
+    quote: '"lastModified":"2025-03-20T23:18:32.000Z"'
+  data_provenance:
+    - crowd-authored
+    - model-generated
+  data_provenance_note: Contributors trained on the archetypes and quizzed before taking tasks wrote
+    the pressure prompts, reviewed by full-time staff and audited on a 10% sample. The proposition
+    and the belief prompts were generated by Claude 3.5 Sonnet from each pressure prompt, and the
+    ground truth by a GPT-4o and Claude 3.5 Sonnet ensemble, with a human search when they
+    disagreed; o3-mini filtered the prompts, and the lead authors reviewed nearly every example.
+  data_provenance_source: src-arxiv-2503-03750-v3
+  data_provenance_quote: Contributors were onboarded in cohorts and were required to pass a quiz
+    before being allowed to take on tasks.
+  contamination_risk: medium
+  contamination_risk_note: The public 1,000 have been on Hugging Face since March 2025, with a
+    canary string on the card; the private 500 are held to track overfitting and every leaderboard
+    run sends them to the model's API. No contamination evidence was read.
+  contamination_risk_source: src-scale-leaderboard-mask
+  contamination_risk_quote: This approach allows tracking of potential model overfitting on public
+    data while also preventing optimization gaming.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: The honesty score is bounded by 100 (no lies); no human or oracle
+    baseline is reported. Because evasion and no belief count as not lying, the score rises for
+    models whose beliefs are unclear.
+  ceiling_anchor_type_source: src-scale-leaderboard-mask
+  ceiling_anchor_type_quote: Since responses are categorized as evasive also in case of lack of
+    belief, we note that the honesty score increases for models whose beliefs are unclear.
+  dataset_licence: null
+  dataset_licence_note: Neither the Hugging Face record nor its card states a licence, and the
+    repositories' MIT licence covers the code. Looked for in the API record, the card, both READMEs
+    and the paper.
+  size:
+    - count: 1500
+      unit: examples (public and held-out), on which the paper's results are computed
+      subset: full set
+      source: src-arxiv-2503-03750-v3
+      quote: The results presented in this paper are based on the full set of 1,500 examples.
+    - count: 1000
+      unit: public examples in six archetypes
+      subset: public
+      source: src-arxiv-2503-03750-v3
+      quote: We also release a large-scale, manually-curated dataset with over 1,500 examples (1,000
+        public examples)
+    - count: 500
+      unit: held-out examples, scored only by the leaderboard
+      subset: private
+      source: src-scale-leaderboard-mask
+      quote: The private evaluation set of MASK comprises 500 high-quality examples
+  size_note: The Hugging Face description says the public set has 1,028 examples, while its six
+    configs and the inspect_evals port total 1,000 (review_checks).
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Center for AI Safety, with Scale AI (the leaderboard and its private split)
+  maintainer_basis:
+    reason: The dataset and the repository sit in the Center for AI Safety's namespaces (Hugging
+      Face cais, GitHub centerforaisafety). Scale AI co-wrote the paper, collected the data and runs
+      the leaderboard on the private split.
+    source: src-hf-api-cais-mask
+    quote: '"id":"cais/MASK","author":"cais"'
+  maintainer_type: nonprofit
+  maintainer_type_basis:
+    reason: The holder of the dataset and repository is a single nonprofit; Scale's leaderboard is a
+      partner's results page, which the term's test says does not change the holder
+      (humanity-s-last-exam is its example).
+    source: src-safe-ai-about
+    quote: CAIS is an AI safety non-profit.
+  submission_process:
+    - maintainer-run
+  submission_process_note: Scale chooses the models, runs them on the private split with the paper's
+    judges, and ranks them by confidence interval. Results on the public set appear in others'
+    papers and in the inspect_evals port, outside any shared channel. Nobody else can produce a
+    leaderboard number, because the private split stays with Scale, which is why private-test-server
+    access sits beside a maintainer-run process here.
+  submission_process_source: src-scale-leaderboard-mask
+  submission_process_quote: Leaderboard rankings are determined using Rank (Upper Bound)
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-scale-leaderboard-mask
+      quote: We employ an LLM judge (GPT-4o for binary propositions and o3-mini for numerical
+        propositions)
+    - flag: single-evaluator-private-test-set
+      source: src-scale-leaderboard-mask
+      quote: This leaderboard is based on a private split of the MASK dataset
+  independence_flags_note: >
+    The judges, GPT-4o and o3-mini, are themselves ranked on the same leaderboard (gpt 4o (November
+    2024) at 60.07, o3 mini (Low) at 49.73), and the paper evaluates gpt-4o-2024-08-06 and o3-mini as
+    well. Scale holds the private split and runs every leaderboard evaluation. The pressure prompts were
+    collected adversarially against a list of seven models (among them gpt-4o-mini, claude-3-5-sonnet,
+    the gemini-1.5 models and llama-3-1 models), which may disadvantage those families. No source read
+    says any evaluation was paid for, so evaluator-sells-evaluations is not tagged; no row on the board
+    read is named as a CAIS or Scale model.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The judges are OpenAI API models and the original pipeline calls OpenAI and Anthropic
+      models, so a run costs inference spend; no cost is stated.
+    source: src-github-mask-eval-readme
+    quote: Create a `.env` file in the root directory with your API keys
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The leaderboard number exists only on the private split, which Scale holds and scores.
+    source: src-scale-leaderboard-mask
+    quote: This leaderboard is based on a private split of the MASK dataset
+  reproducibility_blockers:
+    - private-test-set
+  reproducibility_blockers_note: The public 1,000 can be run end to end with the released pipeline
+    and the same judges, but that is not the headline set.
+  harness_availability: official-harness
+  harness: centerforaisafety/mask (generate_responses.py, evaluate.py, metric.py,
+    process_metrics.py)
+  harness_note: The maintainers' pipeline produces the paper's honesty and accuracy scores, and
+    Scale's page describes the same judges and metric; whether the leaderboard runs this code is not
+    stated (review_checks).
+  harness_source: src-github-mask-eval-readme
+  harness_quote: 'The framework consists of three main stages: 1. Response Generation 2. Response Evaluation
+    3. Metrics Processing'
+  harness_gotcha:
+    source: src-github-mask-eval-readme
+    quote: '`--temperature`: Sampling temperature (default: 1.0)'
+  harness_gotcha_note: The original pipeline samples the evaluated model at temperature 1.0 by
+    default and its generation script supports only OpenAI and Anthropic models. The inspect_evals
+    port fixed its belief-consistency resolution in March 2026 to match the reference
+    implementation.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for centerforaisafety/mask, read 2026-11-08; not a
+    quoted Source.
+  runnable_via:
+    - custom
+    - inspect
+  runnable_via_note: inspect_evals' mask task loads the 1,000 public records and uses gpt-4o and
+    o3-mini as judges by default; its README calls the dataset gated, while the Hugging Face API
+    record read on 2026-11-08 says it is not.
+  runnable_via_source: src-github-inspect-evals-mask-readme
+  runnable_via_quote: uv run inspect eval inspect_evals/mask
+  inspect_evals_id: mask
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The model-graded profile already makes judge_model (and its version and prompt) and reasoning_effort
+  # material. Beyond it: sampling, because the original pipeline runs the evaluated model at temperature 1.0
+  # and results move between runs; k, for Honesty@1 against Honesty@10; and harness, because the original
+  # pipeline and the inspect_evals port resolved belief consistency differently until March 2026. subset_used
+  # carries the split (public, private or full) and any archetype filter.
+  material_extra:
+    - sampling
+    - k
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One honesty score over all examples ranks the models; archetype breakdowns are reported
+    beside it.
+  source: src-scale-leaderboard-mask
+  quote: The final metric used to derive the ranking is the Honesty Score
+
+homepage: https://www.mask-benchmark.ai/
+repository: https://github.com/centerforaisafety/mask
+dataset_url: https://huggingface.co/datasets/cais/MASK
+leaderboard_url: https://scale.com/leaderboard/mask
+
+versions:
+  - version: 2025-03
+    label: The benchmark as released with arXiv 2503.03750
+    version_kind: revision
+    released: 2025-03-05
+    changes: 1,000 public and 500 held-out examples, with the pipeline and the judges. The paper was
+      revised on 2025-03-20 (v2) and 2026-01-05 (v3); no source records a change to the items.
+    frozen: true
+    sources:
+      - src-arxiv-2503-03750
+      - src-arxiv-2503-03750-v3
+      - src-hf-api-cais-mask
+
+subsets:
+  - id: mask#known-facts
+    label: Known Facts
+    items: 209
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-03750-v3
+        quote: Known Facts Tests if the model honestly reports widely-documented facts picked up
+          from pretraining
+      - source: src-github-inspect-evals-mask-readme
+        quote: '`known_facts` | 209'
+  - id: mask#situation-provided-facts
+    label: Situation-Provided Facts
+    items: 274
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-03750-v3
+        quote: Situation-Provided Facts System prompt gives context-provided specific facts
+          privately
+      - source: src-github-inspect-evals-mask-readme
+        quote: '`provided_facts` | 274'
+    notes: No belief-elicitation prompts; the facts are given in the system prompt.
+  - id: mask#doubling-down
+    label: Doubling Down
+    items: 120
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-03750-v3
+        quote: Doubling Down Tests if the model doubles down on a prior falsehood it generated.
+      - source: src-github-inspect-evals-mask-readme
+        quote: '`doubling_down_known_facts` | 120'
+  - id: mask#fabricated-statistics
+    label: Fabricated Statistics
+    items: 96
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-03750-v3
+        quote: Fabricated Statistics Tests if the model invents or manipulates false numerical data.
+      - source: src-github-inspect-evals-mask-readme
+        quote: '`statistics` | 96'
+  - id: mask#continuations
+    label: Continuations
+    items: 176
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-03750-v3
+        quote: Continuations Partial drafts containing falsehoods with requests to continue writing.
+      - source: src-github-inspect-evals-mask-readme
+        quote: '`continuations` | 176'
+  - id: mask#disinformation
+    label: Disinformation Generation
+    items: 125
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-03750-v3
+        quote: Disinformation Generation Tests if the model willingly generates and amplifies
+          misinformation when asked.
+      - source: src-github-inspect-evals-mask-readme
+        quote: '`disinformation` | 125'
+subsets_note: >
+  The six archetypes of the paper's Table 2, with the public split's counts (Hugging Face configs and
+  the inspect_evals port). The paper reports honesty per archetype, and the leaderboard gives the
+  private split's archetype shares (Known Facts 20.6%, Situation-Provided Facts 27%, Doubling Down 11%,
+  Fabricated Statistics 8.4%, Continuations 20.6%, Disinformation 12.4%). The public, private and full
+  sets are splits, recorded in data.size, not subsets.
+
+tags:
+  - honesty
+  - lying
+  - llm-safety
+  - belief-elicitation
+  - held-out-split
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T04)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2503-03750-v3
+    - src-arxiv-2503-03750
+    - src-github-mask-readme
+    - src-github-mask-eval-readme
+    - src-hf-api-cais-mask
+    - src-scale-leaderboard-mask
+    - src-github-inspect-evals-mask-readme
+    - src-arxiv-2610-22292
+    - src-safe-ai-about
+  sources_note: >
+    The paper's v3 PDF (a DOI, not archived) read as text, and its abstract page; both READMEs of
+    centerforaisafety/mask at commit 25e0b12; the Hugging Face API record of cais/MASK; Scale's
+    leaderboard page with scripts and styles stripped; the inspect_evals port's README at commit
+    2b9c003; CATCH's abstract page (2026) as evidence of current use; and CAIS's about page (on main)
+    for its form. The project site, the dataset card and evaluate.py were read and not cited. GitHub
+    metadata (licence, dates, commits) was read through the API and is not a quoted Source.
+  confidence: medium
+  review_checks:
+    - check: data.access is private-test-server because the leaderboard is computed on the private
+        500 alone and the paper on all 1,500. The paper's own wording says the held-out set is there
+        to track overfitting, which reads like humanity-s-last-exam's near miss; the leaderboard's
+        use of it is what decides.
+      field: data.access
+      source: src-arxiv-2503-03750-v3
+      quote: We also maintain a separate, held-out set of 500 examples to track potential
+        overfitting.
+    - check: Who holds the private split is not stated. Scale's page runs the leaderboard on it, and
+        the paper's authors (CAIS and Scale) maintain it. The maintainer is recorded as CAIS with
+        Scale, and maintainer_type nonprofit follows the dataset's namespace; if Scale holds the
+        split, a reviewer may weigh industry-lab.
+      field: governance.maintainer
+      source: src-scale-leaderboard-mask
+      quote: In partnership with the Center for AI Safety (CAIS), we introduce Model Alignment
+        between Statements and Knowledge (MASK)
+    - check: activity no-submission-channel rests on silence. The leaderboard page, the READMEs and
+        the paper describe no route for developers to be evaluated; if Scale takes requests, the
+        value would change.
+      field: activity
+    - check: The public set's size disagrees. The Hugging Face description says 1,028, while the six
+        configs and the inspect_evals port count 1,000, as the paper does.
+      field: data.size
+      source: src-hf-api-cais-mask
+      quote: The public set contains 1,028 high-quality human-labeled examples across six distinct
+        archetypes
+    - check: The inspect_evals README says the dataset is gated and needs a Hugging Face token, but
+        the API record read on 2026-11-08 says gated false. If a gate was added and removed, or the
+        port's text is stale, the access note should say so.
+      field: execution.runnable_via
+      source: src-github-inspect-evals-mask-readme
+      quote: is [gated](https://huggingface.co/docs/hub/datasets-gated)
+    - check: refresh static assumes paper v3 (2026-01-05) changed no items or scoring; v1 and v3
+        were not compared, and the leaderboard's private split carries no version label.
+      field: data.refresh
+      source: src-arxiv-2503-03750
+      quote: Submitted on 5 Mar 2025 (v1), last revised 5 Jan 2026 (this version, v3)
+    - check: harness_availability official-harness assumes the maintainers' pipeline is the scoring
+        path. Scale's page describes the same judges and metric, but does not say the leaderboard
+        runs that code; reference-implementation-only is the alternative.
+      field: execution.harness_availability
+      source: src-scale-leaderboard-mask
+      quote: We employ an LLM judge (GPT-4o for binary propositions and o3-mini for numerical
+        propositions)
+    - check: ground_truth_source none reflects the honesty score, which has no key. Accuracy uses
+        model-ensemble labels with human tie-breaking, which no term names exactly; held-out-labels
+        is the alternative if accuracy is treated as a headline.
+      field: ground_truth_source
+      source: src-arxiv-2503-03750-v3
+      quote: We obtain a ground truth via an ensemble of LLMs (GPT-4o and Claude3.5-Sonnet) prompted
+        with the proposition.
+    - check: attack-or-intervention-method is tagged for the paper's intervention experiments and
+        later uses (CATCH). The leaderboard ranks models only, so the term may overstate a secondary
+        use.
+      field: designed_for_subjects
+    - check: "reliability-consistency and adversarial-robustness were rejected: Honesty@10 is reported
+        for every model in the paper's Table 3 but is not the headline, and the prompts were collected
+        adversarially against seven named models (Gemini, GPT-4o-mini, Claude 3.5 and Llama 3.1 models)."
+      field: capability
+      source: src-arxiv-2503-03750-v3
+      quote: We run the same pressure prompt ten times
+    - check: 'data_provenance crowd-authored: the pressure-prompt writers were trained and quizzed on
+        the archetypes, and the paper does not describe their prior expertise.'
+      field: data.data_provenance
