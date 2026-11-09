@@ -1,0 +1,720 @@
+# data/benchmarks/robotics-embodiment/nuplan.yaml
+#
+# P1-S5-T03, robotics-embodiment entry 21. Filled from the nuPlan benchmark paper, arXiv 2403.04133 read as its v1 PDF
+# (2024-03-07, ICRA 2024, with its supplementary material), and its abstract page; the abstract page of the first nuPlan
+# paper (arXiv 2106.11810, CVPR 2021 ADP3 workshop); the motional/nuplan-devkit repository's README, LICENSE.txt,
+# competition page and scoring document, pinned at commit e924167; EvalAI's API record of the nuPlan Planning
+# Challenge (challenge 1856); nuplan.org's nuPlan page and its dataset terms of use, each read as the script chunk that
+# renders it (robots.txt disallows nothing; nothing was registered, signed or accepted); the v2 PDF of the PDM paper
+# (arXiv 2306.07962, the 2023 challenge's winning team, which defines Val14) and the v1 PDF of PlanTF (arXiv
+# 2309.10443, which defines Test14); the abstract page of interPlan (arXiv 2404.07569); and three 2026 papers that
+# report nuPlan closed-loop scores: ExecDiffuser (arXiv 2610.36837, its v1 PDF), DriveZero (arXiv 2609.06055) and
+# DriveMLP (arXiv 2610.29676), their abstract pages. NAVSIM's fork row cites a Source of navsim.yaml. Every quote below
+# is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: nuplan
+name: nuPlan
+aliases:
+  - nuPlan Planning Challenge
+  - nuPlan benchmark
+  - Motional nuPlan
+aliases_note: >
+  The 2023 nuPlan Planning Challenge ran on this benchmark and is in `events`. Val14, Test14-random and
+  Test14-hard, the community's splits, are other groups' scenario selections scored with this benchmark's
+  devkit (as_used); NAVSIM, built on nuPlan's logs, and interPlan, other groups' benchmarks, are forks.
+tagline: Planners driven through about 1,300 hours of real logs, scored open-loop and in
+  non-reactive and reactive closed loop.
+description: >
+  Motional's benchmark and dataset for autonomous-vehicle motion planning. The dataset is about 1,300
+  hours of manually driven logs from Las Vegas, Boston, Pittsburgh and Singapore, auto-labelled offline
+  with object tracks, traffic-light states inferred from other vehicles' motion and 73 mined scenario
+  types, on human-annotated HD maps; 128 hours carry raw lidar and camera data. A planner receives the
+  ego state, the route, tracked agents and map information (current and 2 s past), and returns a trajectory
+  of at least 8 s every 0.1 s within a 1 s budget, over scenarios of up to 15 s. The devkit scores it
+  in three modes. Open-loop compares the planned trajectory with the human driver's. Closed-loop non-reactive
+  tracks it with an LQR controller and a kinematic bicycle model while the other agents replay their logs.
+  Closed-loop reactive does the same with vehicles driven by the Intelligent Driver Model. Each scenario's
+  closed-loop score multiplies penalties (at-fault collisions, drivable area, driving direction, making
+  progress) by a weighted average of time to collision, progress along the expert's route, speed-limit
+  compliance and comfort, in [0, 1]. The 2023 nuPlan Planning Challenge (CVPR 2023) took Docker images
+  on EvalAI, ran them on a hidden test set over 14 scenario types and ranked by the mean of the three
+  modes. The leaderboard closed after the challenge; since then results are computed locally with the
+  devkit on the public splits, most often other groups' Val14 and Test14 selections in the two closed-loop
+  modes.
+self_description:
+  source: src-arxiv-2403-04133-v1
+  quote: The benchmark is designed to test the ability of ML-based planners to handle diverse
+    driving situations and to make safe and efficient decisions.
+external_ids:
+  arxiv: '2106.11810'
+external_ids_note: The devkit's README asks users to cite the 2021 paper (arXiv 2106.11810), which
+  announced the benchmark before release; `paper` is the 2024 paper that documents the released
+  benchmark and its challenge.
+paper:
+  title: 'Towards learning-based planning: The nuPlan benchmark for real-world autonomous driving'
+  arxiv: '2403.04133'
+  version_read: v1
+  source: src-arxiv-2403-04133-v1
+released: 2021-12-10
+released_note: The teaser dataset (v0.1, over 200 hours from Las Vegas) and devkit v0.1, the first
+  public release. The full dataset followed on 2022-06-10 (v1.0) and its revision on 2022-10-13
+  (v1.1); devkit v1.1, "The official nuPlan Challenge Release", on 2023-01-20 (see versions). The
+  benchmark was announced in June 2021 (arXiv 2106.11810 v1, 2021-06-22).
+released_source: src-github-nuplan-devkit-readme
+released_quote: '- Dec 10 2021 * v0.1 Dataset'
+release_venue: CVPR 2021 ADP3 workshop (the announcement paper); ICRA 2024 (the benchmark paper)
+release_venue_source: src-github-nuplan-devkit-readme
+release_venue_quote: booktitle={CVPR ADP3 workshop},
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/autonomous-driving-planning
+  secondary: []
+domain_basis:
+  reason: The entrant is a driving planner and the score is the driving outcome of its trajectories
+    -- at-fault collisions, drivable-area and driving-direction compliance, progress, speed limits,
+    comfort -- not perception accuracy, which is the leaf's definition. The family's inclusion test
+    asks for an outcome produced by embodied action, here driving a simulated vehicle in closed loop
+    through real logged scenes.
+  source: src-arxiv-2106-11810
+  quote: we propose the world's first closed-loop ML-based planning benchmark for autonomous
+    driving.
+domain_considered_and_rejected:
+  - term: robotics-embodiment/navigation
+    reason: The ego follows a given route towards a mission goal, but the subject is driving among
+      traffic and the score counts traffic-rule compliance and comfort; the driving leaf is the
+      narrower fit, as for CARLA.
+  - term: vision/driving-perception-3d
+    reason: The dataset carries lidar and camera data and auto-labelled 3D tracks, but planners
+      receive tracked objects and nothing perceptual is scored.
+    source: src-github-nuplan-devkit-competition
+    quote: that includes ego pose, ego route, agents, and static/dynamic map information.
+
+capability:
+  - planning
+  - sensorimotor-control
+capability_basis:
+  planning:
+    reason: The entrant outputs a planned trajectory, which the open-loop mode scores directly
+      against the human driver's and the closed-loop modes hand to the benchmark's own controller;
+      the benchmark's claim is planning.
+    source: src-arxiv-2403-04133-v1
+    quote: To assert kinematic feasibility and prevent users from cheating, we require the use of a
+      controller.
+  sensorimotor-control:
+    reason: In the two closed-loop modes, which carry the community's results, the planner is
+      queried again every 0.1 s on the state its earlier trajectories produced, and in the reactive
+      mode the other vehicles respond to the ego. The score is that driven behaviour, so the loop is
+      closed through the entrant, unlike NAVSIM's single query (see review_checks).
+    source: src-github-nuplan-devkit-competition
+    quote: The simulation horizon will be up to 15s for each scenario and the simulation frequency
+      will be 10Hz.
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: The paper studies covariate shift in closed loop and city transfer (training on Las
+      Vegas, testing elsewhere), but these are experiments, not scored conditions; the benchmark's
+      splits are stratified across days, cities and scenarios.
+    source: src-arxiv-2403-04133-v1
+    quote: to minimize temporal data leakage, data from the same day and city is not shared across
+      splits.
+  - term: perception
+    reason: Planners are given auto-labelled object tracks and map data; the released sensor data is
+      optional input and nothing perceptual is scored.
+  - term: long-horizon-execution
+    reason: Scenarios last up to 15 s, and a planner can recover from a poor step; no failure makes
+      later success unattainable beyond the per-scenario multipliers.
+
+evaluation_method:
+  - simulation-rollout
+  - domain-metric
+  - composite
+evaluation_method_basis:
+  reason: Each closed-loop scenario is a simulated episode scored on a bounded scale, with penalties
+    that can zero it times a weighted average of graded sub-scores, as CARLA's driving score is
+    (simulation-rollout). The open-loop mode scores displacement and heading errors and the miss
+    rate against the logged expert trajectory within bounds, motion-planning measures
+    (domain-metric). The challenge ranked the mean of the three modes' scores (composite).
+  source: src-github-nuplan-devkit-competition
+  quote: The submissions are ranked based on the mean overall score across all three challenges.
+evaluation_method_considered_and_rejected:
+  - term: constraint-check
+    reason: The multiplier metrics (at-fault collision, drivable area, driving direction, making
+      progress) invalidate a scenario, but they are judged on the simulated execution, which the
+      term excludes; simulation-rollout carries them.
+    source: src-github-nuplan-devkit-metrics-aggregation
+    quote: there is an at_fault collision with a vehicle or a VRU (pedestrian or bicyclist), or
+  - term: reference-metric
+    reason: The open-loop errors compare a trajectory with a reference, but they are
+      driving-specific displacement and heading measures, not a general similarity statistic.
+designed_for_subjects:
+  - rl-policy
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The benchmark targets ML-based planners, mostly trained by imitation on nuPlan's logs (the
+    Urban Driver baseline; the diffusion and transformer planners of 2026), scored by acting in
+    closed loop, which subjects.yaml calls rl-policy (as for CARLA). Rule-based planners are entered
+    beside them -- the IDM baseline, PDM-Closed in the 2026 tables -- and the 2023 challenge's best
+    closed-loop planner was mostly rule-based, which is classical-algorithm.
+  source: src-arxiv-2403-04133-v1
+  quote: It is evident that sufficiently sophisticated rule-based planners still outperform purely
+    learned planners in closed-loop settings.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The open-loop mode scores learned planners on logged data without acting, which is this
+      term, but the closed-loop modes, which carry the headline use, have them act in simulation.
+    source: src-arxiv-2403-04133-v1
+    quote: We train the model using imitation learning to match expert trajectories available in the
+      nuPlan dataset.
+as_used:
+  - protocol: Val14, the PDM paper's split, run locally with the devkit in the two closed-loop modes
+      (CLS-NR and CLS-R). It takes 100 scenarios of each of the challenge's 14 scenario types from
+      nuPlan's validation split (1,118 in all), offered as a proxy for the hidden challenge test
+      set.
+    split: Val14 (validation split)
+    source: src-arxiv-2306-07962-v2
+    quote: For evaluation, we use 100 scenarios of the 14 scenario types considered by the
+      leaderboard, totaling 1,118 scenarios.
+    note: The open-loop score is mostly dropped in 2026 papers, which report the two closed-loop
+      modes and often the mean over several seeds (five in ExecDiffuser).
+  - protocol: Test14-random and Test14-hard, the PlanTF paper's splits, run locally on nuPlan's
+      public test split in both closed-loop modes; 20 scenarios of each of the 14 types, drawn at
+      random, or the 20 a rule-based planner (PDM-Closed) did worst on out of 100.
+    split: Test14-random, Test14-hard (test split)
+    source: src-arxiv-2309-10443-v1
+    quote: we employ 14 scenario types specified by the nuPlan Planning Challenge, each comprising
+      20 scenarios.
+    note: A 2026 paper calls Val14, Test14-hard and Test14-random "community splits"
+      (src-arxiv-2609-06055).
+  - protocol: Val14, Test14-hard and Test14 in non-reactive and reactive closed-loop simulation,
+      beside interPlan, under a five-seed protocol.
+    split: Val14, Test14-hard, Test14
+    source: src-arxiv-2610-36837-v1
+    quote: We evaluate nuPlan [24] Val14, Test14-hard, and Test14 under non-reactive (NR) and
+      reactive (R) closed-loop simulation
+    note: ExecDiffuser (October 2026), the newest paper read; its Table I quotes other papers'
+      numbers beside its own reproduced baselines.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on the instrument. Papers in September and October 2026 report
+    nuPlan closed-loop scores on Val14 and Test14 (ExecDiffuser, DriveMLP, DriveZero). The
+    challenge's ending and the closed leaderboard are recorded in activity (ADR-0019).
+  source: src-arxiv-2610-36837-v1
+  quote: ExecDiffuser achieves the best overall performance across the six nuPlan settings, with an
+    average score of 85.62
+activity: closed
+activity_note: EvalAI's record keeps the challenge's end date at 2025-11-15, but papers from 2023
+  already describe the leaderboard as closed ("due to the closure of the leaderboard",
+  src-arxiv-2306-07962-v2). Either way no route for submitting results is open now; local evaluation
+  with the devkit produces results but no leaderboard entry. No later round is announced in the
+  sources read.
+activity_basis:
+  reason: The only route for official results was the EvalAI challenge, whose record is inactive and
+    frozen, with an end date that has passed.
+  source: src-evalai-nuplan-challenge-1856
+  quote: '"is_frozen":true'
+events:
+  - name: nuPlan Planning Challenge 2023 (End-to-End Autonomous Driving workshop, CVPR 2023)
+    kind: online-challenge    # Docker images run on EvalAI against a hidden test set; three modes, prizes
+    source: src-github-nuplan-devkit-competition
+    quote: January 30th, 2023 - Warm-up phase and Test phase opens for submission
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: ExecDiffuser (diffusion planner)
+    source: src-arxiv-2610-36837-v1
+    observed_on: 2026-11-05
+    quote: ExecDiffuser achieves the best overall performance across the six nuPlan settings, with
+      an average score of 85.62
+  - system: DriveMLP (imitation-learned planner)
+    source: src-arxiv-2610-29676
+    observed_on: 2026-11-05
+    quote: It achieves a score of 86.51 on the nuPlan Val14 Reactive benchmark
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The closed-loop sub-scores are computed by the devkit from the simulated
+  drive against the scene's map, its auto-labelled agents (replayed or IDM-driven) and the inferred
+  traffic lights; progress is normalised by the logged expert's. The open-loop mode compares the
+  planned trajectory with the logged human trajectory.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The dataset, including the test split's logs and labels, and the devkit are public (after
+    registration), and since the leaderboard closed the field's results are computed that way. The
+    2023 challenge's scores on the hidden test set cannot be reproduced.
+  source: src-arxiv-2309-10443-v1
+  quote: As the online leaderboard submission is closed, all evaluations are conducted on the nuPlan
+    public test set.
+
+task:
+  exists: true
+  input:
+    - the ego pose and its 2 s history, the route to the mission goal, the tracked agents and
+      objects (vehicles, pedestrians, cyclists, cones, barriers, signs, generic objects), and the
+      static and dynamic map, including traffic-light states, at each 0.1 s iteration
+    - optionally lidar and camera data, released for 128 hours of the logs
+  output: A trajectory of at least 8 s of rear-axle poses (x, y, heading, time) in the global frame,
+    every iteration within a 1 s budget. In the closed-loop modes an LQR tracker and a kinematic
+    bicycle model propagate the ego along it for the next step.
+  scoring: Per scenario, closed-loop (CLS-NR, CLS-R) = the product of no at-fault collisions (0,
+    0.5, 1), drivable-area compliance, driving-direction compliance (0, 0.5, 1) and making progress,
+    times the weighted average of time to collision (5), progress along the expert's route (5),
+    speed-limit compliance (4) and comfort (2). Open-loop (OLS) = miss rate within bound times the
+    weighted average of ADE, FDE, AHE and FHE within bound, over 3, 5 and 8 s horizons. Each mode's
+    score is the mean over scenarios; the challenge ranked the mean of the three.
+  metric_range:
+    - 0
+    - 1
+  source: src-github-nuplan-devkit-metrics-aggregation
+  quote: A planner is assigned a score between 0 and 1 based on its performance in multiple
+    scenarios.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: gated-registration
+  access_note: >
+    The logs, labels, maps and sensor data, test split included, are downloaded from nuscenes.org after
+    signing up and accepting Motional's terms, which put the datasets under CC BY-NC-SA 4.0 with additional
+    terms; nothing was registered or accepted for this entry. The 2023 challenge instead scored a hidden
+    test set on Motional's server ("against the hidden test set of the challenge", src-github-nuplan-devkit-competition),
+    which was private-test-server for that round; it is closed, and the community splits are drawn from
+    the released validation and test data.
+  access_basis:
+    reason: The data behind current results is released, but every official copy needs an account
+      and acceptance of the terms.
+    source: src-github-nuplan-devkit-competition
+    quote: Sign up and download the dataset from
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The dataset changes in labelled releases (v0.1 teaser, v0.2, v1.0, v1.1) and the devkit
+      in its own (v0.1 to v1.2.2), the challenge naming the devkit version it used.
+    source: src-github-nuplan-devkit-readme
+    quote: 'v1.1 Devkit: The official nuPlan Challenge Release.'
+  data_provenance:
+    - real-world-instrument
+    - model-generated
+  data_provenance_note: The logs are recorded by Motional's vehicles driven manually ("All data is
+    collected via manual driving to get suitable ground-truth for imitation learning",
+    src-nuplan-org-nuplan). The object tracks are produced by an offline perception network, and the
+    traffic-light states are inferred from the tracked vehicles' motion ("Instead we use a
+    machine-learning based system to autolabel the data", src-nuplan-org-nuplan); the HD maps are
+    human-annotated.
+  data_provenance_source: src-arxiv-2403-04133-v1
+  data_provenance_quote: We develop techniques to auto-label the dataset with accurate object
+    tracks, traffic lights, and scenario labels.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The validation and test splits, from which Val14 and Test14 are drawn, are released with their labels,
+    so a route for training on the scored scenarios exists; the papers read train on the training split,
+    but no source checks it. The splits share map areas but not days. The 2023 challenge's hidden test
+    set had no such route.
+  contamination_risk_source: src-arxiv-2403-04133-v1
+  contamination_risk_quote: to minimize temporal data leakage, data from the same day and city is
+    not shared across splits.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: Every multiplier and weighted sub-score lies in [0, 1], so each mode's
+    score is bounded at 1 (reported as 100 in most papers). The logged human driver is built into
+    the progress metric and the open-loop errors, and is not a ceiling. The challenge's best overall
+    score was 0.895.
+  ceiling_anchor_type_basis:
+    reason: The metric's own bound.
+    source: src-github-nuplan-devkit-metrics-aggregation
+    quote: A planner is assigned a score between 0 and 1 based on its performance in multiple
+      scenarios.
+  dataset_licence: CC-BY-NC-SA-4.0
+  dataset_licence_note: The terms of use for Motional's datasets (nuScenes, nuPlan and others) put
+    them under CC BY-NC-SA 4.0 "with the additional terms included herein", for non-commercial use,
+    unless labelled otherwise; a separate commercial licence exists. Read from the public page only.
+  dataset_licence_source: src-nuplan-org-terms-noncommercial
+  dataset_licence_quote: these Datasets are provided to You under a Creative Commons
+    Attribution-NonCommercial-ShareAlike 4.0 International Public License
+  size:
+    - count: 1300
+      unit: hours of driving data (over 1,300; 15,000+ logs), from 4 cities
+      subset: dataset v1.0 and v1.1
+      source: src-github-nuplan-devkit-readme
+      quote: '- Jun 10 2022 * v1.0 Dataset: Full nuPlan dataset release with over 1,300 hours of driving
+        data (15,000+ logs) across 4 cities'
+    - count: 1282
+      unit: hours of driving data, as the 2024 paper counts them
+      subset: dataset
+      source: src-arxiv-2403-04133-v1
+      quote: In total, we have 1282 hours of challenging and real-world driving scenarios.
+    - count: 128
+      unit: hours with released lidar and camera data
+      subset: sensor data
+      source: src-arxiv-2403-04133-v1
+      quote: we only release a subset of the sensor data which totals 128 hours
+    - count: 73
+      unit: mined scenario types
+      subset: dataset
+      source: src-arxiv-2403-04133-v1
+      quote: In total, we have 73 unique scenario types.
+    - count: 14
+      unit: scenario types scored in the 2023 challenge
+      subset: nuPlan Planning Challenge 2023
+      source: src-arxiv-2403-04133-v1
+      quote: The details and parameters of the 14 scenarios that were used to grade the nuPlan
+        planning challenge can be found in Tab. XII.
+  size_note: The 2021 paper planned 1,500 hours ("We provide a high-quality dataset with 1500h of
+    human driving data", src-arxiv-2106-11810) and nuplan.org's page still says 1,200 hours; the
+    README's "over 1,300" is the headline.
+  submission_limit:
+    max_submissions: 3
+    period_days: 0
+    per: participant, for the whole 2023 challenge (test phase); the warm-up phase allowed 10
+    source: src-github-nuplan-devkit-competition
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Motional (Motional AD Inc.)
+  maintainer_basis:
+    reason: Motional holds the dataset, its terms and the devkit repository (motional/nuplan-devkit,
+      copyright Motional), and conducted the challenge.
+    source: src-evalai-nuplan-challenge-1856
+    quote: which is conducted by Motional AD Inc. and its affiliates
+  maintainer_type: industry-lab
+  maintainer_type_note: The holder is Motional AD Inc., a company (an "Inc."), which also names its
+    robotaxi routes as the source of the Las Vegas logs; the type rests on that legal form as the
+    sources state it.
+  submission_process:
+    - containerized-algorithm-submission
+    - maintainer-verified
+  submission_process_note: >
+    In the 2023 challenge entrants pushed a Docker image to EvalAI, which ran it in each of the three
+    modes against the hidden test set and posted the scores to a public leaderboard, three test-phase
+    submissions per participant. Finalists were invited to share their code, and the organisers verified
+    their submissions before the winners were confirmed; obfuscated code was excluded from the prizes.
+    Since the leaderboard closed, results are self-reported in papers from local runs (as_used).
+  submission_process_source: src-github-nuplan-devkit-competition
+  submission_process_quote: The code will be submitted in the form of a Docker image and will be
+    executed for each of the challenge modes
+  independence_flags:
+    - flag: single-evaluator-private-test-set
+      source: src-github-nuplan-devkit-competition
+      quote: against the hidden test set of the challenge.
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2306-07962-v2
+      quote: Note that the Urban Driver and IDM results on the leaderboard are provided by the
+        nuPlan team
+    - flag: prize-sponsored-by-industry
+      source: src-github-nuplan-devkit-competition
+      quote: '1st place: USD $10,000'
+  independence_flags_note: >
+    The hidden test set was held and run by Motional for the 2023 challenge only; the standing public
+    splits are not. Motional's own baselines (Urban Driver, IDM) sat on the leaderboard, while its employees
+    were barred from competing ("a current employee, intern, contractor, officer, or director of Motional
+    or their affiliates", src-evalai-nuplan-challenge-1856). The prizes (USD 10,000, 8,000 and 5,000,
+    a USD 5,000 Innovation Prize judged by Motional experts, and internship consideration) were offered
+    under the terms of the competition Motional AD Inc. conducted; that Motional itself paid them is the
+    reading of those terms, not a sentence of them.
+  independence_assessed: true
+  participation:
+    source: src-arxiv-2306-07962-v2
+    quote: The 2023 nuPlan challenge saw the preliminary (graph) version of PDM-Hybrid rank first
+      out of 25 participating teams.
+  known_limitation:
+    source: src-arxiv-2403-04133-v1
+    quote: Our scoring heuristic described above is an initial proposal that accounts for the
+      natural importance of each metric and is hand-tuned for our dataset and simulation framework.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs the devkit's simulation (and the dataset and maps), now on the
+    entrant's own machine. In the 2023 challenge the organisers ran each image on EvalAI (a
+    submission container with 1 GPU, 8 vCPUs and 32 GB beside a CPU-only simulation container),
+    which was provided-allocation for that round only; the 1 s per-iteration budget made the
+    planner's hardware material there.
+  compute_tier_source: src-github-nuplan-devkit-competition
+  compute_tier_quote: 'SubmissionContainer: 1GPU, 8vCPU, 32GB RAM'
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run on the public splits is automatic, but the score is defined only inside the
+      devkit's simulation (its controller, IDM agents and metrics) at a given version. The 2023
+      challenge's leaderboard scores rest on the hidden test set and cannot be reproduced
+      (private-test-set).
+    source: src-arxiv-2403-04133-v1
+    quote: We implement a Linear Quadratic Regulator (LQR) [72], [73] as the tracker.
+  reproducibility_blockers:
+    - specific-simulator-build
+    - private-test-set
+  reproducibility_blockers_note: >
+    The simulator is the devkit: an LQR tracker and a kinematic bicycle model propagate the ego at 10
+    Hz, other agents replay their logs or, in the reactive mode, follow the Intelligent Driver Model (vehicles
+    only; pedestrians and cyclists replay), on dataset v1.1 and its maps. The challenge was released with
+    devkit v1.1 and moved to v1.2 (2023-04-25, with hydra, numpy and sqlalchemy pinned), then v1.2.2;
+    no tagged release followed, and the papers read do not state which devkit version they ran. private-test-set
+    applies to the 2023 challenge's hidden test set only.
+  reproducibility_blockers_source: src-github-nuplan-devkit-readme
+  reproducibility_blockers_quote: The Planning Challenge will be using devkit version 1.2 from now
+    on.
+  harness_availability: official-harness
+  harness: motional/nuplan-devkit (nuplan.planning simulation, metrics and nuBoard; the submission
+    engine in nuplan/submission for the challenge)
+  harness_source: src-github-nuplan-devkit-metrics-aggregation
+  harness_quote: the driven trajectory scores in these N scenarios are averaged to score the
+    planner.
+  submission_channel:
+    source: src-evalai-nuplan-challenge-1856
+    quote: '"start_date":"2023-01-30T00:00:00Z","end_date":"2025-11-15T07:59:59Z"'
+  submission_channel_note: EvalAI challenge 1856 (warm-up and test phases), now inactive and frozen;
+    see history.
+  code_licence: Apache-2.0
+  code_licence_source: src-github-nuplan-devkit-licence
+  code_licence_quote: Licensed under the Apache License, Version 2.0
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The simulation profile resolves (simulation-rollout x rl-policy or classical-algorithm): simulator,
+  # simulator_version, hardware_platform, subset_used, selection_strategy, n_samples. simulator and simulator_version
+  # are listed again to make the devkit explicit: the score is defined inside the nuplan-devkit's simulation at a
+  # version (v1.1 for the challenge's release, v1.2 from April 2023, v1.2.2 last; quoted in
+  # reproducibility_blockers_quote) on dataset v1.1. subset_used records the mode (open-loop, closed-loop
+  # non-reactive, closed-loop reactive) and the split (Val14, Test14-random, Test14-hard, the challenge's hidden
+  # test set, interPlan's scenarios), and n_samples the seeds averaged. training_data_policy: what the planner
+  # trained on (the training split, how many scenarios per type, other data).
+  material_extra:
+    - simulator
+    - simulator_version
+    - training_data_policy
+
+homepage: https://www.nuplan.org/
+repository: https://github.com/motional/nuplan-devkit
+leaderboard_url: https://eval.ai/web/challenges/challenge-page/1856/leaderboard/4360
+
+versions:
+  - version: v0.1
+    label: nuPlan teaser dataset v0.1 (and v0.2) with devkit v0.1
+    version_kind: edition
+    released: 2021-12-10
+    changes: Over 200 hours (350+ logs) from Las Vegas only, with the first devkit. v0.2
+      (2021-12-19) fixed bugs in the teaser dataset.
+    breaking: true
+    superseded_by: v1.0
+    frozen: true
+    sources:
+      - src-github-nuplan-devkit-readme
+      - src-nuplan-org-nuplan
+  - version: v1.0
+    label: nuPlan dataset v1.0 (devkit v0.2 to v0.6)
+    version_kind: edition
+    released: 2022-06-10
+    changes: The full dataset, over 1,300 hours (15,000+ logs) across Las Vegas, Pittsburgh, Boston
+      and Singapore. Devkit releases through September 2022 added the submission pipeline, smart
+      agents and metrics changes.
+    breaking: true
+    supersedes_version: v0.1
+    superseded_by: v1.1
+    frozen: true
+    sources:
+      - src-github-nuplan-devkit-readme
+  - version: v1.1
+    label: nuPlan dataset v1.1 (devkit v1.0 to v1.2.2), the 2023 challenge's release
+    version_kind: revision
+    released: 2022-10-13
+    changes: The same logs with an improved route plan, traffic-light status and mission goal;
+      devkit v1.0 adapted to it. Devkit v1.1 (2023-01-20) was the official challenge release, v1.2
+      (2023-04-25) released the sensor data for v1.1 and pinned packages, and the challenge used it
+      from then on; v1.2.2 (2023-05-11) updated the submission images. The sensor data was to be
+      released gradually.
+    breaking: true
+    supersedes_version: v1.0
+    frozen: false
+    sources:
+      - src-github-nuplan-devkit-readme
+      - src-github-nuplan-devkit-competition
+      - src-arxiv-2403-04133-v1
+
+subsets:
+  - id: nuplan#open-loop
+    label: Challenge 1, open-loop (OLS)
+    scored_separately: true
+    evidence:
+      - source: src-github-nuplan-devkit-competition
+        quote: 'Challenge 1: Open-loop'
+      - source: src-github-nuplan-devkit-competition
+        quote: In this challenge, the planning system is tasked with imitating the expert driver in
+          open-loop.
+    notes: The planned trajectory is compared with the logged one and never executed. Rarely
+      reported after the challenge.
+  - id: nuplan#closed-loop-non-reactive
+    label: Challenge 2, closed-loop with non-reactive agents (CLS-NR)
+    scored_separately: true
+    evidence:
+      - source: src-github-nuplan-devkit-competition
+        quote: 'Challenge 2: Closed-loop non-reactive agents'
+      - source: src-github-nuplan-devkit-competition
+        quote: Nonetheless, the other agents are replayed from a log according to their observed
+          states in open-loop - hence, the name non-reactive.
+    notes: The ego is propagated by the LQR tracker along the planner's trajectory; other agents
+      replay their logs.
+  - id: nuplan#closed-loop-reactive
+    label: Challenge 3, closed-loop with reactive agents (CLS-R)
+    scored_separately: true
+    evidence:
+      - source: src-github-nuplan-devkit-competition
+        quote: 'Challenge 3: Closed-loop reactive agents'
+      - source: src-github-nuplan-devkit-competition
+        quote: In the final and most complex challenge, the vehicles in the scene become reactive.
+    notes: Vehicles follow the Intelligent Driver Model; pedestrians and other objects replay their
+      logs. Computed identically to CLS-NR ("they differ in background traffic behavior",
+      src-arxiv-2306-07962-v2).
+
+lineage:
+  role: root
+  forks:
+    # Other groups' benchmarks derived from nuPlan, with their own scenarios, metrics or simulation, maintained apart
+    # from Motional.
+    - id: navsim
+      maintainer: Autonomous Vision Group, University of Tübingen, with co-authors (see navsim.yaml)
+      source: src-github-navsim-splits
+      quote: Corresponds to nuPlan and downsampled to 2HZ.
+    - id: interplan
+      maintainer: The interPlan authors (arXiv 2404.07569)
+      source: src-arxiv-2404-07569
+      quote: we propose a novel closed-loop benchmark interPlan containing several edge cases and
+        challenging driving scenarios.
+lineage_note: Val14 and Test14 are not forks here, as they are scenario lists over nuPlan's own
+  validation and test splits, scored unchanged with the devkit's modes and metrics, so they are
+  recorded as protocols (as_used). interPlan is a separate closed-loop benchmark of edge cases,
+  proposed because nuPlan "mostly covers basic driving scenarios" (src-arxiv-2404-07569); only its
+  abstract was read, and that it reuses nuPlan's logs and simulation, as the 2026 papers that report
+  both imply, is not stated there. Other nuPlan-based benchmarks seen in arXiv listings were not
+  read or linked.
+
+history:
+  - date: 2023-01-30
+    event: channel-opened
+    field: execution.submission_channel
+    to: EvalAI challenge 1856 (nuPlan Planning Challenge)
+    source: src-github-nuplan-devkit-competition
+    quote: January 30th, 2023 - Warm-up phase and Test phase opens for submission
+  - date: 2023-05-26
+    event: channel-closed
+    field: execution.submission_channel
+    from: EvalAI challenge 1856
+    source: src-github-nuplan-devkit-competition
+    quote: May 26th, 2023 - Competition closes
+    note: The deadline as extended in devkit v1.2.1. EvalAI's record keeps the challenge's end date
+      at 2025-11-15 and is now inactive and frozen; PlanTF (September 2023) and PDM's November 2023
+      version describe the leaderboard as closed ("As the online leaderboard submission is closed",
+      src-arxiv-2309-10443-v1).
+
+tags:
+  - autonomous-driving
+  - motion-planning
+  - closed-loop
+  - simulation
+  - nuplan
+  - competition
+  - real-world-logs
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T03)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2403-04133-v1
+    - src-arxiv-2403-04133
+    - src-arxiv-2106-11810
+    - src-github-nuplan-devkit-readme
+    - src-github-nuplan-devkit-licence
+    - src-github-nuplan-devkit-competition
+    - src-github-nuplan-devkit-metrics-aggregation
+    - src-evalai-nuplan-challenge-1856
+    - src-nuplan-org-nuplan
+    - src-nuplan-org-terms-noncommercial
+    - src-arxiv-2306-07962-v2
+    - src-arxiv-2309-10443-v1
+    - src-arxiv-2404-07569
+    - src-arxiv-2610-36837-v1
+    - src-arxiv-2609-06055
+    - src-arxiv-2610-29676
+    - src-github-navsim-splits
+  sources_note: >
+    The 2024 paper's PDF and four arXiv PDFs or abstract pages of others' work (DOIs, not archived); the
+    2021 paper's abstract page; four devkit files at commit e924167; EvalAI's public API record of the
+    challenge, withheld from archiving for the creator's personal handle; nuplan.org's two pages as the
+    script chunks that render them; and three 2026 papers as evidence of current use. Nothing behind the
+    dataset's registration was read, and no terms were accepted.
+  confidence: medium
+  review_checks:
+    - check: Capability. planning and sensorimotor-control are both tagged. sensorimotor-control's
+        tie-break sends a trajectory tracked by the benchmark's own controller in a non-reactive
+        simulation to planning, which describes the CLS-NR mode literally; but nuPlan re-queries the
+        planner every 0.1 s on the state it produced, and the reactive mode closes the loop through
+        other vehicles too. A reviewer may keep planning only.
+      field: capability
+      source: src-github-nuplan-devkit-competition
+      quote: Each planner will have a fixed time budget of 1s for each simulation iteration, after
+        which the simulation will time out.
+    - check: evaluation_method adds domain-metric and composite for the open-loop mode and the
+        challenge's mean of the three modes, beside simulation-rollout; current papers report the
+        closed-loop modes only, so simulation-rollout alone may be the better reading.
+      field: evaluation_method
+    - check: Val14 and Test14 are recorded as as_used protocols, not forks, because they are
+        scenario lists over nuPlan's own splits scored unchanged; 04 S4's "independently versioned
+        and cited" could make them separate benchmarks, especially Test14-hard, whose selection
+        depends on a planner (PDM-Closed). interPlan is a fork on its abstract alone.
+      field: lineage
+      source: src-arxiv-2609-06055
+      quote: across the Val14, Test14-hard, and Test14-random community splits in both non-reactive
+        and reactive modes
+    - check: Versions. The dataset releases are modelled (v0.1 and v1.0 editions, v1.1 a revision of
+        the same logs) and the devkit versions are a condition (simulator_version). v1.1 is unfrozen
+        because the sensor data was to be released gradually; whether it completed was not checked.
+        The devkit version used by 2026 papers is not stated in any source read.
+      field: versions
+      source: src-github-nuplan-devkit-readme
+      quote: Submissions generated from version v1.1 should remain compatible.
+    - check: activity is closed. EvalAI's record ends on 2025-11-15 (inactive, frozen), but the PDM
+        and PlanTF papers describe the leaderboard as closed in 2023. When submissions actually
+        stopped, between 2023-05-26 and 2025-11-15, is unclear; the history's closing date follows
+        the competition page.
+      field: activity
+      source: src-arxiv-2306-07962-v2
+      quote: Unfortunately, due to the closure of the leaderboard
+    - check: data.access is gated-registration for the released splits behind current results; the
+        challenge's hidden test set made that round private-test-server. Whether the hidden set is
+        the same as the released test split was not established.
+      field: data.access
+    - check: prize-sponsored-by-industry rests on the competition page's prizes and the terms'
+        statement that Motional AD Inc. conducted the competition; no sentence says who paid. The
+        maintainer type rests on the same legal-form wording.
+      field: governance.independence_flags
+      source: src-evalai-nuplan-challenge-1856
+      quote: which is conducted by Motional AD Inc. and its affiliates
+    - check: The scoring document lists driving_direction_compliance with a weight of 5 in its table
+        while its text and the 2024 paper (Tables II and XIV) treat it as a multiplier; task.scoring
+        follows the paper.
+      field: task
+      source: src-github-nuplan-devkit-metrics-aggregation
+      quote: '|driving_direction_compliance |Score is 1 if during the previous `time_horizon`'
+    - check: The 2024 paper notes that reactive agents use an IDM similar to the IDM baseline
+        planner, which may favour it in closed loop; no source measures the bias.
+      field: known_limitation
+      source: src-arxiv-2403-04133-v1
+      quote: It should be noted though that the reactive agents are also modelled with a similar
+        IDM.
+    - check: The challenge's ranking table in the 2024 paper names team "CS Tu" first (0.895), while
+        the PDM paper says PDM-Hybrid ranked first of 25 teams; that these are the same entry is
+        likely but not stated. The EvalAI leaderboard itself was not read (it lists entrants by team
+        names, some personal).
+      field: governance.participation
+      source: src-arxiv-2403-04133-v1
+      quote: Overall Score 0.895 0.875 0.848 0.829
+    - check: The NAVSIM fork row cites navsim's Source src-github-navsim-splits, which needs nuplan
+        in its cited_by. navsim.yaml has no lineage block; it may want a fork role pointing here.
+      field: lineage
