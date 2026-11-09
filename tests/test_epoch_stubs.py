@@ -80,7 +80,7 @@ def test_the_stubs_are_exactly_the_emitters_output():
         with open(os.path.join(ROOT, rel), encoding='utf-8') as fh:
             assert fh.read() == text, rel
     new = {a.benchmark for a in ALLOC.allocations if not a.existing}
-    assert len(files) == len(new) == 59   # 76 less the seventeen promoted, P1-S10-T04's two among them
+    assert len(files) == len(new) == 55   # 76 less the twenty-one promoted, P1-S10-T06's four among them
 
 
 @pytest.mark.parametrize('name', STUB_FILES)
@@ -93,8 +93,8 @@ def test_each_stub_is_unfaceted_and_unreviewed(name):
 
 
 def test_a_stub_with_a_facet_is_not_a_stub():
-    raw = load(os.path.join(E.STUBS, 'gsm8k.yaml'))
-    raw['domain'] = {'primary': 'mathematics/arithmetic-word-problems'}
+    raw = load(os.path.join(E.STUBS, 'lambada.yaml'))
+    raw['domain'] = {'primary': 'language/understanding'}
     with pytest.raises(Exception):
         BenchmarkStub.model_validate(raw)
 
@@ -143,7 +143,7 @@ def test_ratifying_a_row_clears_its_warning(tmp_path):
     dst.write_text(head + tail, encoding='utf-8')
     findings = tiers.stub_tier(tiers.load(ROOT), str(tmp_path))
     unratified = {f.entity for f in findings if f.rule == 'stub-unratified'}
-    assert 'anli' not in unratified and 'gsm8k' in unratified
+    assert 'anli' not in unratified and 'lambada' in unratified
     assert not [f for f in findings if f.blocks]
 
 
