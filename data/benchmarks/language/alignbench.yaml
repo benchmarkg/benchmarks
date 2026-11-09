@@ -1,0 +1,673 @@
+# data/benchmarks/language/alignbench.yaml
+#
+# P1-S10-T04, language entry 14. Found through OpenCompass / CompassHub (the catalogue's shared non-English hub):
+# the open-compass/opencompass repository's dataset index, its AlignBench v1.1 config and its AlignBench loader at
+# commit 0d88e51, and its README. Filled from the AlignBench paper, arXiv 2311.18743 read as its v4 PDF
+# (2024-08-25, ACL 2024), and its abstract page; THUDM/AlignBench's Chinese README and English README at commit
+# 6505913; GitHub's API record of the THUDM organisation; OpenAI's API deprecations page (its Markdown version);
+# and the v1 PDF of the Qwen3 Technical Report (arXiv 2505.09388, May 2025), a model report that uses AlignBench
+# v1.1. Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
+# Chinese quotes are verbatim.
+#
+# Hub route - found through OpenCompass / CompassHub, the catalogue's shared non-English hub (docs/sweeps/hubs.yaml,
+# shared_hubs), by reading the open-compass/opencompass repository (dataset index, AlignBench v1.1 config and
+# loader) because the hub's site is script-rendered; every fact was then taken from the benchmark's own paper and
+# repository.
+
+id: alignbench
+name: AlignBench
+aliases:
+  - ALIGNBENCH
+  - AlignBench v1.1
+  - alignment_bench
+  - 多维度中文对齐评测基准
+tagline: 683 real-user Chinese queries in eight categories, each answer rated 1-10 by a GPT-4 judge
+  against a revised reference.
+description: >
+  A Chinese benchmark of how well chat assistants serve user requests ("alignment" in the helpfulness
+  sense), from Tsinghua University's Knowledge Engineering Group and Zhipu AI. It holds 683 single-turn
+  queries in eight categories: fundamental language ability, advanced Chinese understanding, open-ended
+  questions, writing, logical reasoning, mathematics, task-oriented role play and professional knowledge.
+  The queries come mainly from real users of the ChatGLM online service, with a minority written by the
+  researchers; half the candidates were discarded as too easy after GPT-3.5-turbo, ChatGLM and Sparkdesk
+  answered them well. Each query has a reference answer that GPT-4 drafted and annotators revised, with
+  web evidence for knowledge-heavy ones. A judge model (gpt-4-0613 in the paper and README) sees the query,
+  the answer and the reference, writes an analysis along category-specific dimensions (correctness, user
+  satisfaction, clarity, creativity and others), scores each and then gives an overall 1-10 rating, with
+  the reference anchored at 8. The headline is the mean of a reasoning score (mathematics and logic) and
+  a language score (the other six categories). Version 1.1 (2024-06-15) keeps the 683 queries and corrects
+  the references of fact-heavy items. The paper measures the judge against human ratings on 400 queries
+  and names position, verbosity and self-enhancement bias as open problems. OpenCompass ships it as a
+  subjective dataset, and model reports such as Qwen3's still cite AlignBench v1.1.
+self_description:
+  source: src-arxiv-2311-18743-v4
+  quote: We design a human-in-the-loop data curation pipeline, containing eight main categories, 683
+    real-scenario rooted queries and corresponding human verified references.
+external_ids:
+  arxiv: '2311.18743'
+paper:
+  title: 'AlignBench: Benchmarking Chinese Alignment of Large Language Models'
+  arxiv: '2311.18743'
+  version_read: v4
+  source: src-arxiv-2311-18743-v4
+released: 2023-11-30
+released_note: The paper's first arXiv version, as its abstract page dates it. The THUDM/AlignBench
+  repository was created on 2023-11-23 (GitHub API, not a quoted Source).
+released_source: src-arxiv-2311-18743
+released_quote: Submitted on 30 Nov 2023 (v1), last revised 25 Aug 2024 (this version, v4)
+release_venue: ACL 2024
+release_venue_source: src-arxiv-2311-18743
+release_venue_quote: 'Comments: Accepted to ACL 2024'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: language/generation
+domain_basis:
+  reason: Every item is an open request answered in free-form Chinese text, and the score is a
+    judge's 1-10 rating of that text against a reference answer and category-specific criteria,
+    which is the generation leaf's case ("scored against reference texts or rubric criteria"). The
+    claim is one competence, alignment with user intent in Chinese, not coverage of many subjects.
+  source: src-arxiv-2311-18743-v4
+  quote: the output is an multi-dimensional analytical explanation and a final rating, ranging from
+    1 to 10
+domain_considered_and_rejected:
+  - term: language/dialogue
+    reason: Each item is one user query and one answer; OpenCompass's config sends the question as a
+      single human turn, and nothing is scored across turns.
+    source: src-github-opencompass-alignbench-v1-1-config
+    quote: mode='singlescore'
+  - term: general-intelligence/multi-subject-knowledge-exams
+    reason: Professional knowledge (124 queries) spans physics, history, music, law and more, but
+      the items are open-ended generation, not closed-ended exam questions, and the claim is
+      alignment, not breadth of knowledge.
+  - term: safety-alignment/harmlessness-refusal
+    reason: '"Alignment" here means fulfilling user intent and preference. Harm enters only as a judging
+      rule (a harmful answer is capped at 1-2) and the queries were desensitised; refusal is not the scored
+      quantity.'
+    source: src-arxiv-2311-18743-v4
+    quote: 'Desensitization: Ensure that the queries are safe and insensitive.'
+  - term: language/understanding
+    reason: Advanced Chinese understanding is one category of 58 queries about Chinese culture and
+      history, and no passage determines the answers.
+    source: src-arxiv-2311-18743-v4
+    quote: understand cultural and historical background in Chinese-specific tasks
+  - term: language/creative-writing
+    reason: Writing and role play are two of eight categories (191 of 683 queries); the score is not
+      about craft alone.
+  - term: reasoning-general/logical-deduction
+    reason: Logical reasoning (92) and mathematics (112) make up the reasoning half of the headline,
+      which weighs them at half the score although they are 30% of the items; the benchmark's claim
+      is still alignment. See review_checks.
+capability:
+  - instruction-following
+capability_basis:
+  instruction-following:
+    reason: The source counts following human instructions as part of the alignment it measures, and
+      the judge scores "user satisfaction" (满足用户需求) as its own dimension on every answer; writing
+      items carry explicit directions such as formatting conditions.
+    source: src-arxiv-2311-18743-v4
+    quote: Alignment, including following human instructions and providing helpful assistance
+capability_considered_and_rejected:
+  - term: factual-precision
+    reason: Correctness (事实正确性) is a judged dimension and dominates the overall score, but the judge
+      rates it as a whole; asserted particulars are not checked one by one against the reference.
+    source: src-github-opencompass-alignbench-loader
+    quote: 其中，事实正确性和满足用户需求这两个维度是最重要的，这两个维度的分数主导了最后的综合分数。
+  - term: generation-fidelity
+    reason: The reference answer is a scoring pivot (it would earn 8), not a target to match; an
+      answer better than the reference scores 9-10.
+    source: src-arxiv-2311-18743-v4
+    quote: Additionally, we set the reference answer to score 8 as a reference scoring pivot.
+  - term: knowledge-recall
+    reason: Professional knowledge and Chinese understanding need recalled knowledge, but the score
+      is a holistic quality rating, not recall checked against a key.
+  - term: quantitative-reasoning
+    reason: Mathematics is one category (112 queries), scored by the judge against a reference; the
+      benchmark's claim is alignment, and per-category scores are subsets.
+  - term: creativity-novelty
+    reason: Creativity (创造性) is a judged dimension for generative and advice questions, but the
+      scoring does not reward departure from known solutions as such.
+
+evaluation_method:
+  - model-graded-judge
+evaluation_method_note: The judge is gpt-4-0613 in the paper and in the README's instructions. The
+  maintainers also built CritiqueLLM as a substitute judge and published a second results table
+  judged by it, and the OpenCompass config uses a CritiqueLLM-format prompt with whatever judge the
+  run names. The judge prompt (in Chinese) asks it to compare the answer with the reference, score
+  each of the category's dimensions 1-10, then give an overall 1-10 score under five bands, with the
+  reference worth 8; the overall score is the one aggregated.
+evaluation_method_basis:
+  reason: A general model prompted with a grading instruction decides each answer's quality, and the
+    reported number is its 1-10 overall ratings averaged.
+  source: src-arxiv-2311-18743-v4
+  quote: GPT-4 is instructed to generate explanations from multiple dimensions before providing a
+    final grade on a scale of 1 to 10.
+evaluation_method_considered_and_rejected:
+  - term: rubric-graded
+    reason: The judge scores named dimensions one by one, but the overall rating it issues is its
+      own synthesis (综合每个维度的评估), not a fixed combination of those scores, and the headline averages
+      that overall rating. See review_checks.
+    source: src-github-opencompass-alignbench-loader
+    quote: 3. 最后，综合每个维度的评估，对AI助手的回答给出一个1～10的综合分数。
+  - term: human-expert-eval
+    reason: Annotators rated 3,200 answers on a 1-5 scale to validate the judge; scores on the
+      benchmark come from the judge.
+    source: src-arxiv-2311-18743-v4
+    quote: producing a total of 3200 question-answer pairings
+  - term: reference-metric
+    reason: References are shown to the judge; no similarity formula compares answer and reference.
+  - term: pairwise-preference-elo
+    reason: Grading is point-wise by design; the pairwise comparisons in the paper rate the judges'
+      explanations, not systems.
+    source: src-arxiv-2311-18743-v4
+    quote: Therefore ALIGNBENCH adopts point-wise grading either.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The benchmark is built to evaluate instruction-tuned chat assistants on real user
+    requests, prompting the model directly with each query; generation temperature is set per
+    category.
+  source: src-arxiv-2311-18743-v4
+  quote: we set temperature to 0.1 to ensure more deterministic and reproducible generation
+designed_for_subjects_considered_and_rejected:
+  - term: base-model
+    reason: The paper motivates the benchmark by prior benchmarks failing to separate aligned from
+      base models; all 17 models it scores are chat or API models.
+  - term: reasoning-model
+    reason: Reasoning models such as Qwen3 in thinking mode are scored on it (as_used), but the
+      design predates them and sets nothing for reasoning traces.
+
+as_used:
+  - protocol: AlignBench v1.1 as one of the "alignment tasks" in a 2025 model report, with Qwen3's
+      own sampling (thinking mode at temperature 0.6, top-p 0.95, top-k 20); the report does not
+      name the judge model.
+    split: not stated
+    source: src-arxiv-2505-09388-v1
+    quote: To assess alignment with human preferences on general topics, we utilize Arena-Hard (Li
+      et al., 2024) and AlignBench v1.1 (Liu et al., 2023b).
+    note: Without the judge's identity the report's numbers (Qwen3-235B-A22B thinking 8.94) cannot
+      be set beside the paper's gpt-4-0613-judged ones.
+  - protocol: OpenCompass's subjective config runs AlignBench v1.1 with the CritiqueLLM-format judge
+      prompt (prompt_construct) and single scoring; the judge model is whatever the evaluation run
+      configures.
+    split: all 683 queries (alignment_bench_v1_1)
+    source: src-github-opencompass-alignbench-v1-1-config
+    quote: "'alignment_bench_v1_1', # Changed to Alignbench_v1_1 since 06/15/2024, refer to https://github.com/THUDM/AlignBench"
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against the instrument; the Qwen3 Technical Report (May 2025)
+    reports AlignBench v1.1 scores among its alignment tasks, and OpenCompass keeps a v1.1 config in
+    its current main branch. The repository itself was last changed on 2025-10-25, a concurrency fix
+    (GitHub commit history, not a quoted Source).
+  source: src-arxiv-2505-09388-v1
+  quote: To assess alignment with human preferences on general topics, we utilize Arena-Hard (Li et
+    al., 2024) and AlignBench v1.1 (Liu et al., 2023b).
+activity: no-submission-channel
+activity_note: The README's results are the paper's own 17 models, judged by gpt-4-0613 and by
+  CritiqueLLM. In December 2023 the maintainers opened a website whose Submit function scored a
+  model with CritiqueLLM in about five minutes, a private scoring service that no source shows
+  publishing outside results; the site now redirects to a domain marketplace (see
+  curation.unreachable).
+activity_basis:
+  reason: A download-and-run package whose users report their own numbers in their own work; the
+    only results table is the maintainers' release table.
+  source: src-github-alignbench-readme-en
+  quote: We report our evaluation results on 17 Chinese-supported LLMs on AlignBench using
+    `gpt-4-0613` and `CritiqueLLM`.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: gpt-4-1106-preview
+    source: src-arxiv-2311-18743-v4
+    observed_on: 2026-11-09
+    quote: gpt-4-1106-preview 8.01 7.73 7.80 7.66 8.29
+    note: Overall 8.01, reasoning 7.73, mathematics 7.80, logic 7.66, language 8.29, judged by
+      gpt-4-0613 (Table 6).
+  - system: Qwen3-235B-A22B (thinking mode)
+    source: src-arxiv-2505-09388-v1
+    observed_on: 2026-11-09
+    quote: Alignment Tasks Arena-Hard AlignBench v1.1 Creative Writing v3 92.1 92.3 8.86 8.76 81.7
+      85.5 - 96.4 9.03 86.0 95.6 8.94 84.6
+    note: Table 11's text comes out column by column (OpenAI-o1, DeepSeek-R1, Grok-3-Beta,
+      Gemini2.5-Pro, Qwen3-235B-A22B), each column giving Arena-Hard, AlignBench v1.1 and Creative
+      Writing v3, so Qwen3's AlignBench v1.1 score is 8.94 (Grok-3-Beta has none). The judge is not
+      stated.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: none
+ground_truth_source_note: No stored answer key decides the score. Each query's reference answer,
+  drafted by GPT-4 and revised by annotators, is shown to the judge as a scoring pivot worth 8, and
+  the judge's rating is the score; the human ratings of 3,200 answers validated the judge.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The queries, references, judge prompt, dimension definitions and scripts are public, and
+    grading needs only API access to the judge. The paper's judge is a hosted snapshot that has now
+    been shut down (see execution.harness_gotcha).
+  source: src-arxiv-2311-18743-v4
+  quote: All evaluation code, data, and LLM generations are available at https://
+    github.com/THUDM/AlignBench.
+
+task:
+  exists: true
+  input:
+    - one Chinese user query from one of eight categories, with its category and subcategory
+  output: A free-text answer.
+  scoring: The judge is given the query, the answer and the reference answer, analyses the answer
+    along the dimensions set for the question type (for example correctness, user satisfaction,
+    logical coherence, creativity and richness for generative questions), scores each 1-10 and gives
+    an overall 1-10 score, the reference counting as 8. Category scores are means of the overall
+    scores; the reasoning score (中文推理) is the mean of mathematics and logical reasoning, the
+    language score (中文语言) the mean of the other six, and the headline (总分) the mean of those two.
+  metric_range:
+    - 1
+    - 10
+  source: src-github-opencompass-alignbench-loader
+  quote: capability_avg_ratings['总分'] /= len(temp_list)
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The query file with references and evidence ships in the THUDM/AlignBench repository,
+      without registration.
+    source: src-arxiv-2311-18743-v4
+    quote: All evaluation code, data, and LLM generations are available at https://
+      github.com/THUDM/AlignBench.
+  refresh: versioned-releases
+  refresh_note: Two releases of the same 683 queries, v1 (2023) and v1.1 (2024-06-15), which
+    corrected references; the repository now holds only data/data_v1.1_release.jsonl (GitHub
+    contents API, not a quoted Source). The README invites further corrections, and the
+    human-in-the-loop pipeline was designed for continual harvesting, but no later release is
+    recorded.
+  refresh_basis:
+    reason: v1.1 is a dated, named re-release of the item file.
+    source: src-github-alignbench-readme
+    quote: '[2024.06.15] 更新了 AlignBench v1.1，对涉及较强事实性内容的测试指令的参考答案进行了一轮人工检查修正。'
+  data_provenance: []
+  data_provenance_note: The queries come mainly from real users of the ChatGLM online service,
+    filtered and desensitised, with a minority of challenging problems written by the researchers.
+    No term covers prompts taken from a deployed service's users (logged with bench tag-gap). The
+    references were drafted by GPT-4 and revised by annotators, but they are grading material, not
+    items.
+  data_provenance_source: src-github-alignbench-readme
+  data_provenance_quote: AlignBench 中的数据主要来自 ChatGLM 在线服务中真实用户的问题（少部分为研究人员构造的挑战性问题）。
+  contamination_risk: medium
+  contamination_risk_note: The queries, references and evidence have been public on GitHub since
+    late 2023, so a training route is plausible; no source read evidences one, and none of the
+    Sources states contamination findings. The queries were drawn from ChatGLM's users, and ChatGLM
+    is the maintaining organisation's own model (src-github-api-thudm-org), so its developers had
+    the same queries before release; no source says whether they were kept out of training.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: Each overall rating is bounded at 10 and the headline is a mean of means of them, so 10
+      is the top; the reference answer is anchored at 8, and 9-10 is reserved for answers clearly
+      better than it. No human ceiling is published.
+    source: src-github-opencompass-alignbench-loader
+    quote: 作为示例，参考答案可以得到8分。
+  dataset_licence: null
+  dataset_licence_note: No licence is stated. GitHub's licence metadata for THUDM/AlignBench is null
+    and the repository has no LICENSE file (API, read 2026-11-09; not a quoted Source), and neither
+    README nor the paper names one.
+  size:
+    - count: 683
+      unit: Chinese queries, each with a reference answer, in eight categories
+      source: src-arxiv-2311-18743-v4
+      quote: 'Total 中文名 基本任务 中文理解 综合问答 文本写作 逻辑推理 数学计算 角色扮演 专业能力 总计 #Samples 68 58 38 75 92 112 116 124
+        683'
+    - count: 683
+      unit: queries in the v1.1 release
+      subset: v1.1
+      source: src-github-alignbench-readme
+      quote: AlignBench 总共包含 683 个高质量评测数据。
+  languages:
+    - Chinese
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: THUDM (Tsinghua University's Knowledge Engineering Group with Zhipu AI)
+  maintainer_basis:
+    reason: The repository sits in the THUDM organisation, which describes itself as Zhipu.ai (Z.ai)
+      and the Knowledge Engineering Group; the paper's lead affiliations are KEG at Tsinghua and
+      Zhipu AI.
+    source: src-github-api-thudm-org
+    quote: '"description":"ChatGLM, GLM-4, CogVLM, CodeGeeX, CogView, ImageReward, CogVideoX | CogDL,
+      GraphMAE, AMiner | Zhipu.ai (Z.ai) & Knowledge Engineering Group (KEG)","name":"THUKEG"'
+  maintainer_type: academic-lab
+  maintainer_type_note: The holding organisation is named THUKEG and is shared by the university
+    group and Zhipu AI; academic-lab follows the catalogue's AgentBench entry, held in the same
+    organisation. industry-lab or community-collective could be argued (see review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: The maintainers publish only the release's 17-model results. Everyone
+    else runs the scripts or OpenCompass and reports in their own work. The website's Submit
+    function returned a CritiqueLLM score to the submitter and no source shows it ranking anyone;
+    the site is gone.
+  submission_process_source: src-github-alignbench-readme-en
+  submission_process_quote: You can use the *Submit* function on the website to perform evaluation
+    with `CritiqueLLM` on AlignBench (results can be obtained in about 5 minutes).
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2311-18743-v4
+      quote: We use gpt-4-0613 (OpenAI, 2023) as the judge model to evaluate model performances.
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2311-18743-v4
+      quote: ChatGLM3-6B 4.97 3.85 3.55 4.14
+  independence_flags_note: The judge, gpt-4-0613, is itself a scored system (gpt-4-0613 7.53 overall
+    in Table 6), as is gpt-4-1106-preview. The maintaining organisation lists ChatGLM and GLM-4 as
+    its own projects (src-github-api-thudm-org), and ChatGLM models are scored in the paper
+    (ChatGLM2-6B, ChatGLM3-6B, chatglm-pro, chatglm-turbo). The maintainers' CritiqueLLM, the
+    alternative judge, therefore also grades its own organisation's models. ChatGLM was one of the
+    three difficulty filters that removed the easier half of the candidate queries, and the queries
+    came from ChatGLM's users. The paper's funders are Chinese government programmes and a science
+    foundation, none of them an evaluated party.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2311-18743-v4
+    quote: This work is supported by Technology and Innovation Major Project of the Ministry of
+      Science and Technology of China under Grant 2022ZD0118600
+  known_limitation:
+    source: src-arxiv-2311-18743-v4
+    quote: it is shown that LLM-as-Judge has some potential biases (Zheng et al., 2023), including
+      position, verbosity, and selfenhancement. These biases could harm the correctness of
+      evaluation on certain models.
+  known_limitation_note: >
+    Judge-bias evidence from the paper: on 400 sampled queries answered by 8 models (3,200 answers rated
+    1-5 by annotators), the rule-calibrated multi-dimensional judge reaches a sample-level Pearson correlation
+    of 0.638, a system-level Pearson of 0.998 and pairwise agreement of 0.753 without ties ("Overall 0.618
+    0.628 0.638 0.998 0.999 0.998 0.751 0.724 0.753", general, rules and ours for each metric), and the
+    paper says "there is a large room for improving this correlation and granularity". It claims the multi-dimensional
+    method reduces verbosity bias, from one example. Self-enhancement is named but not measured, although
+    the judge's own snapshot is among the scored systems. Difficulty filtering discarded "50% of the queries
+    that garnered the highest average scores" from GPT-3.5-turbo, ChatGLM and Sparkdesk, which may set
+    the items against those entrants. The paper also notes that "ALIGNBENCH does not include evaluation
+    over long-text queries" (all src-arxiv-2311-18743-v4).
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The judge is called through OpenAI's API; the system under test is reached
+    through an API class the user writes, and serving open weights is the entrant's choice.
+  compute_tier_source: src-github-alignbench-readme-en
+  compute_tier_quote: First, fill in your GPT-4 API key in `config/multi-dimension.json`.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: Automatable end to end with an API key for the judge. The paper's
+    judge, gpt-4-0613, has been shut down, so the headline condition can no longer be reproduced;
+    the vocabulary deferred a blocker for hosted judges.
+  reproducibility_tier_basis:
+    reason: Answer generation, judging and score computation are scripted (get_answers.py, judge.py,
+      show_result.py) on public queries and references.
+    source: src-github-alignbench-readme
+    quote: --question-file data/data_v1.1_release.jsonl
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: THUDM/AlignBench's get_answers.py, judge.py (with config/multi-dimension.json) and
+    show_result.py; OpenCompass's alignbench configs are a second implementation.
+  harness_source: src-github-alignbench-readme
+  harness_quote: --question-file data/data_v1.1_release.jsonl
+  harness_gotcha:
+    source: src-openai-api-deprecations
+    quote: October 23, 2026 | `gpt-4-0613` \| `gpt-4`, `gpt-4-0613-completions`
+  harness_gotcha_note: The README names gpt-4-0613 as the judge ("目前我们使用 `gpt-4-0613` 作为评测模型",
+    src-github-alignbench-readme). OpenAI shut that snapshot down on 2026-10-23, 17 days before this
+    entry was read, so a run now needs another judge, which is a different condition. The English
+    README also still points to data/data_release.jsonl, the v1 file, which the repository no longer
+    holds.
+  code_licence: null
+  code_licence_note: No licence. GitHub's licence metadata for THUDM/AlignBench is null and there is
+    no LICENSE file (API, read 2026-11-09; not a quoted Source). OpenCompass's reimplementation is
+    Apache-2.0.
+  runnable_via:
+    - custom
+  runnable_via_note: The maintainers' scripts or OpenCompass
+    (src-github-opencompass-alignbench-v1-1-config); neither is a value of the vocabulary.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The model-graded profile applies (judge model and version, judge prompt, rubric). Beyond it: the generation
+  # temperature, which the paper sets per category (0.1 for fixed-answer categories, 0.7 for writing and role play),
+  # and the system's chat template. The data version (v1 or v1.1) changes the references the judge sees and is
+  # recorded under versions.
+  material_extra:
+    - prompt_template_hash
+    - sampling
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline (总分), the mean of the reasoning and language scores, each a mean of category
+    means.
+  source: src-github-opencompass-alignbench-loader
+  quote: capability_avg_ratings['总分'] /= len(temp_list)
+
+homepage: https://github.com/THUDM/AlignBench
+repository: https://github.com/THUDM/AlignBench
+dataset_url: https://github.com/THUDM/AlignBench/tree/master/data
+
+versions:
+  - version: v1
+    label: AlignBench (v1), the paper's release
+    version_kind: revision
+    released: 2023-11-30
+    items: 683
+    changes: The first release, 683 queries with references, in data/data_release.jsonl.
+    superseded_by: v1.1
+    frozen: true
+    sources:
+      - src-arxiv-2311-18743-v4
+      - src-github-alignbench-readme-en
+  - version: v1.1
+    label: AlignBench v1.1
+    version_kind: revision
+    released: 2024-06-15
+    items: 683
+    changes: The references of fact-heavy queries were checked and corrected by hand, and about 22%
+      gained source web pages and quotations (an evidences field). The queries are unchanged (683 in
+      v1.1, the same per-category counts, counted from data/data_v1.1_release.jsonl, which has 150
+      items with evidence). OpenCompass switched to v1.1 from the same date.
+    breaking: true
+    supersedes_version: v1
+    frozen: true
+    sources:
+      - src-github-alignbench-readme
+      - src-github-opencompass-alignbench-v1-1-config
+
+subsets:
+  - id: alignbench#fundamental-language-ability
+    label: Fundamental Language Ability (基本任务)
+    items: 68
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2311-18743-v4
+        quote: such as text classification, information extraction, and short summarization
+    notes: Traditional NLP tasks posed as instructions, such as text classification, information
+      extraction and short summarisation. Part of the language score.
+  - id: alignbench#advanced-chinese-understanding
+    label: Advanced Chinese Understanding (中文理解)
+    items: 58
+    scored_separately: true
+    notes: Part of the language score.
+  - id: alignbench#open-ended-questions
+    label: Open-ended Questions (综合问答)
+    items: 38
+    scored_separately: true
+    notes: Part of the language score.
+  - id: alignbench#writing-ability
+    label: Writing Ability (文本写作)
+    items: 75
+    scored_separately: true
+    notes: Part of the language score.
+  - id: alignbench#logical-reasoning
+    label: Logical Reasoning (逻辑推理)
+    items: 92
+    scored_separately: true
+    notes: Part of the reasoning score.
+  - id: alignbench#mathematics
+    label: Mathematics (数学计算)
+    items: 112
+    scored_separately: true
+    notes: Part of the reasoning score.
+  - id: alignbench#task-oriented-role-play
+    label: Task-oriented Role Play (角色扮演)
+    items: 116
+    scored_separately: true
+    notes: Part of the language score.
+  - id: alignbench#professional-knowledge
+    label: Professional Knowledge (专业能力)
+    items: 124
+    scored_separately: true
+    notes: Part of the language score.
+subsets_note: >
+  The eight categories with the paper's counts (Table 2), which v1.1 keeps. The ids follow the English
+  names; the Chinese labels are the category strings in the data and the loader. The loader groups them
+  as "'中文推理': ['数学计算', '逻辑推理']," and "'中文语言': ['基本任务', '中文理解', '综合问答', '文本写作', '角色扮演', '专业能力']," (src-github-opencompass-alignbench-loader),
+  and the two group means are reported beside the overall score; they are aggregates, not item subsets.
+
+lineage:
+  role: root
+
+tags:
+  - llm-judge
+  - chinese
+  - chat-assistants
+  - reference-guided-grading
+  - compasshub
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T04)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-github-opencompass-dataset-index-0d88e51
+    - src-github-opencompass-alignbench-v1-1-config
+    - src-github-opencompass-alignbench-loader
+    - src-github-opencompass-readme-0d88e51
+    - src-arxiv-2311-18743-v4
+    - src-arxiv-2311-18743
+    - src-github-alignbench-readme
+    - src-github-alignbench-readme-en
+    - src-github-api-thudm-org
+    - src-openai-api-deprecations
+    - src-arxiv-2505-09388-v1
+  sources_note: >
+    The hub route first: OpenCompass / CompassHub (docs/sweeps/hubs.yaml, shared_hubs) is script-rendered,
+    so AlignBench was found in the open-compass/opencompass repository at commit 0d88e51, through its
+    dataset index (the list the README's dataset-statistics page is built from), its AlignBench v1.1 config
+    and its loader, and the README for CompassHub. Every fact was then read from the paper's v4 PDF (a
+    DOI, not archived) and abstract page, the benchmark's Chinese and English READMEs at commit 6505913,
+    and GitHub's record of the THUDM organisation; OpenAI's deprecations page (an existing Source) for
+    the judge's shutdown; and the Qwen3 Technical Report's v1 PDF (a DOI, not archived) as evidence of
+    current use. GitHub's API was read for licence metadata, the repository's creation and push dates,
+    file-level commit dates and the data directory listing without being made a Source, and the v1.1 data
+    file was downloaded to count items and evidence fields. Hugging Face's dataset search (API, read 2026-11-09)
+    holds no AlignBench dataset from the maintainers; the record named omron-sinicx/AlignBench is HalCap-Bench,
+    an unrelated image-caption set.
+  confidence: medium
+  review_checks:
+    - check: A reviewer who reads Chinese should confirm the Chinese-language fields - the Chinese
+        alias (多维度中文对齐评测基准, the README's title), the eight subset labels, the v1.1 note and the
+        data-origin statement quoted from the Chinese README, and the rubric and aggregation read
+        from the loader's Chinese prompt and code. The English README predates v1.1 and says nothing
+        of either.
+      field: data.data_provenance
+      specialist: true
+      source: src-github-alignbench-readme
+      quote: 其中，约 22% 的答案除了进行修正外，还补充了对应参考信息的来源网页
+    - check: Why AlignBench was chosen over the other CompassHub candidates. It fills
+        language/generation, which had no primary entry on main (writingbench, drafted in parallel,
+        also takes it); its data is open on GitHub; its paper is ACL 2024; and it is still reported
+        in 2025 model reports (Qwen3). LCSTS (EMNLP 2015) is filed by OpenCompass under
+        Understanding and would have been a second summarisation set beside xlsum. CompassArena and
+        OpenCompass's other subjective sets were not read, and CLUE, CMRC 2018 and C3 were left to
+        another agent.
+      field: domain
+      source: src-github-opencompass-dataset-index-0d88e51
+      quote: 'name: LCSTS category: Understanding paper: https://aclanthology.org/D15-1229.pdf'
+    - check: domain primary language/generation with no secondary. The headline weighs the reasoning
+        half (mathematics and logic, 204 of 683 queries) equally with the six language categories,
+        so mathematics or reasoning-general could be argued as a secondary, or as domain_override on
+        those two subsets.
+      field: domain
+      source: src-github-opencompass-alignbench-loader
+      quote: "'中文推理': ['数学计算', '逻辑推理'],"
+    - check: rubric-graded was rejected because the overall score is the judge's own synthesis of
+        its dimension scores, not a computed combination; the dimensions are named, defined per
+        question type and scored individually, which is close to the term's inclusion test.
+      field: evaluation_method
+      source: src-github-opencompass-alignbench-loader
+      quote: "'生成型回答': ['事实正确性', '满足用户需求', '逻辑连贯性', '创造性', '丰富度'],"
+    - check: v1 and v1.1 are revisions (same 683 queries, corrected references), and v1.1 is marked
+        breaking because changed references move the judge's pivot; the sources do not say whether
+        v1 and v1.1 scores are comparable. v1's file is no longer in the repository, and the English
+        README still names it.
+      field: versions
+      source: src-github-alignbench-readme-en
+      quote: The data is placed in `data/data_release.jsonl`
+    - check: The judge. The paper and README use gpt-4-0613, shut down on 2026-10-23; CritiqueLLM,
+        the maintainers' own judge, is claimed to recover 95% of GPT-4's evaluation ability;
+        OpenCompass's config does not name a judge, and the Qwen3 report does not say which it used.
+        Published AlignBench numbers are therefore often not comparable, and the reproducibility
+        tier may need the hosted-judge blocker the execution vocabulary deferred.
+      field: evaluation_method
+      source: src-github-alignbench-readme-en
+      quote: CritiqueLLM, which could recover 95% of GPT-4's evaluation ability
+    - check: maintainer-competes-on-own-benchmark rests on the THUDM organisation listing ChatGLM as
+        its project and on ChatGLM models in the paper's table. The paper does not say in words that
+        ChatGLM is the maintainers' model; its authors interned at Zhipu AI and its queries came
+        from "an online LLM service" it leaves anonymous, which the Chinese README names as
+        ChatGLM's.
+      field: governance.independence_flags
+      source: src-arxiv-2311-18743-v4
+      quote: Based on observations from an online LLM service (anonymous due to review policy)
+    - check: maintainer_type academic-lab, following the AgentBench entry in the same THUDM
+        organisation, whose description names Zhipu.ai (Z.ai) and KEG jointly. industry-lab (Zhipu
+        AI) or community-collective (an organisation shared by two institutions with no single
+        stated holder) could be argued.
+      field: governance.maintainer_type
+      source: src-github-api-thudm-org
+      quote: '"description":"ChatGLM, GLM-4, CogVLM, CodeGeeX, CogView, ImageReward, CogVideoX | CogDL,
+        GraphMAE, AMiner | Zhipu.ai (Z.ai) & Knowledge Engineering Group (KEG)","name":"THUKEG"'
+    - check: activity no-submission-channel rather than closed. The website's Submit function was a
+        private scoring service and no source shows it publishing outside results; if it fed a
+        public ranking, the lapsed domain would make this closed with a channel-closed history
+        event.
+      field: activity
+      source: src-github-alignbench-readme-en
+      quote: AlignBench [Website](https://llmbench.ai/align) is now officially online
+    - check: contamination_risk medium with no evidence. No Source states a contamination finding;
+        the queries came from the maintainers' own service's users, which is a route for ChatGLM in
+        particular that no source examines. The paper also says the LLM generations are released,
+        but the repository's data directory now holds only the v1.1 query file (GitHub contents API,
+        not quoted), so records_access is left unset.
+      field: data.contamination_risk
+    - check: capability instruction-following rests on the paper counting instruction following
+        within alignment and on the user-satisfaction dimension; the overall score does not isolate
+        compliance from quality, as the term's definition would like.
+      field: capability
+  unreachable:
+    - url: https://llmbench.ai/align
+      http_status: 404
+      consequence: The AlignBench website the README announced, with its CritiqueLLM Submit
+        function, now answers with a 301 to bolddomains.com/align, a domain marketplace's not-found
+        page, so it was not read and could not be made a Source. activity and submission_process
+        rest on the README's description of the Submit function.
+  personal_data_excluded:
+    - source: src-arxiv-2311-18743-v4
+      what: the author list, the equal-contribution and corresponding-author footnotes, and the
+        reference list
+    - source: src-arxiv-2311-18743
+      what: the author list and the submitter's name
+    - source: src-github-alignbench-readme
+      what: the citation block's author list
+    - source: src-github-alignbench-readme-en
+      what: the citation block's author list
+    - source: src-github-api-thudm-org
+      what: the group's contact e-mail address and social handle
