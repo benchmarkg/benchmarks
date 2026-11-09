@@ -118,6 +118,9 @@ def test_candidates_are_proposals_never_merges():
     verified = D.Record('drafts/benchmarks/swe-bench-verified.yaml', 'SWE-bench Verified',
                         urls=['https://www.swebench.com/verified.html'])
     got = [g for g in D.candidates(records + [verified], CFG) if (g[0].a, g[0].b) not in base]
+    # every new proposal is the draft's; other benchmarks may resemble it by name too (swe-bench-pro, P1-S10-T02)
+    assert all(verified.id in (s.a, s.b) for s, _ in got)
+    got = [g for g in got if {g[0].a, g[0].b} & {'swe-bench', 'swe-bench-verified'}]
     # a draft has no lineage: proposed beside both
     assert sorted((s.a, s.b) for s, _ in got) == [('swe-bench', 'drafts/benchmarks/swe-bench-verified.yaml'),
                                                   ('swe-bench-verified', 'drafts/benchmarks/swe-bench-verified.yaml')]
