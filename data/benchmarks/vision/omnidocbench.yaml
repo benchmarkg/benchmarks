@@ -1,0 +1,672 @@
+# data/benchmarks/vision/omnidocbench.yaml
+#
+# P1-S8-T06, vision entry 13. Filled from the OmniDocBench paper, arXiv 2412.07626 read as its v2 PDF
+# (2025-03-25, CVPR 2025) with its supplementary material, and its abstract page; the repository's README at
+# main's head commit (2026-11-06) and at the heads of its v1_0 and v1_5 branches; the Hugging Face API record of
+# the dataset; the MinerU2.5-Pro report (arXiv 2604.04771, v2 PDF), in which the maintainers' lab introduces
+# v1.6; and the PaddleOCR-VL-1.6 report (arXiv 2606.03264, v1 PDF, June 2026) as evidence of current use. The
+# official site on opendatalab.com renders by script and was not read. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# The entry is the benchmark across its dataset versions v1.0, v1.5, v1.6 and v1.7, one repository and one
+# README leaderboard. Real5-OmniDocBench, re-photographed pages of v1.5 by another team, is a fork (lineage).
+
+id: omnidocbench
+name: OmniDocBench
+aliases:
+  - OmniDocBench v1.5
+  - OmniDocBench v1.6
+tagline: Full-page PDF parsing scored on recovered text, tables, formulas and reading order against
+  layout-level annotations.
+description: >
+  A benchmark for document parsing: turning a page image into structured, machine-readable content. Each
+  page carries block-level layout boxes (titles, text paragraphs, tables, figures, display formulas, headers
+  and footers, and more), span-level boxes for text lines and inline formulas, reading-order and caption-affiliation
+  annotations, the text of every text region, LaTeX for formulas and both HTML and LaTeX for tables, and
+  page and block attributes (document type, layout, language, watermarks, blurred scans, coloured backgrounds,
+  rotated text, table frames and merged cells). The end-to-end task gives the system the page image and
+  scores the Markdown it returns: text by normalised edit distance, tables by TEDS on HTML, display formulas
+  by CDM, and reading order by edit distance, after an extraction and matching step that pairs the output's
+  elements with the ground truth and ignores headers, footers and captions. Since v1.5 the headline Overall
+  averages the three content scores. The same annotations support single-task evaluations of layout detection,
+  table recognition, formula recognition and detection, and text OCR. v1.0 (CVPR 2025) had 981 pages of
+  nine document types, drawn from over 200,000 web and internal PDFs, pre-annotated by models and corrected
+  by annotators and researchers. v1.5 (September 2025) added 374 pages, and v1.6 (April 2026) a Hard subset
+  of 296 pages and a new matching algorithm, for 1,651 pages in a Base, Hard and Full protocol. The maintainers
+  run the models on the README leaderboard themselves; in November 2026 its top Overall on v1.6 Full is
+  97.03.
+self_description:
+  source: src-arxiv-2412-07626-v2
+  quote: we introduce OmniDocBench, a novel benchmark featuring high-quality annotations across nine
+    document sources
+external_ids:
+  arxiv: '2412.07626'
+paper:
+  title: 'OmniDocBench: Benchmarking Diverse PDF Document Parsing with Comprehensive Annotations'
+  arxiv: '2412.07626'
+  version_read: v2
+  source: src-arxiv-2412-07626-v2
+released: 2024-12-10
+released_note: The paper's first arXiv version, as its abstract page dates it. The Hugging Face
+  dataset record was created eight days earlier, on 2024-12-02 (src-hf-api-omnidocbench).
+released_source: src-arxiv-2412-07626
+released_quote: Submitted on 10 Dec 2024 (v1), last revised 25 Mar 2025 (this version, v2)
+release_venue: CVPR 2025
+release_venue_source: src-arxiv-2412-07626
+release_venue_quote: 'Comments: Accepted by CVPR2025'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: vision/document-understanding
+  secondary:
+    - vision/ocr-handwriting
+domain_basis:
+  reason: The scored quantity is the structure and content recovered from the page image (its text,
+    tables, formulas and reading order) against annotations of that page, which is
+    document-understanding's own case and vision's inclusion test (what was recovered from an
+    image). No question or description is posed; the only text the system gets is, for a prompted
+    model, an instruction to transcribe. That is where it differs from DocVQA
+    (multimodal/visual-qa), whose items are natural-language questions about a page scored on the
+    answer, so the correspondence between the page and a question is what is measured. Text
+    recognition, including handwritten notes, is scored separately and inside the Overall, so
+    ocr-handwriting is secondary.
+  source: src-arxiv-2412-07626-v2
+  quote: Document parsing, a core task in computer vision and document intelligence, aims to extract
+    structured, machine-readable content from unstructured documents such as PDFs.
+domain_considered_and_rejected:
+  - term: multimodal/visual-qa
+    reason: Rejected under 02 S11 rule 12. document-understanding's not_to_be_confused_with sends a
+      document-image benchmark posed as questions to visual-qa; OmniDocBench poses none, and its
+      metrics compare the recovered page content with the page's own annotations, not an answer with
+      a question.
+    source: src-github-omnidocbench-readme
+    quote: The evaluation uses the model's Markdown output of the entire PDF page parsing results as
+      the prediction.
+  - term: multimodal/any-to-any-generation
+    reason: The output is text and the input an image, but the text is a transcription of the page's
+      own content, scored against that content's annotation; the taxonomy keeps transcription of
+      text in images in vision (ocr-handwriting) rather than treating it as generation across
+      modalities.
+  - term: multimodal/chart-diagram-understanding
+    reason: Figures are located by layout boxes but carry no content annotation, so nothing in a
+      chart or diagram is scored.
+    source: src-arxiv-2412-07626-v2
+    quote: The recognition annotations are also provided for each annotation category except for
+      Figures.
+  - term: vision/detection
+    reason: Layout and formula detection are scored by mAP as single-task subsets, but the headline
+      is the end-to-end parse, so detection is the subsets' override rather than a secondary of the
+      entry.
+capability:
+  - perception
+capability_basis:
+  perception:
+    reason: The input is a rendered page image, and every score measures what was recovered from it,
+      characters, table structure, formula structure and the order of blocks; the paper's analysis
+      is of failures on blurred scans, watermarks, dense newspapers and handwriting.
+    source: src-arxiv-2412-07626-v2
+    quote: Notably, most VLMs fail to recognize when dealing with the Newspapers
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: Reading order across columns is scored, but as the edit distance of a recovered sequence
+      against the annotated one, a structure read off the layout; it is not in the Overall, and no
+      item asks for an inference about spatial relations.
+    source: src-arxiv-2412-07626-v2
+    quote: Reading order is evaluated using the Normalized Edit Distance as metric.
+  - term: grounding
+    reason: Nothing binds a language expression to a region; the layout boxes are scored against a
+      fixed category set, which is perception.
+  - term: context-integration
+    reason: The page is the input signal itself, not supplied material that answers a question.
+
+evaluation_method:
+  - composite
+  - reference-metric
+  - domain-metric
+evaluation_method_basis:
+  reason: Since v1.5 the headline Overall averages three sub-scores produced by different methods.
+    Text is scored by normalised edit distance, a fixed-formula string similarity of the kind
+    reference-metric names. Tables are scored by TEDS, a tree-edit-distance similarity defined for
+    table structure in HTML, and display formulas by CDM, a character-matching metric defined for
+    formula recognition; both are the document-analysis field's own measures with no meaning outside
+    it, so domain-metric. The single-task layout and formula detection subsets use COCO-style mAP,
+    also domain-metric. v1.0's paper reported the sub-scores separately, with no Overall of this
+    form.
+  source: src-github-omnidocbench-readme
+  quote: The **Overall** metric is now calculated as ((1 - text Edit distance) * 100 + table TEDS +
+    formula CDM) / 3
+evaluation_method_considered_and_rejected:
+  - term: model-derived-metric
+    reason: CDM renders the predicted and the reference LaTeX and matches their characters, and no
+      source read says a learned model computes it; TEDS and edit distance are fixed formulas. See
+      the review checks.
+    source: src-arxiv-2412-07626-v2
+    quote: Formulas are currently evaluated using the Character Detection Matching (CDM) metric
+      [41], Normalized Edit Distance, and BLEU [33].
+  - term: exact-match
+    reason: Every content score gives partial credit; no item is scored as an exact match.
+designed_for_subjects:
+  - task-specific-supervised-model
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The paper's three classes of entrant are pipeline tools built from task-trained layout,
+    OCR, table and formula models, expert vision-language models trained for document parsing
+    (GOT-OCR, Nougat), both scored as trained artefacts on a general perception task, and general
+    vision-language models (GPT-4o, Qwen2-VL-72B, InternVL2-76B) prompted to output the page as
+    Markdown. Document parsing is a general perception task, not a discipline, so
+    domain-specialist-model does not apply.
+  source: src-arxiv-2412-07626-v2
+  quote: 'General VLMs: These are general-purpose large multimodal models inherently capable of document
+    parsing.'
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: The specialised parsers are trained for document parsing, a general perception task with
+      no scientific, clinical or engineering-design discipline, which the term's exclusion test
+      sends to task-specific-supervised-model.
+    source: src-arxiv-2412-07626-v2
+    quote: 'Expert VLMs: These are large multimodal models specifically trained for document parsing tasks.'
+  - term: full-product-pipeline
+    reason: Some rows are commercial products whose components are not documented (Mathpix, Mistral
+      OCR), but most are open pipelines and models with named weights; whether a row is a product is
+      a fact about that claim.
+observed_subjects:
+  values:
+    - task-specific-supervised-model
+    - instruction-tuned-model
+  basis: The v1.6_full leaderboard ranks Specialized VLMs, compact models trained for document
+    parsing such as OXR-1.0, TeleOCR, PaddleOCR-VL-1.6 and MinerU2.5-Pro, at the top, above General
+    VLMs (Gemini 3 Pro, Gemini 3 Flash, Qwen3-VL-235B, GPT-5.2, Kimi K2.5) and two pipeline tools
+    (MinerU-Pipeline, Marker).
+  source: src-github-omnidocbench-readme
+as_used:
+  - protocol: v1.6 Full (1,651 pages), the developer's own model scored with the official end-to-end
+      evaluation and reported as Overall with its Text Edit, Formula CDM, Table TEDS, TEDS-S and
+      Read Order Edit; the rival models' numbers cited from the official leaderboard rather than
+      re-run.
+    split: v1.6 Full
+    source: src-arxiv-2606-03264-v1
+    quote: Performance metrics are cited from the official leaderboard [38].
+    note: Baidu's PaddleOCR-VL-1.6 report (June 2026) gives 96.33 Overall; the README leaderboard
+      lists the same model at 96.34. Its reference [38] for the leaderboard is
+      opendatalab.com/omnidocbench, the script-rendered official site.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. A June 2026 developer report claims a new state of the
+    art on v1.6, and the README added three models to the leaderboard on 2026-09-11. The
+    repository's head commit is dated 2026-11-06 (GitHub API), which is maintenance evidence, not
+    use.
+  source: src-arxiv-2606-03264-v1
+  quote: PaddleOCR-VL-1.6 achieves a new state-of-the-art score of 96.33% on OmniDocBench v1.6
+activity: no-submission-channel
+activity_note: Read from the README alone; the official site on opendatalab.com, which other reports
+  cite as the leaderboard, renders by script and was not read. The README invites issues and pull
+  requests on the evaluation code, but states no route by which a developer enters a result. See the
+  review checks.
+activity_basis:
+  reason: The leaderboard is a table in the README that the maintainers extend in dated updates,
+    adding models they run themselves with inference scripts they add to the repository; no round
+    has ever run, and no source read describes a submission route for outsiders.
+  source: src-github-omnidocbench-readme
+  quote: Added inference scripts for the models listed above.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: PaddleOCR-VL-1.6
+    source: src-github-omnidocbench-readme
+    observed_on: 2026-11-08
+    quote: PaddleOCR-VL-1.6 Specialized VLMs 0.9B 96.34
+    note: A 0.9B document-parsing model on the v1.6_full leaderboard; OXR-1.0 (1.3B) leads at 97.03.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Annotations of every page, pre-annotated by models (fine-tuned LayoutLMv3
+  for layout, PaddleOCR, UniMERNet and GPT-4o for text, formulas and tables), corrected character by
+  character by annotators and checked by researchers; they are public, not withheld.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The page images and annotations are on Hugging Face without a gate, and the evaluation
+    code and a Docker image are in the repository, so anyone can run a parser and compute the
+    official metrics.
+  source: src-github-omnidocbench-readme
+  quote: python pdf_validation.py --config configs/end2end.yaml
+
+task:
+  exists: true
+  input:
+    - one PDF page rendered as an image
+  output: The page as Markdown, with tables in HTML, LaTeX or Markdown and formulas in LaTeX; the
+    single-task subsets take a layout or formula detection file, or recognised text, tables or
+    formulas for cropped regions.
+  scoring: The output is split into tables, display formulas, code and text paragraphs, matched to
+    the ground-truth elements (quick_match, and from v1.6 Multi-Granularity Adaptive Matching), and
+    scored per element type, averaged over pages; headers, footers, page numbers, page footnotes and
+    captions take part in matching but not in the scores. Overall = ((1 - text edit distance) x 100
+    + table TEDS + formula CDM) / 3.
+  source: src-arxiv-2412-07626-v2
+  quote: Headers, footers, page numbers, and page footnotes, which are handled inconsistently by
+    different models
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The README restricts the dataset to research use and forbids commercial use; that is
+    a use term, not a gate on download.
+  access_basis:
+    reason: The page images and the annotation JSON, the labels the scores are computed from, are in
+      an ungated Hugging Face dataset (also on OpenDataLab), and the evaluation code is public, so
+      nothing is held back.
+    source: src-hf-api-omnidocbench
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_note: The Hugging Face dataset was last modified on 2026-06-26, after the v1.7 label, and
+    no source read says what changed then (see the review checks).
+  refresh_basis:
+    reason: The pages and annotations change only with a labelled version announced in the README's
+      dated log (v1.0, v1.5 on 2025-09-25, v1.6 on 2026-04-10, v1.7 on 2026-04-30), each carrying
+      its typo fixes, new pages and scoring changes, and the old versions stay on their own
+      branches.
+    source: src-github-omnidocbench-readme
+    quote: if you still want to evaluate your model in v1.0, please checkout to branch `v1_0`
+  data_provenance:
+    - web-scraped
+    - crowd-authored
+  data_provenance_note: The pages come from PDFs collected from the web and internal data, and the
+    README adds community user contributions. The annotations were pre-annotated by models, then
+    corrected by annotators and inspected by three researchers ("These elements are then reviewed
+    and corrected by three researchers to ensure accuracy in the final annotations", same Source);
+    2077AI, an author affiliation, supported the annotation (src-github-omnidocbench-readme). The
+    annotators' expertise is not described, so crowd-authored is the closer term. v1.6's Hard pages
+    were chosen from the maintainers' own MinerU training-data pool and annotated by professional
+    teams (src-arxiv-2604-04771-v2).
+  data_provenance_source: src-arxiv-2412-07626-v2
+  data_provenance_quote: we collected over 200,000 initial PDF documents from Common Crawl, Google,
+    Baidu search engines, and internal data
+  contamination_risk: medium
+  contamination_risk_note: Every page and its annotations are public, and the source PDFs are on the
+    open web, so a parser's training data can include them; the competing models are trained on
+    large document corpora. No source read evidences a route. The maintainers state that the Hard
+    pages were excluded from every stage of their own MinerU2.5-Pro training ("All Hard subset
+    samples are excluded from every training stage of MinerU2.5-Pro", src-arxiv-2604-04771-v2),
+    which concerns that one entrant.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: No human baseline is reported in the sources read. Scores are near the
+    top of their range (97.03 Overall on v1.6 Full), and the maintainers' lab gives saturation on
+    v1.5 as a reason for v1.6 ("As leading document parsing models converge on OmniDocBench v1.5",
+    src-arxiv-2604-04771-v2).
+  dataset_licence: null
+  dataset_licence_note: No licence is named for the dataset. The README restricts it to research use
+    and forbids commercial use ("The dataset is for research purposes only and not for commercial
+    use", src-github-omnidocbench-readme); the Hugging Face record declares no licence; the
+    repository's Apache-2.0 covers the code. The pages' own rights are not stated beyond the
+    README's note that content not allowed for distribution was removed.
+  upstream_licences: The PDFs were collected from public online channels and community
+    contributions, with no licence stated for them.
+  upstream_licences_source: src-github-omnidocbench-readme
+  upstream_licences_quote: The PDFs are collected from public online channels and community user
+    contributions.
+  size:
+    - count: 1651
+      unit: PDF pages (10 document types, 5 layout types, 5 language types)
+      subset: v1.6 Full, the current version
+      source: src-github-omnidocbench-readme
+      quote: This benchmark includes 1651 PDF pages, covering 10 document types, 5 layout types, and
+        5 language types.
+    - count: 1355
+      unit: PDF pages
+      subset: v1.6 Base, the v1.5 set
+      source: src-arxiv-2604-04771-v2
+      quote: 'Base (1,355 pages): retains the original v1.5 evaluation set to maintain comparability with
+        historical results.'
+    - count: 296
+      unit: PDF pages
+      subset: v1.6 Hard
+      source: src-arxiv-2604-04771-v2
+      quote: 'Hard (296 pages): the newly added hard sample subset'
+    - count: 981
+      unit: PDF pages (9 document types)
+      subset: v1.0
+      source: src-arxiv-2412-07626-v2
+      quote: OmniDocBench comprises a total of 981 PDF pages across 9 distinct types.
+    - count: 100000
+      unit: layout and recognition annotations, more than
+      subset: v1.0
+      source: src-arxiv-2412-07626-v2
+      quote: OmniDocBench contains over 100,000 annotations for page detection and recognition
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OpenDataLab (Shanghai Artificial Intelligence Laboratory)
+  maintainer_basis:
+    reason: The repository and the Hugging Face dataset sit in the opendatalab organisation, the
+      README calls the dataset copies on Hugging Face and OpenDataLab its own, and the paper's
+      authors are at Shanghai AI Laboratory with Abaka AI and 2077AI. The v1.6 upgrade was made in
+      the lab's MinerU2.5-Pro report.
+    source: src-arxiv-2604-04771-v2
+    quote: To address these issues, we upgrade OmniDocBench to v1.6
+  maintainer_type: null
+  maintainer_type_note: Not decided. The holder is one institution's organisation account, Shanghai
+    Artificial Intelligence Laboratory's, but no source read states the laboratory's legal form. It
+    is not a university (academic-lab), government-agency may not rest on an institute's name (its
+    exclusion test), and no source makes it a company (industry-lab).
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers choose the models, run them with inference scripts kept
+    in the repository under one evaluation environment, and add them to the README table in dated
+    updates; the leaderboard lists the version or weights evaluated for each. The MinerU2.5-Pro
+    report says the same of its v1.6 table. No developer-submitted route is stated.
+  submission_process_source: src-arxiv-2604-04771-v2
+  submission_process_quote: All competing models are reevaluated under a unified environment using
+    the same evaluation code.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2604-04771-v2
+      quote: establishing the more discriminative OmniDocBench v1.6 protocol. Without any
+        architectural modification, MinerU2.5-Pro achieves 95.69 on OmniDocBench v1.6
+  independence_flags_note: The report that defines v1.6 is the maintainers' lab's report on its own
+    MinerU2.5-Pro model, which it ranks first on v1.6 at release; MinerU-Pipeline, MinerU2.5 and
+    MinerU2.5-Pro, from the same opendatalab organisation, are leaderboard rows the maintainers
+    scored. The Hard subset was selected from the pool of data the lab's Data Engine labelled as
+    hard ("we construct a Hard subset of 296 pages selected from the pool of data labeled as Hard
+    during Data Engine difficulty stratification", same Source). The original paper also evaluates
+    MinerU, whose reference lists several of OmniDocBench's authors. 2077AI, an author affiliation,
+    supported the annotation and is not an evaluated party in the sources read.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The pages, the annotations and the evaluation code are public, and the score is computed
+      by the code with no human step. CDM needs TeX Live, ImageMagick and Ghostscript, which the
+      Docker image bundles.
+    source: src-github-omnidocbench-readme
+    quote: OmniDocBench has developed an evaluation methodology based on document component
+      segmentation and matching.
+  harness_availability: official-harness
+  harness: OmniDocBench evaluation code (pdf_validation.py with configs/end2end.yaml; branches v1_0
+    and v1_5 for the older versions)
+  harness_note: A community-maintained EvalScope integration runs OmniDocBench against
+    OpenAI-compatible endpoints (README, 2026-07-27); it is not the maintainers' scoring path.
+  harness_source: src-github-omnidocbench-readme
+  harness_quote: python pdf_validation.py --config configs/end2end.yaml
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for opendatalab/OmniDocBench, read 2026-11-08; not a
+    quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The profile resolves from reference-metric x instruction-tuned-model to llm-static-text. Beyond it: which
+  # version and tier was scored (v1.0, v1.5, or v1.6 Base, Hard or Full, since each changed pages and matching),
+  # the evaluation code that scored it (matching method, the v1.6 MGAM change, whether CDM was computed), and,
+  # for prompted models, the prompt that asked for Markdown.
+  material_extra:
+    - harness
+    - prompt_template_hash
+
+homepage: https://github.com/opendatalab/OmniDocBench
+repository: https://github.com/opendatalab/OmniDocBench
+dataset_url: https://huggingface.co/datasets/opendatalab/OmniDocBench
+leaderboard_url: https://github.com/opendatalab/OmniDocBench#end-to-end-evaluation
+
+versions:
+  - version: v1.0
+    label: OmniDocBench v1.0, the CVPR 2025 release
+    version_kind: edition
+    released: 2024-12-10
+    items: 981
+    changes: The first release, 981 pages of nine document types in three languages, with layout,
+      reading-order, text, formula and table annotations; scores reported per element type, by
+      English and Chinese pages. Kept on the v1_0 branch.
+    breaking: true
+    superseded_by: v1.5
+    frozen: true
+    sources:
+      - src-arxiv-2412-07626
+      - src-arxiv-2412-07626-v2
+      - src-github-omnidocbench-readme-v1-0
+  - version: v1.5
+    label: OmniDocBench v1.5
+    version_kind: edition
+    released: 2025-09-25
+    items: 1355
+    changes: Adds 374 pages, balancing Chinese and English and raising the share with formulas;
+      newspaper and note images re-rendered at 200 DPI instead of 72; typo fixes in text and table
+      annotations; hybrid matching of formulas and text; CDM computed in the pipeline; the
+      leaderboard drops the English and Chinese split for one Overall over all pages. Kept on the
+      v1_5 branch.
+    breaking: true
+    supersedes_version: v1.0
+    superseded_by: v1.6
+    frozen: true
+    sources:
+      - src-github-omnidocbench-readme
+      - src-github-omnidocbench-readme-v1-5
+  - version: v1.6
+    label: OmniDocBench v1.6 (Base, Hard and Full)
+    version_kind: edition
+    released: 2026-04-10
+    items: 1651
+    changes: Adds a Hard subset of 296 pages (complex nested tables, dense formula layouts,
+      unconventional layouts), giving Base (the 1,355 v1.5 pages), Hard and Full; replaces fixed
+      one-to-one matching with Multi-Granularity Adaptive Matching on the prediction side; fixes
+      typos in text and table annotations; CDM dependencies rewritten in Python. Introduced in the
+      MinerU2.5-Pro report.
+    breaking: true
+    supersedes_version: v1.5
+    superseded_by: v1.7
+    frozen: true
+    sources:
+      - src-github-omnidocbench-readme
+      - src-arxiv-2604-04771-v2
+  - version: v1.7
+    label: OmniDocBench v1.7
+    version_kind: revision
+    released: 2026-04-30
+    changes: The README's log names only the Qianfan-OCR leaderboard row and skills-based
+      evaluation; no change to pages, annotations or scoring is stated, and the leaderboard is still
+      captioned v1.6_full. See the review checks.
+    breaking: false
+    supersedes_version: v1.6
+    frozen: false
+    sources:
+      - src-github-omnidocbench-readme
+
+subsets:
+  - id: omnidocbench#end-to-end
+    label: End-to-end evaluation (the headline Overall)
+    scored_separately: true
+    evidence:
+      - source: src-github-omnidocbench-readme
+        quote: Comprehensive evaluation of document parsing on OmniDocBench (v1.6_full)
+    notes: Full-page Markdown scored on text, formulas, tables and reading order; the leaderboard's
+      table.
+  - id: omnidocbench#base
+    label: v1.6 Base (the 1,355 v1.5 pages)
+    parent: omnidocbench#end-to-end
+    items: 1355
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2604-04771-v2
+        quote: 'Base (1,355 pages): retains the original v1.5 evaluation set to maintain comparability
+          with historical results.'
+  - id: omnidocbench#hard
+    label: v1.6 Hard
+    parent: omnidocbench#end-to-end
+    items: 296
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2604-04771-v2
+        quote: we construct a Hard subset of 296 pages selected from the pool of data labeled as
+          Hard during Data Engine difficulty stratification
+    notes: v1.6 only. Full is the union of Base and Hard.
+  - id: omnidocbench#layout-detection
+    label: Layout detection
+    scored_separately: true
+    domain_override:
+      primary: vision/detection
+      secondary:
+        - vision/document-understanding
+    evidence:
+      - source: src-github-omnidocbench-readme
+        quote: making it suitable as a benchmark for layout detection task evaluation
+    notes: Block boxes scored by COCO-style mAP, reported by document type; the README's table is on
+      v1.0.
+  - id: omnidocbench#formula-detection
+    label: Formula detection
+    scored_separately: true
+    domain_override:
+      primary: vision/detection
+      secondary:
+        - vision/document-understanding
+    evidence:
+      - source: src-github-omnidocbench-readme
+        quote: making it suitable as a benchmark for formula detection task evaluation
+    notes: Display and inline formula boxes, scored as layout detection is.
+  - id: omnidocbench#table-recognition
+    label: Table recognition
+    scored_separately: true
+    evidence:
+      - source: src-github-omnidocbench-readme
+        quote: making it suitable as a benchmark for table recognition evaluation
+    notes: Cropped tables scored by TEDS against the HTML annotation, by language, frame type and
+      special situation.
+  - id: omnidocbench#formula-recognition
+    label: Formula recognition
+    scored_separately: true
+    evidence:
+      - source: src-github-omnidocbench-readme
+        quote: making it suitable as a benchmark for formula recognition evaluation
+    notes: Display formulas scored by CDM, BLEU and normalised edit distance.
+  - id: omnidocbench#text-ocr
+    label: Text OCR
+    scored_separately: true
+    domain_override:
+      primary: vision/ocr-handwriting
+      secondary:
+        - vision/document-understanding
+    evidence:
+      - source: src-github-omnidocbench-readme
+        quote: making it suitable as a benchmark for OCR evaluation
+    notes: Text paragraphs scored by normalised edit distance, by language, background and rotation.
+subsets_note: >
+  The README's five evaluation dimensions plus formula detection, each with its own config, and v1.6's
+  Base and Hard tiers of the end-to-end evaluation. The single-task tables in the README are on v1.0.
+
+lineage:
+  role: root
+  forks:
+    - id: real5-omnidocbench
+      maintainer: The Real5-OmniDocBench authors (arXiv 2603.04205, not read)
+      source: src-arxiv-2606-03264-v1
+      quote: 'Built upon OmniDocBench v1.5, it covers five representative scenarios: scanning, warping,
+        screen photography, illumination variation, and skew.'
+tags:
+  - document-parsing
+  - document-understanding
+  - ocr
+  - table-recognition
+  - formula-recognition
+  - layout-analysis
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T06)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2412-07626-v2
+    - src-arxiv-2412-07626
+    - src-github-omnidocbench-readme
+    - src-github-omnidocbench-readme-v1-0
+    - src-github-omnidocbench-readme-v1-5
+    - src-hf-api-omnidocbench
+    - src-arxiv-2604-04771-v2
+    - src-arxiv-2606-03264-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text with its supplementary material, and its abstract
+    page for the dates and venue; the README at main's head commit and at the heads of the v1_0 and v1_5
+    branches, each pinned to its commit; the Hugging Face API record of the dataset, read through the
+    API,
+    not the dataset page; the MinerU2.5-Pro report's v2 PDF for v1.6; and the PaddleOCR-VL-1.6 report's
+    v1 PDF as evidence of current use. The official site, opendatalab.com/omnidocbench, allows agents
+    in its robots.txt but serves an empty script shell, so it was not read. The README's leaderboard is
+    an HTML table whose tags normalise() strips, so its rows are quoted as cell text.
+  confidence: medium
+  review_checks:
+    - check: v1.0, v1.5 and v1.6 are modelled as editions because each adds pages under the same
+        task, while also correcting earlier annotations and changing the matching. They are
+        supersets, not replacement sets, and v1.6 keeps v1.5 as its Base tier for comparability, so
+        a reviewer could read v1.5 and v1.6 as revisions with additions. Scores across them are not
+        comparable either way.
+      field: versions
+      source: src-arxiv-2604-04771-v2
+      quote: 'Base (1,355 pages): retains the original v1.5 evaluation set to maintain comparability with
+        historical results.'
+    - check: v1.7 is a version label with no stated change to pages, annotations or scoring, and the
+        leaderboard is still captioned v1.6_full; the Hugging Face dataset was modified on
+        2026-06-26, after it. Whether v1.7 changed the data, and whether that later modification is
+        an unannounced change (which would make refresh rolling-live), is not shown by any source
+        read.
+      field: versions
+      source: src-github-omnidocbench-readme
+      quote: Updated from **v1.6** to **v1.7**, added the Qianfan-OCR leaderboard, and supported
+        skills-based evaluation.
+    - check: The domain rests on what is scored. The output is text produced from an image, which a
+        reader could take for multimodal/any-to-any-generation; it is kept in vision because the
+        text is a transcription of the page's own content, as document-understanding and
+        ocr-handwriting define it. DocVQA, by contrast, scores answers to questions and sits in
+        multimodal.
+      field: domain
+    - check: activity no-submission-channel rests on the README, which shows a maintainer-run table
+        and no submission route. The official site on opendatalab.com, which reports cite as the
+        leaderboard, could not be read. If developers can ask to be evaluated or send results,
+        activity is accepting-submissions and submission_process gains that route.
+      field: activity
+    - check: maintainer-competes-on-own-benchmark rests on the MinerU2.5-Pro report, which both
+        defines v1.6 and ranks the lab's own model first on it, with the Hard pages drawn from that
+        model's data pool. The leaderboard's top is now other models (OXR-1.0 at 97.03), and
+        MinerU2.5-Pro is fifth.
+      field: governance.independence_flags
+      source: src-github-omnidocbench-readme
+      quote: OXR-1.0 Specialized VLMs 1.3B 97.03
+    - check: maintainer_type is null. Shanghai Artificial Intelligence Laboratory's legal form is
+        not stated in any source read; the field needs a source that states it.
+      field: governance.maintainer_type
+    - check: TEDS and CDM are tagged domain-metric as table- and formula-recognition measures. TEDS
+        is also a similarity against a reference markup, which a reviewer could read as
+        reference-metric; CDM's description was not read beyond the paper's naming of it, so whether
+        any learned model takes part in it (model-derived-metric) is unconfirmed.
+      field: evaluation_method
+    - check: Real5-OmniDocBench is recorded as a fork on the PaddleOCR-VL-1.6 report's description
+        (re-photographed v1.5 pages, the same annotations and protocol). Its own paper (arXiv
+        2603.04205) was not read, so its maintainer and whether it is a separate benchmark or a test
+        condition of this one are unconfirmed; it has no entry.
+      field: lineage
+      source: src-arxiv-2606-03264-v1
+      quote: Each subset maintains a one-to-one correspondence with the original OmniDocBench
+        samples and follows the same ground-truth annotations and evaluation protocols.
+    - check: dataset_licence is null. The README limits the dataset to research and non-commercial
+        use without naming a licence, and the Hugging Face record declares none.
+      field: data.dataset_licence
+      source: src-github-omnidocbench-readme
+      quote: The dataset is for research purposes only and not for commercial use.
+    - check: data_provenance crowd-authored rests on the annotators' expertise being undescribed;
+        annotation was supported by 2077AI, and the v1.6 Hard pages by professional teams. The
+        annotations were model pre-annotations corrected by people, which a reviewer may want
+        recorded as model-generated as well.
+      field: data.data_provenance
+      source: src-arxiv-2604-04771-v2
+      quote: are annotated by professional teams with inter-annotator cross-validation to ensure
+        ground truth quality
