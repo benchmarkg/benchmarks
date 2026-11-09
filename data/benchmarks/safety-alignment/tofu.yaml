@@ -1,0 +1,622 @@
+# data/benchmarks/safety-alignment/tofu.yaml
+#
+# P1-S9-T04, safety-alignment entry 12. Filled from the TOFU paper, arXiv 2401.06121 read as its v1 PDF (2024-01-11,
+# the only and so the latest version) and its abstract page; the project page (locuslab.github.io/tofu); the README
+# of the legacy locuslab/tofu repository at commit bdc209e; the README and community/leaderboard.md of
+# locuslab/open-unlearning at commit 2d98027; Hugging Face's API record of the locuslab/TOFU dataset and the dataset
+# viewer's size record; the API record, app.py and uploads.py of the locuslab/tofu_leaderboard Space; the abstract
+# page of the OpenUnlearning technical report (arXiv 2506.12618, v2); and three 2025-2026 papers that use TOFU, read
+# as abstract pages: SAUL (arXiv 2608.16249, August 2026, a Source already on main), K-Bench (arXiv 2609.12808,
+# September 2026) and SHIFT (arXiv 2611.00374, October 2026). Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+#
+# The paper's text from the KL Minimization objective (page 10) to Appendix A (page 19), which holds Section 4's
+# results and Section 5's limitations, is lost to normalise() (a subscript '<i' opens a tag), so it was read in the
+# raw pdftotext output and nothing below quotes it (review_checks).
+#
+# Identity (04 S4): locuslab/open-unlearning is the original TOFU repository renamed (GitHub API: created
+# 2024-01-10), and it now hosts TOFU beside MUSE and WMDP. It is recorded as TOFU's official harness, its
+# re-implementation of TOFU with new target models as a same-maintainer revision (versions), and third parties'
+# runs through it as as_used. MUSE and WMDP are separate benchmarks; wmdp.yaml is the related entry.
+#
+# The 200 authors are fictitious, so profile examples are not personal data, but none is quoted: the quotes are
+# definitions, counts and procedures.
+
+id: tofu
+name: TOFU
+aliases:
+  - Task of Fictitious Unlearning
+  - 'TOFU: A Task of Fictitious Unlearning for LLMs'
+tagline: Unlearning 1%, 5% or 10% of 200 fictitious author profiles fine-tuned into an LLM, scored
+  by forget quality and utility.
+description: >
+  A benchmark for unlearning in language models, from Carnegie Mellon University: 200 fictitious author
+  profiles written by GPT-4, each 20 question-answer pairs (4,000 in all), are fine-tuned into a model,
+  and an unlearning method must then make the model forget 2, 10 or 20 of the authors (the forget01, forget05
+  and forget10 splits, 1%, 5% and 10% of the data) with compute that grows only linearly with the forget
+  set. Because the authors do not exist, the fine-tuning set is the only source of what is to be forgotten,
+  and a retain model fine-tuned without the forget set is the gold standard the unlearned model is compared
+  with. Methods are scored on two axes. Forget quality is the p-value of a two-sample Kolmogorov-Smirnov
+  test between the unlearned and retain models' truth ratios on the forget set (the probability of perturbed
+  wrong answers against a paraphrased correct one), so a high p-value means the two cannot be told apart.
+  Model utility is the harmonic mean of nine numbers: answer probability, ROUGE-L recall and truth ratio
+  on the retain set and on two sets further away, questions about real authors and general world facts.
+  The paper's four baselines (gradient ascent, gradient difference, KL minimisation and preference optimisation
+  towards 'I don't know' answers, on Llama-2-7B and Phi-1.5) all fall short. The code now lives in OpenUnlearning,
+  the maintainers' framework that also hosts MUSE and WMDP, which re-created the target models on Llama
+  3.x and added a holdout set and membership-inference metrics. Unlike WMDP, whose questions measure hazardous
+  knowledge a model already has, TOFU plants harmless synthetic facts and asks only whether a method removes
+  them.
+self_description:
+  source: src-arxiv-2401-06121-v1
+  quote: we present TOFU, a Task of Fictitious Unlearning, as a benchmark aimed at helping deepen
+    our understanding of unlearning
+external_ids:
+  huggingface: locuslab/TOFU
+  arxiv: '2401.06121'
+paper:
+  title: 'TOFU: A Task of Fictitious Unlearning for LLMs'
+  arxiv: '2401.06121'
+  version_read: v1
+  source: src-arxiv-2401-06121-v1
+released: 2024-01-11
+released_note: The paper's first and only arXiv version, as the abstract page dates it. Hugging
+  Face's dataset record was created earlier, on 2023-11-14, and the leaderboard Space on 2023-12-05;
+  neither is a dated release.
+released_source: src-arxiv-2401-06121
+released_quote: Submitted on 11 Jan 2024
+release_venue: COLM 2024
+release_venue_note: The citation block OpenUnlearning's README asks users to cite; the COLM
+  proceedings page itself was not read (OpenReview refused the fetch).
+release_venue_source: src-github-open-unlearning-readme-2d98027
+release_venue_quote: booktitle={First Conference on Language Modeling}, year={2024}
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/unlearning-knowledge-removal
+  secondary:
+    - safety-alignment/privacy-memorization
+domain_basis:
+  reason: The scored question is whether targeted knowledge has been removed from a model, and the
+    leaderboard ranks removal methods, which the leaf's distinction from dangerous-capability-evals
+    names as the case for this term as primary. The setting is privacy, the right to be forgotten
+    for a rarely mentioned person, with the fictitious authors standing in for private individuals
+    and low forget quality read as privacy leakage, which is privacy-memorization, secondary. WMDP,
+    the related entry, differs in what is removed and why it is scored, not only in score direction.
+    Its questions measure hazardous knowledge a model already holds and rank released models, so it
+    is dangerous-capability-evals first. TOFU's knowledge is harmless and planted by fine-tuning,
+    and no model is ranked.
+  source: src-arxiv-2401-06121-v1
+  quote: detailing how unlearning methods must be compared across two different axes of forget
+    quality and model utility
+domain_considered_and_rejected:
+  - term: safety-alignment/dangerous-capability-evals
+    reason: Nothing hazardous is measured. The facts are fictitious biographies, and no released
+      model is ranked on what it knows.
+  - term: safety-alignment/harmlessness-refusal
+    reason: Refusing is not credited as forgetting. One baseline trains 'I don't know' answers, but
+      the truth ratio reads probabilities, which the paper designs to see past a model that
+      abstains.
+  - term: language/understanding
+    reason: Its definition needs answers determined by a supplied passage; TOFU's questions are
+      asked closed-book.
+capability:
+  - knowledge-recall
+capability_basis:
+  knowledge-recall:
+    reason: Every evaluation set asks closed-book questions whose answers the model must already
+      hold, from fine-tuning (retain and forget sets) or pretraining (real authors, world facts).
+      Utility rewards recall; the forget axis asks that recall of the forget set match a model that
+      never saw it.
+    source: src-arxiv-2401-06121-v1
+    quote: 'The evaluation framework includes four distinct datasets: Forget Set, Retain Set, Real Authors,
+      and World Facts.'
+capability_considered_and_rejected:
+  - term: continual-learning
+    reason: Its inclusion test needs tasks presented in sequence with retention of earlier ones
+      scored. TOFU makes one forget request against a fixed fine-tuned model; sequential unlearning
+      appears only in later papers' own protocols.
+  - term: harm-avoidance
+    reason: Nothing harmful is requested or produced; the scored outcome is indistinguishability
+      from a retain model.
+  - term: memory-retention
+    reason: It is about information carried across a long context or an episode boundary, not about
+      knowledge stored in weights.
+
+evaluation_method:
+  - reference-metric
+evaluation_method_basis:
+  reason: "Every number is a fixed formula over reference answers: ROUGE-L recall of the greedy answer,
+    the length-normalised probability of the reference answer (a perplexity relative), and the truth ratio
+    of perturbed to paraphrased answers. Forget quality is a KS-test p-value between two such truth-ratio
+    distributions, the unlearned and the retain model's, which no term describes (taxonomy/_failures/)."
+  source: src-arxiv-2401-06121-v1
+  quote: Specifically, we compute the ROUGE-L recall score (Lin, 2004)
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: Model utility is a harmonic mean, but its nine constituents are three reference metrics
+      on three sets, and composite's exclusion covers constituents that share one method.
+  - term: multiple-choice
+    reason: Real Authors and World Facts compute the correct option's probability relative to the
+      others, but no option is chosen and scored as an answer; it is one of the nine utility
+      numbers.
+    source: src-locuslab-tofu-site
+    quote: we treat each question as a multiple-choice question with several answers, and calculate
+      the probability of the correct answer relative to the others.
+  - term: statistical-fit
+    reason: The KS test compares two distributions of the models' own truth ratios; it is not error
+      against ground-truth measurements.
+  - term: model-derived-metric
+    reason: No separate scoring model produces the number. The retain model is a reference whose
+      outputs are scored by the same formulas.
+designed_for_subjects:
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: The entrant is an unlearning method applied to a fixed fine-tuned target model, and the
+    paper benchmarks existing methods. The leaderboard has one table per base model and forget
+    percentage, with a Method column sorted by the product of model utility and forget quality, so
+    no model is ranked against another.
+  source: src-arxiv-2401-06121-v1
+  quote: we leverage foundational baselines in machine unlearning literature from the domains of
+    computer vision and tabular data
+designed_for_subjects_considered_and_rejected:
+  - term: base-model
+    reason: Llama-2-7B and Phi-1.5 (and in OpenUnlearning Llama 3.x) are the targets methods are
+      applied to, chosen by the benchmark; they are a condition of a claim, not the thing ranked.
+  - term: instruction-tuned-model
+    reason: The legacy code fine-tunes Llama2-7b chat, but the chat model is a fixed target, and the
+      protocol prompts nothing as an assistant.
+as_used:
+  - protocol: OpenUnlearning's re-implementation, with its re-created target and retain models and
+      its unified baseline set, scored across the TOFU settings.
+    source: src-arxiv-2611-00374
+    quote: Evaluated against eleven baselines under a unified OpenUnlearning protocol, SHIFT
+      achieves the highest aggregate score across all TOFU settings
+    note: SHIFT (October 2026) reports an aggregate score of its own over the TOFU settings, not the
+      paper's two axes as such; only the abstract was read.
+  - protocol: TOFU beside WMDP and MUSE as one of three unlearning benchmarks, with forgetting
+      judged against a criterion per benchmark.
+    source: src-arxiv-2608-16249
+    quote: We evaluate SAUL on the TOFU, WMDP, and MUSE benchmarks
+    note: SAUL (August 2026); only the abstract was read.
+
+lifecycle: active
+lifecycle_basis:
+  reason: New unlearning methods are still scored on TOFU in late 2026, through OpenUnlearning
+    (SHIFT, October) and beside WMDP and MUSE (SAUL, August), and OpenUnlearning's last commit is
+    from 2026-10-31.
+  source: src-arxiv-2611-00374
+  quote: Submitted on 30 Oct 2026
+activity: accepting-submissions
+activity_note: The legacy README still sends results to the Space; OpenUnlearning asks contributors
+  to add results to community/leaderboard.md, whose TOFU tables hold only the Finetuned and Retain
+  reference rows.
+activity_basis:
+  reason: The Hugging Face leaderboard Space, which has never run in rounds, is running and serves a
+    form that commits a submitted results file to its own repository. Its file list holds only the
+    maintainers' baseline files, and OpenUnlearning's own leaderboard, which invites contributions,
+    lists no contributed row (review_checks).
+  source: src-hf-space-tofu-leaderboard-app
+  quote: Submit a new model for evaluation
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Llama-2-7B
+    source: src-arxiv-2401-06121-v1
+    observed_on: 2026-11-08
+    quote: Pretrained Finetuned on TOFU Llama-2-7B 0.3640 Phi-1.5 0.4399 0.9849 0.8693
+    note: Table 2, ROUGE on the fine-tuning data before and after fine-tuning on TOFU; the target
+      models the paper's methods are applied to.
+  - system: Llama-3.2-1B-Instruct
+    source: src-github-open-unlearning-leaderboard-2d98027
+    observed_on: 2026-11-08
+    quote: TOFU unlearning on the `Llama-3.2-1B-Instruct` architecture
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The reference answers are the GPT-4-written answers in the dataset, with
+  GPT-4 paraphrases and perturbations for the truth ratio. They are not held out (the forget set is
+  the fine-tuning data by design); forget quality's real reference is the retain model, fine-tuned
+  without the forget set. No ground truth term names a reference model (review_checks).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The dataset is ungated on Hugging Face under MIT, the harness is MIT, and OpenUnlearning
+    publishes its target and retain models and downloads the retain models' evaluation logs that
+    forget quality needs.
+  source: src-github-open-unlearning-readme-2d98027
+  quote: This downloads log files with evaluation results (including retain model logs)
+
+task:
+  exists: true
+  input:
+    - a model fine-tuned on all 4,000 TOFU question-answer pairs (the target)
+    - a forget split (forget01, forget05 or forget10) and its retain split (retain99, retain95 or
+      retain90)
+  output: The unlearned model's weights, evaluated on the forget set, the retain set, Real Authors
+    and World Facts.
+  scoring: Two numbers, not combined in the paper. Forget quality is the KS-test p-value between the
+    unlearned and retain models' truth ratios on the forget set (higher is better; the paper reads
+    0.05 as the significance threshold). Model utility is the harmonic mean of probability, ROUGE-L
+    recall and truth ratio on the other three sets. The leaderboard sorts methods by their product.
+  constraint:
+    source: src-locuslab-tofu-site
+    quote: The challenge is to limit computation to an O(n) compute, where n is the number of
+      samples to be unlearned, thereby excluding strategies like retraining from scratch.
+  source: src-arxiv-2401-06121-v1
+  quote: Crucially, the KS-Test produces a p-value which we use to measure Forget Quality.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The dataset is public and ungated on Hugging Face, tagged MIT, with every split, the
+    perturbed answer sets and the holdout sets. Nothing is withheld; the forget set is the training
+    data by design.
+  access_basis:
+    reason: Hugging Face's record of locuslab/TOFU is public and not gated.
+    source: src-hf-api-tofu
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Changes are announced with dates in the READMEs. A new evaluation pipeline came with a
+      note that paper and leaderboard numbers may change, the TOFU code moved to OpenUnlearning with
+      new target models on 2025-02-27, and a holdout set was added on 2025-04-06 (the dataset files
+      were last modified on 2025-03-27). The fine-tuning and forget splits are not shown to have
+      changed.
+    source: src-github-tofu-readme-bdc209e
+    quote: We have updated a new evaluation pipeline, see the following section on model evaluation.
+  data_provenance:
+    - model-generated
+  data_provenance_note: GPT-4 wrote the 200 biographies as question-answer pairs from seeded
+    attributes (birthplace, gender, birth year, genre, awards, parents' occupations, and keywords
+    from Goodreads book titles), and also the paraphrased and perturbed answers. The sources read do
+    not say how the Real Authors and World Facts questions were written.
+  data_provenance_source: src-arxiv-2401-06121-v1
+  data_provenance_quote: we curate a unique dataset composed entirely of fictitious author
+    biographies, synthesized by GPT-4
+  contamination_risk: medium
+  contamination_risk_note: TOFU's premise is that the authors are absent from pretraining. The
+    dataset has been public since 2024, and OpenUnlearning's Llama 3.x targets were pretrained after
+    that, so the facts could reach a target before fine-tuning, which would blur the retain-model
+    reference. No source read evidences it.
+  contamination_risk_source: src-hf-api-tofu
+  contamination_risk_quote: '"createdAt":"2023-11-14T22:25:09.000Z"'
+  contamination_evidence: []
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_basis:
+    reason: The retain model, fine-tuned without the forget set, is run against the same tests as
+      the gold standard. It sets forget quality at 1.0 and gives a measured utility (0.59 on
+      Llama-3.2-1B-Instruct in OpenUnlearning's table) that unlearned models are read against.
+    source: src-arxiv-2401-06121-v1
+    quote: We then employ a statistical test to compare unlearned models to the gold standard retain
+      models that are never trained on the sensitive data
+  dataset_licence: MIT
+  dataset_licence_source: src-hf-api-tofu
+  dataset_licence_quote: '"license:mit"'
+  size:
+    - count: 4000
+      unit: question-answer pairs
+      subset: full (the fine-tuning set)
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"full","num_bytes_original_files":1077844,"num_bytes_parquet_files":502672,"num_bytes_memory":990798,"num_rows":4000'
+    - count: 200
+      unit: fictitious author profiles
+      subset: full
+      source: src-arxiv-2401-06121-v1
+      quote: We offer a dataset of 200 diverse synthetic author profiles, each consisting of 20
+        question-answer pairs
+    - count: 40
+      unit: question-answer pairs
+      subset: forget01
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"forget01","num_bytes_original_files":11655,"num_bytes_parquet_files":8645,"num_bytes_memory":10806,"num_rows":40'
+    - count: 200
+      unit: question-answer pairs
+      subset: forget05
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"forget05","num_bytes_original_files":56437,"num_bytes_parquet_files":29493,"num_bytes_memory":52258,"num_rows":200'
+    - count: 400
+      unit: question-answer pairs
+      subset: forget10
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"forget10","num_bytes_original_files":114856,"num_bytes_parquet_files":56656,"num_bytes_memory":106524,"num_rows":400'
+    - count: 100
+      unit: questions
+      subset: real_authors
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"real_authors","num_bytes_original_files":21862,"num_bytes_parquet_files":14424,"num_bytes_memory":15067,"num_rows":100'
+    - count: 117
+      unit: questions
+      subset: world_facts
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"world_facts","num_bytes_original_files":23094,"num_bytes_parquet_files":14847,"num_bytes_memory":15244,"num_rows":117'
+    - count: 400
+      unit: question-answer pairs
+      subset: holdout10 (added 2025)
+      source: src-hf-datasets-server-tofu-size
+      quote: '"config":"holdout10","num_bytes_original_files":131049,"num_bytes_parquet_files":63940,"num_bytes_memory":122394,"num_rows":400'
+  size_note: Each forget split is 20 pairs per author (2, 10 and 20 authors), and its retain split
+    is the rest of the 4,000 (retain90 has 3,600 rows). holdout01 and holdout05 have 40 and 200
+    rows. Whether the holdout pairs are new authors or drawn from the 200 is not stated in the
+    sources read.
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: locuslab (Carnegie Mellon University)
+  maintainer_basis:
+    reason: The dataset, the leaderboard Space and both repositories sit in the locuslab namespaces
+      on Hugging Face and GitHub, and the project page is Carnegie Mellon University's.
+      OpenUnlearning was developed and is maintained by a wider group under the same namespace, and
+      its technical report is co-authored by TOFU's senior authors (review_checks).
+    source: src-locuslab-tofu-site
+    quote: Carnegie Mellon University © 2024.
+  maintainer_type: academic-lab
+  maintainer_type_basis:
+    reason: A university research group's namespace holds the dataset, the code and the leaderboard.
+    source: src-locuslab-tofu-site
+    quote: Carnegie Mellon University © 2024.
+  submission_process:
+    - self-reported
+  submission_process_note: The Space's form takes a results CSV with a method name, base model,
+    forget rate, URL, organisation and contact address, adds the metadata and commits the file to
+    the Space's versions folder with no scoring or review step. OpenUnlearning's leaderboard takes
+    contributors' own results.
+  submission_process_source: src-hf-space-tofu-leaderboard-uploads
+  submission_process_quote: Please refresh the leaderboard, and wait a bit to see the score
+    displayed
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-arxiv-2401-06121-v1
+      quote: we leverage foundational baselines in machine unlearning literature from the domains of
+        computer vision and tabular data
+  independence_flags_note: Searched on 2026-11-08. The paper's four baselines are existing methods,
+    not the authors' own. The data were written with GPT-4, but no OpenAI model is a target. The
+    acknowledgements (funding from a Bosch research centre and DARPA) fall in the span normalise()
+    drops and were read but not quoted. Whether any of the methods OpenUnlearning has since added
+    are its maintainers' own was not checked (review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2609-12808
+    quote: Unlearning benchmarks such as TOFU and MUSE certify forgetting by reading the model's
+      final answer, where a model that refuses to answer already counts as having forgotten.
+  known_limitation_note: K-Bench's characterisation (September 2026). The TOFU paper designs the
+    truth ratio to see past abstention, so the criticism bears hardest on the ROUGE and probability
+    numbers. The paper's own limitations (entity-level forgetting only, information learned in
+    fine-tuning rather than pretraining, and models that output gibberish reaching high forget
+    quality) sit in the span normalise() drops (review_checks).
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Fine-tuning, unlearning and evaluation run as scripts with no human step, and
+      OpenUnlearning ships the target models, retain models and retain logs, so a method can be
+      scored without first fine-tuning.
+    source: src-github-open-unlearning-readme-2d98027
+    quote: For each architecture, we have finetuned with four different splits of the TOFU datasets
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: OpenUnlearning (locuslab/open-unlearning; Hydra configs experiment=unlearn/tofu/default
+    and eval/tofu/default), which replaced the legacy locuslab/tofu code (finetune.py, forget.py,
+    evaluate_util.py, aggregate_eval_stat.py) that produced the paper's numbers
+  harness_source: src-github-open-unlearning-readme-2d98027
+  harness_quote: This repo replaces the original TOFU codebase at
+  harness_gotcha:
+    source: src-github-tofu-readme-bdc209e
+    quote: We notice that Llama2 model has reproducibility issue due to the internal randomness of
+      flash attention.
+  harness_gotcha_note: Forget quality is computed against the retain model's evaluation logs for the
+    same target model and split, so a number means nothing without its target model and retain logs.
+    The legacy README encourages users to collect their own retain results and warns that paper and
+    leaderboard numbers may change. OpenUnlearning's target models (Llama 3.2 1B and 3B, Llama 3.1
+    8B and a re-created Llama-2 7B) differ from the paper's (Llama-2-7B chat and Phi-1.5), and its
+    baseline scripts are untuned.
+  submission_channel:
+    source: src-hf-space-tofu-leaderboard-app
+    quote: Submit a new model for evaluation
+  code_licence: MIT
+  code_licence_note: OpenUnlearning's README states the MIT License, and GitHub's licence metadata
+    gives MIT for both locuslab/open-unlearning and locuslab/tofu (read 2026-11-08). The Space's
+    card gives Apache-2.0 for the leaderboard app.
+  code_licence_source: src-github-open-unlearning-readme-2d98027
+  code_licence_quote: This project is licensed under the MIT License.
+  runnable_via:
+    - custom
+  inspect_evals_id: null
+  inspect_evals_id_note: Checked 2026-11-08 against UKGovernmentBEIS/inspect_evals at main through
+    the GitHub API's listings of src/inspect_evals (137 entries) and register/ (58). Neither has
+    TOFU or any unlearning task; the nearest is wmdp, which scores released models, not unlearning
+    methods.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The fallback profile (subset_used, the forget split) applies: no profile lists reference-metric with
+  # attack-or-intervention-method. Beyond it: the harness, because the legacy code and OpenUnlearning differ in
+  # target models, retain logs and evaluation pipeline; and the training data policy, because methods differ in
+  # whether they use the retain set beside the forget set. The target model and the retain logs that forget
+  # quality is computed against have no condition field (review_checks).
+  material_extra:
+    - harness
+    - training_data_policy
+aggregation_policy: unknown
+aggregation_policy_note: The paper reports forget quality and model utility as two axes and does not
+  combine them. The Space sorts methods by their product without calling it a score, and SHIFT
+  reports an aggregate of its own, so whether an official aggregate exists is not settled
+  (review_checks).
+
+homepage: https://locuslab.github.io/tofu/
+repository: https://github.com/locuslab/open-unlearning
+dataset_url: https://huggingface.co/datasets/locuslab/TOFU
+leaderboard_url: https://huggingface.co/spaces/locuslab/tofu_leaderboard
+leaderboard_url_note: The Space linked from the project page and the legacy README. OpenUnlearning
+  keeps a separate table in community/leaderboard.md.
+
+versions:
+  - version: '2024-01-11'
+    label: First release (paper v1, locuslab/tofu code)
+    version_kind: revision
+    released: 2024-01-11
+    items: 4000
+    changes: The first release. 200 fictitious authors with 20 pairs each; 90-10, 95-5 and 99-1
+      forget-retain splits; Real Authors and World Facts; Llama-2-7B (chat) and Phi-1.5 fine-tuned
+      for five epochs as targets; four baseline methods.
+    superseded_by: '2025-02-27'
+    errata:
+      - scope: evaluation pipeline
+        description: The legacy README announces a new evaluation pipeline, dated only '03/18', and
+          says that the Hugging Face leaderboard results and the paper's numbers and figures may be
+          updated; Llama-2 retain results are not reproducible exactly because of flash attention.
+        source: src-github-tofu-readme-bdc209e
+    frozen: true
+    sources:
+      - src-arxiv-2401-06121-v1
+      - src-arxiv-2401-06121
+      - src-github-tofu-readme-bdc209e
+  - version: '2025-02-27'
+    label: OpenUnlearning re-implementation (current)
+    version_kind: revision
+    released: 2025-02-27
+    items: 4000
+    changes: OpenUnlearning replaces the original codebase, with new target models (Llama 3.2 1B and
+      3B, Llama 3.1 8B and a re-created Llama-2 7B), each fine-tuned on full, retain90, retain95 and
+      retain99, so forget quality is read against new retain models. A holdout set (holdout01/05/10)
+      and membership-inference metrics were added on 2025-04-06; the dataset files were last
+      modified on 2025-03-27. The fine-tuning and forget splits are not shown to have changed.
+    breaking: true
+    supersedes_version: '2024-01-11'
+    frozen: false
+    sources:
+      - src-github-open-unlearning-readme-2d98027
+      - src-hf-api-tofu
+      - src-hf-datasets-server-tofu-size
+      - src-arxiv-2506-12618
+
+lineage:
+  role: root
+lineage_note: OpenUnlearning is not a separate benchmark. It is the original TOFU repository renamed
+  (GitHub API), under the same namespace, and it is TOFU's harness and current revision (versions).
+  MUSE and WMDP, which it also hosts, are separate benchmarks with their own maintainers (WMDP is
+  wmdp.yaml). Derivatives named in 2026 papers' abstracts were not read and are not recorded.
+
+history:
+  - date: 2025-02-27
+    event: repository-moved
+    field: repository
+    from: https://github.com/locuslab/tofu
+    to: https://github.com/locuslab/open-unlearning
+    source: src-github-open-unlearning-readme-2d98027
+    quote: This repo replaces the original TOFU codebase at
+    note: The GitHub API dates open-unlearning's creation to 2024-01-10, which makes it the original
+      repository renamed. A new locuslab/tofu, created on 2025-02-25, holds the legacy code, and its
+      README says it is only for legacy maintenance.
+
+tags:
+  - unlearning
+  - right-to-be-forgotten
+  - privacy
+  - synthetic-data
+  - fictitious-entities
+  - question-answering
+  - ks-test
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T04)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2401-06121-v1
+    - src-arxiv-2401-06121
+    - src-locuslab-tofu-site
+    - src-github-tofu-readme-bdc209e
+    - src-github-open-unlearning-readme-2d98027
+    - src-github-open-unlearning-leaderboard-2d98027
+    - src-hf-api-tofu
+    - src-hf-datasets-server-tofu-size
+    - src-hf-api-tofu-leaderboard-space
+    - src-hf-space-tofu-leaderboard-app
+    - src-hf-space-tofu-leaderboard-uploads
+    - src-arxiv-2506-12618
+    - src-arxiv-2608-16249
+    - src-arxiv-2609-12808
+    - src-arxiv-2611-00374
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, and its abstract page for the date; the project
+    page; the legacy README and OpenUnlearning's README and leaderboard file at pinned commits; Hugging
+    Face's API records of the dataset and the leaderboard Space, the dataset viewer's size record, and
+    the Space's app.py and uploads.py at a pinned commit (no terms accepted, nothing submitted); the OpenUnlearning
+    report's abstract page; and three 2026 abstract pages, SAUL, K-Bench and SHIFT. OpenReview's COLM
+    PDF returned 403 and was not read.
+  confidence: medium
+  review_checks:
+    - check: The paper's Sections 4 and 5 (baseline results, discussion, limitations) and its
+        acknowledgements fall in the span normalise() drops as a tag, so the limitation and the
+        funding note rest on a raw reading and the quoted limitation is K-Bench's. Whether the
+        extract builder should escape '<' in PDF text, or the COLM version should be read instead,
+        is the reviewer's call.
+      field: governance.known_limitation
+    - check: "Identity under 04 S4. OpenUnlearning is treated as TOFU's harness and current revision,
+        not as a separate benchmark or as as_used: the repository is the original one renamed, in the
+        same namespace, and it says it replaces the TOFU codebase. But it is developed by a wider group
+        and hosts three benchmarks, and the re-created target models change every forget-quality number.
+        If the reviewer reads it as a different maintainer, it is a fork-like harness and the 2025 version
+        becomes as_used."
+      field: versions
+      source: src-github-open-unlearning-readme-2d98027
+      quote: We've updated Open-Unlearning's TOFU benchmark target models to use a wider variety of
+        newer architectures with sizes varying from 1B to 8B.
+    - check: Family fit. The safety-alignment inclusion test lists refusal, robustness, honesty,
+        bias and frontier-risk properties, and unlearning efficacy is none of them; TOFU enters
+        through the family's own unlearning-knowledge-removal leaf and its privacy framing. Whether
+        privacy-memorization should be secondary or primary (the setting is the right to be
+        forgotten) is open.
+      field: domain
+      source: src-arxiv-2401-06121-v1
+      quote: One potential mitigation procedure relevant to the privacy of LLMs is unlearning
+    - check: activity accepting-submissions rests on a running Space whose form commits uploads;
+        nothing was submitted to test it, and its file list shows no submission ever kept.
+        OpenUnlearning's table also lists no contributed row. If the reviewer reads the channel as
+        unused, the state is still accepting-submissions, but lifecycle evidence comes only from
+        papers.
+      field: activity
+      source: src-hf-api-tofu-leaderboard-space
+      quote: '"stage":"RUNNING"'
+    - check: aggregation_policy unknown. The paper keeps two axes, the Space sorts by their product,
+        and later papers report aggregates of their own; whether the product is an official
+        aggregate decides between official-aggregate and none-by-design.
+      field: aggregation_policy
+      source: src-hf-space-tofu-leaderboard-app
+      quote: df = df.sort_values(by="product", ascending=False)
+    - check: ground_truth_source held-out-labels is the nearest term, but the labels are public
+        training data and forget quality's reference is a retain model; and ceiling_anchor_type
+        measured-ceiling reads the retain model as the oracle, although an O(n) method is not
+        allowed to retrain. Both need a reviewer's reading.
+      field: ground_truth_source
+    - check: versions. The 2025 revision is marked breaking for its new target and retain models,
+        though the fine-tuning and forget items are not shown to change; the '03/18' pipeline update
+        is an erratum because its year is not given. The holdout set's origin (new authors or not)
+        was not established.
+      field: versions
+      source: src-hf-api-tofu
+      quote: '"lastModified":"2025-03-27T22:38:57.000Z"'
+    - check: Independence. no-known-conflict rests on the paper's baselines being others' methods.
+        OpenUnlearning has since added methods and a metric from many groups; whether any are its
+        maintainers' own was not checked.
+      field: governance.independence_flags
+    - check: No EvalConditions field records the target model a method is applied to, or the retain
+        logs forget quality is read against, though both decide the number; bench tag-gap refuses
+        comparability as a facet, so it is raised here. A target_model condition would serve every
+        attack-or-intervention-method entry. Forget quality's indistinguishability test has no
+        evaluation-method term (taxonomy/_failures/).
+      field: comparability.material_extra
+      source: src-github-open-unlearning-readme-2d98027
+      quote: Sets the path to the reference model eval logs that is needed to compute reference
+        model based metrics like `forget_quality` in TOFU.
