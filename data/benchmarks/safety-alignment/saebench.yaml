@@ -1,0 +1,623 @@
+# data/benchmarks/safety-alignment/saebench.yaml
+#
+# P1-S9-T04, safety-alignment entry 15. Filled from the SAEBench paper, arXiv 2503.09532 read as its v4 PDF
+# (2025-06-04), and its abstract page; the repository README (adamkarvonen/SAEBench) pinned at commit 8042bb3
+# (2026-05-01); Neuronpedia's SAEBench write-up (sae-bench/info, scripts and styles stripped), which dates the beta
+# and the 1.0 release; and Hugging Face's API record of the maintainers' results dataset (sae_bench_results_0125).
+# Current use is from three abstract pages: DB-KSVD (arXiv 2505.18441, v2 of April 2026), which scores a non-SAE
+# dictionary on six of the metrics; an audit of the metrics (arXiv 2605.18229, May 2026); and Shaped SAEs (arXiv
+# 2610.27375, October 2026). Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# The entrant is an interpretability method, not a model: a sparse autoencoder (or any encode/decode dictionary)
+# trained on a fixed layer of a fixed host model. No subject term names that, so attack-or-intervention-method is
+# the nearest and the miss is logged (taxonomy/_failures). Neuronpedia's results browser (sae-bench) renders by
+# script and its data path (/api) is disallowed by robots.txt, so it is not a cited Source. The unlearning metric
+# uses WMDP-bio; no question or hazardous text is quoted here or in any extract.
+
+id: saebench
+name: SAEBench
+aliases:
+  - SAE Bench
+tagline: Eight metrics for sparse autoencoders on language-model activations, from concept detection
+  to feature disentanglement.
+description: >
+  A benchmark for sparse autoencoders (SAEs) and other dictionary-learning methods used to interpret
+  language-model activations. An entrant is an SAE trained on one layer of a host model, scored by eight
+  metrics in four groups: concept detection (sparse probing and feature absorption), interpretability
+  (automated interpretability, judged by gpt-4o-mini), reconstruction (L0 and loss recovered), and
+  feature disentanglement (unlearning on WMDP-bio, spurious correlation removal, targeted probe
+  perturbation and RAVEL). The metrics are reported separately, and the paper says they cannot be
+  combined into one score. The maintainers trained and released over 200 SAEs of seven architectures
+  (ReLU, TopK, BatchTopK, JumpReLU, Gated, P-anneal and Matryoshka BatchTopK) at three widths and six
+  sparsities, on layer 12 of Gemma-2-2B and layer 8 of Pythia-160M, as the reference suite; the paper
+  also scores Gemma Scope SAEs. A beta came out on 2024-12-10 and version 1.0 with the paper in March
+  2025 (ICML 2025). The open-source harness has since added a ninth evaluation, the SAE Probes version
+  of sparse probing. A 2026 audit finds two of the metrics, TPP and SCR, unreliable at their default
+  settings.
+self_description:
+  source: src-arxiv-2503-09532-v4
+  quote: We introduce SAEBench, a comprehensive evaluation suite that measures SAE performance
+    across eight diverse metrics, spanning interpretability, feature disentanglement and practical
+    applications like unlearning.
+external_ids:
+  arxiv: '2503.09532'
+paper:
+  title: 'SAEBench: A Comprehensive Benchmark for Sparse Autoencoders in Language Model Interpretability'
+  arxiv: '2503.09532'
+  version_read: v4
+  source: src-arxiv-2503-09532-v4
+released: 2024-12-10
+released_note: The beta release, which Neuronpedia's write-up dates; the paper's first arXiv version
+  (2025-03-12) came with version 1.0.
+released_source: src-neuronpedia-sae-bench-info
+released_quote: This blog post was originally published with the SAE Bench beta release on December
+  10, 2024.
+release_venue: ICML 2025
+release_venue_source: src-arxiv-2503-09532
+release_venue_quote: 'Comments: Accepted to ICML 2025 main conference'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: safety-alignment/interpretability-probes
+domain_basis:
+  reason: The leaf is defined as evaluating methods that read a model's internal structure, scored
+    on what the method recovers. An SAE encodes a host model's internal activations into latents,
+    and every metric scores what those latents recover (concepts, explanations, reconstructions,
+    separable attributes).
+  source: src-arxiv-2503-09532-v4
+  quote: an SAE consists of an encoder that maps model internal activations x to a sparse,
+    higher-dimensional feature space
+domain_considered_and_rejected:
+  - term: safety-alignment/unlearning-knowledge-removal
+    reason: Only one of the eight metrics removes knowledge (WMDP-bio), and it scores the SAE as the
+      tool that removes it. It is the unlearning subset's own primary (subsets), not the
+      benchmark's.
+  - term: safety-alignment/bias-fairness
+    reason: Spurious correlation removal uses gender in Bias in Bios as the spurious signal, but it
+      scores whether SAE latents isolate a concept, not whether any system behaves differently
+      across groups.
+  - term: language/understanding
+    reason: The probing tasks are language classification datasets (professions, sentiment, language
+      identification), but no model is asked to understand them; probes on SAE latents measure what
+      the latents encode.
+capability: []
+capability_note: No capability term names what an interpretability method is scored on, recovering a
+  host model's concepts as separable, explainable units; logged as a missing term
+  (taxonomy/_failures). Reconstruction alone passes generation-fidelity, which the core subset
+  carries as its override (subsets).
+capability_considered_and_rejected:
+  - term: generation-fidelity
+    reason: It fits the core metric only (reconstruction against the original activations), which
+      the paper calls necessary but not sufficient; the other seven metrics score concept isolation
+      and explanation, not matching a reference.
+  - term: abstraction
+    reason: Its test is about a solver finding a representation of a problem; an SAE's dictionary is
+      a learned decomposition scored against probes and a judge, not a solved task.
+evaluation_method:
+  - domain-metric
+  - model-graded-judge
+evaluation_method_basis:
+  reason: Seven metrics are interpretability-specific formulas with no meaning outside SAE
+    evaluation (loss recovered, absorption fraction, the SCR and TPP probe-ablation scores, RAVEL's
+    cause and isolation average, sparse-probe accuracy on SAE latents, the unlearning minimum). The
+    automated interpretability metric is a verdict from a prompted LLM judge, gpt-4o-mini.
+  source: src-arxiv-2503-09532-v4
+  quote: we use gpt4o-mini as an LLM judge to quantify the interpretability of SAE latents at scale
+evaluation_method_considered_and_rejected:
+  - term: composite
+    reason: No figure combines the metrics; the paper rules a single score out (aggregation_policy).
+  - term: classification-metric
+    reason: Sparse probing reports a probe's plain accuracy, but the probe is part of the metric and
+      the number reads only as a property of the SAE's latents; SCR and TPP turn probe accuracies
+      into normalised ablation scores.
+  - term: multiple-choice
+    reason: The unlearning metric is built from WMDP-bio and MMLU accuracy, but the score is the
+      minimum WMDP-bio accuracy over a hyperparameter sweep under an MMLU constraint, not accuracy
+      on a set of questions.
+designed_for_subjects:
+  - attack-or-intervention-method
+designed_for_subjects_basis:
+  reason: The entrant is a procedure applied to a fixed host model (an SAE architecture and training
+    method, or any dictionary with encode and decode) and ranked on what it does with that model's
+    activations, including how ablating or clamping its latents changes the model (unlearning, SCR,
+    TPP, RAVEL). That is the nearest term; it names attacks, defences, unlearning and editing, not
+    interpretability methods, and the gap is logged (taxonomy/_failures).
+  source: src-github-saebench-readme
+  quote: Our evaluations can run on any SAE object with `encode()`, `decode()`, and a few config
+    values.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: SAEs are trained without labels, on reconstruction and sparsity; the term needs
+      supervision for one task.
+  - term: classical-algorithm
+    reason: PCA is a baseline in every chart, and DB-KSVD (2025) enters a KSVD-style dictionary, but
+      both are fitted to the host model's activations, and the designed entrants are trained SAEs.
+  - term: base-model
+    reason: Gemma-2-2B and Pythia-160M are the host models whose activations are decomposed; they
+      are the environment every entrant shares, not the entrant.
+as_used:
+  - protocol: Six of the eight metrics, applied to a dictionary learned by DB-KSVD, an alternating
+      optimisation adapted from KSVD rather than an SAE, on Gemma-2-2B and Pythia-160M.
+    source: src-arxiv-2505-18441
+    quote: evaluating on six metrics from the SAEBench benchmark, where we achieve competitive
+      results when compared to established approaches based on SAEs
+    note: DB-KSVD (v2, April 2026); only the abstract was read, so which six metrics is not known.
+  - protocol: SAEBench beside the separate SAE Probes suite, for SAEs trained on linearly shaped
+      activations (Matched Filter SAEs).
+    source: src-arxiv-2610-27375
+    quote: The promise of shaping is demonstrated via evaluations against dense activations and
+      state-of-the-art SAEs on benchmarks including SAEBench and SAE Probes.
+    note: Shaped SAEs (October 2026); only the abstract was read.
+  - protocol: An audit of the metrics themselves, by reseeding a fixed SAE, correlating with ground
+      truth on synthetic SAEs, and discriminating along training trajectories.
+    source: src-arxiv-2605-18229
+    quote: We audit the SAE quality metrics in SAEBench, the de-facto standard SAE evaluation suite
+    note: May 2026; only the abstract was read. Its finding is the known_limitation.
+
+lifecycle: active
+lifecycle_basis:
+  reason: SAE papers still report SAEBench results in 2026, for example Shaped SAEs in October. The
+    repository's last push is 2026-05-01 (GitHub API), which is maintenance evidence, not use.
+  source: src-arxiv-2610-27375
+  quote: The promise of shaping is demonstrated via evaluations against dense activations and
+    state-of-the-art SAEs on benchmarks including SAEBench and SAE Probes.
+activity: no-submission-channel
+activity_note: Neuronpedia's browser holds the maintainers' own releases (Dec 24 and Jan 25), and no
+  source read gives anyone else a route onto it; the write-up invites outsiders to contribute new
+  evaluations to the codebase, not results. Others run the open harness and publish in their own
+  papers. The browser itself renders by script and was not read (review_checks).
+activity_basis:
+  reason: The only results table is the browser of the maintainers' own SAE suites, released as two
+    named sets; outside results appear in papers.
+  source: src-neuronpedia-sae-bench-info
+  quote: Neuronpedia's SAEBench Evaluation browser features both the new results (SAEBench – Jan 25)
+    and previous results (SAEBench – Dec 24) as separate releases.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Matryoshka BatchTopK SAEs (SAEBench 1.0 suite, Gemma-2-2B layer 12)
+    source: src-neuronpedia-sae-bench-info
+    observed_on: 2026-11-08
+    quote: Matryoshka SAEs perform best on 5 out of 8 metrics In the typically used L0 range of
+      20-200
+  - system: Gemma Scope SAEs on Gemma-2-2B and Gemma-2-9B
+    source: src-arxiv-2503-09532-v4
+    observed_on: 2026-11-08
+    quote: In addition, we evaluate SAEs of widths 16k, 65k, 131k, and 1M on Gemma-2-2B and
+      Gemma-2-9B from the Gemma-Scope series
+    note: Appendix I of the paper.
+  - system: DB-KSVD dictionaries
+    source: src-arxiv-2505-18441
+    observed_on: 2026-11-08
+    quote: we propose Double-Batch KSVD (DB-KSVD), a scalable dictionary learning algorithm that
+      adapts the classic KSVD algorithm
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The supervised metrics (sparse probing, absorption, SCR, TPP, RAVEL,
+  unlearning) score against the labels of their constituent datasets, the RAVEL attributes and the
+  WMDP-bio and MMLU keys. Core has no labels (it compares with the host model's own loss), and
+  automated interpretability's key is the SAE's own activations, predicted by the judge.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The harness, its default configurations and the baseline SAEs are public, and a pinned
+    branch reproduces the paper's environment. Autointerp needs a paid OpenAI key and unlearning a
+    WMDP-bio access request (execution.harness_gotcha).
+  source: src-github-saebench-readme
+  quote: To exactly reproduce SAE Bench results from the paper, each evaluation comes with a default
+    `eval_config.py` file containing the recommended configuration values.
+
+task:
+  exists: true
+  input:
+    - a trained SAE, or any dictionary exposing encode() and decode(), for one layer of a supported
+      host model (the paper's suites use Gemma-2-2B layer 12 and Pythia-160M layer 8)
+  output: The SAE's latents and reconstructions on each evaluation's text, which the harness passes
+    to probes, ablations, the host model and an LLM judge.
+  scoring: Eight metrics reported separately, each oriented so that higher is better (absorption is
+    reported as its complement). The paper reads them across sparsities and widths against SAEs
+    trained in a directly comparable way, not as one ranking.
+  source: src-arxiv-2503-09532-v4
+  quote: These capabilities are measured through eight distinct metrics, combining established
+    approaches with novel evaluation methods.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The evaluation text and labels come from public datasets (Bias in Bios, Amazon
+    Reviews, Europarl, GitHub code, AG News, RAVEL, OpenWebText, The Pile, WikiText, MMLU, WMDP-bio
+    questions). The one access step the README names is a request for the WMDP-bio corpus, which the
+    unlearning metric uses to select latents; seven of the eight metrics need no account. The
+    maintainers' results dataset is public and ungated on Hugging Face.
+  access_basis:
+    reason: The README names a single access request, for the unlearning metric's WMDP-bio corpus,
+      and an API key for the judge, which is a cost, not a data gate.
+    source: src-github-saebench-readme
+    quote: Autointerp requires the creation of `openai_api_key.txt`. Unlearning requires requesting
+      access to the WMDP bio dataset (refer to `unlearning/README.md`).
+  refresh: versioned-releases
+  refresh_basis:
+    reason: A beta (2024-12-10) and version 1.0 (March 2025) are named releases with separate result
+      sets; the harness has since added evaluations on its main branch while a pinned branch keeps
+      the paper's setup.
+    source: src-neuronpedia-sae-bench-info
+    quote: This blog post was originally published with the SAE Bench beta release on December 10,
+      2024. We are now releasing SAE Bench 1.0.
+  data_provenance:
+    - inherited-from-constituents
+  data_provenance_note: Each metric draws on published datasets (the probing table lists five;
+    RAVEL, WMDP-bio, MMLU, OpenWebText and The Pile serve the others). Absorption's items are the
+    host model's vocabulary, filtered to tokens of English letters.
+  data_provenance_source: src-arxiv-2503-09532-v4
+  data_provenance_quote: Dataset bias in bios Amazon Reviews Europarl GitHub AG News
+  contamination_risk: unknown
+  contamination_risk_note: The usual question, whether an entrant saw the scored items, does not
+    settle for an SAE trained without labels on generic web text. The paper's SAEs train on The Pile
+    and automated interpretability draws its sequences from The Pile, an overlap by design rather
+    than a leak; whether probe or RAVEL items reach SAE training corpora was not considered in any
+    source read.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: There is no headline metric. RAVEL reports a measured skyline (0.87,
+    from a jointly trained MDAS and MDBM intervention), and SCR is normalised against an oracle
+    probe; neither is a ceiling for the benchmark as a whole.
+  ceiling_anchor_type_source: src-arxiv-2503-09532-v4
+  ceiling_anchor_type_quote: As a performance skyline, we also implement a jointly-trained Multitask
+    Distributed Alignment Search (MDAS) and MDBM, achieving a disentanglement score of 0.87.
+  dataset_licence: null
+  dataset_licence_note: SAEBench releases no evaluation set of its own; each constituent keeps its
+    own licence, which no source read states. The maintainers' results dataset is MIT
+    (src-hf-api-sae-bench-results-0125).
+  size:
+    - count: 8
+      unit: metrics
+      subset: SAEBench 1.0
+      source: src-arxiv-2503-09532-v4
+      quote: These capabilities are measured through eight distinct metrics, combining established
+        approaches with novel evaluation methods.
+    - count: 35
+      unit: binary classification tasks
+      subset: sparse probing
+      source: src-arxiv-2503-09532-v4
+      quote: Our evaluation spans 35 distinct binary classification tasks derived from five
+        datasets.
+    - count: 200
+      unit: reference SAEs (over 200)
+      subset: SAEBench 1.0 suite
+      source: src-arxiv-2503-09532-v4
+      quote: we open-source a suite of over 200 SAEs across seven recently proposed SAE
+        architectures and training algorithms
+  size_note: The metric count is the paper's; the README at 8042bb3 still says eight but lists nine,
+    with the SAE Probes version of sparse probing. The suite count is a floor ('over 200'), and the
+    abstract page's summary says eight architectures where the v4 PDF says seven (review_checks).
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The SAEBench authors (repository and results dataset in the first author's personal
+    accounts)
+  maintainer_basis:
+    reason: The repository and the results dataset sit in one person's own GitHub and Hugging Face
+      namespaces; Neuronpedia hosts the results browser and the write-up.
+    source: src-github-saebench-readme
+    quote: git clone https://github.com/adamkarvonen/SAEBench.git
+  maintainer_type: individual
+  maintainer_type_note: The taxonomy's test for individual is artefacts in one person's own account
+    with no organisation stated as holding them, whatever institutions the authors list. Others
+    contribute through pull requests, and Neuronpedia hosts the browser, which may argue for
+    community-collective (review_checks).
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers chose and ran the SAE suites in Neuronpedia's browser and
+    their results dataset; nobody submits to it. Results for other SAEs and methods appear in their
+    authors' papers.
+  submission_process_source: src-neuronpedia-sae-bench-info
+  submission_process_quote: Neuronpedia's SAEBench Evaluation browser features both the new results
+    (SAEBench – Jan 25) and previous results (SAEBench – Dec 24) as separate releases.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2503-09532-v4
+      quote: we open-source a suite of over 200 SAEs across seven recently proposed SAE
+        architectures and training algorithms
+  independence_flags_note: The maintainers trained the SAE suite the paper ranks and the README
+    offers as the baselines new SAEs are compared against. The work was done in the MATS programme
+    under an Open Philanthropy grant, neither an evaluated party. Whether the author list overlaps
+    with the authors of evaluated architectures (P-anneal, JumpReLU, Gated, Matryoshka, Gemma
+    Scope), and the bearing of one author's Anthropic affiliation on the ReLU recipe credited to
+    Anthropic, were not assessed by name (review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2605-18229
+    quote: fail multiple lenses at their canonical settings and should not be used to evaluate SAEs
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: single-gpu
+  compute_tier_note: The README times a full run at about 115 minutes per SAE plus 177 minutes of
+    setup on one RTX 3090 for a 16k-width Gemma-2-2B SAE, with up to 100 GB of cached activations;
+    automated interpretability adds OpenAI API calls.
+  compute_tier_source: src-github-saebench-readme
+  compute_tier_quote: All evals can be ran with current batch sizes on Gemma-2-2B on a 24GB VRAM GPU
+    (e.g. a RTX 3090).
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Every metric runs from the harness with default configurations and no human step; the
+      judge is an API model.
+    source: src-github-saebench-readme
+    quote: To exactly reproduce SAE Bench results from the paper, each evaluation comes with a
+      default `eval_config.py` file containing the recommended configuration values.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: sae_bench (the SAEBench repository, also on PyPI as sae-bench), read at commit 8042bb3
+    (2026-05-01); the stable_paper_version branch pins the paper's dependencies
+  harness_note: The README warns that main tracks upstream libraries such as SAE Lens and points to
+    the stable_paper_version branch, with a lockfile, to reproduce the paper's results. It also
+    advises a constant batch size across the SAEs compared, since some steps (a trained binary mask)
+    vary with it.
+  harness_source: src-github-saebench-readme
+  harness_quote: pip install sae-bench
+  harness_gotcha:
+    source: src-github-saebench-readme
+    quote: Autointerp requires the creation of `openai_api_key.txt`. Unlearning requires requesting
+      access to the WMDP bio dataset (refer to `unlearning/README.md`).
+  harness_gotcha_note: Automated interpretability needs a paid OpenAI key for its gpt-4o-mini judge,
+    and the unlearning metric needs the gated WMDP-bio corpus, released on request. No terms were
+    accepted for this entry.
+  code_licence: null
+  code_licence_note: GitHub's API reports no licence for adamkarvonen/SAEBench, and the repository
+    root at 8042bb3 holds no LICENSE file (read 2026-11-08; not a quoted Source).
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the judge for automated interpretability (gpt-4o-mini in the paper) and the harness
+  # version or branch, since main moves with SAE Lens while stable_paper_version is pinned. What matters most has no
+  # condition field: the host model and layer, the SAE's width and its L0. The paper and the write-up say the metrics
+  # are meant to compare SAEs on the same host model, and the README says most correlate with sparsity. bench tag-gap
+  # does not take comparability fields, so this is a review check.
+  material_extra:
+    - judge_model
+    - judge_model_version
+    - harness
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: The paper says the metrics run on different scales and noise levels and that any weighting
+    would be arbitrary, so it reports them separately; the write-up says the same.
+  source: src-arxiv-2503-09532-v4
+  quote: Metrics cannot be meaningfully combined into a single score.
+
+homepage: https://www.neuronpedia.org/sae-bench/info
+repository: https://github.com/adamkarvonen/SAEBench
+
+versions:
+  - version: beta
+    label: SAEBench beta (December 2024)
+    version_kind: revision
+    released: 2024-12-10
+    changes: The beta release with the first write-up, with results for SAEs on Pythia-70m and
+      Gemma-2-2B (the browser's Dec 24 set). RAVEL's binary-mask latent selection was still to come.
+    breaking: true
+    superseded_by: '1.0'
+    frozen: true
+    sources:
+      - src-neuronpedia-sae-bench-info
+  - version: '1.0'
+    label: SAEBench 1.0 (the paper)
+    version_kind: revision
+    released: 2025-03-12
+    changes: Released with the paper (v1 2025-03-12; the write-up's March 2025 update). Changed ReLU
+      training, added Matryoshka SAEs and standardised hyperparameters, with a new suite on
+      Pythia-160M and Gemma-2-2B (the Jan 25 set); later findings on absorption differ from the
+      beta's. The stable_paper_version branch pins it.
+    breaking: true
+    supersedes_version: beta
+    frozen: true
+    sources:
+      - src-neuronpedia-sae-bench-info
+      - src-arxiv-2503-09532
+      - src-arxiv-2503-09532-v4
+
+subsets:
+  - id: saebench#core
+    label: L0 / Loss Recovered (core)
+    scored_separately: true
+    capability_override:
+      - generation-fidelity
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: Reconstruction (fidelity) is quantified by mean squared error or the loss recovered
+          score
+    notes: Sparsity (L0) and the share of the host model's cross-entropy loss recovered when its
+      activations are replaced by the SAE's reconstruction; the paper calls the sparsity-fidelity
+      curve necessary but not sufficient.
+  - id: saebench#autointerp
+    label: Automated interpretability
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: The LLM judge uses the feature description it created to predict which sequences
+          would activate the selected latent
+      - source: src-arxiv-2503-09532-v4
+        quote: we use gpt4o-mini as an LLM judge to quantify the interpretability of SAE latents at
+          scale
+    notes: An LLM writes a description of each sampled latent from its activating examples, then
+      predicts which held-out sequences activate it; the score is that prediction's accuracy. The
+      judge is gpt-4o-mini.
+  - id: saebench#sparse-probing
+    label: Sparse probing
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: Our evaluation spans 35 distinct binary classification tasks derived from five
+          datasets.
+      - source: src-arxiv-2503-09532-v4
+        quote: We evaluate across k ∈ {1, 2, 5} latents but focus our analysis on k = 1.
+    notes: Probes on the k SAE latents most associated with each concept, over 35 one-versus-all
+      tasks from Bias in Bios, Amazon Reviews, Europarl, GitHub and AG News.
+  - id: saebench#absorption
+    label: Feature absorption
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: we present our results using the complement of the absorption score (1 - absorption
+          score)
+    notes: On a first-letter classification task over the host model's vocabulary, the share of a
+      feature's representation carried by absorbing latents instead of the main ones, reported as
+      its complement.
+  - id: saebench#ravel
+    label: RAVEL
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: 'The final disentanglement score averages two metrics: the Cause Metric, measuring successful
+          attribute changes due to the intervention, and the Isolation Metric, verifying minimal interference
+          with other attributes.'
+      - source: src-neuronpedia-sae-bench-info
+        quote: a differential binary masking-based latent selection in line with Chaudhary & Geiger
+          is forthcoming
+    notes: Interventions on SAE latents that should change one attribute of an entity (cities, Nobel
+      laureates) and leave the others; 1.0 selects latents with a trained binary mask, which the
+      beta write-up still called forthcoming. Its skyline is 0.87.
+  - id: saebench#unlearning
+    label: Unlearning
+    scored_separately: true
+    domain_override:
+      primary: safety-alignment/unlearning-knowledge-removal
+      secondary:
+        - safety-alignment/interpretability-probes
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: This SAE unlearning evaluation uses the WMDP-bio dataset, which contains
+          multiple-choice questions involving dangerous biology knowledge.
+      - source: src-arxiv-2503-09532-v4
+        quote: To derive a single evaluation metric, we filter for results maintaining MMLU accuracy
+          above 0.99 and select the minimum achieved WMDP-bio accuracy
+    notes: Latents chosen from a forget corpus (WMDP-bio) and a retain corpus (WikiText) are clamped
+      negative; the score is the lowest WMDP-bio accuracy reached while MMLU accuracy stays above
+      0.99. It scores the SAE as an unlearning tool, so the removal leaf is primary here.
+  - id: saebench#scr
+    label: Spurious correlation removal (SCR)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: we measure how effectively zero-ablating a small number of SAE latents can remove the
+          unwanted correlation
+    notes: Zero-ablating the SAE latents a probe attributes to a spurious signal (gender in Bias in
+      Bios, sentiment in Amazon Reviews), normalised between the biased probe and an oracle; results
+      are shown at 20 ablated latents. The 2026 audit advises against it at its canonical settings.
+  - id: saebench#tpp
+    label: Targeted probe perturbation (TPP)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2503-09532-v4
+        quote: A high TPP score indicates that concepts are captured by distinct sets of latents
+    notes: Ablating the latents for one class should lower that class's probe accuracy and leave the
+      others; multi-class Bias in Bios and Amazon Reviews. The 2026 audit advises against it at its
+      canonical settings.
+  - id: saebench#sae-probes-sparse-probing
+    label: Sparse probing (SAE Probes version)
+    scored_separately: true
+    evidence:
+      - source: src-github-saebench-readme
+        quote: '**[Sparse Probing (SAE Probes version)](https://arxiv.org/pdf/2502.16681)**'
+      - source: src-arxiv-2605-18229
+        quote: The sae-probes variant of $k$-sparse probing is the most reliable metric we tested
+    notes: Added to the harness after the paper and not among its eight metrics; the 2026 audit
+      finds it the most reliable it tested.
+
+tags:
+  - sparse-autoencoders
+  - mechanistic-interpretability
+  - dictionary-learning
+  - feature-disentanglement
+  - unlearning
+  - llm-judge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S9-T04)
+  added_on: 2026-11-08
+  last_verified: 2026-11-08
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2503-09532-v4
+    - src-arxiv-2503-09532
+    - src-github-saebench-readme
+    - src-neuronpedia-sae-bench-info
+    - src-hf-api-sae-bench-results-0125
+    - src-arxiv-2505-18441
+    - src-arxiv-2605-18229
+    - src-arxiv-2610-27375
+  sources_note: >
+    The paper's v4 PDF (a DOI, not archived) read as text, and its abstract page for the dates and the
+    ICML comment; the README pinned at commit 8042bb3828c6340da8d12062324e92b2077c571c; Neuronpedia's
+    write-up with scripts and styles stripped; Hugging Face's API record of the results dataset; and
+    three abstract pages (DOIs) for current use and the audit. The Neuronpedia browser renders by
+    script, its /api path is disallowed by robots.txt, and it is not cited. The CHANGELOG was looked at
+    for the evaluations added after the paper but is not a cited Source.
+  confidence: medium
+  review_checks:
+    - check: Family fit. safety-alignment's inclusion test names refusal, robustness, honesty, bias
+        and frontier-risk properties, none of which an SAE metric scores; the entry rests on
+        interpretability-probes being a safety-alignment leaf whose definition fits exactly. Confirm
+        the family placement, or move the leaf.
+      field: domain
+    - check: designed_for_subjects. attack-or-intervention-method is the nearest term, not a fit;
+        the entrant is an interpretability method (an SAE or other dictionary) on a fixed host
+        model. A missing term (interpretability-method) is logged; until it exists, claims about
+        SAEs resolve to the fallback comparability profile.
+      field: designed_for_subjects
+    - check: Comparability. The host model, layer, SAE width and L0 decide what a number means, and
+        no condition field holds them; the paper warns the metrics compare SAEs on one host model,
+        and the README that most correlate with sparsity. Whether EvalConditions needs host-model,
+        site, width and L0 fields (tag-gap does not take comparability, so nothing is logged).
+      field: comparability
+      source: src-github-saebench-readme
+      quote: Many evaluation metrics correlate strongly with sparsity, so assessing performance
+        across multiple sparsity levels is essential to avoid misleading conclusions.
+    - check: Metric reliability. A 2026 audit (abstract only read) says TPP and SCR should not be
+        used at their canonical settings and that the rest are noisier than assumed; its sole author
+        is one of SAEBench's authors. Whether lifecycle should note a partial deprecation of those
+        two subsets.
+      field: governance.known_limitation
+      source: src-arxiv-2605-18229
+      quote: The other metrics show higher reseed noise and lower discriminability than the field
+        assumes.
+    - check: "Versions. The beta and 1.0 are modelled as revisions, both breaking: 1.0 changed RAVEL's
+        latent selection, the ReLU recipe and the suite (Pythia-70m to Pythia-160M), and the browser keeps
+        both result sets apart. 1.0's release date is the paper's v1, since the write-up says only March
+        2025. The SAE Probes evaluation added on main since is a subset, not a version."
+      field: versions
+      source: src-neuronpedia-sae-bench-info
+      quote: We made minor changes to the training code for ReLU SAEs, added Matryoshka SAEs, and
+        standardized the training hyperparameters across SAEs.
+    - check: The abstract page says eight architectures where the v4 PDF says seven; the README and
+        write-up list seven. size uses the PDF.
+      field: data.size
+      source: src-arxiv-2503-09532
+      quote: we open-source a suite of over 200 SAEs across eight recently proposed SAE
+        architectures and training algorithms
+    - check: data.access fully-open although the unlearning metric needs the WMDP-bio corpus on
+        request; the scored WMDP-bio questions and the other seven metrics' data need no account.
+        Whether one gated selection corpus moves the family to gated-registration.
+      field: data.access
+    - check: activity no-submission-channel and submission_process maintainer-run rest on the
+        write-up; the Neuronpedia browser renders by script and was not read, so whether it ever
+        took outside SAEs is not confirmed.
+      field: activity
+    - check: Independence. Only maintainer-competes-on-own-benchmark is set (the maintainers' own
+        suite). Author overlap with the evaluated architectures' papers, and one author's Anthropic
+        affiliation beside the Anthropic ReLU recipe, were not assessed by name.
+      field: governance.independence_flags
+      source: src-arxiv-2503-09532-v4
+      quote: ReLU (Anthropic Interpretability Team, 2024a) MatryoshkaBatchTopK
+    - check: maintainer_type individual (personal GitHub and Hugging Face namespaces) against
+        community-collective (outside pull requests, Neuronpedia hosting).
+      field: governance.maintainer_type
