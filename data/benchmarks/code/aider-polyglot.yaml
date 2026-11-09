@@ -1,0 +1,523 @@
+# data/benchmarks/code/aider-polyglot.yaml
+#
+# P1-S10-T02, code entry 13. Promotes the Epoch stub data/benchmarks/_stubs/aider-polyglot.yaml (Epoch's string
+# "Aider polyglot"). Filled from the blog post that introduced the benchmark (aider.chat, 2024-12-21); the aider LLM
+# leaderboards page, a static page built from the aider repository, and the polyglot_leaderboard.yml data file behind
+# it, at main; the leaderboards' Contributing results and Benchmark notes pages; the old Code editing and Refactoring
+# leaderboard pages and the 2023 "GPT code editing benchmarks" page, for the lineage; the benchmark harness README and
+# benchmark.py in the aider repository, at main; the polyglot-benchmark repository README at main, its file tree
+# (GitHub's git trees API) and GitHub's API records of both repositories; Epoch's benchmark export and its ECI
+# Included benchmarks page; and the v1 PDF of a September 2026 paper that evaluates on aider-polyglot. Every quote
+# below is checked by the quote-substring validator against those Sources' committed extracts.
+
+id: aider-polyglot
+name: Aider polyglot benchmark
+aliases:
+  - Aider polyglot
+aliases_note: Epoch's benchmark string. Epoch's ECI page writes it "Aider Polyglot"; the
+  maintainer's leaderboard calls its board the "Aider polyglot coding leaderboard".
+aliases_source: src-epoch-benchmark-data
+aliases_quote: Aider polyglot,True,aider_polyglot_external.csv,Percent correct
+tagline: 225 hard Exercism exercises in six languages, edited through aider and scored by their unit
+  tests over two tries.
+description: >
+  The benchmark of aider, an open-source AI pair-programming tool, that its leaderboard uses to rank language
+  models as code editors. It holds 225 Exercism practice exercises across six languages (C++ 26, Go 39,
+  Java 47, JavaScript 49, Python 34, Rust 30), the hardest of the 697 Exercism offers in those languages:
+  seven 2024 models each attempted all 697, and the benchmark keeps the problems that three or fewer of
+  them solved. For each exercise the model is given Exercism's instructions and the stub source files,
+  through aider, and must edit the files in an aider edit format (whole file, diff and others) so that
+  aider can apply the changes. The exercise's own unit tests are then run in its language's toolchain
+  inside a Docker container; if any fail, the model gets the test error output and a second try. The headline
+  is the percentage of exercises whose tests all pass after the second try (pass_rate_2); the first-try
+  rate, the percentage of responses in the correct edit format, cost and other statistics are published
+  beside it. The exercises, with Exercism's example solutions, are public in the polyglot-benchmark repository,
+  and the harness is in the aider repository. Results are added to the leaderboard's data file by pull
+  request. It replaced aider's original code editing benchmark, all 133 Exercism Python exercises, which
+  had saturated above 80%; the polyglot board's top score is 88.0% (gpt-5, high reasoning effort).
+self_description:
+  source: src-aider-leaderboards-page
+  quote: polyglot benchmark tests LLMs on 225 challenging Exercism coding exercises across C++, Go,
+    Java, JavaScript, Python, and Rust
+external_ids:
+  epoch: Aider polyglot
+released: 2024-12-21
+released_note: The date of the blog post that introduced the benchmark and its leaderboard; the
+  polyglot-benchmark repository was created the next day (GitHub API).
+released_source: src-aider-blog-polyglot
+released_quote: December 21, 2024 o1 tops aider
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: code/function-synthesis
+domain_basis:
+  reason: Each exercise asks for an implementation of the stub functions or classes in one
+    exercise's source files from a natural-language specification (Exercism's instructions), judged
+    by running the exercise's unit tests, which is the leaf's definition. The edit-format
+    requirement and the second try do not change what is scored.
+  source: src-github-aider-benchmark-readme
+  quote: This benchmark evaluates how effectively aider and LLMs can translate a natural language
+    coding request into executable code saved into files that pass unit tests.
+domain_considered_and_rejected:
+  - term: code/competitive-programming
+    reason: The exercises were selected for difficulty, but they are practice exercises without a
+      contest's efficiency limits; the harness only stops a test run after three minutes.
+    source: src-github-aider-benchmark-py
+    quote: timeout = 60 * 3
+  - term: code/repository-scale-se
+    reason: The files to change are given and small (an exercise's stubs); there is no repository to
+      search and no localisation step. A 2026 paper describes the tasks as single-file editing.
+    source: src-arxiv-2609-20715-v1
+    quote: Its six programming languages and single-file editing objectives, evaluated by unit
+      tests, define a task family that is distinct from the environments used for training.
+  - term: code/bug-repair
+    reason: The stubs are unimplemented, not defective, and the second try repairs the model's own
+      first attempt rather than a specified defect.
+  - term: agents-tooluse/software-agents
+    reason: The model neither navigates a repository nor runs builds or tests itself; aider applies
+      its edits and the harness runs the tests and returns the errors. Tests judge the code, so code
+      is primary in any case (02 S12.11).
+capability:
+  - instruction-following
+capability_note: The headline is test correctness, for which no capability term exists; the gap is
+  already logged for function synthesis (taxonomy/_failures/2026-10-10-humaneval-001.yaml, proposed
+  term program-synthesis) and is not logged again.
+capability_basis:
+  instruction-following:
+    reason: The leaderboard claims to measure following instructions as well as editing code, and it
+      scores compliance with the edit format specified in the system prompt separately from
+      correctness ("Correct edit format" beside "Percent correct"), which the term's inclusion test
+      asks.
+    source: src-aider-leaderboards-notes
+    quote: Measures the percent of coding tasks where the LLM complied with the edit format
+      specified in the system prompt.
+capability_considered_and_rejected:
+  - term: self-correction
+    reason: The second try is driven by the test error output, an external oracle telling the model
+      what is wrong, which the term's exclusion test rules out, although the first-try and
+      second-try rates are both published.
+    source: src-github-aider-benchmark-py
+    quote: instructions += prompts.test_failures.format(file_list=file_list)
+  - term: tool-use
+    reason: The model calls no tools; it writes edits in a text format that aider parses and
+      applies.
+  - term: constraint-satisfaction
+    reason: Every test must pass, but the tests check behaviour, not an enumerated list of stated
+      requirements, and no source claims constraint satisfaction.
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: The exercise's unit tests are run in its language's toolchain (pytest, cargo test, go
+    test, npm, a C++ script, Gradle), and an exercise counts as solved when all of them pass.
+  source: src-github-aider-benchmark-readme
+  quote: which report the percent of the tasks which had all tests passing
+designed_for_subjects:
+  - model-in-benchmark-harness
+designed_for_subjects_basis:
+  reason: Every model is run through aider and the benchmark's own driver, which sends the
+    instructions, applies the edits, runs the tests and returns their errors for one more try; a row
+    names the model, its edit format and the aider command. The README calls it an end-to-end
+    evaluation of aider and the LLM together.
+  source: src-github-aider-benchmark-readme
+  quote: It provides an end-to-end evaluation of not just the LLM's coding ability, but also its
+    capacity to *edit existing code* and *format those code edits* so that aider can save the edits
+    to the local source files.
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: The model is not prompted once; the harness returns test errors for a second try, and
+      aider itself asks for a fixed copy of an edit it could not apply.
+    source: src-aider-leaderboards-notes
+    quote: If the LLM makes edit mistakes, aider will give it feedback and ask for a fixed copy of
+      the edit.
+  - term: agent-scaffold
+    reason: Entrants do not bring their own loop. Some rows pair two models in aider's architect
+      mode (a planner and an editor model), but that is one of aider's own modes, chosen like an
+      edit format, not an entrant's scaffold.
+    source: src-github-aider-polyglot-leaderboard-yml
+    quote: 'model: DeepSeek R1 + claude-3-5-sonnet-20241022 edit_format: architect'
+  - term: reasoning-model
+    reason: Rows record reasoning-effort and thinking-token settings, but the benchmark is not built
+      around a reasoning budget; they are run conditions (comparability).
+    source: src-github-aider-polyglot-leaderboard-yml
+    quote: 'test_cases: 225 model: gpt-5 (high) edit_format: diff commit_hash: 32faf82 reasoning_effort:
+      high pass_rate_1: 52.0 pass_rate_2: 88.0'
+as_used:
+  - protocol: pass@1 and pass@4 over all 225 exercises, from four attempts per task with the
+      unbiased estimator, for Qwen3-4B and Qwen3-8B policies trained on terminal tasks, as a
+      cross-domain transfer test.
+    source: src-arxiv-2609-20715-v1
+    quote: aiderpolyglot (225 code-editing tasks; four attempts per task)
+    note: Don't Mask the Environment (arXiv 2609.20715, September 2026). Its pass@k is not the
+      leaderboard's two-try percentage, and the paper does not say which harness or edit format it
+      used, so its numbers are not comparable with the board's.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced against it. A September 2026 paper evaluates on all 225
+    exercises, and Epoch's ECI counts it among the benchmarks whose creator administers the results
+    it fits.
+  source: src-arxiv-2609-20715-v1
+  quote: We evaluate aider-polyglot as a cross-domain benchmark
+activity: accepting-submissions
+activity_basis:
+  reason: The leaderboard has never run in rounds, and its Contributing results page still invites
+    results by pull request to the data file.
+  source: src-aider-leaderboards-contrib
+  quote: Submit results by opening a PR with edits to the benchmark results data files.
+  caveat: The newest rows in the data file are dated 2025-10-03, more than a year before this entry
+    was drafted, and the aider repository was last pushed on 2026-05-22 (GitHub API). Whether pull
+    requests are still merged is not stated.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: gpt-5 (high), in aider's diff edit format
+    source: src-github-aider-polyglot-leaderboard-yml
+    observed_on: 2026-11-09
+    quote: 'test_cases: 225 model: gpt-5 (high) edit_format: diff commit_hash: 32faf82 reasoning_effort:
+      high pass_rate_1: 52.0 pass_rate_2: 88.0'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each exercise's unit tests from its Exercism language track, copied into
+  the polyglot-benchmark repository.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The exercises and tests are in a public repository, and the README gives the commands to
+    clone them, build the Docker image and run the harness; the model, edit format and aider commit
+    recorded on each row are meant to be enough to reproduce it.
+  source: src-github-aider-benchmark-readme
+  quote: should be enough to reliably reproduce any benchmark run
+  caveat: Rows run on uncommitted ("-dirty") aider code cannot be reproduced from the commit alone.
+
+task:
+  exists: true
+  input:
+    - Exercism's instructions for one exercise (introduction, instructions and any appended notes),
+      with aider's instruction addendum
+    - the exercise's stub source files, which the model edits; test and example files are withheld
+  output: Edits to the stub files in the aider edit format being tested (such as whole or diff),
+    which aider applies.
+  scoring: The exercise's unit tests are run after the first try; if any fail, the error output is
+    sent back for a second try. pass_rate_1 and pass_rate_2 are the percentages of exercises whose
+    tests all pass after one and two tries, and the leaderboard ranks pass_rate_2 ("Percent
+    correct"). The share of responses in the correct edit format is reported beside it.
+  tests_hidden_from_system: true
+  reference_solution: true
+  source: src-github-aider-benchmark-py
+  quote: '# Also ignore test & example files'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The 225 exercises, with their instructions, stubs, unit tests and example solutions, are
+      in a public GitHub repository without a gate.
+    source: src-github-polyglot-benchmark-tree
+    quote: '"path":"python/exercises/practice/affine-cipher/affine_cipher_test.py"'
+  refresh: static
+  refresh_basis:
+    reason: One set since release. The polyglot-benchmark repository was created on 2024-12-22 and
+      has not been pushed to since that day; no source records a change to the exercises.
+    source: src-polyglot-benchmark-gh-api
+    quote: '"pushed_at":"2024-12-22T21:47:10Z"'
+  data_provenance:
+    - web-scraped
+  data_provenance_note: The exercises are Exercism's, copied from its six public language-track
+    repositories rather than written for the benchmark. The maintainer chose them by difficulty,
+    keeping the 225 of 697 that three or fewer of seven 2024 models solved, so the selection is
+    adversarial to those models.
+  data_provenance_source: src-github-polyglot-benchmark-readme
+  data_provenance_quote: This repository contains a curated collection of programming exercises
+    extracted from Exercism's language tracks.
+  contamination_risk: medium
+  contamination_risk_note: >
+    Every exercise, its tests and an example solution are public, in the polyglot-benchmark repository
+    and in Exercism's own track repositories, so a route into training data is plausible. The maintainer
+    said of the original Python benchmark, which drew on the same Exercism source, that its code was "probably
+    part of" the models' training data, but that is a supposition, not evidence for any split. No source
+    read reports a decontamination check or items found in training data, and the set has not been refreshed.
+    One 2026 paper states that none of the 225 tasks is in its own training data, which concerns that
+    paper's models only.
+  contamination_risk_source: src-aider-docs-benchmarks
+  contamination_risk_quote: Of course, all of this code was probably part of its original training
+    data!
+  contamination_evidence:
+    - source: src-aider-docs-benchmarks
+      stance: supports
+      quote: Of course, all of this code was probably part of its original training data!
+    - source: src-github-polyglot-benchmark-tree
+      stance: supports
+      quote: '"path":"python/exercises/practice/affine-cipher/.meta/example.py"'
+    - source: src-arxiv-2609-20715-v1
+      stance: against
+      quote: none of its 225 code-editing tasks appears in either the terminal SFT corpus or the
+        Endless Terminals RL set
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: The headline is a percentage of exercises solved, bounded at 100%; the blog post reads
+      headroom as the problems left unsolved. Each exercise ships an example solution, but no source
+      reports running them against the tests.
+    source: src-aider-blog-polyglot
+    quote: This still leaves 86 problems of headroom for future models to solve.
+  dataset_licence: null
+  dataset_licence_note: The polyglot-benchmark repository has no licence of its own (GitHub API);
+    its README says the exercises are Exercism's copyright, used under Exercism's open-source
+    licences, and points to the track repositories for the terms. Those licences were not read.
+  upstream_licences: The exercises are copyright Exercism, used in accordance with the licences of
+    Exercism's C++, Go, Java, JavaScript, Python and Rust track repositories.
+  upstream_licences_source: src-github-polyglot-benchmark-readme
+  upstream_licences_quote: These exercises are used in accordance with Exercism's open source
+    licenses.
+  size:
+    - count: 225
+      unit: exercises
+      source: src-aider-blog-polyglot
+      quote: The new benchmark uses the 225 problems that were solved by 3 or fewer models.
+  size_note: 'By language: C++ 26, Go 39, Java 47, JavaScript 49, Python 34, Rust 30. The languages are
+    not scored separately. A few leaderboard rows were run on 223 or 224 exercises.'
+  languages:
+    - C++
+    - Go
+    - Java
+    - JavaScript
+    - Python
+    - Rust
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Aider (the Aider-AI GitHub organisation, which holds the aider and polyglot-benchmark
+    repositories)
+  maintainer_basis:
+    reason: Both repositories, the harness with the leaderboard's site and data, and the exercises,
+      sit in the Aider-AI organisation account, not a personal one.
+    source: src-polyglot-benchmark-gh-api
+    quote: '"type":"Organization"'
+  maintainer_type: null
+  maintainer_type_note: No source read says what Aider-AI is (a company, a project or one person's
+    organisation account) or gives it a legal form. The leaderboard pages carry a single person's
+    byline and the harness README and the 2023 benchmark page are written in the first person, so
+    individual may be the truer reading, but the term's test asks for a personal account, which this
+    is not. Logged with bench tag-gap.
+  submission_process:
+    - self-reported
+    - maintainer-run
+  submission_process_note: Outside results arrive as pull requests to the leaderboard's data file,
+    with the run's statistics, and no source states that anyone re-runs or checks them. The
+    maintainer also chooses and runs models itself, as the blog post's launch results show (the
+    seven models of the selection run and the ten launch rows); no source says which rows came from
+    which route.
+  submission_process_source: src-aider-leaderboards-contrib
+  submission_process_quote: Contributions of benchmark results are welcome!
+  independence_flags: []
+  independence_flags_note: Not assessed. No source read says who funds aider or its benchmark runs,
+    or whether model providers supply credits or access. The maintainer builds aider, the harness
+    every row runs in, but no source read says it builds or sells any of the ranked models.
+  independence_assessed: false
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Public exercises and tests and an open harness; the run executes in a Docker container
+      built from the repository and scores itself.
+    source: src-github-aider-benchmark-readme
+    quote: The benchmark is intended to be run *inside a docker container*.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: aider's benchmark/benchmark.py with the exercises cloned into tmp.benchmarks, run in the
+    Docker image from benchmark/docker_build.sh; two tries by default
+  harness_source: src-github-aider-benchmark-py
+  harness_quote: 'tries: int = typer.Option(2, "--tries", "-r", help="Number of tries for running tests")'
+  harness_gotcha:
+    source: src-github-aider-polyglot-leaderboard-yml
+    quote: 'test_cases: 223 model: chatgpt-4o-latest (2025-02-15)'
+  harness_gotcha_note: A row's percentage can rest on fewer than 225 exercises (some rows ran 223 or
+    224), and many rows were run on uncommitted aider code (commit hashes ending "-dirty"). The
+    harness version moves with aider's (each row records it), the edit format changes scores, and
+    the --tries setting changes which pass rate is the headline.
+  code_licence: Apache-2.0
+  code_licence_source: src-aider-gh-api
+  code_licence_quote: '"spdx_id":"Apache-2.0"'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The pair (execution-tests, model-in-benchmark-harness) resolves to the fallback profile (subset_used, which
+  # carries runs on fewer than 225 exercises). Beyond it: the harness, meaning the aider version and commit behind
+  # benchmark.py; the edit format (whole, diff, diff-fenced, udiff, architect), which is aider's prompt and output
+  # contract and changes scores; the number of tries; the reasoning effort or thinking-token budget rows record;
+  # and the scaffold, for architect rows that pair a planner with an editor model.
+  material_extra:
+    - harness
+    - prompt_template_hash
+    - retries_allowed
+    - reasoning_effort
+    - thinking_token_budget
+    - scaffold
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: Each row reports the percentage of exercises solved within two tries over the whole set.
+  source: src-aider-leaderboards-page
+  quote: Model Percent correct Cost Command Correct edit format Edit Format
+
+homepage: https://aider.chat/docs/leaderboards/
+repository: https://github.com/Aider-AI/polyglot-benchmark
+dataset_url: https://github.com/Aider-AI/polyglot-benchmark
+leaderboard_url: https://aider.chat/docs/leaderboards/
+
+versions: []
+versions_note: One release, with no version label; Epoch's string maps here with version null. The
+  harness changes with each aider release, which the rows record, but the exercises have not.
+
+lineage:
+  role: root
+  role_note: >
+    The same maintainer's earlier benchmarks have no entries and no allocated ids, so no edge is recorded.
+    The polyglot benchmark replaced aider's original code editing benchmark (2023), which asked for the
+    same kind of work on all 133 Exercism Python exercises, with the same two tries and test-error feedback.
+    By 04 S4's table that could read as an edition of one family (same task, new items), but the polyglot
+    set is cited on its own, under its own name and Epoch string, and on its own board, so it is a separate
+    benchmark here, and the old one would be its predecessor (lineage.supersedes) if it is curated. The
+    refactoring benchmark (89 large Python methods to refactor, built to provoke "lazy coding") is a sibling
+    with a different task, not an ancestor.
+  role_source: src-aider-leaderboards-edit
+  role_quote: This old aider code editing leaderboard has been replaced by the new, much more
+    challenging polyglot leaderboard.
+
+history:
+  - date: 2024-12-21
+    event: channel-opened
+    field: execution.submission_channel
+    to: the Aider polyglot coding leaderboard on aider.chat
+    source: src-aider-blog-polyglot
+    quote: December 21, 2024 o1 tops aider
+
+tags:
+  - code-editing
+  - multilingual-code
+  - exercism
+  - edit-format
+  - two-tries
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T02)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-aider-blog-polyglot
+    - src-aider-leaderboards-page
+    - src-github-aider-polyglot-leaderboard-yml
+    - src-aider-leaderboards-contrib
+    - src-aider-leaderboards-notes
+    - src-aider-leaderboards-edit
+    - src-aider-leaderboards-refactor
+    - src-aider-docs-benchmarks
+    - src-github-aider-benchmark-readme
+    - src-github-aider-benchmark-py
+    - src-github-polyglot-benchmark-readme
+    - src-github-polyglot-benchmark-tree
+    - src-polyglot-benchmark-gh-api
+    - src-aider-gh-api
+    - src-epoch-benchmark-data
+    - src-epoch-eci-included-benchmarks
+    - src-arxiv-2609-20715-v1
+  sources_note: >
+    The aider.chat pages are static HTML read with scripts and styles stripped: the blog post, the leaderboards
+    page, its Contributing results, Benchmark notes, Code editing and Refactoring pages, and the 2023
+    benchmark write-up. The leaderboards, Code editing and Refactoring pages carry a person's byline,
+    so they are withheld from archiving and their extracts keep it out. The data file, harness README
+    and benchmark.py were read at main in the aider repository, the exercises' README at main and their
+    file tree through GitHub's API (no exercise was downloaded), and GitHub's API records for licences,
+    account types and last pushes; Epoch's export and ECI page for the Epoch string and current use; and
+    the 2026 paper's v1 PDF, its windows kept clear of the author list. Not read: Exercism's track repositories
+    and their licences, benchmark/prompts.py, and the leaderboard's by-release-date page. The Epoch-scaffolded
+    Sources src-aider-chat-docs-leaderboards and src-aider-chat-docs-leaderboards-polyglot-leaderboard
+    name the same page but hold no extract, so they are not cited.
+  confidence: medium
+  review_checks:
+    - check: maintainer_type is null. Both repositories are in the Aider-AI organisation account,
+        but the site's pages carry one person's byline and the harness writing is first-person. If
+        Aider-AI is one person's organisation, individual (key-person risk) fits better than any
+        organisational term; if it is a company, industry-lab.
+      field: governance.maintainer_type
+      source: src-aider-gh-api
+      quote: '"type":"Organization"'
+    - check: capability instruction-following rests on the separately reported edit-format
+        compliance and the leaderboard's own claim. The headline is test correctness, so a reviewer
+        may prefer an empty capability, as HumanEval and BigCodeBench have.
+      field: capability
+      source: src-aider-leaderboards-page
+      quote: ability to follow instructions and edit code successfully without human intervention
+    - check: Lineage. The polyglot benchmark is modelled as its own benchmark that replaced the
+        original 133-exercise Python code editing benchmark, not as a later edition of one aider
+        family. Both are the same maintainer's, with the same task and protocol, so 04 S4's edition
+        row is arguable; the old board is still published. Neither the old benchmark nor the
+        refactoring benchmark has an id.
+      field: lineage
+      source: src-aider-leaderboards-edit
+      quote: code editing benchmark asks the LLM to edit python source files to complete 133 small
+        coding exercises from Exercism.
+    - check: contamination_risk medium. The supporting evidence is the maintainer's 2023 supposition
+        about the Python predecessor and the public example solutions; neither shows items in a
+        model's training data, so high is not supported. No decontamination check exists.
+      field: data.contamination_risk
+      source: src-aider-docs-benchmarks
+      quote: It only sees the error output from failed tests. Of course, all of this code was
+        probably part of its original training data!
+    - check: submission_process is self-reported plus maintainer-run. Merging a pull request may
+        amount to a review, which would make it maintainer-verified, but no source states a check;
+        no source says which rows the maintainer ran.
+      field: governance.submission_process
+      source: src-github-aider-benchmark-readme
+      quote: Submit results by opening a PR with edits to the
+    - check: activity accepting-submissions rests on the Contributing results page. The newest rows
+        are from 2025-10-03, so whether pull requests are still merged is unconfirmed; closed may be
+        the truer state.
+      field: activity
+      source: src-github-aider-polyglot-leaderboard-yml
+      quote: 'command: aider --model deepseek/deepseek-chat date: 2025-10-03'
+    - check: The exercise selection used seven 2024 models' results (those solved by three or fewer
+        were kept), so the set is adversarially filtered against those models, and a model family
+        among them may be disadvantaged against later ones. No source discusses this bias.
+      field: data.data_provenance
+      source: src-aider-blog-polyglot
+      quote: each attempted all 697 of the Exercism problems
+    - check: designed_for_subjects model-in-benchmark-harness. The harness is aider itself, the
+        maintainer's product, and scores move with the edit format and aider version;
+        (execution-tests, model-in-benchmark-harness) resolves to the fallback comparability
+        profile, so the material_extra list carries the harness conditions.
+      field: designed_for_subjects
+    - check: The refactoring benchmark (89 large Python methods) is not recorded as lineage of this
+        entry. It is the same maintainer's, with its own leaderboard, but a different task; if it is
+        curated it needs its own id.
+      field: lineage
+      source: src-aider-leaderboards-refactor
+      quote: refactoring benchmark asks the LLM to refactor 89 large methods from large python
+        classes.
+    - check: Epoch's string maps here with version null, and its score column "Percent correct" is
+        presumably the leaderboard's pass_rate_2 (two tries); that should be confirmed before
+        Epoch's rows are compared with first-try or pass@k numbers from papers.
+      field: external_ids
+      source: src-epoch-eci-included-benchmarks
+      quote: Administered by the benchmark creator Aider Polyglot, APEX-Agents
+    - check: independence_assessed is false. The maintainer's tool is the harness, not an entrant,
+        and no funding statement was found; a reviewer with the site's sponsorship or company
+        details could assess it.
+      field: governance.independence_flags
+    - check: dataset_licence is null. The repository has no licence file and defers to Exercism's
+        track licences, which were not read.
+      field: data.dataset_licence
+      source: src-polyglot-benchmark-gh-api
+      quote: '"license":null'
