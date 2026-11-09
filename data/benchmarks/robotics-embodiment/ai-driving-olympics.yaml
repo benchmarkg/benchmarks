@@ -1,0 +1,780 @@
+# data/benchmarks/robotics-embodiment/ai-driving-olympics.yaml
+#
+# P1-S5-T03, robotics-embodiment entry 22. Filled from the AI-DO 1 report (arXiv 1903.02503, NeurIPS 2018), read as
+# its v1 PDF and its abstract page; the DUCKIENet and Autolab paper (arXiv 2009.04362, IROS 2020), read as its v1 PDF
+# and its abstract page; Duckietown's AI Driving Olympics page and its announcements of the 5th (2020) and 6th (2021)
+# editions on duckietown.com (robots.txt disallows only /wp-admin/), with scripts and styles stripped; three files of
+# the 2021 edition's challenge definitions in duckietown/challenge-aido_LF at the head of branch daffy-aido21
+# (scoring.yaml, LF-norm-test.challenge.yaml, comp_simulator.yaml) and GitHub's API listing of its lane-following
+# test scenarios; the gym-duckietown README at the head of branch daffy; the abstract page of a Lane Following
+# winner's paper (arXiv 2007.03514); and the v1 PDF of arXiv 2609.00718 (September 2026), which trains and evaluates
+# driving policies in Gym-Duckietown. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# challenges.duckietown.org, which held the submissions and leaderboards, answered HTTP 530 (Cloudflare: origin
+# unreachable) on 2026-11-05, and driving-olympics.ai did not answer; neither was read, and nothing was logged into.
+# Finalists, team members, organisers and endorsers are not named here: quote organisations and systems only.
+
+id: ai-driving-olympics
+name: AI Driving Olympics (AIDO)
+aliases:
+  - AI-DO
+  - AIDO
+  - Artificial Intelligence Driving Olympics
+  - AI-DO Urban Driving League
+aliases_note: The organisers write AI-DO throughout; the Urban Driving League is the Duckietown part
+  of the competition, which this entry covers. The Advanced Perception League (nuScenes challenges,
+  organised by Motional) and the Racing League (AWS DeepRacer, organised by AWS) ran under the same
+  name from AI-DO 3 and are not this entry; the nuScenes challenges are recorded on nuscenes.yaml.
+tagline: Duckietown's 2018-2021 driving competition, scoring one containerised agent in simulation
+  and on physical Duckiebots.
+description: >
+  The AI Driving Olympics, a competition series run by the Duckietown project with ETH Zurich, Mila /
+  Université de Montréal and TTIC. Six editions were announced from NeurIPS 2018 to NeurIPS 2021, and
+  five ran (AI-DO 4, at ICRA 2020, was cancelled for COVID-19). Its Urban Driving League scores driving
+  agents on Duckiebots, small differential-drive robots whose only exteroceptive sensor is a forward-facing
+  fisheye camera, in Duckietown, a model city of standardised road tiles. The challenges grow in complexity:
+  lane following on a loop (LF), with static obstacles or other vehicles (LFV, with a multi-body variant
+  in which the submission drives every vehicle), with pedestrians (LFP), with intersections (LFI), and
+  with vehicles and intersections (LFVI); AI-DO 1 also had a fleet-dispatch challenge (AMOD). Entrants
+  submit an agent as a Docker container. It is evaluated first in the gym-duckietown simulator on the
+  challenges server, and the best are then run, unchanged, on physical Duckiebots: by hand at the AI-DO
+  1 finals, and from AI-DO 2 on in Duckietown Autolabs, remote labs that localise the robots with camera
+  watchtowers and score the run automatically. Lane following is scored on the median distance travelled
+  along the lane, with survival time, lateral deviation and time outside the drivable area as further
+  scores. No edition has run since 2021; the challenge definitions and the simulator stay public on GitHub.
+self_description:
+  source: src-duckietown-aido-page
+  quote: The AI-DO are a set of competitions with the objective of evaluating the state of the art
+    for ML/AI for embodied intelligence
+external_ids:
+  arxiv: '1903.02503'
+paper:
+  title: The AI Driving Olympics at NeurIPS 2018
+  arxiv: '1903.02503'
+  version_read: v1
+  source: src-arxiv-1903-02503-v1
+paper_note: The AI-DO 1 report. The IROS 2020 paper (src-arxiv-2009-04362-v1) describes the
+  evaluation infrastructure (DUCKIENet, the Challenges server and the Autolabs) that the later
+  editions ran on.
+released: null
+released_note: The first edition's first submissions arrived in October 2018 and its finals were
+  held at NeurIPS 2018 in Montréal in December 2018; no source read gives the day the first
+  challenge opened.
+release_venue: NeurIPS 2018 (AI-DO 1)
+release_venue_source: src-arxiv-1903-02503
+release_venue_quote: The first AI-DO, AI-DO 1, occurred at the Neural Information Processing Systems
+  (NeurIPS) conference in December 2018.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: robotics-embodiment/autonomous-driving-planning
+  secondary:
+    - robotics-embodiment/sim2real-transfer
+domain_basis:
+  reason: The task is driving a robot car through a model town, and the score is the driving outcome
+    (distance travelled along the lane within the episode, survival time, lane deviation, time
+    outside the drivable area), not perception accuracy, which is the driving leaf.
+    sim2real-transfer is secondary. The organisers built AI-DO so that the same agent is scored in
+    simulation and then on hardware, with separate simulation and real-robot leaderboards per
+    challenge, and it was weighed for primary. But the AI-DO 1 report says no metric quantified the
+    gap, and each leaderboard scores a drive in one setting, so the drive, not the transfer, is what
+    each number scores (see review_checks).
+  source: src-duckietown-aido-6-announcement
+  quote: The AI-DO serves to benchmark the state of the art of artificial intelligence in autonomous
+    driving by providing standardized simulation and hardware environments
+domain_considered_and_rejected:
+  - term: robotics-embodiment/navigation
+    reason: The robots drive a known road network and are scored on distance along the lane, not on
+      reaching a goal in an environment they must map; the intersection challenges add rules of the
+      road, not goal finding.
+  - term: robotics-embodiment/continuous-control
+    reason: Wheel commands are continuous, but the score is a driving outcome in a model town, not a
+      control objective in the abstract (the family's mujoco-gymnasium near miss).
+  - term: robotics-embodiment/locomotion
+    reason: The Duckiebot is wheeled, but nothing scored is about traversing terrain without falling
+      or sticking; the road is flat tiles.
+
+capability:
+  - sensorimotor-control
+  - distribution-shift-generalization
+capability_basis:
+  sensorimotor-control:
+    reason: The agent consumes the robot's camera images (and wheel encoders in 2021) and issues
+      actuation commands in closed loop, in the simulator or on the robot, and the score is the
+      resulting drive.
+    source: src-arxiv-2009-04362-v1
+    quote: Agents are nodes that consume sensor observations and produce actuation commands.
+  distribution-shift-generalization:
+    reason: The same agent, developed mostly in simulation, is scored again on physical robots under
+      real lighting, on boards of their own (real-validation beside sim-validation and sim-testing),
+      with the driving task unchanged and only the inputs and dynamics moved from simulation to
+      reality.
+    source: src-duckietown-aido-page
+    quote: The agents are evaluated first in simulation (remotely, locally and/or in the cloud), and
+      then the same code is tested on physical robots in a Duckietown Autolab.
+capability_considered_and_rejected:
+  - term: planning
+    reason: The intersection and multi-vehicle challenges require decisions in traffic, but the
+      score is the executed drive, not a planned sequence.
+  - term: perception
+    reason: Lane detection from the camera is the core difficulty, but nothing perceptual is scored.
+  - term: autonomy
+    reason: The agents drive unattended, but the protocol neither prohibits nor measures human
+      intervention as such; the Autolab's human operator resets experiments between runs, outside
+      the scored drive.
+    source: src-arxiv-2009-04362-v1
+    quote: a human operator responsible for tasks that are currently not automated (e.g., resetting
+      experiments
+  - term: collaboration
+    reason: In the multi-body variants (LFV_multi, LFVM, LFVI-multi-full) one submission drives
+      every vehicle on the road, so no two agents work together; other challenges put non-playing
+      vehicles on the road, which the agent avoids.
+    source: src-duckietown-aido-5-announcement
+    quote: all vehicles on the road are controlled by the submission
+  - term: reliability-consistency
+    reason: Scores are medians over several episodes, and the IROS paper measures repeatability
+      across robots and Autolabs, but the ranking takes the median score, and the repeatability
+      study validates the infrastructure, not the entrants.
+    source: src-arxiv-2009-04362-v1
+    quote: standard deviations of the MPD (1.3 cm) and the MOD (2.8 deg)
+
+evaluation_method:
+  - simulation-rollout
+  - physical-trial
+evaluation_method_basis:
+  reason: Every challenge is scored first by rollouts in the gym-duckietown simulator on the
+    challenges server, which qualify agents for the hardware stage; the winners are then decided by
+    runs of the same agent on physical Duckiebots, in the Autolabs (or, at AI-DO 1, by hand at the
+    NeurIPS finals). Both are scored tracks of the protocol, so both terms apply.
+  source: src-duckietown-aido-page
+  quote: participants access the finals by obtaining high placements in the simulated challenges
+    leaderboards, and winners are determined based on experimental evaluations performed in remote
+    Duckietown Autolabs.
+evaluation_method_considered_and_rejected:
+  - term: episodic-return
+    reason: The simulator offers a Gym reward for training, but the challenges score defined driving
+      metrics (distance along the lane, survival time, deviation, infractions), not the return.
+    source: src-github-challenge-aido-lf-scoring
+    quote: This is the median distance traveled, *along a lane*. (That is, going in circles will not
+      make this metric increase.)
+  - term: composite
+    reason: Several scores are reported, but they are ordered by priority (a lexicographic order),
+      not combined into one number.
+designed_for_subjects:
+  - rl-policy
+  - physical-robot-system
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The organisers built AI-DO to compare learned and classical driving agents, with
+    reinforcement learning, imitation learning and classical ROS baselines. In the simulation stage
+    the entrant is a policy acting in the simulator (rl-policy, which the subjects vocabulary uses
+    for learned controllers scored by acting, imitation-trained ones included); in the hardware
+    stage the same policy runs on the organisers' Duckiebots, which is physical-robot-system.
+    Classical pipelines (lane filter and PID or pure-pursuit control) were entered and reached the
+    AI-DO 1 finals.
+  source: src-arxiv-1903-02503-v1
+  quote: The guaranteed impact is the establishment of a standardized baseline for comparison of
+    learning-based and classical robotics approaches.
+designed_for_subjects_considered_and_rejected:
+  - term: task-specific-supervised-model
+    reason: The Lane Following winner described in arXiv 2007.03514 is imitation-trained, but it is
+      scored by driving in closed loop, which the subjects vocabulary sends to rl-policy.
+  - term: agent-scaffold
+    reason: No entrant read is a language model looped with tools; the agents are driving policies
+      and pipelines.
+as_used:
+  - protocol: Not an AI-DO challenge. Belief-state PPO driving policies trained in Gym-Duckietown
+      and evaluated through a compression pipeline on five curricula of the authors' own (plain lane
+      following on a small and a larger loop, crossing pedestrians, stop-line compliance, and both
+      combined), with their own reward and pass criteria, in simulation only. It uses the
+      competition's simulator and lane-following, pedestrian and stop-line tasks of the kind the
+      challenges set, not their scenarios, metrics or server.
+    split: none (the authors' own curricula)
+    source: src-arxiv-2609-00718-v1
+    quote: C0 is plain lane following on a small loop with domain randomization, C1 moves to a
+      larger loop, and C2 adds crossing pedestrians.
+    note: September 2026. The paper names Duckietown and Gym-Duckietown but not the AI Driving
+      Olympics.
+
+lifecycle: mature
+lifecycle_basis:
+  reason: The instrument is established and stays available, its simulator and challenge definitions
+    public on GitHub, and its tasks are still used in its simulator (a September 2026 paper trains
+    and evaluates lane-following, pedestrian and stop-line policies in Gym-Duckietown). Its own
+    result record has settled, with no edition since 2021. The series' ending is recorded in
+    activity (ADR-0019). active was weighed, but the 2026 use is of the simulator and task family,
+    not of AI-DO's challenges or scoring (see review_checks).
+  source: src-arxiv-2609-00718-v1
+  quote: The task is visuomotor lane-following with pedestrian avoidance and stop-line compliance in
+    Gym-Duckietown [9], [10].
+activity: closed
+activity_note: >
+  No ending was announced in any source read. The organiser's AI-DO page, under a 2026 copyright, still
+  calls the 2021 edition the ongoing one, and the post sitemap of duckietown.com (read 2026-11-05, not
+  a quoted Source) lists no AI-DO post after the 2021 finalists. challenges.duckietown.org, the only route
+  for submissions, answered HTTP 530 on 2026-11-05. In duckietown/challenge-aido_LF the newest commit
+  on branch ente (2026-05-04, GitHub API, not a quoted Source) is titled as removing obsolete scenario,
+  scoring and solution files.
+activity_basis:
+  reason: Submissions entered through the challenges server, and the last edition's challenges
+    closed at the end of 2021 (date-close in their definitions); no later edition, round or open
+    leaderboard is found, and the server does not answer. The sources describe no permanent phase.
+  source: src-github-challenge-aido-lf-lf-norm-test
+  quote: 'date-open: 2021-01-31T00:00Z date-close: 2021-12-31T00:00Z'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Team JetBrains' lane-following agent, a convolutional policy trained with DDPG in the
+      simulator, an AI-DO 1 finalist
+    source: src-arxiv-1903-02503-v1
+    observed_on: 2026-11-05
+    quote: The network was trained using the Deep Deterministic Policy Gradient algorithm [16].
+  - system: An imitation-learning lane-following agent trained on mixed simulated and real data, a
+      Lane Following Challenge winner (arXiv 2007.03514)
+    source: src-arxiv-2007-03514
+    observed_on: 2026-11-05
+    quote: we describe our winning approach to solving the Lane Following Challenge at the AI
+      Driving Olympics Competition through imitation learning
+evaluation_target: learned-system
+execution_mode: physical-trial
+execution_mode_note: The simulation stage is automated (the challenges server's evaluators); the
+  hardware stage, which decides the winners, runs physical Duckiebots in the Autolabs, where a human
+  operator resets the experiments.
+ground_truth_source: experimental
+ground_truth_source_note: In the hardware stage the scores are computed from the robots'
+  trajectories as measured by the Autolab's localisation system (camera watchtowers and AprilTags);
+  at AI-DO 1 a judge counted time in the drivable area and tiles traversed. In the simulation stage
+  the same scores are computed from the simulator's state, which is simulation. experimental is the
+  closest value for a measured physical run.
+ground_truth_source_source: src-arxiv-2009-04362-v1
+ground_truth_source_quote: a localization system that estimates the pose of every Duckiebot in the
+  map
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: The official scores came from the organisers' challenges server and their Autolabs, which
+    no longer take submissions. The simulator, challenge definitions and their scenarios are public,
+    so the simulation stage can be rerun locally, and an Autolab can in principle be built from its
+    documentation, but no rerun produces an official result.
+  source: src-arxiv-2009-04362-v1
+  quote: Agents are submitted to the Challenges server, which marshals agents
+
+task:
+  exists: true
+  input:
+    - images from the Duckiebot's forward-facing camera (and wheel-encoder readings in 2021), in the
+      simulator or on the robot
+    - in LFVI-multi-full only, the state of the other vehicles (full information)
+  output: Wheel actuation commands for the Duckiebot (or for every Duckiebot on the map in the
+    multi-body variants), issued until the episode ends or the robot leaves the road or crashes.
+  scoring: Per challenge, scores are medians over the episodes, ordered by priority -- distance
+    travelled along the lane (discretised to tiles; going in circles does not count), then survival
+    time, lateral deviation from the centre line and time spent outside the drivable zones. AI-DO 1
+    ranked by distance travelled with the others as tie-breakers; its finals counted tiles traversed
+    and seconds in the lane from five starting positions. Entry to a testing challenge requires
+    passing its validation challenge (at least 20 cm travelled and beating a drive-straight baseline
+    in 2021), and the hardware stage takes the best simulation entries.
+  source: src-arxiv-1903-02503-v1
+  quote: The winner was determined as the user with the longest traveled distance.
+platform: Duckiebots on Duckietown tiles -- DB18 in the early editions (Raspberry Pi 3B+, 160-degree
+  fisheye camera at 640 x 480 nominal, two DC motors in differential drive, five LEDs), DB19 in
+  AI-DO 5 and DB21M/J in AI-DO 6 (camera and wheel encoders); in Autolabs from AI-DO 2, with camera
+  watchtowers for localisation.
+platform_note: >
+  The hardware is the organisers' (the Autolab fleet) for official runs, so the entrant is the software
+  on it; entrants could buy the same kits to test locally. The AI-DO 1 report's Table 3 lists the DB18's
+  components; the robot models of AI-DO 2 and 3 are inferred from the AI-DO 3 webinar's DB18, and AI-DO
+  5's from its webinar's DB19. The camera resolution the report gives is 640 x 420 at 30 Hz; the 2021
+  simulator renders 640 x 480.
+hardware:
+  source: src-arxiv-2009-04362-v1
+  quote: Duckiebots are differential-drive mobile robots with a front-facing camera as the only
+    sensor
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: The simulation scenarios, including the 2021 testing ones, sit in the public
+    challenge repository, and the simulator is public, so the simulation stage can be reproduced.
+    The hardware runs that decide the winners happened only in the organisers' Autolabs (or at the
+    AI-DO 1 finals), and testing challenges hid their results from entrants.
+  access_basis:
+    reason: The headline results were produced only by the organisers running each submitted
+      container, on their evaluation servers and then on their Autolab robots.
+    source: src-duckietown-aido-page
+    quote: Competitors submit their solutions to specific challenges in the form of agents packaged
+      as a Docker container.
+  refresh: periodic-recompetition
+  refresh_basis:
+    reason: Each edition was a new competition with its own challenge set (LF and LFV, then LFVI,
+      LFP, the multi-body variants, LFI), new scenarios and, by 2021, new robots; the editions are
+      versions here.
+    source: src-duckietown-aido-page
+    quote: Each AI-DO edition focuses on a subset of challenges.
+  data_provenance:
+    - simulation-generated
+    - real-world-instrument
+  data_provenance_note: Scenarios are sampled maps and start poses in gym-duckietown, scored from
+    the simulator's state; hardware runs are scored from the Autolab's localisation recordings of
+    the physical drive.
+  data_provenance_source: src-arxiv-2009-04362-v1
+  data_provenance_quote: a localization system that estimates the pose of every Duckiebot in the map
+  contamination_risk: medium
+  contamination_risk_note: The 2021 testing scenarios are public in the challenge repository, and
+    the maps are the simulator's own, so an agent can be tuned on the scored simulation scenarios;
+    in AI-DO 1 all submissions, as Docker images, were publicly visible and could be downloaded and
+    resubmitted. The hardware stage is a live physical run, which nothing can contain. No source
+    reports such misuse.
+  contamination_risk_source: src-arxiv-1903-02503-v1
+  contamination_risk_quote: Competitors were able to download, view, and re-submit other images
+    using the public hash code.
+  contamination_evidence: []
+  ceiling_anchor_type: none-known
+  ceiling_anchor_type_note: Distance travelled within a fixed episode (60 s in 2021) has a physical
+    bound set by the robot's speed, but no source states it as a ceiling. The AI-DO 1 report notes
+    that Duckietown's own lane-following solution had worked since 2016 and did not score well in
+    simulation; it is a reference system, not an anchor.
+  dataset_licence: null
+  dataset_licence_note: No licence is stated for the challenge definitions or their scenarios
+    (GitHub reports none for duckietown/challenge-aido_LF); gym-duckietown ships a LICENSE.pdf that
+    was not read.
+  size:
+    - count: 4
+      unit: simulation test scenarios (one map each -- loop, small_loop, techtrack, zigzag), one
+        60-s episode per scenario
+      subset: AI-DO 2021, LF simulation testing (aido-LF-sim-testing)
+      note: Each challenge has its own scenario set; only LF-norm-test was listed.
+      source: src-github-api-challenge-aido-lf-lf-norm-test-scenarios
+      quote: '"name":"LF-norm-zigzag-000"'
+    - count: 4
+      unit: Urban Driving challenges (LF, LFI, LFV, LFVI-multi-full)
+      subset: AI-DO 2021 (AI-DO 6)
+      source: src-duckietown-aido-6-announcement
+      quote: 'AI-DO 2021 features four challenges: lane following (LF), lane following with intersections
+        (LFI), lane following with vehicles (LFV) and lane following with vehicles and intersections,
+        multi-body, with full information (LFVI-multi-full).'
+    - count: 20
+      unit: simulated evaluation episodes, on one map
+      subset: AI-DO 1 (NeurIPS 2018)
+      source: src-arxiv-1903-02503-v1
+      quote: since the simulations considered 20 episodes in only 1 map
+    - count: 2000
+      unit: submissions (around), from around 110 users
+      subset: AI-DO 1 (NeurIPS 2018)
+      note: The organiser's page gives over 1,600 submissions from 58 unique participants for the
+        same edition (see review_checks).
+      source: src-arxiv-1903-02503-v1
+      quote: We received a total of around 2000 submissions from around 110 unique users, with the
+        majority focused on the lane following (LF) task.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Duckietown project (the Duckietown Foundation; Duckietown, Inc. now publishes the
+    pages), with ETH Zurich, Mila / Université de Montréal and TTIC, which built the evaluation
+    infrastructure and Autolabs
+  maintainer_basis:
+    reason: The organiser's page says Duckietown hosted the finals; the AI-DO 5 announcement thanks
+      sponsors on the Duckietown Foundation's behalf; the AI-DO 1 report's authors are from ETH
+      Zurich, Mila, TTIC, nuTonomy, the Duckietown Foundation and AWS; and the IROS paper says the
+      Autolabs were built at ETH Zurich and TTIC. The site's footer is now Duckietown, Inc.'s.
+    source: src-duckietown-aido-page
+    quote: Duckietown has been hosting the AI-DO competition finals twice per year, at ICRA
+  maintainer_type: null
+  maintainer_type_note: Not decided. The holder is the Duckietown project, whose organisation
+    account holds the simulator and challenge repositories, but no source read states the Duckietown
+    Foundation's legal form (nonprofit would rest on the name), and the site is now published by
+    Duckietown, Inc., a company. The organising team came from three universities, which would
+    suggest academic-lab or conference-workshop.
+  submission_process:
+    - containerized-algorithm-submission
+  submission_process_note: Entrants pushed agents as Docker images to the challenges server, which
+    ran them in simulation and dispatched the qualifiers to Autolabs; validation challenges gated
+    the testing ones, and testing results were hidden from entrants. Entrants need not attend,
+    because the organisers ran the finals submissions themselves.
+  submission_process_source: src-arxiv-1903-02503-v1
+  submission_process_quote: Our architecture is unique in that it requires that all submissions be
+    containerized.
+  independence_flags:
+    - flag: prize-sponsored-by-industry
+      source: src-arxiv-1903-02503-v1
+      quote: $3000 worth of Amazon web services (AWS) credits and a trip to the nearest nuTonomy
+        (Aptiv) location
+  independence_flags_note: AI-DO 1's finalists were awarded AWS credits and a ride in a nuTonomy
+    (Aptiv) self-driving car, from two companies whose staff co-authored the report. Later editions
+    name sponsors but no prizes in the sources read. maintainer-competes-on-own-benchmark was looked
+    for and not found (no organiser entry is described). single-evaluator-private-test-set is not
+    adopted, because the simulation scenarios are public; the hardware stage's single evaluator is
+    recorded in data.access.
+  independence_assessed: true
+  participation:
+    source: src-duckietown-aido-page
+    quote: There were over 1600 submissions from 58 unique participants.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: provided-allocation
+  compute_tier_note: The organisers ran every official evaluation, in simulation on their evaluation
+    servers (one local server in AI-DO 1, later cloud and distributed evaluators) and on their own
+    robots in the Autolabs, at no cost to entrants; developing locally needs only a computer, and
+    testing on hardware the entrant's own Duckiebot kit.
+  compute_tier_source: src-duckietown-aido-page
+  compute_tier_quote: If you are not present at the conference where the finals will be hosted we
+    will run your submission on your behalf.
+  reproducibility_tier: requires-specialized-hardware
+  reproducibility_tier_basis:
+    reason: The headline hardware result needs a Duckietown with a fleet of Duckiebots and a
+      localisation system, an Autolab, which its designers describe as low-cost and fully
+      documented, not something only the maintainer can hold; the simulation stage alone is
+      automatable with the simulator (see review_checks).
+    source: src-arxiv-2009-04362
+    quote: One of the central components of this setup is the Duckietown Autolab, a remotely
+      accessible standardized setup that is itself also relatively low-cost and reproducible.
+  reproducibility_blockers:
+    - hardware-fleet
+    - specific-simulator-build
+    - private-test-set
+  reproducibility_blockers_note: The simulation scores are defined inside the challenge's simulator
+    image (challenge-aido_lf-simulator-gym at the daffy tag, built on gym-duckietown's floating
+    daffy image), with the challenge's parameters (domain randomisation off, 640 x 480 camera,
+    distortion on), so the image or the gym-duckietown release must be recorded. The hardware scores
+    need the Autolab's robots, watchtowers and operator. private-test-set records that the hardware
+    stage and the testing challenges' results were held by the organisers, although the 2021
+    simulation test scenarios themselves are public in the repository.
+  reproducibility_blockers_source: src-github-challenge-aido-lf-comp-simulator
+  reproducibility_blockers_quote: 'image: ${AIDO_REGISTRY}/duckietown/challenge-aido_lf-simulator-gym:daffy-amd64'
+  harness_availability: official-harness
+  harness: The challenge definitions (duckietown/challenge-aido_LF and its sibling challenge
+    repositories), the duckietown-challenges evaluator and the gym-duckietown simulator, run locally
+    through the Duckietown Shell
+  harness_note: The organisers' own evaluation stack is public and was meant for local evaluation,
+    which reproduces the simulation stage only; the Autolab stage needs the hardware.
+  harness_source: src-github-gym-duckietown-readme
+  harness_quote: The recommended way to test your model on the real hardware is to use [one of the
+    AI Driving Olympics templates]
+  submission_channel:
+    source: src-arxiv-1903-02503-v1
+    quote: Any submission is visualized on https://challenges.duckietown.org/v3/ by clicking its
+      submission number.
+  submission_channel_note: challenges.duckietown.org, the challenges server, answered HTTP 530 on
+    2026-11-05.
+  code_licence: null
+  code_licence_note: GitHub reports no licence for duckietown/challenge-aido_LF and NOASSERTION for
+    duckietown/gym-duckietown, which ships a LICENSE.pdf (read 2026-11-05 from GitHub's API; the PDF
+    was not read).
+  est_participant_cost_usd: null
+  est_participant_cost_usd_note: Official evaluation was free; a Duckiebot kit for local hardware
+    testing was optional and its price is not in the sources read.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Profiles: simulation (simulation-rollout x rl-policy or classical-algorithm: simulator, simulator_version,
+  # hardware_platform, subset_used, selection_strategy, n_samples) and physical-trial (physical-trial x
+  # physical-robot-system or rl-policy: hardware_platform, venue, subset_used, n_samples). Listed again to make them
+  # explicit for this entry: the simulator is gym-duckietown, run through the challenge's simulator image
+  # (challenge-aido_lf-simulator-gym:daffy, "image: ${AIDO_REGISTRY}/duckietown/challenge-aido_lf-simulator-gym:
+  # daffy-amd64", src-github-challenge-aido-lf-comp-simulator), whose gym-duckietown release floats with the daffy
+  # tag (PyPI's duckietown-gym-daffy had 6.1.x releases through 2021), so simulator_version must name the image or the
+  # release; the hardware platform is the Duckiebot model (DB18, DB19, DB21M/J; "Robot: Duckiebot (DB21M/J)",
+  # src-duckietown-aido-6-announcement) and the Autolab or venue. subset_used carries the edition and challenge (LF,
+  # LFV, LFI, LFP, LFVI and their -multi variants, validation or testing, sim or real), n_samples the episodes.
+  material_extra:
+    - simulator
+    - simulator_version
+    - hardware_platform
+aggregation_policy: none-by-design
+aggregation_policy_basis:
+  reason: Each challenge has its own simulation and real-robot leaderboards and its own finalists
+    and winners; nothing combines the challenges.
+  source: src-duckietown-aido-6-announcement
+  quote: 'Current AI-DO leaderboards: LF-sim-validation, LF-sim-testing. Previous AI-DO leaderboards:
+    sim-validation, sim-testing, real-validation.'
+homepage: https://duckietown.com/research/ai-driving-olympics/
+repository: https://github.com/duckietown/challenge-aido_LF
+maintainer_url: https://duckietown.com/
+
+versions:
+  - version: aido-1
+    label: AI-DO 1, NeurIPS 2018, Montréal (December 2018)
+    version_kind: edition
+    changes: The first edition. LF, LFV (static obstacles) and AMOD (fleet dispatch); simulation
+      evaluation on one local server over 20 episodes on one map; the top five LF entrants run by
+      the organisers on physical Duckiebots (DB18) at the live finals, judged on tiles traversed and
+      time in the lane.
+    breaking: true
+    superseded_by: aido-2
+    frozen: true
+    sources:
+      - src-arxiv-1903-02503
+      - src-arxiv-1903-02503-v1
+      - src-duckietown-aido-page
+  - version: aido-2
+    label: AI-DO 2, ICRA 2019, Montréal (May 2019)
+    version_kind: edition
+    changes: Urban league only, adding LFV with moving vehicles and LFVI (vehicles and
+      intersections); hidden test sets were planned and the hardware stage moved to the automated
+      Robotariums, later called Autolabs.
+    breaking: true
+    supersedes_version: aido-1
+    superseded_by: aido-3
+    frozen: true
+    sources:
+      - src-duckietown-aido-page
+      - src-arxiv-1903-02503-v1
+  - version: aido-3
+    label: AI-DO 3, NeurIPS 2019, Vancouver (December 2019)
+    version_kind: edition
+    changes: The Advanced Perception (nuScenes) and Racing (AWS DeepRacer) leagues join the Urban
+      league, which this entry covers; over 2,000 submissions across the leagues.
+    breaking: true
+    supersedes_version: aido-2
+    superseded_by: aido-5
+    frozen: true
+    sources:
+      - src-duckietown-aido-page
+  - version: aido-5
+    label: AI-DO 5, NeurIPS 2020 (virtual)
+    version_kind: edition
+    changes: AI-DO 4 (ICRA 2020, Paris) was cancelled for COVID-19. Urban challenges LF, the new LFP
+      (pedestrians) and LFVM (multi-body, the submission driving every vehicle); DB19 robots;
+      Autolab evaluation on the DUCKIENet; finals held virtually.
+    breaking: true
+    supersedes_version: aido-3
+    superseded_by: aido-6
+    frozen: true
+    sources:
+      - src-duckietown-aido-5-announcement
+      - src-duckietown-aido-page
+      - src-arxiv-2009-04362-v1
+  - version: aido-6
+    label: AI-DO 6 (AI-DO 2021), NeurIPS 2021 (virtual finals, winners 10 December 2021)
+    version_kind: edition
+    changes: Four challenges -- LF, LFI (intersections, new), LFV and LFVI-multi-full (simulation
+      only) -- each with simulation and, except LFVI-multi-full, hardware stages; new DB21M/J robots
+      with wheel encoders; a practice phase, a competition phase in November, Autolab evaluation of
+      the best simulation entries and finals in early December. The last edition found.
+    breaking: true
+    supersedes_version: aido-5
+    frozen: true
+    sources:
+      - src-duckietown-aido-6-announcement
+      - src-duckietown-aido-page
+      - src-github-challenge-aido-lf-lf-norm-test
+      - src-github-challenge-aido-lf-scoring
+      - src-github-challenge-aido-lf-comp-simulator
+      - src-github-api-challenge-aido-lf-lf-norm-test-scenarios
+
+subsets:
+  - id: ai-driving-olympics#lf
+    label: Lane following (LF), every edition
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1903-02503-v1
+        quote: LF Lane following on a continuous closed course, without obstacles.
+      - source: src-duckietown-aido-6-announcement
+        quote: The objective is to travel the longest path in a given time while staying in the
+          lane, i.e., not committing driving infractions.
+    notes: A road loop with no intersections, pedestrians or other vehicles. The only challenge of
+      the AI-DO 1 finals.
+  - id: ai-driving-olympics#lfv
+    label: Lane following with vehicles (LFV), with multi-body variants (LFV_multi, LFVM)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1903-02503-v1
+        quote: LFV Lane following on a continuous closed course as above, but with static obstacles
+          (e.g., vehicles) sharing the road.
+      - source: src-duckietown-aido-5-announcement
+        quote: all vehicles on the road are controlled by the submission
+    notes: Static obstacles in AI-DO 1 (not scored separately from LF that year); other vehicles
+      from AI-DO 2, non-playing or, in the multi-body variant, all driven by the submission.
+  - id: ai-driving-olympics#lfp
+    label: Lane following with pedestrians (LFP), AI-DO 5
+    scored_separately: true
+    evidence:
+      - source: src-duckietown-aido-5-announcement
+        quote: introduces two new ones (LFP, LFVM)
+      - source: src-duckietown-aido-page
+        quote: 'LFP: Lane following with pedestrians challenge'
+    notes: Duckie pedestrians on the road to avoid.
+  - id: ai-driving-olympics#lfi
+    label: Lane following with intersections (LFI), AI-DO 6
+    scored_separately: true
+    evidence:
+      - source: src-duckietown-aido-6-announcement
+        quote: now featuring 3 and/or 4-way intersections
+    notes: Three- and four-way intersections with traffic signs, no traffic lights. The organiser's
+      page also lists LFI-TL (with traffic lights), for which no edition was found.
+  - id: ai-driving-olympics#lfvi
+    label: Lane following with vehicles and intersections (LFVI from AI-DO 2; LFVI-multi-full,
+      simulation only, in AI-DO 6)
+    scored_separately: true
+    evidence:
+      - source: src-duckietown-aido-page
+        quote: AI-DO 2 comprised again only the Urban league, but additional challenges were added,
+          such as Lane following with other vehicles (LFV) and Lane following with other Vehicles
+          and Intersections (LFVI).
+      - source: src-duckietown-aido-6-announcement
+        quote: This challenge is in simulation only.
+    notes: In LFVI-multi-full the agent drives every vehicle and is given the other vehicles' state.
+  - id: ai-driving-olympics#amod
+    label: Autonomous mobility on demand (AMOD), AI-DO 1 only
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1903-02503-v1
+        quote: Participants were required to implement a centralized dispatcher that provided goals
+          to individual robots
+    notes: A fleet dispatcher in a separate city-scale simulator, scored on service quality,
+      efficiency and fleet size, with low-level driving assumed. Few entrants; not in the finals.
+      Not embodied driving (see review_checks).
+
+tags:
+  - autonomous-driving
+  - duckietown
+  - sim-to-real
+  - closed-loop
+  - competition
+  - remote-lab
+  - containerised-submission
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S5-T03)
+  added_on: 2026-11-05
+  last_verified: 2026-11-05
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1903-02503
+    - src-arxiv-1903-02503-v1
+    - src-arxiv-2009-04362
+    - src-arxiv-2009-04362-v1
+    - src-duckietown-aido-page
+    - src-duckietown-aido-6-announcement
+    - src-duckietown-aido-5-announcement
+    - src-github-challenge-aido-lf-scoring
+    - src-github-challenge-aido-lf-lf-norm-test
+    - src-github-challenge-aido-lf-comp-simulator
+    - src-github-api-challenge-aido-lf-lf-norm-test-scenarios
+    - src-github-gym-duckietown-readme
+    - src-arxiv-2007-03514
+    - src-arxiv-2609-00718-v1
+  sources_note: >
+    The AI-DO 1 report and the DUCKIENet paper, each as its v1 PDF and abstract page (DOIs, not archived);
+    the organiser's AI-DO page and its 5th- and 6th-edition announcements on duckietown.com, with scripts
+    and styles stripped, withheld from archiving because they name individuals; three challenge-definition
+    files of the 2021 edition and GitHub's API listing of its LF test scenarios, pinned at commit a317d9ff;
+    the gym-duckietown README pinned at c76a7fec; a Lane Following winner's abstract page for a learned
+    entrant; and the v1 PDF of arXiv 2609.00718 as evidence of current use. The challenges server could
+    not be read.
+  confidence: medium
+  review_checks:
+    - check: Primary domain. autonomous-driving-planning was chosen over sim2real-transfer because
+        every board scores a drive in one setting and the AI-DO 1 report says the sim-to-real gap
+        had no metric; the organisers' own framing (one agent scored in simulation and on hardware)
+        makes sim2real-transfer the main alternative, kept as secondary.
+      field: domain
+      source: src-arxiv-1903-02503-v1
+      quote: The AI-DO is an ideal setup to test sim-to-real transfer wince both simulation and real
+        environment are readily available for testing
+    - check: lifecycle mature rests on a September 2026 paper that uses Gym-Duckietown and
+        AI-DO-like tasks with its own curricula, not AI-DO's challenges, scenarios or metrics. If
+        only the challenges count as the instrument, nothing has used it since 2021; dormant would
+        then be weighed against the ADR-0019 reading of an ended series, and no ending was ever
+        announced.
+      field: lifecycle
+      source: src-arxiv-2609-00718-v1
+      quote: train a belief-state policy with proximal policy optimization (PPO) in Gym-Duckietown
+    - check: activity closed rests on the 2021 challenges' close date and on the challenges server
+        answering HTTP 530 on 2026-11-05 (not quotable). The organiser's page still calls AI-DO 2021
+        the ongoing edition; whether any leaderboard reopened elsewhere could not be checked without
+        the server.
+      field: activity
+      source: src-duckietown-aido-page
+      quote: Check the rules of the ongoing edition (AI-DO 2021 Urban League Finalists).
+    - check: The sources disagree on AI-DO 1's participation. The report gives around 2,000
+        submissions from around 110 users; the organiser's page gives over 1,600 from 58 unique
+        participants.
+      field: data.size
+      source: src-duckietown-aido-page
+      quote: There were over 1600 submissions from 58 unique participants.
+    - check: Versions. The editions are numbered as the organisers number them (AI-DO 4 was
+        cancelled, so there is no aido-4 row). AI-DO 2, 3 and 5 rest on the organiser's summary page
+        and the AI-DO 5 announcement; their own rules and results pages (on docs.duckietown.org and
+        the challenges server) were not read, and no edition has a release date in the sources read.
+        The 2021 challenge files open on 2021-01-31, while the AI-DO 6 announcement puts the
+        practice phase in November 2021.
+      field: versions
+      source: src-github-challenge-aido-lf-lf-norm-test
+      quote: 'date-open: 2021-01-31T00:00Z date-close: 2021-12-31T00:00Z'
+    - check: Scope. The entry covers the Urban Driving League. The Advanced Perception League's
+        nuScenes challenges are recorded on nuscenes.yaml, and the Racing League (AWS DeepRacer) is
+        a separate competition; whether either needs a lineage link here is for a reviewer.
+      field: aliases
+      source: src-duckietown-aido-page
+      quote: The Racing League uses AWS Deepracer and is organized by AWS.
+    - check: simulator_version is material but cannot be filled for any edition from the sources
+        read. The 2021 simulator image is built on gym-duckietown's floating daffy tag; PyPI's
+        duckietown-gym-daffy shows 6.1.x releases through 2021 (read 2026-11-05, not a quoted
+        Source), and the daffy branch now declares 6.2.0.
+      field: comparability
+      source: src-github-challenge-aido-lf-comp-simulator
+      quote: 'image: ${AIDO_REGISTRY}/duckietown/challenge-aido_lf-simulator-gym:daffy-amd64'
+    - check: maintainer_type is null. The Duckietown Foundation's legal form is not stated, the
+        pages are now Duckietown, Inc.'s, and the organisers were from ETH Zurich, Mila and TTIC;
+        nonprofit, academic-lab and conference-workshop are all arguable (taxonomy failure
+        2026-11-05-ai-driving-olympics-001, logged by this draft).
+      field: governance.maintainer_type
+      source: src-duckietown-aido-5-announcement
+      quote: The Duckietown Foundation is grateful to its sponsors
+    - check: reproducibility_tier requires-specialized-hardware treats an Autolab as buildable by
+        others from its documentation; if the headline results count as held only by the organisers
+        (their Autolabs and the closed server), not-independently-reproducible is the alternative.
+      field: execution.reproducibility_tier
+    - check: ground_truth_source experimental and execution_mode physical-trial describe the
+        hardware stage that decided the winners; the simulation leaderboards are simulation and
+        automated. Neither field takes two values.
+      field: ground_truth_source
+    - check: AI-DO 1's AMOD challenge scored a fleet dispatcher in a separate city-scale simulator,
+        with low-level driving assumed, which is not embodied driving; no domain leaf fits it (fleet
+        dispatch is operations planning). It is kept as a subset because it was one challenge of one
+        edition, with few entrants; a reviewer may prefer to drop it or give it a domain_override.
+      field: subsets
+      source: src-arxiv-1903-02503-v1
+      quote: Participants were required to implement a centralized dispatcher that provided goals to
+        individual robots
+    - check: prize-sponsored-by-industry rests on AI-DO 1's AWS credits and nuTonomy ride, from
+        companies whose staff co-authored the report; whether later editions had industry prizes was
+        not found.
+      field: governance.independence_flags
+    - check: data.access private-test-server describes the hardware stage; the simulation test
+        scenarios of 2021 are public in the repository, which is why contamination_risk is medium.
+      field: data.access
+      source: src-github-api-challenge-aido-lf-lf-norm-test-scenarios
+      quote: '"name":"LF-norm-loop-000"'
+  personal_data_excluded:
+    - source: src-arxiv-1903-02503-v1
+      what: the author block, and the finalists' names and team members in Section 4, Figure 10 and
+        Table 4
+    - source: src-arxiv-1903-02503
+      what: the author list and the submitter line
+    - source: src-arxiv-2009-04362-v1
+      what: the author block, the corresponding author's contact line and the acknowledgements
+    - source: src-arxiv-2009-04362
+      what: the author list and the submitter line
+    - source: src-arxiv-2007-03514
+      what: the author list and the submitter line
+    - source: src-duckietown-aido-page
+      what: named endorsements by individual academics and industry staff, and the footer's
+        obfuscated contact address
+    - source: src-duckietown-aido-6-announcement
+      what: the author's byline and a related post naming a lecturer
+    - source: src-duckietown-aido-5-announcement
+      what: the author's byline and a related post naming a lecturer
+    - source: src-github-gym-duckietown-readme
+      what: the citation block's author list
