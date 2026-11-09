@@ -1,0 +1,620 @@
+# data/benchmarks/mathematics/asymob.yaml
+#
+# P1-S10-T06, mathematics entry 11. Filled from the ASyMOB paper, arXiv 2505.23851 read as its v3 PDF (2026-06-17,
+# the ICML 2026 camera-ready and the latest version) and its v1 PDF (2025-05-28, the first edition), and its
+# abstract page; the repository README of RamanujanMachine/ASyMOB at main; and Hugging Face's API record of the
+# dataset (ungated). Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# Read and not cited: GitHub's API records of the repository (created 2025-05-27, last pushed 2026-06-08, no
+# licence, not archived), of its commit listing (the 2026-06-08 commit "Updated to 100 Seed questions and
+# additional perturbations") and of the RamanujanMachine account (an Organization); the Hugging Face dataset's
+# commit listing; the v2 abstract page (2026-06-08, already 35,368 problems); Semantic Scholar's citation
+# listing of the paper (eight citing papers, read 2026-11-09), and the arXiv abstracts of three of them
+# (2607.06820, 2605.26414, 2509.09936), none of which reports ASyMOB results; the other five were not read. For the candidates weighed against
+# ASyMOB: the arXiv API records of Deep Learning for Symbolic Mathematics (1912.01412) and U-MATH (2412.03205),
+# the facebookresearch/SymbolicMathematics README at main and GitHub's API record of that repository. What they
+# bear on is in the notes and in curation.review_checks.
+
+id: asymob
+name: ASyMOB
+aliases:
+  - Algebraic Symbolic Mathematical Operations Benchmark
+tagline: 35,368 perturbed integrals, limits, series, ODEs and hypergeometric problems, answers
+  checked with SymPy.
+description: >
+  A benchmark of purely symbolic university-level mathematics: no word problems, only an expression to
+  integrate, a limit, a series, a differential equation or a hypergeometric identity, with any assumptions
+  on its symbols. The 2026 edition starts from 100 seed problems (55 curated from university-level benchmarks
+  and olympiads, 45 written by the authors), perturbs each by hand with two to five symbolic parameters,
+  and generates the rest algorithmically: symbolic variants with fewer parameters, numeric variants that
+  replace parameters with random integers of 0 to 10 digits, 50 random redraws of the 2- and 3-digit variants
+  to measure variance, and equivalence variants that insert expressions equal to 1 (trigonometric, hyperbolic,
+  logarithmic, complex-exponential and series identities, easy and hard). That gives 35,368 problems in
+  five topics. A model answers once (pass@1), with a prompt that forbids or invites code execution where
+  the model can run code. The final LaTeX expression is extracted by regular expressions, parsed into
+  SymPy (with gemini-2.0-flash translating the LaTeX when the parser fails, never judging it), and accepted
+  if SymPy simplifies its difference from the reference to zero (or a constant, for indefinite integrals)
+  or if five random numeric substitutions agree within 0.002%. Results are reported by perturbation category
+  and by topic, with SymPy itself as a CAS baseline. The 2025 edition (arXiv v1) had 61 seeds and 17,092
+  problems.
+self_description:
+  source: src-arxiv-2505-23851-v3
+  quote: we present ASyMOB, a high-resolution dataset of 35,368 validated symbolic math problems
+    spanning integration, limits, differential equations, series, and hypergeometrics
+external_ids:
+  huggingface: Shalyt/ASyMOB-Algebraic_Symbolic_Mathematical_Operations_Benchmark
+  arxiv: '2505.23851'
+paper:
+  title: 'ASyMOB: Algebraic Symbolic Mathematical Operations Benchmark'
+  arxiv: '2505.23851'
+  version_read: v3
+  source: src-arxiv-2505-23851-v3
+released: 2025-05-28
+released_note: The paper's first arXiv version, as the abstract page dates it. Hugging Face's record
+  of the dataset was created on 2025-05-25 and the GitHub repository on 2025-05-27 (GitHub API).
+released_source: src-arxiv-2505-23851
+released_quote: Submitted on 28 May 2025 (v1), last revised 17 Jun 2026 (this version, v3)
+release_venue: ICML 2026
+release_venue_source: src-arxiv-2505-23851-v3
+release_venue_quote: International Conference on Machine Learning, Seoul, South Korea. PMLR 306,
+  2026.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: mathematics/symbolic-manipulation
+domain_basis:
+  reason: Every item is an expression to transform (integrate, take a limit of, expand, solve,
+    simplify), and an answer is scored by computer-algebra equivalence to the reference, so
+    differently written correct answers pass; that is the leaf's definition. The family's inclusion
+    test asks that the answer be checked as mathematics, here an expression.
+  source: src-arxiv-2505-23851-v3
+  quote: 'Focused Scope: Targeting pure symbolic manipulation'
+domain_considered_and_rejected:
+  - term: mathematics/competition-math
+    reason: Some seeds come from olympiads, but the items are university-level symbolic operations
+      without a word-problem component, most of them generated perturbations, and the paper sets
+      them against word-problem and competition sets.
+    source: src-arxiv-2505-23851-v3
+    quote: Word-problem benchmarks mix two fundamentally different challenges
+  - term: mathematics/arithmetic
+    reason: Numeric perturbations insert integers of up to 10 digits, but they probe the same
+      symbolic task; the scored answer is still an expression, and the paper reads the numeric
+      variants against their symbolic counterparts.
+  - term: mathematics/research-level-math
+    reason: The problems are textbook-to-graduate operations with known closed-form answers,
+      validated by CAS when the seeds were chosen, not open research questions.
+capability:
+  - quantitative-reasoning
+capability_basis:
+  quantitative-reasoning:
+    reason: The scored output is a closed-form expression reached by integration, limits, series
+      expansion or solving a differential equation, which is algebraic manipulation in the term's
+      sense.
+    source: src-arxiv-2505-23851-v3
+    quote: The difference between the extracted expression and the correct answer is simplified via
+      SymPy.simplify.
+capability_considered_and_rejected:
+  - term: reliability-consistency
+    reason: The Variance subset redraws the random 2- and 3-digit coefficients 50 times per seed and
+      reports variance, but the inputs change between draws and the scores are averaged, which the
+      term's exclusion test sends away.
+    source: src-arxiv-2505-23851-v3
+    quote: we measure stability over 50 random variations
+  - term: adversarial-robustness
+    reason: The perturbations are a fixed catalogue applied to every seed, not inputs chosen to make
+      a given system fail; the hard equivalence forms are designed to cause expression swell, but
+      for all models alike. A missing-term record (perturbation-robustness) is logged.
+  - term: distribution-shift-generalization
+    reason: Long numeric coefficients are described as rare in training, but no training
+      distribution is held out; the variants are the same problems with altered constants, symbols
+      and identities.
+  - term: tool-use
+    reason: Code-capable models are run with and without code execution, but the scored artifact is
+      the final expression, not the use of the tool.
+    source: src-arxiv-2505-23851-v3
+    quote: we tested code-integrated LLMs both with and without code execution
+  - term: deductive-reasoning
+    reason: No derivation is checked; only the final expression is compared with the reference.
+
+evaluation_method:
+  - symbolic-equivalence
+evaluation_method_note: Two checks run on the parsed answer and either suffices. Symbolic validation
+  simplifies the difference between the answer and the reference with SymPy.simplify and accepts
+  zero, or a constant for an indefinite integral. Numeric validation substitutes random values for
+  every variable and parameter five times and accepts a relative difference under 0.002% (for an
+  indefinite integral, the same difference in all five). The final LaTeX expression is extracted
+  with regular expressions and parsed with sympy.parsing.latex.parse_latex; when that fails (about
+  9% of cases in v3), gemini-2.0-flash translates the LaTeX into SymPy, seeing only the extracted
+  expression. Responses that cannot be parsed, or that neither check can test, are excluded from the
+  reported statistics rather than counted wrong.
+evaluation_method_basis:
+  reason: Answers are accepted when a computer-algebra system finds them equal to the reference, so
+    differently written forms of one expression both pass, which is the term's inclusion test; the
+    numeric check is a second test of the same equivalence, used because SymPy's simplification is
+    imperfect.
+  source: src-arxiv-2505-23851-v3
+  quote: if either validation method confirms an answer, it is treated as correct
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: The 0.002% tolerance is applied to random numeric substitutions into two expressions, as
+      a test of their equivalence, not to a numeric answer against a reference value. See
+      review_checks.
+    source: src-arxiv-2505-23851-v3
+    quote: If the relative difference between the two evaluations is less than 0.002%, the answers
+      are considered matching.
+  - term: model-graded-judge
+    reason: An LLM translates the extracted LaTeX into SymPy when the deterministic parser fails,
+      but it never decides correctness, and the paper rejects LLM judges on purpose.
+    source: src-arxiv-2505-23851-v3
+    quote: it is never used to judge mathematical correctness, and the LLM never sees the full
+      answer, only the final LaTeX expression
+  - term: exact-match
+    reason: No string comparison is made; the paper's example is two structurally different but
+      equal expressions that must both pass.
+    source: src-arxiv-2505-23851-v3
+    quote: This validation strategy avoids employing LLMs as judges
+designed_for_subjects:
+  - instruction-tuned-model
+  - reasoning-model
+  - tool-augmented-model
+designed_for_subjects_basis:
+  reason: The paper evaluates closed- and open-weight chat and reasoning models (o4-mini, Gemini 2.5
+    and 2.0 Flash, GPT-4.1, GPT-4o, DeepSeek-R1 and V3, Qwen2.5-72B-Instruct, Llama 4 Scout and
+    others) with one call per problem. Models that can execute code are run twice, with a preamble
+    that forbids code and one that asks for Python, the latter through OpenAI's Assistants API with
+    a server-side interpreter; that directed tool offer, with no autonomous loop, is
+    tool-augmented-model.
+  source: src-arxiv-2505-23851-v3
+  quote: The preamble either disallows or encourages code execution
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: DeepSeek-Prover-V2-671B, a maths-tuned model, is evaluated, but mathematics is not one
+      of the term's disciplines; miniF2F's and Omni-MATH's entries found the same.
+  - term: classical-algorithm
+    reason: SymPy is reported as a pure CAS baseline row, but the benchmark is built and analysed
+      for language models, and the seeds were validated with SymPy, which the paper says biases that
+      row. PutnamBench's entry tags the term for its symbolic baselines; see review_checks.
+    source: src-arxiv-2505-23851-v3
+    quote: The bottom line shows SymPy success statistics, providing pure CAS performance baseline.
+  - term: agent-scaffold
+    reason: Code execution is a single directed exchange inside one answer, not a loop the entrant
+      supplies.
+
+lifecycle: active
+lifecycle_basis:
+  reason: The maintainers produced a new edition and a full new set of results for ICML 2026 (arXiv
+    v2 and v3, June 2026), 18 model setups on 35,368 problems. No result by anyone else was found.
+    Semantic Scholar lists eight citing papers (read 2026-11-09), and none of the three whose
+    abstracts were read reports ASyMOB results, so the standing rests on the maintainers' own 2026
+    runs; see review_checks.
+  source: src-arxiv-2505-23851-v3
+  quote: reducing the average model success rate from 74.6% on the unperturbed subset to 46.8% on
+    the full ASyMOB benchmark
+activity: no-submission-channel
+activity_note: There is no leaderboard; the README gives the scripts to collect answers and validate
+  them oneself, and asks users to cite the paper.
+activity_basis:
+  reason: A download-and-run benchmark whose results are in the release paper, with no route for
+    anyone else to enter a result.
+  source: src-github-asymob-readme
+  quote: These scripts collect answers from the LLMs for the questions generated in the previous
+    step, using different APIs.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: DeepSeek-R1
+    source: src-arxiv-2505-23851-v3
+    observed_on: 2026-11-09
+    quote: DeepSeek-R1 94 78.8 76.7 80.1 75.2 78.3
+    note: Table 2's row (Seed, Symbolic, Numeric, Equivalence, Variance, Total, in per cent); 78.3%
+      on the full 2026 edition, the best open-weight result.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each problem's reference answer as a SymPy expression. The seed answers
+  were validated, mostly with a CAS, when the seeds were chosen; perturbed answers follow from the
+  seed's by substitution. The answers are released with the problems.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The problems, the reference answers, the generator and the validation scripts are public,
+    and the models evaluated are API or open-weight models. The LaTeX-to-SymPy fallback calls a
+    Gemini model that may change (execution.harness_gotcha).
+  source: src-hf-api-asymob
+  quote: '"gated":false'
+task:
+  exists: true
+  input:
+    - one symbolic problem in LaTeX (an integral, limit, series, differential equation or
+      hypergeometric expression) with its assumptions on the symbols, wrapped in formatting
+      instructions and, for code-capable models, a preamble forbidding or asking for code
+  output: A worked answer ending in 'The final answer is:' and a single LaTeX expression.
+  scoring: The last LaTeX expression is extracted and parsed into SymPy; it is correct if SymPy
+    simplifies its difference from the reference to zero (or a constant, for indefinite integrals)
+    or if five random numeric substitutions agree within 0.002% relative difference. Success rate
+    (pass@1) over the parsable responses, reported by perturbation category, by topic and in total.
+  reference_solution: true
+  reference_solution_note: Reference answers are released as SymPy expressions; there are no worked
+    solutions.
+  source: src-arxiv-2505-23851-v3
+  quote: We exclusively use the pass@1 evaluation criterion
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The full set with reference answers, the seed file and the generator are on Hugging
+      Face, ungated; the repository holds the generator, the seed file and the evaluation pipeline.
+    source: src-hf-api-asymob
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_note: Two editions so far, each tied to a dated arXiv version and a dated upload of the
+    data (2025-05-25 and 2026-06-08 on Hugging Face), with no version labels. The maintainers also
+    say the set should be regenerated before a new model is assessed; a regenerated set redraws the
+    random numeric coefficients, so it is not the published file. See review_checks.
+  refresh_basis:
+    reason: The 2026 edition replaced the 2025 set on the same day arXiv v2 was posted, and the
+      paper versions date each set, so a result can name the state it was measured on.
+    source: src-hf-api-asymob
+    quote: '"lastModified":"2026-06-08T23:21:27.000Z"'
+  data_provenance:
+    - synthetic-procedural
+    - expert-authored
+  data_provenance_note: 100 seed problems, 55 curated from university-level benchmarks (U-MATH,
+    MathOdyssey, GHOSTS, UGMathBench) and olympiad sets and 45 written by the authors; each seed was
+    perturbed by hand with two to five symbolic parameters. Everything else, over 99% of the items,
+    is generated by rule from those (the symbolic, numeric, variance and equivalence variants). No
+    model is in the generation loop. exam-derived was considered; some seeds come from olympiads,
+    but they are a few dozen of 35,368 items, reached through other benchmarks.
+  data_provenance_source: src-arxiv-2505-23851-v3
+  data_provenance_quote: After manually perturbing each seed question with 2-to5 symbolic
+    parameters, additional variants were generated using algorithmic transformations.
+  contamination_risk: medium
+  contamination_risk_note: The whole set with answers is public on Hugging Face, and 55 of the 100
+    seeds come from public benchmarks and olympiads, so a route into training data is plausible; no
+    source evidences one. The maintainers argue the perturbations limit the effect. With each seed
+    and its answer placed in the prompt, gains on harder variants were 2 to 6.8 points. They do not
+    rule out training on ASyMOB-style perturbations, and the random variants are fixed in the
+    published file unless a user regenerates them.
+  contamination_evidence:
+    - source: src-arxiv-2505-23851-v3
+      stance: against
+      quote: These findings show that seed question contamination does not substantially distort
+        performance on harder variants
+    - source: src-arxiv-2505-23851-v3
+      stance: supports
+      quote: This stress test does not rule out
+  dataset_licence: CC-BY-SA-4.0
+  dataset_licence_note: Hugging Face's licence tag for the dataset. The repository states no
+    licence, and no source read addresses the terms of the benchmarks the 55 curated seeds were
+    taken from.
+  dataset_licence_source: src-hf-api-asymob
+  dataset_licence_quote: license:cc-by-sa-4.0
+  size:
+    - count: 35368
+      unit: problems
+      subset: 2026 edition (arXiv v2 and v3)
+      source: src-arxiv-2505-23851-v3
+      quote: to create an overall dataset of 35,368 unique symbolic math challenges
+    - count: 100
+      unit: seed problems
+      subset: 2026 edition
+      source: src-arxiv-2505-23851-v3
+      quote: We begin by curating and creating a set of 100 seed problems that contain only symbolic
+        content
+    - count: 17092
+      unit: problems
+      subset: 2025 edition (arXiv v1)
+      note: From 61 seed problems, the last column of v1's per-seed heatmap.
+      source: src-arxiv-2505-23851-v1
+      quote: to create an overall dataset of 17,092 unique symbolic math challenges
+  languages:
+    - en
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Ramanujan Machine group at the Technion - Israel Institute of Technology (the
+    RamanujanMachine GitHub organisation); the dataset sits in a first author's personal Hugging
+    Face account
+  maintainer_basis:
+    reason: All three authors are at the Technion, and the code is in the RamanujanMachine
+      organisation on GitHub (an Organization account, GitHub API read 2026-11-09). The Hugging Face
+      copy is held in an individual's account.
+    source: src-arxiv-2505-23851-v3
+    quote: 'Code: github.com/RamanujanMachine/ASyMOB'
+  maintainer_type: academic-lab
+  maintainer_type_note: individual was considered for the Hugging Face copy, but the paper, the code
+    and the name sit with a university research group's organisation account.
+  submission_process:
+    - literature-only
+  submission_process_note: The paper's own tables are the only results; the maintainers keep no
+    ranking, and others are asked to cite the paper.
+  submission_process_source: src-github-asymob-readme
+  submission_process_quote: 'If you use ASyMOB in your research, please cite the paper:'
+  independence_flags:
+    - flag: no-known-conflict
+      source: src-arxiv-2505-23851-v3
+      quote: This research received support through Schmidt Sciences, LLC.
+  independence_flags_note: Searched for every flag on 2026-11-09. The only stated support is Schmidt
+    Sciences, LLC, which has no system among those evaluated; the 18 setups evaluated are all other
+    parties' models, and the authors enter none. Correctness is decided by SymPy, but the fallback
+    LaTeX-to-SymPy translator is gemini-2.0-flash, from Google, whose Gemini models are evaluated;
+    it does not judge, which grader-from-evaluated-party's exclusion for programmatic scoring
+    covers, but see review_checks. The paper does not say whether any API provider gave credits
+    (Table 4 gives costs per setup).
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2505-23851-v3
+    quote: This research received support through Schmidt Sciences, LLC.
+  known_limitation:
+    source: src-arxiv-2505-23851-v3
+    quote: Due to the limitations of SymPy (imperfections in SymPy.simplify, handling of very large
+      numbers in .evalf(), etc.)
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: Most setups are API-served models, and the paper tabulates a cost per setup on the full
+      set, from $16 (GPT-4o-mini) to $1,849 (o4-mini with code); the validation stage needs ordinary
+      workstations.
+    source: src-arxiv-2505-23851-v3
+    quote: Cost of evaluating each test setup on the full ASyMOB dataset.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: Problems and SymPy answers are public, and extraction, parsing and both validations are
+      scripts, so a new model can be scored end to end with no human step.
+    source: src-github-asymob-readme
+    quote: then validate the answers both symbolically and numerically
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: 'RamanujanMachine/ASyMOB: Dataset Generation (ASyMOB_Generation.py and the seed CSV) and Verification
+    Pipeline (collect_llm_answers.py with per-provider interfaces, openai_send_batch_query.py, openai_assistants.py
+    for the code-execution runs, create_subs.py and validate_answers_rowwise.py, over an SQL results database)'
+  harness_note: The pipeline writes answers and validations to a database defined in db_schema.sql
+    and reports through a view; sample tables are provided. It was not run for this entry.
+  harness_source: src-github-asymob-readme
+  harness_quote: Symbolic validation relies on the SymPy library to validate the answers
+    symbolically.
+  harness_gotcha:
+    source: src-arxiv-2505-23851-v3
+    quote: Responses that could not be translated into valid SymPy expressions after both parsing
+      attempts were excluded from aggregate statistics.
+  harness_gotcha_note: Success rates are over the responses that could be parsed and tested, not
+    over all problems, so a model that often gives no usable expression is not penalised for it;
+    responses SymPy could not test are dropped too. The parsing fallback is gemini-2.0-flash, a
+    moving model whose snapshot is not named. The published file fixes the random variants, but the
+    maintainers ask for regeneration, which changes them.
+  code_licence: null
+  code_licence_note: GitHub's API reports no licence for RamanujanMachine/ASyMOB, and its top level
+    has no LICENSE file (read 2026-11-09); not a quoted Source.
+  runnable_via:
+    - custom
+  runnable_via_note: No ASyMOB task was looked for in third-party harnesses (HELM, inspect_evals,
+    lm-evaluation-harness).
+  maintainer_rerun_policy: unstated
+
+# comparability: none added. The (symbolic-equivalence, instruction-tuned-model / reasoning-model) pairs resolve
+# the llm-static-text profile, whose tools_allowed carries the code / no-code split. Beyond it: the benchmark
+# edition, which the claim's benchmark version carries, and whether the published file or a regenerated set was
+# scored, which no condition field holds (see review_checks). The paper states no sampling settings.
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The headline is the success rate over the full dataset (Total), beside the per-category
+    and per-topic rates.
+  source: src-arxiv-2505-23851-v3
+  quote: The Total column is performance on the full dataset.
+
+homepage: https://github.com/RamanujanMachine/ASyMOB
+repository: https://github.com/RamanujanMachine/ASyMOB
+dataset_url:
+  https://huggingface.co/datasets/Shalyt/ASyMOB-Algebraic_Symbolic_Mathematical_Operations_Benchmark
+
+versions:
+  - version: '2025'
+    label: The first edition (arXiv v1, 61 seeds)
+    version_kind: edition
+    released: 2025-05-28
+    items: 17092
+    changes: The first release, 17,092 problems from 61 seed problems, uploaded to Hugging Face on
+      2025-05-25.
+    breaking: true
+    superseded_by: '2026'
+    frozen: true
+    sources:
+      - src-arxiv-2505-23851-v1
+      - src-arxiv-2505-23851
+  - version: '2026'
+    label: The ICML 2026 edition (arXiv v2 and v3, 100 seeds)
+    version_kind: edition
+    released: 2026-06-08
+    items: 35368
+    changes: 100 seeds against 61, additional perturbations (Numeric-All-3-S beside Numeric-All-2-S
+      in the variance set), 35,368 problems; the data on Hugging Face and the generator's seed file
+      in the repository were replaced on 2026-06-08, the day arXiv v2 was posted, and the 2025 seed
+      file was deleted. Re-run results for 18 setups.
+    breaking: true
+    supersedes_version: '2025'
+    frozen: true
+    sources:
+      - src-arxiv-2505-23851-v3
+      - src-arxiv-2505-23851
+      - src-hf-api-asymob
+
+subsets:
+  - id: asymob#seed
+    label: Seed (unperturbed)
+    items: 100
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2505-23851-v3
+        quote: We begin by curating and creating a set of 100 seed problems that contain only
+          symbolic content
+  - id: asymob#symbolic
+    label: Symbolic perturbations (Symbolic-N)
+    items: 1348
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2505-23851-v3
+        quote: 7 (1348)
+    notes: Variants with N of the seed's hand-chosen symbolic parameters kept, for every
+      combination.
+  - id: asymob#numeric
+    label: Numeric perturbations (Numeric-All-N and Numeric-One-N)
+    items: 4590
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2505-23851-v3
+        quote: 11 (1100)
+      - source: src-arxiv-2505-23851-v3
+        quote: 30 (3490)
+    notes: All parameters replaced by random integers of N digits (0 to 10; 1,100 items), or one
+      parameter replaced and the rest removed (1 to 10 digits; 3,490 items). items is the sum of
+      Table 1's two rows.
+  - id: asymob#equivalence
+    label: Equivalence perturbations (One or All, Easy or Hard)
+    items: 19330
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2505-23851-v3
+        quote: 15 (1745)
+      - source: src-arxiv-2505-23851-v3
+        quote: 60 (7920)
+      - source: src-arxiv-2505-23851-v3
+        quote: inserting one or more expressions that are mathematically equal to 1
+    notes: One or all symbols replaced by an expression identically equal to 1, in five identity
+      types, Easy or Hard; 1,745 items each for One-Easy and One-Hard and 7,920 each for All-Easy
+      and All-Hard. items is the sum of Table 1's four rows.
+  - id: asymob#variance
+    label: Variance (Numeric-All-N-S)
+    items: 10000
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2505-23851-v3
+        quote: 100 (10000)
+      - source: src-arxiv-2505-23851-v3
+        quote: we measure stability over 50 random variations
+    notes: 50 random redraws of the 2-digit and 3-digit numeric variants per seed.
+  - id: asymob#integrals
+    label: Integrals
+    items: 10694
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2505-23851-v3
+        quote: Total Questions 10694 10157 6994 4505 3018 35368
+  - id: asymob#differential-equations
+    label: Differential Equations
+    items: 10157
+    scored_separately: true
+  - id: asymob#series
+    label: Series
+    items: 6994
+    scored_separately: true
+  - id: asymob#limits
+    label: Limits
+    items: 4505
+    scored_separately: true
+  - id: asymob#hypergeometrics
+    label: Hypergeometric Functions
+    items: 3018
+    scored_separately: true
+subsets_note: >
+  The five perturbation categories are the columns of Table 2 and partition the 35,368 problems; the five
+  topics are the columns of Table 6 and partition them again, by seed (30, 23, 22, 15 and 10 seeds). Both
+  are computed from one run. The finer variant labels (Symbolic-3, Numeric-One-6, Equivalence-All-Hard
+  and so on) are plotted in Figures 2 and 3, not tabulated.
+
+tags:
+  - symbolic-mathematics
+  - computer-algebra
+  - sympy
+  - perturbation
+  - integration
+  - differential-equations
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S10-T06)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2505-23851-v3
+    - src-arxiv-2505-23851-v1
+    - src-arxiv-2505-23851
+    - src-github-asymob-readme
+    - src-hf-api-asymob
+  sources_note: >
+    The paper's v3 and v1 PDFs (DOIs, not archived) read as text; its abstract page for the dates, the
+    venue and the CC BY-SA 4.0 licence; the README at main; and Hugging Face's API record of the dataset,
+    which sits in a personal account. Both non-DOI Sources are pending archive.
+  confidence: medium
+  review_checks:
+    - check: 'Candidates weighed for this leaf. Deep Learning for Symbolic Mathematics (facebookresearch,
+        ICLR 2020): an organisation repository and a DOI-backed paper, but the repository has been archived
+        since 2021, its integration and ODE sets are train/valid/test splits for seq2seq models (exact
+        match during training, a symbolic check only at beam evaluation), and no 2025-2026 use was found.
+        U-MATH (Toloka): university-level problems, but graded by an LLM judge, not by symbolic equivalence.
+        ASyMOB won on all four criteria except third-party use: CAS-checked answers, a DOI, the RamanujanMachine
+        organisation, and a 2026 ICML edition.'
+      field: domain
+    - check: Id. asymob is proposed (04 S3); asymob-benchmark or
+        algebraic-symbolic-mathematical-operations are the alternatives, and the long name is
+        carried as an alias.
+      field: id
+    - check: lifecycle active rests on the maintainers' own 2026 edition and results; no result by
+        anyone else was found, and none of the three citing papers whose abstracts were read reports
+        ASyMOB numbers (five of Semantic Scholar's eight were not read). If release results alone do
+        not make it active, proposed is the alternative.
+      field: lifecycle
+      source: src-arxiv-2505-23851-v3
+      quote: reducing the average model success rate from 74.6% on the unperturbed subset to 46.8%
+        on the full ASyMOB benchmark
+    - check: Versions. The two editions are this entry's labels ('2025', '2026'); the maintainers
+        name neither, and arXiv v2 (2026-06-08) and v3 (2026-06-17) both describe the 2026 set.
+        Recorded as editions (new items, same task, same maintainer), so breaking; the 2026 seeds
+        include the 61 earlier ones only if the paper says so, and no source read says which seeds
+        were kept.
+      field: versions
+      source: src-arxiv-2505-23851-v1
+      quote: featuring 17,092 unique math challenges, organized by similarity and complexity
+    - check: refresh versioned-releases, against continuously-generated. The maintainers ask that
+        the set be regenerated before each new model, which would make the scored items synthesised
+        per run; their own results are on the published file. No condition field records whether a
+        claim used the published file or a regeneration.
+      field: data.refresh
+      source: src-arxiv-2505-23851-v3
+      quote: The dataset can (and should) be re-generated before assessing a new LLM
+    - check: Denominator. Unparseable and untestable responses are excluded from the success rates,
+        so a model's rate is over a model-dependent subset; whether the comparability profile should
+        treat this as material.
+      field: execution.harness_gotcha
+      source: src-arxiv-2505-23851-v3
+      quote: Responses that could not be verified by either method due to SymPy
+    - check: no-known-conflict, against grader-from-evaluated-party. gemini-2.0-flash sits in the
+        scoring path as the fallback LaTeX-to-SymPy translator (about 9% of responses in v3) and
+        Gemini 2.0 Flash is itself evaluated; it translates rather than judges, which is why the
+        flag is not set.
+      field: governance.independence_flags
+      source: src-arxiv-2505-23851-v3
+      quote: we resort to using gemini-2.0-flash (Pichai et al., 2024) for this translation
+    - check: evaluation_method. The numeric validation (random substitution, 0.002% relative
+        tolerance) is read as part of the symbolic-equivalence check; numeric-tolerance-match could
+        be added as a second term.
+      field: evaluation_method
+    - check: classical-algorithm is left out of designed_for_subjects although SymPy is a baseline
+        row (39.2% total), as PutnamBench's entry tags it for symbolic baselines.
+      field: designed_for_subjects
+    - check: Robustness to designed, non-adversarial perturbations is what ASyMOB measures, and no
+        capability term carries it; logged as missing-term (proposed perturbation-robustness), as
+        AgentClinic's entry did.
+      field: capability
+    - check: The Hugging Face dataset is held in a personal account, whose handle is in dataset_url
+        and external_ids.huggingface; the lead decides whether those stand.
+      field: dataset_url
