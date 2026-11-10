@@ -1,0 +1,652 @@
+# data/benchmarks/games-planning/smac.yaml
+#
+# P1-S11-T04, games-planning entry 9. Filled from the SMAC paper, arXiv 1902.04043 read as its v5 PDF (2019-12-09,
+# accepted at the NeurIPS 2019 Deep RL workshop), and its abstract page for the first version's date; the README and
+# docs/smac.md of oxwhirl/smac at commit d6aab33 (2024-02-18, the newest on master), with GitHub's release record for
+# v0.1-beta1 and v1; the SMACv2 paper, arXiv 2212.07489 read as its v2 PDF (2023-10-17, NeurIPS 2023 Datasets and
+# Benchmarks), and its abstract page; the README of oxwhirl/smacv2 at commit 577ab5a (2024-02-15, withheld from the
+# archive); and the v2 PDF of arXiv 2605.01805 (2026-05-10), a paper that reports SMAC and SMACv2 win rates as
+# evidence of current use. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# SMAC (v1) only. SMACv2 is recorded as a same-maintainer variant in lineage, not as a version of this entry: it has
+# its own repository, package, paper and maps, and the SMACv2 README says the old SMAC maps do not work in it (see
+# review_checks for why the 04 S4 call is not clear-cut). SMAC's own saturation is stated only as the SMACv2 paper
+# states it (governance.known_limitation). The many third-party derivatives seen in an arXiv search (SMAC-Hard,
+# SMAC-Talk, HLSMAC, StarCraft+ and others) were not read and are not folded in.
+
+id: smac
+name: StarCraft Multi-Agent Challenge
+aliases:
+  - SMAC
+  - SMACv1
+  - The StarCraft Multi-Agent Challenge
+tagline: Decentralised StarCraft II micromanagement battles against the built-in AI, scored by test
+  win rate per map.
+description: >
+  A cooperative multi-agent reinforcement learning benchmark from the University of Oxford's WhiRL lab,
+  built on StarCraft II through Blizzard's machine-learning API and PySC2. Each scenario is a battle between
+  two armies on a fixed map: every allied unit is controlled by its own learned agent, which acts only
+  on observations within its sight range, while the enemy army is played by the game's hand-coded built-in
+  AI at difficulty level 7 ("very difficult"). An episode is won when every enemy unit dies, and lost
+  when the allies die or the time limit runs out. The goal is to maximise the win rate. Training may be
+  centralised, using the global state, but execution must be decentralised. The paper proposes 14 challenge
+  scenarios (the repository lists 23 maps), grouped by the release results into Easy, Hard and Super Hard,
+  and recommends reporting the median test win rate over independent runs, measured with 32 greedy test
+  episodes at intervals during training. PyMARL, the maintainers' training framework, shipped beside it
+  with QMIX, COMA, VDN, IQL and QTRAN. Scores depend on the StarCraft II binary: the README warns that
+  results under SC2 4.10 are not comparable with the paper's 4.6.2. SMACv2 (2022), from the same group,
+  replaces the fixed scenarios with procedurally generated ones.
+self_description:
+  source: src-arxiv-1902-04043
+  quote: we propose the StarCraft Multi-Agent Challenge (SMAC) as a benchmark problem to fill this
+    gap
+external_ids:
+  arxiv: '1902.04043'
+paper:
+  title: The StarCraft Multi-Agent Challenge
+  arxiv: '1902.04043'
+  doi: 10.48550/arXiv.1902.04043
+  version_read: v5
+  source: src-arxiv-1902-04043-v5
+released: 2019-02-11
+released_note: The paper's first arXiv version, as its abstract page dates it. GitHub's release
+  record shows a v0.1-beta1 release published on 2019-01-15, before the paper, and v1 on 2019-12-04,
+  with the paper's v3 to v5.
+released_source: src-arxiv-1902-04043
+released_quote: Submitted on 11 Feb 2019 (v1), last revised 9 Dec 2019 (this version, v5)
+release_venue: NeurIPS 2019 Deep Reinforcement Learning workshop
+release_venue_source: src-arxiv-1902-04043-v5
+release_venue_quote: Accepted at the Workshop on Deep Reinforcement Learning at the 33rd Conference
+  on Neural Information Processing Systems (NeurIPS 2019)
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: games-planning/real-time-strategy
+domain_basis:
+  reason: Every scenario is a battle in StarCraft II, a real-time strategy game, in which a team of
+    units must be controlled at once, each by its own agent. The benchmark takes the game's
+    micromanagement component only, not the full game's economy and base-building (see review_checks
+    on the real-time clause).
+  source: src-arxiv-1902-04043
+  quote: focuses on micromanagement challenges where each unit is controlled by an independent agent
+    that must act based on local observations
+domain_considered_and_rejected:
+  - term: games-planning/video-games
+    reason: StarCraft II is a video game, but SMAC plays it through the raw API's feature vectors
+      and unit-level commands, not the game's ordinary observation and action interface, which the
+      leaf's definition asks for.
+    source: src-arxiv-1902-04043-v5
+    quote: SMAC uses the raw API of SC2LE.
+  - term: games-planning/multi-agent-social
+    reason: Several agents learn together, but the team is fixed and fully cooperative against a
+      scripted enemy, with no alliance, betrayal or persuasion, the dynamics the leaf names.
+  - term: agents-tooluse/multi-agent-coordination
+    reason: The agents must coordinate, but the family's exclusion test sends a game environment to
+      games-planning; Hanabi's entry rejects it on the same ground.
+  - term: robotics-embodiment/drone-uav
+    reason: The paper motivates SMAC with the coordination of drones and other multi-robot systems,
+      but the units are game units in StarCraft II, with no robot, vehicle or physical body.
+capability:
+  - collaboration
+capability_basis:
+  collaboration:
+    reason: All allied agents share one objective, winning the battle, and the score is the team's
+      win rate; the opposing army is the game's scripted AI, not a party the team works with.
+    source: src-arxiv-1902-04043-v5
+    quote: teams of agents must learn to coordinate their behaviour while conditioning only on their
+      private observations
+capability_considered_and_rejected:
+  - term: communication
+    reason: There is no channel between agents at test time; each acts on its own observation
+      history, and the score is the joint outcome, which the term's exclusion test removes.
+    source: src-arxiv-1902-04043-v5
+    quote: during testing each agent must base its policy solely on its own action-observation
+      history
+  - term: planning
+    reason: An episode is an interactive game against an explicit objective, but the term's game
+      clause needs the source to claim planning, and the paper claims coordination under partial
+      observability, credit assignment and decentralised control instead.
+  - term: sample-efficiency
+    reason: The metric is read as a function of environment steps and the paper asks that the steps
+      used be reported, but no budget is fixed and scored at, which the term's exclusion test
+      requires.
+    source: src-arxiv-1902-04043-v5
+    quote: Our main evaluation metric is the mean win percentage of evaluation episodes as a
+      function of environment steps observed
+  - term: distribution-shift-generalization
+    reason: The scenarios are fixed, with the same units and start positions in training and test;
+      the SMACv2 paper names this as the gap its procedurally generated scenarios close. It belongs
+      to SMACv2, not to this entry.
+    source: src-arxiv-2212-07489-v2
+    quote: we show that an open-loop policy, which conditions only on the timestep and ignores all
+      other observations, performs well on many SMAC scenarios
+  - term: long-horizon-execution
+    reason: Episodes run for many steps and kiting scenarios need at least 100 of them, but losing a
+      unit does not make a win unattainable, and the paper scores win rate only, not the survival of
+      a chain of dependent steps.
+  - term: sensorimotor-control
+    reason: Units move and fire in a simulated game world, but the action space is discrete
+      unit-level commands (move in four directions, attack, stop, no-op), not control of a body.
+
+evaluation_method:
+  - simulation-rollout
+evaluation_method_basis:
+  reason: Every number is a win rate over episodes played in the StarCraft II engine, each episode a
+    win or a loss, so the score is bounded at 100%. The term's inclusion test asks for the simulator
+    and its build to be recorded, which matters here because the SC2 version changes the score.
+  source: src-arxiv-1902-04043-v5
+  quote: The goal is to maximise the win rate, i.e., the ratio of games won to games played.
+evaluation_method_considered_and_rejected:
+  - term: episodic-return
+    reason: The environment's default shaped reward accumulates over an episode, but it trains the
+      agents and is not the reported metric. The score is a win or a loss per episode, which the
+      term's exclusion test removes; headroom is therefore defined, and the entry can saturate.
+    source: src-arxiv-1902-04043-v5
+    quote: The percentage of episodes where the agents defeat all enemy units within the permitted
+      time limit is referred to as the test win rate.
+  - term: tournament-play
+    reason: Entrants never play each other. Every entrant fights the same built-in AI at a fixed
+      difficulty, a fixed baseline, which the term's exclusion test removes; comparability needs no
+      rating pool.
+    source: src-github-smac-docs-d6aab33
+    quote: The difficulty of the game AI is set to _very difficult_ (7).
+designed_for_subjects:
+  - rl-policy
+  - multi-agent-system
+  - classical-algorithm
+designed_for_subjects_basis:
+  reason: The environment is built for decentralised policies trained in it, one agent per unit, by
+    multi-agent learning algorithms, which the maintainers' PyMARL framework implements. Each unit's
+    agent acts on its own observations and the team's joint behaviour is scored, which
+    multi-agent-system's inclusion test admits. The paper's Table 2 scores a hand-coded focus-fire
+    heuristic beside the learners, which classical-algorithm's inclusion test admits as a baseline.
+  source: src-arxiv-1902-04043-v5
+  quote: We also plot the performance of a simple heuristic AI that selects the closest enemy unit
+    (ignoring partial observability)
+designed_for_subjects_considered_and_rejected:
+  - term: agent-scaffold
+    reason: No prompted language agent is part of the design; LLM and VLM work on SMAC seen in an
+      arXiv search (SMAC-Talk, a natural-language extension, among them) was not read.
+
+as_used:
+  - protocol: Five SMAC maps (3s5z, 5m_vs_6m, corridor, 6h_vs_8z, MMM2) beside one SMACv2 scenario
+      (Protoss5v5), run on StarCraft II 4.10.0 rather than the paper's 4.6.2, with 10 million
+      environment steps per method and five seeds. Final win rate and the area under the win-rate
+      curve are reported, with evaluation every 10,000 steps over 32 deterministic test episodes as
+      the paper recommends.
+    source: src-arxiv-2605-01805-v2
+    quote: For SMAC and SMACv2, we use StarCraft II version 4.10.0 and a unified MAPPO protocol.
+    note: Under the SMAC README's warning, these numbers are not comparable with the paper's Table
+      2, which ran on SC2.4.6.2.69232.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on SMAC's own maps, for example a May 2026 paper reporting
+    final win rates on five of them. The SMACv2 paper's case that SMAC is near saturation, and the
+    SMAC README's pointer to SMACv2, are recorded but do not make it superseded while new results
+    appear (see review_checks).
+  source: src-arxiv-2605-01805-v2
+  quote: 'The SMAC and SMACv2 experiments use six micromanagement maps: 3s5z, 5m_vs_6m, corridor, 6h_vs_8z,
+    MMM2, and Protoss5v5.'
+activity: no-submission-channel
+activity_basis:
+  reason: The paper and README release an environment, maps and a reporting methodology; neither
+    offers a leaderboard, server or submission route, and results appear in users' papers.
+  source: src-github-smac-readme-d6aab33
+  quote: pip install git+https://github.com/oxwhirl/smac.git
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: QMIX (PyMARL)
+    source: src-arxiv-1902-04043-v5
+    observed_on: 2026-11-09
+    quote: Overall QMIX achieves the highest test win percentage
+  - system: MAGIC (MAPPO backbone)
+    source: src-arxiv-2605-01805-v2
+    observed_on: 2026-11-09
+    quote: MAGIC obtains the highest average performance, improving over SCIC by 10.1% in average
+      final win rate
+evaluation_target: learned-system
+evaluation_target_note: The hand-coded heuristic in Table 2 is a baseline. The protocol is defined
+  for trained decentralised policies, with win rate read over the course of training.
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The StarCraft II engine decides each battle; an episode that reaches the
+  time limit is counted as a loss.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The environment and maps are open source and the game binary is freely available (the
+    Starter Edition works, and Linux builds come from Blizzard's repository). Exact reproduction
+    needs the same SC2 build, which the README names for the paper's results.
+  source: src-github-smac-readme-d6aab33
+  quote: The free [Starter Edition](http://battle.net/sc2/en/legacy-of-the-void/) also works.
+
+task:
+  exists: true
+  input:
+    - each agent's local observation within its unit's sight range (distance, relative position,
+      health, shield and unit type of visible allied and enemy units, the last actions of visible
+      allies, surrounding terrain), and during centralised training only, the global state
+  output: One discrete action per agent per step, move in one of four directions, attack an enemy in
+    shooting range (heal an ally, for Medivacs), stop or no-op, until one army is destroyed or the
+    episode limit is reached.
+  scoring: 'Test win rate: the percentage of greedy, decentralised test episodes in which the allies kill
+    every enemy unit within the time limit. The paper runs 32 test episodes every 10,000 training steps
+    over independent runs (five in the paper) and reports the median with the 25-75% percentiles; Table
+    2 gives the maximum median over the last 250k steps of training.'
+  metric_range:
+    - 0
+    - 100
+  source: src-arxiv-1902-04043-v5
+  quote: during which 32 test episodes are run with agents performing action selection greedily in a
+    decentralised fashion.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: generated-on-demand was weighed and rejected. The scored episodes are played live,
+    but the scenarios are fixed map files, with the same units and start positions each episode,
+    which the SMACv2 paper shows can be solved by a fixed action sequence on many maps; Atari 100k's
+    entry takes fully-open on the same ground.
+  access_basis:
+    reason: There is no held-out data. The environment and the map files are open source, and the
+      game binary is free to install; every episode is played out live by the engine against the
+      built-in AI.
+    source: src-github-smac-readme-d6aab33
+    quote: SMAC is based on the full game of StarCraft II (versions >= 3.16.1).
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The repository has two releases, v0.1-beta1 and v1, and v1's notes say its maps are the
+      beta's, while the paper's v5 says its challenge list was updated from an earlier version. What
+      moves scores since is the StarCraft II binary, a condition of a result; commits after v1 are
+      not tagged, and the commit history was not read (see review_checks).
+    source: src-github-smac-releases
+    quote: SMAC_Maps_V1.tar.gz is the same as SMAC_Maps.tar.gz from the beta release.
+  data_provenance:
+    - simulation-generated
+  data_provenance_note: Every episode is produced by the StarCraft II game engine, with the enemy
+    played by its built-in AI; the scenarios are hand-designed maps made in the StarCraft II Editor.
+    synthetic-procedural was weighed, as Atari 100k's entry reads the ALE, but the vocabulary
+    reserves it for rules engines that enumerate legal states, and SC2 simulates unit movement,
+    combat and terrain in real time.
+  data_provenance_source: src-arxiv-1902-04043-v5
+  data_provenance_quote: controlled by the hand-coded built-in StarCraft II AI
+  contamination_risk: unknown
+  contamination_risk_note: Training on the scored maps is the protocol, so contamination reduces to
+    tuning on the test maps; the SMACv2 paper's open-loop result, that a timestep-only policy wins
+    on many maps, is evidence that the fixed scenarios can be memorised, but no source read assesses
+    training-data contamination as such. Atari 100k's entry is unknown on the same ground.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: A win rate cannot exceed 100%, and QMIX reaches 100% on 2s_vs_1sc in the paper's Table
+      2; no human score is published.
+    source: src-arxiv-1902-04043-v5
+    quote: 'Table 2: The Test Win Rate % of IQL, COMA, VDN, QMIX and the heuristic-based algorithm.'
+  dataset_licence: null
+  dataset_licence_note: The maps ship in the repository, whose GitHub licence metadata reports MIT
+    (read 2026-11-09; not a quoted Source). The StarCraft II binary is Blizzard's; its terms of use
+    were not read.
+  size:
+    - count: 14
+      unit: challenge scenarios
+      subset: the paper's challenge set (Table 1)
+      source: src-arxiv-1902-04043-v5
+      quote: features 14 diverse combat scenarios which challenge MARL methods to handle partial
+        observability and high-dimensional inputs
+    - count: 23
+      unit: maps in the repository's scenario table
+      note: Counted from the table in docs/smac.md, which adds 3m, 8m, 25m, MMM, 8m_vs_9m, 2m_vs_1z,
+        3s_vs_3z, 3s_vs_4z and so_many_banelings to the 14.
+      source: src-github-smac-docs-d6aab33
+      quote: The complete list of challenges is presented bellow.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: WhiRL (University of Oxford)
+  maintainer_basis:
+    reason: The README calls SMAC WhiRL's environment and links the lab's page at the University of
+      Oxford, and the repository sits in the oxwhirl organisation; SMACv2 sits in the same
+      organisation.
+    source: src-github-smac-readme-d6aab33
+    quote: "[WhiRL](http://whirl.cs.ox.ac.uk)'s environment for research in the field of cooperative multi-agent
+      reinforcement learning (MARL)"
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or submission route; the paper's Table 2 and the run data
+    in release v1 are the release baselines, and everyone else reports in their own papers.
+  submission_process_source: src-arxiv-1902-04043-v5
+  submission_process_quote: 'Table 2: The Test Win Rate % of IQL, COMA, VDN, QMIX and the heuristic-based
+    algorithm.'
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-smac-readme-d6aab33
+      quote: our [PyTorch](https://github.com/pytorch/pytorch) framework for MARL research, which
+        includes implementations of several state-of-the-art algorithms
+  independence_flags_note: The release results are the maintainers' own runs in their own framework,
+    PyMARL, released with SMAC. They are release baselines, not a later entry on a ranking the
+    maintainers keep. Whether QMIX, the best performer, is also the maintainers' own method is not
+    stated in any passage quoted here (see review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2212-07489-v2
+    quote: This suggests that, due to ceiling effects, SMAC may no longer reward further algorithmic
+      improvements and that new benchmarks are needed.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs a StarCraft II client. In the paper each independent training
+    run took 8 to 16 hours on an Nvidia GTX 1080 Ti, depending on the scenario.
+  compute_tier_source: src-arxiv-1902-04043-v5
+  compute_tier_quote: Each independent run takes between 8 to 16 hours, depending on the exact
+    scenario, using Nvidia Geforce GTX 1080 Ti graphics cards
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run is automatic but needs the StarCraft II game, the SMAC maps copied into its Maps
+      directory, and the smac package.
+    source: src-github-smac-readme-d6aab33
+    quote: python -m smac.examples.random_agents
+  reproducibility_blockers:
+    - specific-simulator-build
+  reproducibility_blockers_note: The README warns that scores differ between SC2 builds and names
+    the paper's, and its own run data as outdated by later SC2 changes.
+  reproducibility_blockers_source: src-github-smac-readme-d6aab33
+  reproducibility_blockers_quote: use `SC2.4.6.2.69232` not `SC2.4.10`
+  harness_availability: official-harness
+  harness: smac (smac.env.StarCraft2Env, the environment, with the maps), and PyMARL, the
+    maintainers' training framework, which runs the test episodes and computes the win rate
+  harness_note: The environment reports each battle's outcome; the test win rate and the median over
+    runs come from the training framework. Later implementations change the environment itself,
+    which is a harness setting (see comparability).
+  harness_source: src-github-smac-readme-d6aab33
+  harness_quote: pip install git+https://github.com/oxwhirl/smac.git
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for oxwhirl/smac, read 2026-11-09; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulator, simulator_version, hardware_platform, subset_used,
+  # selection_strategy, n_samples): the harness, because implementations differ in what they change in the
+  # environment, and the SMACv2 paper notes that an influential MAPPO implementation modified SMAC directly rather
+  # than wrapping it; the paper forbids any change to observations, actions, map files, game-AI difficulty or episode
+  # limits. simulator_version carries the SC2 build (4.6.2.69232 in the paper, 4.10 in much later work), which the
+  # README says changes the score. subset_used names the maps; n_samples is the runs and test episodes; and
+  # selection_strategy matters because Table 2 reports the maximum median over the last 250k steps.
+  material_extra:
+    - harness
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper's suite-level comparison averages the per-scenario median test win rate across
+    the 14 scenarios (Figure 3). Its methodology and most users report per map, so the aggregate is
+    the paper's summary rather than a required headline (see review_checks).
+  source: src-arxiv-1902-04043-v5
+  quote: Figure 3 plots the median test win percentage averaged across all scenarios to compare the
+    algorithms across the entire SMAC suite.
+
+homepage: https://github.com/oxwhirl/smac
+repository: https://github.com/oxwhirl/smac
+
+versions:
+  - version: v0.1-beta1
+    label: Beta release
+    version_kind: revision
+    released: 2019-01-15
+    changes: The first release, with the SMAC maps.
+    breaking: false
+    superseded_by: v1
+    frozen: true
+    sources:
+      - src-github-smac-releases
+  - version: v1
+    label: Version 1
+    version_kind: revision
+    released: 2019-12-04
+    changes: The release notes say the maps are the beta's; the release adds the paper's run data.
+      The paper's v5 (December 2019) says its list of challenge scenarios was updated from an
+      earlier version, with every scenario still in the repository, and that the baselines' training
+      settings differ from the beta's.
+    breaking: false
+    supersedes_version: v0.1-beta1
+    frozen: true
+    sources:
+      - src-github-smac-releases
+      - src-arxiv-1902-04043-v5
+
+subsets:
+  - id: smac#easy
+    label: Easy scenarios
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1902-04043-v5
+        quote: 'we broadly group the scenarios into 3 categories: Easy, Hard, and Super-Hard based on
+          the performance of the algorithms'
+      - source: src-arxiv-1902-04043-v5
+        quote: they serve an important role in the benchmark as sanity checks when implementing and
+          testing new algorithms
+    notes: Five scenarios on which QMIX exceeds 95% in the release results, kept as sanity checks.
+      The membership is read from the paper's Figure 4 and Table 2, not stated in its text.
+  - id: smac#2s-vs-1sc
+    label: 2s_vs_1sc (2 Stalkers vs 1 Spine Crawler)
+    parent: smac#easy
+    scored_separately: true
+  - id: smac#2s3z
+    label: 2s3z (2 Stalkers and 3 Zealots each side)
+    parent: smac#easy
+    scored_separately: true
+  - id: smac#3s5z
+    label: 3s5z (3 Stalkers and 5 Zealots each side)
+    parent: smac#easy
+    scored_separately: true
+  - id: smac#1c3s5z
+    label: 1c3s5z (1 Colossus, 3 Stalkers and 5 Zealots each side)
+    parent: smac#easy
+    scored_separately: true
+  - id: smac#10m-vs-11m
+    label: 10m_vs_11m (10 Marines vs 11)
+    parent: smac#easy
+    scored_separately: true
+  - id: smac#hard
+    label: Hard scenarios
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1902-04043-v5
+        quote: The Hard scenarios in Figure 5 each present their own unique problems.
+    notes: 2c_vs_64zg, bane_vs_bane, 5m_vs_6m and 3s_vs_5z, the four the paper discusses under
+      Figure 5.
+  - id: smac#2c-vs-64zg
+    label: 2c_vs_64zg (2 Colossi vs 64 Zerglings)
+    parent: smac#hard
+    scored_separately: true
+  - id: smac#bane-vs-bane
+    label: bane_vs_bane (20 Zerglings and 4 Banelings each side)
+    parent: smac#hard
+    scored_separately: true
+  - id: smac#5m-vs-6m
+    label: 5m_vs_6m (5 Marines vs 6)
+    parent: smac#hard
+    scored_separately: true
+  - id: smac#3s-vs-5z
+    label: 3s_vs_5z (3 Stalkers vs 5 Zealots)
+    parent: smac#hard
+    scored_separately: true
+  - id: smac#super-hard
+    label: Super Hard scenarios
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1902-04043-v5
+        quote: are categorised as Super Hard because of the poor performance of all algorithms
+    notes: Five scenarios on which only QMIX made meaningful progress, on two of them, at release.
+      The membership is read from the paper's Figure 6 and Table 2, not stated in its text.
+  - id: smac#3s5z-vs-3s6z
+    label: 3s5z_vs_3s6z (3 Stalkers and 5 Zealots vs 3 and 6)
+    parent: smac#super-hard
+    scored_separately: true
+  - id: smac#6h-vs-8z
+    label: 6h_vs_8z (6 Hydralisks vs 8 Zealots)
+    parent: smac#super-hard
+    scored_separately: true
+  - id: smac#27m-vs-30m
+    label: 27m_vs_30m (27 Marines vs 30)
+    parent: smac#super-hard
+    scored_separately: true
+  - id: smac#mmm2
+    label: MMM2 (Medivac, Marauders and Marines, 10 vs 12)
+    parent: smac#super-hard
+    scored_separately: true
+  - id: smac#corridor
+    label: corridor (6 Zealots vs 24 Zerglings)
+    parent: smac#super-hard
+    scored_separately: true
+
+lineage:
+  role: root
+  variants:
+    - id: smacv2
+      relation: successor
+      source: src-arxiv-2212-07489
+      quote: we introduce SMACv2, a new version of the benchmark where scenarios are procedurally
+        generated
+lineage_note: >
+  SMACv2 (arXiv 2212.07489, NeurIPS 2023 Datasets and Benchmarks) is by the same lab, in the same GitHub
+  organisation, and keeps SMAC's API, but it has its own repository and package (smacv2), its own paper
+  and citation, and new procedurally generated scenarios (5, 10 and 20 units per side, symmetric and asymmetric,
+  for each of three races, plus three EPO maps); its README says old SMAC maps do not work in it. That
+  makes it independently versioned and cited, the 04 S4 test for a new Benchmark linked by lineage, so
+  it is a same-maintainer variant here rather than a version. It has no entry yet. Third-party derivatives
+  seen in an arXiv search (SMAC-Hard, SMAC-Talk, HLSMAC, StarCraft+ and others) were not read and are
+  not recorded as forks.
+lineage_source: src-github-smacv2-readme-577ab5a
+lineage_quote: For now, SMAC is not backwards compatible with old SMAC maps
+
+tags:
+  - multi-agent-reinforcement-learning
+  - cooperative
+  - starcraft-ii
+  - micromanagement
+  - decentralised-execution
+  - partial-observability
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T04)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1902-04043-v5
+    - src-arxiv-1902-04043
+    - src-github-smac-readme-d6aab33
+    - src-github-smac-docs-d6aab33
+    - src-github-smac-releases
+    - src-arxiv-2212-07489-v2
+    - src-arxiv-2212-07489
+    - src-github-smacv2-readme-577ab5a
+    - src-arxiv-2605-01805-v2
+  sources_note: >
+    The SMAC paper's v5 PDF and the SMACv2 paper's v2 PDF (DOIs, not archived) read as text, with their
+    abstract pages for dates and abstracts; the SMAC README and docs/smac.md at commit d6aab33 and GitHub's
+    release record (pending archive); the SMACv2 README at commit 577ab5a (withheld from the archive for
+    a named maintainer's e-mail address); and the v2 PDF of a May 2026 paper (a DOI) as evidence of current
+    use. The repositories' licences and dates come from GitHub's API metadata, read 2026-11-09. The paper's
+    AAMAS 2019 extended-abstract publication was not found in any source read; the v5 PDF names the NeurIPS
+    2019 Deep RL workshop.
+  confidence: medium
+  review_checks:
+    - check: "Identity (04 S4). SMACv2 is recorded as a same-maintainer variant, a separate Benchmark,
+        not as a version of this entry, and the call is not clear-cut. For a version: the same lab and
+        organisation, the same API and task (decentralised micromanagement against the built-in AI, scored
+        by win rate), the abstract page calls it \"a new version of the benchmark\" and its README \"\
+        an update\". For a separate entry: its own repository, package and paper (cited separately), new
+        procedurally generated scenarios in place of SMAC's maps, old maps no longer running in it, and
+        the v2 PDF's abstract calling it \"a new benchmark\". If it were folded in, it would be a version
+        with version_kind edition and breaking true."
+      field: lineage
+      source: src-arxiv-2212-07489-v2
+      quote: we introduce SMACv2, a new benchmark where scenarios are procedurally generated and
+        require agents to generalise to previously unseen settings during evaluation
+    - check: Primary is real-time-strategy, whose definition asks for many simultaneous decisions
+        under real-time pressure. SMAC has the simultaneous decisions (one agent per unit) and is
+        built on an RTS game, but the environment is stepped through the API, so there is no
+        wall-clock pressure on the agents. video-games is the alternative if the clause is read
+        strictly.
+      field: domain
+    - check: multi-agent-system is tagged beside rl-policy, as Melting Pot's entry does for a
+        population scored jointly. Hanabi's entry rejects it because one learning process controls
+        every seat; SMAC's release baselines also share parameters across agents, but each agent
+        acts on its own local observations at test time.
+      field: designed_for_subjects
+    - check: The maintainer-competes-on-own-benchmark flag rests on the release table being the
+        maintainers' own runs in their own framework, as Hanabi's rests on its release learners.
+        That QMIX, the best performer, is by several of the SMAC authors is visible only in the
+        paper's reference list, which this entry does not quote because it names individuals; a
+        reviewer may confirm it.
+      field: governance.independence_flags
+    - check: The Easy and Super Hard memberships come from the paper's Figures 4 and 6 and Table 2
+        (the five maps at 97% or more for QMIX, and the five where all methods stay low), not from a
+        sentence; only the Hard four are named in the text. A reviewer with the figures should
+        confirm.
+      field: subsets
+    - check: aggregation_policy is official-aggregate on the paper's Figure 3, the median win rate
+        averaged across the 14 scenarios. The methodology section and users (such as arXiv
+        2605.01805, which averages over its own six maps) report per map; community-aggregate or
+        unknown are the alternatives.
+      field: aggregation_policy
+    - check: lifecycle active rests on a May 2026 paper using five SMAC maps. The SMACv2 paper
+        argues SMAC no longer rewards algorithmic improvement and the README points to SMACv2, which
+        could support superseded; saturated is derived and not hand-set. The entry states the
+        saturation claim only as the SMACv2 paper does (governance.known_limitation).
+      field: lifecycle
+      source: src-arxiv-2212-07489-v2
+      quote: Recent work reports near-perfect win rates on most scenarios [55, 13]
+    - check: data.refresh is versioned-releases on two releases whose maps are identical; the
+        paper's v5 says its challenge list changed from an earlier version (which arXiv version is
+        not stated), and later commits are not tagged (GitHub API, read 2026-11-09). The commit
+        history was not read for changes to scenarios or scoring; static is the alternative if none
+        exist.
+      field: data.refresh
+    - check: The StarCraft II binary is a proprietary dependency. Blizzard's terms for the Linux
+        builds and the game were not read, so no licence-restriction blocker is recorded; the
+        specific-simulator-build blocker rests on the README's warning that SC2 versions are not
+        comparable.
+      field: execution.reproducibility_blockers
+    - check: The task framing named AAMAS 2019 (extended abstract) as a venue; no source read states
+        it. release_venue is the NeurIPS 2019 Deep RL workshop from the v5 PDF's first page.
+      field: release_venue
+  personal_data_excluded:
+    - source: src-arxiv-1902-04043-v5
+      what: The first page's author block and correspondence line, the acknowledgements, and the
+        citations' author names; the 40-character windows stop short of them.
+    - source: src-arxiv-1902-04043
+      what: The abstract page's author list and the submitter's name; the windows stop short of
+        them.
+    - source: src-github-smac-readme-d6aab33
+      what: The citation block naming the paper's ten authors, and a contributor thanked by name and
+        GitHub account; the windows leave both out.
+    - source: src-github-smac-releases
+      what: The GitHub logins of the releasing and uploading accounts; the 30-character windows
+        leave them out.
+    - source: src-arxiv-2212-07489-v2
+      what: The first page's author block and correspondence e-mail address, and the citations'
+        author names; the 50-character windows stop short of them.
+    - source: src-arxiv-2212-07489
+      what: The abstract page's author list and the submitter's name; the windows stop short of
+        them.
+    - source: src-github-smacv2-readme-577ab5a
+      what: A named maintainer's e-mail address for questions and the citation block naming the
+        paper's authors; the windows leave both out, and the Source is withheld from the archive.
+    - source: src-arxiv-2605-01805-v2
+      what: The first page's author names and e-mail addresses; the 50-character windows stop short
+        of them.
