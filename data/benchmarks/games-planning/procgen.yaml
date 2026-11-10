@@ -1,0 +1,590 @@
+# data/benchmarks/games-planning/procgen.yaml
+#
+# P1-S11-T04, games-planning entry 10. Filled from the Procgen paper, arXiv 1912.01588 read as its v2 PDF (2020-07-26,
+# ICML 2020), and its abstract page; the repository README at commit 37b521d (openai/procgen, 2026-03-27); OpenAI's
+# announcement page, read from its Wayback capture of 2026-09-22 because openai.com answered 403; and the v2 PDF of
+# arXiv 2609.32532 (October 2026), a paper that runs the 200-level easy protocol on eight environments and audits
+# how others evaluate. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# The benchmark is the 16 environments with the paper's two protocols, generalization (train on a finite set of
+# levels, test on the full distribution) and sample efficiency (train and test on the full distribution), each in
+# the hard or easy distribution mode. The v1 PDF (2019-12-03) was read for comparison and is not cited: its
+# protocols, level counts and normalisation constants match v2's. CoinRun, the earlier single environment that
+# became Procgen's first, has no entry. The NeurIPS 2020 Procgen competition, which the README names, was not read
+# and is not folded in.
+
+id: procgen
+name: Procgen Benchmark
+aliases:
+  - Procgen
+  - ProcGen
+tagline: '16 procedurally generated 2D games for RL: train on 500 levels, score on unseen ones, or train
+  and test on all.'
+description: >
+  A suite of 16 procedurally generated game-like environments for reinforcement learning, released
+  by OpenAI in December 2019 and published at ICML 2020. Each environment (BigFish, BossFight,
+  CaveFlyer, Chaser, Climber, CoinRun, Dodgeball, FruitBot, Heist, Jumper, Leaper, Maze, Miner,
+  Ninja, Plunder, StarPilot) generates its level layout, assets, entity placement and spawn times
+  from a level seed, and all share 64x64 RGB observations and a 15-action discrete space. The paper
+  defines two protocols. For generalization, an agent trains on a finite set of levels, 500 in the
+  default hard mode or 200 in the easy mode, and is scored zero-shot on the full distribution of
+  levels; for sample efficiency it trains and is tested on the full distribution. The reference
+  budget is 200M environment steps in hard mode (about 24 GPU-hours with the paper's PPO per
+  environment) and 25M in easy mode, which needs about an eighth of the compute. Scores are mean
+  episodic return per environment; a single score across the suite is the mean normalised return,
+  (R - Rmin)/(Rmax - Rmin) with published per-environment constants, which almost always falls
+  between 0 and 1. Baselines are PPO and Rainbow with the IMPALA convolutional network. Some
+  environments also offer memory and exploration modes, which are not part of the two protocols.
+  The environments run on CPU, install from PyPI, and are kept in their released form, known bugs
+  included, so that published results stay reproducible; the README marks the repository as in
+  maintenance. There is no leaderboard: papers run the protocols and report their own numbers.
+self_description:
+  source: src-arxiv-1912-01588
+  quote: a suite of 16 procedurally generated game-like environments designed to benchmark both
+    sample efficiency and generalization in reinforcement learning
+external_ids:
+  arxiv: '1912.01588'
+paper:
+  title: Leveraging Procedural Generation to Benchmark Reinforcement Learning
+  arxiv: '1912.01588'
+  version_read: v2
+  source: src-arxiv-1912-01588-v2
+released: 2019-12-03
+released_note: The paper's first arXiv version, as the abstract page dates it, and the date of
+  OpenAI's announcement and of the package's first release, 0.9.1 (GitHub API). The v2 read here
+  (2020-07-26) is the ICML 2020 version.
+released_source: src-arxiv-1912-01588
+released_quote: Submitted on 3 Dec 2019 (v1), last revised 26 Jul 2020 (this version, v2)
+release_venue: ICML 2020
+release_venue_source: src-arxiv-1912-01588-v2
+release_venue_quote: Vienna, Austria, PMLR 119, 2020
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: games-planning/procedural-generalization
+  secondary:
+    - games-planning/video-games
+domain_basis:
+  reason: An agent plays episodes against environments that respond, and the headline protocol
+    trains on a finite set of procedurally generated levels and scores on levels it has not seen,
+    which is the leaf's definition. The games mimic Atari and Gym Retro titles and are played from
+    pixels through a button-combination action space, which is the secondary leaf.
+  source: src-arxiv-1912-01588-v2
+  quote: zero-shot performance averaged over unseen levels
+domain_considered_and_rejected:
+  - term: games-planning/multi-game-suites
+    reason: Sixteen games in one suite, but every one is a procedurally generated 2D video game
+      scored the same way, so two leaves hold the whole benchmark; the term's atari-100k near miss
+      is the same case.
+  - term: games-planning/puzzle-games
+    reason: Maze and Heist are navigation puzzles, but they are two of sixteen and are played in the
+      same arcade style as the rest; the suite's claim is generalisation, not puzzle solving.
+capability:
+  - compositional-generalization
+  - sample-efficiency
+capability_basis:
+  compositional-generalization:
+    reason: The game mechanics and asset pools are fixed per environment and the generator
+      recombines them per level; the paper enumerates for each environment what generation controls
+      (counts, types and positions of platforms, obstacles, enemies), and held-out levels are new
+      arrangements of those. The taxonomy names procgen as the term's example.
+    source: src-arxiv-1912-01588-v2
+    quote: Procedural generation controls the number of platform sections, their corresponding
+      types, the location of crates, and the location and types of obstacles
+  sample-efficiency:
+    reason: The sample-efficiency protocol trains and tests on the full level distribution under a
+      fixed reference budget, 200M steps in hard mode and 25M in easy, and reports return over that
+      budget; the abstract names sample efficiency as one of the two things measured.
+    source: src-arxiv-1912-01588-v2
+    quote: training for 200M timesteps with PPO on a single Procgen environment requires
+      approximately 24 GPU-hrs and 60 CPU-hrs
+capability_considered_and_rejected:
+  - term: distribution-shift-generalization
+    reason: Test levels come from the same generator as training levels and differ by the seed only,
+      a difference by random sampling that the term's exclusion test removes; the taxonomy names
+      procgen as its near miss.
+    source: src-arxiv-1912-01588-v2
+    quote: we use a training set of 500 levels to evaluate generalization in each environment
+  - term: transfer-learning
+    reason: Held-out levels differ from training levels within one game and one task; the taxonomy
+      names procgen as the term's near miss.
+  - term: perception
+    reason: The paper says success depends on recognising assets in the pixels, but the score is the
+      game's return, not what was recovered from the images; atari-100k rejects it the same way.
+    source: src-arxiv-1912-01588-v2
+    quote: Performing well primarily depends on identifying critical assets in the observation space
+  - term: memory-retention
+    reason: The default environments need little memory, and the memory variants are a separate
+      distribution mode that neither protocol uses.
+    source: src-arxiv-1912-01588-v2
+    quote: By default, Procgen environments require little to no use of memory
+  - term: search-exploration
+    reason: Eight environments can be run as hard-exploration tasks on a single hand-picked level,
+      but that setting is outside both protocols and measures no generalisation.
+    source: src-arxiv-1912-01588-v2
+    quote: We note that generalization is not measured in this setting
+  - term: sensorimotor-control
+    reason: The paper stresses low-level motor responses, but actions go to a 2D game, not to a
+      physical or simulated body whose physical behaviour is scored.
+
+evaluation_method:
+  - episodic-return
+evaluation_method_basis:
+  reason: Per environment, the reported number is mean raw episodic return. The suite-level score
+    rescales it with constants "chosen to approximately bound R", so a normalised return can pass 1;
+    for StarPilot and FruitBot Rmax is the score a long PPO run reached, not a bound. The term's
+    exclusion test keeps a reference constant that agents can exceed as episodic-return, so headroom
+    is undefined (see review_checks).
+  source: src-arxiv-1912-01588-v2
+  quote: We report the mean raw episodic return, where each episode includes a single level
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: Episodes run in a simulator, but the reported quantity is cumulative return, and the
+      normalisation constants only approximately bound it; for eleven environments Rmax is the
+      theoretical maximum, which would argue for a bounded method on those alone.
+    source: src-arxiv-1912-01588-v2
+    quote: the normalized return will almost always fall between 0 and 1
+designed_for_subjects:
+  - rl-policy
+designed_for_subjects_basis:
+  reason: The environments are built to train and evaluate reinforcement-learning policies, and
+    every result read is a trained policy (PPO and Rainbow in the paper, PPO in arXiv 2609.32532).
+  source: src-arxiv-1912-01588-v2
+  quote: PPO performs much more consistently across the benchmark
+
+as_used:
+  - protocol: The easy-mode generalization protocol on 8 of the 16 environments, with 200 training
+      levels and 100 held-out levels starting at level 1000, PPO trained for 8M steps (three games
+      to 25M) rather than the paper's 25M, each checkpoint evaluated on 384 episodes per level set
+      under both sampled and greedy action selection, read against a measured uniform-random floor.
+    split: 200 training levels; 100 held-out levels from seed 1000
+    source: src-arxiv-2609-32532-v2
+    quote: 100 held-out levels starting at level 1000
+    note: arXiv 2609.32532 (October 2026), a single-author preprint. Its agents reach a mean
+      normalised held-out score of 0.19 on the paper's easy-mode scale, and it finds that the test
+      level count, the test-time action rule and the random floor differ between codebases and
+      change what a generalization gap means.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; arXiv 2609.32532 (revised October 2026) trains and
+    evaluates PPO agents on eight environments and audits twelve other Procgen codebases. The README
+    marks the repository as in maintenance; the package's latest release, 0.10.7, is dated
+    2022-01-24, and the repository was last pushed on 2026-03-27 for a workflow change (GitHub API).
+    That is maintenance evidence, not lifecycle.
+  source: src-arxiv-2609-32532-v2
+  quote: On eight ProcGen environments with PPO at a compute-limited budget
+activity: no-submission-channel
+activity_basis:
+  reason: The repository ships the environments with no leaderboard and the paper sets out protocols
+    for others to run; results appear in users' papers. The 2020 competition the README names ran on
+    the environments as a separate event and was not read (see review_checks).
+  source: src-arxiv-1912-01588
+  quote: we provide detailed experimental protocols for using this benchmark
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: PPO with the IMPALA convolutional network
+    source: src-arxiv-1912-01588-v2
+    observed_on: 2026-11-09
+    quote: we train agents with the convolutional architecture found in IMPALA
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The game's own reward, accumulated over an episode of one level; the
+  normalisation constants are published per environment and distribution mode.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The environments are open source and install from PyPI, and a level set is fixed by two
+    options, so anyone can rebuild the paper's 500 training levels and draw test levels.
+  source: src-github-procgen-readme
+  quote: "'start_level' and 'num_levels' fully specify the set of possible levels."
+task:
+  exists: true
+  input:
+    - 64x64 RGB frames of the game, one per step, with the reward; no frame stacking by default
+  output: One of 15 discrete button-combination actions per step, until the episode ends; each
+    episode is one level.
+  scoring: Per environment, mean episodic return over episodes on held-out levels (generalization)
+    or on the full distribution (sample efficiency), averaged over seeds and reported over the
+    training budget; across the suite, the mean of (R - Rmin)/(Rmax - Rmin) with the paper's
+    constants for the distribution mode.
+  source: src-arxiv-1912-01588-v2
+  quote: all environments use a discrete 15 dimensional action space
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: generated-on-demand
+  access_basis:
+    reason: There is no stored set of levels. Each level is generated from its seed when it is
+      played, and the test set of the generalization protocol is the unlimited distribution, so
+      scored levels are drawn afresh in each run.
+    source: src-github-procgen-readme
+    quote: Set to 0 to use unlimited levels.
+  refresh: static
+  refresh_basis:
+    reason: The maintainers keep the environments as first released, with their known bugs, so that
+      published results stay comparable. Package releases (0.9.1 to 0.10.7, GitHub API) changed
+      interfaces, flags and the info dictionary, not level generation, and are not modelled as
+      versions (see review_checks).
+    source: src-github-procgen-readme
+    quote: Rather than patch these issues, we plan to keep the environments in their originally
+      released form
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: Levels are generated by each game's own C++ code from a seed, with
+    human-designed asset packs and no learned model in the loop.
+  data_provenance_source: src-arxiv-1912-01588-v2
+  data_provenance_quote: Procedural generation logic governs the level layout
+  contamination_risk: low
+  contamination_risk_note: Training on the environment is the protocol, and the held-out levels are
+    drawn from the generator at evaluation. The risk that remains is tuning on test levels, which no
+    source read assesses; papers fix different held-out sets (arXiv 2609.32532 uses 100 levels from
+    seed 1000).
+  contamination_evidence: []
+  ceiling_anchor_type: null
+  ceiling_anchor_type_note: 'The aggregate is read against Rmax, which the paper obtains three ways: the
+    theoretical maximum (11 environments), an empirical average of the best achievable reward over many
+    levels (CaveFlyer, Chaser, Climber), and the return of PPO after 8 billion steps (StarPilot, FruitBot).
+    No one term covers the mix; theoretical-maximum and measured-ceiling were weighed (see review_checks;
+    failure 2026-11-09-procgen-001).'
+  dataset_licence: null
+  dataset_licence_note: The benchmark has no dataset. The game assets carry their own licences,
+    listed in the repository's ASSET_LICENSES file, which was not read.
+  size:
+    - count: 16
+      unit: environments
+      source: src-arxiv-1912-01588-v2
+      quote: Procgen Benchmark consists of 16 unique environments
+    - count: 500
+      unit: training levels per environment
+      subset: generalization, hard mode
+      source: src-arxiv-1912-01588-v2
+      quote: we use a training set of 500 levels to evaluate generalization in each environment
+    - count: 200
+      unit: training levels per environment
+      subset: generalization, easy mode
+      source: src-arxiv-1912-01588-v2
+      quote: we recommend using training sets of 200 levels
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: OpenAI
+  maintainer_basis:
+    reason: The environments and the training code sit in OpenAI's GitHub organisation (an
+      Organization account, GitHub API), the paper gives that repository as their home, and its
+      authors were at OpenAI.
+    source: src-arxiv-1912-01588-v2
+    quote: All environments are open-source and can be found at https://github.com/openai/procgen
+  maintainer_type: industry-lab
+  submission_process:
+    - literature-only
+  submission_process_note: Nothing collects or ranks results; each paper runs a protocol and reports
+    its own numbers, often with its own choice of test levels and action rule.
+  submission_process_source: src-arxiv-2609-32532-v2
+  submission_process_quote: An audit of twelve ProcGen codebases finds that nine sample test-time
+    actions with no explicit choice at the evaluation call site
+  independence_flags: []
+  independence_flags_note: None recorded. There is no ranking of the maintainer's own; the paper's
+    PPO and Rainbow runs are baselines of standard algorithms used to study training-set size and
+    model scale, not a system of the maintainer's entered against others.
+  independence_assessed: true
+  known_limitation:
+    source: src-github-procgen-readme
+    quote: In ~7% of levels, the player will spawn on top of an enemy or the goal
+  known_limitation_note: Four environments have known level bugs that are deliberately left in place
+    (BigFish, CaveFlyer, Jumper, Miner); in Jumper about 7% of levels end after one step, almost all
+    with zero reward. The paper believes over 99% of levels in each environment to be solvable.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs the Procgen environments, which run on CPU and need no GPU.
+    Training is the protocol, and the paper's PPO needs about 24 GPU-hours and 60 CPU-hours per
+    hard-mode environment at 200M steps, or about 3 GPU-hours at the easy mode's 25M.
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Runs are automatic, but only inside the Procgen package at a pinned version, which the
+      README asks experiments to fix.
+    source: src-github-procgen-readme
+    quote: You should depend on a specific version of this library (using `==`) for your experiments
+      to ensure they are reproducible.
+  harness_availability: official-harness
+  harness: procgen (the gym environments procgen:procgen-<name>-v0 and the vectorised
+    ProcgenGym3Env, with distribution_mode, num_levels and start_level); train-procgen holds the
+    code for some of the paper's experiments
+  harness_note: The package supplies environments and returns, not the protocol. The training-set
+    size, the test levels, the action rule and the normalisation are set by the user; the constants
+    are printed in the paper's Appendix C.
+  harness_source: src-github-procgen-readme
+  harness_quote: env = gym.make("procgen:procgen-coinrun-v0")
+  harness_gotcha:
+    source: src-arxiv-2609-32532-v2
+    quote: We recommend that every reported gap state its action rule, seed its evaluation and
+      specify its tests before analysis, and report the floor on both level sets
+  harness_gotcha_note: Sampled and greedy (argmax) action selection at test time give different
+    held-out returns on the same checkpoints, and most codebases audited inherit sampling without
+    stating it; the normalisation's Rmin, from a policy trained on masked observations, is not a
+    random-policy floor.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for openai/procgen (MIT), read 2026-11-09; not a
+    quoted Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the simulation profile (simulator, simulator_version, hardware_platform, subset_used, selection_strategy,
+  # n_samples): subset_used carries the protocol, the environments and the distribution mode (hard or easy, whose
+  # normalisation constants differ); simulator_version the procgen package version; n_samples the seeds and test
+  # episodes. Two more are material. training_data_policy carries the training level set (500 or 200 levels from
+  # start_level 0, or the full distribution), and sampling the test-time action rule (sampled or greedy), which
+  # arXiv 2609.32532 shows moves held-out return in both directions.
+  material_extra:
+    - training_data_policy
+    - sampling
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper defines one suite-level score, the mean over the 16 environments of the
+    normalised return, preferred to the median because no robustness to outliers is needed.
+  source: src-arxiv-1912-01588-v2
+  quote: we calculate the mean normalized return
+
+homepage: https://github.com/openai/procgen
+repository: https://github.com/openai/procgen
+
+subsets:
+  - id: procgen#generalization
+    label: Generalization (finite training levels, unseen test levels)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1912-01588-v2
+        quote: we use a training set of 500 levels to evaluate generalization in each environment
+      - source: src-arxiv-1912-01588-v2
+        quote: zero-shot performance averaged over unseen levels
+    notes: The headline protocol. Train on 500 levels in hard mode (200 in easy mode) and score
+      zero-shot on the full distribution of levels, with no limit on training duration, though the
+      paper still trains for 200M steps. 500 was chosen near where generalization begins; closing
+      the gap took as many as 10,000 levels.
+  - id: procgen#sample-efficiency
+    label: Sample efficiency (full level distribution)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-1912-01588-v2
+        quote: we train and test agents on the full distribution of levels in each environment
+      - source: src-openai-procgen-benchmark-wayback
+        quote: Easy environments require approximately an eighth of the resources to train.
+    notes: Train and test on the unlimited level distribution, reporting return over a budget of
+      200M steps in hard mode or 25M in easy mode.
+  - id: procgen#bigfish
+    label: BigFish
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player starts as a small fish and becomes bigger by eating other fish
+    notes: Eat smaller fish to grow until larger than all others; contact with a larger fish ends
+      the episode.
+  - id: procgen#bossfight
+    label: BossFight
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player controls a small starship and must destroy a much bigger boss starship
+    notes: Dodge the boss's attack patterns and damage it in rounds while its shields are down.
+  - id: procgen#caveflyer
+    label: CaveFlyer
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player must navigate a network of caves to reach the exit
+    notes: Fly an Asteroids-style ship through cellular-automaton caves to the exit, with extra
+      reward for destroying targets. One of the memory-mode environments.
+  - id: procgen#chaser
+    label: Chaser
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player must collect all the green orbs
+    notes: A Ms. Pac-Man-like maze game; large stars make enemies vulnerable for a short time.
+  - id: procgen#climber
+    label: Climber
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player must climb a sequence of platforms, collecting stars along the way
+    notes: A platformer; the episode ends when every star is collected.
+  - id: procgen#coinrun
+    label: CoinRun
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The goal is to collect the coin at the far right of the level
+      - source: src-arxiv-1912-01588-v2
+        quote: CoinRun serves as the inaugural environment in Procgen Benchmark
+    notes: The earlier CoinRun environment, revised; velocity information is no longer painted onto
+      the observation, which makes it harder.
+  - id: procgen#dodgeball
+    label: Dodgeball
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player spawns in a room with a random configuration of walls and enemies
+    notes: Hit every enemy with thrown balls, avoiding walls and their throws, then reach the
+      unlocked platform.
+  - id: procgen#fruitbot
+    label: FruitBot
+    evidence:
+      - source: src-github-procgen-readme
+        quote: A scrolling game where the player controls a robot that must navigate between gaps in
+          walls and collect fruit
+    notes: Collect fruit and avoid non-fruit objects through gaps in scrolling walls. Its Rmax is a
+      long PPO run's score, not a bound.
+  - id: procgen#heist
+    label: Heist
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player must steal the gem hidden behind a network of locks
+    notes: A maze of coloured locks whose keys are scattered through the level.
+  - id: procgen#jumper
+    label: Jumper
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player, a bunny, must navigate through the world to find the carrot
+    notes: An open-world platformer with a compass to the goal. About 7% of levels end after one
+      step (a known bug, kept).
+  - id: procgen#leaper
+    label: Leaper
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player must cross several lanes to reach the finish line
+    notes: A Frogger-like crossing of road lanes and then river lanes on logs.
+  - id: procgen#maze
+    label: Maze
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player, a mouse, must navigate a maze to find the sole piece of cheese
+    notes: Mazes from 3x3 to 25x25, generated with Kruskal's algorithm.
+  - id: procgen#miner
+    label: Miner
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player, a robot, can dig through dirt to move throughout the world
+    notes: A Boulder Dash-like game; collect every diamond, then reach the exit.
+  - id: procgen#ninja
+    label: Ninja
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player, a ninja, must jump across narrow ledges while avoiding bomb obstacles
+    notes: A platformer with charged jumps and throwing stars; the mushroom at the end is the only
+      reward.
+  - id: procgen#plunder
+    label: Plunder
+    evidence:
+      - source: src-github-procgen-readme
+        quote: The player must destroy enemy pirate ships by firing cannonballs
+    notes: Hit enemy ships of the target colour against a countdown, avoiding friendly ships.
+  - id: procgen#starpilot
+    label: StarPilot
+    evidence:
+      - source: src-github-procgen-readme
+        quote: A simple side scrolling shooter game
+    notes: Every enemy fires at the player. Its Rmax is a long PPO run's score, not a bound.
+
+lineage:
+  role: root
+lineage_note: >
+  CoinRun, released earlier by the same maintainer as a single environment for measuring
+  generalization, became Procgen's first environment, revised. It has no entry, so no edge is
+  recorded.
+lineage_source: src-arxiv-1912-01588-v2
+lineage_quote: CoinRun serves as the inaugural environment in Procgen Benchmark
+
+tags:
+  - reinforcement-learning
+  - procedural-generation
+  - generalization
+  - train-test-level-split
+  - gym
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S11-T04)
+  added_on: 2026-11-09
+  last_verified: 2026-11-09
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1912-01588-v2
+    - src-arxiv-1912-01588
+    - src-github-procgen-readme
+    - src-openai-procgen-benchmark-wayback
+    - src-arxiv-2609-32532-v2
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, with its abstract page for the dates; the
+    README at commit 37b521d; OpenAI's announcement page from its 2026-09-22 Wayback capture; and the
+    v2 PDF of arXiv 2609.32532 (a DOI, not archived) as evidence of current use and of the protocol as
+    run.
+  confidence: medium
+  review_checks:
+    - check: evaluation_method is episodic-return, so headroom is null, as the brief directs. But
+        for 11 of the 16 environments Rmax is the theoretical and practical maximum, and for 3 more
+        an average of the best achievable reward, so most per-environment normalised returns cannot
+        exceed about 1; only StarPilot's and FruitBot's Rmax is a score an agent can beat. Whether
+        the suite should be a bounded method (simulation-rollout, as craftax is) or per-subset
+        metrics is a reviewer call.
+      field: evaluation_method
+      source: src-arxiv-1912-01588-v2
+      quote: the maximal theoretical and practical reward is trivial to compute
+    - check: ceiling_anchor_type is null because Rmax mixes three kinds of anchor. measured-ceiling
+        fits the five environments with empirical Rmax, theoretical-maximum the other eleven;
+        ceiling_by_category could carry them per environment if a single value is wanted.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-1912-01588-v2
+      quote: Rmax in these environments as the score PPO achieves after 8 billion timesteps
+    - check: compositional-generalization follows the taxonomy's own example, on the per-environment
+        lists of what generation controls. Generation also picks assets and backgrounds from pools,
+        a change in input statistics closer to distribution shift; whether every primitive in a test
+        level was seen in 500 training levels is not stated.
+      field: capability
+      source: src-arxiv-1912-01588-v2
+      quote: Procedural generation logic governs the level layout
+    - check: video-games is secondary on the pixel observations and button-combo actions a human can
+        also play with (procgen.interactive). craftax rejected video-games for a game built as an RL
+        environment; Procgen's games are also built for RL, so the two entries should agree.
+      field: domain
+      source: src-github-procgen-readme
+      quote: The expected step rate for a human player is 15 Hz.
+    - check: The README names a 2020 competition (NeurIPS 2020, on AIcrowd) on these environments.
+        It was not read and is not folded in, as nle.yaml does with the NetHack Challenge; if the
+        catalogue records it as an event here, activity becomes closed with a history entry.
+      field: activity
+      source: src-github-procgen-readme
+      quote: We ran a competition in 2020 which used these environments to measure sample efficiency
+        and generalization in RL.
+    - check: No versions are recorded. The package had 12 releases from 0.9.1 (2019-12-03) to 0.10.7
+        (2022-01-24) by GitHub's release record, which was read but is not a Source; the README says
+        the environments are kept as released. 0.10.0 changed the info dictionary and added flags;
+        whether any release changed level generation was not checked against the code.
+      field: versions
+    - check: The README's status line (Maintenance) is recorded only in lifecycle_basis, since
+        maintenance_status is derived; the repository's last push (2026-03-27) pinned workflow
+        references, by its commit message, and was not checked for environment changes.
+      field: lifecycle
+      source: src-github-procgen-readme
+      quote: Maintenance (expect bug fixes and minor updates)
+    - check: The paper says 6 of the 16 environments have memory variants but lists seven names; the
+        README lists memory and exploration as game-specific distribution modes. Neither mode is in
+        the two protocols, so no subset is recorded for them.
+      field: subsets
+      source: src-arxiv-1912-01588-v2
+      quote: evaluation of memory are CoinRun, CaveFlyer, Dodgeball, Miner, Jumper, Maze, and Heist
+    - check: The evidence of current use is a single-author preprint that is not peer reviewed and
+        runs an 8M-step budget rather than the paper's 25M; a peer-reviewed 2025-2026 paper (for
+        example Impoola, RLC 2025, arXiv 2503.05546, seen in an arXiv listing and not read) would be
+        a firmer anchor for lifecycle.
+      field: lifecycle
+    - check: The announcement page and the paper name the authors and, on the page, many people in
+        the acknowledgements; the windows keep clear of them, and contains_personal_data is false on
+        both Sources. The page was read from a Wayback capture because openai.com answered 403
+        (robots.txt allows it).
+      field: curation.sources
