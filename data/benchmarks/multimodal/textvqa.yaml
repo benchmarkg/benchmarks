@@ -1,0 +1,593 @@
+# data/benchmarks/multimodal/textvqa.yaml
+#
+# P1-S8-T09, multimodal entry 12. Filled from the TextVQA paper, "Towards VQA Models That Can Read", arXiv
+# 1904.08920 read as its v2 PDF (2019-05-13, CVPR 2019), and its abstract page; three files of the textvqa.org
+# site's source repository (facebookresearch/TextVQA at master, commit bd26fd3: the download page, the 2021
+# challenge page and the news list), read because the site renders by script and its live bundle carries the same
+# text; EvalAI's public API records of the 2021 challenge's phases, the 2020 challenge's phases and the 2021
+# test-standard leaderboard; MMF's TextVQA accuracy evaluator at main; and two technical reports that report
+# TextVQA, Amazon Nova (arXiv 2506.12103, 2025) and Leum-VL (arXiv 2603.20354, March 2026). Every quote below is
+# checked by the quote-substring validator against those Sources' committed extracts.
+#
+# The vision boundary (02 S11 rule 12): what is scored is a free-form answer to a natural-language question about
+# a photograph, matched against ten human answers to that question about that image. Question-only and image-only
+# models score 8% and 6%, so the score is defined over the question-image pair, which is multimodal. Reading the
+# scene text is the step the benchmark is built to test, and the answer is often that text copied out, so
+# vision/ocr-handwriting is the secondary; no transcription is scored, and the primary stays visual-qa.
+#
+# TextVQA only. TextCaps, the same team's captioning benchmark on the same images, and TextOCR are recorded under
+# lineage and are not included.
+
+id: textvqa
+name: TextVQA
+tagline: 45,336 questions on Open Images photos answerable only by reading their text, scored by VQA
+  accuracy.
+description: >
+  Visual question answering that needs reading. Crowd workers were shown Open Images photographs from
+  categories likely to contain text (billboards, traffic signs, whiteboards) and asked for questions that
+  cannot be answered without reading the text in the image; ten other workers answered each one. The 45,336
+  questions on 28,408 images are split into 34,602 training, 5,000 validation and 5,734 test questions,
+  the test images drawn from Open Images' own test set. Answers are open-ended, usually one or two words,
+  a brand, a name, a number or a time, and are often copied from the scene text, though some must be inferred
+  from it. The dataset ships OCR tokens from the Rosetta system with every image; v0.5.1 (March 2020)
+  replaced those tokens and changed nothing else. The score is VQA accuracy, VQA v2's consensus measure:
+  an answer counts in full when at least three of the human answers match it. Test answers are withheld
+  and scored on EvalAI, where a standing test-standard leaderboard has remained open since the 2021 challenge.
+  The release paper's LoRRA model, which adds an OCR module and a copy mechanism to a VQA network, reached
+  26.56% on validation against 85.01% for humans; the leaderboard's top row is 84.22, and current vision-language
+  models report validation accuracy in their technical reports.
+self_description:
+  source: src-arxiv-1904-08920
+  quote: TextVQA contains 45,336 questions on 28,408 images that require reasoning about text to
+    answer.
+external_ids:
+  arxiv: '1904.08920'
+paper:
+  title: Towards VQA Models That Can Read
+  arxiv: '1904.08920'
+  version_read: v2
+  source: src-arxiv-1904-08920-v2
+released: 2019-04-18
+released_note: The paper's first arXiv version, as its abstract page dates it. The data came first;
+  the site's news list dates TextVQA v0.5 and the 2019 challenge to March 2019
+  (src-github-textvqa-site-news-bd26fd3).
+released_source: src-arxiv-1904-08920
+released_quote: Submitted on 18 Apr 2019 (v1), last revised 13 May 2019 (this version, v2)
+release_venue: CVPR 2019
+release_venue_source: src-arxiv-1904-08920
+release_venue_quote: 'Comments: CVPR 2019'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: multimodal/visual-qa
+  secondary:
+    - vision/ocr-handwriting
+domain_basis:
+  reason: Each item is a natural-language question about a photograph, and the score is whether the
+    free-form answer matches the human answers to that question about that image. The paper's
+    question-only and image-only baselines reach 8.09% and 6.29%, so neither modality alone carries
+    the score and the question-image correspondence is what is measured; multimodal's inclusion test
+    ("answering in language about an image") and vision's exclusion test both send it here, and
+    visual-qa is the leaf for questions answered about an image. vision/ocr-handwriting is secondary
+    because reading the scene text is the skill the benchmark was built to test and many answers are
+    that text copied out of the image (30.6% of validation answers are among the Rosetta tokens),
+    but no transcription is scored, so it cannot be the primary.
+  source: src-arxiv-1904-08920-v2
+  quote: Question only (Q) and Image only (I) baseline get 8.09% and 6.29% validation accuracies,
+    respectively
+domain_considered_and_rejected:
+  - term: vision/document-understanding
+    reason: The images are photographs of everyday scenes (signs, jerseys, clocks, labels), not
+      document pages, and no layout, form or table structure is extracted or scored.
+    source: src-arxiv-1904-08920-v2
+    quote: We use Open Images v3 dataset [27] as the source of our images.
+  - term: multimodal/chart-diagram-understanding
+    reason: The text to be read is scene text in natural images, not the labels and marks of charts
+      or diagrams; the paper sets itself against chart and textbook-diagram datasets for that
+      reason.
+capability:
+  - perception
+  - context-integration
+capability_basis:
+  perception:
+    reason: The answer depends on text recovered from the image itself, often rotated, partly
+      occluded or stylised; the paper's examples need hidden characters inferred and rotated text
+      read, and its OCR upper bound is far under human accuracy.
+    source: src-arxiv-1904-08920-v2
+    quote: Questions require inferring hidden characters
+  context-integration:
+    reason: The image the protocol supplies holds the answer. Question writers were told that
+      answering must require reading the image's text, and the answer is taken or inferred from that
+      text rather than from what the system already knows.
+    source: src-arxiv-1904-08920-v2
+    quote: Please ensure that answering the question requires reading of the text in the image.
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: Some answers are inferred or paraphrased from the text (a team name read from a jersey,
+      an aircraft type from its markings) and may lean on world knowledge, but the questions were
+      written so that the text in the image decides the answer.
+    source: src-arxiv-1904-08920-v2
+    quote: It is OK if the answer cannot be directly copied from the text but needs to be inferred
+      or paraphrased.
+  - term: spatial-reasoning
+    reason: Many questions locate the text they ask about ("on the top left", "the player on the
+      right"), but position only selects which text to read; no score isolates spatial judgement.
+    source: src-arxiv-1904-08920-v2
+    quote: Workers often form questions which are longer to disambiguate the response
+  - term: grounding
+    reason: Only the answer string is scored; no source scores whether a system located the text
+      region the question refers to.
+
+evaluation_method:
+  - reference-metric
+evaluation_method_basis:
+  reason: VQA accuracy is a fixed formula over ten human reference answers. After normalisation the
+    predicted answer earns min(1, n/3), where n is how many of the other nine answers match it,
+    averaged over the ten leave-one-out sets, so an answer two annotators gave earns partial credit.
+    It is a reference similarity computed by formula, not a learned model and not specific to a
+    scientific field.
+  source: src-github-mmf-m4c-evaluators-72f898e
+  quote: acc = min(1, float(len(matching_answers)) / 3)
+evaluation_method_considered_and_rejected:
+  - term: exact-match
+    reason: Each comparison is an exact string match after normalisation, but exact-match's
+      exclusion test rules it out where partial credit is available, and VQA accuracy gives a third
+      or two thirds of a point to answers fewer than three annotators gave.
+    source: src-github-textvqa-site-challenge-bd26fd3
+    quote: We use the same metric as VQA v2 which is robust to inter-human variability in phrasing
+      the answers.
+designed_for_subjects:
+  - task-specific-supervised-model
+designed_for_subjects_basis:
+  reason: The dataset ships a 34,602-question training split, and the release paper's entrants are
+    VQA networks (Pythia, BAN) with and without its LoRRA reading module, trained on that split and
+    selected on validation; the challenges' starter code trains such models. Reading scene text is a
+    general perception task, not a discipline.
+  source: src-arxiv-1904-08920-v2
+  quote: We train all of our models for 24000 iterations
+designed_for_subjects_considered_and_rejected:
+  - term: instruction-tuned-model
+    reason: Today's reports come from general vision-language models prompted with the question
+      (observed_subjects), but the benchmark was designed in 2019 for models trained on its own
+      split.
+observed_subjects:
+  values:
+    - instruction-tuned-model
+  basis: >
+    A March 2026 technical report lists TextVQA validation accuracy for Leum-VL-8B beside Qwen3-VL-8B,
+    Keye-VL-8B Thinking and other 8B vision-language models among its open benchmarks, and the public
+    test-standard leaderboard's top rows are general vision-language models (CogVLM-1.5, SMoLA-PaLI-3,
+    PaLI-X; src-evalai-textvqa-leaderboard-2313). Whether each was trained on TextVQA's training split
+    is not stated.
+  source: src-arxiv-2603-20354-v1
+as_used:
+  - protocol: General vision-language models evaluated by their developers on the validation split
+      and reported as accuracy in a technical report, among dozens of benchmarks.
+    split: validation
+    source: src-arxiv-2603-20354-v1
+    quote: embedded in natural images. We report val-set accuracy.
+    note: The maintainers ask for test-std numbers in papers ('Numbers in the papers should be
+      reported on v0.5.1/v0.5 test set (test-std).', src-github-textvqa-site-download-bd26fd3), and
+      EvalAI's validation phase says it 'should not be used for reporting results in the paper'
+      (src-evalai-textvqa-challenge-874-phases). The validation answers are public.
+  - protocol: Zero-shot evaluation of a developer's own models in its technical report, on 5,000
+      samples, the validation split's size.
+    split: validation (by count; not labelled)
+    source: src-arxiv-2506-12103-v1
+    quote: 'TextVQA [70]: The 5,000 samples of this dataset focus specifically on'
+    note: Amazon's Nova report (March 2025) states that its evaluations are zero-shot ('Unless
+      otherwise noted, all evaluations are 0-shot', same Source); the extract does not hold its
+      TextVQA scores.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced. A March 2026 technical report lists TextVQA validation
+    accuracy for its own and comparison models, and the test-standard leaderboard has taken public
+    rows into 2024.
+  source: src-arxiv-2603-20354-v1
+  quote: DocVQAtest TextVQAval ChartQAtest
+activity: leaderboard-live-no-round
+activity_note: Challenges ran on EvalAI in 2019 (challenge 244), 2020 (551) and 2021 (874), the 2021
+  round closing at the CVPR 2021 VQA workshop. The 2021 challenge's three phases, test-standard
+  included, are active until 2099-12-31, and its leaderboard's newest public row is dated 2024-06-12
+  (src-evalai-textvqa-leaderboard-2313). EvalAI's record of challenge 874 itself answered "Challenge
+  does not exist!" on 2026-11-10, so whether a new submission is still scored was not tested (no
+  login was attempted).
+activity_basis:
+  reason: TextVQA has run competition rounds and none is open; the 2021 round closed in May 2021,
+    and its test-standard phase stays open with a public leaderboard.
+  source: src-evalai-textvqa-challenge-874-phases
+  quote: '"end_date":"2099-12-31T23:59:59Z","challenge":874'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: LoRRA (the release paper's model)
+    source: src-arxiv-1904-08920
+    observed_on: 2026-11-10
+    quote: We show that LoRRA outperforms existing state-of-the-art VQA models on our TextVQA
+      dataset.
+  - system: CogVLM-1.5
+    source: src-evalai-textvqa-leaderboard-2313
+    observed_on: 2026-11-10
+    quote: '"submission__submitted_at":"2024-05-09T16:37:05.841743Z","submission__method_name":"CogVLM-1.5"'
+  - system: Leum-VL-8B
+    source: src-arxiv-2603-20354-v1
+    observed_on: 2026-11-10
+    quote: Leum-VL-8B 84.8 83.9 56.5 73.2 67.5 65.2 85.4 95.7 85.0
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Ten answers per question from crowd workers, who could flag a question as
+  not needing the image's text or as unanswerable (flagged questions were removed), with
+  hand-crafted questions of known answer used to filter out poor annotators. The test answers are
+  held by the maintainers and scored on EvalAI; train and validation answers are public.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: Anyone who registers a team on EvalAI can submit test-standard predictions to the standing
+    phase, which scores them automatically, and the validation answers are public for local scoring.
+  source: src-evalai-textvqa-challenge-874-phases
+  quote: This phase evaluates algorithms on TextVQA test-standard set.
+
+task:
+  exists: true
+  input:
+    - one Open Images photograph containing text (test images from Open Images' test set)
+    - a natural-language question that needs the image's text to answer
+    - optionally, the dataset's Rosetta OCR tokens for the image; any automatic OCR may be used
+      instead, but not ground-truth OCR on test-standard
+  output: A short free-form answer string, usually one or two words.
+  scoring: VQA accuracy against the question's ten human answers, averaged over the 5,734
+    test-standard questions and computed by EvalAI; validation accuracy, against public answers, is
+    what most reports give.
+  metric: vqa-accuracy
+  source: src-github-textvqa-site-challenge-bd26fd3
+  quote: TextVQA requires models to read and reason about text in an image to answer questions based
+    on them.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: Questions, images and OCR tokens for every split, and the answers for train and
+    validation, are direct downloads from dl.fbaipublicfiles.com linked from the download page; the
+    test answers are withheld, and test scores come from EvalAI, which needs a registered team.
+  access_basis:
+    reason: The validation answers are released and the test-standard phase scores test predictions
+      on the server, so the evaluation labels behind the headline are withheld while its inputs are
+      released.
+    source: src-github-textvqa-site-challenge-bd26fd3
+    quote: While answers are already provided for the validation set
+  refresh: static
+  refresh_basis:
+    reason: The questions, answers and splits are those of the March 2019 release. v0.5.1 replaced
+      only the supplied Rosetta OCR tokens, which are an optional input, not items or labels
+      (versions; review_checks).
+    source: src-github-textvqa-site-download-bd26fd3
+    quote: 'NOTE: Both v0.5.1 and v0.5 are same except the OCR tokens.'
+  data_provenance:
+    - curated-public-database
+    - crowd-authored
+  data_provenance_note: The images come from Open Images v3, a public image dataset; categories were
+    weighted by how many OCR boxes Rosetta found in a sample of each, and crowd workers removed
+    images without text. Questions (one or two per image) and ten answers per question were written
+    by crowd workers, with flags to remove questions that needed no reading or were unanswerable,
+    and hand-crafted questions of known answer to screen annotators ('we use hand-crafted questions
+    for which we know the correct answers to identify and', same Source).
+  data_provenance_source: src-arxiv-1904-08920-v2
+  data_provenance_quote: We use Open Images v3 dataset [27] as the source of our images.
+  contamination_risk: medium
+  contamination_risk_note: The test images and questions are distributed and the images are also in
+    Open Images, while the test answers are withheld. The validation answers are public, and
+    validation is the split most 2025-2026 reports use, so those numbers are exposed to any training
+    mixture carrying them; no source read assesses contamination.
+  contamination_evidence: []
+  ceiling_anchor_type: crowd-average
+  ceiling_anchor_type_note: Human accuracy under the same metric, 85.01% on validation, is the crowd
+    answers scored against one another, as for VQA 2.0 and VizWiz; partial credit keeps it below
+    100. The paper's left table also gives upper bounds for answering from its OCR tokens (37.12%)
+    and from a fixed answer list plus OCR (67.56%), which bound models built that way, not the task.
+  ceiling_anchor_type_source: src-arxiv-1904-08920-v2
+  ceiling_anchor_type_quote: that human accuracy is 85.01%, consistent with that on VQA 2.0
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: The download page's licence statement, which the live site's bundle carries
+    too; it covers the questions, answers and OCR tokens.
+  dataset_licence_source: src-github-textvqa-site-download-bd26fd3
+  dataset_licence_quote: Data is available under CC BY 4.0 license.
+  upstream_licences: null
+  upstream_licences_note: The images are Open Images' and are distributed in the dataset's zips and
+    by Open Images; their licence is not stated in any source read (the download page links Open
+    Images' own download page for it).
+  size:
+    - count: 45336
+      unit: questions
+      subset: all splits
+      source: src-arxiv-1904-08920
+      quote: TextVQA contains 45,336 questions on 28,408 images that require reasoning about text to
+        answer.
+    - count: 28408
+      unit: images
+      subset: all splits
+      source: src-arxiv-1904-08920
+      quote: TextVQA contains 45,336 questions on 28,408 images that require reasoning about text to
+        answer.
+    - count: 5734
+      unit: questions on 3,289 images
+      subset: test (test-std)
+      source: src-github-textvqa-site-challenge-bd26fd3
+      quote: the v0.5.1 test-std set contains 5,734 questions based on 3,289 images from OpenImages'
+        test set
+    - count: 5000
+      unit: questions on 3,166 images
+      subset: validation
+      source: src-github-textvqa-site-download-bd26fd3
+      quote: Validation set 5,000 questions (16MB) 3,166 images
+    - count: 34602
+      unit: questions on 21,953 images
+      subset: train
+      source: src-github-textvqa-site-download-bd26fd3
+      quote: Training set 34,602 questions (103MB) 21,953 images (6.6GB)
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Facebook AI Research (FAIR)
+  maintainer_basis:
+    reason: The site, the download files (dl.fbaipublicfiles.com) and the challenge code are
+      Facebook's, published from the facebookresearch GitHub organisation, and the site's challenge
+      pages run the EvalAI challenges. The paper's authors were at Facebook AI Research and Georgia
+      Tech.
+    source: src-github-textvqa-site-download-bd26fd3
+    quote: // Copyright (c) Facebook, Inc. and its affiliates.
+  maintainer_type: industry-lab
+  maintainer_type_note: academic-lab was considered for the Georgia Tech co-authors and
+    co-organisers, but the data, the site and the code are held by Facebook. The site's repository
+    (facebookresearch/TextVQA) is archived on GitHub (API, read 2026-11-10); the data and the EvalAI
+    phases remain up.
+  submission_process:
+    - held-out-server
+  submission_process_note: Teams register on EvalAI and upload a JSON of answers for the full test
+    set to the test-standard phase (one a day, five in all), scored against the withheld answers;
+    entries are private unless the team makes one public. A separate phase scores, without a
+    leaderboard, entries that break the challenge rules (ensembles, ground-truth OCR).
+  submission_process_source: src-github-textvqa-site-challenge-bd26fd3
+  submission_process_quote: By default, the submissions for the test-std phase are private but can
+    be voluntarily released to the public leaderboard
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-1904-08920
+      quote: We show that LoRRA outperforms existing state-of-the-art VQA models on our TextVQA
+        dataset.
+    - flag: single-evaluator-private-test-set
+      source: src-github-textvqa-site-download-bd26fd3
+      quote: TextVQA evaluation server for testing and validation set is hosted on EvalAI.
+  independence_flags_note: The release paper introduces LoRRA and reports it best on TextVQA, and
+    the challenge page points entrants to M4C as the state of the art in the same team's code. The
+    maintainers hold the test answers and their EvalAI challenge scores every test submission.
+  independence_assessed: true
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline the maintainers ask for is test-std accuracy, which only their EvalAI
+      challenge can compute because they hold the test answers. Validation accuracy can be computed
+      by anyone from the public answers.
+    source: src-github-textvqa-site-download-bd26fd3
+    quote: Numbers in the papers should be reported on v0.5.1/v0.5 test set (test-std).
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: reference-implementation-only
+  harness: MMF (facebookresearch/mmf), which ships the TextVQA dataset builder, the LoRRA and M4C
+    baselines and a TextVQA accuracy evaluator for local validation scoring
+  harness_source: src-github-mmf-m4c-evaluators-72f898e
+  harness_quote: 'class TextVQAAccuracyEvaluator:'
+  harness_gotcha:
+    source: src-github-mmf-m4c-evaluators-72f898e
+    quote: Processes an answer similar to Eval AI
+  harness_gotcha_note: MMF's answer normalisation is a copy of EvalAI's, not the code that produces
+    the official score; the EvalAI evaluation script itself was not read.
+  submission_channel:
+    source: src-evalai-textvqa-challenge-874-phases
+    quote: We recommend using this Test-Standard phase for reporting comparison numbers in academic
+      papers
+  submission_channel_note: eval.ai/web/challenges/challenge-page/874, the Test-Standard phase. The
+    download page still links the deprecated 2019 challenge (244) as the evaluation server.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile: the split (test-std on EvalAI, as the maintainers ask, or validation, which most
+  # 2025-2026 reports use), whether the system trained on TextVQA's training split, and which OCR it read: the
+  # dataset's Rosetta tokens (v0.5 or v0.5.1), another OCR system, its own reading of the pixels, or ground-truth
+  # OCR, which test-standard forbids.
+  material_extra:
+    - subset_used
+    - training_data_policy
+    - tools_allowed
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline, the mean VQA accuracy over the test-standard questions, which the
+    leaderboard ranks by as its single overall column.
+  source: src-github-textvqa-site-challenge-bd26fd3
+  quote: We use the same metric as VQA v2 which is robust to inter-human variability in phrasing the
+    answers.
+headline_metric: vqa-accuracy
+headline_metric_note: The Metric record vqa-accuracy is being drafted in the same task for the VQA
+  entry and is not yet committed; TextVQA's challenge page and MMF's evaluator use the same formula.
+
+homepage: https://textvqa.org/
+repository: https://github.com/facebookresearch/mmf
+dataset_url: https://textvqa.org/download
+leaderboard_url: https://eval.ai/web/challenges/challenge-page/874/leaderboard/2313
+
+versions:
+  - version: v0.5
+    label: The release, 45,336 questions (March 2019)
+    version_kind: revision
+    items: 45336
+    changes: The dataset as released for the 2019 challenge and used in the paper, with the paper's
+      Rosetta OCR tokens.
+    superseded_by: v0.5.1
+    frozen: true
+    sources:
+      - src-github-textvqa-site-news-bd26fd3
+      - src-github-textvqa-site-download-bd26fd3
+  - version: v0.5.1
+    label: Updated OCR tokens (March 2020)
+    version_kind: revision
+    items: 45336
+    changes: Rosetta OCR tokens replaced by a newer set (v0.2) and moved to separate JSON files;
+      questions, answers and splits unchanged. The 2020 and 2021 challenges ran on it.
+    supersedes_version: v0.5
+    frozen: true
+    sources:
+      - src-github-textvqa-site-news-bd26fd3
+      - src-github-textvqa-site-download-bd26fd3
+      - src-github-textvqa-site-challenge-bd26fd3
+
+lineage:
+  role: root
+  variants:
+    - id: textcaps
+      relation: sibling benchmark by the same team, image captioning that needs reading, collected
+        on the same images (TextCaps v0.1, March 2020, 142,040 captions)
+      source: src-github-textvqa-site-challenge-bd26fd3
+      quote: TextCaps dataset is based on task of image captioning with reading comprehension.
+lineage_note: TextOCR (May 2021, 903,069 word annotations) is announced on the same site
+  (src-github-textvqa-site-news-bd26fd3) but no source read says how it relates to TextVQA's images.
+  Scene-Text VQA and OCR-VQA, which the challenge page lists as related datasets, are other
+  maintainers' benchmarks, not forks. No id is allocated for any of them here.
+
+history:
+  - date: 2021-02-25
+    event: channel-moved
+    field: execution.submission_channel
+    from: EvalAI challenge 551 (TextVQA Challenge 2020)
+    to: EvalAI challenge 874 (TextVQA Challenge 2021)
+    source: src-evalai-textvqa-challenge-551-phases
+    quote: '"end_date":"2021-02-25T23:55:55Z","challenge":551'
+    note: The 2020 phases end on the day the 2021 phases start
+      (src-evalai-textvqa-challenge-874-phases). An earlier move, from the 2019 challenge (244) to
+      551 in March 2020, is not dated by a Source cited here.
+
+tags:
+  - text-vqa
+  - scene-text
+  - visual-question-answering
+  - ocr
+  - vqa-accuracy
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T09)
+  added_on: 2026-11-10
+  last_verified: 2026-11-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-1904-08920-v2
+    - src-arxiv-1904-08920
+    - src-github-textvqa-site-download-bd26fd3
+    - src-github-textvqa-site-challenge-bd26fd3
+    - src-github-textvqa-site-news-bd26fd3
+    - src-evalai-textvqa-challenge-874-phases
+    - src-evalai-textvqa-challenge-551-phases
+    - src-evalai-textvqa-leaderboard-2313
+    - src-github-mmf-m4c-evaluators-72f898e
+    - src-arxiv-2603-20354-v1
+    - src-arxiv-2506-12103-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, and its abstract page for the dates, venue
+    and abstract; three source files of the textvqa.org site at master commit bd26fd3 (download page,
+    2021 challenge page, news list), read because the site renders by script, after checking that the
+    live bundle carries the same statements; EvalAI's public API records of the 2021 and 2020 challenges'
+    phases and the 2021 test-standard leaderboard (withheld, for its team names); MMF's evaluator at main;
+    and the Leum-VL and Amazon Nova reports, already in the catalogue for ChartQA and DocVQA, as evidence
+    of current use. EvalAI's record of challenge 874 itself answered "Challenge does not exist!", and
+    the 2019 challenge's record holds personal data, so neither is cited.
+  confidence: medium
+  review_checks:
+    - check: vision/ocr-handwriting is taken as a secondary because reading scene text is what the
+        benchmark was built to test and many answers are copied text. DocVQA and ChartQA rejected
+        the same term because no transcription is scored, which is true here too; confirm whether
+        the secondary should stand, or whether TextVQA should match them.
+      field: domain
+      source: src-arxiv-1904-08920-v2
+      quote: We believe TextVQA will encourage research both on improving text detection and
+        recognition in unconstrained environments
+    - check: headline_metric and task.metric point at vqa-accuracy, a Metric record drafted in this
+        task for the VQA entry and not yet committed. If that record is renamed or not kept, both
+        refs need changing; TextVQA uses VQA v2's formula unchanged.
+      field: headline_metric
+      source: src-github-textvqa-site-challenge-bd26fd3
+      quote: We use the same metric as VQA v2 which is robust to inter-human variability in phrasing
+        the answers.
+    - check: evaluation_method is reference-metric, because VQA accuracy gives partial credit, which
+        exact-match's exclusion test rules out; the VQA entry takes the same term. Neither term fits
+        consensus scoring well, which the open gap record 2026-11-10-vqa-001 (proposed term
+        consensus-match) already logs, so no duplicate was logged for TextVQA; if the term is added,
+        both entries move together.
+      field: evaluation_method
+      source: src-github-mmf-m4c-evaluators-72f898e
+      quote: acc = min(1, float(len(matching_answers)) / 3)
+    - check: Current reports use the validation split, against the maintainers' instruction to
+        report test-std. Validation and test-std numbers are not comparable, and validation answers
+        are public, which bears on contamination_risk medium.
+      field: as_used
+      source: src-evalai-textvqa-challenge-874-phases
+      quote: This phase should not be used for reporting results in the paper.
+    - check: activity leaderboard-live-no-round rests on the 2021 phases being active until 2099 and
+        public rows into June 2024. EvalAI's record of challenge 874 answers "Challenge does not
+        exist!" and the challenge is missing from EvalAI's public lists, so it may be unpublished;
+        whether a new test-standard submission is scored could not be checked without logging in.
+      field: activity
+      source: src-evalai-textvqa-challenge-874-phases
+      quote: '"is_active":true,"codename":"test-standard"'
+    - check: refresh is static and v0.5.1 is a revision, because only the supplied OCR tokens
+        changed. Models that read those tokens can score differently on v0.5 and v0.5.1, so a
+        reviewer may prefer versioned-releases.
+      field: data.refresh
+      source: src-github-textvqa-site-download-bd26fd3
+      quote: This version has everything same as v0.5 except that Rosetta OCR tokens have been
+        updated and separated into a separate JSON file.
+    - check: single-evaluator-private-test-set is tagged, as for DocVQA, for public test inputs with
+        answers held by the maintainers' EvalAI challenge. COCO's entry has the same arrangement and
+        no flag; one of them should change.
+      field: governance.independence_flags
+    - check: Facebook AI Research maintains TextVQA, and its parent company develops vision-language
+        models that may report TextVQA. No source read shows that, so funded-by-evaluated-party and
+        grader-from-evaluated-party are not set; a reviewer who finds such a report should add the
+        flag.
+      field: governance.independence_flags
+    - check: TextCaps is recorded as a same-team variant (a sibling task on the same images) under
+        the id textcaps, which is not allocated. Whether it should be a separate benchmark linked
+        another way, and whether TextOCR belongs in lineage at all.
+      field: lineage
+      source: src-github-textvqa-site-challenge-bd26fd3
+      quote: are collected on the same images as TextVQA
+    - check: The test-split counts come from the site (5,734 questions on 3,289 images) and the
+        paper (5,734), and the image totals from the site's per-split counts (21,953 + 3,166 + 3,289
+        = 28,408), which agree with the abstract. The paper's Table 2 test column could not be read
+        reliably from the PDF text, so LoRRA's test score is not recorded.
+      field: data.size
+      source: src-arxiv-1904-08920-v2
+      quote: We divide TextVQA into train, validation and test splits with size 34,602, 5,000, and
+        5,734, respectively.
+  personal_data_excluded:
+    - source: src-arxiv-1904-08920-v2
+      what: the author list under the title
+    - source: src-arxiv-1904-08920
+      what: the author list and the submitter's name
+    - source: src-github-textvqa-site-download-bd26fd3
+      what: the maintainers' contact e-mail address
+    - source: src-github-textvqa-site-challenge-bd26fd3
+      what: the maintainers' contact e-mail address; the organisers' names, held in a separate file
+        that was not fetched
+    - source: src-evalai-textvqa-leaderboard-2313
+      what: the participant team names, some of which look like personal names or handles
