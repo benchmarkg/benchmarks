@@ -471,9 +471,14 @@ specialist clicks.
 The arithmetic. **<!-- gen: n(SEED) -->320<!-- /gen --> seed entries over <!-- gen: n(S) -->209<!-- /gen --> `(family, subdomain)` pairs is a mean of <!-- gen: r2(SEED/S) -->1.53<!-- /gen --> primary
 entries per subdomain**, and the distribution will be far worse than the mean because benchmark
 attention is concentrated. <!-- gen: density_sentence() -->The thinnest rows by construction are safety-alignment (18 entries over 16 subdomains, 1.13), games-planning and reasoning-general (12 over 10, 1.20), language and society-econ-law (14 over 11, 1.27) and general-intelligence (12 over 9, 1.33); the fattest are earth-climate (18 over 8, 2.25), engineering-design (12 over 6, 2.00) and agents-tooluse (20 over 11, 1.82).<!-- /gen --> Under a Poisson null at λ = <!-- gen: r2(SEED/S) -->1.53<!-- /gen -->, <!-- gen: pct(exp(-SEED/S)) -->22<!-- /gen -->% of subdomain pages — about <!-- gen: n(float(r2(exp(-SEED/S))) * S + 0.5) -->46<!-- /gen --> of <!-- gen: n(S) -->209<!-- /gen --> — would be
-empty even with perfectly even curation; the true figure will be higher, and 40–50% is the working
-estimate *(derived from an assumed concentration, not measured — confirm against the seed corpus at
-the 100-entry checkpoint)*. A specialist clicking `biology-genetics/phylogenetics`, which the
+empty even with perfectly even curation. The working estimate was 40–50%, derived from an assumed
+concentration. **Measured at the 100-entry checkpoint, the concentration did not appear**
+(P1-S7-T05, 2026-11-10, `metrics/subdomain-emptiness-100.json`). On main at 105 entries
+(2026-10-14), 126 of 209 pairs had no primary entry. That is 60.3%, against 60.5% for the Poisson
+null at that size, so curation was as even as chance; counting secondaries, 45.0% were empty. At
+309 entries (2026-11-10) the figure was 31 of 209, 14.8%, below the 22.8% null, because each family
+round aims at empty leaves; counting secondaries, it was 8.6%. The estimate overstated emptiness for
+this corpus, and the figures stand in its place. A specialist clicking `biology-genetics/phylogenetics`, which the
 changelog above says is deliberately empty, or `vision/multi-view-stereo`, which is not, must not
 get the same blank page. **A blank browse page reads as an abandoned site, not as a finding**, and
 that misreading is exactly what killed the credibility of every catalogue in
