@@ -1,0 +1,585 @@
+# data/benchmarks/multimodal/geneval.yaml
+#
+# P1-S8-T09, multimodal entry 8. Filled from the GenEval paper, arXiv 2310.11513 read as its v1 PDF (2023-10-17,
+# the only version), and its abstract page; the NeurIPS 2023 proceedings page for the paper, for its track and
+# proceedings DOI; the repository README pinned at commit af4902f (2025-03-03), with GitHub's API for its licence,
+# owner type and last push; the GenEval 2 paper (arXiv 2512.16853, v1 PDF and abstract page), a December 2025 audit
+# of GenEval that introduces a separate successor; the Echo-4o paper (arXiv 2508.09987, v1 PDF), which introduces
+# GenEval++; and the v1 PDF of the SenseNova-U1 report (arXiv 2605.12500, May 2026) as evidence of current use. No
+# leaderboard of GenEval's own exists. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# Why multimodal is primary, not vision (02 S11 rule 12): the scored quantity is defined over the image-prompt pair.
+# Each generated image is checked by a COCO-trained detector and a CLIP colour classifier against what its prompt
+# specifies (which objects, how many, what colour, where relative to each other), and is correct only if every
+# element of the prompt was rendered. No score is computed on the image alone; the paper sets itself against FID
+# for ignoring the prompt. This is the case the multimodal family names as its canonical qualifying example
+# (taxonomy/domains.yaml, ref geneval) and that vision's record carries as its near miss.
+#
+# GenEval 2 (FAIR at Meta with academic co-authors, none of them GenEval's authors) and GenEval++ (the Echo-4o
+# authors) are separate benchmarks by other maintainers, with new prompts and new judges. They are recorded in
+# lineage_note and a review check only; no ids are allocated for them here (04 S3).
+
+id: geneval
+name: GenEval
+aliases:
+  - GENEVAL
+tagline: 553 text-to-image prompts; a COCO detector and CLIP check each image for its objects,
+  counts, colours, positions.
+description: >
+  An automated benchmark for text-to-image models from the University of Washington, with the Allen Institute
+  for AI and LAION, published in the NeurIPS 2023 Datasets and Benchmarks Track. Its 553 prompts are filled
+  in from six templates with COCO object names, ten colours, the counts two to four and four relative
+  positions: single object, two objects, counting, colours, position, and attribute binding (two objects
+  with two different colours). A model generates four images per prompt. Each image is checked by a Mask2Former
+  instance-segmentation model trained on COCO, which finds the prompted objects and gives their count
+  and bounding-box positions, and, for the colour tasks, by CLIP ViT-L/14 classifying the colour of each
+  detected object after cropping and masking out the background. An image scores 1 only if every element
+  of the prompt was rendered, with a reason recorded when it fails. Scores are averaged per task and the
+  six task scores averaged into the overall score. In a Mechanical Turk study of 1,200 images, the automated
+  verdict agreed with annotators 83% of the time, against 88% between annotators. Prompts, generation
+  and scoring code are public, and results are published only in papers. GenEval has become a standard
+  report for image generators and unified multimodal models, with top scores near 0.9 in 2026; a December
+  2025 audit found its detector-based verdicts drifting below human judgment on recent models and called
+  the benchmark saturated.
+self_description:
+  source: src-arxiv-2310-11513-v1
+  quote: we introduce GENEVAL, an object-focused framework to evaluate compositional image
+    properties such as object co-occurrence, position, count, and color
+external_ids:
+  arxiv: '2310.11513'
+paper:
+  title: 'GenEval: An Object-Focused Framework for Evaluating Text-to-Image Alignment'
+  arxiv: '2310.11513'
+  version_read: v1
+  source: src-arxiv-2310-11513-v1
+released: 2023-10-17
+released_note: The paper's first and only arXiv version. The repository was created on 2023-08-22
+  (GitHub API), before the paper; the NeurIPS proceedings abstract still says the code "will be made
+  publicly available".
+released_source: src-arxiv-2310-11513
+released_quote: Submitted on 17 Oct 2023
+release_venue: NeurIPS 2023 Datasets and Benchmarks Track
+release_venue_source: src-neurips-2023-geneval
+release_venue_quote: '(NeurIPS 2023) Datasets and Benchmarks Track DOI: 10.52202/075280-2270'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: multimodal/any-to-any-generation
+domain_basis:
+  reason: An image is generated from text and scored on whether it corresponds to the text, which is
+    any-to-any-generation's definition. The score is defined over the image-prompt pair. The
+    detector looks for the objects the prompt names, and its boxes and masks are checked against the
+    prompt's count, relative position and colours, so an image is correct only if every element of
+    the prompt was rendered. No GenEval score is computed on the image alone. Multimodal's inclusion
+    test covers generating in one modality from another where the correspondence is scored, and
+    vision's exclusion test sends exactly this case to multimodal.
+  source: src-arxiv-2310-11513-v1
+  quote: GENEVAL centers around the use of an object detection model, which verifies that the
+    generated image contains the objects specified in the text prompt
+domain_considered_and_rejected:
+  - term: vision/image-generation
+    reason: The images are generated and scored by vision models, but image-generation is scored on
+      properties of the image itself, and GenEval scores nothing without the prompt; it defines
+      itself against FID for exactly that. The human study's realism question was not part of the
+      score. Under 02 S11 rule 12 a text-to-image benchmark is vision only where the prompt merely
+      conditions generation, so neither primary nor secondary applies.
+    source: src-arxiv-2310-11513-v1
+    quote: Metrics such as the Frechet Inception Distance [16] solely evaluate image quality without
+      taking the prompt into account.
+  - term: vision/detection
+    reason: A COCO detector does the scoring, but detection is the grader's job, not the entrant's;
+      the entrant generates images.
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: The score is whether the generated image matches a stated specification, the prompt
+      broken into objects, counts, colours and positions, which is generation-fidelity's inclusion
+      test (a stated specification as the target). The verdict per image is binary, but the
+      specification is a description to be depicted, not a discrete answer checked against a key.
+    source: src-arxiv-2310-11513-v1
+    quote: In order to produce a fine-grained verification of how well a generated image matches the
+      description provided in the text prompt
+capability_considered_and_rejected:
+  - term: instruction-following
+    reason: The GenEval paper calls the property text-to-image alignment and never claims
+      instruction following, which 02 S4.2 requires. The Echo-4o authors call GenEval an
+      instruction-following benchmark, a third party's framing.
+    source: src-arxiv-2508-09987-v1
+    quote: Previous instruction-following benchmarks, such as GenEval [20], have been widely adopted
+  - term: spatial-reasoning
+    reason: The position task checks that two rendered objects stand where the prompt places them,
+      from their box centroids, a fidelity check on the output rather than reasoning about space.
+      The paper uses the phrase only for what models find hard.
+    source: src-arxiv-2310-11513-v1
+    quote: This supports prior claims that spatial reasoning and attribute binding are difficult for
+      T2I models
+  - term: compositional-generalization
+    reason: The paper calls its tasks compositional, and many object pairings are rare in real data,
+      but nothing establishes that the primitives were seen in training and only their arrangement
+      is new, as the term's test requires; the arrangements are random samples from templates.
+    source: src-arxiv-2310-11513-v1
+    quote: would rarely appear in a real-world dataset like LAION-5B
+  - term: perception
+    reason: The detector and the classifier perceive the image, but they are the grader; the entrant
+      generates it.
+  - term: quantitative-reasoning
+    reason: The counting task asks for two to four instances of an object; the count is a
+      specification to depict, not a quantity to reason about.
+
+evaluation_method:
+  - model-derived-metric
+evaluation_method_basis:
+  reason: Every verdict is computed by released scoring models acting as automated graders, not as
+    prompted judges. A Mask2Former (Swin-S backbone) instance-segmentation model from MMDetection,
+    trained on COCO, finds the objects at a confidence threshold of 0.3 (0.9 for counting), and its
+    boxes give the count and the relative position. For the two colour tasks CLIP ViT-L/14
+    classifies each detected object's colour zero-shot among ten colours after the image is cropped
+    to its box and the background masked grey. The detector's version and thresholds are part of the
+    result; the taxonomy's own example for this term is GenEval.
+  source: src-arxiv-2310-11513-v1
+  quote: we choose the best instance segmentation model available from the MMDetection toolbox [5],
+    a Mask2Former [7] trained on MS COCO
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: No general-purpose model is prompted for a verdict; the detector and CLIP return boxes,
+      masks and class scores that fixed rules turn into a verdict. The successors GenEval++
+      (GPT-4.1) and GenEval 2 (Soft-TIFA over a VQA model) use judges, which is one reason they are
+      separate benchmarks.
+    source: src-arxiv-2310-11513-v1
+    quote: whereas GENEVAL breaks the prompt down into correct and incorrect elements before
+      producing a final binary score
+  - term: human-crowd-eval
+    reason: Mechanical Turk annotators labelled 1,200 images, but only to validate the automated
+      verdicts; no published GenEval score comes from human ratings. The GenEval 2 authors' human
+      study of GenEval outputs is likewise an audit.
+    source: src-arxiv-2310-11513-v1
+    quote: We conduct the study through Amazon Mechanical Turk, and gather 6,000 annotations on a
+      total of 1,200 images
+  - term: reference-metric
+    reason: CLIPScore appears only as the baseline the paper compares against; GenEval itself
+      compares no output with a reference by a similarity formula.
+    source: src-arxiv-2310-11513-v1
+    quote: GENEVAL obtains significantly greater human agreement than the CLIPScore image-text
+      alignment metric on complex tasks
+  - term: composite
+    reason: The overall score averages six task scores that one pipeline produces, the detector with
+      the CLIP colour classifier added for two tasks, so every constituent shares one method.
+designed_for_subjects:
+  - generative-media-model
+designed_for_subjects_basis:
+  reason: The entrants are text-to-image generators, and every score is a property of the images
+    they generate for the prompts; the paper scores Stable Diffusion versions, DeepFloyd IF, SD-XL
+    and minDALL-E, beside a CLIP-retrieval baseline of real LAION-5B images.
+  source: src-arxiv-2310-11513-v1
+  quote: We evaluate a variety of open-source text-to-image models.
+as_used:
+  - protocol: Four images per original prompt, scored with the released pipeline and averaged per
+      task and overall; rival models' scores are copied into one table, closed systems (GPT-Image-1,
+      Seedream) beside open text-to-image and unified multimodal models.
+    split: All 553 prompts, six tasks and overall
+    source: src-arxiv-2605-12500-v1
+    quote: For general text-to-image generation, we adopt GenEval [43], DPG-Bench [53], OneIGBench
+      [12], and TIIF-Bench [138].
+    note: SenseNova-U1 (May 2026) reports 0.91 overall for both its variants, against 0.84 for
+      GPT-Image-1 and 0.87 for Qwen-Image. The report does not say whether its prompts were
+      rewritten before generation or how its rivals' numbers were obtained.
+  - protocol: The prompt is rewritten or expanded by a language model before generation and the
+      image scored against the original prompt's metadata. The GenEval 2 authors report scores with
+      and without rewriting for six recent models, so whether a reported score used rewriting is a
+      condition of it.
+    split: All 553 prompts
+    source: src-arxiv-2512-16853-v1
+    quote: Recent T2I models employ rewriting techniques to improve performance
+    note: Gemini 2.5 Flash Image is reported at 75.4 without rewriting and 82.1 with it on GenEval's
+      own scorer, and 93.1 and 96.7 by the GenEval 2 authors' human annotators.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced in 2026; a May 2026 unified-model report scores itself on
+    GenEval and tabulates two dozen other models. The GenEval 2 authors find it saturated by human
+    judgment and its automated verdicts drifting from human judgment, but `saturated` is derived
+    from headroom and may not be hand-set, and the benchmark is still in use (see review_checks).
+    The repository was last pushed on 2025-03-03 (GitHub API), which is maintenance evidence, not
+    use.
+  source: src-arxiv-2605-12500-v1
+  quote: SenseNova-U1-A3B-MoT and SenseNova-U1-8B-MoT both achieve an overall score of 0.91
+activity: no-submission-channel
+activity_basis:
+  reason: There is no leaderboard, server or submission route. The README gives the paper's table of
+    results and the code to generate and score images, and results appear in users' own papers.
+  source: src-github-geneval-readme
+  quote: to get the score across each task, and the overall GenEval score.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: SenseNova-U1 (8B and A3B MoT variants)
+    source: src-arxiv-2605-12500-v1
+    observed_on: 2026-11-10
+    quote: SenseNova-U1-A3B-MoT and SenseNova-U1-8B-MoT both achieve an overall score of 0.91
+  - system: DeepFloyd IF-XL
+    source: src-arxiv-2310-11513-v1
+    observed_on: 2026-11-10
+    quote: IF-XL correctly generating 61% of images over 50% from Stable Diffusion v2.1
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: released-classifier
+ground_truth_source_note: No reference images are held. Each prompt's metadata (the objects, counts,
+  colours and relation it asks for) is the target, and the verdict is the released detector's and
+  CLIP classifier's reading of the generated image against it.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The prompts with their metadata, the generation sample code, the scoring scripts and the
+    detector download are all in the public repository, so anyone can generate images for a model
+    and score them as the paper does.
+  source: src-github-geneval-readme
+  quote: but you can sample new prompts with different random seeds using
+
+task:
+  exists: true
+  input:
+    - a templated English prompt, for example a photo of two objects in two named colours, with its
+      evaluation metadata (object classes, counts, colours, relative position)
+  output: Four images per prompt, generated at the model's default resolution, sampler and steps.
+  scoring: Each image is correct (1) only if all elements specified in the prompt are found by the
+    detector and colour classifier, with a reason recorded otherwise. The mean over a task's images
+    is its score, and the mean of the six task scores is the overall GenEval score.
+  source: src-arxiv-2310-11513-v1
+  quote: 'For each image, the GENEVAL score is a binary classification of image correctness: whether all
+    elements specified in the prompt were correctly rendered in the image.'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The paper's prompts and their metadata ship in the public repository's prompts folder,
+      and the detector and classifier are public models, so the headline score needs nothing the
+      maintainers hold back.
+    source: src-github-geneval-readme
+    quote: but you can sample new prompts with different random seeds using
+  refresh: static
+  refresh_basis:
+    reason: The 553 prompts of the paper are the set every result uses. The prompt generator can
+      draw new sets with other seeds, but no new official set has been issued, and the README's last
+      change (2025-03-03) fixed a checkpoint name in the generation example.
+    source: src-arxiv-2310-11513-v1
+    quote: We evaluate the models on a set of 553 prompts spanning all six tasks enumerated in Table
+      1.
+  data_provenance:
+    - synthetic-procedural
+  data_provenance_note: Prompts are filled into six task templates by a seeded random sampler, from
+    the 80 COCO class names (some renamed, as mouse to computer mouse), ten basic colour terms, the
+    counts two to four and four relative positions, with duplicates removed. No model is in the
+    loop. The object vocabulary is COCO's because the detector was trained on it.
+  data_provenance_source: src-arxiv-2310-11513-v1
+  data_provenance_quote: All our text prompts are generated from task-specific templates filled in
+    with randomly sampled object names, colors, numbers, and relative positions.
+  contamination_risk: medium
+  contamination_risk_note: There are no reference outputs to leak, but the prompts, templates and
+    scorers have been public and fixed since 2023, so a generator can be tuned towards them, and
+    prompt rewriting before generation is widespread. No source read measures training on GenEval's
+    prompts or templates. The GenEval 2 audit finds the opposite failure on recent models, the
+    scorer under-crediting images that human annotators accept.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: The overall score is a proportion of correct images, bounded at 1.0. The
+    paper's human study measures the scorer's agreement with annotators (83%, against 88% between
+    annotators), not an achievable score, and the GenEval 2 authors' human-judged 96.7% for one
+    model measures the same images by another grader.
+  ceiling_anchor_type_source: src-arxiv-2310-11513-v1
+  ceiling_anchor_type_quote: GENEVAL attains 83% agreement with annotators about the correctness of
+    generated images, compared to the interannotator agreement of 88%
+  dataset_licence: null
+  dataset_licence_note: No licence is stated for the prompts apart from the repository's, which
+    GitHub's metadata reports as MIT (read 2026-11-10). The paper states Apache-2.0 for the
+    MMDetection Mask2Former and MIT for OpenAI's CLIP ViT-L/14, the two scoring models.
+  size:
+    - count: 553
+      unit: prompts, each generated four times (2,212 images per model)
+      subset: all six tasks
+      source: src-arxiv-2310-11513-v1
+      quote: We evaluate the models on a set of 553 prompts spanning all six tasks enumerated in
+        Table 1.
+    - count: 6
+      unit: tasks
+      subset: single object, two object, counting, colors, position, attribute binding
+      source: src-arxiv-2310-11513-v1
+      quote: This score is averaged across all images generated for each task to obtain
+        task-specific scores, and then averaged across the six tasks to produce an overall score for
+        a given T2I model.
+  size_note: The paper's Table 1 gives 80, 99, 80, 94, 100 and 100 prompts per task, which sum to
+    553; the table's cells were not quoted because the PDF text interleaves them.
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The GenEval authors (University of Washington, with the Allen Institute for AI and
+    LAION)
+  maintainer_basis:
+    reason: The paper sends readers to its authors' repository for the code, and that repository
+      holds the prompts, the generation example and the scoring scripts. It sits under one author's
+      personal GitHub account (owner type User, GitHub API), and no organisation is stated as
+      holding it. The affiliations are from the paper's author block.
+    source: src-arxiv-2310-11513-v1
+    quote: Our code to run the GENEVAL framework is publicly available at
+  maintainer_type: individual
+  maintainer_type_note: academic-lab was considered on the University of Washington authorship, but
+    the repository is a personal account with no institution stated as holder, which individual's
+    test decides, as for gpqa-diamond and refcoco.
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or submission route exists; the README reproduces the
+    paper's results table, and everyone else reports in their own papers.
+  submission_process_source: src-github-geneval-readme
+  submission_process_quote: to get the score across each task, and the overall GenEval score.
+  independence_flags: []
+  independence_flags_note: None recorded as a flag. The paper scores only third-party generators
+    (Stable Diffusion, DeepFloyd IF, minDALL-E) and a retrieval baseline over LAION-5B; one author
+    lists LAION, whose LAION-5B is that baseline's index and, per the paper, the Stable Diffusion
+    models' training data (see review_checks). The sources read show no system from the authors'
+    institutions or funders scored on GenEval. With no board, there is no ranking for a maintainer
+    to compete on.
+  independence_flags_source: src-arxiv-2310-11513-v1
+  independence_flags_quote: We also compare these models against a baseline of real images from
+    LAION-5B
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2310-11513-v1
+    quote: This work was funded in part by the DARPA MCS program through NIWC Pacific
+      (N66001-19-2-4031), NSF IIS-2044660, Open Philanthropy, the Allen Institute for AI
+  known_limitation:
+    source: src-arxiv-2310-11513-v1
+    quote: GENEVAL is primarily limited by the performance of the object detector used and the
+      availability of discriminative vision models.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: null
+  compute_tier_note: No source states the hardware scoring needs. Scoring runs a Mask2Former and a
+    CLIP ViT-L/14 over 2,212 images; generating them is the entrant's cost, which the paper calls
+    the reason it did not tune sampling settings.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The prompts, the scoring code and the scoring models are public, and scoring needs no
+      human step. Re-generating a closed model's images depends on its vendor still serving it.
+    source: src-github-geneval-readme
+    quote: specifying whether the generated image was deemed correct and, if applicable, why it was
+      marked incorrect
+  harness_availability: official-harness
+  harness: The GenEval repository's evaluation/evaluate_images.py (per-image verdicts with reasons)
+    and evaluation/summary_scores.py (task and overall scores), with the Mask2Former weights fetched
+    by evaluation/download_models.sh; generation/diffusers_generate.py is sample generation code for
+    Stable Diffusion models.
+  harness_source: src-github-geneval-readme
+  harness_quote: to get the score across each task, and the overall GenEval score.
+  harness_gotcha:
+    source: src-github-geneval-readme
+    quote: git checkout 2.x
+  harness_gotcha_note: The scorer depends on MMDetection's 2.x branch, installed from source; the
+    README's installation steps were changed twice in 2024 (GitHub commits API).
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for the repository, read 2026-11-10; not a quoted
+    Source.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The profile resolves to model-graded (a generative media model scored by a model-derived metric), which makes
+  # the scoring models material: here the detector (Mask2Former Swin-S from MMDetection 2.x, with its 0.3 and 0.9
+  # thresholds) and CLIP ViT-L/14, recorded as judge_model and judge_model_version. Beyond the profile: the number
+  # of images per prompt (four in the paper) and their seeds; whether a language model rewrote the prompts before
+  # generation, which the GenEval 2 authors show moves reported scores by several points; the prompt set itself
+  # (the paper's 553, or a set resampled with another seed); and the code version, since installation changed in
+  # 2024. The paper leaves resolution, steps and sampler at each model's defaults and reports a seed-to-seed
+  # standard deviation of about 0.01 overall.
+  material_extra:
+    - n_samples
+    - prompt_template_hash
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper defines the overall score as the unweighted mean of the six task scores, each
+    the mean of its images' binary verdicts, and the README's summary script computes it.
+  source: src-arxiv-2310-11513-v1
+  quote: This score is averaged across all images generated for each task to obtain task-specific
+    scores, and then averaged across the six tasks to produce an overall score for a given T2I
+    model.
+
+homepage: https://github.com/djghosh13/geneval
+repository: https://github.com/djghosh13/geneval
+
+subsets:
+  - id: geneval#single-object
+    label: Single object
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2310-11513-v1
+        quote: 'single object: rendering the specified type of object.'
+    notes: 80 prompts, one per COCO class; the detector must find the object.
+  - id: geneval#two-object
+    label: Two object
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2310-11513-v1
+        quote: 'two object: rendering two different objects.'
+    notes: 99 prompts naming two different objects, both of which must be found.
+  - id: geneval#counting
+    label: Counting
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2310-11513-v1
+        quote: 'counting: rendering a specific number of one type of object.'
+      - source: src-arxiv-2310-11513-v1
+        quote: we raise the minimum confidence threshold to 0.9 for the counting task only
+    notes: 80 prompts asking for two, three or four of one object; the detected count must match, at
+      the higher confidence threshold.
+  - id: geneval#colors
+    label: Colors
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2310-11513-v1
+        quote: 'colors: rendering an object with a specific color.'
+    notes: 94 prompts naming one object in one of ten colours, checked by the CLIP classifier on the
+      masked crop.
+  - id: geneval#position
+    label: Position
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2310-11513-v1
+        quote: 'position: rendering two objects with specified positions relative to each other.'
+      - source: src-arxiv-2310-11513-v1
+        quote: we use the 2D coordinates of the detected bounding box centroids to compute relative
+          position
+    notes: 100 prompts placing one object above, below, left of or right of another, judged from box
+      centroids with a minimum offset.
+  - id: geneval#attribute-binding
+    label: Attribute binding (the README's Color attribution)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2310-11513-v1
+        quote: 'attribute binding: rendering two different objects with two different colors.'
+    notes: 100 prompts naming two objects with a different colour each; both objects and both
+      colours must be right.
+subsets_note: >
+  The six tasks are scored and reported separately in every results table read, and averaged into the
+  overall score. The README's results table calls the sixth task Color attribution.
+
+lineage:
+  role: root
+lineage_note: >
+  Two derivatives by other maintainers carry GenEval's name and are separate benchmarks, not versions
+  (04 S4): neither reuses GenEval's prompts or its detector-based scorer, and no id is allocated for either
+  here. GenEval 2 (arXiv 2512.16853, December 2025), by authors at FAIR at Meta, the University of Washington,
+  UCLA and the Allen Institute for AI, keeps GenEval's templated design with 800 new prompts over 40 objects
+  and 18 attributes at three to ten atoms each, and scores them with Soft-TIFA over a VQA model; its paper
+  is also the audit that finds GenEval saturated. GenEval++ (introduced in the Echo-4o paper, arXiv 2508.09987,
+  August 2025), by authors at Shanghai Artificial Intelligence Laboratory, Sun Yat-sen University, CUHK
+  and Peking University, has 280 harder prompts in seven task types judged by GPT-4.1. GenEval's own authors
+  have issued no new version.
+
+tags:
+  - text-to-image
+  - compositional-generation
+  - object-detection-scoring
+  - prompt-alignment
+  - coco-classes
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T09)
+  added_on: 2026-11-10
+  last_verified: 2026-11-10
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2310-11513-v1
+    - src-arxiv-2310-11513
+    - src-neurips-2023-geneval
+    - src-github-geneval-readme
+    - src-arxiv-2512-16853-v1
+    - src-arxiv-2512-16853
+    - src-arxiv-2508-09987-v1
+    - src-arxiv-2605-12500-v1
+  sources_note: >
+    The GenEval paper's v1 PDF (a DOI, not archived) read as text with windows that keep the author block
+    and the acknowledgements' names out, and its abstract page for the date; the NeurIPS proceedings page
+    for the track; the README pinned at commit af4902f, withheld from archiving because the repository
+    sits under a personal account and the README names the authors; the GenEval 2 paper's v1 PDF and abstract
+    page, the Echo-4o paper's v1 PDF and the SenseNova-U1 report's v1 PDF (all DOIs). GitHub's API was
+    read for the licence, owner type, creation date, last push and recent commits. No leaderboard exists
+    to read.
+  confidence: medium
+  review_checks:
+    - check: GenEval 2 and GenEval++ are treated as separate benchmarks by other maintainers and
+        given no ids (lineage_note). Both take GenEval's name, and GenEval 2 keeps its templated
+        design and task kinds, so a reviewer may prefer fork records once ids are allocated; neither
+        shares GenEval's prompts, scorer or authors. GenEval 2's paper and GenEval++'s Echo-4o paper
+        were read only for these lines; their own repositories were not.
+      field: lineage
+      source: src-arxiv-2512-16853
+      quote: we introduce a new benchmark, GenEval 2, with improved coverage of primitive visual
+        concepts and higher degrees of compositionality
+    - check: GenEval 2 calls its skill set a similar-but-expanded version of GenEval's (40 objects,
+        20 from COCO; 18 attributes; 9 relations; counts 2 to 7), which is the strongest case for
+        treating it as GenEval's successor in the same family. It has a different maintainer and no
+        shared items, so 04 S4 makes it a new benchmark with a lineage link either way.
+      field: lineage
+      source: src-arxiv-2512-16853-v1
+      quote: GenEval 2 evaluates a similar-but-expanded set of skills compared to GenEval
+    - check: GenEval++ (280 prompts, GPT-4.1 judge) is a successor by the Echo-4o authors that is
+        cited by its own name. Whether it warrants an entry depends on uptake outside the Echo-4o
+        paper, which was not searched.
+      field: lineage
+      source: src-arxiv-2508-09987-v1
+      quote: GenEval++ incorporates an automated evaluator powered by GPT-4.1 and significantly
+        increases the difficulty and compositional complexity of test instructions
+    - check: lifecycle stays active because GenEval is still reported in 2026. The GenEval 2 authors
+        argue it has been saturated for over a year by human judgment, with the automated score
+        under-crediting recent models by up to 17.7 points, so measured headroom on the automated
+        score (top 0.91 in May 2026) understates how saturated it is. saturated is derived and
+        cannot be hand-set; a reviewer may want the drift recorded as a contamination or validity
+        note elsewhere.
+      field: lifecycle
+      source: src-arxiv-2512-16853-v1
+      quote: showing that GenEval is effectively saturated today, and has been for over a year
+    - check: The scorer's validity is model-dependent. The detector was trained on COCO photographs,
+        the paper reports it failing on artistic renders and merged objects, and the GenEval 2 audit
+        finds it unreliable on recent models' images. Scores across model generations may therefore
+        not be comparable, which no condition field records.
+      field: evaluation_method
+      source: src-arxiv-2512-16853-v1
+      quote: which are no longer reliable for evaluating recent T2I models
+    - check: Prompt rewriting before generation is now common and moves scores by several points,
+        and current reports often do not say whether they used it (SenseNova-U1 does not).
+        prompt_template_hash is the nearest condition field; a dedicated rewriting flag may be
+        needed.
+      field: comparability.material_extra
+      source: src-arxiv-2512-16853-v1
+      quote: in addition to images generated based on rewritten prompts for the 6 of these T2I
+        models trained with rewriting techniques
+    - check: maintainer_type individual rests on the repository's personal-account owner (GitHub
+        API), with academic-lab arguable on the University of Washington authorship. The README and
+        the API record are not archived because the account is named for an author.
+      field: governance.maintainer_type
+    - check: One author lists LAION, whose LAION-5B indexes the retrieval baseline and trained the
+        Stable Diffusion models the paper scores; no flag was set, since no LAION system is an
+        entrant. A reviewer may judge otherwise.
+      field: governance.independence_flags
+      source: src-arxiv-2310-11513-v1
+      quote: We also compare these models against a baseline of real images from LAION-5B
+    - check: generation-fidelity is the only capability. instruction-following was rejected because
+        the paper does not claim it, although third parties (Echo-4o) describe GenEval that way, and
+        compositional-generalization because no held-out-arrangement claim is made.
+      field: capability
+    - check: Per-task prompt counts (80, 99, 80, 94, 100, 100) are stated in the subsets' notes from
+        the paper's Table 1, whose cells the PDF text interleaves with the templates and so could
+        not be quoted cleanly; only the 553 total is quoted.
+      field: subsets
