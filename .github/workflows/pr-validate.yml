@@ -56,6 +56,12 @@
 # docs/sweeps/checklist.md's generated cadence table is current. A twentieth family added to the
 # taxonomy without a sweep block fails here, in the same pull request.
 #
+# survey-notes (P1-S12-T08; 02 S3, 02 S11 rule 6) writes build/derived/coverage-states.json with
+# tools/build/coverage_states.py, the builder `bench build --derived` runs, and checks it with
+# scripts/check_survey_notes.py: no subdomain page or coverage cell reads surveyed-and-empty without a dated
+# survey note in data/surveys/, and a note whose empty finding a newly curated entry contradicts fails in the
+# pull request that files the entry.
+#
 # single-source (P4-S5-T06; 12 S6, 06 S3.10) builds the site and runs scripts/check_single_source.py
 # over it: no single-aggregator citation figure renders without its "unverified" marker, and no
 # OpenAlex citation count is a headline number. The build needs the whole history (tools/build/feed.py
@@ -337,6 +343,20 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: check_sweep_families.py
         run: uv run --locked --python "$PYTHON" python scripts/check_sweep_families.py
+
+  survey-notes:
+    name: no empty state without a survey note
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: coverage_states.py
+        run: uv run --locked --python "$PYTHON" python tools/build/coverage_states.py --out build/derived/coverage-states.json
+      - name: check_survey_notes.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_survey_notes.py
 
   single-source:
     name: single-source marker on the built site
