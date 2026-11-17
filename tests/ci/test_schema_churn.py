@@ -4,6 +4,9 @@ The verify, `python scripts/check_schema_churn.py --window 40`, exits 1 today by
 with ADR-0024 at entry 34, and no entry has been added since. These cases run the checker over throwaway git
 repositories to show the count, the window, the docstring exemption and rule (b), and the last asserts it is a
 reported (non-blocking) job.
+
+P1-S13-T07's verify, `--window 40 --assert-clean`, is the exit gate's form: "No commit touching schema/ appears
+inside the last 40 entry-adding commits". Its cases follow the reported ones.
 """
 import os
 import subprocess
@@ -92,3 +95,59 @@ def test_it_is_a_reported_signal_not_a_blocking_job():
     assert [s['run'] for s in job['steps'] if 'run' in s] == [
         'uv run --locked --python "$PYTHON" python scripts/reported.py --title "schema freeze" '
         'scripts/check_schema_churn.py --window 40']
+
+
+# ---- --assert-clean, the Phase 1 exit assertion (P1-S13-T07) ------------------------------------------------
+
+def clean(repo, window):
+    r = subprocess.run([sys.executable, CHURN, '--root', str(repo), '--window', str(window), '--assert-clean'],
+                       capture_output=True, text=True, encoding='utf-8')
+    return r.returncode, r.stdout
+
+
+def one_by_one(repo, n, start):
+    for i in range(start, start + n):
+        commit(repo, entries(1, start=i), 'entry %d' % i)
+
+
+def test_assert_clean_passes_when_the_change_precedes_the_window(repo):
+    commit(repo, {'schema/benchmark.py': MODULE + 'TAGLINE = True\n'}, 'a schema change')
+    one_by_one(repo, 5, 3)
+    code, out = clean(repo, 5)
+    assert code == 0 and 'the last 5 entry-adding commits run from' in out and 'add 5 entries' in out
+    assert '5 entry-adding commits ago' in out and 'OK    schema freeze' in out
+
+
+def test_assert_clean_fails_on_a_change_inside_the_window(repo):
+    one_by_one(repo, 3, 3)
+    commit(repo, {'schema/benchmark.py': MODULE + 'LATE = True\n'}, 'a schema change')
+    one_by_one(repo, 2, 6)
+    code, out = clean(repo, 4)
+    assert code == 1 and 'FAIL  schema freeze: the schema changed inside the last 4' in out
+    assert '2 entry-adding commits ago' in out
+    assert clean(repo, 2)[0] == 0                 # the two after the change are a clean window of two
+
+
+def test_a_schema_change_in_an_entry_commit_is_inside_the_window(repo):
+    one_by_one(repo, 2, 3)
+    commit(repo, dict(entries(1, start=5), **{'schema/benchmark.py': MODULE + 'BOTH = True\n'}), 'both at once')
+    assert clean(repo, 1)[0] == 1
+
+
+def test_assert_clean_fails_with_fewer_commits_than_the_window(repo):
+    code, out = clean(repo, 2)
+    assert code == 1 and 'only 1 entry-adding commits exist, fewer than the window of 2' in out
+
+
+def test_assert_clean_ignores_stubs_and_docstring_edits(repo):
+    one_by_one(repo, 2, 3)
+    commit(repo, {'schema/benchmark.py': MODULE.replace('A schema module.', 'Reworded.')}, 'docstring only')
+    commit(repo, {'data/benchmarks/_stubs/stub.yaml': 'id: stub\n'}, 'a stub is not an entry')
+    code, out = clean(repo, 2)
+    assert code == 0 and 'add 2 entries' in out
+
+
+def test_the_repository_answers_assert_clean():
+    r = subprocess.run([sys.executable, CHURN, '--window', '40', '--assert-clean'], capture_output=True, text=True,
+                       encoding='utf-8')
+    assert r.returncode in (0, 1) and 'schema freeze' in r.stdout          # a shallow checkout has too few commits
