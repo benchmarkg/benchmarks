@@ -31,6 +31,8 @@ import type { Release } from '../lib/release';
 import type { Benchmark, Evidence, FlagItem, EvidenceItem } from '../types/benchmark';
 import type { Metric } from '../types/metric';
 import type { Source } from '../types/source';
+import LineageFigure from '../components/LineageFigure.astro';
+import { lineageFigures } from '../lib/lineage';
 
 interface Props {
   benchmark: Benchmark;
@@ -118,6 +120,9 @@ const edges: { relation: string; target: string; detail?: string; source?: strin
   ...(L?.forks ?? []).map((f) => ({ relation: 'fork', target: f.id, detail: `maintained by ${f.maintainer}`, source: f.source, quote: f.quote })),
   ...(L?.views ?? []).map((v) => ({ relation: `view of ${v.of}`, target: v.name, source: v.source, quote: v.quote })),
 ];
+// The relations drawn as an SVG plus its table (P2-S3-T03), when the build wrote build/derived/lineage.json; the text
+// list of `edges` stays beneath it on the page, because it carries each relation's source and quote.
+const lineageFigure = lineageFigures()?.get(b.id) ?? null;
 
 // ---- 12. governance ---------------------------------------------------------------------------------------------------
 const G = b.governance;
@@ -351,6 +356,7 @@ const C = b.curation;
     <details class="more" data-section="11">
       <summary><h2>Lineage <span class="count">({edges.length})</span></h2></summary>
       <p>Role: {L?.role ?? <Absent state="not-recorded" />}<SuggestFix entity={b.id} field="lineage" label="lineage" /></p>
+      {lineageFigure != null && <LineageFigure figure={lineageFigure} />}
       {edges.length === 0 ? <p><Absent state="not-recorded" reason="no lineage relation recorded" /></p> : (
         <ul class="edges">
           {edges.map((e) => (
