@@ -3,7 +3,7 @@
 
 `bench resolve --candidates` proposes the pairs of curated entries that a name, alias, URL or cosine signal
 says might be one benchmark. 05 S3: resolution never merges; a person (or an agent draft a person reviews)
-decides each pair. The decisions are data/_dedup/verdicts.yaml, one row per pair: `pair`, the `signal` that
+decides each pair. The decisions are data/_analysis/dedup-verdicts.yaml, one row per pair: `pair`, the `signal` that
 proposed it, `verdict` (same | variant-of | distinct), a one-sentence `reason`, `decided_by`, `decided_on`,
 and for a variant the lineage edge it is `expressed_as`. This asserts:
 
@@ -33,7 +33,7 @@ import yaml
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-VERDICTS = 'data/_dedup/verdicts.yaml'
+VERDICTS = 'data/_analysis/dedup-verdicts.yaml'
 KINDS = ('same', 'variant-of', 'distinct')
 REQUIRED = {'pair', 'signal', 'verdict', 'reason', 'decided_by', 'decided_on'}
 OPTIONAL = {'expressed_as'}

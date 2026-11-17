@@ -1,4 +1,4 @@
-"""Tests for scripts/check_dedup_resolved.py and data/_dedup/verdicts.yaml (P1-S13-T05; 11 S F7, 05 S3).
+"""Tests for scripts/check_dedup_resolved.py and data/_analysis/dedup-verdicts.yaml (P1-S13-T05; 11 S F7, 05 S3).
 
 The verify: `bench resolve --candidates --threshold 0.88 && python scripts/check_dedup_resolved.py`. Done when "No
 unresolved candidate pair remains above the calibrated threshold." The synthetic cases pass the candidate list in,
@@ -36,7 +36,7 @@ def row(a, b, verdict='distinct', **over):
 
 
 def verdicts(root, rows):
-    path = root / 'data' / '_dedup' / 'verdicts.yaml'
+    path = root / 'data' / '_analysis' / 'dedup-verdicts.yaml'
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump({'version': 1, 'threshold': 0.88, 'pairs': rows}, sort_keys=False),
                     encoding='utf-8')
@@ -59,7 +59,7 @@ def test_every_candidate_adjudicated_passes(tree):
 def test_a_candidate_with_no_verdict_fails(tree):
     verdicts(tree, [row('alpha', 'beta')])
     errs = C.check(str(tree), TODAY, [('alpha', 'beta'), ('alpha', 'alpha-pro')])
-    assert errs == ['(alpha, alpha-pro) is a candidate pair with no verdict in data/_dedup/verdicts.yaml: '
+    assert errs == ['(alpha, alpha-pro) is a candidate pair with no verdict in data/_analysis/dedup-verdicts.yaml: '
                     'adjudicate it']
 
 
@@ -120,7 +120,7 @@ def test_a_row_must_name_two_curated_entries(tree, pair, message):
 
 
 def test_no_verdict_file_fails(tree):
-    assert C.check(str(tree), TODAY, []) == ['data/_dedup/verdicts.yaml does not exist']
+    assert C.check(str(tree), TODAY, []) == ['data/_analysis/dedup-verdicts.yaml does not exist']
 
 
 def test_the_repository_passes():
