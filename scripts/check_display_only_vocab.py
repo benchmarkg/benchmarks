@@ -12,6 +12,18 @@ Two assertions, from 09-design-system.md §4.2 properties 1 and 3:
      property. Every coverage percentage, density figure, gap score and curation-confidence
      value is computed over families and subdomains, never over groups.
 
+The three artifacts the S8 emitter writes -- corpus.json, facets.json and enums.json
+(tools/build/emit.py, P2-S1-T02; 08 S3.2 obliges it to refuse a group id) -- are parsed and
+every key and string value walked, so a hit names its JSON path rather than line 1 of a
+one-line file; a file that does not parse is a failure, since it cannot be vouched for. Every
+other artifact is scanned line by line. Both use one rule, a group id as a whole token, which
+is also the emitter's, so a build the emitter accepts passes here. Each of the three is
+reported by name, scanned or absent: an absent one is NOT RUN, never a pass.
+
+That rule is only sound while no group id equals an id another vocabulary defines (a term, a
+subdomain leaf, a capability group, a rung, a profile): such a term's every legitimate use
+would read as a leak. So a collision is itself a failure, naming the file, as the emitter's is.
+
 A display-only grouping that leaks into a published gap claim is a data-integrity failure
 invisible in the diff: a specialist who disputes the grouping has then invalidated the
 finding without touching the data.
@@ -24,6 +36,7 @@ state until the first build -- the containment assertion reports NOT RUN and say
 It is never reported as a pass.
 """
 import argparse
+import json
 import os
 import re
 import sys
@@ -43,6 +56,7 @@ PERMITTED = {'atlas.json'}
 NAMED_FORBIDDEN = [
     'facets.json',
     'corpus.json',
+    'enums.json',
     'derived/coverage.json',
     'derived/gaps.json',
     'derived/ecosystem.json',
@@ -51,6 +65,9 @@ NAMED_FORBIDDEN = [
 ]
 
 SCAN_SUFFIXES = ('.json', '.jsonld', '.yaml', '.yml')
+
+# The S8 emitter's artifacts (08 S4.2; tools/build/emit.py ARTIFACTS), at the top of the artifact directory.
+EMITTED = ('corpus.json', 'facets.json', 'enums.json')
 
 
 def display_path(path):
@@ -78,6 +95,48 @@ def token_re(ids):
     return re.compile(r'(?<![A-Za-z0-9_-])(%s)(?![A-Za-z0-9_-])' % alt)
 
 
+def vocabulary_ids(taxonomy_dir):
+    """{id: [files]} for every id a taxonomy file other than domain_groups.yaml defines: terms (and
+    each subdomain's leaf), groups, rungs and profiles."""
+    out = {}
+    for fn in sorted(os.listdir(taxonomy_dir)):
+        if not fn.endswith('.yaml') or fn == 'domain_groups.yaml':
+            continue
+        doc = load(os.path.join(taxonomy_dir, fn))
+        if not isinstance(doc, dict):
+            continue
+        for key in ('terms', 'groups', 'rungs', 'profiles'):
+            for item in doc.get(key) or []:
+                ident = item.get('id') if isinstance(item, dict) else None
+                if isinstance(ident, str):
+                    for i in {ident, ident.split('/')[-1]}:
+                        out.setdefault(i, []).append(fn)
+    return out
+
+
+def check_homonyms(gids, taxonomy_dir):
+    """A group id that is also another vocabulary's id makes the containment scan unsound."""
+    ids = vocabulary_ids(taxonomy_dir)
+    return ['group id %s is also an id in %s, so no scan can tell the group from that term'
+            % (g, ', '.join('taxonomy/' + f for f in sorted(set(ids[g])))) for g in sorted(gids) if g in ids]
+
+
+def json_hits(x, pattern, where=''):
+    """(JSON path, group id) for every key and string value of `x` carrying a group id as a token."""
+    out = []
+    if isinstance(x, str):
+        out += [(where or '<root>', m.group(1)) for m in pattern.finditer(x)]
+    elif isinstance(x, dict):
+        for k, v in x.items():
+            path = '%s.%s' % (where, k) if where else k
+            out += [(path + ' (key)', m.group(1)) for m in pattern.finditer(k)]
+            out += json_hits(v, pattern, path)
+    elif isinstance(x, list):
+        for i, v in enumerate(x):
+            out += json_hits(v, pattern, '%s[%d]' % (where, i))
+    return out
+
+
 def check_partition(groups, families):
     problems = []
     seen = {}
@@ -102,11 +161,14 @@ def check_partition(groups, families):
 
 
 def scan_artifacts(root, pattern):
-    """Return (hits, files_scanned). A hit is (relpath, group_id, line_no)."""
+    """Return (hits, files_scanned). A hit is (relpath, group_id, where), `where` being a JSON path in
+    one of the EMITTED artifacts and `line N` elsewhere; an EMITTED artifact that does not parse is a
+    hit with group_id None and `where` saying so."""
     hits, scanned = [], []
     if not os.path.isdir(root):
         return hits, scanned
-    for dirpath, _dirnames, filenames in os.walk(root):
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames.sort()
         for fn in sorted(filenames):
             if not fn.endswith(SCAN_SUFFIXES):
                 continue
@@ -115,10 +177,19 @@ def scan_artifacts(root, pattern):
             full = os.path.join(dirpath, fn)
             rel = os.path.relpath(full, root).replace(os.sep, '/')
             scanned.append(rel)
+            if rel in EMITTED:
+                try:
+                    with open(full, encoding='utf-8') as fh:
+                        doc = json.load(fh)
+                except (OSError, ValueError) as e:
+                    hits.append((rel, None, 'does not parse: %s' % e))
+                    continue
+                hits += [(rel, gid, path) for path, gid in json_hits(doc, pattern)]
+                continue
             with open(full, encoding='utf-8', errors='replace') as fh:
                 for n, line in enumerate(fh, 1):
                     for m in pattern.finditer(line):
-                        hits.append((rel, m.group(1), n))
+                        hits.append((rel, m.group(1), 'line %d' % n))
     return hits, scanned
 
 
@@ -155,6 +226,12 @@ def main():
 
     # --- property 3
     gids = set(g.get('id') for g in groups if g.get('id'))
+    homonyms = check_homonyms(gids, TAXONOMY)
+    if homonyms:
+        failures.extend(homonyms)
+        print('  FAIL    group ids are unambiguous          %s' % '; '.join(homonyms))
+    else:
+        print('  PASS    group ids are unambiguous          no group id is another vocabulary\'s id')
     hits, scanned = scan_artifacts(args.artifacts, token_re(gids))
     where = display_path(args.artifacts)
     if not scanned:
@@ -165,15 +242,21 @@ def main():
                    if not os.path.exists(os.path.join(args.artifacts, p))]
         print('          Named artifacts still absent: %d of %d' % (len(missing), len(NAMED_FORBIDDEN)))
     elif hits:
-        for rel, gid, n in hits[:20]:
-            failures.append('%s:%d carries the group id %s' % (rel, n, gid))
-            print('  FAIL    containment in artifacts           %s:%d -> %s' % (rel, n, gid))
+        for rel, gid, at in hits[:20]:
+            failures.append('%s: %s' % (rel, at) if gid is None else '%s %s carries the group id %s' % (rel, at, gid))
+            print('  FAIL    containment in artifacts           %s %s%s' % (rel, at, '' if gid is None else ' -> ' + gid))
         if len(hits) > 20:
             print('          ... and %d more' % (len(hits) - 20))
     else:
         print('  PASS    containment in artifacts           %d artifacts scanned, no group id'
               % len(scanned))
         print('          permitted and skipped: %s' % ', '.join(sorted(PERMITTED)))
+    if scanned:
+        for name in EMITTED:
+            if name not in scanned:
+                print('  NOT RUN %-34s absent from %s/, so unscanned: not a pass' % (name, where))
+            elif not any(h[0] == name for h in hits):
+                print('  PASS    %-34s parsed, every key and string value walked' % name)
 
     if failures:
         print('\nFAILED (%d):' % len(failures))

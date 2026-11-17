@@ -12,8 +12,13 @@ What "validates" means for each part of the artifacts:
   - every materialised subset row: its id, parent and label against subset.schema.json, its
     resolved domain, capability and metric against the Subset override they stand in for, and its
     inherited facets against the Benchmark field they come from;
-  - every facets.json value against the Benchmark field FACET_FIELDS says it projects, and equal to
-    that field of the corpus.json record, so the two artifacts cannot disagree.
+  - every facets.json row: exactly 08 S4.2's keys (tools/build/emit.py FACET_ROW); each value
+    tools/build/emit.py PROJECTED says is one Benchmark field against that field, and equal to that
+    field of the corpus.json record; and its seven facet arrays and its domain and year equal what the
+    corpus.json record gives, so the two artifacts cannot disagree.
+
+tests/build/test_emit_artifacts.py tests the emitter itself -- the field lists, the claim-derived
+fields, enums.json and the domain-group refusal -- over the 20-entry fixture.
 """
 import copy
 import json
@@ -28,7 +33,7 @@ from typer.testing import CliRunner
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from tools import cli  # noqa: E402
-from tools.build import artifacts  # noqa: E402
+from tools.build import artifacts, emit  # noqa: E402
 from tools import corpus_pins  # noqa: E402
 
 FIXTURE = os.path.join(ROOT, 'tests', 'build', 'fixtures', 'minimal')
@@ -102,10 +107,19 @@ def problems(out_dir: str) -> list[str]:
         out.append('facets.json and corpus.json hold different benchmarks')
     for row in facets['benchmarks']:
         b = records.get(row['id'])
-        for key, path in artifacts.FACET_FIELDS.items():
+        if sorted(row) != sorted(emit.FACET_ROW):
+            out.append('facets %s: keys %s, not 08 S4.2\'s %s' % (row['id'], sorted(row), sorted(emit.FACET_ROW)))
+            continue
+        for key, path in emit.PROJECTED.items():
             out += _check(bench, path, row[key], 'facets %s.%s' % (row['id'], key))
             if b is not None and row[key] != artifacts.at(b, path):
                 out.append('facets %s.%s differs from corpus.json %s' % (row['id'], key, path))
+        if b is not None:
+            try:
+                if row['facets'] != emit.facet_values(b):
+                    out.append('facets %s.facets differs from corpus.json' % row['id'])
+            except KeyError as e:                           # a corpus value no vocabulary defines
+                out.append('facets %s: corpus.json carries %s, which no facet vocabulary defines' % (row['id'], e))
         if b is not None and (row['domain'], row['year']) != (b['domain']['primary'].split('/')[0],
                                                               int(b['released'][:4]) if b['released'] else None):
             out.append('facets %s: domain or year is not derived from the corpus record' % row['id'])
@@ -349,7 +363,8 @@ def _draft(corpus, facets):
     (lambda c, f: c['subsets'][0]['facets'].update(capability=['telepathy']), 'subset alpha-bench#chem.facets.capability'),
     (lambda c, f: c['subsets'][0]['facets'].pop('lifecycle'), 'facets'),
     (lambda c, f: f['benchmarks'][0].update(subdomain='code'), 'facets alpha-bench.subdomain'),
-    (lambda c, f: f['benchmarks'][0].update(capability=['knowledge-recall']), 'differs from corpus.json'),
+    (lambda c, f: f['benchmarks'][0]['facets'].update(capability=['knowledge-recall']), 'facets differs from corpus.json'),
+    (lambda c, f: f['benchmarks'][0].update(domain_secondary=[]), 'not 08 S4.2'),
     (lambda c, f: f['benchmarks'][0].update(year=1999), 'domain or year'),
     (lambda c, f: f['benchmarks'].clear(), 'different benchmarks'),
 ])
