@@ -24,7 +24,7 @@ import Staleness from '../components/Staleness.astro';
 import SourceRef from './detail/SourceRef.astro';
 import Contribute from '../components/Contribute.astro';
 import SuggestFix from '../components/SuggestFix.astro';
-import { daysSince, formatValue, term } from '../lib/vocab';
+import { daysSince, formatValue, signoff, term } from '../lib/vocab';
 import { versionHref } from '../lib/versions';
 import type { Adoption, SubsetRow } from '../lib/corpus';
 import type { Release } from '../lib/release';
@@ -47,6 +47,10 @@ const today = new Date(`${release.built_on}T00:00:00Z`);
 const family = b.domain.primary.split('/')[0];
 const yamlPath = `data/benchmarks/${family}/${b.id}.yaml`;        // 05 S2: the family of domain.primary
 const draft = b.curation.verification_status === 'ai-drafted-unverified';
+// 14 Phase 1, "The honest gate": every entry in a family no reviewer has signed carries a visible
+// `curation_confidence: unreviewed` badge (P1-S4-T08); scripts/check_unreviewed_badging.py reads the attribute
+const review = signoff(family);
+const unreviewed = review === 'none';
 
 // /browse/{facet}/{term}/, 10 "Information architecture": the single-facet pages, the no-JS path
 const browse = (facet: string, id: string) => `/browse/${facet}/${id}/`;
@@ -162,6 +166,7 @@ const C = b.curation;
 <article class="entry" data-benchmark={b.id} data-yaml-path={yamlPath}>
   <header class="head" data-section="1">
     {draft && <p class="draft" data-draft-entry>This entry is an agent's draft that no person has verified. It appears only in a draft preview.</p>}
+    {unreviewed && <p class="unreviewed" data-curation-confidence="unreviewed"><strong>Curation confidence: unreviewed.</strong> No domain reviewer has signed off on {label('domain', family)} yet, so this entry and the domain's coverage are not review-backed, and no gap is asserted in it.</p>}
     <h1>{b.name}</h1>
     {b.aliases != null && b.aliases.length > 0 && <p class="aliases">Also known as {b.aliases.join(', ')}</p>}
     <p class="tagline">{b.tagline}</p>
@@ -420,6 +425,7 @@ const C = b.curation;
         <div><dt>Last verified</dt><dd><Staleness last_verified_at={C.last_verified} entity_kind="benchmark" today={today} /></dd></div>
         <div><dt>Verification status</dt><dd data-verification-status>{C.verification_status ?? <Absent state="not-recorded" />}</dd></div>
         <div><dt>Confidence</dt><dd>{C.confidence ?? <Absent state="not-recorded" />}</dd></div>
+        <div><dt>Domain review</dt><dd data-domain-review={review}>{unreviewed ? `unreviewed: no reviewer has signed off on ${label('domain', family)}` : `signed off (${review})`}</dd></div>
       </dl>
       {C.notes != null && <p class="notes">{C.notes}</p>}
       {(C.review_checks ?? []).length > 0 && (
@@ -470,6 +476,13 @@ const C = b.curation;
     border: 1px solid var(--c-caution);
     background: var(--c-caution-bg);
     font-weight: 600;
+  }
+  .unreviewed {
+    margin: 0 0 var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-caution);
+    background: var(--c-caution-bg);
+    font-size: var(--fs-sm);
   }
   /* the phone fact strip: the rail's facts in a wrapping row above the prose */
   .facts {

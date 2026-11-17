@@ -10,9 +10,12 @@ this file beside tokens.json, from the same tree, and the committed copy is the 
 drift rule as tools/build/tokens.py). It carries, per facet file:
 
     facets.<facet>.<term id> = {label, status}     every `terms:` entry of a file that declares `facet:`
+    facets.domain.<family>   + {reviewer_signoff}  a domain family's sign-off, `none` when unset, so every entry
+                                                   page in an unsigned family carries the unreviewed badge (P1-S4-T08)
     verification             = [rung ids by rank]  taxonomy/verification.yaml's ladder, for the badge's segments
 
-Only the id, label and status travel: definitions and tests stay in taxonomy/, where they are governed.
+Only the id, label, status and a family's sign-off travel: definitions and tests stay in taxonomy/, where they
+are governed.
 Deterministic: sorted keys, LF, one trailing newline, no clock.
 """
 from __future__ import annotations
@@ -26,6 +29,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 TAXONOMY = 'taxonomy'
 OUT = os.path.join('site', 'src', 'lib', 'taxonomy.json')
 FORMAT = 1
+FAMILY_FACET = 'domain'
+
+
+def _term(facet: str, t: dict) -> dict:
+    out = {'label': t['label']}
+    if 'status' in t:
+        out['status'] = t['status']
+    if facet == FAMILY_FACET and not t.get('parent'):                                   # get-default: a family has no parent
+        out['reviewer_signoff'] = t.get('reviewer_signoff') or 'none'                   # get-default: unset is unreviewed
+    return out
 
 
 def generate(root: str = ROOT) -> bytes:
@@ -39,8 +52,7 @@ def generate(root: str = ROOT) -> bytes:
         rel = os.path.relpath(path, root).replace(os.sep, '/')
         if doc['facet'] in facets:
             raise ValueError('%s: facet %s is declared by two files' % (rel, doc['facet']))
-        facets[doc['facet']] = {t['id']: {'label': t['label'], 'status': t['status']} if 'status' in t
-                                else {'label': t['label']} for t in doc['terms']}
+        facets[doc['facet']] = {t['id']: _term(doc['facet'], t) for t in doc['terms']}
         sources.append(rel)
     doc = {'artifact': 'taxonomy', 'format': FORMAT, 'sources': sources + ['taxonomy/verification.yaml'],
            'facets': facets, 'verification': rungs(root)}

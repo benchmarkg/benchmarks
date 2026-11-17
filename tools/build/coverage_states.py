@@ -46,6 +46,11 @@ Every cell also carries its `triage` and `rationale` (03 S7.1: "every coarse cel
 or not applicable before any gap claim publishes"): the verdict and the one-sentence reason of the cell's row in
 the triage file, or null for a cell the file does not list.
 
+Every family carries its `reviewer_signoff` and, from it, `curation_confidence`: `unreviewed` while it is none
+(P1-S4-T08; 14 Phase 1 "The honest gate": "the domain is marked unreviewed in the coverage map, not only on the
+entry page"), `reviewed` once a generalist or domain expert has signed. Its `gap_claims` is refused, with the
+reason in `gap_claims_refusal`, when it is unreviewed or under-surveyed (tools/build/gaps.py's refusal).
+
 Published entries are scripts/seed_progress.py's (and tools/build/gaps.py's): every Benchmark file under
 data/benchmarks/<family>/, not _stubs/. The artifact has no clock in it: it is a function of the tree.
 scripts/check_survey_notes.py checks the notes and that this artifact is current.
@@ -75,6 +80,7 @@ APPLICABLE = 'applicable'
 VERDICTS = (APPLICABLE, NA)
 ALL = 'all'
 MUTED = 'under-surveyed'
+UNREVIEWED_BADGE = 'unreviewed'          # a family's curation_confidence while no reviewer has signed it (P1-S4-T08)
 
 
 def _load(path: str):
@@ -214,7 +220,11 @@ def build(root: str = ROOT) -> dict:
 
     families = [{
         'id': f['id'], 'coverage_status': f.get('coverage_status'),                    # get-default: reported as written
-        'gap_claims': 'refused' if f['id'] in muted else 'permitted',
+        'reviewer_signoff': f.get('reviewer_signoff') or gaps.UNREVIEWED,              # get-default: unset is unreviewed
+        'curation_confidence': UNREVIEWED_BADGE if (f.get('reviewer_signoff') or gaps.UNREVIEWED) == gaps.UNREVIEWED
+        else 'reviewed',                                                               # get-default: as above
+        'gap_claims': 'refused' if f['id'] in muted or gaps.refusal(f) else 'permitted',
+        'gap_claims_refusal': gaps.refusal(f),
         'survey_notes': [n['path'] for n in found if n['family'] == f['id']],
         'subdomain_states': {s: sum(1 for p in pages if p['family'] == f['id'] and p['state'] == s) for s in STATES},
         'coverage': coverage([c for c in cells if c['family'] == f['id']]),
@@ -230,7 +240,8 @@ def build(root: str = ROOT) -> dict:
                 'taxonomy/_triage/not-applicable.yaml is not-applicable and leaves both sides of every coverage '
                 'figure (12 S5.4); surveyed-and-empty only behind dated survey notes in data/surveys/ (02 S11 rule '
                 '6, 02 S3); not-yet-surveyed otherwise. A cell in an under-surveyed family never reads '
-                'surveyed-and-empty (02 S3).',
+                'surveyed-and-empty (02 S3). A family no reviewer has signed is curation_confidence unreviewed, '
+                'and no gap is asserted in it (14 Phase 1).',
         'counts': {
             'subdomains': {s: sum(1 for p in pages if p['state'] == s) for s in STATES},
             'cells': {s: sum(1 for c in cells if c['state'] == s) for s in CELL_STATES},
