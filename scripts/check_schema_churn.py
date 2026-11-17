@@ -13,7 +13,16 @@ commit that changed the schema's code -- a schema/*.py module whose syntax tree,
   rule (b)   how many entries existed when the schema last changed; above 60, the rule fires and says so.
 
     python scripts/check_schema_churn.py --window 40      # exit 0 when the schema held for 40 entries, else 1
+    python scripts/check_schema_churn.py --window 40 --assert-clean      # the Phase 1 exit assertion (P1-S13-T07)
     python scripts/check_schema_churn.py --root DIR       # another repository (the tests do)
+
+--assert-clean is the exit gate's form (P1-S13-T07: "No commit touching schema/ appears inside the last 40
+entry-adding commits"). It takes the last --window commits that add an entry, in `git log` order, and fails
+when the last schema change is one of them or newer than the oldest of them, or when fewer than --window such
+commits exist. It prints the window's commit range and dates, the entries it adds, and where the last schema
+change falls, which is the record the exit review reads. A commit adds at least one entry, so a clean window of
+40 commits is also a clean window of 40 entries (14-roadmap's wording). Rule (b) is reported as above, not
+asserted: it is a re-plan trigger, not an exit criterion.
 
 In pr-validate.yml it is a reported signal, run through scripts/reported.py (a warning on a green job, never a
 block); at the Phase 1 exit gate it is blocking, which is where a still-moving schema means the plan has to stop.
@@ -64,6 +73,56 @@ def entries_added(root: str, rev_range: str | None) -> list[str]:
     return sorted({p for p in out.split() if ENTRY.match(p)})
 
 
+def entry_commits(root: str) -> list[tuple[str, int]]:
+    """(sha, entries it adds) for every commit that adds a curated entry, in `git log` order, newest first."""
+    out = []
+    for line in git(root, 'log', '--diff-filter=A', '--name-only', '--format=commit %H', '--',
+                    'data/benchmarks/').splitlines():
+        if line.startswith('commit '):
+            out.append([line[7:], 0])
+        elif out and ENTRY.match(line.strip()):
+            out[-1][1] += 1
+    return [(sha, n) for sha, n in out if n]
+
+
+def freeze_window(root: str, window: int) -> dict:
+    """The last `window` entry-adding commits, and whether the last schema change falls among or after them."""
+    commits = entry_commits(root)
+    inside = commits[:window]
+    pos = {sha: i for i, sha in enumerate(git(root, 'log', '--format=%H').split())}
+    last = last_schema_change(root)
+    oldest = inside[-1][0] if len(inside) == window else None
+    return {'commits': inside, 'available': len(commits), 'oldest': oldest,
+            'newest': inside[0][0] if inside else None, 'entries': sum(n for _, n in inside),
+            'last_change': last,
+            'commits_since_change': sum(1 for sha, _ in commits if last and pos[sha] < pos[last]) if last else None,
+            'clean': oldest is not None and (last is None or pos[last] > pos[oldest])}
+
+
+def assert_clean(root: str, window: int) -> int:
+    w = freeze_window(root, window)
+
+    def when(sha):
+        return git(root, 'log', '-1', '--format=%ad', '--date=short', sha).strip()
+    if w['oldest'] is None:
+        print('FAIL  schema freeze: only %d entry-adding commits exist, fewer than the window of %d'
+              % (w['available'], window))
+        return 1
+    print('check_schema_churn: the last %d entry-adding commits run from %s (%s) to %s (%s) and add %d entries'
+          % (window, w['oldest'][:12], when(w['oldest']), w['newest'][:12], when(w['newest']), w['entries']))
+    if w['last_change'] is None:
+        print('check_schema_churn: no schema change in the history')
+    else:
+        print('check_schema_churn: the schema last changed in %s (%s), %d entry-adding commits ago'
+              % (w['last_change'][:12], when(w['last_change']), w['commits_since_change']))
+    if not w['clean']:
+        print('FAIL  schema freeze: the schema changed inside the last %d entry-adding commits; stop and finish '
+              'Phase 0 rather than absorbing the change (14-roadmap)' % window)
+        return 1
+    print('OK    schema freeze: no schema change inside the last %d entry-adding commits' % window)
+    return 0
+
+
 def report(root: str, window: int) -> dict:
     sha = last_schema_change(root)
     since = entries_added(root, '%s..HEAD' % sha if sha else None)
@@ -76,7 +135,11 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     p.add_argument('--root', default=ROOT)
     p.add_argument('--window', type=int, default=40)
+    p.add_argument('--assert-clean', action='store_true',
+                   help='the exit gate: fail unless the last --window entry-adding commits hold no schema change')
     a = p.parse_args(argv)
+    if a.assert_clean:
+        return assert_clean(a.root, a.window)
     r = report(a.root, a.window)
     if r['last_change'] is None:
         print('check_schema_churn: no schema change in the history; nothing to freeze')
