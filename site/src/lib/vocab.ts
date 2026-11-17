@@ -4,8 +4,15 @@ import taxonomy from './taxonomy.json';
 
 // ---- taxonomy terms (09 S6.2) -------------------------------------------------------------------------------
 
-export interface Term { label: string; status?: string }
+export type Signoff = 'none' | 'generalist' | 'domain-expert';
+/** `reviewer_signoff` is set on a domain family only (tools/build/site_taxonomy.py), `none` while unsigned. */
+export interface Term { label: string; status?: string; reviewer_signoff?: Signoff }
 const FACETS = taxonomy.facets as Record<string, Record<string, Term>>;
+
+/** A domain family's sign-off; a family no reviewer has signed is `none` (14 Phase 1, "The honest gate"). */
+export function signoff(family: string): Signoff {
+  return term('domain', family).reviewer_signoff ?? 'none';
+}
 
 /** The term `id` of `facet`, or a thrown error: "a chip with an unresolvable term is a build failure" (09 S6.2). */
 export function term(facet: string, id: string): Term {

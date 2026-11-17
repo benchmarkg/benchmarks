@@ -24,6 +24,12 @@ cited with every coverage figure.
 00 S7.1's success criterion S3 runs over. Not here, by the task's own scope (step 4): the gap score, its
 weights, curation_confidence, --min-confidence and the publishability gate. Phase 4 extends this emitter.
 
+The Gap Finder refusal (P1-S4-T08; 14 Phase 1 "The honest gate": "the Gap Finder refuses to assert a gap in
+it"): every family and every cell says whether a gap claim may be made from it, `gap_claim(s)` refused or
+permitted, and a refusal says why. A family no reviewer has signed is refused with 14 Phase 4's words,
+"insufficient curation confidence to assert a gap"; an under-surveyed one is refused too (02 S3: "the Gap
+Finder refusing to assert any gap in that row"). Permitted is not a claim: Phase 1 asserts no gap anywhere.
+
 What counts as a published entry is scripts/seed_progress.py's rule, restated (a test holds the two equal):
 every Benchmark file under data/benchmarks/<family>/, not _stubs/.
 """
@@ -41,10 +47,21 @@ CAPABILITIES = 'taxonomy/capabilities.yaml'
 GROUPS = 'taxonomy/capability_groups.yaml'
 NOT_PUBLISHED = ('_stubs',)
 UNREVIEWED = 'none'
+MUTED = 'under-surveyed'
+INSUFFICIENT = 'insufficient curation confidence to assert a gap'
 
 
 class GridRefused(Exception):
     """The fine grid: 12 S5.1 forbids a gap claim from it, and Phase 1 does not emit it at all."""
+
+
+def refusal(family: dict) -> str | None:
+    """Why no gap may be asserted in `family`'s row, or None when one may (14 Phase 1, 02 S3)."""
+    if (family.get('reviewer_signoff') or UNREVIEWED) == UNREVIEWED:                   # get-default: unset is unreviewed
+        return '%s: no reviewer has signed off on %s (reviewer_signoff: none)' % (INSUFFICIENT, family['id'])
+    if family.get('coverage_status') == MUTED:                                         # get-default: unset is not muted
+        return '%s is under-surveyed: no gap is asserted in its row (02 S3)' % family['id']
+    return None
 
 
 def _load(root: str, rel: str):
@@ -118,10 +135,14 @@ def coarse(root: str = ROOT, reviewed_only: bool = False) -> dict:
                 'terms': {t: terms[key][t] for t in g['members']},
                 'coverage_status': f.get('coverage_status'),                           # get-default: reported as written
                 'reviewer_signoff': f.get('reviewer_signoff') or UNREVIEWED,           # get-default: unset is unreviewed
+                'gap_claim': 'refused' if refusal(f) else 'permitted',
+                'gap_claim_refusal': refusal(f),
             })
     families = [{'id': f['id'], 'label': f['label'], 'core': f.get('core') is True,     # get-default: core is false unless stated
                  'coverage_status': f.get('coverage_status'),                           # get-default: as above
                  'reviewer_signoff': f.get('reviewer_signoff') or UNREVIEWED,           # get-default: as above
+                 'gap_claims': 'refused' if refusal(f) else 'permitted',
+                 'gap_claims_refusal': refusal(f),
                  'entries': per_family[f['id']], 'in_scope': f['id'] in in_scope,
                  'non_empty_cells': sum(1 for c in cells if c['family'] == f['id'])}
                 for f in rows['families']]
@@ -174,6 +195,13 @@ def markdown(doc: dict) -> str:
              % (doc['entries'], doc['cells_emitted'], doc['cells_in_scope'], doc['axes']['rows']['vocabulary'],
                 doc['axes']['rows']['version'], doc['axes']['columns']['vocabulary'],
                 doc['axes']['columns']['version']), '', doc['not_yet'] + '.', '']
+    refused = [f for f in doc['families'] if f['in_scope'] and f['gap_claims'] == 'refused']
+    if refused:
+        lines += ['Gap claims refused in %d of %d families in scope: %s.'
+                  % (len(refused), sum(1 for f in doc['families'] if f['in_scope']),
+                     '; '.join('%s (%s)' % (f['id'], 'unreviewed' if f['reviewer_signoff'] == UNREVIEWED
+                                            else 'under-surveyed') for f in refused))
+                  + ' An unreviewed family has %s.' % INSUFFICIENT, '']
     if not doc['cells']:
         lines.append('No non-empty cell is in scope.' + (
             ' Every family has reviewer_signoff: none.' if doc['reviewed_only'] and not any(
