@@ -184,7 +184,7 @@ def validate(
 @app.command('build')
 def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
-    derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json and coverage-states.json.')] = False,
+    derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
 ):
     """Emit the shipped JSON artifacts (08 S4.2), drafts excluded, and regenerate the design tokens (09 S13)."""
     from tools.build import artifacts, site_taxonomy, tokens
@@ -211,6 +211,9 @@ def build_cmd(
         # behind a dated survey note in data/surveys/ (P1-S12-T08)
         from tools.build import coverage_states
         typer.echo('wrote %s' % coverage_states.write(ROOT, str(out / 'derived' / 'coverage-states.json')))
+        # 10 V6 section 11: each published benchmark's lineage as a build-time SVG and its table (P2-S3-T03)
+        from tools.build import lineage_svg
+        typer.echo('wrote %s' % lineage_svg.write(result.corpus, str(out / 'derived' / 'lineage.json')))
     try:
         # committed files: `git diff` after a build is the drift check. A data-only tree (a test
         # corpus, a fork of data/) has no design/ and gets no tokens.

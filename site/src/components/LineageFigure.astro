@@ -1,0 +1,74 @@
+---
+// site/src/components/LineageFigure.astro -- P2-S3-T03 (10 V6 section 11; 09 S6.12, S7, S8.4, S8.6; 08 S4.3). A
+// benchmark's lineage: the build-time SVG and its table, both drawn by tools/build/lineage_svg.py from one figure
+// object, so the drawing and the citable rows cannot disagree.
+//
+// DOM order: <figure> -> <figcaption> -> the SVG -> the summary -> the <table>, readable with JavaScript off and
+// shipping none (08 S4.3: the detail page is 0 KB of JS). The SVG is role="img", aria-labelledby the figcaption and
+// aria-describedby the one-sentence summary the build computed from the same rows (09 S8.4); the table is the
+// accessible representation. Every edge is labelled in text in both, and a related entry with a page is a link in
+// both. The SVG is drawn at its authored size, with no text under 11px (scripts/lint_svg.mjs), so a figure wider
+// than the column scrolls rather than shrinking its text; the drawing and the table each scroll in a focusable
+// region, the pattern BenchmarkDetail's wide tables use.
+//
+// The SVG and the table are inlined with set:html. They are the build's markup, not a data/ field (08 S11): every
+// string in them was escaped by tools/build/svgcharts.py, and checkLineage refuses markup that module never writes.
+//
+// NEVER: aria-label on the SVG (09 S6.12), or CSS that scales the SVG down.
+import { checkLineage, type LineageEntry } from '../lib/lineage';
+
+interface Props {
+  figure: LineageEntry;
+}
+
+const { figure } = Astro.props;
+checkLineage(figure);
+---
+<figure class="lineage-figure" data-lineage-figure={figure.id}>
+  <figcaption id={figure.caption_id}>{figure.caption}</figcaption>
+  <div class="drawing" tabindex="0" role="region" aria-labelledby={figure.caption_id} set:html={figure.svg} />
+  <p class="summary" id={figure.summary_id}>{figure.summary}</p>
+  <div class="rows" tabindex="0" role="region" aria-label="Lineage table" set:html={figure.table} />
+</figure>
+
+<style>
+  .lineage-figure {
+    margin: 0;
+  }
+  figcaption {
+    font-size: var(--fs-sm);
+    margin-block-end: var(--sp-2);
+  }
+  .drawing {
+    overflow-x: auto;
+    color: var(--c-ink);
+  }
+  .drawing :global(svg) {
+    display: block;
+    max-inline-size: none;
+  }
+  .summary {
+    font-size: var(--fs-sm);
+    color: var(--c-ink-muted);
+    margin-block: var(--sp-2);
+  }
+  .rows {
+    overflow-x: auto;
+  }
+  .rows :global(table) {
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+  }
+  .rows :global(th),
+  .rows :global(td) {
+    padding: var(--sp-1) var(--sp-3) var(--sp-1) 0;
+    text-align: start;
+  }
+  .rows :global(.absent) {
+    color: var(--c-absent-ink);
+    font-size: var(--fs-xs);
+  }
+  .rows :global(.absent .glyph) {
+    font-weight: 600;
+  }
+</style>
