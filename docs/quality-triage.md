@@ -42,7 +42,8 @@ adds the triage lines, the same way it updates the corpus pins.
 `bench validate --tier all --json` on main at a36fb3d (after the sweeps, #183-#201) reported
 **0 blocking findings, 157 tier-3 warnings and 1,001 tier-4 quality signals: 1,158 in all**.
 
-This pull request fixes 16 of them, and the other 1,142 are triaged:
+P1-S13-T04 fixed 16 of them and triaged the other 1,142. After the merges of 2026-11-17 (#202 to #210) and the
+archive captures that followed, the table reads:
 
 <!-- gen: bench validate --tier all --json | python scripts/check_warnings_triaged.py --markdown -->
 | Tier/rule | Findings | Accepted | Deferred | Untriaged |
@@ -50,15 +51,14 @@ This pull request fixes 16 of them, and the other 1,142 are triaged:
 | 3/lifecycle-unobserved | 4 | 4 | 0 | 0 |
 | 3/private-server-submission | 23 | 23 | 0 | 0 |
 | 3/reference-grader | 38 | 0 | 38 | 0 |
-| 3/subset-drops-terms | 87 | 85 | 2 | 0 |
+| 3/subset-drops-terms | 85 | 85 | 0 | 0 |
 | 4/condition-completeness | 10 | 10 | 0 | 0 |
-| 4/liveness-stale | 13 | 0 | 13 | 0 |
 | 4/material-waived | 11 | 11 | 0 | 0 |
 | 4/no-baseline | 306 | 0 | 306 | 0 |
 | 4/stub-identity-unreviewed | 592 | 0 | 592 | 0 |
 | 4/stub-unratified | 44 | 0 | 44 | 0 |
-| 4/unarchived-source | 14 | 11 | 3 | 0 |
-| **total** | **1142** | **144** | **998** | **0** |
+| 4/unarchived-source | 15 | 11 | 4 | 0 |
+| **total** | **1128** | **144** | **984** | **0** |
 <!-- /gen -->
 
 ### Fixed (16)
@@ -103,3 +103,15 @@ This pull request fixes 16 of them, and the other 1,142 are triaged:
 
 Every decision here is agent-drafted (`decided_by: agent (P1-S13-T04)`), because P1-S13-T04's
 executor is agent-draft. A person accepts or amends each decision when reviewing the pull request.
+
+## Updates
+
+- **2026-11-17, after the merges of #202 to #210:**
+  - **16 lines resolved:**
+    - the 13 liveness signals, now stamped by the first general-intelligence and engineering-design sweeps;
+    - the two physionet subset drops, restored by #203;
+    - GPQA Diamond's archive.
+  - Their lines are dropped, so `--strict` passes.
+  - **Two new deferrals:**
+    - `src-github-livecodebench-submissions` waits on github.com's daily capture cap;
+    - `src-mlcommons-ailuminate-safety-results` failed because Wayback's newest capture of it is a 301, though the URL answers 200, so a direct capture follows.
