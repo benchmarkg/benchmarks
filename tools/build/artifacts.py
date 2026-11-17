@@ -1,11 +1,11 @@
-"""`bench build [--out build/]`, minimal: corpus.json and facets.json (P0-S5-T05; 05 S3, 08 S4.2).
+"""`bench build [--out build/]`: the loader and publish rules behind the S8 artifacts (P0-S5-T05; 05 S3, 08 S4.2).
 
-    bench build --out build/    # load data/, write build/corpus.json and build/facets.json
+    bench build --out build/    # load data/, write build/corpus.json, build/facets.json and build/enums.json
 
-08 S3.5 stages the pipeline, and this is the loader (S1) wired straight to a first emitter (S8)
-for the two artifacts every later stage and the site start from. P2-S1-T02 owns the full S8
-emitter -- exactly 08 S4.2's field lists, enums.json, the domain-group refusal -- and every
-derived, claims, search or release artifact belongs to the stage that 08 S3.5 ships it in.
+08 S3.5 stages the pipeline, and this is the loader (S1) and the publish rules, wired to the S8
+emitter (tools/build/emit.py, P2-S1-T02), which owns what the three artifacts hold -- exactly 08
+S4.2's field lists -- the domain-group refusal and the serialisation. Every derived, claims, search
+or release artifact belongs to the stage that 08 S3.5 ships it in.
 
 What gets published. 05 S4: "Entries at this level are NOT published." So:
 
@@ -23,7 +23,8 @@ What gets published. 05 S4: "Entries at this level are NOT published." So:
     records (unarchived, so failing tier 1) out without special-casing them.
 
 Everything else under data/ (claims, conditions, leaderboards, baselines, ...) belongs to other
-artifacts: 08 S4.2 puts "no claim records" in corpus.json.
+artifacts: 08 S4.2 puts "no claim records" in corpus.json. The claims under data/claims/ and the
+conditions they name are read for one purpose, facets.json's claim-derived fields (emit.claim_fields).
 
 Records are dumped in JSON mode by alias, without computed fields, so each one validates against its
 own schema/generated/<kind>.schema.json -- the validation schema, which has no derived fields
@@ -36,41 +37,24 @@ Inheritance is field-by-field replace: a subset's value for a facet is its own o
 nearest ancestor's, else the benchmark's. `overrides` names the facets the subset declares itself,
 which is what the coverage rule ("a subset contributes only if it carries a domain_override") reads.
 
-Determinism: records sorted by id, keys sorted, every string NFC, compact separators, UTF-8, LF,
-one trailing newline, and no clock: two builds of one tree are byte-identical.
+Determinism: files are read in sorted POSIX path order (tiers.discover) and written by emit.py's
+serialisation (08 S6), so two builds of one tree are byte-identical.
 """
 from __future__ import annotations
 
-import json
 import os
-import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
 from pydantic import BaseModel
 
+from tools.build import emit
+from tools.build.emit import ARTIFACTS, at, nfc, serialise  # noqa: F401 -- re-exported: adoption.py, the tests
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FORMAT = 1
 DRAFT = 'ai-drafted-unverified'
 STUB = 'unfaceted stub'                      # data/benchmarks/_stubs/ (P3-S2-T07)
 CORPUS_KINDS = ('benchmark', 'system', 'organization', 'metric', 'source')   # 08 S4.2's corpus.json row
-ARTIFACTS = ('corpus.json', 'facets.json')
-
-# facets.json: key -> the Benchmark field it projects, as a dotted path. The two keys not listed
-# are computed: `domain` is the family of domain.primary and `year` is the year of `released`.
-# P2-S1-T02 completes 08 S4.2's field list (the claim-derived fields need claims to exist).
-FACET_FIELDS = {
-    'id': 'id',
-    'slug': 'id',                       # a benchmark's URL slug is its id (05 S2)
-    'name': 'name',
-    'aliases': 'aliases',
-    'subdomain': 'domain.primary',
-    'domain_secondary': 'domain.secondary',
-    'capability': 'capability',
-    'evaluation_method': 'evaluation_method',
-    'designed_for_subjects': 'designed_for_subjects',
-    'lifecycle': 'lifecycle',
-}
 # A subset's resolved facet block: facet -> (the Subset field that overrides it, or None when a
 # subset cannot override it, and the Benchmark field it inherits from).
 SUBSET_FACETS = {
@@ -87,6 +71,7 @@ SUBSET_FACETS = {
 class Build:
     corpus: dict = field(default_factory=dict)
     facets: dict = field(default_factory=dict)
+    enums: dict = field(default_factory=dict)
     excluded: list[tuple[str, str, str]] = field(default_factory=list)    # (path, id, reason)
     errors: list[str] = field(default_factory=list)
 
@@ -94,24 +79,8 @@ class Build:
         return {k: len(v) for k, v in self.corpus['entities'].items()} if self.corpus else {}
 
 
-def nfc(x: Any) -> Any:
-    if isinstance(x, str):
-        return unicodedata.normalize('NFC', x)
-    if isinstance(x, list):
-        return [nfc(v) for v in x]
-    if isinstance(x, dict):
-        return {nfc(k): nfc(v) for k, v in x.items()}
-    return x
-
-
 def dump(model: BaseModel) -> dict:
     return model.model_dump(mode='json', by_alias=True, exclude_computed_fields=True)
-
-
-def at(record: dict, dotted: str) -> Any:
-    for key in dotted.split('.'):
-        record = record[key]
-    return record
 
 
 def status(raw: Any) -> str:
@@ -126,13 +95,6 @@ def status(raw: Any) -> str:
 def cited_sources(record: dict) -> set[str]:
     from tools.validate.tiers import _walk_prefixed
     return {value for _, value, kind in _walk_prefixed(record, '') if kind == 'source'}
-
-
-def facet_row(b: dict) -> dict:
-    row = {key: at(b, path) for key, path in FACET_FIELDS.items()}
-    row['domain'] = b['domain']['primary'].split('/')[0]
-    row['year'] = int(b['released'][:4]) if b['released'] else None
-    return row
 
 
 def resolve_subsets(b: dict) -> tuple[list[dict], list[str]]:
@@ -170,7 +132,10 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
     from tools.validate import tiers
     out = Build()
     published: dict[str, dict[str, dict]] = {k: {} for k in CORPUS_KINDS}
+    models: dict[str, BaseModel] = {}                  # the published benchmarks' models, for emit.claim_fields
     sources: dict[str, list] = {}
+    claims: list = []
+    conditions: dict[str, list] = {}
 
     def broken(r) -> str:
         return '; '.join(f.message for f in r.schema_findings if f.blocks)
@@ -179,6 +144,12 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
         kind = r.kind.name if r.kind else None
         if kind and kind.endswith('-stub'):          # 07 S2.4, 04 S7: withheld until a curator fills them in
             out.excluded.append((r.path, r.id, STUB if kind == 'benchmark-stub' else 'unreviewed %s' % kind))
+            continue
+        if kind == 'claim' and r.anchored.startswith('data/'):    # never vendor/: 08 S3.2's licence boundary
+            claims.append(r)
+            continue
+        if kind == 'conditions':
+            conditions.setdefault(r.id, []).append(r)
             continue
         if kind not in CORPUS_KINDS:
             continue
@@ -196,6 +167,8 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
             out.errors.append('%s: a second %s with id %s' % (r.path, kind, r.id))
             continue
         published[kind][r.id] = dump(r.model)
+        if kind == 'benchmark':
+            models[r.id] = r.model
 
     citers: dict[str, list[str]] = {}
     for kind, records in published.items():
@@ -222,11 +195,13 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
         out.errors += errors
     if out.errors:
         return out
-    entities = {k: [v[i] for i in sorted(v)] for k, v in published.items()}
-    out.corpus = nfc({'artifact': 'corpus', 'format': FORMAT, 'entities': entities, 'subsets': subsets,
-                      **({'drafts': True} if drafts else {})})
-    out.facets = nfc({'artifact': 'facets', 'format': FORMAT, 'vocabularies': vocabulary_versions(),
-                      'benchmarks': [facet_row(b) for b in entities['benchmark']]})
+    try:
+        done = emit.emit({k: list(v.values()) for k, v in published.items()}, subsets, models, claims, conditions,
+                         vocabulary_versions(), drafts=drafts)
+    except emit.Refused as e:
+        out.errors += e.errors
+        return out
+    out.corpus, out.facets, out.enums = done['corpus.json'], done['facets.json'], done['enums.json']
     return out
 
 
@@ -246,16 +221,7 @@ def vocabulary_versions(root: str = ROOT) -> dict[str, str]:
     return out
 
 
-def serialise(artifact: dict) -> bytes:
-    return (json.dumps(artifact, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n').encode('utf-8')
-
-
 def write(result: Build, out_dir: str) -> list[str]:
-    os.makedirs(out_dir, exist_ok=True)
-    written = []
-    for name, artifact in zip(ARTIFACTS, (result.corpus, result.facets)):
-        path = os.path.join(out_dir, name)
-        with open(path, 'wb') as fh:
-            fh.write(serialise(artifact))
-        written.append(path)
-    return written
+    """The three files, through emit.write, which refuses a group id or a claim record again before writing."""
+    return emit.write({'corpus.json': result.corpus, 'facets.json': result.facets, 'enums.json': result.enums},
+                      out_dir)
