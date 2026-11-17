@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""build/derived/coverage-states.json: the three empty-or-not states of every subdomain page and coarse cell (P1-S12-T08).
+"""build/derived/coverage-states.json: the empty-or-not state of every subdomain page and coarse cell (P1-S12-T08, -T09).
 
     python tools/build/coverage_states.py --out build/derived/coverage-states.json [--root PATH]
     bench build --derived                                   # writes it with the other derived artifacts
@@ -32,6 +32,20 @@ The states, decided in this order:
   not-yet-surveyed     everything else, including a family-level survey that found candidates nobody has
                        curated yet.
 
+A coarse cell has a fourth state, which 12 S5.4 calls "not a kind of empty at all" (P1-S12-T09):
+
+  not-applicable       taxonomy/_triage/not-applicable.yaml gives the cell the verdict not-applicable: its
+                       question is incoherent for the family. It is decided after has-benchmarks (an occupied
+                       cell is applicable by evidence, and scripts/check_na_cells.py fails the verdict) and before
+                       the survey states. A declared cell "leaves both the numerator and the denominator of every
+                       coverage figure" (12 S5.4), so `coverage` below counts has-benchmarks cells over the cells
+                       that are not declared. No coarse cell is tautological (12 S5.1: no family slug is a
+                       capability term), so nothing else leaves the denominator.
+
+Every cell also carries its `triage` and `rationale` (03 S7.1: "every coarse cell must be triaged as applicable
+or not applicable before any gap claim publishes"): the verdict and the one-sentence reason of the cell's row in
+the triage file, or null for a cell the file does not list.
+
 Published entries are scripts/seed_progress.py's (and tools/build/gaps.py's): every Benchmark file under
 data/benchmarks/<family>/, not _stubs/. The artifact has no clock in it: it is a function of the tree.
 scripts/check_survey_notes.py checks the notes and that this artifact is current.
@@ -52,8 +66,13 @@ sys.path.insert(0, ROOT)
 FORMAT = 1
 ARTIFACT = os.path.join('build', 'derived', 'coverage-states.json')
 SURVEYS = 'data/surveys'
+NOT_APPLICABLE = 'taxonomy/_triage/not-applicable.yaml'      # a record, not a vocabulary: see its header
 STATES = ('has-benchmarks', 'surveyed-and-empty', 'not-yet-surveyed')
+CELL_STATES = STATES + ('not-applicable',)
 EMPTY = 'surveyed-and-empty'
+NA = 'not-applicable'
+APPLICABLE = 'applicable'
+VERDICTS = (APPLICABLE, NA)
 ALL = 'all'
 MUTED = 'under-surveyed'
 
@@ -97,6 +116,28 @@ def covers(note: dict, terms) -> bool:
     if note['decision'] != EMPTY or note['subdomain'] is None or not note['conducted_on']:
         return False
     return caps == ALL or (isinstance(caps, list) and set(terms) <= set(caps))
+
+
+def triage(root: str = ROOT) -> dict:
+    """{(family, group): row} for every row of the triage file; the first row wins a duplicated cell. No file is
+    no triage; scripts/check_na_cells.py asserts the file's shape."""
+    path = os.path.join(root, *NOT_APPLICABLE.split('/'))
+    doc = _load(path) if os.path.exists(path) else {}
+    doc = doc if isinstance(doc, dict) else {}
+    out = {}
+    for row in doc.get('cells') or []:                                                 # get-default: checked there
+        if isinstance(row, dict):
+            out.setdefault((row.get('family'), row.get('group')), row)
+    return out
+
+
+def coverage(cells: list[dict]) -> dict:
+    """12 S5.4: a declared cell leaves both sides of the figure."""
+    na = sum(1 for c in cells if c['state'] == NA)
+    den = len(cells) - na
+    hit = sum(1 for c in cells if c['state'] == 'has-benchmarks')
+    return {'cells': len(cells), 'not_applicable': na, 'denominator': den, 'has_benchmarks': hit,
+            'percent': round(100.0 * hit / den, 1) if den else None}
 
 
 def build(root: str = ROOT) -> dict:
@@ -148,20 +189,27 @@ def build(root: str = ROOT) -> dict:
         })
 
     occupied = {(c['family'], c['group']): c for c in gaps.coarse(root)['cells']}
+    verdicts = triage(root)
     cells = []
     for f in rows['families']:
         for g in cols['groups']:
             c = occupied.get((f['id'], g['id']))
+            key = (f['id'], g['id'])
+            row = verdicts.get(key) or {}
+            verdict = row.get('verdict') if row.get('verdict') in VERDICTS else None
+            na = c is None and verdict == NA
             backing = []
-            if c is None and f['id'] not in muted and subs_of[f['id']]:
+            if c is None and not na and f['id'] not in muted and subs_of[f['id']]:
                 per_sub = [[n for n in by_sub[s] if covers(n, g['members'])] for s in subs_of[f['id']]]
                 if all(per_sub):
                     backing = sorted({n['path'] for ns in per_sub for n in ns})
-            state = 'has-benchmarks' if c else EMPTY if backing else 'not-yet-surveyed'
+            state = 'has-benchmarks' if c else NA if na else EMPTY if backing else 'not-yet-surveyed'
             cells.append({
                 'family': f['id'], 'group': g['id'],
                 'primary': c['entries'] if c else 0, 'secondary': c['secondary_entries'] if c else 0,
                 'state': state, 'survey_notes': backing,
+                'triage': verdict,
+                'rationale': row.get('rationale') if verdict else None,
             })
 
     families = [{
@@ -169,6 +217,7 @@ def build(root: str = ROOT) -> dict:
         'gap_claims': 'refused' if f['id'] in muted else 'permitted',
         'survey_notes': [n['path'] for n in found if n['family'] == f['id']],
         'subdomain_states': {s: sum(1 for p in pages if p['family'] == f['id'] and p['state'] == s) for s in STATES},
+        'coverage': coverage([c for c in cells if c['family'] == f['id']]),
     } for f in rows['families']]
 
     return {
@@ -176,13 +225,18 @@ def build(root: str = ROOT) -> dict:
         'vocabularies': {'domains': rows['version'], 'capability_groups': cols['version'],
                          'capabilities': cols['terms_version']},
         'states': list(STATES),
-        'rule': 'has-benchmarks at any weight, primary or secondary (02 S11 rule 1); surveyed-and-empty only behind '
-                'dated survey notes in data/surveys/ (02 S11 rule 6, 02 S3); not-yet-surveyed otherwise. A cell in '
-                'an under-surveyed family never reads surveyed-and-empty (02 S3).',
+        'cell_states': list(CELL_STATES),
+        'rule': 'has-benchmarks at any weight, primary or secondary (02 S11 rule 1); a cell declared in '
+                'taxonomy/_triage/not-applicable.yaml is not-applicable and leaves both sides of every coverage '
+                'figure (12 S5.4); surveyed-and-empty only behind dated survey notes in data/surveys/ (02 S11 rule '
+                '6, 02 S3); not-yet-surveyed otherwise. A cell in an under-surveyed family never reads '
+                'surveyed-and-empty (02 S3).',
         'counts': {
             'subdomains': {s: sum(1 for p in pages if p['state'] == s) for s in STATES},
-            'cells': {s: sum(1 for c in cells if c['state'] == s) for s in STATES},
+            'cells': {s: sum(1 for c in cells if c['state'] == s) for s in CELL_STATES},
+            'cells_untriaged': sum(1 for c in cells if c['triage'] is None),
         },
+        'coverage': coverage(cells),
         'notes': found,
         'families': families,
         'subdomains': pages,

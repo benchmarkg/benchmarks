@@ -203,7 +203,8 @@ def main(argv=None):
           % (len(notes), sum(1 for n in notes if n['subdomain']), sum(1 for n in notes if not n['subdomain'])))
     for kind in ('subdomains', 'cells'):
         print('      %s: %s' % ('subdomain pages' if kind == 'subdomains' else 'coarse cells',
-                                ', '.join('%d %s' % (doc['counts'][kind][s], s) for s in CS.STATES)))
+                                ', '.join('%d %s' % (doc['counts'][kind][s], s)
+                                          for s in (CS.STATES if kind == 'subdomains' else CS.CELL_STATES))))
     empty = [p['id'] for p in doc['subdomains'] if p['state'] == 'not-yet-surveyed']
     if empty:
         print('      not yet surveyed, with no entry: %s' % ', '.join(empty))
