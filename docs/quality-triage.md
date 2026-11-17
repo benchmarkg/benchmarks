@@ -57,8 +57,8 @@ archive captures that followed, the table reads:
 | 4/no-baseline | 306 | 0 | 306 | 0 |
 | 4/stub-identity-unreviewed | 592 | 0 | 592 | 0 |
 | 4/stub-unratified | 44 | 0 | 44 | 0 |
-| 4/unarchived-source | 15 | 11 | 4 | 0 |
-| **total** | **1128** | **144** | **984** | **0** |
+| 4/unarchived-source | 15 | 12 | 3 | 0 |
+| **total** | **1128** | **145** | **983** | **0** |
 <!-- /gen -->
 
 ### Fixed (16)
@@ -112,6 +112,6 @@ executor is agent-draft. A person accepts or amends each decision when reviewing
     - the two physionet subset drops, restored by #203;
     - GPQA Diamond's archive.
   - Their lines are dropped, so `--strict` passes.
-  - **Two new deferrals:**
+  - **Two new warnings:**
     - `src-github-livecodebench-submissions` waits on github.com's daily capture cap;
-    - `src-mlcommons-ailuminate-safety-results` failed because Wayback's newest capture of it is a 301, though the URL answers 200, so a direct capture follows.
+    - `src-mlcommons-ailuminate-safety-results` is accepted as failed: Save Page Now receives a 301 for it, as its 2026-10-29 capture records, though the URL answers 200 to this project, and a direct retry failed the same way.
