@@ -108,6 +108,54 @@ def test_cli_exit_codes(tmp_path, capsys):
     assert 'VIOLATION src-old' in capsys.readouterr().out
 
 
+# ---- one archived Source per entry (P1-S13-T03) -----------------------------------------------
+
+def entry(root, family, id, body):
+    d = root / 'data' / 'benchmarks' / family
+    d.mkdir(parents=True, exist_ok=True)
+    (d / (id + '.yaml')).write_text('id: %s\n%s' % (id, body), encoding='utf-8')
+
+
+def per_entry_tree(tmp_path):
+    write(tmp_path, 'src-doi', doi="'10.1/x'")
+    write(tmp_path, 'src-failed', status='failed', reason='error:blocked-url')
+    write(tmp_path, 'src-young')                                   # new, inside the SLA, never tried
+    (tmp_path / 'data' / 'sources' / '2026' / 'src-ok.yaml').write_text(
+        'id: src-ok\ntype: web-page\nurl: https://example.org/ok\ndoi: null\nfetched_at: 2026-09-28T00:00:00Z\n'
+        'archive_url: https://web.archive.org/web/1/https://example.org/ok\narchive_status: ok\n', encoding='utf-8')
+    entry(tmp_path, 'code', 'by-doi', 'paper:\n  source: src-doi\n')
+    entry(tmp_path, 'code', 'by-archive', 'evidence:\n  - source: src-young\n  - {source: src-ok, quote: q}\n')
+    entry(tmp_path, 'physics', 'by-failure', 'released_source: src-failed\nsources: [src-young]\n')
+    entry(tmp_path, '_stubs', 'a-stub', 'source: src-young\n')     # stubs are not entries
+    return ['--root', str(tmp_path), '--now', '2026-10-01T12:00:00Z', '--require-one-per-entry']
+
+
+def test_every_entry_cites_an_archived_or_doi_source(tmp_path, capsys):
+    args = per_entry_tree(tmp_path)
+    assert cov.main(args) == 0
+    out = capsys.readouterr().out
+    assert '3 entries: 2 with a DOI-bearing or archived Source, 1 with only a recorded failure reason, 0 with ' \
+           'neither' in out
+    assert 'recorded  by-failure: src-failed' in out
+
+
+def test_an_entry_with_only_pending_sources_fails(tmp_path, capsys):
+    args = per_entry_tree(tmp_path)
+    entry(tmp_path, 'code', 'only-young', 'source: src-young\n')
+    entry(tmp_path, 'code', 'cites-nothing-known', 'source: src-not-a-record\n')
+    assert cov.main(args) == 1
+    out = capsys.readouterr().out
+    assert 'MISSING   only-young: cites src-young (new)' in out
+    assert 'MISSING   cites-nothing-known: cites no Source record' in out
+    assert cov.main(args[:-1]) == 0                                 # without the flag only the SLA is asserted
+
+
+def test_cited_finds_source_ids_anywhere_and_only_whole_ids():
+    rec = {'source': 'src-a', 'evidence': [{'source': 'src-b'}, {'quote': 'see src-c for more'}],
+           'lineage_source': 'src-d', 'note': 'src-e.'}
+    assert cov.cited(rec) == {'src-a', 'src-b', 'src-d'}
+
+
 # ---- the rolling archiver ----------------------------------------------------------------------
 
 class FakeWayback:

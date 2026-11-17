@@ -31,6 +31,15 @@ the record says contains_personal_data: true and gives its failure_reason, and i
 otherwise. Any other status outside the vocabulary (ok | pending | failed | not-required | withheld)
 is a WARNING when it carries a failure_reason, and a VIOLATION under --strict.
 
+--require-one-per-entry adds P1-S13-T03's assertion: every curated entry (data/benchmarks/<family>/*.yaml,
+not _stubs/) cites at least one Source that carries a DOI or an archive_url ("archived"). An entry with none
+passes only when one of its Sources failed or was withheld with a recorded reason ("recorded", the task's
+"or a recorded failure reason"), and is listed so. Anything else, an entry whose Sources are all pending or
+new, fails. A cited Source is any string in the entry that is a whole Source id, wherever it sits: `source`,
+`sources`, a `*_source` field or an evidence row.
+
+    python scripts/check_archive_coverage.py --require-one-per-entry      # P1-S13-T03's verify
+
 Exit 0 when there are no violations, 1 otherwise; the oldest violation is printed first.
 """
 import argparse
@@ -60,6 +69,53 @@ def _yaml_load(f):
     except ImportError:
         import yaml
         return yaml.safe_load(f)
+
+
+SRC_ID = re.compile(r'^src-[a-z0-9]+(?:-[a-z0-9]+)*$')
+ARCHIVED = ('doi-exempt', 'ok')
+RECORDED = ('failed', 'withheld')
+
+
+def cited(node, out=None):
+    """Every Source id an entry cites, wherever it sits."""
+    out = set() if out is None else out
+    if isinstance(node, dict):
+        for v in node.values():
+            cited(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            cited(v, out)
+    elif isinstance(node, str) and SRC_ID.match(node):
+        out.add(node)
+    return out
+
+
+def load_entries(root=ROOT):
+    """(entry id, Source ids it cites) for every curated entry, not the stubs."""
+    out = []
+    for path in sorted(glob.glob(os.path.join(root, 'data', 'benchmarks', '*', '*.yaml'))):
+        if os.path.basename(os.path.dirname(path)).startswith('_'):
+            continue
+        with open(path, encoding='utf-8') as f:
+            rec = _yaml_load(f)
+        if isinstance(rec, dict) and rec.get('id'):
+            out.append((rec['id'], cited(rec)))
+    return out
+
+
+def per_entry(entries, classes):
+    """[(entry id, state, detail)]: archived, recorded or MISSING (06 S7.1, P1-S13-T03)."""
+    out = []
+    for eid, sids in entries:
+        got = {sid: classes[sid] for sid in sids if sid in classes}
+        if any(c in ARCHIVED for c in got.values()):
+            out.append((eid, 'archived', ''))
+        elif any(c in RECORDED for c in got.values()):
+            out.append((eid, 'recorded', ', '.join(sorted(sid for sid, c in got.items() if c in RECORDED))))
+        else:
+            out.append((eid, 'MISSING', 'cites %s' % (', '.join('%s (%s)' % kv for kv in sorted(got.items()))
+                                                      or 'no Source record')))
+    return out
 
 
 def load_sources(root=ROOT):
@@ -95,6 +151,8 @@ def main(argv=None):
     p.add_argument('--now', type=parse_time, default=None, help='evaluate as of this UTC time')
     p.add_argument('--strict', action='store_true', help='a status outside 04 S9 is a violation')
     p.add_argument('-v', '--verbose', action='store_true', help='list every Source, not only problems')
+    p.add_argument('--require-one-per-entry', action='store_true',
+                   help='also assert every entry cites a Source with a DOI or an archive_url (P1-S13-T03)')
     a = p.parse_args(argv)
     now = a.now or datetime.now(timezone.utc)
 
@@ -113,7 +171,16 @@ def main(argv=None):
     print('%d sources as of %s, SLA %s: %s' % (
         len(rows), now.strftime('%Y-%m-%dT%H:%M:%SZ'), show(a.max_pending_age),
         ', '.join('%s %d' % kv for kv in sorted(counts.items()))))
-    return 1 if bad else 0
+    if not a.require_one_per_entry:
+        return 1 if bad else 0
+    entries = per_entry(load_entries(a.root), {sid: cls for sid, cls, _, _ in rows})
+    missing = [e for e in entries if e[1] == 'MISSING']
+    for eid, state, detail in missing + [e for e in entries if e[1] == 'recorded']:
+        print('%-9s %s: %s' % (state, eid, detail))
+    print('%d entries: %d with a DOI-bearing or archived Source, %d with only a recorded failure reason, %d with '
+          'neither' % (len(entries), sum(1 for e in entries if e[1] == 'archived'),
+                       sum(1 for e in entries if e[1] == 'recorded'), len(missing)))
+    return 1 if bad or missing else 0
 
 
 if __name__ == '__main__':
