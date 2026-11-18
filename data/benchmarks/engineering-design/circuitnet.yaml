@@ -5,8 +5,10 @@
 # Information Sciences), and its abstract page; the repository README; and the project site. Every quote below is
 # checked by the quote-substring validator against those Sources' committed extracts.
 #
-# The family entry: CircuitNet 1.0 (N28, 2022), 2.0 (N14, 2023) and 3.0 (N45, 2026) share tasks and tooling. The
-# 2.0 and 3.0 papers were not read.
+# The family entry: CircuitNet 1.0 (N28, 2022), 2.0 (N14, 2023) and 3.0 (N45, 2026). The P1-S12 publication
+# follow-ups (2026-11-18) read the 2.0 (ICLR 2024) and 3.0 (ICLR 2026) papers as their ICLR proceedings PDFs; the
+# OpenReview copies the site links refuse this project's fetcher. 3.0 comes from another lead group and has
+# tasks of its own, so whether it belongs here is a review check.
 
 id: circuitnet
 name: CircuitNet
@@ -23,8 +25,13 @@ description: >
   netlists. The tasks predict, from early-stage features, what later stages will show: routing congestion,
   design-rule-check violations, IR drop and, from 2.0, net delay and timing. Each task is scored with
   the metric of the method it reproduces: NRMSE and SSIM for congestion, ROC and precision-recall AUC
-  for DRC violations and IR-drop hotspots. Later versions add a 14 nm FinFET node (2.0) and a 45 nm node
-  (3.0).
+  for DRC violations and IR-drop hotspots, R² for net delay. CircuitNet 2.0 (ICLR 2024) moves to a
+  14 nm FinFET node with CPU, GPU and AI-chip designs, more than 10,000 samples in all. CircuitNet 3.0
+  (ICLR 2026), whose corresponding authors are at the Chinese Academy of Sciences' State Key Lab of
+  Processors and CUHK, with Peking University co-authors, collects 8,659 open-source RTL designs,
+  augments them to 15,863 instances at 45 nm, and predicts post-layout timing (arrival time, WNS, TNS)
+  from RTL and power from RTL and netlists, scored by Pearson correlation, R² and MAPE on a fixed
+  design-level split.
 self_description:
   source: src-arxiv-2208-01040-v4
   quote: CircuitNet, which provides holistic support for cross-stage prediction tasks in back-end
@@ -117,9 +124,11 @@ task:
   exists: true
   input:
     - image-like feature maps (and netlist graphs) extracted from a layout at an early design stage
+    - RTL code, and for power the synthesised netlist as well (3.0)
   output: A predicted map or set of hotspots for a later stage -- congestion, DRC violations, IR
-    drop -- or net delays.
-  scoring: Per task, the original method's metrics (NRMSE and SSIM; ROC and PR AUC).
+    drop -- net delays (2.0), or post-layout timing metrics and power (3.0).
+  scoring: Per task, the original method's metrics (NRMSE and SSIM; ROC and PR AUC); R² for net
+    delay (2.0); Pearson correlation, R² and MAPE for timing and power (3.0).
   source: src-arxiv-2208-01040-v4
   quote: we used the normalized root-mean-square-error and structural similarity index measure as
     metrics to evaluate pixel-level accuracy
@@ -141,21 +150,29 @@ data:
       RTL to Layout in 14 nm FinFET. CircuitNet 3.0
   data_provenance:
     - simulation-generated
+    - web-scraped
   data_provenance_note: Layouts and labels come from running logic synthesis and place-and-route
-    tools (Synopsys Design Compiler, Cadence Innovus) on open RISC-V designs, under varied settings.
+    tools (Synopsys Design Compiler, Cadence Innovus) on open designs, under varied settings, from
+    six RISC-V designs in 1.0 and eight CPU, GPU and AI-chip configurations in 2.0. web-scraped is
+    3.0's, whose RTL was harvested from GitHub, Hugging Face, OpenCores and RISC-V projects and then
+    augmented by syntax-tree rewriting (review_checks).
   data_provenance_source: src-arxiv-2208-01040-v4
   data_provenance_quote: Then, the physical design transformed the netlists into layouts with
     Cadence Innovus
   contamination_risk: unknown
-  contamination_risk_note: All features and labels are public. The read sources name no fixed
-    train-test split (the code's configuration sets it), so the route into a scored split was not
+  contamination_risk_note: All features and labels are public. The 2.0 paper fixes a split per
+    experiment by design (net delay trains on 80 samples of three designs and tests on 20 of three
+    others), and the 3.0 paper splits at the source-design level (80/10/10), testing only on
+    un-augmented designs plus outside submodules; neither is published as the benchmark's scored
+    split, and users' configurations set their own, so the route into a scored split was not
     assessed.
   contamination_evidence: []
   dataset_licence: null
   dataset_licence_note: The site's footer and the repository are BSD-3-Clause; the licence of the
     data downloads was not read separately.
   size_note: CircuitNet 1.0 has 10,242 layouts from six RISC-V designs ("we obtained 10,242 layouts
-    after excluding the failed runs").
+    after excluding the failed runs"); 2.0 more than 10,000 samples from eight design
+    configurations; 3.0 8,659 source RTL designs and 15,863 instances with augmentation.
 
 # --- Governance ------------------------------------------------------------------------------
 
@@ -167,9 +184,11 @@ governance:
     source: src-circuitnet-site
     quote: Copyright © 2022-present CircuitNet Team
   maintainer_type: academic-lab
-  maintainer_type_note: The code sits in a project organisation (circuitnet) and the 3.0 data in a
-    lab organisation on Hugging Face; both are run from one university lab, so the holder is taken
-    to be that lab.
+  maintainer_type_note: 1.0 and 2.0 come from Peking University's School of Integrated Circuits,
+    whose CircuitNet team holds the project organisation (circuitnet). 3.0's data and code sit in
+    the SKLP-EDA-LAB organisations, and its paper's corresponding authors are at the Chinese Academy
+    of Sciences' Institute of Computing Technology and at CUHK, with Peking University co-authors,
+    so it is not held by the same lab (review_checks). Both holders are academic.
   submission_process:
     - literature-only
   independence_flags: []
@@ -223,19 +242,41 @@ tags:
 curation:
   added_by: agent (P1-S3-T02)
   added_on: 2026-10-10
-  last_verified: 2026-10-10
+  last_verified: 2026-11-18
   verification_status: ai-drafted-unverified
   sources:
     - src-arxiv-2208-01040-v4
     - src-arxiv-2208-01040
     - src-github-circuitnet-readme
     - src-circuitnet-site
+    - src-iclr-2024-circuitnet-2
+    - src-iclr-2026-circuitnet-3
   sources_note: >
     The CircuitNet 1.0 note's v4 PDF (a DOI, not archived) read as text, with the corresponding author's
     address kept out; its abstract page; the README at main; and the site's home page with scripts and
-    styles stripped.
+    styles stripped. The 2.0 and 3.0 papers were read on 2026-11-18 as their ICLR proceedings PDFs, which
+    are withheld from archiving because their title blocks name the authors; the OpenReview copies answer
+    this project's fetcher with HTTP 403. The 3.0 dataset card was not read.
   confidence: medium
   review_checks:
     - check: capability scientific-prediction for an engineered system (see its basis).
-    - check: The CircuitNet 2.0 (ICLR 2024) and 3.0 papers were not read; the split and the timing
-        tasks rest on the README.
+    - check: "Lineage: 3.0 may be a separate benchmark rather than a version. Its paper's corresponding
+        authors are at the Chinese Academy of Sciences' Institute of Computing Technology and at CUHK
+        (the title block, kept out of the extract), its data and code sit in the SKLP-EDA-LAB organisations
+        rather than circuitnet, and its tasks (timing and power from RTL, scored by PCC, R² and MAPE)
+        differ from 1.0's and 2.0's layout tasks; 04 S4 sends a different maintainer to a new entry with
+        a lineage link. Against that, the CircuitNet README and site list it as the family's 3.0, and
+        Peking University authors share the paper."
+      field: lineage
+      source: src-iclr-2026-circuitnet-3
+      quote: 1State Key Lab of Processors, Institute of Computing Technology, Chinese Academy of
+        Sciences 2University of Chinese Academy of Sciences 3The Chinese University of Hong Kong
+        4Peking University 5Stanford University ∗Equal contribution †Corresponding authors
+    - check: data_provenance web-scraped is 3.0's alone (RTL harvested from public repositories).
+        Its augmented instances come from rule-based syntax-tree rewriting, which
+        synthetic-procedural may also describe; if 3.0 leaves this entry, web-scraped goes with it.
+      field: data.data_provenance
+      source: src-iclr-2026-circuitnet-3
+      quote: We systematically collected RTL designs from established platforms, including GitHub,
+        Hugging Face, OpenCore, and RISC-V projects, ensuring compliance with open-source licensing
+        requirements.
