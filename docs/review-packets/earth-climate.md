@@ -2,7 +2,7 @@
 
 # Review packet: Earth and climate
 
-`earth-climate` · 18 published entries · Core family · 8 subdomains · data as of 2026-11-04 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`earth-climate` · 18 published entries · Core family · 8 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -51,13 +51,13 @@ Not in this packet (8): `buildingsbench`, `chaosbench`, `climatebench`, `digital
 | 2.1 | [S2S AI Challenge](#21-s2s-ai-challenge-s2s-ai-challenge) | `weather-forecasting` | 47 | 11 |
 | 2.2 | [ClimSim](#22-climsim-climsim) | `climate-projection` | 50 | 11 |
 | 2.3 | [CropHarvest](#23-cropharvest-cropharvest) | `remote-sensing` | 54 | 10 |
-| 2.4 | [GEO-Bench](#24-geo-bench-geo-bench) | `remote-sensing` | 55 | 9 |
+| 2.4 | [GEO-Bench](#24-geo-bench-geo-bench) | `remote-sensing` | 55 | 10 |
 | 2.5 | [MapEval](#25-mapeval-mapeval) | `geospatial-reasoning` | 48 | 11 |
 | 2.6 | [WildfireSpreadTS](#26-wildfirespreadts-wildfirespreadts) | `hazard-prediction` | 37 | 10 |
 | 2.7 | [LifeCLEF](#27-lifeclef-lifeclef) | `ecology-biodiversity` | 49 | 10 |
 | 2.8 | [CY-Bench](#28-cy-bench-cy-bench) | `agriculture` | 37 | 7 |
 | 2.9 | [Learning to Run a Power Network (L2RPN)](#29-learning-to-run-a-power-network-l2rpn-l2rpn) | `energy-systems` | 50 | 9 |
-| 2.10 | [Smart Buildings Challenge](#210-smart-buildings-challenge-smart-buildings-challenge) | `energy-systems` | 50 | 12 |
+| 2.10 | [Smart Buildings Challenge](#210-smart-buildings-challenge-smart-buildings-challenge) | `energy-systems` | 50 | 13 |
 
 ### 2.1 S2S AI Challenge (s2s-ai-challenge)
 
@@ -145,7 +145,7 @@ Considered and rejected:
 
 - `learned_entrant_evidence` = system CRIMS2S, the winning entry, a mixture of EMOS-calibrated ECMWF, ECCC and NCEP forecasts, a CNN applied to ECMWF forecasts and climatology, weighted by a second CNN · [S2][s2s-ai-challenge-s2]
   > (ii) a prediction based on a convolutional neural network (CNN) applied to ECMWF forecasts
-- `learned_entrant_evidence` = system Horat and Lerch's global UNet post-processing model · [S3][s2s-ai-challenge-s3]
+- `learned_entrant_evidence` = system The global UNet post-processing model of arXiv 2306.15956 · [S3][s2s-ai-challenge-s3]
   > Overall, the global UNet yields the best results with a global RPSS of 3.1% averaged over all four test cases.
 - `ground_truth_source` = held-out-labels · [S5][s2s-ai-challenge-s5]
   - why: The observations are gridded analyses of instrument measurements, scored as category labels.
@@ -166,7 +166,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = fully-automatable · [S1][s2s-ai-challenge-s1]
   - why: Public data, a public scoring script and public ground truth; no human, physical or maintainer-only step produces the RPSS.
   > Note that we provide the scoring script as skill\_by\_year and ground truth data for responsible use only.
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · [S1][s2s-ai-challenge-s1]
+- `execution.harness` = The RPSS verification notebook and skill\_by\_year in the template's notebooks/scripts.py, the s2s-ai-challenge-template repository in the contractor's personal GitHub account (formerly in his namespace on RenkuLab's GitLab); the s2saichallengescorer bot that ran them has stopped. · [S1][s2s-ai-challenge-s1]
   > Note that we provide the scoring script as skill\_by\_year and ground truth data for responsible use only.
 - `execution.harness_gotcha` · [S3][s2s-ai-challenge-s3]
   > a closer inspection of the precipitation forecasts revealed that the probabilities over the three categories sometimes do not sum up to 1
@@ -180,7 +180,7 @@ Considered and rejected:
 
 - `as_used` = protocol Four CNN post-processing models (two UNets among them) trained on the challenge's ECMWF reforecasts and observations and scored by the challenge's RPSS on its 2020 test year, over land without Antarctica, against climatology and the challenge's ECMWF benchmark. The paper also scores a corrected ECMWF baseline of its own, because the challenge's benchmark file has precipitation probabilities that do not sum to 1.; split test (2020, 53 Thursday forecasts) · [S3][s2s-ai-challenge-s3]
   > Following the setup of the S2S AI Challenge, we evaluate the proposed post-processing methods based on the ranked probability skill score (RPSS) for the test set (year 2020)
-- `as_used` = protocol \[withheld: it may name a person; see the entry file\] · [S4][s2s-ai-challenge-s4]
+- `as_used` = protocol The 2025 AIES paper's authors extend the UConn team's entry, a random forest per region for each of 23 climate regions, and report RPSS improvements for temperature and precipitation at weeks 3-4 and 5-6. The abstract does not name the challenge, its test year or its reference; the full text was not read. · [S4][s2s-ai-challenge-s4]
   > a random forest classification model built for each of 23 regions of the world
 - `data.access` = fully-open · [S5][s2s-ai-challenge-s5]
   - why: The test year's observations, the labels, are distributed with the inputs.
@@ -221,7 +221,7 @@ Considered and rejected:
 #### s2s-ai-challenge · Lifecycle and activity
 
 - `lifecycle` = mature · [S1][s2s-ai-challenge-s1]
-  - why: The competition was formally ended, which ADR-0019 records in activity while lifecycle keeps the instrument's standing. The instrument stays available. The site and the climetlab data remain online, the template, scoring notebook and leaderboard moved to GitHub in December 2025, and the organisers invite later contributions. Its result record is settled (the leaderboard last updated 2022-11-07). Results on its setup were produced after it closed, by Horat and Lerch (2023, MWR 2024) and, apparently, by a 2025 follow-up from members of the UConn team (as\_used), but no 2025-2026 paper found names it, so \`active\` was not chosen (see review\_checks).
+  - why: The competition was formally ended, which ADR-0019 records in activity while lifecycle keeps the instrument's standing. The instrument stays available. The site and the climetlab data remain online, the template, scoring notebook and leaderboard moved to GitHub in December 2025, and the organisers invite later contributions. Its result record is settled (the leaderboard last updated 2022-11-07). Results on its setup were produced after it closed, by arXiv 2306.15956 (2023, MWR 2024) and, apparently, by a 2025 follow-up from members of the UConn team (as\_used), but no 2025-2026 paper found names it, so \`active\` was not chosen (see review\_checks).
   > The s2s-ai-competition is officially over.
 - `activity` = closed · [S1][s2s-ai-challenge-s1]
   - why: The route was the s2saichallengescorer bot, which scored tagged commits in participants' RenkuLab repositories and posted the results to the RPSS leaderboard. Contributions closed on 2021-10-31, the bot has stopped, and the leaderboard's last automated update is 2022-11-07. The site still asks anyone who beats the leader to contact the organisers and offers manual scoring, but describes no route to listing.
@@ -235,12 +235,12 @@ Considered and rejected:
 
 **Open review checks** (11):
 
-1. (field `lifecycle`) \[withheld: it may name a person; see the entry file\] · [S1][s2s-ai-challenge-s1]
+1. (field `lifecycle`) lifecycle mature rests on the formal ending (ADR-0019) and on use after it, arXiv 2306.15956 (2023/2024) by name and the 2025 AIES paper by inference. If the 2025 paper is not on the challenge's protocol, the last named use is 2024, and a reviewer may prefer null (the sources silent on current use) over mature. · [S1][s2s-ai-challenge-s1]
    > The s2s-ai-competition is officially over.
-2. (field `as_used`) \[withheld: it may name a person; see the entry file\] · [S2][s2s-ai-challenge-s2]
+2. (field `as_used`) The 2025 AIES paper is tied to the challenge only by its authors, its 23 regions, its weeks 3-4 and 5-6 RPSS and a 12.3% temperature gain against the 12.4% the results paper reports for the UConn team's later work. Its full text, closed access, would show whether it uses the 2020 test year and the challenge's reference. · [S2][s2s-ai-challenge-s2]
    > Further work since the competition showed that using the average of the ECMWF hindcast realizations as a feature in all the models could significantly improve the forecast accuracy by 12.4% for temperature at week 3 + 4
 3. (field `governance.maintainer_type`) maintainer\_type government-agency or individual. WMO and ECMWF are intergovernmental bodies, but no source read calls them public bodies, and the code repositories sit in the contractor's personal account, which the individual term's holder test would read as key-person risk; ECMWF holds the data.
-4. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S1][s2s-ai-challenge-s1]
+4. (field `governance.independence_flags`) grader-from-evaluated-party rests on one ECMWF reviewer being both an expert reviewer and a member of the ECMWF team that entered. That team was not among the five reviewed, and the review was pass/fail, so whether a grader in the official scoring path had a stake is arguable. The site thanks the other ECMWF reviewer under a name that differs only in the given name from an organiser who is on the team; they may be one person. · [S1][s2s-ai-challenge-s1]
    > \[withheld: it may name a person; see the entry file\]
 5. (field `designed_for_subjects`, needs a specialist) designed\_for\_subjects domain-specialist-model, not scientific-surrogate-model. The entrants post-process dynamical forecasts; a forecast-verification specialist may read a calibrated forecast system as standing in for the forecast system, which would bring the \`forecasting\` profile and its lead\_time and resolution\_window into force.
 6. (field `ground_truth_source`) ground\_truth\_source held-out-labels follows cy-bench for observed labels, although the 2020 observations were public and not held out; experimental was the alternative for CPC's gauge and station analyses.
@@ -358,7 +358,7 @@ Considered and rejected:
   > optimized via an extensive hyperparameter search with 8,257 trials
 - `learned_entrant_evidence` = system Squeezeformer (the first-placed Kaggle team's architecture) · [S4][climsim-s4]
   > For our Kaggle architectures, we chose the Squeezeformer from the first place team
-- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S6][climsim-s6]
+- `learned_entrant_evidence` = system Regularized mean-variance regression networks (arXiv 2511.22004, 2025) · [S6][climsim-s6]
   > Experiments on UCI datasets and the large-scale ClimSim dataset demonstrate robust calibration performance
 - `ground_truth_source` = simulation · [S1][climsim-s1]
   - why: Offline targets are the multi-scale simulator's outputs, and online the hybrid run is compared with a pure physical E3SM-MMF run.
@@ -389,7 +389,7 @@ Considered and rejected:
   > No subsampling was used to create the training dataset, but the validation dataset subsamples every 7th timestep while the test dataset subsamples every 12th timestep.
 - `as_used` = protocol Its online runs start from a spun-up state with a different initial condition than the one that made the ClimSim data, for both the hybrid runs and the reference E3SM-MMF run, because the dataset ships no restart files. · [S4][climsim-s4]
   > both hybrid runs and the MMF reference run used a different initial condition than that used to create the original ClimSim dataset
-- `as_used` = protocol \[withheld: it may name a person; see the entry file\] · [S4][climsim-s4]
+- `as_used` = protocol Its online comparisons use four-year runs between configurations and five-year runs against the maintainers' 2025 U-Net paper, where v6's case study scores one-year runs. · [S4][climsim-s4]
   > we use four-year simulations when comparing configurations and five-year simulations when directly comparing our online results
 - `data.access` = fully-open · [S7][climsim-s7]
   - why: The simulations are public Hugging Face datasets under CC-BY-4.0, and the records of the high- and low-resolution ones show no gate (the aquaplanet record was not read); the Kaggle copy of the low-resolution subset was CC0.
@@ -429,7 +429,7 @@ Considered and rejected:
 - `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S4][climsim-s4]
   > the winning solutions outperformed the U- Net submission by a considerable margin in offline R2 skill
 - `governance.funding` · [S1][climsim-s1]
-  > Primary support is by NVIDIA, the National Science Foundation (NSF) Science and Technology Center (STC) Learning the Earth with Artificial Intelligence and Physics
+  > \[withheld: it may name a person; see the entry file\]
 - `governance.independence_policy` · [S3][climsim-s3]
   > may enter and participate in the Competition, but are not eligible to win any Prizes
 - `governance.known_limitation` · [S1][climsim-s1]
@@ -457,8 +457,8 @@ Considered and rejected:
 2. (field `versions`) One entry for three protocols (offline v1, the Kaggle edition, ClimSim-Online). Whether the Kaggle competition, with its own variable list, hidden rows and single weighted R2, should be its own entry, and whether version\_kind edition fits a one-off competition.
 3. (field `aggregation_policy`) aggregation\_policy official-aggregate rests on the Kaggle score. The paper reports each variable apart and the online metrics have no aggregate, so none-by-design or unknown are defensible for the paper's protocol.
 4. (field `evaluation_method`, needs a specialist) calibration-uncertainty and uncertainty-calibration-score are rejected because CRPS is SI-only; the stochastic baselines (HSR, RPN, cVAE) emit distributions, and a reviewer may read CRPS as part of the protocol.
-5. (field `governance.independence_flags`) funded-by-evaluated-party is not set. NVIDIA is the primary funder, and the U-Net that v6 and the follow-up treat as the online state of the art is by authors at NVIDIA; no NVIDIA product is evaluated, but the U-Net could be read as an evaluated party's system. · [S1][climsim-s1]
-   > Primary support is by NVIDIA, the National Science Foundation (NSF) Science and Technology Center (STC) Learning the Earth with Artificial Intelligence and Physics
+5. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S1][climsim-s1]
+   > \[withheld: it may name a person; see the entry file\]
 6. (field `activity`) activity closed assumes Kaggle's late-submission route, if open, does not count. The competition pages and record read do not say whether late submissions are accepted.
 7. (field `execution.reproducibility_tier`) reproducibility\_tier automatable-with-simulator and compute\_tier simulator-required follow the online evaluation; if the offline R2 is taken as the headline, fully-automatable and a GPU tier would apply.
 8. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type theoretical-maximum is for the offline and Kaggle R2; the online errors are read against internal unpredictability from reruns of the reference simulation, a noise-ceiling for those metrics. · [S1][climsim-s1]
@@ -663,8 +663,8 @@ Considered and rejected:
 
 #### cropharvest · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S4][cropharvest-s4]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = NASA Harvest, with the University of Maryland, College Park · [S4][cropharvest-s4]
+  - why: The repository sits in the nasaharvest GitHub organisation, and the Zenodo record's creators are affiliated with NASA Harvest and the University of Maryland, College Park, as are the paper's authors. NASA Harvest is the consortium that funded the work.
   > This work was supported by the NASA Harvest Consortium (Award
 - `governance.funding` · [S4][cropharvest-s4]
   > This work was supported by the NASA Harvest Consortium (Award
@@ -722,7 +722,7 @@ Considered and rejected:
 
 ### 2.4 GEO-Bench (geo-bench)
 
-`data/benchmarks/earth-climate/geo-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/earth-climate/geo-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Pretrained Earth-observation models fine-tuned on satellite and aerial tasks: 12 in GEO-Bench, 19 in GEO-Bench-2.*
 
@@ -743,7 +743,7 @@ A benchmark for pretrained models on Earth observation, built from public remote
 | Independence flags | maintainer-competes-on-own-benchmark |
 | Licences: code · dataset | Apache-2.0 · mixed, per dataset (CC-BY-4.0, CC-BY-SA-4.0, CDLA-Permissive-1.0, CC0-1.0, MIT, Etalab Open Licence 2.0) |
 | Released | 2023-06-06 |
-| Links | homepage [the-ai-alliance.github.io/GEO-Bench-2/](https://the-ai-alliance.github.io/GEO-Bench-2/) · repository [github.com/The-AI-Alliance/GEO-Bench-2](https://github.com/The-AI-Alliance/GEO-Bench-2) · leaderboard [huggingface.co/spaces/aialliance/GEO-Bench-2-Leaderboard](https://huggingface.co/spaces/aialliance/GEO-Bench-2-Leaderboard) · dataset [huggingface.co/collections/aialliance/geo-bench-2](https://huggingface.co/collections/aialliance/geo-bench-2) |
+| Links | homepage [the-ai-alliance.github.io/GEO-Bench-2/](https://the-ai-alliance.github.io/GEO-Bench-2/) · repository [github.com/The-AI-Alliance/GEO-Bench-2](https://github.com/The-AI-Alliance/GEO-Bench-2) · leaderboard [huggingface.co/spaces/aialliance/GEO-Bench-2-Leaderboard](https://huggingface.co/spaces/aialliance/GEO-Bench-2-Leaderboard) · dataset [huggingface.co/aialliance](https://huggingface.co/aialliance) |
 
 **Sources**
 
@@ -757,6 +757,7 @@ A benchmark for pretrained models on Earth observation, built from public remote
 | S6 | `src-github-geo-bench-2-leaderboard-readme` | repository · GitHub | [raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/mai...](https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063351/https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/main/README.md) |
 | S7 | `src-github-geo-bench-2-readme` | repository · GitHub | [raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md](https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063414/https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md) |
 | S8 | `src-github-geo-bench-readme` | repository · GitHub | [raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md](https://raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063438/https://raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md) |
+| S9 | `src-hf-api-aialliance-datasets` | dataset-card · Hugging Face | [huggingface.co/api/datasets?author=aialliance&limit=100](https://huggingface.co/api/datasets?author=aialliance&limit=100) | none (pending) |
 
 **Evidence** (55 quoted fields), by checklist area:
 
@@ -907,9 +908,9 @@ Considered and rejected:
 - `history` = date 2025-11-19; event channel-opened; field governance.submission\_process; from none (GEO-Bench asked authors to publish per-seed CSV files with their papers); to maintainer-verified · [S4][geo-bench-s4]
   > an interactive leaderboard on Hugging Face for community engagement
 
-**Open review checks** (9):
+**Open review checks** (10):
 
-1. (field `versions`) \[withheld: it may name a person; see the entry file\] · [S8][geo-bench-s8]
+1. (field `versions`) The entry is GEO-Bench with GEO-Bench-2 as its second edition, as GEO-Bench's README calls it the successor and one ServiceNow researcher is the corresponding author of both. But the holder changed (ServiceNow to the AI Alliance), only three datasets carried over, and the stress corpus and taxonomy examples treat geo-bench-2 as its own id. It could instead be its own entry with lineage.supersedes. · [S8][geo-bench-s8]
    > GEO-Bench-2 is the successor to GEO-Bench, published by the AI Alliance
 2. (field `comparability.material_extra`) Spatial resolution has no EvalConditions field, so it is recorded per task in subsets and reaches a claim only through subset\_used. Resizing, cropping or coarsening the images changes it and the score (GEO-Bench-2's GSD ablation; GEO-Bench's warning on crop-and-resize). A resolution field, or a ruling that subset\_used suffices, is needed; this task could not file a tag gap or write a conditions record. · [S4][geo-bench-s4]
    > Both figures highlight that increasing GSD tends to lower test metrics across all models.
@@ -922,6 +923,8 @@ Considered and rejected:
 8. (field `governance.independence_flags`) The independence flag rests on IBM authors of TerraMind and Prithvi-EO-2.0 being GEO-Bench-2 authors (and, for GEO-Bench, ServiceNow's SeCo among the baselines); the rows are the paper's baselines, not models built for the board. · [S4][geo-bench-s4]
    > Some examples include TerraMind-V1-Large for its multi-spectral and Multi-Temporal capabilities
 9. (field `capability`) sample-efficiency was rejected although GEO-Bench ships official training subsets (1% to 100%) and the paper reports results along them.
+10. (field `dataset_url`) dataset\_url is the aialliance organisation page because the GEO-Bench-2 collection answers 401; the organisation also holds GEOBench-VLM, a different benchmark. Re-check whether the maintainers restore or rename the collection, and point dataset\_url back to it if they do. · [S9][geo-bench-s9]
+   > "id":"aialliance/benv2","author":"aialliance","disabled":false,"gated":false,"lastModified":"2025-11-17T18:19:23.000Z"
 
 **Reviewer checklist** for `geo-bench`:
 
@@ -942,6 +945,7 @@ Considered and rejected:
 [geo-bench-s6]: https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/main/README.md
 [geo-bench-s7]: https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md
 [geo-bench-s8]: https://raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md
+[geo-bench-s9]: https://huggingface.co/api/datasets?author=aialliance&limit=100
 
 ### 2.5 MapEval (mapeval)
 
@@ -1214,7 +1218,7 @@ A dataset and benchmark for predicting how an active wildfire will spread over t
   > Published October 25, 2023 \| Version v1.0
 - `release_venue` = NeurIPS 2023 Datasets and Benchmarks Track · [S1][wildfirespreadts-s1]
   > Advances in Neural Information Processing Systems 36 (NeurIPS 2023) Datasets and Benchmarks Track DOI: 10.52202/075280-3258
-- `lineage.forks` = id wsts-plus; maintainer Lahrichi, Bova, Johnson and Malof (the WSTS+ authors, Universities of Missouri and Montana) · [S4][wildfirespreadts-s4]
+- `lineage.forks` = id wsts-plus; maintainer The WSTS+ authors (Universities of Missouri and Montana) · [S4][wildfirespreadts-s4]
   > we create a new benchmark, WSTS+, by incorporating four additional years of historical wildfire data into the WSTS benchmark
 
 #### wildfirespreadts · Domain and capabilities
@@ -1263,7 +1267,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = fully-automatable · S6
   - why: Open data, a fixed protocol and public training and evaluation code; a model can be trained and scored end to end with no human, physical or maintainer-only step.
   > which directly provides dataset loaders for train/val/test set
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S6
+- `execution.harness` = train.py and src/dataloader/FireSpreadDataModule.py in the WildfireSpreadTS repository, on the first author's personal GitHub account (the paper's experiment code and data module) · S6
   > This repository contains the code for recreating the experiments in the WildfireSpreadTS paper.
 - `aggregation_policy` = official-aggregate · [S3][wildfirespreadts-s3]
   - why: The paper's number is the mean test AP over the 12 cross-validation folds, with its standard deviation, per model, input length and feature set; nothing combines input lengths or feature sets into one score.
@@ -1298,7 +1302,7 @@ Considered and rejected:
 
 #### wildfirespreadts · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S5][wildfirespreadts-s5]
+- `governance.maintainer` = The dataset's three authors at KTH Royal Institute of Technology · [S5][wildfirespreadts-s5]
   - why: The datasheet names the three authors at KTH as the dataset's creators; the repository is in the first author's GitHub account and the data on Zenodo.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.funding` · [S5][wildfirespreadts-s5]
@@ -1989,7 +1993,7 @@ Considered and rejected:
 
 ### 2.10 Smart Buildings Challenge (smart-buildings-challenge)
 
-`data/benchmarks/earth-climate/smart-buildings-challenge.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-04
+`data/benchmarks/earth-climate/smart-buildings-challenge.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-18
 
 *A NeurIPS 2026 Kaggle competition: one HVAC control policy, scored in simulation on unseen buildings and climates.*
 
@@ -2023,8 +2027,10 @@ A NeurIPS 2026 competition, run on Kaggle, for a single HVAC control policy that
 | S5 | `src-kaggle-smart-buildings-record` | leaderboard-page · Kaggle | [www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?c...](https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=neurips-2026-smart-buildings) | [capture 2026-11-04](https://web.archive.org/web/20261104111732/https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=neurips-2026-smart-buildings) |
 | S6 | `src-kaggle-smart-buildings-code` | leaderboard-page · Kaggle | [www.kaggle.com/api/i/kernels.KernelsService/ListKernels](https://www.kaggle.com/api/i/kernels.KernelsService/ListKernels) | none (withheld) |
 | S7 | `src-github-smart-buildings-starter-kit-readme` | repository · GitHub | [raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c5...](https://raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c57b5291f44baf0283e0a081d53f5b16/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104105338/https://raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c57b5291f44baf0283e0a081d53f5b16/README.md) |
-| S8 | `src-arxiv-2410-03756-v2` | preprint · arXiv | [arxiv.org/pdf/2410.03756v2](https://arxiv.org/pdf/2410.03756v2) | none (not-required) |
-| S9 | `src-arxiv-2610-18511` | preprint · arXiv | [arxiv.org/abs/2610.18511](https://arxiv.org/abs/2610.18511) | none (not-required) |
+| S8 | `src-github-api-smart-buildings-starter-kit-pull-2` | repository · GitHub | [api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2](https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2) | none (pending) |
+| S9 | `src-arxiv-2410-03756-v2` | preprint · arXiv | [arxiv.org/pdf/2410.03756v2](https://arxiv.org/pdf/2410.03756v2) | none (not-required) |
+| S10 | `src-arxiv-2610-18511` | preprint · arXiv | [arxiv.org/abs/2610.18511](https://arxiv.org/abs/2610.18511) | none (not-required) |
+| S11 | `src-github-api-smart-buildings-starter-kit-pull-3` | repository · GitHub | [api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3](https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3) | none (pending) |
 
 **Evidence** (50 quoted fields), by checklist area:
 
@@ -2178,27 +2184,29 @@ Considered and rejected:
 - `history` = date 2026-10-13; event channel-opened; field governance.submission\_process; to sandboxed-rerun · [S5][smart-buildings-challenge-s5]
   > "dateEnabled":"2026-10-13T20:06:22.087Z","deadline":"2027-01-15T17:59:59Z"
 
-**Open review checks** (12):
+**Open review checks** (13):
 
-1. (field `domain`) Placement. The taxonomy names this benchmark as an earth-climate example, and energy-systems reads "optimising energy ... demand", but the family's inclusion test asks for energy "in a geophysical setting" and its exclusion sends a physical process outside an Earth-system context to physics. engineering-design/process-control-optimization fits the act by its definition and is rejected only through its family's operated-not-designed exclusion. A building's HVAC plant is the stress case the recon note flagged; the entry follows the taxonomy's examples, as l2rpn does.
-2. (field `evaluation_method`) episodic-return or simulation-rollout. The score is accumulated reward with no floor (the comfort penalty is unbounded), which is episodic-return, but the reward is bounded above by zero, and episodic-return's inclusion speaks of "no defined maximum". ceiling\_anchor\_type is theoretical-maximum on the same bound. Both methods resolve the simulation profile here, so only the facet and saturation handling change. · [S1][smart-buildings-challenge-s1]
+1. (field `execution.harness`) The simulator's reward changed on 2026-11-16 (starter-kit pull requests 2 and 3, the tank energy balance and airflow-weighted return air), after the Round One deadline and before the final one. Whether Kaggle's gateway was updated, whether the public leaderboard was re-scored or now mixes scores from two simulator revisions, and which commit the final re-run of the top 7 policies fixes, are not stated; the competition's discussion and overview pages render by script and were not read. · [S8][smart-buildings-challenge-s8]
+   > Legitimate policies can shift a few percent, so merging means re-scoring.
+2. (field `domain`) Placement. The taxonomy names this benchmark as an earth-climate example, and energy-systems reads "optimising energy ... demand", but the family's inclusion test asks for energy "in a geophysical setting" and its exclusion sends a physical process outside an Earth-system context to physics. engineering-design/process-control-optimization fits the act by its definition and is rejected only through its family's operated-not-designed exclusion. A building's HVAC plant is the stress case the recon note flagged; the entry follows the taxonomy's examples, as l2rpn does.
+3. (field `evaluation_method`) episodic-return or simulation-rollout. The score is accumulated reward with no floor (the comfort penalty is unbounded), which is episodic-return, but the reward is bounded above by zero, and episodic-return's inclusion speaks of "no defined maximum". ceiling\_anchor\_type is theoretical-maximum on the same bound. Both methods resolve the simulation profile here, so only the facet and saturation handling change. · [S1][smart-buildings-challenge-s1]
    > The reward is bounded above by zero.
-3. (field `capability`) distribution-shift-generalization rather than transfer-learning. The task and reward are fixed and the buildings come from the same generator, but the observation and action spaces change shape per building, which a reviewer may read as a new embodiment and so transfer-learning. · [S4][smart-buildings-challenge-s4]
+4. (field `capability`) distribution-shift-generalization rather than transfer-learning. The task and reward are fixed and the buildings come from the same generator, but the observation and action spaces change shape per building, which a reviewer may read as a new embodiment and so transfer-learning. · [S4][smart-buildings-challenge-s4]
    > Across the 6 training buildings, K runs from 3 to 9 and V from 28 to 85, so the discrete space spans 4 to 10 bits and the continuous space 67 to 199 values.
-4. (field `capability`) No capability term covers closed-loop control of a non-embodied physical plant; sensorimotor-control is defined for a body. Logged with bench tag-gap (proposed plant-control).
-5. (field `governance.funding`) Prize split. The proposal gives $2K for Round One and $38K for the final deadline; the site and Kaggle give $25,000 for the leaderboard and $15,000 for the paper track. The entry follows the competition pages. · [S1][smart-buildings-challenge-s1]
+5. (field `capability`) No capability term covers closed-loop control of a non-embodied physical plant; sensorimotor-control is defined for a body. Logged with bench tag-gap (proposed plant-control).
+6. (field `governance.funding`) Prize split. The proposal gives $2K for Round One and $38K for the final deadline; the site and Kaggle give $25,000 for the leaderboard and $15,000 for the paper track. The entry follows the competition pages. · [S1][smart-buildings-challenge-s1]
    > Round One deadline (NeurIPS poster; $2K in prizes) Paris Workshop Final deadline ($38K in prizes)
-6. (field `governance.submission_process`) Team size and submission form. The proposal allows teams of up to four and an Entry of a module, weights and a reproducibility bundle; Kaggle's rules allow five and take a notebook only. · [S2][smart-buildings-challenge-s2]
+7. (field `governance.submission_process`) Team size and submission form. The proposal allows teams of up to four and an Entry of a module, weights and a reproducibility bundle; Kaggle's rules allow five and take a notebook only. · [S2][smart-buildings-challenge-s2]
    > The maximum Team size is five (5).
-7. (field `activity`) Final deadline time. Kaggle's timeline says every deadline is at 23:59 UTC, but its record holds 17:59:59 UTC on 2027-01-15. · [S2][smart-buildings-challenge-s2]
+8. (field `activity`) Final deadline time. Kaggle's timeline says every deadline is at 23:59 UTC, but its record holds 17:59:59 UTC on 2027-01-15. · [S2][smart-buildings-challenge-s2]
    > All deadlines are at 11:59 PM UTC on the corresponding day unless otherwise noted.
-8. (field `governance.known_limitation`) Real-building trials. The proposal invites top teams to live trials at four physical partner sites; Kaggle's description says three real buildings. Neither is scored, and no date is given. · [S2][smart-buildings-challenge-s2]
+9. (field `governance.known_limitation`) Real-building trials. The proposal invites top teams to live trials at four physical partner sites; Kaggle's description says three real buildings. Neither is scored, and no date is given. · [S2][smart-buildings-challenge-s2]
    > Winning solutions may have the opportunity to test their models on three real buildings.
-9. (field `learned_entrant_evidence`) learned\_entrant\_evidence is a public notebook whose title names residual PPO; its code was not read, the organisers ship no learned baseline, and many of the top public notebooks are PI or rule-based controllers. The leaderboard was not read because its rows name participants.
-10. (field `governance.maintainer_type`) maintainer\_type academic-lab rests on Kaggle naming the University of Washington host and sponsor; the organisers span five universities, Mila and four companies, and the code sits in a dedicated account with no stated institution, which community-collective's test may fit better.
-11. (field `lineage`) The reward differs from the Smart Buildings Control Suite's 3C reward, which is bounded in \[-1, 0\]; the challenge's comfort term is unbounded and occupancy-weighted. Whether the suite itself (a 2024-2025 benchmark of 11 real buildings) deserves an entry, with this challenge linked to it, is open; lineage is not recorded. · [S8][smart-buildings-challenge-s8]
+10. (field `learned_entrant_evidence`) learned\_entrant\_evidence is a public notebook whose title names residual PPO; its code was not read, the organisers ship no learned baseline, and many of the top public notebooks are PI or rule-based controllers. The leaderboard was not read because its rows name participants.
+11. (field `governance.maintainer_type`) maintainer\_type academic-lab rests on Kaggle naming the University of Washington host and sponsor; the organisers span five universities, Mila and four companies, and the code sits in a dedicated account with no stated institution, which community-collective's test may fit better.
+12. (field `lineage`) The reward differs from the Smart Buildings Control Suite's 3C reward, which is bounded in \[-1, 0\]; the challenge's comfort term is unbounded and occupancy-weighted. Whether the suite itself (a 2024-2025 benchmark of 11 real buildings) deserves an entry, with this challenge linked to it, is open; lineage is not recorded. · [S9][smart-buildings-challenge-s9]
    > formulated as an approximate regret function, bounded in the range \[-1,0\]
-12. (field `release_venue`) The NeurIPS blog's competition-track post (src-neurips-2026-competitions-blog, on main) lists the challenge, but its extract has no window on that line, so release\_venue cites the site instead.
+13. (field `release_venue`) The NeurIPS blog's competition-track post (src-neurips-2026-competitions-blog, on main) lists the challenge, but its extract has no window on that line, so release\_venue cites the site instead.
 
 **Reviewer checklist** for `smart-buildings-challenge`:
 
@@ -2218,8 +2226,10 @@ Considered and rejected:
 [smart-buildings-challenge-s5]: https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=neurips-2026-smart-buildings
 [smart-buildings-challenge-s6]: https://www.kaggle.com/api/i/kernels.KernelsService/ListKernels
 [smart-buildings-challenge-s7]: https://raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c57b5291f44baf0283e0a081d53f5b16/README.md
-[smart-buildings-challenge-s8]: https://arxiv.org/pdf/2410.03756v2
-[smart-buildings-challenge-s9]: https://arxiv.org/abs/2610.18511
+[smart-buildings-challenge-s8]: https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2
+[smart-buildings-challenge-s9]: https://arxiv.org/pdf/2410.03756v2
+[smart-buildings-challenge-s10]: https://arxiv.org/abs/2610.18511
+[smart-buildings-challenge-s11]: https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3
 
 ## 3. The coverage row and the gap question: are these cells empty, or do we not know about the work?
 

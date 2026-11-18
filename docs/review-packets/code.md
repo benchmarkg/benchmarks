@@ -2,7 +2,7 @@
 
 # Review packet: Code
 
-`code` · 16 published entries · 9 subdomains · data as of 2026-11-09 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`code` · 16 published entries · 9 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -21,11 +21,11 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 
 | # | Subdomain | Definition | Entries (primary + secondary) | Page |
 | ---: | --- | --- | --- | --- |
-| 1 | `function-synthesis`<br>Function synthesis | Producing a self-contained function from a specification, scored by running tests against it. | 4 + 3 | has benchmarks |
+| 1 | `function-synthesis`<br>Function synthesis | Producing a self-contained function from a specification, scored by running tests against it. | 4 + 4 | has benchmarks |
 | 2 | `repository-scale-se`<br>Repository-scale software engineering | Making a correct change inside a real repository, where finding where to change it is part of the task. | 3 + 2 | has benchmarks |
 | 3 | `bug-repair`<br>Bug repair | Producing a patch that fixes a specified defect. | 1 + 4 | has benchmarks |
 | 4 | `competitive-programming`<br>Competitive programming | Solving algorithmic contest problems under their original correctness and efficiency limits. | 2 + 1 | has benchmarks |
-| 5 | `code-understanding`<br>Code understanding | Answering questions about code without necessarily modifying it. | 1 + 1 | has benchmarks |
+| 5 | `code-understanding`<br>Code understanding | Answering questions about code without necessarily modifying it. | 1 + 2 | has benchmarks |
 | 6 | `program-verification`<br>Program verification | Producing or checking formal proofs of program properties. | 1 + 0 | has benchmarks |
 | 7 | `ml-engineering`<br>ML engineering | Building or improving a machine-learning pipeline, scored on the performance of the model it produces. | 1 + 0 | has benchmarks |
 | 8 | `data-science-workflows`<br>Data science workflows | Completing an analysis over real data to reach a defensible quantitative answer. | 1 + 0 | has benchmarks |
@@ -50,8 +50,8 @@ Not in this packet (6): `bigcodebench`, `defects4j`, `humaneval`, `livecodebench
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [Aider polyglot benchmark](#21-aider-polyglot-benchmark-aider-polyglot) | `function-synthesis` | 38 | 12 |
-| 2.2 | [SWE-bench](#22-swe-bench-swe-bench) | `repository-scale-se` | 26 | 1 |
-| 2.3 | [SWE-Bench Pro](#23-swe-bench-pro-swe-bench-pro) | `repository-scale-se` | 52 | 11 |
+| 2.2 | [SWE-bench](#22-swe-bench-swe-bench) | `repository-scale-se` | 28 | 2 |
+| 2.3 | [SWE-Bench Pro](#23-swe-bench-pro-swe-bench-pro) | `repository-scale-se` | 53 | 11 |
 | 2.4 | [ALE-Bench](#24-ale-bench-ale-bench) | `competitive-programming` | 44 | 12 |
 | 2.5 | [CRUXEval](#25-cruxeval-cruxeval) | `code-understanding` | 33 | 7 |
 | 2.6 | [DafnyBench](#26-dafnybench-dafnybench) | `program-verification` | 40 | 11 |
@@ -281,7 +281,7 @@ Considered and rejected:
 
 ### 2.2 SWE-bench (swe-bench)
 
-`data/benchmarks/code/swe-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence None · added 2026-09-23 · last verified 2026-09-23
+`data/benchmarks/code/swe-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence None · added 2026-09-23 · last verified 2026-11-18
 
 *2,294 real GitHub issues from 12 Python repos; a system must patch the repo so the issue's tests pass.*
 
@@ -311,40 +311,41 @@ Each task instance pairs a GitHub issue with the repository at the commit its fi
 | S1 | `src-swebench-leaderboard` | leaderboard-page · SWE-bench Team | [www.swebench.com/](https://www.swebench.com/) | [capture 2026-09-27](https://web.archive.org/web/20260927212929/https://www.swebench.com/) |
 | S2 | `src-swebench-arxiv-html` | preprint · arXiv | [arxiv.org/html/2310.06770v3](https://arxiv.org/html/2310.06770v3) | none (not-required) |
 | S3 | `src-swebench-illusion` | preprint · arXiv | [arxiv.org/abs/2506.12286](https://arxiv.org/abs/2506.12286) | none (not-required) |
-| S4 | `src-swebench-original-page` | documentation · SWE-bench Team | [www.swebench.com/original.html](https://www.swebench.com/original.html) | [capture 2026-09-14](https://web.archive.org/web/20260914211118/https://www.swebench.com/original.html) |
-| S5 | `src-swebench-hf-api` | dataset-card · Hugging Face | [huggingface.co/api/datasets/princeton-nlp/SWE-bench](https://huggingface.co/api/datasets/princeton-nlp/SWE-bench) | [capture 2026-09-29](https://web.archive.org/web/20260929210948/https://huggingface.co/api/datasets/princeton-nlp/SWE-bench) |
-| S6 | `src-swebench-experiments-readme` | documentation · SWE-bench/experiments | [raw.githubusercontent.com/SWE-bench/experiments/main/README.md](https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md) | [capture 2026-09-29](https://web.archive.org/web/20260929211031/https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md) |
-| S7 | `src-swebench-readme` | repository · SWE-bench/SWE-bench | [raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md](https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md) | [capture 2026-09-29](https://web.archive.org/web/20260929210801/https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md) |
-| S8 | `src-swebench-lite-page` | documentation · SWE-bench Team | [www.swebench.com/lite.html](https://www.swebench.com/lite.html) | [capture 2026-09-07](https://web.archive.org/web/20260907022852/https://www.swebench.com/lite.html) |
-| S9 | `src-swebench-verified-page` | documentation · SWE-bench Team | [www.swebench.com/verified.html](https://www.swebench.com/verified.html) | [capture 2026-09-25](https://web.archive.org/web/20260925052528/https://www.swebench.com/verified.html) |
-| S10 | `src-swebench-multimodal-arxiv` | preprint · arXiv | [arxiv.org/abs/2410.03859](https://arxiv.org/abs/2410.03859) | none (not-required) |
-| S11 | `src-swebench-pro-arxiv` | preprint · arXiv | [arxiv.org/abs/2509.16941](https://arxiv.org/abs/2509.16941) | none (not-required) |
-| S12 | `src-arxiv-2505-23419-v2` | preprint · arXiv | [arxiv.org/html/2505.23419v2](https://arxiv.org/html/2505.23419v2) | none (not-required) |
-| S13 | `src-arxiv-2504-02605` | preprint · arXiv | [arxiv.org/abs/2504.02605](https://arxiv.org/abs/2504.02605) | none (not-required) |
-| S14 | `src-swebench-arxiv-abs` | preprint · arXiv | [arxiv.org/abs/2310.06770](https://arxiv.org/abs/2310.06770) | none (not-required) |
-| S15 | `src-swebench-gh-api` | repository · GitHub | [api.github.com/repos/SWE-bench/SWE-bench](https://api.github.com/repos/SWE-bench/SWE-bench) | [capture 2026-09-14](https://web.archive.org/web/20260914211116/https://api.github.com/repos/SWE-bench/SWE-bench) |
+| S4 | `src-arxiv-2410-06992` | preprint · arXiv | [arxiv.org/abs/2410.06992](https://arxiv.org/abs/2410.06992) | none (not-required) |
+| S5 | `src-swebench-original-page` | documentation · SWE-bench Team | [www.swebench.com/original.html](https://www.swebench.com/original.html) | [capture 2026-09-14](https://web.archive.org/web/20260914211118/https://www.swebench.com/original.html) |
+| S6 | `src-swebench-hf-api` | dataset-card · Hugging Face | [huggingface.co/api/datasets/princeton-nlp/SWE-bench](https://huggingface.co/api/datasets/princeton-nlp/SWE-bench) | [capture 2026-09-29](https://web.archive.org/web/20260929210948/https://huggingface.co/api/datasets/princeton-nlp/SWE-bench) |
+| S7 | `src-swebench-experiments-readme` | documentation · SWE-bench/experiments | [raw.githubusercontent.com/SWE-bench/experiments/main/README.md](https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md) | [capture 2026-09-29](https://web.archive.org/web/20260929211031/https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md) |
+| S8 | `src-swebench-readme` | repository · SWE-bench/SWE-bench | [raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md](https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md) | [capture 2026-09-29](https://web.archive.org/web/20260929210801/https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md) |
+| S9 | `src-swebench-lite-page` | documentation · SWE-bench Team | [www.swebench.com/lite.html](https://www.swebench.com/lite.html) | [capture 2026-09-07](https://web.archive.org/web/20260907022852/https://www.swebench.com/lite.html) |
+| S10 | `src-swebench-verified-page` | documentation · SWE-bench Team | [www.swebench.com/verified.html](https://www.swebench.com/verified.html) | [capture 2026-09-25](https://web.archive.org/web/20260925052528/https://www.swebench.com/verified.html) |
+| S11 | `src-swebench-multimodal-arxiv` | preprint · arXiv | [arxiv.org/abs/2410.03859](https://arxiv.org/abs/2410.03859) | none (not-required) |
+| S12 | `src-swebench-pro-arxiv` | preprint · arXiv | [arxiv.org/abs/2509.16941](https://arxiv.org/abs/2509.16941) | none (not-required) |
+| S13 | `src-arxiv-2505-23419-v2` | preprint · arXiv | [arxiv.org/html/2505.23419v2](https://arxiv.org/html/2505.23419v2) | none (not-required) |
+| S14 | `src-arxiv-2504-02605` | preprint · arXiv | [arxiv.org/abs/2504.02605](https://arxiv.org/abs/2504.02605) | none (not-required) |
+| S15 | `src-swebench-arxiv-abs` | preprint · arXiv | [arxiv.org/abs/2310.06770](https://arxiv.org/abs/2310.06770) | none (not-required) |
+| S16 | `src-swebench-gh-api` | repository · GitHub | [api.github.com/repos/SWE-bench/SWE-bench](https://api.github.com/repos/SWE-bench/SWE-bench) | [capture 2026-09-14](https://web.archive.org/web/20260914211116/https://api.github.com/repos/SWE-bench/SWE-bench) |
 
-**Evidence** (26 quoted fields), by checklist area:
+**Evidence** (28 quoted fields), by checklist area:
 
 #### swe-bench · Identity and id
 
-- `lineage.variants` = id swe-bench-lite; relation subset; n_items 300 · [S8][swe-bench-s8]
+- `lineage.variants` = id swe-bench-lite; relation subset; n_items 300 · [S9][swe-bench-s9]
   > SWE-bench Lite provides a smaller, carefully selected subset of 300 tasks from the full benchmark
-- `lineage.variants` = id swe-bench-verified; relation human-filtered-subset; n_items 500; co_maintainer OpenAI · [S9][swe-bench-s9]
+- `lineage.variants` = id swe-bench-verified; relation human-filtered-subset; n_items 500; co_maintainer OpenAI · [S10][swe-bench-s10]
   > SWE-bench Verified is a human-filtered subset of 500 instances from SWE-bench, created in collaboration with OpenAI.
-- `lineage.variants.n_items_history` = value 617 · [S10][swe-bench-s10]
+- `lineage.variants.n_items_history` = value 617 · [S11][swe-bench-s11]
   > SWE-bench M features 617 task instances collected from 17 JavaScript libraries
-- `lineage.variants` = id swe-bench-multimodal; relation extension; n_items 480 · [S7][swe-bench-s7]
+- `lineage.variants` = id swe-bench-multimodal; relation extension; n_items 480 · [S8][swe-bench-s8]
   > SWE-bench Multimodal v2 is now fully open source, with 480 tasks available for local evaluation!
 - `lineage.variants` = id swe-bench-multilingual; relation extension; n_items 300 · [S1][swe-bench-s1]
   > Tasks from 42 repositories across 9 programming languages.
-- `lineage.forks` = id swe-bench-pro; maintainer Scale AI · [S11][swe-bench-s11]
+- `lineage.forks` = id swe-bench-pro; maintainer Scale AI · [S12][swe-bench-s12]
   > builds upon the best practices of SWE-BENCH \[25\], but is explicitly designed to capture realistic, complex, enterprise-level problems
-- `lineage.forks` = id swe-bench-live; maintainer Microsoft · [S12][swe-bench-s12]
+- `lineage.forks` = id swe-bench-live; maintainer Microsoft · [S13][swe-bench-s13]
   > While SWE-bench-Live adopts the same task definition as SWE-bench, it introduces a novel, fully automated pipeline that enables scalable and continuously updatable benchmark construction.
-- `lineage.forks` = id multi-swe-bench; maintainer ByteDance Seed · [S13][swe-bench-s13]
+- `lineage.forks` = id multi-swe-bench; maintainer ByteDance Seed · [S14][swe-bench-s14]
   > To address this, we introduce a multilingual issue-resolving benchmark, called Multi-SWE-bench, covering Java, TypeScript, JavaScript, Go, Rust, C, and C++.
-- `lineage.views` = name Bash Only; of swe-bench-verified · [S6][swe-bench-s6]
+- `lineage.views` = name Bash Only; of swe-bench-verified · [S7][swe-bench-s7]
   > Bash Only\* view is a filter on the Verified board rather than a board of its own.
 
 #### swe-bench · Task and evaluation
@@ -353,11 +354,11 @@ Each task instance pairs a GitHub issue with the repository at the commit its fi
   > Sonar Foundation Agent + Claude 4.5 Opus
 - `task.scoring` = The patch is applied and the instance's FAIL\_TO\_PASS and PASS\_TO\_PASS tests are run in that instance's Docker image. Resolved if the patch applies and every test in both lists passes. · [S2][swe-bench-s2]
   > If the patch applies successfully and all of these tests pass we consider the proposed solution to have successfully resolved the issue. The metric for our benchmark is the percentage of task instances that are resolved.
-- `execution.harness` = swebench (PyPI), CLI \`swebench eval full\` · [S7][swe-bench-s7]
+- `execution.harness` = swebench (PyPI), CLI \`swebench eval full\` · [S8][swe-bench-s8]
   > \`DATASET\` accepts an alias (\`full\`, \`verified\`, \`multimodal\`, \`multilingual\`)
-- `execution.harness_gotcha` · [S7][swe-bench-s7]
+- `execution.harness_gotcha` · [S8][swe-bench-s8]
   > The evaluation harness caches results by \`run\_id\` and \`instance\_id\` only.
-- `results_observed` = label release baseline; system Claude 2 with BM25 retrieval; scaffold none (single-shot RAG); value 1.96; checked maintainer-produced · [S4][swe-bench-s4]
+- `results_observed` = label release baseline; system Claude 2 with BM25 retrieval; scaffold none (single-shot RAG); value 1.96; checked maintainer-produced · [S5][swe-bench-s5]
   > our initial Retrieval Augmented Generation (RAG) baseline scored just 1.96%
 - `results_observed` = label highest row on the Full board; system Claude 4.5 Opus; scaffold Sonar Foundation Agent; value 52.62; date 2025-12-19; checked false · [S1][swe-bench-s1]
   > "name": "Sonar Foundation Agent + Claude 4.5 Opus", "os\_model": false, "os\_system": false, "reasoning\_effort": null, "resolved": 52.62
@@ -368,34 +369,40 @@ Each task instance pairs a GitHub issue with the repository at the commit its fi
 
 - `data.contamination_evidence` = stance supports · [S3][swe-bench-s3]
   > up to 35% consecutive 5-gram accuracy on SWE-Bench Verified and Full, but only up to 18% for tasks in other benchmarks
+- `data.contamination_evidence` = stance supports · [S4][swe-bench-s4]
+  > over 94% of the issues were created before LLM's knowledge cutoff dates, posing potential data leakage issues
 - `data.contamination_evidence` = stance against · [S2][swe-bench-s2]
   > for most models there’s little difference in performance before or after this date, with the exception of GPT-4
-- `data.size` = count 2294; unit task instances; subset test · [S4][swe-bench-s4]
+- `data.size` = count 2294; unit task instances; subset test · [S5][swe-bench-s5]
   > We collect 2,294 task instances by crawling Pull Requests and Issues from 12 popular Python repositories.
-- `data.size` = count 12; unit repositories · [S4][swe-bench-s4]
+- `data.size` = count 12; unit repositories · [S5][swe-bench-s5]
   > from 12 popular Python repositories
-- `data.size` = count 225; unit task instances; subset dev · [S5][swe-bench-s5]
+- `data.size` = count 225; unit task instances; subset dev · [S6][swe-bench-s6]
   > "name":"dev","num\_bytes":4783179,"num\_examples":225
-- `data.size` = count 19008; unit task instances; subset train · [S5][swe-bench-s5]
+- `data.size` = count 19008; unit task instances; subset train · [S6][swe-bench-s6]
   > "name":"train","num\_bytes":367610377,"num\_examples":19008
 
 #### swe-bench · Governance and independence
 
-- `governance.submission_process` = self-reported, maintainer-verified · [S6][swe-bench-s6]
+- `governance.submission_process` = self-reported, maintainer-verified · [S7][swe-bench-s7]
   > We will run your model on a random subset of SWE-bench and verify the results.
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S7][swe-bench-s7]
+- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S8][swe-bench-s8]
   > We have released \[SWE-agent\](https://github.com/SWE-agent/SWE-agent), which sets the state-of-the-art on the full SWE-bench test set!
 - `governance.independence_flags` = flag funded-by-evaluated-party · [S1][swe-bench-s1]
   > \[withheld: it may name a person; see the entry file\]
+- `governance.known_limitation` · [S4][swe-bench-s4]
+  > 32.67% of the successful patches involve cheating as the solutions were directly provided in the issue report or the comments.
 
 #### swe-bench · Lifecycle and activity
 
 - `activity` = leaderboard-live-no-round · [S1][swe-bench-s1]
   > "date": "2025-12-19", "folder": "20251219\_sonar-foundation-agent\_claude-opus-4-5"
 
-**Open review checks** (1):
+**Open review checks** (2):
 
 1. (field `governance.independence_flags`) funded-by-evaluated-party: The page says "generous support", not funding of the benchmark specifically. OpenAI and Anthropic models are both on this leaderboard. Flag if support = funding; otherwise drop. Disclosure, not accusation, either way.
+2. (field `governance.known_limitation`) SWE-Bench+'s solution leakage (the fix given in the issue or its comments) is recorded as a known limitation of the instances, not as training contamination; its before-cutoff figure is the contamination row. Its screening covers one agent's resolved instances (SWE-Agent with GPT-4), and it says the same problems hold in Lite and Verified, whose entries do not cite it. · [S4][swe-bench-s4]
+   > We also observed that the same data quality issues also exist in the two variants of SWE-bench, i.e., SWE-bench Lite and SWE-Bench Verified.
 
 **Reviewer checklist** for `swe-bench`:
 
@@ -411,22 +418,23 @@ Each task instance pairs a GitHub issue with the repository at the commit its fi
 [swe-bench-s1]: https://www.swebench.com/
 [swe-bench-s2]: https://arxiv.org/html/2310.06770v3
 [swe-bench-s3]: https://arxiv.org/abs/2506.12286
-[swe-bench-s4]: https://www.swebench.com/original.html
-[swe-bench-s5]: https://huggingface.co/api/datasets/princeton-nlp/SWE-bench
-[swe-bench-s6]: https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md
-[swe-bench-s7]: https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md
-[swe-bench-s8]: https://www.swebench.com/lite.html
-[swe-bench-s9]: https://www.swebench.com/verified.html
-[swe-bench-s10]: https://arxiv.org/abs/2410.03859
-[swe-bench-s11]: https://arxiv.org/abs/2509.16941
-[swe-bench-s12]: https://arxiv.org/html/2505.23419v2
-[swe-bench-s13]: https://arxiv.org/abs/2504.02605
-[swe-bench-s14]: https://arxiv.org/abs/2310.06770
-[swe-bench-s15]: https://api.github.com/repos/SWE-bench/SWE-bench
+[swe-bench-s4]: https://arxiv.org/abs/2410.06992
+[swe-bench-s5]: https://www.swebench.com/original.html
+[swe-bench-s6]: https://huggingface.co/api/datasets/princeton-nlp/SWE-bench
+[swe-bench-s7]: https://raw.githubusercontent.com/SWE-bench/experiments/main/README.md
+[swe-bench-s8]: https://raw.githubusercontent.com/SWE-bench/SWE-bench/main/README.md
+[swe-bench-s9]: https://www.swebench.com/lite.html
+[swe-bench-s10]: https://www.swebench.com/verified.html
+[swe-bench-s11]: https://arxiv.org/abs/2410.03859
+[swe-bench-s12]: https://arxiv.org/abs/2509.16941
+[swe-bench-s13]: https://arxiv.org/html/2505.23419v2
+[swe-bench-s14]: https://arxiv.org/abs/2504.02605
+[swe-bench-s15]: https://arxiv.org/abs/2310.06770
+[swe-bench-s16]: https://api.github.com/repos/SWE-bench/SWE-bench
 
 ### 2.3 SWE-Bench Pro (swe-bench-pro)
 
-`data/benchmarks/code/swe-bench-pro.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-09 · last verified 2026-11-09
+`data/benchmarks/code/swe-bench-pro.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-09 · last verified 2026-11-18
 
 *Long-horizon tasks from copyleft and purchased startup repositories; an agent's patch must pass hidden tests.*
 
@@ -455,17 +463,18 @@ Scale AI's successor in design to SWE-bench: 1,865 tasks from 41 actively mainta
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2509-16941-v2` | preprint · arXiv | [arxiv.org/pdf/2509.16941v2](https://arxiv.org/pdf/2509.16941v2) | none (not-required) |
 | S2 | `src-swebench-pro-arxiv` | preprint · arXiv | [arxiv.org/abs/2509.16941](https://arxiv.org/abs/2509.16941) | none (not-required) |
-| S3 | `src-arxiv-2610-24206-v1` | preprint · arXiv | [arxiv.org/pdf/2610.24206v1](https://arxiv.org/pdf/2610.24206v1) | none (not-required) |
-| S4 | `src-arxiv-2610-00890-v1` | preprint · arXiv | [arxiv.org/pdf/2610.00890v1](https://arxiv.org/pdf/2610.00890v1) | none (not-required) |
-| S5 | `src-scale-leaderboard-swe-bench-pro-v2` | leaderboard-page · Scale AI | [scale.com/leaderboard/swe\_bench\_pro\_public\_v2](https://scale.com/leaderboard/swe_bench_pro_public_v2) | [capture 2026-11-09](https://web.archive.org/web/20261109075706/https://labs.scale.com/leaderboard/swe_bench_pro_public_v2) |
-| S6 | `src-scale-leaderboard-swe-bench-pro` | leaderboard-page · Scale AI | [scale.com/leaderboard/swe\_bench\_pro\_public](https://scale.com/leaderboard/swe_bench_pro_public) | [capture 2026-11-09](https://web.archive.org/web/20261109075641/https://labs.scale.com/leaderboard/swe_bench_pro) |
-| S7 | `src-hf-api-swe-bench-pro` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ScaleAI/SWE-bench\_Pro](https://huggingface.co/api/datasets/ScaleAI/SWE-bench_Pro) | [capture 2026-11-09](https://web.archive.org/web/20261109073449/https://huggingface.co/api/datasets/ScaleAI/SWE-bench_Pro) |
-| S8 | `src-github-swe-bench-pro-readme` | repository · GitHub | [raw.githubusercontent.com/scaleapi/SWE-bench\_Pro-os/66f92766bba642462...](https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/README.md) | none (withheld) |
-| S9 | `src-arxiv-2609-08149` | preprint · arXiv | [arxiv.org/abs/2609.08149](https://arxiv.org/abs/2609.08149) | none (not-required) |
-| S10 | `src-github-swe-bench-pro-v2-readme` | repository · GitHub | [raw.githubusercontent.com/scaleapi/SWE-bench\_Pro-os/66f92766bba642462...](https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md) | [capture 2026-11-09](https://web.archive.org/web/20261109073204/https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md) |
-| S11 | `src-github-api-swe-bench-pro-os` | repository · GitHub | [api.github.com/repos/scaleapi/SWE-bench\_Pro-os](https://api.github.com/repos/scaleapi/SWE-bench_Pro-os) | [capture 2026-11-09](https://web.archive.org/web/20261109073006/https://api.github.com/repos/scaleapi/SWE-bench_Pro-os) |
+| S3 | `src-arxiv-2610-24206-v2` | preprint · arXiv | [arxiv.org/pdf/2610.24206v2](https://arxiv.org/pdf/2610.24206v2) | none (not-required) |
+| S4 | `src-arxiv-2610-24206-v1` | preprint · arXiv | [arxiv.org/pdf/2610.24206v1](https://arxiv.org/pdf/2610.24206v1) | none (not-required) |
+| S5 | `src-arxiv-2610-00890-v1` | preprint · arXiv | [arxiv.org/pdf/2610.00890v1](https://arxiv.org/pdf/2610.00890v1) | none (not-required) |
+| S6 | `src-scale-leaderboard-swe-bench-pro-v2` | leaderboard-page · Scale AI | [scale.com/leaderboard/swe\_bench\_pro\_public\_v2](https://scale.com/leaderboard/swe_bench_pro_public_v2) | [capture 2026-11-09](https://web.archive.org/web/20261109075706/https://labs.scale.com/leaderboard/swe_bench_pro_public_v2) |
+| S7 | `src-scale-leaderboard-swe-bench-pro` | leaderboard-page · Scale AI | [scale.com/leaderboard/swe\_bench\_pro\_public](https://scale.com/leaderboard/swe_bench_pro_public) | [capture 2026-11-09](https://web.archive.org/web/20261109075641/https://labs.scale.com/leaderboard/swe_bench_pro) |
+| S8 | `src-hf-api-swe-bench-pro` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ScaleAI/SWE-bench\_Pro](https://huggingface.co/api/datasets/ScaleAI/SWE-bench_Pro) | [capture 2026-11-09](https://web.archive.org/web/20261109073449/https://huggingface.co/api/datasets/ScaleAI/SWE-bench_Pro) |
+| S9 | `src-github-swe-bench-pro-readme` | repository · GitHub | [raw.githubusercontent.com/scaleapi/SWE-bench\_Pro-os/66f92766bba642462...](https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/README.md) | none (withheld) |
+| S10 | `src-arxiv-2609-08149` | preprint · arXiv | [arxiv.org/abs/2609.08149](https://arxiv.org/abs/2609.08149) | none (not-required) |
+| S11 | `src-github-swe-bench-pro-v2-readme` | repository · GitHub | [raw.githubusercontent.com/scaleapi/SWE-bench\_Pro-os/66f92766bba642462...](https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md) | [capture 2026-11-09](https://web.archive.org/web/20261109073204/https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md) |
+| S12 | `src-github-api-swe-bench-pro-os` | repository · GitHub | [api.github.com/repos/scaleapi/SWE-bench\_Pro-os](https://api.github.com/repos/scaleapi/SWE-bench_Pro-os) | [capture 2026-11-09](https://web.archive.org/web/20261109073006/https://api.github.com/repos/scaleapi/SWE-bench_Pro-os) |
 
-**Evidence** (52 quoted fields), by checklist area:
+**Evidence** (53 quoted fields), by checklist area:
 
 #### swe-bench-pro · Identity and id
 
@@ -473,7 +482,9 @@ Scale AI's successor in design to SWE-bench: 1,865 tasks from 41 actively mainta
   > provides a contamination-resistant testbed that more faithfully captures the complexity and diversity of real-world software development
 - `released` = 2025-09-21 · [S2][swe-bench-pro-s2]
   > Submitted on 21 Sep 2025
-- `lineage.forks` = id swe-bench-pro-verified; maintainer The authors of arXiv 2609.08149, outside Scale AI · [S9][swe-bench-pro-s9]
+- `release_venue` = ICML 2026 · [S3][swe-bench-pro-s3]
+  > SWE-Bench Pro: Can AI agents solve long-horizon software engineering tasks? In Proceedings of the 43rd International Conference on Machine Learning (ICML), volume 306 of Proceedings of Machine Learning Research, 2026.
+- `lineage.forks` = id swe-bench-pro-verified; maintainer The authors of arXiv 2609.08149, outside Scale AI · [S10][swe-bench-pro-s10]
   > We present SWE-Bench Pro Verified, a verified version of SWE-Bench Pro that addresses both problems.
 - `lineage` = role fork · [S1][swe-bench-pro-s1]
   > builds upon the best practices of SWE-Bench \[19\], but is explicitly designed to capture realistic, complex, enterprise-level problems beyond the scope of SWE-Bench.
@@ -492,7 +503,7 @@ Scale AI's successor in design to SWE-bench: 1,865 tasks from 41 actively mainta
 - `evaluation_method` = execution-tests · [S1][swe-bench-pro-s1]
   - why: The patch is applied in the task's container and its fail-to-pass and pass-to-pass tests are run; the resolve rate is the headline.
   > Every task includes human-reviewed test suites with fail2pass tests that verify issue resolution and pass2pass tests that ensure existing functionalities remain intact.
-- `designed_for_subjects` = model-in-benchmark-harness, agent-scaffold · [S3][swe-bench-pro-s3]
+- `designed_for_subjects` = model-in-benchmark-harness, agent-scaffold · [S4][swe-bench-pro-s4]
   - why: The paper runs every model in one scaffold (SWE-Agent, its default prompt, 50 turns), so only the model varies, which is model-in-benchmark-harness. The V2 paper and board report each result as a system -- model, scaffold and reasoning effort, with Claude Code, Codex and mini-swe-agent -- which is agent-scaffold.
   > Because results depend on the scaffold and effort setting as well as the model, we report them per system, defined as the combination of the three.
 
@@ -504,54 +515,54 @@ Considered and rejected:
 
 #### swe-bench-pro · Task and evaluation
 
-- `learned_entrant_evidence` = system Opus 5 in Claude Code, xhigh effort · [S5][swe-bench-pro-s5]
+- `learned_entrant_evidence` = system Opus 5 in Claude Code, xhigh effort · [S6][swe-bench-pro-s6]
   > \\"label\\":\\"SWE-Bench Pro V2 Full\\",\\"entries\\":\[{\\"model\\":\\"Opus 5 (Claude Code) xhigh\\",\\"version\\":\\"\\",\\"rank\\":1,\\"score\\":99.4
-- `reproducible_by_third_party` = true · [S7][swe-bench-pro-s7]
+- `reproducible_by_third_party` = true · [S8][swe-bench-pro-s8]
   - why: The public set, with its tests and reference patches, is in an ungated Hugging Face dataset, the images are public and the evaluation code is in the repository. The held-out and commercial scores cannot be reproduced by anyone but Scale.
   > "gated":false
 - `task` = exists true; input a human-rewritten problem statement in the repository's issue style, with a list of requirements and, where the tests expect new classes or functions, their interface, the repository at the base commit, in a Docker image with its dependencies installed; output A patch to the repository.; scoring The patch is applied in the task's environment and the fail-to-pass and pass-to-pass tests are run; resolved if all pass. The resolve rate (Pass@1) is the share of tasks resolved. V2 applies the patch to a fresh container and runs the unchanged verifier there.; tests_hidden_from_system true · [S1][swe-bench-pro-s1]
   > We report Pass@1 as the resolve rate.
-- `execution.compute_tier` = api-credits-only · [S3][swe-bench-pro-s3]
+- `execution.compute_tier` = api-credits-only · [S4][swe-bench-pro-s4]
   - why: Agents call hosted model APIs and the tasks run in CPU containers (Modal in the official setup, or local Docker); the V2 paper reports a few dollars of API spend per task. Serving open weights on GPUs, as the paper did with vLLM, is the entrant's choice.
   > Mean API spend per task on V2 was $2.9 for the Claude Code runs
 - `execution.reproducibility_tier` = fully-automatable · [S1][swe-bench-pro-s1]
   - why: The public set's tasks, images, verifiers and protocol tooling are public, and one command runs and re-grades a model; the commercial and held-out scores are Scale's alone.
   > All environments will be released as pre-built docker images to ensure that they are fully reproducible.
-- `execution.harness` = V2, Harbor (0.22 or later) task directories with the v2/tooling locked-protocol agents and the patch\_replay re-grader; v1, swe\_bench\_pro\_eval.py with run\_scripts and the SWE-agent submodule · [S10][swe-bench-pro-s10]
+- `execution.harness` = V2, Harbor (0.22 or later) task directories with the v2/tooling locked-protocol agents and the patch\_replay re-grader; v1, swe\_bench\_pro\_eval.py with run\_scripts and the SWE-agent submodule · [S11][swe-bench-pro-s11]
   > each shipped here as a self-contained \[Harbor\](https://github.com/laude-institute/harbor) task directory with its verifier
-- `execution.harness_gotcha` · [S10][swe-bench-pro-s10]
+- `execution.harness_gotcha` · [S11][swe-bench-pro-s11]
   > Report the re-graded number; publish both.
-- `aggregation_policy` = official-aggregate · [S6][swe-bench-pro-s6]
+- `aggregation_policy` = official-aggregate · [S7][swe-bench-pro-s7]
   - why: One headline per set and version, the share of tasks resolved, with a confidence interval beside each board row.
   > The primary metric is Resolve Rate, which is the percentage of tasks an agent successfully resolves.
 
 #### swe-bench-pro · Data and licence
 
-- `as_used` = protocol SWE-Bench Pro reported as pass@1 from one run on the 731-task public split, v1.0, under mini-swe-agent at maximum reasoning effort, for Kimi K2.7 Code before and after RL.; split public set, v1.0 (731 tasks) · [S4][swe-bench-pro-s4]
+- `as_used` = protocol SWE-Bench Pro reported as pass@1 from one run on the 731-task public split, v1.0, under mini-swe-agent at maximum reasoning effort, for Kimi K2.7 Code before and after RL.; split public set, v1.0 (731 tasks) · [S5][swe-bench-pro-s5]
   > 731 Issue resolution in 11 repositories (public split)
 - `data.access` = fully-open · [S1][swe-bench-pro-s1]
   - why: The headline scores, the paper's and both boards' public tabs, are computed on the public set, which anyone can download with its labels. The held-out set only guards against overfitting and publishes nothing, which the private-test-server term's exclusion test (and its Humanity's Last Exam near miss) sets aside. The commercial set is private-test-server in itself but is scored as a separate line, not inside the headline (review\_checks).
   > Problems in the held-out and the commercial set are not publicly accessible, but we release results on the commercial set.
-- `data.refresh` = versioned-releases · [S8][swe-bench-pro-s8]
+- `data.refresh` = versioned-releases · [S9][swe-bench-pro-s9]
   - why: The public set changed in one labelled revision, V2 on 2026-09-22, with v1 kept as its own Hugging Face config and tag, so a claim can name the set it was measured on.
   > The HuggingFace \`default\` config is now V2; v1 is kept as config \`v1\` / tag \`v1.0\`.
-- `data.data_provenance` = web-scraped, expert-authored · [S6][swe-bench-pro-s6]
+- `data.data_provenance` = web-scraped, expert-authored · [S7][swe-bench-pro-s7]
   > Human experts organize unstructured commits and issue metadata into two artifacts: a problem statement and a requirements brief with an optional interface.
-- `data.contamination_evidence` = stance supports · [S3][swe-bench-pro-s3]
+- `data.contamination_evidence` = stance supports · [S4][swe-bench-pro-s4]
   > the repository state shipped in the container leaked future commits containing the fix, first in SWE-bench \[24\] and later in SWE-Bench Pro \[25, 26\]
-- `data.contamination_evidence` = stance supports · [S3][swe-bench-pro-s3]
+- `data.contamination_evidence` = stance supports · [S4][swe-bench-pro-s4]
   > after a frontier model copied reference solutions verbatim from GitHub on 351 solved tasks, only 237 of which held up with GitHub blocked
-- `data.contamination_evidence` = stance supports · [S5][swe-bench-pro-s5]
+- `data.contamination_evidence` = stance supports · [S6][swe-bench-pro-s6]
   > In an earlier open-network run, 32 of 642 trajectories called code hosts and 4 retrieved the fixing commit's SHA.
-- `data.contamination_evidence` = stance supports · [S9][swe-bench-pro-s9]
+- `data.contamination_evidence` = stance supports · [S10][swe-bench-pro-s10]
   > its evaluation is undermined by two sources of unreliability: reward hacking, enabled by leakage of gold solutions or hidden evaluation information
-- `data.contamination_evidence` = stance supports · [S3][swe-bench-pro-s3]
+- `data.contamination_evidence` = stance supports · [S4][swe-bench-pro-s4]
   > The public repositories and their fixes predate the evaluated models. The protocol stops retrieval at test time, not memorization during training.
 - `data.contamination_evidence` = stance against · [S1][swe-bench-pro-s1]
   > By exclusively using repositories with GPL and other copyleft licenses, we ensure benchmark content is unlikely to appear in proprietary model training sets
 - `data.contamination_evidence` = stance against · [S1][swe-bench-pro-s1]
   > In addition, we use commercial repositories purchased from startups, which are private.
-- `data.ceiling_anchor_type` = theoretical-maximum · [S3][swe-bench-pro-s3]
+- `data.ceiling_anchor_type` = theoretical-maximum · [S4][swe-bench-pro-s4]
   - why: The resolve rate is bounded at 100%, and V2's release gate shows it reachable on every task, the reference patch passing and the empty patch failing each one; every V2 task was also solved by at least one frontier system. On v1.0 the V2 audit found 480 of 731 tasks needing repair or removal, so v1's reachable score is below the bound, unmeasured.
   > On the assembled 642-task set, the reference patch passes every task and the empty patch fails every task.
 - `data.upstream_licences` = The public and held-out sets come from repositories under strong copyleft licences (GPL and others), chosen for that reason; the commercial set's codebases were purchased from startups and are not released. · [S1][swe-bench-pro-s1]
@@ -560,9 +571,9 @@ Considered and rejected:
   > SWE-BENCH PRO contains 1,865 problems sourced from a diverse set of 41 actively maintained repositories spanning business applications, B2B services, and developer tools.
 - `data.size` = count 41; unit repositories; subset all three sets · [S1][swe-bench-pro-s1]
   > SWE-BENCH PRO contains 1,865 problems sourced from a diverse set of 41 actively maintained repositories
-- `data.size` = count 642; unit tasks; subset public set, V2 (Hugging Face config default) · [S7][swe-bench-pro-s7]
+- `data.size` = count 642; unit tasks; subset public set, V2 (Hugging Face config default) · [S8][swe-bench-pro-s8]
   > "num\_examples":642
-- `data.size` = count 51; unit tasks; subset Hard split of the V2 public set (config hard) · [S7][swe-bench-pro-s7]
+- `data.size` = count 51; unit tasks; subset Hard split of the V2 public set (config hard) · [S8][swe-bench-pro-s8]
   > "num\_examples":51
 - `data.size` = count 731; unit tasks; subset public set, v1.0 (config v1) · [S1][swe-bench-pro-s1]
   > We release 731 instances openly on HuggingFace and report the relevant statistics and model performances in this paper.
@@ -572,39 +583,39 @@ Considered and rejected:
   > We hold out a set of 858 problems mirroring the public set but use a separate set of repositories.
 - `data.languages` = Python, Go, JavaScript, TypeScript · [S1][swe-bench-pro-s1]
   > Although SWE-BENCH PRO includes multiple programming languages (Python, JavaScript, TypeScript, Go)
-- `execution.code_licence` = MIT · [S11][swe-bench-pro-s11]
+- `execution.code_licence` = MIT · [S12][swe-bench-pro-s12]
   > "license":{"key":"mit","name":"MIT License","spdx\_id":"MIT"
 - `subsets` = id swe-bench-pro#public; label Public set; items 642; scored_separately true · [S1][swe-bench-pro-s1]
   > We release 731 instances openly on HuggingFace and report the relevant statistics and model performances in this paper.
-- `subsets` = id swe-bench-pro#public; label Public set; items 642; scored_separately true · [S10][swe-bench-pro-s10]
+- `subsets` = id swe-bench-pro#public; label Public set; items 642; scored_separately true · [S11][swe-bench-pro-s11]
   > 731 -\> 642 tasks: 89 dropped after review. Same repositories, same base commits.
-- `subsets` = id swe-bench-pro#hard; label HARD-51 (Hard split of V2); parent swe-bench-pro#public; items 51; scored_separately true · [S3][swe-bench-pro-s3]
+- `subsets` = id swe-bench-pro#hard; label HARD-51 (Hard split of V2); parent swe-bench-pro#public; items 51; scored_separately true · [S4][swe-bench-pro-s4]
   > A task qualified if at least two of five model families fail on it across runs.
 - `subsets` = id swe-bench-pro#commercial; label Commercial set (the boards' private dataset); items 276; scored_separately true · [S1][swe-bench-pro-s1]
   > This is the only set containing proprietary repositories from startups, which we cannot release for legal reasons.
-- `subsets` = id swe-bench-pro#commercial; label Commercial set (the boards' private dataset); items 276; scored_separately true · [S6][swe-bench-pro-s6]
+- `subsets` = id swe-bench-pro#commercial; label Commercial set (the boards' private dataset); items 276; scored_separately true · [S7][swe-bench-pro-s7]
   > \\"label\\":\\"SWE-Bench Pro (Private Dataset)\\",\\"entries\\":\[{\\"model\\":\\"Muse Spark 1.1\*\\",\\"version\\":\\"\\",\\"rank\\":1,\\"score\\":51.5
-- `subsets` = id swe-bench-pro#held-out; label Held-out set; items 858; scored_separately false · [S6][swe-bench-pro-s6]
+- `subsets` = id swe-bench-pro#held-out; label Held-out set; items 858; scored_separately false · [S7][swe-bench-pro-s7]
   > This entire dataset is held-out for future analysis and internal evaluations. Therefore, the results for this set will not be published on the public leaderboards.
 
 #### swe-bench-pro · Governance and independence
 
-- `governance.maintainer` = Scale AI (V2 co-developed with Reflection AI) · [S5][swe-bench-pro-s5]
+- `governance.maintainer` = Scale AI (V2 co-developed with Reflection AI) · [S6][swe-bench-pro-s6]
   - why: Scale AI wrote the paper, holds the dataset and the repository under its organisation accounts (ScaleAI on Hugging Face, scaleapi on GitHub) and runs the boards; it co-developed V2 with Reflection AI, whose authors share the V2 paper.
   > We're releasing SWE-Bench Pro V2, a refreshed public split with a modified benchmark and a locked evaluation protocol, co-developed with Reflection.
-- `governance.submission_process` = maintainer-run · [S6][swe-bench-pro-s6]
+- `governance.submission_process` = maintainer-run · [S7][swe-bench-pro-s7]
   > Models and results that are grayed out were run with a capped cost limit and turn limit of 50. All other Models on this page were run with an uncapped cost and with a turn limit of 250.
 - `governance.independence_flags` = flag single-evaluator-private-test-set · [S1][swe-bench-pro-s1]
   > For the commercial set of 276 problems sourced from startup repositories, we keep it private but report results publicly in this paper and will update in the leaderboard.
-- `governance.known_limitation` · [S3][swe-bench-pro-s3]
+- `governance.known_limitation` · [S4][swe-bench-pro-s4]
   > Gemini fabricated go.sum and go.work.sum entries or edited the shared module cache in place in 3 tasks
 
 #### swe-bench-pro · Lifecycle and activity
 
-- `lifecycle` = active · [S5][swe-bench-pro-s5]
+- `lifecycle` = active · [S6][swe-bench-pro-s6]
   - why: Scale released V2 in September 2026 and was still adding rows to its board in November 2026; papers in October 2026 report SWE-Bench Pro results (as\_used). V2's Full set is near saturation for frontier systems (99.4%), which is computed from claims, not set here.
   > \\"createdAt\\":\\"2026-11-06T00:07:33.000Z\\"
-- `activity` = no-submission-channel · [S6][swe-bench-pro-s6]
+- `activity` = no-submission-channel · [S7][swe-bench-pro-s7]
   - why: Scale chooses and runs the systems and publishes the results on its boards; no source read names a route by which others enter a result (review\_checks).
   > We ran frontier models on Pro using the SWE-Agent scaffold
 
@@ -612,23 +623,24 @@ Considered and rejected:
 
 1. (field `data.access`) data.access fully-open, because the headline (the paper's tables and both boards' public tabs) is computed on the public set, and the held-out set publishes no score. If the commercial set's private tab counts as a headline beside the public one, the precedence rule makes it private-test-server. The same set fits data\_provenance unreleasable-confidential, left out because the validator then demands an unreleasable-data blocker that contradicts the public headline's fully-automatable tier. · [S1][swe-bench-pro-s1]
    > Problems in the held-out and the commercial set are not publicly accessible, but we release results on the commercial set.
-2. (field `data.contamination_risk`) contamination\_risk medium rather than high. Solution leakage at test time is evidenced on the v1.0 public set (git history in the images, open network) and was closed by V2's locked protocol, but v1.0 scores are still reported by others (as\_used) and sit on the deprecated board. Training-time memorisation is conceded as possible and not evidenced; the copyleft defence is a legal argument, not a measurement. · [S3][swe-bench-pro-s3]
+2. (field `data.contamination_risk`) contamination\_risk medium rather than high. Solution leakage at test time is evidenced on the v1.0 public set (git history in the images, open network) and was closed by V2's locked protocol, but v1.0 scores are still reported by others (as\_used) and sit on the deprecated board. Training-time memorisation is conceded as possible and not evidenced; the copyleft defence is a legal argument, not a measurement. · [S4][swe-bench-pro-s4]
    > after a frontier model copied reference solutions verbatim from GitHub on 351 solved tasks, only 237 of which held up with GitHub blocked
-3. (field `data.contamination_evidence`) The two V2 sources describe the open-network runs differently: the board says 32 of 642 trajectories called code hosts and 4 retrieved the fixing commit's SHA; the paper says 32 of 642 Opus 5 trajectories contacted code hosts and 25 downloaded the task's repository. The board's 69 tasks with contradicting instructions also does not match the paper's 15 spec-test contradictions. · [S3][swe-bench-pro-s3]
-   > 32 of 642 Claude Opus 5 trajectories contacted code hosts, and 25 downloaded the task
-4. (field `versions`) Versions: V2 is modelled as a breaking revision of the public set (same repositories and base commits, 89 tasks retired, instructions, tests and verifiers changed), with v1.0 and V2 running as concurrent lines on two boards. The tags v1.0 and v2 follow the Hugging Face configs; the release merge is named v2.0.0 on GitHub (not a quoted Source). No source says whether the commercial and held-out sets were revised for V2. · [S10][swe-bench-pro-s10]
+3. (field `data.contamination_evidence`) The two V2 sources describe the open-network runs differently: the board says 32 of 642 trajectories called code hosts and 4 retrieved the fixing commit's SHA; the paper says 32 of 642 Opus 5 trajectories contacted code hosts and 25 downloaded the task's repository. The board's 69 tasks with contradicting instructions also does not match the paper's 15 spec-test contradictions (10 repaired, 5 discarded). The paper's v2 (2026-11-11) keeps both of its figures, so the disagreement stands; which count the board means is not stated. · [S3][swe-bench-pro-s3]
+   > With the network open, 32 of 642 Claude Opus 5 trajectories contacted code hosts, and 25 downloaded the task’s own repository.
+4. (field `versions`) Versions: V2 is modelled as a breaking revision of the public set (same repositories and base commits, 89 tasks retired, instructions, tests and verifiers changed), with v1.0 and V2 running as concurrent lines on two boards. The tags v1.0 and v2 follow the Hugging Face configs; the release merge is named v2.0.0 on GitHub (not a quoted Source). No source says whether the commercial and held-out sets were revised for V2. · [S11][swe-bench-pro-s11]
    > 731 -\> 642 tasks: 89 dropped after review. Same repositories, same base commits.
-5. (field `lineage`) Lineage: swe-bench-pro-verified is listed as a fork with a proposed id, which is the lead's to allocate or drop. SWE-Bench ProMax, which an October 2026 arXiv abstract (2610.33851) names, was not read. swe-bench.yaml's fork entry cites src-swebench-pro-arxiv, which needs swe-bench-pro in its cited\_by. · [S3][swe-bench-pro-s3]
+5. (field `lineage`) Lineage: swe-bench-pro-verified is listed as a fork with a proposed id, which is the lead's to allocate or drop. SWE-Bench ProMax, which an October 2026 arXiv abstract (2610.33851) names, was not read. swe-bench.yaml's fork entry cites src-swebench-pro-arxiv, which needs swe-bench-pro in its cited\_by. · [S4][swe-bench-pro-s4]
    > In contemporaneous work, SWE-Bench Pro Verified \[29\] blocks code hosts, hides test artifacts, and refines 102 tasks collected from public reports \[30\]
 6. (field `governance.independence_flags`) Independence: Scale AI sells data and evaluation services and bought the commercial set's codebases, but no source read says so of evaluations, so evaluator-sells-evaluations is not set. Reflection AI co-developed V2; none of its models is on the boards read, so maintainer-competes-on-own-benchmark is not set either.
-7. (field `activity`) activity no-submission-channel rests on Scale running every row and no source naming a route for others; if labs can ask Scale to run their models, the board takes entries and accepting-submissions fits. · [S6][swe-bench-pro-s6]
+7. (field `activity`) activity no-submission-channel rests on Scale running every row and no source naming a route for others; if labs can ask Scale to run their models, the board takes entries and accepting-submissions fits. · [S7][swe-bench-pro-s7]
    > We ran frontier models on Pro using the SWE-Agent scaffold
 8. (field `comparability`) Comparability: board rows mix scaffolds (SWE-Agent, mini-swe-agent, Claude Code, Codex), turn limits (50 capped, 250 uncapped) and efforts, and the v1 paper reports two tables for the same public set under different caps. The boards' company metadata also mislabels some rows (Gemini 4 Argon and Minimax M3p1 Flash under openai), so observed\_subjects was read from the model strings.
-9. (field `subsets`) HARD-51 was chosen by the failures of five model families, Opus 5's among them, which then scores 98.0% on it; it is a model-filtered subset whose difficulty is relative to those models. V2's Full set is at 99.4% for the best system, which the V2 paper itself calls near saturation. · [S3][swe-bench-pro-s3]
+9. (field `subsets`) HARD-51 was chosen by the failures of five model families, Opus 5's among them, which then scores 98.0% on it; it is a model-filtered subset whose difficulty is relative to those models. V2's Full set is at 99.4% for the best system, which the V2 paper itself calls near saturation. · [S4][swe-bench-pro-s4]
    > Hard does not separate the top four systems from each other, and ranking them would require harder tasks than the public split currently contains.
-10. (field `data.ceiling_anchor_type`) ceiling theoretical-maximum is shown reachable for V2 by its release gate. For v1.0 the V2 audit found 480 of 731 tasks needing repair or removal, so v1.0's reachable ceiling is below 100% and unmeasured. · [S3][swe-bench-pro-s3]
+10. (field `data.ceiling_anchor_type`) ceiling theoretical-maximum is shown reachable for V2 by its release gate. For v1.0 the V2 audit found 480 of 731 tasks needing repair or removal, so v1.0's reachable ceiling is below 100% and unmeasured. The V2 paper's v2 adds that SWE-Bench Pro Verified drew on external audits, one by OpenAI estimating that about 30% of the tasks are broken; that audit was not read. · [S4][swe-bench-pro-s4]
    > 480 of the 731 tasks (66%) were repaired or removed
-11. (field `release_venue`) release\_venue is unset. The Surge AI paper's reference list cites SWE-Bench Pro as ICML 2026, which no primary source read confirms. The secondary code/bug-repair rests on bug fixes being one of several task types, with no share given.
+11. (field `release_venue`) release\_venue ICML 2026 rests on reference lists, the maintainers' own V2 paper (v2) and the Surge AI paper; no ICML proceedings page or arXiv comment was read. The secondary code/bug-repair rests on bug fixes being one of several task types, with no share given. · [S3][swe-bench-pro-s3]
+   > In Proceedings of the 43rd International Conference on Machine Learning (ICML), volume 306 of Proceedings of Machine Learning Research, 2026.
 
 **Reviewer checklist** for `swe-bench-pro`:
 
@@ -643,15 +655,16 @@ Considered and rejected:
 
 [swe-bench-pro-s1]: https://arxiv.org/pdf/2509.16941v2
 [swe-bench-pro-s2]: https://arxiv.org/abs/2509.16941
-[swe-bench-pro-s3]: https://arxiv.org/pdf/2610.24206v1
-[swe-bench-pro-s4]: https://arxiv.org/pdf/2610.00890v1
-[swe-bench-pro-s5]: https://scale.com/leaderboard/swe_bench_pro_public_v2
-[swe-bench-pro-s6]: https://scale.com/leaderboard/swe_bench_pro_public
-[swe-bench-pro-s7]: https://huggingface.co/api/datasets/ScaleAI/SWE-bench_Pro
-[swe-bench-pro-s8]: https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/README.md
-[swe-bench-pro-s9]: https://arxiv.org/abs/2609.08149
-[swe-bench-pro-s10]: https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md
-[swe-bench-pro-s11]: https://api.github.com/repos/scaleapi/SWE-bench_Pro-os
+[swe-bench-pro-s3]: https://arxiv.org/pdf/2610.24206v2
+[swe-bench-pro-s4]: https://arxiv.org/pdf/2610.24206v1
+[swe-bench-pro-s5]: https://arxiv.org/pdf/2610.00890v1
+[swe-bench-pro-s6]: https://scale.com/leaderboard/swe_bench_pro_public_v2
+[swe-bench-pro-s7]: https://scale.com/leaderboard/swe_bench_pro_public
+[swe-bench-pro-s8]: https://huggingface.co/api/datasets/ScaleAI/SWE-bench_Pro
+[swe-bench-pro-s9]: https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/README.md
+[swe-bench-pro-s10]: https://arxiv.org/abs/2609.08149
+[swe-bench-pro-s11]: https://raw.githubusercontent.com/scaleapi/SWE-bench_Pro-os/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md
+[swe-bench-pro-s12]: https://api.github.com/repos/scaleapi/SWE-bench_Pro-os
 
 ### 2.4 ALE-Bench (ale-bench)
 
@@ -916,7 +929,7 @@ Considered and rejected:
   > Submitted on 5 Jan 2024
 - `release_venue` = ICML 2024 (PMLR volume 235) · [S3][cruxeval-s3]
   > Proceedings of the 41st International Conference on Machine Learning
-- `lineage.forks` = id cruxeval-x; maintainer \[withheld: it may name a person; see the entry file\] · [S4][cruxeval-s4]
+- `lineage.forks` = id cruxeval-x; maintainer the CRUXEval-X authors · [S4][cruxeval-s4]
   > CRUXEval-X extends CRUXEval to a multilingual setting
 
 #### cruxeval · Domain and capabilities
@@ -1332,7 +1345,7 @@ Considered and rejected:
 #### mle-bench · Data and licence
 
 - `as_used` = protocol The README's 24-hour budget per competition and three runs, but on one A100 (40GB) with 12 vCPUs and 220 GB of RAM rather than the canonical A10 machine; results on all 75 competitions and on each complexity split, with ablations on the 22 Lite competitions.; split all 75 competitions, and the Low (Lite), Medium and High splits · [S4][mle-bench-s4]
-  > conducted on a standard node equipped with one NVIDIA A100 GPU (40GB), 12 vCPUs, 220 GB of RAM, and 1 TB of SSD storage
+  > \[withheld: it may name a person; see the entry file\]
 - `data.access` = gated-registration · [S3][mle-bench-s3]
   - why: The datasets are not redistributed. The preparation scripts download each competition through the Kaggle API, which needs an account and acceptance of the competition's rules, and build the held-out test labels locally, so nothing scored is withheld once the gate is passed.
   > Ensure that you have downloaded your Kaggle credentials
@@ -1514,8 +1527,8 @@ Considered and rejected:
 
 #### dabstep · Task and evaluation
 
-- `learned_entrant_evidence` = system NVIDIA KGMON (NeMo Agent Toolkit) Data Explorer with Claude Haiku 4.5 · [S8][dabstep-s8]
-  > \["\*\*NVIDIA KGMON (NeMo Agent Toolkit) Data Explorer\*\*",87.5,89.95,"NVIDIA LLM-tech Agent Research"
+- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S8][dabstep-s8]
+  > \[withheld: it may name a person; see the entry file\]
 - `learned_entrant_evidence` = system DS-STAR with Gemini-2.5-Pro · [S8][dabstep-s8]
   > \["\*\*DS-STAR\*\*",87.5,45.24,"Google Cloud AI Research"
 - `ground_truth_source` = held-out-labels · [S9][dabstep-s9]
@@ -1630,7 +1643,7 @@ Considered and rejected:
    > return set(words1).issubset(set(words2)) or set(words2).issubset(set(words1))
 9. (field `governance.submission_process`) submission\_process lists maintainer-verified for the Validated tab, which is now frozen, beside held-out-server for the open route. Whether a frozen validation record should still be tagged, or recorded in history only, is a modelling call.
 10. (field `domain`) The secondary leaf society-econ-law/financial-analysis is defined over financial documents and statements; DABstep's material is payment transactions, fee tables and a processing manual. It may not fit, in which case no secondary applies.
-11. (field `lineage`) \[withheld: it may name a person; see the entry file\] · [S7][dabstep-s7]
+11. (field `lineage`) Lineage. DS-STAR evaluates on DABStep-Research (the DABStep-Research paper, 2025), a report-generation suite whose name suggests it derives from DABstep; its maintainer and relation were not read, so no fork is recorded. The paper's own size statement ("the majority" of tasks hidden) also differs from the Space, which scores all 450. · [S7][dabstep-s7]
    > \[withheld: it may name a person; see the entry file\]
 
 **Reviewer checklist** for `dabstep`:

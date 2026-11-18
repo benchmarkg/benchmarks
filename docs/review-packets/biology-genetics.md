@@ -2,7 +2,7 @@
 
 # Review packet: Biology and genetics
 
-`biology-genetics` · 25 published entries · Core family · 18 subdomains · data as of 2026-11-05 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`biology-genetics` · 25 published entries · Core family · 18 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -59,14 +59,14 @@ Not in this packet (15): `bend`, `bixbench`, `brain-score`, `cafa`, `cagi`, `cam
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [CAID](#21-caid-caid) | `protein-function-prediction` | 46 | 11 |
-| 2.2 | [FLIP](#22-flip-flip) | `protein-fitness-prediction` | 55 | 13 |
-| 2.3 | [Protein Engineering Tournament](#23-protein-engineering-tournament-protein-engineering-tournament) | `protein-design` | 43 | 13 |
+| 2.2 | [FLIP](#22-flip-flip) | `protein-fitness-prediction` | 56 | 13 |
+| 2.3 | [Protein Engineering Tournament](#23-protein-engineering-tournament-protein-engineering-tournament) | `protein-design` | 43 | 14 |
 | 2.4 | [Runs N' Poses](#24-runs-n-poses-runs-n-poses) | `protein-ligand-cofolding` | 53 | 11 |
 | 2.5 | [GUE](#25-gue-gue) | `regulatory-genomics` | 51 | 12 |
 | 2.6 | [MLOmics](#26-mlomics-mlomics) | `transcriptomics` | 41 | 10 |
 | 2.7 | [Open Problems in Single-Cell Analysis](#27-open-problems-in-single-cell-analysis-open-problems) | `single-cell-analysis` | 50 | 8 |
 | 2.8 | [ASAP Discovery x OpenADMET Antiviral Competition](#28-asap-discovery-x-openadmet-antiviral-competition-asap-antiviral-competition) | `drug-target-interaction` | 57 | 12 |
-| 2.9 | [BEELINE](#29-beeline-beeline) | `systems-biology` | 44 | 12 |
+| 2.9 | [BEELINE](#29-beeline-beeline) | `systems-biology` | 45 | 12 |
 | 2.10 | [Neural Latents Benchmark](#210-neural-latents-benchmark-neural-latents-benchmark) | `neuroscience-decoding` | 49 | 11 |
 
 ### 2.1 CAID (caid)
@@ -279,7 +279,7 @@ Considered and rejected:
 
 ### 2.2 FLIP (flip)
 
-`data/benchmarks/biology-genetics/flip.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-05 · last verified 2026-11-05
+`data/benchmarks/biology-genetics/flip.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-05 · last verified 2026-11-18
 
 *Protein fitness landscapes split so training sees few mutations and the test set many, as an engineering campaign does.*
 
@@ -315,10 +315,12 @@ A benchmark for protein fitness prediction built for protein engineering rather 
 | S7 | `src-arxiv-2501-18223-v1` | preprint · arXiv | [arxiv.org/pdf/2501.18223v1](https://arxiv.org/pdf/2501.18223v1) | none (not-required) |
 | S8 | `src-zenodo-18433203` | dataset-card · Zenodo | [zenodo.org/api/records/18433203](https://zenodo.org/api/records/18433203) | none (not-required) |
 | S9 | `src-github-flip-license` | repository · GitHub | [raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f...](https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/LICENSE) | [capture 2026-11-05](https://web.archive.org/web/20261105111229/https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/LICENSE) |
-| S10 | `src-github-flip-splits-readme` | repository · GitHub | [raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f...](https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/splits/README.md) | [capture 2026-11-05](https://web.archive.org/web/20261105111618/https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/splits/README.md) |
-| S11 | `src-flip-protein-properties` | documentation · GitHub Pages (J-SNACKKB/flip\_webpage) | [flip.protein.properties/](https://flip.protein.properties/) | [capture 2026-11-05](https://web.archive.org/web/20261105110042/https://flip.protein.properties/) |
+| S10 | `src-github-flip-readme-e74069f` | repository · GitHub | [raw.githubusercontent.com/J-SNACKKB/FLIP/e74069fe09490c6a44a8d7ff8c28...](https://raw.githubusercontent.com/J-SNACKKB/FLIP/e74069fe09490c6a44a8d7ff8c2811b61f24ec82/README.md) | none (pending) |
+| S11 | `src-github-flip-splits-readme` | repository · GitHub | [raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f...](https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/splits/README.md) | [capture 2026-11-05](https://web.archive.org/web/20261105111618/https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/splits/README.md) |
+| S12 | `src-flip-protein-properties` | documentation · GitHub Pages (J-SNACKKB/flip\_webpage) | [flip.protein.properties/](https://flip.protein.properties/) | [capture 2026-11-05](https://web.archive.org/web/20261105110042/https://flip.protein.properties/) |
+| S13 | `src-biorxiv-api-2026-02-23-707496` | preprint · bioRxiv | [api.biorxiv.org/details/biorxiv/10.64898/2026.02.23.707496](https://api.biorxiv.org/details/biorxiv/10.64898/2026.02.23.707496) | none (not-required) |
 
-**Evidence** (55 quoted fields), by checklist area:
+**Evidence** (56 quoted fields), by checklist area:
 
 #### flip · Identity and id
 
@@ -381,7 +383,7 @@ Considered and rejected:
   > GB1 baselines (metric: Spearman correlation)
 - `execution.compute_tier` = single-gpu · [S1][flip-s1]
   - why: The reference run embeds each split's sequences with the language model under test and trains the downstream model on one accelerator; the paper notes that the most expensive baseline would have taken about a month on four GPUs and was left out.
-  > Models are trained on a NVidia Quadro RTXA6000 GPU.
+  > \[withheld: it may name a person; see the entry file\]
 - `execution.reproducibility_tier` = fully-automatable · [S1][flip-s1]
   - why: The splits carry their own labels and assignment, the metric is a standard rank correlation, and no human, physical or maintainer-only step stands between a model and a score.
   > Code, data, and instructions needed to reproduce results can be found at
@@ -425,36 +427,36 @@ Considered and rejected:
   > ntotal 3706 17143 55759 228298 24935 884 734
 - `execution.code_licence` = AFL-3.0 · [S9][flip-s9]
   > Academic Free License ("AFL") v. 3.0
-- `subsets` = id flip#gb1; label GB1 (four-position combinatorial binding landscape; 5 splits); items 8733; scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#gb1; label GB1 (four-position combinatorial binding landscape; 5 splits); items 8733; scored_separately true · [S11][flip-s11]
   > \`three\_vs\_rest\`
 - `subsets` = id flip#gb1; label GB1 (four-position combinatorial binding landscape; 5 splits); items 8733; scored_separately true · [S1][flip-s1]
   > possible combinations of mutations at 4 positions
-- `subsets` = id flip#aav; label AAV capsid VP-1 (mutagenesis and design screen; 7 splits); items 284009; scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#aav; label AAV capsid VP-1 (mutagenesis and design screen; 7 splits); items 284009; scored_separately true · [S11][flip-s11]
   > \`seven\_vs\_many\`
 - `subsets` = id flip#aav; label AAV capsid VP-1 (mutagenesis and design screen; 7 splits); items 284009; scored_separately true · [S1][flip-s1]
   > a 28-amino acid window from position 561 to 588 of VP-1
-- `subsets` = id flip#meltome; label Thermostability from the Meltome Atlas (3 splits); items 27951; scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#meltome; label Thermostability from the Meltome Atlas (3 splits); items 27951; scored_separately true · [S11][flip-s11]
   > \`human\_cell\`
 - `subsets` = id flip#meltome; label Thermostability from the Meltome Atlas (3 splits); items 27951; scored_separately true · [S1][flip-s1]
   > measure protein melting curves across 13 species and 48,000 proteins
-- `subsets` = id flip#bind; label Bind (6 splits); scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#bind; label Bind (6 splits); scored_separately true · [S11][flip-s11]
   > \`from\_publication\`
-- `subsets` = id flip#sav; label SAV, single amino-acid variants (3 splits); scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#sav; label SAV, single amino-acid variants (3 splits); scored_separately true · [S11][flip-s11]
   > \`only\_savs\`
-- `subsets` = id flip#scl; label SCL, subcellular localisation (6 splits); scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#scl; label SCL, subcellular localisation (6 splits); scored_separately true · [S11][flip-s11]
   > \`mixed\_vs\_human\_2\`
-- `subsets` = id flip#secondary-structure; label Secondary structure (1 split); scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#secondary-structure; label Secondary structure (1 split); scored_separately true · [S11][flip-s11]
   > Secondary Structure
-- `subsets` = id flip#conservation; label Conservation (1 split); scored_separately true · [S10][flip-s10]
+- `subsets` = id flip#conservation; label Conservation (1 split); scored_separately true · [S11][flip-s11]
   > Conservation
-- `subsets` = id flip#cas; label Cas9 (2 splits, both withdrawn); scored_separately false · [S10][flip-s10]
+- `subsets` = id flip#cas; label Cas9 (2 splits, both withdrawn); scored_separately false · [S11][flip-s11]
   > \`positive\_selection\`
 - `subsets` = id flip#cas; label Cas9 (2 splits, both withdrawn); scored_separately false · [S6][flip-s6]
   > splits that should not be used / considered obsolete. Please do not use these to report performance.
 
 #### flip · Governance and independence
 
-- `governance.maintainer` = The J-SNACKKB organisation on GitHub (the FLIP authors, with FLIP2 added by a group at NVIDIA, Microsoft Research, Caltech, Profluent Bio and Duke University) · [S6][flip-s6]
+- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S6][flip-s6]
   - why: The repository and the site's source both sit in the J-SNACKKB organisation account, as the Sources' own URLs show (raw.githubusercontent.com/J-SNACKKB/FLIP and J-SNACKKB/flip\_webpage); no quote names a holder, no single institution is stated as holding them, and the LICENSE leaves its copyright notice unfilled.
   > This repository is for the paper submitted to the 2021 NeurIPS Benchmark track.
 - `governance.submission_process` = literature-only · [S6][flip-s6]
@@ -470,15 +472,18 @@ Considered and rejected:
 - `activity` = unknown · [S6][flip-s6]
   - why: No submission route was found -- the repository takes no results, and the FLIP2 site offers downloads and the paper's own baseline figures. But the 2021 paper's Figure 1 names a leaderboard step, and the home it points at (benchmark.protein.properties) now redirects to a Google Sites sign-in page, which was not read, so no-submission-channel ("and it never had one") cannot be asserted.
   > The main place to find out about the splits is the \`splits\` folder.
+- `versions` = 2 items · [S10][flip-s10]
+  - why: FLIP2 is this family's second edition, not a separate benchmark, by 04 S4's test (same task definition, new items, new year). It is the same maintainers' next release of the same task, fitness predicted from sequence on splits that shift the test distribution, with seven new datasets. Nor is it separately maintained or independently versioned, the new-benchmark row's test. One repository, one site and one Zenodo concept record carry both releases, and since 2026-11-10 the repository's README presents FLIP2 as an expansion of the original benchmark, with the 2021 tasks kept in the same repository as "Legacy FLIP". FLIP2's own name, paper and citation are what a yearly edition has too.
+  > The original FLIP benchmark remains available here.
 
 **Open review checks** (13):
 
-1. (field `versions`) FLIP2 is recorded as an edition in versions, by the 04 section 4 rule (same maintainers' next release, new items, same task, carried on the same site and repository). Against that, it has its own name, paper, citation and Zenodo DOI, and the site says the 2021 datasets are not part of it, which would make it a separate benchmark linked by lineage. This is the entry's least clear-cut call. · [S11][flip-s11]
-   > These legacy datasets are not part of the FLIP2 benchmark
+1. (field `versions`) FLIP2 is recorded as an edition by the 04 section 4 rule (versions\_basis), and the README rewrite of 2026-11-10, which turns the repository's landing page into FLIP2's and keeps the 2021 tasks there as "Legacy FLIP", was weighed for that call. Against it, FLIP2 has its own name, paper and Zenodo DOI, the README calls it "the new benchmark" and asks for a separate citation, and the site says the 2021 datasets are not part of it. A reviewer who reads "independently cited" alone as enough would make FLIP2 a separate benchmark linked by lineage. · [S10][flip-s10]
+   > Please cite \[FLIP2\](https://doi.org/10.64898/2026.02.23.707496) when using the new benchmark
 2. (field `lineage`) How FLIP and proteingym differ and overlap, as the two entries under biology-genetics/protein-fitness-prediction. ProteinGym spans over 250 assays scored mostly zero-shot with random, contiguous and modulo cross-validation and an official aggregate; FLIP has three (now ten) landscapes with engineering-motivated extrapolation splits, supervised training and no aggregate. The GB1 and AAV capsid landscapes look likely to appear in both corpora, which would make some assays shared: that was not confirmed from a Source here, and whether the pair deserves a lineage.correlates\_with link is open. · [S5][flip-s5]
    > results in the majority of datasets only containing single- and double- mutants collected via deep mutational scanning experiments
 3. (field `activity`) activity is unknown rather than no-submission-channel: the paper's Figure 1 shows a "Leaderboard" step and the 2021 home (benchmark.protein.properties) redirects to a Google Sites sign-in page, which was not read and not archived here. If a board never existed, no-submission-channel is right.
-4. (field `subsets`) Six of the ten split sets in the repository (Bind, SAV, SCL, Secondary Structure, Conservation, Cas9) are described in no source read here, so their subsets carry no item count and no task description, and SCL and Secondary Structure would pull in domain leaves this entry does not take (protein-function-prediction, protein-structure-prediction). Their per-set READMEs on the data host were not read. · [S10][flip-s10]
+4. (field `subsets`) Six of the ten split sets in the repository (Bind, SAV, SCL, Secondary Structure, Conservation, Cas9) are described in no source read here, so their subsets carry no item count and no task description, and SCL and Secondary Structure would pull in domain leaves this entry does not take (protein-function-prediction, protein-structure-prediction). Their per-set READMEs on the data host were not read. · [S11][flip-s11]
    > \`mixed\_vs\_human\_2\`
 5. (field `self_description`) The published abstract on the proceedings page reads "curated splits" and "future expansion to new splits" where the PDF reads "curated tasks" and "new tasks". No field here depends on the difference, but a reviewer quoting the abstract should know the two differ. · [S3][flip-s3]
    > Our curated splits, baselines, and metrics probe model generalization in settings relevant for protein engineering
@@ -486,7 +491,7 @@ Considered and rejected:
 7. (field `capability`) sample-efficiency was rejected: the paper claims the low-resource setting and GB1 1-vs-rest leaves 29 training sequences, but no budget is fixed as the measured quantity. proteingym is the vocabulary's near miss for the same question, so the two entries should be decided together.
 8. (field `data.size`) The FLIP2 site gives NucB 55,760 variants where the FLIP2 paper's Table 1 gives 55,759, and the 2021 paper's Table 2 repeats a landscape's total for every split of it. data.size follows the papers' tables. · [S5][flip-s5]
    > ntotal 3706 17143 55759 228298 24935 884 734
-9. (field `data.dataset_licence`) dataset\_licence is mixed and partly unchecked: AFL-3 for the 2021 derivatives, CC BY 4.0 for FLIP2's data, MIT for its Amylase dataset per the site. The files on data.bioembeddings.com and the per-dataset READMEs were not read, so no file's own licence statement was seen. · [S11][flip-s11]
+9. (field `data.dataset_licence`) dataset\_licence is mixed and partly unchecked: AFL-3 for the 2021 derivatives, CC BY 4.0 for FLIP2's data, MIT for its Amylase dataset per the site. The files on data.bioembeddings.com and the per-dataset READMEs were not read, so no file's own licence statement was seen. · [S12][flip-s12]
    > All data licensed under CC-BY 4.0 or MIT.
 10. (field `execution.harness_availability`) harness\_availability is reference-implementation-only: the repository ships baseline models and the split-building notebooks, and no scoring script was read. If baselines/ holds code that computes the official per-split Spearman, official-harness is right. · [S6][flip-s6]
    > contains code used to compute baselines
@@ -514,16 +519,18 @@ Considered and rejected:
 [flip-s7]: https://arxiv.org/pdf/2501.18223v1
 [flip-s8]: https://zenodo.org/api/records/18433203
 [flip-s9]: https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/LICENSE
-[flip-s10]: https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/splits/README.md
-[flip-s11]: https://flip.protein.properties/
+[flip-s10]: https://raw.githubusercontent.com/J-SNACKKB/FLIP/e74069fe09490c6a44a8d7ff8c2811b61f24ec82/README.md
+[flip-s11]: https://raw.githubusercontent.com/J-SNACKKB/FLIP/62cace8735f5610e2743cf06ce0f944b37fffaa6/splits/README.md
+[flip-s12]: https://flip.protein.properties/
+[flip-s13]: https://api.biorxiv.org/details/biorxiv/10.64898/2026.02.23.707496
 
 ### 2.3 Protein Engineering Tournament (protein-engineering-tournament)
 
-`data/benchmarks/biology-genetics/protein-engineering-tournament.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-04
+`data/benchmarks/biology-genetics/protein-engineering-tournament.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-18
 
 *Biennial open-science competition in which teams predict enzyme properties, then design variants the lab assays.*
 
-The Protein Engineering Tournament, run by the Align Foundation (Align to Innovate), a nonprofit, as a CASP-like community benchmark for protein function rather than structure. Each edition has two phases. In the predictive phase, teams receive protein sequences and predict biophysical properties -- specific activity, thermostability, soluble expression -- in a zero-shot track with no training data and a supervised track with a provided training set; predictions are scored against withheld measurements. Top teams advance to the generative phase, where they submit ranked lists of designed sequences that the organisers and their wet-lab partners synthesise, express and assay, and the ranking is made from what the assays return. The 2023 pilot ran six donated enzyme datasets (alpha-amylase, aminotransferase, imine reductase, alkaline phosphatase PafA, beta-glucosidase B, xylanase) as seven predictive events scored by Spearman correlation and one generative event on alpha-amylase, whose \~1,200 designed variants were characterised by International Flavors and Fragrances; 28 teams registered, seven submitted predictions, and TUM Rostlab won overall. The 2025 edition targets PETase, scores the predictive phase by NDCG against experimental rankings and the generative phase by the change in measured specific activity against a benchmark enzyme subject to expression thresholds, and reports more than 290 registered teams. All data, submissions and analysis scripts of a finished edition are released publicly. Known weaknesses the sources name: in the pilot, how far a team built on the donor's prior engineering mattered more than which model it used, and only two teams kept more than half their designs inside the stability and expression criteria.
+The Protein Engineering Tournament, run by the Align Foundation (Align to Innovate), a nonprofit, as a CASP-like community benchmark for protein function rather than structure. Each edition has two phases. In the predictive phase, teams receive protein sequences and predict biophysical properties -- specific activity, thermostability, soluble expression -- in a zero-shot track with no training data and a supervised track with a provided training set; predictions are scored against withheld measurements. Top teams advance to the generative phase, where they submit ranked lists of designed sequences that the organisers and their wet-lab partners synthesise, express and assay, and the ranking is made from what the assays return. The 2023 pilot ran six donated enzyme datasets (alpha-amylase, aminotransferase, imine reductase, alkaline phosphatase PafA, beta-glucosidase B, xylanase) as seven predictive events scored by Spearman correlation and one generative event on alpha-amylase, whose \~1,200 designed variants were characterised by International Flavors and Fragrances; 28 teams registered, seven submitted predictions, and a TUM lab won overall. The 2025 edition targets PETase, scores the predictive phase by NDCG against experimental rankings and the generative phase by the change in measured specific activity against a benchmark enzyme subject to expression thresholds, and reports more than 290 registered teams. All data, submissions and analysis scripts of a finished edition are released publicly. Known weaknesses the sources name: in the pilot, how far a team built on the donor's prior engineering mattered more than which model it used, and only two teams kept more than half their designs inside the stability and expression criteria.
 
 | Classification | |
 | --- | --- |
@@ -540,7 +547,7 @@ The Protein Engineering Tournament, run by the Align Foundation (Align to Innova
 | Independence flags | maintainer-competes-on-own-benchmark, funded-by-evaluated-party, prize-sponsored-by-industry |
 | Licences: code · dataset | CC-BY-4.0 · CC-BY-4.0 |
 | Released | 2023-05-01 |
-| Links | homepage [alignbio.org/benchmarks/](https://alignbio.org/benchmarks/) · repository [github.com/Align-to-Innovate/the-protein-engineering-tournament-2023](https://github.com/Align-to-Innovate/the-protein-engineering-tournament-2023) · dataset [data.alignbio.org/protein-tournament/](https://data.alignbio.org/protein-tournament/) |
+| Links | homepage [alignbio.org/benchmarks/](https://alignbio.org/benchmarks/) · repository [github.com/Align-to-Innovate/the-protein-engineering-tournament-2023](https://github.com/Align-to-Innovate/the-protein-engineering-tournament-2023) · dataset [github.com/Align-to-Innovate/the-protein-engineering-tournament-2023](https://github.com/Align-to-Innovate/the-protein-engineering-tournament-2023) |
 
 **Sources**
 
@@ -613,9 +620,9 @@ Considered and rejected:
 
 #### protein-engineering-tournament · Task and evaluation
 
-- `learned_entrant_evidence` = system TUM Rostlab (protein language models with reinforcement training; the pilot's overall champion) · [S7][protein-engineering-tournament-s7]
+- `learned_entrant_evidence` = system A TUM lab's team (protein language models with reinforcement training; the pilot's overall champion) · [S7][protein-engineering-tournament-s7]
   > In Vitro Winner & Overall Tournament Champion: TUM Rostlab
-- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S6][protein-engineering-tournament-s6]
+- `learned_entrant_evidence` = system Registered teams of the 2025 edition, including a Caltech lab, a University of Washington lab and Profluent · [S6][protein-engineering-tournament-s6]
   > \[withheld: it may name a person; see the entry file\]
 - `reproducible_by_third_party` = true · [S7][protein-engineering-tournament-s7]
   - why: After the pilot, every dataset, submission and analysis script was released publicly under CC BY, so its predictive events can be rescored by anyone. What cannot be repeated is the blind condition or the generative round, which needs DNA synthesis and the partner's assays.
@@ -633,7 +640,7 @@ Considered and rejected:
 - `data.access` = train-open-test-held-out · [S3][protein-engineering-tournament-s3]
   - why: The predictive phase scores predictions against properties the teams never see, and the generative phase against measurements that do not exist until the designs are assayed.
   > The zero‐shot track challenged participants to make predictions without any prior training data, relying solely on intrinsic algorithmic robustness and generalizability.
-- `data.access_by_phase.after_edition` = Everything is released -- data, participant submissions and analysis scripts on GitHub under CC BY 4.0, with four of the pilot's datasets also on the Align data portal. · [S1][protein-engineering-tournament-s1]
+- `data.access_by_phase.after_edition` = Everything is released -- data, participant submissions and analysis scripts on GitHub under CC BY 4.0, with four of the pilot's datasets also on the Align data portal until its rebuild in November 2026. · [S1][protein-engineering-tournament-s1]
   > Anonymized predictions, designed protein sequences, and associated experimental results for all teams will made public at the completion of the Tournament.
 - `data.refresh` = periodic-recompetition · [S4][protein-engineering-tournament-s4]
   - why: Each edition poses unpublished measurements on a different enzyme family, and nothing carries over between them.
@@ -686,7 +693,7 @@ Considered and rejected:
   - why: What is evidenced is that an edition is under way and that its results are promised at completion, not which phase is open today.
   > Anonymized predictions, designed protein sequences, and associated experimental results for all teams will made public at the completion of the Tournament.
 
-**Open review checks** (13):
+**Open review checks** (14):
 
 1. (field `domain`) Primary domain protein-design against protein-fitness-prediction. Seven of the pilot's eight events, and every team, were predictive; only the generative event produced the champion. The call follows the phase the Tournament is decided on, and the other term is secondary. · [S3][protein-engineering-tournament-s3]
    > In the predictive round, participants engaged in seven events distributed across two unique tracks
@@ -702,12 +709,14 @@ Considered and rejected:
    > the choice to build on top of IFF's prior engineering, and the number of mutations introduced (Figure 4A,B), was a stronger indicator of team performance than the base model used.
 8. (field `evaluation_method`) entrant-relative-ranking is tagged from the pilot's reverse-rank points. The 2025 predictive phase is scored by average NDCG, which is not pool-relative; if a reviewer reads the editions apart, the term belongs to the pilot only.
 9. (field `execution_mode`) execution\_mode wet-lab and reproducibility\_tier requires-physical-experiment both describe the generative phase. The predictive phase on its own is automated and fully reproducible from the released repository, and reproducible\_by\_third\_party true describes that half.
-10. (field `data.access`) data.access train-open-test-held-out describes a live edition. After an edition everything is published, which on its own would be fully-open; the pilot's four datasets download from the data portal with no login or agreement. · [S2][protein-engineering-tournament-s2]
+10. (field `data.access`) data.access train-open-test-held-out describes a live edition. After an edition everything is published, which on its own would be fully-open; the pilot's four datasets downloaded from the data portal with no login or agreement until the portal's rebuild. · [S2][protein-engineering-tournament-s2]
    > Protein Tournament 4 datasets available
-11. (field `data.submission_limit`) submission\_limit records the pilot's 200 sequences per generative submission, which is a size limit on one submission rather than a rate limit; period\_days 0 and the note carry that. No limit on predictive submissions was found.
-12. (field `data.dataset_licence`) The pilot's data and the 2025 edition's are governed differently. The repository is CC BY 4.0, while the 2025 participation terms give the organisers ownership of all outputs with no licence named for the release, so dataset\_licence may need splitting per edition. · [S1][protein-engineering-tournament-s1]
+11. (field `dataset_url`) dataset\_url is now the pilot repository, because the data portal's tournament page answers 404. The rebuilt portal has a public data browser whose pages render by script and were not read; if it serves the tournament's datasets again, dataset\_url could point there. · [S8][protein-engineering-tournament-s8]
+   > Please note that all of the provided data, participant submissions, and analysis scripts can be found on our \[GitHub repository\]
+12. (field `data.submission_limit`) submission\_limit records the pilot's 200 sequences per generative submission, which is a size limit on one submission rather than a rate limit; period\_days 0 and the note carry that. No limit on predictive submissions was found.
+13. (field `data.dataset_licence`) The pilot's data and the 2025 edition's are governed differently. The repository is CC BY 4.0, while the 2025 participation terms give the organisers ownership of all outputs with no licence named for the release, so dataset\_licence may need splitting per edition. · [S1][protein-engineering-tournament-s1]
    > The Align Foundation will own those datasets, methods, assays, analysis and results
-13. (field `lifecycle`) Evidence of current use is second-hand. A 2026 Molecular Systems Biology paper on another design competition names the Tournament among the efforts now validating crowd-sourced designs experimentally, but no 2026 result of the Tournament's own was found, and its 2025 edition has published none. · [S9][protein-engineering-tournament-s9]
+14. (field `lifecycle`) Evidence of current use is second-hand. A 2026 Molecular Systems Biology paper on another design competition names the Tournament among the efforts now validating crowd-sourced designs experimentally, but no 2026 result of the Tournament's own was found, and its 2025 edition has published none. · [S9][protein-engineering-tournament-s9]
    > Similar efforts are emerging in AI-driven protein design, such as the Protein Engineering Tournament
 
 **Reviewer checklist** for `protein-engineering-tournament`:
@@ -738,7 +747,7 @@ Considered and rejected:
 
 *Protein-ligand co-folding on 2,600 post-cutoff PDB systems, scored per bin of similarity to the training set.*
 
-\[withheld: it may name a person; see the entry file\]
+A benchmark dataset for protein-ligand co-folding from a lab at the University of Basel's Biozentrum and the SIB Swiss Institute of Bioinformatics. It was built by running the PLINDER pipeline over X-ray PDB entries released between 30 September 2021, the training cutoff the evaluated methods share, and 9 January 2025. Filters on structure quality and interaction statistics, then one system per redundancy cluster, leave 2,600 systems with 3,047 proper ligands (not ions or artefacts). A method gets each system's protein sequences, ligand SMILES and the released MSAs, and predicts the complex. Each proper ligand is scored with OpenStructure, and it succeeds if its binding-site superposed, symmetry-corrected RMSD is under 2 Å and its LDDT-PLI is over 0.8. PoseBusters validity, LDDT-LP and pocket F1 are reported beside the success rate. The point is stratification. Every system carries its similarity to the closest training system before the cutoff (SuCOS ligand-pose overlap times pocket coverage), and results are read across eight similarity bins. A Parquet file of similarities to the whole PDB lets a later cutoff be applied, such as Boltz-2's 1 June 2023 (1,028 systems). The release paper ran AlphaFold3, Boltz-1, Chai-1 and Protenix (with Boltz-1x, Boltz-2 and RoseTTAFold All-Atom beside them) and found that accuracy tracks similarity to training, which it reads as memorisation of ligand poses. Polaris hosts an ML-ready preview of 2,073 of the systems, which takes no submissions. Unlike PoseBusters, a time split whose complexes the paper finds mostly similar to training, Runs N' Poses measures that similarity for every system.
 
 | Classification | |
 | --- | --- |
@@ -895,9 +904,9 @@ Considered and rejected:
 
 #### runs-n-poses · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S8][runs-n-poses-s8]
-  - why: \[withheld: it may name a person; see the entry file\]
-  > \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = A lab at the Biozentrum, University of Basel, with the SIB Swiss Institute of Bioinformatics (repository in the plinder-org GitHub organisation) · [S8][runs-n-poses-s8]
+  - why: The repository's licence names the lab as copyright holder, the paper's authors are at the Biozentrum and SIB, and every creator on the Zenodo record gives the University of Basel.
+  > Copyright 2024 Schwede Lab
 - `governance.submission_process` = literature-only · [S6][runs-n-poses-s6]
   > Interacting with it through the Polaris client is currently not possible.
 - `governance.independence_flags` = flag no-known-conflict · [S4][runs-n-poses-s4]
@@ -924,8 +933,8 @@ Considered and rejected:
 3. (field `aggregation_policy`) aggregation\_policy is none-by-design, read from per-bin reporting; no source says in so many words that no single figure should be quoted. community-aggregate is the alternative.
 4. (field `comparability`) The pair (constraint-check, domain-specialist-model) resolves to the llm-static-text profile, whose LLM fields mean nothing for a co-folding model, as posebusters' entry notes. Nothing is waived.
 5. (field `execution.compute_tier`) compute\_tier is null where the corpus record has single-gpu, because the GPU serves the entrant and no source mandates it.
-6. (field `governance.maintainer_type`) \[withheld: it may name a person; see the entry file\] · [S8][runs-n-poses-s8]
-   > \[withheld: it may name a person; see the entry file\]
+6. (field `governance.maintainer_type`) maintainer\_type academic-lab against community-collective. The repository is in the shared plinder-org account; the LICENSE names the lab, and the Zenodo creators all give the University of Basel. · [S8][runs-n-poses-s8]
+   > Copyright 2024 Schwede Lab
 7. (field `governance.independence_flags`) no-known-conflict rests on the journal's competing-interests statement. Dompé farmaceutici is a funder, and AlphaFold3 weights were provided to one author; neither looks like support from an evaluated party, but a reviewer should confirm. The corpus record quotes a different employer for the same author from the preprint.
 8. (field `subsets`) The Polaris subset's eight bins sum to 2,073, but its header lists test sizes summing to 2,835, probably ligands rather than systems; the page does not say. · [S6][runs-n-poses-s6]
    > Test size: 95 + 122 + 169 + 302 + 356 + 444 + 454 + 893
@@ -1077,7 +1086,7 @@ Considered and rejected:
 - `data.ceiling_anchor_type` = theoretical-maximum · [S1][gue-s1]
   - why: The headline metrics are bounded statistics of predicted labels against true labels.
   > To measure model performance, we utilize F1-Score and Matthews Correlation Coefficient (MCC).
-- `data.upstream_licences` = \[withheld: it may name a person; see the entry file\] · [S1][gue-s1]
+- `data.upstream_licences` = The terms of EPDnew, ENCODE and the UCSC browser, Ensembl, GenBank, GISAID EpiCoV, the yeast nucleosome dataset site and the published 2019 splice-site dataset apply to the data they supplied; none was read. · [S1][gue-s1]
   > \[withheld: it may name a person; see the entry file\]
 - `data.size` = count 28; unit datasets in 7 tasks (GUE) · [S1][gue-s1]
   > GUE (See Table 1) includes 7 genome sequence classification problems with 28 datasets with input lengths ranging from 70 to 1000.
@@ -1192,7 +1201,7 @@ Considered and rejected:
 
 *Twenty TCGA cancer multi-omics datasets for classifying, clustering and imputing patients' profiles.*
 
-A machine-learning-ready cancer multi-omics resource built from TCGA through the Genomic Data Commons, by groups at Kyoto University, Osaka University, the University of Tokyo and the University of Illinois Urbana-Champaign. It holds 8,314 patients over all 32 TCGA cancer types, each with four uniformly processed omics (mRNA expression, miRNA expression, DNA methylation and copy number), at three feature scales (Original; Aligned, genes shared across cancers; Top, ANOVA-selected). Twenty datasets define the tasks: pan-cancer classification of a patient's cancer type (one dataset); classification into gold-standard molecular subtypes for five cancers (GS-BRCA, GS-COAD, GS-GBM, GS-LGG, GS-OV); clustering of nine rarer cancers into subtypes without labels; and imputation of randomly masked values (30, 50 or 70%) in five cohorts. Classification is scored by precision, recall and F1 (and NMI and ARI against the labels), clustering by the silhouette coefficient and the log-rank p-value of survival between clusters, and imputation by error on the masked entries. The release ships 10 baselines per classification and clustering task and 7 for imputation, with runners and downstream analysis tools (survival, enrichment, STRING and KEGG mappings). No train/test split is fixed in the data, there is no aggregate, and no leaderboard takes submissions; the README keeps the maintainers' baseline tables. First released on arXiv as CMOB in September 2024, renamed MLOmics in 2025, and refreshed in July 2026.
+\[withheld: it may name a person; see the entry file\]
 
 | Classification | |
 | --- | --- |
@@ -1215,7 +1224,7 @@ A machine-learning-ready cancer multi-omics resource built from TCGA through the
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-mlomics-scidata-2025` | paper · Scientific Data (Springer Nature) | [europepmc.org/article/PMC/PMC12125382](https://europepmc.org/article/PMC/PMC12125382) | none (not-required) |
+| S1 | `src-mlomics-scidata-2025` | paper · \[withheld: it may name a person; see the entry file\] | [europepmc.org/article/PMC/PMC12125382](https://europepmc.org/article/PMC/PMC12125382) | none (not-required) |
 | S2 | `src-arxiv-2409-02143` | preprint · arXiv | [arxiv.org/abs/2409.02143](https://arxiv.org/abs/2409.02143) | none (not-required) |
 | S3 | `src-cmgl-bioinformatics-2026` | paper · Bioinformatics (Oxford University Press) | [europepmc.org/article/PMC/PMC13712188](https://europepmc.org/article/PMC/PMC13712188) | none (not-required) |
 | S4 | `src-github-mlomics-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/Cancer-Multi-Omics-Benchmark/fdb9da0b3e184ad31c6c50f588acce20f2aefdd1/README.md (not linked: a personal account) | none (withheld) |
@@ -1233,8 +1242,8 @@ A machine-learning-ready cancer multi-omics resource built from TCGA through the
   > we introduce MLOmics, an open cancer multi-omics database aiming at serving better the development and evaluation of bioinformatics and machine learning models.
 - `released` = 2024-09-02 · [S2][mlomics-s2]
   > Submitted on 2 Sep 2024 (v1), last revised 16 Jun 2025 (this version, v3)
-- `release_venue` = Scientific Data (2025), as the version of record of the arXiv preprint · [S2][mlomics-s2]
-  > Comments: This work has been published in Scientific Data
+- `release_venue` = \[withheld: it may name a person; see the entry file\] · [S2][mlomics-s2]
+  > \[withheld: it may name a person; see the entry file\]
 
 #### mlomics · Domain and capabilities
 
@@ -1324,7 +1333,7 @@ Considered and rejected:
 
 #### mlomics · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S4
+- `governance.maintainer` = The MLOmics authors, with the repository in a personal GitHub account and the data in the AIBIC Hugging Face organisation and on figshare · S4
   - why: The README links the code repository and the Hugging Face dataset as the benchmark's homes; no source read names an institution as holding either, and what AIBIC stands for is not stated.
   > \- \[Hugging Face dataset\](https://huggingface.co/datasets/AIBIC/MLOmics)
 - `governance.submission_process` = maintainer-run · [S1][mlomics-s1]
@@ -1351,11 +1360,11 @@ Considered and rejected:
    > X, y\_enc, test\_size=args.test\_size, random\_state=42, stratify=y\_enc)
 3. (field `evaluation_method`) The metric set differs between documents. The paper names precision, recall and F1 (with NMI and ARI) for classification and MSE for imputation; the README's classification table ranks the clustering methods (SNF to MCluster-VAEs) by PREC, NMI and ARI and gives MAE and RMSE for imputation; the classical runner reports accuracy and macro-F1. Which is canonical is not stated. · S8
    > f1 = f1\_score(y\_te, y\_pred, average='macro')
-4. (field `versions`) versions models three revisions. v1's Table 1 gives the Top scale 2,000 features per omics and different Original feature counts from the README's current table (5,000 at Top), but the Scientific Data XML holds no tables, so when the change came (v2/v3 in 2025, or the July 2026 refresh) was not established. The Hugging Face files were re-uploaded on 2026-07-21 and 2026-09-22, the second with no announcement, which is why data.refresh is null. · [S7][mlomics-s7]
+4. (field `versions`) \[withheld: it may name a person; see the entry file\] · [S7][mlomics-s7]
    > Top Features 2K+ genes, etc.
 5. (field `data.access`) data.access is fully-open on the strength of MLOmics' own ungated, CC BY 4.0 files. The paper does not say which GDC access tier each input came from. The GDC page puts high-level, non-identifiable genomic data and most clinical elements in the open tier, but the tier of each input file (the copy-number calls especially) and of the clinical annotation file was not checked file by file. · [S6][mlomics-s6]
    > Open access data generally includes high level genomic data that is not individually identifiable
-6. (field `governance.maintainer_type`) \[withheld: it may name a person; see the entry file\]
+6. (field `governance.maintainer_type`) maintainer\_type individual rests on the personal-account repository. The data sit in a Hugging Face organisation (AIBIC) whose holder is not stated in any source read; if it is a university lab's, academic-lab fits better.
 7. (field `evaluation_method`) The clustering tasks (9 of 20 datasets) are scored by the silhouette and a survival log-rank p-value, which no evaluation-method term covers (failure 2026-11-05-mlomics-001); the list carries only the classification and imputation methods. · [S1][mlomics-s1]
    > To evaluate the goodness of clustering we opt for the classic Silhouette coefficient (SIL)
 8. (field `execution.code_licence`) code\_licence CC-BY-4.0 is the paper's statement; the repository has no LICENSE file and GitHub reports none, and CC BY is not a software licence. The bundled third-party baselines carry their own licences.
@@ -1384,7 +1393,7 @@ Considered and rejected:
 
 ### 2.7 Open Problems in Single-Cell Analysis (open-problems)
 
-`data/benchmarks/biology-genetics/open-problems.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/biology-genetics/open-problems.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *A living, community-run benchmark of 13 single-cell analysis tasks, from batch integration to spatial decomposition.*
 
@@ -1417,10 +1426,11 @@ A community-run benchmarking platform for single-cell and spatial omics analysis
 | S4 | `src-openproblems-batch-integration` | leaderboard-page · Open Problems in Single-Cell Analysis | [openproblems.bio/benchmarks/batch\_integration](https://openproblems.bio/benchmarks/batch_integration) | [capture 2026-10-14](https://web.archive.org/web/20261014034544/https://openproblems.bio/benchmarks/batch_integration/) |
 | S5 | `src-github-task-predict-modality-releases` | repository · GitHub | [api.github.com/repos/openproblems-bio/task\_predict\_modality/releases](https://api.github.com/repos/openproblems-bio/task_predict_modality/releases) | [capture 2026-10-14](https://web.archive.org/web/20261014034005/https://api.github.com/repos/openproblems-bio/task_predict_modality/releases) |
 | S6 | `src-openproblems-site` | documentation · Open Problems in Single-Cell Analysis | [openproblems.bio/](https://openproblems.bio/) | [capture 2026-10-14](https://web.archive.org/web/20261014034928/https://openproblems.bio/) |
-| S7 | `src-openproblems-about` | documentation · Open Problems in Single-Cell Analysis | [openproblems.bio/about](https://openproblems.bio/about) | [capture 2026-10-14](https://web.archive.org/web/20261014034439/https://openproblems.bio/about/) |
-| S8 | `src-openproblems-docs-philosophy` | documentation · Open Problems in Single-Cell Analysis | [openproblems.bio/documentation/fundamentals/philosophy/](https://openproblems.bio/documentation/fundamentals/philosophy/) | [capture 2026-10-14](https://web.archive.org/web/20261014034753/https://openproblems.bio/documentation/fundamentals/philosophy/) |
-| S9 | `src-openproblems-cell-cell-communication` | leaderboard-page · Open Problems in Single-Cell Analysis | [openproblems.bio/benchmarks/cell\_cell\_communication](https://openproblems.bio/benchmarks/cell_cell_communication) | [capture 2026-10-14](https://web.archive.org/web/20261014034653/https://openproblems.bio/benchmarks/cell_cell_communication/) |
-| S10 | `src-openproblems-benchmarks` | leaderboard-page · Open Problems in Single-Cell Analysis | [openproblems.bio/benchmarks](https://openproblems.bio/benchmarks) | [capture 2026-10-14](https://web.archive.org/web/20261014034611/https://openproblems.bio/benchmarks/) |
+| S7 | `src-openproblems-site-2026-11-18` | documentation · Open Problems in Single-Cell Analysis | [openproblems.bio/](https://openproblems.bio/) | none (pending) |
+| S8 | `src-openproblems-about` | documentation · Open Problems in Single-Cell Analysis | [openproblems.bio/about](https://openproblems.bio/about) | [capture 2026-10-14](https://web.archive.org/web/20261014034439/https://openproblems.bio/about/) |
+| S9 | `src-openproblems-docs-philosophy` | documentation · Open Problems in Single-Cell Analysis | [openproblems.bio/documentation/fundamentals/philosophy/](https://openproblems.bio/documentation/fundamentals/philosophy/) | [capture 2026-10-14](https://web.archive.org/web/20261014034753/https://openproblems.bio/documentation/fundamentals/philosophy/) |
+| S10 | `src-openproblems-cell-cell-communication` | leaderboard-page · Open Problems in Single-Cell Analysis | [openproblems.bio/benchmarks/cell\_cell\_communication](https://openproblems.bio/benchmarks/cell_cell_communication) | [capture 2026-10-14](https://web.archive.org/web/20261014034653/https://openproblems.bio/benchmarks/cell_cell_communication/) |
+| S11 | `src-openproblems-benchmarks` | leaderboard-page · Open Problems in Single-Cell Analysis | [openproblems.bio/benchmarks](https://openproblems.bio/benchmarks) | [capture 2026-10-14](https://web.archive.org/web/20261014034611/https://openproblems.bio/benchmarks/) |
 
 **Evidence** (50 quoted fields), by checklist area:
 
@@ -1477,7 +1487,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = fully-automatable · [S2][open-problems-s2]
   - why: The data are public and every dataset loader, method and metric is a containerised component in a public repository, so anyone can run a task's benchmark workflow end to end. Some methods need GPUs (compute\_tier left null).
   > To maximise reproducibility, each component is run within a Docker container defined by the method contributor, and all data is downloaded from public repositories
-- `execution.harness` = Each task repository's Viash components and Nextflow benchmark workflow (openproblems-bio/task\_\*, scripts/run\_benchmark) · [S8][open-problems-s8]
+- `execution.harness` = Each task repository's Viash components and Nextflow benchmark workflow (openproblems-bio/task\_\*, scripts/run\_benchmark) · [S9][open-problems-s9]
   > Viash is a meta-framework which allows generating modular Nextflow components and workflows from Python and R scripts
 - `aggregation_policy` = none-by-design · [S4][open-problems-s4]
   > Methods ranked by scaled overall mean.
@@ -1494,33 +1504,33 @@ Considered and rejected:
   > State-of-the-art methods are ranked and re-run automatically as the field evolves.
 - `data.data_provenance` = curated-public-database, experimental-measurement · [S2][open-problems-s2]
   > all data is downloaded from public repositories, including figshare, the Gene Expression Omnibus (GEO)
-- `data.size` = count 13; unit tasks (one, Cyto Batch Integration, marked in development); subset the site, 2026-10-14 · [S6][open-problems-s6]
-  > 13 open problems 135 methods benchmarked 96 gold-standard datasets 58 contributors
-- `data.size` = count 135; unit methods benchmarked; subset the site, 2026-10-14 · [S6][open-problems-s6]
-  > 13 open problems 135 methods benchmarked 96 gold-standard datasets 58 contributors
-- `data.size` = count 96; unit gold-standard datasets; subset the site, 2026-10-14 · [S6][open-problems-s6]
-  > 13 open problems 135 methods benchmarked 96 gold-standard datasets 58 contributors
+- `data.size` = count 14; unit tasks; subset the site, 2026-11-18 (13 on 2026-10-14, when one, Cyto Batch Integration, was marked in development) · [S7][open-problems-s7]
+  > 14 open problems 140 methods benchmarked 127 gold-standard datasets 61 contributors
+- `data.size` = count 140; unit methods benchmarked; subset the site, 2026-11-18 (135 on 2026-10-14) · [S7][open-problems-s7]
+  > 14 open problems 140 methods benchmarked 127 gold-standard datasets 61 contributors
+- `data.size` = count 127; unit gold-standard datasets; subset the site, 2026-11-18 (96 on 2026-10-14) · [S7][open-problems-s7]
+  > 14 open problems 140 methods benchmarked 127 gold-standard datasets 61 contributors
 - `data.size` = count 10; unit tasks counting subtasks (16 datasets, 70 methods, 31 metrics); subset the 2024 preprint · [S2][open-problems-s2]
   > Currently, Open Problems includes 10 defined tasks, on which 16 datasets are used to evaluate 70 methods using 31 metrics.
 - `execution.code_licence` = MIT · [S4][open-problems-s4]
   > Task repository MIT v2.0.0
-- `subsets` = id open-problems#batch-integration; label Batch Integration; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#batch-integration; label Batch Integration; scored_separately true · [S11][open-problems-s11]
   > Remove unwanted batch effects from scRNA-seq data while retaining biologically meaningful variation.
-- `subsets` = id open-problems#cell-cell-communication; label Cell-Cell Communication; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#cell-cell-communication; label Cell-Cell Communication; scored_separately true · [S11][open-problems-s11]
   > Detect interactions between ligands and target cell types
-- `subsets` = id open-problems#cyto-batch-integration; label Cyto Batch Integration; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#cyto-batch-integration; label Cyto Batch Integration; scored_separately true · [S11][open-problems-s11]
   > Benchmarking of batch integration algorithms for cytometry data.
-- `subsets` = id open-problems#cyto-batch-integration; label Cyto Batch Integration; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#cyto-batch-integration; label Cyto Batch Integration; scored_separately true · [S11][open-problems-s11]
   > in development Cyto Batch Integration
-- `subsets` = id open-problems#denoising; label Denoising; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#denoising; label Denoising; scored_separately true · [S11][open-problems-s11]
   > Removing noise in sparse single-cell RNA-sequencing count data
-- `subsets` = id open-problems#dimensionality-reduction; label Dimensionality Reduction for Visualisation; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#dimensionality-reduction; label Dimensionality Reduction for Visualisation; scored_separately true · [S11][open-problems-s11]
   > Reduction of high-dimensional datasets to 2D for visualization & interpretation
-- `subsets` = id open-problems#foundation-models; label Foundation Models; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#foundation-models; label Foundation Models; scored_separately true · [S11][open-problems-s11]
   > Modelling of single-cells to perform multiple tasks using
-- `subsets` = id open-problems#label-projection; label Label Projection; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#label-projection; label Label Projection; scored_separately true · [S11][open-problems-s11]
   > Automated cell type annotation from rich, labeled reference data
-- `subsets` = id open-problems#match-modalities; label Match Modalities; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#match-modalities; label Match Modalities; scored_separately true · [S11][open-problems-s11]
   > Alignment of cellular profiles from two different modalities
 - `subsets` = id open-problems#perturbation-prediction; label Perturbation Prediction; scored_separately true; capability_override scientific-prediction, causal-reasoning · [S3][open-problems-s3]
   > The task is to predict the gene expression profile of a cell after a small molecule perturbation.
@@ -1528,27 +1538,27 @@ Considered and rejected:
   > accurately predict chemical perturbations in new cell types
 - `subsets` = id open-problems#perturbation-prediction; label Perturbation Prediction; scored_separately true; capability_override scientific-prediction, causal-reasoning · [S3][open-problems-s3]
   > This task was a Kaggle competition as part of the NeurIPS 2023 competition track.
-- `subsets` = id open-problems#predict-modality; label Predict Modality; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#predict-modality; label Predict Modality; scored_separately true · [S11][open-problems-s11]
   > Predicting the profiles of one modality (e.g. protein abundance) from another (e.g. mRNA expression).
-- `subsets` = id open-problems#spatial-decomposition; label Spatial Decomposition; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#spatial-decomposition; label Spatial Decomposition; scored_separately true · [S11][open-problems-s11]
   > Calling cell-type compositions for spot-based spatial transcriptomics data
-- `subsets` = id open-problems#spatial-simulators; label Spatial Simulators; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#spatial-simulators; label Spatial Simulators; scored_separately true · [S11][open-problems-s11]
   > Assessing the quality of spatial transcriptomics simulators
-- `subsets` = id open-problems#spatially-variable-genes; label Spatially Variable Genes; scored_separately true · [S10][open-problems-s10]
+- `subsets` = id open-problems#spatially-variable-genes; label Spatially Variable Genes; scored_separately true · [S11][open-problems-s11]
   > Spatially variable genes (SVGs) are genes whose expression levels vary significantly across different spatial regions within a tissue
 
 #### open-problems · Governance and independence
 
-- `governance.maintainer` = The Open Problems community, led by its core team, with a task team and task leader for each task · [S7][open-problems-s7]
-  - why: The about page names a core team of six across Helmholtz Munich, NVIDIA, HubFlow, Edaro and Data Intuitive, with two scientific advisors; each task page names its own maintainers.
+- `governance.maintainer` = The Open Problems community, led by its core team, with a task team and task leader for each task · [S8][open-problems-s8]
+  - why: \[withheld: it may name a person; see the entry file\]
   > \[withheld: it may name a person; see the entry file\]
 - `governance.maintainer_type` = community-collective · [S6][open-problems-s6]
   > A community-owned platform for benchmarking single-cell analysis.
-- `governance.submission_process` = sandboxed-rerun, open-source-gated, maintainer-run · [S8][open-problems-s8]
+- `governance.submission_process` = sandboxed-rerun, open-source-gated, maintainer-run · [S9][open-problems-s9]
   > Community members can actively contribute to the development and refinement of single-cell omics benchmarks, which are then run by our computational infrastructure.
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S9][open-problems-s9]
+- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S10][open-problems-s10]
   > \[withheld: it may name a person; see the entry file\]
-- `governance.funding` · [S7][open-problems-s7]
+- `governance.funding` · [S8][open-problems-s8]
   > \[withheld: it may name a person; see the entry file\]
 
 #### open-problems · Lifecycle and activity
@@ -1569,11 +1579,11 @@ Considered and rejected:
    > Added the winning solution of the NeurIPS 2022 competition
 4. (field `governance.submission_process`) open-source-gated rests on a pull request into the task's public repository being the only route to a score; no rule read says in so many words that a method's own package must be open source. · [S2][open-problems-s2]
    > adding a new method is as simple as opening a pull request to the repository and adding a new file that follows the API for that task
-5. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on Cell-Cell Communication's maintainer authoring LIANA, whose methods it ranks. Other tasks were not checked for methods from the core team's or advisors' labs. · [S9][open-problems-s9]
+5. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on Cell-Cell Communication's maintainer authoring LIANA, whose methods it ranks. Other tasks were not checked for methods from the core team's or advisors' labs. · [S10][open-problems-s10]
    > \[withheld: it may name a person; see the entry file\]
 6. (field `capability`, needs a specialist) scientific-prediction fits most tasks, but Batch Integration and Dimensionality Reduction score representations (batch removal and conservation of biology, 2D embeddings), which no capability term describes; domain-metric was rejected only because no Metric entities are recorded for kBET, LISI and ASW.
 7. (field `released`) released is null. No source dates a first release; the tasks were public by 2021, the preprint was posted on 2024-04-04 and the paper published on 2025-07-01.
-8. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type is null. Scores are scaled between each task's worst and best control methods; where the best control is a perfect prediction run on the data this resembles measured-ceiling, but methods can score above it. · [S9][open-problems-s9]
+8. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type is null. Scores are scaled between each task's worst and best control methods; where the best control is a perfect prediction run on the data this resembles measured-ceiling, but methods can score above it. · [S10][open-problems-s10]
    > Perfect prediction of cell-cell communication events from target data
 
 **Reviewer checklist** for `open-problems`:
@@ -1593,10 +1603,11 @@ Considered and rejected:
 [open-problems-s4]: https://openproblems.bio/benchmarks/batch_integration
 [open-problems-s5]: https://api.github.com/repos/openproblems-bio/task_predict_modality/releases
 [open-problems-s6]: https://openproblems.bio/
-[open-problems-s7]: https://openproblems.bio/about
-[open-problems-s8]: https://openproblems.bio/documentation/fundamentals/philosophy/
-[open-problems-s9]: https://openproblems.bio/benchmarks/cell_cell_communication
-[open-problems-s10]: https://openproblems.bio/benchmarks
+[open-problems-s7]: https://openproblems.bio/
+[open-problems-s8]: https://openproblems.bio/about
+[open-problems-s9]: https://openproblems.bio/documentation/fundamentals/philosophy/
+[open-problems-s10]: https://openproblems.bio/benchmarks/cell_cell_communication
+[open-problems-s11]: https://openproblems.bio/benchmarks
 
 ### 2.8 ASAP Discovery x OpenADMET Antiviral Competition (asap-antiviral-competition)
 
@@ -1837,7 +1848,7 @@ Considered and rejected:
 
 *GRN inference from single-cell expression, scored by AUPRC and early precision against simulated and curated networks.*
 
-A framework from the Murali group at Virginia Tech for benchmarking algorithms that infer gene regulatory networks (GRNs) from single-cell gene expression. An algorithm takes an expression matrix (and, for most, a pseudotime or simulation time per cell) and returns a ranked list of regulator-target edges, which is scored against a ground-truth network by AUPRC and AUROC and by early precision, the fraction of true edges among the top k, k being the number of edges in the ground truth; both are also reported as ratios to a random predictor. Three kinds of dataset are scored apart: six synthetic networks and four published Boolean models (mammalian cortical area development, ventral spinal cord, hematopoietic stem cells, gonadal sex determination), each simulated with the authors' BoolODE into more than 400 datasets, some with induced dropouts; and five experimental scRNA-seq datasets from GEO (seven cell types, human and mouse) scored against cell-type-specific ChIP-seq, non-specific regulatory databases and STRING. The framework also measures stability across runs and datasets, network motifs and running time. Each algorithm runs in its own Docker image. The paper compared 12 unsupervised algorithms; v1.1 (2026) wraps 14. There is no leaderboard; GRN method papers run its datasets and metrics and report in their own work, sometimes on preprocessed copies with other gene sets than the paper's, or with supervised train and test splits that the paper did not define.
+A framework from a Virginia Tech group for benchmarking algorithms that infer gene regulatory networks (GRNs) from single-cell gene expression. An algorithm takes an expression matrix (and, for most, a pseudotime or simulation time per cell) and returns a ranked list of regulator-target edges, which is scored against a ground-truth network by AUPRC and AUROC and by early precision, the fraction of true edges among the top k, k being the number of edges in the ground truth; both are also reported as ratios to a random predictor. Three kinds of dataset are scored apart: six synthetic networks and four published Boolean models (mammalian cortical area development, ventral spinal cord, hematopoietic stem cells, gonadal sex determination), each simulated with the authors' BoolODE into more than 400 datasets, some with induced dropouts; and five experimental scRNA-seq datasets from GEO (seven cell types, human and mouse) scored against cell-type-specific ChIP-seq, non-specific regulatory databases and STRING. The framework also measures stability across runs and datasets, network motifs and running time. Each algorithm runs in its own Docker image. The paper compared 12 unsupervised algorithms; v1.1 (2026) wraps 14. There is no leaderboard; GRN method papers run its datasets and metrics and report in their own work, sometimes on preprocessed copies with other gene sets than the paper's, or with supervised train and test splits that the paper did not define.
 
 | Classification | |
 | --- | --- |
@@ -1867,10 +1878,11 @@ A framework from the Murali group at Virginia Tech for benchmarking algorithms t
 | S5 | `src-europepmc-pmc13069479` | paper · Bioinformatics (Oxford University Press) | [www.ebi.ac.uk/europepmc/webservices/rest/PMC13069479/fullTextXML](https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13069479/fullTextXML) | none (not-required) |
 | S6 | `src-beeline-docs` | repository · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | capture 2026-11-05 (not linked: the page is under a personal account) |
 | S7 | `src-zenodo-beeline-v4` | dataset-card · Zenodo | [zenodo.org/api/records/19009603](https://zenodo.org/api/records/19009603) | none (not-required) |
-| S8 | `src-zenodo-beeline-v3` | dataset-card · Zenodo | [zenodo.org/api/records/3701939](https://zenodo.org/api/records/3701939) | none (not-required) |
-| S9 | `src-github-beeline-releases` | repository · GitHub | api.github.com/repos/\[personal account\]/Beeline/releases (not linked: a personal account) | none (withheld) |
+| S8 | `src-arxiv-2607-13120-v1` | preprint · arXiv | [arxiv.org/html/2607.13120v1](https://arxiv.org/html/2607.13120v1) | none (not-required) |
+| S9 | `src-zenodo-beeline-v3` | dataset-card · Zenodo | [zenodo.org/api/records/3701939](https://zenodo.org/api/records/3701939) | none (not-required) |
+| S10 | `src-github-beeline-releases` | repository · GitHub | api.github.com/repos/\[personal account\]/Beeline/releases (not linked: a personal account) | none (withheld) |
 
-**Evidence** (44 quoted fields), by checklist area:
+**Evidence** (45 quoted fields), by checklist area:
 
 #### beeline · Identity and id
 
@@ -1880,6 +1892,8 @@ A framework from the Murali group at Virginia Tech for benchmarking algorithms t
   > "firstPublicationDate":"2019-05-20"
 - `release_venue` = Nature Methods (2020) · S3
   > \_Nature Methods\_, 17, 147
+- `lineage.forks` = id beeline-kgc; maintainer the BEELINE-KGC authors (arXiv 2607.13120), Peking University and National University of Defense Technology · [S8][beeline-s8]
+  > we propose BEELINE-KGC, a systematic extension of BEELINE that enforces an Inductive Gene-Holdout Split
 
 #### beeline · Domain and capabilities
 
@@ -1976,7 +1990,7 @@ Considered and rejected:
 
 #### beeline · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][beeline-s1]
+- `governance.maintainer` = A group in the Department of Computer Science, Virginia Tech (the group's GitHub organisation) · [S1][beeline-s1]
   - why: The paper's authors are in Virginia Tech's computer science department and its genetics, bioinformatics and computational biology programme, and the code, Docker images and data are held in the group's GitHub organisation, Docker Hub organisation (grnbeeline) and Zenodo record, which the same five authors created. v1.1 was prepared in the same organisation in 2026.
   > Department of Computer Science, Virginia Tech, Blacksburg
 - `governance.submission_process` = literature-only · [S1][beeline-s1]
@@ -1994,7 +2008,7 @@ Considered and rejected:
 - `activity` = no-submission-channel · S6
   - why: The repository and documentation offer code, Docker images and data; there is no leaderboard, server or results page, and none is described in any source. New algorithms can be added to the framework's code (v1.1 credits one to a contributor), but adding a runner is not entering a result.
   > a Python wrapper for 14 GRN inference algorithms with options to add new methods
-- `history` = date 2020-03-27; event licence-changed; field data.dataset\_licence; from GPL; to CC-BY-NC-4.0 · [S8][beeline-s8]
+- `history` = date 2020-03-27; event licence-changed; field data.dataset\_licence; from GPL; to CC-BY-NC-4.0 · [S9][beeline-s9]
   > Changed license to CC BY-NC 4.0 from GPL v3.0 to account for the non-commercial clause for the network data
 
 **Open review checks** (12):
@@ -2010,7 +2024,7 @@ Considered and rejected:
    > on the BEELINE single cell benchmark, which includes seven datasets (two from human and five from mouse) and three sets of ground truth networks
 7. (field `as_used`) Supervised GRN methods train on part of BEELINE's ground-truth edges or on other cell types and score against sampled negatives, none of which the paper defined; numbers from these protocols and from the paper's unsupervised one are not comparable, and no condition field records the split. · [S5][beeline-s5]
    > In contrast competing deep-learning methods were trained and evaluated on within-dataset splits of each test cell type
-8. (field `versions`) v1.0 and v1.1 are revisions over the same datasets. v1.1 is not marked breaking, since the incompatibility its notes declare is of configuration files and directory layout, but its evaluation code was rewritten and its roster changed, and whether it reproduces v1.0's numbers was not checked. · S9
+8. (field `versions`) v1.0 and v1.1 are revisions over the same datasets. v1.1 is not marked breaking, since the incompatibility its notes declare is of configuration files and directory layout, but its evaluation code was rewritten and its roster changed, and whether it reproduces v1.0's numbers was not checked. · S10
    > Config files from v1.0 are not immediately compatible with v1.1.
 9. (field `versions`) The preprint (May 2019) evaluated synthetic and Boolean data only, and the journal version added the experimental datasets; the data's Zenodo versions 1 (2019-08-27) and 2 (2019-10-01) predate the first code release and are not modelled as versions. · [S2][beeline-s2]
    > We use synthetic networks with predictable cellular trajectories as well as curated Boolean models to serve as the ground truth for evaluating the accuracy of GRN inference algorithms.
@@ -2034,7 +2048,8 @@ Considered and rejected:
 [beeline-s4]: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12574904/fullTextXML
 [beeline-s5]: https://www.ebi.ac.uk/europepmc/webservices/rest/PMC13069479/fullTextXML
 [beeline-s7]: https://zenodo.org/api/records/19009603
-[beeline-s8]: https://zenodo.org/api/records/3701939
+[beeline-s8]: https://arxiv.org/html/2607.13120v1
+[beeline-s9]: https://zenodo.org/api/records/3701939
 
 ### 2.10 Neural Latents Benchmark (neural-latents-benchmark)
 

@@ -2,7 +2,7 @@
 
 # Review packet: Games and planning
 
-`games-planning` · 12 published entries · 10 subdomains · data as of 2026-11-09 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`games-planning` · 12 published entries · 10 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -261,7 +261,7 @@ Considered and rejected:
 #### hanabi · Task and evaluation
 
 - `learned_entrant_evidence` = system Rainbow (sample-limited regime) · [S2][hanabi-s2]
-  > Training a Rainbow agent for the sample limited regime of 100 million steps took approximately seven days using an NVIDIA V100 GPU
+  > \[withheld: it may name a person; see the entry file\]
 - `learned_entrant_evidence` = system IPPO with LSTM policies (high entropy regularisation, greedified) · [S3][hanabi-s3]
   > We see for 2 players, that XP of IPPO with either LSTM architecture is above 24.45, which is higher than our OBL level 6 and the previous SOTA of 24.30
 - `reproducible_by_third_party` = true · [S2][hanabi-s2]
@@ -356,7 +356,7 @@ Considered and rejected:
 
 *26 Atari 2600 games, each learned from scratch in 100k agent steps (400k frames), scored by human-normalised score.*
 
-\[withheld: it may name a person; see the entry file\]
+A sample-efficiency protocol for reinforcement learning on the Arcade Learning Environment (ALE), introduced with SimPLe (arXiv 1903.00374, ICLR 2020). An agent learns each of 26 Atari 2600 games from scratch within 100k agent steps; every action is repeated for 4 frames, so the budget is 400k frames, about two hours of play. The 26 games are those on which SimPLe or a tuned Rainbow reached non-random scores at that budget. A run's score on a game is its return averaged over evaluation episodes after training, normalised so that a random agent scores 0 and an average human 1, and most papers report 3 or 5 runs per game, aggregated across games as the mean and the median. The rliable paper (arXiv 2108.13264, NeurIPS 2021) showed that such point estimates mislead at these run counts and recommended the interquartile mean (IQM) over all runs with stratified bootstrap confidence intervals, which later papers report beside the mean and median. SimPLe's main results ran without sticky actions; the ALE's v5 environments repeat the previous action with probability 0.25 by default and its v4 environments never do, so the environment settings are part of a result. There is no maintainer, site or leaderboard: papers run the protocol and publish their own numbers.
 
 | Classification | |
 | --- | --- |
@@ -469,7 +469,7 @@ Considered and rejected:
 
 **Open review checks** (8):
 
-1. (field `lineage`) \[withheld: it may name a person; see the entry file\] · [S4][atari-100k-s4]
+1. (field `lineage`) The entry is the 100k protocol on 26 games. The ALE (arXiv 1207.4708, 2013), its 200M-frame protocol and the sticky-action protocol of arXiv 1709.06009 (2018) are ancestors or siblings and have no entry; rliable calls the benchmark an offshoot of the ALE and cites SimPLe as its origin. lineage is left empty until an ALE entry exists. · [S4][atari-100k-s4]
    > Our case study concerns the Atari 100k benchmark \[50\], an offshoot of the ALE
 2. (field `data.refresh`) rliable's IQM recommendation is recorded here, not as a version. It is a third party's reporting recommendation (no maintainer exists to issue a version), and the per-run, per-game scores it aggregates are unchanged. If the catalogue treats it as a scoring revision, versions would gain a 2019 SimPLe protocol and a 2021 rliable protocol, and refresh would become versioned-releases. The rliable library computes the IQM that papers now report. · [S6][atari-100k-s6]
    > Interquartile Mean (IQM) across all runs
@@ -478,7 +478,7 @@ Considered and rejected:
 4. (field `governance.independence_flags`) The 26 games were chosen by the originators' own results (SimPLe or Rainbow non-random at 100k), which the independence flag rests on together with SimPLe ranking itself in the defining paper. Whether a benchmark introduced beside its authors' method carries maintainer-competes-on-own-benchmark is a reviewer call. · [S1][atari-100k-s1]
    > Specifically, for the final evaluation we selected games which achieved non-random results using our method or the Rainbow algorithm using 100K interactions
 5. (field `governance.maintainer_type`) maintainer\_type is industry-lab by the originator rule (Google Brain, whose Tensor2Tensor holds SimPLe's code). Nobody ever held the protocol as a benchmark, so null with a note is the alternative.
-6. (field `data.ceiling_anchor_type`) \[withheld: it may name a person; see the entry file\]
+6. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type is left null. The average-human normaliser is an anchor agents exceed, but no source read says whether the humans were non-specialists or expert players; arXiv 1805.11593 (2018), where SimPLe takes them from, was not read.
 7. (field `activity`) activity no-submission-channel rests on there being no route of the benchmark's own. The stress corpus records a Papers with Code leaderboard for Atari-100k that now redirects; it was a third-party aggregator and was not read. If it counts as a channel that existed, activity is closed.
 8. (field `released`) released is SimPLe v1's date (2019-03-01). v1's abstract page (read, not cited) already states the 100K-interaction, 400K-frame budget, but whether v1 evaluated the same 26 games was not checked; v3 (June 2019) and v4 (February 2020) revised the paper.
 
@@ -504,7 +504,7 @@ Considered and rejected:
 
 ### 2.4 VideoGameBench (videogamebench)
 
-`data/benchmarks/games-planning/videogamebench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-09 · last verified 2026-11-09
+`data/benchmarks/games-planning/videogamebench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-09 · last verified 2026-11-18
 
 *VLM agents play 1990s Game Boy and MS-DOS games in real time from raw frames, scored by share of each game completed.*
 
@@ -525,7 +525,7 @@ A benchmark of 23 video games from the 1990s, Game Boy, Game Boy Color and MS-DO
 | Independence flags | maintainer-competes-on-own-benchmark, single-evaluator-private-test-set |
 | Licences: code · dataset | MIT · null |
 | Released | 2025-05-23 |
-| Links | homepage [www.vgbench.com/](https://www.vgbench.com/) · repository github.com/\[personal account\]/VideoGameBench (not linked: a personal account) · leaderboard [www.vgbench.com/](https://www.vgbench.com/) |
+| Links | homepage [vgbench.com/](https://vgbench.com/) · repository github.com/\[personal account\]/VideoGameBench (not linked: a personal account) · leaderboard [vgbench.com/](https://vgbench.com/) |
 
 **Sources**
 
@@ -816,7 +816,7 @@ Considered and rejected:
 - `task` = exists true; input each agent's local observation within its unit's sight range (distance, relative position, health, shield and unit type of visible allied and enemy units, the last actions of visible allies, surrounding terrain), and during centralised training only, the global state; output One discrete action per agent per step, move in one of four directions, attack an enemy in shooting range (heal an ally, for Medivacs), stop or no-op, until one army is destroyed or the episode limit is reached.; scoring Test win rate: the percentage of greedy, decentralised test episodes in which the allies kill every enemy unit within the time limit. The paper runs 32 test episodes every 10,000 training steps over independent runs (five in the paper) and reports the median with the 25-75% percentiles; Table 2 gives the maximum median over the last 250k steps of training.; metric_range 0, 100 · [S2][smac-s2]
   > during which 32 test episodes are run with agents performing action selection greedily in a decentralised fashion.
 - `execution.compute_tier` = simulator-required · [S2][smac-s2]
-  > Each independent run takes between 8 to 16 hours, depending on the exact scenario, using Nvidia Geforce GTX 1080 Ti graphics cards
+  > \[withheld: it may name a person; see the entry file\]
 - `execution.reproducibility_tier` = automatable-with-simulator · [S6][smac-s6]
   - why: A run is automatic but needs the StarCraft II game, the SMAC maps copied into its Maps directory, and the smac package.
   > python -m smac.examples.random\_agents
@@ -1049,7 +1049,7 @@ Considered and rejected:
 
 #### craftax · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S3
+- `governance.maintainer` = An individual researcher (the paper's first author and the repository's owner) · S3
   - why: The repository and the baselines repository sit in the first author's personal GitHub account (a User account, GitHub API), and the LICENSE file's copyright is his. The paper's authors were at the University of Oxford and UCL; that line of the PDF sits beside the correspondence address and is not quoted.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = self-reported, maintainer-run · S3

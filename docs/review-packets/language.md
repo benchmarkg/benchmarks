@@ -2,7 +2,7 @@
 
 # Review packet: Language
 
-`language` · 14 published entries · 11 subdomains · data as of 2026-11-09 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`language` · 14 published entries · 11 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -56,7 +56,7 @@ Not in this packet (4): `boolq`, `fiction-livebench`, `flores`, `squad`. `python
 | 2.3 | [WritingBench](#23-writingbench-writingbench) | `generation` | 43 | 12 |
 | 2.4 | [MT-Bench](#24-mt-bench-mt-bench) | `dialogue` | 42 | 11 |
 | 2.5 | [XL-Sum](#25-xl-sum-xlsum) | `summarization` | 33 | 7 |
-| 2.6 | [WMT General Machine Translation](#26-wmt-general-machine-translation-wmt-general-mt) | `translation` | 45 | 9 |
+| 2.6 | [WMT General Machine Translation](#26-wmt-general-machine-translation-wmt-general-mt) | `translation` | 46 | 10 |
 | 2.7 | [Belebele](#27-belebele-belebele) | `multilingual` | 41 | 10 |
 | 2.8 | [RULER](#28-ruler-ruler) | `long-context` | 40 | 8 |
 | 2.9 | [HotpotQA](#29-hotpotqa-hotpotqa) | `retrieval-qa` | 37 | 8 |
@@ -1063,7 +1063,7 @@ Considered and rejected:
 
 ### 2.6 WMT General Machine Translation (wmt-general-mt)
 
-`data/benchmarks/language/wmt-general-mt.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/language/wmt-general-mt.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *The Conference on Machine Translation's yearly general MT shared task, ranked by professional human evaluation.*
 
@@ -1077,7 +1077,7 @@ The main shared task of WMT, the Conference on Machine Translation (a workshop f
 | Evaluation methods | human-expert-eval, human-crowd-eval, model-graded-judge, model-derived-metric, reference-metric, entrant-relative-ranking |
 | Designed for | task-specific-supervised-model, instruction-tuned-model, full-product-pipeline, human-expert |
 | Evaluation target · execution mode · ground truth | learned-system · panel · expert-panel |
-| Lifecycle · activity | active · results-pending |
+| Lifecycle · activity | active · between-rounds |
 | Data access · refresh · contamination risk | fully-open · periodic-recompetition · low |
 | Reproducibility tier · harness | requires-human-raters · reference-implementation-only |
 | Maintainer type · submission process | conference-workshop · held-out-server, maintainer-run, publication-gated |
@@ -1094,13 +1094,15 @@ The main shared task of WMT, the Conference on Machine Translation (a workshop f
 | S2 | `src-acl-2025-wmt-1-22-pdf` | paper · Association for Computational Linguistics | [aclanthology.org/2025.wmt-1.22.pdf](https://aclanthology.org/2025.wmt-1.22.pdf) | none (not-required) |
 | S3 | `src-wmt26-general-mt-site` | documentation · WMT (Conference on Machine Translation) | [www2.statmt.org/wmt26/translation-task.html](https://www2.statmt.org/wmt26/translation-task.html) | none (withheld) |
 | S4 | `src-arxiv-2609-13916-v1` | preprint · arXiv | [arxiv.org/pdf/2609.13916v1](https://arxiv.org/pdf/2609.13916v1) | none (not-required) |
-| S5 | `src-github-wmt26-general-mt-readme` | repository · GitHub | [raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md](https://raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014140050/https://raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md) |
-| S6 | `src-acl-2024-wmt-1-1-pdf` | paper · Association for Computational Linguistics | [aclanthology.org/2024.wmt-1.1.pdf](https://aclanthology.org/2024.wmt-1.1.pdf) | none (not-required) |
-| S7 | `src-acl-2025-wmt-1-22` | paper · Association for Computational Linguistics | [aclanthology.org/2025.wmt-1.22/](https://aclanthology.org/2025.wmt-1.22/) | none (not-required) |
-| S8 | `src-github-wmt25-general-mt-readme` | repository · GitHub | [raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md](https://raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014135943/https://raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md) |
-| S9 | `src-arxiv-2609-13916` | preprint · arXiv | [arxiv.org/abs/2609.13916](https://arxiv.org/abs/2609.13916) | none (not-required) |
+| S5 | `src-acl-2026-wmt-main-48` | paper · Association for Computational Linguistics | [aclanthology.org/2026.wmt-main.48/](https://aclanthology.org/2026.wmt-main.48/) | none (not-required) |
+| S6 | `src-acl-2026-wmt-main-48-pdf` | paper · Association for Computational Linguistics | [aclanthology.org/2026.wmt-main.48.pdf](https://aclanthology.org/2026.wmt-main.48.pdf) | none (not-required) |
+| S7 | `src-acl-2024-wmt-1-1-pdf` | paper · Association for Computational Linguistics | [aclanthology.org/2024.wmt-1.1.pdf](https://aclanthology.org/2024.wmt-1.1.pdf) | none (not-required) |
+| S8 | `src-acl-2025-wmt-1-22` | paper · Association for Computational Linguistics | [aclanthology.org/2025.wmt-1.22/](https://aclanthology.org/2025.wmt-1.22/) | none (not-required) |
+| S9 | `src-github-wmt26-general-mt-readme` | repository · GitHub | [raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md](https://raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014140050/https://raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md) |
+| S10 | `src-github-wmt25-general-mt-readme` | repository · GitHub | [raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md](https://raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014135943/https://raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md) |
+| S11 | `src-arxiv-2609-13916` | preprint · arXiv | [arxiv.org/abs/2609.13916](https://arxiv.org/abs/2609.13916) | none (not-required) |
 
-**Evidence** (45 quoted fields), by checklist area:
+**Evidence** (46 quoted fields), by checklist area:
 
 #### wmt-general-mt · Identity and id
 
@@ -1145,6 +1147,8 @@ Considered and rejected:
   > The best system overall, was Gemini 2.5 Pro, which was in top cluster in 14 language pairs
 - `learned_entrant_evidence` = system Cohere CAT+ (North Small Translate), a WMT26 submission · [S4][wmt-general-mt-s4]
   > We submitted our model to the WMT 2026 General MT shared task as Cohere CAT+
+- `learned_entrant_evidence` = system Wayfinder, a Gemini-based system (best system overall at WMT26, top cluster in 17 of 23 language pairs) · [S6][wmt-general-mt-s6]
+  > The best system overall was Wayfinder, scoring in the top cluster for 17 out of 23 language pairs.
 - `reproducible_by_third_party` = true · [S2][wmt-general-mt-s2]
   - why: After each round the sources, references, system outputs and human judgements are public, and the WMT26 repository explains how to rerun its human evaluation in Pearmut. A rerun needs raters of one's own, so it reproduces the protocol, not the official numbers.
   > All source data, system outputs, and human judgments are released to support transparency, reproducibility, and further research on machine translation.
@@ -1154,12 +1158,12 @@ Considered and rejected:
   > Constrained models compete only against other constrained, while unconstrained compete against all.
 - `entrant_classes` = class unconstrained; ranked_separately false · [S1][wmt-general-mt-s1]
   > Unconstrained track - track that do not place any limitations, neither requires publishing the model.
-- `entrant_classes_history` · [S6][wmt-general-mt-s6]
+- `entrant_classes_history` · [S7][wmt-general-mt-s7]
   > We distinguish three types of MT systems participating in the shared task: constrained, open and closed systems.
 - `execution.compute_tier` = human-panel · [S2][wmt-general-mt-s2]
   - why: What a run costs is the organisers' paid human evaluation; each entrant's own inference cost varies with the system.
   > All annotators were paid a fair wage in their respective countries.
-- `execution.reproducibility_tier` = requires-human-raters · [S5][wmt-general-mt-s5]
+- `execution.reproducibility_tier` = requires-human-raters · [S9][wmt-general-mt-s9]
   - why: The headline score is human ratings. The data and the annotation tool are public and the WMT26 repository shows how to rerun the campaign, so anyone who recruits raters can run it, not only the organisers.
   > You can start the annotation server without any completed annotations as follows
 - `execution.harness` = wmt\_gen\_mt\_tool.py (blind-set handling and submission checks); Pearmut 1.1.6 with contrastive ESA (the WMT26 human evaluation) · [S1][wmt-general-mt-s1]
@@ -1193,7 +1197,7 @@ Considered and rejected:
   > English to Ladin (Val Badia), Italy (new)
 - `data.size` = count 9000; unit source words per domain test set (about 60 to 100 segments); subset WMT25 · [S2][wmt-general-mt-s2]
   > approximately 9,000 words distributed across
-- `data.size` = count 11; unit language pairs; subset WMT24 · [S6][wmt-general-mt-s6]
+- `data.size` = count 11; unit language pairs; subset WMT24 · [S7][wmt-general-mt-s7]
   > participants were asked to build machine translation systems for any of 11 language pairs
 - `subsets` = id wmt-general-mt#multilingual; label Multilingual subtask (2025); scored_separately true · [S1][wmt-general-mt-s1]
   > Multilingual subtask - develop a system that can translate into multiple languages simultaneously.
@@ -1202,11 +1206,11 @@ Considered and rejected:
 
 #### wmt-general-mt · Governance and independence
 
-- `governance.maintainer` = The WMT General MT task organisers (Conference on Machine Translation, ACL SIGMT) · [S7][wmt-general-mt-s7]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The WMT General MT task organisers (Conference on Machine Translation, ACL SIGMT) · [S8][wmt-general-mt-s8]
+  - why: The task is run for WMT, a conference under ACL's special interest group on machine translation, by an organising group of about 30 from universities and companies; the first-listed organiser (Cohere) is the contact.
   > Venue: WMT SIG: SIGMT
 - `governance.maintainer_type` = conference-workshop · [S3][wmt-general-mt-s3]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: A recurring shared task of a yearly conference whose organiser list changes between editions (WMT26 added three organisers, and thanks two WMT25 organisers instead of listing them).
   > ELEVENTH CONFERENCE ON MACHINE TRANSLATION (WMT26) 28-29 October, 2026 Budapest, Hungary
 - `governance.submission_process` = held-out-server, maintainer-run, publication-gated · [S1][wmt-general-mt-s1]
   > human references do not exist at the time of submission
@@ -1224,29 +1228,31 @@ Considered and rejected:
 #### wmt-general-mt · Lifecycle and activity
 
 - `lifecycle` = active · [S3][wmt-general-mt-s3]
-  - why: The 2026 edition took submissions until 2 July 2026 and has published its submissions and references, and a September 2026 paper reports results on the WMT25 and WMT26 test sets.
+  - why: The 2026 edition took submissions until 2 July 2026, published its submissions and references, and published its official human-evaluation results in the findings at WMT26 (28-29 October 2026, src-acl-2026-wmt-main-48-pdf); a September 2026 paper reports results on the WMT25 and WMT26 test sets.
   > 2026-07-27: We published the submissions and references
-- `activity` = results-pending · [S5][wmt-general-mt-s5]
-  - why: The WMT26 round closed on 2 July 2026, and its official ranking will appear in the findings paper at the conference; no round is open and no standing leaderboard takes outputs.
-  > To appear in Proceedings of the Eleventh Conference on Machine Translation
+- `activity` = between-rounds · [S5][wmt-general-mt-s5]
+  - why: The WMT26 round closed on 2 July 2026 and its results are published; no round is open, no standing leaderboard takes outputs, and the next round has no date yet.
+  > This paper presents the results of the General Machine Translation Task organized under the 2026 Conference on Machine Translation (WMT).
 
-**Open review checks** (9):
+**Open review checks** (10):
 
 1. (field `versions`) Identity: one family entry for the General MT task (the News translation task until its rename), with editions as versions, as IWSLT and DCASE are modelled. The stress corpus names the 2025 edition, which as an entry of its own would be superseded and closed; the family is active.
-2. (field `versions`) Versions start at 2023, the earliest edition a read source describes (WMT24's findings name DA+SQM as the protocol it replaced). The series ran since 2006; the 2006-2022 editions and the year of the rename to General MT were not read. 2023 and 2024 carry no release date. · [S6][wmt-general-mt-s6]
+2. (field `versions`) Versions start at 2023, the earliest edition a read source describes (WMT24's findings name DA+SQM as the protocol it replaced). The series ran since 2006; the 2006-2022 editions and the year of the rename to General MT were not read. 2023 and 2024 carry no release date. · [S7][wmt-general-mt-s7]
    > This conference built on 18 previous editions as a workshop or a conference
 3. (field `evaluation_method`) evaluation\_method has six terms. model-graded-judge, model-derived-metric and reference-metric come from AutoRank, which WMT26 dropped. entrant-relative-ranking rests on rank ranges and clusters computed against the other systems. composite was rejected because the headline is the human score. · [S2][wmt-general-mt-s2]
    > Finally, we linearly rescale the results to the range from 1 to N systems.
 4. (field `evaluation_method`) \[withheld: it may name a person; see the entry file\] · [S2][wmt-general-mt-s2]
    > Toloka AI paid expert crowd: Bilingual native target-language
-5. (field `activity`) activity results-pending, against between-rounds. The WMT26 round closed on 2 July and its human annotations are on GitHub (marked preliminary in the release), but the official ranking is the findings paper, due at the 28-29 October conference. · [S3][wmt-general-mt-s3]
-   > This year, we will not release automatic preliminary results.
-6. (field `designed_for_subjects`) designed\_for\_subjects follows the corpus classification's four terms; human-expert rests on the professional references ranked as an entrant. WMT26 builds references by post-editing MT, which is closer to human-ai-team. · [S3][wmt-general-mt-s3]
+5. (field `activity`) activity between-rounds, against round-scheduled. The WMT26 findings with the official ranking are published and no WMT27 page or call exists yet; WMT has run a General MT task every year, so round-scheduled fits once WMT27 announces one with dates. · [S5][wmt-general-mt-s5]
+   > This paper presents the results of the General Machine Translation Task organized under the 2026 Conference on Machine Translation (WMT).
+6. (field `paper`) paper names the WMT25 findings, the newest when the entry was drafted. The WMT26 findings (2026.wmt-main.48) now describe the current edition and are cited on versions\[2026\]; whether paper should follow each year's findings is the reviewer's call. · [S5][wmt-general-mt-s5]
+   > We evaluated 46 systems in total: 30 submitted by participants and 16 consisting of translations from large language models (LLMs) and industry translation providers.
+7. (field `designed_for_subjects`) designed\_for\_subjects follows the corpus classification's four terms; human-expert rests on the professional references ranked as an entrant. WMT26 builds references by post-editing MT, which is closer to human-ai-team. · [S3][wmt-general-mt-s3]
    > Human reference will be build with updated translators brief and encouraged post-editing of MT and many language pairs will not have human reference at all
-7. (field `data.contamination_risk`) contamination\_risk low describes the rounds as run; the literary Japanese sources are public-domain stories from 1938 and 1942, and whether translations of them were public was not checked.
-8. (field `entrant_classes`) The constrained and unconstrained tracks are recorded as entrant\_classes and eligibility\_track, not as training\_data\_eligibility\_tiers, because since 2025 the constrained track limits model size and weight licensing, not training data (WMT24's constrained track did limit training data). · [S1][wmt-general-mt-s1]
+8. (field `data.contamination_risk`) contamination\_risk low describes the rounds as run; the literary Japanese sources are public-domain stories from 1938 and 1942, and whether translations of them were public was not checked.
+9. (field `entrant_classes`) The constrained and unconstrained tracks are recorded as entrant\_classes and eligibility\_track, not as training\_data\_eligibility\_tiers, because since 2025 the constrained track limits model size and weight licensing, not training data (WMT24's constrained track did limit training data). · [S1][wmt-general-mt-s1]
    > Redefined constrained/open/closed tracks. Only two tracks
-9. (field `ground_truth_source`) execution\_mode panel and ground\_truth\_source expert-panel are read from the human ratings being the official score; the crowd-rated pairs make expert-panel approximate.
+10. (field `ground_truth_source`) execution\_mode panel and ground\_truth\_source expert-panel are read from the human ratings being the official score; the crowd-rated pairs make expert-panel approximate.
 
 **Reviewer checklist** for `wmt-general-mt`:
 
@@ -1263,11 +1269,13 @@ Considered and rejected:
 [wmt-general-mt-s2]: https://aclanthology.org/2025.wmt-1.22.pdf
 [wmt-general-mt-s3]: https://www2.statmt.org/wmt26/translation-task.html
 [wmt-general-mt-s4]: https://arxiv.org/pdf/2609.13916v1
-[wmt-general-mt-s5]: https://raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md
-[wmt-general-mt-s6]: https://aclanthology.org/2024.wmt-1.1.pdf
-[wmt-general-mt-s7]: https://aclanthology.org/2025.wmt-1.22/
-[wmt-general-mt-s8]: https://raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md
-[wmt-general-mt-s9]: https://arxiv.org/abs/2609.13916
+[wmt-general-mt-s5]: https://aclanthology.org/2026.wmt-main.48/
+[wmt-general-mt-s6]: https://aclanthology.org/2026.wmt-main.48.pdf
+[wmt-general-mt-s7]: https://aclanthology.org/2024.wmt-1.1.pdf
+[wmt-general-mt-s8]: https://aclanthology.org/2025.wmt-1.22/
+[wmt-general-mt-s9]: https://raw.githubusercontent.com/wmt-conference/wmt26-general-mt/main/README.md
+[wmt-general-mt-s10]: https://raw.githubusercontent.com/wmt-conference/wmt25-general-mt/main/README.md
+[wmt-general-mt-s11]: https://arxiv.org/abs/2609.13916
 
 ### 2.7 Belebele (belebele)
 
@@ -1476,7 +1484,7 @@ Considered and rejected:
 
 *Synthetic long-context tasks generated at any input length, reporting the context size a model can really use.*
 
-NVIDIA's synthetic benchmark for long-context language models. A generator builds every input at a chosen length, counted in the evaluated model's own tokens (4K to 128K in the paper), so the same tasks can be rerun as the input grows. The 13 tasks fall in four categories. Retrieval has eight needle-in-a-haystack variants, with different needle types, distractor needles, and several values or keys to return. Multi-hop tracing follows a chain of variable assignments. Aggregation returns the most common or most frequent words of a long synthetic word list. Question answering hides SQuAD and HotpotQA gold paragraphs among distractor paragraphs. Each task is scored by whether the reference strings appear in the model's output, over 500 samples per length, and the 13 task scores are averaged at each length. The headline is a model's effective context length, the longest tested length at which its average still beats Llama2-7B's score at 4K (85.6%), set beside the length the model claims. The paper evaluated 17 models in 2024; the repository's results table has grown since, partly with rows that model developers reported in their own papers.
+\[withheld: it may name a person; see the entry file\]
 
 | Classification | |
 | --- | --- |
@@ -1493,7 +1501,7 @@ NVIDIA's synthetic benchmark for long-context language models. A generator build
 | Independence flags | results-published-only-in-vendor-document |
 | Licences: code · dataset | Apache-2.0 · null |
 | Released | 2024-04-09 |
-| Links | homepage [github.com/NVIDIA/RULER](https://github.com/NVIDIA/RULER) · repository [github.com/NVIDIA/RULER](https://github.com/NVIDIA/RULER) |
+| Links | homepage github.com/\[personal account\]/RULER (not linked: a personal account) · repository github.com/\[personal account\]/RULER (not linked: a personal account) |
 
 **Sources**
 
@@ -1501,9 +1509,9 @@ NVIDIA's synthetic benchmark for long-context language models. A generator build
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2404-06654-v3` | preprint · arXiv | [arxiv.org/pdf/2404.06654v3](https://arxiv.org/pdf/2404.06654v3) | none (not-required) |
 | S2 | `src-arxiv-2404-06654` | preprint · arXiv | [arxiv.org/abs/2404.06654](https://arxiv.org/abs/2404.06654) | none (not-required) |
-| S3 | `src-github-ruler-eval-metrics` | repository · GitHub | [raw.githubusercontent.com/NVIDIA/RULER/main/scripts/eval/synthetic/co...](https://raw.githubusercontent.com/NVIDIA/RULER/main/scripts/eval/synthetic/constants.py) | [capture 2026-10-14](https://web.archive.org/web/20261014135809/https://raw.githubusercontent.com/NVIDIA/RULER/main/scripts/eval/synthetic/constants.py) |
+| S3 | `src-github-ruler-eval-metrics` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/RULER/main/scripts/eval/synthetic/constants.py (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S4 | `src-arxiv-2605-31268-v1` | preprint · arXiv | [arxiv.org/pdf/2605.31268v1](https://arxiv.org/pdf/2605.31268v1) | none (not-required) |
-| S5 | `src-github-ruler-readme` | repository · GitHub | [raw.githubusercontent.com/NVIDIA/RULER/main/README.md](https://raw.githubusercontent.com/NVIDIA/RULER/main/README.md) | [capture 2026-10-02](https://web.archive.org/web/20261002085255/https://raw.githubusercontent.com/NVIDIA/RULER/main/README.md) |
+| S5 | `src-github-ruler-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/RULER/main/README.md (not linked: a personal account) | capture 2026-10-02 (not linked: the page is under a personal account) |
 | S6 | `src-lm-eval-harness-ruler-readme` | repository · EleutherAI | [raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de816439...](https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014141648/https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler/README.md) |
 | S7 | `src-lm-eval-harness-ruler-utils` | repository · EleutherAI | [raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de816439...](https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler/common_utils.py) | [capture 2026-10-14](https://web.archive.org/web/20261014141658/https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler/common_utils.py) |
 
@@ -1544,7 +1552,7 @@ Considered and rejected:
 - `capability` not `memory-retention` · [S1][ruler-s1]
   - why: The needle sits earlier in the input than the query at its end, but the whole input is in the window when the query is read. The term's exclusion keeps it off benchmarks where only the input is long, and RULER does not vary or report the distance between needle and query.
   > Current RULER reports a single number metric for each input length without providing the depth-level performance.
-- `evaluation_method` not `exact-match` · [S3][ruler-s3]
+- `evaluation_method` not `exact-match` · S3
   - why: The output is not compared for equality with the reference. A reference string counts if it appears anywhere in the output, and multi-answer tasks give partial credit, which the term's exclusion test rules out.
   > score = sum(\[sum(\[1.0 if r.lower() in pred.lower() else 0.0 for r in ref\]) / len(ref) for pred, ref in zip(preds, refs)\]) / len(preds) \* 100
 
@@ -1554,18 +1562,18 @@ Considered and rejected:
   > The closed-source model Gemini-1.5-Pro outperforms the rest of the models by a large margin
 - `learned_entrant_evidence` = system Mellum 2 · [S4][ruler-s4]
   > we used RULER \[29\] at 128K as the primary long-context benchmark
-- `reproducible_by_third_party` = true · [S5][ruler-s5]
+- `reproducible_by_third_party` = true · S5
   - why: The generator, task configurations and scorer are public, and inputs are determined by the model's tokenizer, the target length and a random seed.
   > Verify the script is reproducible given a tokenizer, a sequence length, and a random seed.
 - `task` = exists true; input a generated text of the target length in the model's own tokens (distractor essays, noise sentences, synthetic word lists or distractor paragraphs) with the task's key information inserted, followed by the question and an answer prefix; output A short answer, such as the requested values, the variable names bound to a value, the most common or most frequent words, or the answer to the question.; scoring Per task, the share of reference strings found in the output (any one answer for QA), averaged over 500 samples per length; the 13 task scores are averaged at each length. A model's effective length is the longest tested length whose average beats Llama2-7B (chat) at 4K (85.6%). Two weighted averages over the lengths, one weighting long inputs more (inc) and one short inputs (dec), rank the models.; metric_range 0, 100 · [S1][ruler-s1]
   > The performance exceeding the Llama2-7B performance at 4K (85.6%) is underlined. The effective context length is the maximum length passing this threshold.
-- `execution.compute_tier` = api-credits-only · [S5][ruler-s5]
+- `execution.compute_tier` = api-credits-only · S5
   - why: The paper ran GPT-4 and Gemini-1.5-Pro beside open models, and the pipeline ships OpenAI and Gemini API backends. Generation sizes inputs with a tokenizer and scoring is string matching, so the protocol mandates no hardware; GPUs only serve local weights.
   > MODEL\_FRAMEWORK="openai"
-- `execution.reproducibility_tier` = fully-automatable · [S5][ruler-s5]
+- `execution.reproducibility_tier` = fully-automatable · S5
   - why: Inputs are generated and scored by public scripts with no human or maintainer-only step.
   > Verify the script is reproducible given a tokenizer, a sequence length, and a random seed.
-- `execution.harness` = NVIDIA/RULER, the original run.sh pipeline (now marked deprecated in the README) and the rulerv1-ns branch's NeMo-Skills pipeline, which the README names as the current one for RULER · [S5][ruler-s5]
+- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S5
   > branch to use our latest pipeline for RULERv1 evaluation
 - `execution.harness_gotcha` · [S6][ruler-s6]
   > The default maximum sequence length is 4096.
@@ -1582,7 +1590,7 @@ Considered and rejected:
 - `data.access` = generated-on-demand · [S1][ruler-s1]
   - why: No fixed item set is released. The repository's scripts generate each run's samples for the model's tokenizer and the target length, from the task configurations.
   > Evaluation examples in RULER are automatically generated based on input configurations (see Table 2) that define the length and complexity of each input.
-- `data.refresh` = continuously-generated · [S5][ruler-s5]
+- `data.refresh` = continuously-generated · S5
   - why: The samples a run is scored on are synthesised for that run by the generator; the 13 task configurations stay fixed.
   > RULER generates synthetic examples to evaluate long-context language models with configurable sequence length and task complexity.
 - `data.data_provenance` = synthetic-procedural · [S1][ruler-s1]
@@ -1595,7 +1603,7 @@ Considered and rejected:
   > we evaluate each model with 500 examples generated for each length from the series (4K, 8K, 16K, 32K, 64K, 128K)
 - `data.size` = count 6; unit input lengths in the paper's series (4K, 8K, 16K, 32K, 64K, 128K) · [S1][ruler-s1]
   > we evaluate each model with 500 examples generated for each length from the series (4K, 8K, 16K, 32K, 64K, 128K)
-- `execution.code_licence` = Apache-2.0 · [S3][ruler-s3]
+- `execution.code_licence` = Apache-2.0 · S3
   > Licensed under the Apache License, Version 2.0
 - `subsets` = id ruler#retrieval; label Retrieval (needle-in-a-haystack); scored_separately true · [S1][ruler-s1]
   > Retrieval: we extend the needle-in-a-haystack (Kamradt, 2023, NIAH) test to evaluate retrieval capability with diverse types and quantities of needles.
@@ -1610,12 +1618,12 @@ Considered and rejected:
 
 #### ruler · Governance and independence
 
-- `governance.maintainer` = NVIDIA · [S3][ruler-s3]
-  - why: The repository is in NVIDIA's GitHub organisation (NVIDIA/RULER), the code is NVIDIA Corporation's copyright, and the eight authors are at NVIDIA. The README adds that it is a research project, not an official NVIDIA product.
-  > Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
-- `governance.submission_process` = maintainer-run, self-reported · [S5][ruler-s5]
+- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S3
+  - why: \[withheld: it may name a person; see the entry file\]
+  > \[withheld: it may name a person; see the entry file\]
+- `governance.submission_process` = maintainer-run, self-reported · S5
   > Jamba-1.5-large results are reported by authors from this
-- `governance.independence_flags` = flag results-published-only-in-vendor-document · [S5][ruler-s5]
+- `governance.independence_flags` = flag results-published-only-in-vendor-document · S5
   > Qwen3 results are reported by authors from this
 
 #### ruler · Lifecycle and activity
@@ -1623,23 +1631,23 @@ Considered and rejected:
 - `lifecycle` = active · [S4][ruler-s4]
   - why: Results are still being produced. A May 2026 technical report used RULER at 128K as its primary long-context benchmark, and the README's results table carries rows from 2025 model reports. The repository was last pushed on 2026-07-22 (GitHub API, read 2026-10-14).
   > we used RULER \[29\] at 128K as the primary long-context benchmark
-- `history` = event repository-moved; field repository; from \[withheld: it may name a person; see the entry file\]; to NVIDIA/RULER · [S1][ruler-s1]
+- `history` = event repository-moved; field repository; from github.com/\[personal account\]/RULER (not linked: a personal account); to github.com/\[personal account\]/RULER (not linked: a personal account) · [S1][ruler-s1]
   > \[withheld: it may name a person; see the entry file\]
 
 **Open review checks** (8):
 
-1. (field `evaluation_method`) evaluation\_method is reference-metric, a fixed-formula recall of reference strings found anywhere in the output with partial credit. exact-match was rejected because the output need not equal the reference, though Mellum 2 calls the scorer exact-match and many readers would file it there. · [S3][ruler-s3]
+1. (field `evaluation_method`) evaluation\_method is reference-metric, a fixed-formula recall of reference strings found anywhere in the output with partial credit. exact-match was rejected because the output need not equal the reference, though Mellum 2 calls the scorer exact-match and many readers would file it there. · S3
    > score = sum(\[max(\[1.0 if r.lower() in pred.lower() else 0.0 for r in ref\]) for pred, ref in zip(preds, refs)\]) / len(preds) \* 100
 2. (field `comparability.material_extra`) The input length is carried in context\_window\_used, read as the length a run was scored at. If that field means the model's configured window instead, the length belongs in subset\_used (for example "13 tasks at 131072 tokens"), and a new length field may be needed. Lengths are counted in each model's own tokenizer, so "128K" is not the same text across models.
 3. (field `execution.runnable_via`) lm-evaluation-harness's QA scorer gives the share of reference answers found, where RULER's own counts a sample right if any one answer appears, so lm-eval scores QA samples with several distinct answers lower. Confirm before treating lm-eval RULER numbers as comparable. · [S7][ruler-s7]
    > score = max( sum(1.0 if r.lower() in pred.lower() else 0.0 for r in ref) / len(ref)
-4. (field `versions`) RULERv2 (NeurIPS 2025, the same NVIDIA authors) has its own pipeline on the rulerv2-ns branch. It was not read; it could be an edition of this entry or an entry of its own. · [S5][ruler-s5]
+4. (field `versions`) \[withheld: it may name a person; see the entry file\] · S5
    > branch to use our latest pipeline for RULERv2 evaluation
 5. (field `data.access`) data.access generated-on-demand and refresh continuously-generated rest on samples being generated per run. The generator is seeded, so a tokenizer, length and seed fix the samples; fully-open with static could be argued instead.
 6. (field `capability`) memory-retention was rejected as the input is all in the window and needle depth is not reported; the needle does precede the query by the whole haystack, which the term's inclusion test describes.
-7. (field `data.data_provenance`) data\_provenance is synthetic-procedural only. The haystack essays (from the web) and the SQuAD and HotpotQA questions are re-used text whose provenance the sources read do not state; web-scraped or crowd-authored could be added from those datasets' own papers. · [S5][ruler-s5]
+7. (field `data.data_provenance`) data\_provenance is synthetic-procedural only. The haystack essays (from the web) and the SQuAD and HotpotQA questions are re-used text whose provenance the sources read do not state; web-scraped or crowd-authored could be added from those datasets' own papers. · S5
    > QA datasets are downloaded from
-8. (field `governance.independence_flags`) self-reported and results-published-only-in-vendor-document rest on the asterisked rows copied from developers' reports. Whether those rows count as a submission channel (and so whether activity is unknown or no-submission-channel) is unsettled; the README names no route. · [S5][ruler-s5]
+8. (field `governance.independence_flags`) self-reported and results-published-only-in-vendor-document rest on the asterisked rows copied from developers' reports. Whether those rows count as a submission channel (and so whether activity is unknown or no-submission-channel) is unsettled; the README names no route. · S5
    > Qwen3 results are reported by authors from this
 
 **Reviewer checklist** for `ruler`:
@@ -1655,9 +1663,7 @@ Considered and rejected:
 
 [ruler-s1]: https://arxiv.org/pdf/2404.06654v3
 [ruler-s2]: https://arxiv.org/abs/2404.06654
-[ruler-s3]: https://raw.githubusercontent.com/NVIDIA/RULER/main/scripts/eval/synthetic/constants.py
 [ruler-s4]: https://arxiv.org/pdf/2605.31268v1
-[ruler-s5]: https://raw.githubusercontent.com/NVIDIA/RULER/main/README.md
 [ruler-s6]: https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler/README.md
 [ruler-s7]: https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/ruler/common_utils.py
 

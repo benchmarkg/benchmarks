@@ -2,7 +2,7 @@
 
 # Review packet: Audio and speech
 
-`audio-speech` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-05 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`audio-speech` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -55,8 +55,8 @@ Not in this packet (8): `audioset`, `dihard`, `hear`, `musiccaps`, `open-asr-lea
 | 2.3 | [ASVspoof](#23-asvspoof-asvspoof) | `speaker-tasks` | 42 | 9 |
 | 2.4 | [Deep Noise Suppression Challenge](#24-deep-noise-suppression-challenge-dns-challenge) | `speaker-tasks` | 50 | 12 |
 | 2.5 | [IWSLT Evaluation Campaign](#25-iwslt-evaluation-campaign-iwslt) | `speech-translation` | 53 | 10 |
-| 2.6 | [MIREX](#26-mirex-mirex) | `music-understanding` | 52 | 8 |
-| 2.7 | [DCASE Challenge](#27-dcase-challenge-dcase) | `audio-event-understanding` | 49 | 11 |
+| 2.6 | [MIREX](#26-mirex-mirex) | `music-understanding` | 52 | 9 |
+| 2.7 | [DCASE Challenge](#27-dcase-challenge-dcase) | `audio-event-understanding` | 49 | 12 |
 | 2.8 | [L3DAS Challenge](#28-l3das-challenge-l3das) | `audio-event-detection-localization` | 37 | 10 |
 | 2.9 | [BEANS](#29-beans-beans) | `bioacoustics` | 51 | 10 |
 | 2.10 | [BirdSet](#210-birdset-birdset) | `bioacoustics` | 41 | 9 |
@@ -157,8 +157,8 @@ The CHiME challenges (Computational Hearing in Multisource Environments) and the
 
 #### chime · Task and evaluation
 
-- `learned_entrant_evidence` = system BUT's CHiME-9 MCoRec system (NVIDIA Parakeet-v2 ASR conditioned on AV-HuBERT visual features, with Qwen3.5-122B for conversation clustering), second on the evaluation set · [S11][chime-s11]
-  > Our architecture conditions a pre-trained NVIDIA Parakeet-v2 ASR model on visual representations from a pre-trained AV-HuBERT model.
+- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S11][chime-s11]
+  > \[withheld: it may name a person; see the entry file\]
 - `learned_entrant_evidence` = system STCON's CHiME-8 DASR system, first in the constrained-LM track · [S12][chime-s12]
   > Contrary to our expectation, STCON (1st place) and NTT (2nd place) DASR systems technically would place 2nd and 3rd also in Task 2 multi-channel track
 - `reproducible_by_third_party` = false · [S13][chime-s13]
@@ -751,7 +751,7 @@ The Automatic Speaker Verification Spoofing and Countermeasures Challenge, a com
 
 ### 2.4 Deep Noise Suppression Challenge (dns-challenge)
 
-`data/benchmarks/audio-speech/dns-challenge.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-05 · last verified 2026-11-05
+`data/benchmarks/audio-speech/dns-challenge.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-05 · last verified 2026-11-18
 
 *Microsoft's five-round speech enhancement challenge (2020-2023), ranked by crowdsourced listening tests.*
 
@@ -793,6 +793,7 @@ Microsoft's Deep Noise Suppression Challenge, five rounds held at Interspeech 20
 | S13 | `src-arxiv-2110-01763` | preprint · arXiv | [arxiv.org/abs/2110.01763](https://arxiv.org/abs/2110.01763) | none (not-required) |
 | S14 | `src-github-dns-challenge-dns5-blind-script` | repository · GitHub | [raw.githubusercontent.com/microsoft/DNS-Challenge/591184a9fcb2cbdec02...](https://raw.githubusercontent.com/microsoft/DNS-Challenge/591184a9fcb2cbdec02520fed81a32bbbf9d73ff/download-dns5-blind-testset.sh) | [capture 2026-11-05](https://web.archive.org/web/20261105084620/https://raw.githubusercontent.com/microsoft/DNS-Challenge/591184a9fcb2cbdec02520fed81a32bbbf9d73ff/download-dns5-blind-testset.sh) |
 | S15 | `src-github-api-dns-challenge-branches` | repository · GitHub | [api.github.com/repos/microsoft/DNS-Challenge/branches](https://api.github.com/repos/microsoft/DNS-Challenge/branches) | [capture 2026-11-05](https://web.archive.org/web/20261105084138/https://api.github.com/repos/microsoft/DNS-Challenge/branches) |
+| S16 | `src-github-api-dns-challenge-commit-785ab12` | repository · GitHub | [api.github.com/repos/microsoft/DNS-Challenge/commits/785ab12275d5cf93...](https://api.github.com/repos/microsoft/DNS-Challenge/commits/785ab12275d5cf9341c5e946b0eee9f8825ece3b) | none (withheld) |
 
 **Evidence** (50 quoted fields), by checklist area:
 
@@ -979,6 +980,7 @@ Considered and rejected:
 [dns-challenge-s13]: https://arxiv.org/abs/2110.01763
 [dns-challenge-s14]: https://raw.githubusercontent.com/microsoft/DNS-Challenge/591184a9fcb2cbdec02520fed81a32bbbf9d73ff/download-dns5-blind-testset.sh
 [dns-challenge-s15]: https://api.github.com/repos/microsoft/DNS-Challenge/branches
+[dns-challenge-s16]: https://api.github.com/repos/microsoft/DNS-Challenge/commits/785ab12275d5cf9341c5e946b0eee9f8825ece3b
 
 ### 2.5 IWSLT Evaluation Campaign (iwslt)
 
@@ -1207,7 +1209,7 @@ Considered and rejected:
 
 ### 2.6 MIREX (mirex)
 
-`data/benchmarks/audio-speech/mirex.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/audio-speech/mirex.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *ISMIR's yearly music information retrieval evaluation since 2005, from chord and beat tasks to music generation.*
 
@@ -1294,7 +1296,7 @@ Considered and rejected:
   > This task requires participants to extract or transcribe a sequence of chords from an audio music recording.
 - `execution.compute_tier` = provided-allocation · [S3][mirex-s3]
   - why: For the standardized suites the organisers run every submitted image on their own GPU server, so the entrant pays for training only. Music Audio Generation 2026 is the exception, where teams run their own systems.
-  > A Linux server with one Nvidia GeForce RTX 3090 is used for evaluation.
+  > \[withheld: it may name a person; see the entry file\]
 - `execution.reproducibility_tier` = not-independently-reproducible · [S2][mirex-s2]
   - why: The headline numbers need test audio and private labels only the organisers hold, and the generation tasks' numbers need their listening panels.
   > the test data used in MIREX cannot be distributed to participants
@@ -1387,12 +1389,12 @@ Considered and rejected:
 - `activity` = between-rounds · [S6][mirex-s6]
   - why: The 2026 results date (2026-10-15) has passed, the organisers' results repositories carry 2026 tables, and ISMIR 2026 (8-12 November), where MIREX reports, has been held; no 2027 round was found.
   > 2026: computed with \`scripts/main\_beat\_tracking.py\`; identical to mirex-evaluation \`audio\_beat\_detection\` (checked 2026-10-15)
-- `history` = event maintainer-changed; field governance.maintainer; from IMIRSEL, University of Illinois at Urbana-Champaign (2005-2021); to the Future MIREX team · [S4][mirex-s4]
+- `history` = event maintainer-changed; field governance.maintainer; from \[withheld: it may name a person; see the entry file\]; to the Future MIREX team · [S4][mirex-s4]
   > After a break of 3 years, we want to bring back the MIREX (Music Information Retrieval Evaluation eXchange) competition starting from 2024.
 - `history` = date 2024-09-15; event channel-moved; field execution.submission\_channel; from algorithms sent to IMIRSEL, run by its staff and volunteers; to the Future MIREX submission site · [S12][mirex-s12]
   > Submit your system and the extended abstract to the new submission portal
 
-**Open review checks** (8):
+**Open review checks** (9):
 
 1. (field `versions`) One entry for 2005-2026, with the three Future MIREX editions and the last IMIRSEL edition (2021) as versions. The sixteen IMIRSEL editions before it (2005-2020) are on the wiki but were not read; they could be added as versions, or the two eras split into two entries. · [S1][mirex-s1]
    > MIREX 2026 MIREX 2025 MIREX 2024 MIREX 2021 MIREX 2020
@@ -1407,6 +1409,7 @@ Considered and rejected:
 7. (field `data.data_provenance`) unreleasable-confidential and compute\_tier provided-allocation hold for the audio understanding tasks, not for the public sets reported apart or for Music Audio Generation, where teams run their own systems on released songs.
 8. (field `activity`) activity between-rounds rests on 2026 results for three of the fourteen tasks, read in the organisers' GitHub results repositories (one created on 2026-10-21); the MIREX wiki failed TLS on 2026-11-17. Re-read it: if some tasks' 2026 results are still unpublished, results-pending is the other reading. · [S14][mirex-s14]
    > "created\_at":"2026-10-21T13:19:41Z"
+9. (field `homepage`) homepage and leaderboard\_url are on music-ir.org, whose TLS certificate expired on 2026-10-24 (notAfter 23:59:59 GMT); with certificate checks on, which this project does not skip, neither could be read on 2026-11-17 or 2026-11-18. The host answers and nothing says the wiki moved, so the URLs stand. Until the certificate is renewed, none of the ten wiki Sources can be re-read, and the facts they back rest on their October extracts; six of them are withheld from archiving, and four have Wayback captures of 2026-10-11 or 2026-10-14. curation.unreachable cannot record this, as it takes an HTTP status. Re-read the wiki before the entry is verified.
 
 **Reviewer checklist** for `mirex`:
 
@@ -1437,7 +1440,7 @@ Considered and rejected:
 
 ### 2.7 DCASE Challenge (dcase)
 
-`data/benchmarks/audio-speech/dcase.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/audio-speech/dcase.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Yearly IEEE AASP challenge on sound scene and event analysis since 2013; independent tasks scored by their organisers.*
 
@@ -1477,7 +1480,8 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 | S11 | `src-dcase-challenge2026-submission` | documentation · DCASE Community | [dcase.community/challenge2026/submission](https://dcase.community/challenge2026/submission) | none (withheld) |
 | S12 | `src-github-dcase2026-task2-evaluator-readme` | repository · GitHub | [raw.githubusercontent.com/nttcslab/dcase2026\_task2\_evaluator/main/REA...](https://raw.githubusercontent.com/nttcslab/dcase2026_task2_evaluator/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014082104/https://raw.githubusercontent.com/nttcslab/dcase2026_task2_evaluator/main/README.md) |
 | S13 | `src-dcase-challenge2026-task4` | documentation · DCASE Community | [dcase.community/challenge2026/task-spatial-semantic-segmentation-of-s...](https://dcase.community/challenge2026/task-spatial-semantic-segmentation-of-sound-scenes) | none (withheld) |
-| S14 | `src-arxiv-2609-12484` | preprint · arXiv | [arxiv.org/abs/2609.12484](https://arxiv.org/abs/2609.12484) | none (not-required) |
+| S14 | `src-zenodo-22954971` | paper · Zenodo | [zenodo.org/api/records/22954971](https://zenodo.org/api/records/22954971) | none (not-required) |
+| S15 | `src-arxiv-2609-12484` | preprint · arXiv | [arxiv.org/abs/2609.12484](https://arxiv.org/abs/2609.12484) | none (not-required) |
 
 **Evidence** (49 quoted fields), by checklist area:
 
@@ -1605,7 +1609,7 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 #### dcase · Lifecycle and activity
 
 - `lifecycle` = active · [S4][dcase-s4]
-  - why: The 2026 edition ran from April to June, ranked 421 entries and published its results; its workshop is on 28-29 October 2026, and the 2027 edition has been called.
+  - why: The 2026 edition ran from April to June, ranked 421 entries and published its results; its workshop was held in Boston on 28-29 October 2026, with the task description papers in its proceedings (Zenodo, 2026-10-27, src-zenodo-22954971), and the 2027 edition has been called.
   > DCASE2026 Challenge received 421 submission entries
 - `activity` = round-scheduled · [S1][dcase-s1]
   - why: The 2026 results are out and no round is open, but the call for the 2027 edition, posted on 1 October 2026, dates its opening.
@@ -1613,7 +1617,7 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 - `events` = name DCASE2026 Workshop, Boston, 28-29 October 2026; kind workshop · [S10][dcase-s10]
   > The 11th Workshop on Detection and Classification of Acoustic Scenes and Events, DCASE 2026, will be held in Boston on 28-29 October.
 
-**Open review checks** (11):
+**Open review checks** (12):
 
 1. (field `comparability`) The comparability profile table maps statistical-fit with instruction-tuned-model to forecasting, so Task 3's Pearson r makes lead\_time and resolution\_window material, though no DCASE task forecasts. ADR-0024 (D3) removes entry-level waivers of those two fields and puts the fix in the profile rule; whether that pair should map to forecasting is the open question.
 2. (field `versions`) Identity. The entry is the challenge as one family, with yearly editions as versions and the 2026 tasks as subsets. Long-running task lines (anomalous sound detection since 2020, sound event localization and detection since 2019) could instead be entries of their own.
@@ -1623,7 +1627,7 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
    > 1 April 2027 Challenge opening: datasets and baseline methods published
 5. (field `governance.submission_process`) publication-gated rests on the technical report being part of every submission package; no 2026 source states that a submission without one is unranked (the general rules page, challenge2026/rules, returned 404). · [S11][dcase-s11]
    > Challenge submission consists of a submission package (one zip package) containing system outputs, system meta information, and technical report (pdf file).
-6. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S8][dcase-s8]
+6. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on organisers of one task entering another (a Task 5 organiser at CUHK, in Task 3) and on ranked organiser baselines, not on the Steering Group entering a system. Whether the industry organisers' own teams entered their tasks was not checked, and the workshop's sponsors were not read. · [S8][dcase-s8]
    > \[withheld: it may name a person; see the entry file\]
 7. (field `capability`) temporal-reasoning rests on Task 6's IoU-thresholded start and end times; no 2026 task scores onsets and offsets of a closed class set, which earlier sound event detection tasks did.
 8. (field `evaluation_method`) Task 7's accuracy is the mean of class-wise accuracies, tagged classification-metric as a macro-averaged accuracy; Stage 3 tagged it exact-match. · [S6][dcase-s6]
@@ -1632,6 +1636,8 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 10. (field `data.access`) data.access and the reproducibility tier assume the 2026 evaluation labels are withheld; only Task 2's release was read. If most tasks have published theirs, fully-open and fully-automatable may fit completed editions. · [S12][dcase-s12]
    > Ground truth of the normal and anomaly labels
 11. (field `subsets`) Task 4 has no domain\_override; its score joins detection of which classes are present with separation, for which no audio-speech leaf exists.
+12. (field `subsets`) The 2026 subsets rest on the task pages and, for Task 6, its overview paper. The proceedings (src-zenodo-22954971) hold the description papers of Tasks 1, 2, 4, 5, 6 and 7, and arXiv carries task overviews for Tasks 2, 4, 5 and 7 (2606.01578, 2604.00776, 2607.18718, 2606.02173, per the 2026-11-17 sweep). Neither the volume's PDF nor those four papers were read; they could confirm or correct the subsets' notes and item counts. · [S14][dcase-s14]
+   > This volume is a collection of the papers presented at the Detection and Classification of Acoustic Scenes and Events 2026Workshop (DCASE 2026)
 
 **Reviewer checklist** for `dcase`:
 
@@ -1657,7 +1663,8 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 [dcase-s11]: https://dcase.community/challenge2026/submission
 [dcase-s12]: https://raw.githubusercontent.com/nttcslab/dcase2026_task2_evaluator/main/README.md
 [dcase-s13]: https://dcase.community/challenge2026/task-spatial-semantic-segmentation-of-sound-scenes
-[dcase-s14]: https://arxiv.org/abs/2609.12484
+[dcase-s14]: https://zenodo.org/api/records/22954971
+[dcase-s15]: https://arxiv.org/abs/2609.12484
 
 ### 2.8 L3DAS Challenge (l3das)
 

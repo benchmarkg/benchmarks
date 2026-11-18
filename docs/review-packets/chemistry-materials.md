@@ -2,7 +2,7 @@
 
 # Review packet: Chemistry and materials
 
-`chemistry-materials` · 20 published entries · Core family · 12 subdomains · data as of 2026-11-04 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`chemistry-materials` · 20 published entries · Core family · 12 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -61,7 +61,7 @@ Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`,
 | 2.7 | [Matbench Discovery](#27-matbench-discovery-matbench-discovery) | `crystal-stability-discovery` | 27 | 4 |
 | 2.8 | [MD17](#28-md17-md17) | `force-fields-potentials` | 62 | 11 |
 | 2.9 | [TDC ADMET Benchmark Group](#29-tdc-admet-benchmark-group-tdc-admet) | `drug-discovery-admet` | 52 | 9 |
-| 2.10 | [CACHE Challenges](#210-cache-challenges-cache-challenges) | `experimental-hit-finding` | 43 | 10 |
+| 2.10 | [CACHE Challenges](#210-cache-challenges-cache-challenges) | `experimental-hit-finding` | 43 | 11 |
 
 ### 2.1 MoleculeNet (moleculenet)
 
@@ -69,7 +69,7 @@ Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`,
 
 *17 molecular property datasets, from DFT energies to clinical toxicity, each with a recommended split and metric.*
 
-\[withheld: it may name a person; see the entry file\]
+A benchmark collection for molecular machine learning, released with DeepChem by a Stanford group: 17 public datasets in four categories, quantum mechanics (QM7, QM7b, QM8, QM9), physical chemistry (ESOL, FreeSolv, Lipophilicity), biophysics (PCBA, MUV, HIV, PDBbind, BACE) and physiology (BBBP, Tox21, ToxCast, SIDER, ClinTox), over 700,000 compounds and over 800 tasks in all. A system takes a molecule, as SMILES or, for the quantum sets and PDBbind, 3D coordinates, and predicts each of the dataset's properties. For each dataset the paper recommends a split, 80/10/10 random, scaffold, time or stratified, and a metric, MAE or RMSE for regression and ROC-AUC or PRC-AUC for classification, averaged over a dataset's tasks; there is no score across datasets. The quantum labels are DFT and TDDFT/CC2 calculations, the rest mostly experimental measurements. The DeepChem loaders now default to scaffold splits for most datasets, and the documentation's recommended split differs from the paper's for ESOL, Lipophilicity, MUV and PDBbind, so a number means little without its split. A leaderboard repository last changed in 2021; results appear in papers.
 
 | Classification | |
 | --- | --- |
@@ -260,7 +260,7 @@ Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`,
 
 #### moleculenet · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][moleculenet-s1]
+- `governance.maintainer` = The DeepChem project (deepchem-contributors); released by a Stanford group · [S1][moleculenet-s1]
   - why: The datasets are served from DeepChem's AWS bucket and added through its technical steering committee, the documentation is the deepchem-contributors' (Copyright 2024), and the leaderboard repository sits in the deepchem organisation.
   > Ask a member of the technical steering committee to add your .tar.gz or .zip file to the DeepChem AWS bucket.
 - `governance.submission_process` = maintainer-run · [S6][moleculenet-s6]
@@ -325,7 +325,7 @@ Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`,
 
 *Forward reaction prediction on about 480,000 US-patent reactions, scored by top-k accuracy of the predicted product.*
 
-\[withheld: it may name a person; see the entry file\]
+The forward reaction prediction set built for its release paper, a NIPS 2017 paper on Weisfeiler-Lehman networks: about 480,000 reactions from US granted patents, taken from a public text-mined extraction with duplicates and erroneous reactions removed, atom-mapped, without stereochemistry, and split into training, development and test sets (409,035, 30,000 and 40,000 reactions in the distributed files; the paper rounds them to 400K, 40K and 40K). Given a reaction's reactants and reagents, a system predicts its product, and is scored by top-k accuracy, the share of test reactions whose recorded product is among its k highest-ranked predictions. Later papers call the set USPTO\_MIT or USPTO-480k. The Molecular Transformer paper (2019) added a mixed setting, with no split between reactants and reagents in the input, beside the separated setting earlier work used, which it argues presumes knowledge of the product; numbers from the two settings are not comparable. The release paper also had ten chemists predict 80 test reactions, on which its model scored 69.1% top-1 and the best chemist 72.0%. There is no leaderboard; results appear in the papers that use the set.
 
 | Classification | |
 | --- | --- |
@@ -412,7 +412,7 @@ Considered and rejected:
 - `reproducible_by_third_party` = true · S6
   - why: The three splits and their products are public, and top-k accuracy needs only the recorded products to compute.
   > USPTO/data.zip includes the train/dev/test split of USPTO dataset used in our paper.
-- `task` = exists true; input the SMILES of a reaction's reactants and reagents (atom-mapped in the distributed files), with the reagents set apart in the separated setting and not in the mixed one; output A ranked list of predicted products, as SMILES or as the graph edits that produce them.; scoring \[withheld: it may name a person; see the entry file\] · [S5][uspto-mit-s5]
+- `task` = exists true; input the SMILES of a reaction's reactants and reagents (atom-mapped in the distributed files), with the reagents set apart in the separated setting and not in the mixed one; output A ranked list of predicted products, as SMILES or as the graph edits that produce them.; scoring Top-k accuracy on the 40,000-reaction test split (k of 1, 3 and 5 in the release paper; 1, 2, 3 and 5 in the Molecular Transformer paper), a prediction counting when it matches the recorded product. · [S5][uspto-mit-s5]
   > The single model top-k accuracy of the Molecular Transformer
 - `execution.reproducibility_tier` = fully-automatable · S6
   - why: The splits and their products are public, and top-k accuracy compares predicted with recorded products, with no human, physical or maintainer-only step.
@@ -477,9 +477,9 @@ Considered and rejected:
 5. (field `data.size`) The paper gives 400K, 40K and 40K; the distributed files hold 409,035, 30,000 and 40,000 reactions (a local line count, matching the Molecular Transformer paper and RxnNano). The headline follows the files. · [S2][uspto-mit-s2]
    > This dataset is divided into 400K, 40K, and 40K for training, development, and testing purposes.
 6. (field `execution.harness_availability`) reference-implementation-only, because scripts/eval.py scores only the paper's own bond-edit outputs. If the maintainers' script counts as the official scorer, this is official-harness.
-7. (field `lineage`) \[withheld: it may name a person; see the entry file\]
+7. (field `lineage`) USPTO-15K was built in earlier work, before this set, and the release paper calls it a subset "from this dataset"; whether it belongs here as a variant or as its own entry. USPTO\_LEF is recorded as the Molecular Transformer paper describes it, non-public.
 8. (field `governance.independence_flags`) independence\_flags is empty. The release paper's model, and the same group's later models, report on the set, but there is no ranking; whether no-known-conflict should be tagged instead, the funder being DARPA.
-9. (field `data.dataset_licence`) dataset\_licence is null. The repository's MIT licence names "the Software"; whether it covers data.zip, and what Lowe's extraction is licensed under, were not read.
+9. (field `data.dataset_licence`) dataset\_licence is null. The repository's MIT licence names "the Software"; whether it covers data.zip, and what the upstream patent extraction is licensed under, were not read.
 
 **Reviewer checklist** for `uspto-mit`:
 
@@ -931,7 +931,7 @@ Considered and rejected:
 
 *Molecule identification from tandem mass spectra, in de novo generation, retrieval and spectrum simulation challenges.*
 
-\[withheld: it may name a person; see the entry file\]
+A benchmark and Python package from a lab at IOCB Prague and collaborators for machine learning on tandem mass spectrometry (MS/MS) of small molecules. Its dataset holds 231,104 labelled MS/MS spectra of about 29,000 molecules, collected from MoNA, MassBank and GNPS and from the authors' own newly measured MSnLib library, cleaned, standardised and split so that no molecule in one fold lies within a maximum-common-edge-subgraph (MCES) edit distance of 10 of a molecule in another. Three challenges are scored apart, each with a bonus variant that gives the chemical formula: de novo generation of the molecule from its spectrum (top-k accuracy, MCES and Tanimoto similarity of the best of k = 1 or 10 guesses), retrieval of the molecule from up to 256 candidates of the same mass or formula (hit rate at 1, 5 and 20, MCES of the top hit), and simulation of the spectrum from the molecule (cosine and Jensen-Shannon similarity of binned spectra, and retrieval by simulated spectra). Results tables in the repository take entries by pull request; the leaderboard site that displayed them was suspended by November 2026. In 2026 an audit by the maintainers and an MIT group found evaluation problems in at least 18 of 26 papers reporting MassSpecGym results and released v1.5, which re-canonicalises the SMILES strings that let models spot the true candidate, adds pretraining sets filtered against the test molecules and pins the metric implementations. Known weaknesses the sources name: shortcut learning from candidate sets, leakage through pretraining data and shared components, metric implementations that diverge across codebases, and a ranking bias in the candidate pools that v1.5 does not fix.
 
 | Classification | |
 | --- | --- |
@@ -1019,7 +1019,7 @@ Considered and rejected:
 
 - `learned_entrant_evidence` = system MIST (the paper's state-of-the-art retrieval baseline) · [S2][massspecgym-s2]
   > MIST assigns chemical subformulae to spectral peaks via energy-based modeling
-- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S5][massspecgym-s5]
+- `learned_entrant_evidence` = system DiffMS (ICML 2025) · [S5][massspecgym-s5]
   > only MADGEN and DiffMS generate any correct structures on MassSpecGym
 - `learned_entrant_evidence` = system DiffMS, as listed in the de novo bonus table · S6
   > DiffMS,0.0230,,,18.45,,,0.28,,,0.0425,,,14.73,,,0.39
@@ -1038,7 +1038,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = fully-automatable · S4
   - why: Data, splits, candidate pools and evaluation code are public, and the package scores a model with no human, physical or maintainer-only step.
   > Finally, MassSpecGym defines evaluation metrics by implementing abstract subclasses of \`LightningModule\` for each of the MassSpecGym challenges
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S4
+- `execution.harness` = massspecgym Python package (PyPI; the MassSpecGym repository), with DeNovo-, Retrieval- and SimulationMassSpecGymModel base classes on PyTorch Lightning · S4
   > pip install massspecgym
 - `execution.harness_gotcha` · [S3][massspecgym-s3]
   > Pinned, standardized metric implementations should be used
@@ -1104,7 +1104,7 @@ Considered and rejected:
 #### massspecgym · Governance and independence
 
 - `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S2][massspecgym-s2]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: The code is in the IOCB lab's GitHub organisation and the dataset in its first author's Hugging Face account; the paper's first two and last two authors are at IOCB Prague and CTU, and the datasheet says the authors maintain it. The v1.5 audit adds an MIT group and Enveda Biosciences as co-authors, but its release is in the same repositories.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = self-reported · S4
   > To submit new results from your paper, please open a pull request that updates the results tables in the \`results\` folder.
@@ -1121,7 +1121,7 @@ Considered and rejected:
 - `activity` = accepting-submissions · S4
   - why: The README invites anyone to add results from a paper by pull request, open at any time.
   > To submit new results from your paper, please open a pull request that updates the results tables in the \`results\` folder.
-- `history` = event channel-moved; field execution.submission\_channel; from The Papers With Code leaderboard (the paper's plan); to \[withheld: it may name a person; see the entry file\] · S4
+- `history` = event channel-moved; field execution.submission\_channel; from The Papers With Code leaderboard (the paper's plan); to Pull requests to the results tables in the MassSpecGym repository, shown on massspecgym.onrender.com · S4
   > To submit new results from your paper, please open a pull request that updates the results tables in the \`results\` folder.
 
 **Open review checks** (11):
@@ -1129,7 +1129,7 @@ Considered and rejected:
 1. (field `lineage`) CASMI against MassSpecGym, for the two entries' boundary. CASMI (the Critical Assessment of Small Molecule Identification) is a periodic blind contest, run six times since 2012, with a few hundred challenge spectra per edition and preprocessing that takes mass-spectrometry expertise; it is an edition series. MassSpecGym is a fixed, machine-learning-ready release with a public test fold of 17,556 spectra, a structure-distance split and three tasks, scored continuously by anyone. MassSpecGym grew out of a Dagstuhl seminar, not out of CASMI, and neither is a version, variant or fork of the other, so no lineage link is recorded; correlates\_with may suit if the CASMI entry finds shared methods. · [S2][massspecgym-s2]
    > However, the CASMI challenge is held only once every two years at best, limiting opportunities for continuous evaluation and benchmarking.
 2. (field `lifecycle`) lifecycle active against under-revision. v1.5 is released (audit v1 of 2026-06-17, dataset card updated 2026-10-26), but the commit that brought it to GitHub is titled "MassSpecGym v1.5 (part 1/2)" (2026-05-08, GitHub's commit list; not a quoted Source), the README does not mention v1.5, and the results tables lack the audit's corrected rows. If a part 2 is announced, the term would be under-revision and v1.5's frozen false would stand.
-3. (field `versions`) \[withheld: it may name a person; see the entry file\] · [S3][massspecgym-s3]
+3. (field `versions`) versions. v1.5 is modelled as a revision of the same items by the same maintainers (the IOCB lab's head is one of the audit's corresponding authors, and the files are in the same repositories), not as a fork by the MIT group or Enveda, who co-author the audit. breaking true rests on retrieval results that exploited the v1.0 canonicalisation collapsing under v1.5; the audit says honest de novo rankings barely move. · [S3][massspecgym-s3]
    > MassSpecGym v1.5 as a benchmark revision.
 4. (field `data.contamination_risk`) contamination\_risk medium. The audit evidences leakage through entrants' pretraining sets, simulators and formula annotators, and finds evaluation issues in at least 18 of 26 papers. The vocabulary keeps a route evidenced for particular entrants on their claims, but when most entrants take it, high may be the better reading. · [S3][massspecgym-s3]
    > We find evaluation issues in at least 18 of 26 papers reporting MassSpecGym benchmark results in the first year of its adoption.
@@ -1142,7 +1142,7 @@ Considered and rejected:
 9. (field `capability`, needs a specialist) capability. perception is rejected because the input is a processed peak list and the claim is a chemical inference; hypothesis-generation because the k de novo guesses hedge one determinate answer. A mass spectrometrist may read the spectrum as a raw signal.
 10. (field `training_data_eligibility_tiers`) training\_data\_eligibility\_tiers left empty. The board does not split entrants by what they may train on. The audit's tables mark methods that use data beyond MassSpecGym's spectrum and molecule pairs, and v1.5 offers official filtered pretraining sets, but neither is a rule that groups the ranking; if the maintainers make one, the tiers belong here and the eligibility-gated profile would make them material. · [S3][massspecgym-s3]
    > The auxiliary data column marks methods that rely on data beyond the MassSpecGym spectrum–molecule pairs.
-11. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\]
+11. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on the DeepSets + Fourier features baseline, built on the maintainers' DreaMS work, and on the v1.5 audit re-ranking the MIT group's models with that group as co-authors; none is a model built to top the board.
 
 **Reviewer checklist** for `massspecgym`:
 
@@ -1277,7 +1277,7 @@ Considered and rejected:
 
 #### cspbench · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S5][cspbench-s5]
+- `governance.maintainer` = Machine Learning and Evolution Laboratory, University of South Carolina · [S5][cspbench-s5]
   - why: The repository sits in the usccolumbia organisation and its README names the laboratory and the university as the benchmark's developers.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = maintainer-run · [S5][cspbench-s5]
@@ -1398,7 +1398,7 @@ A leaderboard and Python package that evaluate machine-learning energy models, m
   > \[withheld: it may name a person; see the entry file\]
 - `task` = exists true; input unrelaxed WBM crystal structure (discovery, geometry optimisation), PhononDB structure (phonons and thermal conductivity); output Per task: a formation energy per atom for each WBM structure (discovery); the relaxed structure (geometry optimisation); lattice thermal conductivity (phonons).; scoring Discovery: predicted stability is on or below a fixed DFT convex hull built from the Materials Project v2022.10.28 release, scored by F1, DAF, precision and recall, with MAE, RMSE and R2 on the hull distance. Geometry optimisation: RMSD to the DFT-relaxed structure. Phonons: κSRME.; tests_hidden_from_system false · [S5][matbench-discovery-s5]
   > In Matbench Discovery, the convex hull is always constructed from DFT reference energies, not from the ML model’s predicted energies.
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · [S2][matbench-discovery-s2]
+- `execution.harness` = matbench-discovery Python package (in the maintainer's personal GitHub account) · [S2][matbench-discovery-s2]
   > We welcome further model submissions via pull requests.
 - `aggregation_policy` = official-aggregate · [S3][matbench-discovery-s3]
   - why: The leaderboard sorts by CPS, a weighted composite of three task metrics, and lets the reader change the weights. Official, but not fixed: a CPS value means something only with its weights.
@@ -1434,7 +1434,7 @@ A leaderboard and Python package that evaluate machine-learning energy models, m
 
 #### matbench-discovery · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S3][matbench-discovery-s3]
+- `governance.maintainer` = An individual researcher (the repository's owner) · [S3][matbench-discovery-s3]
   - why: The site is copyrighted to one person and the code repository is his; it is hosted on a Materials Project domain, but the Materials Project disclaims the ranking (known\_limitation).
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = maintainer-verified · [S4][matbench-discovery-s4]
@@ -1531,7 +1531,7 @@ MD17 is a set of ab initio molecular dynamics trajectories of small organic mole
   > Submitted on 15 Nov 2016
 - `release_venue` = Science Advances 3(5), e1603015 (2017) · [S3][md17-s3]
   > Journal reference: Science Advances 3(5):e1603015 (2017)
-- `lineage.forks` = id rmd17; maintainer \[withheld: it may name a person; see the entry file\] · [S10][md17-s10]
+- `lineage.forks` = id rmd17; maintainer A University of Basel group · [S10][md17-s10]
   > we additionally present a revision of the MD17 where the energies and forces have been calculated using dense integration grids
 
 #### md17 · Domain and capabilities
@@ -1585,7 +1585,7 @@ Considered and rejected:
 
 #### md17 · Data and licence
 
-- `as_used` = protocol \[withheld: it may name a person; see the entry file\]; split 9,500 / 500 / 10,000 per molecule · [S4][md17-s4]
+- `as_used` = protocol MD17-10k, the protocol of an earlier paper the MD-ET paper cites: per molecule, 9,500 training, 500 validation and 10,000 test conformations, scored by force MAE beside the stability of MD simulations (time to failure, capped at 300 ps), the distribution of interatomic distances h(r) and inference speed; run by MD-ET on aspirin, ethanol, naphthalene and salicylic acid.; split 9,500 / 500 / 10,000 per molecule · [S4][md17-s4]
   > we sample 9500/500/10000 conformations for train/val/test splits for each molecule
 - `as_used` = protocol Fine-tuning a model pretrained on DFT data with 1,000 and with 100 structures of the coupled-cluster sets, scored by force MAE on the five molecules, after the setup of the 2018 paper.; split the sets' training split, or 100 structures of it; the sets' test split · [S4][md17-s4]
   > When fine-tuned on 1,000 CCSD(T)-level samples
@@ -1662,7 +1662,7 @@ Considered and rejected:
 
 #### md17 · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S8][md17-s8]
+- `governance.maintainer` = The sGDML group (TU Berlin Machine Learning Group, with a group at the University of Luxembourg) · [S8][md17-s8]
   - why: The trajectories were produced by the GDML and sGDML papers' authors, whose affiliations are TU Berlin's Machine Learning Group and the University of Luxembourg, and are hosted on the sGDML site with the sgdml code.
   > A variety of ab-initio molecular dynamics trajectories from the authors of sGDML.
 - `governance.submission_process` = literature-only · [S5][md17-s5]
@@ -1836,7 +1836,7 @@ The Therapeutics Data Commons' benchmark group for the absorption, distribution,
   > We formulate the ADMET Benchmark Group using 22 ADMET datasets in TDC.
 - `execution.code_licence` = MIT · [S8][tdc-admet-s8]
   > The TDC codebase is licensed under the MIT license.
-- `subsets` = id tdc-admet#caco2-wang; label \[withheld: it may name a person; see the entry file\]; items 906 · [S1][tdc-admet-s1]
+- `subsets` = id tdc-admet#caco2-wang; label TDC.Caco2\_Wang (Caco-2 permeability; absorption); items 906 · [S1][tdc-admet-s1]
   > Caco2 cm/s 906 Regression MAE Scaffold
 - `subsets` = id tdc-admet#hia-hou; label \[withheld: it may name a person; see the entry file\]; items 578 · [S1][tdc-admet-s1]
   > HIA % 578 Binary AUROC Scaffold
@@ -1872,7 +1872,7 @@ The Therapeutics Data Commons' benchmark group for the absorption, distribution,
   > CL-Hepa uL.min-1.(10^6 cells)-1 1,020 Regression Spearman Scaffold
 - `subsets` = id tdc-admet#clearance-microsome-az; label TDC.Clearance\_Microsome\_AZ (microsome clearance; excretion); items 1102 · [S1][tdc-admet-s1]
   > CL-Micro mL.min-1.g-1 1,102 Regression Spearman Scaffold
-- `subsets` = id tdc-admet#ld50-zhu; label \[withheld: it may name a person; see the entry file\]; items 7385 · [S1][tdc-admet-s1]
+- `subsets` = id tdc-admet#ld50-zhu; label TDC.LD50\_Zhu (acute toxicity; toxicity); items 7385 · [S1][tdc-admet-s1]
   > LD50 log(1/(mol/kg)) 7,385 Regression MAE Scaffold
 - `subsets` = id tdc-admet#herg; label TDC.hERG (hERG blockade; toxicity); items 648 · [S1][tdc-admet-s1]
   > hERG % 648 Binary AUROC Scaffold
@@ -1883,8 +1883,8 @@ The Therapeutics Data Commons' benchmark group for the absorption, distribution,
 
 #### tdc-admet · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S10][tdc-admet-s10]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The TDC team (a Harvard lab, the mims-harvard GitHub organisation), with a team member now at Stanford who updates the leaderboard · [S10][tdc-admet-s10]
+  - why: The team page lists the people developing and maintaining TDC, most of them in the Harvard lab; the code and the site's source sit in the mims-harvard organisation, and the leaderboard's last update was committed from the Stanford team member's account.
   > Developing and Maintaining Therapeutics Data Commons
 - `governance.submission_process` = self-reported, maintainer-run · [S6][tdc-admet-s6]
   > To be included in the leaderboard, please fill out THIS FORM, include results of your model and provide a brief summary about your model
@@ -1947,7 +1947,7 @@ The Therapeutics Data Commons' benchmark group for the absorption, distribution,
 
 ### 2.10 CACHE Challenges (cache-challenges)
 
-`data/benchmarks/chemistry-materials/cache-challenges.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/chemistry-materials/cache-challenges.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Prospective hit-finding: teams nominate compounds for a protein target, and the organisers buy and assay them.*
 
@@ -1985,8 +1985,9 @@ A series of prospective hit-finding competitions, launched by the Structural Gen
 | S9 | `src-biorxiv-cache-1` | preprint · bioRxiv | [api.biorxiv.org/details/biorxiv/10.1101/2024.07.18.603797](https://api.biorxiv.org/details/biorxiv/10.1101/2024.07.18.603797) | none (not-required) |
 | S10 | `src-cache-challenge-7` | documentation · Conscience | [cache-challenge.org/challenges/finding-selective-inhibitors-of-phosph...](https://cache-challenge.org/challenges/finding-selective-inhibitors-of-phosphoglycerate-kinase-2) | [capture 2026-10-14](https://web.archive.org/web/20261014045119/https://cache-challenge.org/challenges/finding-selective-inhibitors-of-phosphoglycerate-kinase-2) |
 | S11 | `src-conscience-cache-programme` | documentation · Conscience | [conscience.ca/cache-challenge/](https://conscience.ca/cache-challenge/) | [capture 2026-10-14](https://web.archive.org/web/20261014045457/https://conscience.ca/cache-challenge/) |
-| S12 | `src-cache-challenge-5` | documentation · Conscience | [cache-challenge.org/challenges/predicting-novel-mchr1-antagonists](https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists) | [capture 2026-10-14](https://web.archive.org/web/20261014044938/https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists) |
-| S13 | `src-cache-challenge-8` | documentation · Conscience | [cache-challenge.org/challenges/finding-ligands-targeting-gid4](https://cache-challenge.org/challenges/finding-ligands-targeting-gid4) | [capture 2026-10-14](https://web.archive.org/web/20261014045156/https://cache-challenge.org/challenges/finding-ligands-targeting-gid4) |
+| S12 | `src-cache-publications` | documentation · Conscience | [cache-challenge.org/cache-publications](https://cache-challenge.org/cache-publications) | none (pending) |
+| S13 | `src-cache-challenge-5` | documentation · Conscience | [cache-challenge.org/challenges/predicting-novel-mchr1-antagonists](https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists) | [capture 2026-10-14](https://web.archive.org/web/20261014044938/https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists) |
+| S14 | `src-cache-challenge-8` | documentation · Conscience | [cache-challenge.org/challenges/finding-ligands-targeting-gid4](https://cache-challenge.org/challenges/finding-ligands-targeting-gid4) | [capture 2026-10-14](https://web.archive.org/web/20261014045156/https://cache-challenge.org/challenges/finding-ligands-targeting-gid4) |
 
 **Evidence** (43 quoted fields), by checklist area:
 
@@ -2104,7 +2105,7 @@ Considered and rejected:
 #### cache-challenges · Lifecycle and activity
 
 - `lifecycle` = active · [S6][cache-challenges-s6]
-  - why: Challenge #8 took applications until April 2026, Challenge #6 is in its hit-expansion round, and the results papers keep appearing, Challenge #3's in January 2026.
+  - why: Challenge #8 took applications until April 2026, Challenge #6 is in its hit-expansion round, and the results papers keep appearing, Challenge #3's in January 2026 and Challenge #4's in November 2026, both in J Chem Inf Model (src-cache-publications).
   > Last date to apply is: Thu, 04/30/2026 - 00:00
 - `activity` = results-pending · [S8][cache-challenges-s8]
   - why: Every challenge's entry route is its call for applications, and the last of them closed; the organisers are procuring, assaying and scoring the compounds of the challenges that are open, and none of those results is published yet.
@@ -2114,7 +2115,7 @@ Considered and rejected:
 - `history` = event access-changed; field execution.compute\_tier; from the organisers buy the compounds for every qualified participant; to participants buy the compounds, and the organisers pay for the assays · [S1][cache-challenges-s1]
   > In the first two competitions, CACHE aims to secure sufficient seed funding to purchase and evaluate \~100 compounds for every qualified participant, but in subsequent rounds, these costs will be transferred to participants.
 
-**Open review checks** (10):
+**Open review checks** (11):
 
 1. (field `versions`) One entry for the series, with the eight challenges as editions. Each challenge has its own target, assays, activity threshold and field of teams, and the scores do not compare across them, so each could instead be its own entry, as the corpus treats some yearly challenges.
 2. (field `versions`) The DREAM x CACHE Target 2035 Challenge is listed in the same site menu, shares the CACHE Terms of Participation and is supported by Conscience, but it is run with the SGC, Sage Bionetworks and IBM's DREAM on Synapse, with a retrospective phase before the prospective one. It is excluded here and may deserve its own entry. · [S6][cache-challenges-s6]
@@ -2131,6 +2132,8 @@ Considered and rejected:
    > \[withheld: it may name a person; see the entry file\]
 9. (field `data.dataset_licence`) The released structures and assay data carry no named licence, only the promise that they are unrestricted; dataset\_licence is null rather than a guess. The website's own CC BY 4.0 footer covers the pages, not the data.
 10. (field `ground_truth_source`, needs a specialist) The assay conditions recorded here are Challenges #1, #2 and #5's. The pipeline changes with the target -- SPR and ITC or 19F NMR for the structural-biology targets, a radioligand competition assay and a cellular functional assay for the GPCR, an enzyme assay where the target is an enzyme -- so a per-edition assay record would be better than one summary.
+11. (field `versions`) The Challenge #4 results paper (J Chem Inf Model, 2026-11-13, DOI 10.1021/acs.jcim.6c02396; on 2026-11-17 the publications page listed its ChemRxiv preprint, DOI 10.26434/chemrxiv.15005792) and the Challenge #3 one (DOI 10.1021/acs.jcim.5c02441) were not read, because chemrxiv.org and pubs.acs.org refused this project's fetcher. versions\[challenge-3\] and \[challenge-4\] cite only the listing, and their changes text still rests on the news and home pages. Read from the papers, the team and compound counts, the activity thresholds and the hit counts should be checked. · [S12][cache-challenges-s12]
+   > \[withheld: it may name a person; see the entry file\]
 
 **Reviewer checklist** for `cache-challenges`:
 
@@ -2154,8 +2157,9 @@ Considered and rejected:
 [cache-challenges-s9]: https://api.biorxiv.org/details/biorxiv/10.1101/2024.07.18.603797
 [cache-challenges-s10]: https://cache-challenge.org/challenges/finding-selective-inhibitors-of-phosphoglycerate-kinase-2
 [cache-challenges-s11]: https://conscience.ca/cache-challenge/
-[cache-challenges-s12]: https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists
-[cache-challenges-s13]: https://cache-challenge.org/challenges/finding-ligands-targeting-gid4
+[cache-challenges-s12]: https://cache-challenge.org/cache-publications
+[cache-challenges-s13]: https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists
+[cache-challenges-s14]: https://cache-challenge.org/challenges/finding-ligands-targeting-gid4
 
 ## 3. The coverage row and the gap question: are these cells empty, or do we not know about the work?
 
