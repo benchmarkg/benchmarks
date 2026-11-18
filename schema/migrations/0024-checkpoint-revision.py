@@ -219,8 +219,9 @@ def benchmark_rows(rel: str, doc: dict) -> list[Row]:
     assessed = not (isinstance(flags_note, str) and NOT_ASSESSED.match(flags_note) and not at('governance', 'independence_flags'))
     put(('governance', 'independence_assessed'), assessed)
     # A3, A4, A10
-    if bid in HISTORY:
-        put(('history',), HISTORY[bid])
+    if bid in HISTORY:                                           # adds its events; keeps any recorded later
+        have = list(at('history') or [])
+        put(('history',), have + [e for e in HISTORY[bid] if e not in have] if have else HISTORY[bid])
     if bid in AS_USED:
         put(('as_used',), AS_USED[bid])
     if bid in LINEAGE:
