@@ -7,7 +7,8 @@ The site is built over the draft preview (scripts/preview_corpus.py; no entry is
 tools/build/citation.py -- which parses what was built without the site's own code -- checks it: every benchmark's
 cite.bib, cite.json, cite.ris and cite.yaml parse and agree with each other and with the page, none points at an
 artifact URL, and every page's footer carries the build. The failure each check exists for is shown by tampering with
-a copy. Four of the five formats are here; Croissant JSON-LD is P2-S3-T06's, which waits on the S8 emitter.
+a copy. The fifth format, croissant-benchmark JSON-LD, is P2-S3-T06's document (tools/build/croissant.py): the preview
+writes one per entry, the page inlines it and cite.jsonld serves it, and the check holds the two to each other.
 """
 import json
 import os
@@ -72,6 +73,19 @@ def test_the_fixture_entrys_four_formats_parse_and_cite_one_thing(built):
     assert read(out, 'benchmarks', FIXTURE, 'cite.yaml', binary=True) == open(os.path.join(ROOT, path), 'rb').read()
     footer = re.search(r'data-commit="([0-9a-f]{40})"', read(out, 'benchmarks', FIXTURE, 'index.html')).group(1)
     assert footer == commit                           # the page and its citation name one commit
+
+
+def test_the_fixture_entrys_croissant_json_ld_is_the_builds_document_inlined_and_linked(built):
+    out, _ = built
+    raw = read(out, 'benchmarks', FIXTURE, 'cite.jsonld')
+    with open(os.path.join(ROOT, 'build', 'preview', 'croissant-benchmark', FIXTURE + '.jsonld'), encoding='utf-8') as fh:
+        assert raw == fh.read()                       # the route serves the build's document byte for byte
+    doc = json.loads(raw)
+    assert doc['benchmarkId'] == FIXTURE and doc['name'] == 'SWE-bench'
+    page = read(out, 'benchmarks', FIXTURE, 'index.html')
+    inline = citation.INLINE_JSONLD.search(page).group(1)
+    assert json.loads(inline) == doc and '<' not in inline
+    assert 'href="/benchmarks/%s/cite.jsonld"' % FIXTURE in page
 
 
 def test_the_footer_carries_release_commit_timestamp_and_the_cache_key_sentence(built):
@@ -144,3 +158,13 @@ def test_a_page_without_its_footer_or_from_another_build_is_caught(copy):
 def test_a_citation_block_without_its_format_links_is_caught(copy):
     tamper(copy / 'benchmarks' / FIXTURE / 'index.html', 'cite.ris"', 'cite-gone.ris"')
     assert 'the citation block does not link cite.ris' in problems(copy)
+
+
+def test_json_ld_that_drifts_from_the_page_or_goes_missing_is_caught(copy):
+    path = copy / 'benchmarks' / FIXTURE / 'cite.jsonld'
+    doc = json.loads(path.read_text(encoding='utf-8'))
+    path.write_text(json.dumps({**doc, 'name': 'SWE-bench (edited)'}), encoding='utf-8')
+    assert 'the inlined JSON-LD is not cite.jsonld' in problems(copy)
+    assert "cite.jsonld names it 'SWE-bench (edited)', not 'SWE-bench'" in problems(copy)
+    path.unlink()
+    assert 'the page inlines croissant-benchmark JSON-LD but there is no cite.jsonld' in problems(copy)

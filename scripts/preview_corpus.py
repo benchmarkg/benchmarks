@@ -7,9 +7,10 @@
 No entry is published yet -- every committed benchmark is still an agent's draft, and 05 S4 publishes none of
 those -- so a site built over build/corpus.json has no detail pages to test or to look at. This writes, into its
 own directory, what `bench build` would write if the drafts that pass tier 1 counted as published:
-corpus.json (saying `"drafts": true`), facets.json, and derived/adoption.json (tools/build/adoption.py), which the
-detail page reads its claim and system counts from. site/playwright.config.ts runs it before the page tests; a
-person reviewing the drafts can run it to read them rendered.
+corpus.json (saying `"drafts": true`), facets.json, derived/adoption.json (tools/build/adoption.py), which the
+detail page reads its claim and system counts from, and croissant-benchmark/ (tools/build/croissant.py), validated as
+`bench build` validates it, which the detail page inlines and serves as cite.jsonld. site/playwright.config.ts runs it
+before the page tests; a person reviewing the drafts can run it to read them rendered.
 
 It is a script rather than a `bench build` flag because 05 S3's code block is the CLI's only specification. It
 refuses to write into build/ itself, which is what the site deploys from, and the site refuses to build from a
@@ -24,7 +25,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from tools.build import adoption, artifacts  # noqa: E402
+from tools.build import adoption, artifacts, croissant  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -42,8 +43,17 @@ def main(argv=None) -> int:
     if result.errors:
         print('preview_corpus: %d error(s); nothing written' % len(result.errors), file=sys.stderr)
         return 1
+    documents, problems, summary = croissant.build(result.corpus, result.withheld)
+    for e in problems:
+        print('error  %s' % e, file=sys.stderr)
+    if problems:
+        print('preview_corpus: %d croissant-benchmark problem(s); nothing written' % len(problems), file=sys.stderr)
+        return 1
     for path in artifacts.write(result, a.out):
         print('wrote %s' % path)
+    croissant.write(documents, os.path.join(a.out, croissant.DIR))
+    print('wrote %s (%d benchmark document(s) and the collection)'
+          % (os.path.join(a.out, croissant.DIR), summary['written']))
     path = os.path.join(a.out, 'derived', 'adoption.json')
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'wb') as fh:

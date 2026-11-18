@@ -74,6 +74,10 @@ class Build:
     enums: dict = field(default_factory=dict)
     excluded: list[tuple[str, str, str]] = field(default_factory=list)    # (path, id, reason)
     errors: list[str] = field(default_factory=list)
+    # The drafts left out that pass tier 1, dumped like a published record: tools/build/croissant.py validates their
+    # croissant-benchmark documents without writing them, so a mapping change is held to base conformance before any
+    # entry is published (P2-S3-T06). Never written, never in an artifact.
+    withheld: dict[str, dict] = field(default_factory=dict)
 
     def counts(self) -> dict[str, int]:
         return {k: len(v) for k, v in self.corpus['entities'].items()} if self.corpus else {}
@@ -158,6 +162,8 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
             continue
         if kind == 'benchmark' and r.parsed and status(r.raw) == DRAFT and not (drafts and r.model and not broken(r)):
             out.excluded.append((r.path, r.id, DRAFT + (' (and fails tier 1)' if broken(r) else '')))
+            if r.model is not None and not broken(r):
+                out.withheld[r.id] = dump(r.model)
             continue
         if not r.parsed or r.model is None or broken(r):
             out.errors.append('%s: %s would be published, but fails tier 1: %s'

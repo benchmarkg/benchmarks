@@ -13,7 +13,10 @@ Pydantic is canonical; both artifacts are committed, and "CI fails if regenerati
 Because the vocabularies are Literal enums built from taxonomy/ at import time, a taxonomy edit
 changes the output too, so `--check` catches drift from either source (05 S3's `schema gen` row).
 
-One schema and one type file per entity: every root model schema/paths.py registers. The JSON Schema
+One schema and one type file per entity: every root model schema/paths.py registers. Beside them,
+croissant-benchmark.schema.json, the croissant-benchmark extension's schema from tools/build/croissant.py's models
+(P2-S3-T06; 08 S5.8), so `--check` holds it to its models too; it has no type file, because it describes the
+JSON-LD documents the build emits, not an entity the site types. The JSON Schema
 is the VALIDATION schema -- what a hand-written or ingested record may contain -- so derived,
 computed fields (`execution.inspect_evals_available`, `Metric.higher_is_better`) are not in it.
 
@@ -104,11 +107,23 @@ def typescript(schemas: dict[str, dict], json2ts: str) -> dict[str, str]:
     return {name: ts.replace('\r\n', '\n') for name, ts in json.loads(r.stdout).items()}
 
 
+def croissant_schema(root: str = ROOT) -> dict:
+    """The croissant-benchmark extension schema (P2-S3-T06; 08 S5.8), from tools/build/croissant.py's models. It is
+    a JSON Schema of the documents the build emits, not of an entity, so it has no TypeScript type: the site reads
+    those documents as text and inlines them."""
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from tools.build import croissant
+    return croissant.json_schema()
+
+
 def render(root: str = ROOT, json2ts: str | None = None) -> dict[str, str]:
     """Every generated file, repo-relative path -> content."""
     schemas = json_schemas(root)
     files = {os.path.join(JSON_DIR, slug(n) + '.schema.json').replace(os.sep, '/'):
              json.dumps(s, indent=2, ensure_ascii=False) + '\n' for n, s in schemas.items()}
+    files[os.path.join(JSON_DIR, 'croissant-benchmark.schema.json').replace(os.sep, '/')] = \
+        json.dumps(croissant_schema(root), indent=2, ensure_ascii=False) + '\n'
     for n, ts in typescript(schemas, json2ts or os.path.join(root, JSON2TS)).items():
         files[os.path.join(TS_DIR, slug(n) + '.d.ts').replace(os.sep, '/')] = ts
     return files
