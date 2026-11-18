@@ -1,0 +1,694 @@
+# data/benchmarks/engineering-design/parametric-cad-bench.yaml
+#
+# P1-S8-T03, engineering-design entry 3. Filled from the V3 paper, arXiv 2611.02659 read as its v1 PDF (2026-11-02),
+# and its abstract page; cadbench.ai, which is server-rendered (no robots.txt is served): the home page, the
+# leaderboard's V3, V2 and V1 tabs, the Run the Bench page and three posts (the V1 report of 2026-05-13, V2 of
+# 2026-09-08 and V3 of 2026-09-21); the READMEs of gNucleus-AI/cad-bench-submission (commit 5b192d4, 2026-11-04) and
+# gNucleus-AI/freecad-validator (commit 716159c, v0.10.0, 2026-10-21); and Hugging Face's API records of the three
+# results datasets (gnucleus-ai/cad-gen-freecad-bench, -v2 and -v3) and of the V1 source dataset
+# gnucleus-ai/cad-gen-freecad. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# The family entry, by 04 S4: V1, V2 and V3 are versions of one benchmark by one maintainer, on one site, board and
+# submission repository. V2 re-ran V1's 100 tasks (the same task ids in the two results datasets) on a new runtime,
+# validator and isolation boundary, so it is a breaking revision; V3 is a new set of 100 tasks in three workflows, so
+# it is an edition. The Harbor Hub tab and job pages are script-rendered and were not read; the rows come from
+# cadbench.ai. This is not CadEval (data/benchmarks/_stubs/cadeval.yaml), nor CADBench, BenchCAD or CAD-bench.
+
+id: parametric-cad-bench
+name: Parametric CAD Bench
+aliases:
+  - CAD Bench
+aliases_note: >
+  The site and the V2 post also say "CAD Bench", and the Harbor task suite is gnucleus-ai/cad-bench. The
+  bare name collides with unrelated benchmarks that the V3 paper itself sets apart: CADBench (arXiv 2605.10873,
+  reconstruction of CAD programs from meshes and images), CAD-bench (an ICML 2026 workshop poster on functional
+  CAD generation) and BenchCAD (CadQuery programs); CadEval, an OpenSCAD benchmark tracked by Epoch, is
+  another. Never catalogue this benchmark under the bare name.
+tagline: Agents author editable FreeCAD parts from text or engineering drawings, scored on geometry
+  and named dimensions.
+description: >
+  A benchmark from gNucleus AI in which AI agents author parametric CAD parts in FreeCAD. The agent works
+  in a sandboxed container with FreeCAD and a shell: it writes a Python script that builds the part as
+  a feature tree (sketches, pads, pockets, patterns) in a single PartDesign body and saves a native .FCStd
+  document, running and revising it as it likes until it stops or the time limit (9,000 seconds in V3)
+  ends the trial. A separate verifier, the open-source gnucleus-freecad-validator, scores the saved document
+  on two axes: geometry similarity to a held-back reference model (volume, surface areas, surface types,
+  moments of inertia and aligned face centres, behind bounding-box and structural gates) and consistency
+  with the part's specification (each key parameter must be measurable in the document as a named dimension,
+  within 1% by default, with a budget of ten failures). The two are combined by harmonic mean, so a part
+  that looks right but exposes no named dimensions scores zero, and the headline is the mean reward over
+  all tasks with failures counted as zero. Entrants are complete agent-model systems (Claude Code, Codex,
+  Grok Build, Antigravity, mini-swe-agent and, in V1, Gemini CLI), and the harness is treated as a variable
+  under test. V1 (May 2026) had 100 text-to-CAD creation tasks on FreeCAD 0.21.2. V2 (September 2026)
+  re-ran the same 100 tasks on FreeCAD 1.1.0, with the held-out assets moved into a separate verifier
+  image and the validator updated. V3 (September 2026, current) is a new set of 100 tasks: 30 text-to-CAD
+  creation, 30 create-and-edit (build a part from text, then modify it; both models are scored) and 40
+  reconstructions of parts from engineering drawings, with a stricter scorer and no agent network beyond
+  the model provider. Each version keeps its own board, and only V3 takes submissions. On the V3 snapshot
+  of 2026-09-24, Claude Code with Claude Opus 5.5 leads at 61.03%.
+self_description:
+  source: src-cadbench-ai
+  quote: Parametric CAD Bench evaluates models and AI agents on parametric CAD tasks.
+external_ids:
+  arxiv: '2611.02659'
+paper:
+  title: 'Parametric CAD Bench v3: Evaluating Agentic Parametric CAD Authoring from Text and Engineering
+    Drawings'
+  arxiv: '2611.02659'
+  version_read: v1
+  source: src-arxiv-2611-02659-v1
+released: 2026-05-13
+released_note: V1, the date of the maintainers' report post in the site's news list; the source
+  dataset (2026-05-08) and the validator (2026-05-10) were published a few days earlier, and the V3
+  paper followed on 2026-11-02.
+released_source: src-cadbench-ai
+released_quote: May 13, 2026 Parametric CAD Bench Report
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: engineering-design/cad-geometry-generation
+  primary_basis:
+    reason: What is scored is a designed part, the native FreeCAD document the agent saves, judged
+      against a reference model and the part's specified dimensions. That is the family's inclusion
+      test (geometry judged against engineering criteria) and the subdomain's definition (CAD
+      geometry that satisfies a stated specification); CadEval, the family's own example, is the
+      same act in OpenSCAD.
+    source: src-arxiv-2611-02659-v1
+    quote: Our benchmark instead requires native FreeCAD documents with an application-managed
+      feature tree and document dependencies, rather than a CadQuery program or exported B-rep
+      alone.
+  secondary:
+    - agents-tooluse/operating-system-tasks
+  secondary_basis:
+    reason: Every task is run by an agent working through a shell in a sandboxed container, running
+      its script and reading the errors, and the benchmark treats the agent harness as a variable it
+      measures; replibench is the leaf's example of such a secondary.
+    source: src-cadbench-ai-news-parametric-cad-bench
+    quote: Our agents run a shell, write the FreeCAD script, execute it, inspect errors, fix them,
+      and try again, all inside a sandboxed container.
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: The agent writes a Python script, but the script is the means; the verifier scores the
+      saved CAD document's geometry and named dimensions, not the program's behaviour, and the paper
+      says that executable code is not enough. The code family's exclusion ("code is the means to a
+      result in another field") applies.
+    source: src-arxiv-2611-02659-v1
+    quote: requires more than testing whether generated code executes or whether the resulting
+      geometry is visually or geometrically similar.
+  - term: engineering-design/structural-mechanical-design
+    reason: The parts are mechanical (flanges, clevis connectors, linkage arms, housings), but every
+      dimension is given; nothing is designed against loads or material constraints.
+  - term: vision/3d-reconstruction
+    reason: V3's 40 image-to-CAD tasks rebuild a part from an engineering drawing, but the output is
+      an editable parametric model scored against a reference and named dimensions, not recovered
+      scene geometry, and drawings are only part of one version.
+    source: src-arxiv-2611-02659-v1
+    quote: Image-to-CAD tasks provide engineering drawings rather than the held-back dimensional
+      specification.
+capability:
+  - generation-fidelity
+  - self-correction
+capability_basis:
+  generation-fidelity:
+    reason: The geometry axis compares the saved solid with the reference by volume, surface areas,
+      surface types, moments of inertia and aligned face centres, and the specification axis checks
+      the named dimensions against the stated values; the score is closeness to a target, as for
+      cadeval, the term's own example.
+    source: src-arxiv-2611-02659-v1
+    quote: The verifier computes two independent axes, geometry_similarity and cad_spec_consistency
+  self-correction:
+    reason: The V1 report says the benchmark measures the agent's loop of running its own script,
+      reading the errors and repairing it, not the first output, and traces the gap between
+      harnesses on one model to how often each checks and repairs its saved part. Only the final
+      document is scored (review_checks).
+    source: src-cadbench-ai-news-parametric-cad-bench
+    quote: The bench measures that loop end-to-end rather than just the first model output.
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: Placing features from a prose specification, or reconciling the orthographic and section
+      views of a drawing, needs spatial inference, but the score is the fidelity of the
+      reconstruction to a reference, which the term's exclusion sends elsewhere, and no source
+      claims spatial reasoning.
+  - term: constraint-satisfaction
+    reason: The specification check enumerates parameters, but one violation does not fail the item;
+      under V3's scorer each costs 0.1 up to a budget of ten, and under V1's the score was the
+      consistent share.
+  - term: perception
+    reason: V3's image-to-CAD tasks give only an engineering drawing as geometry input, but a
+      drawing is a dimensioned technical document rather than a raw sensory signal, the score is the
+      model built from it, and V1 and V2 have no image input (review_checks).
+    source: src-arxiv-2611-02659-v1
+    quote: Image-to-CAD tasks provide engineering drawings rather than the held-back dimensional
+      specification.
+  - term: tool-use
+    reason: Agents use a shell and FreeCAD's Python API, but the protocol scores only the saved
+      document, not whether calls were selected and parameterised correctly.
+  - term: long-horizon-execution
+    reason: An episode can run many dependent steps, but an error is recoverable by rebuilding the
+      part before the time limit, only the end artifact is scored, and no source claims the horizon.
+  - term: instruction-following
+    reason: The specification is given in prose, but what is checked is geometry and dimensions, and
+      the sources claim geometric and parametric correctness, not compliance with directions.
+
+evaluation_method:
+  - domain-metric
+  - numeric-tolerance-match
+  - constraint-check
+  - composite
+evaluation_method_note: >
+  domain-metric for the geometry axis, a comparison of CAD solids specific to this validator (relative
+  errors in volume, total and per-type surface area and principal moments, mapped to credit, times a face-centre
+  alignment factor); it has no standard name (review_checks). numeric-tolerance-match for the specification
+  axis: each parsed parameter is measured in the document and counts as consistent within a relative tolerance
+  (1% by default, with case-specific tolerances), and the axis is 1 minus 0.1 per failure up to ten. constraint-check
+  for the gates that zero the geometry axis whatever else matches: one non-empty PartDesign body producing
+  one solid from native features, an oriented bounding box within 10% and face counts within limits (cadeval
+  is the term's example of validation before any tolerance is measured). composite because the task reward
+  is the harmonic mean of the two axes, and for create-and-edit the harmonic mean of the base and edited
+  models' rewards.
+evaluation_method_basis:
+  reason: The reward combines the two axes so that a zero on either, or on either deliverable, is a
+    zero.
+  source: src-arxiv-2611-02659-v1
+  quote: Thus a zero score on a required axis or deliverable cannot be rescued by another axis.
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: The verifier measures the saved document's geometry and parameters with the reference
+      beside it; no test of the part's or the script's behaviour decides the verdict.
+  - term: model-graded-judge
+    reason: No model takes part in grading; the validator is deterministic.
+    source: src-github-freecad-validator-readme-716159c
+    quote: Deterministic validation for FreeCAD CAD geometry, design specifications, and solved
+      FreeCAD/CalculiX FEM analyses. Reproducible, no LLM, no GPU.
+  - term: statistical-fit
+    reason: The geometry subscores are relative errors on one artifact mapped to credit by
+      thresholds, not an error statistic aggregated over predictions.
+designed_for_subjects:
+  - agent-scaffold
+  - full-product-pipeline
+designed_for_subjects_note: agent-scaffold for loops the entrant configures, such as mini-swe-agent
+  with the multimodal bridge and system template the V3 matrix added for image tasks;
+  full-product-pipeline for shipped coding agents installed and run as delivered (Claude Code,
+  Codex, Grok Build, Antigravity, and Gemini CLI in V1). Every row names the agent and its version
+  beside the model.
+designed_for_subjects_basis:
+  reason: The paper and the V1 report treat the agent harness as part of what is measured, and the
+    V1 matrix pairs one model with two agents to measure the harness effect.
+  source: src-arxiv-2611-02659
+  quote: These measurements describe complete systems, not isolated model capabilities.
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The maintainers supply no loop of their own. mini-swe-agent is one entrant agent among
+      several; the V1 report uses it as a vendor-neutral comparison and V3 configures it per run,
+      but it is not the benchmark's driver for every entrant.
+    source: src-cadbench-ai-news-parametric-cad-bench
+    quote: The harness is a first-class variable.
+  - term: tool-augmented-model
+    reason: The agent, not the protocol, decides what to run next and when to stop.
+
+lifecycle: active
+lifecycle_basis:
+  reason: V3 went live on 2026-09-21, its paper followed on 2026-11-02, and the submission
+    repository switched intake to V3 on 2026-11-04 (the commit read).
+  source: src-github-cad-bench-submission-readme-5b192d4
+  quote: Only v3 accepts submissions. V1 and v2 intake is closed.
+activity: accepting-submissions
+activity_basis:
+  reason: A board that has never run in rounds and takes outside runs now. A submitter runs the full
+    V3 cohort, publishes the Harbor job and opens a pull request; the maintainers audit it before a
+    row is shown.
+  source: src-cadbench-ai-benchmark
+  quote: Maintainers verify the complete 100-task cohort and task digests, inspect trajectories,
+    spot-check the score with gnucleus-freecad-validator, and audit cost data before displaying the
+    result.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude Opus 5.5 (Claude Code 2.1.280, max effort)
+    source: src-cadbench-ai-leaderboard
+    observed_on: 2026-11-18
+    quote: 1 Claude Opus 5.5 Claude Code 2.1.280 max 50.87 39.69 84.66 61.03 % ± 7.53 99 / 100 9 /
+      100 $573.94
+    note: The V3 board's top row on the Harbor snapshot of 2026-09-24 (create 50.87, create-and-edit
+      39.69, image-to-CAD 84.66, overall 61.03).
+  - system: GPT-5.5 (Codex)
+    source: src-cadbench-ai-news-parametric-cad-bench
+    observed_on: 2026-11-18
+    quote: Early results show GPT-5.5 via Codex leading at 0.832
+    note: The V1 report's leading cell in May 2026.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each task's reference model (a FreeCAD document built by gNucleus AI) and
+  its specification, with the parameter-checking code CAD engineers wrote; withheld from the agent
+  during a run (from V2 in a separate verifier image) but published with the tasks.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The tasks are public and pinned by a dataset digest, the harness and the validator are
+    open source, and every trial of the board's jobs is published; a run needs a container runtime
+    and API access to the model.
+  source: src-arxiv-2611-02659-v1
+  quote: every reported statistic is computed from the public tasks and the final trials of the
+    public Harbor jobs, and can be recomputed from them.
+
+task:
+  exists: true
+  input:
+    - a natural-language part description and a table of its key parameters (creation)
+    - a base description, then an edit instruction with target requirements (create-and-edit, V3)
+    - an engineering drawing with general execution requirements and no parameter list
+      (image-to-CAD, V3)
+    - a container with FreeCAD (0.21.2 in V1, 1.1.0 from V2) and a shell, until the agent stops or
+      the time limit ends the trial
+  output: A FreeCAD Python script and the native document it saves (answer.FCStd; answer_base.FCStd
+    and answer_edit.FCStd for create-and-edit), a single PartDesign body producing one solid with
+    editable features.
+  scoring: Per task, the harmonic mean of geometry similarity to the reference and specification
+    consistency (for create-and-edit, the harmonic mean of the base's and the edited model's
+    rewards), zero if a gate fails or either axis is zero. The headline is the mean reward over all
+    tasks, failures counting zero, on a 0-100 scale, with per-workflow means beside it in V3.
+  tests_hidden_from_system: true
+  reference_solution: true
+  source: src-arxiv-2611-02659
+  quote: Agents operate in a pinned FreeCAD environment and submit native CAD artifacts to a
+    separate programmatic verifier.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: Reference models, specifications and drawings are held back from the agent during a
+    run, but they are published with the tasks on Harbor Hub under Apache-2.0; V1's parts are also
+    the rows of the source dataset gnucleus-ai/cad-gen-freecad, and the three results datasets
+    publish every trial's generated models.
+  access_basis:
+    reason: Every version's tasks, references and drawings are public under one licence, with no
+      registration.
+    source: src-github-cad-bench-submission-readme-5b192d4
+    quote: The license covers this repository's code and the Parametric CAD Bench task
+      specifications, reference models, and drawings of v1, v2, and v3 published on Harbor Hub.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: Three numbered releases, each with its own frozen board; V3 is pinned by an immutable
+      dataset digest.
+    source: src-arxiv-2611-02659
+    quote: We release versioned tasks, evaluation configurations, and inspectable result artifacts.
+  data_provenance:
+    - expert-authored
+  data_provenance_note: The paper says gNucleus AI authored the tasks, specifications, reference
+    models and drawings, and that CAD engineers wrote the parameter checks; it does not describe who
+    modelled the parts or wrote the descriptions. V1's 100 parts are the rows of the source dataset
+    gnucleus-ai/cad-gen-freecad, which groups them by part family. The V2 post thanks outside
+    contributors for public tasks and results (review_checks).
+  data_provenance_source: src-arxiv-2611-02659-v1
+  data_provenance_quote: CAD engineers wrote the parameter-checking logic shipped in each task
+  contamination_risk: medium
+  contamination_risk_note: >
+    The scored content is public. V3's references and drawings are on Harbor Hub under Apache-2.0, and
+    its results dataset holds every evaluated system's generated models; no source evidences V3 content
+    in a training set. V1 and V2 had a route: their 100 parts, with reference FCStd documents and key
+    parameters, are the train split of gnucleus-ai/cad-gen-freecad, published on 2026-05-08 for CAD generation
+    from text (all 100 V1 task ids are its part ids, compared for this entry), but both versions are frozen
+    and scored nothing after 2026-09-21. At run time V2's agents were seen seeking the reference CAD and
+    grader artifacts; V3 closed that route by isolating the verifier and cutting agent network to the
+    model provider, so it does not count against V3.
+  contamination_risk_source: src-arxiv-2611-02659-v1
+  contamination_risk_quote: limit contamination claims and reproducibility
+  contamination_evidence:
+    - source: src-cadbench-ai-news-parametric-cad-bench
+      stance: supports
+      quote: the part designs, parameter specs, instructions, and reference geometry that the bench
+        is built from
+    - source: src-hf-api-gnucleus-cad-gen-freecad
+      stance: supports
+      quote: '"split":"train"'
+    - source: src-cadbench-ai-news-cad-bench-v3
+      stance: supports
+      quote: we observed agent-model systems attempting to locate or download the held-back
+        reference CAD or the validator and grader artifacts instead of solving the modeling task
+        from the provided inputs
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: A task's reward is bounded at 1.0 and the headline at 100%; no source reports running
+      the reference models through the verifier, and only 15 of V3's 100 tasks drew a perfect reward
+      from any system in the paper.
+    source: src-cadbench-ai-news-cad-bench-v3
+    quote: A perfect result earns 1.0, partial results receive partial credit, and failed or
+      unscored trials count as zero.
+  dataset_licence: Apache-2.0
+  dataset_licence_source: src-arxiv-2611-02659-v1
+  dataset_licence_quote: The benchmark tasks, including their specifications, reference models, and
+    drawings, were authored by gNucleus AI and are released under the Apache License 2.0, as is the
+    validator.
+  upstream_licences: FreeCAD and Open CASCADE Technology, redistributed in the task images, are
+    LGPL-2.1.
+  size:
+    - count: 100
+      unit: tasks
+      subset: v3 (30 creation, 30 create-and-edit, 40 image-to-CAD)
+      source: src-arxiv-2611-02659
+      quote: We present Parametric CAD Bench v3, a 100-task benchmark comprising 30 text-to-CAD
+        creation tasks, 30 text-to-CAD create-and-edit tasks, and 40 tasks that reconstruct
+        mechanical parts from engineering drawings.
+    - count: 100
+      unit: text-to-CAD creation tasks, the same task ids in both versions
+      subset: v1 and v2
+      source: src-cadbench-ai-news-cad-bench-v2
+      quote: The task count is still 100, but the runtime, validator, isolation boundary, artifact
+        contract, and failure handling changed.
+    - count: 1300
+      unit: published final trials (13 systems, one per task)
+      subset: v3 results dataset
+      source: src-hf-api-gnucleus-cad-gen-freecad-bench-v3
+      quote: 'leaderboard: one final trial per system and task, 1,300 in total.'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: gNucleus AI
+  maintainer_basis:
+    reason: The paper says gNucleus AI authored the tasks, references, drawings and validator; the
+      site, the repositories and the datasets sit in gNucleus AI's organisation accounts.
+    source: src-arxiv-2611-02659-v1
+    quote: The benchmark tasks, including their specifications, reference models, and drawings, were
+      authored by gNucleus AI and are released under the Apache License 2.0, as is the validator.
+  maintainer_type: industry-lab
+  maintainer_type_note: The paper's affiliation line gives the company as gNucleus AI, Inc. (not
+    quoted, to keep the extract clear of the authors' addresses), and the GitHub and Hugging Face
+    accounts are the company's organisation accounts.
+  submission_process:
+    - maintainer-run
+    - maintainer-verified
+  submission_process_note: >
+    The maintainers ran the board's cells themselves (V1's "internal baseline", whose costs they backfilled
+    before upload), and outside runs are taken by pull request: V1 took manifests reviewed by hand with
+    a spot re-grade, and V3 takes a public Harbor job of the full cohort, which the maintainers download,
+    audit and spot-check before staging a row. No outside V2 manifest was accepted. The sources read do
+    not say who ran each V3 row (review_checks).
+  submission_process_source: src-cadbench-ai-news-parametric-cad-bench
+  submission_process_quote: A maintainer reviews each PR by hand
+  independence_flags: []
+  independence_flags_note: No flag could be evidenced. The boards rank third-party agents and
+    models, and no gNucleus AI system appears on the V1, V2 or V3 board read. no-known-conflict is
+    not tagged because no source read says who paid for the runs or whether model providers gave
+    credits, so the search for funded-by-evaluated-party could not be completed.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2611-02659-v1
+    quote: The benchmark is a curated 100-task FreeCAD evaluation, not a representative sample of
+      all engineering CAD.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: A run is model-API spend plus CPU containers for FreeCAD; the validator needs
+    no GPU. The V3 rows' known costs for a 100-task cohort run from $196.74 to $1,056.04.
+  compute_tier_source: src-cadbench-ai-benchmark
+  compute_tier_quote: The task suite itself is free; you pay only your model-API and execution
+    costs.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_note: >
+    A run needs no human or maintainer-only step. Closed models behind provider APIs change, which the
+    paper names as a limit on reproducibility, and the board's single attempt per task does not establish
+    run-to-run robustness.
+  reproducibility_tier_basis:
+    reason: The tasks are a digest-pinned Harbor dataset and the scorer is a published package.
+    source: src-github-cad-bench-submission-readme-5b192d4
+    quote: Run the frozen v3 dataset with one attempt per task and no automatic retries.
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: Harbor (0.23.0 for V3) running the gnucleus-ai/cad-bench task suite (harbor run -d
+    gnucleus-ai/cad-bench@v3, or its sha256 digest), with gnucleus-freecad-validator as the verifier
+    (0.1.0 in V1, 0.4.0 in V2, 0.6.0 with the v2 scorer in V3)
+  harness_source: src-arxiv-2611-02659-v1
+  harness_quote: Our benchmark is built on Harbor, a framework for specifying and evaluating agent
+    tasks in sandboxed environments
+  harness_gotcha:
+    source: src-github-freecad-validator-readme-716159c
+    quote: Scores are only comparable when they come from the same geometry kernel
+  harness_gotcha_note: One FreeCAD 1.1.0 build string covers different OCCT kernels (7.8.1 in the
+    official binaries, 7.9.3 on conda-forge), and volume and area measurements can shift between
+    them, so a local re-grade must use the task image's build. The validator's default scorer also
+    changed at 0.6.0, and its later releases (to 0.10.0) are not the version V3 pins.
+  code_licence: Apache-2.0
+  code_licence_note: The validator's README and the submission repository's README both state
+    Apache-2.0, and GitHub's licence metadata agrees for both (API, read 2026-11-18).
+  code_licence_source: src-github-freecad-validator-readme-716159c
+  code_licence_quote: License Apache 2.0 — see
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the agentic profile (constraint-check and composite with agent-scaffold and full-product-pipeline), which
+  # already makes the scaffold, harness, reasoning effort, retries, tools, sample count and sandbox material: attempts
+  # per task (k; the board takes one). The version is material through the version tag (V1, V2 and V3 differ in
+  # runtime, validator, scorer and tasks). The per-task time limit (9,000 seconds in V3) and the FreeCAD/OCCT build of
+  # a local re-grade are material too but have no condition field. The V3 post shows the image interface alone moving
+  # one model's image-to-CAD score from 17.45% to 31.10%.
+  material_extra:
+    - k
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline, the mean reward over every task of a version with failures counted as zero
+    (in V3, 30/30/40 across the workflows by task count); the per-workflow means are reported beside
+    it.
+  source: src-cadbench-ai
+  quote: Overall is the mean reward across all 100 tasks; failures count as zero.
+secondary_axes:
+  - cost
+secondary_axes_basis:
+  reason: Every board row reports the known cost of its run in USD (V1 and V2 also tokens and time),
+    and the paper analyses cost per score point.
+  source: src-cadbench-ai-leaderboard
+  quote: Costs are reported for the full cohort and depend on the model and agent configuration.
+
+liveness:
+  repo_last_commit: 2026-11-04
+  leaderboard_last_updated: 2026-09-24
+  reproduction_script_present: true
+  last_checked: 2026-11-18
+
+homepage: https://cadbench.ai/
+repository: https://github.com/gNucleus-AI/cad-bench-submission
+dataset_url: https://hub.harborframework.com/datasets/gnucleus-ai/cad-bench/v3
+leaderboard_url: https://cadbench.ai/leaderboard
+
+versions:
+  - version: v1
+    label: Parametric CAD Bench v1, 100 text-to-CAD creation tasks
+    version_kind: revision
+    released: 2026-05-13
+    items: 100
+    changes: The launch set of 100 text-to-CAD creation tasks (a part description and a table of key
+      parameters), run with Harbor on FreeCAD 0.21.2 and scored by freecad-validator 0.1.0 as the
+      harmonic mean of geometry similarity and the share of consistent parameters; the reference
+      geometry and grader sat in the task image behind root-only permissions, and agents had
+      outbound internet. Ten agent-model cells in May 2026 and five more in August; frozen and
+      closed to submissions when V2 was released.
+    breaking: false
+    superseded_by: v2
+    frozen: true
+    sources:
+      - src-cadbench-ai-news-parametric-cad-bench
+      - src-cadbench-ai-leaderboard-v1
+      - src-hf-api-gnucleus-cad-gen-freecad-bench
+      - src-cadbench-ai
+  - version: v2
+    label: Parametric CAD Bench v2, the same 100 tasks on a corrected stack
+    version_kind: revision
+    released: 2026-09-08
+    items: 100
+    changes: The same 100 task ids as V1, run on FreeCAD 1.1.0 with validator 0.4.0, the held-out
+      assets moved into a separate verifier image, rewards reported under Harbor's contract and
+      explicit zero-reward paths for failures; a fresh board of ten runs. Its trajectories showed
+      agents seeking the reference CAD and grader artifacts. Kept as a historical board when V3 was
+      released; no outside V2 manifest was accepted.
+    breaking: true
+    supersedes_version: v1
+    superseded_by: v3
+    frozen: true
+    sources:
+      - src-cadbench-ai-news-cad-bench-v2
+      - src-cadbench-ai-leaderboard-v2
+      - src-hf-api-gnucleus-cad-gen-freecad-bench-v2
+      - src-arxiv-2611-02659-v1
+  - version: v3
+    label: Parametric CAD Bench v3, 100 new tasks in three workflows (current)
+    version_kind: edition
+    released: 2026-09-21
+    items: 100
+    changes: A new task set, sharing no task id with V1 or V2, of 30 text-to-CAD creation, 30
+      create-and-edit and 40 image-to-CAD tasks, on FreeCAD 1.1.0, Harbor 0.23.0 and task schema
+      1.3, scored by validator 0.6.0's v2 scorer (an oriented-bounding-box gate, stricter
+      per-component comparison, revised geometry weights and a failure budget of ten parameters);
+      agent network limited to the model provider, one attempt per task, and the dataset pinned by a
+      digest. The paper's version.
+    breaking: true
+    supersedes_version: v2
+    frozen: true
+    sources:
+      - src-cadbench-ai-news-cad-bench-v3
+      - src-arxiv-2611-02659-v1
+      - src-arxiv-2611-02659
+      - src-cadbench-ai-leaderboard
+      - src-hf-api-gnucleus-cad-gen-freecad-bench-v3
+      - src-github-cad-bench-submission-readme-5b192d4
+
+subsets:
+  - id: parametric-cad-bench#create
+    label: Text-to-CAD creation (V3)
+    items: 30
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2611-02659
+        quote: We present Parametric CAD Bench v3, a 100-task benchmark comprising 30 text-to-CAD
+          creation tasks, 30 text-to-CAD create-and-edit tasks, and 40 tasks that reconstruct
+          mechanical parts from engineering drawings.
+    notes: The V3 board's Create column. V1 and V2 consisted of creation tasks only, 100 each.
+  - id: parametric-cad-bench#create-and-edit
+    label: Text-to-CAD create-and-edit (V3)
+    items: 30
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2611-02659-v1
+        quote: Create-and-edit measures two-stage construction, not maintenance of an externally
+          authored document.
+    notes: The agent builds a base part from text and then the edited part; both documents are
+      scored and their rewards combined by harmonic mean, as one task. No externally authored
+      document is supplied, and the scores do not show whether the edit reused the base's feature
+      history. Every task that drew zero from all systems in the paper's snapshot is in this
+      workflow.
+  - id: parametric-cad-bench#image-to-cad
+    label: Image-to-CAD from engineering drawings (V3)
+    items: 40
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2611-02659-v1
+        quote: Image-to-CAD tasks provide engineering drawings rather than the held-back dimensional
+          specification.
+    notes: The drawing is the only geometry input, with no prose description or parameter list. The
+      workflow separates systems most widely in the paper (8.18% to 84.66%), and the agent's image
+      interface changes the result.
+
+lineage:
+  role: root
+lineage_note: No variant or fork was found in the sources read. The paper says gNucleus AI
+  contributed three FreeCAD tasks of the create-and-edit and image-to-CAD kinds to Terminal-Bench
+  3.0/4.0; they belong to Terminal-Bench, not to a version of this benchmark.
+  gnucleus-ai/cad-gen-freecad is V1's source data and is counted with the benchmark. CADBench,
+  BenchCAD, CADGenBench, CAD-bench and 3DCodeBench, which the paper compares, are unrelated
+  benchmarks.
+
+tags:
+  - cad
+  - freecad
+  - parametric-design
+  - text-to-cad
+  - image-to-cad
+  - harbor
+  - agents
+  - leaderboard
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T03)
+  added_on: 2026-11-18
+  last_verified: 2026-11-18
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2611-02659-v1
+    - src-arxiv-2611-02659
+    - src-cadbench-ai
+    - src-cadbench-ai-leaderboard
+    - src-cadbench-ai-leaderboard-v2
+    - src-cadbench-ai-leaderboard-v1
+    - src-cadbench-ai-news-parametric-cad-bench
+    - src-cadbench-ai-news-cad-bench-v2
+    - src-cadbench-ai-news-cad-bench-v3
+    - src-cadbench-ai-benchmark
+    - src-github-cad-bench-submission-readme-5b192d4
+    - src-github-freecad-validator-readme-716159c
+    - src-hf-api-gnucleus-cad-gen-freecad-bench
+    - src-hf-api-gnucleus-cad-gen-freecad-bench-v2
+    - src-hf-api-gnucleus-cad-gen-freecad-bench-v3
+    - src-hf-api-gnucleus-cad-gen-freecad
+  sources_note: >
+    The paper's v1 PDF and its abstract page (DOIs, not archived), read as text with the windows kept
+    away from the author block, which prints e-mail addresses; seven cadbench.ai pages, server-rendered,
+    with script and style blocks stripped and the V2 post's contributor names kept out of the windows;
+    two READMEs at pinned commits; and Hugging Face's public API records of four datasets (none gated).
+    The task ids of the three results datasets and the source dataset were compared from the API records'
+    file lists, not from a quoted statement.
+  confidence: medium
+  review_checks:
+    - check: Identity of V2. Recorded as a revision because its 100 task ids are V1's (from the two
+        results datasets' file lists, compared for this entry, not stated in a source) while the
+        runtime, validator, isolation and failure handling changed; the maintainers call it a new
+        benchmark version and froze V1's board.
+      field: versions
+      source: src-cadbench-ai-news-cad-bench-v2
+      quote: That makes a v2 score a measurement on a new benchmark version, not a continuation of
+        the v1 series.
+    - check: Identity of V3. Recorded as an edition because maintainer, name, site, board,
+        submission repository and harness carry over, but it replaces every task, adds two workflows
+        (create-and-edit and drawings) and a new scorer; the maintainers call it a fresh
+        measurement. A reviewer may judge the task change large enough for an entry of its own.
+      field: versions
+      source: src-cadbench-ai-news-cad-bench-v3
+      quote: A v3 score is therefore a fresh benchmark measurement, not a continuation of the v2
+        series.
+    - check: Domain secondary agents-tooluse/operating-system-tasks rests on agents working through
+        a shell in a container and on the harness being a measured variable, by analogy with
+        replibench; the grader scores a design, so the secondary may be over-tagging.
+      field: domain
+    - check: Capabilities. self-correction rests on the V1 report's claim that the loop is measured
+        and on the harness gaps it traces to checking the saved part; only the final document is
+        scored, which is swe-bench-verified's near miss. perception was rejected for the drawing
+        tasks, which a reviewer may read as a raw image input.
+      field: capability
+      source: src-cadbench-ai-news-parametric-cad-bench
+      quote: 'Same model, same task, different verification rhythm: +6 to +9 points of absolute composite
+        score.'
+    - check: domain-metric for the geometry axis. It is a bespoke comparison of solids defined by
+        this validator, not a named, standardised measure of the field, which the term's inclusion
+        test asks for; no other term fits better, so no gap was logged.
+      field: evaluation_method
+      specialist: true
+      source: src-arxiv-2611-02659-v1
+      quote: An independently measured OCCT oriented bounding box is a gate, not an additional
+        weighted subscore
+    - check: contamination_risk medium for the benchmark as scored now (V3). V1 and V2's 100 parts
+        and reference documents are the train split of gnucleus-ai/cad-gen-freecad, which the
+        maintainers released for CAD generation, so a reviewer may record those frozen versions as
+        high.
+      field: data.contamination_risk
+      source: src-cadbench-ai
+      quote: aimed at accurate, parametric CAD generation from text prompt
+    - check: data_provenance expert-authored rests on "authored by gNucleus AI" and on CAD engineers
+        writing the parameter checks; the sources do not say who modelled the parts or wrote the
+        descriptions, or whether the part families were generated procedurally. The V2 post credits
+        five outside contributors (names withheld) with public tasks and results.
+      field: data.data_provenance
+    - check: submission_process maintainer-run rests on V1's internal baseline; the sources do not
+        say who ran each V3 row. The Run the Bench page says to contact the maintainers about the V3
+        manifest format, while the README at the commit read already carries a V3 template; no
+        accepted outside V3 row was seen.
+      field: governance.submission_process
+      source: src-cadbench-ai-news-parametric-cad-bench
+      quote: layout the internal baseline uses
+    - check: The Harbor Hub tab and the Harbor job pages are script-rendered and were not read; the
+        board's rows come from cadbench.ai. The V3 tab notes that one row's Harbor job links fewer
+        trials than tasks. leaderboard_last_updated is the Harbor snapshot date.
+      field: liveness.leaderboard_last_updated
+      source: src-cadbench-ai-leaderboard
+      quote: Harbor reports metrics over 100 tasks and currently links 96 trials.
+    - check: Current use rests on the maintainers' own board and paper; no third-party paper using
+        the benchmark was searched for.
+      field: lifecycle
