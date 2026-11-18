@@ -3,7 +3,7 @@
     uv run bench --help
     uv run bench new <entity> --id <id> [--domain <d>] [--from-source <url>] [--template <name>]
     uv run bench fmt [paths...] [--check]
-    uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all] [--changed-only] [--single] [--json]
+    uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all|<comma list>] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
     uv run bench build [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
@@ -14,7 +14,8 @@
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
 tools/build/ and tools/validate/ hold the implementations, and this file only wires them to the
-command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's, `fmt` P0-S5-T04's (tools/fmt.py),
+command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's (its `--tier` takes a comma list since
+P2-S6-T04, whose issue-intake bot runs `--single --tier schema,ref,semantic`), `fmt` P0-S5-T04's (tools/fmt.py),
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
 build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, and coverage-states.json,
 P1-S12-T08's; --embed and --atlas arrive
@@ -146,11 +147,22 @@ class Tier(str, Enum):
     all = 'all'
 
 
+def _tiers(value: str):
+    """`--tier`: one tier, `all`, or a comma list such as `schema,ref,semantic` (the issue-intake bot's, P2-S6-T04)."""
+    names = [v.strip() for v in str(value).split(',') if v.strip()]
+    if not names or any(n not in Tier.__members__ for n in names) or ('all' in names and len(names) > 1):
+        raise typer.BadParameter('%r: give one of %s, or a comma list of the first four'
+                                 % (value, ', '.join(t.value for t in Tier)), param_hint="'--tier'")
+    return 'all' if names == ['all'] else names
+
+
 @app.command('validate')
 def validate(
     paths: Annotated[Optional[list[Path]], typer.Argument(
         help='Report only on these files or directories (the whole corpus is still read).')] = None,
-    tier: Annotated[Tier, typer.Option('--tier', help='One tier, or all four.')] = Tier.all,
+    tier: Annotated[str, typer.Option(
+        '--tier', help='One tier (schema, ref, semantic, quality), all four (all), or a comma list: '
+                       'schema,ref,semantic.')] = 'all',
     changed_only: Annotated[bool, typer.Option(
         '--changed-only', help='Report only on files changed against the merge base with origin/main.')] = False,
     single: Annotated[bool, typer.Option(
@@ -159,14 +171,15 @@ def validate(
 ):
     """The four validation tiers (04 S12). Tiers 1-3 block; tier 4, quality, is report-only."""
     from tools.validate import tiers
+    selected = _tiers(tier)
     if single:
         if changed_only or not paths or len(paths) != 1:
             typer.echo('--single takes exactly one path and no --changed-only', err=True)
             raise typer.Exit(2)
-        report = tiers.single(str(paths[0]), tier.value, ROOT)
+        report = tiers.single(str(paths[0]), selected, ROOT)
     else:
         try:
-            report = tiers.run(ROOT, tier.value, [str(p) for p in paths] if paths else None, changed_only)
+            report = tiers.run(ROOT, selected, [str(p) for p in paths] if paths else None, changed_only)
         except (OSError, tiers.subprocess.CalledProcessError) as e:
             typer.echo('validate: could not list changed files: %s' % e, err=True)
             raise typer.Exit(2)

@@ -66,6 +66,16 @@ cost. The App gets 5,000 to 12,500 requests an hour and has no expiry to renew (
 Commits then carry the App's identity (`<app>[bot]`) instead of `uaibi-bot`. That keeps bot commits
 separable from human curation in `git log`, which is the first reason 07 §6.1 gives for a bot identity.
 
+## The intake bot's commits
+
+The issue-intake bot (`.github/workflows/issue-intake.yml`, P2-S6-T04) opens its pull requests with
+`UAIBI_BOT_PAT`, but its commits do not carry `uaibi-bot`: by the maintainer's call of 2026-11-18,
+every commit in this repository is authored and committed as `intelligence-benchmark` and carries
+only the `advancedintelligence` and `tatra-labs` Co-authored-by trailers. `tools/intake/open_pr.py`
+refuses any other identity or trailer. The contributor is credited by the pull request's link to
+their issue, never in a commit. The workflow ships switched off behind the repository variable
+`ISSUE_INTAKE_ENABLED`.
+
 ## Not done yet
 
 - `main` has no branch protection or ruleset. 07 §6.1's design assumes branch protection requires

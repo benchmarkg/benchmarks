@@ -1,0 +1,89 @@
+# .github/workflows/issue-intake.yml -- P2-S6-T04
+#
+# SHIPS SWITCHED OFF. A workflow file is live as soon as it lands on main, and this repository runs one workflow,
+# pr-validate.yml, until the maintainer turns another on. So the one job below runs only when the repository
+# variable ISSUE_INTAKE_ENABLED is 'true' (Settings > Secrets and variables > Actions > Variables). Until the
+# maintainer sets it, every issue event this file receives is a skipped job: nothing is commented, labelled,
+# pushed or opened.
+#
+# 05 S6's validation bot (Path A). On an issue opened from one of the five forms, or a form issue whose body is
+# edited, it
+#   1. parses the form into a draft entry and runs `bench validate --single --tier schema,ref,semantic` on it
+#      (tools/intake/parse_form.py). This step holds no token: the issue body is untrusted input.
+#   2. comments the YAML it will write, then opens a pull request on contrib/<issue>-<id> labelled
+#      source:issue-form and verification:curator-review-needed; or comments the field-level errors and labels
+#      the issue needs-fix, leaving it open, and on the third failed attempt in a row adds needs-human and pings
+#      the steward .github/CODEOWNERS names (tools/intake/open_pr.py). It replaces its own comment each time.
+# It never merges. The draft lands in drafts/ as ai-drafted-unverified, never in data/ (parse_form.py says why).
+#
+# Tokens (08 S7.3; docs/bot-identity.md). GITHUB_TOKEN, with issues: write, comments on and labels the issue.
+# UAIBI_BOT_PAT, uaibi-bot's, writes the branch and opens the pull request: a pull request opened with
+# GITHUB_TOKEN would not run pr-validate.yml. Every commit is authored and committed as intelligence-benchmark
+# and carries the two maintainers' Co-authored-by trailers and no other identity; the contributor is credited
+# by the link to their issue (open_pr.py).
+#
+# The budget (08 S3.4): the comment within 90 seconds of the submission, with a ceiling of four minutes, hence
+# timeout-minutes: 4, a sparse checkout of what the bot reads, and no dev dependencies. The step summary records
+# how long each comment took.
+#
+# The issue body is never put into a shell command: both scripts read it from $GITHUB_EVENT_PATH.
+#
+# Actions are pinned by commit SHA (08 S6); these are pr-validate.yml's.
+
+name: issue-intake
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: issue-intake-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+env:
+  PYTHON: '3.12'
+
+jobs:
+  intake:
+    name: validate the form and draft the entry
+    # Off until the maintainer sets the variable. Then: open issues from a form, when opened or when the body is
+    # edited (a title-only edit changes nothing the bot reads).
+    if: >-
+      vars.ISSUE_INTAKE_ENABLED == 'true'
+      && github.event.issue.state == 'open'
+      && contains(join(github.event.issue.labels.*.name, ' '), 'form:')
+      && (github.event.action == 'opened' || github.event.changes.body)
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github
+            data/aliases
+            data/benchmarks
+            data/tombstones
+            drafts
+            ingest
+            schema
+            taxonomy
+            tools
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: parse the form, draft the entry and validate it (no token)
+        run: >-
+          uv run --locked --no-dev --python "$PYTHON" python -m tools.intake.parse_form
+          --event "$GITHUB_EVENT_PATH" --out "$RUNNER_TEMP/intake" --result "$RUNNER_TEMP/intake.json"
+      - name: comment, label, and open the pull request
+        # Also after a failed first step: with no result to read, the bot says it failed and asks a person.
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          UAIBI_BOT_PAT: ${{ secrets.UAIBI_BOT_PAT }}
+        run: >-
+          uv run --locked --no-dev --python "$PYTHON" python -m tools.intake.open_pr
+          --event "$GITHUB_EVENT_PATH" --result "$RUNNER_TEMP/intake.json"

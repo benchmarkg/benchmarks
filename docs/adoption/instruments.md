@@ -45,16 +45,16 @@ A citation can name the concept DOI or a version DOI, so condition (2) queries e
 
 ## Condition (1): at least 3 external contributors landed data through the issue form
 
-**Instrument.** The pull requests the intake bot opens are labelled `source:issue-form`, and the
-contributor is credited in a `Co-authored-by:` trailer on the commit (05 §6, steps 3 and 5), so the
-contributor is in the trailer, not the PR author (the bot).
+**Instrument.** The pull requests the intake bot opens are labelled `source:issue-form`, and each one
+links the issue it came from ("From issue #N", "Closes #N"). The contributor is the author of that
+issue: the bot's commits carry only the maintainers' identities (the maintainer's call of 2026-11-18,
+P2-S6-T04), so the commit trailers name no contributor.
 
 ```
-gh pr list --repo benchmarkg/benchmarks --state merged --label source:issue-form --limit 1000 \
-  --json number,mergeCommit --jq '.[].mergeCommit.oid' |
-while read sha; do
-  git log -1 --format='%(trailers:key=Co-authored-by,valueonly)' "$sha"
-done | sed '/^$/d' | sort -u
+gh pr list --repo benchmarkg/benchmarks --state merged --label source:issue-form --limit 1000   --json closingIssuesReferences --jq '.[].closingIssuesReferences[].number' |
+while read n; do
+  gh issue view "$n" --repo benchmarkg/benchmarks --json author --jq .author.login
+done | sort -u
 ```
 
 **What counts.** Each distinct contributor once. Remove every account that holds commit rights on
@@ -65,9 +65,8 @@ gh api repos/benchmarkg/benchmarks/collaborators --jq '.[].login'
 ```
 
 On 2026-09-29 those were `tatra-labs`, `advancedintelligence`, `intelligence-benchmark` and
-`uaibi-bot`. The co-author trailers the maintainers put on their own commits
-(`advancedintelligence`, `tatra-labs`) are not issue-form contributions and are excluded by the
-label filter as well as by this list.
+`uaibi-bot`. An issue a maintainer opens is not an external contribution and is excluded by this
+list.
 
 **2026-09-29:** the query returns no pull requests: neither the intake bot (P2-S6) nor the `source:issue-form` label exists yet.
 
