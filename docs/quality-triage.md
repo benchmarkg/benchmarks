@@ -37,6 +37,11 @@ and fails only under `--strict`, so a fix never has to wait on the triage file.
 A new entry adds findings of its own (no-baseline, for one). The pull request that adds the entry also
 adds the triage lines, the same way it updates the corpus pins.
 
+pr-validate's `warnings-triaged` job runs the check with `--strict` on every pull request and reports what
+it finds without blocking (the maintainer's call of 2026-11-18): an untriaged finding or a stale line
+shows as a warning on a green job and in the job summary. The job fails only when the validator or the
+check itself does not run.
+
 ## The account, 2026-11-17
 
 `bench validate --tier all --json` on main at a36fb3d (after the sweeps, #183-#201) reported
