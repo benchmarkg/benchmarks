@@ -1,11 +1,14 @@
 // site/src/pages/benchmarks/[id]/cite.[ext].ts -- P2-S3-T07 (10 "The permanent citation URL"). The citation as files
 // beside the detail page: cite.bib (BibTeX), cite.json (CSL-JSON), cite.ris (RIS) and cite.yaml (the record itself), each
-// from lib/cite.ts with the facts the page's citation block uses, so the two cannot disagree. Static files: no script.
+// from lib/cite.ts with the facts the page's citation block uses, so the two cannot disagree; and cite.jsonld, the
+// croissant-benchmark document the build wrote (P2-S3-T06, lib/croissant.ts), only where it wrote one. Static files: no
+// script.
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { APIRoute } from 'astro';
 import { benchmarks } from '../../../lib/collections';
 import { bibtex, cslJson, FORMATS, ris, type CiteFacts, type Format } from '../../../lib/cite';
+import { croissantText } from '../../../lib/croissant';
 import { release } from '../../../lib/release';
 import type { Benchmark } from '../../../types/benchmark';
 
@@ -13,7 +16,8 @@ const REPO_ROOT = process.env.REPO_ROOT ?? resolve(process.cwd(), '..');
 
 export async function getStaticPaths() {
   return (await benchmarks()).flatMap((benchmark) =>
-    (Object.keys(FORMATS) as Format[]).map((ext) => ({ params: { id: benchmark.id, ext }, props: { benchmark } })));
+    (Object.keys(FORMATS) as Format[]).filter((ext) => ext !== 'jsonld' || croissantText(benchmark.id) != null)
+      .map((ext) => ({ params: { id: benchmark.id, ext }, props: { benchmark } })));
 }
 
 export const GET: APIRoute = ({ params, props }) => {
@@ -26,6 +30,7 @@ export const GET: APIRoute = ({ params, props }) => {
   const body = ext === 'bib' ? bibtex(facts)
     : ext === 'json' ? cslJson(facts)
       : ext === 'ris' ? ris(facts)
-        : readFileSync(join(REPO_ROOT, yaml_path), 'utf8');
+        : ext === 'jsonld' ? croissantText(b.id) ?? ''
+          : readFileSync(join(REPO_ROOT, yaml_path), 'utf8');
   return new Response(body, { headers: { 'Content-Type': FORMATS[ext].type } });
 };

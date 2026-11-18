@@ -16,8 +16,11 @@ This reads what was built, independently of that code, and reports:
              cache key, not a citation"
   footers    every page carries the release, the commit SHA and the build timestamp, and the cache-key sentence; one
              build, so one commit and one timestamp across all of them
-
-Croissant JSON-LD, the fifth format 10 names, is P2-S3-T06's (tools/build/croissant.py) and is not checked here.
+  JSON-LD    the fifth format, croissant-benchmark JSON-LD (P2-S3-T06, tools/build/croissant.py), exists where the build
+             wrote a document, so it is checked where it is present: cite.jsonld and the page's inlined
+             <script type="application/ld+json" data-croissant> go together, parse to the same document, name the
+             benchmark and title it as the other formats do, carry no raw `<` inline, and the block links the file. It
+             is metadata in a standard rather than a citation string, so the permalink and DOI rules do not apply to it
 """
 from __future__ import annotations
 
@@ -30,6 +33,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FORMATS = ('bib', 'json', 'ris', 'yaml')
+JSONLD = 'jsonld'                     # present where the build wrote a croissant-benchmark document (module docstring)
+INLINE_JSONLD = re.compile(r'<script type="application/ld\+json" data-croissant>(.*?)</script>', re.S)
 PERMALINK = re.compile(r'^https://github\.com/benchmarkg/benchmarks/blob/([0-9a-f]{40})/(data/benchmarks/[^/]+/[^/]+\.yaml)$')
 ARTIFACT = re.compile(r'/data/(?:latest/)?[\w./-]*\.json|/data/latest/')
 FOOTER_SENTENCE = 'An artifact URL is a cache key, not a citation'
@@ -147,6 +152,34 @@ def check_benchmark(dist: str, bid: str, root: str, doi: str | None) -> list[str
         for ext in FORMATS:
             if 'href="/benchmarks/%s/cite.%s"' % (bid, ext) not in block.group(1):
                 out.append('%s: the citation block does not link cite.%s' % (bid, ext))
+    return out + check_jsonld(here, bid, parsed['json']['title'], page, block.group(1) if block else '')
+
+
+def check_jsonld(here: str, bid: str, title: str, page: str, block: str) -> list[str]:
+    """The fifth format where the build wrote it: cite.jsonld and the inlined document agree (module docstring)."""
+    path = os.path.join(here, 'cite.' + JSONLD)
+    inline = INLINE_JSONLD.search(page)
+    if not os.path.exists(path) and not inline:
+        return []
+    if not os.path.exists(path):
+        return ['%s: the page inlines croissant-benchmark JSON-LD but there is no cite.jsonld' % bid]
+    if not inline:
+        return ['%s: cite.jsonld exists but the page does not inline it' % bid]
+    if '<' in inline.group(1):
+        return ['%s: the inlined JSON-LD carries a raw <, which could end its <script>' % bid]
+    try:
+        doc, inlined = json.loads(open(path, encoding='utf-8').read()), json.loads(inline.group(1))
+    except json.JSONDecodeError as e:
+        return ['%s: the croissant-benchmark JSON-LD does not parse: %s' % (bid, e)]
+    out = []
+    if doc != inlined:
+        out.append('%s: the inlined JSON-LD is not cite.jsonld' % bid)
+    if doc.get('benchmarkId') != bid:
+        out.append('%s: cite.jsonld describes %r' % (bid, doc.get('benchmarkId')))
+    if doc.get('name') != title:
+        out.append('%s: cite.jsonld names it %r, not %r' % (bid, doc.get('name'), title))
+    if 'href="/benchmarks/%s/cite.%s"' % (bid, JSONLD) not in block:
+        out.append('%s: the citation block does not link cite.%s' % (bid, JSONLD))
     return out
 
 
@@ -206,8 +239,8 @@ def main(argv=None) -> int:
     problems, benchmarks, pages = check(a.check, a.root)
     for line in problems:
         print('BLOCKING  citation  %s' % line)
-    print('citation: %d benchmark(s) in four formats and %d page footer(s) checked, %d problem(s)'
-          % (benchmarks, pages, len(problems)))
+    print('citation: %d benchmark(s) in four formats, and JSON-LD where built, and %d page footer(s) checked, '
+          '%d problem(s)' % (benchmarks, pages, len(problems)))
     return 1 if problems else 0
 
 

@@ -25,8 +25,9 @@ P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 rel
 re-verification queue, is P5-S7-T05's). `build` also
 regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/tokens.yaml
 (P2-S2-T01, tools/build/tokens.py), and site/src/lib/taxonomy.json from taxonomy/ (P2-S2-T06,
-tools/build/site_taxonomy.py). `promote`, `resolve` and `tag-gap` are P1-S2-T10's (tools/promote.py,
-tools/resolve.py, tools/tag_gap.py).
+tools/build/site_taxonomy.py), and writes build/croissant-benchmark/, validated with mlcroissant and the extension
+schema before anything is written (P2-S3-T06, tools/build/croissant.py). `promote`, `resolve` and `tag-gap` are
+P1-S2-T10's (tools/promote.py, tools/resolve.py, tools/tag_gap.py).
 """
 from __future__ import annotations
 
@@ -186,7 +187,8 @@ def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
     derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
 ):
-    """Emit the shipped JSON artifacts (08 S4.2), drafts excluded, and regenerate the design tokens (09 S13)."""
+    """Emit the shipped JSON artifacts (08 S4.2) and the croissant-benchmark JSON-LD (08 S5.8), drafts excluded, and
+    regenerate the design tokens (09 S13)."""
     from tools.build import artifacts, site_taxonomy, tokens
     result = artifacts.build(ROOT)
     for e in result.errors:
@@ -194,8 +196,23 @@ def build_cmd(
     if result.errors:
         typer.echo('build: %d error(s); nothing written' % len(result.errors), err=True)
         raise typer.Exit(1)
+    # 08 S5.8 (P2-S3-T06): the croissant-benchmark JSON-LD, validated before anything is written -- mlcroissant base
+    # conformance and the committed extension schema, over the withheld drafts' documents too -- so a mapping or
+    # schema change that breaks either fails this build, which is CI's build step
+    from tools.build import croissant
+    documents, problems, summary = croissant.build(result.corpus, result.withheld)
+    for e in problems:
+        typer.echo('error  %s' % e, err=True)
+    if problems:
+        typer.echo('build: %d croissant-benchmark problem(s); nothing written' % len(problems), err=True)
+        raise typer.Exit(1)
     for path in artifacts.write(result, str(out)):
         typer.echo('wrote %s' % path)
+    croissant.write(documents, str(out / croissant.DIR))
+    typer.echo('wrote %s (%d benchmark document(s) and the collection; %d withheld draft(s) validated, not written; '
+               'mlcroissant %s, %d recommended-property notice(s))'
+               % (out / croissant.DIR, summary['written'], summary['withheld'], summary['mlcroissant'],
+                  summary['notices']))
     # SUCCESSION.md item 5: the date of the last human commit to data/, which the site's banner reads (P0-S7-T04)
     from tools import dormancy
     typer.echo('wrote %s' % dormancy.write(dormancy.state(dormancy.last_human_commit(ROOT), _dt.date.today()),

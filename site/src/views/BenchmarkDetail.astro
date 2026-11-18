@@ -3,7 +3,9 @@
 // one benchmark: 10 V6's eighteen sections, in its order. Sections 1-9 are the readable article; 10-17 are
 // collapsed <details> with a count in each summary -- collapsed, not absent, so their content is in the HTML,
 // crawlable, printable and found by the browser's own find; 18 is the citation block. Every disclosure is a native
-// <details> and nothing here has a script, so the page reads completely with JavaScript off and ships none.
+// <details> and nothing here has a script, so the page reads completely with JavaScript off and ships none. The one
+// <script> element in the view is data, not code: section 18's croissant-benchmark JSON-LD (P2-S3-T06; 10 "Croissant"),
+// type application/ld+json, which no browser runs.
 //
 // The entry grid (09 S5.3): from --bp-md (51rem) a prose column beside a 20rem metadata rail; below it one column,
 // with the rail's facts as a compact strip ABOVE the prose (09 S10: "on a phone the facts are usually why you
@@ -17,6 +19,8 @@
 // est_api_calls, which the schema (04) has no field for, so it is not rendered as a recordable gap.
 import Absent from '../components/Absent.astro';
 import CiteThis from '../components/CiteThis.astro';
+import { FORMATS, type Format } from '../lib/cite';
+import { croissantText, scriptSafe } from '../lib/croissant';
 import FacetChip from '../components/FacetChip.astro';
 import FacetChips from '../components/FacetChips.astro';
 import SourceBlocks from '../components/SourceBlocks.astro';
@@ -167,6 +171,10 @@ const citedIds = [...cited].sort();
 
 // ---- 17. curation ----------------------------------------------------------------------------------------------------------
 const C = b.curation;
+
+// ---- 18. citation: the croissant-benchmark JSON-LD the build wrote (P2-S3-T06), inlined here and linked as cite.jsonld --
+const jsonld = croissantText(b.id);
+const citeFormats = (Object.keys(FORMATS) as Format[]).filter((f) => f !== 'jsonld' || jsonld != null);
 ---
 <article class="entry" data-benchmark={b.id} data-yaml-path={yamlPath}>
   <header class="head" data-section="1">
@@ -449,7 +457,8 @@ const C = b.curation;
     </details>
 
     <div class="cite-block" data-section="18">
-      <CiteThis entity_id={b.id} title={b.name} commit_sha={release.commit_sha} release_doi={release.concept_doi} retrieved_at={release.built_on} yaml_path={yamlPath} release_tag={release.tag} index_title={release.index_title} formats_base={`/benchmarks/${b.id}/`} />
+      <CiteThis entity_id={b.id} title={b.name} commit_sha={release.commit_sha} release_doi={release.concept_doi} retrieved_at={release.built_on} yaml_path={yamlPath} release_tag={release.tag} index_title={release.index_title} formats_base={`/benchmarks/${b.id}/`} formats={citeFormats} />
+      {jsonld != null && <script is:inline type="application/ld+json" data-croissant set:html={scriptSafe(jsonld)}></script>}
     </div>
   </div>
 </article>

@@ -43,11 +43,12 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | uv | 05 §3 (named, not versioned) | 0.9.17 (installed here) | **0.12.18** | -- | pypi.org/pypi/uv/json | 2026-09-23 | **moved**; see note 1 |
 | typer | 05 §3 (named, not versioned) | 0.27.2 | 0.27.2 | 2026-08-28 | pypi.org/pypi/typer/json | 2026-09-25 | ok (first pin, P0-S5-T01) |
 | hatchling (build backend) | P0-S5-T01, for the `bench` entry point | 1.32.4 | 1.32.4 | -- | pypi.org/pypi/hatchling/json | 2026-09-25 | ok (first pin) |
-| jsonschema (dev group) | 04 §15 item 21, first P3-S1-T01: validating fixtures against schema/generated/ | 4.26.0 | 4.26.0 (`requires_python >=3.10`) | 2026-01-07 | pypi.org/pypi/jsonschema/json | 2026-09-25 | ok (first pin) |
+| jsonschema | 04 §15 item 21, first P3-S1-T01: validating fixtures against schema/generated/; since P2-S3-T06 also the croissant extension schema inside `bench build`, so a runtime dependency | 4.26.0 | 4.26.0 (`requires_python >=3.10`) | 2026-01-07 | pypi.org/pypi/jsonschema/json | 2026-09-25 | ok (first pin) |
 | rapidfuzz | 07 §5.3 (named, not versioned), first P3-S3-T03: the fuzzy name term of match_confidence | 3.14.6 | 3.14.6 (`requires_python >=3.11`) | 2026-08-30 | pypi.org/pypi/rapidfuzz/json | 2026-10-06 | ok (first pin; recorded late, pinned 2026-10-05) |
 | pyyaml (dev group) | first P3-S3-T07: the workflow script next_task.py, so tests/test_next_task_ahead.py runs here | 6.0.3 | 6.0.3 (`requires_python >=3.8`) | 2025-09-25 | pypi.org/pypi/pyyaml/json | 2026-10-06 | ok (first pin) |
 | colorspacious (dev group) | 09 §4.2 (named, not versioned), first P2-S2-T03: CVD simulation and CAM02-UCS ΔE in scripts/check_palette.py | 1.1.2 | 1.1.2 (needs only numpy; MIT) | 2018-04-08 | pypi.org/pypi/colorspacious/json | 2026-10-06 | ok (first pin); the last release is from 2018, checked working against numpy 2.5.3 here |
 | numpy (dev group) | colorspacious's dependency, P2-S2-T03 | 2.5.3 | see the numpy row above | -- | -- | 2026-10-06 | ok (same pin as the atlas extra) |
+| mlcroissant | 08 §5.8 (named, not versioned), first P2-S3-T06: base-Croissant conformance of every croissant-benchmark document, inside `bench build` | 1.1.1 | 1.1.1 (no `requires_python`; the wheel declares no licence, the repository mlcommons/croissant is Apache-2.0 per api.github.com) | 2026-10-05 | pypi.org/pypi/mlcroissant/json | 2026-11-18 | ok (first pin); see note 5 |
 
 ## Other pins and third-party facts the plan names
 
@@ -79,6 +80,18 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    `benchindex` package (17). Any consumer package that depends on numpy cannot honour a 3.11
    floor at this numpy; either the floor moves to 3.12 or the package keeps numpy out of its
    dependencies.
+
+5. **mlcroissant is heavy, and it is a runtime dependency.** `bench build` validates every document
+   with it, so it is in `[project] dependencies`, not an extra. 1.1.1 brought 22 packages into
+   `uv.lock`: absl-py, certifi, charset-normalizer, decorator, etils, fsspec, jinja2, jsonpath-rw,
+   markupsafe, mlcroissant, networkx, pandas, pandas-stubs, ply, pyparsing, python-dateutil, rdflib,
+   requests, six, tzdata, urllib3 and zipp; and numpy, scipy and tqdm, which the lock already held
+   for the atlas extra and the dev group, become runtime dependencies through it (scipy, numpy and
+   pandas are most of the weight: about 206 MB installed for the set, scipy 108 MB, numpy 42 MB,
+   pandas 39 MB, measured 2026-11-18). Importing it takes several seconds, so
+   tools/build/croissant.py imports it only to validate. The extension-schema half of the check
+   imports jsonschema, which moved from the dev group into `[project] dependencies` for that reason
+   (the same pin, 4.26.0, still the newest on PyPI on 2026-11-18), so a `--no-dev` install builds.
 
 ## Moved pins (issue to open)
 

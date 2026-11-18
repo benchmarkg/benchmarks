@@ -1,20 +1,42 @@
 # taxonomy/crosswalks/croissant.yaml
 #
-# Our Benchmark fields <-> the schema.org terms MLCommons Croissant uses (04 S5, 02 S13).
+# Our Benchmark fields <-> the schema.org terms MLCommons Croissant uses (04 S5, 02 S13), and <-> the
+# terms of our own `croissant-benchmark` extension (08 S5.8, 15 A8).
 #
 # Croissant describes the DATASET behind a benchmark; we describe the benchmark -- tasks, metrics,
-# protocol, conditions -- which is the layer Croissant does not have and the proposed
-# `croissant-benchmark` extension would occupy. So `croissant_url` is stored as a link and never
-# re-encoded, and dataset-level structure (columns, splits, formats, record counts) is not ours to
-# duplicate (02 S13).
+# protocol, conditions -- which is the layer Croissant does not have and the `croissant-benchmark`
+# extension occupies. So `croissant_url` is stored as a link and never re-encoded, and dataset-level
+# structure (columns, splits, formats, record counts) is not ours to duplicate (02 S13).
 #
 # The Croissant spec is CC BY-ND: we may publish a NAMESPACED extension and may never republish a
 # modified spec (04 S5). Nothing in this file restates the spec; it names terms.
 #
-# The term column must equal schema/benchmark.py's CROISSANT_TERMS, which the extension serialiser
-# reads. tests/test_crosswalks.py asserts the two agree, so this file cannot drift from the code.
+# `rows` are the base terms. Their term column must equal schema/benchmark.py's CROISSANT_TERMS,
+# which the extension serialiser reads. tests/test_crosswalks.py asserts the two agree, so this
+# file cannot drift from the code.
 #
-# Authored by P0-S4-T09 from 02 S13 and 04 S5.
+# `extension` is the mapping onto our own terms, which tools/build/croissant.py emits as
+# build/croissant-benchmark/{id}.jsonld (P2-S3-T06). Its namespace is 08 S5.8's
+# https://<host>/ns/croissant-benchmark/v1#; no host is fixed yet, so the documents carry the
+# reserved placeholder host.invalid until one is. Row shapes:
+#
+#   classes   the cb: classes the extension declares
+#   terms     one row per cb: property: the class it is a property of (`on`), and the field of ours it
+#             carries (`ours`, a dotted path tests/build/test_croissant.py resolves on the Pydantic
+#             models), or null for a node that gathers several fields, each of which has a row of its
+#             own. 08 S5.8's five groups -- tasks, metrics, protocol, conditions, lineage -- are the
+#             rows `on: Benchmark`
+#   reuses    a schema.org term a node of ours reuses with its schema.org meaning, on another entity's
+#             field. A Benchmark field never reuses one: it has a base row above or a cb: term here
+#   unmapped  fields 08 S5.8 or 15 A8 name that the extension does not carry yet, each with its reason
+#
+# No extension term may share its name with an upstream context key or a schema.org term, because
+# under the Croissant context's @vocab a bare key already means the schema.org term of that name;
+# the build refuses one that does. So the edge is `isSupersededBy` (schema.org has `supersededBy`)
+# and the headline flag `isHeadline` (schema.org has `headline`). tests/build/test_croissant.py
+# holds `extension` to tools/build/croissant.py's CLASSES, TERMS and REUSES.
+#
+# Authored by P0-S4-T09 from 02 S13 and 04 S5; `extension` by P2-S3-T06 from 08 S5.8 and 15 A8.
 
 crosswalk: croissant
 counterpart: MLCommons Croissant (schema.org vocabulary)
@@ -22,7 +44,7 @@ counterpart_url: https://mlcommons.org/croissant/
 counterpart_licence: CC-BY-ND-4.0 (spec)
 relation: crosswalk
 verified: true
-updated: 2026-09-25
+updated: 2026-11-18
 
 rows:
   - ours: Benchmark.name
@@ -48,3 +70,158 @@ rows:
     theirs: "sc:subjectOf"
     fidelity: one-to-one
     note: A link to the dataset's own Croissant record, served by HuggingFace at /api/datasets/{name}/croissant.
+
+extension:
+  name: croissant-benchmark
+  status: unofficial            # 15 A8: emitted from the Phase 2 build, proposed only after public v1
+  prefix: cb
+  namespace: https://host.invalid/ns/croissant-benchmark/v1#
+  conforms_to:
+    - http://mlcommons.org/croissant/1.1
+    - https://host.invalid/ns/croissant-benchmark/v1
+  classes: [Benchmark, BenchmarkCollection, Task, Metric, Protocol, EvalConditions, Lineage]
+
+  terms:
+    # --- on the benchmark's own Dataset node: the id and 08 S5.8's five groups ---
+    - term: benchmarkId
+      on: Benchmark
+      ours: Benchmark.id
+    - term: tasks
+      on: Benchmark
+      ours: Benchmark.task
+      note: One Task node. It also carries 15 A8's admissibility fields, below.
+    - term: metrics
+      on: Benchmark
+      ours: Benchmark.metrics
+      note: The headline metric first, then `metrics` in order, each joined to its published Metric.
+    - term: protocol
+      on: Benchmark
+      ours: null
+    - term: conditions
+      on: Benchmark
+      ours: null
+    - term: lineage
+      on: Benchmark
+      ours: Benchmark.lineage
+    # --- Task ---
+    - term: input
+      on: Task
+      ours: Benchmark.task.input
+    - term: output
+      on: Task
+      ours: Benchmark.task.output
+    - term: scoring
+      on: Task
+      ours: Benchmark.task.scoring
+    - term: testsHiddenFromSystem
+      on: Task
+      ours: Benchmark.task.tests_hidden_from_system
+    - term: evaluationTarget
+      on: Task
+      ours: Benchmark.evaluation_target
+    - term: executionMode
+      on: Task
+      ours: Benchmark.execution_mode
+    - term: groundTruthSource
+      on: Task
+      ours: Benchmark.ground_truth_source
+    # --- Metric: range and direction ---
+    - term: isHeadline
+      on: Metric
+      ours: Benchmark.headline_metric
+    - term: valueType
+      on: Metric
+      ours: Metric.value_type
+    - term: optimum
+      on: Metric
+      ours: Metric.optimum
+    - term: optimumTarget
+      on: Metric
+      ours: Metric.optimum_target
+    - term: unbounded
+      on: Metric
+      ours: Metric.unbounded
+    # --- Protocol: submission process and held-out policy ---
+    - term: submissionProcess
+      on: Protocol
+      ours: Benchmark.governance.submission_process
+    - term: dataAccess
+      on: Protocol
+      ours: Benchmark.data.access
+    - term: aggregationPolicy
+      on: Protocol
+      ours: Benchmark.aggregation_policy
+    # --- EvalConditions: the reference to our entity ---
+    - term: conditionsId
+      on: EvalConditions
+      ours: Benchmark.reference_conditions
+    - term: comparabilityProfile
+      on: EvalConditions
+      ours: Benchmark.comparability.profile
+    # --- Lineage: each edge to a benchmark id ---
+    - term: lineageRole
+      on: Lineage
+      ours: Benchmark.lineage.role
+    - term: supersedes
+      on: Lineage
+      ours: Benchmark.lineage.supersedes
+    - term: isSupersededBy
+      on: Lineage
+      ours: Benchmark.lineage.superseded_by
+    - term: subsetOf
+      on: Lineage
+      ours: Benchmark.lineage.subset_of
+    - term: extendedBy
+      on: Lineage
+      ours: Benchmark.lineage.extended_by
+    - term: decontaminates
+      on: Lineage
+      ours: Benchmark.lineage.decontaminates
+    - term: variants
+      on: Lineage
+      ours: Benchmark.lineage.variants
+      note: Each variant's id; its relation and size stay in the record.
+    - term: forks
+      on: Lineage
+      ours: Benchmark.lineage.forks
+      note: Each fork's id; its maintainer stays in the record.
+
+  reuses:
+    - term: "sc:identifier"
+      on: Metric
+      ours: Metric.id
+    - term: "sc:name"
+      on: Metric
+      ours: Metric.name
+    - term: "sc:minValue"
+      on: Metric
+      ours: Metric.range.min
+    - term: "sc:maxValue"
+      on: Metric
+      ours: Metric.range.max
+
+  unmapped:
+    - ours: Benchmark.subsets
+      reason: >-
+        08 S5.8 lists splits under protocol, but a subset is a data split or a task variant and the
+        record does not say which; 15 A8 maps it to a RecordSet only where it is a data split.
+    - ours: Benchmark.task.metric
+      reason: >-
+        The metric a task names is the headline or one of `metrics` wherever it is a published
+        Metric, which the Metric nodes carry; a name that is no Metric id would be a node with no range.
+    - ours: Benchmark.task.metric_range
+      reason: A Metric node carries its range from the Metric record (sc:minValue, sc:maxValue).
+    - ours: Benchmark.lineage.views
+      reason: A view is a named filter on a leaderboard, not a supersession or fork edge.
+    - ours: Benchmark.lineage.correlates_with
+      reason: A measured correlation, not lineage (10 V1 draws it apart).
+    - ours: Benchmark.baselines
+      reason: 15 A8 leaves results out of the extension on purpose; they belong to Every Eval Ever's registry.
+    - ours: Benchmark.released
+      reason: >-
+        Croissant's datePublished is the natural home, and CROISSANT_TERMS has no row for it;
+        adding one is a change to schema/benchmark.py, which P4-S6-T02's full mapping owns.
+    - ours: Benchmark.paper
+      reason: >-
+        Croissant's citeAs is the natural home, and CROISSANT_TERMS has no row for it; P4-S6-T02's
+        full mapping owns it.

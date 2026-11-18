@@ -5,12 +5,14 @@
 //   CSL-JSON   a one-item array, for Zotero et al.   /benchmarks/{id}/cite.json
 //   RIS        TY - DATA, CRLF line ends             /benchmarks/{id}/cite.ris
 //   raw YAML   the record itself                     /benchmarks/{id}/cite.yaml
+//   Croissant  croissant-benchmark JSON-LD           /benchmarks/{id}/cite.jsonld
 //   APA        a sentence, on the page only
 //
-// Every format points at the YAML at a commit (a permalink) and at the release's concept DOI, never at an artifact
-// URL: "an artifact URL is a cache key, not a citation" (08 S4.4). tools/build/citation.py checks the built files
-// against each other and against the page, independently of this module. Croissant JSON-LD, the fifth format 10 names,
-// is P2-S3-T06's to generate.
+// Every format but the JSON-LD points at the YAML at a commit (a permalink) and at the release's concept DOI, never at
+// an artifact URL: "an artifact URL is a cache key, not a citation" (08 S4.4). The JSON-LD is metadata in a standard,
+// not a citation string: it is the build's own document (tools/build/croissant.py, P2-S3-T06; lib/croissant.ts), the
+// same text the page inlines, and a route exists only where the build wrote one. tools/build/citation.py checks the
+// built files against each other and against the page, independently of this module.
 import { blobAt, sha } from './repo';
 
 export interface CiteFacts {
@@ -95,5 +97,6 @@ export const FORMATS = {
   json: { label: 'CSL-JSON', type: 'application/vnd.citationstyles.csl+json; charset=utf-8' },
   ris: { label: 'RIS', type: 'application/x-research-info-systems; charset=utf-8' },
   yaml: { label: 'raw YAML', type: 'text/yaml; charset=utf-8' },
+  jsonld: { label: 'Croissant-benchmark JSON-LD', type: 'application/ld+json; charset=utf-8' },
 } as const;
 export type Format = keyof typeof FORMATS;

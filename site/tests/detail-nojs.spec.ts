@@ -97,7 +97,8 @@ for (const id of DEEP) {
 
 test('the route ships 0 bytes of JavaScript', async ({ browser, page }) => {
   // In the HTML: no script file, no module, no preload of one, no island; the one inline script is 09 S9's pre-paint
-  // theme line, which every page carries and which 09 S9 allows.
+  // theme line, which every page carries and which 09 S9 allows. The croissant-benchmark JSON-LD (P2-S3-T06) is a
+  // <script> element too, but of type application/ld+json: data, which no browser runs; the preview writes one per entry.
   for (const id of IDS) {
     const h = await html(page, id);
     expect(h, id).not.toMatch(/<script[^>]*\bsrc=/);
@@ -105,7 +106,8 @@ test('the route ships 0 bytes of JavaScript', async ({ browser, page }) => {
     expect(h, id).not.toMatch(/rel="modulepreload"/);
     expect(h, id).not.toMatch(/<astro-island/);
     expect(h, id).not.toMatch(/data-theme-toggle/);
-    expect([...h.matchAll(/<script\b[^>]*>/g)].map((m) => m[0]), id).toEqual(['<script data-prepaint>']);
+    expect([...h.matchAll(/<script\b[^>]*>/g)].map((m) => m[0]), id)
+      .toEqual(['<script data-prepaint>', '<script type="application/ld+json" data-croissant>']);
   }
   // In a browser that runs JavaScript: what the page fetches as script, in bytes. The same measurement on a page that
   // ships its theme toggle comes out non-zero, so a detail page that gained a script would fail here.

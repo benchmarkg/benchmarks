@@ -7,7 +7,7 @@
 // never at an artifact URL. Until a release DOI is minted the DOI line says so in the absent token; the permalink
 // stands in.
 import Absent from './Absent.astro';
-import { apa, bibtex, FORMATS, permalink, type CiteFacts } from '../lib/cite';
+import { apa, bibtex, FORMATS, permalink, type CiteFacts, type Format } from '../lib/cite';
 import { rawAt, sha } from '../lib/repo';
 
 interface Props {
@@ -23,10 +23,12 @@ interface Props {
   index_title?: string;
   /** The page whose cite.{ext} routes hold the files (for example /benchmarks/swe-bench/); omitted, no file links. */
   formats_base?: string;
+  /** Which of those files exist to link; omitted, every format (cite.jsonld exists only where the build wrote one). */
+  formats?: readonly Format[];
 }
 
 const { entity_id, title, commit_sha, release_doi, retrieved_at, yaml_path, release_tag, formats_base,
-  index_title = 'The Universal AI Benchmark Index' } = Astro.props;
+  index_title = 'The Universal AI Benchmark Index', formats = Object.keys(FORMATS) as Format[] } = Astro.props;
 const at = sha(commit_sha);
 const facts: CiteFacts = { entity_id, title, commit_sha: at, release_doi, release_tag: release_tag ?? null, retrieved_at,
   yaml_path, index_title };
@@ -48,7 +50,7 @@ const link = permalink(facts);
     <dt>BibTeX</dt>
     <dd><pre><code>{bibtex(facts).trimEnd()}</code></pre></dd>
     {formats_base != null && <dt>Formats</dt>}
-    {formats_base != null && <dd class="formats" data-formats>{Object.entries(FORMATS).map(([ext, f]) => <a href={`${formats_base}cite.${ext}`} data-format={ext}>{f.label}</a>)}</dd>}
+    {formats_base != null && <dd class="formats" data-formats>{formats.map((ext) => <a href={`${formats_base}cite.${ext}`} data-format={ext}>{FORMATS[ext].label}</a>)}</dd>}
   </dl>
 </section>
 
