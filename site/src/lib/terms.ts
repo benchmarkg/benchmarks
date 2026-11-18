@@ -66,7 +66,8 @@ export function facetFiles(root: string = REPO_ROOT): FacetFile[] {
 
 export const allTerms = (root?: string): TaxTerm[] => facetFiles(root).flatMap((f) => f.terms);
 
-/** The facet's URL segment: its id in kebab case (evaluation_method -> evaluation-method), as /browse/ spells it. */
+/** The facet's URL segment: its id in kebab case (evaluation_method -> evaluation-method), as /taxonomy/ spells it.
+ *  /browse/ spells a field of a facet with several fields by the field (lib/browse.ts). */
 export const facetSegment = (facet: string) => facet.replace(/_/g, '-');
 export const termHref = (facet: string, id: string) => `/taxonomy/${facetSegment(facet)}/${id}/`;
 

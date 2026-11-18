@@ -1,0 +1,131 @@
+---
+// site/src/views/BrowsePage.astro -- P2-S4-T01 (10 V11 "Without JavaScript"; 09 S6.10, S8.6, S11.5). One single-facet
+// browse page (lib/browse.ts): a complete index of the published benchmarks that carry one value of one facet,
+// readable and navigable with JavaScript off and shipping none. Every member is on the page. There is no pagination
+// and no "load more", so a crawler, an archive copy and a text browser all see the whole list.
+//
+// A member is one line (browse/MemberList: name, primary domain, release year), not a <BenchmarkCard>. The route
+// takes the record-page budget of HTML <= 60 KB (10 "Performance budget"). A card's tagline, chips, headroom slot and
+// staleness footer cost about 2 KB, and a line costs about 170 bytes. The page around the list is about 18 KB with
+// its stylesheet inlined, as `npm run build` inlines it, so a term of about 250 members reaches the budget. The draft
+// preview's largest, lifecycle `active`, has 302 (test/browse-routes.test.mjs reports it).
+//
+// The page leads to every neighbouring page: a domain page lists the families and its family's subdomains, and any
+// other page lists every term of its facet. Each neighbour shows its count, and a term with no benchmark is still a
+// link, because its page says it is empty.
+//
+// A domain page says, at its top, whether its family is review-backed (10 V11: the curation-confidence indicator,
+// "so a thin result list is never mistaken for a thin field"; 14 Phase 1, "The honest gate": shipping unreviewed is
+// permitted, shipping it silently is not). No family is signed off yet, so today every domain page says unreviewed.
+//
+// An empty page says so in 09's form: what happened, what it means, one action, in at most three sentences. An empty
+// domain in a signed-off family uses <EmptyState context="domain-page">, which 09 S6.10 defines for this case. In a
+// family no reviewer has signed, it does not, because that component calls the gap a finding and the honest gate
+// refuses to assert a gap there; the page says the list is empty and points at what would qualify, beside the
+// unreviewed notice. A term of another facet has no EmptyState context, so its empty state is written here in the
+// same voice, and it asserts no gap either.
+import Absent from '../components/Absent.astro';
+import EmptyState from '../components/EmptyState.astro';
+import MemberList from './browse/MemberList.astro';
+import { browseHref, browseSegment, type BrowsePage, type Neighbour } from '../lib/browse';
+import { facetSegment, termHref } from '../lib/terms';
+import { signoff, term } from '../lib/vocab';
+
+interface Props {
+  page: BrowsePage;
+}
+
+const { page: p } = Astro.props;
+const t = p.kind === 'term' ? p.term : null;
+const id = t != null ? t.id : p.kind === 'org' ? p.org.id : '';
+const label = t != null ? t.label : p.kind === 'org' ? p.org.name : '';
+const isDomain = t?.facet === 'domain';
+const segmentName = p.kind === 'org' ? 'maintainer' : p.segment.replace(/-/g, ' ');
+// a field of a facet with several fields says which facet it belongs to: access is a field of data properties
+const facetName = t != null && browseSegment(t) !== facetSegment(t.facet) ? t.facet.replace(/_/g, ' ') : null;
+const members = p.members;
+const primary = (members ?? []).filter((m) => !m.secondary);
+const secondary = (members ?? []).filter((m) => m.secondary);
+const n = (k: number) => `${k} published ${k === 1 ? 'benchmark' : 'benchmarks'}`;
+const definition = t != null ? termHref(t.facet, t.id) : null;
+const familyId = isDomain && t != null ? (t.parent ?? t.id) : null;
+const review = familyId != null ? signoff(familyId) : null;
+const neighbours = (list: Neighbour[]) => list.map((x) => ({ ...x, here: t != null && x.term.id === t.id && browseHref(x.term) === browseHref(t) }));
+---
+<article class="record" data-browse={`${p.segment}:${id}`} data-count={members == null ? 'derived' : members.length} data-pagefind-ignore>
+  <header>
+    <p class="kind">Browse by {segmentName}{facetName != null && <>, a field of the {facetName} facet</>} · <code>{id}</code></p>
+    <h1>{label}</h1>
+    {p.kind === 'term' && p.parent != null && <p class="kind">Part of <a href={browseHref(p.parent)}>{p.parent.label}</a></p>}
+    <p class="lede">
+      {members == null
+        ? <>Derived from observable signals, so its members are computed, not curated.</>
+        : p.kind === 'org'
+          ? <>{n(primary.length)} {primary.length === 1 ? 'names' : 'name'} {label} as a maintainer.</>
+          : isDomain
+            ? <>{n(primary.length)} {primary.length === 1 ? 'has' : 'have'} this as {primary.length === 1 ? 'its' : 'their'} primary domain{secondary.length > 0 && <>, and {secondary.length} more as a secondary domain</>}.</>
+            : <>{n(primary.length)} {primary.length === 1 ? 'carries' : 'carry'} this {segmentName} term.</>}
+      {' '}{definition != null ? <a href={definition}>What the term means and how it is applied</a> : p.kind === 'org' && <a href={`/orgs/${p.org.id}/`}>The organisation's profile</a>}.
+    </p>
+    {review != null && familyId != null && (review === 'none'
+      ? <p class="confidence" data-curation-confidence="unreviewed"><strong>Curation confidence: unreviewed.</strong> No domain reviewer has signed off on {term('domain', familyId).label} yet, so this list is not review-backed, and a short or empty list is not evidence of a thin field.</p>
+      : <p class="confidence" data-curation-confidence={review}><strong>Curation confidence: signed off ({review}).</strong></p>)}
+  </header>
+
+  <section aria-labelledby="s-members">
+    <h2 id="s-members">Benchmarks <span class="count">({members == null ? 'derived' : primary.length})</span></h2>
+    {members == null
+      ? <p data-derived><Absent state="not-applicable" reason="derived from observable signals, never curated, and no build stage derives it yet" /></p>
+      : primary.length > 0
+        ? <MemberList members={primary} which="primary" />
+        : isDomain && secondary.length === 0 && t != null
+          ? (review === 'none'
+            ? <p data-empty="domain-unreviewed">No published benchmark has {label} as its primary domain yet. <a href={definition}>Its definition</a> says what would qualify.</p>
+            : <EmptyState context="domain-page" domain={t.id} />)
+          : isDomain
+            ? <p data-empty="primary">No published benchmark has {label} as its primary domain. The {secondary.length} below hold it as a secondary domain.</p>
+            : <p data-empty="term">No published benchmark carries {label} yet. The term is part of the taxonomy, so its page stays and says so. <a href={definition}>Its definition</a> says what would qualify.</p>}
+  </section>
+
+  {secondary.length > 0 && (
+    <section aria-labelledby="s-secondary">
+      <h2 id="s-secondary">As a secondary domain <span class="count">({secondary.length})</span></h2>
+      <MemberList members={secondary} which="secondary" />
+    </section>
+  )}
+
+  {p.kind === 'term' && isDomain && familyId != null && (
+    <nav aria-labelledby="s-subdomains">
+      <h2 id="s-subdomains">Subdomains of {term('domain', familyId).label} <span class="count">({p.children.length})</span></h2>
+      <ul class="cols" data-neighbours="subdomains">{neighbours(p.children).map((x) => <li>{x.here ? <span aria-current="page">{x.term.label}</span> : <a href={browseHref(x.term)}>{x.term.label}</a>} <span class="n">({x.count})</span></li>)}</ul>
+    </nav>
+  )}
+  {p.kind === 'term' && (isDomain ? p.families : p.siblings).length > 0 && (
+    <nav aria-labelledby="s-neighbours">
+      <h2 id="s-neighbours">{isDomain ? 'Domain families' : `Every ${segmentName} term`} <span class="count">({(isDomain ? p.families : p.siblings).length})</span></h2>
+      <ul class="cols" data-neighbours={isDomain ? 'families' : 'terms'}>{neighbours(isDomain ? p.families : p.siblings).map((x) => <li>{x.here ? <span aria-current="page">{x.term.label}</span> : <a href={browseHref(x.term)}>{x.term.label}</a>} <span class="n">({x.count ?? 'derived'})</span></li>)}</ul>
+    </nav>
+  )}
+
+  <p class="note">This page lists one value of one facet. Lists that combine facets are queries and need JavaScript. Every single value has a page like this one.</p>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  .kind, .note { color: var(--c-ink-muted); font-size: var(--fs-sm); }
+  .kind { margin: 0 0 var(--sp-1); }
+  .confidence { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border: 1px solid var(--c-caution); background: var(--c-caution-bg); font-size: var(--fs-sm); }
+  .note { margin-block-start: var(--sp-8); }
+  .count, .n { font-weight: 400; color: var(--c-ink-muted); font-variant-numeric: tabular-nums slashed-zero; }
+  .n { font-size: var(--fs-xs); }
+  .cols { columns: 2 16rem; padding-inline-start: var(--sp-6); }
+  /* browse/MemberList renders without a scope of its own (it says why), so its lines are styled from here */
+  .record :global(.members) { display: grid; gap: var(--sp-2); padding-inline-start: var(--sp-6); }
+  .record :global(.members .meta) { font-size: var(--fs-xs); color: var(--c-ink-muted); font-variant-numeric: tabular-nums slashed-zero; }
+</style>
