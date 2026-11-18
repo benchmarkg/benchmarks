@@ -36,6 +36,7 @@ def tree(tmp_path):
     for d in ('schema', 'taxonomy', 'tools'):
         shutil.copytree(os.path.join(ROOT, d), tmp_path / d, ignore=ignore)
     shutil.copytree(os.path.join(ROOT, 'site', 'src', 'types'), tmp_path / 'site' / 'src' / 'types')
+    shutil.copytree(os.path.join(ROOT, 'site', 'public', 'ns'), tmp_path / 'site' / 'public' / 'ns')   # P4-S6-T01
     return tmp_path
 
 
