@@ -1,0 +1,685 @@
+# data/benchmarks/engineering-design/analoggym.yaml
+#
+# P1-S8-T04, engineering-design entry 9. Filled from the AnalogGym paper, arXiv 2409.08534 read as its v1 PDF
+# (2024-09-13, the only version, typeset as the ICCAD 2024 invited paper), and its abstract page; the CODA-Team/AnalogGym
+# README and the amplifier performance-extraction script, both pinned at commit 0a9d139 (2025-10-29), with GitHub's API
+# record for licence, owner type and dates; and, as evidence of current use, the AAAI-26 PDF of a priority-based
+# graph-enhanced RL sizing method (DOI 10.1609/aaai.v40i43.41031) and the page of a UC Berkeley EECS technical report
+# (May 2026, abstract only). The documentation site (coda-team.github.io/AnalogGym) renders the README and is not a
+# separate Source; READMEs at earlier commits were read to date the FOM_AMP update, and the repository tree, the LDO
+# script and the RL example were read and not recorded. There is no leaderboard. Every quote below is checked by the
+# quote-substring validator against those Sources' committed extracts.
+#
+# Criterion b (a scoring procedure of its own, not only circuits for a method paper): met. The paper defines the problem
+# (sizing under PVT corners against specification tables), per-topology baselines and a reference figure of merit,
+# FOM_AMP, for amplifiers, and states the goal of beating every baseline metric. The repository ships no script that
+# computes FOM_AMP (review_checks). Drafted as entry 9 in place of AutoLabs, which the re-read found to be a system paper.
+#
+# The family entry: one suite of 30 topologies in five circuit categories (subsets), whose FOM_AMP penalty the
+# maintainers rewrote in May 2025 (two versions). No Epoch stub exists.
+
+id: analoggym
+name: AnalogGym
+tagline: Analog circuit sizing on 30 topologies, each design simulated in SPICE across PVT corners
+  and scored against baselines.
+description: >
+  A testing suite for machine-learning methods of analog integrated-circuit sizing, from a team at Fudan
+  University, the University of Electronic Science and Technology of China and three other Chinese institutions,
+  presented as an invited paper at ICCAD 2024. It holds 30 circuit topologies in five categories: amplifiers,
+  low-dropout regulators (LDOs), sensing front ends, voltage references and phase-locked loops (the paper's
+  table lists 16, 6, 6, 3 and 1, which is 32). Each circuit ships as an encapsulated SPICE netlist with
+  its complete bias circuitry, a testbench and a file of design variables: transistor widths, lengths
+  and multipliers, capacitors, resistors and bias currents. A sizing method proposes values, the testbench
+  simulates the circuit (DC, AC, pole-zero and transient analyses) at chosen process, voltage and temperature
+  (PVT) corners, and scripts extract the metrics, such as gain, phase margin, PSRR, CMRR, noise, offset,
+  settling time, power and area. The amplifiers and LDOs run on the open-source Ngspice simulator with
+  the SkyWater sky130 PDK; the other three categories need Cadence Spectre or Synopsys HSPICE and process
+  models that are not open. For amplifiers the paper defines a reference figure of merit, FOM_AMP, which
+  multiplies each metric's ratio to the baseline of the topology's original paper (Table 6) and penalises
+  noise, temperature coefficient and offset worse than baseline; a design should beat the baseline on
+  every metric, with the phase margin between 45 and 90 degrees. In May 2025 the maintainers rewrote the
+  penalty, because the printed indicator-function form zeroes the product. The paper's own study sizes
+  four three-stage amplifiers in sky130 with five methods (graph-network RL, two Bayesian optimisers,
+  two evolutionary algorithms), ten runs each under a stated limit of 1,000 simulations, the evolutionary
+  methods at four worst-case PVT corners; constrained Voronoi tree search reaches the highest single-objective
+  FOM_AMP on all four. There is no leaderboard; others report results in their own papers, such as an
+  AAAI-26 RL method scored by FOM_AMP on seven of the circuits over 20 PVT corners.
+self_description:
+  source: src-arxiv-2409-08534
+  quote: we introduced AnalogGym, an open-source testing suite designed to provide fair and
+    comprehensive evaluations
+external_ids:
+  arxiv: '2409.08534'
+paper:
+  title: 'AnalogGym: An Open and Practical Testing Suite for Analog Circuit Synthesis'
+  arxiv: '2409.08534'
+  doi: 10.1145/3676536.3697117
+  version_read: v1
+  source: src-arxiv-2409-08534-v1
+paper_note: The DOI is the ACM proceedings version's, from the README's citation; that version was
+  not read.
+released: 2024-09-13
+released_note: The arXiv v1 date, the paper's only version. The repository was created on 2024-08-12
+  (GitHub API) and filled through September 2024; the paper was presented at ICCAD 2024 (27-31
+  October 2024), and the README's citation dates the proceedings 2025.
+released_source: src-arxiv-2409-08534
+released_quote: '[Submitted on 13 Sep 2024]'
+release_venue: ICCAD 2024 (IEEE/ACM International Conference on Computer-Aided Design), invited
+  paper
+release_venue_source: src-github-analoggym-readme-0a9d139
+release_venue_quote: Proceedings of the 43rd IEEE/ACM International Conference on Computer-Aided
+  Design
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: engineering-design/circuit-eda
+domain_basis:
+  reason: >
+    What is scored is a circuit design, a sizing of an analog integrated circuit's transistors, passives
+    and bias currents, judged against performance specifications by circuit simulation: the family's inclusion
+    test (a circuit judged against engineering criteria) and circuit-eda's definition (designing electronic
+    circuits). The physics family's test (a simulated physical observable) also touches it, but the observables
+    are a designed circuit's performance against engineering specifications, which the engineering-design
+    family takes; CircuitNet and VerilogEval sit in the same leaf for chip layouts and digital circuits.
+  source: src-arxiv-2409-08534-v1
+  quote: that ensures that the circuit meets all specifications under PVT variations by optimizing
+    the design parameters
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: The entrant is a sizing algorithm, which is software, but the scored artifact is the
+      design it produces, and the code family's exclusion sends code that is the means to a result
+      in another field elsewhere.
+  - term: engineering-design/process-control-optimization
+    reason: An optimisation against operating objectives, but of a circuit's design parameters, not
+      of an industrial process under control.
+  - term: physics/simulation-surrogates
+    reason: Several entrants fit surrogates of the simulator, but no score compares a surrogate with
+      SPICE; the design each method finds is simulated itself.
+
+capability:
+  - optimization
+capability_basis:
+  optimization:
+    reason: The suite states an objective, FOM_AMP relative to the topology's baselines for
+      amplifiers, and the paper's single-objective methods maximise it and are compared, with the
+      multi-objective ones, by the value they reach; the difficulty is the best design, not a
+      feasible one.
+    source: src-arxiv-2409-08534-v1
+    quote: The optimization objective for the single-objective optimization algorithms GCNRL and BO
+      is to maximize
+capability_considered_and_rejected:
+  - term: constraint-satisfaction
+    reason: The phase margin must lie in a band and the goal is to beat every baseline metric, but
+      the figure of merit grades by degree and penalises rather than fails a design that misses a
+      reference.
+    source: src-arxiv-2409-08534-v1
+    quote: where the phase margin (PM) is a critical constraint that must be met to ensure the
+      stability of the amplifier
+  - term: sample-efficiency
+    reason: The paper's study limits each run to 1,000 simulations and reports fitness evaluations
+      and runtime beside the results, but the budget is the study's setting, not part of the suite's
+      definition, and its own table records more evaluations than that for the RL method
+      (review_checks).
+    source: src-arxiv-2409-08534-v1
+    quote: the experiment limited each algorithm to 1000 simulations.
+  - term: search-exploration
+    reason: Simulation counts and runtimes are reported, but nothing ranks how the design space was
+      traversed; the figure of merit scores the final design.
+  - term: reliability-consistency
+    reason: Each method runs ten times and the averages are reported; agreement between runs is not
+      scored.
+    source: src-arxiv-2409-08534-v1
+    quote: Each algorithm was run ten times to ensure fairness and reliability, and the average
+      performance was calculated.
+
+evaluation_method:
+  - domain-metric
+evaluation_method_basis:
+  reason: >
+    FOM_AMP and the metrics it combines (gain, PSRR, CMRR, the gain-bandwidth and slew-rate figures of
+    merit FOMS and FOML, settling time, area, noise, temperature coefficient, offset) are measures of
+    analog circuit performance with no meaning outside circuit design, computed from the simulated design.
+    FOMS and FOML are the field's standard amplifier figures; FOM_AMP is the suite's own. No term names
+    a score computed by simulating the submitted design, logged as a miss (review_checks).
+  source: src-arxiv-2409-08534-v1
+  quote: In addition to individual performance and conventional FOM, AnalogGym also provides a
+    reference metric
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: The score comes from a simulator, but it rates a design on an unbounded figure, not a
+      bounded success score of episodes; an RL entrant's interactions are its search, not the scored
+      episodes.
+  - term: constraint-check
+    reason: The phase-margin band and the specifications are checked on the design, but only after
+      simulating it, which the term's exclusion sends elsewhere, and a miss lowers the figure rather
+      than invalidating it.
+  - term: composite
+    reason: FOM_AMP multiplies several metrics, but all are simulated circuit measures of one
+      method, which the term's exclusion leaves to domain-metric.
+  - term: execution-tests
+    reason: EngDesign took it for simulated designs; here nothing is a program under test, and the
+      result is a graded figure, not test outcomes.
+designed_for_subjects:
+  - domain-specialist-model
+  - classical-algorithm
+designed_for_subjects_note: >
+  domain-specialist-model for sizing methods trained from scratch on the circuit, a task the discipline
+  defines: the graph-network RL agent, the Bayesian optimisers' Gaussian-process surrogates and the surrogate-assisted
+  evolutionary algorithm. classical-algorithm for the multi-task evolutionary algorithm, which fits no
+  model (Table 8 gives it no modelling time) and is a non-learned baseline in the same tables.
+designed_for_subjects_basis:
+  reason: The abstract frames the suite as a standard for ML algorithms in analog circuit synthesis,
+    and the paper's study sets RL, Bayesian optimisation and evolutionary algorithms against each
+    other on the same circuits.
+  source: src-arxiv-2409-08534-v1
+  quote: reinforcement learning based on graph neural networks (GCNRL) [9], weighted expected
+    improvement-based BO (WEIBO) [1]
+designed_for_subjects_considered_and_rejected:
+  - term: rl-policy
+    reason: Graph-network RL is one of the five methods, the README's worked example is an RL agent
+      and the name follows Gym, but the suite is built for sizing methods of every paradigm and
+      scores the design an agent reaches, not its return (review_checks).
+  - term: scientific-surrogate-model
+    reason: Surrogates appear inside entrants, but what is scored is the design they find, not the
+      surrogate's agreement with SPICE.
+  - term: instruction-tuned-model
+    reason: No source read evaluates a language model on the suite.
+
+as_used:
+  - protocol: Seven AnalogGym circuits sized under full specifications (11 objectives and 5
+      constraints each) over 20 PVT corners (five process corners, 1.08-1.32 V, -25 to 125 C) in
+      Ngspice with sky130, scored by FOM_AMP with the May 2025 penalty, used only for comparison and
+      not as the optimisation objective, beside a count of specifications violated across corners;
+      four RL and hybrid baselines.
+    split: seven AnalogGym circuits, 20 PVT corners
+    source: src-aaai-2026-priority-graph-rl
+    quote: Seven distinct complex circuits are selected for optimization, each involving 11
+      objectives, 5 constraints, and 20 PVT corners
+    note: AAAI-26 (published 2026-03-14). The 20 corners differ from the four of the AnalogGym
+      paper's own study, so its numbers are not on the paper's conditions.
+  - protocol: Amplifier topologies derived from AnalogGym, scored by pass rate and a figure of merit
+      against baseline sizing methods.
+    split: amplifier topologies derived from AnalogGym (the set is not given in the abstract)
+    source: src-eecs-berkeley-techrpt-2026-32128
+    quote: Evaluated on a set of amplifier topologies derived from the AnalogGym benchmarks, SPEEDY
+      achieves the highest pass rate while improving the figure of merit with respect to comparable
+      baseline methods.
+    note: A UC Berkeley EECS technical report of 2026-05-01 whose full text is marked delayed; only
+      the abstract was read, so the pass criterion and the figure of merit are not known to be
+      AnalogGym's.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced on it; an AAAI-26 paper (March 2026) evaluates on the suite and
+    adopts FOM_AMP, and a May 2026 Berkeley report uses amplifiers derived from it. The repository's
+    last push was in October 2025.
+  source: src-aaai-2026-priority-graph-rl
+  quote: Performance evaluation of the proposed framework is conducted using the open-source test
+    suite AnalogGym
+activity: no-submission-channel
+activity_basis:
+  reason: The README and its rendered documentation offer circuits, testbenches, extraction scripts
+    and an RL example, and no leaderboard or results route; results appear in users' papers.
+  source: src-github-analoggym-readme-0a9d139
+  quote: 'The test circuits provided in AnalogGym include:'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GCNRL (graph-network reinforcement learning), with WEIBO and cVTS Bayesian optimisation
+      and SMEA, in the paper's study
+    source: src-arxiv-2409-08534-v1
+    observed_on: 2026-11-18
+    quote: reinforcement learning based on graph neural networks (GCNRL) [9], weighted expected
+      improvement-based BO (WEIBO) [1]
+  - system: Priority-based graph-enhanced RL (AAAI-26)
+    source: src-aaai-2026-priority-graph-rl
+    observed_on: 2026-11-18
+    quote: we propose a priority-based graph-enhanced RL framework
+  - system: SPEEDY (single-step multi-actor RL; UC Berkeley EECS report, 2026)
+    source: src-eecs-berkeley-techrpt-2026-32128
+    observed_on: 2026-11-18
+    quote: we propose SPEEDY, a RL framework for efficient design space exploration via parallel
+      simulations and incremental pruning of the design space.
+evaluation_target: mixed
+evaluation_target_note: Learned methods (RL, Gaussian-process Bayesian optimisation, a
+  surrogate-assisted evolutionary algorithm) and a non-learned one (the multi-task evolutionary
+  algorithm) are scored on the same figures in the paper's tables.
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The design's performance as the testbench's SPICE analyses compute it at
+  the chosen PVT corners, read against the topology's specifications and, for amplifiers, its
+  baselines; there is no answer key.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The amplifiers and LDOs, the categories the paper's study and later papers use, run on
+    Ngspice with the sky130 PDK from the public repository. The sensing front ends, voltage
+    references and PLL need commercial simulators and process models the suite does not supply.
+  source: src-arxiv-2409-08534-v1
+  quote: Among these, the LDOs and AMPs support the open-source Ngspice simulator and PDKs, allowing
+    for greater accessibility and reproducibility.
+
+task:
+  exists: true
+  input:
+    - an encapsulated SPICE netlist of one topology, with complete bias circuits, and its testbench
+      (DC, AC, pole-zero and transient analyses) at a fixed load capacitance
+    - the design variables to size (transistor width, length and multiplier, capacitors, resistors,
+      bias current) within the physical bounds of the technology node
+    - the PVT corners to cover and the topology's specifications and, for amplifiers, its baseline
+      performance
+  output: A sizing, one value per design variable, which the testbench simulates; a method may
+    evaluate many sizings, and its final design is scored.
+  scoring: The simulated metrics, at the worst corner where PVT variation is applied (the paper's
+    evolutionary runs use four corners). For amplifiers, FOM_AMP multiplies the metrics' ratios to
+    the topology's baselines, divides by the settling-time and area ratios and penalises noise,
+    temperature coefficient and offset worse than baseline, with the phase margin held between 45
+    and 90 degrees. The paper averages ten runs per method and reports fitness evaluations and
+    runtime beside the metrics.
+  item_definition: A circuit topology with its netlist, testbench, design variables and
+    specifications, and for amplifiers its baseline performance.
+  source: src-arxiv-2409-08534-v1
+  quote: The goal of algorithmic optimization is to produce better circuit designs where all
+    performance metrics exceed their respective baseline performances.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: >
+    The netlists, testbenches, design variables, schematics and the sky130 PDK are in the public BSD 3-Clause
+    repository. The sensing front ends, voltage references and PLL need process models that the paper
+    says open PDKs cannot provide and the repository does not ship, so running them needs commercial models
+    and simulators; at commit 0a9d139 the voltage-reference folder holds a description document only (repository
+    tree, GitHub API, read 2026-11-18).
+  access_basis:
+    reason: The paper releases the circuits and specifications openly, and the repository needs no
+      registration.
+    source: src-arxiv-2409-08534
+    quote: AnalogGym standardizes the assessment of ML algorithms in analog circuit synthesis and
+      promotes reproducibility with its open datasets and detailed benchmark specifications.
+  refresh: versioned-releases
+  refresh_note: The repository has no tagged releases. The circuits have changed in place (one
+    amplifier's schematic and netlists were deleted in October 2024 while its design-variable file
+    remains, and a Charge Pump folder that no source describes is present), and the README's update
+    note of 2025-05-31 rewrote the FOM_AMP penalty; the paper was not revised (review_checks).
+  refresh_basis:
+    reason: The scoring formula changed in a dated revision, announced in the README, so FOM_AMP
+      values before and after are computed differently.
+    source: src-github-analoggym-readme-0a9d139
+    quote: 'Update Note: Adjustment to the'
+  data_provenance:
+    - expert-authored
+  data_provenance_note: The topologies come from published circuit papers, each amplifier's baseline
+    from its original paper; the authors implemented them as encapsulated netlists with complete
+    bias circuits, testbenches and specification tables. The performance values come from
+    simulation.
+  data_provenance_source: src-arxiv-2409-08534-v1
+  data_provenance_quote: These baseline performances are derived from the analysis of the original
+    papers proposing these topologies, identifying the fundamental criteria necessary for reliable
+    circuit operation.
+  contamination_risk: low
+  contamination_risk_note: >
+    An item is a circuit to size with no stored answer: the score exists only once a design is simulated.
+    The baselines, the shipped design-variable files and the original papers' own designs are public,
+    so a method seeded from them starts nearer the baseline, and a language-model sizer could have read
+    those papers; no source read evidences either route or describes a decontamination measure.
+  contamination_evidence: []
+  ceiling_anchor_type: expert-best
+  ceiling_anchor_type_note: >
+    By the revised formula FOM_AMP is one for a design that matches its topology's baseline, the performance
+    taken from the circuit's original paper, and higher is better without bound; the paper's goal is a
+    design that beats every baseline metric. Only amplifiers have baselines (review_checks).
+  ceiling_anchor_type_source: src-arxiv-2409-08534-v1
+  ceiling_anchor_type_quote: The goal of algorithmic optimization is to produce better circuit
+    designs where all performance metrics exceed their respective baseline performances.
+  dataset_licence: BSD-3-Clause
+  dataset_licence_note: The circuits are files in the BSD 3-Clause repository; the bundled sky130
+    PDK keeps its own licence, which was not read.
+  dataset_licence_source: src-github-analoggym-readme-0a9d139
+  dataset_licence_quote: 'License: BSD 3-Clause'
+  size:
+    - count: 30
+      unit: circuit topologies in five categories
+      source: src-arxiv-2409-08534
+      quote: 'AnalogGym includes 30 circuit topologies in five categories: sensing front ends, voltage
+        references, low dropout regulators, amplifiers, and phase-locked loops.'
+    - count: 16
+      unit: amplifier topologies
+      subset: Amplifiers
+      source: src-arxiv-2409-08534-v1
+      quote: Amplifier 16 Spectre/Ngspice
+    - count: 4
+      unit: amplifier topologies in the paper's comparison study
+      subset: the paper's study (NMCNR, NMCF, DFCFC1, DFCFC2)
+      source: src-arxiv-2409-08534-v1
+      quote: 'As a case study, we select four representative amplifiers: NMCNR, NMCF, DFCFC1, and DFCFC2.'
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The AnalogGym team (CODA-Team; Fudan University and the University of Electronic
+    Science and Technology of China, with Southeast University, Guangzhou University and the
+    National Center of Technology Innovation for EDA)
+  maintainer_basis:
+    reason: The repository and its licence are held by CODA-Team, a GitHub organisation. The paper's
+      author block (not quoted, since it interleaves names with e-mail addresses) places the authors
+      at those five institutions, with the corresponding authors at Fudan and UESTC.
+    source: src-github-api-analoggym
+    quote: '"type":"Organization"'
+  maintainer_type: academic-lab
+  maintainer_type_note: A team spanning several universities, held in a GitHub organisation rather
+    than one lab's; community-collective is the other reading (review_checks).
+  submission_process:
+    - literature-only
+  submission_process_note: Results appear in users' papers, as in the AAAI-26 paper and the 2026
+    Berkeley report. The README invites contributed circuit designs by e-mail, not results.
+  independence_flags: []
+  independence_flags_note: >
+    Checked in the sources read, and no flag applies: there is no leaderboard, and no affiliation in the
+    sources read shows a lab ranking its own systems on the suite. Some methods in the paper's study,
+    and the AAAI-26 method, come from papers whose author lists overlap the suite's; a comparison of names
+    is not evidence under the rule, and a shared university is not a shared lab (review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2409-08534-v1
+    quote: Transient instability, such as oscillations or prolonged settling, can extend simulation
+      times and reduce efficiency, leading to inaccurate evaluation of other performance metrics.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every evaluation is a SPICE run; Ngspice is free, while three categories need
+    Cadence Spectre or Synopsys HSPICE. The paper's study ran on one workstation (two RTX 4080 GPUs,
+    four Xeon CPUs, 128 GB), with the evolutionary methods simulating on 64 cores in parallel.
+  compute_tier_source: src-arxiv-2409-08534-v1
+  compute_tier_quote: All experiments are conducted on a Linux workstation with 2 NVIDIA GeForce RTX
+    4080 GPUs
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Sizing and scoring run end to end without a person, but every number is what the
+      simulator computes, and the README warns that the Conda build of Ngspice gives wrong DC
+      sweeps.
+    source: src-github-analoggym-readme-0a9d139
+    quote: manually upgrade to `ngspice-42` or later
+  reproducibility_blockers:
+    - specific-simulator-build
+  reproducibility_blockers_note: ngspice-42 or later for the amplifiers and LDOs. The sensing front
+    ends, voltage references and PLL need commercial simulators and process models, which
+    licence-restriction may describe better (review_checks).
+  harness_availability: reference-implementation-only
+  harness_availability_basis:
+    reason: The repository gives testbenches, performance-extraction scripts offered for reference
+      and an RL example, but no script computes FOM_AMP or applies the baselines; the amplifier
+      script returns a hand-weighted cost and prints FOMS and FOML.
+    source: src-github-analoggym-readme-0a9d139
+    quote: Two performance extraction scripts are provided for reference
+  harness: AnalogGym's Ngspice testbenches (amp_spice_testbench, ldo_spice_testbench) with
+    perf_extraction_amp.py and perf_extraction_LDO.py, and the RGNN_RL example (main_AMP.py,
+    main_LDO.py, with a Docker version)
+  harness_source: src-github-analoggym-perf-extraction-amp-0a9d139
+  harness_quote: ngspice -o log.txt -b TB_Amplifier_ACDC.cir
+  harness_gotcha:
+    source: src-github-analoggym-readme-0a9d139
+    quote: this version has known limitations and may yield inaccurate simulation results
+  code_licence: BSD-3-Clause
+  code_licence_note: GitHub's licence metadata for CODA-Team/AnalogGym reads BSD-3-Clause too
+    (src-github-api-analoggym).
+  code_licence_source: src-github-analoggym-readme-0a9d139
+  code_licence_quote: 'License: BSD 3-Clause'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # (domain-metric x classical-algorithm) resolves eligibility-gated, and (domain-metric x domain-specialist-model)
+  # the fallback (subset_used). Beyond them: the simulator and its build (Ngspice 41 against 42 and later, Spectre,
+  # HSPICE); the simulation budget, which the paper sets at 1,000 per run (max_steps); and the runs averaged
+  # (n_samples, ten in the paper). The PVT corner set and the FOM_AMP version (the 2024 or the 2025 penalty) are
+  # material too and have no conditions field; subset_used carries the topology.
+  material_extra:
+    - simulator
+    - simulator_version
+    - max_steps
+    - n_samples
+  material_waived:
+    - field: eligibility_track
+      reason: There are no tracks; every method is compared on the same circuits.
+    - field: training_data_eligibility
+      reason: No training-data tiers are defined; training_data_policy carries whether a method was
+        pretrained on other circuits.
+    - field: decontamination_applied
+      reason: The items are circuits to size with no stored answer, and nothing is decontaminated.
+aggregation_policy: official-aggregate
+aggregation_policy_note: FOM_AMP combines an amplifier design's metrics into one figure per
+  topology; nothing aggregates across topologies or categories, and no figure is defined for the
+  other four categories (review_checks).
+aggregation_policy_basis:
+  reason: For amplifiers the paper defines one reference figure over the individual metrics and uses
+    it to compare the methods' final designs, beside the metrics themselves.
+  source: src-arxiv-2409-08534-v1
+  quote: In addition to individual performance and conventional FOM, AnalogGym also provides a
+    reference metric
+liveness:
+  repo_last_commit: 2025-10-29
+  reproduction_script_present: true
+  last_checked: 2026-11-18
+
+homepage: https://coda-team.github.io/AnalogGym/
+repository: https://github.com/CODA-Team/AnalogGym
+dataset_url: https://github.com/CODA-Team/AnalogGym/tree/main/AnalogGym
+
+versions:
+  - version: 2024-09
+    label: The release, with FOM_AMP's indicator-function penalty
+    version_kind: revision
+    released: 2024-09-13
+    items: 30
+    changes: The suite as the paper describes it, with FOM_AMP's last factor written as ratios
+      multiplied by indicator functions for noise, temperature coefficient and offset worse than
+      baseline.
+    superseded_by: 2025-05
+    frozen: true
+    sources:
+      - src-arxiv-2409-08534
+      - src-arxiv-2409-08534-v1
+  - version: 2025-05
+    label: FOM_AMP penalty rewritten as max(1, ratio) terms
+    version_kind: revision
+    released: 2025-05-31
+    items: 30
+    changes: The same circuits. The README's update note (commit 6274f50, 2025-05-31) replaces the
+      penalty's indicator functions, which zero the product whenever a metric beats its reference,
+      with max(1, x / x_ref) terms; the maintainers call it logically equivalent to the intended
+      penalty. The paper was not revised.
+    supersedes_version: 2024-09
+    frozen: true
+    sources:
+      - src-github-analoggym-readme-0a9d139
+
+subsets:
+  - id: analoggym#amplifiers
+    label: Amplifiers
+    items: 16
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2409-08534-v1
+        quote: Amplifier 16 Spectre/Ngspice
+    notes: Two- and three-stage operational amplifiers, on Ngspice with sky130 and in Spectre; the
+      only category with baselines and FOM_AMP, and the one the paper's study and the AAAI-26 paper
+      use. The repository's design-variables folder holds 21 amplifier files at commit 0a9d139.
+  - id: analoggym#ldo
+    label: Low dropout regulators
+    items: 6
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2409-08534-v1
+        quote: Low dropout regulator 6 Spectre/Ngspice
+    notes: On Ngspice with sky130, measured at light and heavy load; no reference figure of merit is
+      defined. The repository holds four LDO design-variable sets at commit 0a9d139.
+  - id: analoggym#sensing-front-ends
+    label: Sensing front ends
+    items: 6
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2409-08534-v1
+        quote: Sensing front end 6 Spectre
+    notes: Temperature-sensing front ends in Spectre, without an open PDK.
+  - id: analoggym#voltage-references
+    label: Voltage references
+    items: 3
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2409-08534-v1
+        quote: Voltage reference 3 Hspice
+    notes: In HSPICE, without an open PDK; the paper gives the field's voltage-reference figure of
+      merit for them.
+  - id: analoggym#pll
+    label: Phase-locked loop
+    items: 1
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2409-08534-v1
+        quote: Phase-locked loop 1 Hspice
+    notes: In HSPICE per the paper, without an open PDK; the repository's folder drives Cadence
+      through OCEAN scripts (repository tree, GitHub API).
+
+lineage:
+  role: root
+lineage_note: No variant or fork is recorded. Later papers draw their own circuit sets from the
+  suite (the AAAI-26 paper's seven circuits over 20 corners, the 2026 Berkeley report's amplifiers),
+  and none is maintained as an AnalogGym derivative in the sources read. The Phase-0 survey's
+  AnalogGym-Opt (IEEE TCAD 2026) was not found (review_checks).
+
+tags:
+  - analog-circuits
+  - circuit-sizing
+  - spice
+  - ngspice
+  - sky130
+  - pvt-variation
+  - black-box-optimisation
+  - bayesian-optimisation
+  - reinforcement-learning
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T04)
+  added_on: 2026-11-18
+  last_verified: 2026-11-18
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2409-08534-v1
+    - src-arxiv-2409-08534
+    - src-github-analoggym-readme-0a9d139
+    - src-github-analoggym-perf-extraction-amp-0a9d139
+    - src-github-api-analoggym
+    - src-aaai-2026-priority-graph-rl
+    - src-eecs-berkeley-techrpt-2026-32128
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, and its abstract page for the date and the
+    abstract; the README and perf_extraction_amp.py at commit 0a9d1390ade361e2b4a2d33181e22367edbb8afc,
+    and GitHub's API record for the repository; the AAAI-26 PDF (a DOI) and the Berkeley report's page
+    as evidence of current use. The README is withheld from archiving (a contact e-mail address and the
+    authors' names) and so is the Berkeley page (the author's and editors' names); the script and the
+    API record are pending. Commit history, the repository tree and earlier READMEs come from GitHub's
+    API and raw files and are not quoted; the documentation site renders the README.
+  confidence: medium
+  review_checks:
+    - check: Criterion b. The scoring procedure (FOM_AMP against Table 6's baselines, the
+        phase-margin band, the worst case over PVT corners) is defined for amplifiers only; the LDOs
+        and the other categories have metric and constraint tables but no reference figure, and no
+        script in the repository computes FOM_AMP (the amplifier script returns a hand-weighted
+        cost). Whether the suite meets the survey's criterion b as a whole, or only for amplifiers.
+      field: task
+      source: src-github-analoggym-perf-extraction-amp-0a9d139
+      quote: foms = meas['gbp']*10 / (meas['power']*1e3)
+    - check: Size. The paper and README say 30 topologies, but Table 1's counts (16, 6, 6, 3, 1) sum
+        to 32. At commit 0a9d139 the repository holds 21 amplifier design-variable files (17 Ngspice
+        netlists, one of them empty), four LDO sets, Spectre netlists for the sensing front ends,
+        only a description for the voltage references, and a Charge Pump folder that no source read
+        describes.
+      field: data.size
+      source: src-arxiv-2409-08534-v1
+      quote: Amplifier 16 Spectre/Ngspice
+    - check: Versions. The 2025-05-31 rewrite of the FOM_AMP penalty is modelled as a revision with
+        breaking false, since the maintainers call it equivalent to the intended penalty. The
+        printed form is degenerate, so which form produced the paper's FOM_AMP values is unknown; an
+        erratum on one version is the other reading. Circuit additions and deletions in place are
+        not versioned.
+      field: versions
+      source: src-github-analoggym-readme-0a9d139
+      quote: 'This structure is logically equivalent to the original one: it penalizes only when a parameter
+        exceeds its reference.'
+    - check: The paper's study says four algorithms and lists five, and states a 1,000-simulation
+        limit while Table 7 records 5,284.6 to 6,842 fitness evaluations for GCNRL (an RL
+        interaction may count differently). sample-efficiency is rejected partly on this.
+      field: capability
+      source: src-arxiv-2409-08534-v1
+      quote: FEs Consumption 5284.6 826.1 122.4
+    - check: designed_for_subjects. The entry treats the Gaussian-process Bayesian optimisers and
+        the surrogate-assisted evolutionary algorithm as learned (domain-specialist-model) and only
+        the multi-task evolutionary algorithm as classical-algorithm, by classical-algorithm's
+        exclusion of per-run model fitting. rl-policy is arguable for the RL entrants and the Gym
+        framing.
+      field: designed_for_subjects
+      specialist: true
+      source: src-arxiv-2409-08534-v1
+      quote: Modeling Time (min) 10.4 - 11.6 -
+    - check: domain-metric for a figure of merit the suite defines from simulated circuit metrics;
+        no term names a score computed by simulating the submitted design. Logged as
+        taxonomy/_failures/2026-11-18-analoggym-001 (simulator-reevaluation, the third case after
+        open-catalyst-oc20-oc22 and learn2design-2026).
+      field: evaluation_method
+    - check: Independence. Some methods in the paper's study (MTEA, ref. 11; WEIBO and cVTS, refs 1
+        and 6) and the AAAI-26 method come from papers whose author lists overlap AnalogGym's, and
+        the AAAI-26 authors are at UESTC and Guangzhou University, both among the suite's
+        institutions. The rule does not count names or a shared university, so no flag is set;
+        whether an affiliation shows the same lab needs a reviewer.
+      field: governance.independence_flags
+    - check: maintainer_type academic-lab for a team across five institutions, held in the CODA-Team
+        GitHub organisation; community-collective is the other reading, and no source names a single
+        lab as the holder.
+      field: governance.maintainer_type
+      source: src-github-api-analoggym
+      quote: '"type":"Organization"'
+    - check: Current use rests on the AAAI-26 paper and a Berkeley report read only as an abstract
+        (its full text is delayed). The Phase-0 survey's evidence, reuse by AnalogGym-Opt (IEEE TCAD
+        2026), was not found by search, and PPAAS (arXiv 2507.17003) was read only to see that it
+        sizes one AnalogGym amplifier in another PDK.
+      field: lifecycle
+    - check: reproducibility_blockers. specific-simulator-build for ngspice-42 or later; the three
+        categories without an open PDK need Spectre or HSPICE and commercial process models, which
+        licence-restriction may describe.
+      field: execution.reproducibility_blockers
+      specialist: true
+      source: src-github-analoggym-readme-0a9d139
+      quote: manually upgrade to `ngspice-42` or later
+    - check: aggregation_policy official-aggregate rests on FOM_AMP combining one amplifier's
+        metrics. Nothing aggregates across topologies, and the suite lets methods choose their own
+        objective, so none-by-design is the other reading.
+      field: aggregation_policy
+      source: src-arxiv-2409-08534-v1
+      quote: AnalogGym provides the interface to access the individual performance metrics and
+        allows the circuit synthesizer to dynamically select its optimization objective.
+    - check: ceiling expert-best. The baselines are described as criteria derived from the original
+        papers, so they may be minimum operating criteria rather than the designers' best
+        performance; Table 6 is headed 180 nm while the study and the repository use sky130 (130
+        nm).
+      field: data.ceiling_anchor_type
+      specialist: true
+      source: src-arxiv-2409-08534-v1
+      quote: These baseline performances are derived from the analysis of the original papers
+        proposing these topologies, identifying the fundamental criteria necessary for reliable
+        circuit operation.
+  personal_data_excluded:
+    - source: src-github-analoggym-readme-0a9d139
+      what: the authors' names in the citation, a maintainer's e-mail address and an individual's
+        linked repository
+    - source: src-arxiv-2409-08534-v1
+      what: the author block's names and e-mail addresses
+    - source: src-eecs-berkeley-techrpt-2026-32128
+      what: the report author's and editors' names
