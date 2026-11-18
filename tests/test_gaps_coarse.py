@@ -35,7 +35,7 @@ def two_groups():
 
 @pytest.fixture
 def tree(tmp_path):
-    for rel in (G.DOMAINS, G.CAPABILITIES, G.GROUPS):
+    for rel in (G.DOMAINS, G.CAPABILITIES, G.GROUPS, G.EXPECTATIONS):             # the matrix's denominator too
         os.makedirs(tmp_path / os.path.dirname(rel), exist_ok=True)
         shutil.copy(os.path.join(ROOT, rel), tmp_path / rel)
     return tmp_path
@@ -115,10 +115,11 @@ def test_the_published_count_is_seed_progress_s():
     assert G.emit()['entries'] == sum(seed_progress.counts().values())
 
 
-def test_no_gap_score_yet():
-    doc = G.emit()
+def test_the_coverage_cells_are_counts_and_the_score_is_the_matrix_s():
+    doc = G.emit()                              # P1-S14-T08 put the score in `matrix`, beside its four factors
     assert not any(k in c for c in doc['cells'] for k in ('gap_score', 'curation_confidence', 'density'))
-    assert 'Phase 4' in doc['not_yet']
+    assert all('gap_score' in c and 'factors' in c for c in doc['matrix'])
+    assert 'Phase 4' in doc['not_yet'] and 'matrix' in doc['not_yet']
 
 
 # ---- what a cell counts ---------------------------------------------------------------------------------------
