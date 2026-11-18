@@ -1,0 +1,1062 @@
+# data/benchmarks/engineering-design/cvdp.yaml
+#
+# P1-S8-T04, engineering-design entry 7. Filled from the CVDP paper, arXiv 2506.14074 read as its v1 PDF (2025-06-17,
+# the only version), and its abstract page; three files of NVlabs/cvdp_benchmark at commit 8e894cf (2026-06-08, the
+# head of main; the repository has no tags): README.md, README_FULL.md and LICENSE; on Hugging Face,
+# nvidia/cvdp-benchmark-dataset's API record, its file listing with each file's last commit, the dataset viewer's
+# size record, and the CHANGELOG, LICENSE, NOTICE and heavy-bundle README at commit 5b807d9 (2026-07-21); Si2's
+# LBC-bench leaderboard repository at commit 0ac27bb (2026-11-07): its README, contributor guide and
+# data/leaderboards.json (the board at lbc-bench.si2.org renders from it); and Si2's post on CVDP 1.1.0
+# (2026-06-23). Current use is from the v1 PDF of RTL-Interact (arXiv 2610.41225, October 2026) and the board's
+# rows (to 2026-07-26); the GateTruth abstract page (arXiv 2608.12635, August 2026) for what the public release
+# lets others audit. Every quote below is checked by the quote-substring validator against those Sources'
+# committed extracts.
+#
+# The family entry: one NVIDIA benchmark in six dataset releases (v1.0.0 to v1.1.0, revisions). Its non-agentic
+# code generation, agentic code generation and non-agentic comprehension formats are subsets, each with its
+# task categories as children (scored separately in the paper's Tables 2 to 4), and v1.1.0's heavy-context
+# agentic set is a fourth. The hard call is the family, as for VerilogEval: the submissions are HDL code, but
+# what is scored is a circuit or a testbench simulated against hidden harnesses (domain_basis, review_checks).
+# The board's newest row is dated 2026-07-26 (liveness.leaderboard_last_updated); its repository's last commit,
+# 2026-11-07, changed documentation only.
+
+id: cvdp
+name: CVDP
+aliases:
+  - Comprehensive Verilog Design Problems
+  - CVDP Benchmark
+tagline: 783 hardware design and verification problems in 13 categories, single-turn or agentic,
+  scored by hidden test harnesses.
+description: >
+  A benchmark from NVIDIA for language models and agents on digital hardware design and verification in
+  Verilog and SystemVerilog. About 35 hardware engineers wrote 1,313 problems, experts reviewed them,
+  and sanity checks (the reference solution must pass and the starting context fail) and an LLM quality
+  judge kept 783 in 13 categories. Code generation covers RTL code completion, specification to RTL, code
+  modification, composing existing modules, lint and quality-of-results improvement, testbench stimulus
+  and checker generation, assertion generation and debugging; comprehension covers matching RTL or testbenches
+  to specifications and test plans, and technical questions on RTL and testbenches. 617 problems are non-agentic,
+  one prompt holding the whole context, and 166 agentic, a mini-repository in a Docker container where
+  the entrant's agent can read and edit files and run tools such as simulators. Each problem ships a reference
+  solution and a hidden test harness, usually a CocoTB script over Icarus Verilog, Verilator or Yosys;
+  the testbench and assertion categories need Cadence Xcelium, a commercial simulator. Code generation
+  is scored by pass@1 estimated from five samples, correspondence by BLEU and question answering by an
+  LLM judge (o4-mini in the paper). In the paper (June 2025) Claude 3.7 Sonnet leads non-agentic code
+  generation at 33.56% and reaches 29% on agentic, the agentic problems run as single prompts because
+  no open hardware design agent then existed. The public Hugging Face release left out 20 problems and
+  withholds the code generation reference solutions; v1.0.1 added nine, and v1.1.0 (2026) moved to newer
+  open-source tools and added 100 heavy-context agentic problems built on 40 open-source repositories.
+  Si2's LLM Benchmarking Coalition keeps the LBC-bench leaderboard on CVDP, which takes results by pull
+  request.
+self_description:
+  source: src-arxiv-2506-14074
+  quote: a new dataset and infrastructure to advance LLM and agent research in hardware design and
+    verification
+external_ids:
+  huggingface: nvidia/cvdp-benchmark-dataset
+  arxiv: '2506.14074'
+paper:
+  title: 'Comprehensive Verilog Design Problems: A Next-Generation Benchmark Dataset for Evaluating Large
+    Language Models and Agents on RTL Design and Verification'
+  arxiv: '2506.14074'
+  doi: 10.48550/arXiv.2506.14074
+  version_read: v1
+  source: src-arxiv-2506-14074-v1
+released: 2025-06-17
+released_note: The paper's only arXiv version. The Hugging Face dataset was created the next day,
+  2025-06-18, with the first public files; the repository was created on 2025-06-10 (GitHub API, not
+  a quoted Source).
+released_source: src-arxiv-2506-14074
+released_quote: '[Submitted on 17 Jun 2025]'
+release_venue: null
+release_venue_note: The v1 PDF is marked a preprint under review and the abstract page's comments
+  line gives only its length; no venue was found in the sources read.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: engineering-design/circuit-eda
+  secondary:
+    - code/code-understanding
+    - agents-tooluse/software-agents
+domain_basis:
+  reason: >
+    Every code generation problem asks for a digital circuit or for the testbench, checker or assertions
+    that verify one, in Verilog or SystemVerilog, and the hidden harness simulates (or for code improvement,
+    synthesises and lints) the result; designing and verifying electronic circuits is circuit-eda's definition,
+    and the paper sets hardware design apart from the software development where LLMs are already used.
+    The family excludes software, which is `code`, and `code` excludes code that is the means to a result
+    in another field; the boundary is the one VerilogEval's entry logged (taxonomy/_failures/2026-11-18-verilogeval-001.yaml),
+    which names CVDP, so it is not logged again. The 123 comprehension problems submit an answer about
+    given RTL or testbench code, scored by BLEU or an LLM judge, so no design is submitted; code/code-understanding
+    is secondary and is their subset's primary. The agentic format, an agent working a mini-repository
+    with EDA tools and judged by the harness, makes agents-tooluse/software-agents secondary, as code's
+    exclusion test prescribes for an agentic harness.
+  source: src-arxiv-2506-14074-v1
+  quote: These categories reflect common subtasks in real-world hardware design and verification
+    workflows.
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: The item is not a self-contained function written from a docstring; each problem is a
+      multi-file repository, and what the harness judges is a simulated circuit or testbench, which
+      VerilogEval's entry kept as its secondary and this entry does not, because most CVDP tasks
+      modify, compose, verify or debug rather than write one unit.
+    source: src-arxiv-2506-14074-v1
+    quote: represents a multi-file repository extracted at evaluation time.
+  - term: code/repository-scale-se
+    reason: The paper's problems give oracle contexts, only the files needed, so finding where to
+      make the change is not part of the task. v1.1.0's 100 heavy-context problems do work in whole
+      open-source repositories, a minority recorded on their subset.
+    source: src-arxiv-2506-14074-v1
+    quote: For both Non-Agentic and Agentic problems we limited datapoint creation to oracle
+      contexts
+  - term: code/bug-repair
+    reason: Debugging is one category (47 of 783 problems); the defect is in a circuit and the fix
+      is judged by simulating it, which circuit-eda's verifying covers.
+    source: src-arxiv-2506-14074-v1
+    quote: cid16 Design Verification - Debugging / Bug Fixing 36 11
+capability: []
+capability_note: No capability term names writing a correct design or program to a specification,
+  the gap HumanEval's entry logged (taxonomy/_failures/2026-10-10-humaneval-001.yaml, proposed term
+  program-synthesis), which VerilogEval's entry cited for the same reason; it is not logged again.
+  CVDP adds verification (testbench stimulus and checker generation, assertions), which the paper
+  finds hardest and no term captures as scored either.
+capability_considered_and_rejected:
+  - term: tool-use
+    reason: The agentic format lets an agent run simulators, but the harness scores the repository
+      the agent leaves, not its tool calls, and the paper ran its agentic problems without tools.
+    source: src-arxiv-2506-14074-v1
+    quote: Agentic datapoints were converted to Non-Agentic format for evaluation, as no
+      open-source, generalpurpose hardware design agent currently exists.
+  - term: optimization
+    reason: The code improvement category (41 problems) asks for lint fixes or area or latency
+      reductions, but each is passed or failed against stated criteria, not ranked by the
+      objective's value.
+    source: src-arxiv-2506-14074-v1
+    quote: RTL Lint Improvement or Power -Performance Optimization
+  - term: constraint-satisfaction
+    reason: A harness checks the design's behaviour in simulation against the task, not an
+      enumerated list of conditions, and the paper claims correctness, not constraint satisfaction.
+  - term: knowledge-recall
+    reason: The question-answering categories ask about RTL or a testbench given in the prompt, so
+      the answer is read from context; the paper adds that they do not challenge current models.
+    source: src-arxiv-2506-14074-v1
+    quote: The Question & Answer Code Comprehension datapoints do not sufficiently challenge the
+      LLMs
+
+evaluation_method:
+  - execution-tests
+  - reference-metric
+  - model-graded-judge
+evaluation_method_basis:
+  reason: Code generation problems pass or fail by their hidden harness, which simulates the
+    submitted RTL or testbench (Icarus Verilog, Verilator, Yosys, or Cadence Xcelium for categories
+    12 to 14); correspondence answers (cid06, cid08), expected verbatim, are scored by BLEU against
+    the reference; question-and-answer responses (cid09, cid10) are rated by an LLM judge that
+    compares them with the reference in the context of the question, o4-mini in the paper.
+  source: src-arxiv-2506-14074-v1
+  quote: A test harness—typically a CocoTB (CocoTB [2025]) simulation script—assesses correctness
+    based on task type.
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: A simulator runs, but on the submitted circuit under a fixed harness; no policy acts
+      through episodes, which the term requires.
+  - term: constraint-check
+    reason: Linting and synthesis checks appear in code improvement harnesses, but the verdict comes
+      from the harness running the design, not from validating its structure.
+  - term: exact-match
+    reason: Correspondence answers are expected verbatim, but scored by BLEU, a graded overlap,
+      rather than by exact match.
+    source: src-arxiv-2506-14074-v1
+    quote: should match a reference verbatim
+designed_for_subjects:
+  - instruction-tuned-model
+  - reasoning-model
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The non-agentic format sends one prompt to a model; the paper runs chat models (Claude 3.7
+    Sonnet, Claude 3.5 Haiku, GPT-4.1, Llama 3.1) and reasoning models (o1, o4-mini, Claude 3.7
+    Sonnet with extended thinking). The agentic format is built for an entrant's Dockerized agent
+    working a mini-repository with tools, which the paper names as the benchmark's purpose, although
+    it ran those problems single-turn (as_used).
+  source: src-arxiv-2506-14074-v1
+  quote: Previous benchmarks focus on single-turn prompts and evaluation infrastructure, while CVDP
+    is designed to evaluate agents, with support for tool interaction, iterative workflows, and
+    complex reasoning.
+designed_for_subjects_considered_and_rejected:
+  - term: domain-specialist-model
+    reason: The paper motivates the benchmark by scarce RTL training data but evaluates no
+      RTL-specialised model; later papers bring them (RTL-Interact, as_used).
+  - term: tool-augmented-model
+    reason: The non-agentic format offers no tools, and in the agentic format the entrant supplies
+      its own agent image, which is the scaffold.
+    source: src-arxiv-2506-14074-v1
+    quote: Users populate tool and agent images using provided templates.
+  - term: base-model
+    reason: Code completion gives skeleton code to finish, but as an instruction to a chat model; no
+      base model is evaluated.
+  - term: multi-agent-system
+    reason: Nothing in the protocol needs more than one agent.
+as_used:
+  - protocol: Agentic problems run as single-turn prompts. The paper converts every agentic
+      datapoint to the non-agentic format for its Table 3, with the oracle context in the prompt and
+      no tools.
+    split: agentic code generation (166 problems in the paper)
+    source: src-arxiv-2506-14074-v1
+    quote: Agentic datapoints were converted to Non-Agentic format for evaluation, as no
+      open-source, generalpurpose hardware design agent currently exists.
+    note: The harness converts either way (--force-copilot, --force-agentic), so a number on an
+      agentic file is comparable only with others run the same way.
+  - protocol: LBC-bench's limited-context board pools the non-agentic and agentic code generation
+      files in one pass rate, and Si2's guidance is to score the agentic files single-turn through
+      the harness's --force-copilot conversion; one row runs Claude Code as the agent.
+    split: code-generation-limited-context (four files, 489 non-agentic and 160 agentic problems in
+      v1.1.0)
+    source: src-github-lbc-bench-leaderboards-0ac27bb
+    quote: agentic_code_generation_no_commercial evaluated non-agentically via --force-copilot per
+      Si2 guidance
+    note: The row notes say so for the 2026-07-26 rows; earlier rows do not state how the agentic
+      files were run.
+  - protocol: Trained RTL models on the 302 no-commercial non-agentic code generation problems (five
+      categories), allowed to call EDA tools while answering (up to six calls per trajectory, ten
+      for optimisation tasks), scored by pass@1 and pass@5 from five samples at temperature 0.7 and
+      top-p 0.95, averaged weighted by category size.
+    split: non-agentic code generation, no-commercial file (302 problems)
+    source: src-arxiv-2610-41225-v1
+    quote: temperature 0.7, and top-p 0.95. CVDP averages are weighted by category sizes (94, 78,
+      55, 40, 35), totaling 302.
+    note: RTL-Interact (arXiv 2610.41225, October 2026). Tool calls inside a non-agentic problem are
+      the paper's protocol, not CVDP's single-turn format.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still produced. An October 2026 paper reports trained RTL models on CVDP, the
+    LBC-bench board has rows dated to July 2026 on release 1.1.0, and an arXiv search on 2026-11-18
+    returned about twenty 2025 and 2026 papers whose abstracts report work on CVDP (not cited).
+  source: src-arxiv-2610-41225-v1
+  quote: On CVDP, RTL-Interact-32B achieves 48.7% weighted Pass@1 and 68.9% Pass@5
+activity: accepting-submissions
+activity_basis:
+  reason: The LBC-bench board, run by Si2 and pointed to by the CVDP README, takes results at any
+    time by a pull request against its data file; it has never run in rounds.
+  source: src-github-lbc-bench-contributor-0ac27bb
+  quote: This guide explains how to add or update benchmark results on the LBC leaderboard by
+    editing `data/leaderboards.json` and opening a pull request.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude 3.7 Sonnet, non-agentic code generation
+    source: src-arxiv-2506-14074-v1
+    observed_on: 2026-11-18
+    quote: The highest aggregate pass@1 rate observed was 34% (Claude 3.7 Sonnet)
+  - system: RTL-Interact-32B, no-commercial non-agentic code generation
+    source: src-arxiv-2610-41225-v1
+    observed_on: 2026-11-18
+    quote: On CVDP, RTL-Interact-32B achieves 48.7% weighted Pass@1 and 68.9% Pass@5
+  - system: Claude Opus 4.8 in Claude Code, heavy-context agentic code generation
+    source: src-github-lbc-bench-leaderboards-0ac27bb
+    observed_on: 2026-11-18
+    quote: '"name": "Claude Opus 4.8 (Claude Code, xhigh)"'
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: repository-tests
+ground_truth_source_note: Each code generation problem's harness, usually a CocoTB test run on the
+  submitted files in a Docker image; the harness files ship in the dataset. The comprehension
+  problems are scored against a reference answer instead (BLEU, or an LLM judge).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The problems, contexts and harnesses are public and the open-source simulation image
+    builds from the repository. The testbench and assertion categories (and the commercial files)
+    need a Cadence Xcelium licence and a licence network, which a third party can obtain but the
+    benchmark does not supply, and the code generation reference solutions are withheld, so the
+    golden self-check runs only on the repository's example files.
+  source: src-github-cvdp-readme-8e894cf
+  quote: 'NOTE: Requires commercial EDA tools (Cadence Xcelium), license network, and VERIF_EDA_IMAGE
+    setup'
+task:
+  exists: true
+  input:
+    - 'non-agentic: one prompt holding the task and its whole context (a specification, RTL, a testbench
+      or a test plan, as the category needs), answered in one turn'
+    - "agentic: a prompt and a mini-repository in a Docker container, where the entrant's agent can read,
+      edit and run tools such as simulators"
+  output: The files the task asks for (RTL modules, testbenches, checkers, assertions, modified,
+    improved or fixed RTL), or for comprehension a code snippet or a text answer.
+  scoring: A hidden harness passes or fails each code generation problem, reported as pass@1
+    estimated from n = 5 samples; correspondence answers are scored by BLEU against the reference
+    and question-and-answer responses by an LLM judge that compares them with the reference (o4-mini
+    in the paper).
+  tests_hidden_from_system: true
+  tests_hidden_from_system_note: Hidden from the model or agent during a run; the harness files are
+    public in the dataset.
+  reference_solution: true
+  item_definition: A datapoint, a multi-file repository extracted at evaluation time, with its
+    category, difficulty label, prompt, context, harness and reference solution; non-agentic
+    problems are easy or medium, agentic ones span easy to hard.
+  source: src-arxiv-2506-14074-v1
+  quote: Models or agents may generate or use a testbench but never see the test harness or
+    reference solution.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The Hugging Face dataset is ungated and holds every public problem with its context and
+      harness, so anyone can compute the pass rates. The code generation reference solutions are
+      withheld against contamination, which scoring does not need, and 11 of the paper's 783
+      problems are still unpublished (review_checks). Running the testbench and assertion categories
+      needs a commercial simulator licence, which gates running them, not reading them.
+    source: src-hf-api-cvdp
+    quote: '"gated":false'
+  records_access: fully-open
+  records_licence: CC-BY-NC-4.0
+  records_licence_note: The LBC-bench board's repository, which holds every row and links its logs,
+    is under Creative Commons Attribution-NonCommercial 4.0 (its LICENSE, read 2026-11-18).
+  refresh: versioned-releases
+  refresh_note: Versioned files sit side by side on Hugging Face (v1.0.2, v1.0.3, v1.0.4, v1.1.0);
+    the v1.0 files were deleted from main on 2025-07-22 and stay in the history. The LBC-bench rows
+    name the release they ran (1.0.2 or 1.1.0).
+  refresh_basis:
+    reason: The maintainers release corrected and extended versions with a changelog, and the paper
+      plans further versions as errors are found and as the task set grows.
+    source: src-arxiv-2506-14074-v1
+    quote: may cap maximum achievable scores, and updated benchmark versions will be released as
+      needed.
+  data_provenance:
+    - expert-authored
+  data_provenance_note: About 35 hardware engineers with more than four years of Verilog and
+    verification experience wrote the problems, which subject-matter experts with doctorates in
+    hardware design or engineering-management experience reviewed; the paper thanks Turing for its
+    collaboration in developing the dataset. LLM judging filtered problems but wrote none. NOTICE
+    lists 15 datapoint families derived from open-source code, and v1.1.0's heavy-context problems
+    are built on 40 open-source repositories, whose code is harvested rather than written for the
+    benchmark (review_checks).
+  data_provenance_source: src-arxiv-2506-14074-v1
+  data_provenance_quote: engaged a team of approximately 35 hardware engineers with more than 4
+    years of Verilog and verification experience to author problems across 13 task categories and
+    difficulty levels
+  contamination_risk: medium
+  contamination_risk_note: >
+    Every public problem, with its context and harness, has been public since June 2025, and the harnesses
+    encode the expected behaviour; the comprehension reference answers ship in the public file (seen in
+    the v1.1.0 file, not a quoted Source). The code generation reference solutions are withheld, which
+    the maintainers state as a contamination measure. Some datapoints derive from open-source code, and
+    the 100 heavy-context problems are built on 40 public repositories, with bugs placed by hand, whose
+    upstream commits the dataset records, so the code they ask for may already be in training corpora.
+    No source
+    read measures contamination; a reviewer may judge the heavy-context subset high.
+  contamination_evidence:
+    - source: src-github-cvdp-readme-8e894cf
+      stance: against
+      quote: we excluded the reference solutions—'output' for non-agentic and 'patch' for
+        agentic—from the initial dataset release to help mitigate data contamination.
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_note: Others cannot repeat the check on the public files, which lack the code
+    generation reference solutions; a mutation audit of the harnesses is impossible for the same
+    reason.
+  ceiling_anchor_type_basis:
+    reason: Before release every problem was run with its reference solution, which had to pass, and
+      with its starting context, which had to fail, so a full pass rate is shown to be reachable on
+      code generation. The comprehension scores (BLEU, judge ratings) have no measured ceiling.
+    source: src-arxiv-2506-14074-v1
+    quote: Sanity checks ensured all reference solutions passed and incomplete contexts failed as
+      expected.
+  dataset_licence: CC-BY-4.0 AND Apache-2.0
+  dataset_licence_note: CC BY 4.0 for the dataset's non-code content and the Apache License 2.0 for
+    its original code; third-party derived datapoints and the heavy-context repository bundles keep
+    their upstream terms (upstream_licences). Hugging Face's licence tag reads other.
+  dataset_licence_basis:
+    reason: The dataset's LICENSE gives the two licences by content type and defers third-party code
+      to NOTICE.
+    source: src-hf-cvdp-license-5b807d9
+    quote: Third-party code-derived datapoints and public Git context bundles may be governed by
+      additional or different open-source license terms from their upstream source repositories.
+  upstream_licences: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BSD-3-Clause-Clear and SHL-0.51
+    for the derived datapoints and the 40 heavy-context bundles, two derived datapoints with no
+    licence specified
+  upstream_licences_source: src-hf-cvdp-notice-5b807d9
+  upstream_licences_quote: This dataset incorporates derivative code of various open-source
+    repositories along with original code.
+  size:
+    - count: 783
+      unit: problems
+      source: src-arxiv-2506-14074-v1
+      quote: CVDP comprises 783 human expert-authored problems across 13 hardware design and
+        verification task categories.
+    - count: 617
+      unit: problems
+      subset: non-agentic (paper)
+      source: src-arxiv-2506-14074-v1
+      quote: 'Total # of Problems 617 166'
+    - count: 166
+      unit: problems
+      subset: agentic (paper)
+      source: src-arxiv-2506-14074-v1
+      quote: 'Total # of Problems 617 166'
+    - count: 1313
+      unit: problems written before quality filtering
+      source: src-arxiv-2506-14074-v1
+      quote: Of the 1,313 problems written, 783 were retained after quality filtering
+    - count: 302
+      unit: problems
+      subset: non-agentic code generation, no-commercial file (v1.1.0)
+      source: src-hf-datasets-server-cvdp-size
+      quote: '"config":"cvdp_nonagentic_code_generation_no_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":4870040,"num_bytes_memory":4867959,"num_rows":302'
+    - count: 187
+      unit: problems
+      subset: non-agentic code generation, commercial file (v1.1.0)
+      source: src-hf-datasets-server-cvdp-size
+      quote: '"config":"cvdp_nonagentic_code_generation_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":2369696,"num_bytes_memory":3497759,"num_rows":187'
+    - count: 92
+      unit: problems
+      subset: agentic code generation, no-commercial file (v1.1.0)
+      source: src-hf-datasets-server-cvdp-size
+      quote: '"config":"cvdp_agentic_code_generation_no_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":966714,"num_bytes_memory":3517537,"num_rows":92'
+    - count: 68
+      unit: problems
+      subset: agentic code generation, commercial file (v1.1.0)
+      source: src-hf-datasets-server-cvdp-size
+      quote: '"config":"cvdp_agentic_code_generation_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":617312,"num_bytes_memory":2158693,"num_rows":68'
+    - count: 123
+      unit: problems
+      subset: non-agentic code comprehension (v1.1.0)
+      source: src-github-lbc-bench-leaderboards-0ac27bb
+      quote: 'nonagentic_code_comprehension: 91.43/123 = 74.33%.'
+    - count: 100
+      unit: problems
+      subset: agentic heavy-context code generation (v1.1.0)
+      source: src-hf-cvdp-heavy-readme-5b807d9
+      quote: 'Rows supported: 100 Repositories: 40'
+    - count: 75
+      unit: problems
+      subset: agentic heavy-context code generation, no-commercial file (v1.1.0)
+      source: src-hf-datasets-server-cvdp-size
+      quote: '"config":"cvdp_agentic_heavy_code_generation_no_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":458377,"num_bytes_memory":1399592,"num_rows":75'
+    - count: 25
+      unit: problems
+      subset: agentic heavy-context code generation, commercial file (v1.1.0)
+      source: src-hf-datasets-server-cvdp-size
+      quote: '"config":"cvdp_agentic_heavy_code_generation_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":177145,"num_bytes_memory":474020,"num_rows":25'
+    - count: 40
+      unit: open-source repositories behind the heavy-context problems
+      subset: agentic heavy-context code generation (v1.1.0)
+      source: src-hf-cvdp-heavy-readme-5b807d9
+      quote: 'Rows supported: 100 Repositories: 40'
+  size_note: The public v1.1.0 files hold 772 of the paper's 783 problems (489 non-agentic code
+    generation, 160 agentic, 123 comprehension) plus the 100 heavy-context problems; v1.0.0 held 763
+    (row counts of the files, not quoted).
+  languages:
+    - Verilog
+    - SystemVerilog
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: NVIDIA (NVlabs)
+  maintainer_basis:
+    reason: All eight of the paper's authors list NVIDIA, the repository sits in NVIDIA Research's
+      NVlabs organisation and the dataset in Hugging Face's nvidia organisation, and the licence
+      notice names NVIDIA Corporation. The results board is Si2's (submission_process).
+    source: src-github-cvdp-license-8e894cf
+    quote: Copyright 2025 NVIDIA Corporation
+  maintainer_type: industry-lab
+  submission_process:
+    - maintainer-verified
+    - maintainer-run
+  submission_process_note: The channel is LBC-bench, run by Si2 (the Silicon Integration Initiative)
+    for its LLM Benchmarking Coalition, which the CVDP README presents as maintaining the
+    leaderboard. Si2 ran the first 20 rows itself and marks them verified; outside results arrive as
+    pull requests that Si2 reviews before merging, with logs uploaded for Si2 to publish, and stay
+    unverified until Si2 checks them. Papers also report results of their own, as RTL-Interact does.
+  submission_process_basis:
+    reason: A stated review of each submitted result before it is published, beside Si2's own
+      verified runs.
+    source: src-github-lbc-bench-contributor-0ac27bb
+    quote: PRs are reviewed by Si2
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-github-lbc-bench-leaderboards-0ac27bb
+      quote: '"name": "NemoTron Ultra v3 xhigh", "logo": [ "./img/nvidia-logo.png" ], "site": "https://nvidia.com"'
+  independence_flags_note: >
+    The board lists NVIDIA's own model, tagged "Org: NVIDIA", in a row run from nvidia.com, in both the
+    limited-context and the comprehension boards; NVIDIA, the maintainer by the paper's affiliations and
+    the licence notice, also ran six rows for other developers' models. The paper evaluates no NVIDIA
+    model. Cadence, which lent the EDA licences, and Turing, which helped build the dataset, have no entry
+    on the board. The membership of Si2's coalition was read on its page (not recorded) and not assessed.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2506-14074-v1
+    quote: grateful to Cadence for providing EDA tool licenses, which enabled the collection of
+      digital verification datapoints.
+  funding_note: In-kind tool licences from Cadence, whose simulator the verification harnesses use;
+    Cadence has no system evaluated, so funded-by-evaluated-party does not apply.
+  known_limitation:
+    source: src-arxiv-2506-14074-v1
+    quote: The Question & Answer Code Comprehension datapoints do not sufficiently challenge the
+      LLMs
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every harness runs in Docker; the open-source simulation image is built once
+    from the repository, the verification categories need an image with Cadence Xcelium and a
+    licence network, and agentic runs need the entrant's agent image. Model inference is API spend
+    or local serving. The paper's runs used a 12-vCPU, 24 GB virtual machine, with 6.4 to 15 GB of
+    disk per model.
+  compute_tier_source: src-github-cvdp-readme-8e894cf
+  compute_tier_quote: docker build -f docker/Dockerfile.sim -t nvidia/cvdp-sim:v1.0.0 .
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: A run is automatic end to end, but every code generation verdict comes from simulating
+      the submission in a pinned tool image, whose versions changed in v1.1.0.
+    source: src-github-cvdp-readme-8e894cf
+    quote: The build includes cocotb 2.0.1, pytest 8.3.2, Icarus Verilog v13_0, Yosys yosys-0.40,
+      and Verilator v5.038.
+  reproducibility_blockers: []
+  reproducibility_blockers_note: The testbench, checker and assertion categories (and a few others
+    in the commercial files) run only with a Cadence Xcelium licence, which can be bought; whether
+    that is a licence-restriction blocker is left to a specialist (review_checks).
+  harness_availability: official-harness
+  harness: cvdp_benchmark at 8e894cf, run_benchmark.py for one run and run_samples.py for n samples
+    and pass@k, with the open-source simulation image (nvidia/cvdp-sim), a Cadence verification
+    image for categories 12 to 14, entrant agent images for the agentic files, --force-copilot and
+    --force-agentic to convert formats, and an LLM subjective scorer for comprehension
+  harness_source: src-github-cvdp-readme-8e894cf
+  harness_quote: Run 5 samples for statistical reliability with Pass@1
+  harness_gotcha:
+    source: src-github-cvdp-readme-full-8e894cf
+    quote: Pass@k = 1 - (1 - c/n)^k
+  harness_gotcha_note: For k above 1 the harness reports 1 - (1 - c/n)^k, sampling with replacement,
+    not the unbiased estimator; the two agree at k = 1 but not for the pass@5 that papers such as
+    RTL-Interact report. The comprehension scorer calls an LLM through an OpenAI key, and its judge
+    model is a setting; the paper used o4-mini, and nine LBC-bench comprehension rows of April and
+    May 2026 name Gemini 3.1 Pro Preview. The README calls that scoring BLEU/ROUGE plus subjective
+    scoring, the paper BLEU and an LLM judge. The format converters can also expose the reference
+    solution or the harness to an agent (--force-agentic-include-golden,
+    --force-agentic-include-harness).
+  code_licence: Apache-2.0
+  code_licence_source: src-github-cvdp-license-8e894cf
+  code_licence_quote: Apache License Version 2.0, January 2004
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The agentic profile (execution-tests x agent-scaffold) carries the scaffold, harness, tools, sandbox,
+  # n_samples and subset; the model-graded profile (model-graded-judge x instruction-tuned-model) carries the
+  # judge model, version and prompt, which matter for cid09-10 (o4-mini in the paper, Gemini 3.1 Pro Preview on
+  # LBC-bench rows). Beyond those: the simulator (the open-source image alone, which LBC-bench reports as
+  # resolved_oss, or with Xcelium, resolved_full) and its version (Icarus Verilog v13_0 and cocotb 2.0.1 from
+  # v1.1.0); k, since the harness's pass@k is not the unbiased estimator; sampling (the paper ran Llama at
+  # T = 0.2 and top-p 0.7 and the other models at API defaults; RTL-Interact at 0.7 and 0.95); and max_steps,
+  # the tool-call or turn budget where a model or agent calls tools. Whether the agentic files were run
+  # single-turn (--force-copilot) or by an agent is subset_used plus scaffold; the release (1.0.2 or 1.1.0) is
+  # the version. The paper's own numbers rose about 3 and 1.5 points after its quality filtering, so pre-filter
+  # numbers are not comparable either.
+  material_extra:
+    - simulator
+    - simulator_version
+    - k
+    - sampling
+    - max_steps
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper reports an overall pass@1 for non-agentic code generation (Table 2), another for
+    agentic code generation (Table 3) and an average rating for comprehension (Table 4), each beside
+    its per-category columns; nothing combines the three. LBC-bench reports each of its three boards
+    as problems passed over problems attempted across the files it includes, with and without the
+    commercial-tool files.
+  source: src-arxiv-2506-14074-v1
+  quote: Model Overall cid02 cid03 cid04 cid07 cid12 cid13 cid14 cid16 Claude 3.7 Sonnet 33.56%
+headline_metric: null
+headline_metric_note: The headline is pass@1 per format, with BLEU and judge ratings for
+  comprehension; no Metric record exists for it and this task did not write one.
+secondary_axes:
+  - cost
+secondary_axes_basis:
+  reason: LBC-bench rows carry a cost column beside the pass rates.
+  source: src-github-lbc-bench-contributor-0ac27bb
+  quote: Average cost per test in USD
+
+liveness:
+  repo_last_commit: 2026-06-08
+  leaderboard_last_updated: 2026-07-26
+  reproduction_script_present: true
+  last_checked: 2026-11-18
+
+homepage: https://github.com/NVlabs/cvdp_benchmark
+repository: https://github.com/NVlabs/cvdp_benchmark
+dataset_url: https://huggingface.co/datasets/nvidia/cvdp-benchmark-dataset
+leaderboard_url: https://lbc-bench.si2.org
+
+versions:
+  - version: v1.0.0
+    label: CVDP v1.0 (initial public release)
+    version_kind: revision
+    released: 2025-06-18
+    items: 763
+    changes: The first Hugging Face release, three files (non-agentic code generation, non-agentic
+      comprehension, agentic code generation) holding the paper's 783 problems less 20 left out for
+      harness issues and licensing (763 rows by the files' own count), with the code generation
+      reference solutions withheld.
+    superseded_by: v1.0.1
+    frozen: true
+    sources:
+      - src-hf-cvdp-changelog-5b807d9
+      - src-hf-api-cvdp
+      - src-github-cvdp-readme-8e894cf
+  - version: v1.0.1
+    label: CVDP v1.0.1
+    version_kind: revision
+    items: 772
+    changes: Nine non-agentic code generation datapoints added and six harnesses enhanced; five
+      datapoints removed from internal datasets. It has no files of its own on Hugging Face, whose
+      history goes from the v1.0 files to v1.0.2; the repository's example files carry its name.
+    breaking: true
+    supersedes_version: v1.0.0
+    superseded_by: v1.0.2
+    frozen: true
+    sources:
+      - src-hf-cvdp-changelog-5b807d9
+  - version: v1.0.2
+    label: CVDP v1.0.2
+    version_kind: revision
+    released: 2025-07-22
+    items: 772
+    changes: Every file split into commercial and no-commercial variants by whether Cadence Xcelium
+      is needed; the v1.0 files were deleted from main the same day. The LBC-bench rows before May
+      2026 are on this release.
+    supersedes_version: v1.0.1
+    superseded_by: v1.0.3
+    frozen: true
+    sources:
+      - src-hf-cvdp-changelog-5b807d9
+      - src-hf-api-cvdp-tree
+  - version: v1.0.3
+    label: CVDP v1.0.3
+    version_kind: revision
+    released: 2026-03-05
+    items: 772
+    changes: One datapoint's harness fixed.
+    breaking: true
+    supersedes_version: v1.0.2
+    superseded_by: v1.0.4
+    frozen: true
+    sources:
+      - src-hf-cvdp-changelog-5b807d9
+      - src-hf-api-cvdp-tree
+  - version: v1.0.4
+    label: CVDP v1.0.4
+    version_kind: revision
+    released: 2026-03-05
+    items: 772
+    changes: Version pinning fixed for cocotb, pytest and the Docker images, added with v1.0.3 in
+      one commit.
+    supersedes_version: v1.0.3
+    superseded_by: v1.1.0
+    frozen: true
+    sources:
+      - src-hf-cvdp-changelog-5b807d9
+      - src-hf-api-cvdp-tree
+  - version: v1.1.0
+    label: CVDP v1.1.0
+    version_kind: revision
+    released: 2026-05-01
+    items: 872
+    changes: Harnesses updated for cocotb 2.0.1, pytest 8.3.2, Icarus Verilog v13_0, Yosys 0.40 and
+      Verilator 5.038 in a new open-source simulation image, and prompts and synthesis thresholds
+      recalibrated for three datapoints (2026-05-01); the 100-problem heavy-context agentic set
+      added with sanitized git bundles of 40 open-source repositories (2026-06-08, the date Si2
+      gives the release) and split into commercial and no-commercial files (2026-07-21); a Claude
+      Code agent setup added to the harness.
+    breaking: true
+    supersedes_version: v1.0.4
+    frozen: true
+    sources:
+      - src-hf-cvdp-changelog-5b807d9
+      - src-hf-api-cvdp-tree
+      - src-github-cvdp-readme-8e894cf
+      - src-hf-cvdp-heavy-readme-5b807d9
+      - src-si2-cvdp-1-1-0
+
+subsets:
+  - id: cvdp#non-agentic-code-generation
+    label: Non-agentic code generation
+    items: 494
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: Non-Agentic problems are evaluated in a single-turn setting where the prompt and
+          context are fully provided to the model.
+      - source: src-hf-datasets-server-cvdp-size
+        quote: '"config":"cvdp_nonagentic_code_generation_no_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":4870040,"num_bytes_memory":4867959,"num_rows":302'
+    notes: Eight categories in one prompt each, easy and medium only, scored by pass@1 (Table 2,
+      with an overall rate); 494 in the paper, 489 public since v1.0.2 in two files, 302
+      no-commercial and 187 needing Xcelium.
+  - id: cvdp#non-agentic-cid02
+    label: Non-agentic cid02, RTL code completion
+    parent: cvdp#non-agentic-code-generation
+    items: 94
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid02 RTL - Code Completion 94 0
+    notes: Skeleton code to complete into the full RTL module. Non-agentic only.
+  - id: cvdp#non-agentic-cid03
+    label: Non-agentic cid03, natural-language specification to RTL
+    parent: cvdp#non-agentic-code-generation
+    items: 78
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid03 RTL - Natural Language Spec to Code 78 37
+  - id: cvdp#non-agentic-cid04
+    label: Non-agentic cid04, RTL code modification
+    parent: cvdp#non-agentic-code-generation
+    items: 56
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid04 RTL - Code Modification 56 26
+  - id: cvdp#non-agentic-cid07
+    label: Non-agentic cid07, code improvement (linting, quality of results)
+    parent: cvdp#non-agentic-code-generation
+    items: 41
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid07 RTL - Code Improvement (Linting/QoR) 41 0
+    notes: Lint fixes or area or latency reductions to stated criteria. Non-agentic only.
+  - id: cvdp#non-agentic-cid12
+    label: Non-agentic cid12, testbench stimulus generation
+    parent: cvdp#non-agentic-code-generation
+    items: 68
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid12 Design Verification - Testbench Stimulus Gen. 68 18
+    notes: Needs Cadence Xcelium.
+  - id: cvdp#non-agentic-cid13
+    label: Non-agentic cid13, testbench checker generation
+    parent: cvdp#non-agentic-code-generation
+    items: 53
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid13 Design Verification - Testbench Checker Gen. 53 18
+    notes: Needs Cadence Xcelium; the paper's lowest pass rates.
+  - id: cvdp#non-agentic-cid14
+    label: Non-agentic cid14, assertion generation
+    parent: cvdp#non-agentic-code-generation
+    items: 68
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid14 Design Verification - Assertion Generation 68 30
+    notes: Needs Cadence Xcelium.
+  - id: cvdp#non-agentic-cid16
+    label: Non-agentic cid16, debugging and bug fixing
+    parent: cvdp#non-agentic-code-generation
+    items: 36
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid16 Design Verification - Debugging / Bug Fixing 36 11
+  - id: cvdp#agentic-code-generation
+    label: Agentic code generation
+    items: 166
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: Agentic problems run inside a Docker container, allowing an agent to inspect a
+          mini-repository and invoke tools (e.g., simulators).
+      - source: src-hf-datasets-server-cvdp-size
+        quote: '"config":"cvdp_agentic_code_generation_no_commercial","num_bytes_original_files":null,"num_bytes_parquet_files":966714,"num_bytes_memory":3517537,"num_rows":92'
+    notes: Seven categories as mini-repositories for an agent, easy to hard, scored by pass@1 (Table
+      3, run single-turn in the paper); 166 in the paper, 160 public in two files, 92 no-commercial
+      and 68 needing Xcelium.
+  - id: cvdp#agentic-cid03
+    label: Agentic cid03, natural-language specification to RTL
+    parent: cvdp#agentic-code-generation
+    items: 37
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid03 RTL - Natural Language Spec to Code 78 37
+  - id: cvdp#agentic-cid04
+    label: Agentic cid04, RTL code modification
+    parent: cvdp#agentic-code-generation
+    items: 26
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid04 RTL - Code Modification 56 26
+  - id: cvdp#agentic-cid05
+    label: Agentic cid05, specification to RTL with module reuse
+    parent: cvdp#agentic-code-generation
+    items: 26
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid05 RTL - Spec to RTL (Module Reuse) 0 26
+      - source: src-arxiv-2506-14074-v1
+        quote: These problems require composing multiple
+    notes: A new top-level module composed from existing RTL modules with glue logic. Agentic only.
+  - id: cvdp#agentic-cid12
+    label: Agentic cid12, testbench stimulus generation
+    parent: cvdp#agentic-code-generation
+    items: 18
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid12 Design Verification - Testbench Stimulus Gen. 68 18
+    notes: Needs Cadence Xcelium.
+  - id: cvdp#agentic-cid13
+    label: Agentic cid13, testbench checker generation
+    parent: cvdp#agentic-code-generation
+    items: 18
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid13 Design Verification - Testbench Checker Gen. 53 18
+    notes: Needs Cadence Xcelium.
+  - id: cvdp#agentic-cid14
+    label: Agentic cid14, assertion generation
+    parent: cvdp#agentic-code-generation
+    items: 30
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid14 Design Verification - Assertion Generation 68 30
+    notes: Needs Cadence Xcelium.
+  - id: cvdp#agentic-cid16
+    label: Agentic cid16, debugging and bug fixing
+    parent: cvdp#agentic-code-generation
+    items: 11
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid16 Design Verification - Debugging / Bug Fixing 36 11
+  - id: cvdp#non-agentic-code-comprehension
+    label: Non-agentic code comprehension
+    items: 123
+    scored_separately: true
+    domain_override:
+      primary: code/code-understanding
+      secondary:
+        - engineering-design/circuit-eda
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: Code Comprehension includes matching specifications to RTL or testbench code (and
+          vice versa), as well as technical question answering on both RTL and testbench content.
+      - source: src-github-lbc-bench-leaderboards-0ac27bb
+        quote: 'nonagentic_code_comprehension: 91.43/123 = 74.33%.'
+    notes: Four categories, non-agentic only, scored by BLEU (correspondence) and an LLM judge
+      (question answering) and reported as an average rating (Table 4). An answer about given HDL
+      code is submitted, not a design, hence the override, which its four categories inherit. The
+      reference answers are in the public file.
+  - id: cvdp#non-agentic-cid06
+    label: Non-agentic cid06, RTL to or from specification correspondence
+    parent: cvdp#non-agentic-code-comprehension
+    items: 34
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid06 Correspondence - RTL to/from Specification 34 0
+    notes: Scored by BLEU against the reference.
+  - id: cvdp#non-agentic-cid08
+    label: Non-agentic cid08, testbench to or from test plan correspondence
+    parent: cvdp#non-agentic-code-comprehension
+    items: 29
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid08 Correspondence - Testbench to/from Test Plan 29 0
+    notes: Scored by BLEU against the reference.
+  - id: cvdp#non-agentic-cid09
+    label: Non-agentic cid09, question answering on RTL
+    parent: cvdp#non-agentic-code-comprehension
+    items: 34
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid09 Question & Answer - RTL 34 0
+    notes: Scored by an LLM judge against the reference.
+  - id: cvdp#non-agentic-cid10
+    label: Non-agentic cid10, question answering on testbenches
+    parent: cvdp#non-agentic-code-comprehension
+    items: 26
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2506-14074-v1
+        quote: cid10 Question & Answer - Testbench 26 0
+    notes: Scored by an LLM judge against the reference.
+  - id: cvdp#agentic-heavy-code-generation
+    label: Agentic heavy-context code generation (v1.1.0)
+    items: 100
+    scored_separately: true
+    evidence:
+      - source: src-hf-cvdp-heavy-readme-5b807d9
+        quote: 'Rows supported: 100 Repositories: 40'
+      - source: src-si2-cvdp-1-1-0
+        quote: Includes an additional 100 data points from 40+ open-source repositories having
+          manually placed bugs and larger sized problems.
+      - source: src-github-lbc-bench-leaderboards-0ac27bb
+        quote: '"name": "code-generation-heavy-context"'
+    notes: Added in v1.1.0, agentic only and all hard; each problem is a git workspace from one of
+      40 open-source repositories, sanitized and shipped as bundles, and cannot be run single-turn.
+      75 no-commercial and 25 commercial; most are debugging (file counts, not quoted). LBC-bench
+      scores it as its own board.
+subsets_note: The paper's three formats are subsets, each with its task categories as children,
+  because Tables 2, 3 and 4 score every category separately within its format; a category offered in
+  both formats (cid03, cid04, cid12, cid13, cid14, cid16) is two subsets. Category counts are the
+  paper's Table 1; the public files hold up to two fewer per category (11 fewer in all, row counts
+  of the v1.1.0 files). The commercial and no-commercial files, split in v1.0.2 by whether Cadence
+  Xcelium is needed, are a tooling split recorded in the size rows, not subsets; the heavy-context
+  set is a fourth subset, of v1.1.0 only.
+subsets_source: src-arxiv-2506-14074-v1
+subsets_quote: 'Total # of Problems 617 166'
+lineage:
+  role: root
+lineage_note: Only what a source read states. CVDP shares a maintainer with VerilogEval but none of
+  its items, and the paper presents it as a new benchmark beside VerilogEval and RTLLM, so neither
+  is lineage. LBC-bench is Si2's leaderboard on CVDP releases; its README calls it a benchmark whose
+  initial focus is CVDP, and Si2's coalition plans to extend the problems to new categories and
+  design domains, but no extended problem set was found, so no fork is recorded (review_checks). The
+  heavy-context problems are a subset of v1.1.0, by the same maintainer in the same dataset.
+
+tags:
+  - verilog
+  - systemverilog
+  - rtl-generation
+  - design-verification
+  - testbench-generation
+  - hardware-description-language
+  - cocotb
+  - agentic
+  - pass-at-k
+  - llm-judge
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T04)
+  added_on: 2026-11-18
+  last_verified: 2026-11-18
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2506-14074-v1
+    - src-arxiv-2506-14074
+    - src-github-cvdp-readme-8e894cf
+    - src-github-cvdp-readme-full-8e894cf
+    - src-github-cvdp-license-8e894cf
+    - src-hf-api-cvdp
+    - src-hf-api-cvdp-tree
+    - src-hf-datasets-server-cvdp-size
+    - src-hf-cvdp-changelog-5b807d9
+    - src-hf-cvdp-license-5b807d9
+    - src-hf-cvdp-notice-5b807d9
+    - src-hf-cvdp-heavy-readme-5b807d9
+    - src-github-lbc-bench-readme-0ac27bb
+    - src-github-lbc-bench-contributor-0ac27bb
+    - src-github-lbc-bench-leaderboards-0ac27bb
+    - src-si2-cvdp-1-1-0
+    - src-arxiv-2610-41225-v1
+    - src-arxiv-2608-12635
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, its windows kept clear of the authors' names
+    and e-mail addresses and of the reference list, and its abstract page for the date; the README, README_FULL
+    and LICENSE at commit 8e894cf74414ab1eaea1e2b4e80a02f123df07b6, read raw; Hugging Face's API record,
+    file listing and dataset viewer size record for nvidia/cvdp-benchmark-dataset (never authenticated)
+    and its CHANGELOG, LICENSE, NOTICE and heavy-bundle README at commit 5b807d945f6a99aa645f7e43a64a2115e281b4bf;
+    the LBC-bench repository's README, contributor guide and leaderboard data at commit 0ac27bbebd2d8cf222cc97f998664f6977cdf20c
+    (the data withheld from archiving, as it names who ran each row); Si2's CVDP 1.1.0 post (withheld:
+    its byline names a person); RTL-Interact's v1 PDF and GateTruth's abstract page (DOIs). The v1.0,
+    v1.0.2 and v1.1.0 JSONL files were downloaded to count rows, categories and reference fields, and
+    GitHub's and Hugging Face's commit histories were read for dates; none of that is quoted. Si2's kickoff
+    post, coalition page and LBC-bench launch post were read and not recorded.
+  confidence: medium
+  review_checks:
+    - check: Family. The submissions are Verilog and SystemVerilog, and CVDP borrows SWE-bench's
+        repository-and-harness design, but what the harness judges is a circuit or a testbench in
+        simulation, and circuit-eda's definition names verifying. This is the HDL boundary
+        VerilogEval's entry logged, which names CVDP; it is not logged again.
+      field: domain
+      source: src-arxiv-2506-14074-v1
+      quote: By contrast, semiconductor hardware design has not benefited as significantly from
+        LLMs.
+    - check: The comprehension subset's override to code/code-understanding rests on its answers
+        being about code rather than designs; by the same boundary a reviewer may keep it in
+        circuit-eda. agents-tooluse/software-agents is secondary for the agentic format although its
+        definition says software engineering.
+      field: subsets
+    - check: Subset modelling. Three formats with their categories as children (19), by 04 S4's
+        scored separately test on Tables 2 to 4, and the v1.1.0 heavy-context set as a fourth subset
+        rather than a variant; the commercial and no-commercial files are not subsets, though
+        LBC-bench reports a pass rate on the no-commercial files alone. A flatter tree of 13
+        categories is the alternative.
+      field: subsets
+      source: src-hf-cvdp-changelog-5b807d9
+      quote: Split all datasets into commercial and non-commercial variants
+    - check: Versions. Six releases are recorded as revisions from the CHANGELOG. v1.0.1 never had
+        files of its own on Hugging Face, and breaking is false for v1.0.2 (a file split) and v1.0.4
+        (version pinning) by judgement. No public version holds the paper's 783 problems (763 in
+        v1.0.0, 772 from v1.0.2), so the paper's tables cannot be reproduced exactly on public data.
+      field: versions
+      source: src-github-cvdp-readme-8e894cf
+      quote: Twenty datapoints were omitted from the initial public release release due to test
+        harness issues and licensing restrictions.
+    - check: v1.1.0's date. Hugging Face added the v1.1.0 files on 2026-05-01 (and LBC-bench's news
+        gives May 1), but Si2's post dates the release to 2026-06-08, when the heavy-context bundles
+        were added; released takes the first.
+      field: versions
+      source: src-si2-cvdp-1-1-0
+      quote: The latest version called CVDP 1.1.0, released on June 8, 2026, has made the following
+        improvements targeting AI agents
+    - check: maintainer-competes-on-own-benchmark rests on NVIDIA's model in rows run from
+        nvidia.com on Si2's board, not on the paper, which evaluates no NVIDIA model. Whether a
+        maintainer's entries on a third-party board count, and whether the coalition's membership
+        (it includes model developers) matters, were not settled.
+      field: governance.independence_flags
+      source: src-github-lbc-bench-leaderboards-0ac27bb
+      quote: '"Model: nemotron-3-ultra", "Agent:", "Org: NVIDIA"'
+    - check: submission_process reads Si2, which runs the board, as the maintainer of the channel;
+        NVIDIA maintains the dataset and harness. Since March 2026 every new row is unverified
+        (checked false), so most current numbers are reviewed pull requests, not Si2 runs.
+      field: governance.submission_process
+      source: src-github-lbc-bench-contributor-0ac27bb
+      quote: Si2 verification flag
+    - check: contamination_risk medium. The harnesses and the comprehension answers are public, some
+        datapoints derive from open-source code, and the heavy-context problems are built on public
+        repositories at recorded commits, so the code they ask for may sit in training corpora;
+        nothing measures it. A reviewer may judge high, at least for the heavy-context subset.
+      field: data.contamination_risk
+      source: src-hf-cvdp-heavy-readme-5b807d9
+      quote: See `manifest.txt` for original-to-sanitized commit mappings.
+    - check: ceiling measured-ceiling rests on the maintainers' own sanity check; with the reference
+        solutions withheld no one else can rerun it, or audit how strict the harnesses are.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2608-12635
+      quote: "A comparable audit of NVIDIA's CVDP benchmark is structurally impossible: its public release
+        withholds reference solutions, removing the golden RTL mutation testing requires."
+    - check: The testbench, checker and assertion categories need a Cadence Xcelium licence; whether
+        that is a licence-restriction blocker beside automatable-with-simulator needs a specialist,
+        as for EngDesign's MATLAB and Cadence tasks.
+      field: execution.reproducibility_blockers
+      specialist: true
+      source: src-arxiv-2506-14074-v1
+      quote: Some tasks (cid12–14) require commercial tools, currently Cadence Xcelium
+    - check: capability is empty, by HumanEval's logged gap; verification work (stimulus, checkers,
+        assertions), a third of the problems, may need a term of its own.
+      field: capability
+    - check: LBC-bench calls itself a benchmark and plans problems beyond CVDP; once an extended set
+        is released it may need its own entry as a fork maintained by Si2. Today its boards run CVDP
+        releases.
+      field: lineage
+      source: src-github-lbc-bench-readme-0ac27bb
+      quote: LBC-bench provides performance data for generation and comprehension of HDLs on design
+        problems by AI models and agents.
