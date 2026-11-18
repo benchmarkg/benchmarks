@@ -1,0 +1,579 @@
+# data/benchmarks/engineering-design/cadeval.yaml
+#
+# P1-S8-T04, engineering-design entry 10. Promotes the Epoch stub data/benchmarks/_stubs/cadeval.yaml (Epoch's string
+# "CadEval", source file cad_eval_external.csv, score column "Overall pass (%)", in the ECI). There is no paper. Filled
+# from the repository, which sits under a person's GitHub account: its README and scripts/process_results.py at the
+# head commit 2ef2fc0e (2025-05-19, the last push), and config.yaml and dashboard/dashboard_data.json at commit
+# 4d04ad5b (2025-04-23), which hold the published run of 2025-04-22; GitHub's API record of the repository; the
+# maintainer's write-up of 2025-04-23 on a personal site; Epoch's benchmark page, its benchmark export and the ECI's
+# included-benchmarks page; the README of CadQueryEval at commit 6985f357 (2026-10-04), another maintainer's CadQuery
+# derivative; and the CAD-bench paper, an anonymous 2026 submission that cites CadEval. Read but not cited: three task
+# YAMLs (task1, task12, task25), the commit list (GitHub API) and the maintainer's results page, Epoch's source link,
+# whose scaffolded Source has no extract. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# One benchmark with one task set (04 S4): the 25 tasks were written in April 2025 and later commits add models,
+# scripts and dashboard fixes; the May 2025 runs of DeepSeek and Qwen3 models are new rows, not a new version.
+# CadQueryEval re-uses the 25 tasks and references in CadQuery under another maintainer, with its own board, DOI and
+# dataset, so it is a fork in `lineage`. The Phase-0 survey graded CadEval W (meets the letter of the bar only); the
+# evidence of use is recorded as found, in `lifecycle` and the review checks.
+
+id: cadeval
+name: CadEval
+aliases: []
+aliases_note: >
+  Epoch's string is the name itself, and the README's title adds "Text-to-CAD Evaluation Framework". Not
+  CadQueryEval (its CadQuery derivative, a fork below), nor Parametric CAD Bench, CADBench, CAD-bench,
+  BenchCAD or Text2CAD-Bench, which are unrelated benchmarks.
+tagline: LLMs write OpenSCAD for 25 simple mechanical parts; a part passes if its rendered mesh
+  matches a reference within 1 mm.
+description: >
+  A text-to-CAD benchmark built by one person in April 2025 and published as a GitHub repository with
+  a results dashboard. Each of the 25 tasks describes a single, simple mechanical part in prose, usually
+  as numbered modelling steps with every dimension given (a hex nut, a plate with two holes, an eye bolt,
+  a T-handle tap holder, a silo with a hole through it), written so that only one geometry is a correct
+  reading. The maintainer modelled each reference part in Autodesk Fusion 360 and exported it as an STL
+  mesh, and tallied how many manual operations it took, from one to five. A model receives the description
+  with a system prompt in one API call and must return an OpenSCAD script, which OpenSCAD renders to an
+  STL; Zoo's text-to-CAD service, the one non-LLM entrant, returns the STL directly. The rendered mesh
+  is aligned to the reference with ICP and passes only if all six checks hold: watertight, the expected
+  number of connected components, the aligned bounding box within 1 mm, volume within 2%, Chamfer distance
+  at most 1 mm and 95th-percentile Hausdorff distance at most 1 mm. The headline is the overall pass rate
+  over every task and replicate, with failed generations and renders counted as failures, reported beside
+  estimated cost and time per attempt. The published run of 2025-04-22 tested 15 systems with two replicates
+  per task: o3 led at 74% (37 of 50), reasoning models took the top six places, Zoo scored 20%, and two
+  tasks (an eye bolt and a square-to-circle loft) were never passed. Epoch AI republishes those 15 rows
+  on its benchmarking hub and fits them in its Capabilities Index. The repository has not been pushed
+  since May 2025; CadQueryEval, a separate CadQuery port of the same 25 tasks, ran 91 models in 2026 and
+  was archived as saturated when four scored 100%.
+self_description:
+  source: src-github-cadeval-readme-2ef2fc0
+  quote: This repository contains a framework for evaluating the capability of Large Language Models
+    (LLMs) to generate 3D models (specifically OpenSCAD code or direct STL files) from textual
+    descriptions.
+external_ids:
+  epoch: CadEval
+external_ids_source: src-epoch-benchmark-data
+external_ids_quote: CadEval,True,cad_eval_external.csv,Overall pass (%),1.0,0.0,1.0,2025-04-22,
+released: 2025-04-22
+released_note: The date of the first published run, which Epoch's export and the stub carry, the
+  dashboard's run id 20250422_095709 and the write-up state; the write-up was posted the next day.
+  The repository was created on 2025-03-31 and the tasks were added from 2025-04-04 (GitHub API).
+released_source: src-cadeval-blog-teaching-llms-solid-model
+released_quote: Here are the results from an eval run executed on April 22, 2025.
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: engineering-design/cad-geometry-generation
+  primary_basis:
+    reason: What is scored is a designed part, the geometry the model's OpenSCAD script renders to,
+      judged against a reference model of the specified part. That is the family's inclusion test
+      (geometry judged against engineering criteria) and the subdomain's definition (CAD geometry
+      that satisfies a stated specification); the family's own example is this benchmark.
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: Assess the reliability and geometric accuracy of various LLMs in producing single, simple
+      mechanical parts based on text prompts
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: The model writes an OpenSCAD program, but the program is the means; the checks score the
+      mesh it renders to against the reference, and no test exercises the program. The code family's
+      exclusion ("code is the means to a result in another field") applies.
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: Calculates the Chamfer distance between generated and reference point clouds after ICP
+      alignment
+  - term: engineering-design/structural-mechanical-design
+    reason: The parts are mechanical (a nut, a gasket, a clamp, a crank plate), but every dimension
+      is given; nothing is designed against loads or material constraints.
+  - term: reasoning-general/spatial-reasoning
+    reason: The write-up names poor spatial reasoning as one failure mode, but the tasks are CAD
+      parts scored by geometric fidelity, not spatial puzzles posed to study the ability.
+    source: src-cadeval-blog-teaching-llms-solid-model
+    quote: Task 11 is a good example of poor spatial reasoning.
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: An attempt passes only when its mesh is close to the reference by volume, aligned
+      bounding box, Chamfer distance and percentile Hausdorff distance, each within a fixed
+      tolerance; the score is closeness to a target, and the term's own example is this benchmark.
+    source: src-github-cadeval-config-4d04ad5
+    quote: 'geometry_check: bounding_box_tolerance_mm: 1.0 icp_fitness_threshold: 1.0 chamfer_threshold_mm:
+      1.0 hausdorff_threshold_mm: 1.0 volume_threshold_percent: 2.0 evaluation: num_replicates: 2'
+capability_considered_and_rejected:
+  - term: constraint-satisfaction
+    reason: Any one failed check fails the attempt, which meets the inclusion test's letter, but
+      four of the six conditions are tolerances of closeness to one reference shape rather than the
+      prompt's stated requirements, and the sources claim geometric accuracy, which
+      generation-fidelity carries (review_checks).
+    source: src-cadeval-blog-teaching-llms-solid-model
+    quote: all of the geometric checks must be passed.
+  - term: spatial-reasoning
+    reason: Turning step-by-step prose into placed solids needs spatial inference, and the write-up
+      blames poor spatial reasoning for one task's failures, but the scored quantity is the fidelity
+      of the result to a reference, which the term's exclusion sends elsewhere (review_checks).
+    source: src-cadeval-blog-teaching-llms-solid-model
+    quote: Task 11 is a good example of poor spatial reasoning.
+  - term: instruction-following
+    reason: The system prompt gives directions (one part, manifold, at the origin, code only), but
+      compliance is scored only through the geometry, and the sources claim accuracy, not
+      compliance.
+  - term: reliability-consistency
+    reason: Each task runs twice in the published run, but the replicates are averaged into the pass
+      rate, which the term's exclusion rules out.
+    source: src-cadeval-blog-teaching-llms-solid-model
+    quote: In the eval run, 15 different models were tested on the 25 tasks with 2 replicates were
+      task.
+  - term: tool-use
+    reason: No tools are offered; the model answers in one API call.
+    source: src-cadeval-blog-teaching-llms-solid-model
+    quote: For each task and model, the eval sends the text prompt (along with a system prompt) to
+      the LLM via API.
+
+evaluation_method:
+  - constraint-check
+  - domain-metric
+evaluation_method_note: >
+  constraint-check for the validity gates: the script must generate and render, and the mesh must be watertight
+  (manifold, by Open3D) and have the expected number of connected components (cadeval is the term's example
+  of validation before any tolerance is measured). domain-metric for the four comparisons with the reference
+  after ICP alignment, measures of 3D shape comparison each thresholded per attempt, as posebusters reads
+  its RMSD criterion: Chamfer distance and 95th-percentile Hausdorff distance at most 1 mm, volume within
+  2% and the aligned bounding box within 1 mm. The headline is the share of attempts meeting all six.
+evaluation_method_basis:
+  reason: The overall pass is the conjunction of generation, rendering and every executed check,
+    computed by the results processor.
+  source: src-github-cadeval-process-results-2ef2fc0
+  quote: 'Non-Zoo Pass Criteria: SCAD Gen Success AND Render Success AND Checks Executed AND All Executed
+    Checks Passed'
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: The answer is a shape, not a number; the tolerances apply to quantities measured from
+      it, which the taxonomy reads as domain-metric in posebusters (review_checks).
+  - term: composite
+    reason: The headline is a per-attempt conjunction of the checks, not a weighted or averaged
+      combination of sub-scores, which the term's inclusion test asks (as posebusters).
+  - term: execution-tests
+    reason: OpenSCAD runs the script, but rendering only shows that it builds; the verdict comes
+      from the geometry checks, not from tests of behaviour.
+  - term: model-graded-judge
+    reason: No model takes part in grading; the checks are geometry computations in Open3D.
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: Checks if the mesh is manifold using Open3D.
+designed_for_subjects:
+  - instruction-tuned-model
+  - full-product-pipeline
+designed_for_subjects_note: instruction-tuned-model for the LLM path, one API call with a system
+  prompt and the task text, with no tools, loop or retries; thinking models (Claude 3.7 Sonnet at a
+  2,500-token budget, OpenAI's o-series) run through the same single call. full-product-pipeline for
+  Zoo's text-to-CAD, a shipped service run through its CLI that returns an STL directly and whose
+  dataset and model are proprietary.
+designed_for_subjects_basis:
+  reason: The README names both paths, provider APIs for LLMs and a command-line product for Zoo.
+  source: src-github-cadeval-readme-2ef2fc0
+  quote: Supports standard LLMs (via API like OpenAI, Anthropic, Google) and specialized models like
+    Zoo ML's Text-to-CAD (via CLI).
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The harness prompts the model once and renders what comes back; there is no multi-turn
+      loop, which the term's exclusion sends to instruction-tuned-model.
+  - term: reasoning-model
+    reason: The README notes that the thinking budget moves results, but the benchmark is not built
+      around a reasoning setting; the budget is a run condition (comparability), as for mmlu-pro.
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: Initial tests suggest Anthropic's `thinking.budget_tokens` significantly impacts
+      performance
+  - term: tool-augmented-model
+    reason: No tools are offered.
+  - term: agent-scaffold
+    reason: Entrants supply nothing but a model entry in config.yaml; the maintainer's script drives
+      every model the same way.
+  - term: hosted-inference-endpoint
+    reason: Models are reached through provider APIs, but the subject is the model, not the serving
+      path; Zoo, the one served product, is full-product-pipeline.
+observed_subjects:
+  values:
+    - reasoning-model
+    - instruction-tuned-model
+    - full-product-pipeline
+  basis: The published run's 15 systems are 14 provider models and Zoo's text-to-CAD. In its
+    dashboard data the top six are reasoning models (o3, Gemini 2.5 Pro, o4-mini, o1, Claude 3.7
+    Sonnet with thinking, o3-mini) and the seventh is Claude 3.5 Sonnet, where the write-up says the
+    top seven are all reasoning models. The May 2025 runs added DeepSeek and Qwen3 reasoning models.
+  source: src-cadeval-blog-teaching-llms-solid-model
+
+lifecycle: dormant
+lifecycle_basis:
+  reason: Nobody has maintained the benchmark since the last push on 2025-05-19, nothing ended it
+    formally, and no results against it have been produced since May 2025 in the sources found. The
+    maintainer's dashboard holds the runs of 2025-04-22 and 2025-05-19; Epoch's 15 rows are the
+    first run's, and the ECI still fits on them (review_checks); no 2025-2026 paper was found that
+    runs it. CadQueryEval ran the same 25 tasks through September 2026, but in CadQuery, under
+    another maintainer, as its own benchmark.
+  source: src-github-api-cadeval
+  quote: '"created_at":"2025-03-31T18:18:18Z","updated_at":"2026-10-17T12:55:30Z","pushed_at":"2025-05-19T22:06:45Z"'
+activity: no-submission-channel
+activity_basis:
+  reason: A download-and-run framework whose only results are the maintainer's own runs on the
+    dashboard; neither the README nor the write-up describes a way for others to enter a result.
+  source: src-github-cadeval-readme-2ef2fc0
+  quote: python scripts/run_evaluation.py
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: o3 (o3-2025-04-16, default prompt)
+    source: src-github-cadeval-dashboard-data-4d04ad5
+    observed_on: 2026-11-18
+    quote: '"o3-2025-04-16": { "default": { "total_replicates": 50, "scad_generation_success_count": 49,
+      "render_success_count": 48, "checks_run_count": 48, "overall_pass_count": 37,'
+    note: The published run's top row, 37 of 50 attempts passed (74%); Epoch's export carries it as
+      0.74 for o3 at medium effort.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each task's reference STL, which the maintainer modelled in Autodesk
+  Fusion 360 and exported, with its bounding box and component count in the task file; public in the
+  repository but never shown to the model.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The tasks, references, prompts, thresholds and harness are public in one repository; a run
+    needs provider API keys and a local OpenSCAD.
+  source: src-github-cadeval-readme-2ef2fc0
+  quote: Download and install OpenSCAD (version 2021.01 or later recommended)
+
+task:
+  exists: true
+  input:
+    - a prose description of one simple mechanical part, usually as numbered modelling steps with
+      every dimension in mm
+    - a system prompt from config.yaml (the default asks for a single manifold part at the origin,
+      code only; three alternative templates ship beside it)
+  output: An OpenSCAD script, which OpenSCAD renders (Manifold backend, 120-second timeout) to an
+    STL; Zoo's text-to-CAD returns the STL itself.
+  scoring: The STL is aligned to the reference mesh with ICP and passes if it is watertight, has the
+    expected number of components, its aligned bounding box is within 1 mm and its volume within 2%
+    of the reference's, and its Chamfer distance and 95th-percentile Hausdorff distance are at most
+    1 mm. The headline is the share of attempts that pass over all tasks and replicates, failed
+    generations and renders counting as failures.
+  tests_hidden_from_system: true
+  tests_hidden_from_system_note: The model sees only the prompt; the reference meshes and
+    requirements sit in the public repository beside it.
+  reference_solution: true
+  source: src-github-cadeval-config-4d04ad5
+  quote: 'Create a valid OpenSCAD script that models the following 3D object, described below: {description}'
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The 25 task files and their reference STLs are in the repository's tasks/ and
+    reference/ directories, with no registration; no licence is stated for them (dataset_licence).
+  access_basis:
+    reason: Each task file points at its reference mesh in the public repository.
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: Path to the corresponding ground truth STL model in `reference/`.
+  refresh: static
+  refresh_basis:
+    reason: One set of 25 tasks; the sources read record no change to it after the published run,
+      whose later commits add models and fix the dashboard (review_checks).
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: The current evaluation suite consists of 25 tasks.
+  data_provenance:
+    - expert-authored
+  data_provenance_note: One person wrote the 25 descriptions, so that each admits one geometry, and
+    modelled every reference in Fusion 360; the sources do not state that person's CAD background
+    beyond doing the modelling (review_checks).
+  data_provenance_source: src-cadeval-blog-teaching-llms-solid-model
+  data_provenance_quote: For each task, I designed a reference CAD model using Autodesk Fusion 360
+    and then exported a STL mesh file.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The scored content is public: the descriptions and reference meshes have been in the repository since
+    April 2025, with no canary string, and the same 25 parts, with CadQuery references, are in CadQueryEval's
+    public dataset. A mesh is not the OpenSCAD script a model must write, but descriptions and target
+    geometry are trainable, and no source evidences them in a training set. medium because the route is
+    plausible, not shown.
+  contamination_risk_source: src-github-cadeval-readme-2ef2fc0
+  contamination_risk_quote: Path to the corresponding ground truth STL model in `reference/`.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: The pass rate is bounded at 100%, and Epoch's export sets the ceiling at
+    1.0. The README warns that ICP alignment can fail on correct parts, the write-up puts false
+    negatives at about 5%, and CadQueryEval found that task 6's description admits two readings, so
+    under CadEval's single references and unseeded alignment the reachable score may be below 100%;
+    no source reports an oracle run (review_checks).
+  ceiling_anchor_type_basis:
+    reason: The headline is a share of attempts, bounded at 1, and no measured ceiling exists.
+    source: src-epoch-benchmark-data
+    quote: CadEval,True,cad_eval_external.csv,Overall pass (%),1.0,0.0,1.0,2025-04-22,
+  dataset_licence: null
+  dataset_licence_note: The repository has no LICENSE file at the commits read and GitHub reports no
+    licence, so the tasks and reference meshes carry no stated licence (review_checks).
+  size:
+    - count: 25
+      unit: tasks, each a single mechanical part with one reference STL
+      source: src-github-cadeval-readme-2ef2fc0
+      quote: The current evaluation suite consists of 25 tasks.
+    - count: 50
+      unit: attempts per system (25 tasks, two replicates)
+      subset: the published run of 2025-04-22
+      source: src-cadeval-blog-teaching-llms-solid-model
+      quote: In the eval run, 15 different models were tested on the 25 tasks with 2 replicates were
+        task.
+  size_note: The tasks are grouped by the number of manual Fusion 360 operations, one to five. The
+    write-up says five tasks per level; the published run's complexity analysis counts 150, 120,
+    180, 150 and 150 attempts at levels one to five (15 systems, two replicates), which is 5, 4, 6,
+    5 and 5 tasks (review_checks). Its pass rate falls from 42% at one operation to 16% at five,
+    with level three highest (57%); it is an analysis of the one set, not a separately released
+    subset.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The repository's owner, an individual (a personal GitHub account)
+  maintainer_basis:
+    reason: The write-up's author says they wrote the 25 tasks and modelled every reference; the
+      repository, the results page and the write-up sit in that person's own GitHub account and
+      site, and no organisation is named anywhere read.
+    source: src-cadeval-blog-teaching-llms-solid-model
+    quote: I wrote 25 total CAD tasks which ranged in difficulty from a single operation
+  maintainer_type: individual
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainer chose the models, ran them and published the dashboard (15
+    systems on 2025-04-22, then DeepSeek and Qwen3 models on 2025-05-19). Epoch republishes the
+    first run's rows and lists CadEval among the benchmarks administered by their creator.
+  submission_process_source: src-cadeval-blog-teaching-llms-solid-model
+  submission_process_quote: In the eval run, 15 different models were tested on the 25 tasks with 2
+    replicates were task.
+  independence_flags: []
+  independence_flags_note: No flag could be evidenced. Grading is programmatic, with no judge model;
+    the ranked systems are model providers' APIs and one start-up's product (Zoo), and no source
+    read names an affiliation for the maintainer or any funding. no-known-conflict is not tagged
+    because the maintainer's employment and funding were not read (the write-up links a CV, which
+    was not opened).
+  independence_assessed: true
+  known_limitation:
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: this number is insufficient to represent the full spectrum of CAD modeling challenges
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: A run is model-API spend plus local OpenSCAD renders and Open3D checks on a
+    CPU; the dashboard reports an estimated cost and time per attempt.
+  compute_tier_source: src-cadeval-blog-teaching-llms-solid-model
+  compute_tier_quote: The time to make the API call and receive the OpenSCAD is much, much greater
+    than the time to render the STL, which is less than 1 second.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: One script generates, renders and checks every attempt, and a second builds the
+      dashboard data, with no human step.
+    source: src-github-cadeval-readme-2ef2fc0
+    quote: python scripts/run_evaluation.py
+  reproducibility_blockers: []
+  harness_availability: official-harness
+  harness: scripts/run_evaluation.py (or run_evaluation_parallel.py), which calls
+    scripts/generate_scad.py, render_scad.py and geometry_check.py, then scripts/process_results.py
+    for the dashboard, in the repository's conda environment with OpenSCAD 2021.01 or later
+  harness_source: src-github-cadeval-readme-2ef2fc0
+  harness_quote: python scripts/run_evaluation.py
+  harness_gotcha:
+    source: src-github-cadqueryeval-readme-6985f35
+    quote: Upstream CadEval does not seed it, so repeated runs could flip borderline samples.
+  harness_gotcha_note: Open3D's random number generator, which drives point sampling and alignment,
+    is not seeded, so a borderline attempt can pass in one run and fail in the next; with 50
+    attempts per system each flip is two points. ICP alignment can also fail on correct parts, and
+    config.yaml points OpenSCAD at a macOS application path that other machines must change.
+  code_licence: null
+  code_licence_note: The tree at the commits read holds no LICENSE file and GitHub's licence
+    metadata is null, so the code carries no stated licence.
+  runnable_via:
+    - custom
+  runnable_via_note: CadQueryEval is an Inspect AI evaluation, but of its CadQuery derivative, not
+    of CadEval.
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # (constraint-check, instruction-tuned-model) resolves to llm-static-text and (constraint-check,
+  # full-product-pipeline) to the agentic profile, whose scaffold, harness, sample count and sandbox matter here
+  # only for Zoo's row. Beyond them: the thinking budget (the README says Anthropic's budget moves results;
+  # Claude 3.7 Sonnet ran at 2,500 tokens), the system prompt (config.yaml ships four templates; the published
+  # run used the default), the output-token cap (4,000 to 16,000 by model) and sampling (temperature 0.4, 1.0 for
+  # Claude 3.7 Sonnet). The replicate count (two in the published run, one in May 2025) is n_samples, and the
+  # geometry thresholds, fixed in config.yaml, have no condition field.
+  material_extra:
+    - thinking_token_budget
+    - prompt_template_hash
+    - max_output_tokens
+    - sampling
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: One headline per system and prompt, the share of all attempts that pass overall, with
+    every failure in the denominator; the per-check and per-stage rates are reported beside it.
+  source: src-github-cadeval-process-results-2ef2fc0
+  quote: 'Overall Pass Rate: Overall Success / Total Replicates'
+headline_metric: cadeval-score
+secondary_axes:
+  - cost
+  - latency
+secondary_axes_basis:
+  reason: The dashboard reports each system's average estimated cost and average total time
+    (generation plus render) per attempt.
+  source: src-github-cadeval-readme-2ef2fc0
+  quote: The dashboard displays `Average Estimated Cost` per successful generation/render cycle.
+
+liveness:
+  repo_last_commit: 2025-05-19
+  leaderboard_last_updated: 2025-04-22
+  reproduction_script_present: true
+  last_checked: 2026-11-18
+
+homepage: https://github.com/wgpatrick/cadeval
+repository: https://github.com/wgpatrick/cadeval
+leaderboard_url: https://willpatrick.xyz/cadevalresults_20250422_095709/
+metrics:
+  - cadeval-score
+
+lineage:
+  role: root
+  forks:
+    # Another maintainer's derivative, with its own board, dataset and DOI.
+    - id: cadqueryeval
+      maintainer: An individual (a personal GitHub account), not CadEval's maintainer
+      source: src-github-cadqueryeval-readme-6985f35
+      quote: This evaluation is based on the [CadEval benchmark]
+lineage_note: CadQueryEval (2026) ports the 25 tasks and their reference meshes to CadQuery Python,
+  runs them in a Docker sandbox through Inspect AI, merges near-duplicate vertices before the
+  watertight and volume checks, seeds Open3D and accepts an alternate reference for task 6; its
+  board ranks 91 models, and it was archived in September 2026 after four scored 100%. No variant by
+  CadEval's maintainer exists. The CAD-bench paper cites CadEval as related work, not as a source of
+  tasks.
+
+tags:
+  - cad
+  - openscad
+  - text-to-cad
+  - mechanical-parts
+  - single-shot
+  - epoch-hub
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T04)
+  added_on: 2026-11-18
+  last_verified: 2026-11-18
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-github-cadeval-readme-2ef2fc0
+    - src-github-cadeval-config-4d04ad5
+    - src-github-cadeval-dashboard-data-4d04ad5
+    - src-github-cadeval-process-results-2ef2fc0
+    - src-github-api-cadeval
+    - src-cadeval-blog-teaching-llms-solid-model
+    - src-epoch-benchmarks-cad-eval
+    - src-epoch-benchmark-data
+    - src-epoch-eci-included-benchmarks
+    - src-github-cadqueryeval-readme-6985f35
+    - src-github-cad-bench-paper-main
+  sources_note: >
+    Four files of the repository at pinned commits (README and results processor at the head, configuration
+    and dashboard data at the published run's commit), read as raw text, and GitHub's API record of the
+    repository (withheld from archiving: it carries the owner's login); the maintainer's write-up (withheld:
+    it names its author and embeds a third person's post), with script and style blocks stripped and the
+    windows kept clear of both; Epoch's benchmark page, its export and the ECI's included-benchmarks page;
+    CadQueryEval's README at a pinned commit; and the CAD-bench paper's PDF at main, which GitHub's rate
+    limit kept from pinning. Not cited: the maintainer's results page, whose scaffolded Source has no
+    extract.
+  confidence: medium
+  review_checks:
+    - check: lifecycle is dormant, not mature or null. The repository has not been pushed since
+        2025-05-19 and no new results were found after May 2025, but Epoch's Capabilities Index
+        still fits on CadEval's 2025 rows, which a reviewer may read as current use of a settled
+        record (mature).
+      field: lifecycle
+      source: src-epoch-eci-included-benchmarks
+      quote: Administered by the benchmark creator Aider Polyglot, APEX-Agents, ARC-AGI-1,
+        ARC-AGI-2, BALROG, CadEval
+    - check: Evidence of use is thin, as the survey's W grade said. No 2025-2026 paper was found
+        that runs CadEval; five 2026 text-to-CAD papers searched for it (arXiv 2605.18430,
+        2605.07807, 2606.11152, 2608.09296, 2605.10865, not made Sources) do not mention it. What
+        exists is Epoch's mirror of the maintainer's first run, CadQueryEval's port of the tasks and
+        one citation as related work; the repository has 54 stars and 2 forks.
+      field: lifecycle
+      source: src-github-api-cadeval
+      quote: '"stargazers_count":54'
+    - check: CadQueryEval is recorded as a fork. It re-uses CadEval's 25 tasks and references under
+        another maintainer, in another CAD language, with its own scorer fixes, board, dataset and
+        DOI. It reports the 25 parts saturated in CadQuery (four models at 100%), which bears on
+        CadEval's headroom, but no 2026 model has been run on CadEval itself.
+      field: lineage
+      source: src-github-cadqueryeval-readme-6985f35
+      quote: This benchmark is no longer updated. Four models score 1.00 on all 25 tasks, so it no
+        longer separates frontier models; that would take harder tasks.
+    - check: Epoch's page says the tasks stress long-horizon reasoning and tool-augmented
+        generation; the repository and the write-up describe a single API call with no tools, and
+        the entry follows them.
+      field: designed_for_subjects
+      source: src-epoch-benchmarks-cad-eval
+      quote: The tasks stress long-horizon reasoning, tool-augmented generation, and an
+        understanding of geometry and constraints.
+    - check: The CAD-bench paper attributes CadEval to Epoch AI (2026). Epoch hosts and republishes
+        the results, but the tasks, harness and runs are the repository owner's; maintainer follows
+        the repository and the write-up.
+      field: governance.maintainer
+      source: src-github-cad-bench-paper-main
+      quote: CadEval [Epoch AI, 2026] evaluates text-to-CAD systems with rendering
+    - check: The write-up's counts disagree with its own run's data. It says five tasks per
+        complexity level, but the dashboard's complexity analysis implies 5, 4, 6, 5 and 5; it says
+        the top seven systems are reasoning models, but the seventh in the dashboard data is Claude
+        3.5 Sonnet. The entry follows the dashboard data; the three task files read do not settle
+        the levels.
+      field: data.size
+      source: src-github-cadeval-dashboard-data-4d04ad5
+      quote: '"2": { "total_replicates": 120, "overall_pass_count": 61, "avg_overall_pass_rate": 50.83333333333333
+        }, "3": { "total_replicates": 180,'
+    - check: evaluation_method follows posebusters, reading the thresholded Chamfer, Hausdorff,
+        volume and bounding-box comparisons as domain-metric and rejecting numeric-tolerance-match
+        and composite; the taxonomy's own examples cite cadeval only for constraint-check. Chamfer
+        and Hausdorff distances are general shape measures, which a reviewer may not count as named
+        and standardised within one field.
+      field: evaluation_method
+      specialist: true
+      source: src-github-cadeval-readme-2ef2fc0
+      quote: Calculates percentile Hausdorff distances after alignment
+    - check: capability holds generation-fidelity only. constraint-satisfaction was rejected
+        although any one failed check fails the attempt, and spatial-reasoning although the write-up
+        blames it for failures.
+      field: capability
+      source: src-cadeval-blog-teaching-llms-solid-model
+      quote: Only 2 tasks had 0% success, task 11 and task 15.
+    - check: data_provenance expert-authored rests on the maintainer having modelled every reference
+        in Fusion 360 and written tasks with a single correct reading; the sources read do not state
+        the maintainer's CAD or engineering background.
+      field: data.data_provenance
+      source: src-cadeval-blog-teaching-llms-solid-model
+      quote: I decided to write the tasks in my eval such that there was only a single, correct
+        interpretation of the geometry.
+    - check: No licence covers the tasks, references or code (dataset_licence and code_licence are
+        null), so reuse, CadQueryEval's under MIT included, has no stated permission.
+      field: data.dataset_licence
+      source: src-github-api-cadeval
+      quote: '"license":null'
+    - check: The ceiling may sit below 100%. The README says alignment can fail on correct parts and
+        small missing features can pass, and CadQueryEval found task 6's hole described two ways and
+        added an alternate reference that CadEval lacks.
+      field: data.ceiling_anchor_type
+      source: src-github-cadqueryeval-readme-6985f35
+      quote: Currently this applies to task6, whose hole is described as both
+    - check: No versions are recorded, and refresh is static. The tasks were not diffed between
+        commits; the commit list shows them added from 2025-04-04 to 2025-04-10 and later commits
+        touching models, scripts and the dashboard. The replicate count changed in config.yaml (4,
+        then 2 for the published run, then 1 for the May 2025 runs), so a score should name its run.
+      field: versions
+      source: src-github-cadeval-config-4d04ad5
+      quote: 'geometry_check: bounding_box_tolerance_mm: 1.0 icp_fitness_threshold: 1.0 chamfer_threshold_mm:
+        1.0 hausdorff_threshold_mm: 1.0 volume_threshold_percent: 2.0 evaluation: num_replicates: 2'

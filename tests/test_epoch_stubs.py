@@ -80,7 +80,7 @@ def test_the_stubs_are_exactly_the_emitters_output():
         with open(os.path.join(ROOT, rel), encoding='utf-8') as fh:
             assert fh.read() == text, rel
     new = {a.benchmark for a in ALLOC.allocations if not a.existing}
-    assert len(files) == len(new) == 44   # 76 less the thirty-two promoted, P1-S8-T09's one among them
+    assert len(files) == len(new) == 43   # 76 less the thirty-three promoted, P1-S8-T04's cadeval the latest
 
 
 @pytest.mark.parametrize('name', STUB_FILES)
