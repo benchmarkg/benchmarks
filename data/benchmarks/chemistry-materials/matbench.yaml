@@ -37,9 +37,10 @@ description: >
   ten regression tasks, ROC-AUC for the three classification tasks, averaged over the folds. There is
   no score across tasks; the leaderboard ranks general-purpose algorithms, which must run all 13, all
   10 regression or all 9 structure tasks with one configuration, apart from task-specific ones. Submissions
-  are pull requests of recorded predictions plus code. Known weaknesses the sources name: the classification
-  ROC-AUC scores on the board were computed on thresholded predictions and equal balanced accuracy, and
-  the folds are random, so they do not test extrapolation to new chemistries.
+  are pull requests of recorded predictions plus code. Known weaknesses the sources name: older
+  classification submissions saved only class labels, so since November 2026 the board ranks them by
+  recomputed balanced accuracy after the probability submissions ranked by ROC-AUC, and the folds are
+  random, so they do not test extrapolation to new chemistries.
 self_description:
   source: src-arxiv-2005-00707
   quote: The test suite, Matbench, is a set of 13 ML tasks that range in size from 312 to 132k
@@ -246,17 +247,20 @@ data:
       MPContribs-ML platform (https://ml.materialsproject.org) as serialized tabular data.
   refresh: rolling-live
   refresh_note: The 13 tasks and their data are unchanged since v0.1 (2020), and the paper calls the
-    benchmark "a versioned resource", but no later benchmark version exists. The scoring changed on
-    the live board without a version label. Classification scores computed before the fix are on
-    thresholded predictions. The fix landed in commit cd06e5ed4e on 2026-10-24, the package's last
-    tag is v0.6 of 2022-07-27, and the README and site announce the change without a date (GitHub
-    API). Old scores were not recomputed, so the board mixes both scorings, and a classification
-    claim should say when it was scored (review_checks).
+    benchmark "a versioned resource", but no later benchmark version exists. The classification
+    scoring changed twice on the live board without a version label, and the package's last tag is
+    still v0.6 of 2022-07-27. On 2026-10-24 (commit cd06e5ed4e) ROC-AUC on thresholded predictions
+    was fixed for new submissions, with old scores left as they were. On 2026-11-12 pull request 410
+    recomputed every classification submission against the official test labels. The task boards now
+    show verified balanced accuracy for all and probability ROC-AUC where probabilities were saved,
+    and the homepage names a separate best model for each metric (GitHub API for the dates). A
+    classification claim should name its metric and when it was scored (review_checks).
   refresh_basis:
-    reason: A scoring change reached the live leaderboard between package labels, announced but not
-      versioned.
-    source: src-github-matbench-readme
-    quote: This is fixed for future scoring; existing leaderboard scores have not been recomputed.
+    reason: Two scoring changes reached the live leaderboard between package labels, announced in
+      the README but not versioned.
+    source: src-github-matbench-readme-a9f297f
+    quote: Both metrics are recomputed against official test labels in each of the five folds;
+      original submission artifacts remain unchanged.
   data_provenance:
     - curated-public-database
     - inherited-from-constituents
@@ -351,9 +355,9 @@ governance:
     Sciences) is not an evaluated party.
   independence_assessed: true
   known_limitation:
-    source: src-github-matbench-readme
-    quote: They therefore equal balanced accuracy, not true ROC-AUC, and understate submissions that
-      provided probabilities.
+    source: src-github-matbench-docs-probability-migration-8a27ce0
+    quote: These are groups with different available metrics, not a continuous ranking across
+      metrics.
 
 # --- Execution -------------------------------------------------------------------------------
 
@@ -423,6 +427,16 @@ versions:
           classification scores equal balanced accuracy. Scoring was fixed for later submissions and
           existing scores were not recomputed (README; the date is the fixing commit's, GitHub API).
         source: src-github-matbench-readme
+      - date: 2026-11-12
+        scope: classification tasks (matbench_expt_is_metal, matbench_glass, matbench_mp_is_metal)
+        description: Pull request 410 (merged 2026-11-12) recomputes balanced accuracy and, where
+          probabilities were saved, probability ROC-AUC for every classification submission against
+          the official test labels, fold by fold. Task boards list probability submissions by
+          ROC-AUC, then hard-label ones by balanced accuracy; the homepage names a best model for
+          each metric and its scaled-error plots use balanced accuracy. Submitted artifacts are
+          unchanged, and the hard-label thresholds cannot be recovered. Pull request 403, an earlier
+          proposal, was closed unmerged on 2026-11-15 (GitHub API).
+        source: src-github-matbench-docs-probability-migration-8a27ce0
     frozen: true
     sources:
       - src-arxiv-2005-00707-v2
@@ -487,8 +501,9 @@ subsets:
     evidence:
       - source: src-github-matbench-docs-v01-info
         quote: '`matbench_expt_is_metal` | classification/composition | `is_metal` | 4,921'
-    notes: Composition only, experimental (a published band-gap set). ROC-AUC; board scores before
-      2026-10-24 are balanced accuracy (versions, errata).
+    notes: Composition only, experimental (a published band-gap set). ROC-AUC where probabilities
+      were saved; since 2026-11-12 every submission also has a recomputed balanced accuracy, the
+      only metric for hard-label ones (versions, errata).
   - id: matbench#glass
     label: matbench_glass (metallic-glass formation)
     items: 5680
@@ -553,9 +568,10 @@ subsets_note: >
   "General purpose algorithms are valid for all the tasks in a benchmark **using the same human-chosen
   configuration**."); the three task sets are leaderboard groupings, not separate subsets here. The site
   counts 180 task submissions from 28 algorithms (src-github-matbench-docs-index).
-metrics_note: Per task, MAE (in the task's unit) for regression and ROC-AUC for classification; the
-  package also reports RMSE, MAPE and maximum error, and accuracy, balanced accuracy and F1. No
-  Metric records exist for these per-task metrics yet, and this entry adds none.
+metrics_note: Per task, MAE (in the task's unit) for regression and ROC-AUC for classification, with
+  balanced accuracy beside it on the board since 2026-11-12; the package also reports RMSE, MAPE and
+  maximum error, and accuracy, balanced accuracy and F1. No Metric records exist for these per-task
+  metrics yet, and this entry adds none.
 
 lineage:
   role: root
@@ -589,7 +605,7 @@ tags:
 curation:
   added_by: agent (P1-S6-T02)
   added_on: 2026-11-04
-  last_verified: 2026-11-04
+  last_verified: 2026-11-18
   verification_status: ai-drafted-unverified
   sources:
     - src-arxiv-2005-00707-v2
@@ -604,6 +620,8 @@ curation:
     - src-arxiv-2509-03547
     - src-arxiv-2308-14920-v3
     - src-github-matbench-docs-index-2026-11
+    - src-github-matbench-readme-a9f297f
+    - src-github-matbench-docs-probability-migration-8a27ce0
   sources_note: >
     The paper's v2 PDF (a DOI, not archived) read as text, with windows that keep the corresponding authors'
     contact line out, and its abstract page for the dates; Crossref's JSON record for the journal venue,
@@ -612,6 +630,8 @@ curation:
     sources from which the MkDocs site is built (the site renders them; the home page also carries embedded
     plotly figures, stripped from the extract). These six are pending archive. Two arXiv documents, a
     2025 abstract as evidence of current use, and the Matbench Discovery paper's v3 PDF for the lineage.
+    For the 2026-11 sweep follow-ups, the README at a9f297f and the probability-migration guide at
+    8a27ce0, both read raw at pinned commits on 2026-11-18, record pull request 410's rescoring.
   confidence: medium
   review_checks:
     - check: domain.primary is molecular-property-prediction only as the nearest leaf. Its
@@ -630,15 +650,24 @@ curation:
       source: src-github-matbench-docs-index
       quote: For DFT-based materials discovery campaigns, use [Matbench
         Discovery](https://matbench-discovery.materialsproject.org/).
-    - check: refresh rolling-live rests on one scoring change (ROC-AUC, 2026-10-24) made without a
-        version label, with old scores left unrecomputed; versioned-releases fits if the fixing
-        commit counts as a dated announcement, and the items are static since 2020. Pull request 403
-        (open) proposes handling label against probability predictions programmatically, so scoring
-        may change again.
+    - check: refresh rolling-live rests on two classification scoring changes made without a version
+        label, the ROC-AUC fix of 2026-10-24 and the rescoring of every submission by pull request
+        410 on 2026-11-12; versioned-releases fits if the merges count as dated announcements, and
+        the items are static since 2020. Pull request 403, which this check named, was closed
+        unmerged on 2026-11-15 (GitHub API).
       field: data.refresh
-      source: src-github-matbench-readme
-      quote: ROC-AUC scores on the `matbench_v0.1` classification leaderboards were computed on
-        predictions thresholded at 0.5.
+      source: src-github-matbench-readme-a9f297f
+      quote: Task leaderboards show both BA and probability ROC AUC, with probability submissions
+        ordered by ROC AUC first and valid historical hard-label submissions ordered by BA
+        afterwards.
+    - check: The 2026-11-12 rescoring recomputes hard-label submissions' balanced accuracy from
+        their saved decisions, whose original thresholds are unknown, so the balanced-accuracy group
+        is not scored at one common threshold. Whether a claim on a classification task should
+        record its metric (ROC-AUC or balanced accuracy) as a condition is for the lead.
+      field: versions
+      source: src-github-matbench-docs-probability-migration-8a27ce0
+      quote: The original decision threshold for those historical labels may not be recoverable, so
+        this is not a claim that every historical model was reevaluated at a common threshold.
     - check: maintainer_type government-agency rests on the Materials Project being run from LBNL, a
         DOE national laboratory, which no source read here states in those words; the paper's
         affiliation and funding lines are the evidence. academic-lab would follow the
