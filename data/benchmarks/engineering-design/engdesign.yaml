@@ -1,0 +1,755 @@
+# data/benchmarks/engineering-design/engdesign.yaml
+#
+# P1-S8-T03, engineering-design entry 4. Filled from the EngDesign paper, arXiv 2509.16204 read as its v2 PDF
+# (2025-11-06; NeurIPS 2025 Datasets and Benchmarks), and its abstract page; the AGI4Engineering/EngDesign README
+# pinned at commit c8ec338 (2025-10-16), with GitHub's API record for licence, owner type and dates; Hugging Face's
+# API record of the dataset; the project page (agi4engineering.github.io/Eng-Design) and the leaderboard_data.json
+# its script loads; and the v1 PDF of Self-Improvement Memory (arXiv 2611.18856, November 2026), a paper that runs
+# EngDesign-Open. The paper's v1 HTML was consulted for the 48/53 split it states and is not a recorded Source; the
+# project page states the same split. Every quote below is checked by the quote-substring validator against those
+# Sources' committed extracts.
+#
+# The family entry: one set of 101 tasks, whose stated split into proprietary-software and open tasks changed in
+# October 2025 (two versions). EngDesign-Open, the text-only tasks and the nine domains are subsets.
+
+id: engdesign
+name: EngDesign
+aliases:
+  - EngDesign Benchmark
+tagline: 101 engineering design tasks across nine domains, each design checked by running it through
+  domain simulators.
+description: >
+  A benchmark of 101 engineering design tasks across nine domains, from a team at the University of Illinois
+  Urbana-Champaign: control design (18 tasks), signal processing (18), digital hardware (17), structural
+  design (13), robotics (10), operating systems (8), mechanical systems (7), computer architecture (5)
+  and analog integrated circuits (5). Each task states design goals, constraints and performance requirements
+  in a prompt of 779 tokens on average, and 23 tasks add images. The model answers once in a fixed structured
+  format whose configuration field holds the design: a set of parameters, a controller's transfer function,
+  a SPICE netlist, Verilog or code. A script per task parses the design, runs it through domain tools
+  (MATLAB toolboxes, SPICE and Cadence Spectre, finite-element and topology-optimisation code, an SSD
+  simulator, Webots) and returns pass or fail for meeting every requirement, a rubric score from 0 to
+  100 (473 gradable items in all) and a log. Each task ships a reference design that meets every requirement.
+  Each model runs three trials per task, and the paper reports the average pass rate, the average score
+  and a reasoning-robustness ratio, the tasks passed in all three trials over those passed in any. In
+  the paper o3 leads at a 34.38% pass rate, chat models such as GPT-4o sit near 15%, and no model passes
+  an analog IC task. Scoring 34 tasks needs MATLAB or Cadence; the other 67 form EngDesign-Open, which
+  runs in the repository's Docker image. The stated split was 48 and 53 until October 2025, when four
+  tasks' evaluators moved from MATLAB to Octave and the README and the paper's v2 restated it as 34 and
+  67. The project page keeps a leaderboard of the paper's twelve model configurations, last updated 2025-06-18;
+  others publish results in their own papers.
+self_description:
+  source: src-arxiv-2509-16204
+  quote: In this work, we introduce EngDesign, an Engineering Design benchmark that evaluates LLMs'
+    abilities to perform practical design tasks across nine engineering domains.
+external_ids:
+  huggingface: opt1zer/EngDesign
+  arxiv: '2509.16204'
+paper:
+  title: 'Toward Engineering AGI: Benchmarking the Engineering Design Capabilities of LLMs'
+  arxiv: '2509.16204'
+  version_read: v2
+  source: src-arxiv-2509-16204-v2
+released: 2025-07-01
+released_note: The arXiv v1 date. Earlier dates exist but none is a stated release; the Hugging Face
+  dataset record was created on 2025-05-15 and the repository on 2025-05-16 (API records), and the
+  project page's news says the website went live in June 2025, with the leaderboard dated
+  2025-06-18. Whether the data was public before July is not stated.
+released_source: src-arxiv-2509-16204
+released_quote: '[Submitted on 1 Jul 2025 (v1), last revised 6 Nov 2025 (this version, v2)]'
+release_venue: NeurIPS 2025 Datasets and Benchmarks Track
+release_venue_source: src-arxiv-2509-16204
+release_venue_quote: 'Comments: To Appear in NeurIPS 2025 Datasets & Benchmarks Track'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: engineering-design/circuit-eda
+  secondary:
+    - engineering-design/structural-mechanical-design
+domain_basis:
+  reason: >
+    Every task's scored artifact is a design checked against engineering requirements by simulation, which
+    is the family's inclusion case. Of the paper's nine domains, digital hardware design (17 tasks: Verilog
+    and SystemVerilog modules, HLS kernels, FPGA display logic) and analog IC design (5 SPICE netlists
+    sized for a Spectre testbench) are circuit design, 22 of the 101 tasks and the largest group any engineering-design
+    leaf takes. Structural design (13 tasks: beam, plate, shaft and truss sizing checked in simulation,
+    topology optimisation under load and volume limits) is the secondary, with some of the seven mechanical-systems
+    tasks. Control (18), signal processing (18), robotics (10), operating systems (8) and computer architecture
+    (5) have no leaf in the family. No leaf holds most of the tasks, and the paper's claim is breadth
+    across engineering design, which is ADR-0016's case for an in-family suite leaf; engineering-design
+    has none, so the largest group is primary, as SUPERB's entry did, and the miss is logged. Each domain's
+    leaf, where one exists, is on its subset.
+  source: src-arxiv-2509-16204-v2
+  quote: 'spanning practical design problems across nine engineering domains: Operating System Design,
+    Computer Architecture Design, Control System Design, Mechanical Systems, Structural Design, Digital
+    Hardware Design, Analog Integrated Circuit Design, Robotics, and Signal Processing'
+domain_considered_and_rejected:
+  - term: engineering-design/process-control-optimization
+    reason: The 18 control-design tasks design controllers, but for aircraft, vehicle suspensions,
+      magnetic levitation, a positioning stage and mass-spring systems; one plant, a stirred-tank
+      reactor, is the industrial process the leaf names.
+    source: src-arxiv-2509-16204-v2
+    quote: Design a stabilizing controller for an aircraft state-space model using MATLAB
+  - term: code/function-synthesis
+    reason: A minority of tasks ask for software, such as the operating-system tasks that implement
+      a block driver and file-system operations and some signal-processing image pipelines, and the
+      paper notes coding implementation tasks. The rest are designs whose simulated performance is
+      scored, which the code family's exclusion leaves to engineering-design.
+    source: src-arxiv-2509-16204-v2
+    quote: Implement separate programs to perform create, read, update, and delete operations on a
+      provided file system image while maintaining its integrity.
+  - term: robotics-embodiment/navigation
+    reason: The ten robotics tasks compute joint angles, grid paths and trajectories that the
+      evaluator checks or simulates, but no policy acts through a body in an episode; the model
+      submits one answer per trial.
+    source: src-arxiv-2509-16204-v2
+    quote: Determine the six joint angles of a 6-DOF serial robot that achieve a specified
+      end-effector pose
+  - term: general-intelligence/agi-composite-suites
+    reason: The breadth is across engineering design, one field, and the paper's claim is
+      engineering design capability, not a general-capability score.
+capability:
+  - constraint-satisfaction
+  - reliability-consistency
+capability_basis:
+  constraint-satisfaction:
+    reason: A task passes only if the design meets every performance requirement the prompt states
+      (margins, settling time, gain, bandwidth, deflection, timing), and the pass rate leads the
+      paper's tables and the board; the paper's contributions name constraint satisfaction. The
+      0-100 rubric score beside it gives partial credit, which the term does not cover.
+    source: src-arxiv-2509-16204-v2
+    quote: a binary pass/fail indicator for meeting all performance requirements
+  reliability-consistency:
+    reason: Reasoning robustness, one of the paper's three primary metrics and a column of the
+      board, is the share of tasks passed in all three trials among the tasks passed in any, which
+      scores agreement across repeated runs of the same task.
+    source: src-arxiv-2509-16204-v2
+    quote: we compute the ratio between the number of tasks where all three trials passed and the
+      number of tasks where at least one trial passed
+capability_considered_and_rejected:
+  - term: optimization
+    reason: Some tasks minimise an objective (compliance, maximum stress), but they are scored by
+      pass or fail and rubric points against thresholds, not ranked by the objective's value.
+    source: src-arxiv-2509-16204-v2
+    quote: Perform topology optimization on a cracked 2D domain under given horizontal loads to
+      minimize the maximum stress while restricting the material volume to 25%.
+  - term: quantitative-reasoning
+    reason: Many designs are numbers, but the score is simulated performance against requirements,
+      not a number checked against a key; many outputs are netlists, HDL or code, and the paper's
+      error analysis finds computational errors rare.
+    source: src-arxiv-2509-16204-v2
+    quote: implying that numerical reasoning is not the primary bottleneck for current frontier
+      models
+  - term: knowledge-recall
+    reason: Insufficient domain knowledge is the paper's leading failure mode, but knowledge is an
+      input to the design, not what is scored (the term's exclusion).
+  - term: self-correction
+    reason: The iterative-design protocol gives the model its previous design with the evaluator's
+      scores and logs, so revision is driven by an external oracle (the exclusion), and it is an
+      analysis beside the single-answer headline.
+    source: src-arxiv-2509-16204-v2
+    quote: the LLM is provided with its previous design output along with corresponding evaluation
+      results
+  - term: perception
+    reason: 23 tasks include images, but reading them is a means to the design, not a scored output.
+    source: src-arxiv-2509-16204-v2
+    quote: 23 tasks of ENGDESIGN incorporate images as part of the task input to LLMs
+
+evaluation_method:
+  - execution-tests
+evaluation_method_basis:
+  reason: >
+    Each task's script parses the design from the structured response and runs it, through MATLAB toolboxes,
+    SPICE and Cadence Spectre, finite-element and topology-optimisation code, an SSD simulator, Webots
+    or test code, and both the verdict and the rubric points come from whether the simulated behaviour
+    meets the requirements. The term's definition speaks of code; most designs here are parameters, netlists
+    or HDL that a simulator runs, which is logged as a vocabulary miss.
+  source: src-arxiv-2509-16204-v2
+  quote: These components are then fed into our evaluation pipeline, which runs domain-specific
+    simulations to assess the design
+evaluation_method_considered_and_rejected:
+  - term: simulation-rollout
+    reason: No policy acts in episodes; one submitted design is simulated per trial.
+  - term: constraint-check
+    reason: Any violated requirement fails the design, but the design has to be simulated to be
+      judged, which the term's exclusion sends elsewhere.
+  - term: rubric-graded
+    reason: The rubric's items are checked one by one and summed to 100, but each is a programmatic
+      check on the simulated design, which the term's exclusion leaves out.
+    source: src-arxiv-2509-16204-v2
+    quote: The evaluation rubrics define the assessment criteria and scoring metrics, with a full
+      score of 100.
+  - term: numeric-tolerance-match
+    reason: Some rubric items compare an intermediate number, such as a fitted model parameter, with
+      a reference within a tolerance, but the pass verdict turns on simulated performance.
+    source: src-arxiv-2509-16204-v2
+    quote: theta_check = abs(theta - desired_theta)
+designed_for_subjects:
+  - instruction-tuned-model
+  - reasoning-model
+designed_for_subjects_basis:
+  reason: The paper evaluates four chat models and eight reasoning-model configurations, each
+    prompted once per trial through a structured-output schema with no tools and no loop; the board
+    splits the two kinds, and the reasoning effort (o3 and o4-mini at medium or high) and Claude's
+    16,000-token thinking budget are conditions of the reported numbers.
+  source: src-arxiv-2509-16204-v2
+  quote: 'o3 o3-2025-04-16, reasoning effort: medium/high'
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The iterative-design protocol is a maintainer-supplied loop, but the paper reports it as
+      an analysis; the headline protocol sends one prompt per trial.
+    source: src-arxiv-2509-16204-v2
+    quote: we implement an iterative design protocol that allows LLMs to refine their solutions
+      based on feedback from previous attempts
+  - term: agent-scaffold
+    reason: A November 2026 paper optimises a harness around a model on EngDesign-Open (as_used),
+      but the benchmark offers no tools and expects one structured answer per task.
+  - term: tool-augmented-model
+    reason: No tools are offered to the model; the simulators belong to the grader.
+
+as_used:
+  - protocol: EngDesign-Open's 67 tasks split at random into 34 evolve and 33 held-out tasks, five
+      rollouts per task, with the harness around Gemini 3.8 Flash optimised on the evolve set and
+      every rollout scored by EngDesign's binary verifier pass. EngDesign is the source and
+      Frontier-Eng the target of the paper's engineering-design transfer.
+    split: EngDesign-Open, 34 evolve and 33 held-out tasks
+    source: src-arxiv-2611-18856-v1
+    quote: 'Engineering S: EngDesign T: Frontier-Eng Total 89 66 412 1,000 160 65 220 480 765 67 47'
+    note: Self-Improvement Memory (arXiv 2611.18856, November 2026). Its Table 4 gives EngDesign 67
+      tasks, the size of EngDesign-Open, split 34 and 33. The scores are pass rates of a harnessed
+      policy, not the paper's one-prompt protocol, and they average five rollouts rather than three
+      trials.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced; a November 2026 paper runs EngDesign-Open as the source
+    benchmark of its engineering-design experiments. The repository's last push was in October 2025
+    and the board's last update in June 2025, which is maintenance evidence, not the instrument's
+    standing.
+  source: src-arxiv-2611-18856-v1
+  quote: Engineering design moves from EngDesign
+activity: no-submission-channel
+activity_note: The board holds the paper's twelve model configurations, last updated 2025-06-18, and
+  no source read gives outsiders a route to add a result.
+activity_basis:
+  reason: The maintainers choose and run the models on their board, and no source read offers a
+    submission route; others publish their own numbers in their papers.
+  source: src-engdesign-site
+  quote: We evaluate frontier models on EngDesign including both general-purpose chat models and
+    reasoning models.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: o3 (o3-2025-04-16)
+    source: src-arxiv-2509-16204-v2
+    observed_on: 2026-11-18
+    quote: The top-performing model, o3, achieves 34.38%
+  - system: Gemini 3.8 Flash in an optimised harness (Self-Improvement Memory)
+    source: src-arxiv-2611-18856-v1
+    observed_on: 2026-11-18
+    quote: Crossdataset CRSI uses Gemini 3.8 Flash
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_note: The requirements each task states, checked against the design's behaviour
+  as the task's simulation or analysis computes it; a few rubric items compare an intermediate value
+  with the reference design's.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The prompts and evaluation scripts are public, and the 67 open tasks run in the
+    repository's Docker image. The other 34 need MATLAB or Cadence licences, which a third party can
+    buy but which the benchmark does not supply.
+  source: src-github-engdesign-readme-c8ec338
+  quote: Of these 101 tasks, 34 rely on proprietary scientific softwares (e.g., MATLAB or Cadence)
+    and may not run on every system.
+
+task:
+  exists: true
+  input:
+    - a design task of 778.71 tokens on average stating design goals, constraints and performance
+      requirements, with images for 23 tasks
+    - a response schema (instructor over Pydantic) with a reasoning field and a task-specific
+      configuration field
+  output: One structured response whose configuration field holds the design, such as parameters, a
+    transfer function, a SPICE netlist, HDL, code or an SSD configuration.
+  scoring: A per-task script simulates the design and returns pass or fail for meeting every
+    requirement, a rubric score of 0 to 100 and a log. Three trials per task are averaged per task
+    and then across tasks into the average pass rate and the average score; reasoning robustness
+    counts tasks passed in all three trials against tasks passed in any.
+  reference_solution: true
+  item_definition: A task, one design problem with its own rubric of gradable items (473 across the
+    101 tasks), its evaluation script and its reference design.
+  source: src-arxiv-2509-16204-v2
+  quote: Each task provides a validated reference design that fully satisfies all specified
+    requirements
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The prompts are an ungated Hugging Face dataset, and the tasks, evaluation scripts and
+      reference designs are in a public, MIT-licensed repository. Scoring the 34
+      proprietary-software tasks needs MATLAB or Cadence licences, which gates running them, not
+      reading them.
+    source: src-hf-api-engdesign
+    quote: '"gated":false'
+  refresh: versioned-releases
+  refresh_note: The 101 tasks are unchanged. On 2025-10-16 one commit gave four tasks Octave
+    evaluators in place of MATLAB ones and moved them into EngDesign-Open (GitHub API commits
+    endpoint, read 2026-11-18). The folder held 63 tasks before that commit and 67 after, so the 53
+    stated earlier did not match the folder either.
+  refresh_basis:
+    reason: The stated split moved from 48 proprietary-software and 53 open tasks (the paper's v1
+      and the project page) to 34 and 67 (the README and the paper's v2, dated 2025-11-06), and four
+      tasks' evaluators changed, so results on EngDesign-Open before and after are on different task
+      sets.
+    source: src-github-engdesign-readme-c8ec338
+    quote: The remaining 67 tasks have no license restrictions
+  data_provenance:
+    - expert-authored
+  data_provenance_note: Over 40 contributors, graduate students and researchers in the engineering
+    disciplines, proposed 186 tasks drawing on open resources and their own knowledge (the per-task
+    references include MATLAB and Simulink examples, the Chipdev platform and university course
+    material); o4-mini screened prompts for sufficiency, two review rounds followed, the second by
+    faculty in each domain, and 101 tasks were kept.
+  data_provenance_source: src-arxiv-2509-16204-v2
+  data_provenance_quote: We recruited graduate students and researchers from various engineering
+    disciplines to contribute initial task proposals, drawing on open-source resources and their
+    domain knowledge.
+  contamination_risk: medium
+  contamination_risk_note: >
+    Every prompt and evaluation script has been public since 2025 on GitHub and Hugging Face, the task
+    folders hold reference solutions (solution files, seen in the commit history through GitHub's API),
+    and the repository also holds the maintainers' model logs; several tasks adapt public material, which
+    may already be in training corpora. No canary or decontamination measure is described, and no source
+    read evidences a route into the scored tasks. A reviewer may judge high, given that reference designs
+    sit beside the tasks.
+  contamination_risk_source: src-arxiv-2509-16204-v2
+  contamination_risk_quote: We recruited graduate students and researchers from various engineering
+    disciplines to contribute initial task proposals, drawing on open-source resources and their
+    domain knowledge.
+  contamination_evidence: []
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_basis:
+    reason: Each task's reference design was run through its evaluation and meets every requirement,
+      which the first review round checks, so a 100% pass rate is shown to be reachable.
+    source: src-arxiv-2509-16204-v2
+    quote: Each task provides a validated reference design that fully satisfies all specified
+      requirements
+  dataset_licence: MIT
+  dataset_licence_note: The Hugging Face record's licence tag for the prompts. The repository that
+    holds the tasks, scripts and reference designs is MIT as well (src-github-api-engdesign).
+  dataset_licence_source: src-hf-api-engdesign
+  dataset_licence_quote: '"tags":["license:mit"'
+  size:
+    - count: 101
+      unit: design tasks
+      source: src-arxiv-2509-16204-v2
+      quote: it comprises 101 design tasks spanning 9 engineering domains, with a total of 473
+        gradable items
+    - count: 473
+      unit: gradable rubric items
+      source: src-arxiv-2509-16204-v2
+      quote: it comprises 101 design tasks spanning 9 engineering domains, with a total of 473
+        gradable items
+    - count: 67
+      unit: design tasks
+      subset: EngDesign-Open
+      source: src-arxiv-2509-16204-v2
+      quote: 34 tasks require domain-specific scientific software such as MATLAB or Cadence for
+        evaluation, while the remaining 67 tasks are fully open-sourced
+    - count: 23
+      unit: design tasks with image inputs
+      source: src-arxiv-2509-16204-v2
+      quote: 23 tasks of ENGDESIGN incorporate images as part of the task input to LLMs
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The EngDesign team (University of Illinois Urbana-Champaign)
+  maintainer_basis:
+    reason: The project page credits the EngDesign Team, and most of the paper's authors are at the
+      University of Illinois Urbana-Champaign, with others at Pennsylvania, UC San Diego, Michigan
+      and Amazon AGI.
+    source: src-arxiv-2509-16204-v2
+    quote: 1University of Illinois at Urbana-Champaign, 2University of Pennsylvania, 3University of
+      California San Diego, 4University of Michigan, 5Amazon AGI
+  maintainer_type: academic-lab
+  maintainer_type_note: The repository and the project page sit in a GitHub User-type account named
+    AGI4Engineering, not an Organization (it holds five repositories, GitHub API, read 2026-11-18);
+    the dataset sits in a Hugging Face user account (Hugging Face API, read 2026-11-18). No source
+    states an institution as the holder, so `individual` is arguable.
+  maintainer_type_source: src-github-api-engdesign
+  maintainer_type_quote: received_events","type":"User"
+  submission_process:
+    - maintainer-run
+  submission_process_note: Others report results in their own papers, as Self-Improvement Memory
+    does.
+  submission_process_basis:
+    reason: The board's twelve rows are the paper's own runs, four chat models and eight
+      reasoning-model configurations, each with overall and per-domain pass rate and score and an
+      overall reasoning robustness; the maintainers chose and ran them.
+    source: src-engdesign-leaderboard-data
+    quote: '"info": {"name": "o3", "type": "reasoning", "date": "2025-04-16"}, "apr": {"overall": 34.38,'
+  independence_flags: []
+  independence_flags_note: >
+    Checked in the sources read, and no flag applies. The evaluated models are OpenAI's, Anthropic's,
+    Google's and DeepSeek's; the paper's industry ties are to Amazon (two authors at Amazon AGI, and an
+    Amazon AICE award supporting two of the authors), and no Amazon model is evaluated. The board holds
+    only the paper's own runs.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2509-16204-v2
+    quote: are generously supported by the Amazon AICE award
+  known_limitation:
+    source: src-arxiv-2509-16204-v2
+    quote: there are instances where LLMs fail to adhere to the expected output format
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs the domain tools behind the evaluation scripts. The 67 open
+    tasks run in the repository's Docker image (engdesign-sim) on CPU; the other 34 need MATLAB or
+    Cadence installed and licensed. Inference is API spend for the paper's models.
+  compute_tier_source: src-github-engdesign-readme-c8ec338
+  compute_tier_quote: docker build -t engdesign-sim .
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Scoring is automatic end to end, but every task's score is defined by the simulation its
+      script runs, and a third of the tasks need commercial tools to run at all.
+    source: src-github-engdesign-readme-c8ec338
+    quote: Of these 101 tasks, 34 rely on proprietary scientific softwares (e.g., MATLAB or Cadence)
+      and may not run on every system.
+  reproducibility_blockers: []
+  reproducibility_blockers_note: No source names tool versions, so no simulator build is recorded.
+    The analog tasks instantiate tsmc18 device models in a Cadence Spectre testbench, whose
+    availability outside the maintainers' setting was not established.
+  harness_availability: official-harness
+  harness: evaluation/evaluate_llm.py with each task's evaluate.py, run in the repository's Docker
+    image under xvfb, with responses structured by instructor; --k sets the trials per task
+  harness_source: src-github-engdesign-readme-c8ec338
+  harness_quote: python3 evaluation/evaluate_llm.py
+  harness_gotcha:
+    source: src-github-engdesign-readme-c8ec338
+    quote: each task folder in this GitHub repository contains a `logs` folder with pre-generated
+      results from our own runs
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for AGI4Engineering/EngDesign; the README states no
+    licence.
+  code_licence_source: src-github-api-engdesign
+  code_licence_quote: '"spdx_id":"MIT"'
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the fallback profile (subset_used), which execution-tests with these subjects resolves to: the harness and
+  # its structured-output schema; chain-of-thought, which the paper shows moves GPT-4o's pass rate on EngDesign-Open;
+  # reasoning effort and thinking budget (o3 against o3-high); the trials per task, which the averages and reasoning
+  # robustness are defined over; retries, since the iterative protocol with evaluator feedback lifts o3 to nearly 60%;
+  # and the simulator and its version (MATLAB or Octave for the four moved tasks, Cadence Spectre).
+  material_extra:
+    - harness
+    - chain_of_thought
+    - reasoning_effort
+    - thinking_token_budget
+    - n_samples
+    - retries_allowed
+    - simulator
+    - simulator_version
+
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper and the board lead with the overall average pass rate, with the average score,
+    reasoning robustness and per-domain columns beside it; nothing combines them.
+  source: src-engdesign-site
+  quote: 'Average Pass Rate (APR): Percentage of tasks that models correctly solve'
+liveness:
+  repo_last_commit: 2025-10-16
+  leaderboard_last_updated: 2025-06-18
+  reproduction_script_present: true
+  last_checked: 2026-11-18
+
+homepage: https://agi4engineering.github.io/Eng-Design/
+repository: https://github.com/AGI4Engineering/EngDesign
+dataset_url: https://huggingface.co/datasets/opt1zer/EngDesign
+leaderboard_url: https://agi4engineering.github.io/Eng-Design/#leaderboard
+
+versions:
+  - version: 2025-07
+    label: The release, 101 tasks with 53 stated as open
+    version_kind: revision
+    released: 2025-07-01
+    items: 101
+    changes: The set as the paper's v1 and the project page describe it, with 48 tasks needing
+      MATLAB or Cadence and 53 in EngDesign-Open.
+    superseded_by: 2025-10
+    frozen: true
+    sources:
+      - src-arxiv-2509-16204
+      - src-engdesign-site
+  - version: 2025-10
+    label: Four evaluators moved to Octave, 67 stated as open
+    version_kind: revision
+    released: 2025-10-16
+    items: 101
+    changes: The same 101 tasks. Four tasks' MATLAB evaluators were replaced by Octave ones and the
+      tasks moved into EngDesign-Open (commit c8ec338, 2025-10-16), and the README and the paper's
+      v2 (2025-11-06) state the split as 34 and 67.
+    supersedes_version: 2025-07
+    frozen: true
+    sources:
+      - src-github-engdesign-readme-c8ec338
+      - src-arxiv-2509-16204-v2
+
+subsets:
+  - id: engdesign#open
+    label: EngDesign-Open
+    items: 67
+    scored_separately: true
+    evidence:
+      - source: src-github-engdesign-readme-c8ec338
+        quote: a standalone subset whose repository includes evaluation scripts for all 67 tasks
+          without any proprietary dependencies
+      - source: src-engdesign-site
+        quote: 'EngDesign-OPEN: A consolidated subset of 53 fully open-sourced tasks that supports broader
+          community adoption without licensing constraints.'
+    notes: The tasks scored without proprietary software, in the repository's Docker image; the
+      paper reports it separately (Tables 9 and 10), and the Self-Improvement Memory paper uses it.
+      53 tasks before October 2025.
+  - id: engdesign#text-only
+    label: Text-only tasks
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Model is not multimodal and was evaluated only on the text-only subset.
+    notes: The tasks without image inputs, 101 less the 23 with images (the count is not stated).
+      DeepSeek-v3 and DeepSeek-R1 are scored on it alone, and the paper reports every model on it
+      (Tables 7 and 8).
+  - id: engdesign#os
+    label: Operating System Design
+    items: 8
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Operating System Design 8 0 8
+    notes: Page-table, scheduling-quantum and cluster-size choices against stated bounds, and
+      implementations of a block driver and file-system operations; all eight are open. No
+      engineering-design leaf.
+  - id: engdesign#arch
+    label: Computer Architecture Design
+    items: 5
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Computer Arch Design 5 0 5
+    notes: SSD configuration tuning checked in an SSD simulator, accelerator execution plans and NPU
+      sizing; all five are open. No engineering-design leaf.
+  - id: engdesign#ctrl
+    label: Control Design
+    items: 18
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Control Design 7 11 18
+    notes: State-feedback, loop-shaping, PID and robust controllers for aircraft, suspensions,
+      levitation and other plants, checked in MATLAB; 7 open and 11 needing MATLAB. No
+      engineering-design leaf (see domain_considered_and_rejected).
+  - id: engdesign#mech
+    label: Mechanical Systems
+    items: 7
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Mechanical Systems 6 1 7
+    notes: A battery module and cooling plate, a re-entry heat shield and an underwater glider sized
+      against constraints, and race-car and engine-calibration calculations; 6 open, 1 closed. Only
+      some are component design, so no leaf is set.
+  - id: engdesign#stru
+    label: Structure Design
+    items: 13
+    scored_separately: true
+    domain_override:
+      primary: engineering-design/structural-mechanical-design
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Structure Design 7 6 13
+      - source: src-arxiv-2509-16204-v2
+        quote: Determine the required thickness of a simply supported rectangular steel beam under
+          two quarter-span loads so that its maximum vertical displacement is less than 1 mm in a 3D
+          PDE Toolbox simulation.
+    notes: Beam, plate, shaft and truss sizing checked in simulation (finite elements for the beams
+      and plates), and topology optimisation under load and volume limits; 7 open, 6 needing MATLAB.
+  - id: engdesign#dhd
+    label: Digital Hardware Design
+    items: 17
+    scored_separately: true
+    domain_override:
+      primary: engineering-design/circuit-eda
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Digital Hardware Design 13 4 17
+      - source: src-arxiv-2509-16204-v2
+        quote: Design a parameterized 32-entry, 2-read/1-write register file in synthesizable
+          SystemVerilog
+    notes: Verilog and SystemVerilog modules, FPGA display and colour logic, a CPU's control signals
+      and HLS matrix-multiply kernels; 13 open, 4 needing proprietary tools.
+  - id: engdesign#aicd
+    label: Analog Integrated Circuit Design
+    items: 5
+    scored_separately: true
+    domain_override:
+      primary: engineering-design/circuit-eda
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Analog IC Design 0 5 5
+      - source: src-arxiv-2509-16204-v2
+        quote: Analog IC design tasks stands as the most difficult ones where all the models got 0%
+          pass rate.
+    notes: Operational transconductance amplifiers and a common-source amplifier sized as SPICE
+      netlists for a Cadence Spectre testbench; all five need Cadence, and no model passes any.
+  - id: engdesign#robo
+    label: Robotics
+    items: 10
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Robotics 10 0 10
+    notes: Inverse kinematics, grid and trajectory planning (some checked in Webots) and robot
+      parameter sizing; all ten are open. No engineering-design leaf (see
+      domain_considered_and_rejected).
+  - id: engdesign#sigp
+    label: Signal Processing
+    items: 18
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2509-16204-v2
+        quote: Signal Processing 11 7 18
+      - source: src-arxiv-2509-16204-v2
+        quote: Design a rectangular microstrip patch antenna on a Rogers laminate to resonate at
+          1.537 GHz
+    notes: Antennas, digital filters and sample-rate converters, image-processing pipelines and a
+      radar link budget; 11 open, 7 needing MATLAB. No engineering-design leaf.
+
+lineage:
+  role: root
+lineage_note: EngDesign-Open is a subset, not a variant. Self-Improvement Memory reports that
+  Frontier-Eng (arXiv 2604.12290), a separate benchmark by other maintainers, includes an
+  EngDesign-derived component of seven sub-problems; Frontier-Eng was not read, so no fork is
+  recorded.
+
+tags:
+  - engineering-design
+  - simulation-in-the-loop
+  - structured-output
+  - spice
+  - verilog
+  - matlab
+  - finite-element-analysis
+  - control-design
+  - partial-credit
+  - multi-domain
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T03)
+  added_on: 2026-11-18
+  last_verified: 2026-11-18
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2509-16204-v2
+    - src-arxiv-2509-16204
+    - src-github-engdesign-readme-c8ec338
+    - src-github-api-engdesign
+    - src-hf-api-engdesign
+    - src-engdesign-site
+    - src-engdesign-leaderboard-data
+    - src-arxiv-2611-18856-v1
+  sources_note: >
+    The paper's v2 PDF (a DOI, not archived) read as text, and its abstract page for the dates, the venue
+    and the abstract; the README at commit c8ec338cc5f846d792d93728b00c9448111139e5 and GitHub's API record
+    for the repository; Hugging Face's API record for the dataset; the project page with scripts and styles
+    stripped (withheld from archiving: it lists the corresponding authors' e-mail addresses), and the
+    leaderboard_data.json its script loads; and Self-Improvement Memory's v1 PDF (a DOI) as evidence of
+    current use. Commit history and folder counts come from GitHub's API and are not quoted. No task folder,
+    evaluation script or reference design was opened beyond the commit diff.
+  confidence: medium
+  review_checks:
+    - check: Primary circuit-eda (22 of 101 tasks) and secondary structural-mechanical-design, where
+        the Phase-0 survey placed the benchmark in structural-mechanical-design. No leaf holds most
+        tasks; 59 tasks (control, signal processing, robotics, operating systems, computer
+        architecture) have no engineering-design leaf. A suite leaf is logged as missing; a reviewer
+        may prefer the survey's placement.
+      field: domain
+      source: src-arxiv-2509-16204-v2
+      quote: 'spanning practical design problems across nine engineering domains: Operating System Design,
+        Computer Architecture Design, Control System Design, Mechanical Systems, Structural Design, Digital
+        Hardware Design, Analog Integrated Circuit Design, Robotics, and Signal Processing'
+    - check: Whether the family holds for every task. Some tasks are calculations or code rather
+        than designs (race-car lap time, a driver's neck load, image statistics, file-system
+        operations); the family is kept because most scored artifacts are designs checked by
+        simulation.
+      field: domain
+      specialist: true
+      source: src-arxiv-2509-16204-v2
+      quote: Calculate the maximum lateral load on a driver
+    - check: execution-tests is a stretch for designs that are parameters, netlists or HDL run
+        through a simulator; no term names a design verified by simulation against a specification,
+        and the miss is logged.
+      field: evaluation_method
+    - check: reliability-consistency rests on reasoning robustness, a primary metric but not the
+        headline; the headline pass rate averages the three trials.
+      field: capability
+      source: src-arxiv-2509-16204-v2
+      quote: Each task is evaluated over three independent trials per model.
+    - check: Two versions for one task set. The stated open split went from 53 to 67 while the
+        commit moved four tasks, and the open folder held 63 tasks before it (GitHub API), so the
+        earlier 53 is unexplained. refresh is versioned-releases on the paper's v2 restating the
+        split; static is arguable, since no task changed.
+      field: versions
+      source: src-engdesign-site
+      quote: 48 tasks require domain-specific scientific software (MATLAB, Cadence), while 53 tasks
+        are fully open-sourced with manually authored evaluation scripts.
+    - check: released 2025-07-01 is the arXiv v1 date; the repository and dataset records were
+        created in May 2025 and the project page went live in June 2025, but no source says when the
+        data became public.
+      field: released
+      source: src-engdesign-site
+      quote: '2025-06: EngDesign website is live!'
+    - check: maintainer_type academic-lab, although the repository sits in a GitHub User-type
+        account named AGI4Engineering and the dataset in a Hugging Face user account; no source
+        names an institution as the holder, which the term's test reads as `individual`.
+      field: governance.maintainer_type
+      source: src-github-api-engdesign
+      quote: received_events","type":"User"
+    - check: Model identifiers disagree across sources. The paper's Table 5 gives gemini-1.5-pro as
+        the pointer for Gemini-2.0-Flash and gemini-2.5-pro-preview-03-25 for Gemini-2.5-Pro, while
+        the README runs gemini-2.5-pro-preview-05-06; which models the board's Gemini rows are is
+        unclear.
+      field: learned_entrant_evidence
+      source: src-arxiv-2509-16204-v2
+      quote: Gemini-2.0-Flash gemini-1.5-pro
+    - check: Independence. Amazon supports the work and employs two authors, and no evaluated model
+        is Amazon's in the sources read; whether any tie between the funder and an evaluated
+        developer matters was not assessed. o4-mini, an evaluated model, also screened the task
+        proposals for prompt sufficiency.
+      field: governance.independence_flags
+      source: src-arxiv-2509-16204-v2
+      quote: Submitted tasks undergo an initial filtering phase using a language model (o4-mini)
+    - check: contamination_risk medium. Reference designs and the maintainers' model logs sit in the
+        public task folders, and tasks adapt public material; a reviewer may judge high.
+      field: data.contamination_risk
+    - check: The 34 proprietary-software tasks (and the analog tasks' tsmc18 models) may not be
+        runnable outside a licensed setting; whether a licence-restriction blocker belongs beside
+        automatable-with-simulator needs a specialist.
+      field: execution.reproducibility_blockers
+      specialist: true
+    - check: Frontier-Eng's EngDesign-derived component (seven sub-problems) is reported only by
+        Self-Improvement Memory; Frontier-Eng was not read, and no lineage link is recorded.
+      field: lineage
+      source: src-arxiv-2611-18856-v1
+      quote: Frontier-Eng includes an EngDesign-derived component containing seven sub-problems
