@@ -2,7 +2,7 @@
 
 # Review packet: Robotics and embodiment
 
-`robotics-embodiment` · 25 published entries · Core family · 15 subdomains · data as of 2026-11-05 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`robotics-embodiment` · 25 published entries · Core family · 15 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -51,18 +51,18 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (15): `a2rl-drone-championship`, `aerialvln`, `ai-driving-olympics`, `bench2drive`, `carla-leaderboard`, `f1tenth`, `habitat-challenge`, `libero`, `maniskill`, `nuplan`, `rlbench`, `roboarena`, `robocasa`, `robothor-challenge`, `simplerenv`. `python scripts/review_packet.py --family robotics-embodiment --all` renders every entry.
+Not in this packet (15): `a2rl-drone-championship`, `aerialvln`, `ai-driving-olympics`, `bench2drive`, `carla-leaderboard`, `f1tenth`, `habitat-challenge`, `libero`, `maniskill`, `navsim`, `rlbench`, `roboarena`, `robocasa`, `robothor-challenge`, `simplerenv`. `python scripts/review_packet.py --family robotics-embodiment --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [Meta-World](#21-meta-world-meta-world) | `manipulation` | 52 | 9 |
 | 2.2 | [Bi-DexHands](#22-bi-dexhands-bi-dexhands) | `dexterous-manipulation` | 33 | 9 |
-| 2.3 | [RoboTwin](#23-robotwin-robotwin) | `bimanual-manipulation` | 26 | 8 |
+| 2.3 | [RoboTwin](#23-robotwin-robotwin) | `bimanual-manipulation` | 28 | 8 |
 | 2.4 | [LocoMuJoCo](#24-locomujoco-locomujoco) | `locomotion` | 35 | 9 |
 | 2.5 | [HumanoidBench](#25-humanoidbench-humanoidbench) | `whole-body-humanoid-control` | 33 | 9 |
 | 2.6 | [Room-to-Room (R2R)](#26-room-to-room-r2r-r2r) | `navigation` | 40 | 10 |
 | 2.7 | [BEHAVIOR-1K](#27-behavior-1k-behavior-1k) | `mobile-manipulation` | 35 | 8 |
-| 2.8 | [NAVSIM](#28-navsim-navsim) | `autonomous-driving-planning` | 56 | 11 |
+| 2.8 | [nuPlan](#28-nuplan-nuplan) | `autonomous-driving-planning` | 57 | 11 |
 | 2.9 | [safe-control-gym](#29-safe-control-gym-safe-control-gym) | `drone-uav` | 47 | 10 |
 | 2.10 | [CALVIN](#210-calvin-calvin) | `embodied-instruction-following` | 18 | 3 |
 
@@ -185,7 +185,7 @@ Considered and rejected:
 - `task` = exists true; input a 39-dimensional state vector -- end-effector position, gripper opening, the positions and quaternions of up to two objects, the previous step's values and the goal position (zeroed in the meta-learning sets); MT10 and MT50 append a one-hot task ID; output A 4-dimensional action each step (end-effector displacement and gripper command), up to a 500-step horizon.; scoring Per task set, the mean over tasks and goal positions of episode success, the success flag set at any step. In MT1, MT10 and MT50 one episode per training goal (50 per task); in ML10 and ML45 three post-adaptation episodes per test goal (40 goals for each of 5 held-out tasks), after adaptation episodes on that goal. · [S6][meta-world-s6]
   > The final metric is the average success rate achieved across all tasks and episodes.
 - `execution.compute_tier` = simulator-required · [S5][meta-world-s5]
-  > on an AMD Epyc 7402 24-Core Processor with an NVIDIA A100 PCI GPU
+  > \[withheld: it may name a person; see the entry file\]
 - `execution.reproducibility_tier` = automatable-with-simulator · [S12][meta-world-s12]
   - why: A run is fully automatic, but only inside MuJoCo at the version the release pins.
   > "mujoco==3.3.0",
@@ -320,7 +320,7 @@ Considered and rejected:
 
 *20 bimanual tasks for two simulated Shadow Hands in Isaac Gym, for single-agent, multi-agent, offline and meta RL.*
 
-A reinforcement-learning benchmark for bimanual dexterous manipulation from Peking University (the PKU-MARL group), built in NVIDIA's Isaac Gym. Two simulated Shadow Hands (24 degrees of freedom each, on a fixed base or with a movable base in some tasks) perform 20 tasks designed after the Fine Motor Subtest of infant development, from pushing a block (5-6 months) to catching an object thrown underarm or pouring water (48 months) and swapping two objects between the hands, with objects drawn from YCB and SAPIEN. Each task has a goal-based dense reward. The paper benchmarks five formulations on the same tasks: single-agent RL, multi-agent RL (each hand, or any grouping of fingers and palms, as an agent in a fully cooperative game with one shared reward), offline RL on collected datasets, and multi-task and meta RL categories modelled on Meta-World (MT1, MT4, MT20, ML1, ML4, ML20). Results are learning curves of episode reward over 100M environment steps with 2,048 parallel environments, averaged over 10 trials, and normalised scores for the offline and generalisation settings; the README later added a success metric for every task. A journal version appeared in IEEE TPAMI in 2024. There is no leaderboard; results appear in users' papers.
+\[withheld: it may name a person; see the entry file\]
 
 | Classification | |
 | --- | --- |
@@ -348,7 +348,7 @@ A reinforcement-learning benchmark for bimanual dexterous manipulation from Peki
 | S3 | `src-github-dexteroushands-readme` | repository · GitHub | [raw.githubusercontent.com/PKU-MARL/DexterousHands/main/README.md](https://raw.githubusercontent.com/PKU-MARL/DexterousHands/main/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104175508/https://raw.githubusercontent.com/PKU-MARL/DexterousHands/main/README.md) |
 | S4 | `src-arxiv-2505-20922` | preprint · arXiv | [arxiv.org/abs/2505.20922](https://arxiv.org/abs/2505.20922) | none (not-required) |
 | S5 | `src-pubmed-38051620` | paper · IEEE | [eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=380516...](https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=38051620&rettype=abstract&retmode=text) | none (not-required) |
-| S6 | `src-nvidia-isaac-gym` | documentation · NVIDIA | [developer.nvidia.com/isaac-gym](https://developer.nvidia.com/isaac-gym) | [capture 2026-10-08](https://web.archive.org/web/20261008210012/https://developer.nvidia.com/isaac-gym) |
+| S6 | (id withheld) | documentation · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | capture 2026-10-08 (not linked: the page is under a personal account) |
 | S7 | `src-crossref-10-52202-068431-0372` | paper · Neural Information Processing Systems Foundation, Inc. (NeurIPS) | [api.crossref.org/works/10.52202/068431-0372](https://api.crossref.org/works/10.52202/068431-0372) | none (not-required) |
 
 **Evidence** (33 quoted fields), by checklist area:
@@ -406,7 +406,7 @@ Considered and rejected:
 - `learned_entrant_evidence` = system DIMA (Diffusion-Inspired Multi-Agent world model) · [S4][bi-dexhands-s4]
   > significantly outperforming prior world models in terms of final return and sample efficiency, including MAMuJoCo and Bi-DexHands
 - `reproducible_by_third_party` = true · [S3][bi-dexhands-s3]
-  - why: Tasks, algorithms and training and test scripts are released under Apache-2.0, and the paper's offline datasets are linked from the README; Isaac Gym itself must be obtained from NVIDIA (execution.harness\_gotcha).
+  - why: \[withheld: it may name a person; see the entry file\]
   > Bi-DexHands has an Apache license, as found in the \[LICENSE\](LICENSE) file.
 - `task` = exists true; input joint, fingertip, velocity and force state of both hands with the object's and goal's poses (up to about 400 dimensions); point-cloud and visual observations optional; output Relative joint-position targets for the actuated joints of both hands (and the base in some tasks), up to 40 dimensions per hand, from one policy or from several agents.; scoring Per task, episode reward over training (curves over 100M steps, 10 trials); for offline RL, return normalised between random (0) and expert (100); for multi-task and meta RL, average reward on training and test tasks. · [S1][bi-dexhands-s1]
   > The shaded region represents the standard deviation of the score over 10 trials.
@@ -417,7 +417,7 @@ Considered and rejected:
   > Building on the Isaac Gym simulator, Bi-DexHands supports running thousands of environments simultaneously.
 - `execution.harness` = bidexhands (train.py with --task and --algo, and --test to evaluate a saved model; rl-games 1.5.2 as an alternative trainer) · [S3][bi-dexhands-s3]
   > python train.py --task=ShadowHandOver --algo=ppo
-- `execution.harness_gotcha` · [S6][bi-dexhands-s6]
+- `execution.harness_gotcha` · S6
   > Developers may download and continue to use it, but it is no longer supported.
 
 #### bi-dexhands · Data and licence
@@ -425,7 +425,7 @@ Considered and rejected:
 - `as_used` = protocol A multi-agent RL testbed beside MAMuJoCo, for comparing MARL methods (here world models) by final return and sample efficiency. · [S4][bi-dexhands-s4]
   > significantly outperforming prior world models in terms of final return and sample efficiency, including MAMuJoCo and Bi-DexHands
 - `data.access` = fully-open · [S3][bi-dexhands-s3]
-  - why: The task code, assets and algorithms install from the public repository and the offline datasets download from links in the README, with no account. Isaac Gym, which the tasks need, is NVIDIA's separate download (execution.harness\_gotcha).
+  - why: \[withheld: it may name a person; see the entry file\]
   > The originally collected data in our paper is available at:
 - `data.refresh` = static · [S5][bi-dexhands-s5]
   - why: The 20 tasks of the NeurIPS paper are the 20 of the 2024 journal abstract. The code has changed since without version labels (visual observations for all tasks in 2022-11, a success metric, a re-packaging in 2023-02), and the repository has no tags or releases (GitHub API).
@@ -445,14 +445,14 @@ Considered and rejected:
 
 #### bi-dexhands · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S3][bi-dexhands-s3]
+- `governance.maintainer` = PKU-MARL, a group at the Institute for AI, Peking University · [S3][bi-dexhands-s3]
   - why: The repository sits in the PKU-MARL organisation, and the README's team section names Peking University; the paper's authors are mostly at Peking University's Institute for AI, with the Beijing Institute for General Artificial Intelligence, UCL and CMU.
   > Organization-PKU\_MARL
 
 #### bi-dexhands · Lifecycle and activity
 
 - `lifecycle` = active · [S4][bi-dexhands-s4]
-  - why: Results are still being produced, among them DIMA's (NeurIPS 2025). The repository was last pushed on 2025-02-18 (GitHub API), and its simulator is deprecated by NVIDIA (see execution.harness\_gotcha), so mature or dormant may soon fit better (see review\_checks).
+  - why: \[withheld: it may name a person; see the entry file\]
   > significantly outperforming prior world models in terms of final return and sample efficiency, including MAMuJoCo and Bi-DexHands
 - `activity` = no-submission-channel · [S3][bi-dexhands-s3]
   - why: The README offers code, tasks, baselines, offline datasets and plotting scripts, and no leaderboard or submission route; results appear in users' papers.
@@ -472,7 +472,7 @@ Considered and rejected:
    > existing RL algorithms fail to work in most of the multi-task and the few-shot learning settings
 6. (field `versions`) Versions. The IEEE TPAMI journal version (2024, a different author list) was read only as its PubMed abstract, which keeps the 20 tasks, so it is not modelled as a version; the code changed without tags (visual observations, success metric, re-packaging). If the journal version changed tasks or protocol it should become a revision, and refresh would move from static. · [S5][bi-dexhands-s5]
    > \[withheld: it may name a person; see the entry file\]
-7. (field `lifecycle`) lifecycle active rests on one 2025 paper (DIMA). The repository has not been pushed since 2025-02-18 and Isaac Gym is deprecated legacy software, so mature or dormant are the alternatives within a year; no 2026 use was searched beyond one web search. · [S6][bi-dexhands-s6]
+7. (field `lifecycle`) lifecycle active rests on one 2025 paper (DIMA). The repository has not been pushed since 2025-02-18 and Isaac Gym is deprecated legacy software, so mature or dormant are the alternatives within a year; no 2026 use was searched beyond one web search. · S6
    > Isaac Gym - Now Deprecated Note: This is legacy software.
 8. (field `data.size`) The abstract calls the task count "tens" and the conclusion "more than twenty", while the results and the journal abstract give 20 and the README table lists 16 task names beside 20 result figures; data.size takes 20. The 2,000-object count is the README's. · [S1][bi-dexhands-s1]
    > We follow the principle of Fine Motor Subtest (FMS) \[20\] to design tens of tasks
@@ -495,7 +495,6 @@ Considered and rejected:
 [bi-dexhands-s3]: https://raw.githubusercontent.com/PKU-MARL/DexterousHands/main/README.md
 [bi-dexhands-s4]: https://arxiv.org/abs/2505.20922
 [bi-dexhands-s5]: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=38051620&rettype=abstract&retmode=text
-[bi-dexhands-s6]: https://developer.nvidia.com/isaac-gym
 [bi-dexhands-s7]: https://api.crossref.org/works/10.52202/068431-0372
 
 ### 2.3 RoboTwin (robotwin)
@@ -536,8 +535,10 @@ A simulation benchmark and data generator for dual-arm (bimanual) manipulation. 
 | S7 | `src-github-robotwin-readme` | repository · GitHub | [raw.githubusercontent.com/RoboTwin-Platform/RoboTwin/main/README.md](https://raw.githubusercontent.com/RoboTwin-Platform/RoboTwin/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014022720/https://raw.githubusercontent.com/RoboTwin-Platform/RoboTwin/main/README.md) |
 | S8 | `src-hf-api-robotwin2-0` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/RoboTwin2.0 (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S9 | `src-arxiv-2504-13059-v1` | preprint · arXiv | [arxiv.org/pdf/2504.13059v1](https://arxiv.org/pdf/2504.13059v1) | none (not-required) |
+| S10 | `src-arxiv-2603-01229-html` | preprint · arXiv | [arxiv.org/html/2603.01229v4](https://arxiv.org/html/2603.01229v4) | none (not-required) |
+| S11 | `src-arxiv-2609-26292-html` | preprint · arXiv | [arxiv.org/html/2609.26292v1](https://arxiv.org/html/2609.26292v1) | none (not-required) |
 
-**Evidence** (26 quoted fields), by checklist area:
+**Evidence** (28 quoted fields), by checklist area:
 
 #### robotwin · Identity and id
 
@@ -545,6 +546,10 @@ A simulation benchmark and data generator for dual-arm (bimanual) manipulation. 
   > RoboTwin 2.0 is a scalable framework for bimanual manipulation, integrating an expert data generation pipeline with a 50-task benchmark built on the RoboTwin Object Dataset (731 objects, 147 categories)
 - `released` = 2024-09-04 · [S2][robotwin-s2]
   > Submitted on 4 Sep 2024
+- `lineage.variants` = id rmbench; relation the same team's memory-dependent dual-arm manipulation benchmark, built on the RoboTwin 2.0 platform; n_items 9 · [S10][robotwin-s10]
+  > we propose RMBench, a robotic manipulation benchmark built on the RoboTwin 2.0 \[9\] platform.
+- `lineage.forks` = id robotwin-phys; maintainer the RoboTwin-Phys authors (arXiv 2609.26292), Peking University with Memo · [S11][robotwin-s11]
+  > We present RoboTwin-Phys, a systematic benchmark for physical-condition diversity built on the 50-task bimanual platform of RoboTwin-2.0.
 
 #### robotwin · Domain and capabilities
 
@@ -652,6 +657,8 @@ A simulation benchmark and data generator for dual-arm (bimanual) manipulation. 
 [robotwin-s6]: https://arxiv.org/abs/2506.18088
 [robotwin-s7]: https://raw.githubusercontent.com/RoboTwin-Platform/RoboTwin/main/README.md
 [robotwin-s9]: https://arxiv.org/pdf/2504.13059v1
+[robotwin-s10]: https://arxiv.org/html/2603.01229v4
+[robotwin-s11]: https://arxiv.org/html/2609.26292v1
 
 ### 2.4 LocoMuJoCo (locomujoco)
 
@@ -800,7 +807,7 @@ Considered and rejected:
 #### locomujoco · Governance and independence
 
 - `governance.maintainer` = The paper's first author, on a personal GitHub and Hugging Face account; the paper is from TU Darmstadt's Intelligent Autonomous Systems Group and Locomotion Laboratory · [S1][locomujoco-s1]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: The code, the datasets and the documentation sit in one person's accounts (the loco-mujoco repository and the datasets' Hugging Face namespace, under one personal handle; the documentation's copyright line names the same person), and no institution is stated as holding them, which the governance vocabulary records as individual whatever university the authors list.
   > \[withheld: it may name a person; see the entry file\]
 
 #### locomujoco · Lifecycle and activity
@@ -989,7 +996,7 @@ Considered and rejected:
 #### humanoidbench · Governance and independence
 
 - `governance.maintainer` = Robot Learning Lab (RLL), UC Berkeley · S7
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: The package names RLL at UC Berkeley as its author and the LICENSE holds the copyright for the lab; the code sits in the first author's personal GitHub account (the humanoid-bench repository), and the LICENSE has placed it in the BAIR Commons repository since 2025.
   > author="RLL at UC Berkeley",
 
 #### humanoidbench · Lifecycle and activity
@@ -1249,7 +1256,7 @@ Considered and rejected:
 
 *1,000 household activities simulated in OmniGibson, with a yearly challenge on full-length mobile-manipulation tasks.*
 
-A simulation benchmark of 1,000 everyday activities chosen by a survey of what people want robots to do for them. Each activity is defined in BDDL, a predicate logic of initial and goal conditions over objects and their states, written by lay annotators, and is instantiated in 50 interactive scenes (houses, gardens, restaurants, offices) with more than 9,000 annotated objects. Activities run in OmniGibson, a simulator built on NVIDIA Omniverse that models rigid and deformable bodies, fluids and object states such as temperature, cooked and sliced. Since 2025 it has run as the BEHAVIOR Challenge, once a year: 50 tasks in 2025 (NeurIPS 2025, with a standard and a privileged-information track) and 100 tasks in seven scenes in 2026 (CoRL 2026, one RGB-D track, the robot left to the entrant). An episode is one full activity of several minutes, scored by the fraction of its BDDL goal predicates satisfied at the end (Q) and averaged over tasks; simulated time, base distance and hand displacement, normalised by human demonstrations, break ties. Entrants train on human teleoperation demonstrations (200 per task), report results on public instances, and the organisers run the top submissions on hidden instances for the final ranking.
+\[withheld: it may name a person; see the entry file\]
 
 | Classification | |
 | --- | --- |
@@ -1337,7 +1344,7 @@ Considered and rejected:
 - `execution.harness` = OmniGibson's evaluator (python -m omnigibson.eval.eval) with a websocket policy server, in the BEHAVIOR-1K repository · [S5][behavior-1k-s5]
   > We provide OmniGibson/omnigibson/eval/eval.py as the command-line entry point for running websocket-based evaluations
 - `execution.harness_gotcha` · [S10][behavior-1k-s10]
-  > auto-accepts Conda TOS, NVIDIA Isaac Sim EULA, and BEHAVIOR Dataset License
+  > \[withheld: it may name a person; see the entry file\]
 - `execution.submission_channel` · [S11][behavior-1k-s11]
   > This Space hosts the public leaderboard and submission portal for the BEHAVIOR-1K 2026 Challenge
 
@@ -1371,7 +1378,7 @@ Considered and rejected:
 - `governance.submission_process` = maintainer-verified, containerized-algorithm-submission · [S5][behavior-1k-s5]
   > We will update the leaderboard once we sanity-check the performance
 - `governance.independence_flags` = flag prize-sponsored-by-industry · [S6][behavior-1k-s6]
-  > New sponsor: NVIDIA! 💰 Prize pool updated: 1st: $1,000 + GeForce 5080
+  > \[withheld: it may name a person; see the entry file\]
 - `governance.participation` · [S6][behavior-1k-s6]
   > we have received submissions from 18 teams across academia, industry, and individuals
 
@@ -1402,7 +1409,7 @@ Considered and rejected:
 4. (field `data.contamination_risk`) contamination\_risk is medium because published leaderboard rows come from public instances; the taxonomy's Stage 3 pilot read the hidden-instance ranking alone and chose low.
 5. (field `governance.submission_process`) The IP-address route to final evaluation, where the organisers query a policy server the entrant hosts, fits no submission\_process term (taxonomy failure 2026-behavior-challenge-006). The 2025 board labels its public rows self-reported although the rules state a sanity check. · [S12][behavior-1k-s12]
    > entries are self-reported on the public validation set
-6. (field `governance.independence_flags`) prize-sponsored-by-industry rests on NVIDIA's 2025 sponsorship; 2026's prize funders are not named in text, and NVIDIA Research also competed in 2025. · [S4][behavior-1k-s4]
+6. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S4][behavior-1k-s4]
    > We gratefully acknowledge the support of our sponsors who make this challenge possible
 7. (field `released`) released is the first day of CoRL 2022 (14 December 2022), combined from the arXiv comment and PMLR's conference dates; PMLR dates the volume 2023. · [S3][behavior-1k-s3]
    > month = {14--18 Dec}
@@ -1432,228 +1439,231 @@ Considered and rejected:
 [behavior-1k-s11]: https://huggingface.co/spaces/behavior-1k/2026-challenge-leaderboard/raw/d5cd72b36cef0e3799423ddd83acf88ca96a66f0/README.md
 [behavior-1k-s12]: https://behavior.stanford.edu/challenge/archive/2025/leaderboard.html
 
-### 2.8 NAVSIM (navsim)
+### 2.8 nuPlan (nuplan)
 
-`data/benchmarks/robotics-embodiment/navsim.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-04
+`data/benchmarks/robotics-embodiment/nuplan.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-05 · last verified 2026-11-05
 
-*End-to-end driving planners scored on real nuPlan scenes by simulating their 4-second trajectories, two-stage since v2.*
+*Planners driven through about 1,300 hours of real logs, scored open-loop and in non-reactive and reactive closed loop.*
 
-A benchmark and devkit for sensor-based autonomous-driving planners, from the University of Tübingen's Autonomous Vision Group with NVIDIA Research, Bosch and OpenDriveLab. Each test sample is a real scene from OpenScene, a 2 Hz redistribution of nuPlan, filtered for challenging situations. The planner sees the cameras (and LiDAR in v1), its speed, acceleration and a discrete driving command, and outputs a 4-second trajectory. The devkit then tracks that trajectory with an LQR controller and a kinematic bicycle model at 10 Hz in a bird's-eye-view abstraction of the scene, without querying the planner again, and scores the result. NAVSIM v1 (2024) scores the PDM Score (PDMS): collision and drivable-area penalties multiplying a weighted average of ego progress, time to collision and comfort, on the navtest split, with background actors replaying their logs. NAVSIM v2 (2025) scores the Extended PDM Score (EPDMS), which adds driving-direction, traffic-light, lane-keeping and comfort terms and switches off any penalty the logged human driver also incurs, and makes background vehicles react through IDM. It adds a second stage: the planner is scored again from synthetic observations pre-rendered with 3D Gaussian Splatting around the human's 4-second endpoint, each weighted by its distance from where the planner's own first-stage trajectory ended, and the two stages are multiplied. Results go to Hugging Face leaderboards (navtest for v1 since 2024, navhard\_two\_stage for v2), which score submitted trajectory pickles and drop entries without released code; NAVSIM also ran the end-to-end driving tracks of OpenDriveLab's Autonomous Grand Challenge at CVPR 2024 and at CVPR and ICCV 2025 on private test splits.
+Motional's benchmark and dataset for autonomous-vehicle motion planning. The dataset is about 1,300 hours of manually driven logs from Las Vegas, Boston, Pittsburgh and Singapore, auto-labelled offline with object tracks, traffic-light states inferred from other vehicles' motion and 73 mined scenario types, on human-annotated HD maps; 128 hours carry raw lidar and camera data. A planner receives the ego state, the route, tracked agents and map information (current and 2 s past), and returns a trajectory of at least 8 s every 0.1 s within a 1 s budget, over scenarios of up to 15 s. The devkit scores it in three modes. Open-loop compares the planned trajectory with the human driver's. Closed-loop non-reactive tracks it with an LQR controller and a kinematic bicycle model while the other agents replay their logs. Closed-loop reactive does the same with vehicles driven by the Intelligent Driver Model. Each scenario's closed-loop score multiplies penalties (at-fault collisions, drivable area, driving direction, making progress) by a weighted average of time to collision, progress along the expert's route, speed-limit compliance and comfort, in \[0, 1\]. The 2023 nuPlan Planning Challenge (CVPR 2023) took Docker images on EvalAI, ran them on a hidden test set over 14 scenario types and ranked by the mean of the three modes. The leaderboard closed after the challenge; since then results are computed locally with the devkit on the public splits, most often other groups' Val14 and Test14 selections in the two closed-loop modes.
 
 | Classification | |
 | --- | --- |
 | Primary domain | robotics-embodiment/autonomous-driving-planning |
 | Secondary domains | - |
-| Capabilities | planning |
-| Evaluation methods | composite, constraint-check |
-| Designed for | task-specific-supervised-model, classical-algorithm |
+| Capabilities | planning, sensorimotor-control |
+| Evaluation methods | simulation-rollout, domain-metric, composite |
+| Designed for | rl-policy, classical-algorithm |
 | Evaluation target · execution mode · ground truth | learned-system · automated · simulation |
-| Lifecycle · activity | active · leaderboard-live-no-round |
-| Data access · refresh · contamination risk | fully-open · versioned-releases · medium |
+| Lifecycle · activity | active · closed |
+| Data access · refresh · contamination risk | gated-registration · versioned-releases · medium |
 | Reproducibility tier · harness | automatable-with-simulator · official-harness |
-| Maintainer type · submission process | academic-lab · maintainer-scored-predictions, open-source-gated |
-| Independence flags | maintainer-competes-on-own-benchmark |
+| Maintainer type · submission process | industry-lab · containerized-algorithm-submission, maintainer-verified |
+| Independence flags | single-evaluator-private-test-set, maintainer-competes-on-own-benchmark, prize-sponsored-by-industry |
 | Licences: code · dataset | Apache-2.0 · CC-BY-NC-SA-4.0 |
-| Released | 2024-04-21 |
-| Links | homepage [github.com/autonomousvision/navsim](https://github.com/autonomousvision/navsim) · repository [github.com/autonomousvision/navsim](https://github.com/autonomousvision/navsim) · leaderboard [huggingface.co/spaces/AGC2025/e2e-driving-navhard](https://huggingface.co/spaces/AGC2025/e2e-driving-navhard) |
+| Released | 2021-12-10 |
+| Links | homepage [www.nuplan.org/](https://www.nuplan.org/) · repository [github.com/motional/nuplan-devkit](https://github.com/motional/nuplan-devkit) · leaderboard [eval.ai/web/challenges/challenge-page/1856/leaderboard/4360](https://eval.ai/web/challenges/challenge-page/1856/leaderboard/4360) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-2406-15349-v2` | preprint · arXiv | [arxiv.org/pdf/2406.15349v2](https://arxiv.org/pdf/2406.15349v2) | none (not-required) |
-| S2 | `src-github-navsim-readme` | repository · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93...](https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104183222/https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/README.md) |
-| S3 | `src-arxiv-2406-15349` | preprint · arXiv | [arxiv.org/abs/2406.15349](https://arxiv.org/abs/2406.15349) | none (not-required) |
-| S4 | `src-arxiv-2506-04218-v3` | preprint · arXiv | [arxiv.org/pdf/2506.04218v3](https://arxiv.org/pdf/2506.04218v3) | none (not-required) |
-| S5 | `src-github-navsim-metrics` | documentation · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93...](https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/metrics.md) | [capture 2026-11-04](https://web.archive.org/web/20261104183125/https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/metrics.md) |
-| S6 | `src-arxiv-2610-20604` | preprint · arXiv | [arxiv.org/abs/2610.20604](https://arxiv.org/abs/2610.20604) | none (not-required) |
-| S7 | `src-hf-navsim-navhard-leaderboard` | leaderboard-page · Hugging Face (AGC2025/e2e-driving-navhard) | [agc2025-e2e-driving-navhard.hf.space/leaderboard](https://agc2025-e2e-driving-navhard.hf.space/leaderboard) | none (withheld) |
-| S8 | `src-opendrivelab-challenge2025` | leaderboard-page · OpenDriveLab | [opendrivelab.com/challenge2025/](https://opendrivelab.com/challenge2025/) | none (withheld) |
-| S9 | `src-github-navsim-install` | documentation · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93...](https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/install.md) | [capture 2026-11-04](https://web.archive.org/web/20261104183034/https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/install.md) |
-| S10 | `src-hf-api-openscene` | dataset-card · Hugging Face | [huggingface.co/api/datasets/OpenDriveLab/OpenScene](https://huggingface.co/api/datasets/OpenDriveLab/OpenScene) | [capture 2026-11-04](https://web.archive.org/web/20261104183948/https://huggingface.co/api/datasets/OpenDriveLab/OpenScene) |
-| S11 | `src-github-navsim-splits` | documentation · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93...](https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/splits.md) | [capture 2026-11-04](https://web.archive.org/web/20261104183332/https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/splits.md) |
-| S12 | `src-hf-navsim-navhard-info` | leaderboard-page · Hugging Face (AGC2025/e2e-driving-navhard) | [agc2025-e2e-driving-navhard.hf.space/competition\_info](https://agc2025-e2e-driving-navhard.hf.space/competition_info) | [capture 2026-11-04](https://web.archive.org/web/20261104184157/https://agc2025-e2e-driving-navhard.hf.space/competition_info) |
-| S13 | `src-github-navsim-submission` | documentation · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93...](https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/submission.md) | none (withheld) |
-| S14 | `src-hf-navsim-navtest-info` | leaderboard-page · Hugging Face (AGC2024-P/e2e-driving-navtest) | [agc2024-p-e2e-driving-navtest.hf.space/competition\_info](https://agc2024-p-e2e-driving-navtest.hf.space/competition_info) | [capture 2026-11-04](https://web.archive.org/web/20261104184244/https://agc2024-p-e2e-driving-navtest.hf.space/competition_info) |
-| S15 | `src-hf-navsim-navtest-leaderboard` | leaderboard-page · Hugging Face (AGC2024-P/e2e-driving-navtest) | [agc2024-p-e2e-driving-navtest.hf.space/leaderboard](https://agc2024-p-e2e-driving-navtest.hf.space/leaderboard) | none (withheld) |
-| S16 | `src-arxiv-2506-04218` | preprint · arXiv | [arxiv.org/abs/2506.04218](https://arxiv.org/abs/2506.04218) | none (not-required) |
-| S17 | `src-github-navsim-v1-1-metrics` | documentation · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/3e8291bfa89ff247231...](https://raw.githubusercontent.com/autonomousvision/navsim/3e8291bfa89ff247231e0227778840cd0a036896/docs/metrics.md) | [capture 2026-11-04](https://web.archive.org/web/20261104183431/https://raw.githubusercontent.com/autonomousvision/navsim/3e8291bfa89ff247231e0227778840cd0a036896/docs/metrics.md) |
+| S1 | `src-arxiv-2403-04133-v1` | preprint · arXiv | [arxiv.org/pdf/2403.04133v1](https://arxiv.org/pdf/2403.04133v1) | none (not-required) |
+| S2 | `src-github-nuplan-devkit-readme` | repository · GitHub | [raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0b...](https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/README.md) | [capture 2026-11-05](https://web.archive.org/web/20261105153647/https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/README.md) |
+| S3 | `src-arxiv-2106-11810` | preprint · arXiv | [arxiv.org/abs/2106.11810](https://arxiv.org/abs/2106.11810) | none (not-required) |
+| S4 | `src-github-nuplan-devkit-competition` | documentation · GitHub | [raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0b...](https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/competition.md) | [capture 2026-11-05](https://web.archive.org/web/20261105161405/https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/competition.md) |
+| S5 | `src-github-nuplan-devkit-metrics-aggregation` | documentation · GitHub | [raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0b...](https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/nuplan_metrics_aggeregation.md) | [capture 2026-11-05](https://web.archive.org/web/20261105153044/https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/nuplan_metrics_aggeregation.md) |
+| S6 | `src-arxiv-2306-07962-v2` | preprint · arXiv | [arxiv.org/pdf/2306.07962v2](https://arxiv.org/pdf/2306.07962v2) | none (not-required) |
+| S7 | `src-arxiv-2309-10443-v1` | preprint · arXiv | [arxiv.org/pdf/2309.10443v1](https://arxiv.org/pdf/2309.10443v1) | none (not-required) |
+| S8 | `src-arxiv-2610-36837-v1` | preprint · arXiv | [arxiv.org/pdf/2610.36837v1](https://arxiv.org/pdf/2610.36837v1) | none (not-required) |
+| S9 | `src-evalai-nuplan-challenge-1856` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/1856/](https://eval.ai/api/challenges/challenge/1856/) | none (withheld) |
+| S10 | `src-arxiv-2610-29676` | preprint · arXiv | [arxiv.org/abs/2610.29676](https://arxiv.org/abs/2610.29676) | none (not-required) |
+| S11 | `src-nuplan-org-terms-noncommercial` | documentation · Motional | [www.nuplan.org/static/js/TermsOfUseNonCommercial.d9d49b0c.chunk.js](https://www.nuplan.org/static/js/TermsOfUseNonCommercial.d9d49b0c.chunk.js) | [capture 2026-11-05](https://web.archive.org/web/20261105161221/https://www.nuplan.org/static/js/TermsOfUseNonCommercial.d9d49b0c.chunk.js) |
+| S12 | `src-github-nuplan-devkit-licence` | repository · GitHub | [raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0b...](https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/LICENSE.txt) | [capture 2026-11-05](https://web.archive.org/web/20261105151609/https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/LICENSE.txt) |
+| S13 | `src-github-navsim-splits` | documentation · GitHub | [raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93...](https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/splits.md) | [capture 2026-11-04](https://web.archive.org/web/20261104183332/https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/splits.md) |
+| S14 | `src-arxiv-2404-07569` | preprint · arXiv | [arxiv.org/abs/2404.07569](https://arxiv.org/abs/2404.07569) | none (not-required) |
+| S15 | `src-arxiv-2511-10403` | preprint · arXiv | [arxiv.org/abs/2511.10403](https://arxiv.org/abs/2511.10403) | none (not-required) |
+| S16 | `src-arxiv-2609-06055` | preprint · arXiv | [arxiv.org/abs/2609.06055](https://arxiv.org/abs/2609.06055) | none (not-required) |
+| S17 | `src-arxiv-2403-04133` | preprint · arXiv | [arxiv.org/abs/2403.04133](https://arxiv.org/abs/2403.04133) | none (not-required) |
+| S18 | `src-nuplan-org-nuplan` | documentation · Motional | [www.nuplan.org/static/js/NuPlan.f51ac65b.chunk.js](https://www.nuplan.org/static/js/NuPlan.f51ac65b.chunk.js) | [capture 2026-11-05](https://web.archive.org/web/20261105161203/https://www.nuplan.org/static/js/NuPlan.f51ac65b.chunk.js) |
 
-**Evidence** (56 quoted fields), by checklist area:
+**Evidence** (57 quoted fields), by checklist area:
 
-#### navsim · Identity and id
+#### nuplan · Identity and id
 
-- `self_description` · [S1][navsim-s1]
-  > We combine these ideas to propose NAVSIM, a comprehensive tool for AV data curation, simulation, and benchmarking.
-- `released` = 2024-04-21 · [S2][navsim-s2]
-  > \[2024/04/21\]\`\*\* \[NAVSIM v1.0\]
-- `release_venue` = NeurIPS 2024 Track on Datasets and Benchmarks (v1); CoRL 2025 (v2) · [S3][navsim-s3]
-  > Comments: NeurIPS 2024 Datasets and Benchmarks
+- `self_description` · [S1][nuplan-s1]
+  > The benchmark is designed to test the ability of ML-based planners to handle diverse driving situations and to make safe and efficient decisions.
+- `released` = 2021-12-10 · [S2][nuplan-s2]
+  > \- Dec 10 2021 \* v0.1 Dataset
+- `release_venue` = CVPR 2021 ADP3 workshop (the announcement paper); ICRA 2024 (the benchmark paper) · [S2][nuplan-s2]
+  > booktitle={CVPR ADP3 workshop},
+- `lineage.forks` = id navsim; maintainer Autonomous Vision Group, University of Tübingen, with co-authors (see navsim.yaml) · [S13][nuplan-s13]
+  > Corresponds to nuPlan and downsampled to 2HZ.
+- `lineage.forks` = id interplan; maintainer The interPlan authors (arXiv 2404.07569) · [S14][nuplan-s14]
+  > we propose a novel closed-loop benchmark interPlan containing several edge cases and challenging driving scenarios.
+- `lineage.forks` = id nuplan-r; maintainer the nuPlan-R authors (arXiv 2511.10403) · [S15][nuplan-s15]
+  > we present nuPlan-R, a new reactive closed-loop planning benchmark that integrates learning-based reactive multi-agent simulation into the nuPlan framework.
 
-#### navsim · Domain and capabilities
+#### nuplan · Domain and capabilities
 
-- `domain` = primary robotics-embodiment/autonomous-driving-planning · [S1][navsim-s1]
-  - why: The entrant produces a driving trajectory and the score is the driving outcome of executing it -- collisions, drivable-area and traffic-rule compliance, progress, comfort -- not perception accuracy, which is the leaf's definition. The family's inclusion test asks for an outcome produced by embodied action, here driving; the action is a committed plan that the benchmark's own controller executes on a simulated vehicle rather than a closed control loop, which taxonomy/capabilities.yaml settles for this benchmark as planning, not sensorimotor control (see review\_checks).
-  > Our benchmark evaluates trajectory outputs of sensor-based driving policies with simulation-based metrics, considering collisions and map compliance.
-- `capability` = planning · [S4][navsim-s4]
-  - why: The scored object is the planned 4-second trajectory, which the devkit's controller tracks with no further input from the planner. sensorimotor-control's 0.9.0 tie-break assigns this case to planning, and capabilities.yaml gives this benchmark (as navsim-v2) as planning's example.
-  > We consider a planning task where evaluation proceeds in two stages (Fig. 1).
-- `evaluation_method` = composite, constraint-check · [S5][navsim-s5]
-  - why: The headline is a product of rule-violation penalties (no at-fault collision, drivable area, and since v2 driving direction and traffic lights), any of which can zero a sample (constraint-check), times a weighted average of graded subscores (ego progress, time to collision, comfort, lane keeping), averaged over samples; in v2 the two stages are multiplied (composite). Each subscore is computed from a simulated execution of the trajectory (see evaluation\_method\_considered\_and\_rejected).
-  > NAVSIM v1 introduced the PDM Score (PDMS), a combination of several subscores and multiplicative penalties.
-- `designed_for_subjects` = task-specific-supervised-model, classical-algorithm · [S4][navsim-s4]
-  - why: The entrants are end-to-end driving networks trained by imitation on navtrain (TransFuser, Latent TransFuser, UniAD, PARA-Drive, NavFormer, the community's diffusion and scoring planners) and scored open-loop on logged scenes, which subjects.yaml assigns to task-specific-supervised-model. Rule-based planners are entered too -- the constant-velocity baseline and PDM-Closed, the privileged planner that tops the paper's March 2026 navhard snapshot -- which is classical-algorithm.
-  > Latent TransFuser (LTF) \[11\], the most established baseline for image-only planning for nuPlan
+- `domain` = primary robotics-embodiment/autonomous-driving-planning · [S3][nuplan-s3]
+  - why: The entrant is a driving planner and the score is the driving outcome of its trajectories -- at-fault collisions, drivable-area and driving-direction compliance, progress, speed limits, comfort -- not perception accuracy, which is the leaf's definition. The family's inclusion test asks for an outcome produced by embodied action, here driving a simulated vehicle in closed loop through real logged scenes.
+  > we propose the world's first closed-loop ML-based planning benchmark for autonomous driving.
+- `capability` = planning · [S1][nuplan-s1]
+  - why: The entrant outputs a planned trajectory, which the open-loop mode scores directly against the human driver's and the closed-loop modes hand to the benchmark's own controller; the benchmark's claim is planning.
+  > To assert kinematic feasibility and prevent users from cheating, we require the use of a controller.
+- `capability` = sensorimotor-control · [S4][nuplan-s4]
+  - why: In the two closed-loop modes, which carry the community's results, the planner is queried again every 0.1 s on the state its earlier trajectories produced, and in the reactive mode the other vehicles respond to the ego. The score is that driven behaviour, so the loop is closed through the entrant, unlike NAVSIM's single query (see review\_checks).
+  > The simulation horizon will be up to 15s for each scenario and the simulation frequency will be 10Hz.
+- `evaluation_method` = simulation-rollout, domain-metric, composite · [S4][nuplan-s4]
+  - why: Each closed-loop scenario is a simulated episode scored on a bounded scale, with penalties that can zero it times a weighted average of graded sub-scores, as CARLA's driving score is (simulation-rollout). The open-loop mode scores displacement and heading errors and the miss rate against the logged expert trajectory within bounds, motion-planning measures (domain-metric). The challenge ranked the mean of the three modes' scores (composite).
+  > The submissions are ranked based on the mean overall score across all three challenges.
+- `designed_for_subjects` = rl-policy, classical-algorithm · [S1][nuplan-s1]
+  - why: The benchmark targets ML-based planners, mostly trained by imitation on nuPlan's logs (the Urban Driver baseline; the diffusion and transformer planners of 2026), scored by acting in closed loop, which subjects.yaml calls rl-policy (as for CARLA). Rule-based planners are entered beside them -- the IDM baseline, PDM-Closed in the 2026 tables -- and the 2023 challenge's best closed-loop planner was mostly rule-based, which is classical-algorithm.
+  > It is evident that sufficiently sophisticated rule-based planners still outperform purely learned planners in closed-loop settings.
 
 Considered and rejected:
 
-- `domain` not `robotics-embodiment/navigation` · [S1][navsim-s1]
-  - why: No goal location is reached or searched for. The route is given as a discrete command, and each sample scores a 4-second plan in a mapped road scene.
-  > we provide the navigation goal as a one-hot vector with three categories: left, straight, or right.
-- `domain` not `vision/novel-view-synthesis` · [S4][navsim-s4]
-  - why: The v2 second-stage views are rendered by the maintainers with 3D Gaussian Splatting before evaluation and given to the planner as inputs. Their fidelity (LPIPS) is the paper's own validation, not something entrants are scored on.
-  > augments them with synthetic observations generated prior to evaluation using 3D Gaussian Splatting
-- `capability` not `sensorimotor-control` · [S1][navsim-s1]
-  - why: The planner is queried once per stage and its trajectory is executed open-loop over the horizon, so the environment's response never reaches it. The term's exclusion test sends a trajectory tracked by the benchmark's own controller to planning.
-  > This means driving agents are only queried in the initial frame of each scene.
-- `capability` not `distribution-shift-generalization` · [S4][navsim-s4]
-  - why: The v2 second stage starts the planner from states off the human's path, and the leaderboard reports its subscores apart, but the states approximate where the planner's own closed-loop drift would take it, and the headline multiplies both stages into one score. No condition is drawn from a distribution the planner was not fitted to (see review\_checks).
-  > suggesting their sensitivity to the distribution shifts introduced in Stage 2
-- `evaluation_method` not `simulation-rollout` · [S1][navsim-s1]
-  - why: The subscores come from simulating the trajectory, but the planner is not run in the simulator; its committed output is replayed with no feedback, and the score is a rule-based product, not an episode's success or partial credit. taxonomy/evaluation-methods.yaml cites this benchmark under composite. The missing term for pseudo-simulation is the open Stage 3 failure 2026-09-28-navsim-v2-002.
-  > Over this short horizon, no environmental feedback is provided to the driving agent
-- `designed_for_subjects` not `instruction-tuned-model` · [S1][navsim-s1]
-  - why: Vision-language models have entered since the first challenge, but as driving models fine-tuned to output a trajectory, scored like any other planner; no prompt or instruction is part of the task.
-  > The team that placed second employed a vision language model (VLM) for driving
+- `domain` not `vision/driving-perception-3d` · [S4][nuplan-s4]
+  - why: The dataset carries lidar and camera data and auto-labelled 3D tracks, but planners receive tracked objects and nothing perceptual is scored.
+  > that includes ego pose, ego route, agents, and static/dynamic map information.
+- `capability` not `distribution-shift-generalization` · [S1][nuplan-s1]
+  - why: The paper studies covariate shift in closed loop and city transfer (training on Las Vegas, testing elsewhere), but these are experiments, not scored conditions; the benchmark's splits are stratified across days, cities and scenarios.
+  > to minimize temporal data leakage, data from the same day and city is not shared across splits.
+- `evaluation_method` not `constraint-check` · [S5][nuplan-s5]
+  - why: The multiplier metrics (at-fault collision, drivable area, driving direction, making progress) invalidate a scenario, but they are judged on the simulated execution, which the term excludes; simulation-rollout carries them.
+  > there is an at\_fault collision with a vehicle or a VRU (pedestrian or bicyclist), or
+- `designed_for_subjects` not `task-specific-supervised-model` · [S1][nuplan-s1]
+  - why: The open-loop mode scores learned planners on logged data without acting, which is this term, but the closed-loop modes, which carry the headline use, have them act in simulation.
+  > We train the model using imitation learning to match expert trajectories available in the nuPlan dataset.
 
-#### navsim · Task and evaluation
+#### nuplan · Task and evaluation
 
-- `learned_entrant_evidence` = system VITAL · [S6][navsim-s6]
-  > VITAL achieves 90.8 PDMS on NAVSIM v1 navtest
-- `learned_entrant_evidence` = system Hydra-MDP (winner of the 2024 challenge) · [S1][navsim-s1]
-  > The winning entry extended TransFuser and learned to predict proxy subscores
-- `reproducible_by_third_party` = true · [S9][navsim-s9]
-  - why: The headline navhard\_two\_stage split, its synthetic scenes and the devkit are public, and the leaderboard's scores can be reproduced locally with the same evaluation scripts. The challenge splits (private\_test\_hard\_two\_stage, the 2024 private set) were scored only by the server.
-  > The \`navhard\_two\_stage\` split is used for local testing of your model's performance in a two-stage pseudo closed-loop setup.
-- `task` = exists true; input camera images from the vehicle's eight cameras (and a merged LiDAR sweep in v1), the current frame and up to three past frames at 2 Hz, with the ego status (speed, acceleration, motion history) and a driving command (left, straight or right), in v2, the same inputs again for each pre-rendered synthetic follow-up observation of the scene; output A 4-second trajectory of future poses in the ego frame, once per observation; the devkit's LQR controller and kinematic bicycle model execute it at 10 Hz.; scoring Per sample, the product of the penalty subscores (NC, DAC; v2 adds DDC and TLC) times the weighted average of the others (v1 TTC 5, EP 5, comfort 2; v2 TTC 5, EP 5, LK 2, HC 2, EC 2), averaged over samples (PDMS, EPDMS, both in \[0, 1\]). In v2 the Stage 2 scores are averaged with Gaussian weights on each start point's distance from the planner's Stage 1 endpoint and multiplied by the Stage 1 score.; metric_range 0, 1 · [S4][navsim-s4]
-  > generates a 4-second trajectory based on sensor inputs and a driving command \[8\].
-- `execution.compute_tier` = null · [S1][navsim-s1]
-  > 80 GPUs for 3 days to train PARA-Drive versus 1 GPU for 1 day for TransFuser on the navtrain split
-- `execution.reproducibility_tier` = automatable-with-simulator · [S4][navsim-s4]
-  - why: A run is fully automatic from public data, but the score is defined only inside the NAVSIM devkit's simulation at a given release, which the maintainers say moves the number with details as small as the human filter or the numpy version; the official navhard number is the leaderboard's.
-  > The goal of the leaderboard is to ensure standardized evaluation, as subtle differences (e.g., enabling/disabling the human-based filtering mechanism, or using a newer numpy version) can have an effect on the computed metrics.
-- `execution.reproducibility_blockers` = specific-simulator-build · [S2][navsim-s2]
-  > NAVSIM v2.2 release (official devkit version for
-- `execution.harness` = navsim devkit (scripts/evaluation run\_metric\_caching.sh and run\_cv\_pdm\_score\_evaluation.sh with the agent override; run\_create\_submission\_pickle for leaderboard files) · [S5][navsim-s5]
-  > To evaluate the PDM score for an agent you can run:
-- `execution.submission_channel` · [S13][navsim-s13]
-  > To submit to a leaderboard you need to create a pickle file that contains a trajectory for each test scenario.
+- `learned_entrant_evidence` = system ExecDiffuser (diffusion planner) · [S8][nuplan-s8]
+  > ExecDiffuser achieves the best overall performance across the six nuPlan settings, with an average score of 85.62
+- `learned_entrant_evidence` = system DriveMLP (imitation-learned planner) · [S10][nuplan-s10]
+  > It achieves a score of 86.51 on the nuPlan Val14 Reactive benchmark
+- `reproducible_by_third_party` = true · [S7][nuplan-s7]
+  - why: The dataset, including the test split's logs and labels, and the devkit are public (after registration), and since the leaderboard closed the field's results are computed that way. The 2023 challenge's scores on the hidden test set cannot be reproduced.
+  > As the online leaderboard submission is closed, all evaluations are conducted on the nuPlan public test set.
+- `task` = exists true; input the ego pose and its 2 s history, the route to the mission goal, the tracked agents and objects (vehicles, pedestrians, cyclists, cones, barriers, signs, generic objects), and the static and dynamic map, including traffic-light states, at each 0.1 s iteration, optionally lidar and camera data, released for 128 hours of the logs; output A trajectory of at least 8 s of rear-axle poses (x, y, heading, time) in the global frame, every iteration within a 1 s budget. In the closed-loop modes an LQR tracker and a kinematic bicycle model propagate the ego along it for the next step.; scoring Per scenario, closed-loop (CLS-NR, CLS-R) = the product of no at-fault collisions (0, 0.5, 1), drivable-area compliance, driving-direction compliance (0, 0.5, 1) and making progress, times the weighted average of time to collision (5), progress along the expert's route (5), speed-limit compliance (4) and comfort (2). Open-loop (OLS) = miss rate within bound times the weighted average of ADE, FDE, AHE and FHE within bound, over 3, 5 and 8 s horizons. Each mode's score is the mean over scenarios; the challenge ranked the mean of the three.; metric_range 0, 1 · [S5][nuplan-s5]
+  > A planner is assigned a score between 0 and 1 based on its performance in multiple scenarios.
+- `execution.compute_tier` = simulator-required · [S4][nuplan-s4]
+  > SubmissionContainer: 1GPU, 8vCPU, 32GB RAM
+- `execution.reproducibility_tier` = automatable-with-simulator · [S1][nuplan-s1]
+  - why: A run on the public splits is automatic, but the score is defined only inside the devkit's simulation (its controller, IDM agents and metrics) at a given version. The 2023 challenge's leaderboard scores rest on the hidden test set and cannot be reproduced (private-test-set).
+  > We implement a Linear Quadratic Regulator (LQR) \[72\], \[73\] as the tracker.
+- `execution.reproducibility_blockers` = specific-simulator-build, private-test-set · [S2][nuplan-s2]
+  > The Planning Challenge will be using devkit version 1.2 from now on.
+- `execution.harness` = motional/nuplan-devkit (nuplan.planning simulation, metrics and nuBoard; the submission engine in nuplan/submission for the challenge) · [S5][nuplan-s5]
+  > the driven trajectory scores in these N scenarios are averaged to score the planner.
+- `execution.submission_channel` · [S9][nuplan-s9]
+  > "start\_date":"2023-01-30T00:00:00Z","end\_date":"2025-11-15T07:59:59Z"
 
-#### navsim · Data and licence
+#### nuplan · Data and licence
 
-- `as_used` = protocol EPDMS reported on the v1 navtest split without the two-stage pseudo-simulation, beside v1 PDMS on navtest and EPDMS on navhard. The v2 paper discourages such self-reported "NAVSIM v2" numbers as unofficial.; split navtest · [S6][navsim-s6]
-  > Without retraining, it achieves 91.1 EPDMS on NAVSIM v2 navtest and 38.6 on navhard.
-- `data.access` = fully-open · [S10][navsim-s10]
-  - why: The data behind the headline (the navhard leaderboard) is public and the score is reproducible from it.
-  > "gated":false
-- `data.refresh` = versioned-releases · [S2][navsim-s2]
-  - why: The devkit and its data change in labelled releases (v1.0 and v1.1; v2.0, v2.1, v2.1.1, v2.1.2, v2.2), two of them named the official devkit for a challenge, and the yearly challenges sit beside them; taxonomy/data-properties.yaml gives this benchmark (as navsim-v2) as the term's example.
-  > NAVSIM v2.2 release (official devkit version for
-- `data.data_provenance` = real-world-instrument, model-generated, simulation-generated · [S11][navsim-s11]
-  > Corresponds to nuPlan and downsampled to 2HZ.
-- `data.contamination_risk` = medium · [S2][navsim-s2]
-  > Using the \`test\`/\`navtest\`/\`navhard\_two\_stage\`/\`warmup\_two\_stage\`/\`private\_test\_two\_stage\` splits for training your challenge submissions is not allowed.
-- `data.ceiling_anchor_type` = theoretical-maximum · [S5][navsim-s5]
+- `as_used` = protocol Val14, the PDM paper's split, run locally with the devkit in the two closed-loop modes (CLS-NR and CLS-R). It takes 100 scenarios of each of the challenge's 14 scenario types from nuPlan's validation split (1,118 in all), offered as a proxy for the hidden challenge test set.; split Val14 (validation split) · [S6][nuplan-s6]
+  > For evaluation, we use 100 scenarios of the 14 scenario types considered by the leaderboard, totaling 1,118 scenarios.
+- `as_used` = protocol Test14-random and Test14-hard, the PlanTF paper's splits, run locally on nuPlan's public test split in both closed-loop modes; 20 scenarios of each of the 14 types, drawn at random, or the 20 a rule-based planner (PDM-Closed) did worst on out of 100.; split Test14-random, Test14-hard (test split) · [S7][nuplan-s7]
+  > we employ 14 scenario types specified by the nuPlan Planning Challenge, each comprising 20 scenarios.
+- `as_used` = protocol Val14, Test14-hard and Test14 in non-reactive and reactive closed-loop simulation, beside interPlan, under a five-seed protocol.; split Val14, Test14-hard, Test14 · [S8][nuplan-s8]
+  > We evaluate nuPlan \[24\] Val14, Test14-hard, and Test14 under non-reactive (NR) and reactive (R) closed-loop simulation
+- `data.access` = gated-registration · [S4][nuplan-s4]
+  - why: The data behind current results is released, but every official copy needs an account and acceptance of the terms.
+  > Sign up and download the dataset from
+- `data.refresh` = versioned-releases · [S2][nuplan-s2]
+  - why: The dataset changes in labelled releases (v0.1 teaser, v0.2, v1.0, v1.1) and the devkit in its own (v0.1 to v1.2.2), the challenge naming the devkit version it used.
+  > v1.1 Devkit: The official nuPlan Challenge Release.
+- `data.data_provenance` = real-world-instrument, model-generated · [S1][nuplan-s1]
+  > We develop techniques to auto-label the dataset with accurate object tracks, traffic lights, and scenario labels.
+- `data.contamination_risk` = medium · [S1][nuplan-s1]
+  > to minimize temporal data leakage, data from the same day and city is not shared across splits.
+- `data.ceiling_anchor_type` = theoretical-maximum · [S5][nuplan-s5]
   - why: The metric's own bound.
-  > No at-fault Collisions (NC) \| multiplier \| {0, 1/2, 1} \|
-- `data.dataset_licence` = CC-BY-NC-SA-4.0 · [S10][navsim-s10]
-  > "cardData":{"license":"cc-by-nc-sa-4.0"}
-- `data.size` = count 450; unit Stage 1 (real) observations, with 5,462 Stage 2 synthetic observations; subset navhard\_two\_stage (NAVSIM v2 leaderboard) · [S4][navsim-s4]
-  > It uses a subset of nuPlan that we refer to as navhard, involving 450 Stage 1 and 5462 Stage 2 observations.
-- `data.size` = count 12000; unit test samples (about 12k); subset navtest (NAVSIM v1 leaderboard) · [S1][navsim-s1]
-  > called navtrain and navtest, with 103k and 12k samples respectively
-- `data.size` = count 103000; unit training samples (about 103k); subset navtrain · [S1][navsim-s1]
-  > called navtrain and navtest, with 103k and 12k samples respectively
-- `execution.code_licence` = Apache-2.0 · [S2][navsim-s2]
-  > All assets and code in this repository are under the \[Apache 2.0 license\](./LICENSE) unless specified otherwise.
-- `subsets` = id navsim#navhard-two-stage; label navhard\_two\_stage (NAVSIM v2 leaderboard, EPDMS); items 450; scored_separately true · [S11][navsim-s11]
-  > Standard split for testing agents in NAVSIM v2 with real and synthetic driving scenes.
-- `subsets` = id navsim#navhard-two-stage; label navhard\_two\_stage (NAVSIM v2 leaderboard, EPDMS); items 450; scored_separately true · [S12][navsim-s12]
-  > After the NAVSIM challenge 2025 CVPR phase, we have re-opened the leaderboard with the \`navhard\_two\_stage\` split
-- `subsets` = id navsim#navtest; label navtest (NAVSIM v1 leaderboard, PDMS); scored_separately true · [S14][navsim-s14]
-  > After the NAVSIM v1 challenge 2024, we have re-opened the leaderboard with the \`navtest\` split.
-- `subsets` = id navsim#navtest; label navtest (NAVSIM v1 leaderboard, PDMS); scored_separately true · [S15][navsim-s15]
-  > \| 1 \| EABOT.AI \| 96.1906 \|
-- `subsets` = id navsim#private-test-hard-two-stage; label private\_test\_hard\_two\_stage (2025 challenge); scored_separately true · [S11][navsim-s11]
-  > Private test split for the challenge leaderboard on hugging face.
-- `subsets` = id navsim#private-test-hard-two-stage; label private\_test\_hard\_two\_stage (2025 challenge); scored_separately true · [S8][navsim-s8]
-  > The private test set is provided by nuPlan from Motional.
+  > A planner is assigned a score between 0 and 1 based on its performance in multiple scenarios.
+- `data.dataset_licence` = CC-BY-NC-SA-4.0 · [S11][nuplan-s11]
+  > these Datasets are provided to You under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License
+- `data.size` = count 1300; unit hours of driving data (over 1,300; 15,000+ logs), from 4 cities; subset dataset v1.0 and v1.1 · [S2][nuplan-s2]
+  > \- Jun 10 2022 \* v1.0 Dataset: Full nuPlan dataset release with over 1,300 hours of driving data (15,000+ logs) across 4 cities
+- `data.size` = count 1282; unit hours of driving data, as the 2024 paper counts them; subset dataset · [S1][nuplan-s1]
+  > In total, we have 1282 hours of challenging and real-world driving scenarios.
+- `data.size` = count 128; unit hours with released lidar and camera data; subset sensor data · [S1][nuplan-s1]
+  > we only release a subset of the sensor data which totals 128 hours
+- `data.size` = count 73; unit mined scenario types; subset dataset · [S1][nuplan-s1]
+  > In total, we have 73 unique scenario types.
+- `data.size` = count 14; unit scenario types scored in the 2023 challenge; subset nuPlan Planning Challenge 2023 · [S1][nuplan-s1]
+  > The details and parameters of the 14 scenarios that were used to grade the nuPlan planning challenge can be found in Tab. XII.
+- `execution.code_licence` = Apache-2.0 · [S12][nuplan-s12]
+  > Licensed under the Apache License, Version 2.0
+- `subsets` = id nuplan#open-loop; label Challenge 1, open-loop (OLS); scored_separately true · [S4][nuplan-s4]
+  > Challenge 1: Open-loop
+- `subsets` = id nuplan#open-loop; label Challenge 1, open-loop (OLS); scored_separately true · [S4][nuplan-s4]
+  > In this challenge, the planning system is tasked with imitating the expert driver in open-loop.
+- `subsets` = id nuplan#closed-loop-non-reactive; label Challenge 2, closed-loop with non-reactive agents (CLS-NR); scored_separately true · [S4][nuplan-s4]
+  > Challenge 2: Closed-loop non-reactive agents
+- `subsets` = id nuplan#closed-loop-non-reactive; label Challenge 2, closed-loop with non-reactive agents (CLS-NR); scored_separately true · [S4][nuplan-s4]
+  > Nonetheless, the other agents are replayed from a log according to their observed states in open-loop - hence, the name non-reactive.
+- `subsets` = id nuplan#closed-loop-reactive; label Challenge 3, closed-loop with reactive agents (CLS-R); scored_separately true · [S4][nuplan-s4]
+  > Challenge 3: Closed-loop reactive agents
+- `subsets` = id nuplan#closed-loop-reactive; label Challenge 3, closed-loop with reactive agents (CLS-R); scored_separately true · [S4][nuplan-s4]
+  > In the final and most complex challenge, the vehicles in the scene become reactive.
 
-#### navsim · Governance and independence
+#### nuplan · Governance and independence
 
-- `governance.maintainer` = Autonomous Vision Group, University of Tübingen and Tübingen AI Center, with NVIDIA Research, Robert Bosch GmbH and OpenDriveLab · [S2][navsim-s2]
-  - why: The repository (autonomousvision/navsim) is the Tübingen group's, and Tübingen is the first affiliation of both papers; NVIDIA Research, Bosch and OpenDriveLab are co-author affiliations, and OpenDriveLab hosts the challenges within its Autonomous Grand Challenge and the leaderboard Spaces.
-  > 1University of Tübingen, Tübingen AI Center, 2NVIDIA Research, 3Robert Bosch GmbH
-- `governance.submission_process` = maintainer-scored-predictions, open-source-gated · [S12][navsim-s12]
-  > do not provide associated open-source training and inference code with the corresponding pre-trained checkpoints
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S4][navsim-s4]
-  > we propose a new simple and robust baseline architecture called NavFormer
-- `governance.participation` · [S1][navsim-s1]
-  > We received 463 submissions from 143 teams
-- `governance.known_limitation` · [S4][navsim-s4]
-  > We do not yet demonstrate or claim direct correlation with performance metrics from real-world vehicle deployment.
+- `governance.maintainer` = Motional (Motional AD Inc.) · [S9][nuplan-s9]
+  - why: Motional holds the dataset, its terms and the devkit repository (motional/nuplan-devkit, copyright Motional), and conducted the challenge.
+  > which is conducted by Motional AD Inc. and its affiliates
+- `governance.submission_process` = containerized-algorithm-submission, maintainer-verified · [S4][nuplan-s4]
+  > The code will be submitted in the form of a Docker image and will be executed for each of the challenge modes
+- `governance.independence_flags` = flag single-evaluator-private-test-set · [S4][nuplan-s4]
+  > against the hidden test set of the challenge.
+- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S6][nuplan-s6]
+  > Note that the Urban Driver and IDM results on the leaderboard are provided by the nuPlan team
+- `governance.independence_flags` = flag prize-sponsored-by-industry · [S4][nuplan-s4]
+  > 1st place: USD $10,000
+- `governance.participation` · [S6][nuplan-s6]
+  > The 2023 nuPlan challenge saw the preliminary (graph) version of PDM-Hybrid rank first out of 25 participating teams.
+- `governance.known_limitation` · [S1][nuplan-s1]
+  > Our scoring heuristic described above is an initial proposal that accounts for the natural importance of each metric and is hand-tuned for our dataset and simulation framework.
 
-#### navsim · Lifecycle and activity
+#### nuplan · Lifecycle and activity
 
-- `lifecycle` = active · [S6][navsim-s6]
-  - why: Results are still being produced. Papers report on NAVSIM v1 and v2 in October 2026 (VITAL among them), the navhard leaderboard's newest row is dated 2026-10-17 and the navtest leaderboard's 2026-11-03. The repository was last pushed on 2025-10-27 (GitHub API), which is maintenance evidence, not lifecycle.
-  > VITAL achieves 90.8 PDMS on NAVSIM v1 navtest
-- `activity` = leaderboard-live-no-round · [S7][navsim-s7]
-  - why: NAVSIM has run challenge rounds (CVPR 2024, CVPR and ICCV 2025), and its two standing Hugging Face leaderboards still take entries from outside the maintainers, the newest on 2026-10-17 (navhard) and 2026-11-03 (navtest). No 2026 round is announced in the sources read; OpenDriveLab's challenge2026 page returned 404 on 2026-11-04 (not a Source).
-  > 2026-10-17 02:51:25
-- `events` = name NAVSIM challenge 2024 (End-to-End Driving at Scale, Autonomous Grand Challenge, CVPR 2024 Workshop on Foundation Models for Autonomous Systems); kind online-challenge · [S1][navsim-s1]
-  > hosted in conjunction with the CVPR 2024 Workshop on Foundation Models for Autonomous Systems
-- `events` = name NAVSIM v2 End-to-End Driving Challenge 2025, CVPR 2025 phase (Autonomous Grand Challenge); kind online-challenge · [S2][navsim-s2]
-  > The submission deadline is 2025-05-11 00:00:00 UTC
-- `events` = name NAVSIM v2 End-to-End Driving Challenge 2025, ICCV 2025 phase (warm-up track); kind online-challenge · [S8][navsim-s8]
-  > Submission Deadline September 20
-- `history` = date 2024-03; event channel-opened; field governance.submission\_process; to held-out-server · [S1][navsim-s1]
-  > NAVSIM challenge which ran from March - May 2024.
-- `history` = date 2024-05; event channel-closed; field governance.submission\_process; from held-out-server · [S1][navsim-s1]
-  > NAVSIM challenge which ran from March - May 2024.
-- `history` = date 2024-09-03; event channel-opened; field governance.submission\_process; to maintainer-scored-predictions · [S2][navsim-s2]
-  > Leaderboard for \`navtest\` on \[Hugging Face\]
-- `history` = date 2025-04-28; event channel-opened; field governance.submission\_process; to held-out-server · [S2][navsim-s2]
-  > \[2025/04/28\]\`\*\* NAVSIM v2.2 release
-- `history` = date 2025-05-11; event channel-closed; field governance.submission\_process; from held-out-server · [S2][navsim-s2]
-  > The submission deadline is 2025-05-11 00:00:00 UTC
-- `history` = event channel-opened; field execution.submission\_channel; to [huggingface.co/spaces/AGC2025/e2e-driving-navhard](https://huggingface.co/spaces/AGC2025/e2e-driving-navhard) · [S12][navsim-s12]
-  > After the NAVSIM challenge 2025 CVPR phase, we have re-opened the leaderboard with the \`navhard\_two\_stage\` split
-- `history` = date 2025-09-20; event channel-closed; field governance.submission\_process; from held-out-server · [S8][navsim-s8]
-  > Submission Deadline September 20
+- `lifecycle` = active · [S8][nuplan-s8]
+  - why: Results are still produced on the instrument. Papers in September and October 2026 report nuPlan closed-loop scores on Val14 and Test14 (ExecDiffuser, DriveMLP, DriveZero). The challenge's ending and the closed leaderboard are recorded in activity (ADR-0019).
+  > ExecDiffuser achieves the best overall performance across the six nuPlan settings, with an average score of 85.62
+- `activity` = closed · [S9][nuplan-s9]
+  - why: The only route for official results was the EvalAI challenge, whose record is inactive and frozen, with an end date that has passed.
+  > "is\_frozen":true
+- `events` = name nuPlan Planning Challenge 2023 (End-to-End Autonomous Driving workshop, CVPR 2023); kind online-challenge · [S4][nuplan-s4]
+  > January 30th, 2023 - Warm-up phase and Test phase opens for submission
+- `history` = date 2023-01-30; event channel-opened; field execution.submission\_channel; to EvalAI challenge 1856 (nuPlan Planning Challenge) · [S4][nuplan-s4]
+  > January 30th, 2023 - Warm-up phase and Test phase opens for submission
+- `history` = date 2023-05-26; event channel-closed; field execution.submission\_channel; from EvalAI challenge 1856 · [S4][nuplan-s4]
+  > May 26th, 2023 - Competition closes
 
 **Open review checks** (11):
 
-1. (field `domain`) Family inclusion. The scored outcome is the simulated execution of a committed 4-second trajectory, not of closed-loop control, so whether it is "produced by embodied action" is arguable. autonomous-driving-planning's definition (a trajectory scored on the driving outcome) fits it, and the taxonomy files cite this benchmark as planning, not sensorimotor control; no other family claims it. · [S1][navsim-s1]
-   > This means driving agents are only queried in the initial frame of each scene.
-2. (field `evaluation_method`) evaluation\_method follows the corpus (composite and constraint-check). simulation-rollout is the alternative, since every subscore comes from a simulated execution and CARLA's driving score is that term's example; the missing pseudo-simulation term is open failure 2026-09-28-navsim-v2-002.
-3. (field `versions`) Versions. v2 is an edition by the 04 S4 rule (same maintainer and task, new test items), but it also changes the metric (EPDMS) and the simulation (IDM-reactive vehicles, a second stage), and taxonomy/ cites the corpus item as \`navsim-v2\`. A separate navsim-v2 entry linked by lineage, or v1 and v2 as track-sets (both boards are live and both splits are scored under v2's devkit), are the alternatives. · [S4][navsim-s4]
-   > we release NAVSIM v2, a framework for benchmarking autonomous driving built upon our proposed evaluation methodology
-4. (field `description`) Sources disagree on reactivity. The v2 paper and the 2025 challenge page make background vehicles react through IDM, while the navhard board's overview still describes NAVSIM as non-reactive, and v1's documents describe log replay. The description follows the papers. · [S4][navsim-s4]
-   > Background vehicles (represented as oriented bounding boxes) respond to the ego agent using a rule-based planner called the Intelligent Driver Model (IDM) \[43\].
-5. (field `execution.reproducibility_tier`) reproducibility\_tier is automatable-with-simulator with the specific-simulator-build blocker, treating the devkit's own simulation as the simulator (as ManiSkill's entry does); the corpus record chose fully-automatable. compute\_tier stays null (open failure 2026-09-28-navsim-v2-011).
-6. (field `lifecycle`) navtest looks saturated. The navtest board's top row (96.19 PDMS, 2026-10-17) is above the logged human's 94.8 in the v1 paper's Table 1, and the v1 paper's own 10-point gap to the human has closed. saturated is derived and needs claims; navhard (top 64.58 EPDMS) is far from its bound. · [S1][navsim-s1]
-   > The 10 PDMS discrepancy to the human operator demonstrates that navtest poses challenges even to well-studied end-to-end architectures.
-7. (field `governance.submission_process`) open-source-gated rests on a stated periodic removal (about every 6 months) on both boards; whether it is enforced was not checked. The corpus record left the term off because it read the rule only for the 2024 board; the navhard overview states it too. · [S12][navsim-s12]
-   > do not provide associated open-source training and inference code with the corresponding pre-trained checkpoints
-8. (field `governance.independence_flags`) Independence. NVIDIA won the CVPR 2025 phase, and NVIDIA Research is a co-author affiliation of both papers; the rules bar a track's organisers from its awards. Whether the winning team overlaps the authors was not checked; maintainer-competes-on-own-benchmark rests on the maintainers' baselines on their boards. · [S8][navsim-s8]
-   > The outstanding Champion goes to team NVIDIA.
-9. (field `versions`) The metric changed after the challenge (the 2025-09-29 human-filter bugfix, on main after v2.2), and which devkit commit each board's server runs is not stated, so navhard rows before and after that date may not be comparable. · [S2][navsim-s2]
-   > \[2025/09/29\]\`\*\* Bugfix
-10. (field `activity`) activity and lifecycle now rest on dated leaderboard rows and October 2026 papers, which answers the corpus's open source-silent failures 2026-09-28-navsim-v2-007 (lifecycle) and -008 (activity); the lead may close them. No 2026 round was found.
-11. (field `data.dataset_licence`) Both leaderboard tables were read by POST and are withheld (personal handles in rows), so they cannot be archived; the entry's DOI sources carry the rest. dataset\_licence is the OpenScene repository's tag; nuPlan's own licence, which the installation guide points to, was not read.
+1. (field `capability`) Capability. planning and sensorimotor-control are both tagged. sensorimotor-control's tie-break sends a trajectory tracked by the benchmark's own controller in a non-reactive simulation to planning, which describes the CLS-NR mode literally; but nuPlan re-queries the planner every 0.1 s on the state it produced, and the reactive mode closes the loop through other vehicles too. A reviewer may keep planning only. · [S4][nuplan-s4]
+   > Each planner will have a fixed time budget of 1s for each simulation iteration, after which the simulation will time out.
+2. (field `evaluation_method`) evaluation\_method adds domain-metric and composite for the open-loop mode and the challenge's mean of the three modes, beside simulation-rollout; current papers report the closed-loop modes only, so simulation-rollout alone may be the better reading.
+3. (field `lineage`) Val14 and Test14 are recorded as as\_used protocols, not forks, because they are scenario lists over nuPlan's own splits scored unchanged; 04 S4's "independently versioned and cited" could make them separate benchmarks, especially Test14-hard, whose selection depends on a planner (PDM-Closed). interPlan is a fork on its abstract alone. · [S16][nuplan-s16]
+   > across the Val14, Test14-hard, and Test14-random community splits in both non-reactive and reactive modes
+4. (field `versions`) Versions. The dataset releases are modelled (v0.1 and v1.0 editions, v1.1 a revision of the same logs) and the devkit versions are a condition (simulator\_version). v1.1 is unfrozen because the sensor data was to be released gradually; whether it completed was not checked. The devkit version used by 2026 papers is not stated in any source read. · [S2][nuplan-s2]
+   > Submissions generated from version v1.1 should remain compatible.
+5. (field `activity`) activity is closed. EvalAI's record ends on 2025-11-15 (inactive, frozen), but the PDM and PlanTF papers describe the leaderboard as closed in 2023. When submissions actually stopped, between 2023-05-26 and 2025-11-15, is unclear; the history's closing date follows the competition page. · [S6][nuplan-s6]
+   > Unfortunately, due to the closure of the leaderboard
+6. (field `data.access`) data.access is gated-registration for the released splits behind current results; the challenge's hidden test set made that round private-test-server. Whether the hidden set is the same as the released test split was not established.
+7. (field `governance.independence_flags`) prize-sponsored-by-industry rests on the competition page's prizes and the terms' statement that Motional AD Inc. conducted the competition; no sentence says who paid. The maintainer type rests on the same legal-form wording. · [S9][nuplan-s9]
+   > which is conducted by Motional AD Inc. and its affiliates
+8. (field `task`) The scoring document lists driving\_direction\_compliance with a weight of 5 in its table while its text and the 2024 paper (Tables II and XIV) treat it as a multiplier; task.scoring follows the paper. · [S5][nuplan-s5]
+   > \|driving\_direction\_compliance \|Score is 1 if during the previous \`time\_horizon\`
+9. (field `known_limitation`) The 2024 paper notes that reactive agents use an IDM similar to the IDM baseline planner, which may favour it in closed loop; no source measures the bias. · [S1][nuplan-s1]
+   > It should be noted though that the reactive agents are also modelled with a similar IDM.
+10. (field `governance.participation`) The challenge's ranking table in the 2024 paper names team "CS Tu" first (0.895), while the PDM paper says PDM-Hybrid ranked first of 25 teams; that these are the same entry is likely but not stated. The EvalAI leaderboard itself was not read (it lists entrants by team names, some personal). · [S1][nuplan-s1]
+   > Overall Score 0.895 0.875 0.848 0.829
+11. (field `lineage`) The NAVSIM fork row cites navsim's Source src-github-navsim-splits, which needs nuplan in its cited\_by. navsim.yaml has no lineage block; it may want a fork role pointing here.
 
-**Reviewer checklist** for `navsim`:
+**Reviewer checklist** for `nuplan`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -1664,23 +1674,24 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[navsim-s1]: https://arxiv.org/pdf/2406.15349v2
-[navsim-s2]: https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/README.md
-[navsim-s3]: https://arxiv.org/abs/2406.15349
-[navsim-s4]: https://arxiv.org/pdf/2506.04218v3
-[navsim-s5]: https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/metrics.md
-[navsim-s6]: https://arxiv.org/abs/2610.20604
-[navsim-s7]: https://agc2025-e2e-driving-navhard.hf.space/leaderboard
-[navsim-s8]: https://opendrivelab.com/challenge2025/
-[navsim-s9]: https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/install.md
-[navsim-s10]: https://huggingface.co/api/datasets/OpenDriveLab/OpenScene
-[navsim-s11]: https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/splits.md
-[navsim-s12]: https://agc2025-e2e-driving-navhard.hf.space/competition_info
-[navsim-s13]: https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/submission.md
-[navsim-s14]: https://agc2024-p-e2e-driving-navtest.hf.space/competition_info
-[navsim-s15]: https://agc2024-p-e2e-driving-navtest.hf.space/leaderboard
-[navsim-s16]: https://arxiv.org/abs/2506.04218
-[navsim-s17]: https://raw.githubusercontent.com/autonomousvision/navsim/3e8291bfa89ff247231e0227778840cd0a036896/docs/metrics.md
+[nuplan-s1]: https://arxiv.org/pdf/2403.04133v1
+[nuplan-s2]: https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/README.md
+[nuplan-s3]: https://arxiv.org/abs/2106.11810
+[nuplan-s4]: https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/competition.md
+[nuplan-s5]: https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/docs/nuplan_metrics_aggeregation.md
+[nuplan-s6]: https://arxiv.org/pdf/2306.07962v2
+[nuplan-s7]: https://arxiv.org/pdf/2309.10443v1
+[nuplan-s8]: https://arxiv.org/pdf/2610.36837v1
+[nuplan-s9]: https://eval.ai/api/challenges/challenge/1856/
+[nuplan-s10]: https://arxiv.org/abs/2610.29676
+[nuplan-s11]: https://www.nuplan.org/static/js/TermsOfUseNonCommercial.d9d49b0c.chunk.js
+[nuplan-s12]: https://raw.githubusercontent.com/motional/nuplan-devkit/e9241677997dd86bfc0bcd44817ab04fe631405b/LICENSE.txt
+[nuplan-s13]: https://raw.githubusercontent.com/autonomousvision/navsim/0a380a9063d7162ec93d0f51e9990ebac585f720/docs/splits.md
+[nuplan-s14]: https://arxiv.org/abs/2404.07569
+[nuplan-s15]: https://arxiv.org/abs/2511.10403
+[nuplan-s16]: https://arxiv.org/abs/2609.06055
+[nuplan-s17]: https://arxiv.org/abs/2403.04133
+[nuplan-s18]: https://www.nuplan.org/static/js/NuPlan.f51ac65b.chunk.js
 
 ### 2.9 safe-control-gym (safe-control-gym)
 
@@ -1996,7 +2007,7 @@ A simulated benchmark (PyBullet) for language-conditioned, long-horizon manipula
 
 #### calvin · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S3][calvin-s3]
+- `governance.maintainer` = University of Freiburg (the CALVIN paper's first author and collaborators) · [S3][calvin-s3]
   - why: The site and leaderboard are hosted by the University of Freiburg's computer science department; the code sits in the first author's GitHub account.
   > http://calvin.cs.uni-freiburg.de
 

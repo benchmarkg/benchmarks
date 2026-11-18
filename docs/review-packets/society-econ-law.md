@@ -2,7 +2,7 @@
 
 # Review packet: Society, economics and law
 
-`society-econ-law` · 14 published entries · 11 subdomains · data as of 2026-11-08 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`society-econ-law` · 14 published entries · 11 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -56,11 +56,11 @@ Not in this packet (4): `financebench`, `gdpval`, `legalbench`, `lexglue`. `pyth
 | 2.3 | [Finance Agent Benchmark](#23-finance-agent-benchmark-finance-agent-benchmark) | `financial-analysis` | 44 | 11 |
 | 2.4 | [StockBench](#24-stockbench-stockbench) | `trading-market-interaction` | 36 | 12 |
 | 2.5 | [BigLaw Bench](#25-biglaw-bench-biglaw-bench) | `legal-document` | 50 | 11 |
-| 2.6 | [GLEE](#26-glee-glee) | `economics-simulation` | 42 | 8 |
+| 2.6 | [GLEE](#26-glee-glee) | `economics-simulation` | 42 | 9 |
 | 2.7 | [MathTutorBench](#27-mathtutorbench-mathtutorbench) | `education-tutoring` | 46 | 9 |
-| 2.8 | [ObliQA](#28-obliqa-obliqa) | `policy-analysis` | 40 | 11 |
-| 2.9 | [SimulacraBench](#29-simulacrabench-simulacrabench) | `social-simulation` | 37 | 7 |
-| 2.10 | [ForecastBench](#210-forecastbench-forecastbench) | `forecasting-prediction-markets` | 26 | 3 |
+| 2.8 | [ObliQA](#28-obliqa-obliqa) | `policy-analysis` | 41 | 11 |
+| 2.9 | [SimulacraBench](#29-simulacrabench-simulacrabench) | `social-simulation` | 37 | 8 |
+| 2.10 | [ForecastBench](#210-forecastbench-forecastbench) | `forecasting-prediction-markets` | 28 | 4 |
 
 ### 2.1 Remote Labor Index (remote-labor-index)
 
@@ -292,7 +292,7 @@ Considered and rejected:
 
 ### 2.2 StockNet (stocknet)
 
-`data/benchmarks/society-econ-law/stocknet.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
+`data/benchmarks/society-econ-law/stocknet.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-18
 
 *Binary next-day movement of 88 US stocks from tweets and five days of prices, 2014-2015, scored by accuracy and MCC.*
 
@@ -327,6 +327,7 @@ A dataset for predicting whether a stock's adjusted closing price rises or falls
 | S6 | `src-github-stocknet-dataset-licence` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/stocknet-dataset/master/LICENSE (not linked: a personal account) | none (withheld) |
 | S7 | `src-github-stocknet-code-licence` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/stocknet-code/master/LICENSE (not linked: a personal account) | none (withheld) |
 | S8 | `src-acl-p18-1183` | paper · Association for Computational Linguistics | [aclanthology.org/P18-1183/](https://aclanthology.org/P18-1183/) | none (not-required) |
+| S9 | `src-github-stocknet-code-repo` | repository · GitHub | github.com/\[personal account\]/stocknet-code (not linked: a personal account) | none (pending) |
 
 **Evidence** (35 quoted fields), by checklist area:
 
@@ -428,7 +429,7 @@ Considered and rejected:
 #### stocknet · Lifecycle and activity
 
 - `lifecycle` = active · [S3][stocknet-s3]
-  - why: Results are still produced on it. A March 2025 paper reports a new MCC baseline on the dataset, and FinBen's copy of it was last modified on 2026-10-07. The original repositories were last pushed in March 2019 (GitHub API), which is maintenance evidence, not lifecycle.
+  - why: Results are still produced on it. A March 2025 paper reports a new MCC baseline on the dataset, and FinBen's copy of it was last modified on 2026-10-07. The original repositories were last pushed in March 2019 (GitHub API), and the code repository has been archived, read-only, since 2026-09-30 (src-github-stocknet-code-repo, "This repository was archived by the owner on Sep 30, 2026. It is now read-only."); the dataset repository is not archived. Both are maintenance evidence, not lifecycle.
   > setting a new baseline for Matthews Correlation Coefficient on the Stocknet dataset without auxiliary data sources
 - `activity` = no-submission-channel · S4
   - why: The repository releases the data and the paper its results; neither has a leaderboard or a submission route, and results appear in users' papers.
@@ -791,7 +792,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = fully-automatable · S5
   - why: The code, the prompts and the cached data are public, and the backbones are API or open-weight models; an independent rerun reproduces the baseline row exactly.
   > The buy-and-hold baseline comes out at 0.4% return, -15.2% max drawdown and Sortino 0.0155. That matches Table 2 of the paper.
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S4
+- `execution.harness` = StockBench (the stockbench GitHub repository) -- scripts/run\_benchmark.sh over the back-trading engine and agent workflow, with the window and LLM profile as arguments · S4
   > bash scripts/run\_benchmark.sh
 - `aggregation_policy` = official-aggregate · [S1][stockbench-s1]
   - why: The paper and the project page publish one rank per model, from the mean of the three metrics' z-scores, beside the three metrics themselves.
@@ -884,7 +885,7 @@ Considered and rejected:
 
 ### 2.5 BigLaw Bench (biglaw-bench)
 
-`data/benchmarks/society-econ-law/biglaw-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
+`data/benchmarks/society-econ-law/biglaw-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-18
 
 *Harvey's private law-firm tasks, from memos to deal analysis, scored by lawyer-written rubrics.*
 
@@ -1113,7 +1114,7 @@ Considered and rejected:
 
 ### 2.6 GLEE (glee)
 
-`data/benchmarks/society-econ-law/glee.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/society-econ-law/glee.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Two-player bargaining, negotiation and persuasion games in language, scored on self-gain, efficiency and fairness.*
 
@@ -1146,6 +1147,9 @@ GLEE (Games in Language-based Economic Environments) is a framework and benchmar
 | S4 | `src-glee-site` | documentation · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S5 | `src-arxiv-2506-00539-v2` | preprint · arXiv | [arxiv.org/pdf/2506.00539v2](https://arxiv.org/pdf/2506.00539v2) | none (not-required) |
 | S6 | `src-github-glee-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/GLEE/master/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
+| S7 | `src-arxiv-2605-12411-v1` | preprint · arXiv | [arxiv.org/pdf/2605.12411v1](https://arxiv.org/pdf/2605.12411v1) | none (not-required) |
+| S8 | `src-arxiv-2601-11496-v3` | preprint · arXiv | [arxiv.org/pdf/2601.11496v3](https://arxiv.org/pdf/2601.11496v3) | none (not-required) |
+| S9 | `src-arxiv-2603-17218-v2` | preprint · arXiv | [arxiv.org/pdf/2603.17218v2](https://arxiv.org/pdf/2603.17218v2) | none (not-required) |
 
 **Evidence** (42 quoted fields), by checklist area:
 
@@ -1208,7 +1212,7 @@ Considered and rejected:
 - `execution.compute_tier` = api-credits-only · [S1][glee-s1]
   - why: The engine and the analysis run on one CPU; the LLM players are called through their providers' APIs (litellm in the repository).
   > The system does not require any specialized hardware: data collection and analysis can be performed efficiently using a single CPU
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S6
+- `execution.harness` = GLEE (the GLEE GitHub repository) -- main.py with sample configurations for LLM-vs-LLM games, an oTree app for human-vs-LLM games, and the analysis suite · S6
   > This repository includes all the necessary code and data to run experiments, collect new data, and replicate or extend the results from the corresponding research paper
 - `aggregation_policy` = none-by-design · [S1][glee-s1]
   - why: The paper fits a separate regression for each family and metric and reports each role apart, with no single score. The 2026 competition did average the three family ratings into an overall board ("The overall leaderboard averages your three family ratings").
@@ -1250,7 +1254,7 @@ Considered and rejected:
 
 #### glee · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S3][glee-s3]
+- `governance.maintainer` = An individual researcher (the first author, who owns the repository) and co-authors (Technion, Faculty of Data and Decision Sciences) · [S3][glee-s3]
   - why: The code and data sit in the first author's GitHub account, and the competition names four Technion organisers, all authors of the paper.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = live-arena, maintainer-run · [S3][glee-s3]
@@ -1273,7 +1277,7 @@ Considered and rejected:
 - `history` = date 2026-08-30; event channel-closed; field execution.submission\_channel; from the GLEE Competition's agent API and browser play · [S3][glee-s3]
   > "competition\_close\_at": "2026-08-30T11:59:59+00:00"
 
-**Open review checks** (8):
+**Open review checks** (9):
 
 1. (field `domain`) Both the games-planning test (an opponent that responds) and the society-econ-law test (economic outcomes) pass; the primary follows the benchmark's claim. Confirm, and confirm economics-simulation over trading-market-interaction, both proposed leaves with no tests. · [S1][glee-s1]
    > our focus extends to evaluating the outcome reached by the strategic behavior of the agents, using the fundamental economic notions of efficiency and fairness
@@ -1286,6 +1290,8 @@ Considered and rejected:
 7. (field `activity`) activity closed or between-rounds. One edition and a pilot have run; no second edition is announced. · [S3][glee-s3]
    > The competition closed on August 29, 2026.
 8. (field `governance.maintainer_type`) maintainer\_type individual (a personal repository) or academic-lab (four Technion organisers); and whether the absence of any code or data licence is a licence-restriction blocker.
+9. (field `history`) 2605.12411's held-out agents come from a university hackathon of December 2025 (34 teams, restricted to Gemini 2.5 Flash models). The sweep read the project page as saying that paper uses the competition's pilot; if the hackathon is that pilot, it is a dated round before the August 2026 edition that history and versions could carry. The page's wording was not re-read here. · [S7][glee-s7]
+   > The target population is a new dataset from a competitive university hackathon held in December 2025, where 34 teams competed for a $2,000 prize.
 
 **Reviewer checklist** for `glee`:
 
@@ -1302,6 +1308,9 @@ Considered and rejected:
 [glee-s2]: https://arxiv.org/abs/2410.05254
 [glee-s3]: https://glee-competition.com/llms.txt
 [glee-s5]: https://arxiv.org/pdf/2506.00539v2
+[glee-s7]: https://arxiv.org/pdf/2605.12411v1
+[glee-s8]: https://arxiv.org/pdf/2601.11496v3
+[glee-s9]: https://arxiv.org/pdf/2603.17218v2
 
 ### 2.7 MathTutorBench (mathtutorbench)
 
@@ -1549,9 +1558,11 @@ ObliQA is a question-answering dataset for regulatory compliance, and RIRAG the 
 | S7 | `src-hf-api-obliqa` | dataset-card · Hugging Face | [huggingface.co/api/datasets/RegNLP/ObliQA](https://huggingface.co/api/datasets/RegNLP/ObliQA) | [capture 2026-11-09](https://web.archive.org/web/20261109054410/https://huggingface.co/api/datasets/RegNLP/ObliQA) |
 | S8 | `src-hf-datasets-server-obliqa-size` | dataset-card · Hugging Face | [datasets-server.huggingface.co/size?dataset=RegNLP/ObliQA](https://datasets-server.huggingface.co/size?dataset=RegNLP/ObliQA) | [capture 2026-11-09](https://web.archive.org/web/20261109060511/https://datasets-server.huggingface.co/size?dataset=RegNLP/ObliQA) |
 | S9 | `src-acl-2025-nllp-1-10-pdf` | paper · Association for Computational Linguistics | [aclanthology.org/2025.nllp-1.10.pdf](https://aclanthology.org/2025.nllp-1.10.pdf) | none (not-required) |
-| S10 | `src-github-obliqa-readme` | repository · GitHub | [raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76...](https://raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76106ce13af672d48e02/README.md) | [capture 2026-11-09](https://web.archive.org/web/20261109050104/https://raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76106ce13af672d48e02/README.md) |
+| S10 | `src-github-regnlp-obliqa-xref-readme` | repository · GitHub | [raw.githubusercontent.com/RegNLP/ObliQA-XRef/b470e47182d66bc5625199b3...](https://raw.githubusercontent.com/RegNLP/ObliQA-XRef/b470e47182d66bc5625199b32d3c60ea5297abfb/README.md) | none (pending) |
+| S11 | `src-github-obliqa-readme` | repository · GitHub | [raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76...](https://raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76106ce13af672d48e02/README.md) | [capture 2026-11-09](https://web.archive.org/web/20261109050104/https://raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76106ce13af672d48e02/README.md) |
+| S12 | `src-hf-regnlp-obliqa-xref-card` | dataset-card · Hugging Face | [huggingface.co/datasets/RegNLP/ObliQA-XRef/raw/main/README.md](https://huggingface.co/datasets/RegNLP/ObliQA-XRef/raw/main/README.md) | none (pending) |
 
-**Evidence** (40 quoted fields), by checklist area:
+**Evidence** (41 quoted fields), by checklist area:
 
 #### obliqa · Identity and id
 
@@ -1561,6 +1572,8 @@ ObliQA is a question-answering dataset for regulatory compliance, and RIRAG the 
   > Submitted on 9 Sep 2024 (v1), last revised 2 Dec 2024 (this version, v2)
 - `lineage.variants` = id obliqa-mp; relation multi-passage extension; n_items 2976 · [S9][obliqa-s9]
   > we introduce ObliQA-MP, a dataset for multi-passage regulatory QA, extending the earlier ObliQA benchmark
+- `lineage.variants` = id obliqa-xref; relation cross-reference-aware extension (citation-dependent QA items, each anchored in a resolved source-to-target cross-reference, on the ADGM corpus and the UK PRA Rulebook); n_items 17394 · [S10][obliqa-s10]
+  > It is part of the ObliQA benchmark family:
 
 #### obliqa · Domain and capabilities
 
@@ -1676,7 +1689,7 @@ Considered and rejected:
 
 1. (field `domain.primary`) Leaf call. policy-analysis rests on the items being regulatory questions, which its definition names. legal-document (extraction from semi-legal texts) is the nearest rival, and language/retrieval-qa could be primary if the family exclusion (a general competence on domain material) is read to cover regulatory RAG. ObliQA analyses no policy option. · [S1][obliqa-s1]
    > Regulatory documents are formal semi-legal texts issued by governmental regulatory bodies
-2. (field `domain.primary`) The README lists policy analysis and impact assessment among the dataset's intended uses, but no ObliQA task scores the impact of a regulation; the leaf call rests on the regulatory questions alone, not on this line. · [S10][obliqa-s10]
+2. (field `domain.primary`) The README lists policy analysis and impact assessment among the dataset's intended uses, but no ObliQA task scores the impact of a regulation; the leaf call rests on the regulatory questions alone, not on this line. · [S11][obliqa-s11]
    > Policy Analysis and Impact Assessment: Analyzing the potential impact of new or modified regulations.
 3. (field `data.size`) The development split is 2,888 in the paper's Table 6, the README and the card, but 2,788 rows on Hugging Face, and 22,295 + 2,888 + 2,786 exceeds the stated 27,869 by 100. Which count is right, and whether the GitHub file matches the Hugging Face copy, was not checked. · [S5][obliqa-s5]
    > \- \*\*Validation:\*\* 2,888
@@ -1713,11 +1726,13 @@ Considered and rejected:
 [obliqa-s7]: https://huggingface.co/api/datasets/RegNLP/ObliQA
 [obliqa-s8]: https://datasets-server.huggingface.co/size?dataset=RegNLP/ObliQA
 [obliqa-s9]: https://aclanthology.org/2025.nllp-1.10.pdf
-[obliqa-s10]: https://raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76106ce13af672d48e02/README.md
+[obliqa-s10]: https://raw.githubusercontent.com/RegNLP/ObliQA-XRef/b470e47182d66bc5625199b32d3c60ea5297abfb/README.md
+[obliqa-s11]: https://raw.githubusercontent.com/RegNLP/ObliQADataset/c1b2c3c04aee1f6ce75f76106ce13af672d48e02/README.md
+[obliqa-s12]: https://huggingface.co/datasets/RegNLP/ObliQA-XRef/raw/main/README.md
 
 ### 2.9 SimulacraBench (simulacrabench)
 
-`data/benchmarks/society-econ-law/simulacrabench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/society-econ-law/simulacrabench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *A NeurIPS 2026 competition: predict held-out survey answers on unreleased UNHCR, UNICEF and World Bank microdata.*
 
@@ -1748,6 +1763,8 @@ A NeurIPS 2026 competition that tests how well submitted systems stand in for ha
 | S2 | `src-neurips-2026-competitions-blog` | blog-post · NeurIPS Blog | [blog.neurips.cc/2026/07/28/neurips-2026-competitions-announced/](https://blog.neurips.cc/2026/07/28/neurips-2026-competitions-announced/) | [capture 2026-10-03](https://web.archive.org/web/20261003033649/https://blog.neurips.cc/2026/07/28/neurips-2026-competitions-announced/) |
 | S3 | `src-github-situatedevals-public-readme` | repository · GitHub | [raw.githubusercontent.com/SituatedEvals/public/main/README.md](https://raw.githubusercontent.com/SituatedEvals/public/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014125657/https://raw.githubusercontent.com/SituatedEvals/public/main/README.md) |
 | S4 | `src-codabench-simulacrabench` | leaderboard-page · Codabench | [www.codabench.org/api/competitions/17822/](https://www.codabench.org/api/competitions/17822/) | [capture 2026-11-04](https://web.archive.org/web/20261104100429/https://www.codabench.org/api/competitions/17822/) |
+| S5 | `src-simulacrabench-site-2026-11-18` | documentation · SimulacraBench (Stanford Digital Economy Lab) | [simulacrabench.org/](https://simulacrabench.org/) | none (pending) |
+| S6 | `src-github-situatedevals-public-config-aa03186` | repository · GitHub | [raw.githubusercontent.com/SituatedEvals/public/aa03186f8f083c7785a1a5...](https://raw.githubusercontent.com/SituatedEvals/public/aa03186f8f083c7785a1a566c802c2077925e265/config.yml) | none (pending) |
 
 **Evidence** (37 quoted fields), by checklist area:
 
@@ -1846,7 +1863,7 @@ A NeurIPS 2026 competition that tests how well submitted systems stand in for ha
 - `governance.independence_flags` = flag single-evaluator-private-test-set · [S1][simulacrabench-s1]
   > Evaluation is closed. Code travels to the data; only aggregate scores travel back.
 - `governance.funding` · [S1][simulacrabench-s1]
-  > \[withheld: it may name a person; see the entry file\]
+  > With thanks to Schmidt Sciences for prize sponsorship.
 
 #### simulacrabench · Lifecycle and activity
 
@@ -1859,7 +1876,7 @@ A NeurIPS 2026 competition that tests how well submitted systems stand in for ha
 - `history` = date 2026-08-17; event channel-opened; field governance.submission\_process; to sandboxed-rerun · [S4][simulacrabench-s4]
   > "start":"2026-08-17T00:00:00Z","end":"2026-11-14T07:55:00Z","name":"Development"
 
-**Open review checks** (7):
+**Open review checks** (8):
 
 1. (field `capability`) calibration-uncertainty is the only capability, assigned on its inclusion test (a scored distribution). Its definition, a system's confidence in its own output, fits a distribution over another person's answer loosely, and the benchmark's central claim, faithful simulation of a population, has no term (taxonomy/\_failures/2026-09-28-simulacrabench-001 proposes population-response-modelling).
 2. (field `governance.submission_process`) publication-gated rests on Codabench's Terms (rule 7). The site says only winning teams supply a method description and everyone else submits code alone; if the site's reading holds, the requirement is for prizes only and the term goes. · [S4][simulacrabench-s4]
@@ -1871,6 +1888,8 @@ A NeurIPS 2026 competition that tests how well submitted systems stand in for ha
 6. (field `data.size`) The headline size is the site's "\~40,000 respondents"; the per-instrument totals it tabulates sum to 37,000. · [S1][simulacrabench-s1]
    > N total 10,300 19,800 6,900
 7. (field `lifecycle`) lifecycle active rests on the running development phase (noised scores only); the competition is two months old, has no paper, and ends on 2026-11-18 with no later edition announced. After that, mature or results-pending activity may fit.
+8. (field `data.submission_limit`) The development phase's daily quota is three on today's site and in config.yml from 2026-10-26, where the site read on 2026-10-14 said one. Whether Codabench's phase allowed one a day until late October and three after, or three throughout, is not settled; its API now answers this project's fetcher with a bot check, so its phase record was not re-read. · [S1][simulacrabench-s1]
+   > one leaderboard submission
 
 **Reviewer checklist** for `simulacrabench`:
 
@@ -1887,10 +1906,12 @@ A NeurIPS 2026 competition that tests how well submitted systems stand in for ha
 [simulacrabench-s2]: https://blog.neurips.cc/2026/07/28/neurips-2026-competitions-announced/
 [simulacrabench-s3]: https://raw.githubusercontent.com/SituatedEvals/public/main/README.md
 [simulacrabench-s4]: https://www.codabench.org/api/competitions/17822/
+[simulacrabench-s5]: https://simulacrabench.org/
+[simulacrabench-s6]: https://raw.githubusercontent.com/SituatedEvals/public/aa03186f8f083c7785a1a566c802c2077925e265/config.yml
 
 ### 2.10 ForecastBench (forecastbench)
 
-`data/benchmarks/society-econ-law/forecastbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-09-27 · last verified 2026-09-27
+`data/benchmarks/society-econ-law/forecastbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-09-27 · last verified 2026-11-18
 
 *LLMs and humans forecast real future events; scores update as the questions resolve.*
 
@@ -1909,7 +1930,7 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 | Reproducibility tier · harness | fully-automatable · official-harness |
 | Maintainer type · submission process | nonprofit · maintainer-verified |
 | Independence flags | none |
-| Licences: code · dataset | null · null |
+| Licences: code · dataset | null · CC-BY-SA-4.0 |
 | Released | 2024-09-30 |
 | Links | homepage [www.forecastbench.org/](https://www.forecastbench.org/) · repository [github.com/forecastingresearch/forecastbench](https://github.com/forecastingresearch/forecastbench) · leaderboard [www.forecastbench.org/leaderboards/](https://www.forecastbench.org/leaderboards/) |
 
@@ -1921,10 +1942,12 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 | S2 | `src-forecastbench-about` | documentation · Forecasting Research Institute | [www.forecastbench.org/about/](https://www.forecastbench.org/about/) | [capture 2026-09-26](https://web.archive.org/web/20260926102029/https://www.forecastbench.org/about/) |
 | S3 | `src-forecastbench-leaderboards` | leaderboard-page · Forecasting Research Institute | [www.forecastbench.org/leaderboards/](https://www.forecastbench.org/leaderboards/) | [capture 2026-09-26](https://web.archive.org/web/20260926102034/https://www.forecastbench.org/leaderboards/) |
 | S4 | `src-forecastbench-arxiv-html` | preprint · arXiv | [arxiv.org/html/2409.19839](https://arxiv.org/html/2409.19839) | none (not-required) |
-| S5 | `src-forecastbench-baseline-data` | dataset-export · Forecasting Research Institute | [www.forecastbench.org/assets/js/leaderboard\_baseline\_full.js](https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js) | [capture 2026-09-26](https://web.archive.org/web/20260926102017/https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js) |
-| S6 | `src-metaculus-futureeval` | leaderboard-page · Metaculus | [www.metaculus.com/futureeval/](https://www.metaculus.com/futureeval/) | [capture 2026-09-24](https://web.archive.org/web/20260924185724/https://www.metaculus.com/futureeval/) |
+| S5 | `src-github-forecastbench-datasets-readme-ed36f73` | repository · GitHub | [raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/...](https://raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/ed36f732de709ff288af275cfeb28b88e8795a8b/README.md) | none (pending) |
+| S6 | `src-arxiv-2606-18686` | preprint · arXiv | [arxiv.org/abs/2606.18686](https://arxiv.org/abs/2606.18686) | none (not-required) |
+| S7 | `src-forecastbench-baseline-data` | dataset-export · Forecasting Research Institute | [www.forecastbench.org/assets/js/leaderboard\_baseline\_full.js](https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js) | [capture 2026-09-26](https://web.archive.org/web/20260926102017/https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js) |
+| S8 | `src-metaculus-futureeval` | leaderboard-page · Metaculus | [www.metaculus.com/futureeval/](https://www.metaculus.com/futureeval/) | [capture 2026-09-24](https://web.archive.org/web/20260924185724/https://www.metaculus.com/futureeval/) |
 
-**Evidence** (26 quoted fields), by checklist area:
+**Evidence** (28 quoted fields), by checklist area:
 
 #### forecastbench · Identity and id
 
@@ -1933,6 +1956,8 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 - `released` = 2024-09-30 · [S1][forecastbench-s1]
   - why: The arXiv v1 submission date, the earliest public release any source read here dates.
   > \[v1\] Mon, 30 Sep 2024 00:41:51 UTC
+- `lineage.variants` = id forecastbench-sim; relation simulated-world companion benchmark, with new forecasting questions generated from Freeciv game rollouts (none of ForecastBench's questions), scored ForecastBench-style by Brier score and CRPS; not on ForecastBench's leaderboards · [S6][forecastbench-s6]
+  > We introduce ForecastBench-Sim, a simulated-world forecasting benchmark built on game rollouts from Freeciv, a turn-based strategy game modelled on the Civilization series.
 
 #### forecastbench · Domain and capabilities
 
@@ -1983,6 +2008,8 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 - `data.ceiling_anchor_type` = expert-average · [S4][forecastbench-s4]
   - why: The comparator is the superforecasters' median forecast, an aggregate of experts, not the best expert (02 S12.8 has expert-best). On the 2026-09-26 baseline leaderboard it still ranks first, above every model; the maintainers' own blog (2026-07-16, about page) says models have likely reached parity on the tournament board. The general public is the second tier.
   > Superforecaster median forecast ForecastBench – – 0.118 0.074 0.096
+- `data.dataset_licence` = CC-BY-SA-4.0 · [S5][forecastbench-s5]
+  > The datasets in this repository are distributed under the \[CC BY-SA 4.0 license\]
 - `data.size` = count 1000; unit questions in a round's LLM question set (the 2024 protocol) · [S1][forecastbench-s1]
   > regularly updated set of 1,000 forecasting questions
 - `data.size` = count 200; unit questions in the human question set; subset forecastbench#human-question-set · [S4][forecastbench-s4]
@@ -2011,11 +2038,13 @@ A benchmark run by the Forecasting Research Institute in which language models, 
   - why: The tournament leaderboard takes outside submissions.
   > The tournament leaderboard captures the frontier of LLM forecasting ability and is open to external submissions.
 
-**Open review checks** (3):
+**Open review checks** (4):
 
 1. Whether the resolution semantics are captured correctly (a human judgement, the task's verify): the three claims' states and the reasons in their notes, and resolved\_as\_of 2025-02-28 (v5).
 2. ceiling\_anchor\_type expert-average for a median of superforecasters (02 S12.8: expert-best).
 3. (field `execution`) The reproducibility tier and the dropped live-world-state blocker (execution).
+4. (field `data.dataset_licence`) dataset\_licence CC-BY-SA-4.0 rests on the datasets repository's README and LICENSE. The about page releases datasets only "where licensing permits"; whether any upstream series or market platform's questions are withheld, or carry terms of their own beside the repository's licence, was not checked. · [S2][forecastbench-s2]
+   > we publicly provide our code, datasets (where licensing permits), and methodology
 
 **Reviewer checklist** for `forecastbench`:
 
@@ -2032,8 +2061,10 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 [forecastbench-s2]: https://www.forecastbench.org/about/
 [forecastbench-s3]: https://www.forecastbench.org/leaderboards/
 [forecastbench-s4]: https://arxiv.org/html/2409.19839
-[forecastbench-s5]: https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js
-[forecastbench-s6]: https://www.metaculus.com/futureeval/
+[forecastbench-s5]: https://raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/ed36f732de709ff288af275cfeb28b88e8795a8b/README.md
+[forecastbench-s6]: https://arxiv.org/abs/2606.18686
+[forecastbench-s7]: https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js
+[forecastbench-s8]: https://www.metaculus.com/futureeval/
 
 ## 3. The coverage row and the gap question: are these cells empty, or do we not know about the work?
 

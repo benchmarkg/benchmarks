@@ -2,7 +2,7 @@
 
 # Review packet: Medicine and health
 
-`medicine-health` · 20 published entries · Core family · 13 subdomains · data as of 2026-11-04 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`medicine-health` · 20 published entries · Core family · 13 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -61,7 +61,7 @@ Not in this packet (10): `camelyon17`, `chexpert`, `ddxplus`, `ehrshot`, `isic-c
 | 2.6 | [ReXrank](#26-rexrank-rexrank) | `radiology-report-generation` | 38 | 10 |
 | 2.7 | [MedAgentBench](#27-medagentbench-medagentbench) | `clinical-agent-workflows` | 33 | 8 |
 | 2.8 | [PubMedQA](#28-pubmedqa-pubmedqa) | `biomedical-literature` | 34 | 8 |
-| 2.9 | [HealthBench](#29-healthbench-healthbench) | `medical-safety` | 40 | 8 |
+| 2.9 | [HealthBench](#29-healthbench-healthbench) | `medical-safety` | 41 | 8 |
 | 2.10 | [CounselBench](#210-counselbench-counselbench) | `mental-health` | 41 | 10 |
 
 ### 2.1 MedCalc-Bench (medcalc-bench)
@@ -307,7 +307,7 @@ A corpus for benchmarking automatic visit-note generation from doctor-patient co
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-scidata-aci-bench-2023` | paper · Scientific Data (Nature Portfolio) | [europepmc.org/article/PMC/PMC10482860](https://europepmc.org/article/PMC/PMC10482860) | none (not-required) |
+| S1 | `src-scidata-aci-bench-2023` | paper · \[withheld: it may name a person; see the entry file\] | [europepmc.org/article/PMC/PMC10482860](https://europepmc.org/article/PMC/PMC10482860) | none (not-required) |
 | S2 | `src-arxiv-2306-02022` | preprint · arXiv | [arxiv.org/abs/2306.02022](https://arxiv.org/abs/2306.02022) | none (not-required) |
 | S3 | `src-github-aci-bench-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/aci-bench/main/README.md (not linked: a personal account) | none (withheld) |
 | S4 | `src-acl-2023-clinicalnlp-1-52` | paper · Association for Computational Linguistics | [aclanthology.org/2023.clinicalnlp-1.52.pdf](https://aclanthology.org/2023.clinicalnlp-1.52.pdf) | none (not-required) |
@@ -326,8 +326,8 @@ A corpus for benchmarking automatic visit-note generation from doctor-patient co
   > Here we present the Ambient Clinical Intelligence Benchmark (aci-bench) corpus, the largest dataset to date tackling the problem of AI-assisted note generation from visit dialogue
 - `released` = 2023-06-03 · [S2][aci-bench-s2]
   > Submitted on 3 Jun 2023
-- `release_venue` = Scientific Data (2023) · S3
-  > Nature Scientific Data, 2023.
+- `release_venue` = \[withheld: it may name a person; see the entry file\] · S3
+  > \[withheld: it may name a person; see the entry file\]
 
 #### aci-bench · Domain and capabilities
 
@@ -373,7 +373,7 @@ Considered and rejected:
   > Run the generated evaluation from the previous step.
 - `execution.reproducibility_blockers` = [] · S8
   > In order to use this you will need to setup a UMLS account
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S8
+- `execution.harness` = The ACI-Bench repository (pre-process and post-process notebooks, sectiontagger.py, and the generated baselines/evaluation\_script.sh over the evaluation scripts, with rouge-score, bert-score 0.3.12, BLEURT and QuickUMLS) · S8
   > ./baselines/evaluation\_script.sh
 - `execution.runnable_via` = custom, helm · [S9][aci-bench-s9]
   > "display\_name": "ACI-Bench Jury Score"
@@ -421,8 +421,8 @@ Considered and rejected:
 
 #### aci-bench · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][aci-bench-s1]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The ACI-Bench first author and co-authors (Microsoft Health AI, Nuance Communications, University of Washington) · [S1][aci-bench-s1]
+  - why: The repository sits in the first author's personal GitHub account and the Figshare record is deposited by the six authors; no institution is named as holding either. The authors were at Microsoft Health AI, Nuance Communications and the University of Washington.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = held-out-server · [S4][aci-bench-s4]
   > the evaluation of the participating systems on unseen test sets
@@ -675,7 +675,7 @@ Considered and rejected:
 #### agentclinic · Governance and independence
 
 - `governance.maintainer` = The AgentClinic authors (Johns Hopkins, Stanford, ETH Zurich), on the first author's personal GitHub account · [S3][agentclinic-s3]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: The tasks, code and README sit in the AgentClinic repository on a personal account, which the npj paper names as the home of the data and code; no institution is stated as holding them. The project site is a separate GitHub Pages site (agentclinic.github.io).
   > All code, prompts, and evaluation scripts are available under an MIT license
 - `governance.submission_process` = literature-only · S5
   > Just change modify the following parameters in the CLI
@@ -1031,7 +1031,7 @@ The Brain Tumor Segmentation challenge, held with MICCAI every year since 2012; 
   - why: The input is raw multi-contrast MRI volumes (and, in BraTS-Path, digitized H&E tissue patches), and the score measures the tumour structure recovered from them.
   > Twenty state-of-the-art tumor segmentation algorithms were applied to a set of 65 multi-contrast MR scans of low- and high-grade glioma patients
 - `capability` = distribution-shift-generalization · [S3][brats-s3]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: BraTS-GoAT scores one segmentation algorithm across tumour types and populations (glioma, meningioma, metastases, paediatric tumours, sub-Saharan African patients) with the label set fixed across them, so only the inputs move; its test composition is not disclosed. The source calls new tumour entities unseen tasks; the vocabulary's tie-break makes that distribution shift. The 2021 edition also scored an out-of-distribution test cohort (arXiv 2107.02314).
   > We aim to simulate the clinical scenario where we develop a segmentation tool agnostic to future clinical applications (i.e., a tool trained on a specific disease(s) that will be applied to new ones)
 - `capability` = generation-fidelity · [S3][brats-s3]
   - why: The inpainting task scores a synthesized T1 region against the scan's real tissue by SSIM, PSNR and RMSE.
@@ -1053,7 +1053,7 @@ Considered and rejected:
 
 - `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S6][brats-s6]
   > \[withheld: it may name a person; see the entry file\]
-- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S4][brats-s4]
+- `learned_entrant_evidence` = system A five-fold nnU-Net ResEnc-L ensemble (arXiv 2609.11477), BraTS-METS 2026 · [S4][brats-s4]
   > We build a pragmatic pipeline on a 5-fold nnU-Net ResEnc-L ensemble
 - `reproducible_by_third_party` = false · [S3][brats-s3]
   - why: The test cases behind every ranking stay with the organisers, who run the submitted containers on them; the validation labels are not released either.
@@ -1061,7 +1061,7 @@ Considered and rejected:
 - `task` = exists true; input multiparametric brain MRI of one patient (pre-contrast T1, contrast-enhanced T1, T2, T2-FLAIR), at one or more timepoints, for inpainting, a T1 scan with the tumour region voided and the mask of the region to fill, for BraTS-Path, one patch of a digitized H&E-stained tissue section; output A voxel-wise label map of the tumour sub-regions (segmentation tasks), a synthesized T1 volume (inpainting) or one of ten histologic classes (pathology).; scoring Per case and sub-region, Dice with a surface distance (lesion-wise in the later segmentation tasks); each team is ranked against the others per case, region and metric, the ranks are averaged over cases into a final ranking score, and pairwise permutation tests decide which differences are significant.; tests_hidden_from_system true · [S6][brats-s6]
   > The ranking scheme followed during the BraTS 2017 and 2018 comprised the ranking of each team relative to its competitors for each of the testing subjects
 - `execution.compute_tier` = provided-allocation · [S3][brats-s3]
-  - why: Training runs on the participants' own hardware; validation scoring and the ranking runs of the containers are on the organisers' Synapse infrastructure (an NVIDIA A10G per segmentation container in 2026).
+  - why: \[withheld: it may name a person; see the entry file\]
   > during the validation and final testing/ranking phase using the organizers' infrastructure (i.e., Synapse.org - SAGE Bionetworks)
 - `execution.reproducibility_tier` = not-independently-reproducible · [S3][brats-s3]
   - why: The rankings are computed on test data that only the organisers hold and run.
@@ -1121,7 +1121,7 @@ Considered and rejected:
 
 #### brats · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S3][brats-s3]
+- `governance.maintainer` = The BraTS organisers, MICCAI challenge committees that re-form by edition and task, started in 2012 by the original BRATS benchmark paper's authors and coordinated in later editions by a CBICA group (University of Pennsylvania, now Indiana University), with RANO, RSNA, ASNR, ASFNR, ESNR, CBTN and the NIH as partners in 2026 · [S3][brats-s3]
   - why: The 2026 proposal has 24 authors from 17 institutions (its Zenodo record lists them) and names the partner societies; each challenge has its own organising team, and the challenges run on Synapse with Sage Bionetworks.
   > The BraTS 2026 Cluster of Challenges is a multi-society multi-institutional collaborative effort
 - `governance.submission_process` = containerized-algorithm-submission, publication-gated, held-out-server · [S10][brats-s10]
@@ -1188,11 +1188,11 @@ Considered and rejected:
 
 ### 2.6 ReXrank (rexrank)
 
-`data/benchmarks/medicine-health/rexrank.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/medicine-health/rexrank.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Leaderboard for AI-written chest X-ray reports, scored on a private 10,000-study set and three public test sets.*
 
-\[withheld: it may name a person; see the entry file\]
+A public leaderboard from a Harvard Medical School lab for AI models that write chest X-ray radiology reports. A model is given a study's images with the patient's age, gender, indication and comparison, and writes the findings section, or the findings and impression, which are ranked separately. The generated reports are scored against the radiologists' reports on four test sets: ReXGradient, 10,000 studies from 67 US sites provided by Gradient Health and held by the maintainers, who run every model on it; and the public MIMIC-CXR (2,347 studies) and IU-Xray (590) test splits and the CheXpert Plus validation set (200). The paper reports eight metrics, from BLEU-2 and BERTScore to labeller-, entity- and LLM-based clinical metrics, with 1/RadCliQ-v1, a composite of BLEU, BERTScore, SembScore and RadGraph-F1, as the primary one. The live board has since dropped FineRadScore for CRIMSON, an LLM-based metric from the same lab, and ranks findings-only reports by CRIMSON; the findings and impression rows, which carry no CRIMSON score, are ranked by 1/RadCliQ-v1. Entrants e-mail a conda environment and an inference script that the maintainers run; the paper's 16 founding models are public checkpoints the maintainers ran themselves. A second track, Challenge V2.0, ranks vision-language models on 41,007 question-answer pairs (ReXVQA) built from the ReXGradient studies.
 
 | Classification | |
 | --- | --- |
@@ -1220,9 +1220,11 @@ Considered and rejected:
 | S3 | `src-arxiv-2608-03890-v1` | preprint · arXiv | [arxiv.org/pdf/2608.03890v1](https://arxiv.org/pdf/2608.03890v1) | none (not-required) |
 | S4 | `src-arxiv-2411-15122-v2` | preprint · arXiv | [arxiv.org/pdf/2411.15122v2](https://arxiv.org/pdf/2411.15122v2) | none (not-required) |
 | S5 | `src-arxiv-2603-06183` | preprint · arXiv | [arxiv.org/abs/2603.06183](https://arxiv.org/abs/2603.06183) | none (not-required) |
-| S6 | `src-rexrank-submission-guideline` | documentation · \[withheld: it may name a person; see the entry file\] | [rexrank.ai/explore/submission\_guideline.html](https://rexrank.ai/explore/submission_guideline.html) | none (withheld) |
-| S7 | `src-github-rexrank-data-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ReXrank/main/data/READMD.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
-| S8 | `src-github-cxr-report-metric-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/CXR-Report-Metric/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
+| S6 | `src-rexrank-leaderboard-2026-11` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [rexrank.ai/](https://rexrank.ai/) | none (pending) |
+| S7 | `src-rexrank-submission-guideline` | documentation · \[withheld: it may name a person; see the entry file\] | [rexrank.ai/explore/submission\_guideline.html](https://rexrank.ai/explore/submission_guideline.html) | none (withheld) |
+| S8 | `src-github-rexrank-data-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ReXrank/main/data/READMD.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
+| S9 | `src-github-cxr-report-metric-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/CXR-Report-Metric/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
+| S10 | `src-github-api-rexrank-gh-pages-commits` | repository · GitHub | api.github.com/repos/\[personal account\]/ReXrank/commits?sha=gh-pages&per\_page=30 (not linked: a personal account) | none (withheld) |
 
 **Evidence** (38 quoted fields), by checklist area:
 
@@ -1274,19 +1276,19 @@ Considered and rejected:
 - `reproducible_by_third_party` = false · [S1][rexrank-s1]
   - why: ReXGradient, the set every model is scored on first, is private, so only the maintainers can produce those scores. Scores on the three public sets can be recomputed with the public checkpoints and metric code.
   > ReXGradient is a large-scale private test dataset contains 10,000 studies collected from different medical centers in the US.
-- `task.scoring` = Each metric is averaged over the test set, per test set and per section setting. The paper ranks by 1/RadCliQ-v1 (the reciprocal of the lower-is-better RadCliQ-v1); the live board leads with CRIMSON, scored in (-1, 1\]. · [S3][rexrank-s3]
+- `task.scoring` = Each metric is averaged over the test set, per test set and per section setting. The paper ranks by 1/RadCliQ-v1 (the reciprocal of the lower-is-better RadCliQ-v1); the live board ranks findings-only reports by CRIMSON, scored in (-1, 1\], and findings-and-impression reports by 1/RadCliQ-v1. · [S3][rexrank-s3]
   > yielding a severity-weighted score in
-- `task` = exists true; input a chest X-ray study's images (frontal, and lateral where taken), with the patient's age, gender, indication and comparison; output A free-text report, either the findings section or the findings and impression.; scoring Each metric is averaged over the test set, per test set and per section setting. The paper ranks by 1/RadCliQ-v1 (the reciprocal of the lower-is-better RadCliQ-v1); the live board leads with CRIMSON, scored in (-1, 1\]. · [S4][rexrank-s4]
+- `task` = exists true; input a chest X-ray study's images (frontal, and lateral where taken), with the patient's age, gender, indication and comparison; output A free-text report, either the findings section or the findings and impression.; scoring Each metric is averaged over the test set, per test set and per section setting. The paper ranks by 1/RadCliQ-v1 (the reciprocal of the lower-is-better RadCliQ-v1); the live board ranks findings-only reports by CRIMSON, scored in (-1, 1\], and findings-and-impression reports by 1/RadCliQ-v1. · [S4][rexrank-s4]
   > ReXrank employs 8 evaluation metrics and separately assesses models capable of generating only findings sections and those providing both findings and impressions sections
 - `execution.reproducibility_tier` = not-independently-reproducible · [S1][rexrank-s1]
   - why: ReXGradient scores can only come from the maintainers, who hold the set. The three public sets can be scored by anyone with the checkpoints and the metric code.
   > ReXGradient is a large-scale private test dataset contains 10,000 studies collected from different medical centers in the US.
-- `execution.reproducibility_blockers` = private-test-set · S8
+- `execution.reproducibility_blockers` = private-test-set · S9
   > Note: You need to apply for credentialed access to RadGraph on PhysioNet.
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · [S4][rexrank-s4]
+- `execution.harness` = CXR-Report-Metric (the lab's repository) for BLEU, BERTScore, SembScore, RadGraph-F1 and RadCliQ-v1; GREEN, RaTEScore, FineRadScore and CRIMSON from their own repositories · [S4][rexrank-s4]
   > For our evaluation, we utilized the official implementation
 - `aggregation_policy` = official-aggregate · [S4][rexrank-s4]
-  - why: The paper ranks models by 1/RadCliQ-v1 averaged over the four test sets. The live board shows no cross-set aggregate; it ranks each test set in its own column.
+  - why: The paper ranks models by 1/RadCliQ-v1 averaged over the four test sets. The live board shows no cross-set aggregate; it ranks each test set in its own column, by CRIMSON for Findings and by 1/RadCliQ-v1 for Findings + Impression.
   > based on the average 1/RadCliQ-v1 metric of four distinct datasets
 
 #### rexrank · Data and licence
@@ -1301,7 +1303,7 @@ Considered and rejected:
   > CRIMSON became available after the SFT checkpoint was submitted to ReXrank
 - `data.data_provenance` = real-world-instrument, patient-clinical-record, inherited-from-constituents · [S4][rexrank-s4]
   > This private test set is provided by Gradient Health, which consists of 10,000 studies collected from 7,004 patients across 67 medical sites in the United States.
-- `data.contamination_risk` = medium · S7
+- `data.contamination_risk` = medium · S8
   > For each dataset, the test set JSON file includes the following fields:
 - `data.size` = count 10000; unit studies; subset ReXGradient (private test set) · [S4][rexrank-s4]
   > This private test set is provided by Gradient Health, which consists of 10,000 studies collected from 7,004 patients across 67 medical sites in the United States.
@@ -1313,15 +1315,15 @@ Considered and rejected:
   > We follow the official split of CheXpert Plus and report scores on the validation set, which contains 200 studies.
 - `data.size` = count 41007; unit question-answer pairs over the 10,000 ReXGradient studies; subset VQA track (Challenge V2.0, ReXVQA) · [S1][rexrank-s1]
   > ReXrank Challenge V2.0 is a competition in VQA task utilizing VQA dataset constructed from ReXGradient, including 41,007 VQA pairs with 10,000 radiological studies.
-- `execution.code_licence` = MIT · S8
+- `execution.code_licence` = MIT · S9
   > This repository is made publicly available under the MIT License.
 
 #### rexrank · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][rexrank-s1]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The ReXrank authors' lab (Department of Biomedical Informatics, Harvard Medical School) · [S1][rexrank-s1]
+  - why: The board names the lab, the repository sits in the lab's GitHub organisation, and the authors are at Harvard's Department of Biomedical Informatics, with two from Gradient Health, which supplied the private set.
   > \[withheld: it may name a person; see the entry file\]
-- `governance.submission_process` = sandboxed-rerun, maintainer-run · [S6][rexrank-s6]
+- `governance.submission_process` = sandboxed-rerun, maintainer-run · [S7][rexrank-s7]
   > Inference Script: The model should support the following command:
 - `governance.independence_flags` = flag single-evaluator-private-test-set · [S1][rexrank-s1]
   > In ReXrank, we use additional private test set ReXGradient, 10,000 studies for benchmarking.
@@ -1332,10 +1334,10 @@ Considered and rejected:
 
 #### rexrank · Lifecycle and activity
 
-- `lifecycle` = active · [S1][rexrank-s1]
-  - why: The board carries rows dated 2026 (CARE-X, Deepwise-RG, MedGemma 1.5 4B), and a paper of August 2026 reports submitting to it.
-  > 25 2026 CARE-X Microsoft Research 0.438 1.635
-- `activity` = accepting-submissions · [S6][rexrank-s6]
+- `lifecycle` = active · [S6][rexrank-s6]
+  - why: The board carries rows dated 2026 (CARE-X, Deepwise-RG, MedGemma 1.5 4B, and CXR-Agent, added to the Findings + Impression board on 2026-11-09), and a paper of August 2026 reports submitting to it.
+  > 10 2026 CXR-Agent Individual 1.569 0.301 0.535 0.553 0.304 0.628 0.523
+- `activity` = accepting-submissions · [S7][rexrank-s7]
   - why: The submission route is open with no deadline or round stated. "Challenge V1.0" and "V2.0" name the report and VQA tasks, not dated rounds.
   > Once your model has been evaluated, your scores will be added to the leaderboard.
 
@@ -1343,8 +1345,8 @@ Considered and rejected:
 
 1. (field `evaluation_method`) reference-metric is tagged because BLEU-2 is a column on every table and one of RadCliQ-v1's constituents, which composite says to tag as well. The taxonomy's reference-metric example lists ReXrank as a near miss, so the example and the tests disagree. · [S4][rexrank-s4]
    > It evaluates the quality of generated text by comparing n-gram precision between the candidate and reference texts
-2. (field `evaluation_method`) The paper names RadCliQ-v1 primary, but the live board's ranking follows CRIMSON. The summary table's order matches the CRIMSON column, not 1/RadCliQ-v1 (MAIRA-2 is third on ReXGradient with CRIMSON 0.391 and 1/RadCliQ-v1 0.93, above UniRG-CXR at 0.315 and 1.509), and a comment in the page's stylesheet, outside the stripped extract, calls CRIMSON the primary metric. If CRIMSON is the headline, composite describes a secondary column only. · [S1][rexrank-s1]
-   > Findings Findings + Impression Rank Model CRIMSON 1/RadCliQ-v1 BLEU BertScore SembScore RadGraph RaTEScore GREEN
+2. (field `evaluation_method`) The paper names RadCliQ-v1 primary; the live board made CRIMSON its headline for the report board on 2026-08-07, and since 2026-11-09 ranks the Findings + Impression tab (and that view of the overview) by 1/RadCliQ-v1, because those rows have no CRIMSON score. The headline therefore depends on the tab. composite describes a secondary column for Findings and the ranking metric for Findings + Impression; whether evaluation\_method should record both headlines, and whether the Findings + Impression rows will get CRIMSON scores, is open. · S10
+   > rows have no CRIMSON, so that tab showed rows in submission order.
 3. (field `evaluation_method`) GREEN and CRIMSON run fine-tuned, released models (GREEN's own; a fine-tuned MedGemma for CRIMSON), which sits between model-graded-judge and model-derived-metric. With model-graded-judge tagged, the reference-grader rule asks for reference conditions naming the judge; the board does not say which CRIMSON model it runs. · [S5][rexrank-s5]
    > We release the metric, the evaluation benchmarks, RadJudge and RadPref, and a fine-tuned MedGemma model
 4. (field `governance.independence_flags`) grader-from-evaluated-party rests on the paper's GPT-4o FineRadScore judge and GPT-4V entrant. Whether it also covers CRIMSON (by the maintainer lab, whose MedVersa competes, and built on MedGemma while Google's MedGemma models are ranked) or GREEN (Stanford-AIMI, while Stanford models are ranked). · [S5][rexrank-s5]
@@ -1376,7 +1378,8 @@ Considered and rejected:
 [rexrank-s3]: https://arxiv.org/pdf/2608.03890v1
 [rexrank-s4]: https://arxiv.org/pdf/2411.15122v2
 [rexrank-s5]: https://arxiv.org/abs/2603.06183
-[rexrank-s6]: https://rexrank.ai/explore/submission_guideline.html
+[rexrank-s6]: https://rexrank.ai/
+[rexrank-s7]: https://rexrank.ai/explore/submission_guideline.html
 
 ### 2.7 MedAgentBench (medagentbench)
 
@@ -1411,7 +1414,7 @@ Stanford's benchmark of language-model agents working in an electronic health re
 | S2 | `src-arxiv-2501-14654` | preprint · arXiv | [arxiv.org/abs/2501.14654](https://arxiv.org/abs/2501.14654) | none (not-required) |
 | S3 | `src-github-stanfordmlgroup-medagentbench-readme` | repository · GitHub | [raw.githubusercontent.com/stanfordmlgroup/MedAgentBench/main/README.md](https://raw.githubusercontent.com/stanfordmlgroup/MedAgentBench/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014051517/https://raw.githubusercontent.com/stanfordmlgroup/MedAgentBench/main/README.md) |
 | S4 | `src-arxiv-2609-13582` | preprint · arXiv | [arxiv.org/abs/2609.13582](https://arxiv.org/abs/2609.13582) | none (not-required) |
-| S5 | `src-psb-2026-medagentbench-v2` | paper · World Scientific (Pacific Symposium on Biocomputing 2026) | [psb.stanford.edu/psb-online/proceedings/psb26/chen\_eric.pdf](https://psb.stanford.edu/psb-online/proceedings/psb26/chen_eric.pdf) | none (not-required) |
+| S5 | `src-psb-2026-medagentbench-v2` | paper · \[withheld: it may name a person; see the entry file\] | [psb.stanford.edu/psb-online/proceedings/psb26/chen\_eric.pdf](https://psb.stanford.edu/psb-online/proceedings/psb26/chen_eric.pdf) | none (not-required) |
 | S6 | `src-arxiv-2501-14654-v1` | preprint · arXiv | [arxiv.org/pdf/2501.14654v1](https://arxiv.org/pdf/2501.14654v1) | none (not-required) |
 | S7 | `src-github-medagentbenchv2-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/medagentbenchv2/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 
@@ -1425,7 +1428,7 @@ Stanford's benchmark of language-model agents working in an electronic health re
   > Submitted on 24 Jan 2025 (v1), last revised 12 Feb 2025 (this version, v2)
 - `release_venue` = NEJM AI · [S3][medagentbench-s3]
   > journal={NEJM AI}
-- `lineage.forks` = id medagentbench-v2; maintainer \[withheld: it may name a person; see the entry file\] · [S5][medagentbench-s5]
+- `lineage.forks` = id medagentbench-v2; maintainer An individual researcher (the repository's owner), on a personal GitHub account (the medagentbenchv2 repository); the owner's PSB 2026 co-authors include MedAgentBench's two first authors and its senior author · [S5][medagentbench-s5]
   > To contribute to the benchmark and evaluate the generalization of our agent, we developed 300 new multi-step clinically-driven tasks in collaboration with a physician.
 
 #### medagentbench · Domain and capabilities
@@ -1684,9 +1687,9 @@ Considered and rejected:
 
 #### pubmedqa · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S5][pubmedqa-s5]
+- `governance.maintainer` = An individual researcher, PubMedQA's first author · [S5][pubmedqa-s5]
   - why: The leaderboard names one maintainer, the first author. The repository sits in a GitHub user account named for the project (pubmedqa, GitHub API), and no institution is stated as holding either.
-  > \[withheld: it may name a person; see the entry file\]
+  > Leaderboard maintained by Qiao Jin
 - `governance.submission_process` = maintainer-scored-predictions · [S6][pubmedqa-s6]
   > please send an email that contains the model predictions and a brief description of the system
 - `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S5][pubmedqa-s5]
@@ -1771,10 +1774,11 @@ OpenAI's benchmark of 5,000 conversations between a model and a lay user or a he
 | S4 | `src-github-simple-evals-readme` | repository · GitHub | [raw.githubusercontent.com/openai/simple-evals/main/README.md](https://raw.githubusercontent.com/openai/simple-evals/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014051355/https://raw.githubusercontent.com/openai/simple-evals/main/README.md) |
 | S5 | `src-github-simple-evals-healthbench-eval` | repository · GitHub | [raw.githubusercontent.com/openai/simple-evals/main/healthbench\_eval.py](https://raw.githubusercontent.com/openai/simple-evals/main/healthbench_eval.py) | [capture 2026-10-14](https://web.archive.org/web/20261014051339/https://raw.githubusercontent.com/openai/simple-evals/main/healthbench_eval.py) |
 | S6 | `src-github-simple-evals-script` | repository · GitHub | [raw.githubusercontent.com/openai/simple-evals/main/simple\_evals.py](https://raw.githubusercontent.com/openai/simple-evals/main/simple_evals.py) | [capture 2026-10-14](https://web.archive.org/web/20261014051358/https://raw.githubusercontent.com/openai/simple-evals/main/simple_evals.py) |
-| S7 | `src-arxiv-2604-27470` | preprint · arXiv | [arxiv.org/abs/2604.27470](https://arxiv.org/abs/2604.27470) | none (not-required) |
-| S8 | `src-arxiv-2505-08775` | preprint · arXiv | [arxiv.org/abs/2505.08775](https://arxiv.org/abs/2505.08775) | none (not-required) |
+| S7 | `src-arxiv-2608-25071` | preprint · arXiv | [arxiv.org/abs/2608.25071](https://arxiv.org/abs/2608.25071) | none (not-required) |
+| S8 | `src-arxiv-2604-27470` | preprint · arXiv | [arxiv.org/abs/2604.27470](https://arxiv.org/abs/2604.27470) | none (not-required) |
+| S9 | `src-arxiv-2505-08775` | preprint · arXiv | [arxiv.org/abs/2505.08775](https://arxiv.org/abs/2505.08775) | none (not-required) |
 
-**Evidence** (40 quoted fields), by checklist area:
+**Evidence** (41 quoted fields), by checklist area:
 
 #### healthbench · Identity and id
 
@@ -1782,6 +1786,8 @@ OpenAI's benchmark of 5,000 conversations between a model and a lay user or a he
   > We present HealthBench, an open-source benchmark measuring the performance and safety of large language models in healthcare.
 - `released` = 2025-05-12 · [S2][healthbench-s2]
   > May 12, 2025 Publication Introducing HealthBench
+- `lineage.forks` = id healthbench-psych; maintainer \[withheld: it may name a person; see the entry file\] · [S7][healthbench-s7]
+  > We screened HealthBench's 5,000 physician-rubric conversations for mental-health relevance with a transparent LLM-applied rubric
 
 #### healthbench · Domain and capabilities
 
@@ -1905,7 +1911,7 @@ Considered and rejected:
 4. (field `governance.submission_process`) submission\_process maintainer-run against literature-only. OpenAI's results are the release paper's and announcement page's; the simple-evals results table has no HealthBench column, so whether OpenAI keeps a results table of its own is open.
 5. (field `capability`) reliability-consistency rests on worst-at-k, which the paper reports as an analysis beside the averaged headline score; healthbench\_eval.py does not compute it. · [S1][healthbench-s1]
    > To examine this, we study the worst-at-k performance on HealthBench
-6. (field `versions`) Identity. HealthBench Professional (April 2026) is OpenAI's benchmark on real clinician chats, run through the same eval with a custom input path, a GPT-5.4 grader and a length adjustment. It is left out here as a separate benchmark rather than a version or subset; it may deserve an entry of its own. · [S7][healthbench-s7]
+6. (field `versions`) Identity. HealthBench Professional (April 2026) is OpenAI's benchmark on real clinician chats, run through the same eval with a custom input path, a GPT-5.4 grader and a length adjustment. It is left out here as a separate benchmark rather than a version or subset; it may deserve an entry of its own. · [S8][healthbench-s8]
    > We introduce HealthBench Professional, an open benchmark for evaluating large language models on real tasks that clinicians bring to ChatGPT in the course of their work.
 7. (field `reference_conditions`) No reference\_conditions is written, so the reference-grader rule cannot see the grader (gpt-4.1-2025-04-14, the simple-evals default). simple-evals now also offers GPT-5.4 at low effort as a HealthBench grader, and a score graded that way is not comparable. · [S6][healthbench-s6]
    > Use GPT-5.4 with low reasoning effort as the HealthBench rubric grader.
@@ -1928,8 +1934,9 @@ Considered and rejected:
 [healthbench-s4]: https://raw.githubusercontent.com/openai/simple-evals/main/README.md
 [healthbench-s5]: https://raw.githubusercontent.com/openai/simple-evals/main/healthbench_eval.py
 [healthbench-s6]: https://raw.githubusercontent.com/openai/simple-evals/main/simple_evals.py
-[healthbench-s7]: https://arxiv.org/abs/2604.27470
-[healthbench-s8]: https://arxiv.org/abs/2505.08775
+[healthbench-s7]: https://arxiv.org/abs/2608.25071
+[healthbench-s8]: https://arxiv.org/abs/2604.27470
+[healthbench-s9]: https://arxiv.org/abs/2505.08775
 
 ### 2.10 CounselBench (counselbench)
 
@@ -2111,7 +2118,7 @@ Considered and rejected:
 8. (field `governance.independence_flags`) independence\_assessed is false. The PDF has no funding or competing-interests statement and the ICLR camera-ready was not read; nothing suggests a conflict, but no-known-conflict needs a completed search.
 9. (field `lifecycle`) Evidence of current use is CARE-MH (May 2026), which re-scores CounselBench-Eval with LLM evaluators rather than experts. LLUMI (arXiv 2605.30273) and a content-moderation paper (arXiv 2605.25454) also report using CounselBench (Semantic Scholar contexts) but were not read. · [S4][counselbench-s4]
    > These results suggest that CounselBench is relatively robust to evaluator variation
-10. (field `dataset_url`) \[withheld: it may name a person; see the entry file\] · [S5][counselbench-s5]
+10. (field `dataset_url`) The Hugging Face datasets sit on a separate Hugging Face account rather than the GitHub organisation; the README links them, which is the only tie read between the account and the maintainers. · [S5][counselbench-s5]
    > 2000 human evaluations by 100 mental health professionals on
 
 **Reviewer checklist** for `counselbench`:

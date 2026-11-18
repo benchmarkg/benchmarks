@@ -2,7 +2,7 @@
 
 # Review packet: Vision
 
-`vision` · 22 published entries · 16 subdomains · data as of 2026-11-10 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`vision` · 22 published entries · 16 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -121,9 +121,9 @@ The ImageNet Large Scale Visual Recognition Challenge (ILSVRC) classification be
   > May 3, 2010: Training data, validation data and development kit are available for download!
 - `lineage.variants` = id imagenet-face-blurred; relation privacy variant with faces blurred, released by the maintainers in March 2021 · [S12][imagenet-s12]
   > We first annotated faces in the images and then constructed a face-blurred version of ILSVRC.
-- `lineage.forks` = id imagenetv2; maintainer \[withheld: it may name a person; see the entry file\] · [S5][imagenet-s5]
+- `lineage.forks` = id imagenetv2; maintainer The ImageNetV2 authors (arXiv 1902.10811, 2019) · [S5][imagenet-s5]
   > We build new test sets for the CIFAR-10 and ImageNet datasets.
-- `lineage.forks` = id imagenet-real; maintainer \[withheld: it may name a person; see the entry file\] · [S8][imagenet-s8]
+- `lineage.forks` = id imagenet-real; maintainer The authors of Are we done with ImageNet? (arXiv 2006.07159, 2020) · [S8][imagenet-s8]
   > We therefore develop a significantly more robust procedure for collecting human annotations of the ImageNet validation set.
 
 #### imagenet · Domain and capabilities
@@ -236,7 +236,7 @@ Considered and rejected:
 
 1. (field `activity`) activity is unknown because the Kaggle competition (the 2017 page's successor channel) and the image-net.org test server (behind a login) could not be read. closed fits if the maintainers' 2017 handover ended the series and the server is a private scoring service; leaderboard-live-no-round fits if Kaggle's board still takes entries. · [S4][imagenet-s4]
    > Jul 26, 2017: We are passing the baton to Kaggle. From now on, all three challenges(LOC-CLS, DET, VID) will be hosted on Kaggle!
-2. (field `lifecycle`) \[withheld: it may name a person; see the entry file\] · [S8][imagenet-s8]
+2. (field `lifecycle`) Saturation is derived and was not set. Are we done with ImageNet? (arXiv 2006.07159) finds the original labels nearing the end of their usefulness; whether claims now support headroom\_consumed \>= 0.95 on top-1 accuracy needs the claims the derivation reads. · [S8][imagenet-s8]
    > indicating that their usefulness in evaluating vision models may be nearing an end
 3. (field `data.access`) The facets describe the design (test labels withheld, server-scored), so data.access is train-open-test-held-out and the tier not-independently-reproducible. If the validation set that papers use is taken as the headline, access becomes gated-registration (the copies read need a login or click-through; Kaggle's terms were not read) and the tier fully-automatable.
 4. (field `evaluation_method`) exact-match for top-5, where an image counts as right if any of five labels equals its one label; the term's inclusion test speaks of a response equal to the reference.
@@ -1458,8 +1458,8 @@ Considered and rejected:
 
 #### ntire · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S2][ntire-s2]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The NTIRE workshop and challenge organisers, led from the Computer Vision Lab, University of Würzburg, with an organising team per challenge · [S2][ntire-s2]
+  - why: A University of Würzburg researcher heads the 2026 organiser list and every challenge read names the same researcher among its organisers; each challenge's own team (for example OPPO's Y-Lab with PolyU's VC-Lab for RAIM) runs its data, server and report. In 2017 the series was run from ETH Zurich's Computer Vision Lab.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.maintainer_type` = conference-workshop · [S2][ntire-s2]
   - why: The challenges are held as part of a CVPR workshop, and in 2026 their organisers came from over twenty universities and companies.
@@ -1572,7 +1572,7 @@ A benchmark suite built from one car's recordings around Karlsruhe, on rural roa
 | S13 | `src-cvlibs-kitti-tracking` | leaderboard-page · KITTI (cvlibs.net) | [www.cvlibs.net/datasets/kitti/eval\_tracking.php](https://www.cvlibs.net/datasets/kitti/eval_tracking.php) | none (withheld) |
 | S14 | `src-cvlibs-kitti-360-index` | documentation · KITTI-360 (cvlibs.net) | [www.cvlibs.net/datasets/kitti-360/](https://www.cvlibs.net/datasets/kitti-360/) | none (withheld) |
 | S15 | `src-crossref-10-1177-0278364913491297` | paper · SAGE Publications | [api.crossref.org/works/10.1177/0278364913491297](https://api.crossref.org/works/10.1177/0278364913491297) | none (not-required) |
-| S16 | `src-cvf-object-scene-flow-2015` | paper · Computer Vision Foundation | \[withheld: a personal page\] | capture 2026-11-09 (not linked: the page is under a personal account) |
+| S16 | `src-cvf-object-scene-flow-2015` | paper · Computer Vision Foundation | [openaccess.thecvf.com/content\_cvpr\_2015/html/Menze\_Object\_Scene\_Flow\_...](https://openaccess.thecvf.com/content_cvpr_2015/html/Menze_Object_Scene_Flow_2015_CVPR_paper.html) | [capture 2026-11-09](https://web.archive.org/web/20261109010640/https://openaccess.thecvf.com/content_cvpr_2015/html/Menze_Object_Scene_Flow_2015_CVPR_paper.html) |
 
 **Evidence** (61 quoted fields), by checklist area:
 
@@ -1780,6 +1780,7 @@ Considered and rejected:
 [kitti-s13]: https://www.cvlibs.net/datasets/kitti/eval_tracking.php
 [kitti-s14]: https://www.cvlibs.net/datasets/kitti-360/
 [kitti-s15]: https://api.crossref.org/works/10.1177/0278364913491297
+[kitti-s16]: https://openaccess.thecvf.com/content_cvpr_2015/html/Menze_Object_Scene_Flow_2015_CVPR_paper.html
 
 ### 2.8 nuScenes (nuscenes)
 
@@ -2249,7 +2250,7 @@ A collection of biomedical image classification datasets from Shanghai Jiao Tong
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-nature-s41597-022-01721-8` | paper · Scientific Data | [www.nature.com/articles/s41597-022-01721-8](https://www.nature.com/articles/s41597-022-01721-8) | none (not-required) |
+| S1 | `src-nature-s41597-022-01721-8` | paper · \[withheld: it may name a person; see the entry file\] | [www.nature.com/articles/s41597-022-01721-8](https://www.nature.com/articles/s41597-022-01721-8) | none (not-required) |
 | S2 | `src-arxiv-2010-14925` | preprint · arXiv | [arxiv.org/abs/2010.14925](https://arxiv.org/abs/2010.14925) | none (not-required) |
 | S3 | `src-github-medmnist-readme` | repository · GitHub | [raw.githubusercontent.com/MedMNIST/MedMNIST/805b74237fb5bd2db376fd94e...](https://raw.githubusercontent.com/MedMNIST/MedMNIST/805b74237fb5bd2db376fd94e50646b6a8905d9d/README.md) | none (withheld) |
 | S4 | `src-arxiv-2609-06838` | preprint · arXiv | [arxiv.org/abs/2609.06838](https://arxiv.org/abs/2609.06838) | none (not-required) |
@@ -2270,7 +2271,7 @@ A collection of biomedical image classification datasets from Shanghai Jiao Tong
   > We introduce MedMNIST v2, a large-scale MNIST-like dataset collection of standardized biomedical images, including 12 datasets for 2D and 6 datasets for 3D.
 - `released` = 2020-10-28 · [S2][medmnist-s2]
   > \[Submitted on 28 Oct 2020 (v1), last revised 20 May 2021 (this version, v4)\]
-- `release_venue` = ISBI 2021 (v1); Scientific Data 10, 41 (2023) (v2) · [S2][medmnist-s2]
+- `release_venue` = \[withheld: it may name a person; see the entry file\] · [S2][medmnist-s2]
   > Comments: ISBI 2021.
 - `lineage.forks` = id medmnist-c; maintainer The MedMNIST-C authors (arXiv 2406.17536; ADSMI workshop at MICCAI 2024) · [S10][medmnist-s10]
   > we create and open-source MedMNIST-C, a benchmark dataset based on the MedMNIST+ collection covering 12 datasets and 9 imaging modalities

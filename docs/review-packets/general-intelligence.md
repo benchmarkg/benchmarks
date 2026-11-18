@@ -2,7 +2,7 @@
 
 # Review packet: General intelligence
 
-`general-intelligence` · 12 published entries · 9 subdomains · data as of 2026-11-10 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`general-intelligence` · 12 published entries · 9 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -51,11 +51,11 @@ Not in this packet (2): `epoch-capabilities-index`, `lmarena`. `python scripts/r
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [ARC-AGI-1](#21-arc-agi-1-arc-agi-1) | `abstraction-generalization` | 49 | 12 |
 | 2.2 | [ARC-AGI-2](#22-arc-agi-2-arc-agi-2) | `abstraction-generalization` | 48 | 11 |
-| 2.3 | [ARC-AGI-3](#23-arc-agi-3-arc-agi-3) | `novel-task-acquisition` | 27 | 4 |
+| 2.3 | [ARC-AGI-3](#23-arc-agi-3-arc-agi-3) | `novel-task-acquisition` | 29 | 5 |
 | 2.4 | [AGIEval](#24-agieval-agieval) | `multi-subject-knowledge-exams` | 39 | 10 |
 | 2.5 | [GPQA](#25-gpqa-gpqa) | `multi-subject-knowledge-exams` | 46 | 11 |
 | 2.6 | [Humanity's Last Exam](#26-humanitys-last-exam-hle) | `multi-subject-knowledge-exams` | 46 | 11 |
-| 2.7 | [MMLU](#27-mmlu-mmlu) | `multi-subject-knowledge-exams` | 23 | 3 |
+| 2.7 | [MMLU](#27-mmlu-mmlu) | `multi-subject-knowledge-exams` | 25 | 5 |
 | 2.8 | [MMLU-Pro](#28-mmlu-pro-mmlu-pro) | `multi-subject-knowledge-exams` | 39 | 7 |
 | 2.9 | [HELM Capabilities](#29-helm-capabilities-helm-capabilities) | `agi-composite-suites` | 65 | 9 |
 | 2.10 | [LiveBench](#210-livebench-livebench) | `agi-composite-suites` | 72 | 11 |
@@ -405,8 +405,8 @@ Considered and rejected:
 
 - `as_used` = protocol Verified leaderboard. The foundation chooses commercial models from large providers, calls each as a direct predictor with no tools, at one or more reasoning levels, on the semi-private set, in a single run capped at $10,000, and reports the score with its cost per task.; split semi-private evaluation · [S6][arc-agi-2-s6]
   > We cap our evaluations at $10,000 USD per run.
-- `as_used` = protocol ARC Prize Kaggle competition (2025, and the ARC-AGI-2 track of 2026). Entrants' code runs offline on four NVIDIA L4 GPUs within 12 hours over the semi-private and private sets; the semi-private score is shown during the contest and the private score decides the standings, released only once the solution is open source.; split private evaluation (final), semi-private evaluation (live) · [S1][arc-agi-2-s1]
-  > on four NVIDIA L4 GPUs. Within a single 12-hour wall-clock window
+- `as_used` = protocol \[withheld: it may name a person; see the entry file\]; split private evaluation (final), semi-private evaluation (live) · [S1][arc-agi-2-s1]
+  > \[withheld: it may name a person; see the entry file\]
 - `as_used` = protocol Community leaderboard. Results on the semi-private set are run and verified by the foundation; anything else is scored on a public set and self-reported.; split public evaluation (self-reported) · [S7][arc-agi-2-s7]
   > Results on the ARC-AGI-1 and ARC-AGI-2 semi-private sets are run and verified by ARC Prize. Everything else is scored on a public set and self-reported.
 - `as_used` = protocol Frontier labs report ARC-AGI results in their own model cards, outside both boards. · [S8][arc-agi-2-s8]
@@ -519,7 +519,7 @@ Considered and rejected:
 
 ### 2.3 ARC-AGI-3 (arc-agi-3)
 
-`data/benchmarks/general-intelligence/arc-agi-3.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-09-26 · last verified 2026-09-26
+`data/benchmarks/general-intelligence/arc-agi-3.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-09-26 · last verified 2026-11-18
 
 *Novel turn-based game environments that agents must explore and learn without instructions, scored against humans.*
 
@@ -538,9 +538,9 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 | Reproducibility tier · harness | not-independently-reproducible · official-harness |
 | Maintainer type · submission process | nonprofit · sandboxed-rerun, self-reported, containerized-algorithm-submission |
 | Independence flags | funded-by-evaluated-party, maintainer-competes-on-own-benchmark |
-| Licences: code · dataset | null · null |
+| Licences: code · dataset | MIT · null |
 | Released | 2026-03-24 |
-| Links | homepage [arcprize.org/arc-agi/3](https://arcprize.org/arc-agi/3) · leaderboard [arcprize.org/arc-agi/3/leaderboard](https://arcprize.org/arc-agi/3/leaderboard) |
+| Links | homepage [arcprize.org/arc-agi/3](https://arcprize.org/arc-agi/3) · repository [github.com/arcprize/ARC-AGI](https://github.com/arcprize/ARC-AGI) · leaderboard [arcprize.org/arc-agi/3/leaderboard](https://arcprize.org/arc-agi/3/leaderboard) |
 
 **Sources**
 
@@ -552,9 +552,10 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 | S4 | `src-arc-prize-arc-agi-2` | documentation · ARC Prize Foundation | [arcprize.org/arc-agi/2](https://arcprize.org/arc-agi/2) | [capture 2026-11-16](https://web.archive.org/web/20261116161812/https://arcprize.org/arc-agi/2) |
 | S5 | `src-arc-prize-testing-policy` | documentation · ARC Prize Foundation | [arcprize.org/policy](https://arcprize.org/policy) | [capture 2026-09-04](https://web.archive.org/web/20260904164247/https://arcprize.org/policy) |
 | S6 | `src-arc-agi-3-community-leaderboard` | leaderboard-page · ARC Prize Foundation | [arcprize.org/leaderboard/community](https://arcprize.org/leaderboard/community) | [capture 2026-09-10](https://web.archive.org/web/20260910005944/https://arcprize.org/leaderboard/community) |
-| S7 | `src-arc-prize-leaderboard` | leaderboard-page · ARC Prize Foundation | [arcprize.org/leaderboard](https://arcprize.org/leaderboard) | [capture 2026-09-22](https://web.archive.org/web/20260922043511/https://arcprize.org/leaderboard) |
+| S7 | `src-github-arcprize-arc-agi-readme-f2e6fee` | repository · GitHub | [raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c...](https://raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c8e9f08b8579a31/README.md) | none (pending) |
+| S8 | `src-arc-prize-leaderboard` | leaderboard-page · ARC Prize Foundation | [arcprize.org/leaderboard](https://arcprize.org/leaderboard) | [capture 2026-09-22](https://web.archive.org/web/20260922043511/https://arcprize.org/leaderboard) |
 
-**Evidence** (27 quoted fields), by checklist area:
+**Evidence** (29 quoted fields), by checklist area:
 
 #### arc-agi-3 · Identity and id
 
@@ -563,6 +564,8 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 - `released` = 2026-03-24 · [S2][arc-agi-3-s2]
   - why: The arXiv v1 submission date; the competition opened the next day.
   > \[v1\] Tue, 24 Mar 2026 21:58:16 UTC
+- `repository` = [github.com/arcprize/ARC-AGI](https://github.com/arcprize/ARC-AGI) · [S7][arc-agi-3-s7]
+  > ARC-AGI Toolkit is an open-sourced python interface (API) for ARC-AGI-3 interactive environments.
 - `lineage.supersedes` = arc-agi-1, arc-agi-2 · [S1][arc-agi-3-s1]
   - why: The report names both static-grid generations as its predecessors. They keep running beside it, so the edge records the succession, not a lifecycle. Added by P1-S11-T06 when arc-agi-1 and arc-agi-2 were promoted.
   > Like its predecessors ARC-AGI-1 and 2, ARC-AGI-3 focuses entirely on evaluating fluid adaptive efficiency on novel tasks
@@ -581,7 +584,7 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 - `evaluation_method` = simulation-rollout · [S1][arc-agi-3-s1]
   - why: Outcomes come from running a policy in the game environments. The score is not a plain success rate, as the term's definition has it, but an efficiency-weighted completion score; no term names that, and simulation-rollout is the nearest.
   > This will be a score between 0% and 100%.
-- `secondary_axes` = cost · [S7][arc-agi-3-s7]
+- `secondary_axes` = cost · [S8][arc-agi-3-s8]
   - why: The leaderboard plots cost per task against the score.
   > The scatter plot above visualizes the critical relationship between cost-per-task and performance - a key measure of efficiency.
 
@@ -616,6 +619,8 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
   > Public Demo A public demonstration set that shows the format and basic mechanics of ARC-AGI-3 environments. 25
 - `data.size` = count 55; unit environments; subset fully private (the competition's set) · [S1][arc-agi-3-s1]
   > This set is only given to a very limited number of partners. 55
+- `execution.code_licence` = MIT · [S7][arc-agi-3-s7]
+  > This project is licensed under the MIT License
 - `subsets` = id arc-agi-3#public-demo; label Public demo set; items 25; scored_separately true · [S1][arc-agi-3-s1]
   > we will never report public set scores of any system on the official leaderboard
 
@@ -642,12 +647,14 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
   - why: ARC Prize 2026, whose main track runs on ARC-AGI-3, closed its submissions on 2026-11-02 and announces its results on 2026-12-04, so on 2026-11-17 a round is closed and unscored, as arc-agi-2 reads the same round. The Community board still takes submissions between rounds (see review\_checks).
   > ARC Prize 2026 has finished. Thank you to everybody who participated. Results will be announced December 4, 2026.
 
-**Open review checks** (4):
+**Open review checks** (5):
 
 1. Whether the legality rules are read correctly (the verify's own human judgement): the two boards' conditions records, and the harness rule's move between the report (2026-04, "the official leaderboard will not use a harness to report official scores") and the policy (2026-09, two labelled harnesses).
 2. maintainer-competes-on-own-benchmark rests on reference harnesses the foundation posted to its own Community board; a reviewer may judge that outside the flag's intent.
 3. The Community board spans ARC-AGI-1, -2 and -3; its Leaderboard record lists only arc-agi-3, the one of the three in the corpus.
 4. activity reads results-pending from the 2026-11-17 sweep; leaderboard-live-no-round is the other reading while the Community board takes entries between rounds. Read it again after the results on 2026-12-04.
+5. (field `repository`) repository is the ARC-AGI Toolkit, the interface agents play the environments through, and code\_licence is its licence. The Verified board's runs use arc-agi-3-benchmarking (execution.harness), a separate repository not read here; if repository should name the scoring code, that one is the alternative. · [S7][arc-agi-3-s7]
+   > It provides a consistent API and tooling layer that lets agents interact with ARC-AGI-3 environments, locally or via API.
 
 **Reviewer checklist** for `arc-agi-3`:
 
@@ -666,7 +673,8 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 [arc-agi-3-s4]: https://arcprize.org/arc-agi/2
 [arc-agi-3-s5]: https://arcprize.org/policy
 [arc-agi-3-s6]: https://arcprize.org/leaderboard/community
-[arc-agi-3-s7]: https://arcprize.org/leaderboard
+[arc-agi-3-s7]: https://raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c8e9f08b8579a31/README.md
+[arc-agi-3-s8]: https://arcprize.org/leaderboard
 
 ### 2.4 AGIEval (agieval)
 
@@ -1307,7 +1315,7 @@ Considered and rejected:
 
 ### 2.7 MMLU (mmlu)
 
-`data/benchmarks/general-intelligence/mmlu.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-05 · last verified 2026-10-05
+`data/benchmarks/general-intelligence/mmlu.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-05 · last verified 2026-11-18
 
 *Four-option multiple-choice questions in 57 subjects, from elementary to professional level.*
 
@@ -1326,7 +1334,7 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
 | Reproducibility tier · harness | fully-automatable · official-harness |
 | Maintainer type · submission process | academic-lab · literature-only |
 | Independence flags | none |
-| Licences: code · dataset | null · null |
+| Licences: code · dataset | MIT · MIT |
 | Released | 2020-09-07 |
 | Links | homepage github.com/\[personal account\]/test (not linked: a personal account) |
 
@@ -1335,25 +1343,28 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2009-03300` | preprint · arXiv | [arxiv.org/abs/2009.03300](https://arxiv.org/abs/2009.03300) | none (not-required) |
-| S2 | `src-hf-api-openai-mmmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/openai/MMMLU](https://huggingface.co/api/datasets/openai/MMMLU) | [capture 2026-11-17](https://web.archive.org/web/20261117233256/https://huggingface.co/api/datasets/openai/MMMLU) |
-| S3 | `src-arxiv-2406-04127` | preprint · arXiv | [arxiv.org/abs/2406.04127](https://arxiv.org/abs/2406.04127) | none (not-required) |
-| S4 | `src-arxiv-2412-03304` | preprint · arXiv | [arxiv.org/abs/2412.03304](https://arxiv.org/abs/2412.03304) | none (not-required) |
-| S5 | `src-hf-mmlu-pro-dataset-card` | dataset-card · Hugging Face (TIGER-Lab) | [huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfe...](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014141358/https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) |
-| S6 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
+| S2 | `src-hf-api-cais-mmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/cais/mmlu](https://huggingface.co/api/datasets/cais/mmlu) | none (pending) |
+| S3 | `src-github-mmlu-license-4450500` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/test/4450500f923c49f1fb1dd3d99108a0bd9717b660/LICENSE (not linked: a personal account) | none (withheld) |
+| S4 | `src-hf-api-openai-mmmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/openai/MMMLU](https://huggingface.co/api/datasets/openai/MMMLU) | [capture 2026-11-17](https://web.archive.org/web/20261117233256/https://huggingface.co/api/datasets/openai/MMMLU) |
+| S5 | `src-arxiv-2406-04127` | preprint · arXiv | [arxiv.org/abs/2406.04127](https://arxiv.org/abs/2406.04127) | none (not-required) |
+| S6 | `src-arxiv-2412-03304` | preprint · arXiv | [arxiv.org/abs/2412.03304](https://arxiv.org/abs/2412.03304) | none (not-required) |
+| S7 | `src-hf-mmlu-pro-dataset-card` | dataset-card · Hugging Face (TIGER-Lab) | [huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfe...](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014141358/https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) |
+| S8 | `src-github-mmlu-readme-4450500` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/test/4450500f923c49f1fb1dd3d99108a0bd9717b660/README.md (not linked: a personal account) | none (withheld) |
+| S9 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
 
-**Evidence** (23 quoted fields), by checklist area:
+**Evidence** (25 quoted fields), by checklist area:
 
 #### mmlu · Identity and id
 
 - `self_description` · [S1][mmlu-s1]
   > We propose a new test to measure a text model’s multitask accuracy. The test covers 57 tasks including elementary mathematics, US history, computer science, law, and more.
-- `lineage.forks` = id mmmlu; maintainer OpenAI · [S2][mmlu-s2]
+- `lineage.forks` = id mmmlu; maintainer OpenAI · [S4][mmlu-s4]
   > We translated the MMLU’s test set into 14 languages using professional human translators.
-- `lineage.forks` = id mmlu-redux; maintainer the MMLU-Redux authors (arXiv 2406.04127), data on Hugging Face as edinburgh-dawg · [S3][mmlu-s3]
+- `lineage.forks` = id mmlu-redux; maintainer the MMLU-Redux authors (arXiv 2406.04127), data on Hugging Face as edinburgh-dawg · [S5][mmlu-s5]
   > we create MMLU-Redux, which is a subset of 5,700 manually re-annotated questions across all 57 MMLU subjects.
-- `lineage.forks` = id global-mmlu; maintainer Cohere Labs (the Global MMLU authors, arXiv 2412.03304) · [S4][mmlu-s4]
+- `lineage.forks` = id global-mmlu; maintainer Cohere Labs (the Global MMLU authors, arXiv 2412.03304) · [S6][mmlu-s6]
   > We release Global MMLU, an improved MMLU with evaluation coverage across 42 languages
-- `lineage` = role root; extended_by mmlu-pro · [S5][mmlu-s5]
+- `lineage` = role root; extended_by mmlu-pro · [S7][mmlu-s7]
   > Part of the dataset comes from the original MMLU dataset. We remove the trivial and ambiguous questions.
 
 #### mmlu · Domain and capabilities
@@ -1396,16 +1407,20 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
 - `data.ceiling_anchor_type` = expert-best · [S1][mmlu-s1]
   - why: The paper estimates expert-level accuracy from the 95th-percentile test-taker of each source exam, guessing where no such figure exists -- an estimate of the best experts, not a measured panel.
   > we then estimate that expert-level accuracy is approximately 89.8%.
+- `data.dataset_licence` = MIT · [S2][mmlu-s2]
+  > "license":\["mit"\]
 - `data.size` = count 14079; unit questions; subset test · [S1][mmlu-s1]
   > the test set has 14079 questions
 - `data.size` = count 1540; unit questions; subset validation · [S1][mmlu-s1]
   > the validation set may be used for selecting hyperparameters and is made of 1540 questions
 - `data.size` = count 5; unit questions per subject; subset few-shot development · [S1][mmlu-s1]
   > The few-shot development set has 5 questions per subject
+- `execution.code_licence` = MIT · S3
+  > MIT License
 
 #### mmlu · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][mmlu-s1]
+- `governance.maintainer` = The MMLU authors (UC Berkeley, Columbia, UChicago, UIUC) · [S1][mmlu-s1]
   - why: The paper's authors, at four universities; the repository is the first author's.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = literature-only · [S1][mmlu-s1]
@@ -1417,11 +1432,15 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
   - why: There is no leaderboard of the benchmark's own and no route to submit a result; results are published by whoever evaluates a model, in their own papers.
   > \[withheld: it may name a person; see the entry file\]
 
-**Open review checks** (3):
+**Open review checks** (5):
 
 1. designed\_for\_subjects base-model only: MMLU is now run mostly on instruction-tuned and reasoning models, under protocols the paper did not use. The facet records the design, the conditions record the protocol.
 2. contamination\_risk high from provenance alone, with no evidence entry: a reviewer with a contamination study to cite should add it.
 3. lifecycle active: saturation is derived (12 S4) and the build decides it.
+4. (field `data.dataset_licence`) dataset\_licence MIT comes from the Hugging Face copy's card tag alone. The repository's MIT LICENSE speaks of "the Software", and the test itself is a tarball the README links from outside the repository, which was not opened. Whether either licence covers the questions is unstated; null with this note is the alternative. · S8
+   > This repository contains OpenAI API evaluation code, and the test is available for download
+5. (field `activity`) The README keeps a "Test Leaderboard" table and invites additions through the authors or a pull request (README last changed 2023-01-26), where activity no-submission-channel and submission\_process literature-only say there is no board or route. A dormant README board may call for another activity value or a note. · S8
+   > If you want to have your model added to the leaderboard, please reach out to us or submit a pull request.
 
 **Reviewer checklist** for `mmlu`:
 
@@ -1435,11 +1454,12 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
 [mmlu-s1]: https://arxiv.org/abs/2009.03300
-[mmlu-s2]: https://huggingface.co/api/datasets/openai/MMMLU
-[mmlu-s3]: https://arxiv.org/abs/2406.04127
-[mmlu-s4]: https://arxiv.org/abs/2412.03304
-[mmlu-s5]: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md
-[mmlu-s6]: https://epoch.ai/data/benchmark_data.zip
+[mmlu-s2]: https://huggingface.co/api/datasets/cais/mmlu
+[mmlu-s4]: https://huggingface.co/api/datasets/openai/MMMLU
+[mmlu-s5]: https://arxiv.org/abs/2406.04127
+[mmlu-s6]: https://arxiv.org/abs/2412.03304
+[mmlu-s7]: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md
+[mmlu-s9]: https://epoch.ai/data/benchmark_data.zip
 
 ### 2.8 MMLU-Pro (mmlu-pro)
 
@@ -1875,7 +1895,7 @@ Considered and rejected:
 6. (field `designed_for_subjects`) hosted-inference-endpoint rests on the open models being Together AI's quantized Turbo and FP8 deployments named as such in the rows; frontiermath's near miss says provider APIs alone do not qualify.
 7. (field `lifecycle`) lifecycle mature needs the instrument in use. The outside use found is a September 2025 paper, before maintenance mode; no 2026 use was found. · [S10][helm-capabilities-s10]
    > 7Accessed 2025-06-24, updated 2025-06-10.
-8. (field `data.access`) \[withheld: it may name a person; see the entry file\]
+8. (field `data.access`) data.access is fully-open, but the GPQA copy HELM loads (in an individual's Hugging Face account) is auto-gated on Hugging Face; the authors' password-protected zip, with the password printed in their README, is the ungated copy.
 9. (field `subsets`) Each subset's capability\_override keeps only its own scenario's capability, dropping the other two entry-level terms on purpose (the validator's subset-drops-terms warnings). No reference\_conditions record names the judges yet; the reference-grader warning asks for one.
 
 **Reviewer checklist** for `helm-capabilities`:
@@ -2126,7 +2146,7 @@ Considered and rejected:
 #### livebench · Governance and independence
 
 - `governance.maintainer` = LiveBench (the paper's authors, sponsored by Abacus.AI) · [S2][livebench-s2]
-  - why: The code repository, the site repository and the Hugging Face sets sit in LiveBench organisations on GitHub and Hugging Face (APIs, read 2026-11-10), not in a company's or a person's namespace; the datasheet names the authors as maintainers, and Abacus.AI as the funder. The authors come from Abacus.AI, NYU, Nvidia, UMD, USC and Columbia.
+  - why: \[withheld: it may name a person; see the entry file\]
   > The authors of this work are supporting/hosting/maintaining the dataset.
 - `governance.submission_process` = maintainer-run · [S1][livebench-s1]
   > We maintain the best (or most popular) 40-50 models on the leaderboard so as to avoid an ever-growing list of models to evaluate each month.

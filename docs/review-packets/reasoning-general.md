@@ -2,7 +2,7 @@
 
 # Review packet: General reasoning
 
-`reasoning-general` · 12 published entries · 10 subdomains · data as of 2026-11-09 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`reasoning-general` · 12 published entries · 10 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -50,10 +50,10 @@ Not in this packet (2): `counterbench`, `test-of-time`. `python scripts/review_p
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
-| 2.1 | [CommonsenseQA](#21-commonsenseqa-commonsenseqa) | `commonsense` | 39 | 10 |
+| 2.1 | [CommonsenseQA](#21-commonsenseqa-commonsenseqa) | `commonsense` | 40 | 11 |
 | 2.2 | [HellaSwag](#22-hellaswag-hellaswag) | `commonsense` | 51 | 12 |
 | 2.3 | [BIG-Bench Hard](#23-big-bench-hard-big-bench-hard) | `logical-deduction` | 81 | 12 |
-| 2.4 | [FOLIO](#24-folio-folio) | `logical-deduction` | 17 | 2 |
+| 2.4 | [FOLIO](#24-folio-folio) | `logical-deduction` | 19 | 2 |
 | 2.5 | [CLadder](#25-cladder-cladder) | `causal-inference` | 37 | 9 |
 | 2.6 | [List Functions](#26-list-functions-list-functions) | `abstraction-induction` | 39 | 11 |
 | 2.7 | [SpatialViz-Bench](#27-spatialviz-bench-spatialviz-bench) | `spatial-reasoning` | 39 | 12 |
@@ -63,7 +63,7 @@ Not in this packet (2): `counterbench`, `test-of-time`. `python scripts/review_p
 
 ### 2.1 CommonsenseQA (commonsenseqa)
 
-`data/benchmarks/reasoning-general/commonsenseqa.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/reasoning-general/commonsenseqa.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Five-choice questions on everyday knowledge, written by crowd workers around ConceptNet concepts; test answers withheld.*
 
@@ -102,8 +102,9 @@ Multiple-choice questions that need everyday knowledge the question does not sta
 | S10 | `src-arxiv-1811-00937-v1` | preprint · arXiv | [arxiv.org/pdf/1811.00937v1](https://arxiv.org/pdf/1811.00937v1) | none (not-required) |
 | S11 | `src-github-commonsenseqa-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/commonsenseqa/master/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S12 | `src-lm-eval-harness-commonsense-qa-task` | repository · EleutherAI | [raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de816439...](https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/commonsense_qa/default.yaml) | [capture 2026-10-14](https://web.archive.org/web/20261014133449/https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/commonsense_qa/default.yaml) |
+| S13 | `src-arxiv-2201-05320-v1` | preprint · arXiv | [arxiv.org/pdf/2201.05320v1](https://arxiv.org/pdf/2201.05320v1) | none (not-required) |
 
-**Evidence** (39 quoted fields), by checklist area:
+**Evidence** (40 quoted fields), by checklist area:
 
 #### commonsenseqa · Identity and id
 
@@ -113,6 +114,8 @@ Multiple-choice questions that need everyday knowledge the question does not sta
   > Submitted on 2 Nov 2018
 - `release_venue` = NAACL 2019, long paper (Best Resource Paper) · [S3][commonsenseqa-s3]
   > Award: Best Resource Paper
+- `lineage` = null · [S13][commonsenseqa-s13]
+  > Using our method, we collected COMMONSENSEQA 2.0 (CSQA2) containing 14,343 yes/no questions.
 
 #### commonsenseqa · Domain and capabilities
 
@@ -143,7 +146,7 @@ Multiple-choice questions that need everyday knowledge the question does not sta
 - `execution.reproducibility_tier` = not-independently-reproducible · [S7][commonsenseqa-s7]
   - why: The headline is test-split accuracy, which only the authors could compute from the withheld answers, and their route is offline. Validation accuracy, which is what is reported now, anyone can compute.
   > This eval runs the 1,221-question validation split; the test split's labels are not public
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S11
+- `execution.harness` = The commonsenseqa repository, in a personal GitHub account (the paper's baselines), with the evaluation script the site linked · S11
   > which also has an evaluation script
 - `execution.harness_gotcha` · [S12][commonsenseqa-s12]
   > validation\_split: validation
@@ -212,7 +215,7 @@ Multiple-choice questions that need everyday knowledge the question does not sta
 - `history` = event channel-closed; field governance.submission\_process; from predictions e-mailed to the authors and scored on the withheld test answers, listed on tau-nlp.org · [S5][commonsenseqa-s5]
   > Please send predictions in OpenBookQA format
 
-**Open review checks** (10):
+**Open review checks** (11):
 
 1. (field `lifecycle`) saturated is derived and not hand-set. Evidence for the derivation, either way. On the board, two ConceptNet entries pass the human row (CPACE ensemble 89.8 and KEAR ensemble 89.4 against 88.9), while the best entry without ConceptNet is 82.2 (2023). SMART's best validation accuracy is 0.885 (Qwen2-72B-Instruct), and its authors read the original sets as not yet ready for retirement. Which column and which split the headroom should use is open. · [S6][commonsenseqa-s6]
    > CPACE (ensemble model),Anonymous,02/10/2022,,89.8
@@ -229,6 +232,8 @@ Multiple-choice questions that need everyday knowledge the question does not sta
 9. (field `curation.sources`) Two Sources are read from Wayback captures. The site page's url is its capture, with repointed\_from the dead page, and it is withheld because the page gives two authors' e-mail addresses; the leaderboard keeps its own url with the capture as archive\_url. The leaderboard's table loads by script, so its rows were read from the spreadsheet the page links "to view all references"; that the two hold the same rows is assumed. · [S8][commonsenseqa-s8]
    > To view all references please refer to this document
 10. (field `subsets`) The question token split (site, Hugging Face, README \`qtoken\`) is taken to be the paper's question concept split; its size was not read.
+11. (field `versions`) A "2.0" or "CSQA2" string belongs to CommonsenseQA 2.0 (the csqa2 stub), never to this entry's versions, and CSQA2's paper calls version 1.11 "CommonsenseQA 1.0", so a "1.0" in a source that follows it is not this entry's version '1.0'. Whether csqa2, once promoted, is linked as superseded\_by (the same groups, the 2.0 name) or only by a related-benchmark note is the reviewer's call. · [S13][commonsenseqa-s13]
+   > The average total cost per question is $0.17 (compared to $0.33 in CommonsenseQA 1.0 \[29\]).
 
 **Reviewer checklist** for `commonsenseqa`:
 
@@ -252,6 +257,7 @@ Multiple-choice questions that need everyday knowledge the question does not sta
 [commonsenseqa-s9]: https://huggingface.co/api/datasets/tau/commonsense_qa
 [commonsenseqa-s10]: https://arxiv.org/pdf/1811.00937v1
 [commonsenseqa-s12]: https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/d6de81643928d653435c431bae19945d41d32520/lm_eval/tasks/commonsense_qa/default.yaml
+[commonsenseqa-s13]: https://arxiv.org/pdf/2201.05320v1
 
 ### 2.2 HellaSwag (hellaswag)
 
@@ -813,8 +819,11 @@ Considered and rejected:
 | S3 | `src-github-folio-readme` | repository · GitHub | [raw.githubusercontent.com/Yale-LILY/FOLIO/main/README.md](https://raw.githubusercontent.com/Yale-LILY/FOLIO/main/README.md) | [capture 2026-10-10](https://web.archive.org/web/20261010102617/https://raw.githubusercontent.com/Yale-LILY/FOLIO/main/README.md) |
 | S4 | `src-arxiv-2609-05512` | preprint · arXiv | [arxiv.org/abs/2609.05512](https://arxiv.org/abs/2609.05512) | none (not-required) |
 | S5 | `src-hf-api-folio` | dataset-card · Hugging Face | [huggingface.co/api/datasets/yale-nlp/FOLIO](https://huggingface.co/api/datasets/yale-nlp/FOLIO) | [capture 2026-10-10](https://web.archive.org/web/20261010102607/https://huggingface.co/api/datasets/yale-nlp/FOLIO) |
+| S6 | `src-hf-api-yale-nlp-p-folio` | dataset-card · Hugging Face | [huggingface.co/api/datasets/yale-nlp/P-FOLIO](https://huggingface.co/api/datasets/yale-nlp/P-FOLIO) | none (pending) |
+| S7 | `src-arxiv-2606-02837-v2` | preprint · arXiv | [arxiv.org/html/2606.02837v2](https://arxiv.org/html/2606.02837v2) | none (not-required) |
+| S8 | `src-arxiv-2410-09207-v1` | preprint · arXiv | [arxiv.org/html/2410.09207v1](https://arxiv.org/html/2410.09207v1) | none (not-required) |
 
-**Evidence** (17 quoted fields), by checklist area:
+**Evidence** (19 quoted fields), by checklist area:
 
 #### folio · Identity and id
 
@@ -822,6 +831,10 @@ Considered and rejected:
   > We present FOLIO, a human-annotated, logically complex and diverse dataset for reasoning in natural language (NL), equipped with first-order logic (FOL) annotations
 - `released` = 2022-09-02 · [S2][folio-s2]
   > Fri, 2 Sep 2022
+- `lineage.variants` = id p-folio; relation human-written step-by-step proofs for FOLIO's stories (1,430 proofs), scored on inference-rule classification and on reasoning chains by pass@k; n_items 1430 · [S6][folio-s6]
+  > P-FOLIO is built upon FOLIO.
+- `lineage.forks` = id folio-verified; maintainer the Fixing FOLIO and MALLS authors (arXiv 2606.02837, EMNLP 2026), University of Udine's data science lab (dslab-uniud on GitHub) · [S7][folio-s7]
+  > Corrected datasets: revised FOL formalizations and NLI labels (when applicable) for the FOLIO validation split (275 instances) and for a MALLS test subset (100 instances)
 
 #### folio · Domain and capabilities
 
@@ -900,6 +913,9 @@ Considered and rejected:
 [folio-s3]: https://raw.githubusercontent.com/Yale-LILY/FOLIO/main/README.md
 [folio-s4]: https://arxiv.org/abs/2609.05512
 [folio-s5]: https://huggingface.co/api/datasets/yale-nlp/FOLIO
+[folio-s6]: https://huggingface.co/api/datasets/yale-nlp/P-FOLIO
+[folio-s7]: https://arxiv.org/html/2606.02837v2
+[folio-s8]: https://arxiv.org/html/2410.09207v1
 
 ### 2.5 CLadder (cladder)
 
@@ -1036,9 +1052,9 @@ Considered and rejected:
 
 #### cladder · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S7][cladder-s7]
-  - why: \[withheld: it may name a person; see the entry file\]
-  > \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The CLadder paper's first author and collaborators (the CausalNLP GitHub account; the paper is from the MPI for Intelligent Systems and ETH Zurich) · [S7][cladder-s7]
+  - why: The repository sits in the causalNLP account, a GitHub user account (not an organisation) whose profile names the paper's first author as its owner; the Hugging Face copy is in the causal-nlp organisation.
+  > Repo of research projects to bridge causality and NLP. By Zhijing Jin
 - `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][cladder-s1]
   > our CAUSALCOT achieves the highest performance of 70.40%
 
@@ -1053,7 +1069,7 @@ Considered and rejected:
 
 **Open review checks** (9):
 
-1. (field `governance.maintainer_type`) \[withheld: it may name a person; see the entry file\] · [S7][cladder-s7]
+1. (field `governance.maintainer_type`) maintainer\_type individual: the causalNLP account is a GitHub user account whose profile names the first author of the paper "and many awesome collaborators", and the Hugging Face copy is in a causal-nlp organisation. academic-lab (her group) or community-collective could be argued. · [S7][cladder-s7]
    > "type":"User"
 2. (field `evaluation_method`) exact-match was chosen over multiple-choice for a yes/no answer, by exact-match's "accuracy against a fixed label set"; FOLIO's entry tags its True/False/Unknown labels multiple-choice, so the family is inconsistent one way or the other.
 3. (field `released`) released is the README's date for the v1 data (2023-05-25, the day the repository was created); no source shows the data public that day. The arXiv paper is dated 2023-12-07. · [S2][cladder-s2]
@@ -1649,13 +1665,13 @@ Considered and rejected:
 
 #### planbench · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S5
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The PlanBench authors (an Arizona State University group), through the first author's GitHub account · S5
+  - why: The repository holding the benchmark, its data and the leaderboard sits in one person's account (the first author's) beside three companion papers' code, and no institution is stated as holding it.
   > This repo has the code for four papers
 - `governance.submission_process` = self-reported, maintainer-run · S5
   > Kindly submit results of any new models by submitting a pull request with the result file and the leaderboard will be updated.
 - `governance.funding` · [S1][planbench-s1]
-  > \[withheld: it may name a person; see the entry file\]
+  > and a JP Morgan AI Faculty Research Grant to Kambhampati
 
 #### planbench · Lifecycle and activity
 
@@ -1722,7 +1738,7 @@ An English benchmark of 256 small-talk conversations generated by language model
 | Independence flags | funded-by-evaluated-party |
 | Licences: code · dataset | MIT · MIT |
 | Released | 2023-10-24 |
-| Links | homepage \[withheld: a personal page\] · repository github.com/\[personal account\]/fantom (not linked: a personal account) · dataset [storage.googleapis.com/ai2-mosaic-public/projects/fantom/fantom.tar.gz](https://storage.googleapis.com/ai2-mosaic-public/projects/fantom/fantom.tar.gz) |
+| Links | homepage [hyunw.kim/fantom/](https://hyunw.kim/fantom/) · repository github.com/\[personal account\]/fantom (not linked: a personal account) · dataset [storage.googleapis.com/ai2-mosaic-public/projects/fantom/fantom.tar.gz](https://storage.googleapis.com/ai2-mosaic-public/projects/fantom/fantom.tar.gz) |
 
 **Sources**
 
@@ -1735,7 +1751,7 @@ An English benchmark of 256 small-talk conversations generated by language model
 | S5 | `src-arxiv-2610-18610-v1` | preprint · arXiv | [arxiv.org/pdf/2610.18610v1](https://arxiv.org/pdf/2610.18610v1) | none (not-required) |
 | S6 | `src-github-fantom-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/fantom/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S7 | `src-github-fantom-dataset-loader` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/fantom/main/task/dataset\_loader.py (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
-| S8 | `src-fantom-site` | documentation · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | capture 2026-10-14 (not linked: the page is under a personal account) |
+| S8 | `src-fantom-site` | documentation · \[withheld: it may name a person; see the entry file\] | [hyunw.kim/fantom/](https://hyunw.kim/fantom/) | [capture 2026-10-14](https://web.archive.org/web/20261014131826/https://hyunw.kim/fantom/) |
 
 **Evidence** (40 quoted fields), by checklist area:
 
@@ -1832,7 +1848,7 @@ Considered and rejected:
   > Additionally, there are 2,689 ANSWERABILITY Q\[Y/N\]s and INFOACCESS Q\[Y/N\]s.
 - `subsets` = id fantom#belief-dist; label BeliefQ\[Dist.\] (free response); items 1415 · S4
   > SentenceTransformer('sentence-transformers/all-roberta-large-v1')
-- `subsets` = id fantom#answerability; label All AnswerabilityQ · S8
+- `subsets` = id fantom#answerability; label All AnswerabilityQ · [S8][fantom-s8]
   > (1) BeliefQ (choice and free-response types), (2) AnswerabilityQ (list and binary types), and (3) InfoAccessQ (list and binary types).
 - `subsets` = id fantom#control; label Control task · S6
   > which consists of conversations without information asymmetry (i.e., task without false belief)
@@ -1841,7 +1857,7 @@ Considered and rejected:
 
 #### fantom · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S7
+- `governance.maintainer` = The FANToM authors at the Allen Institute for AI (the first author's repository; the data on AI2's bucket) · S7
   - why: The data file, the benchmark proper, is served from AI2's public bucket, and the first, fourth, sixth and last authors are at AI2. The code repository and the project page sit on the first author's personal accounts.
   > ai2-mosaic-public/projects/fantom/fantom.tar.gz
 - `governance.submission_process` = maintainer-run · S6
@@ -1888,6 +1904,7 @@ Considered and rejected:
 [fantom-s2]: https://arxiv.org/abs/2310.15421
 [fantom-s3]: https://aclanthology.org/2023.emnlp-main.890/
 [fantom-s5]: https://arxiv.org/pdf/2610.18610v1
+[fantom-s8]: https://hyunw.kim/fantom/
 
 ### 2.10 EnigmaEval (enigmaeval)
 

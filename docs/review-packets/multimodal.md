@@ -2,7 +2,7 @@
 
 # Review packet: Multimodal
 
-`multimodal` · 12 published entries · 7 subdomains · data as of 2026-11-10 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`multimodal` · 12 published entries · 7 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -23,7 +23,7 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | ---: | --- | --- | --- | --- |
 | 1 | `visual-qa`<br>Visual QA | Answering questions about an image where the answer depends jointly on the question and the image. | 5 + 7 | has benchmarks |
 | 2 | `visual-grounding`<br>Visual grounding | Locating the image region that a language expression refers to. | 1 + 2 | has benchmarks |
-| 3 | `chart-diagram-understanding`<br>Chart diagram understanding | Answering questions that require reading structured visual content such as charts, plots and diagrams. | 1 + 0 | has benchmarks |
+| 3 | `chart-diagram-understanding`<br>Chart diagram understanding | Answering questions that require reading structured visual content such as charts, plots and diagrams. | 1 + 1 | has benchmarks |
 | 4 | `video-language`<br>Video language | Tasks pairing video with language in which the correspondence between the two is what is scored. | 2 + 0 | has benchmarks |
 | 5 | `audio-language`<br>Audio language | Tasks pairing audio with language in which the correspondence between the two is what is scored. | 1 + 2 | has benchmarks |
 | 6 | `any-to-any-generation`<br>Any to any generation | Generating output in one modality from input in another, scored on whether the output corresponds to the input. | 1 + 5 | has benchmarks |
@@ -49,11 +49,11 @@ Not in this packet (2): `docvqa`, `mmmu`. `python scripts/review_packet.py --fam
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [MMMU-Pro](#21-mmmu-pro-mmmu-pro) | `visual-qa` | 44 | 8 |
 | 2.2 | [TextVQA](#22-textvqa-textvqa) | `visual-qa` | 42 | 10 |
-| 2.3 | [VQA](#23-vqa-vqa) | `visual-qa` | 60 | 10 |
+| 2.3 | [VQA](#23-vqa-vqa) | `visual-qa` | 60 | 9 |
 | 2.4 | [RefCOCO](#24-refcoco-refcoco) | `visual-grounding` | 41 | 7 |
 | 2.5 | [ChartQA](#25-chartqa-chartqa) | `chart-diagram-understanding` | 36 | 8 |
-| 2.6 | [Perception Test](#26-perception-test-perception-test) | `video-language` | 45 | 10 |
-| 2.7 | [Video-MME](#27-video-mme-video-mme) | `video-language` | 42 | 12 |
+| 2.6 | [Perception Test](#26-perception-test-perception-test) | `video-language` | 47 | 11 |
+| 2.7 | [Video-MME](#27-video-mme-video-mme) | `video-language` | 42 | 11 |
 | 2.8 | [MMAU](#28-mmau-mmau) | `audio-language` | 41 | 12 |
 | 2.9 | [GenEval](#29-geneval-geneval) | `any-to-any-generation` | 45 | 10 |
 | 2.10 | [Flickr30k](#210-flickr30k-flickr30k) | `cross-modal-retrieval` | 43 | 10 |
@@ -681,27 +681,25 @@ Considered and rejected:
   - why: VQA ran annual challenge rounds from 2016 to 2021, and the 2021 server's Test-Standard phase, with its public leaderboard, remains open to outside submissions while no round is running.
   > "leaderboard\_public":true,"start\_date":"2021-02-25T23:59:59Z","end\_date":"2099-12-31T23:59:59Z","challenge":830,"max\_submissions\_per\_day":1,"max\_submissions\_per\_month":5,"max\_submissions":5
 
-**Open review checks** (10):
+**Open review checks** (9):
 
-1. (field `id`) The id. Proposed \`vqa\`, with v1.0 and v2.0 as versions, by the allocation rule that a dotted release or vN is a version of the same benchmark and only a successor its maintainers name as a new benchmark gets its own id. The maintainers call v2.0 the 2nd iteration of the VQA dataset and challenge, EvalAI's record calls v1.0 the 1st edition of the VQA dataset, and v2.0 keeps the site, team, question types, metric, splits and evaluation code. The other reading is \`vqa-v2\` as its own benchmark -- it has its own paper and title, is cited and reported as "VQAv2" on its own, re-balances rather than extends v1.0, drops the multiple-choice task and has its own test answers, and v1.0 and v2.0 scores are never compared. A third question is the generic-name rule, since VQA is also the task's name (the paper introduces the task as VQA) and the corpus already uses "VQA" for other benchmarks' tracks; a disambiguated id such as \`visualqa\` would follow it, while MATH's bare \`math\` is the precedent against. Ids are a human act; this stays a proposal. · [S15][vqa-s15]
-   > as part of the 2nd iteration of the Visual Question Answering Dataset and Challenge (VQA v2.0)
-2. (field `versions`) version\_kind for v2.0 is edition (new items on the same task, breaking). It reuses v1.0's real-image questions with new complementary images and answers, so revision (the same items changed) is arguable; and v1.0 is marked revision as the first release, following OSWorld's 1.0. The betas are not listed as versions. · [S18][vqa-s18]
+1. (field `versions`) version\_kind for v2.0 is edition (new items on the same task, breaking). It reuses v1.0's real-image questions with new complementary images and answers, so revision (the same items changed) is arguable; and v1.0 is marked revision as the first release, following OSWorld's 1.0. The betas are not listed as versions. · [S18][vqa-s18]
    > The 1st edition of the VQA Challenge was organized in CVPR 2016 on the 1st edition (v1.0) of the VQA dataset
-3. (field `evaluation_method`) evaluation\_method is reference-metric because exact-match excludes partial credit, but VQA accuracy is not a similarity measure like BLEU; it is an exact match against each of ten human answers, credited by how many gave it. A missing-term gap was logged; a consensus-match term, or exact-match allowing partial credit against multiple references, would fit better. · [S5][vqa-s5]
+2. (field `evaluation_method`) evaluation\_method is reference-metric because exact-match excludes partial credit, but VQA accuracy is not a similarity measure like BLEU; it is an exact match against each of ten human answers, credited by how many gave it. A missing-term gap was logged; a consensus-match term, or exact-match allowing partial credit against multiple references, would fit better. · [S5][vqa-s5]
    > machine accuracies are averaged over all 10 choose 9 sets of human annotators
-4. (field `data.ceiling_anchor_type`) The human anchor (83.30% on v1.0 real-image test-standard) is from v1.0, measured by holding one annotator out against nine, and the best v2.0 test-standard rows are above it (87.85, a personal entry, and 87.07, Molmo2-8B), so it is not a ceiling for v2.0. Whether to record it as a v1.0 Baseline, treat the anchor as none-known for v2.0, or look for a v2.0 human figure not in the sources read. · [S3][vqa-s3]
+3. (field `data.ceiling_anchor_type`) The human anchor (83.30% on v1.0 real-image test-standard) is from v1.0, measured by holding one annotator out against nine, and the best v2.0 test-standard rows are above it (87.85, a personal entry, and 87.07, Molmo2-8B), so it is not a ceiling for v2.0. Whether to record it as a v1.0 Baseline, treat the anchor as none-known for v2.0, or look for a v2.0 human figure not in the sources read. · [S3][vqa-s3]
    > real images (83.30%) and abstract scenes (87.49%)
-5. (field `as_used`) Split reporting is uneven in the literature. The maintainers ask for test-standard, but EvalAI reveals test-dev on every submission and the validation answers are public, and recent abstracts such as JUICE's report "VQAv2" with no split. A score's split should be checked before it is compared. · [S9][vqa-s9]
+4. (field `as_used`) Split reporting is uneven in the literature. The maintainers ask for test-standard, but EvalAI reveals test-dev on every submission and the validation answers are public, and recent abstracts such as JUICE's report "VQAv2" with no split. A score's split should be checked before it is compared. · [S9][vqa-s9]
    > Report test-standard accuracies, which can be calculated using either of the non-test-dev phases
-6. (field `governance.maintainer_type`) maintainer\_type academic-lab. The team is described only as the VQA team or Consortium, the papers' authors span Virginia Tech, Georgia Tech and others, and the repository is in the GT-Vision-Lab organisation (formerly VT-vision-lab). That the organisation is Georgia Tech's lab is read from its name, not stated; community-collective or conference-workshop are the alternatives. · [S18][vqa-s18]
+5. (field `governance.maintainer_type`) maintainer\_type academic-lab. The team is described only as the VQA team or Consortium, the papers' authors span Virginia Tech, Georgia Tech and others, and the repository is in the GT-Vision-Lab organisation (formerly VT-vision-lab). That the organisation is Georgia Tech's lab is read from its name, not stated; community-collective or conference-workshop are the alternatives. · [S18][vqa-s18]
    > "team\_name":"VQA Team"
-7. (field `governance.independence_flags`) funded-by-evaluated-party rests on Google Faculty Research Awards in the v1.0 paper's acknowledgements and Google's PaLI-X and PaliGemma rows on the leaderboard. Whether a faculty research award counts as funding the benchmark, and whether the v2.0 paper's Amazon and NVIDIA support adds to it, is for review. single-evaluator-private-test-set follows DocVQA's entry (COCO's records none). · [S3][vqa-s3]
+6. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S3][vqa-s3]
    > Google Faculty Research Awards
-8. (field `lineage`) The two forks have author lists that overlap the VQA papers', so Variant (same maintainer) is arguable; each has its own paper, splits and name, and VQA-CP's own versions (v1, v2) follow VQA's. Their ids are proposals only; no stub or allocation was made. · [S16][vqa-s16]
+7. (field `lineage`) The two forks have author lists that overlap the VQA papers', so Variant (same maintainer) is arguable; each has its own paper, splits and name, and VQA-CP's own versions (v1, v2) follow VQA's. Their ids are proposals only; no stub or allocation was made. · [S16][vqa-s16]
    > train and test sets have different prior distributions of answers
-9. (field `data.data_provenance`) data\_provenance tags crowd-authored and inherited-from-constituents (the COCO images). The abstract scenes were made for the dataset from clipart, which neither term nor synthetic-procedural describes; and the real images are reused whole rather than as a benchmark's items. · [S3][vqa-s3]
+8. (field `data.data_provenance`) data\_provenance tags crowd-authored and inherited-from-constituents (the COCO images). The abstract scenes were made for the dataset from clipart, which neither term nor synthetic-procedural describes; and the real images are reused whole rather than as a benchmark's items. · [S3][vqa-s3]
    > for 204,721 images from the MS COCO dataset \[32\] and 150,000 questions with 1,950,000 answers for 50, 000 abstract scenes
-10. (field `curation.sources`) The leaderboard was read only to its first page (500 of 559 rows, ordered by score). Four visualqa.org pages (home, both download pages, the challenge page), the README and the leaderboard print people's names, so those six Sources are withheld from archiving and their extracts keep the names out; whether to withhold them is the lead's call. Four non-DOI Sources are pending archive (the evaluation and terms pages and the two EvalAI challenge records). · [S7][vqa-s7]
+9. (field `curation.sources`) The leaderboard was read only to its first page (500 of 559 rows, ordered by score). Four visualqa.org pages (home, both download pages, the challenge page), the README and the leaderboard print people's names, so those six Sources are withheld from archiving and their extracts keep the names out; whether to withhold them is the lead's call. Four non-DOI Sources are pending archive (the evaluation and terms pages and the two EvalAI challenge records). · [S7][vqa-s7]
    > {"count":559
 
 **Reviewer checklist** for `vqa`:
@@ -790,7 +788,7 @@ Three datasets of referring expressions on MS-COCO photographs, used together as
   - why: The score is whether an English expression was attached to the right object in a presented photograph, which is grounding's inclusion test. Expressions were kept only when a second person could find the object from them.
   > which can also comprehend or interpret such an expression to infer which object is being described
 - `evaluation_method` = domain-metric · [S1][refcoco-s1]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: A prediction counts when its IoU with the true box is above 0.5, and the score is the share of such hits over the test set. The verdict rests on IoU, a detection measure that domain-metric names; the RefCOCOg paper (arXiv 1511.02283) calls the score precision@1.
   > If the IOU is larger than 0.5 we count it as a true positive
 - `designed_for_subjects` = task-specific-supervised-model · [S3][refcoco-s3]
   - why: The datasets come with training splits, and the defining papers train comprehension models on them and score the trained models, choosing among ground-truth COCO boxes or detector proposals.
@@ -802,16 +800,16 @@ Considered and rejected:
   - why: The output is a box scored by IoU, but the scored relation is between the expression and the region, which vision's exclusion test assigns to multimodal. Box-only detection on the same images is COCO's entry.
   > Images in these collections were selected to contain two or more objects of the same object category
 - `domain` not `multimodal/any-to-any-generation` · [S3][refcoco-s3]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: Both defining papers also generate expressions for a given object, scored by BLEU, ROUGE and METEOR in the RefCOCO and RefCOCO+ paper (arXiv 1608.00272) and by human judges and a comprehension model in the RefCOCOg paper (arXiv 1511.02283). No common generation protocol settled, and the toolkit's comparison point and current papers report comprehension, which is what this entry records (see review\_checks).
   > We rely instead on human evaluation
 - `domain` not `multimodal/visual-qa` · [S3][refcoco-s3]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: The RefCOCOg paper (arXiv 1511.02283) notes that comprehension can be posed as a question whose answer is a box, but there is no question and the answer is a location, not language.
   > so the answer is numerical, not linguistic
 - `capability` not `spatial-reasoning` · [S1][refcoco-s1]
   - why: Many RefCOCO expressions locate the target by position, but the relation is stated in the expression and checking it is the binding the score measures. RefCOCO+ bans location words, and no split scores spatial expressions on their own.
   > players are disallowed from using location words in their referring expressions
 - `evaluation_method` not `reference-metric` · [S1][refcoco-s1]
-  - why: \[withheld: it may name a person; see the entry file\]
+  - why: BLEU, ROUGE and METEOR score the generation task in the RefCOCO and RefCOCO+ paper (arXiv 1608.00272), which this entry does not record (domain\_considered\_and\_rejected).
   > For the referring expression generation task we use automatic evaluation metrics, BLEU, ROUGE, and METEOR
 - `designed_for_subjects` not `instruction-tuned-model` · [S5][refcoco-s5]
   - why: Prompted vision-language models now report most RefCOCO results (observed\_subjects), but the benchmark was built in 2016 for models trained on its train splits.
@@ -821,7 +819,7 @@ Considered and rejected:
 
 - `learned_entrant_evidence` = system ZAYA1-VL-8B · [S5][refcoco-s5]
   > On RefCOCO, the model scores 91.0 on testA (person-centric queries)
-- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S3][refcoco-s3]
+- `learned_entrant_evidence` = system The RefCOCOg paper's MMI-trained comprehension model (CVPR 2016) · [S3][refcoco-s3]
   > We see that MMI training outperforms ML training under every setting.
 - `reproducible_by_third_party` = true · S6
   - why: All three datasets and their partitions, labels included, are distributed with a public loader, and the metric needs only the boxes. The official download server is down (data.access).
@@ -875,7 +873,7 @@ Considered and rejected:
 
 #### refcoco · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][refcoco-s1]
+- `governance.maintainer` = The RefCOCO and RefCOCO+ paper's first author (the refer toolkit, in a personal GitHub account), for the three datasets as distributed; RefCOCOg's expressions were collected by Google (the RefCOCOg paper, arXiv 1511.02283) · [S1][refcoco-s1]
   - why: The defining paper points to one author's personal GitHub account for the datasets and toolbox, and the README there distributes all three with their partitions.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = literature-only · S6
@@ -894,7 +892,7 @@ Considered and rejected:
 
 **Open review checks** (7):
 
-1. (field `subsets`) \[withheld: it may name a person; see the entry file\] · [S1][refcoco-s1]
+1. (field `subsets`) Identity. One entry with RefCOCO, RefCOCO+ and RefCOCOg as subsets, because one toolkit ships them, the RefCOCO and RefCOCO+ paper (arXiv 1608.00272) evaluates them together and current papers report and average them as one block. RefCOCOg has another origin (Google, non-interactive Mechanical Turk) and RefCOCO+ another collection rule, so either could be an entry of its own. · [S1][refcoco-s1]
    > Evaluation on three recent datasets - RefCOCO, RefCOCO+, and RefCOCOg
 2. (field `data.contamination_risk`) contamination\_risk high rests on RefCOCO and RefCOCO+'s test images and their boxes being COCO training images. The expressions themselves are not in COCO, so medium may be argued. · [S1][refcoco-s1]
    > as the RefCOCO and RefCOCO+ are collected using MSCOCO training data
@@ -903,7 +901,7 @@ Considered and rejected:
    > the following three datasets RefClef, RefCOCO and RefCOCO+ that were collected by UNC
 5. (field `data.access`) data.access fully-open while the official download server is down; the README's issue points to Wayback captures of the official files, which could not be fetched from here. · S6
    > As the webserver is broken (sry about this)
-6. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\]
+6. (field `governance.independence_flags`) Microsoft supported the RefCOCO and RefCOCO+ paper (arXiv 1608.00272) and RefCOCOg is Google's. If Microsoft or Google models are shown scored on RefCOCO, funded-by-evaluated-party may apply.
 7. (field `as_used`) The same datasets with COCO masks are also used for referring expression segmentation (scored by mask IoU). No source read covers that use, so it is not recorded.
 
 **Reviewer checklist** for `refcoco`:
@@ -1055,7 +1053,7 @@ Considered and rejected:
 
 #### chartqa · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S8
+- `governance.maintainer` = An individual researcher (ChartQA's first author), with the vis-nlp GitHub account · S8
   - why: The full dataset sits in the first author's personal Hugging Face namespace, and the code and first-version data in the vis-nlp GitHub account, which GitHub records as a user account, not an organisation (API, read 2026-10-14). No source names an institution as holder; the authors were at York University, Nanyang Technological University and Salesforce Research.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S6][chartqa-s6]
@@ -1072,7 +1070,7 @@ Considered and rejected:
 
 **Open review checks** (8):
 
-1. (field `lifecycle`) \[withheld: it may name a person; see the entry file\] · [S7][chartqa-s7]
+1. (field `lifecycle`) lifecycle stays active because saturated is derived from headroom and never hand-set. The saturation evidence for that derivation is ChartQAPro's abstract (by ChartQA's own authors), Claude Sonnet 3.5 at 90.5%, and Keye-VL-8B Thinking at 94.1 in Leum-VL's Table 6 (a figure it takes from the 2026 Molmo2 paper). · [S7][chartqa-s7]
    > existing benchmarks like ChartQA lack real-world diversity and have recently shown performance saturation with modern large vision-language models (LVLMs)
 2. (field `domain`) Domain is multimodal/chart-diagram-understanding with no secondary. vision/ocr-handwriting and vision/document-understanding were rejected because no transcription or extracted structure is scored; multimodal/visual-qa as a secondary was rejected as redundant with the narrower leaf of the same family. Confirm both calls.
 3. (field `governance.maintainer_type`) maintainer\_type individual or academic-lab. The full dataset is in the first author's personal Hugging Face namespace, and vis-nlp is a GitHub user account, not an organisation, that also hosts the group's later chart models; whether it is a York University lab account is not stated in the sources read. · S8
@@ -1109,7 +1107,7 @@ Considered and rejected:
 
 ### 2.6 Perception Test (perception-test)
 
-`data/benchmarks/multimodal/perception-test.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/multimodal/perception-test.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *11.6k scripted real-world videos with audio and six tasks, from point tracking to video QA, for multimodal video models.*
 
@@ -1142,14 +1140,16 @@ A diagnostic benchmark from Google DeepMind for multimodal video models: 11,609 
 | S4 | `src-perception-test-challenge-2026-site` | documentation · The Perception Test Team | [perception-test-challenge.github.io/](https://perception-test-challenge.github.io/) | [capture 2026-10-14](https://web.archive.org/web/20261014095212/https://perception-test-challenge.github.io/) |
 | S5 | `src-evalai-perception-test-challenge-2547` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/2547/](https://eval.ai/api/challenges/challenge/2547/) | none (withheld) |
 | S6 | `src-arxiv-2506-09985` | preprint · arXiv | [arxiv.org/abs/2506.09985](https://arxiv.org/abs/2506.09985) | none (not-required) |
-| S7 | `src-evalai-perception-test-challenge-2091` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/2091/](https://eval.ai/api/challenges/challenge/2091/) | none (withheld) |
-| S8 | `src-perception-test-challenge-2025-site` | documentation · The Perception Test Team | [perception-test-challenge.github.io/challenge2025.html](https://perception-test-challenge.github.io/challenge2025.html) | [capture 2026-10-14](https://web.archive.org/web/20261014095148/https://perception-test-challenge.github.io/challenge2025.html) |
-| S9 | `src-github-perception-test-readme` | repository · GitHub | [raw.githubusercontent.com/google-deepmind/perception\_test/main/README.md](https://raw.githubusercontent.com/google-deepmind/perception_test/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014094735/https://raw.githubusercontent.com/google-deepmind/perception_test/main/README.md) |
-| S10 | `src-arxiv-2601-06287` | preprint · arXiv | [arxiv.org/abs/2601.06287](https://arxiv.org/abs/2601.06287) | none (not-required) |
-| S11 | `src-perception-test-challenge-2023-site` | documentation · The Perception Test Team | [ptchallenge-workshop.github.io/challenge2023.html](https://ptchallenge-workshop.github.io/challenge2023.html) | [capture 2026-10-14](https://web.archive.org/web/20261014095109/https://ptchallenge-workshop.github.io/challenge2023.html) |
-| S12 | `src-perception-test-challenge-2024-site` | documentation · The Perception Test Team | [ptchallenge-workshop.github.io/](https://ptchallenge-workshop.github.io/) | none (withheld) |
+| S7 | `src-arxiv-2610-12081-v1` | preprint · arXiv | [arxiv.org/pdf/2610.12081v1](https://arxiv.org/pdf/2610.12081v1) | none (not-required) |
+| S8 | `src-evalai-perception-test-challenge-2091` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/2091/](https://eval.ai/api/challenges/challenge/2091/) | none (withheld) |
+| S9 | `src-perception-test-challenge-2025-site` | documentation · The Perception Test Team | [perception-test-challenge.github.io/challenge2025.html](https://perception-test-challenge.github.io/challenge2025.html) | [capture 2026-10-14](https://web.archive.org/web/20261014095148/https://perception-test-challenge.github.io/challenge2025.html) |
+| S10 | `src-github-perception-test-readme` | repository · GitHub | [raw.githubusercontent.com/google-deepmind/perception\_test/main/README.md](https://raw.githubusercontent.com/google-deepmind/perception_test/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014094735/https://raw.githubusercontent.com/google-deepmind/perception_test/main/README.md) |
+| S11 | `src-arxiv-2601-06287` | preprint · arXiv | [arxiv.org/abs/2601.06287](https://arxiv.org/abs/2601.06287) | none (not-required) |
+| S12 | `src-perception-test-challenge-2023-site` | documentation · The Perception Test Team | [ptchallenge-workshop.github.io/challenge2023.html](https://ptchallenge-workshop.github.io/challenge2023.html) | [capture 2026-10-14](https://web.archive.org/web/20261014095109/https://ptchallenge-workshop.github.io/challenge2023.html) |
+| S13 | `src-perception-test-challenge-2024-site` | documentation · The Perception Test Team | [ptchallenge-workshop.github.io/](https://ptchallenge-workshop.github.io/) | none (withheld) |
+| S14 | `src-arxiv-2610-12081` | preprint · arXiv | [arxiv.org/abs/2610.12081](https://arxiv.org/abs/2610.12081) | none (not-required) |
 
-**Evidence** (45 quoted fields), by checklist area:
+**Evidence** (47 quoted fields), by checklist area:
 
 #### perception-test · Identity and id
 
@@ -1197,6 +1197,8 @@ Considered and rejected:
 
 - `learned_entrant_evidence` = system V-JEPA 2, aligned with an 8B language model · [S6][perception-test-s6]
   > 84.0 on PerceptionTest
+- `learned_entrant_evidence` = system Njust-KMG's ensemble (Qwen3-VL-32B fine-tuned on the training split, with Doubao-Seed-2.0-Pro and Gemini 3.1 Pro queried zero-shot), first in the 2026 unified multiple-choice video QA track with 91.4% top-1 accuracy · [S7][perception-test-s7]
+  > The winning team, NjustKMG, used a question-type-aware weighted ensemble of three models: Qwen3-VL-32B finetuned on the Perception Test training set
 - `reproducible_by_third_party` = false · [S3][perception-test-s3]
   - why: The test labels behind the challenge rankings were never released and every server that scored them has closed, so no new test score can be produced. Anyone can score the public validation split, which the paper's own baselines report.
   > An evaluation server is made available together with the videos from the held-out test split.
@@ -1205,41 +1207,43 @@ Considered and rejected:
 - `execution.reproducibility_tier` = not-independently-reproducible · [S1][perception-test-s1]
   - why: The challenge rankings are test-split scores, which only the maintainers' servers could compute because they hold the test labels, and those servers are closed. Validation scores, which the paper's baselines report, can be computed by anyone.
   > a held-out test split where performance can only be evaluated via our evaluation server
-- `execution.harness` = The README's per-task notebooks under baselines/ (data loader, dummy baseline and metric for each task) · [S9][perception-test-s9]
+- `execution.harness` = The README's per-task notebooks under baselines/ (data loader, dummy baseline and metric for each task) · [S10][perception-test-s10]
   > Evaluation scripts (including data loader, dummy baseline, evaluation metrics)
 
 #### perception-test · Data and licence
 
-- `data.access` = train-open-test-held-out · [S7][perception-test-s7]
+- `data.access` = train-open-test-held-out · [S8][perception-test-s8]
   - why: Training and validation videos and labels are public. The test videos, and for video QA the questions and options, came out with the challenge servers, while the test labels stayed with the maintainers.
   > Videos with questions and answer options available now.
-- `data.refresh` = versioned-releases · [S8][perception-test-s8]
+- `data.refresh` = versioned-releases · [S9][perception-test-s9]
   - why: The 2022 splits have not changed, and the challenges ranked the original tasks on the one held-out test split (the README lists one set of challenge video IDs). The one change to the items, the 2025 unified video QA set of 1,842 five-option questions on derived videos, was announced with the 2025 challenge and kept in 2026, so a claim can name it.
   > NEW this year: VQA is a unified track containing regular video QAs, but also questions related to point tracking, object tracking, action localisation in a video QA format.
 - `data.data_provenance` = real-world-instrument, crowd-authored · [S3][perception-test-s3]
   > The answers for all the questions per video were provided by crowd-sourced participants.
 - `data.ceiling_anchor_type` = crowd-average · [S3][perception-test-s3]
   > The overall average accuracy was 91.4%.
-- `data.dataset_licence` = CC-BY-4.0 · [S9][perception-test-s9]
+- `data.dataset_licence` = CC-BY-4.0 · [S10][perception-test-s10]
   > All other materials are licensed under the Creative Commons Attribution 4.0
 - `data.size` = count 11609; unit videos with audio, 23 s on average (2,184 train, 5,900 validation, 3,525 test); subset all splits · [S3][perception-test-s3]
   > The Perception Test contains 11609 videos (with audio), 23s average length.
 - `data.size` = count 3525; unit videos; subset held-out test split · [S3][perception-test-s3]
   > a held-out test split (3525 videos
-- `data.size` = count 38060; unit multiple-choice question-answer pairs on 10,361 videos; subset multiple-choice video QA · [S9][perception-test-s9]
+- `data.size` = count 38060; unit multiple-choice question-answer pairs on 10,361 videos; subset multiple-choice video QA · [S10][perception-test-s10]
   > Multiple-choice Questions\| 10,361 \| 38,060
-- `data.size` = count 6086; unit grounded question-answer pairs on 3,063 videos; subset grounded video QA · [S9][perception-test-s9]
+- `data.size` = count 6086; unit grounded question-answer pairs on 3,063 videos; subset grounded video QA · [S10][perception-test-s10]
   > Grounded video Questions \| 3,063 \| 6,086
 - `data.size` = count 1842; unit five-option questions on 1,842 videos derived from the originals; subset unified video QA test additions (2025-2026) · [S5][perception-test-s5]
   > 1842 questions (with 5 options)
-- `execution.code_licence` = Apache-2.0 · [S9][perception-test-s9]
+- `execution.code_licence` = Apache-2.0 · [S10][perception-test-s10]
   > All software is licensed under the Apache License, Version 2.0 (Apache 2.0)
 - `subsets` = id perception-test#mc-vqa; label Multiple-choice video question-answering; items 38060; scored_separately true; capability_override perception, memory-retention, temporal-reasoning · [S3][perception-test-s3]
   > Performance is evaluated by measuring top-1 accuracy.
-- `subsets` = id perception-test#mc-vqa-unified-additions; label Unified video QA additions (2025-2026); parent perception-test#mc-vqa; items 1842; scored_separately true · [S10][perception-test-s10]
+- `subsets` = id perception-test#mc-vqa-unified-additions; label Unified video QA additions (2025-2026); parent perception-test#mc-vqa; items 1842; scored_separately true · [S11][perception-test-s11]
   > the unified video QA track introduced a novel subset that reformulates traditional perception tasks (such as point tracking and temporal action localisation) as multiple-choice video QA questions
 - `subsets` = id perception-test#mc-vqa-unified-additions; label Unified video QA additions (2025-2026); parent perception-test#mc-vqa; items 1842; scored_separately true · [S5][perception-test-s5]
   > 1842 questions (with 5 options)
+- `subsets` = id perception-test#mc-vqa-unified-additions; label Unified video QA additions (2025-2026); parent perception-test#mc-vqa; items 1842; scored_separately true · [S7][perception-test-s7]
+  > the test set combines the 11,528 original 3-option questions with the 1,842 5-option unified questions
 - `subsets` = id perception-test#grounded-vqa; label Grounded video question-answering; items 6086; scored_separately true; capability_override perception, grounding · [S3][perception-test-s3]
   > The answers are object tracks defined throughout the video and we use HOTA \[40\] metrics to evaluate performance.
 - `subsets` = id perception-test#object-tracking; label Single object tracking; items 189940; scored_separately true; capability_override perception · [S3][perception-test-s3]
@@ -1255,10 +1259,10 @@ Considered and rejected:
 
 #### perception-test · Governance and independence
 
-- `governance.maintainer` = Google DeepMind (the Perception Test team) · [S9][perception-test-s9]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = Google DeepMind (the Perception Test team) · [S10][perception-test-s10]
+  - why: DeepMind holds the dataset and the repository (google-deepmind/perception\_test) and ran every challenge's servers. The challenges are co-organised with two co-authors of the paper, at Bristol and Oxford.
   > Copyright 2022 DeepMind Technologies Limited
-- `governance.submission_process` = held-out-server · [S7][perception-test-s7]
+- `governance.submission_process` = held-out-server · [S8][perception-test-s8]
   > Participants submit their model predictions on the held-out test dataset.
 - `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S3][perception-test-s3]
   > We report results for two strong recent video language models: Flamingo \[3\] in zero-shot and few-shot setups
@@ -1268,34 +1272,36 @@ Considered and rejected:
 #### perception-test · Lifecycle and activity
 
 - `lifecycle` = active · [S4][perception-test-s4]
-  - why: The fourth challenge's results were presented at ECCV 2026 on 9 September 2026, with winners in the unified multiple-choice video QA track, whose test set is the original test split plus the 2025 additions; outside papers also report results (V-JEPA 2, June 2025).
+  - why: The fourth challenge's results were presented at ECCV 2026 on 9 September 2026, with winners in the unified multiple-choice video QA track, whose test set is the original test split plus the 2025 additions, and the maintainers' report on it followed in October 2026 (src-arxiv-2610-12081-v1); outside papers also report results (V-JEPA 2, June 2025).
   > Unified multiple-choice videoQA Winner: Team Njust-KMG
 - `activity` = between-rounds · [S5][perception-test-s5]
   - why: The benchmark runs as yearly challenges (2023-2026). The 2026 round's results are out, no round is open, the last standing server closed on 2026-10-06, and no next round has a date.
   > "end\_date":"2026-10-06T23:59:59Z"
-- `history` = date 2026-01-31; event channel-closed; field execution.submission\_channel; from EvalAI challenge 2091 (the 2023 multiple-choice video QA server) · [S7][perception-test-s7]
+- `history` = date 2026-01-31; event channel-closed; field execution.submission\_channel; from EvalAI challenge 2091 (the 2023 multiple-choice video QA server) · [S8][perception-test-s8]
   > "end\_date":"2026-01-31T23:59:59Z"
 - `history` = date 2026-10-06; event channel-closed; field execution.submission\_channel; from EvalAI challenge 2547 (the 2025 unified multiple-choice video QA server) · [S5][perception-test-s5]
   > "end\_date":"2026-10-06T23:59:59Z"
 
-**Open review checks** (10):
+**Open review checks** (11):
 
 1. (field `versions`) Identity. One entry for the benchmark, with the challenges as versions and the 2025-2026 unified additions as a subset. Tracks on other data (hour-long video QA in 2024 and 2025, KilometerVision and KilometerAudio in 2026, the 2025 interpretability and guest tracks) are left out; the 2026 challenge is half such tracks. · [S4][perception-test-s4]
    > NEW this year: KilometerVision track probing spatial intelligence in walking tour videos
 2. (field `domain`) Primary domain multimodal/video-language rests on the headline task and the benchmark's framing for multimodal video models; four of the six tasks are scored inside one modality and carry vision or audio leaves through domain\_override. · [S3][perception-test-s3]
    > Human baseline results compared to state-of-the-art video QA models show a substantial gap in performance (91.4% vs 46.2%)
 3. (field `subsets`) Vision has no tracking leaf. Object tracking is put under video-understanding and point tracking under image-matching-correspondence (corresponding points across frames); grounded video QA is visual-grounding with video-language secondary.
-4. (field `versions`) 2023, 2024 and 2026 are recorded as non-breaking track-sets and only 2025 as an edition, on the evidence that the README lists one set of challenge video IDs; no source says outright that the 2024 tracks reused the 2023 test subsets. · [S9][perception-test-s9]
-   > Since some of the challenges use subsets of the benchmark
+4. (field `versions`) 2023, 2024 and 2026 are recorded as non-breaking track-sets and only 2025 as an edition, on the evidence that the README lists one set of challenge video IDs. The 2026 report settles 2026 (unified QA unchanged from 2025, grounded QA identical to earlier editions) and calls the 11,528 original multiple-choice questions the only test questions common to all editions; no source says outright that the 2024 tracking and localisation tracks reused the 2023 test subsets. · [S7][perception-test-s7]
+   > the only test questions common to all editions
 5. (field `activity`) activity between-rounds rather than closed. Four yearly rounds ran, but no fifth is announced and the last server closed eight days before this reading. · [S5][perception-test-s5]
    > "end\_date":"2026-10-06T23:59:59Z"
 6. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on Flamingo, a baseline in the defining paper whose own paper shares authors with this one, not on a maintainer's challenge entry. · [S3][perception-test-s3]
    > \[withheld: it may name a person; see the entry file\]
-7. (field `governance.submission_process`) publication-gated is not tagged. Whether the technical report is a condition of ranking or only of prizes is not stated plainly. · [S7][perception-test-s7]
-   > Participants need to submit a technical report
-8. (field `capability`) memory-retention and temporal-reasoning rest on the skill-area diagnostics and the localisation metric; causal-reasoning, spatial-reasoning and abstraction were rejected, although the paper names Physics and Abstraction as skill areas. Each subset's capability\_override deliberately drops the terms its task does not test (grounding outside grounded QA, memory-retention outside multiple-choice QA), which the validator warns about.
-9. (field `execution.harness_availability`) harness reference-implementation-only. The notebooks compute each task's metric on validation, but the servers' test scoring code is not in the repository.
-10. (field `data.data_provenance`) data\_provenance has crowd-authored for the labels; the research team designed the scripts and questions, which might add expert-authored.
+7. (field `governance.submission_process`) publication-gated is not tagged. Whether the technical report is a condition of ranking or only of prizes is not stated plainly; the 2026 report says participants were required to submit one, and ties award eligibility to public test submissions, not to the report. · [S7][perception-test-s7]
+   > Participants were required to report the evaluation mode (zero-shot, few-shot, or fine-tuned) and submit a short technical report.
+8. (field `governance.participation`) The 2026 report and the challenge page disagree on two counts, 1,254 test submissions from 120 teams against 1,439 submissions from 125 teams (the report may count test-phase submissions only), and 22K EUR in prizes against the page's 20K; the entry gives both. A Google-affiliated team entered the 2026 Kilometer tracks, which this entry leaves out, so it does not bear on maintainer-competes-on-own-benchmark here. · [S7][perception-test-s7]
+   > We received 1254 test submissions from 120 different teams across the four tracks.
+9. (field `capability`) memory-retention and temporal-reasoning rest on the skill-area diagnostics and the localisation metric; causal-reasoning, spatial-reasoning and abstraction were rejected, although the paper names Physics and Abstraction as skill areas. Each subset's capability\_override deliberately drops the terms its task does not test (grounding outside grounded QA, memory-retention outside multiple-choice QA), which the validator warns about.
+10. (field `execution.harness_availability`) harness reference-implementation-only. The notebooks compute each task's metric on validation, but the servers' test scoring code is not in the repository.
+11. (field `data.data_provenance`) data\_provenance has crowd-authored for the labels; the research team designed the scripts and questions, which might add expert-authored.
 
 **Reviewer checklist** for `perception-test`:
 
@@ -1314,12 +1320,14 @@ Considered and rejected:
 [perception-test-s4]: https://perception-test-challenge.github.io/
 [perception-test-s5]: https://eval.ai/api/challenges/challenge/2547/
 [perception-test-s6]: https://arxiv.org/abs/2506.09985
-[perception-test-s7]: https://eval.ai/api/challenges/challenge/2091/
-[perception-test-s8]: https://perception-test-challenge.github.io/challenge2025.html
-[perception-test-s9]: https://raw.githubusercontent.com/google-deepmind/perception_test/main/README.md
-[perception-test-s10]: https://arxiv.org/abs/2601.06287
-[perception-test-s11]: https://ptchallenge-workshop.github.io/challenge2023.html
-[perception-test-s12]: https://ptchallenge-workshop.github.io/
+[perception-test-s7]: https://arxiv.org/pdf/2610.12081v1
+[perception-test-s8]: https://eval.ai/api/challenges/challenge/2091/
+[perception-test-s9]: https://perception-test-challenge.github.io/challenge2025.html
+[perception-test-s10]: https://raw.githubusercontent.com/google-deepmind/perception_test/main/README.md
+[perception-test-s11]: https://arxiv.org/abs/2601.06287
+[perception-test-s12]: https://ptchallenge-workshop.github.io/challenge2023.html
+[perception-test-s13]: https://ptchallenge-workshop.github.io/
+[perception-test-s14]: https://arxiv.org/abs/2610.12081
 
 ### 2.7 Video-MME (video-mme)
 
@@ -1485,7 +1493,7 @@ Considered and rejected:
 - `history` = event repository-moved; field repository; from github.com/\[personal account\]/Video-MME (not linked: a personal account); to [github.com/MME-Benchmarks/Video-MME](https://github.com/MME-Benchmarks/Video-MME) · [S3][video-mme-s3]
   > \[withheld: it may name a person; see the entry file\]
 
-**Open review checks** (12):
+**Open review checks** (11):
 
 1. (field `lineage`) Identity. Video-MME-v2 is recorded as a separate benchmark by the same team rather than an edition, because it changes the task (eight options, a tri-level hierarchy) and the scoring (group-based non-linear) as well as the items, and is cited on its own. Same maintainer and same name stem argue for an edition; 04 S4's edition test needs the same task definition. No id was allocated for it. · [S8][video-mme-s8]
    > strategy that enforces both consistency across related queries and coherence in multi-step reasoning
@@ -1496,14 +1504,12 @@ Considered and rejected:
 5. (field `subsets`) The 12 task types (and 6 domains, 30 subcategories) are not subsets, because their item counts and the full task-type list are in a figure that was not read; 04 S6 cites "VideoMME reports 12 sub-scores" as subset material.
 6. (field `versions`) The 2024-06-15 revision is marked breaking because videos were replaced and re-annotated, but the number of items changed is not stated and the leaderboard re-dated the paper's rows to that day. · [S3][video-mme-s3]
    > \*\*\`2024.06.15\`\*\* 🌟 We have refreshed our evaluation: 1) replace broken and potentially broken video links, and re-annotated them
-7. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark is left unset. The paper's reference list gives the VITA papers authors who are Video-MME authors, including its project leader, but the flag would rest on comparing author lists, which the entry does not quote. Set it if a reviewer accepts that evidence; the VITA rows are baselines in the defining paper and on the maintainers' board, not e-mailed entries. · [S6][video-mme-s6]
-   > VITA 1.5 Tencent Youtu Lab & NJU 7B 16 2025-01-22 56.1 58.7
-8. (field `governance.maintainer_type`) maintainer\_type community-collective rather than academic-lab. Every affiliation is academic and Nanjing University leads the project, but the repository moved from a personal account to a shared organisation account, and the data is served from LMMS-Lab's Hugging Face account.
-9. (field `execution.harness_availability`) harness official-harness rests on the README naming its scoring script, which sits in a separate personal account at an unpinned main branch and was not read; reference-implementation-only may fit if the maintainers score submissions with other code.
-10. (field `execution.reproducibility_blockers`) licence-restriction as a blocker, and fully-open access despite academic-only terms. The terms forbid commercial use and redistribution, while frontier developers report the benchmark (the README's news items); whether evaluation counts as commercial use is not stated. · [S3][video-mme-s3]
+7. (field `governance.maintainer_type`) maintainer\_type community-collective rather than academic-lab. Every affiliation is academic and Nanjing University leads the project, but the repository moved from a personal account to a shared organisation account, and the data is served from LMMS-Lab's Hugging Face account.
+8. (field `execution.harness_availability`) harness official-harness rests on the README naming its scoring script, which sits in a separate personal account at an unpinned main branch and was not read; reference-implementation-only may fit if the maintainers score submissions with other code.
+9. (field `execution.reproducibility_blockers`) licence-restriction as a blocker, and fully-open access despite academic-only terms. The terms forbid commercial use and redistribution, while frontier developers report the benchmark (the README's news items); whether evaluation counts as commercial use is not stated. · [S3][video-mme-s3]
    > Without prior approval, you cannot distribute, publish, copy, disseminate, or modify Video-MME in whole or in part.
-11. (field `data.data_provenance`) data\_provenance expert-authored follows the paper's "expert annotators"; their expertise is vision-language research, not the videos' subject domains, so crowd-authored may fit.
-12. (field `lifecycle`) lifecycle active rather than saturated or superseded. The top row is 81.6% with subtitles (no human ceiling is known), and the same team's v2 abstract says existing benchmarks are saturating, but outside papers still report Video-MME in late 2026. · [S8][video-mme-s8]
+10. (field `data.data_provenance`) data\_provenance expert-authored follows the paper's "expert annotators"; their expertise is vision-language research, not the videos' subject domains, so crowd-authored may fit.
+11. (field `lifecycle`) lifecycle active rather than saturated or superseded. The top row is 81.6% with subtitles (no human ceiling is known), and the same team's v2 abstract says existing benchmarks are saturating, but outside papers still report Video-MME in late 2026. · [S8][video-mme-s8]
    > existing benchmarks are becoming increasingly saturated, exposing a critical discrepancy between inflated leaderboard scores and real-world model capabilities
 
 **Reviewer checklist** for `video-mme`:
@@ -1532,7 +1538,7 @@ Considered and rejected:
 
 *10k multiple-choice questions on speech, sound and music clips, for audio-language models' expert-level reasoning.*
 
-\[withheld: it may name a person; see the entry file\]
+A benchmark for large audio-language models from the University of Maryland, College Park, with Adobe: 10,000 audio clips of about ten seconds, each paired with one question and a list of answer options, spread across speech, environmental sounds and music. Domain experts wrote the questions and answers, and GPT-4 added further answer options. Questions are information extraction (3,499) or reasoning (6,501), are tagged with 27 skills, such as temporal event reasoning, chord progressions or multi-speaker role mapping, and are rated easy, medium or hard. The audio is pooled from 12 public corpora (AudioSet, VoxCeleb-1, IEMOCAP, MusicCaps and others) and 1,394 synthetic clips. There are two splits: test-mini, 1,000 questions whose answers are public and which is meant for tuning, and test, 9,000 questions whose answers the maintainers withhold. Both are scored by micro-averaged accuracy, overall and for sound, music and speech. Test predictions were scored by an EvalAI server until January 2026 and by a Hugging Face Space since then. In May 2025 the maintainers released MMAU-v05.15.25, which revised about a quarter of the questions and answers and about 5% of the audio, and asked that results cite it. The site keeps a leaderboard for each version and a table of community-reported results it has not verified. In the release paper the best audio-language model, Gemini Pro v1.5, scored 52.97% on test, against 82% for eight university students on test-mini; on the v05.15.25 board the leaders are near 75% on test.
 
 | Classification | |
 | --- | --- |
@@ -1670,7 +1676,7 @@ Considered and rejected:
 
 #### mmau · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S9][mmau-s9]
+- `governance.maintainer` = The MMAU authors at the University of Maryland, College Park (datasets under the gamma-lab-umd organisation on Hugging Face) · [S9][mmau-s9]
   - why: The paper's authors are at the University of Maryland, one at Adobe. Both datasets sit under the gamma-lab-umd organisation, while the repository, the site and the scoring Space are held under authors' personal accounts.
   > "author":"gamma-lab-umd"
 - `governance.submission_process` = held-out-server, self-reported · S8
@@ -1978,7 +1984,7 @@ A corpus of 31,783 photographs of everyday activities, events and scenes taken f
 | S4 | `src-arxiv-1505-04870` | preprint · arXiv | [arxiv.org/abs/1505.04870](https://arxiv.org/abs/1505.04870) | none (not-required) |
 | S5 | `src-arxiv-2504-13181-v2` | preprint · arXiv | [arxiv.org/pdf/2504.13181v2](https://arxiv.org/pdf/2504.13181v2) | none (not-required) |
 | S6 | `src-arxiv-2502-14786-v1` | preprint · arXiv | [arxiv.org/pdf/2502.14786v1](https://arxiv.org/pdf/2502.14786v1) | none (not-required) |
-| S7 | `src-illinois-denotationgraph` | documentation · University of Illinois at Urbana-Champaign | [shannon.cs.illinois.edu/DenotationGraph/](https://shannon.cs.illinois.edu/DenotationGraph/) | none (withheld) |
+| S7 | `src-illinois-denotationgraph` | documentation · \[withheld: it may name a person; see the entry file\] | [shannon.cs.illinois.edu/DenotationGraph/](https://shannon.cs.illinois.edu/DenotationGraph/) | none (withheld) |
 | S8 | `src-github-clip-benchmark-readme` | repository · GitHub | [raw.githubusercontent.com/LAION-AI/CLIP\_benchmark/523dc98bae2d3b377bb...](https://raw.githubusercontent.com/LAION-AI/CLIP_benchmark/523dc98bae2d3b377bb1c1a43214f569b34989a6/README.md) | none (withheld) |
 | S9 | `src-arxiv-1412-2306` | preprint · arXiv | [arxiv.org/abs/1412.2306](https://arxiv.org/abs/1412.2306) | none (not-required) |
 
@@ -2089,7 +2095,7 @@ Considered and rejected:
 
 #### flickr30k · Governance and independence
 
-- `governance.maintainer` = University of Illinois at Urbana-Champaign (the defining paper's natural language processing group), which distributes the data from its dataset page · [S1][flickr30k-s1]
+- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][flickr30k-s1]
   - why: The paper releases its code, data set and denotation graph from the University of Illinois NLP group's site, and the dataset page that holds the request form is on an Illinois host. The 1,000-image split is the arXiv 1412.2306 authors', at another university; its authors publish no Flickr30k data of their own in the sources read.
   > are available for research purposes at http://nlp.cs.illinois.edu/ Denotation.html
 - `governance.submission_process` = literature-only · [S5][flickr30k-s5]
@@ -2156,7 +2162,7 @@ Considered and rejected:
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
 | Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 7 / 3 | knowledge-recall 3, factual-precision 0, memory-retention 1, context-integration 4 |
-| Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 1 / 0 | deductive-reasoning 0, quantitative-reasoning 1, constraint-satisfaction 0 |
+| Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 1 / 1 | deductive-reasoning 0, quantitative-reasoning 1, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | has-benchmarks | 0 / 1 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
 | Causal & experimental<br>`causal-and-experimental-inference` | not-yet-surveyed | 0 / 0 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
 | Signal, space & time<br>`perception-space-time` | has-benchmarks | 11 / 7 | perception 9, grounding 3, spatial-reasoning 0, temporal-reasoning 2 |

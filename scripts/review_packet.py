@@ -187,7 +187,7 @@ ORG_ACCOUNTS = {
     textarena the-ai-alliance theagentcompany thinklab-sjtu thudm thunlp-mt tiger-ai-lab trishullab ubc-vision
     ukgovernmentbeis usnistgov utiasdsl vals-ai varbench vchitect web-arena-x wmt-conference wur-ai x-plug
     xlang-ai yale-lily zerospeech
-    agentclinic bigcode-bench causalnlp csebuetnlp cybench dihardchallenge hotpotqa humanoid-bench l3das
+    agentclinic bigcode-bench causalnlp csebuetnlp cybench dihardchallenge hotpotqa humanoid-bench ideallab l3das
     libero-project llm-eval-mental-health omni-math os-world perception-test-challenge ptchallenge-workshop
     pubmedqa regnlp robo-arena s2s-ai-challenge smart-buildings-2026 stockbench usccolumbia video-mme vis-nlp
     '''.split()),
@@ -195,7 +195,7 @@ ORG_ACCOUNTS = {
     adyen agc2024-p agc2025 ai-safety-institute aialliance aibic atomind behavior-1k bigcode cais
     cardinaloperations chime9-echi cmtbenchmark coastalcph cruxeval-org csebuetnlp dataset-org dbd-research-group
     dl3dv earthspeciesproject eleutherai eth-nlped facebook futurehouse gaia-benchmark gamma-lab-umd google
-    gorilla-llm gso-bench gtbench hf-audio hoskinson-center hotpotqa huggingface-legal huggingfaceh4 ilsvrc iwslt
+    gorilla-llm gso-bench gtbench hf-audio hoskinson-center hotpotqa huggingface-legal huggingfaceh4 ideallab ilsvrc iwslt
     jailbreakbench leap livebench livecodebench lmarena-ai lmms-eval lmms-lab lmsys locuslab mapeval
     marin-community masakhane matharena mercor mmmu ncbi open-llm-leaderboard openai opendatalab opendrivelab
     openlanguagedata osunlp patronusai phylobio plm-team qwen rethinklab roboarena sakanaai scaleai servicenow

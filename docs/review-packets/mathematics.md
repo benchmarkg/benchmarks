@@ -945,7 +945,7 @@ Considered and rejected:
 
 #### proofnet · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S2][proofnet-s2]
+- `governance.maintainer` = The ProofNet authors, with the dataset in the hoskinson-center organisation on Hugging Face · [S2][proofnet-s2]
   - why: The paper and the README direct users to the Hugging Face dataset in the hoskinson-center organisation, which also holds the authors' proofGPT models; the paper thanks Carnegie Mellon's Hoskinson Center for Formal Mathematics for funding. The repository sits in the first author's GitHub account and was marked deprecated on 2024-10-14.
   > Full dataset are available at https://huggingface.co/datasets/hoskinson-center/proofnet
 - `governance.submission_process` = literature-only · S5
@@ -1383,9 +1383,9 @@ Considered and rejected:
 - `governance.submission_process` = literature-only · [S3][asymob-s3]
   > If you use ASyMOB in your research, please cite the paper:
 - `governance.independence_flags` = flag no-known-conflict · [S1][asymob-s1]
-  > \[withheld: it may name a person; see the entry file\]
+  > This research received support through Schmidt Sciences, LLC.
 - `governance.funding` · [S1][asymob-s1]
-  > \[withheld: it may name a person; see the entry file\]
+  > This research received support through Schmidt Sciences, LLC.
 - `governance.known_limitation` · [S1][asymob-s1]
   > Due to the limitations of SymPy (imperfections in SymPy.simplify, handling of very large numbers in .evalf(), etc.)
 
@@ -1481,6 +1481,7 @@ OpenAI's dataset of 8,792 grade-school mathematics word problems (7,473 training
 | S17 | `src-arxiv-2210-03057` | preprint · arXiv | [arxiv.org/abs/2210.03057](https://arxiv.org/abs/2210.03057) | none (not-required) |
 | S18 | `src-arxiv-2509-25160` | preprint · arXiv | [arxiv.org/abs/2509.25160](https://arxiv.org/abs/2509.25160) | none (not-required) |
 | S19 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
+| S20 | `src-hf-api-scaleai-gsm1k` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ScaleAI/gsm1k](https://huggingface.co/api/datasets/ScaleAI/gsm1k) | none (pending) |
 
 **Evidence** (50 quoted fields), by checklist area:
 
@@ -1490,7 +1491,7 @@ OpenAI's dataset of 8,792 grade-school mathematics word problems (7,473 training
   > we introduce GSM8K, a dataset of 8.5K high quality linguistically diverse grade school math word problems
 - `released` = 2021-10-27 · [S2][gsm8k-s2]
   > Submitted on 27 Oct 2021 (v1), last revised 18 Nov 2021 (this version, v2)
-- `lineage.forks` = id gsm1k; maintainer Scale AI (the GSM1k authors), held privately at release · [S10][gsm8k-s10]
+- `lineage.forks` = id gsm1k; maintainer Scale AI (the GSM1k authors), held privately at release and published on Hugging Face as ScaleAI/gsm1k on 2025-03-31 · [S10][gsm8k-s10]
   > GSM1k is designed to mirror the style and complexity of the established GSM8k benchmark
 - `lineage.forks` = id gsm-symbolic; maintainer the GSM-Symbolic authors (arXiv 2410.05229, ICLR) · [S13][gsm8k-s13]
   > we introduce GSM-Symbolic, an improved benchmark created from symbolic templates that allow for the generation of a diverse set of questions.
@@ -1630,7 +1631,7 @@ Considered and rejected:
 
 1. (field `domain.primary`) Domain: applied-modeling primary, arithmetic secondary. The paper puts the difficulty in interpreting the question and chaining 2 to 8 elementary steps, which is the reverse of arithmetic's definition (the difficulty is the calculation rather than the modelling); applied-modeling's definition (formulating a real-world situation as a mathematical model) fits only if a short chain of arithmetic counts as a model. GSM1k's title calls the set grade-school arithmetic and Hugging Face's eval.yaml calls it arithmetic word problems. Neither leaf has an inclusion test; logged as taxonomy/\_failures/2026-11-09-gsm8k-001. Swapping the two is the alternative; competition-math and reasoning-general were rejected. · [S1][gsm8k-s1]
    > Problems require no concepts beyond the level of early Algebra, and the vast majority of problems can be solved without explicitly
-2. (field `lineage.forks`) Lineage. Five derivatives are forks with proposed, unallocated ids (gsm1k, gsm-symbolic, gsm-plus, gsm-hard, gsm8k-platinum); none has an entry or a stub. Each maintainer is another party than OpenAI, by the sources' own descriptions; the institutions behind GSM-Symbolic, GSM-Plus and GSM-HARD are not stated on the pages read, so the maintainer strings name the authors. Other derivatives (translations, GSM-IC, GSM8K variants in later suites) were not surveyed.
+2. (field `lineage.forks`) Lineage. Seven derivatives are forks with proposed, unallocated ids (gsm1k, gsm-symbolic, gsm-plus, gsm-hard, gsm8k-platinum, mgsm, gsm8k-v); none has an entry or a stub. Each maintainer is another party than OpenAI, by the sources' own descriptions; the institutions behind GSM-Symbolic, GSM-Plus and GSM-HARD are not stated on the pages read, so the maintainer strings name the authors. Other derivatives (further translations, GSM-IC, GSM8K variants in later suites) were not surveyed.
 3. (field `lineage.forks`) GSM8K-Platinum is a corrected copy of the same test items, which 04 S4's table would call a revision if OpenAI had issued it; it is recorded as a fork because the platinum-benchmarks authors, not OpenAI, maintain it. Whether a third party's label correction should become a version of this entry (with breaking true) rather than a separate benchmark is the reviewer's call. · S16
    > "name":"test","num\_bytes":663954,"num\_examples":1209
 4. (field `data.contamination_risk`) contamination\_risk is high on GSM1k's evidence of partial memorisation in several model families, with frontier models showing minimal signs. confirmed may fit if a correlation of memorisation with the GSM8K-GSM1k gap counts as demonstrated contamination; lifecycle was kept active rather than contaminated because GSM1k finds that all models still generalise to new problems. · [S10][gsm8k-s10]
@@ -1681,6 +1682,7 @@ Considered and rejected:
 [gsm8k-s17]: https://arxiv.org/abs/2210.03057
 [gsm8k-s18]: https://arxiv.org/abs/2509.25160
 [gsm8k-s19]: https://epoch.ai/data/benchmark_data.zip
+[gsm8k-s20]: https://huggingface.co/api/datasets/ScaleAI/gsm1k
 
 ### 2.8 Mamo (mamo)
 

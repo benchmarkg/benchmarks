@@ -2,7 +2,7 @@
 
 # Review packet: Physics
 
-`physics` · 18 published entries · Core family · 10 subdomains · data as of 2026-10-14 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`physics` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -27,7 +27,7 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 4 | `astrophysics-cosmology`<br>Astrophysics cosmology | Inferring astronomical or cosmological quantities from observational data. | 2 + 1 | has benchmarks |
 | 5 | `condensed-matter`<br>Condensed matter | Predicting properties of condensed-matter systems such as electronic structure or phase behaviour. | 1 + 1 | has benchmarks |
 | 6 | `quantum-systems`<br>Quantum systems | Simulating, characterising or controlling quantum systems and quantum circuits. | 2 + 0 | has benchmarks |
-| 7 | `optics-photonics`<br>Optics photonics | Designing optical and photonic systems or predicting their behaviour. | 0 + 0 | not yet surveyed |
+| 7 | `optics-photonics`<br>Optics photonics | Designing optical and photonic systems or predicting their behaviour. | 0 + 2 | has benchmarks |
 | 8 | `symbolic-regression-discovery`<br>Symbolic regression discovery | Recovering a governing symbolic expression or physical law from observed data. | 1 + 0 | has benchmarks |
 | 9 | `plasma-fusion`<br>Plasma fusion | Predicting or controlling plasma behaviour in fusion devices. | 1 + 0 | has benchmarks |
 | 10 | `physics-reasoning`<br>Physics reasoning | Solving physics problems posed in text, scored on the physics answer rather than on a simulation. | 1 + 3 | has benchmarks |
@@ -55,11 +55,11 @@ Not in this packet (8): `fair-universe-higgsml`, `icecube-neutrinos-in-deep-ice`
 | 2.3 | [LHC Olympics 2020](#23-lhc-olympics-2020-lhc-olympics-2020) | `particle-physics` | 35 | 8 |
 | 2.4 | [TrackML Particle Tracking Challenge](#24-trackml-particle-tracking-challenge-trackml) | `particle-physics` | 38 | 11 |
 | 2.5 | [PLAsTiCC](#25-plasticc-plasticc) | `astrophysics-cosmology` | 35 | 8 |
-| 2.6 | [CMT-Benchmark](#26-cmt-benchmark-cmt-benchmark) | `condensed-matter` | 32 | 7 |
+| 2.6 | [CMT-Benchmark](#26-cmt-benchmark-cmt-benchmark) | `condensed-matter` | 33 | 9 |
 | 2.7 | [QCircuitBench](#27-qcircuitbench-qcircuitbench) | `quantum-systems` | 34 | 9 |
 | 2.8 | [SRBench](#28-srbench-srbench) | `symbolic-regression-discovery` | 37 | 8 |
 | 2.9 | [Fusion Equilibrium Challenge](#29-fusion-equilibrium-challenge-fusion-equilibrium-challenge) | `plasma-fusion` | 39 | 9 |
-| 2.10 | [CritPt](#210-critpt-critpt) | `physics-reasoning` | 19 | 2 |
+| 2.10 | [CritPt](#210-critpt-critpt) | `physics-reasoning` | 21 | 4 |
 
 ### 2.1 Fast Calorimeter Simulation Challenge 2022 (calochallenge-2022)
 
@@ -340,7 +340,7 @@ Considered and rejected:
   > we use the MSE for each field on the volume and over the airfoil to measure the accuracy of our models
 - `execution.compute_tier` = single-gpu · [S1][airfrans-s1]
   - why: The paper's baselines train in about 2 to 7 hours each on one RTX 3090.
-  > The experiments have been conducted with a single NVIDIA RTX 3090 24Go.
+  > \[withheld: it may name a person; see the entry file\]
 - `execution.reproducibility_tier` = fully-automatable · [S7][airfrans-s7]
   - why: Public data and the repository's training and scoring script run end to end with no human, physical or maintainer-only step; the simulator is needed only to make new data.
   > If you want to compute the score of the models on the associated test set
@@ -446,7 +446,7 @@ Considered and rejected:
 
 *Finding a new-physics resonance hidden in simulated LHC dijet events, with an R&D set and three blinded black boxes.*
 
-\[withheld: it may name a person; see the entry file\]
+A community challenge for model-agnostic anomaly detection in collider physics, organised by three physicists from Universität Hamburg, Lawrence Berkeley National Laboratory and Rutgers University, with simulated proton-proton events stored as lists of up to 700 detector-reconstructed hadrons (pT, eta, phi) and selected by a single large-radius jet trigger at pT above 1.2 TeV. The R&D dataset (Zenodo, April 2019) holds one million QCD dijet background events and 100,000 signal events of a 3.5 TeV Z' decaying to two new particles that each decay to quarks, each event with a signal-or-background truth bit; a three-prong signal sample was added in May 2020. Three black boxes of one million events each, released from November 2019 with background generated under changed Pythia and Delphes settings or with Herwig++, were the test: Black Box 1 hid 834 signal events of the R&D topology at new masses, Black Box 2 was background only, and Black Box 3 hid a 4.2 TeV resonance with two decay modes (1,200 dijet and 2,000 trijet events). Contestants entered a p-value for the no-signal hypothesis, the masses and decay modes of any new particles and the number of signal events, with uncertainties, in a Google form; answers were to be judged by their distance from the truth in units of the stated uncertainty, but no single metric or winner was declared. Box 1 was unblinded at the ML4Jets2020 workshop after a 12 January 2020 deadline, and boxes 2 and 3 at a virtual summer workshop; the truth labels of boxes 1 and 3 have been on Zenodo since November 2020. The R&D dataset is still used to develop and compare anomaly detectors, with each paper's own signal injection and metric.
 
 | Classification | |
 | --- | --- |
@@ -518,7 +518,7 @@ Considered and rejected:
 
 #### lhc-olympics-2020 · Task and evaluation
 
-- `learned_entrant_evidence` = system \[withheld: it may name a person; see the entry file\] · [S1][lhc-olympics-2020-s1]
+- `learned_entrant_evidence` = system Tag N' Train, a weakly supervised classifier that placed the Black Box 1 resonance mass within 200 GeV before unblinding · [S1][lhc-olympics-2020-s1]
   > within a window of ±200 GeV (LSTM, Tag N Train, Density Estimation)
 - `reproducible_by_third_party` = true · [S4][lhc-olympics-2020-s4]
   - why: All events and the per-event truth labels of Black Boxes 1 and 3 are on Zenodo under CC BY 4.0, and the paper gives each box's injected signal, Black Box 2 being background only, so anyone can score a black-box answer or an R&D result.
@@ -562,7 +562,7 @@ Considered and rejected:
 
 #### lhc-olympics-2020 · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S2][lhc-olympics-2020-s2]
+- `governance.maintainer` = The three LHC Olympics 2020 organisers, from Universität Hamburg, Lawrence Berkeley National Laboratory and Rutgers University · [S2][lhc-olympics-2020-s2]
   - why: The three organisers are the creators of both Zenodo records and the paper's editors; the site sits in the LHCO2020 GitHub organisation and the parsing scripts in lhcolympics2020.
   > University of Hamburg 2. Lawrence Berkeley National Lab 3. Rutgers University
 - `governance.submission_process` = held-out-server · [S1][lhc-olympics-2020-s1]
@@ -755,7 +755,7 @@ Considered and rejected:
 - `governance.submission_process` = held-out-server, sandboxed-rerun · [S6][trackml-s6]
   > participants had to upload their software to the Codalab platform, on which it was executed in a controlled environment
 - `governance.independence_flags` = flag prize-sponsored-by-industry · [S5][trackml-s5]
-  > One NVIDIA Tesla V100 GPU
+  > \[withheld: it may name a person; see the entry file\]
 - `governance.independence_flags` = flag single-evaluator-private-test-set · [S6][trackml-s6]
   > contrary to the Accuracy phase, the public test dataset is undisclosed
 - `governance.funding` · [S1][trackml-s1]
@@ -790,7 +790,7 @@ Considered and rejected:
    > "finalLeaderboardHasBeenVerified":true
 7. (field `governance.maintainer_type`) maintainer\_type community-collective, government-agency or academic-lab. CERN hosts the Kaggle competition and is its Competition Sponsor, and gave permission to use the dataset; the helper library is in the LAL (CNRS) organisation. No source read states CERN's legal status as an intergovernmental body. · [S5][trackml-s5]
    > THE EUROPEAN ORGANIZATION FOR NUCLEAR RESEARCH (CERN)
-8. (field `governance.independence_flags`) prize-sponsored-by-industry rests on NVIDIA's GPU for the jury award (the site calls it a Titan V100, Kaggle a Tesla V100). Who paid the $25,000 cash prizes is unstated; if Kaggle, a platinum sponsor, did, the flag holds on that too. · [S2][trackml-s2]
+8. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S2][trackml-s2]
    > "reward":{"id":"USD","quantity":25000}
 9. (field `data.ceiling_anchor_type`) ceiling theoretical-maximum is the accuracy score's bound of 1. The Throughput phase's combined score is unbounded, which would make none-known under the current-edition reading used for data.access. · [S6][trackml-s6]
    > The score is an unbounded dimension-less positive number, the higher the better
@@ -902,7 +902,7 @@ Considered and rejected:
 
 #### plasticc · Task and evaluation
 
-- `learned_entrant_evidence` = system Mike & Silogram (2nd place), seven bidirectional GRU networks and two LightGBM models · [S4][plasticc-s4]
+- `learned_entrant_evidence` = system The 2nd-place team's entry, seven bidirectional GRU networks and two LightGBM models · [S4][plasticc-s4]
   > joined forces to produce an ensemble solution of seven Recurrent Neural Network
 - `reproducible_by_third_party` = true · [S7][plasticc-s7]
   - why: The light curves and the unblinded test labels are on Zenodo under CC BY 4.0, and the results paper publishes the class weights, so anyone can score a classifier on the full test set. Which objects formed Kaggle's private two thirds is not in the release (see execution).
@@ -984,7 +984,7 @@ Considered and rejected:
    > The awards for PLAsTiCC contest were generously supported by Kaggle
 7. (field `governance.independence_flags`) The rules let five metric-and-design team members compete fully. No source read shows whether any entered; if one did, maintainer-competes-on-own-benchmark applies. · [S1][plasticc-s1]
    > nor validating the data, and as such are allowed to compete in the challenge fully
-8. (field `paper`) \[withheld: it may name a person; see the entry file\]
+8. (field `paper`) paper names the data-set note, which defines the data and the metric. The results paper (arXiv 2012.12392, which the 2026 paper cites as a 2023 journal version whose DOI was not read) could be named instead.
 
 **Reviewer checklist** for `plasticc`:
 
@@ -1010,11 +1010,11 @@ Considered and rejected:
 
 ### 2.6 CMT-Benchmark (cmt-benchmark)
 
-`data/benchmarks/physics/cmt-benchmark.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/physics/cmt-benchmark.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
 
 *Fifty expert-written condensed-matter theory problems for language models, graded by SymPy and numeric checks.*
 
-Fifty original research-level problems in condensed matter theory, written and cross-checked by an international panel of condensed-matter theorists to test whether a language model could work as a research assistant. The problems span Hartree-Fock, exact diagonalization, the density matrix renormalization group, quantum and variational Monte Carlo, projected entangled pair states, statistical mechanics and model building. Authors wrote them in a shared Google Sheet whose extension ran each draft through Gemini 2.0 Flash, 2.5 Flash, 2.5 Pro and GPT-4o, and a problem was accepted only once every one of those models failed it and another author had checked it. A model answers closed-book with a final boxed LaTeX expression: numbers, lettered options, an algebraic expression or an expression in fermionic operators, which the grader reduces to normal order. Each answer is right or wrong, with no partial credit, and the paper reports Pass@1; GPT-5 solved 30% and the mean over 17 models was 11.4%. The problems and answers are public on Hugging Face under MIT. A September 2026 audit by other physicists found errors in 30 of the 50 problems and repaired 29.
+Fifty original research-level problems in condensed matter theory, written and cross-checked by an international panel of condensed-matter theorists to test whether a language model could work as a research assistant. The problems span Hartree-Fock, exact diagonalization, the density matrix renormalization group, quantum and variational Monte Carlo, projected entangled pair states, statistical mechanics and model building. Authors wrote them in a shared Google Sheet whose extension ran each draft through Gemini 2.0 Flash, 2.5 Flash, 2.5 Pro and GPT-4o, and a problem was accepted only once every one of those models failed it and another author had checked it. A model answers closed-book with a final boxed LaTeX expression: numbers, lettered options, an algebraic expression or an expression in fermionic operators, which the grader reduces to normal order. Each answer is right or wrong, with no partial credit, and the paper reports Pass@1; GPT-5 solved 30% and the mean over 17 models was 11.4%. The problems and answers are public on Hugging Face under MIT. A September 2026 audit by other physicists found errors in 30 of the 50 problems and repaired 29, and Epoch AI rated v1.0.0 Flawed on it; the authors fixed ten problems in v2.0.0 and dispute most of the others as unstated conventions of the subfield.
 
 | Classification | |
 | --- | --- |
@@ -1031,7 +1031,7 @@ Fifty original research-level problems in condensed matter theory, written and c
 | Independence flags | none |
 | Licences: code · dataset | null · MIT |
 | Released | 2025-10-06 |
-| Links | homepage huggingface.co/datasets/\[personal account\]/cmt\_benchmark (not linked: a personal account) · repository github.com/\[personal account\]/cmt\_benchmark\_data (not linked: a personal account) |
+| Links | homepage [huggingface.co/datasets/CMTBenchmark/cmt\_benchmark](https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark) · repository github.com/\[personal account\]/cmt\_benchmark\_data (not linked: a personal account) |
 
 **Sources**
 
@@ -1043,8 +1043,10 @@ Fifty original research-level problems in condensed matter theory, written and c
 | S4 | `src-arxiv-2609-13009-v1` | preprint · arXiv | [arxiv.org/pdf/2609.13009v1](https://arxiv.org/pdf/2609.13009v1) | none (not-required) |
 | S5 | `src-hf-cmt-benchmark-card` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cmt\_benchmark/raw/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S6 | `src-hf-cmt-benchmark-card-2026-10` | dataset-card · Hugging Face | [huggingface.co/datasets/CMTBenchmark/cmt\_benchmark/raw/c6aa803a6ca553...](https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) | [capture 2026-11-17](https://web.archive.org/web/20261117213634/https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) |
+| S7 | `src-epoch-cmt-benchmark-review` | documentation · Epoch AI | [epoch.ai/benchmarks/cmt-benchmark/review](https://epoch.ai/benchmarks/cmt-benchmark/review) | none (pending) |
+| S8 | `src-hf-cmt-benchmark-card-2026-10-response` | dataset-card · Hugging Face | [huggingface.co/datasets/CMTBenchmark/cmt\_benchmark/raw/c6aa803a6ca553...](https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) | none (pending) |
 
-**Evidence** (32 quoted fields), by checklist area:
+**Evidence** (33 quoted fields), by checklist area:
 
 #### cmt-benchmark · Identity and id
 
@@ -1128,8 +1130,8 @@ Considered and rejected:
 
 #### cmt-benchmark · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S5
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = An individual researcher at Harvard (the owner of the dataset and code repositories), for the nineteen CMT-Benchmark authors · S5
+  - why: The dataset sat in his own Hugging Face namespace and now sits in the CMTBenchmark organisation there (history; the anonymous copy for the submission is under AnonBenchmark322), and the code is in his own GitHub account; none of them names an institution as holder. The authors are at Cornell, Harvard, Stanford, Rutgers, ETH Zurich, the University of Zurich, the Weizmann Institute and elsewhere, with a Cornell researcher as last author.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = literature-only · S5
   > The following table summarizes the Overall Pass@1 rates (%) as reported in the paper.
@@ -1146,15 +1148,17 @@ Considered and rejected:
 - `activity` = no-submission-channel · S5
   - why: There is no leaderboard, server or submission route. The dataset card repeats the paper's Pass@1 table, and others report in their own papers.
   > The following table summarizes the Overall Pass@1 rates (%) as reported in the paper.
+- `history` = event repository-moved; field external\_ids.huggingface; from the dataset owner's personal Hugging Face namespace; to CMTBenchmark/cmt\_benchmark · [S6][cmt-benchmark-s6]
+  > First release under \`CMTBenchmark\`, containing 50 problems.
 
-**Open review checks** (7):
+**Open review checks** (9):
 
 1. (field `domain`) Domain primary is physics/condensed-matter, with physics-reasoning secondary. CritPt, whose problems span most of physics, takes physics-reasoning as primary; the call here treats one physical subject as deciding the leaf, as the simulation-surrogates and fluid-dynamics distinction does for surrogates. Neither leaf has inclusion tests yet. The lattice models are not a molecule, crystal or material, so chemistry-materials was not considered further.
-2. (field `governance.maintainer_type`) \[withheld: it may name a person; see the entry file\] · S5
+2. (field `governance.maintainer_type`) maintainer\_type individual, because the code sits in one author's own GitHub account and the dataset sat in his Hugging Face namespace until it moved to the CMTBenchmark organisation (history). academic-lab (the last author's group at Cornell, or Harvard), or community-collective for the organisation, would follow if a reviewer reads the paper's panel or the new organisation as the holder. · S5
    > \[withheld: it may name a person; see the entry file\]
 3. (field `execution.reproducibility_tier`) requires-human-raters rests on one sentence; it may mean that a few problems are always graded by hand or only that unparseable responses were. If the latter, fully-automatable with a gotcha may be the better tier. · [S1][cmt-benchmark-s1]
    > The parser failed for a small number of problems, which were human-graded.
-4. (field `execution.harness_availability`) The paper says the grading code will be released later and the audit found no public evaluator, yet the data repository has carried src/cmtbench/evaluator.py since 2025-09-21 and the card links it. Whether that code is the grader behind the paper's numbers is not stated; official-harness assumes it is. · [S1][cmt-benchmark-s1]
+4. (field `execution.harness_availability`) The paper says the grading code will be released later and the audit found no public evaluator, yet the data repository has carried src/cmtbench/evaluator.py since 2025-09-21 and the card links it. The authors' response of 2026-10-23 calls it the official evaluation and parsing code; whether it produced the paper's numbers is still not stated. · [S1][cmt-benchmark-s1]
    > We will release the code to perform machine grading in the future.
 5. (field `as_used`) The audit's repaired 49-problem set is recorded as as\_used and a size row. If it is published as a set of its own, it may need a separate entry linked by variant\_of. · [S4][cmt-benchmark-s4]
    > The corrected evaluation retains 49 of the 50 original questions, 29 of them after expert repair, and excludes one.
@@ -1162,6 +1166,10 @@ Considered and rejected:
    > This review identifies benchmark errors in 30 of the 50 questions.
 7. (field `governance.independence_flags`) independence\_flags is empty, but one author lists Google Research, Gemini models are evaluated, and three of the four models the problems were filtered against are Gemini models. No flag term covers an evaluated party's employee among the authors. · [S1][cmt-benchmark-s1]
    > On the spreadsheet, authors had access to Gemini 2.0 Flash, Gemini 2.5 Flash, Gemini 2.5 Pro, and GPT-4o.
+8. (field `governance.known_limitation`) Epoch AI's Flawed verdict is of v1.0.0 and rests entirely on the audit's 30 of 50. v2.0.0 (2026-10-22) fixed ten problems, seven with new reference answers, and neither Epoch nor the audit has reviewed it, so how many defects remain in the current version is unknown. · [S7][cmt-benchmark-s7]
+   > \[withheld: it may name a person; see the entry file\]
+9. (field `governance.known_limitation`) The authors dispute the audit. They accept ten errors, fixed in v2.0.0, and read most other flags as conventions an expert is expected to know; the audit graded with an LLM judge, which they reject. Whether the 30 count as defects is a disagreement between physicists that this entry cannot settle; known\_limitation records the audit's count, and the dispute is recorded here. · [S8][cmt-benchmark-s8]
+   > In our reading, most of the items they flag are not errors. They are conventions standard in the relevant subfield that we deliberately left unstated.
 
 **Reviewer checklist** for `cmt-benchmark`:
 
@@ -1178,6 +1186,8 @@ Considered and rejected:
 [cmt-benchmark-s2]: https://arxiv.org/abs/2510.05228
 [cmt-benchmark-s4]: https://arxiv.org/pdf/2609.13009v1
 [cmt-benchmark-s6]: https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md
+[cmt-benchmark-s7]: https://epoch.ai/benchmarks/cmt-benchmark/review
+[cmt-benchmark-s8]: https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md
 
 ### 2.7 QCircuitBench (qcircuitbench)
 
@@ -1302,8 +1312,8 @@ Considered and rejected:
 
 #### qcircuitbench · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S2][qcircuitbench-s2]
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = The QCircuitBench authors (Peking University), from a personal GitHub account · [S2][qcircuitbench-s2]
+  - why: The paper's authors are at Peking University, one at UCLA. The code and data sit in a personal GitHub account, with a copy on Harvard Dataverse.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = literature-only · [S5][qcircuitbench-s5]
   > \[withheld: it may name a person; see the entry file\]
@@ -1357,7 +1367,7 @@ Considered and rejected:
 
 *Living benchmark of symbolic regression methods: R^2 and model size on PMLB data, and recovery of known physics laws.*
 
-\[withheld: it may name a person; see the entry file\]
+A living benchmark for symbolic regression (SR), the search for a closed-form expression that fits a dataset, kept by a lab at Boston Children's Hospital and Harvard Medical School with method contributions from the SR community. Every method is wrapped behind a scikit-learn API, refitted from scratch on each dataset's training split and must return its model as a sympy-compatible string. The benchmark has two halves. A black-box track scores test-set R^2 and model size on tabular regression problems from PMLB, real-world and synthetic, against machine-learning regressors in v2.0. A ground-truth track gives data generated from known equations: in v2.0 (NeurIPS 2021) 130 problems from the Feynman Lectures on Physics and from Strogatz's nonlinear ODE systems, scored by the symbolic solution rate at four levels of target noise; in SRBench 2025, 12 phenomenological and first-principles problems (Hubble, Kepler, Planck and others), compared with the known expression on accuracy-size Pareto fronts. v2.0 ran 14 SR and 7 ML methods on 252 problems; SRBench 2025 ran 25 SR methods in Docker containers, 30 runs per dataset, on 24 datasets. Contributors submit methods by pull request and the maintainers run them in the next update.
 
 | Classification | |
 | --- | --- |
@@ -1383,7 +1393,7 @@ Considered and rejected:
 | S1 | `src-arxiv-2107-14351` | preprint · arXiv | [arxiv.org/abs/2107.14351](https://arxiv.org/abs/2107.14351) | none (not-required) |
 | S2 | `src-arxiv-2107-14351-v1` | preprint · arXiv | [arxiv.org/pdf/2107.14351v1](https://arxiv.org/pdf/2107.14351v1) | none (not-required) |
 | S3 | `src-arxiv-2605-27245-v1` | preprint · arXiv | [arxiv.org/pdf/2605.27245v1](https://arxiv.org/pdf/2605.27245v1) | none (not-required) |
-| S4 | `src-srbench-contributing` | documentation · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | capture 2026-10-14 (not linked: the page is under a personal account) |
+| S4 | `src-srbench-contributing` | documentation · SRBench (Cava Lab) | \[withheld: a personal page\] | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S5 | `src-arxiv-2505-03977-v1` | preprint · arXiv | [arxiv.org/pdf/2505.03977v1](https://arxiv.org/pdf/2505.03977v1) | none (not-required) |
 | S6 | `src-github-srbench-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/srbench/master/README.md (not linked: a personal account) | none (withheld) |
 | S7 | `src-arxiv-2505-03977` | preprint · arXiv | [arxiv.org/abs/2505.03977](https://arxiv.org/abs/2505.03977) | none (not-required) |
@@ -1476,8 +1486,8 @@ Considered and rejected:
 
 #### srbench · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S4
-  - why: \[withheld: it may name a person; see the entry file\]
+- `governance.maintainer` = A lab at Boston Children's Hospital and Harvard Medical School, with method contributors · S4
+  - why: The site and repository are the lab's, and its head is the contact named in the README; the SRBench 2025 paper gives his affiliation. The 2021 paper's repository was EpistasisLab/srbench, from his earlier post at the University of Pennsylvania (history).
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = sandboxed-rerun, maintainer-run, open-source-gated · [S2][srbench-s2]
   > Once the tests pass and the method is approved by the benchmark maintainers, the contribution becomes part of the resource
@@ -1724,7 +1734,7 @@ Considered and rejected:
 
 ### 2.10 CritPt (critpt)
 
-`data/benchmarks/physics/critpt.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-05 · last verified 2026-10-05
+`data/benchmarks/physics/critpt.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-05 · last verified 2026-11-18
 
 *Unpublished, research-level physics challenges with machine-checkable answers, graded on a private test set.*
 
@@ -1752,13 +1762,15 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2509-26574` | preprint · arXiv | [arxiv.org/html/2509.26574v4](https://arxiv.org/html/2509.26574v4) | none (not-required) |
-| S2 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
-| S3 | `src-critpt-news` | documentation · CritPt (critpt.com) | [critpt.com/news.html](https://critpt.com/news.html) | [capture 2026-11-17](https://web.archive.org/web/20261117215636/https://critpt.com/news.html) |
-| S4 | `src-github-critpt-readme-2026-11` | repository · GitHub | [raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7...](https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md) | [capture 2026-11-17](https://web.archive.org/web/20261117213057/https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md) |
-| S5 | `src-artificialanalysis-critpt-v2` | leaderboard-page · Artificial Analysis | [artificialanalysis.ai/evaluations/critpt-v2](https://artificialanalysis.ai/evaluations/critpt-v2) | [capture 2026-11-13](https://web.archive.org/web/20261113073931/https://artificialanalysis.ai/evaluations/critpt-v2) |
-| S6 | `src-epoch-critpt-review` | documentation · Epoch AI | [epoch.ai/benchmarks/critpt/review](https://epoch.ai/benchmarks/critpt/review) | [capture 2026-11-17](https://web.archive.org/web/20261117212910/https://epoch.ai/benchmarks/critpt/review) |
+| S2 | `src-arxiv-2609-13009-v2` | preprint · arXiv | [arxiv.org/pdf/2609.13009v2](https://arxiv.org/pdf/2609.13009v2) | none (not-required) |
+| S3 | `src-epoch-critpt-review-2026-11` | documentation · Epoch AI | [epoch.ai/benchmarks/critpt/review](https://epoch.ai/benchmarks/critpt/review) | none (pending) |
+| S4 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
+| S5 | `src-critpt-news` | documentation · CritPt (critpt.com) | [critpt.com/news.html](https://critpt.com/news.html) | [capture 2026-11-17](https://web.archive.org/web/20261117215636/https://critpt.com/news.html) |
+| S6 | `src-github-critpt-readme-2026-11` | repository · GitHub | [raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7...](https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md) | [capture 2026-11-17](https://web.archive.org/web/20261117213057/https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md) |
+| S7 | `src-artificialanalysis-critpt-v2` | leaderboard-page · Artificial Analysis | [artificialanalysis.ai/evaluations/critpt-v2](https://artificialanalysis.ai/evaluations/critpt-v2) | [capture 2026-11-13](https://web.archive.org/web/20261113073931/https://artificialanalysis.ai/evaluations/critpt-v2) |
+| S8 | `src-epoch-critpt-review` | documentation · Epoch AI | [epoch.ai/benchmarks/critpt/review](https://epoch.ai/benchmarks/critpt/review) | [capture 2026-11-17](https://web.archive.org/web/20261117212910/https://epoch.ai/benchmarks/critpt/review) |
 
-**Evidence** (19 quoted fields), by checklist area:
+**Evidence** (21 quoted fields), by checklist area:
 
 #### critpt · Identity and id
 
@@ -1794,6 +1806,8 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 
 #### critpt · Data and licence
 
+- `as_used` = protocol An expert audit's re-grading. Specialists reviewed 56 of the 70 test challenges, repaired 19 and excluded 2, and derived their own reference solutions, since the official ones are private; models were then scored against those as mean@4 and pass@4 over four attempts, GPT-5.6-Sol and Fable 5 with tools (Codex, Claude Code) and Gemini 3.1 Pro without. The pre-audit numbers it sets beside them are Artificial Analysis's mean@5 on all 70, from the grading server.; split v1, the 54 test challenges the audit retained (19 of them repaired) · [S2][critpt-s2]
+  > Experts review a 56-challenge subset and identify benchmark errors in 21 of them. They repair 19 and exclude the remaining two, producing a corrected set of 54 challenges with reference solutions derived by the reviewers.
 - `data.access` = private-test-server · [S1][critpt-s1]
   - why: The test answers are private and scoring goes through the maintainers' server; one challenge is public as an example.
   > While the answers to 70 CritPt test challenges are kept private to mitigate data leakage
@@ -1803,7 +1817,7 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 - `data.data_provenance` = expert-authored · [S1][critpt-s1]
   > All problems are newly created by over 50 active physics researchers based on their own research.
 - `data.ceiling_anchor_type` = theoretical-maximum · [S1][critpt-s1]
-  - why: Every challenge has an expert answer the grader accepts, so every one is solvable by construction; no human score is reported to anchor against.
+  - why: Every challenge has an expert answer the grader accepts, so every one is solvable by construction; no human score is reported to anchor against. Two audits of v1 contest that the challenges are answerable as stated (known\_limitation).
   > Every problem is hand-curated to admit a guess-resistant and machine-verifiable answer
 - `data.size` = count 70; unit challenges; subset test · [S1][critpt-s1]
   > While the answers to 70 CritPt test challenges are kept private
@@ -1812,11 +1826,13 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 
 #### critpt · Governance and independence
 
-- `governance.maintainer` = The CritPt team (Argonne National Laboratory and the University of Illinois Urbana-Champaign, with contributors from more than thirty institutions) · [S1][critpt-s1]
+- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][critpt-s1]
   - why: The equal-contribution lead authors are at Argonne and UIUC, as are most of the core team.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = held-out-server · [S1][critpt-s1]
   > we provide a public evaluation pipeline with an online grading server.
+- `governance.known_limitation` · [S3][critpt-s3]
+  > \[withheld: it may name a person; see the entry file\]
 
 #### critpt · Lifecycle and activity
 
@@ -1827,10 +1843,14 @@ Seventy-one research-scale physics challenges, written by more than fifty active
   - why: Model developers submit to the grading server and are scored against the private answers.
   > we provide a public evaluation pipeline with an online grading server.
 
-**Open review checks** (2):
+**Open review checks** (4):
 
 1. contamination\_risk low rests on the problems being unpublished and the answers private; no contamination study is cited, and low needs none.
 2. reproducibility not-independently-reproducible because only the maintainers can grade; a reviewer who reads the grading server as a third-party route may prefer fully-automatable.
+3. (field `governance.known_limitation`) The Flawed verdict and both audits are of v1, and the paper's scores the entry carries (learned\_entrant\_evidence, the tool comparison in the header) are v1 scores from before either audit. v2 revised 47 challenges and has not been reviewed, so whether the defects persist in v2 is unknown; the verdict is recorded as a known limitation, not as a change to any facet. · [S3][critpt-s3]
+   > We reviewed v1. As of October 22, 2026, the leaderboard reports v2. v2 revised 47 challenges, full details are available at the latest commit.
+4. (field `data.ceiling_anchor_type`) The audit's corrected set (54 challenges, the audit's own reference answers) puts one model's pass@4 at 94.44%, close to the ceiling, where the grading server's v1 scores stayed near a third. Saturation is computed from claims (12 S4), and the corrected set is not the benchmark's, but it bears on whether the 70-challenge test set measures what it claims and on ceiling\_anchor\_type's solvable-by-construction basis. · [S2][critpt-s2]
+   > On the corrected set, GPT-5.6-Sol Max achieves a mean@4 of 87.50% and a pass@4 of 94.44%.
 
 **Reviewer checklist** for `critpt`:
 
@@ -1844,11 +1864,13 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
 [critpt-s1]: https://arxiv.org/html/2509.26574v4
-[critpt-s2]: https://epoch.ai/data/benchmark_data.zip
-[critpt-s3]: https://critpt.com/news.html
-[critpt-s4]: https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md
-[critpt-s5]: https://artificialanalysis.ai/evaluations/critpt-v2
-[critpt-s6]: https://epoch.ai/benchmarks/critpt/review
+[critpt-s2]: https://arxiv.org/pdf/2609.13009v2
+[critpt-s3]: https://epoch.ai/benchmarks/critpt/review
+[critpt-s4]: https://epoch.ai/data/benchmark_data.zip
+[critpt-s5]: https://critpt.com/news.html
+[critpt-s6]: https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md
+[critpt-s7]: https://artificialanalysis.ai/evaluations/critpt-v2
+[critpt-s8]: https://epoch.ai/benchmarks/critpt/review
 
 ## 3. The coverage row and the gap question: are these cells empty, or do we not know about the work?
 
@@ -1861,13 +1883,13 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
 | Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 0 / 1 | knowledge-recall 0, factual-precision 0, memory-retention 0, context-integration 0 |
-| Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 2 / 1 | deductive-reasoning 0, quantitative-reasoning 2, constraint-satisfaction 0 |
+| Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 2 / 2 | deductive-reasoning 0, quantitative-reasoning 2, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | has-benchmarks | 1 / 0 | abstraction 0, inductive-reasoning 1, analogical-reasoning 0, compositional-generalization 0 |
-| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 13 / 1 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 13 |
+| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 13 / 2 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 13 |
 | Signal, space & time<br>`perception-space-time` | has-benchmarks | 5 / 0 | perception 5, grounding 0, spatial-reasoning 0, temporal-reasoning 0 |
-| Planning & search<br>`planning-and-search` | has-benchmarks | 1 / 0 | planning 0, search-exploration 0, optimization 1 |
+| Planning & search<br>`planning-and-search` | has-benchmarks | 1 / 2 | planning 0, search-exploration 0, optimization 1 |
 | Action & execution<br>`action-and-execution` | not-yet-surveyed | 0 / 0 | sensorimotor-control 0, tool-use 0, long-horizon-execution 0 |
-| Controlled generation<br>`controlled-generation` | has-benchmarks | 1 / 1 | generation-fidelity 1, creativity-novelty 0, instruction-following 0 |
+| Controlled generation<br>`controlled-generation` | has-benchmarks | 1 / 2 | generation-fidelity 1, creativity-novelty 0, instruction-following 0 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | not-yet-surveyed | 0 / 0 | collaboration 0, communication 0, honesty 0, harm-avoidance 0 |
 | Learning & transfer<br>`learning-and-transfer` | has-benchmarks | 1 / 0 | sample-efficiency 1, continual-learning 0, transfer-learning 0 |
 | Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 5 / 1 | distribution-shift-generalization 5, adversarial-robustness 0, reliability-consistency 0 |

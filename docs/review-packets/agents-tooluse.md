@@ -2,7 +2,7 @@
 
 # Review packet: Agents and tool use
 
-`agents-tooluse` · 20 published entries · 11 subdomains · data as of 2026-11-04 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`agents-tooluse` · 20 published entries · 11 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -27,9 +27,9 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 4 | `multi-agent-coordination`<br>Multi agent coordination | Tasks that require several agents to divide work, communicate or reach agreement. | 0 + 0 | not yet surveyed |
 | 5 | `long-horizon-autonomy`<br>Long horizon autonomy | Tasks requiring many dependent steps across an extended episode without human intervention. | 3 + 8 | has benchmarks |
 | 6 | `research-agents`<br>Research agents | Agents that gather, synthesise and cite external sources to answer an open research question. | 0 + 0 | not yet surveyed |
-| 7 | `software-agents`<br>Software agents | Agents that complete software engineering work inside a real repository or toolchain. | 0 + 3 | has benchmarks |
+| 7 | `software-agents`<br>Software agents | Agents that complete software engineering work inside a real repository or toolchain. | 0 + 4 | has benchmarks |
 | 8 | `negotiation`<br>Negotiation | Tasks scored on the outcome of a bargaining interaction between parties with conflicting objectives. | 0 + 1 | has benchmarks |
-| 9 | `operating-system-tasks`<br>Operating system tasks | Completing tasks against a real operating system, filesystem or shell. | 1 + 2 | has benchmarks |
+| 9 | `operating-system-tasks`<br>Operating system tasks | Completing tasks against a real operating system, filesystem or shell. | 1 + 3 | has benchmarks |
 | 10 | `cybersecurity-offense-defense`<br>Cybersecurity offense defense | Tasks scored on finding, exploiting or defending against security vulnerabilities. | 0 + 1 | has benchmarks |
 | 11 | `agent-evaluation-suites`<br>Agent evaluation suites | Suites whose scored tasks span several of the agents-tooluse family's subdomains, reported per task or as one aggregate, where the suite's own claim is coverage within the family. | 2 + 0 | has benchmarks |
 
@@ -54,12 +54,12 @@ Not in this packet (10): `appworld`, `bfcl`, `browsecomp`, `geobenchx`, `holisti
 | 2.1 | [GAIA](#21-gaia-gaia) | `web-navigation` | 54 | 7 |
 | 2.2 | [WorkArena](#22-workarena-workarena) | `web-navigation` | 51 | 11 |
 | 2.3 | [AndroidWorld](#23-androidworld-androidworld) | `computer-use-gui` | 38 | 9 |
-| 2.4 | [OSWorld](#24-osworld-osworld) | `computer-use-gui` | 49 | 10 |
+| 2.4 | [OSWorld](#24-osworld-osworld) | `computer-use-gui` | 49 | 11 |
 | 2.5 | [APEX-Agents](#25-apex-agents-apex-agents) | `tool-api-calling` | 51 | 12 |
 | 2.6 | [ToolBench](#26-toolbench-toolbench) | `tool-api-calling` | 52 | 11 |
 | 2.7 | [TheAgentCompany](#27-theagentcompany-theagentcompany) | `long-horizon-autonomy` | 53 | 12 |
 | 2.8 | [Vending-Bench 2](#28-vending-bench-2-vending-bench-2) | `long-horizon-autonomy` | 37 | 11 |
-| 2.9 | [Terminal-Bench](#29-terminal-bench-terminal-bench) | `operating-system-tasks` | 51 | 11 |
+| 2.9 | [Terminal-Bench](#29-terminal-bench-terminal-bench) | `operating-system-tasks` | 52 | 11 |
 | 2.10 | [AgentBench](#210-agentbench-agentbench) | `agent-evaluation-suites` | 51 | 7 |
 
 ### 2.1 GAIA (gaia)
@@ -721,7 +721,7 @@ Considered and rejected:
 
 ### 2.4 OSWorld (osworld)
 
-`data/benchmarks/agents-tooluse/osworld.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-04
+`data/benchmarks/agents-tooluse/osworld.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-18
 
 *Agents operate real desktop apps in a VM by mouse and keyboard; 369 tasks in 1.0, 108 long workflows in 2.0.*
 
@@ -759,6 +759,7 @@ A benchmark and environment from XLANG Lab at the University of Hong Kong for mu
 | S9 | `src-xlang-blog-osworld-verified` | blog-post · XLANG Lab | [xlang.ai/blog/osworld-verified](https://xlang.ai/blog/osworld-verified) | none (withheld) |
 | S10 | `src-arxiv-2601-15876` | preprint · arXiv | [arxiv.org/abs/2601.15876](https://arxiv.org/abs/2601.15876) | none (not-required) |
 | S11 | `src-osworld-v1-site` | documentation · XLANG Lab | [osworld-v1.xlang.ai/](https://osworld-v1.xlang.ai/) | none (withheld) |
+| S12 | `src-github-osworld-release-desktop-env-1-0-3` | repository · GitHub | [api.github.com/repos/xlang-ai/OSWorld/releases/tags/desktop-env-v1.0.3](https://api.github.com/repos/xlang-ai/OSWorld/releases/tags/desktop-env-v1.0.3) | none (withheld) |
 
 **Evidence** (49 quoted fields), by checklist area:
 
@@ -903,7 +904,7 @@ Considered and rejected:
   - why: The OSWorld-V2 README states how a result reaches the verified leaderboard now.
   > Alternatively, if you are from a trusted institution, you can share your monitoring data and trajectories with us.
 
-**Open review checks** (10):
+**Open review checks** (11):
 
 1. (field `versions`) Identity, the task's named fork line. OSWorld-Verified (same 369 tasks fixed in place, same lab) is recorded as a revision and OSWorld 2.0 (108 new tasks, same lab, new repository with its own releases) as a breaking edition, as the id allocation's rationale and 04 S3's table ("one benchmark, two versions, one of them breaking") have it. 04 S4's table, however, names "OSWorld -\> OSWorld-Verified" as its example of a lineage link. The maintainer test points to versions for both; 2.0's separate repository, release scheme and citation could instead meet "independently versioned and cited", which would make it a new benchmark with lineage (a same-maintainer variant). A person should settle 04 S4's example either way. · [S9][osworld-s9]
    > OSWorld-Verified is an in-place upgrade of OSWorld with enhanced infrastructure and improved task quality.
@@ -923,6 +924,8 @@ Considered and rejected:
 9. (field `execution.reproducibility_blockers`) Live websites (1.0's Chrome and Google Drive tasks, 2.0's residential proxy) make runs drift, the live-world-state blocker, which tier 3 forbids beside fully-automatable; and 2.0's hosted judge and simulated user have no blocker term (failure 007). Blockers are left empty. · [S9][osworld-s9]
    > Anti-crawling mechanisms and CAPTCHAs
 10. (field `subsets`) The 2.0 offline set's size (82) comes from the leaderboard script, not a read Source, so the subset has no count; 1.0's verified and self-reported tables and GitHub's licence metadata were not read.
+11. (field `governance.known_limitation`) desktop-env 1.0.3 moves the Python test-suite check (the Snake and Tetris tasks) to a result read from the virtual machine the agent operates, and says it does not authenticate such guest-reported scores. Whether that is a governance.known\_limitation of those tasks' scoring, and whether verified-board runs made on earlier desktop-env releases are affected, was not read (the advisory itself was not fetched). · [S12][osworld-s12]
+   > The guest remains an untrusted score source.
 
 **Reviewer checklist** for `osworld`:
 
@@ -946,6 +949,7 @@ Considered and rejected:
 [osworld-s9]: https://xlang.ai/blog/osworld-verified
 [osworld-s10]: https://arxiv.org/abs/2601.15876
 [osworld-s11]: https://osworld-v1.xlang.ai/
+[osworld-s12]: https://api.github.com/repos/xlang-ai/OSWorld/releases/tags/desktop-env-v1.0.3
 
 ### 2.5 APEX-Agents (apex-agents)
 
@@ -1859,7 +1863,7 @@ Considered and rejected:
 
 ### 2.9 Terminal-Bench (terminal-bench)
 
-`data/benchmarks/agents-tooluse/terminal-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-04
+`data/benchmarks/agents-tooluse/terminal-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-18
 
 *Agents work in a terminal to bring a Docker container to a target state, which tests then check; 1.0 through 4.1.*
 
@@ -1880,7 +1884,7 @@ A benchmark of hard, realistic tasks that an agent completes in a computer termi
 | Independence flags | maintainer-competes-on-own-benchmark, funded-by-evaluated-party |
 | Licences: code · dataset | Apache-2.0 · null |
 | Released | 2025-05-19 |
-| Links | homepage [www.tbench.ai/](https://www.tbench.ai/) · repository [github.com/harbor-framework/terminal-bench](https://github.com/harbor-framework/terminal-bench) · leaderboard [hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest...](https://hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest?tab=leaderboard&leaderboard=4-0-0) |
+| Links | homepage [www.tbench.ai/](https://www.tbench.ai/) · repository [github.com/harbor-framework/terminal-bench](https://github.com/harbor-framework/terminal-bench) · leaderboard [hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest...](https://hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest?tab=leaderboard&leaderboard=4-1-0) |
 
 **Sources**
 
@@ -1900,15 +1904,16 @@ A benchmark of hard, realistic tasks that an agent completes in a computer termi
 | S12 | `src-arxiv-2601-11868` | preprint · arXiv | [arxiv.org/abs/2601.11868](https://arxiv.org/abs/2601.11868) | none (not-required) |
 | S13 | `src-tbench-ai-news-terminal-bench-4-0` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/terminal-bench-4-0](https://www.tbench.ai/news/terminal-bench-4-0) | [capture 2026-10-25](https://web.archive.org/web/20261025025507/https://www.tbench.ai/news/terminal-bench-4-0) |
 | S14 | `src-github-terminal-bench-readme` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench/main/README.md](https://raw.githubusercontent.com/harbor-framework/terminal-bench/main/README.md) | [capture 2026-10-13](https://web.archive.org/web/20261013110305/https://raw.githubusercontent.com/harbor-framework/terminal-bench/main/README.md) |
-| S15 | `src-github-terminal-bench-science-readme` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-science/mai...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104151328/https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md) |
-| S16 | `src-tbench-ai-news` | documentation · Terminal-Bench (tbench.ai) | [www.tbench.ai/news](https://www.tbench.ai/news) | [capture 2026-11-04](https://web.archive.org/web/20261104164244/https://www.tbench.ai/news) |
-| S17 | `src-hf-api-zai-terminal-bench-2-verified` | dataset-card · Hugging Face | [huggingface.co/api/datasets/zai-org/terminal-bench-2-verified](https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified) | [capture 2026-11-04](https://web.archive.org/web/20261104161810/https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified) |
-| S18 | `src-tbench-ai-news-continuous-benchmarks` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/continuous-benchmarks](https://www.tbench.ai/news/continuous-benchmarks) | [capture 2026-11-04](https://web.archive.org/web/20261104164324/https://www.tbench.ai/news/continuous-benchmarks) |
-| S19 | `src-github-terminal-bench-1-registry` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/regi...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) | [capture 2026-11-04](https://web.archive.org/web/20261104151111/https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) |
-| S20 | `src-tbench-ai-news-announcement-2-0` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/announcement-2-0](https://www.tbench.ai/news/announcement-2-0) | [capture 2026-10-10](https://web.archive.org/web/20261010022356/https://www.tbench.ai/news/announcement-2-0) |
-| S21 | `src-tbench-ai-leaderboard-terminal-bench-2-0` | leaderboard-page | [www.tbench.ai/leaderboard/terminal-bench/2.0](https://www.tbench.ai/leaderboard/terminal-bench/2.0) | [capture 2026-08-26](https://web.archive.org/web/20260826113700/https://www.tbench.ai/leaderboard/terminal-bench/2.0) |
+| S15 | `src-tbench-ai-home-2026-11-18` | leaderboard-page · Terminal-Bench (Stanford, Harbor and Laude Institute) | [www.tbench.ai/](https://www.tbench.ai/) | none (pending) |
+| S16 | `src-github-terminal-bench-science-readme` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-science/mai...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104151328/https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md) |
+| S17 | `src-tbench-ai-news` | documentation · Terminal-Bench (tbench.ai) | [www.tbench.ai/news](https://www.tbench.ai/news) | [capture 2026-11-04](https://web.archive.org/web/20261104164244/https://www.tbench.ai/news) |
+| S18 | `src-hf-api-zai-terminal-bench-2-verified` | dataset-card · Hugging Face | [huggingface.co/api/datasets/zai-org/terminal-bench-2-verified](https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified) | [capture 2026-11-04](https://web.archive.org/web/20261104161810/https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified) |
+| S19 | `src-tbench-ai-news-continuous-benchmarks` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/continuous-benchmarks](https://www.tbench.ai/news/continuous-benchmarks) | [capture 2026-11-04](https://web.archive.org/web/20261104164324/https://www.tbench.ai/news/continuous-benchmarks) |
+| S20 | `src-github-terminal-bench-1-registry` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/regi...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) | [capture 2026-11-04](https://web.archive.org/web/20261104151111/https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) |
+| S21 | `src-tbench-ai-news-announcement-2-0` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/announcement-2-0](https://www.tbench.ai/news/announcement-2-0) | [capture 2026-10-10](https://web.archive.org/web/20261010022356/https://www.tbench.ai/news/announcement-2-0) |
+| S22 | `src-tbench-ai-leaderboard-terminal-bench-2-0` | leaderboard-page | [www.tbench.ai/leaderboard/terminal-bench/2.0](https://www.tbench.ai/leaderboard/terminal-bench/2.0) | [capture 2026-08-26](https://web.archive.org/web/20260826113700/https://www.tbench.ai/leaderboard/terminal-bench/2.0) |
 
-**Evidence** (51 quoted fields), by checklist area:
+**Evidence** (52 quoted fields), by checklist area:
 
 #### terminal-bench · Identity and id
 
@@ -1918,11 +1923,13 @@ A benchmark of hard, realistic tasks that an agent completes in a computer termi
   > Terminal-Bench 1.0 Mon May 19 2025
 - `release_venue` = ICLR 2026 · [S3][terminal-bench-s3]
   > The Fourteenth International Conference on Learning Representations}, year={2026}
-- `lineage.variants` = id terminal-bench-science; relation sibling benchmark of scientific research workflows, versioned separately by the same team; n_items 82 · [S15][terminal-bench-s15]
+- `leaderboard_url` = [hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest...](https://hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest?tab=leaderboard&leaderboard=4-1-0) · [S15][terminal-bench-s15]
+  > The official leaderboard for Terminal-Bench 4.1.
+- `lineage.variants` = id terminal-bench-science; relation sibling benchmark of scientific research workflows, versioned separately by the same team; n_items 82 · [S16][terminal-bench-s16]
   > Terminal-Bench-Science currently contains \*\*82\*\* expert-curated tasks across five broad scientific domains
-- `lineage.variants` = id terminal-bench-challenges; relation sibling set of long-horizon, single-task benchmarks by the same team · [S16][terminal-bench-s16]
+- `lineage.variants` = id terminal-bench-challenges; relation sibling set of long-horizon, single-task benchmarks by the same team · [S17][terminal-bench-s17]
   > Long-horizon, token-intensive, single-task benchmarks
-- `lineage.forks` = id terminal-bench-2-verified; maintainer Z.ai (zai-org) · [S17][terminal-bench-s17]
+- `lineage.forks` = id terminal-bench-2-verified; maintainer Z.ai (zai-org) · [S18][terminal-bench-s18]
   > Terminal-Bench 2.0 Verified: Instruction & Environment Fix Version
 
 #### terminal-bench · Domain and capabilities
@@ -2057,13 +2064,13 @@ Considered and rejected:
 
 **Open review checks** (11):
 
-1. (field `versions`) Identity of 3.0. Recorded as an edition of this benchmark because the maintainer, name, site, task format and harness carry over, but it is a new task set in a new repository (its pull requests sit in harbor-framework/frontier-bench), and the Continuous Benchmarks post calls Frontier-Bench the successor to Terminal-Bench. If Frontier-Bench is a distinct benchmark rather than 3.0's working name, 3.0 to 4.1 may need an entry of their own. · [S18][terminal-bench-s18]
+1. (field `versions`) Identity of 3.0. Recorded as an edition of this benchmark because the maintainer, name, site, task format and harness carry over, but it is a new task set in a new repository (its pull requests sit in harbor-framework/frontier-bench), and the Continuous Benchmarks post calls Frontier-Bench the successor to Terminal-Bench. If Frontier-Bench is a distinct benchmark rather than 3.0's working name, 3.0 to 4.1 may need an entry of their own. · [S19][terminal-bench-s19]
    > We developed these features while building Frontier-Bench, the successor to Terminal-Bench
 2. (field `versions`) Concurrent boards. The versions form one superseded\_by chain, but 2.0 and 2.1 ran separate leaderboards at the same time, and the 3.0 post still reports 2.1 numbers. Which version Epoch's "Terminal Bench" rows score is for the mapping stanza; the stub's date (2025-05-19) is 1.0's, while its Source link is the 2.0 board. · [S10][terminal-bench-s10]
    > Terminal-Bench 2.1 is a more verified iteration of Terminal-Bench 2.0.
 3. (field `data.size`) Counts disagree. 2.1 fixes 28 tasks by its post and 26 by its README; 1.0 launched with 80 tasks by the post, while the registry lists 71 ids for core 0.1.0 and 80 for 0.1.1, and the 1.0 README says about 100. 4.x's size (66) is inferred from 3.0's 74 less 8 removed and the 4.1 release's 66 modified tasks; no source states it. · [S10][terminal-bench-s10]
    > 26 tasks were modified to fix bugs, modify timeouts or resources, or improve robustness to reward hacking.
-4. (field `versions`) Breaking flags are judgement calls. core-0.1.1 is marked breaking because it adds difficulty variants to the scored set; 4.1 because its verifier fixes change verdicts, though the maintainers' scheme treats a minor bump as re-gradable from saved trials. Release dates use the site's (3.0 and 4.0 GitHub releases are two to seven days earlier); 4.1's is the GitHub release's. · [S18][terminal-bench-s18]
+4. (field `versions`) Breaking flags are judgement calls. core-0.1.1 is marked breaking because it adds difficulty variants to the scored set; 4.1 because its verifier fixes change verdicts, though the maintainers' scheme treats a minor bump as re-gradable from saved trials. Release dates use the site's (3.0 and 4.0 GitHub releases are two to seven days earlier); 4.1's is the GitHub release's. · [S19][terminal-bench-s19]
    > Changes that significantly change the agent environment are considered
 5. (field `lineage`) Lineage. Terminal-Bench-Science and Challenges are recorded as same-maintainer variants because the site lists them in the family and they are versioned apart; the plan's "third generation on a different domain" is probably Terminal-Bench-Science, but no source read calls it a generation. Z.ai's Verified is a fork (another maintainer), whose fixes 2.1 took up. · [S2][terminal-bench-s2]
    > The Terminal-Bench family of benchmarks
@@ -2104,13 +2111,14 @@ Considered and rejected:
 [terminal-bench-s12]: https://arxiv.org/abs/2601.11868
 [terminal-bench-s13]: https://www.tbench.ai/news/terminal-bench-4-0
 [terminal-bench-s14]: https://raw.githubusercontent.com/harbor-framework/terminal-bench/main/README.md
-[terminal-bench-s15]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md
-[terminal-bench-s16]: https://www.tbench.ai/news
-[terminal-bench-s17]: https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified
-[terminal-bench-s18]: https://www.tbench.ai/news/continuous-benchmarks
-[terminal-bench-s19]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json
-[terminal-bench-s20]: https://www.tbench.ai/news/announcement-2-0
-[terminal-bench-s21]: https://www.tbench.ai/leaderboard/terminal-bench/2.0
+[terminal-bench-s15]: https://www.tbench.ai/
+[terminal-bench-s16]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md
+[terminal-bench-s17]: https://www.tbench.ai/news
+[terminal-bench-s18]: https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified
+[terminal-bench-s19]: https://www.tbench.ai/news/continuous-benchmarks
+[terminal-bench-s20]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json
+[terminal-bench-s21]: https://www.tbench.ai/news/announcement-2-0
+[terminal-bench-s22]: https://www.tbench.ai/leaderboard/terminal-bench/2.0
 
 ### 2.10 AgentBench (agentbench)
 
@@ -2345,11 +2353,11 @@ Considered and rejected:
 | Signal, space & time<br>`perception-space-time` | has-benchmarks | 3 / 2 | perception 1, grounding 1, spatial-reasoning 1, temporal-reasoning 0 |
 | Planning & search<br>`planning-and-search` | has-benchmarks | 4 / 1 | planning 3, search-exploration 0, optimization 1 |
 | Action & execution<br>`action-and-execution` | has-benchmarks | 13 / 7 | sensorimotor-control 0, tool-use 9, long-horizon-execution 6 |
-| Controlled generation<br>`controlled-generation` | has-benchmarks | 2 / 1 | generation-fidelity 0, creativity-novelty 0, instruction-following 2 |
+| Controlled generation<br>`controlled-generation` | has-benchmarks | 2 / 2 | generation-fidelity 0, creativity-novelty 0, instruction-following 2 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | has-benchmarks | 4 / 1 | collaboration 0, communication 1, honesty 3, harm-avoidance 1 |
 | Learning & transfer<br>`learning-and-transfer` | not-yet-surveyed | 0 / 0 | sample-efficiency 0, continual-learning 0, transfer-learning 0 |
 | Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 5 / 2 | distribution-shift-generalization 3, adversarial-robustness 0, reliability-consistency 2 |
-| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 2 / 0 | calibration-uncertainty 1, probabilistic-forecasting 0, self-correction 1 |
+| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 2 / 1 | calibration-uncertainty 1, probabilistic-forecasting 0, self-correction 1 |
 | Autonomy & oversight<br>`autonomy-and-oversight` | has-benchmarks | 5 / 4 | autonomy 5, self-improvement 0, situational-awareness 0 |
 
 An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobody measures it, the taxonomy cuts this field badly there, or we have not found the work yet. Only the first may ever be published as a gap, and only after a reviewer has confirmed it.

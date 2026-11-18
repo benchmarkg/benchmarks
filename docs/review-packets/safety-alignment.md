@@ -2,7 +2,7 @@
 
 # Review packet: Safety and alignment
 
-`safety-alignment` · 18 published entries · 16 subdomains · data as of 2026-11-08 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`safety-alignment` · 18 published entries · 16 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -525,7 +525,7 @@ Considered and rejected:
 
 ### 2.3 MASK (mask)
 
-`data/benchmarks/safety-alignment/mask.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
+`data/benchmarks/safety-alignment/mask.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-18
 
 *Elicits a model's belief, pressures it to state the opposite, and scores honesty apart from accuracy.*
 
@@ -546,7 +546,7 @@ A benchmark for lies of commission in language models, built by the Center for A
 | Independence flags | grader-from-evaluated-party, single-evaluator-private-test-set |
 | Licences: code · dataset | MIT · null |
 | Released | 2025-03-05 |
-| Links | homepage [www.mask-benchmark.ai/](https://www.mask-benchmark.ai/) · repository [github.com/centerforaisafety/mask](https://github.com/centerforaisafety/mask) · leaderboard [scale.com/leaderboard/mask](https://scale.com/leaderboard/mask) · dataset [huggingface.co/datasets/cais/MASK](https://huggingface.co/datasets/cais/MASK) |
+| Links | homepage [www.mask-benchmark.ai/](https://www.mask-benchmark.ai/) · repository [github.com/centerforaisafety/mask](https://github.com/centerforaisafety/mask) · leaderboard [labs.scale.com/leaderboard/mask](https://labs.scale.com/leaderboard/mask) · dataset [huggingface.co/datasets/cais/MASK](https://huggingface.co/datasets/cais/MASK) |
 
 **Sources**
 
@@ -848,7 +848,7 @@ Considered and rejected:
 
 #### sycophancy-eval · Data and licence
 
-- `as_used` = protocol \[withheld: it may name a person; see the entry file\]; split are\_you\_sure.jsonl · [S4][sycophancy-eval-s4]
+- `as_used` = protocol UK AISI's inspect\_evals port runs the are-you-sure dataset only, with the multiple-choice solver where the item is multiple choice, and reports three scores taken from arXiv 2409.01658 rather than the paper's metrics.; split are\_you\_sure.jsonl · [S4][sycophancy-eval-s4]
   > This evaluation currently only implements the \*'Are you sure?'\* evaluation
 - `as_used` = protocol The answer dataset's open TriviaQA questions with a stated user belief, scored by the log-probability margin between the correct and the incorrect answer instead of the paper's judge-graded free-form accuracy.; split answer.jsonl (TriviaQA items the model answers correctly without the belief) · [S5][sycophancy-eval-s5]
   > On SycophancyEval answer sycophancy (open TriviaQA questions with a stated user belief, scored by the log-probability margin between the correct and the incorrect answer after
@@ -930,7 +930,7 @@ Considered and rejected:
 7. (field `subsets`) The mimicry file is on the Hugging Face mirror only; the GitHub README lists the other three. Whether the mirror's file is the paper's 300 prompts was not checked. · S6
    > {"rfilename":"mimicry.jsonl"}
 8. (field `capability`) honesty as the capability rests on mimicry's check that each assistant knows the true poet and on are-you-sure scoring apologies apart from answer changes. Feedback and answer measure a shift with the user's view without establishing what the model holds.
-9. (field `lineage`) \[withheld: it may name a person; see the entry file\] · [S3][sycophancy-eval-s3]
+9. (field `lineage`) Lineage is empty. inspect\_evals' port is a harness for one dataset, not a separate benchmark; the sycophancy datasets of arXiv 2212.09251 (2022) are earlier and separate; third-party copies and splits of these files on Hugging Face were not read. The paper's section 4.3 misconceptions set is a proof of concept and not part of the release. · [S3][sycophancy-eval-s3]
    > Note that this dataset is an initial proof-of-concept; for a definitive evaluation, we recommend a larger dataset with more comprehensive fact-verification.
 10. (field `aggregation_policy`) aggregation\_policy none-by-design reads the paper's four per-dataset metrics as never combined. Its section 4.2 plots a combined panel for best-of-N and RL training, which is analysis of training, not a published score of the suite.
 
@@ -1822,7 +1822,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = fully-automatable · S6
   - why: The pipeline runs locally from released questions and answers, with string-matching, algorithmic and model-judge grading and no human grader. A new model needs its facts and a tokenizer supplied before 5 of the 16 tasks can run, a configuration step SAD-lite avoids (review\_checks).
   > The whole evaluation process is local, so you can safely evaluate private models.
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · S6
+- `execution.harness` = The sad CLI in the sad repository (sad run, sad results, sad plot), built on the authors' Evalugator library; unzip.sh unpacks the task files. · S6
   > sad run --tasks influence --models claude-3-haiku-20240307 --variants plain
 - `execution.inspect_evals_id` = sad · [S4][situational-awareness-dataset-s4]
   > uv run inspect eval inspect\_evals/sad\_stages\_oversight --model openai/gpt-5-nano
@@ -1869,7 +1869,7 @@ Considered and rejected:
 
 #### situational-awareness-dataset · Governance and independence
 
-- `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · S6
+- `governance.maintainer` = The SAD authors, through the first author's GitHub account (the sad repository) and situational-awareness-dataset.org · S6
   - why: The code, data and results sit in one person's GitHub account and the site is a GitHub Pages site; the nine authors list affiliations (independent, Constellation, MIT, Apollo Research), and no organisation is stated as holding the benchmark.
   > \[withheld: it may name a person; see the entry file\]
 - `governance.submission_process` = maintainer-run · [S8][situational-awareness-dataset-s8]

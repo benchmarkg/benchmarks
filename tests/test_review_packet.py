@@ -61,12 +61,18 @@ def three_sections(family, text, entries=10):
 
 # ---- the committed packets ------------------------------------------------------------------------------------
 
-def test_one_packet_per_eligible_family_and_no_other():
-    assert len(ELIGIBLE) >= 1 and 'robotics-embodiment' in ELIGIBLE
-    assert sorted(f for f in os.listdir(PACKETS) if f.endswith('.md')) == sorted(f + '.md' for f in ELIGIBLE)
+# The committed packets are a snapshot, refreshed in one pull request just before they are sent (P1-S4-T06): any
+# data change anywhere makes them stale, so no test here asks that they match today's data. --check does that, at
+# the moment of sending; the tests below render afresh wherever they need a current packet.
+COMMITTED = sorted(f[:-3] for f in os.listdir(PACKETS) if f.endswith('.md'))
 
 
-@pytest.mark.parametrize('family', ELIGIBLE)
+def test_the_snapshot_holds_packets_for_families_only():
+    assert 'robotics-embodiment' in COMMITTED
+    assert set(COMMITTED) <= set(FAMILIES)
+
+
+@pytest.mark.parametrize('family', COMMITTED)
 def test_every_committed_packet_has_the_three_sections(family):
     with open(os.path.join(PACKETS, family + '.md'), encoding='utf-8') as fh:
         text = fh.read()
@@ -156,26 +162,27 @@ def run_check(*args):
     return r.returncode, r.stdout + r.stderr
 
 
-def test_the_verify_command_passes():
-    code, out = run_check('--family', 'robotics-embodiment')
+def test_the_verify_command_passes(corpus, tmp_path):
+    copy_of(tmp_path, corpus=corpus)
+    code, out = run_check('--family', 'robotics-embodiment', '--packets', str(tmp_path))
     assert code == 0 and 'all three sections' in out, out
 
 
-def copy_of(tmp_path, family='robotics-embodiment'):
-    with open(os.path.join(PACKETS, family + '.md'), encoding='utf-8', newline='') as fh:
-        text = fh.read()
+def copy_of(tmp_path, family='robotics-embodiment', corpus=None):
+    """A packet as the script renders it from today's data, written where --check will read it."""
+    text = rp.render(corpus or rp.corpus(ROOT), family)
     path = tmp_path / (family + '.md')
     path.write_text(text, encoding='utf-8', newline='')
     return path, text
 
 
 def test_check_passes_on_an_exact_copy(corpus, tmp_path):
-    copy_of(tmp_path)
+    copy_of(tmp_path, corpus=corpus)
     assert rp.check(corpus, str(tmp_path), 'robotics-embodiment', False, None) == []
 
 
 def test_check_fails_on_a_stale_packet(corpus, tmp_path):
-    path, text = copy_of(tmp_path)
+    path, text = copy_of(tmp_path, corpus=corpus)
     path.write_text(text.replace('data as of', 'data as at', 1), encoding='utf-8', newline='')
     errs = rp.check(corpus, str(tmp_path), 'robotics-embodiment', False, None)
     assert len(errs) == 1 and 'is not what scripts/review_packet.py renders' in errs[0], errs
@@ -189,7 +196,7 @@ def test_check_fails_on_a_missing_packet(corpus, tmp_path):
 
 
 def test_check_fails_when_a_section_is_gone(corpus, tmp_path):
-    path, text = copy_of(tmp_path)
+    path, text = copy_of(tmp_path, corpus=corpus)
     path.write_text(text[:text.index('## 3. ')], encoding='utf-8', newline='')
     errs = rp.check(corpus, str(tmp_path), 'robotics-embodiment', False, None)
     assert any("no heading '## 3. The coverage row'" in e for e in errs), errs
@@ -197,14 +204,14 @@ def test_check_fails_when_a_section_is_gone(corpus, tmp_path):
 
 
 def test_check_fails_on_a_line_naming_a_person(corpus, tmp_path):
-    path, text = copy_of(tmp_path)
+    path, text = copy_of(tmp_path, corpus=corpus)
     path.write_text(text + 'Submitted by someone [view email] at someone@example.org\n', encoding='utf-8', newline='')
     errs = rp.check(corpus, str(tmp_path), 'robotics-embodiment', False, None)
     assert any('fails the name screen' in e for e in errs), errs
 
 
 def test_check_fails_on_a_packet_for_a_family_that_does_not_qualify(corpus, tmp_path):
-    small = next(f for f in FAMILIES if f not in ELIGIBLE)
+    small = next((f for f in FAMILIES if f not in ELIGIBLE), 'not-a-family')   # every family qualifies today
     (tmp_path / (small + '.md')).write_text('stray\n', encoding='utf-8')
     errs = rp.check(corpus, str(tmp_path), None, False, None)
     assert len([e for e in errs if 'does not exist' in e]) == len(ELIGIBLE)
