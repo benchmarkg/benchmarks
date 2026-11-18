@@ -28,7 +28,9 @@ regenerates site/src/styles/tokens.css and site/src/lib/tokens.json from design/
 (P2-S2-T01, tools/build/tokens.py), and site/src/lib/taxonomy.json from taxonomy/ (P2-S2-T06,
 tools/build/site_taxonomy.py), and writes build/croissant-benchmark/, validated with mlcroissant and the extension
 schema before anything is written (P2-S3-T06, tools/build/croissant.py). `promote`, `resolve` and `tag-gap` are
-P1-S2-T10's (tools/promote.py, tools/resolve.py, tools/tag_gap.py).
+P1-S2-T10's (tools/promote.py, tools/resolve.py, tools/tag_gap.py). `gaps` is P1-S2-T11's (tools/build/gaps.py), and
+its gap matrix and `--min-confidence` P1-S14-T08's: `bench gaps --grid coarse --reviewed-only --format json >
+build/derived/gaps.json`, checked by scripts/check_gap_claims.py.
 """
 from __future__ import annotations
 
@@ -474,15 +476,18 @@ def gaps_cmd(
     reviewed_only: Annotated[bool, typer.Option(
         '--reviewed-only', help='Only families a reviewer has signed (reviewer_signoff other than none).')] = False,
     fmt_: Annotated[str, typer.Option('--format', help='md or json.')] = 'md',
+    min_confidence: Annotated[Optional[float], typer.Option(
+        '--min-confidence', help='The curation_confidence a gap claim needs (default 0.6, 00 S7.1 criterion S3).')] = None,
 ):
-    """The coverage grid gap claims are read from: non-empty coarse cells, each with its entry count, its terms
-    and both axes' vocabulary (12 S5.1; P1-S2-T11). The gap score and what may be published are Phase 4's."""
+    """The coverage grid and the gap matrix: non-empty coarse cells with their counts and terms (12 S5.1;
+    P1-S2-T11), and every coarse cell's four gap-score factors beside its score, with the claims asserted from them
+    (12 S5.3-5.4; P1-S14-T08). The JSON is build/derived/gaps.json; scripts/check_gap_claims.py checks it."""
     from tools.build import gaps
     if fmt_ not in ('md', 'json'):
         typer.echo('gaps: --format is md or json, not %r' % fmt_, err=True)
         raise typer.Exit(2)
     try:
-        doc = gaps.emit(grid, ROOT, reviewed_only)
+        doc = gaps.emit(grid, ROOT, reviewed_only, gaps.MIN_CONFIDENCE if min_confidence is None else min_confidence)
     except gaps.GridRefused as e:
         typer.echo('gaps: refused: %s' % e, err=True)
         raise typer.Exit(2)

@@ -146,8 +146,10 @@ def coverage(cells: list[dict]) -> dict:
             'percent': round(100.0 * hit / den, 1) if den else None}
 
 
-def build(root: str = ROOT) -> dict:
+def build(root: str = ROOT, entries: list[dict] | None = None) -> dict:
+    """`entries` is gaps.published(root) when the caller has already read it (the gap matrix has, P1-S14-T08)."""
     from tools.build import gaps
+    entries = gaps.published(root) if entries is None else entries
     rows, cols = gaps.axes(root)
     domains = _load(os.path.join(root, *gaps.DOMAINS.split('/')))
     fams = {f['id']: f for f in rows['families']}
@@ -158,7 +160,7 @@ def build(root: str = ROOT) -> dict:
     all_terms = [t for g in cols['groups'] for t in g['members']]
 
     primary, secondary = Counter(), Counter()
-    for b in gaps.published(root):
+    for b in entries:
         dom = b.get('domain') or {}                                                    # get-default: validated elsewhere
         p = dom.get('primary')
         primary[p] += 1
@@ -194,7 +196,7 @@ def build(root: str = ROOT) -> dict:
             'survey': dict(survey(latest), summary=latest['summary']) if latest else None,
         })
 
-    occupied = {(c['family'], c['group']): c for c in gaps.coarse(root)['cells']}
+    occupied = {(c['family'], c['group']): c for c in gaps.coarse(root, entries=entries)['cells']}
     verdicts = triage(root)
     cells = []
     for f in rows['families']:
