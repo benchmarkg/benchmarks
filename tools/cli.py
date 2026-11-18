@@ -5,7 +5,7 @@
     uv run bench fmt [paths...] [--check]
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all|<comma list>] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
-    uv run bench build [--out build/]
+    uv run bench build [--derived] [--atlas] [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
     uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
     uv run bench ingest <adapter> --dry-run [--limit N] [--no-network] [--allow-bulk] [--fixture PATH]
@@ -18,8 +18,8 @@ command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's (its `--tier` 
 P2-S6-T04, whose issue-intake bot runs `--single --tier schema,ref,semantic`), `fmt` P0-S5-T04's (tools/fmt.py),
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
 build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, and coverage-states.json,
-P1-S12-T08's; --embed and --atlas arrive
-with their stages), `migrate`
+P1-S12-T08's; --atlas writes build/atlas.json, P2-S5-T01's (tools/atlas/); --embed arrives
+with its stage), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
 `ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
 P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on; `staleness`, the
@@ -201,6 +201,7 @@ def validate(
 def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
     derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
+    atlas: Annotated[bool, typer.Option('--atlas', help='Also write build/atlas.json, the deterministic pack layout (08 S5.3, 10 V1).')] = False,
 ):
     """Emit the shipped JSON artifacts (08 S4.2) and the croissant-benchmark JSON-LD (08 S5.8), drafts excluded, and
     regenerate the design tokens (09 S13)."""
@@ -232,6 +233,16 @@ def build_cmd(
     from tools import dormancy
     typer.echo('wrote %s' % dormancy.write(dormancy.state(dormancy.last_human_commit(ROOT), _dt.date.today()),
                                           str(out / 'dormancy.json')))
+    # ---- --atlas (P2-S5-T01) ----------------------------------------------------------------------------------------
+    # build/atlas.json over the published corpus: the pack layout, the shipping Atlas for public v1 (08 S5.3, 10 V1)
+    if atlas:
+        from tools.atlas import emit as atlas_emit
+        try:
+            typer.echo('wrote %s' % atlas_emit.write(atlas_emit.build(result.corpus, ROOT), str(out)))
+        except atlas_emit.AtlasError as e:
+            typer.echo('error  %s' % e, err=True)
+            raise typer.Exit(1)
+    # ---- end --atlas ------------------------------------------------------------------------------------------------
     if derived:
         # 07 S9.1: every source's health, read from ingest/state/ and the run logs (P5-S7-T03)
         from tools.build import ingest_health
