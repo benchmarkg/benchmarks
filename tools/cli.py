@@ -200,8 +200,8 @@ def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
     derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
 ):
-    """Emit the shipped JSON artifacts (08 S4.2) and the croissant-benchmark JSON-LD (08 S5.8), drafts excluded, and
-    regenerate the design tokens (09 S13)."""
+    """Emit the shipped JSON artifacts (08 S4.2), their content-hashed copies and build-manifest.json (08 S4.4, S6.1) and
+    the croissant-benchmark JSON-LD (08 S5.8), drafts excluded, and regenerate the design tokens (09 S13)."""
     from tools.build import artifacts, site_taxonomy, tokens
     result = artifacts.build(ROOT)
     for e in result.errors:
@@ -219,7 +219,8 @@ def build_cmd(
     if problems:
         typer.echo('build: %d croissant-benchmark problem(s); nothing written' % len(problems), err=True)
         raise typer.Exit(1)
-    for path in artifacts.write(result, str(out)):
+    shipped = artifacts.write(result, str(out))
+    for path in shipped:
         typer.echo('wrote %s' % path)
     croissant.write(documents, str(out / croissant.DIR))
     typer.echo('wrote %s (%d benchmark document(s) and the collection; %d withheld draft(s) validated, not written; '
@@ -244,6 +245,15 @@ def build_cmd(
         # 10 V6 section 11: each published benchmark's lineage as a build-time SVG and its table (P2-S3-T03)
         from tools.build import lineage_svg
         typer.echo('wrote %s' % lineage_svg.write(result.corpus, str(out / 'derived' / 'lineage.json')))
+    # 08 S4.4 and S6.1 (P2-S1-T05): each shipped artifact at /data/<name>.<sha8>.json, and the manifest naming them;
+    # `python tools/build/manifest.py --site <dist>` completes it after the site build (S13)
+    from tools.build import manifest
+    try:
+        hashed = manifest.write(str(out), shipped, str(out / croissant.DIR))
+    except manifest.ManifestError as e:
+        typer.echo('error  %s' % e, err=True)
+        raise typer.Exit(1)
+    typer.echo('wrote %s (%d content-hashed artifact(s) under %s)' % (hashed[-1], len(hashed) - 1, out / 'data'))
     try:
         # committed files: `git diff` after a build is the drift check. A data-only tree (a test
         # corpus, a fork of data/) has no design/ and gets no tokens.

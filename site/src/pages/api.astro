@@ -2,12 +2,14 @@
 // site/src/pages/api.astro -- P2-S3-T05 (08 S4.5). /api/: the export surface documented as one, and said plainly not to
 // be an API. It states what a consumer gets, where, and the stability contract of each, then the three rules, among
 // them the deprecation rule. Which artifacts this build actually carries is read at build time rather than claimed,
-// so the page cannot promise a file that is not there. Zero JavaScript.
+// so the page cannot promise a file that is not there; a built one links this build's content-hashed file, the only form
+// a page references (lib/manifest.ts, P2-S1-T05), while /data/latest/ is named in text, for people. Zero JavaScript.
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import Absent from '../components/Absent.astro';
 import Base from '../layouts/Base.astro';
 import { CORPUS_PATH } from '../lib/corpus';
+import { dataHref } from '../lib/manifest';
 import { release } from '../lib/release';
 import { REPO } from '../lib/repo';
 
@@ -15,11 +17,11 @@ const built = dirname(CORPUS_PATH);
 const has = (name: string) => existsSync(join(built, name));
 const r = release();
 const rows = [
-  { what: 'corpus.json', detail: 'every entity, fully resolved', where: '/data/latest/corpus.json', present: has('corpus.json'),
+  { what: 'corpus.json', detail: 'every entity, fully resolved', where: '/data/latest/corpus.json', present: has('corpus.json'), href: dataHref('corpus.json'),
     contract: 'Additive within a major schema_version. Fields are added, never renamed or removed; a removal or rename is a major bump, announced in the release notes and here at least one release ahead.' },
-  { what: 'facets.json', detail: 'the slim index for filtering', where: '/data/latest/facets.json', present: has('facets.json'),
+  { what: 'facets.json', detail: 'the slim index for filtering', where: '/data/latest/facets.json', present: has('facets.json'), href: dataHref('facets.json'),
     contract: 'The same contract as corpus.json.' },
-  { what: 'claims.json, claims-ingested/<id>.json', detail: 'the result claims', where: '/data/latest/', present: has('claims.json'),
+  { what: 'claims.json, claims-ingested/<id>.json', detail: 'the result claims', where: '/data/latest/', present: has('claims.json'), href: dataHref('claims.json'),
     contract: 'The same contract. Ingested claims are segregated by path and carry machine-ingested, which is part of the contract rather than an implementation detail.' },
   { what: 'index.sqlite and the data tarball', detail: 'the release archive', where: 'the GitHub release for each tag', present: r.tag != null,
     contract: 'Frozen at the tag. The table shapes may change between majors; the tag never changes.' },
@@ -43,7 +45,7 @@ const rows = [
                 <th scope="row"><code>{x.what}</code> <span class="muted">{x.detail}</span></th>
                 <td>{x.where.startsWith('/') ? <code>{x.where}</code> : x.where}</td>
                 <td data-contract>{x.contract}</td>
-                <td>{x.present ? 'yes' : <Absent state="not-applicable" reason="not built yet" />}</td>
+                <td>{x.present ? (x.href ? <>yes, as <a href={x.href} data-hashed><code>{x.href}</code></a></> : 'yes') : <Absent state="not-applicable" reason="not built yet" />}</td>
               </tr>
             ))}
           </tbody>
