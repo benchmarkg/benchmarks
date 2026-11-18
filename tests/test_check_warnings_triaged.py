@@ -167,3 +167,16 @@ def test_the_repository_passes():
     assert errs == []
     assert sum(c['findings'] for c in tally.values()) == len([f for f in rep['findings']
                                                               if f['severity'] in C.TRIAGED])
+
+
+def test_pr_validate_reports_it_without_blocking():
+    """The maintainer's call of 2026-11-18: reported on a green job, never a red X; a broken run still fails."""
+    with open(os.path.join(ROOT, '.github', 'workflows', 'pr-validate.yml'), encoding='utf-8') as fh:
+        job = yaml.safe_load(fh)['jobs']['warnings-triaged']
+    assert 'continue-on-error' not in job and 'if' not in job
+    runs = [s['run'] for s in job['steps'] if 'run' in s]
+    assert runs == [
+        'uv run --locked --python "$PYTHON" bench validate --tier all --json > validate-report.json || [ $? -eq 1 ]',
+        'uv run --locked --python "$PYTHON" python scripts/reported.py --title "warnings triaged" '
+        'scripts/check_warnings_triaged.py --strict < validate-report.json',
+    ]

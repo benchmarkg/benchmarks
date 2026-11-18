@@ -127,3 +127,12 @@ def test_the_repository_passes():
     assert C.check(ROOT, TODAY, C.proposed(0.88)) == []
     rows = yaml.safe_load(open(os.path.join(ROOT, C.VERDICTS), encoding='utf-8'))['pairs']
     assert {tuple(sorted(r['pair'])) for r in rows} >= set(C.proposed(0.88))
+
+
+def test_pr_validate_runs_it_as_a_blocking_job():
+    """The maintainer's call of 2026-11-18: an unadjudicated pair fails the pull request."""
+    with open(os.path.join(ROOT, '.github', 'workflows', 'pr-validate.yml'), encoding='utf-8') as fh:
+        job = yaml.safe_load(fh)['jobs']['dedup-resolved']
+    assert 'continue-on-error' not in job and 'if' not in job
+    runs = [s['run'] for s in job['steps'] if 'run' in s]
+    assert runs == ['uv run --locked --python "$PYTHON" python scripts/check_dedup_resolved.py']

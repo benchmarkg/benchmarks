@@ -349,6 +349,39 @@ jobs:
       - name: check_sweep_families.py
         run: uv run --locked --python "$PYTHON" python scripts/check_sweep_families.py
 
+  dedup-resolved:
+    name: every near-duplicate pair has a verdict
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Blocking, the maintainer's call of 2026-11-18 (P1-S13-T05; 05 S3). A new entry that the candidate generator
+    # pairs with an existing one fails here until data/_analysis/dedup-verdicts.yaml carries a verdict for the pair;
+    # resolution never merges, a person decides each pair.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: check_dedup_resolved.py
+        run: uv run --locked --python "$PYTHON" python scripts/check_dedup_resolved.py
+
+  warnings-triaged:
+    name: every warning is triaged (reported, not blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # A reported signal, the maintainer's call of 2026-11-18 (P1-S13-T04). A new entry's warnings show as a warning
+    # on a green job until data/_analysis/warning-triage.yaml carries them; --strict also reports triaged lines that
+    # no finding matches any more. The validate step tolerates exit 1 (blocking findings, which jobs 2 to 4 report)
+    # and nothing else, so a broken validator still fails the job, as does a triage check that does not run.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: bench validate --tier all --json, the report the triage check reads
+        run: uv run --locked --python "$PYTHON" bench validate --tier all --json > validate-report.json || [ $? -eq 1 ]
+      - name: check_warnings_triaged.py --strict, reported
+        run: uv run --locked --python "$PYTHON" python scripts/reported.py --title "warnings triaged" scripts/check_warnings_triaged.py --strict < validate-report.json
+
   survey-notes:
     name: no empty state without a survey note
     runs-on: ubuntu-latest
