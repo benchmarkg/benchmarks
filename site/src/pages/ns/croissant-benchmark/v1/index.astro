@@ -1,0 +1,81 @@
+---
+// site/src/pages/ns/croissant-benchmark/v1/index.astro -- P4-S6-T01 (08 S5.8; 10 "Croissant"; 15 A8). The
+// croissant-benchmark extension's own documentation page, at the namespace it documents: the namespace IRI without its
+// fragment is this page, and the context it describes sits beside it as context.jsonld (site/public/ns/, which
+// `bench schema gen` writes from tools/build/croissant.py). It says the extension is unofficial and names the CC BY-ND
+// constraint on the Croissant specification, and quotes none of that specification. The terms are read from the
+// committed context at build time, so the page cannot list a term the context does not declare; a missing context or
+// a missing group fails the build. Zero JavaScript.
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import Base from '../../../../layouts/Base.astro';
+import { release } from '../../../../lib/release';
+import { blobAt, sha } from '../../../../lib/repo';
+
+const CONTEXT = 'site/public/ns/croissant-benchmark/v1/context.jsonld';
+const HREF = '/ns/croissant-benchmark/v1/context.jsonld';
+// Astro builds from site/, as every lib resolving the repository from process.cwd() assumes; not REPO_ROOT, which a
+// test may point at a fixture tree that has no site/.
+const doc = JSON.parse(readFileSync(resolve(process.cwd(), '..', CONTEXT), 'utf8'));
+const [upstream, ours] = doc['@context'] as [string, Record<string, string>];
+const namespace = ours.cb;
+const terms = Object.keys(ours).filter((k) => k !== 'cb');
+// 08 S5.8's five groups, in its words: what each adds because a benchmark is not a dataset.
+const GROUPS: [string, string][] = [
+  ['tasks', 'what is asked: the input, the output, the scoring, and who or what is evaluated'],
+  ['metrics', 'each metric with its range and direction, the headline first'],
+  ['protocol', 'how a result is produced and admitted: the submission process, data access and aggregation policy'],
+  ['conditions', 'a reference to the catalogue\'s EvalConditions entity, and the comparability profile'],
+  ['lineage', 'supersession, subset, extension, decontamination, variant and fork edges, each to a benchmark id'],
+];
+for (const [group] of GROUPS) {
+  if (!terms.includes(group)) throw new Error(`${CONTEXT} does not declare ${group}; run \`uv run bench schema gen\``);
+}
+const commit = sha(release().commit_sha);
+---
+<Base title="croissant-benchmark v1 · Benchmark index" zeroJs>
+  <main>
+    <article class="prose" data-ns="croissant-benchmark/v1">
+      <h1>croissant-benchmark v1</h1>
+      <p class="lead" data-unofficial><strong>An unofficial extension.</strong> croissant-benchmark adds the terms a benchmark needs and a dataset does not to MLCommons Croissant, the metadata format for machine-learning datasets. It is this catalogue's own vocabulary, in its own namespace. It is not part of Croissant, MLCommons has not reviewed or endorsed it, and it has not been proposed to them.</p>
+
+      <h2>The context</h2>
+      <p>The JSON-LD context is <a href={HREF} data-context><code>{HREF}</code></a>. Its terms live under <code data-namespace>{namespace}</code>.</p>
+      <p data-placeholder-host>No host is fixed for the catalogue yet, so the namespace uses <code>host.invalid</code>, a name reserved so that it never resolves to anybody else's vocabulary. Fixing the host is one constant, and regenerating the context then moves every term with it.</p>
+      <p>The context declares the upstream Croissant context first, by the IRI of the version it extends, <code data-upstream>{upstream}</code>, and its own terms after it. None of its terms redefines an upstream term: no key is a Croissant context key or a schema.org term name. MLCommons serves no context document at that IRI, so a JSON-LD processor loading this context needs a document loader that supplies the Croissant context for it. The documents the catalogue publishes do not depend on that: each carries the upstream context and these terms inline.</p>
+
+      <h2>What it adds</h2>
+      <div class="scroll" tabindex="0" role="region" aria-label="The five term groups">
+        <table>
+          <thead><tr><th scope="col">Term</th><th scope="col">What it holds</th></tr></thead>
+          <tbody>
+            {GROUPS.map(([term, what]) => (
+              <tr data-group={term}><th scope="row"><code>{term}</code></th><td>{what}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>All {terms.length} terms: {terms.map((t, i) => <><code>{t}</code>{i < terms.length - 1 ? ', ' : '.'}</>)}</p>
+      <p>The field-level mapping is <a href={blobAt(commit, 'taxonomy/crosswalks/croissant.yaml')}><code>taxonomy/crosswalks/croissant.yaml</code></a>, and the documents are validated against <a href={blobAt(commit, 'schema/generated/croissant-benchmark.schema.json')}><code>schema/generated/croissant-benchmark.schema.json</code></a> as well as for Croissant conformance. Each benchmark page links its document as <code>cite.jsonld</code>.</p>
+
+      <h2>The licence constraint</h2>
+      <p data-licence-constraint>The Croissant specification is published under <strong>CC BY-ND 4.0</strong>: it may be shared with attribution, but no modified version of it may be distributed. That is why this is a separate vocabulary under its own namespace that refers to the specification, rather than an edited copy of it, and why neither this page nor the context reproduces any of its text. Read the specification itself at <a href="https://mlcommons.org/croissant/">mlcommons.org/croissant</a>.</p>
+    </article>
+  </main>
+</Base>
+
+<style>
+  .prose {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+    line-height: var(--lh-prose);
+  }
+  h1 { font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin-block-start: var(--sp-8); font-size: var(--fs-lg); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: var(--fs-sm); }
+  th, td { padding: var(--sp-2); border-block-end: 1px solid var(--c-border); text-align: start; vertical-align: top; }
+  thead th { color: var(--c-ink-muted); }
+  tbody th { font-weight: 400; }
+</style>

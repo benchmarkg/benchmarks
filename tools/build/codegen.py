@@ -16,7 +16,10 @@ changes the output too, so `--check` catches drift from either source (05 S3's `
 One schema and one type file per entity: every root model schema/paths.py registers. Beside them,
 croissant-benchmark.schema.json, the croissant-benchmark extension's schema from tools/build/croissant.py's models
 (P2-S3-T06; 08 S5.8), so `--check` holds it to its models too; it has no type file, because it describes the
-JSON-LD documents the build emits, not an entity the site types. The JSON Schema
+JSON-LD documents the build emits, not an entity the site types. And the extension's published JSON-LD context,
+site/public/ns/croissant-benchmark/v1/context.jsonld, from the same module's terms (P4-S6-T01), so `--check` holds
+the served context to them as well; it is one fixed path, outside the two directories the stale-file sweep reads.
+The JSON Schema
 is the VALIDATION schema -- what a hand-written or ingested record may contain -- so derived,
 computed fields (`execution.inspect_evals_available`, `Metric.higher_is_better`) are not in it.
 
@@ -117,6 +120,15 @@ def croissant_schema(root: str = ROOT) -> dict:
     return croissant.json_schema()
 
 
+def croissant_context(root: str = ROOT) -> tuple[str, dict]:
+    """(repo-relative path, content) of the croissant-benchmark extension's published JSON-LD context (P4-S6-T01;
+    08 S5.8), from tools/build/croissant.py's terms."""
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from tools.build import croissant
+    return croissant.CONTEXT, croissant.context_document()
+
+
 def render(root: str = ROOT, json2ts: str | None = None) -> dict[str, str]:
     """Every generated file, repo-relative path -> content."""
     schemas = json_schemas(root)
@@ -124,6 +136,8 @@ def render(root: str = ROOT, json2ts: str | None = None) -> dict[str, str]:
              json.dumps(s, indent=2, ensure_ascii=False) + '\n' for n, s in schemas.items()}
     files[os.path.join(JSON_DIR, 'croissant-benchmark.schema.json').replace(os.sep, '/')] = \
         json.dumps(croissant_schema(root), indent=2, ensure_ascii=False) + '\n'
+    path, context = croissant_context(root)
+    files[path] = json.dumps(context, indent=2, ensure_ascii=False) + '\n'
     for n, ts in typescript(schemas, json2ts or os.path.join(root, JSON2TS)).items():
         files[os.path.join(TS_DIR, slug(n) + '.d.ts').replace(os.sep, '/')] = ts
     return files

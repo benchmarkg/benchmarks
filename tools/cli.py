@@ -71,7 +71,7 @@ def schema_gen(
     json2ts: Annotated[Optional[Path], typer.Option(
         help='The json-schema-to-typescript package directory (default: site/node_modules/...).')] = None,
 ):
-    """Regenerate schema/generated/*.schema.json and site/src/types/*.d.ts from the Pydantic models."""
+    """Regenerate schema/generated/*.schema.json, site/src/types/*.d.ts and the croissant-benchmark context."""
     j2t = str(json2ts) if json2ts else None
     if check:
         problems = codegen.drift(ROOT, j2t)

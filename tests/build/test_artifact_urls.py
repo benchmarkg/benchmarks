@@ -292,10 +292,12 @@ def test_the_immutable_header_must_be_there(half, text, expect):
     assert any(expect in p for p in M.check_headers(dist)), M.check_headers(dist)
 
 
-def test_the_committed_headers_are_exactly_the_two_rules():
+def test_the_committed_headers_are_exactly_the_three_rules():
+    """The two this checks, and P4-S6-T01's /ns/* (tests/build/test_croissant_context.py)."""
     with open(os.path.join(SITE, 'public', '_headers'), encoding='utf-8') as fh:
         assert M.parse_headers(fh.read()) == {'/data/*': {'cache-control': M.IMMUTABLE},
-                                              '/build-manifest.json': {'cache-control': M.SHORT_TTL}}
+                                              '/build-manifest.json': {'cache-control': M.SHORT_TTL},
+                                              '/ns/*': {'cache-control': croissant.CONTEXT_CACHE}}
 
 
 def test_a_footer_naming_another_commit_fails(half):

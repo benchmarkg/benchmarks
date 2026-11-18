@@ -31,6 +31,23 @@ or a schema.org term name (rdflib's schema.org vocabulary, which mlcroissant ins
 `@vocab` a bare key already means the schema.org term of that name. That rule is why the lineage edge is
 `isSupersededBy` (schema.org has `supersededBy`) and the headline flag is `isHeadline` (schema.org has `headline`).
 
+The published context (P4-S6-T01; 08 S5.8). CONTEXT, site/public/ns/croissant-benchmark/v1/context.jsonld, is served at
+CONTEXT_URL, beside the namespace it defines, and the site's /ns/croissant-benchmark/v1/ page documents it.
+`context_document()` is its whole content and `bench schema gen` writes it (tools/build/codegen.py renders it), so the
+codegen drift check holds the committed file to TERMS as it holds the extension schema. Its @context is a two-entry
+array, the upstream context first, then `extension_context()` -- `cb` and one key per extension term, exactly the keys
+the documents carry beside the upstream context:
+
+  upstream    named by CROISSANT_VERSION, not copied. MLCommons publishes the Croissant context inline in the
+              specification's appendix and serves no context document at that IRI (it redirects to the specification
+              page, as read on 2026-11-18), so a JSON-LD processor that loads this file needs a document loader that
+              answers that IRI with the context the pinned mlcroissant writes. The documents the build emits need
+              neither this file nor such a loader: they inline the upstream context and these keys (`context()`)
+  ours        after the upstream, so a key here that was an upstream term would redefine it, which `context()` refuses
+              at every build. The guard over the published file itself is the croissant checker later in P4-S6
+
+The host is NS_HOST, here as everywhere, so fixing it regenerates this file with the rest.
+
 The mapping. taxonomy/crosswalks/croissant.yaml is the written mapping and tests/build/test_croissant.py holds it to
 this module, as tests/test_crosswalks.py holds its `rows` to schema/benchmark.py's CROISSANT_TERMS:
 
@@ -105,6 +122,9 @@ PREFIX = 'cb'
 DIR = 'croissant-benchmark'                                     # under the build's --out
 COLLECTION = '_collection.jsonld'
 SCHEMA = 'schema/generated/croissant-benchmark.schema.json'
+CONTEXT = 'site/public/ns/croissant-benchmark/v1/context.jsonld'          # the published context (P4-S6-T01)
+CONTEXT_URL = 'https://%s/ns/croissant-benchmark/v1/context.jsonld' % NS_HOST   # where the site serves CONTEXT
+CONTEXT_CACHE = 'public, max-age=604800'        # site/public/_headers' /ns/* rule, a week; it says why not immutable
 DRAFT = 'https://json-schema.org/draft/2020-12/schema'
 SCHEMA_ORG = 'https://schema.org/'
 DATA_LICENCE = 'https://spdx.org/licenses/CC-BY-4.0.html'       # LICENSE-DATA; the collection is ours (05 S12)
@@ -293,10 +313,20 @@ def schema_org_terms() -> frozenset[str]:
     return frozenset(str(u)[len(SCHEMA_ORG):] for u in dir(SDO) if str(u).startswith(SCHEMA_ORG))
 
 
+def extension_context() -> dict:
+    """Our keys of the @context: the prefix, then one per extension term, each the term in our namespace."""
+    return {PREFIX: NAMESPACE, **{t: '%s:%s' % (PREFIX, t) for t in TERMS}}
+
+
+def context_document() -> dict:
+    """The published context, CONTEXT (module docstring): the upstream context by its IRI, then ours."""
+    return {'@context': [CROISSANT_VERSION, extension_context()]}
+
+
 def context() -> dict:
     """The documents' @context; raises Refused if an extension key would redefine an upstream term."""
     upstream = dict(upstream_context())
-    ours = {PREFIX: NAMESPACE, **{t: '%s:%s' % (PREFIX, t) for t in TERMS}}
+    ours = extension_context()
     clash = sorted(set(ours) & (set(upstream) | schema_org_terms()))
     if clash:
         raise Refused(['croissant: extension key %s is already an upstream term (%s); name ours differently'
