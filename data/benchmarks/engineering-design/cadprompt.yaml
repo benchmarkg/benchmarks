@@ -1,0 +1,651 @@
+# data/benchmarks/engineering-design/cadprompt.yaml
+#
+# P1-S8-T04, engineering-design entry 11. Filled from the CADCodeVerify paper that introduces CADPrompt, arXiv
+# 2410.05340 read as its v2 PDF (2025-02-28; ICLR 2025), and its abstract page; three pages of the data repository
+# CAD_Code_Generation at commit 33dcecd (2025-02-28, the head of main): the README read raw, the root file listing and
+# the listing of one item folder (00000007), with nine more item folders sampled for their prompt files. Current use
+# is from EvoCAD (arXiv 2510.11631, v1 HTML, October 2025; IEEE ICTAI 2025) and IterCAD (arXiv 2606.13368, v3 HTML,
+# August 2026), both by other groups. The abstract pages of 2410.05340v1, 2510.11631 and 2606.13368 and the
+# repository's commits page were read and are not cited. Every quote below is checked by the quote-substring
+# validator against those Sources' committed extracts.
+#
+# The bar (the Phase-0 survey's criterion b, a defined scoring procedure and not only a method paper's dataset): the
+# release paper defines the procedure (point sampling, ICP alignment, unit-cube normalisation, three distances, the
+# compile rate and the penalty for a failed script), but in prose only; the repository holds the data and no code.
+# Two later papers by other groups run the full set, each with metrics of its own (as_used), so it is kept. CADPrompt
+# is neither CadEval (data/benchmarks/_stubs/cadeval.yaml: OpenSCAD tasks with their own reference STLs and a
+# validity-and-tolerance harness) nor Parametric CAD Bench (agents authoring native FreeCAD documents, with a
+# validator and a board). This entry replaces PC-Gym, which the re-read found operated rather than produced.
+
+id: cadprompt
+name: CADPrompt
+tagline: 200 DeepCAD objects in text; a model writes CadQuery code and the rendered mesh is scored
+  against the original.
+description: >
+  A benchmark for CAD code generation, introduced in an ICLR 2025 paper from the Georgia Institute of
+  Technology (arXiv 2410.05340) to evaluate the authors' refinement method, CADCodeVerify. Its 200 items
+  are 3D objects selected from DeepCAD, a public collection of CAD models. Each carries a natural-language
+  prompt written by annotators (for hard-to-describe objects two wrote prompts and a third chose; a fourth
+  reviewer refined all 200), the ground-truth mesh as STL and OBJ, its geometric properties, the object's
+  CAD command sequence as JSON, and CadQuery Python code written by a CAD design expert and checked in
+  Blender against the mesh. The model is asked to "Write Python code using CADQuery to ..." and its script
+  is executed to export an STL; the result is sampled to 1,000 points, aligned to the ground truth by
+  ICP, normalised to the unit cube and scored by point-cloud distance (the symmetric mean nearest-point
+  distance), Hausdorff distance and IoGT (the overlap of the two bounding boxes over the ground truth's),
+  beside the compile rate. A script that fails gets distance 3 and IoGT 0. The paper reports medians and
+  interquartile ranges over the 200 with no combined score, and stratifies them by an expert's four-level
+  geometric complexity, a mesh-complexity split at the median and a compile-difficulty split. Its baselines
+  are GPT-4, Gemini and CodeLlama prompted zero- and few-shot, followed by two refinement rounds from
+  3D-Premise, CADCodeVerify or a geometric solver that reads the ground truth; GPT-4 produced compilable
+  code for 96.5% of prompts. The repository (five commits, February 2025) holds the data and no code,
+  so every user rebuilds the metrics, and later papers have changed them: EvoCAD (October 2025) averages
+  over a watertight subset of about 80% and adds IoU and Dice, and IterCAD (2026) reports an invalid ratio
+  and Chamfer distance over successful runs only. Item folders also hold a second prompt with explicit
+  measurements, which neither the paper nor the README describes. Results appear in papers; there is no
+  leaderboard.
+self_description:
+  source: src-arxiv-2410-05340-v2
+  quote: This multimodal benchmark enables researchers to evaluate aspects of CAD code generation,
+    including object quality and the syntactical correctness of the generated code.
+external_ids:
+  arxiv: '2410.05340'
+paper:
+  title: Generating CAD Code with Vision-Language Models for 3D Designs
+  arxiv: '2410.05340'
+  doi: 10.48550/arXiv.2410.05340
+  version_read: v2
+  source: src-arxiv-2410-05340-v2
+released: 2024-10-07
+released_note: The paper's first arXiv version, as its abstract page dates it; the v1 abstract
+  already describes the 200 prompts. The data repository's five commits were all made on 2025-02-28
+  (UTC), the day v2 was posted (the repository's commits page, read, not quoted), so the public data
+  dates from v2.
+released_source: src-arxiv-2410-05340
+released_quote: '[Submitted on 7 Oct 2024 (v1), last revised 28 Feb 2025 (this version, v2)]'
+release_venue: ICLR 2025
+release_venue_source: src-arxiv-2410-05340-v2
+release_venue_quote: 'Published as a conference paper at ICLR 2025 Figure 1: Our approach enables VLMs
+  to automatically generate and refine 3D objects'
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: engineering-design/cad-geometry-generation
+domain_basis:
+  reason: What is scored is the geometry the generated CadQuery script renders, compared with the
+    ground-truth mesh of a CAD model after alignment and normalisation. That is the family's
+    inclusion test (geometry judged against engineering criteria) and the subdomain's definition
+    (CAD geometry that satisfies a stated specification); CadEval, the family's own example, is the
+    same act in OpenSCAD. The code family excludes code that is the means to a result in another
+    field; generated code scored as a shape is the boundary already logged in
+    taxonomy/_failures/2026-11-18-verilogeval-001.yaml, which names CADPrompt, and is not logged
+    again.
+  source: src-arxiv-2410-05340-v2
+  quote: 'We use three evaluation metrics to compare the quality of the generated 3D object against the
+    ground truth: (i) Point Cloud distance, (ii) Hausdorff distance, and (iii) Intersection over the Ground
+    Truth (IoGT).'
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: The entrant writes a Python script, but no test judges its behaviour; it is run once to
+      export a mesh, and the mesh is compared with the ground truth. The compile rate counts scripts
+      that ran, a validity check rather than a test.
+    source: src-arxiv-2410-05340-v2
+    quote: We also report the percentage of successfully compiled code as the
+  - term: vision/3d-reconstruction
+    reason: The output is geometry scored against a reference mesh, but it is built from a text
+      description, not recovered from images of the object.
+  - term: multimodal/any-to-any-generation
+    reason: Text goes in and geometry comes out, but the score is distance to a reference object,
+      not correspondence to the prompt, and the artifact is a CAD model, which engineering-design
+      claims.
+  - term: engineering-design/structural-mechanical-design
+    reason: The objects include mechanical shapes (plates with cutouts, a bobbin in the paper's
+      figures), but nothing is designed against loads or material constraints; the target geometry
+      is given.
+capability:
+  - generation-fidelity
+capability_basis:
+  generation-fidelity:
+    reason: Every geometric metric measures how close the rendered object is to the ground truth
+      after alignment and normalisation, as for cadeval, the term's own example.
+    source: src-arxiv-2410-05340-v2
+    quote: We apply the Iterative Closest Point (ICP) algorithm to rotate and translate the
+      generated 3D object for optimal alignment with the ground truth object
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: Prompts give proportions and relative placements rather than coordinates, so building
+      the object takes spatial inference, but the score is the fidelity of the result to a
+      reference, which the term's exclusion sends elsewhere, and no source claims spatial reasoning.
+  - term: self-correction
+    reason: The release paper reports objects after one and two refinement rounds beside the first
+      generation, but the refinement loop is the method under test, brought by the entrant, and one
+      of its three feedback sources reads the ground truth, an external oracle; the dataset fixes no
+      revision protocol (review_checks).
+    source: src-arxiv-2410-05340-v2
+    quote: This feedback method acts as an upper bound for CAD code refinement
+  - term: instruction-following
+    reason: Each prompt is an instruction, but compliance is not scored; the rendered geometry is.
+  - term: constraint-satisfaction
+    reason: The prompts give no enumerated conditions to check, and the score is a continuous
+      distance.
+
+evaluation_method:
+  - domain-metric
+evaluation_method_note: >
+  domain-metric for the three comparisons with the ground truth, measures of 3D shape similarity computed
+  after ICP alignment and unit-cube normalisation on 1,000 sampled points: point-cloud distance (the symmetric
+  mean of nearest-point distances, usually called Chamfer distance), Hausdorff distance and IoGT, the
+  paper's own bounding-box overlap over the ground truth's box (review_checks). The compile rate, the
+  share of scripts that run and export an object, is reported beside them and has no term (logged as taxonomy/_failures/2026-11-18-cadprompt-001.yaml).
+  The metrics are not combined.
+evaluation_method_basis:
+  reason: Each generated object is compared with its ground truth by three geometric measures, with
+    the compile rate beside them.
+  source: src-arxiv-2410-05340-v2
+  quote: 'We use three evaluation metrics to compare the quality of the generated 3D object against the
+    ground truth: (i) Point Cloud distance, (ii) Hausdorff distance, and (iii) Intersection over the Ground
+    Truth (IoGT).'
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: The script is executed, but only to export the object; no test of behaviour decides a
+      verdict, and the compile rate checks only that it ran, which the term's exclusion leaves out.
+    source: src-arxiv-2410-05340-v2
+    quote: We also report the percentage of successfully compiled code as the
+  - term: constraint-check
+    reason: No battery of conditions is asserted on the object. A script that fails is scored inside
+      the distance metrics at their worst values, not invalidated by a checker, and the artifact
+      must be run to be judged, which the term excludes (the sibling cadeval entry reads its render
+      gates differently; review_checks).
+    source: src-arxiv-2410-05340-v2
+    quote: If any generation fails to compile, we set the distance (Point Cloud and Hausdroff) to 3
+      (the largest possible distance between two points in a unit cube) and an IoGT value of zero
+  - term: statistical-fit
+    reason: The distances are computed between two shapes after alignment, measures of the
+      3D-geometry field, not a goodness-of-fit statistic over predicted values.
+  - term: composite
+    reason: The paper reports each metric separately, as medians with interquartile ranges, and
+      computes no combined figure.
+    source: src-arxiv-2410-05340-v2
+    quote: This table reports the median (IQR) benchmarking results for baselines across metrics.
+  - term: model-graded-judge
+    reason: CADCodeVerify asks a vision-language model questions about the rendered object, but that
+      is the refinement method's feedback, not the score; the metrics are geometric computations.
+designed_for_subjects:
+  - instruction-tuned-model
+  - agent-scaffold
+designed_for_subjects_note: instruction-tuned-model for the "Generated" stage, a model prompted
+  directly zero- or few-shot (GPT-4, Gemini and CodeLlama in the release paper); agent-scaffold for
+  the refinement loops the benchmark was built to compare, each brought by the entrant
+  (compile-error repair, then two rounds of feedback from 3D-Premise, CADCodeVerify or a geometric
+  solver), and for the later entrants' loops (EvoCAD's evolutionary search, IterCAD's multi-turn
+  agent).
+designed_for_subjects_basis:
+  reason: The paper introduces the set to evaluate a refinement method wrapped around a model, and
+    reports each model before and after the loop.
+  source: src-arxiv-2410-05340-v2
+  quote: To evaluate the performance of CADCodeVerify, we introduce a novel benchmark, CADPrompt
+    contains 200 3D objects annotated with natural language prompts and expert-written Python code.
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The dataset ships no driver, prompt template or loop; each paper brings its own.
+  - term: domain-specialist-model
+    reason: Later papers report CAD-specific systems on the set (Text2CAD, CADmium, CAD-Judge and
+      IterCAD's own fine-tuned agent in IterCAD's table), but that is use; the release paper
+      evaluates general models.
+    source: src-arxiv-2606-13368-v3
+    quote: Text2CAD 6.00 (1.57) - 127.70 CADmium 10.50 (6.28) - 116.75 CAD-Judge 4.50 (2.55) 152.40
+      42.69 IterCAD 2.00 10.45 2.42
+  - term: reasoning-model
+    reason: EvoCAD uses a reasoning model to rank candidates inside its loop; no source designs the
+      set for reasoning models.
+as_used:
+  - protocol: EvoCAD runs GPT-4V and GPT-4o on all 200 prompts in an evolutionary loop, three runs
+      per model, and averages every metric over the subset of objects that are watertight for all
+      methods compared (about 80%), reporting point-cloud and Hausdorff distance, IoU and Dice in
+      place of IoGT, and two topology metrics of its own; 3D-Premise and CADCodeVerify are reported
+      beside it on the same subset.
+    split: the watertight joint subset, about 80% of the 200
+    source: src-arxiv-2510-11631-v1
+    quote: all metrics depict the average values calculated over the same watertight joint subset,
+      which approximately represents 80% of the full dataset.
+    note: EvoCAD (October 2025, IEEE ICTAI 2025). Its means over a subset are not comparable with
+      the release paper's medians over all 200 with failures penalised; CADCodeVerify's point-cloud
+      distance is 0.0628 there and 0.127 (GPT-4 few-shot) in the release paper.
+  - protocol: IterCAD runs a multi-turn CAD agent and re-reports Text2CAD, CADmium and CAD-Judge on
+      the 200 prompts, scoring an invalid ratio (programs raising syntax exceptions or geometric
+      anomalies) and mean and median Chamfer distance over successful executions only, multiplied by
+      1,000, and re-evaluates the invalid ratios the CAD-Judge paper reported for itself and the
+      other two because of calculation inconsistencies.
+    source: src-arxiv-2606-13368-v3
+    quote: 'Mean/Median Chamfer Distance (Mean/Med. CD): geometric fidelity computed over successful executions'
+    note: IterCAD (v3, August 2026). Excluding failed programs from the distance reverses the
+      release paper's penalty for them, so a distance there is not comparable with one here.
+
+lifecycle: active
+lifecycle_basis:
+  reason: Other groups still report on the set; IterCAD's August 2026 version reports its own agent
+    and three earlier systems on CADPrompt, and EvoCAD (October 2025) ran it in full.
+  source: src-arxiv-2606-13368-v3
+  quote: On the challenging CADPrompt benchmark (Tab. 4), IterCAD again establishes prominent
+    advantages in geometric fidelity
+activity: no-submission-channel
+activity_basis:
+  reason: The repository holds the data and no leaderboard or results route; results are reported in
+    papers, which re-run or collect each other's numbers, as IterCAD's table does.
+  source: src-arxiv-2606-13368-v3
+  quote: 'Table 4: Evaluation results on the CADPrompt bench.'
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: GPT-4 (compile rate, release paper)
+    source: src-arxiv-2410-05340-v2
+    observed_on: 2026-11-18
+    quote: GPT-4 shows superior performance at 96.5% on the CADPrompt benchmark, compared to Gemini
+      at 85% and CodeLlama at 73.5%.
+  - system: EvoCAD (GPT-4V and GPT-4o)
+    source: src-arxiv-2510-11631-v1
+    observed_on: 2026-11-18
+    quote: CADCodeVerify [1] 80.5 0.629 0.0628 0.182 69.8 79.0 EvoCAD-4v 82.4 (2.3) 0.446 (0.069)
+      0.0626 (0.0007) 0.180 (0.002) 69.7 (0.4) 79.1 (0.2) EvoCAD-4o 87.2 (0.4) 0.410 (0.013) 0.0617
+      (0.0020) 0.177 (0.004) 69.9 (1.0) 79.4 (0.8)
+    note: Topology correctness, topology error, point-cloud and Hausdorff distance, IoU and Dice,
+      means over the watertight subset (as_used).
+  - system: IterCAD
+    source: src-arxiv-2606-13368-v3
+    observed_on: 2026-11-18
+    quote: Text2CAD 6.00 (1.57) - 127.70 CADmium 10.50 (6.28) - 116.75 CAD-Judge 4.50 (2.55) 152.40
+      42.69 IterCAD 2.00 10.45 2.42
+    note: Invalid ratio 2.00%, mean Chamfer distance 10.45 and median 2.42 (times 1,000, over
+      successful executions).
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each item's ground-truth mesh (STL and OBJ), a DeepCAD object, with the
+  expert's CadQuery code that reproduces it. Held out of the model's input but public in the
+  repository; nothing withholds it.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The prompts, meshes and reference code are public with no registration, and the metrics
+    are described in the paper; two other groups have run the full set. No implementation of the
+    metrics is published, which is the reproducibility blocker rather than an access one.
+  source: src-arxiv-2510-11631-v1
+  quote: Our method is applied on the full CADPrompt dataset [1], which consists of 200 samples in
+    total.
+
+task:
+  exists: true
+  input:
+    - a natural-language description of one 3D object, beginning "Write Python code using CADQuery
+      to"; a second description per object with explicit measurements is in the repository (subsets)
+    - optionally, few-shot CadQuery examples (the release paper draws them from 40 examples in the
+      CadQuery documentation)
+  output: A CadQuery Python script that builds the object and exports it as an STL mesh.
+  scoring: The script is executed (in the release paper, compiler errors may be fed back for
+    repair); the STL is sampled to 1,000 points, aligned to the ground truth by ICP and normalised
+    to the unit cube, then scored by point-cloud distance, Hausdorff distance and IoGT, with the
+    compile rate over the set. A failed script gets distance 3 and IoGT 0. Medians and interquartile
+    ranges over the 200 are reported per metric.
+  tests_hidden_from_system: true
+  reference_solution: true
+  source: src-arxiv-2410-05340-v2
+  quote: Each object in CADPrompt is annotated with ground truth code, and a natural language
+    prompt.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: Every item's prompts, meshes, properties and reference code sit in a public GitHub
+      repository, one folder per object, with no registration.
+    source: src-github-cad-code-generation-item-00000007-33dcecd
+    quote: 00000007.json 00000007.json Ground_Truth.json Ground_Truth.json Ground_Truth.obj
+      Ground_Truth.obj Ground_Truth.stl Ground_Truth.stl Natural_Language_Descriptions_Prompt.txt
+      Natural_Language_Descriptions_Prompt.txt
+      Natural_Language_Descriptions_Prompt_with_specific_measurements.txt
+      Natural_Language_Descriptions_Prompt_with_specific_measurements.txt Python_Code.py
+      Python_Code.py
+  refresh: static
+  refresh_basis:
+    reason: One release; the repository's five commits were all made on one day, and nothing has
+      changed since (the commits page, read, not quoted).
+    source: src-github-cad-code-generation-tree-33dcecd
+    quote: Latest commit History 5 Commits 5 Commits Folders and files
+  data_provenance:
+    - inherited-from-constituents
+    - expert-authored
+  data_provenance_note: The 200 objects are selected from DeepCAD, a published CAD-model dataset,
+    whose meshes and command sequences they keep. A recruited CAD design expert wrote the reference
+    CadQuery code (expert-authored). The prompts were written by annotators whose expertise the
+    paper does not state, with a third annotator choosing between two prompts for hard objects and a
+    fourth reviewer refining all 200, so no term is tagged for them. Who wrote the second, measured
+    prompts is not stated (subsets).
+  data_provenance_basis:
+    reason: The reference code, the expert-authored part.
+    source: src-arxiv-2410-05340-v2
+    quote: We recruited a CAD Design expert to annotate CADPrompt with ground truth code for each
+      object.
+  data_provenance_source: src-arxiv-2410-05340-v2
+  data_provenance_quote: we first selected 200 3D objects from a collection of modular CAD objects
+    from previous work
+  contamination_risk: medium
+  contamination_risk_note: The prompts, ground-truth meshes and reference code have been public on
+    GitHub since February 2025, and the objects come from DeepCAD, a public dataset of CAD models;
+    which DeepCAD split they were drawn from is not stated. A route into training data, especially
+    for CAD generators trained on DeepCAD-derived data, is plausible, but no source read evidences
+    one.
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: There is no headline metric; each metric is bounded at its optimum
+    (distance 0, IoGT 1, compile rate 100%). The expert's code was validated against the ground
+    truth in Blender, with discrepancies sent back for refinement, but no metric values for the
+    reference code are reported; the paper's geometric-solver and human-feedback conditions are
+    comparators for refinement, not anchors of the scale.
+  ceiling_anchor_type_basis:
+    reason: The reference code was checked against the ground-truth objects, which is not a measured
+      score.
+    source: src-arxiv-2410-05340-v2
+    quote: to validate the 3D objects produced by the expert
+  dataset_licence: null
+  dataset_licence_note: The repository has no licence file and GitHub shows no licence for it, and
+    the README states none; DeepCAD's own terms, which govern the inherited meshes and command
+    sequences, were not read.
+  size:
+    - count: 200
+      unit: 3D objects, each with a prompt and expert-written CadQuery code
+      source: src-arxiv-2410-05340-v2
+      quote: we introduce a new benchmark the CADPrompt, which consists of 200 3D objects,
+        represented both in images and STL
+  size_note: The repository's CADPrompt folder holds 200 item folders named by eight-digit ids (its
+    listing, read, not quoted), each with the eight files of
+    src-github-cad-code-generation-item-00000007-33dcecd.
+  languages:
+    - English
+    - Python
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The CADPrompt authors (Georgia Institute of Technology)
+  maintainer_basis:
+    reason: The release paper's authors introduced the set, and all are at the Georgia Institute of
+      Technology by its affiliation line (read but kept out of the extract, which would carry their
+      e-mail addresses). The data sit in a personal GitHub account, not an organisation's.
+    source: src-arxiv-2410-05340-v2
+    quote: To evaluate the performance of CADCodeVerify, we introduce a novel benchmark, CADPrompt
+      contains 200 3D objects annotated with natural language prompts and expert-written Python
+      code.
+  maintainer_type: academic-lab
+  submission_process:
+    - literature-only
+  submission_process_note: No leaderboard or results route exists; the release paper reports its own
+    baselines and later papers run the set themselves or collect earlier numbers.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2410-05340-v2
+      quote: We demonstrate that CADCodeVerify sets a new state-of-the-art 3D design via CAD
+        scripting
+  independence_flags_note: The release paper introduces CADPrompt to evaluate its own refinement
+    method and reports that method as the best feedback that does not read the ground truth; the
+    base models it wraps (GPT-4, Gemini, CodeLlama) are not the authors'. The acknowledged funding
+    is a National Science Foundation grant, read but not quoted because the sentence beside it names
+    a person. There is no leaderboard to rank on (review_checks).
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2410-05340-v2
+    quote: It is essential to recognize that Point Cloud distance and Hausdorff distance are noisy
+      metrics, measuring only the spatial similarity between two 3D objects.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: A run is model calls plus CPU work to execute CadQuery and compute the
+    distances; the release paper's whole programme, three models with every feedback method, cost
+    about $1,000 in API calls (CodeLlama through a hosted API).
+  compute_tier_source: src-arxiv-2410-05340-v2
+  compute_tier_quote: The total cost for running the experiments was approximately $1000
+  reproducibility_tier: null
+  reproducibility_tier_note: A run is automatic end to end once the data is cloned, which reads as
+    fully-automatable, but no implementation of the metrics or the prompting is published (the
+    blocker below), and 02 S11 forbids that tier beside it. The tier abstains, as lit-pcba and
+    MusicCaps do on the same pair.
+  reproducibility_blockers:
+    - no-reference-implementation
+  reproducibility_blockers_note: Each user implements the sampling, ICP alignment, normalisation,
+    distances, IoGT and the failure penalty from the paper's prose (the release used Open3D and
+    Pandas), and the two later users read choose different metrics and subsets (as_used).
+  reproducibility_blockers_source: src-arxiv-2410-05340-v2
+  reproducibility_blockers_quote: we converted the generated STL files into point clouds rendered
+    with 1000 points. We used the Open3D and Pandas libraries to calculate the Point Cloud Distance.
+  harness_availability: none
+  harness_availability_note: The repository at 33dcecd holds the CADPrompt folder, a stratification
+    spreadsheet, three figures and the README; no generation, execution or scoring code, and none
+    for CADCodeVerify. The per-item Python_Code.py files are reference solutions, not a harness.
+  harness_availability_source: src-github-cad-code-generation-tree-33dcecd
+  harness_availability_quote: Folders and files Name Name Last commit message Last commit date
+    CADPrompt CADPrompt .DS_Store .DS_Store CADCodeVerify.png CADCodeVerify.png
+    Data_Stratification.xlsx Data_Stratification.xlsx Examples.png Examples.png README.md README.md
+    Statistics.png Statistics.png View all files
+  code_licence: null
+  code_licence_note: No code is published, and the repository has no licence.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The pair domain-metric x instruction-tuned-model (and x agent-scaffold) resolves to the fallback profile
+  # (subset_used: the full 200, a stratum, the measured prompts or a watertight subset). Added: the refinement loop
+  # (scaffold), the compile-error repair attempts (retries_allowed), few-shot examples (shots), the sampling
+  # temperature (the release paper uses 0, and 1 for repairs), the prompt template and prompt set
+  # (prompt_template_hash), and the metric implementation (harness), which differs between every paper read: medians
+  # over all 200 with failures penalised, means over a watertight subset, or Chamfer distance over successful runs.
+  material_extra:
+    - scaffold
+    - retries_allowed
+    - shots
+    - sampling
+    - prompt_template_hash
+    - harness
+
+aggregation_policy: none-by-design
+aggregation_policy_note: The paper compares methods across the metrics in its tables and computes no
+  figure that combines them; later users report their own sets of metrics side by side.
+aggregation_policy_basis:
+  reason: Every result table gives each metric separately, as a median with its interquartile range.
+  source: src-arxiv-2410-05340-v2
+  quote: This table reports the median (IQR) benchmarking results for baselines across metrics.
+headline_metric: null
+headline_metric_note: No single headline metric; point-cloud distance, Hausdorff distance, IoGT and
+  compile rate are reported together, and no Metric record exists for any of them.
+
+liveness:
+  repo_last_commit: 2025-02-28
+  reproduction_script_present: false
+  last_checked: 2026-11-18
+
+homepage: https://github.com/Kamel773/CAD_Code_Generation
+repository: https://github.com/Kamel773/CAD_Code_Generation
+dataset_url: https://github.com/Kamel773/CAD_Code_Generation/tree/main/CADPrompt
+
+subsets:
+  - id: cadprompt#simple
+    label: Simple objects (geometric complexity)
+    items: 17
+    evidence:
+      - source: src-arxiv-2410-05340-v2
+        quote: 'Each object was assigned one of the following levels: (i) Simple: the object is basic,
+          with few features.'
+      - source: src-arxiv-2410-05340-v2
+        quote: Total Datapoints 17 39 87 57 200
+    notes: The four levels a CAD design expert assigned to every object (Table 1's counts), reported
+      separately for GPT-4 few-shot in Table 8.
+  - id: cadprompt#moderate
+    label: Moderate objects (geometric complexity)
+    items: 39
+    evidence:
+      - source: src-arxiv-2410-05340-v2
+        quote: Total Datapoints 17 39 87 57 200
+  - id: cadprompt#complex
+    label: Complex objects (geometric complexity)
+    items: 87
+    evidence:
+      - source: src-arxiv-2410-05340-v2
+        quote: Total Datapoints 17 39 87 57 200
+  - id: cadprompt#very-complex
+    label: Very complex objects (geometric complexity)
+    items: 57
+    evidence:
+      - source: src-arxiv-2410-05340-v2
+        quote: Total Datapoints 17 39 87 57 200
+  - id: cadprompt#measured-prompts
+    label: Prompts with specific measurements (repository only)
+    scored_separately: false
+    evidence:
+      - source: src-github-cad-code-generation-item-00000007-33dcecd
+        quote: 00000007.json 00000007.json Ground_Truth.json Ground_Truth.json Ground_Truth.obj
+          Ground_Truth.obj Ground_Truth.stl Ground_Truth.stl
+          Natural_Language_Descriptions_Prompt.txt Natural_Language_Descriptions_Prompt.txt
+          Natural_Language_Descriptions_Prompt_with_specific_measurements.txt
+          Natural_Language_Descriptions_Prompt_with_specific_measurements.txt Python_Code.py
+          Python_Code.py
+    notes: A second prompt per object that states dimensions (for item 00000007, a circle of radius
+      0.75 units extruded 0.20923 units, where the first prompt says only "an extruded sketch of a
+      circle"). Found in all ten item folders sampled, so probably in all 200, but neither the paper
+      nor the README describes it, who wrote it is not stated, and no source read reports results on
+      it.
+subsets_note: The paper also splits the 200 by mesh complexity (Simple and Complex, either side of
+  the median count of faces and vertices) and by compilation difficulty (Easy where at least four of
+  its six model and prompting runs produced compilable code, otherwise Hard), and plots compile
+  rates on those splits; both are analysis strata, the second defined by the paper's own baselines,
+  and are not modelled as subsets. The repository's Data_Stratification.xlsx presumably holds the
+  labels; it was not opened.
+subsets_source: src-arxiv-2410-05340-v2
+subsets_quote: 3D objects were labeled then as either (i) Easy (at least four of six methods
+  generated compilable code) and (ii) Hard (otherwise).
+
+lineage:
+  role: root
+lineage_note: No version, variant or fork is known. The paper's two arXiv versions (2024-10-07 and
+  2025-02-28) both describe 200 prompts, and the public data dates from the second. EvoCAD and
+  IterCAD run the set under metrics of their own (as_used), which makes them uses, not derivatives.
+  Two gated Hugging Face datasets under an unrelated organisation carry "cadprompt" in their names
+  with placeholder cards (the Hub's search API, read 2026-11-18, not cited). CadEval, CadQueryEval
+  and Parametric CAD Bench are separate benchmarks with their own tasks.
+
+tags:
+  - cad
+  - cadquery
+  - text-to-cad
+  - deepcad
+  - point-cloud-distance
+  - method-paper-dataset
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S8-T04)
+  added_on: 2026-11-18
+  last_verified: 2026-11-18
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2410-05340-v2
+    - src-arxiv-2410-05340
+    - src-github-cad-code-generation-readme-33dcecd
+    - src-github-cad-code-generation-tree-33dcecd
+    - src-github-cad-code-generation-item-00000007-33dcecd
+    - src-arxiv-2510-11631-v1
+    - src-arxiv-2606-13368-v3
+  sources_note: >
+    The release paper's v2 PDF (a DOI, not archived) read as text, its 60-character windows kept away
+    from the author block, which prints e-mail addresses, and from the acknowledgement, which names a
+    person; its abstract page for the version dates; three GitHub pages at commit 33dcecd, all withheld
+    from archiving because the repository sits under a personal account whose handle is an author's name:
+    the README read raw, the root listing and one item folder's listing, with nine more item folders'
+    prompt files fetched raw and not cited; and the HTML full texts of EvoCAD (v1) and IterCAD (v3), both
+    DOIs, as evidence of use by other groups. The repository's commits page and the Hugging Face search
+    API were read and are not cited; GitHub's REST API was rate-limited on the day.
+  confidence: medium
+  review_checks:
+    - check: The bar. CADPrompt was introduced inside a method paper to evaluate that paper's own
+        method, and its scoring procedure is defined in prose only; no code is published. It is kept
+        because the procedure is fully specified and two other groups (EvoCAD in 2025, IterCAD in
+        2026) ran the full set, but a reviewer may judge a method paper's evaluation set below the
+        survey's criterion b.
+      field: execution.harness_availability
+      source: src-arxiv-2510-11631-v1
+      quote: We assess our method using GPT-4V and GPT-4o, evaluating it on the CADPrompt benchmark
+        dataset and comparing it to prior methods.
+    - check: Comparability across papers. With no reference implementation, each user rebuilt the
+        metrics differently (medians over all 200 with failures penalised; means over a watertight
+        subset of about 80%; Chamfer distance over successful runs only), and IterCAD re-evaluated
+        the invalid ratios it took from the CAD-Judge paper for calculation inconsistencies. Numbers
+        from different papers should not be ranked together.
+      field: comparability
+      source: src-arxiv-2606-13368-v3
+      quote: original metrics; we re-evaluate IRs due to calculation inconsistencies on the
+    - check: The second prompt set. Every item folder sampled (10 of 200) holds a prompt with
+        specific measurements beside the paper's prompt; the sources read do not say who wrote it,
+        when, or which set later papers used, and a run on the measured prompts is a different task.
+      field: subsets
+      source: src-github-cad-code-generation-item-00000007-33dcecd
+      quote: 00000007.json 00000007.json Ground_Truth.json Ground_Truth.json Ground_Truth.obj
+        Ground_Truth.obj Ground_Truth.stl Ground_Truth.stl Natural_Language_Descriptions_Prompt.txt
+        Natural_Language_Descriptions_Prompt.txt
+        Natural_Language_Descriptions_Prompt_with_specific_measurements.txt
+        Natural_Language_Descriptions_Prompt_with_specific_measurements.txt Python_Code.py
+        Python_Code.py
+    - check: evaluation_method. domain-metric for point-cloud (Chamfer) and Hausdorff distance and
+        IoGT follows the sibling cadeval draft; fusion-equilibrium-challenge read a Hausdorff
+        distance as a general statistic. constraint-check is rejected because a failed script is
+        penalised inside the metrics rather than invalidated, where the cadeval draft tags its
+        render gates as constraint-check; the compile rate is logged as a missing term. The family's
+        entries should be read together.
+      field: evaluation_method
+      specialist: true
+    - check: maintainer-competes-on-own-benchmark rests on the release paper reporting its own
+        refinement method as the state of the art on the set it introduced (as verilogeval's entry
+        flags its own fine-tuned models). There is no leaderboard, so nothing is ranked.
+      field: governance.independence_flags
+      source: src-arxiv-2410-05340-v2
+      quote: Our results show that through CADCodeVerify, we can achieve comparable performance
+        without requiring access to the target object
+    - check: designed_for_subjects agent-scaffold for the refinement loops. CADCodeVerify runs a
+        fixed two rounds after compile-error repair and stops early when every check passes; whether
+        such a fixed loop is an autonomous one, and whether self-correction should be tagged for the
+        stage-wise reporting (Generated, Refine-1, Refine-2), is a reviewer's call.
+      field: designed_for_subjects
+      source: src-arxiv-2410-05340-v2
+      quote: In all our experiments, we set the number of refinements to 2, as no improvement was
+        observed beyond the second refinement.
+    - check: Versions. Both arXiv versions describe 200 prompts and the v1 abstract matches v2's,
+        but the v1 PDF was not read and the public repository dates from v2's day, so whether the
+        items changed between October 2024 and February 2025 is not established; no version is
+        modelled.
+      field: versions
+      source: src-arxiv-2410-05340
+      quote: '[Submitted on 7 Oct 2024 (v1), last revised 28 Feb 2025 (this version, v2)]'
+    - check: The release paper names its Gemini model inconsistently, Gemini 1.5 Pro in the
+        contributions and gemini1.5-flash-latest in the experimental parameters; a claim for Gemini
+        should name the latter.
+      field: learned_entrant_evidence
+      source: src-arxiv-2410-05340-v2
+      quote: Gemini ("gemini1.5-flash-latest") through the Google API
+    - check: contamination_risk medium. The objects come from DeepCAD, which CAD generators are
+        trained on, and which DeepCAD split the 200 were drawn from is not stated; if they are
+        DeepCAD training objects, any model trained on DeepCAD-derived data (as the CAD-specific
+        systems in IterCAD's table may be) has seen the targets, which would make it high.
+      field: data.contamination_risk
+      source: src-arxiv-2410-05340-v2
+      quote: we first selected 200 3D objects from a collection of modular CAD objects from previous
+        work
+    - check: dataset_licence null. The repository has no licence, so reuse terms are unstated, and
+        DeepCAD's terms for the inherited meshes and command sequences were not read.
+      field: data.dataset_licence
+    - check: The prompts are a known source of variance the paper itself names (descriptions can be
+        geometric or functional), and only one prompt per object is scored; prompt_template_hash is
+        material for that reason.
+      field: comparability
+      source: src-arxiv-2410-05340-v2
+      quote: The quality of generated objects and the likelihood of successful code compilation are
+        influenced by the user
