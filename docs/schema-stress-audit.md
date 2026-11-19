@@ -50,7 +50,8 @@ Chars are before and after; "removed" means the key is gone because everything i
 | matbench-discovery | subsets[1].notes | 98 | the default view; items from data.size | prose | kept |
 | matbench-discovery | subsets[2].notes | 80 | a separate leaderboard view, not comparable | prose | kept |
 | matbench-discovery | subsets[3].notes | 88 | a third view in the 2026-06 capture | prose | kept |
-| matbench-discovery | subsets[6].notes | 160 | unranked in the archived copy, ranked today | prose | kept |
+| matbench-discovery | subsets[6].notes | 160 → 154 | unranked in the archived copy, ranked by CDS at a pinned commit (P3-S6-T01) | prose | kept; evidence (1) |
+| matbench-discovery | subsets[7].notes | 194 | the MD task's 17 systems, its energy and force labels withheld (added by P3-S6-T01) | prose | kept; evidence (2) |
 | arc-agi-3 | curation.notes | 1,689, removed | three reviewer checks; five schema findings | structural | review_checks (3); ledger (5) |
 | arc-agi-3 | subsets[0].notes | 47 | the Verified board's set | prose | kept |
 | arc-agi-3 | subsets[1].notes | 211 → 151 | the public set, and the maintainers' quoted rule on reporting it | quote structural | evidence (1, verified); prose kept |
