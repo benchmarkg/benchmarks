@@ -59,9 +59,11 @@ The manifest is 08 S6.1's block, with these decisions:
                   per version, 08 S7.5). The five counts must sum to total, and S13 asserts it (08 S6.1)
   routes          S13's: HTML pages by route family, 08 S7.5's table, summing to files.html
 
-Not here, each because nothing builds it yet: layout_epoch, layout_method, atlas_reproducibility and basis_version
-(no S7 stage writes atlas.json), quality (no S4 stage computes the completeness means), and the S9 release hashes
-(index.sqlite, P4-S7-T01).
+atlas.json, which `bench build --atlas` writes (P2-S5-T01), is hashed and named like the other shipped artifacts;
+its envelope carries layout_method, layout_epoch and basis_version.
+
+Not here, each because nothing builds it yet: atlas_reproducibility, quality (no S4 stage computes the completeness
+means), and the S9 release hashes (index.sqlite, P4-S7-T01).
 
 CHECKS, run by S13 before anything is published, and by --check:
 

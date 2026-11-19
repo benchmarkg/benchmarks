@@ -239,7 +239,9 @@ def build_cmd(
     if atlas:
         from tools.atlas import emit as atlas_emit
         try:
-            typer.echo('wrote %s' % atlas_emit.write(atlas_emit.build(result.corpus, ROOT), str(out)))
+            written = atlas_emit.write(atlas_emit.build(result.corpus, ROOT), str(out))
+            typer.echo('wrote %s' % written)
+            shipped.append(written)                              # hashed and named in the manifest with the rest
         except atlas_emit.AtlasError as e:
             typer.echo('error  %s' % e, err=True)
             raise typer.Exit(1)
