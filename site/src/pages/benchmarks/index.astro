@@ -1,0 +1,140 @@
+---
+// site/src/pages/benchmarks/index.astro -- P2-S4-T04 (10 V11, "Information architecture": /benchmarks/ is "V11 faceted
+// browse"; 09 S10; 12 S5.3). The browse view: a facet rail beside a result list, the counts live
+// (islands/FacetPanel.tsx; lib/browse-view.ts holds the rules).
+//
+// What the page gives the island, all of it fixed at build time:
+//   facetsHref   facets.json's content-hashed URL, from lib/manifest.ts dataHref(), the only way a page names a /data/
+//                file (08 S4.4; S13 fails a build whose HTML references any other). Null when the build wrote no
+//                manifest, and the view then says it cannot combine terms rather than fetching a file it does not have
+//   groups       the rail's vocabularies, from taxonomy/ itself (lib/terms.ts), each term with its definition for the
+//                hover and its /taxonomy/ and /browse/ segments
+//   families     each domain family's reviewer sign-off (lib/vocab.ts signoff()), which the curation-confidence
+//                indicator at the top of the rail reads for whatever domain is filtered
+//   published    how many benchmarks the build published, which the page states before facets.json arrives
+//
+// The island is server-rendered, so the page as sent is the rail with every term linking its single-facet page
+// (/browse/{facet}/{term}/): with JavaScript off it is a route into the catalogue, and combining terms is what
+// JavaScript adds (10 V11, "Without JavaScript"). The phone layout, the rail as a "Filters (N)" sheet, is P2-S4-T05's;
+// below --bp-md the rail and the list stack.
+import Base from '../../layouts/Base.astro';
+import FacetPanel from '../../islands/FacetPanel.tsx';
+import { benchmarks } from '../../lib/collections';
+import { railGroups, type Family } from '../../lib/browse-view';
+import { dataHref } from '../../lib/manifest';
+import { allTerms } from '../../lib/terms';
+import { signoff } from '../../lib/vocab';
+
+const groups = railGroups(allTerms());
+const families: Family[] = groups.find((g) => g.key === 'd')!.terms.filter((t) => t.parent == null)
+  .map((t) => ({ id: t.id, label: t.label, signoff: signoff(t.id) }));
+const published = (await benchmarks()).length;
+const facetsHref = dataHref('facets.json');
+---
+<Base title="Browse benchmarks · Benchmark index">
+  <main class="browse">
+    <header>
+      <h1>Browse benchmarks</h1>
+      <p class="lede">Combine terms from any facet to narrow the list. Within a facet, terms widen it; across facets, they narrow it. A term with no benchmark stays in the panel, disabled, because where nothing is measured is part of the answer.</p>
+    </header>
+    <FacetPanel client:load facetsHref={facetsHref} groups={groups} families={families} published={published} />
+  </main>
+</Base>
+
+<style>
+  .browse {
+    max-inline-size: 90rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  .lede { max-inline-size: 68ch; margin: 0 0 var(--sp-6); color: var(--c-ink-muted); }
+
+  /* the island renders without this page's scope, so its markup is styled from here */
+  .browse :global(.facet-panel) { display: grid; gap: var(--sp-6); }
+  /* 09 S5.3: the rail beside the list from --bp-md (51rem; a custom property cannot sit in a media query) */
+  @media (min-width: 51rem) {
+    .browse :global(.facet-panel) { grid-template-columns: 20rem minmax(0, 1fr); align-items: start; }
+  }
+  /* 09 S8.2: a second skip link, past the filter rail; off screen until focused, and out of the grid either way */
+  .browse :global(.facet-panel) { position: relative; }
+  .browse :global(.skip) { position: absolute; z-index: 3; inset-block-start: 0; inset-inline-start: -100vw; padding: var(--sp-1) var(--sp-2); background: var(--c-bg); }
+  .browse :global(.skip:focus) { inset-inline-start: 0; }
+  .browse :global(h2) { margin: 0 0 var(--sp-3); font-size: var(--fs-lg); }
+  .browse :global(.n), .browse :global(.count) { color: var(--c-ink-muted); font-weight: 400; font-variant-numeric: tabular-nums slashed-zero; }
+  .browse :global(.n) { font-size: var(--fs-xs); }
+
+  .browse :global(.confidence) { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border: 1px solid var(--c-caution); background: var(--c-caution-bg); font-size: var(--fs-sm); }
+  .browse :global(.confidence[data-curation-confidence='reviewed']) { border-color: var(--c-border); background: var(--c-bg); }
+
+  .browse :global(.group) { border-block-start: 1px solid var(--c-border); padding-block: var(--sp-2); }
+  .browse :global(.group > summary) { cursor: pointer; font-weight: 600; min-block-size: 1.5rem; }
+  .browse :global(.terms) { list-style: none; margin: var(--sp-1) 0 0; padding: 0; }
+  .browse :global(.terms .terms) { padding-inline-start: var(--sp-6); }
+  .browse :global(.subdomains > summary) { cursor: pointer; padding-inline-start: var(--sp-6); font-size: var(--fs-xs); color: var(--c-ink-muted); }
+  .browse :global(.row) { position: relative; display: flex; align-items: center; gap: var(--sp-2); min-block-size: 1.5rem; font-size: var(--fs-sm); }
+  .browse :global(.row label) { cursor: pointer; }
+  .browse :global(.row input:disabled + label) { cursor: default; color: var(--c-ink-faint); }
+
+  /* The definition on hover and on keyboard focus (10 V11). It opens beside the rail, over the list, so it never covers
+     another term; it stays while the pointer is on it, and Escape hides it until the pointer or focus moves (SC 1.4.13).
+     Hover waits a moment, so a pointer passing down the rail does not flash every definition; a mouse click leaves no
+     definition open, because only :focus-visible opens one from focus. The rail does not scroll on its own, which would
+     clip it. Touch has no hover: the phone layout is P2-S4-T05's. */
+  .browse :global(.gloss) {
+    visibility: hidden;
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 0;
+    inset-inline-start: 100%;
+    inline-size: 22rem;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-border-strong);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-dense);
+  }
+  .browse :global(.gloss p) { margin: 0 0 var(--sp-1); }
+  @media (hover: hover) {
+    .browse :global(.row:hover > .gloss) { visibility: visible; transition: visibility 0s linear 0.3s; }
+  }
+  .browse :global(.row:has(:focus-visible) > .gloss) { visibility: visible; }
+  .browse :global(.rail[data-hush] .gloss) { visibility: hidden; }
+  /* stacked below --bp-md: under the row, inside the page */
+  @media (max-width: 50.99rem) {
+    .browse :global(.gloss) { inset-block-start: 100%; inset-inline: 0; inline-size: auto; }
+  }
+
+  .browse :global(.applied) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-block-end: var(--sp-3); }
+  .browse :global(.chips) { display: flex; flex-wrap: wrap; gap: var(--sp-2); list-style: none; margin: 0; padding: 0; }
+  /* 09 S6.2: an applied filter is a filled ground AND a × affordance; 24px tall, 28px at coarse pointers; a 3px radius */
+  .browse :global(.chip), .browse :global(.clear), .browse :global(.drop) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    min-block-size: 1.5rem;
+    padding-inline: var(--sp-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: inherit;
+    font-size: var(--fs-xs);
+    line-height: var(--lh-dense);
+    cursor: pointer;
+  }
+  .browse :global(.chip[data-state='filter-active']) { background: var(--c-select-bg); border-color: var(--c-link); }
+  .browse :global(.chip .group) { color: var(--c-ink-muted); }
+  .browse :global(.chip .remove) { font-weight: 700; }
+  @media (pointer: coarse) {
+    .browse :global(.chip), .browse :global(.clear), .browse :global(.drop), .browse :global(.row) { min-block-size: 1.75rem; }
+  }
+  .browse :global(.none) { margin: 0; color: var(--c-ink-muted); font-size: var(--fs-sm); }
+  .browse :global(.notice) { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border: 1px solid var(--c-caution); background: var(--c-caution-bg); font-size: var(--fs-sm); }
+  .browse :global(.notice p), .browse :global(.notice ul) { margin: 0; }
+
+  .browse :global(.results) { display: grid; gap: var(--sp-2); margin: 0; padding-inline-start: var(--sp-6); }
+  .browse :global(.results .meta) { font-size: var(--fs-xs); color: var(--c-ink-muted); font-variant-numeric: tabular-nums slashed-zero; }
+  .browse :global(.empty) { max-inline-size: 68ch; }
+</style>
