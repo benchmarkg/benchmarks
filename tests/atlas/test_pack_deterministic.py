@@ -367,5 +367,10 @@ def test_bench_build_atlas_writes_it_and_twice_writes_the_same_bytes(tmp_path, m
     atlas = json.loads(outs[0])
     assert [n['id'] for n in atlas['nodes']] == ['alpha-bench'] and 'drafts' not in atlas
     assert outs[0] == serialise(emit.build(artifacts.build(MINIMAL).corpus, MINIMAL))
+    manifest = json.loads((tmp_path / 'one' / 'build-manifest.json').read_text(encoding='utf-8'))
+    assert 'atlas.json' in manifest['artifacts']                 # hashed and named with the other shipped artifacts
+    assert any(n.startswith('atlas.') for n in os.listdir(tmp_path / 'one' / 'data'))
     res = runner.invoke(cli.app, ['build', '--out', str(tmp_path / 'plain')])
     assert res.exit_code == 0 and not (tmp_path / 'plain' / 'atlas.json').exists()
+    plain = json.loads((tmp_path / 'plain' / 'build-manifest.json').read_text(encoding='utf-8'))
+    assert 'atlas.json' not in plain['artifacts']

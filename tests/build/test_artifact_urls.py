@@ -534,7 +534,8 @@ def test_the_verifys_bench_build_wrote_a_manifest_naming_every_artifact_beside_i
     if not os.path.exists(os.path.join(out, M.MANIFEST)):
         pytest.skip('no build/build-manifest.json: run `uv run bench build --out build/` first, as the verify does')
     m = read_json(os.path.join(out, M.MANIFEST))
-    assert sorted(m['paths']) == sorted(emit.ARTIFACTS)
+    optional = {'atlas.json'} & set(m['paths'])                     # present when the build ran with --atlas
+    assert sorted(set(m['paths']) - optional) == sorted(emit.ARTIFACTS)
     for name, url in m['paths'].items():
         with open(os.path.join(out, name), 'rb') as a, open(os.path.join(out, *url.lstrip('/').split('/')), 'rb') as b:
             raw = a.read()
