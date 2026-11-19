@@ -19,7 +19,7 @@ P2-S6-T04, whose issue-intake bot runs `--single --tier schema,ref,semantic`), `
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
 build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, and coverage-states.json,
 P1-S12-T08's; --atlas writes build/atlas.json, P2-S5-T01's (tools/atlas/); --embed arrives
-with its stage), `migrate`
+with its stage; build/index.sqlite, the normalised corpus that never ships, is P2-S1-T06's, tools/build/sqlite.py), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
 `ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
 P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on; `staleness`, the
@@ -203,8 +203,9 @@ def build_cmd(
     derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
     atlas: Annotated[bool, typer.Option('--atlas', help='Also write build/atlas.json, the deterministic pack layout (08 S5.3, 10 V1).')] = False,
 ):
-    """Emit the shipped JSON artifacts (08 S4.2), their content-hashed copies and build-manifest.json (08 S4.4, S6.1) and
-    the croissant-benchmark JSON-LD (08 S5.8), drafts excluded, and regenerate the design tokens (09 S13)."""
+    """Emit the shipped JSON artifacts (08 S4.2), their content-hashed copies and build-manifest.json (08 S4.4, S6.1),
+    the croissant-benchmark JSON-LD (08 S5.8) and index.sqlite (08 S4.2), drafts excluded, and regenerate the design
+    tokens (09 S13)."""
     from tools.build import artifacts, site_taxonomy, tokens
     result = artifacts.build(ROOT)
     for e in result.errors:
@@ -230,6 +231,18 @@ def build_cmd(
                'mlcroissant %s, %d recommended-property notice(s))'
                % (out / croissant.DIR, summary['written'], summary['withheld'], summary['mlcroissant'],
                   summary['notices']))
+    # ---- index.sqlite (P2-S1-T06) -----------------------------------------------------------------------------------
+    # 08 S4.2: the whole corpus, normalised, for build-time analytics and the release archive. It sits beside the
+    # artifacts it is built from and is never shipped: not under data/, not in the manifest's paths, and nothing
+    # copies --out into the site (tools/build/sqlite.py)
+    from tools.build import sqlite
+    try:
+        typer.echo('wrote %s' % sqlite.write({'corpus.json': result.corpus, 'facets.json': result.facets,
+                                              'enums.json': result.enums}, str(out / sqlite.NAME)))
+    except sqlite.SqliteError as e:
+        typer.echo('error  %s' % e, err=True)
+        raise typer.Exit(1)
+    # ---- end index.sqlite -------------------------------------------------------------------------------------------
     # SUCCESSION.md item 5: the date of the last human commit to data/, which the site's banner reads (P0-S7-T04)
     from tools import dormancy
     typer.echo('wrote %s' % dormancy.write(dormancy.state(dormancy.last_human_commit(ROOT), _dt.date.today()),
