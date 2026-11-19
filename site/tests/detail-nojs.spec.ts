@@ -172,9 +172,11 @@ test('claims are counted from the adoption artifact, and the page says their tab
   }
 });
 
-test('a metric recorded as notes renders its notes with their sources (CASP)', async ({ page }) => {
+test("casp's metrics render from their Metric records, one block each (P3-S6-T03)", async ({ page }) => {
+  // CASP's scoring moved from a notes dict to six Metric records; no entry records metrics as notes any more
   await page.goto('/benchmarks/casp/');
-  const notes = page.locator('[data-section="6"] [data-metric-note]');
-  expect(await notes.count()).toBeGreaterThan(0);
-  await expect(notes.first().locator('.ref')).toBeVisible();
+  for (const id of ['gdt-ts', 'lddt', 'tm-score', 'dockq', 'ics', 'ips']) {
+    await expect(page.locator(`[data-section="6"] [data-metric="${id}"]`), id).toHaveCount(1);
+  }
+  await expect(page.locator('[data-section="6"] [data-metric-note]')).toHaveCount(0);
 });

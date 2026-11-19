@@ -19,6 +19,15 @@
 #      table. The separate category is the server one.
 #   3. "maintenance_status: unobservable ... has no signal our probes can read." CASP has a
 #      dated target list, a dated message board and a dated download area.
+#
+# P3-S6-T03 (2026-11-18) gave the entry its per-category metrics and the human-expert split. The descriptive
+# `metrics` dict became refs to seven Metric records (data/metrics/: gdt-ts, lddt, tm-score, dockq, ics, ips and
+# kendall-tau), with its quotes moved to one Subset per category; the editions became BenchmarkVersions of kind
+# edition; human_assistance and selection_strategy became material; and the per-category ceilings the assessment
+# papers state became Baselines. Read for it: the CASP16 complex and monomer assessments again, as Europe PMC full
+# text (src-casp16-complex-2026-11-18, src-casp16-monomer-2026-11-18), and the Prediction Center's results-table
+# help page (src-predictioncenter-casp16-help). The Metric records also cite the DockQ and lDDT papers and the
+# TM-score program's page, which this entry does not quote.
 
 id: casp
 name: CASP
@@ -171,6 +180,13 @@ data:
       During an edition the closest term is `private-test-server`, and even that is loose:
       the structures are often not yet solved, let alone held by the maintainer.
   refresh: periodic-recompetition
+  refresh_basis:
+    reason: A new edition every two years, each with a fresh set of targets whose structures are not
+      yet public (versions).
+    source: src-casp17-home
+    quote: Every two years, participants are invited to submit models for a set of macromolecules
+      and their complexes (proteins, RNA, ligands) for which the experimental structures are not yet
+      public.
   data_provenance:
     - experimental-measurement
   data_provenance_note: X-ray, cryo-EM and NMR structures, contributed by experimental groups before
@@ -200,6 +216,20 @@ data:
       metric: Kendall's tau
       source: src-casp16-ligand
       quote: well below the theoretical maximum possible given experimental uncertainty (~0.73)
+  size:
+    - count: 101
+      unit: experimental targets assessed
+      subset: CASP16
+      source: src-casp16-overview
+      quote: Results were assessed for a total of 101 experimental targets provided by 56 groups
+        from 15 countries.
+    - count: 300
+      unit: targets released, in five prediction categories
+      subset: CASP16
+      note: Released and assessed are different counts. The home page's 300 are its 100+ modelling
+        entities split into evaluation units, phases and ligand poses. Recorded, not reconciled.
+      source: src-casp16-home
+      quote: yielding 300 targets in five prediction categories
 
 # --- Governance -------------------------------------------------------------------------------
 
@@ -256,55 +286,223 @@ execution:
     source: src-casp17-home
     quote: New in CASP17 - we will be accepting submissions only through the web form or server API.
 
+comparability:
+  # P3-S6-T03. The facets resolve, through (expert-panel-assessment, domain-specialist-model), to the wet-lab profile:
+  # assay_protocol, eligibility_track and subset_used. Two fields are added here rather than in
+  # taxonomy/comparability-profiles.yaml, whose profiles are shared by every benchmark that resolves to them:
+  #   human_assistance -- servers and human-led expert groups are separate entrant classes, the server table ranks
+  #     servers alone, and the monomer assessment finds that human intervention improves models. A server's claim
+  #     records `none` and an expert group's `permitted` (CASP lets expert groups intervene and does not require it),
+  #     so the two never share a comparability key; tests/test_casp_metrics.py checks it.
+  #   selection_strategy -- the Prediction Center and the assessors rank both the model each group designates 1 and
+  #     its best model (src-casp16-zscores, src-casp16-complex-2026-11-18), two different numbers for one group.
+  # subset_used already comes from the profile, and the server table also counts server-only targets
+  # (casp#server-only-targets), so the two tables differ in subset as well.
+  material_extra:
+    - human_assistance
+    - selection_strategy
+
 liveness:
   last_checked: 2026-11-17
 
 homepage: https://predictioncenter.org/
 maintainer_url: https://predictioncenter.org/casp17/index.cgi
 
+# --- Editions, categories, metrics and baselines (P3-S6-T03) ------------------------------------
+
+versions:
+  # Editions, not revisions (04 S6): each round is a new set of unreleased targets with a partly new category list
+  # and its own assessors, so a CASP16 number and a CASP17 number are never on one test set, even within one
+  # category. Earlier rounds are not modelled: no source read here covers them.
+  - version: casp16
+    label: CASP16 (2024)
+    version_kind: edition
+    changes: Targets released in 2024 in protein domain, multimer, RNA/DNA, accuracy-estimation,
+      ligand and ensemble categories; multimers in three phases (without the stoichiometry, with it,
+      and with a pool of MassiveFold models) and a Model 6 restricted to ColabFold's alignments.
+      Assessed in the Proteins special issue, volume 94 issue 1, January 2026.
+    breaking: true
+    superseded_by: casp17
+    frozen: true
+    sources:
+      - src-casp16-home
+      - src-casp16-targets
+      - src-casp16-numbers
+      - src-casp16-overview
+      - src-casp16-download
+  - version: casp17
+    label: CASP17 (2026)
+    version_kind: edition
+    changes: Targets released from May to August 2026; immune complexes a category of their own;
+      submissions through the web form or the server API only. The prediction season is over and the
+      assessment in progress, with results due on 2026-11-30 and the conference in Rome on 1-5
+      December 2026.
+    breaking: true
+    supersedes_version: casp16
+    frozen: false
+    sources:
+      - src-casp17-home
+      - src-casp17-targets
+      - src-casp17-numbers-2026-11-18
+      - src-predictioncenter-news-2026-11-18
+
+subsets:
+  # One per category, carrying the quotes that say how the category is scored. A subset holds across editions; a
+  # category that exists in one edition only says so in the comment above it (comments, not `notes`: a stress entry
+  # holds no notes string the escape-hatch audit has not catalogued). metric_override names the category's ranking
+  # metric where one Metric record is it.
+  # Scored per evaluation unit, a domain or a group of domains. Two official rankings exist and can disagree: the
+  # Prediction Center's table ranks on GDT_TS z-scores, and the assessors on a weighted sum of z-scores over nine
+  # measures (GDT_HA, QSE, reLLG_const, SphGr, CAD_AA, GDC_SC, AL0_P, lDDT and the MolProbity score), of which only
+  # lDDT has a Metric record. metric_override names the first.
+  - id: casp#protein-domains
+    label: Single proteins and domains (tertiary structure)
+    metric_override: gdt-ts
+    evidence:
+      - source: src-casp16-home
+        quote: 'Rankings: Protein Domains'
+      - source: src-casp16-zscores
+        quote: The ranking of groups is based on the analysis of zscores for GDT_TS .
+      - source: src-casp16-monomer
+        quote: 'nine representative measures were selected: GDT_HA, QSE, reLLG_const, SphGr, CAD_AA, GDC_SC,
+          AL0_P'
+  # The assessors rank groups on cumulative z-scores of an equal-weight average over six measures, five of which have
+  # Metric records (ics, ips, dockq, tm-score, lddt; QSbest has none), so no single metric_override. CASP16 ran the
+  # category in three phases (no stoichiometry given, stoichiometry given, and a pool of MassiveFold models given) and
+  # took the ranking over all three as the main one.
+  - id: casp#protein-multimers
+    label: Protein complexes (multimers)
+    evidence:
+      - source: src-casp16-home
+        quote: 'Rankings: Protein multimers'
+      - source: src-casp16-complex-2026-11-18
+        quote: we included ICS, IPS, DockQ, and QSbest to assess interface accuracy, and TM‐score
+          and lDDT to evaluate global fold and local geometry
+      - source: src-casp16-complex-2026-11-18
+        quote: We weighted the z‐score for each metric equally to obtain an average z‐score for each
+          model.
+      - source: src-casp16-complex-2026-11-18
+        quote: we consider the ranking over all phases as the main CASP16 ranking
+  # A category of its own from CASP17. In CASP16 the eight antibody- and nanobody-antigen targets sat in the multimer
+  # category and were scored on their antibody-antigen interfaces only, without TM-score and lDDT.
+  - id: casp#immune-complexes
+    label: Immune complexes (antibody-antigen, nanobody-antigen and T-cell receptor)
+    evidence:
+      - source: src-casp17-home
+        quote: we are introducing immune complexes as a specific category in CASP17
+      - source: src-casp16-complex-2026-11-18
+        quote: we only used ICS, IPS, DockQ, and QSbest for AA targets to focus on antibody–antigen
+          interface quality
+  # The CASP16 overview reports the category's backbone agreement in GDT_TS; the rna-puzzles entry records the
+  # RNA-Puzzles assessment of the same round's RNA-only targets. No metric_override: the sources read name no
+  # single ranking score for the category.
+  - id: casp#nucleic-acids
+    label: RNA and DNA structures, monomers and multimers
+    evidence:
+      - source: src-casp16-home
+        quote: 'Rankings: RNA/DNA monomers Rankings: RNA/DNA multimers'
+      - source: src-casp16-overview
+        quote: across all RNA monomers for selected groups in the most recent two CASP experiments,
+          using the GDT_TS metric (max 100)
+  # Scores predicted accuracy rather than structures; none of the seven Metric records applies.
+  - id: casp#accuracy-estimation
+    label: Estimation of model accuracy (EMA)
+    evidence:
+      - source: src-casp16-home
+        quote: 'Rankings: EMA (accuracy)'
+  # Poses are scored by LDDT-PLI, which has no Metric record yet; affinities are a subset of their own.
+  - id: casp#ligands
+    label: Protein-organic ligand complexes (pharmaceutical targets, pose and affinity)
+    evidence:
+      - source: src-casp16-home
+        quote: 'Rankings: Ligands'
+      - source: src-casp16-ligand
+        quote: mean LDDT‐PLI values of 0.69 (scale of 0–1 with 1 best)
+  - id: casp#ligand-affinity
+    label: Ligand affinity ranking
+    parent: casp#ligands
+    metric_override: kendall-tau
+    evidence:
+      - source: src-casp16-ligand
+        quote: The CASP affinity predictions showed modest correlation with experimental data
+          (maximum Kendall's τ = 0.42)
+  # A tab of its own on the CASP16 target list; its assessment was not read.
+  - id: casp#ensembles
+    label: Macromolecular ensembles
+    evidence:
+      - source: src-casp16-targets
+        quote: Mono/Homo -mers Multimers RNA Ligand Ensemble
+  # Targets released to servers only. The Prediction Center's server table ranks servers on the all-groups targets and
+  # these together, and its all-groups table on the all-groups targets alone, so a server's result and an expert
+  # group's can differ in subset_used as well as in human_assistance.
+  - id: casp#server-only-targets
+    label: Server-only targets
+    scored_separately: false
+    evidence:
+      - source: src-casp16-zscores
+        quote: Server groups on 'all groups' + 'server only' targets
+      - source: src-casp17-targets
+        quote: Target type 'h' is for human targets, 's' for server-only targets.
+
 metrics:
-  # Each is a separate Metric ref in 04; which one ranks depends on the category AND the
-  # edition's assessors, who may add their own.
-  assessor_discretion:
-    source: src-casp17-home
-    quote: Assessment criteria will be based on those previously developed in CASP, but assessors
-      may add new metrics they consider appropriate.
-  prediction_center_ranking:
-    metric: GDT_TS z-score (monomers)
-    source: src-casp16-zscores
-    quote: The ranking of groups is based on the analysis of zscores for GDT_TS .
-  assessor_ranking_monomers:
-    metric: weighted sum of z-scores over nine measures
-    measures:
-      - GDT_HA
-      - QSE
-      - reLLG_const
-      - SphGr
-      - CAD_AA
-      - GDC_SC
-      - AL0_P
-      - lDDT
-      - MolProbity
-    source: src-casp16-monomer
-    quote: 'nine representative measures were selected: GDT_HA, QSE, reLLG_const, SphGr, CAD_AA, GDC_SC,
-      AL0_P'
-    note: >
-      Not the same formula as the Prediction Center table above, which ranks on GDT_TS
-      alone. Two official rankings of one category exist and can disagree.
-  complexes:
-    - DockQ
-    - ICS
-  complexes_source: src-casp16-complex
-  complexes_quote: Target Stoichiometry Taxonomy Technique DockQ95 ICS95 Category
-  ligands:
-    - LDDT-PLI
-    - Kendall's tau (affinity)
-  ligands_source: src-casp16-ligand
-  ligands_quote: AlphaFold 3 did particularly well, with a mean LDDT‐PLI of 0.8, thus outscoring the
-    best CASP16 predictor.
-  review_note: >
-    Whether GDT_TS, lDDT and DockQ are the right headline metrics per category is a
-    structural-biology judgement. The task marks it for a human.
+  # Metric records (data/metrics/). Which one ranks depends on the category and on the edition's assessors, who may
+  # add their own; each category's subset says which it uses. QSbest, LDDT-PLI and the monomer assessors' other
+  # measures have no record yet.
+  - gdt-ts
+  - lddt
+  - tm-score
+  - dockq
+  - ics
+  - ips
+  - kendall-tau
+
+baselines:
+  # Per category, as the assessment papers give them. For structures the papers put the ceiling at the experiment's
+  # own uncertainty, and state it for monomers without a number; the affinity ceiling is the one with a number. The
+  # assessors' ColabFold and AlphaFold 3 server references are registered groups, not anchors, and are not stored
+  # here (review_checks).
+  # The overview reads the top of the monomer distribution as the limit of the experiments themselves and gives it no
+  # number, so headroom against it is null rather than computed against 100.
+  - id: base-casp16-protein-domains-noise-ceiling
+    benchmark_version: casp@casp16
+    kind: noise-ceiling
+    metric: gdt-ts
+    value_absent_reason: not-yet-measured
+    is_primary: true
+    subset: casp#protein-domains
+    source: src-casp16-overview
+    evidence:
+      - source: src-casp16-overview
+        quote: for most proteins, agreement is likely as high as can be obtained given experimental
+          uncertainty.
+      - source: src-casp16-overview
+        quote: For most targets additional improvement is likely limited by experiment accuracy.
+  # The top of the scale, listed as the alternative anchor; the overview's reading is that experimental accuracy, not
+  # this bound, limits the best models.
+  - id: base-casp16-protein-domains-gdt-ts-maximum
+    benchmark_version: casp@casp16
+    kind: theoretical-maximum
+    metric: gdt-ts
+    value: 100
+    subset: casp#protein-domains
+    source: src-casp16-overview
+    evidence:
+      - source: src-casp16-overview
+        quote: using the GDT_TS metric (max 100)
+  # Approximate: the paper writes ~0.73 and calls it the theoretical maximum given experimental uncertainty, a ceiling
+  # set by the noise in the measured affinities rather than by the scale, which reaches 1. The best CASP16 affinity
+  # prediction reached 0.42.
+  - id: base-casp16-ligand-affinity-noise-ceiling
+    benchmark_version: casp@casp16
+    kind: noise-ceiling
+    metric: kendall-tau
+    value: 0.73
+    is_primary: true
+    subset: casp#ligand-affinity
+    source: src-casp16-ligand
+    evidence:
+      - source: src-casp16-ligand
+        quote: well below the theoretical maximum possible given experimental uncertainty (~0.73)
 
 tags:
   - assessment-in-progress
@@ -382,12 +580,18 @@ curation:
       url: https://predictioncenter.org/news.cgi
       kind: maintainer-page
       text_sha256: 11193e53878a0a6906dd3ba3fa875928fe051c2152438db55fc2d34dd6d2903e
+    - src-casp16-complex-2026-11-18
+    - src-casp16-monomer-2026-11-18
+    - src-predictioncenter-casp16-help
   sources_note: >
     Paper extracts are the Europe PMC full-text XML with tags stripped, NFC, whitespace
     collapsed. The XML keeps U+2010 hyphens and curly quotes, so a quote retyped with an
     ASCII hyphen will fail the substring check although it reads identically. The CASP17 numbers
     page and the Prediction Center's message board were read on 2026-11-18 for the 2026-11 sweep
     follow-ups; the message board is not archived, because its posts are signed by named organisers.
+    For P3-S6-T03 (2026-11-18) the complex and monomer assessments were read again, as second
+    Sources of the same articles, because the first records' windows hold none of the passages
+    that task cites; the Prediction Center's help page is pending its archive capture.
   review_checks:
     - check: "A Google DeepMind researcher sits on the scientific advisory board, and DeepMind's AlphaFold3
         server is an evaluated entrant. Why no flag: maintainer-competes-on-own-benchmark names the maintainer,
@@ -396,132 +600,143 @@ curation:
       field: governance
       source: src-casp17-home
       quote: John Jumper, Google Deepmind, London, UK
+    - check: human_assistance is material so that a server's result and an expert group's never
+        share a key, and the convention for claims (P3-S8-T01) is `none` for a server and
+        `permitted` for an expert group, since CASP lets expert groups intervene without requiring
+        it. rna-puzzles, scored on the same CASP16 RNA targets, makes human_in_loop material for the
+        same split instead; the two entries should use one field.
+      field: comparability.material_extra
+      source: src-casp16-monomer-2026-11-18
+      quote: predictors could invest more time and apply human intervention to improve prediction
+        quality
+    - check: The facets resolve to the wet-lab profile, whose assay_protocol means little for a
+        structure prediction. Waiving it, or giving blind structure prediction a profile of its own
+        in taxonomy/comparability-profiles.yaml, is a vocabulary decision left open here.
+      field: comparability
+    - check: The Prediction Center's z-scores are computed within a pool, all groups or servers
+        only, so one server's z-score in the server table and in the all-groups table are two
+        numbers. A z-score claim needs its pool, and EvalConditions has no field for it;
+        eligibility_track, material through the wet-lab profile, is the nearest.
+      field: entrant_classes
+      source: src-predictioncenter-casp16-help
+      quote: z-score showing relative quality of the model among the first models submitted on the
+        target by server groups (based on the GDT_TS score)
+    - check: The metric list is CASP16's. Assessors may add metrics in any edition, so the CASP17
+        papers may score categories on measures with no Metric record; re-read metrics and the
+        subsets' evidence against them.
+      field: metrics
+      source: src-casp17-home
+      quote: Assessment criteria will be based on those previously developed in CASP, but assessors
+        may add new metrics they consider appropriate.
+    - check: Which metric heads each category (gdt-ts for protein domains, kendall-tau for ligand
+        affinity, none for multimers, which the assessors rank on an equal-weight z-score over six
+        measures) is a structural-biology judgement.
+      field: subsets
+      specialist: true
+    - check: The complex and monomer assessments measure progress against ColabFold, which takes
+        part as a group, and against the AlphaFold 3 server's group. They are references, neither
+        floors nor ceilings, and Baseline.kind has no term for a learned reference system, so their
+        numbers (DockQ 0.47 on CASP16's ordinary complexes and 0.05 on its antibody-antigen targets;
+        GDT_HA 72.2 on monomers, a measure with no Metric record) are left to the claims
+        (P3-S8-T01). A kind for them would be a schema change.
+      field: baselines
+      source: src-casp16-complex-2026-11-18
+      quote: ColabFold—used as a consistent baseline—achieved an average DockQ of 0.21 in CASP15 but
+        dropped sharply to 0.05 in CASP16
+    - check: A Baseline's primary is chosen per edition and metric, not per subset, so two
+        categories scored on one metric (protein domains and RNA, both reported in GDT_TS) cannot
+        each have their own primary. Only the protein-domain GDT_TS anchors are recorded; a
+        per-subset primary would be a schema change (04 S7).
+      field: baselines
+    - check: Only CASP16 and CASP17 are versions. Earlier rounds are not modelled because no source
+        read here covers them, so a result from one of them cannot be attached to a version yet.
+      field: versions
   not_yet_available:
     - what: CASP17 assessment papers
       expected: after the CASP17 conference (2026-12-01 to 2026-12-05; results on the site from
         2026-11-30)
       consequence: Every assessment-derived field above is CASP16's.
 
-# --- Editions, not versions ------------------------------------------------------------------
-# A claim is about an edition. Editions are not versions of one dataset: each has a fresh
-# target set, a partly new category list, and its own assessors, so a CASP15 number and a
-# CASP16 number are not on the same test set even within one category.
+# --- Per-edition facts BenchmarkVersion has no field for --------------------------------------
+# P3-S6-T03 moved each edition's identity, kind, supersession, status and proceedings to versions[], its
+# categories to subsets[], its target counts to data.size and the biennial cadence to data.refresh_basis.
+# What stays is deferred because 04 S6's BenchmarkVersion has no field for it (docs/schema-field-needs.md,
+# group `editions`: per-edition participation and assessors are not in S6), keyed by version tag. CASP1's
+# year (first_edition) is in no source read here and was never filled.
 
 editions:
-  cadence:
-    value: biennial
-    source: src-casp17-home
-    quote: Every two years, participants are invited to submit models for a set of macromolecules
-      and their complexes (proteins, RNA, ligands) for which the experimental structures are not yet
-      public.
-  first_edition: null                 # CASP1's year is not in any source read here; not guessed
-  current: casp17
-  list:
-    - id: casp16
-      year: 2024
-      status: complete
-      targets_assessed:
-        value: 101
-        unit: experimental targets
-        source: src-casp16-overview
-        quote: Results were assessed for a total of 101 experimental targets provided by 56 groups
-          from 15 countries.
-      targets_released:
-        # Released and assessed are different counts, and 300 "targets" are 101 structures
-        # split into evaluation units, phases and ligand poses. Recorded, not reconciled.
-        value: 300
-        source: src-casp16-home
-        quote: yielding 300 targets in five prediction categories
-      participation:
-        sources_disagree: true        # four figures from the organisers for one round
-        values:
-          - claim: nearly 100 groups, more than 80,000 models
-            source: src-casp16-home
-            quote: nearly 100 research groups from around the world submitted more than 80,000
-              models on 100+ modeling entities yielding 300 targets in five prediction categories.
-          - claim: over 100 groups, more than 120,000 models, 150+ targets
-            source: src-casp17-home
-            quote: In the latest CASP round, CASP16 in 2024, over 100 research groups from around
-              the world submitted more than 120,000 models on 150+ targets in five broad prediction
-              categories.
-          - claim: 110 groups, 200 methods, over 128,000 submissions
-            source: src-casp16-overview
-            quote: A total of 110 research groups from 22 countries used a total of 200 methods to
-              address a range of computational structural biology areas. In all, over 128,000
-              submissions were received.
-          - claim: 210 registered groups, 162 expert and 48 servers
-            source: src-casp16-numbers
-            quote: 'Number of groups registered 210 including: expert groups 162 prediction servers 48'
-          - claim: 128,161 total submissions (last column of the all-categories row)
-            source: src-casp16-numbers
-            quote: 'All (unique): 200 / 48 29987 128161'
-        preferred: src-casp16-overview  # the peer-reviewed overview; the others are web copy
-      categories:
-        - single proteins and domains
-        - protein complexes
-        - accuracy estimation
-        - nucleic acid structures and complexes
-        - protein-organic ligand complexes
-        - macromolecular ensembles
-      categories_source: src-casp16-home
-      proceedings: Proteins special issue (CASP16), 2025-2026
-      site_error_noted:
-        source: src-casp16-home
-        quote: CASP16 results will be published in a special edition of Proteins in 2023.
-        note: A 2024 round cannot publish in 2023. Shown so nobody copies the date.
-    - id: casp17
-      year: 2026
-      status: assessment-in-progress
-      prediction_season:
-        sources_disagree: true        # the same page gives two end dates
-        values:
-          - value: 2026-09-11
-            source: src-casp17-home
-            quote: CASP17 prediction season is over as of September 11, 2026.
-          - value: 2026-08-19
-            source: src-casp17-home
-            quote: CASP17 prediction season is over as of Aug 19, 2026.
-      results_due:
-        value: 2026-11-30             # the day before the conference's first session (conference below)
-        source: src-casp17-home
-        quote: The assessment results will be available through this website one day before the
-          start of the CASP17 conference on November 30, 2026.
-        note: Read until 2026-11-18 as 2026-11-29, with the conference starting on November 30 and
-          the edition page's "December 2026" kept as a conflict. The message board fixes the
-          conference at 1-5 December, so "on November 30" dates the results, the eve of the first
-          session; the edition page's December line agrees.
-      conference:
-        place: Rome, Italy
-        start: 2026-12-01
-        end: 2026-12-05
-        source: src-predictioncenter-news-2026-11-18
-        quote: For the first time, the main CASP meeting will be held in a city center, and in Rome
-          no less, from December 1 to 5, 2026. Sessions will begin in the late afternoon on December
-          1 and conclude at the end of the day on December 4.
-        programme: The message board's post of 2026-11-11 says the programme comes out in the last
-          week of November.
-        programme_source: src-predictioncenter-news-2026-11-18
-        programme_quote: The program will be released in the last week of November.
-      participation:
-        value: 244
-        unit: groups with predictions (177 expert, 67 servers)
-        source: src-casp17-numbers-2026-11-18
-        quote: 'Number of groups with predictions 244 including: expert groups 177 prediction servers
-          67'
-        caveat: >
-          The page read on 2026-09-23 counted 245 groups (178 expert, 67 servers; src-casp17-numbers),
-          and some of its other rows (pharma ligand pose 233, affinity 140, stage 2 110) were identical
-          to CASP16's page and looked carried over. By 2026-11-18 the page had revised the count to
-          244 and dropped those rows. Only the group counts are used.
-      categories_new:
-        - immune complexes
-      categories_new_source: src-casp17-home
-      categories_new_quote: we are introducing immune complexes as a specific category in CASP17
-      server_only_targets: true       # new: some targets are released to servers only
-      server_only_source: src-casp17-targets
-      server_only_quote: Target type 'h' is for human targets, 's' for server-only targets.
-      assessors_named: true
-      assessors_source: src-casp17-home
+  casp16:
+    participation:
+      sources_disagree: true        # four figures from the organisers for one round
+      values:
+        - claim: nearly 100 groups, more than 80,000 models
+          source: src-casp16-home
+          quote: nearly 100 research groups from around the world submitted more than 80,000 models
+            on 100+ modeling entities yielding 300 targets in five prediction categories.
+        - claim: over 100 groups, more than 120,000 models, 150+ targets
+          source: src-casp17-home
+          quote: In the latest CASP round, CASP16 in 2024, over 100 research groups from around the
+            world submitted more than 120,000 models on 150+ targets in five broad prediction
+            categories.
+        - claim: 110 groups, 200 methods, over 128,000 submissions
+          source: src-casp16-overview
+          quote: A total of 110 research groups from 22 countries used a total of 200 methods to
+            address a range of computational structural biology areas. In all, over 128,000
+            submissions were received.
+        - claim: 210 registered groups, 162 expert and 48 servers
+          source: src-casp16-numbers
+          quote: 'Number of groups registered 210 including: expert groups 162 prediction servers 48'
+        - claim: 128,161 total submissions (last column of the all-categories row)
+          source: src-casp16-numbers
+          quote: 'All (unique): 200 / 48 29987 128161'
+      preferred: src-casp16-overview  # the peer-reviewed overview; the others are web copy
+    site_error_noted:
+      source: src-casp16-home
+      quote: CASP16 results will be published in a special edition of Proteins in 2023.
+      note: A 2024 round cannot publish in 2023. Shown so nobody copies the date.
+  casp17:
+    prediction_season:
+      sources_disagree: true        # the same page gives two end dates
+      values:
+        - value: 2026-09-11
+          source: src-casp17-home
+          quote: CASP17 prediction season is over as of September 11, 2026.
+        - value: 2026-08-19
+          source: src-casp17-home
+          quote: CASP17 prediction season is over as of Aug 19, 2026.
+    results_due:
+      value: 2026-11-30             # the day before the conference's first session (conference below)
+      source: src-casp17-home
+      quote: The assessment results will be available through this website one day before the start
+        of the CASP17 conference on November 30, 2026.
+      note: Read until 2026-11-18 as 2026-11-29, with the conference starting on November 30 and the
+        edition page's "December 2026" kept as a conflict. The message board fixes the conference at
+        1-5 December, so "on November 30" dates the results, the eve of the first session; the
+        edition page's December line agrees.
+    conference:
+      place: Rome, Italy
+      start: 2026-12-01
+      end: 2026-12-05
+      source: src-predictioncenter-news-2026-11-18
+      quote: For the first time, the main CASP meeting will be held in a city center, and in Rome no
+        less, from December 1 to 5, 2026. Sessions will begin in the late afternoon on December 1
+        and conclude at the end of the day on December 4.
+      programme: The message board's post of 2026-11-11 says the programme comes out in the last
+        week of November.
+      programme_source: src-predictioncenter-news-2026-11-18
+      programme_quote: The program will be released in the last week of November.
+    participation:
+      value: 244
+      unit: groups with predictions (177 expert, 67 servers)
+      source: src-casp17-numbers-2026-11-18
+      quote: 'Number of groups with predictions 244 including: expert groups 177 prediction servers 67'
+      caveat: >
+        The page read on 2026-09-23 counted 245 groups (178 expert, 67 servers; src-casp17-numbers),
+        and some of its other rows (pharma ligand pose 233, affinity 140, stage 2 110) were identical
+        to CASP16's page and looked carried over. By 2026-11-18 the page had revised the count to
+        244 and dropped those rows. Only the group counts are used.
+    assessors_named: true
+    assessors_source: src-casp17-home
 saturation_by_category:
   # Why a single lifecycle value for CASP is wrong. Evidence only; `saturated` is derived.
   - category: single-domain fold prediction
