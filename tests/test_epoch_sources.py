@@ -93,6 +93,7 @@ def test_a_long_url_is_cut_and_keeps_a_hash():
     assert len(sid) <= 64 and sid.startswith('src-example-org-') and len(sid.rsplit('-', 1)[1]) == 8
 
 
+@needs_epoch
 def test_a_re_pointed_record_keeps_its_id_and_is_held_by_its_old_link():
     # P5-S8-T02: Epoch's InternLM link is dead; the record now points at the same report on GitHub, and the
     # scaffold still recognises it by the link it was made from, so it neither re-scaffolds nor refuses

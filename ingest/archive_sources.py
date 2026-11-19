@@ -288,7 +288,7 @@ def run(sources, state, wayback, max_captures=500, max_attempts=5, in_flight=6,
                                       'archive_captured': captured_on(ts), 'archive_status': 'ok',
                                       'archive_digest': digest, 'failure_reason': None})
                     continue
-                stats['stale'] = stats.get('stale', 0) + 1
+                stats['stale'] = stats.get('stale', 0) + 1   # get-default: set only when a stale capture is met
                 log('stale   %s  %s lacks %d of the extract\'s windows' % (r['id'], ts, stale))
             if not wayback.can_capture or dry_run:
                 log('queued  %s  (%s)' % (r['id'], 'the capture CDX has is stale' if stale else
