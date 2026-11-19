@@ -1,0 +1,42 @@
+# data/metrics/roboarena-rating.yaml -- P3-S6-T05 (04 S6, S13's rating case; 12 S3.4). RoboArena's policy score:
+# pool-relative and unbounded, so no headroom exists. value_type elo is the vocabulary's one rating type; the fit is
+# Bradley-Terry with Davidson's tie extension, not an online Elo update. Flagged unbounded and requires_pool like
+# game-arena-elo, webdev-arena-score and textarena-trueskill; Metric.headroom_null_reason() reads `unbounded` first and
+# so answers unbounded-metric, where 12 S3.4 and P3-S9-T04 name relative-rating-only for RoboArena (a review check on
+# the entry). Without the flag the ingest gate (ingest/gates/numeric.py) refuses a metric with no range.
+id: roboarena-rating
+name: RoboArena score
+full_name: RoboArena Bradley-Terry-Davidson policy score
+definition: >
+  A score per policy from one Bradley-Terry fit with Davidson's extension for ties over every double-blind
+  A/B evaluation in the pool: in each, an evaluator ran two anonymised policies on the same task and scene
+  of their own choosing and recorded which they preferred, or a tie. The fit turns those preferences into
+  one score per policy, published with a standard deviation.
+value_type: elo
+range:
+  min: null
+  max: null
+unbounded: true
+optimum: max
+aggregation: One Bradley-Terry-Davidson fit over all A/B preferences in the pool; the official board
+  lists only the policies with 100 or more A/B evaluations, as a filter of the same rows
+units: rating points
+requires_pool: true
+headroom_computable: false
+domains:
+  - robotics-embodiment/manipulation
+pitfalls: >
+  Pool-relative: a policy's score moves when another policy joins or leaves, and the board changes weekly
+  (19 policies in the snapshot of 2026-06-10, 24 from 2026-08-24), so a score is read with its rating
+  pool and snapshot date and never compared across them. The all-policies board mixes provisional rows
+  with the official ones, and its top row can rest on a few dozen evaluations with a standard deviation
+  above 100. The board's policy strings are backend ids, and the site's display table relabels three of
+  them: the row whose backend id is Cosmos3-Nano-Policy is shown as balsomsoc, and the name Cosmos3-Nano-Policy
+  belongs to a different backend id, so join on the backend id. The paper extends Bradley-Terry with latent
+  task buckets fitted by EM because the task changes from one comparison to the next; the site names the
+  leaderboard's method Bradley-Terry Davidson and does not say whether the live fit keeps the buckets.
+  Removing one evaluator organisation and refitting moves the scores, which the maintainers publish themselves.
+sources:
+  - src-roboarena-site-bundle-2026-11-19
+  - src-roboarena-api-leaderboard-history-2026-11-19
+  - src-roboarena-arxiv-html
