@@ -27,7 +27,10 @@ instrument stands, and it corrects 13 S0.2 twice. This script follows it in both
       when its authors are known and none is a maintainer; a DataCite-only citation's authors come from an
       OpenAlex singleton lookup, which costs nothing. A 404 is `not-indexed`, never zero (instruments.md).
   (3) Issues labelled request:rerun, open and closed, pull requests left out. Unsolicited is a triage judgement,
-      read from the rulings by issue number; a labelled issue with no ruling is not counted.
+      recorded on the issue: the rerun-request form's answer to "Does this request answer a call for requests?"
+      (.github/ISSUE_TEMPLATE/rerun-request.yml, P8-S1-T03), which triage confirms or corrects when it applies
+      the label. A ruling by issue number overrules the form, and is the only judgement an issue opened some
+      other way can carry; a labelled issue with neither is not counted.
 
 "If a condition cannot be measured, it counts as failed" (13 S0.2). So a verdict is MET or FAILED, never unknown,
 and a failed request is a reason whenever it could change the verdict. A failure that could only have found more
@@ -44,12 +47,11 @@ YAML file the script reads and never writes. It names people, so it lives outsid
       - orcid:<0000-0000-0000-0000>
       - openalex:<A...>
       - s2:<Semantic Scholar authorId>
-    unsolicited: [12, 15]   # condition 3: the request:rerun issues triage ruled unsolicited
+    unsolicited: [12, 15]   # condition 3: the request:rerun issues triage ruled unsolicited, whatever the form says
     solicited: [13]         # ... and those it ruled were not
 
-Without it, condition 2 cannot rule out self-citation and condition 3 has no judgement: both fail as unmeasurable
-whenever there is something to judge. P8-S1-T03's rerun-request form is to carry an "unsolicited" field; it does
-not exist yet, so the judgement is read from the rulings only.
+Without it, condition 2 cannot rule out self-citation and condition 3 has only the forms' answers: both fail as
+unmeasurable whenever there is something left to judge.
 
 The network. Nothing is requested without --live. GitHub is read through its REST API, unauthenticated or with
 GH_TOKEN from the environment, never through `gh`, which reads its stored login. The collaborators list needs a
@@ -64,7 +66,8 @@ The raw output (13 S0.2: the file contains "the raw query output and the date it
 every request in order, its status and its response body. It is also what --replay reads and what the tests'
 fixtures are. By default it names no one: GitHub logins, author names, ORCIDs and author ids become aliases
 (`github-1`, `name-1`, `orcid-1`, ...), consistent across one run so the counts replay from it; e-mail addresses
-and @-mentions are removed; issue bodies, which no instrument reads, are dropped. The report gives counts, issue
+and @-mentions are removed; issue bodies are dropped, all but the rerun-request form's answer, which condition 3
+reads and which is kept as the bare word the form put before its colon. The report gives counts, issue
 numbers and citing DOIs, never people. --identify keeps the identities, for the person confirming the exclusions,
 and is refused with --write.
 
@@ -691,25 +694,55 @@ def condition_2(get, dois: list[str], rulings: Rulings) -> Result:
 
 # ---- condition (3): unsolicited rerun requests ------------------------------------------------------------------
 
+RERUN_FORM = '.github/ISSUE_TEMPLATE/rerun-request.yml'
+UNSOLICITED_FIELD = 'unsolicited'                # the dropdown's id in RERUN_FORM
+UNSOLICITED_HEADING = 'Does this request answer a call for requests?'     # its label, the body's `### ` heading
+ANSWERS = {'unsolicited': True, 'solicited': False}     # an option's word before its colon; "Not sure" has none
+
+
+def form_answer(body) -> bool | None:
+    """The rerun-request form's judgement in an issue body: True (unsolicited), False (solicited), or None when the
+    body has no such heading, the answer is blank (`_No response_`) or "Not sure", or it is not an option's text. A
+    submitted form is `### <label>`, a blank line, then the answer (tools/intake/parse_form.py); the first wins."""
+    if not isinstance(body, str):
+        return None
+    m = re.search(r'^###[ \t]+%s[ \t]*\n(.*?)(?=^###[ \t]|\Z)' % re.escape(UNSOLICITED_HEADING),
+                  body.replace('\r\n', '\n'), re.M | re.S)
+    if m is None:
+        return None
+    word, colon, _ = m.group(1).strip().partition(':')
+    return ANSWERS.get(word.strip().casefold()) if colon else None
+
+
 def condition_3(get, repo: str, rulings: Rulings) -> Result:
     items, raising = github_list(get, lambda p: issues_url(repo, RERUN_LABEL, 'all', p))
-    issues, shapeless = set(), 0
+    answers, shapeless = {}, 0                  # issue number -> the form's answer
     for it in items:
         if not isinstance(it, dict) or not isinstance(it.get('number'), int):
             shapeless += 1
         elif 'pull_request' not in it:
-            issues.add(it['number'])
+            answers[it['number']] = form_answer(it.get('body'))
     if shapeless:
         raising.append('%d listed item(s) with no issue number' % shapeless)
-    counted = sorted(issues & rulings.unsolicited)
-    solicited = sorted(issues & rulings.solicited)
-    unjudged = sorted(issues - rulings.unsolicited - rulings.solicited)
+    judged, by_form, overruled = {}, 0, []
+    for n, answer in answers.items():
+        ruled = True if n in rulings.unsolicited else False if n in rulings.solicited else None
+        if ruled is None:
+            judged[n] = answer
+            by_form += answer is not None
+        else:                                   # a person's ruling overrules what the form says
+            judged[n] = ruled
+            if answer is not None and answer != ruled:
+                overruled.append(n)
+    counted = sorted(n for n, v in judged.items() if v is True)
+    solicited = sorted(n for n, v in judged.items() if v is False)
+    unjudged = sorted(n for n, v in judged.items() if v is None)
     if unjudged:
-        raising.append('%d labelled request(s) carry no ruling on whether they were unsolicited: %s'
-                       % (len(unjudged), _refs(unjudged)))
-    detail = {'labelled': len(issues), 'unsolicited': len(counted), 'solicited': len(solicited),
-              'unjudged': len(unjudged),
-              'ruled_but_not_labelled': len((rulings.unsolicited | rulings.solicited) - issues)}
+        raising.append('%d labelled request(s) carry no judgement on whether they were unsolicited, on the form or '
+                       'in the rulings: %s' % (len(unjudged), _refs(unjudged)))
+    detail = {'labelled': len(answers), 'unsolicited': len(counted), 'solicited': len(solicited),
+              'unjudged': len(unjudged), 'by_form': by_form, 'overruled': sorted(overruled),
+              'ruled_but_not_labelled': len((rulings.unsolicited | rulings.solicited) - set(answers))}
     return Result(3, len(counted), detail, raising, [], ['#%d' % n for n in counted])
 
 
@@ -776,6 +809,20 @@ FREE_TEXT = ('body', 'title', 'display_name', 'message', 'raw_affiliation_string
 NOT_PEOPLE = ('Bot', 'Organization')            # GitHub account types that name no person
 
 
+def kept_body(body) -> str:
+    """An issue's body as the raw output keeps it: dropped, all but the rerun-request form's answer, which condition
+    3 reads, kept as the bare word the form puts before its colon and nothing the requester could have typed."""
+    answer = form_answer(body)
+    if answer is None:
+        return DROPPED
+    return '[dropped, all but the answer condition 3 reads]\n\n### %s\n\n%s:' % (
+        UNSOLICITED_HEADING, 'Unsolicited' if answer else 'Solicited')
+
+
+KEPT_BODIES = frozenset({DROPPED, kept_body('### %s\n\nUnsolicited:' % UNSOLICITED_HEADING),
+                         kept_body('### %s\n\nSolicited:' % UNSOLICITED_HEADING)})
+
+
 class Redactor:
     """Person identifiers out of a transcript, consistently: one alias per (kind, normalised value), so the counts
     replay from the redacted copy exactly as from the original."""
@@ -827,7 +874,7 @@ class Redactor:
             else:
                 out[k] = self._walk(v)
         if 'number' in node and 'user' in node and 'pull_request' not in node and 'body' in node:
-            out['body'] = DROPPED                   # an issue's body is its author's own words
+            out['body'] = kept_body(node['body'])   # an issue's body is its author's own words
         return out
 
     def _authorship(self, a):
@@ -850,7 +897,7 @@ class Redactor:
             return [self._scrub(v, key) for v in node]
         if isinstance(node, dict):
             return {k: self._scrub(v, k) for k, v in node.items()}
-        if not isinstance(node, str):
+        if not isinstance(node, str) or node in KEPT_BODIES:   # ours, naming no one: an alias must not reach it
             return node
         text = EMAIL.sub('[e-mail]', node)
         if key not in FREE_TEXT:
@@ -909,9 +956,10 @@ def _counted_line(r: Result) -> str:
         kinds = ', '.join('%d %s' % (n, k) for k, n in d['by_kind'].items()) or 'none'
         return ('- condition 2: %d citing work(s) outside our own DOIs: %s. Counted: %s.'
                 % (d['citing_works'], kinds, ', '.join('`%s`' % c for c in r.counted) or 'none'))
-    return ('- condition 3: %d issue(s) labelled `%s`; %d ruled unsolicited (%s), %d solicited, %d with no ruling.'
+    return ('- condition 3: %d issue(s) labelled `%s`; %d judged unsolicited (%s), %d solicited, %d with no '
+            'judgement. Judged by the form\'s answer alone: %d; the form overruled by the rulings: %s.'
             % (d['labelled'], RERUN_LABEL, d['unsolicited'], ', '.join(r.counted) or 'none', d['solicited'],
-               d['unjudged']))
+               d['unjudged'], d['by_form'], _refs(d['overruled']) or 'none'))
 
 
 def block(m: Measurement, identify: bool = False) -> str:
@@ -953,8 +1001,9 @@ def block(m: Measurement, identify: bool = False) -> str:
     lines += ['', '### Raw query output', '',
               'Every request in order, with its status and response body (13 §0.2). %s' % (
                   'Person identifiers are aliases (`github-1`, `name-1`, ...), consistent across this file; e-mail '
-                  'addresses and @-mentions are removed, and issue bodies, which no instrument reads, are dropped. '
-                  '`--validate` replays the counts above from it.' if t['redacted'] else
+                  'addresses and @-mentions are removed, and issue bodies are dropped, all but the rerun-request '
+                  'form\'s answer, which condition 3 reads. `--validate` replays the counts above from it.'
+                  if t['redacted'] else
                   '**Identities are not redacted (--identify): do not commit this.**'),
               '', '<details><summary>%d request(s)</summary>' % len(m.exchanges), '', FENCE + 'json',
               json.dumps(t, indent=1, sort_keys=True, ensure_ascii=False), FENCE, '', '</details>', '', END]
