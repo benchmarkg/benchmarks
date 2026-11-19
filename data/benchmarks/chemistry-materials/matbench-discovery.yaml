@@ -18,12 +18,25 @@
 # score, the diatomics CDS score, and the per-dataset training filters that replaced the
 # compliant/non-compliant toggle. They wait on archival (IA keys, P5-S3-T01), like P0-S3-T04's pages.
 #
+# P3-S6-T01 (2026-11-18) quoted all three from the code repository instead, pinned at commit 6d587c1
+# (2026-11-15, the latest on main): the leaderboard's metric definitions and ranges (labels.ts), the
+# combined-score code that computes CPS, CMDS and CDS, the MD metric design note, the filter panel with its
+# Compliant models preset, the dataset registry's compliance flags (withheld: it lists dataset creators'
+# contact details) and the v1 paper's unique-prototype metrics table for the dummy row. From them it added
+# the three metrics no Source defined before (phonon-spectrum-w1, matbench-cmds, matbench-cds), the MD
+# subset, a third eligibility tier for the current preset, eligibility_track in
+# comparability.material_extra, and every metric's anchors in data/baselines/matbench-discovery.yaml. Six of
+# the seven repository Sources are pending archive; the dataset registry is withheld.
+#
 # Premises in 02 S12.6 that did not survive the sources, each recorded where it bites:
 #   1. "six metrics ... rather than one composite". The leaderboard ranks by a composite, CPS, with
 #      viewer-adjustable weights. The components are separate Metric references and CPS is recorded
 #      as what it is, the official aggregate (headline_metric), never in place of them.
-#   2. The six metrics. Five components are quotable from archived or DOI sources (F1, DAF, hull-
-#      distance MAE, RMSD, κSRME); the MD and diatomics scores are not yet (see above).
+#   2. The six metrics. 02 S12.6's list is stability F1, energy MAE, phonons, κSRME, MD stability and
+#      diatomic PES checks. They are f1-score, e-above-hull-mae, phonon-spectrum-w1 (the phonon spectrum's
+#      distance from DFT, the phonon task's direct phonon metric), kappa-srme, matbench-cmds and
+#      matbench-cds. CMDS scores fidelity to ab-initio MD, not trajectory stability, and CDS combines
+#      PBE agreement with the PES sanity checks (review_checks). DAF and RMSD stay as recorded.
 #   3. capability `quantitative-reasoning`, `transfer-learning`, `perception` and secondary domain
 #      `physics/condensed-matter` fail their own tests and are considered and rejected.
 #   4. independence_flags `no-known-conflict`. Not adopted: the search here was not exhaustive, and
@@ -286,12 +299,26 @@ training_data_eligibility_tiers:
     label: Non-compliant
     rule: Trained on any data outside that release, e.g. OMat24, sAlex, Alexandria or GNoME.
     source: src-matbench-discovery-homepage
+  - id: compliant-preset
+    label: Compliant models (leaderboard preset)
+    rule: >
+      The leaderboard's Compliant models filter at commit 6d587c1: open-source, open-data (OSOD) models
+      only, with every training dataset the benchmark does not flag compliant excluded. Five datasets
+      carry the flag: MP v2022.10.28, MPtrj, MPF.2021.2.8, the MP 2019 graphs and the MDR PBE phonons
+      computed on MPtrj structures.
+    source: src-github-matbench-discovery-table-controls-6d587c1
 training_data_eligibility_tiers_note: >
   The leaderboard's views, in the 2026-06 capture: "Compliant models Non-compliant models Energy-only
-  models" (src-matbench-discovery-homepage). Today's live site (2026-09-26, not archived) has replaced
-  the two-tier toggle with per-dataset require/exclude filters and a separate openness class (OSOD,
-  OSCD, CSOD, CSCD), which is a finer vocabulary than these two tiers. A claim's tier belongs in its
-  EvalConditions.training_data_eligibility, one of these tier ids (02 S12).
+  models" (src-matbench-discovery-homepage). The site has since replaced the two-tier toggle with
+  per-dataset require/exclude filters, an openness class (OSOD, "Open source, open data",
+  src-github-matbench-discovery-metrics-6d587c1) and a Compliant models button, which excludes every
+  dataset that datasets.yml does not flag compliant (src-github-matbench-discovery-datasets-6d587c1) and
+  keeps only OSOD models (src-github-matbench-discovery-table-controls-6d587c1). That preset is its own
+  tier, compliant-preset, because its cohort is not the paper's: it leaves out closed-source or
+  closed-data models trained only on MP data, and it admits the MDR PBE phonon set of 2026-01-08, PBE
+  calculations outside the MP v2022.10.28 release. A claim's tier belongs in its
+  EvalConditions.training_data_eligibility, one of these tier ids (02 S12); eligibility_track holds the
+  board view the number was read from (comparability).
 training_data_eligibility_tiers_basis:
   reason: >
     The paper defines the compliant tier; the leaderboard shows the two tiers as separate views, with
@@ -359,6 +386,17 @@ execution:
     - custom
   maintainer_rerun_policy: unstated
 
+comparability:
+  # P3-S6-T01: the compliance tier is a material condition, not a note. eligibility_track and
+  # training_data_eligibility are already material through the eligibility-gated profile (domain-metric x
+  # scientific-surrogate-model); eligibility_track is named here so that it stays material whatever the facets
+  # resolve to. It holds the leaderboard view a number was read from (all models, or the Compliant models
+  # preset), and training_data_eligibility the tier the model's training data puts it in. Not added: hardware,
+  # although the CMDS and CDS speed parts are wall time on each submitter's own GPU, and the κ displacement
+  # distance, which EvalConditions has no field for (review_checks).
+  material_extra:
+    - eligibility_track
+
 aggregation_policy: official-aggregate
 aggregation_policy_basis:
   reason: >
@@ -420,24 +458,47 @@ subsets:
     scored_separately: true
     domain_override:
       primary: chemistry-materials/force-fields-potentials
+    metric_override: matbench-cds
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: export const N_SCORED_DIATOMIC_ELEMENTS = 87
     notes: >
-      Unranked in the only archived copy (2025-05), which carries a correctness disclaimer; today's
-      site ranks it by a CDS score that no archived source defines yet.
+      Unranked in the only archived copy (2025-05), which carries a correctness disclaimer; at commit
+      6d587c1 the site ranks it by CDS over 87 scored elements.
+  - id: matbench-discovery#md
+    label: Molecular dynamics (DynaMat v1.0)
+    items: 17
+    scored_separately: true
+    domain_override:
+      primary: chemistry-materials/force-fields-potentials
+    metric_override: matbench-cmds
+    evidence:
+      - source: src-github-matbench-discovery-md-metrics-design-6d587c1
+        quote: (DynaMat v1.0, 17 systems, 293–1500 K)
+      - source: src-github-matbench-discovery-md-metrics-design-6d587c1
+        quote: The public reference artifact intentionally omits energies and forces
+    notes: >
+      NVT trajectories on 17 systems, scored against ab-initio MD by CMDS. The public reference omits
+      energies and forces, so the energy and force errors are maintainer-only diagnostics outside CMDS.
 subsets_note: >
   The tasks are subsets, as the `composite` term asks, and the discovery views are subsets of the
-  discovery task. Molecular dynamics is on today's site only and is not listed. The diatomics
-  disclaimer: "Take the results on this page with a grain of salt." (src-matbench-discovery-
-  diatomics-page).
+  discovery task. The diatomics disclaimer: "Take the results on this page with a grain of salt."
+  (src-matbench-discovery-diatomics-page).
 metrics:
   - f1-score
   - discovery-acceleration-factor
   - e-above-hull-mae
   - structure-rmsd
   - kappa-srme
+  - phonon-spectrum-w1
+  - matbench-cmds
+  - matbench-cds
 metrics_note: >
-  The five component metrics, each a separate Metric; CPS, the composite, is headline_metric and lists
-  its components in must_report_with. The molecular-dynamics (CMDS) and diatomics (CDS) scores on
-  today's site are not recorded: no archived or DOI source defines them yet.
+  Each a separate Metric; CPS, the composite, is headline_metric and lists its components in must_report_with.
+  The six 02 S12.6 names are f1-score, e-above-hull-mae, phonon-spectrum-w1, kappa-srme, matbench-cmds
+  and matbench-cds, and their floors and ceilings are in data/baselines/matbench-discovery.yaml. CMDS
+  and CDS are task composites like CPS, but with a stated range and frozen scales, so they are recorded
+  as headroom-computable at their default weights (review check).
 
 lineage:
   role: root
@@ -451,7 +512,7 @@ tags:
 curation:
   added_by: agent (P0-S8-T02)
   added_on: 2026-09-26
-  last_verified: 2026-09-26
+  last_verified: 2026-11-18
   verification_status: ai-drafted-unverified
   sources:
     - src-matbench-discovery-nature
@@ -463,10 +524,19 @@ curation:
     - src-matbench-discovery-diatomics-page
     - src-matbench-discovery-contribute
     - src-matbench-discovery-repo
+    - src-github-matbench-discovery-labels-6d587c1
+    - src-github-matbench-discovery-combined-scores-6d587c1
+    - src-github-matbench-discovery-md-metrics-design-6d587c1
+    - src-github-matbench-discovery-metrics-table-compliant-6d587c1
+    - src-github-matbench-discovery-table-controls-6d587c1
+    - src-github-matbench-discovery-metrics-6d587c1
+    - src-github-matbench-discovery-datasets-6d587c1
   sources_note: >
     The six web sources are Wayback captures (2025-04 to 2026-06), each extract built from the capture
     and its SHA-1 checked against the CDX digest; the leaderboard has changed since several of them.
-    The three papers carry DOIs and are not archived.
+    The three papers carry DOIs and are not archived. The seven repository files (P3-S6-T01) are read
+    at commit 6d587c1 from raw.githubusercontent.com; six are pending archive and the dataset registry
+    is withheld for the personal data it lists.
   confidence: medium
   review_checks:
     - check: 'Whether the compliance tiers are transcribed correctly is a materials-science judgement:
@@ -483,3 +553,64 @@ curation:
     - check: The independence question about the paper's co-authors and CHGNet (governance).
       field: governance
       specialist: true
+    - check: >
+        The tier mapping is a curator's call. compliant-preset is the site's own Compliant models button,
+        recorded as a third tier because its cohort differs from the paper's compliant rule: it requires
+        OSOD and admits the 2026 MDR PBE phonon set, which the MP v2022.10.28 rule would not. Whether
+        a claim read off today's board should carry compliant-preset, or the maintainers regard the two
+        as one tier, needs a materials-science reader.
+      field: training_data_eligibility_tiers
+      specialist: true
+      source: src-github-matbench-discovery-datasets-6d587c1
+      quote: 'MDR-MP PBE ω_q: name: MDR PBE Phonons in MPtrj'
+    - check: >
+        The plan's six metrics were mapped, not found named: "phonons" became phonon-spectrum-w1, the
+        phonon task's spectrum distance, beside kappa-srme; "MD stability" became CMDS, which scores
+        fidelity to ab-initio MD and speed, not whether a trajectory stays stable; "diatomic PES" became
+        CDS, whose Physicality pillar is the PES sanity check and whose other pillars score PBE agreement
+        and speed.
+      field: metrics
+      specialist: true
+    - check: >
+        CMDS and CDS are recorded as headroom-computable at their default weights, unlike CPS, which is
+        not. The difference rests on the sources: both have a stated [0, 1] range and frozen
+        normalisation scales, while CPS is declared unstable. Their weights are still viewer-adjustable
+        and their speed parts are wall time on each submitter's GPU, so a reviewer may prefer
+        headroom_computable false; P3-S9-T04 would then see metric-not-headroom-computable, which is not
+        one of 12 S3.4's six reasons.
+      field: metrics_note
+      source: src-github-matbench-discovery-labels-6d587c1
+      quote: 'Warning: This is not a stable metric.'
+    - check: >
+        Hardware is not material here although CMDS and CDS include wall time measured on each
+        submitter's own GPU, and the κ finite-difference displacement (0.03 Å against 0.01 Å), which the
+        site says makes κSRME not strictly comparable, has no EvalConditions field. Both bear on
+        comparability.material_extra.
+      field: comparability.material_extra
+      source: src-github-matbench-discovery-labels-6d587c1
+      quote: measured on each model's own GPU, shown on hover, and not normalized across hardware
+    - check: >
+        The dummy floors (F1 0.185, MAE 0.124) are quoted from the v1 paper's table PDF, which gives the
+        numbers but not how the dummy was made. The arXiv v3 Table 1 caption says it ("The dummy classifier
+        uses the scikit-learn stratified strategy ... always predicting the test set mean"), but that
+        text is outside src-arxiv-2308-14920-v3's committed extract; extending that extract would let
+        the two baselines quote it.
+      field: baselines
+    - check: >
+        Two anchors are soft: the hull-distance MAE's ceiling of 0 is the bound of an absolute error,
+        not a published number, and the phonon spectrum's noise ceiling of 0.02 THz is "approximately"
+        in the source. The phonon, MD and diatomics floors are absent (no-published-comparator), so headroom
+        on those metrics waits on a floor.
+      field: baselines
+      specialist: true
+    - check: >
+        The MD task's note at the same commit points to arXiv:2607.03433 for the task, DynaMat and CMDS,
+        while the MD design note calls CMDS a Matbench addition that the reference paper does not have.
+        The arXiv paper was not read; it may belong in paper or lineage for the MD subset.
+      field: subsets
+      source: src-github-matbench-discovery-md-metrics-design-6d587c1
+      quote: '`adf_error` and `combined_score` (CMDS) are Matbench *additions* not in the paper.'
+  personal_data_excluded:
+    - source: src-github-matbench-discovery-datasets-6d587c1
+      what: dataset creators' names, affiliations, ORCIDs, profile links and e-mail addresses, kept
+        out of the extract's 30-character windows; the Source is withheld from archiving

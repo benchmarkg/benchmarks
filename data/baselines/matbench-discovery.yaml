@@ -1,0 +1,210 @@
+# data/baselines/matbench-discovery.yaml -- P3-S6-T01 (04 S7, 12 S3.2). The anchors of Matbench Discovery's six
+# metrics: for each, a ceiling, which is the primary (headroom is read against it), and a floor, or the reason
+# there is none.
+#
+# Read from the repository at commit 6d587c1 (2026-11-15): the leaderboard's column definitions (labels.ts) for
+# each metric's range and direction and the phonon spectrum's noise floor, the combined-score code for the CMDS
+# and CDS scales, and the v1 paper's unique-prototype metrics table for the dummy row. No human comparator exists
+# at any point (04 S7), and no source read runs a non-learned potential on the phonon, MD or diatomics tasks, so
+# those floors are recorded as absent rather than guessed. One ceiling, 0 for the hull-distance MAE, rests on the
+# metric's own mathematical bound rather than on a published range; its notes say so.
+#
+# benchmark_version is the bare id: the entry declares no versions[] (the WBM set is fixed and the leaderboard is
+# rolling), so these anchors hold for the benchmark as read on 2026-11-18.
+
+# --- stability F1 (discovery) ---------------------------------------------------------------------------------
+
+  - id: base-matbench-discovery-f1-maximum
+    benchmark_version: matbench-discovery
+    kind: theoretical-maximum
+    metric: f1-score
+    value: 1.0
+    is_primary: true
+    source: src-github-matbench-discovery-labels-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: 'description: `F1 Score: Harmonic mean of precision and recall for stable/unstable material
+          classification`, range: [0, 1]'
+    notes: Every stable WBM structure found and nothing unstable flagged, against the DFT hull;
+      reproducing DFT, not experiment.
+  - id: base-matbench-discovery-f1-dummy
+    benchmark_version: matbench-discovery
+    kind: random-chance
+    metric: f1-score
+    value: 0.185
+    subset: matbench-discovery#unique-prototypes
+    source: src-github-matbench-discovery-metrics-table-compliant-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-metrics-table-compliant-6d587c1
+        quote: F1 ↑ DAF ↑ Prec ↑ Acc ↑ TPR ↑ TNR ↑ MAE ↓ RMSE ↓ R2 ↑
+      - source: src-github-matbench-discovery-metrics-table-compliant-6d587c1
+        quote: Dummy 0.185 1 0.154 0.687 0.232 0.769 0.124 0.184 0
+      - source: src-matbench-discovery-homepage
+        quote: compared to random selection from the test set
+    notes: >
+      The bottom row of the v1 paper's unique-prototype table: F1 0.185, with DAF 1 and precision 0.154,
+      about the prevalence, which is what labelling at random gives. The arXiv v3 caption of the same
+      table describes the dummy as scikit-learn's stratified strategy, assigning stable or unstable at
+      random at the training-set prevalence; that caption is not in src-arxiv-2308-14920-v3's committed
+      extract, so it is not quoted here (review check).
+
+# --- energy MAE (hull distance) -------------------------------------------------------------------------------
+
+  - id: base-matbench-discovery-mae-zero
+    benchmark_version: matbench-discovery
+    kind: theoretical-maximum
+    metric: e-above-hull-mae
+    value: 0.0
+    is_primary: true
+    source: src-github-matbench-discovery-labels-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: 'description: `Mean Absolute Error of predicted vs. DFT convex hull distance`, unit: `eV/atom`,
+          better: `lower`'
+    notes: 0 eV/atom is the bound of an absolute error, not a published number; the source states
+      the metric and its direction. It means reproducing the DFT hull distances exactly.
+  - id: base-matbench-discovery-mae-dummy
+    benchmark_version: matbench-discovery
+    kind: classical-algorithm
+    metric: e-above-hull-mae
+    value: 0.124
+    subset: matbench-discovery#unique-prototypes
+    source: src-github-matbench-discovery-metrics-table-compliant-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-metrics-table-compliant-6d587c1
+        quote: Dummy 0.185 1 0.154 0.687 0.232 0.769 0.124 0.184 0
+      - source: src-github-matbench-discovery-metrics-table-compliant-6d587c1
+        quote: Voronoi RF 0.333 1.58 0.241 0.668 0.535 0.692 0.148 0.212 -0.329
+      - source: src-matbench-discovery-nature
+        quote: we assign the dummy regression values and a negative classification prediction to
+          these points
+    notes: >
+      MAE 0.124 eV/atom, RMSE 0.184 and R2 0 in the same dummy row. R2 0 is what a constant prediction
+      of the test-set mean scores, which the arXiv v3 caption states is how the dummy regression values
+      were made (not quoted, as for the F1 row). classical-algorithm, as for climatology in a forecasting
+      benchmark: a non-learned constant predictor. Voronoi RF scores worse than it on MAE in the same
+      table (0.148), so a model's headroom on this metric can be negative.
+
+# --- phonons: phonon spectrum W1 ------------------------------------------------------------------------------
+
+  - id: base-matbench-discovery-w1-noise-floor
+    benchmark_version: matbench-discovery
+    kind: noise-ceiling
+    metric: phonon-spectrum-w1
+    value: 0.02
+    is_primary: true
+    subset: matbench-discovery#phonons
+    source: src-github-matbench-discovery-labels-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Mean Wasserstein-1 distance between ML and DFT phonon frequency spectra over
+          materials with usable frequencies
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: with an approximately 0.02 THz mesh-comparison noise floor
+    notes: >
+      Approximate, as the source gives it, in THz. The limit is the comparison's own noise, so a W1 below
+      it is not a better spectrum: the reliability limit of the measurement, which is noise-ceiling's
+      test, rather than the metric's bound of 0.
+  - id: base-matbench-discovery-w1-floor
+    benchmark_version: matbench-discovery
+    kind: classical-algorithm
+    metric: phonon-spectrum-w1
+    value_absent_reason: no-published-comparator
+    subset: matbench-discovery#phonons
+    notes: No source read runs a non-learned or random comparator on the PhononDB-PBE spectra, and
+      W1 has no upper bound to stand in for one.
+
+# --- κSRME (lattice thermal conductivity) ---------------------------------------------------------------------
+
+  - id: base-matbench-discovery-kappa-srme-zero
+    benchmark_version: matbench-discovery
+    kind: theoretical-maximum
+    metric: kappa-srme
+    value: 0.0
+    is_primary: true
+    subset: matbench-discovery#phonons
+    source: src-github-matbench-discovery-labels-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Symmetric relative mean error in predicted phonon-mode contributions to thermal
+          conductivity κ, averaged over the 103 PhononDB-PBE materials (range [0, 2])
+    notes: 0 is an exact mode-resolved match to PhononDB-PBE on every one of the 103 materials.
+  - id: base-matbench-discovery-kappa-srme-floor
+    benchmark_version: matbench-discovery
+    kind: classical-algorithm
+    metric: kappa-srme
+    value_absent_reason: no-published-comparator
+    subset: matbench-discovery#phonons
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Fraction of the 103 PhononDB-PBE materials where κ prediction failed outright and
+          κSRME was censored to its maximum of 2
+      - source: src-github-matbench-discovery-combined-scores-6d587c1
+        quote: 'value: is_valid_score(kappa, 2) ? 1 - kappa / 2 : null,'
+    notes: >
+      No source read runs a non-learned or random comparator on κ-103. The scale's worst end is 2, what
+      a model scores that fails every material, and CPS normalises κSRME against it (1 − κSRME/2); 2 is
+      the range maximum, not a measured comparator, so it is not recorded as a floor.
+
+# --- MD (CMDS) ------------------------------------------------------------------------------------------------
+
+  - id: base-matbench-discovery-cmds-maximum
+    benchmark_version: matbench-discovery
+    kind: theoretical-maximum
+    metric: matbench-cmds
+    value: 1.0
+    is_primary: true
+    subset: matbench-discovery#md
+    source: src-github-matbench-discovery-labels-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Combined MD score in [0,1] (higher is better)
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Higher = closer to ab-initio dynamics.
+    notes: 1 needs zero ΔvDOS, ΔADF and ΔP error and a rollout of at most 9,000 s, so the ceiling is
+      partly a cost ceiling as well as a fidelity one.
+  - id: base-matbench-discovery-cmds-floor
+    benchmark_version: matbench-discovery
+    kind: classical-algorithm
+    metric: matbench-cmds
+    value_absent_reason: no-published-comparator
+    subset: matbench-discovery#md
+    evidence:
+      - source: src-github-matbench-discovery-combined-scores-6d587c1
+        quote: Error components are [0,100] % errors (lower=better) with subscore 1 - error/100
+    notes: >
+      0 is where every subscore bottoms out (each error at 100%, wall time at or above 300,000 s), a clamp
+      of the scale rather than a measured comparator. No source read runs a classical force field or other
+      non-learned reference on DynaMat.
+
+# --- diatomics (CDS) ------------------------------------------------------------------------------------------
+
+  - id: base-matbench-discovery-cds-maximum
+    benchmark_version: matbench-discovery
+    kind: theoretical-maximum
+    metric: matbench-cds
+    value: 1.0
+    is_primary: true
+    subset: matbench-discovery#diatomics
+    source: src-github-matbench-discovery-labels-6d587c1
+    evidence:
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Combined Diatomics Score in [0,1] (higher is better)
+      - source: src-github-matbench-discovery-labels-6d587c1
+        quote: Components use fixed normalization baselines so scores remain stable as models are
+          added.
+    notes: 1 needs every component at its floor (for instance zero PBE energy and force error, one
+      force flip, a sweep of at most 50 s) on all 87 scored elements.
+  - id: base-matbench-discovery-cds-floor
+    benchmark_version: matbench-discovery
+    kind: classical-algorithm
+    metric: matbench-cds
+    value_absent_reason: no-published-comparator
+    subset: matbench-discovery#diatomics
+    evidence:
+      - source: src-github-matbench-discovery-combined-scores-6d587c1
+        quote: '{ key: `pbe_energy_mae`, weight: 5 / 9, baseline: 4, floor: 0, log: false }'
+    notes: >
+      The component "baselines" in the CDS code (energy MAE 4 eV, wall time 5,000 s and so on) are the
+      points where a subscore reaches 0, frozen scale ends rather than measured comparators. No source
+      read runs a non-learned potential on the diatomic curves.
