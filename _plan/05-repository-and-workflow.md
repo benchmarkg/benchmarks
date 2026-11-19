@@ -360,7 +360,7 @@ bench resolve [--candidates] [--threshold 0.85] [--apply <mapping.yaml>]
 bench promote <path…> --to <verification_status> --evidence <src-id>
 
 # Build
-bench build [--derived] [--embed] [--atlas] [--out build/]
+bench build [--derived] [--embed] [--atlas] [--data-only] [--out build/]
 bench embed [--model potion-base-8m] [--quantize int8]
 bench atlas [--basis atlas/basis_v1.npz] [--warm-start atlas/prev.json] [--drift-gate 0.02]
 

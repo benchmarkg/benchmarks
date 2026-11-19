@@ -3,6 +3,7 @@
 // the V9 organisation profile. cacheKey is the content digest of everything the page renders.
 import Base from '../../layouts/Base.astro';
 import OrgDetail from '../../views/OrgDetail.astro';
+import { onlyRoutes } from '../../lib/bench-routes';
 import { benchmarks, organizations, sources, systems } from '../../lib/collections';
 import { contentDigest } from '../../lib/corpus';
 import type { Benchmark } from '../../types/benchmark';
@@ -16,7 +17,7 @@ export async function getStaticPaths() {
   const syss = await systems();
   const benches = await benchmarks();
   const srcs = new Map((await sources()).map((s) => [s.id, s]));
-  return all.map((o) => {
+  return onlyRoutes(all.map((o) => {
     const released = syss.filter((s) => s.organization === o.id);
     const maintained = benches.filter((b) => (b.governance.maintainers ?? []).includes(o.id));
     const inMaintained = (JSON.stringify(maintained).match(/"src-[a-z0-9-]+"/g) ?? []).map((q) => q.slice(1, -1));
@@ -27,7 +28,7 @@ export async function getStaticPaths() {
       cacheKey: contentDigest({ org: o, related: all.filter((x) => x.id === o.parent || x.parent === o.id), released, maintained,
         sources: cited.sort().map((id) => srcs.get(id) ?? null) }),
     };
-  });
+  }), (p) => `/orgs/${p.params.id}/`);
 }
 
 interface Props {

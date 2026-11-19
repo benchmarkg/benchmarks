@@ -3,6 +3,7 @@
 // cacheKey is the content digest of the metric, the benchmarks that use it and its sources.
 import Base from '../../layouts/Base.astro';
 import MetricDetail from '../../views/MetricDetail.astro';
+import { onlyRoutes } from '../../lib/bench-routes';
 import { benchmarks, metrics, sources } from '../../lib/collections';
 import { contentDigest } from '../../lib/corpus';
 import type { Benchmark } from '../../types/benchmark';
@@ -14,7 +15,7 @@ export async function getStaticPaths() {
   const ids = new Set(all.map((m) => m.id));
   const benches = await benchmarks();
   const srcs = new Map((await sources()).map((s) => [s.id, s]));
-  return all.map((m) => {
+  return onlyRoutes(all.map((m) => {
     const users = benches.filter((b) => b.headline_metric === m.id || (Array.isArray(b.metrics) && b.metrics.includes(m.id)));
     return {
       params: { id: m.id },
@@ -22,7 +23,7 @@ export async function getStaticPaths() {
       cacheKey: contentDigest({ metric: m, users: users.map((b) => [b.id, b.name, b.headline_metric === m.id]),
         sources: (m.sources ?? []).map((id) => srcs.get(id) ?? null), links: (m.must_report_with ?? []).map((id) => ids.has(id)) }),
     };
-  });
+  }), (p) => `/metrics/${p.params.id}/`);
 }
 
 interface Props {
