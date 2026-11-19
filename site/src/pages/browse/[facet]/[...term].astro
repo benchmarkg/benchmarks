@@ -8,6 +8,7 @@
 // the page renders.
 import Base from '../../../layouts/Base.astro';
 import BrowsePage from '../../../views/BrowsePage.astro';
+import { onlyRoutes } from '../../../lib/bench-routes';
 import { benchmarks, organizations } from '../../../lib/collections';
 import { browsePages, browseParams, type BrowsePage as Page, type Neighbour } from '../../../lib/browse';
 import { contentDigest } from '../../../lib/corpus';
@@ -16,7 +17,7 @@ import { signoff } from '../../../lib/vocab';
 export async function getStaticPaths() {
   const pages = browsePages(await benchmarks(), await organizations());
   const ns = (list: Neighbour[]) => list.map((x) => [x.term.id, x.term.label, x.count]);
-  return pages.map((page) => ({
+  return onlyRoutes(pages.map((page) => ({
     params: browseParams(page),
     props: { page },
     cacheKey: contentDigest({
@@ -27,7 +28,7 @@ export async function getStaticPaths() {
         m.benchmark.released ?? null, m.secondary]),
       review: page.kind === 'term' && page.term.facet === 'domain' ? signoff(page.term.parent ?? page.term.id) : null,
     }),
-  }));
+  })), (p) => `/browse/${p.params.facet}/${p.params.term}/`);
 }
 
 interface Props {

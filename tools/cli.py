@@ -5,7 +5,7 @@
     uv run bench fmt [paths...] [--check]
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all|<comma list>] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
-    uv run bench build [--derived] [--atlas] [--out build/]
+    uv run bench build [--derived] [--atlas] [--data-only] [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
     uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
     uv run bench ingest <adapter> --dry-run [--limit N] [--no-network] [--allow-bulk] [--fixture PATH]
@@ -19,7 +19,9 @@ P2-S6-T04, whose issue-intake bot runs `--single --tier schema,ref,semantic`), `
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
 build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, and coverage-states.json,
 P1-S12-T08's; --atlas writes build/atlas.json, P2-S5-T01's (tools/atlas/); --embed arrives
-with its stage; build/index.sqlite, the normalised corpus that never ships, is P2-S1-T06's, tools/build/sqlite.py), `migrate`
+with its stage; build/index.sqlite, the normalised corpus that never ships, is P2-S1-T06's, tools/build/sqlite.py;
+--data-only, the preview build that skips S9, S10 and the SQLite emission, is P2-S1-T04's, tools/build/modes.py, beside
+scripts/routes_from_diff.py), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
 `ingest` is P3-S1-T06's (tools/bench/cmd_ingest.py; 07 S1.6 declares its surface), and `report`
 P3-S1-T07's (tools/report/; three of 05 S3's seven reports, the ones Phase 3 relies on; `staleness`, the
@@ -202,11 +204,12 @@ def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
     derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
     atlas: Annotated[bool, typer.Option('--atlas', help='Also write build/atlas.json, the deterministic pack layout (08 S5.3, 10 V1).')] = False,
+    data_only: Annotated[bool, typer.Option('--data-only', help='The preview build (08 S3.4): skip the S9 release artifacts (croissant-benchmark/, index.sqlite) and S10 codegen (the design tokens, the site taxonomy).')] = False,
 ):
     """Emit the shipped JSON artifacts (08 S4.2), their content-hashed copies and build-manifest.json (08 S4.4, S6.1),
     the croissant-benchmark JSON-LD (08 S5.8) and index.sqlite (08 S4.2), drafts excluded, and regenerate the design
-    tokens (09 S13)."""
-    from tools.build import artifacts, site_taxonomy, tokens
+    tokens (09 S13). --data-only skips the last three (08 S3.4; tools/build/modes.py)."""
+    from tools.build import artifacts, modes, site_taxonomy, tokens
     result = artifacts.build(ROOT)
     for e in result.errors:
         typer.echo('error  %s' % e, err=True)
@@ -217,32 +220,41 @@ def build_cmd(
     # conformance and the committed extension schema, over the withheld drafts' documents too -- so a mapping or
     # schema change that breaks either fails this build, which is CI's build step
     from tools.build import croissant
-    documents, problems, summary = croissant.build(result.corpus, result.withheld)
-    for e in problems:
-        typer.echo('error  %s' % e, err=True)
-    if problems:
-        typer.echo('build: %d croissant-benchmark problem(s); nothing written' % len(problems), err=True)
-        raise typer.Exit(1)
+    if not data_only:                                   # S9, which --data-only skips (P2-S1-T04)
+        documents, problems, summary = croissant.build(result.corpus, result.withheld)
+        for e in problems:
+            typer.echo('error  %s' % e, err=True)
+        if problems:
+            typer.echo('build: %d croissant-benchmark problem(s); nothing written' % len(problems), err=True)
+            raise typer.Exit(1)
     shipped = artifacts.write(result, str(out))
     for path in shipped:
         typer.echo('wrote %s' % path)
-    croissant.write(documents, str(out / croissant.DIR))
-    typer.echo('wrote %s (%d benchmark document(s) and the collection; %d withheld draft(s) validated, not written; '
-               'mlcroissant %s, %d recommended-property notice(s))'
-               % (out / croissant.DIR, summary['written'], summary['withheld'], summary['mlcroissant'],
-                  summary['notices']))
-    # ---- index.sqlite (P2-S1-T06) -----------------------------------------------------------------------------------
-    # 08 S4.2: the whole corpus, normalised, for build-time analytics and the release archive. It sits beside the
-    # artifacts it is built from and is never shipped: not under data/, not in the manifest's paths, and nothing
-    # copies --out into the site (tools/build/sqlite.py)
-    from tools.build import sqlite
-    try:
-        typer.echo('wrote %s' % sqlite.write({'corpus.json': result.corpus, 'facets.json': result.facets,
-                                              'enums.json': result.enums}, str(out / sqlite.NAME)))
-    except sqlite.SqliteError as e:
-        typer.echo('error  %s' % e, err=True)
-        raise typer.Exit(1)
-    # ---- end index.sqlite -------------------------------------------------------------------------------------------
+    if data_only:
+        # ---- --data-only (P2-S1-T04) ------------------------------------------------------------------------------
+        # 08 S3.4: S9 and the SQLite emission are a release's, not a preview's. What a full build left in --out goes, so
+        # the directory and its manifest never pair this corpus with another build's documents or database
+        for path in modes.clear(str(out)):
+            typer.echo("removed %s (a full build's S9 output; --data-only writes none)" % path)
+        # ---- end --data-only --------------------------------------------------------------------------------------
+    else:
+        croissant.write(documents, str(out / croissant.DIR))
+        typer.echo('wrote %s (%d benchmark document(s) and the collection; %d withheld draft(s) validated, not written; '
+                   'mlcroissant %s, %d recommended-property notice(s))'
+                   % (out / croissant.DIR, summary['written'], summary['withheld'], summary['mlcroissant'],
+                      summary['notices']))
+        # ---- index.sqlite (P2-S1-T06) -------------------------------------------------------------------------------
+        # 08 S4.2: the whole corpus, normalised, for build-time analytics and the release archive. It sits beside the
+        # artifacts it is built from and is never shipped: not under data/, not in the manifest's paths, and nothing
+        # copies --out into the site (tools/build/sqlite.py)
+        from tools.build import sqlite
+        try:
+            typer.echo('wrote %s' % sqlite.write({'corpus.json': result.corpus, 'facets.json': result.facets,
+                                                  'enums.json': result.enums}, str(out / sqlite.NAME)))
+        except sqlite.SqliteError as e:
+            typer.echo('error  %s' % e, err=True)
+            raise typer.Exit(1)
+        # ---- end index.sqlite ---------------------------------------------------------------------------------------
     # SUCCESSION.md item 5: the date of the last human commit to data/, which the site's banner reads (P0-S7-T04)
     from tools import dormancy
     typer.echo('wrote %s' % dormancy.write(dormancy.state(dormancy.last_human_commit(ROOT), _dt.date.today()),
@@ -275,29 +287,38 @@ def build_cmd(
     # `python tools/build/manifest.py --site <dist>` completes it after the site build (S13)
     from tools.build import manifest
     try:
-        hashed = manifest.write(str(out), shipped, str(out / croissant.DIR))
+        hashed = manifest.write(str(out), shipped, None if data_only else str(out / croissant.DIR))
     except manifest.ManifestError as e:
         typer.echo('error  %s' % e, err=True)
         raise typer.Exit(1)
     typer.echo('wrote %s (%d content-hashed artifact(s) under %s)' % (hashed[-1], len(hashed) - 1, out / 'data'))
     try:
+        # S10, which --data-only skips (P2-S1-T04): a preview reads the committed copies.
         # committed files: `git diff` after a build is the drift check. A data-only tree (a test
         # corpus, a fork of data/) has no design/ and gets no tokens.
-        for path in tokens.write(ROOT) if os.path.exists(os.path.join(ROOT, tokens.TOKENS)) else []:
+        for path in tokens.write(ROOT) if os.path.exists(os.path.join(ROOT, tokens.TOKENS)) and not data_only else []:
             typer.echo('wrote %s' % path)
         # the taxonomy terms the site's components resolve (P2-S2-T06), committed on the same terms
-        for path in site_taxonomy.write(ROOT) if os.path.isdir(os.path.join(ROOT, 'site')) else []:
+        for path in site_taxonomy.write(ROOT) if os.path.isdir(os.path.join(ROOT, 'site')) and not data_only else []:
             typer.echo('wrote %s' % path)
     except tokens.TokenError as e:
         typer.echo('error  %s' % e, err=True)
         raise typer.Exit(1)
+    # ---- BENCH_ROUTES (P2-S1-T04) -----------------------------------------------------------------------------------
+    # the site build's half of --routes-from-diff reads it (site/src/lib/bench-routes.ts); say what it will render
+    line = modes.note(os.environ, result.corpus)
+    if line:
+        typer.echo(line)
+    # ---- end BENCH_ROUTES -------------------------------------------------------------------------------------------
     counts = result.counts()
     reasons: dict[str, int] = {}
     for _, _, reason in result.excluded:
         reasons[reason] = reasons.get(reason, 0) + 1  # get-default: a first reason starts its count
-    typer.echo('build: published %s; %d subset(s) materialised; excluded %s'
+    typer.echo('build: published %s; %d subset(s) materialised; excluded %s%s'
                % (', '.join('%d %s' % (n, k) for k, n in counts.items()), len(result.corpus['subsets']),
-                  ', '.join('%d (%s)' % (n, r) for r, n in sorted(reasons.items())) or 'nothing'))
+                  ', '.join('%d (%s)' % (n, r) for r, n in sorted(reasons.items())) or 'nothing',
+                  '; --data-only: S9 (%s) and S10 (%s) skipped' % (', '.join(modes.SKIPPED['S9']),
+                                                                   ', '.join(modes.SKIPPED['S10'])) if data_only else ''))
 
 
 @app.command('migrate')

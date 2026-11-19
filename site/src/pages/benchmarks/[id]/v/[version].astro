@@ -5,6 +5,7 @@
 // record and everything the page renders from it.
 import Base from '../../../../layouts/Base.astro';
 import BenchmarkVersionDetail from '../../../../views/BenchmarkVersionDetail.astro';
+import { onlyRoutes } from '../../../../lib/bench-routes';
 import { benchmarks, sources } from '../../../../lib/collections';
 import { contentDigest } from '../../../../lib/corpus';
 import { release } from '../../../../lib/release';
@@ -14,7 +15,7 @@ import type { Source } from '../../../../types/source';
 
 export async function getStaticPaths() {
   const srcs = new Map((await sources()).map((s) => [s.id, s]));
-  return (await benchmarks()).flatMap((b) => supersededVersions(b).map((v) => {
+  return onlyRoutes((await benchmarks()).flatMap((b) => supersededVersions(b).map((v) => {
     const cited = [...new Set([...(v.sources ?? []), ...(v.errata ?? []).map((e) => e.source)])];
     return {
       params: { id: b.id, version: v.version },
@@ -24,7 +25,7 @@ export async function getStaticPaths() {
         baselines: (b.baselines ?? []).filter((x) => x.benchmark_version === `${b.id}@${v.version}`),
         sources: cited.map((id) => srcs.get(id) ?? null) }),
     };
-  }));
+  })), (p) => `/benchmarks/${p.params.id}/v/${p.params.version}/`);
 }
 
 interface Props {

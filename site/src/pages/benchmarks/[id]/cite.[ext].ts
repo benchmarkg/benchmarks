@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { APIRoute } from 'astro';
+import { onlyRoutes } from '../../../lib/bench-routes';
 import { benchmarks } from '../../../lib/collections';
 import { bibtex, cslJson, FORMATS, ris, type CiteFacts, type Format } from '../../../lib/cite';
 import { croissantText } from '../../../lib/croissant';
@@ -15,9 +16,10 @@ import type { Benchmark } from '../../../types/benchmark';
 const REPO_ROOT = process.env.REPO_ROOT ?? resolve(process.cwd(), '..');
 
 export async function getStaticPaths() {
-  return (await benchmarks()).flatMap((benchmark) =>
+  return onlyRoutes((await benchmarks()).flatMap((benchmark) =>
     (Object.keys(FORMATS) as Format[]).filter((ext) => ext !== 'jsonld' || croissantText(benchmark.id) != null)
-      .map((ext) => ({ params: { id: benchmark.id, ext }, props: { benchmark } })));
+      .map((ext) => ({ params: { id: benchmark.id, ext }, props: { benchmark } }))),
+  (p) => `/benchmarks/${p.params.id}/cite.${p.params.ext}`);
 }
 
 export const GET: APIRoute = ({ params, props }) => {
