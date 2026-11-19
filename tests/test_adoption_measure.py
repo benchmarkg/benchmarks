@@ -239,7 +239,8 @@ def test_a_datacite_count_beyond_its_list_fails_that_reading():
 def test_condition_3_counts_only_requests_ruled_unsolicited():
     r = result(run(), 3)
     assert r.counted == ['#31', '#32', '#33', '#34', '#35']
-    assert r.detail == {'labelled': 7, 'unsolicited': 5, 'solicited': 1, 'unjudged': 1, 'ruled_but_not_labelled': 0}
+    assert r.detail == {'labelled': 7, 'unsolicited': 5, 'solicited': 1, 'unjudged': 1, 'by_form': 0, 'overruled': [],
+                        'ruled_but_not_labelled': 0}
     assert r.verdict == 'MET' and not r.complete               # #37 could only have added one
 
 
@@ -248,12 +249,117 @@ def test_an_unjudged_request_fails_condition_3_while_below_the_threshold():
                               'solicited': [36]})
     r = result(run(ruled=ruled), 3)
     assert r.count == 4 and r.verdict == 'FAILED'
-    assert 'unmeasurable: 2 labelled request(s) carry no ruling on whether they were unsolicited: #35, #37' in r.reasons
+    assert ('unmeasurable: 2 labelled request(s) carry no judgement on whether they were unsolicited, on the form or '
+            'in the rulings: #35, #37') in r.reasons
 
 
 def test_without_rulings_condition_3_has_no_judgement_and_fails():
     r = result(run(ruled=am.Rulings()), 3)
     assert r.count == 0 and r.verdict == 'FAILED' and r.detail['unjudged'] == 7
+
+
+# condition 3 from the rerun-request form (P8-S1-T03): the issue body as GitHub renders a submitted form, `### <label>`,
+# a blank line, the answer. The bodies below are what .github/ISSUE_TEMPLATE/rerun-request.yml submits.
+
+def form_body(answer, extra='Please rerun it under the published conditions.'):
+    return ('### What to rerun or check\n\nexample-bench-one\n\n### What you are asking for\n\n%s\n\n### %s\n\n'
+            '%s\n\n### How the request arrived\n\nOpened here by the person asking\n'
+            % (extra, am.UNSOLICITED_HEADING, answer))
+
+
+UNSOLICITED = "Unsolicited: no, nobody asked for requests; it is the requester's own"
+SOLICITED = 'Solicited: yes, it answers a call for requests (a post, an announcement or a message asking for them)'
+
+
+def answered(doc, answers):
+    """A copy of `doc` in which each issue numbered in `answers` was opened from the form with that answer."""
+    doc = copy.deepcopy(doc)
+    [listing] = [e for e in doc['exchanges'] if 'labels=request:rerun' in e['url']]
+    for it in listing['body']:
+        if it['number'] in answers:
+            it['body'] = form_body(answers[it['number']])
+    return doc
+
+
+@pytest.mark.parametrize('body, answer', [
+    (form_body(UNSOLICITED), True),
+    (form_body(SOLICITED), False),
+    (form_body('Not sure'), None),
+    (form_body('_No response_'), None),
+    (form_body(UNSOLICITED).replace('\n', '\r\n'), True),                   # an edit in a browser can leave CRLF
+    (form_body('unsolicited: edited by triage'), True),                     # the word before the colon decides
+    (form_body('Perhaps: who knows'), None),                                # a word the form does not offer
+    (form_body(SOLICITED) + '\n### %s\n\n%s\n' % ('Does this request answer a call for requests?', UNSOLICITED),
+     False),                                                                # the first heading wins
+    (form_body(UNSOLICITED).replace('Does this request answer', 'Does this ask answer'), None),     # no such field
+    ('Could the catalogue rerun this one?', None),
+    (None, None),
+])
+def test_form_answer(body, answer):
+    assert am.form_answer(body) is answer
+
+
+def test_condition_3_reads_the_forms_answer_without_rulings():
+    doc = answered(transcript(), {31: UNSOLICITED, 32: UNSOLICITED, 33: UNSOLICITED, 34: UNSOLICITED, 35: UNSOLICITED,
+                                  36: SOLICITED, 37: 'Not sure'})
+    r = result(run(doc, am.Rulings()), 3)
+    assert r.counted == ['#31', '#32', '#33', '#34', '#35'] and r.verdict == 'MET'
+    assert r.detail == {'labelled': 7, 'unsolicited': 5, 'solicited': 1, 'unjudged': 1, 'by_form': 6, 'overruled': [],
+                        'ruled_but_not_labelled': 0}
+    assert r.raising == ['1 labelled request(s) carry no judgement on whether they were unsolicited, on the form or in '
+                         'the rulings: #37']                    # "Not sure" judges nothing: triage has to
+
+
+def test_a_ruling_overrules_the_form():
+    doc = answered(transcript(), {35: UNSOLICITED, 36: UNSOLICITED, 37: SOLICITED})
+    ruled = am.Rulings.parse({'maintainers': ['name:Maintainer Placeholder'], 'unsolicited': [31, 32, 33, 34],
+                              'solicited': [36]})
+    r = result(run(doc, ruled), 3)
+    assert r.counted == ['#31', '#32', '#33', '#34', '#35']    # #35 by the form; #36 the rulings call solicited
+    assert r.detail['by_form'] == 2 and r.detail['overruled'] == [36] and r.detail['unjudged'] == 0
+    assert r.complete and r.verdict == 'MET'
+    assert ("2 solicited, 0 with no judgement. Judged by the form's answer alone: 2; the form overruled by the "
+            "rulings: #36.") in am.block(am.published(run(doc, ruled)))
+
+
+def test_the_raw_output_keeps_the_forms_answer_and_nothing_else_of_the_body():
+    doc = answered(transcript(), {33: UNSOLICITED, 36: SOLICITED})
+    listing = next(e for e in doc['exchanges'] if 'labels=request:rerun' in e['url'])
+    issue = next(it for it in listing['body'] if it['number'] == 33)
+    issue['body'] = form_body(UNSOLICITED, extra='From requester-c, requester-c@example.org; see @requester-c.')
+    m = run(doc, am.Rulings())
+    t = am.transcript(m)
+    kept = {it['number']: it['body'] for e in t['exchanges'] if 'labels=request:rerun' in e['url'] for it in e['body']}
+    assert kept[33] == ('[dropped, all but the answer condition 3 reads]\n\n### %s\n\nUnsolicited:'
+                        % am.UNSOLICITED_HEADING)
+    assert kept[36].endswith('\n\nSolicited:') and kept[31] == am.DROPPED
+    assert 'requester-' not in json.dumps(t) and 'example.org' not in json.dumps(t)
+    replayed = am.from_transcript(t)
+    assert result(replayed, 3).counted == result(m, 3).counted == ['#33']
+    assert am.block(am.published(m)) == am.block(replayed)
+
+
+def test_an_identity_that_reads_like_the_forms_words_cannot_unparse_the_kept_answer():
+    r = am.Redactor()
+    [ex] = r.exchanges([{'url': 'u', 'status': 200, 'body': [
+        {'number': 1, 'user': {'login': 'Unsolicited', 'type': 'User'}, 'body': form_body(UNSOLICITED)},
+        {'number': 2, 'user': {'login': 'requests', 'type': 'User'}, 'body': form_body(SOLICITED)}]}])
+    assert [it['user']['login'] for it in ex['body']] == ['github-1', 'github-2']
+    assert [am.form_answer(it['body']) for it in ex['body']] == [True, False]
+
+
+def test_the_form_carries_the_field_the_script_reads():
+    """rerun-request.yml and this script agree: the dropdown's label is the heading read, each option's word before
+    its colon is an answer, and both answers the script knows are offered, with one that judges nothing."""
+    from ruamel.yaml import YAML
+    with open(os.path.join(ROOT, *am.RERUN_FORM.split('/')), encoding='utf-8') as fh:
+        form = YAML(typ='safe').load(fh)
+    [field] = [b for b in form['body'] if b.get('id') == am.UNSOLICITED_FIELD]
+    assert field['type'] == 'dropdown' and field['validations']['required'] is True
+    assert field['attributes']['label'] == am.UNSOLICITED_HEADING
+    answers = [am.form_answer(form_body(o)) for o in field['attributes']['options']]
+    assert sorted(answers, key=str) == [False, None, True]
+    assert am.RERUN_LABEL not in form['labels']                # triage applies it (13 S0.2), never the form
 
 
 def test_nothing_yet_fails_all_three_on_complete_measurements():
@@ -442,8 +548,8 @@ def test_bot_and_organisation_accounts_are_not_people():
 
 
 def test_a_condition_met_on_partial_data_says_what_was_not_measured():
-    assert ('- condition 3: met; not measured, and able only to add: 1 labelled request(s) carry no ruling on '
-            'whether they were unsolicited: #37') in am.block(am.published(run()))
+    assert ('- condition 3: met; not measured, and able only to add: 1 labelled request(s) carry no judgement on '
+            'whether they were unsolicited, on the form or in the rulings: #37') in am.block(am.published(run()))
 
 
 # ---- publishing: --write and --validate --------------------------------------------------------------------------

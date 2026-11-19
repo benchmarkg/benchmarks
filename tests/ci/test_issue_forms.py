@@ -1,4 +1,4 @@
-"""The five issue forms (P2-S6-T02; 05 S6, 05 S8).
+"""The six issue forms (P2-S6-T02; 05 S6, 05 S8; P8-S1-T03, 13 S0.2).
 
 The verify: `python scripts/gen_issue_forms.py --check && python scripts/validate_issue_forms.py`. These cases
 run the validator on a copy of the committed forms with one thing broken each time, so every assertion it makes
@@ -15,7 +15,8 @@ from ruamel.yaml import YAML
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 VALIDATE = os.path.join(ROOT, 'scripts', 'validate_issue_forms.py')
 GEN = os.path.join(ROOT, 'scripts', 'gen_issue_forms.py')
-FORMS = ('new-benchmark.yml', 'correction.yml', 'new-claim.yml', 'dispute.yml', 'taxonomy-term.yml')
+FORMS = ('new-benchmark.yml', 'correction.yml', 'new-claim.yml', 'dispute.yml', 'taxonomy-term.yml',
+         'rerun-request.yml')
 y = YAML()
 y.width = 4096
 y.indent(mapping=2, sequence=4, offset=2)
@@ -50,7 +51,7 @@ def test_verify_the_committed_forms_hold_and_their_dropdowns_are_current():
     assert b.returncode == 0, b.stdout
 
 
-def test_all_five_exist_and_blank_issues_are_off():
+def test_all_six_exist_and_blank_issues_are_off():
     base = os.path.join(ROOT, '.github', 'ISSUE_TEMPLATE')
     assert sorted(f for f in os.listdir(base) if f != 'config.yml') == sorted(FORMS)
     with open(os.path.join(base, 'config.yml'), encoding='utf-8') as fh:
@@ -69,6 +70,13 @@ def test_all_five_exist_and_blank_issues_are_off():
      'no required bot disclosure'),
     ('taxonomy-term.yml', lambda d: d['labels'].append('source:issue-form'), 'never auto-PRs'),
     ('new-benchmark.yml', lambda d: d['labels'].remove('source:issue-form'), 'no source:issue-form label'),
+    ('rerun-request.yml', lambda d: d['labels'].append('source:issue-form'), 'a rerun request is read by a person'),
+    ('rerun-request.yml', lambda d: d['labels'].remove('form:rerun-request'), 'a rerun request is read by a person'),
+    ('rerun-request.yml', lambda d: d['labels'].append('request:rerun'), 'request:rerun is applied at triage'),
+    ('dispute.yml', lambda d: d['labels'].append('request:rerun'), 'request:rerun is applied at triage'),
+    ('rerun-request.yml', lambda d: item(d, 'unsolicited')['validations'].update(required=False),
+     'unsolicited is not marked required'),
+    ('rerun-request.yml', lambda d: d['body'].remove(item(d, 'bot-disclosure')), 'no required bot disclosure'),
 ])
 def test_each_property_fails_when_broken(tree, name, breaks, expect):
     edit(tree, name, breaks)
@@ -97,3 +105,12 @@ def test_both_checks_run_in_job_5():
         job = YAML(typ='safe').load(fh)['jobs']['check-5-codegen']
     runs = [s['run'] for s in job['steps'] if 'run' in s]
     assert 'uv run --locked --python "$PYTHON" python scripts/validate_issue_forms.py' in runs
+
+
+def test_the_rerun_request_form_promises_no_bot_reply():
+    """The intake bot is switched off, and even on it skips a form it does not know: the box says no bot acts."""
+    with open(os.path.join(ROOT, '.github', 'ISSUE_TEMPLATE', 'rerun-request.yml'), encoding='utf-8') as fh:
+        doc = YAML(typ='safe').load(fh)
+    [box] = item(doc, 'bot-disclosure')['attributes']['options']
+    assert box['label'].startswith('I understand no bot acts on this issue')
+    assert 'comments' not in box['label'] and 'replies' not in box['label']

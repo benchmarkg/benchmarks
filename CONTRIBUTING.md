@@ -58,12 +58,15 @@ benchmark form has no box of its own for the sentence, so when you give a number
 number of items, the release date), paste the sentence that states it under *Anything we should
 know*, with its link if it is on another page.
 
-Three more forms cover the rest:
+Four more forms cover the rest:
 [New result claim](https://github.com/benchmarkg/benchmarks/issues/new?template=new-claim.yml), for
-a score a system reached, with the conditions it was run under; the Dispute form, above; and
+a score a system reached, with the conditions it was run under; the Dispute form, above;
 [Taxonomy term](https://github.com/benchmarkg/benchmarks/issues/new?template=taxonomy-term.yml), to
 propose a new vocabulary term, which goes to a written decision record and two reviewers rather
-than straight into the index.
+than straight into the index; and
+[Rerun request](https://github.com/benchmarkg/benchmarks/issues/new?template=rerun-request.yml), to
+ask for a published result to be rerun or checked. This project does not run evaluations today, so
+a rerun request is kept on record and changes nothing in the index by itself.
 
 ## What happens next
 
@@ -75,7 +78,7 @@ review depends on the intake bot, which exists but is switched off.
 its workflow is disabled, and it runs only once the repository variable `ISSUE_INTAKE_ENABLED` is
 set to `true`, which it is not yet. So for now a maintainer reads each issue, replies on it, asks
 about anything that does not check out, and opens the pull request that makes the change. The tick
-box on each form saying that a bot handles the issue describes the bot as it works when it is on.
+box on the forms saying that a bot handles the issue describes the bot as it works when it is on.
 
 **When the bot is on.** For a new benchmark, the bot checks each answer, looks the benchmark up
 under its names and aliases in case the index already has it, and validates the entry it would
@@ -91,6 +94,12 @@ that has not yet been measured on a real issue. For a correction, a result claim
 bot checks the answers in the same way and then hands the issue to a maintainer, who opens the pull
 request. A taxonomy term goes to a decision record instead, and the bot opens no pull request for
 it. The bot never merges anything.
+
+**A rerun request, and one sent by e-mail.** A rerun request has no bot step, with the bot on or
+off: a maintainer reads it and, at triage, labels it `request:rerun`, the label every request to
+rerun or check a result carries, however it arrived. A rerun request that reaches a maintainer by
+e-mail is transcribed by that maintainer into a Rerun request issue, leaving out the sender's
+address and name, so that the count of requests has one home: the issue list.
 
 **How you are credited: by the link.** The pull request for your contribution opens with "From
 issue #N" and closes your issue when it merges, so the public record runs from the change to your

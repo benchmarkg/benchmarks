@@ -118,8 +118,12 @@ instrument stands until it does.
 
 ## Condition (3): at least 5 unsolicited rerun or verification requests
 
-**Instrument.** Triage labels each rerun or verification request `request:rerun`; a request that
-arrives by e-mail is transcribed into an issue first, so the count has one home.
+**Instrument.** Triage labels each rerun or verification request `request:rerun`, whichever way it
+arrived; a request that arrives by e-mail is transcribed into an issue first, so the count has one
+home. The issue is opened from the Rerun request form (`.github/ISSUE_TEMPLATE/rerun-request.yml`,
+P8-S1-T03), which labels it `form:rerun-request` and never `request:rerun`: a form that applied the
+counted label would count every submission, read or not. A transcription picks *Transcribed from an
+e-mail by a maintainer* and leaves out the sender's address and name.
 
 ```
 gh issue list --repo benchmarkg/benchmarks --label request:rerun --state all --limit 1000 \
@@ -131,4 +135,15 @@ answers a call for requests does not count ("a gate you can generate demand for 
 Unsolicited is a triage judgement, so the triager records it on the issue when applying the label,
 and the measurement copies each counted issue's number into its raw output.
 
+Where it is recorded: the form asks *Does this request answer a call for requests?*, and the
+triager confirms the answer or edits the issue so that it reads `Unsolicited:` or `Solicited:`;
+*Not sure* is not a judgement. `scripts/adoption_measure.py` reads that answer from the issue body,
+by the word before the colon. A request that came some other way carries no answer, and is judged
+in the rulings file by issue number; a ruling there overrules the form. An author can edit an issue
+after triage, so the person confirming the quarterly measurement's condition-3 rulings checks the
+form answers as well.
+
 **2026-09-29:** the `request:rerun` label does not exist yet; the query returns nothing.
+
+**2026-11-18:** the form exists (P8-S1-T03). The `request:rerun` label is still to be created, by a
+maintainer and by hand; until it is, the query returns nothing.

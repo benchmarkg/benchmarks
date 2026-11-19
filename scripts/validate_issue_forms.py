@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The five issue forms carry what 05 S6 requires of them (P2-S6-T02; 05 S6, 05 S8).
+"""The six issue forms carry what 05 S6 requires of them (P2-S6-T02; 05 S6, 05 S8; P8-S1-T03, 13 S0.2).
 
 For each form in .github/ISSUE_TEMPLATE/ it asserts:
 
@@ -11,9 +11,12 @@ For each form in .github/ISSUE_TEMPLATE/ it asserts:
                fields come from the linked sources, not memory (new-benchmark.yml has 05 S6's two).
   bot          a `bot-disclosure` checkboxes block whose every option is required and says a bot handles the
                issue, so no form can be submitted without the contributor knowing a bot acts on it.
-  routing      every form but taxonomy-term.yml carries `source:issue-form`, the label the intake bot opens a
-               pull request for; taxonomy-term.yml carries `route:adr` and never `source:issue-form`, because
-               a term goes to the ADR process and never auto-PRs (05 S5).
+  routing      every form but taxonomy-term.yml and rerun-request.yml carries `source:issue-form`, the label the
+               intake bot opens a pull request for; taxonomy-term.yml carries `route:adr` and never
+               `source:issue-form`, because a term goes to the ADR process and never auto-PRs (05 S5).
+               rerun-request.yml carries `form:rerun-request` and never `source:issue-form`, since a request
+               changes no data. No form carries `request:rerun`: triage applies it (13 S0.2), and a form that
+               applied it would count every submission, read or not.
 
     python scripts/validate_issue_forms.py              # exit 0 if every form holds, 1 otherwise
     python scripts/validate_issue_forms.py --root DIR   # another tree (the tests do)
@@ -44,7 +47,17 @@ REQUIRED = {
     'dispute.yml': ['concerns', 'disputant-relationship', 'position', 'evidence'],
     'taxonomy-term.yml': ['facet', 'term-id', 'term-label', 'definition', 'inclusion-test', 'exclusion-test',
                           'near-miss', 'benchmarks'],
+    # 13 S0.2's condition (3); `unsolicited` is the judgement scripts/adoption_measure.py reads.
+    'rerun-request.yml': ['target', 'request', 'unsolicited', 'arrived-by'],
 }
+# The forms the intake bot opens no pull request for: the label each carries instead, and the rule it breaks.
+NO_PR = {
+    'taxonomy-term.yml': ('route:adr', 'a taxonomy term routes to the ADR process (route:adr) and never auto-PRs '
+                                       '(no source:issue-form)'),
+    'rerun-request.yml': ('form:rerun-request', 'a rerun request is read by a person (form:rerun-request) and '
+                                                'never auto-PRs (no source:issue-form)'),
+}
+RERUN_LABEL = 'request:rerun'
 NEW_BENCHMARK_ATTESTATIONS = (
     'Every field above is supported by the linked sources; I have not filled anything from memory',
     'I understand this index links to data and never hosts it',
@@ -96,11 +109,15 @@ def check_form(name, doc) -> list[str]:
     if not bot or not all(o.get('required') for o in bot) or not all('bot' in str(o.get('label')) for o in bot):
         out.append('no required bot disclosure (a checkbox saying a bot handles the issue)')
     labels = doc.get('labels') or []
-    if name == 'taxonomy-term.yml':
-        if 'source:issue-form' in labels or 'route:adr' not in labels:
-            out.append('a taxonomy term routes to the ADR process (route:adr) and never auto-PRs (no source:issue-form)')
+    if name in NO_PR:
+        route, rule = NO_PR[name]
+        if 'source:issue-form' in labels or route not in labels:
+            out.append(rule)
     elif 'source:issue-form' not in labels:
         out.append('no source:issue-form label, so the intake bot would not pick it up')
+    if RERUN_LABEL in labels:
+        out.append('%s is applied at triage (13 S0.2), never by a form, or every submission would be counted'
+                   % RERUN_LABEL)
     return out
 
 
