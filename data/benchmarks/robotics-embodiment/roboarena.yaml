@@ -15,6 +15,13 @@
 #
 # 02 S12.2 disagrees with the sources in five places; each is recorded where it bites:
 # submission_process, independence_flags, two secondary domains, and the capability list.
+#
+# P3-S6-T05 (2026-11-19) added the pairwise, sim and embodiment records: the headline Metric
+# data/metrics/roboarena-rating.yaml and the pairwise one roboarena-pairwise-win-rate.yaml; two RatingPools,
+# data/rating-pools/pool-roboarena-2026-06-10.yaml and pool-roboarena-2026-11-16.yaml, with the 24 Systems they
+# name; the four environment fields made material under `comparability`; and the Baseline that records why no
+# absolute score has an anchor. Read for it: the API's weekly leaderboard snapshots, a second read of the site
+# bundle (its extract above lacks the passages) and openpi's README. tests/test_roboarena.py holds them.
 
 id: roboarena
 name: RoboArena
@@ -330,9 +337,30 @@ execution:
   code_licence: MIT
   code_licence_source: src-roboarena-gh-api
 comparability:
+  # P3-S6-T05. The facets resolve, through (physical-trial, physical-robot-system), to the physical-trial profile:
+  # hardware_platform, venue, subset_used and n_samples. The task makes simulator, simulator_version,
+  # hardware_platform and venue material on the robotics profile. Of the two profiles in
+  # taxonomy/comparability-profiles.yaml that carry them, simulation lacks venue and physical-trial lacks the
+  # simulator pair, and changing a profile's material set is a vocabulary change that needs an ADR and a migration
+  # (scripts/check_schema_change_gate.py). So the four are named here, the per-entry override 04 S8 provides, as
+  # casp names human_assistance:
+  #   hardware_platform -- every score is a policy on a DROID arm, and the paper leaves other embodiments to
+  #     future work; a policy on another body is a different number.
+  #   venue -- the A/B evaluations are spread over the evaluators' institutions, and the maintainers publish the
+  #     official board refitted with one evaluator organisation removed: the evaluator mix moves the number.
+  #   simulator, simulator_version -- the maintainers point submitters to a simulated DROID environment to test a
+  #     policy before real-world evaluation; a number from it is not an arena number and must never share a key
+  #     with one. A real-robot claim answers both with `none` (a review check asks for a better answer).
+  # hardware_platform and venue also come from the profile; naming them keeps all four material if the facets change.
+  material_extra:
+    - hardware_platform
+    - venue
+    - simulator
+    - simulator_version
   # Added 2026-09-25 with the user's approval (P0-S5-T02). The same fact is stated in the deferred
   # metric block below; this is the field the rating-pool-required rule (02 S11) reads.
   rating_pool_required: true
+headline_metric: roboarena-rating
 liveness:
   repo_last_commit: 2026-04-28
   leaderboard_last_updated: 2026-11-10
@@ -344,6 +372,43 @@ repository: https://github.com/robo-arena/roboarena
 dataset_url: https://huggingface.co/datasets/RoboArena/DataDump_07-17-2026
 api_url: https://roboarena-api-domain-name.online/api
 
+# --- Metrics and the missing absolute baseline (P3-S6-T05) ------------------------------------
+# The rating pools are data/rating-pools/pool-roboarena-2026-06-10.yaml and pool-roboarena-2026-11-16.yaml: a
+# rating claim names one, and the pool carries its snapshot date (comparability.rating_pool_required). A pairwise
+# claim names an `opponent` and is valued in roboarena-pairwise-win-rate.
+
+metrics:
+  - roboarena-rating
+  - roboarena-pairwise-win-rate
+
+baselines:
+  # Why no absolute-score Baseline exists, as a record (04 S7, 12 S3.4): taxonomy/ceiling-anchors.yaml carries the
+  # absent anchor of a pool-relative rating on the Metric and on a Baseline's value_absent_reason. kind
+  # theoretical-maximum names the bound an absolute score would have.
+  - id: base-roboarena-no-absolute-score
+    benchmark_version: roboarena
+    kind: theoretical-maximum
+    metric: roboarena-rating
+    value_absent_reason: not-applicable
+    is_primary: true
+    source: src-roboarena-site-bundle-2026-11-19
+    evidence:
+      - source: src-roboarena-site-bundle-2026-11-19
+        quote: This uses the same Bradley-Terry Davidson ranking path as the leaderboard
+      - source: src-roboarena-site-bundle
+        quote: The only requirement is that evaluations are done pairwise, maintaining the same task
+          and environment for the policies in the pair.
+      - source: src-roboarena-arxiv-html
+        quote: that is proportional to the maximum progress a policy achieved on the task
+    notes: >
+      No absolute anchor exists, and none can be measured. The ranked number is a Bradley-Terry-Davidson
+      score fitted to pairwise preferences within one pool: unbounded, and moved by every policy that
+      joins, so no ceiling or floor can be stated on its scale. Nor is there a fixed item set to measure
+      a human, operational or random reference on: each A/B evaluation's task and scene are the evaluator's,
+      shared only by the pair. The one absolute number the network collects, a 0-100 progress score per
+      policy per evaluation, sits on those evaluator-chosen tasks and does not rank. Headroom is null,
+      and the Metric refuses it (requires_pool, unbounded); 12 S3.4 names the reason relative-rating-only.
+
 tags:                                 # 02 S11 rule 7: the escape hatch for an undefined term
   - evaluator-improvised
 
@@ -352,7 +417,7 @@ tags:                                 # 02 S11 rule 7: the escape hatch for an u
 curation:
   added_by: agent (P0-S3-T03)
   added_on: 2026-09-23
-  last_verified: 2026-09-23
+  last_verified: 2026-11-19
   verification_status: ai-drafted-unverified
   sources:
     - id: src-roboarena-arxiv-abs
@@ -401,6 +466,19 @@ curation:
       kind: third-party-paper
       title: World Action Models are Zero-shot Policies
       text_sha256: 84a0775dd1d561fcf3393ae3932eea9f635a0c44ad7aeaaee169f6baf202d68d
+    - id: src-roboarena-api-leaderboard-history-2026-11-19
+      url: https://roboarena-api-domain-name.online/api/leaderboard_history
+      kind: leaderboard-api
+      text_sha256: 63a2ee51a9a677f35e5de764f32b8df2a9049f377b7fb5ef9ffddd978210a713
+    - id: src-roboarena-site-bundle-2026-11-19
+      url: https://robo-arena.github.io/assets/index-FWyWX4NQ.js
+      kind: maintainer-site
+      text_sha256: 447adbc0335acb2771ba3f4c951070b2cc373d547e0aed1340a9e7dba26e5bb8
+    - id: src-github-openpi-readme-215abfb
+      url:
+        https://raw.githubusercontent.com/Physical-Intelligence/openpi/215abfb217dbac7d5f1273282331b9b1866c0479/README.md
+      kind: repository-readme
+      text_sha256: 98d838b5f336164d357ecbd806cd5d09bc628d84803190563c1cbd8d93ba0751
   review_checks:
     - check: The site's recommended starting point is a Physical Intelligence training pipeline, and
         Physical Intelligence policies (pi0_droid, pi05_droid, pi0_fast_droid) are ranked on the
@@ -413,11 +491,74 @@ curation:
         Note: Derived. The maintainers publish a leave-one-organisation-out rerun themselves.'
       field: governance
       source: src-roboarena-api-transparency
+    - check: The four environment fields are material through comparability.material_extra, not
+        through a robotics profile in taxonomy/comparability-profiles.yaml, whose simulation profile
+        lacks venue and whose physical-trial profile lacks simulator and simulator_version. Giving
+        robotics one profile with all four, or adding the missing pair to each, is a vocabulary
+        change with an ADR and a migration, left to the maintainer; until then the other robotics
+        entries keep their profiles' sets (behavior-1k and calvin resolve to simulation, with no
+        venue).
+      field: comparability.material_extra
+    - check: simulator and simulator_version are material on a benchmark scored only on real robots,
+        so every claim must answer them. EvalConditions has no simulator_applicable companion of the
+        kind provider_snapshot_available is, so the proposed convention for P3-S8-T05 is the string
+        `none` for both, which counts as answered; a companion field would be a schema change.
+      field: comparability.material_extra
+      source: src-roboarena-site-bundle-2026-11-19
+      quote: Test your policies in our simulation environment before submitting for real-world
+        evaluation.
+    - check: P3-S8-T05 asks for pairwise claims with an opponent and a rating_pool snapshot, but
+        schema/claim.py lets only a rating claim name a rating_pool. A pairwise claim here is one
+        policy's non-tie win rate against one opponent (roboarena-pairwise-win-rate) and names no
+        pool; tying it to a snapshot needs either its date_reported or a schema change.
+      field: metrics
+      source: src-roboarena-site-bundle-2026-11-19
+      quote: Percentages exclude ties; records are wins-ties-losses.
+    - check: The pools name 24 Systems drafted only so that the pools resolve, and their ids are
+        proposals (04 S3, id allocation is a human act). The five floppy_bagel rows look like
+        checkpoints of one policy and could be versions of one System; apricot, dam and phoenix are
+        short global ids for arena-only names; balsomsoc is the site's label for the backend id
+        Cosmos3-Nano-Policy, and the site gives the name Cosmos3-Nano-Policy to another backend id,
+        so each System keeps the backend id in external_ids.
+      source: src-roboarena-site-bundle-2026-11-19
+      quote: '"cosmos3-nano-policy":"balsomsoc"'
+    - check: Systems' availability follows the board's open_source flag (16, generally-available, by
+        the paper's definition of an open-source policy), openpi's README (pi0_droid, pi0_fast_droid
+        and pi05_droid, flagged not open_source but downloadable) and, for the five with neither,
+        never-released. No weights were looked for; a reviewer confirms each.
+      source: src-github-openpi-readme-215abfb
+      quote: gs://openpi-assets/checkpoints/pi0_droid
+    - check: The paper's own pool (seven policies, 612 comparisons) is not stored as a RatingPool.
+        Its policy names map onto the board's backend ids only by inference, and it gives no
+        snapshot date of its own.
+      source: src-roboarena-arxiv-html
+      quote: Through decentralized evaluations of 7 generalist policies across 7 universities and a
+        total of 612 pairwise comparisons
+    - check: Two pools are stored, the first weekly snapshot and the newest; the 22 between are in
+        the same Source body. The scores have not moved since the snapshot of 2026-09-14 (the last
+        evaluation the transparency summary showed on 2026-09-23 is dated 2026-09-12), so that
+        snapshot and the newest hold the same scores under different dates; which one a claim cites
+        is P3-S8-T05's call.
+      source: src-roboarena-api-leaderboard-history-2026-11-19
+      quote: '"note":"Automatic weekly leaderboard snapshot."'
+    - check: roboarena-rating is flagged unbounded and requires_pool, like the three other rating
+        metrics, so Metric.headroom_null_reason() answers unbounded-metric, whereas 12 S3.4 and
+        P3-S9-T04 name relative-rating-only for RoboArena and unbounded-metric for Kaggle Game
+        Arena. The two metrics now carry the same flags; dropping unbounded here would give
+        relative-rating-only but the ingest gate refuses a metric with neither a range nor
+        unbounded. Which signal separates the two reasons is P3-S9-T02's or a schema decision.
+      field: metrics
+    - check: The missing absolute anchor is a theoretical-maximum Baseline with value_absent_reason
+        not-applicable, because Baseline.kind has no term for an absent anchor. Whether a floor
+        record (random-chance, also not-applicable) should sit beside it is open.
+      field: baselines
   personal_data_excluded:
     - source: src-roboarena-api-transparency
       what: evaluator account labels (e-mail addresses) and per-account counts
 
 # --- The metric: relative, pool-dependent, and not quite Elo -----------------------------------
+# Deferred (Metric and RatingPool). Since P3-S6-T05 the records are data/metrics/roboarena-rating.yaml and
+# data/rating-pools/pool-roboarena-*.yaml; this block stays as the Phase-0 record of what they had to hold.
 
 metric:
   kind: relative-rating
