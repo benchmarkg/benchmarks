@@ -56,7 +56,11 @@ The manifest is 08 S6.1's block, with these decisions:
   counts          published entities by kind, materialised subsets, and the claims on published benchmarks (both
                   tiers, facets.json's claim_count basis), all read from the shipped artifacts themselves
   files           S13's: html, data, pagefind_fragments, index_chunks, assets, total, cap (Cloudflare's 20,000 files
-                  per version, 08 S7.5). The five counts must sum to total, and S13 asserts it (08 S6.1)
+                  per version, 08 S7.5). The five counts must sum to total, and S13 asserts it (08 S6.1). The two
+                  Pagefind counts are dist/pagefind/'s .pf_fragment and .pf_index files: S12 writes the bundle at the
+                  end of `astro build` (site/src/lib/pagefind.ts, P2-S4-T06), so it is there before S13 counts, and
+                  the bundle's other files (its scripts, styles, wasm, filter and meta files) are assets. It holds no
+                  HTML, so the html check below never reads it; scripts/check_pagefind_urls.py checks its URLs
   routes          S13's: HTML pages by route family, 08 S7.5's table, summing to files.html
 
 atlas.json, which `bench build --atlas` writes (P2-S5-T01), is hashed and named like the other shipped artifacts;

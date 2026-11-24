@@ -435,8 +435,11 @@ def test_unset_renders_every_route_family(sites):
 
 @pytest.mark.skipif(NPX is None, reason='npx is not installed')
 def test_a_preview_renders_the_listed_route_and_the_fixed_narrative_routes_only(sites):
-    every, preview = sites.all.files, sites.preview.files
-    expect = {f for f in every if not f.startswith(FAMILIES) or f.startswith(LISTED.lstrip('/'))}
+    # dist/pagefind/ is the search index over what each build rendered (P2-S4-T06), its files named by their content,
+    # so a preview's differs from a full build's by construction; tests/build/test_pagefind.py checks the index itself
+    every, preview = ({f for f in s.files if not f.startswith('pagefind/')} for s in (sites.all, sites.preview))
+    fixed = {'benchmarks/index.html'}         # /benchmarks/, the browse view (P2-S4-T04): a fixed route under a family
+    expect = {f for f in every if not f.startswith(FAMILIES) or f in fixed or f.startswith(LISTED.lstrip('/'))}
     assert preview == expect
     assert 'benchmarks/alpha-bench/index.html' in preview and 'benchmarks/alpha-bench/cite.yaml' in preview
     assert not any(f.startswith(('orgs/', 'metrics/', 'taxonomy/', 'browse/')) for f in preview)
