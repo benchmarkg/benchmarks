@@ -13,7 +13,7 @@
 // giving one a key is a change to 10's grammar first. Every term of a group's vocabulary is in it, whatever its count:
 // "zero-count terms are shown and disabled, never hidden" (10 V11).
 //
-// Matching. "AND across facets, OR within a facet" (08 S5.7). facets.json (tools/build/emit.py, format 2) writes a flat
+// Matching. "AND across facets, OR within a facet" (08 S5.7). facets.json (tools/build/emit.py, format 3) writes a flat
 // facet's values as the term id, or `{field}:{id}` for an id the facet defines in more than one field (execution's
 // wet-lab is a compute tier and a reproducibility blocker), so a term matches either spelling: exactly one of the two can
 // occur for any term, and which one is the emitter's business. The domain group matches a family against a row's
@@ -37,15 +37,16 @@ import type { FilterState, Ignored, RangeKey, SingleKey, TermKey, Vocabularies }
 
 // ---- facets.json ------------------------------------------------------------------------------------------
 
-/** The facets.json format this view reads (tools/build/emit.py FORMATS). */
-export const FACETS_FORMAT = 2;
+/** The facets.json format this view reads (tools/build/emit.py FORMATS): 3 since the row gained `editions`. */
+export const FACETS_FORMAT = 3;
 
-/** One facets.json row: 08 S4.2's list, as tools/build/emit.py FACET_ROW writes it. */
+/** One facets.json row: 08 S4.2's list and 11 S4's edition names, as tools/build/emit.py FACET_ROW writes it. */
 export interface FacetRow {
   id: string;
   slug: string;
   name: string;
   aliases: string[];
+  editions: string[];                   // the edition names, for the BM25 leg (islands/search/lexical.ts)
   domain: string;                       // the family of domain.primary
   subdomain: string;                    // domain.primary
   facets: Record<string, string[]>;     // the seven flat facet arrays, keyed by taxonomy facet name

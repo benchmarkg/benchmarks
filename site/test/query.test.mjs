@@ -7,8 +7,9 @@
 // is AND across facets and OR within one, a facet with no selection is no constraint and a selection nobody carries
 // admits nothing; ranges are inclusive, by two binary searches, with null outside every range. The faceted counts'
 // sets leave each facet's own selection out. Every rule is checked by eye on a small fixture, then against a
-// brute-force predicate over a seeded random corpus. The BM25 leg ranks only survivors, deterministically; RRF is
-// 1 / (60 + rank) summed; the semantic leg is absent, and says so. The latency budgets are test/perf/facet-filter.bench.mjs.
+// brute-force predicate over a seeded random corpus. RRF is 1 / (60 + rank) summed; the pipeline ranks only survivors,
+// through the BM25 leg (src/islands/search/lexical.ts, whose own tests and frozen fixture are test/lexical.bm25.test.mjs);
+// the semantic leg is absent, and says so. The latency budgets are test/perf/facet-filter.bench.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -16,7 +17,8 @@ import {
   RANGES, add, buildFacetIndex, constrain, count, countBoth, fullSet, has, intersect, members, rangeColumn, union,
   valueSet, within, wordsFor,
 } from '../src/lib/facet-index.ts';
-import { RRF_K, TEXT_FIELDS, bm25, buildPipeline, buildTextIndex, filter, rrf, run } from '../src/lib/query.ts';
+import { RRF_K, buildPipeline, filter, rrf, run } from '../src/lib/query.ts';
+import { bm25 } from '../src/islands/search/lexical.ts';
 
 // ---- a small world, so every set can be checked by eye ---------------------------------------------------------
 
@@ -176,32 +178,7 @@ test('over 3,000 random queries on a random 777-row corpus, filter() and constra
   }
 });
 
-// ---- the BM25 leg, the fusion and the pipeline ----------------------------------------------------------------
-
-test('BM25 ranks only the survivors, best first, over name, aliases and id; a blank query ranks nothing', () => {
-  const text = buildTextIndex(ROWS);
-  const everyone = fullSet(ROWS.length);
-  assert.deepEqual([...TEXT_FIELDS], ['name', 'aliases', 'id']);
-  const swe = bm25(text, 'swe', everyone);
-  assert.deepEqual(swe.map((r) => ROWS[r.row].id).sort(), ['swe-bench', 'swe-lancer']);
-  assert.ok(swe.every((r, i) => i === 0 || swe[i - 1].score >= r.score), 'best first');
-  // `full` is only in an alias, `mtbench` only in an alias, `lancer` matched as a prefix of a name token
-  assert.deepEqual(bm25(text, 'full', everyone).map((r) => ROWS[r.row].id), ['swe-bench']);
-  assert.deepEqual(bm25(text, 'mtbench', everyone).map((r) => ROWS[r.row].id), ['mt-bench']);
-  assert.deepEqual(bm25(text, 'lanc', everyone).map((r) => ROWS[r.row].id), ['swe-lancer']);
-  // the survivors restrict, and do not rescore: a survivor's score is the same with or without the others
-  const judged = filter(buildFacetIndex(ROWS), { facets: { evaluation_method: ['judge'] } });
-  const only = bm25(text, 'swe', judged);
-  assert.deepEqual(only.map((r) => ROWS[r.row].id), ['swe-lancer']);
-  assert.equal(only[0].score, swe.find((r) => ROWS[r.row].id === 'swe-lancer').score);
-  assert.deepEqual(bm25(text, '   ', everyone), []);
-  assert.deepEqual(bm25(text, 'nothing-matches-this', everyone), []);
-});
-
-test('BM25 orders equal scores by row, whatever order the rows were indexed in', () => {
-  const twins = [row('b', 'Alpha'), row('a', 'Alpha'), row('c', 'Alpha')];
-  assert.deepEqual(bm25(buildTextIndex(twins), 'alpha', fullSet(3)).map((r) => r.row), [0, 1, 2]);
-});
+// ---- the fusion and the pipeline -------------------------------------------------------------------------------
 
 test('RRF is the sum of 1 / (k + rank) at the published default k = 60, ties by row', () => {
   assert.equal(RRF_K, 60);
@@ -229,6 +206,7 @@ test('the pipeline runs 08 S5.7\'s steps in order, and the semantic leg is absen
   assert.deepEqual(ids(searched.survivors), ['swe-bench', 'humaneval', 'swe-lancer']);
   assert.deepEqual(searched.rows.map((i) => ROWS[i].id), ['swe-bench', 'swe-lancer'], 'filter first, then rank: humaneval does not match the text');
   assert.deepEqual(searched.fused.map((r) => r.row), searched.lexical.map((r) => r.row), 'one list: fusion keeps its order');
+  assert.deepEqual(searched.lexical, bm25(p.text, 'swe bench', searched.survivors), 'step 2 is the lexical leg, over the survivors');
   assert.equal(searched.semantic, null);
   assert.deepEqual(run(p, { text: '  ' }).rows, [0, 1, 2, 3, 4], 'a blank query is no query');
   assert.deepEqual(run(buildPipeline([]), { text: 'swe', facets: { capability: ['planning'] } }).rows, [], 'an empty corpus');

@@ -12,10 +12,10 @@ What "validates" means for each part of the artifacts:
   - every materialised subset row: its id, parent and label against subset.schema.json, its
     resolved domain, capability and metric against the Subset override they stand in for, and its
     inherited facets against the Benchmark field they come from;
-  - every facets.json row: exactly 08 S4.2's keys (tools/build/emit.py FACET_ROW); each value
-    tools/build/emit.py PROJECTED says is one Benchmark field against that field, and equal to that
-    field of the corpus.json record; and its seven facet arrays and its domain and year equal what the
-    corpus.json record gives, so the two artifacts cannot disagree.
+  - every facets.json row: exactly 08 S4.2's keys and 11 S4's `editions` (tools/build/emit.py FACET_ROW);
+    each value tools/build/emit.py PROJECTED says is one Benchmark field against that field, and equal to
+    that field of the corpus.json record; and its seven facet arrays, its edition names and its domain and
+    year equal what the corpus.json record gives, so the two artifacts cannot disagree.
 
 tests/build/test_emit_artifacts.py tests the emitter itself -- the field lists, the claim-derived
 fields, enums.json and the domain-group refusal -- over the 20-entry fixture.
@@ -120,6 +120,8 @@ def problems(out_dir: str) -> list[str]:
                     out.append('facets %s.facets differs from corpus.json' % row['id'])
             except KeyError as e:                           # a corpus value no vocabulary defines
                 out.append('facets %s: corpus.json carries %s, which no facet vocabulary defines' % (row['id'], e))
+            if row['editions'] != emit.edition_names(b):
+                out.append('facets %s.editions differs from the editions corpus.json lists' % row['id'])
         if b is not None and (row['domain'], row['year']) != (b['domain']['primary'].split('/')[0],
                                                               int(b['released'][:4]) if b['released'] else None):
             out.append('facets %s: domain or year is not derived from the corpus record' % row['id'])

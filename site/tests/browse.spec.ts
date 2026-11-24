@@ -125,9 +125,9 @@ const DISJOINT = (() => {
   return null;
 })();
 
-test('the preview is what these expectations read: facets.json format 2 by its hashed URL, and published rows', () => {
+test('the preview is what these expectations read: facets.json format 3 by its hashed URL, and published rows', () => {
   expect(facets.artifact).toBe('facets');
-  expect(facets.format).toBe(2);
+  expect(facets.format).toBe(3);
   expect(ROWS.length).toBeGreaterThan(0);
   expect(FACETS_URL).toMatch(/^\/data\/facets\.[0-9a-f]{8}\.json$/);
   expect(DISJOINT, 'a capability and an evaluation method that never meet').not.toBeNull();

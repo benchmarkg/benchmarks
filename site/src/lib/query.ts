@@ -15,23 +15,23 @@
 // plus inclusive ranges on the range columns. The browse view (lib/browse-view.ts) does the same over rail terms, each
 // of which joins its spellings, and calls lib/facet-index.ts directly, so its island does not carry MiniSearch.
 //
-// Step 2. 08 S5.7 names the fields as "name, aliases, one-line summary". facets.json (08 S4.2's row, format 2) carries
-// no summary, so the leg indexes `name`, `aliases` and `id` -- the id because a benchmark's slug is how it is often
-// written; indexing a summary needs it in 08 S4.2's row and the emitter first. The text index is built once over every
-// row, like the bitsets, and the survivors only restrict which rows it returns, so IDF and the average field lengths are
-// the whole index's and a row's score does not move with the facet selection. MiniSearch scores with BM25+ at its
-// defaults (k1 = 1.2, b = 0.7, delta = 0.5); a query term matches a token exactly or as its prefix (no fuzzy matching),
-// any term may match (OR), and no field is boosted. Equal scores are ordered by row, never by MiniSearch's map order.
+// Step 2 is islands/search/lexical.ts (P6-S1-T04), the site's one BM25 implementation, which this module runs rather
+// than keeping a second: MiniSearch over facets.json's `name`, `aliases`, `editions` and `id`, with the field boosts,
+// the fuzzy and prefix matching and the BM25+ parameters it states and its frozen fixture holds. The text index is built
+// once over every row, like the bitsets, and the survivors only restrict which rows it returns, so a row's score does
+// not move with the facet selection; equal scores are ordered by row.
 //
 // Step 4: score(d) = the sum over the lists of 1 / (k + rank(d)), ranks counted from 1, a list without d adding nothing;
 // equal scores are ordered by row. A row's number is its position in the rows the pipeline was built over
 // (buildPipeline), the same in the bitsets and the text index, so a caller that orders its rows for display gets the
 // survivors in that order.
-import MiniSearch from 'minisearch';
 import {
-  RANGES, buildFacetIndex, has, intersect, members, union, valueSet, within, type Bitset, type FacetIndex, type IndexedRow,
+  RANGES, buildFacetIndex, intersect, members, union, valueSet, within, type Bitset, type FacetIndex, type IndexedRow,
   type RangeName,
 } from './facet-index.ts';
+import { bm25, buildLexicalIndex, byScore, type LexicalIndex, type LexicalRow, type Ranked } from '../islands/search/lexical.ts';
+
+export type { Ranked };
 
 // ---- step 1: the facet filter -------------------------------------------------------------------------------
 
@@ -58,54 +58,7 @@ export function filter(index: FacetIndex, q: FacetQuery): Bitset {
   return intersect(index.all, sets);
 }
 
-// ---- step 2: BM25 -------------------------------------------------------------------------------------------
-
-/** What the text leg reads of a facets.json row. */
-export interface TextRow {
-  id: string;
-  name: string;
-  aliases: readonly string[];
-}
-
-/** The fields the BM25 leg indexes (module docstring, "Step 2"). */
-export const TEXT_FIELDS = ['name', 'aliases', 'id'] as const;
-
-interface TextDoc {
-  row: number;
-  id: string;
-  name: string;
-  aliases: string;
-}
-
-export type TextIndex = MiniSearch<TextDoc>;
-
-/** The MiniSearch index over `rows`, whose document ids are row numbers. */
-export function buildTextIndex(rows: readonly TextRow[]): TextIndex {
-  const text = new MiniSearch<TextDoc>({
-    idField: 'row',
-    fields: [...TEXT_FIELDS],
-    storeFields: [],
-    searchOptions: { prefix: true, fuzzy: false, combineWith: 'OR' },
-  });
-  text.addAll(rows.map((r, row) => ({ row, id: r.id, name: r.name, aliases: (r.aliases ?? []).join(' ') })));
-  return text;
-}
-
-/** A row and its score in one ranked list. */
-export interface Ranked {
-  row: number;
-  score: number;
-}
-
-const byScore = (a: Ranked, b: Ranked) => b.score - a.score || a.row - b.row;
-
-/** The survivors matching `query`, best first, with their BM25 scores; none for a blank query. */
-export function bm25(text: TextIndex, query: string, survivors: Bitset): Ranked[] {
-  if (query.trim() === '') return [];
-  return text.search(query, { filter: (r) => has(survivors, r.id as number) })
-    .map((r) => ({ row: r.id as number, score: r.score }))
-    .sort(byScore);
-}
+// ---- step 2: BM25 -- islands/search/lexical.ts (module docstring) -----------------------------------------------
 
 // ---- step 3: cosine similarity -- Phase 6, not implemented (module docstring) ----------------------------------
 
@@ -127,12 +80,12 @@ export function rrf(lists: readonly (readonly Ranked[])[], k: number = RRF_K): R
 
 export interface Pipeline {
   facets: FacetIndex;
-  text: TextIndex;
+  text: LexicalIndex;
 }
 
 /** The facet index and the text index over the same rows in the same order, built once on first load. */
-export function buildPipeline(rows: readonly (IndexedRow & TextRow)[]): Pipeline {
-  return { facets: buildFacetIndex(rows), text: buildTextIndex(rows) };
+export function buildPipeline(rows: readonly (IndexedRow & LexicalRow)[]): Pipeline {
+  return { facets: buildFacetIndex(rows), text: buildLexicalIndex(rows) };
 }
 
 /** A query: the facet filter, and the free text (`q`) the BM25 leg ranks by. */
