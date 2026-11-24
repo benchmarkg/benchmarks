@@ -22,15 +22,17 @@
 //
 // Counting. A term's count is the number of rows that carry it and match every OTHER group's selection: what the
 // results would hold if that term were its group's only selection. So the counts of a group with a selection still show
-// what each of its other terms would add. 10 V11 measures a full recount over 1,500 rows as a sub-millisecond loop that
-// needs no index structure, and this is that loop: one pass over the rows, which counts a row into every group when it
-// matches everything and into its one failing group when it fails exactly one. P2-S4-T02's bitset index
-// (lib/facet-index.ts, lib/query.ts) is not built yet; the view needs only tally()'s contract, whatever computes it.
+// what each of its other terms would add. The sets are P2-S4-T02's bitset index (lib/facet-index.ts, 08 S5.7):
+// buildIndex() builds facets.json's value bitsets once, in result order, and gives each rail term the union of its
+// spellings' sets; tally() ORs a group's selected terms, ANDs the groups and the year range, and counts every term within
+// the set constrain() gives its group, so a change is word-wise ANDs and popcounts, not a pass over the rows.
+// test/perf/facet-filter.bench.mjs holds it to 08 S8.1's filter budget at 1,500 and 5,000 rows.
 //
 // What the view applies. The rail's term keys, and `yr` (release year, inclusive; a row with no year is outside every
 // range). The grammar's other keys are kept in the URL and named in a visible "not applied" notice rather than dropped
 // or silently ignored: `q` is the search box's (Pagefind, P2-S4-T06/T07), `hr` filters on headroom, which no build
 // stage computes yet (every row's is null), `sort` and `ver` have no control here yet, and `b` is the Suite Builder's.
+import { buildFacetIndex, constrain, countBoth, members, union, valueSet, within, type Bitset, type FacetIndex } from './facet-index.ts';
 import type { FilterState, Ignored, RangeKey, SingleKey, TermKey, Vocabularies } from './filter-url.ts';
 
 // ---- facets.json ------------------------------------------------------------------------------------------
@@ -152,33 +154,31 @@ export function vocabularies(groups: readonly RailGroup[]): Vocabularies {
 
 export interface Index {
   groups: RailGroup[];
-  rows: FacetRow[];             // in result order: name, then id
-  carried: string[][][];        // carried[row][group]: the term ids of that group the row carries
+  rows: FacetRow[];             // in result order: name, then id; a row's bit in every set is its place here
+  facets: FacetIndex;           // lib/facet-index.ts over `rows`
+  terms: Map<string, Bitset>[]; // per group: term id -> the rows carrying it; a term no row carries is absent
 }
 
 const byName = (a: FacetRow, b: FacetRow) => a.name.localeCompare(b.name, 'en') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
-/** The rows sorted for display, and per row the terms of each group it carries, read once on load. */
+/** The rows sorted for display, the facet index over them, and per group each term's rows, built once on load. A
+ *  term's rows are its spellings' (module docstring, "Matching"): a domain term is a row's family or its subdomain,
+ *  any other term its bare id or `{field}:{id}` in its facet's array. */
 export function buildIndex(groups: RailGroup[], rows: readonly FacetRow[]): Index {
-  const lookups = groups.map((g) => {
-    const m = new Map<string, string>();
-    for (const t of g.terms) {
-      m.set(t.id, t.id);
-      if (g.field != null) m.set(`${g.field}:${t.id}`, t.id);
-    }
-    return m;
-  });
   const sorted = [...rows].sort(byName);
-  const carried = sorted.map((r) => groups.map((g, gi) => {
-    const values = g.key === 'd' ? [r.domain, r.subdomain] : (r.facets?.[g.facet] ?? []);
-    const out: string[] = [];
-    for (const v of values) {
-      const id = lookups[gi].get(v);
-      if (id != null && !out.includes(id)) out.push(id);
+  const facets = buildFacetIndex(sorted);
+  const terms = groups.map((g) => {
+    const out = new Map<string, Bitset>();
+    for (const t of g.terms) {
+      const spelt = (g.key === 'd'
+        ? [valueSet(facets, 'domain', t.id), valueSet(facets, 'subdomain', t.id)]
+        : [valueSet(facets, g.facet, t.id), g.field != null ? valueSet(facets, g.facet, `${g.field}:${t.id}`) : undefined]
+      ).filter((s): s is Bitset => s != null);
+      if (spelt.length > 0) out.set(t.id, spelt.length === 1 ? spelt[0] : union(facets.words, spelt));
     }
     return out;
-  }));
-  return { groups, rows: sorted, carried };
+  });
+  return { groups, rows: sorted, facets, terms };
 }
 
 export interface Tally {
@@ -193,33 +193,25 @@ function yearRange(state: FilterState): [number, number] | null {
   return m ? [Number(m[1]), Number(m[2])] : null;
 }
 
-/** The selection's results and every term's count, from one pass over the rows (module docstring, "Counting"). */
+/** The selection's results and every term's count, over the bitsets (module docstring, "Counting"). */
 export function tally(index: Index, state: FilterState): Tally {
-  const sel = index.groups.map((g) => new Set(state[g.key] ?? []));
+  const { facets, terms } = index;
   const yr = yearRange(state);
-  const counts = index.groups.map(() => new Map<string, number>());
-  const add = (gi: number, ids: string[]) => {
-    for (const id of ids) counts[gi].set(id, (counts[gi].get(id) ?? 0) + 1);
-  };
-  const matches: number[] = [];
-  index.rows.forEach((r, ri) => {
-    if (yr != null && (r.year == null || r.year < yr[0] || r.year > yr[1])) return;
-    const carried = index.carried[ri];
-    let fails = 0;
-    let failed = -1;
-    for (let gi = 0; gi < sel.length && fails < 2; gi++) {
-      if (sel[gi].size > 0 && !carried[gi].some((id) => sel[gi].has(id))) {
-        fails += 1;
-        failed = gi;
-      }
-    }
-    if (fails === 0) {
-      matches.push(ri);
-      carried.forEach((ids, gi) => add(gi, ids));
-    } else if (fails === 1) {
-      add(failed, carried[failed]);
-    }
+  const base = yr == null ? facets.all : within(facets.ranges.year, facets.words, yr[0], yr[1]);
+  const unions = index.groups.map((g, gi) => {
+    const sel = state[g.key] ?? [];
+    return sel.length === 0 ? null : union(facets.words, sel.map((id) => terms[gi].get(id)));
   });
+  const { all, others } = constrain(base, unions);
+  const counts = terms.map((byTerm, gi) => {
+    const m = new Map<string, number>();
+    for (const [id, rows] of byTerm) {
+      const n = countBoth(rows, others[gi]);
+      if (n > 0) m.set(id, n);
+    }
+    return m;
+  });
+  const matches = members(all);
   return { total: matches.length, matches, counts };
 }
 
