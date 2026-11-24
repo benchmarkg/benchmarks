@@ -21,6 +21,18 @@
 #   4. submission_process `self-reported`. There are two paths, and on one of them the maintainers
 #      score the submitted forecasts themselves.
 #   5. The published JAMES version was unreachable (403); the entry rests on arXiv v2.
+#
+# P3-S6-T04 (2026-11-24) stored the anchors and the grid. The ceiling is ECMWF's operational IFS (HRES for the
+# deterministic RMSE, ENS for the probabilistic CRPS) and the floors are the climatology and persistence
+# forecasts, in data/baselines/weatherbench-2.yaml, each at one stated cell of the grid, its value quoted from the
+# maintainers' published results files (benchmark_results/ in the public bucket, read as text): the paper's and
+# the site's scorecards are images, and the site's interactive plots receive base64-encoded arrays, so neither
+# holds a quotable number. The task asked for the (variable, level, lead time, metric) grid as secondary_axes,
+# whose vocabulary is the five cost axes, so the grid is recorded where the schema can hold it: the headline
+# variables as subsets, the headline metrics as Metric records, lead time as a material condition (named in
+# comparability.material_extra too) and the evaluation year as versions. Region and evaluation resolution have
+# no field. New Sources: the paper's v2 PDF, the layout JSON of the site's two score apps, the evaluation script
+# at commit 87a0abd and five results files.
 
 id: weatherbench-2
 name: WeatherBench 2
@@ -273,7 +285,8 @@ data:
     A reference point more than a cap: the scorecards colour each cell by its percentage difference to
     IFS HRES, a scale that runs past the anchor in both directions. And the anchor differs by
     scorecard (ceiling_by_category): IFS HRES for deterministic scores, IFS ENS for probabilistic ones.
-    The Baseline records themselves are P3-S6-T04's.
+    The Baseline records are in data/baselines/weatherbench-2.yaml, one stated cell of the grid each,
+    beside the climatology and persistence floors.
   ceiling_anchor_type_basis:
     reason: The top of the scale is ECMWF's operational forecast, and skill is shown relative to it;
       a human baseline would be a category error here, as 02 S12.3 says.
@@ -377,6 +390,17 @@ execution:
     - custom
   maintainer_rerun_policy: unstated
 
+comparability:
+  # P3-S6-T04: lead time is material, so a 3-day and a 10-day score never share a comparability key (04 S8). It
+  # is material through the `forecasting` profile, which only the uncertainty-calibration-score x
+  # scientific-surrogate-model pair resolves here (statistical-fit with the same subject resolves `surrogate-fit`,
+  # which has no horizon, ADR-0024), and it is named here so that it stays material whatever the facets resolve
+  # to, as chaosbench does; the governed profile vocabulary is untouched. The variable and level are the claim's
+  # subset, the metric its metric and the evaluation year its version. Not added: evaluation resolution and
+  # ground truth (analysis or ERA5), which move the number and have no EvalConditions field (review_checks).
+  material_extra:
+    - lead_time
+
 reference_conditions: cond-eb116e6670bf
 aggregation_policy: none-by-design
 aggregation_policy_basis:
@@ -393,10 +417,18 @@ no_legitimate_aggregate_basis:
     across a variety of metrics, rather than determining a single
 secondary_axes: []
 secondary_axes_note: >
-  Empty because the vocabulary is {cost, latency, throughput, energy, reliability}, and the benchmark's
-  real axes -- variable, pressure level, region, lead time, metric -- are none of them. P3-S6-T04 plans
-  to record that grid here; the enum cannot hold it (curation.notes).
-
+  Empty: the field's vocabulary is {cost, latency, throughput, energy, reliability}, axes reported beside
+  a score, and WeatherBench 2 reports none of them. P3-S6-T04 asked for the score grid here, variable
+  x pressure level x lead time x metric; the vocabulary cannot hold it, and a schema change is not this
+  task's, so the grid is recorded where the schema can hold it: the headline variables with their levels
+  as subsets[], the headline metrics as metrics[], lead time as EvalConditions.lead_time (material, and
+  named in comparability.material_extra) and the evaluation year as versions[]. The site's other two axes,
+  region (34; the headline scores are global) and evaluation resolution (three), have no field (review_checks).
+secondary_axes_basis:
+  reason: The site's score apps pick one cell of the grid by variable, metric, pressure level,
+    region, year and resolution, and plot it against lead time.
+  source: src-weatherbench-2-deterministic-layout-2026-11-24
+  quote: '"options":[500,700,850],"value":850,"clearable":false,"id":"level"'
 liveness:
   repo_last_commit: 2026-10-21
   reproduction_script_present: true
@@ -426,6 +458,88 @@ versions:
     sources:
       - src-weatherbench-2-homepage
 
+subsets:
+  - id: weatherbench-2#z500
+    label: Z500, geopotential at 500 hPa
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 500hPa Geopotential Z500 RMSE CRPS
+    notes: Upper-level headline variable, scored by RMSE and CRPS. The cell the anchors in
+      data/baselines/weatherbench-2.yaml are stated at.
+  - id: weatherbench-2#t850
+    label: T850, temperature at 850 hPa
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 850hPa Temperature T850 RMSE CRPS
+    notes: Upper-level headline variable, scored by RMSE and CRPS.
+  - id: weatherbench-2#q700
+    label: Q700, specific humidity at 700 hPa
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 700hPa Specific humidity Q700 RMSE CRPS
+    notes: Upper-level headline variable, scored by RMSE and CRPS.
+  - id: weatherbench-2#wv-ws850
+    label: WV/WS850, wind vector or wind speed at 850 hPa
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 850hPa Wind vector/speed WV/WS850 RMSE (WV) CRPS (WS)
+    notes: Upper-level headline variable, two quantities under one name. The deterministic headline
+      score is the wind-vector RMSE and the probabilistic one the wind-speed CRPS.
+  - id: weatherbench-2#t2m
+    label: T2M, 2 m temperature
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 2m Temperature T2M RMSE CRPS
+    notes: Surface headline variable, scored by RMSE and CRPS.
+  - id: weatherbench-2#ws10
+    label: WS10, 10 m wind speed
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 10m Wind speed WS10 RMSE CRPS
+    notes: Surface headline variable, scored by RMSE and CRPS.
+  - id: weatherbench-2#mslp
+    label: MSLP, mean sea level pressure
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: Mean sea level pressure MSLP RMSE CRPS
+    notes: Surface headline variable, scored by RMSE and CRPS.
+  - id: weatherbench-2#tp24hr
+    label: TP24hr, 24 h precipitation accumulation
+    scored_separately: true
+    evidence:
+      - source: src-weatherbench-2-arxiv-html
+        quote: 24h precipitation TP24hr SEEPS CRPS
+      - source: src-weatherbench-2-arxiv-html
+        quote: with the exception of precipitation which shows SEEPS (evaluated against ERA5 in all
+          cases)
+    notes: Surface headline variable, scored by SEEPS (deterministic) and CRPS (probabilistic), and
+      against ERA5 for every model, operational ones included. No metric_override, since the
+      deterministic and probabilistic headline metrics differ.
+subsets_note: >
+  The eight headline variables of the paper's Table 3, each at its stated pressure level, one subset each:
+  they are reported separately and never pooled, so a claim's subset says which variable and level it
+  scores and two variables never share a comparability key. This is the variable and level axis of the
+  grid that secondary_axes cannot hold. The site scores more (15 variables in the deterministic app, 13
+  in the probabilistic one, each upper-level variable at 500, 700 and 850 hPa); only the headline ones
+  are subsets.
+metrics:
+  - weatherbench-2-rmse
+  - weatherbench-2-seeps
+  - weatherbench-2-crps
+metrics_note: >
+  The headline scores' metrics (Table 3): RMSE for every deterministic headline variable but precipitation,
+  SEEPS for 24 h precipitation, CRPS for every probabilistic one. The anchors of RMSE and CRPS are in
+  data/baselines/weatherbench-2.yaml; SEEPS has none yet. The site's apps also offer ACC, bias, MSE and
+  forecast activity (deterministic) and ensemble-mean RMSE and spread/skill (probabilistic), which have
+  no Metric records yet. headline_metric stays null: none of the three ranks the benchmark.
+
 lineage:
   role: root
 lineage_note: >
@@ -442,7 +556,7 @@ tags:
 curation:
   added_by: agent (P0-S8-T01)
   added_on: 2026-09-26
-  last_verified: 2026-09-26
+  last_verified: 2026-11-24
   verification_status: ai-drafted-unverified
   sources:
     - src-weatherbench-2-arxiv-html
@@ -452,10 +566,23 @@ curation:
     - src-weatherbench-2-submit
     - src-weatherbench-2-data-guide
     - src-weatherbench-2-repo
+    - src-arxiv-2308-15560-v2
+    - src-weatherbench-2-deterministic-layout-2026-11-24
+    - src-weatherbench-2-probabilistic-layout-2026-11-24
+    - src-github-weatherbench2-evaluate-py-87a0abd
+    - src-weatherbench-2-results-hres-vs-hres-t0-240x121-2020
+    - src-weatherbench-2-results-ens-vs-hres-t0-240x121-2020
+    - src-weatherbench-2-results-climatology-vs-era5-240x121-2020
+    - src-weatherbench-2-results-probabilistic-climatology-vs-era5-240x121-2020
+    - src-weatherbench-2-results-persistence-vs-era5-240x121-2020
   sources_note: >
-    The five web sources are Wayback captures, and each extract was built from the capture itself
-    (its SHA-1 checked against the CDX digest), not from the live page, so every quote holds for the
-    snapshot a reader is sent to. The two arXiv sources carry a DOI and are not archived.
+    The five web sources P0-S8-T01 read are Wayback captures, and each extract was built from the capture
+    itself (its SHA-1 checked against the CDX digest), not from the live page, so every quote holds for
+    the snapshot a reader is sent to. The arXiv sources carry a DOI and are not archived. P3-S6-T04 (2026-11-24)
+    added the paper's v2 PDF (the HTML Source's committed extract holds none of the passages it cites),
+    the layout JSON of the site's deterministic and probabilistic score apps, the evaluation script at
+    commit 87a0abd, and five of the maintainers' NetCDF results files read as text; all fetched live and
+    pending archive.
   confidence: medium
   review_checks:
     - check: Whether the entry is right about the variable x pressure level x lead time x metric
@@ -473,8 +600,51 @@ curation:
         separate question (governance.independence_flags_note).
       field: governance.independence_flags_note
       specialist: true
+    - check: secondary_axes cannot hold the score grid P3-S6-T04 asked it to (its vocabulary is the
+        five cost axes), so the grid is recorded as subsets (variable and level), metrics, the
+        material lead_time and versions (year), and the test asserts that. Whether to add a
+        score-axes field or widen the vocabulary is a schema decision
+        (docs/schema-findings-ledger.md, weatherbench-2 finding 4); region and evaluation resolution
+        still have no home.
+      field: secondary_axes
+    - check: The eight headline variables are recorded as subsets so that a claim's subset names its
+        variable and level and the comparability key separates them. A variable is a sub-score, as
+        GeoBench's metrics are in 04 S6, rather than a slice of items; whether that is the right
+        reading of Subset is a reviewer call.
+      field: subsets
+    - check: Baseline has no lead-time, region or resolution field, so each anchor is one stated
+        cell (Z500, global, 120 h, 2020, 1.5 degrees) with those coordinates only in its notes and
+        quotes, and the one-primary-per-metric rule makes IFS the primary for a whole metric. Which
+        cell, and whether a cell-valued anchor belongs on a benchmark that is vector-valued by
+        design, is open.
+      field: data.ceiling_anchor_type
+      specialist: true
+    - check: The anchors' values are a text rendering of the maintainers' NetCDF results files (each
+        Source's extract_preprocessing), not text anyone wrote. No source read names the
+        benchmark_results/ folder, and whether its 2020 files, last updated 2026-03-03, reproduce
+        the paper's figures is not stated.
+      field: data.ceiling_anchor_type
+    - check: IFS HRES is the RMSE anchor because the scorecards measure every model against it, but
+        the IFS ensemble mean beats it on RMSE at longer lead times; the ceiling is a reference
+        point the scale runs past, not a cap.
+      field: data.ceiling_anchor_type
+      specialist: true
+      source: src-arxiv-2308-15560-v2
+      quote: On RMSE, IFS ENS (mean) performs better than IFS HRES for longer lead times.
+    - check: The two floors cross along the lead-time curve (Z500 persistence RMSE is below the
+        climatology's at 24 h and above it at 120 h), and neither is primary. Which floor a forecast
+        verifier would take, if headroom were ever computed per cell, is a specialist question.
+      specialist: true
+    - check: Evaluation resolution and ground truth (analysis or ERA5) move the number and still
+        have no EvalConditions field (ledger findings 1 and 2), so two claims at one lead time can
+        share a key while differing in either; only lead_time was made material here.
+      field: comparability
   unreachable:
     - url: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2023MS004019
       http_status: 403
       consequence: The journal version (JAMES) was not read; every paper-derived field is from arXiv
         v2 (2024-01-26) and may differ from the published text.
+  personal_data_excluded:
+    - source: src-weatherbench-2-deterministic-layout-2026-11-24
+      what: a comparator label that names one model by its author's surname, kept out of the
+        extract's windows
