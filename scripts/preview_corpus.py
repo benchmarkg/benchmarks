@@ -8,14 +8,16 @@ No entry is published yet -- every committed benchmark is still an agent's draft
 those -- so a site built over build/corpus.json has no detail pages to test or to look at. This writes, into its
 own directory, what `bench build` would write if the drafts that pass tier 1 counted as published:
 corpus.json (saying `"drafts": true`), facets.json, derived/adoption.json (tools/build/adoption.py), which the
-detail page reads its claim and system counts from, and croissant-benchmark/ (tools/build/croissant.py), validated as
-`bench build` validates it, which the detail page inlines and serves as cite.jsonld. site/playwright.config.ts runs it
-before the page tests; a person reviewing the drafts can run it to read them rendered.
+detail page reads its claim and system counts from, croissant-benchmark/ (tools/build/croissant.py), validated as
+`bench build` validates it, which the detail page inlines and serves as cite.jsonld, and atlas.json (tools/atlas/emit.py,
+what `bench build --atlas` writes), the pack layout the Atlas island draws (P2-S5-T02). site/playwright.config.ts runs
+it before the page tests; a person reviewing the drafts can run it to read them rendered.
 
 It also writes what `bench build` writes beside them for the site's own fetches (tools/build/manifest.py `write`, 08
 S4.4): data/<name>.<sha8>.json and build-manifest.json, so a preview site names its data artifacts by their hashed URLs,
 as the published one does (site/src/lib/manifest.ts dataHref), and the browse view (P2-S4-T04) has a facets.json to
-fetch. `python tools/build/manifest.py --site <dist> --build build/preview` copies them into a preview's dist.
+fetch, and the Atlas (P2-S5-T02) an atlas.json. `python tools/build/manifest.py --site <dist> --build build/preview`
+copies them into a preview's dist.
 
 It is a script rather than a `bench build` flag because 05 S3's code block is the CLI's only specification. It
 refuses to write into build/ itself, which is what the site deploys from, and the site refuses to build from a
@@ -30,6 +32,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
+from tools.atlas import emit as atlas_emit  # noqa: E402
 from tools.build import adoption, artifacts, croissant, manifest  # noqa: E402
 
 
@@ -54,7 +57,13 @@ def main(argv=None) -> int:
     if problems:
         print('preview_corpus: %d croissant-benchmark problem(s); nothing written' % len(problems), file=sys.stderr)
         return 1
+    try:
+        atlas = atlas_emit.build(result.corpus, a.root)
+    except atlas_emit.AtlasError as e:
+        print('preview_corpus: %s' % e, file=sys.stderr)
+        return 1
     shipped = artifacts.write(result, a.out)
+    shipped.append(atlas_emit.write(atlas, a.out))      # hashed and named in the manifest, as `bench build --atlas` does
     for path in shipped:
         print('wrote %s' % path)
     croissant.write(documents, os.path.join(a.out, croissant.DIR))
