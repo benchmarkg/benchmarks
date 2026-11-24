@@ -49,6 +49,7 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | colorspacious (dev group) | 09 §4.2 (named, not versioned), first P2-S2-T03: CVD simulation and CAM02-UCS ΔE in scripts/check_palette.py | 1.1.2 | 1.1.2 (needs only numpy; MIT) | 2018-04-08 | pypi.org/pypi/colorspacious/json | 2026-10-06 | ok (first pin); the last release is from 2018, checked working against numpy 2.5.3 here |
 | numpy (dev group) | colorspacious's dependency, P2-S2-T03 | 2.5.3 | see the numpy row above | -- | -- | 2026-10-06 | ok (same pin as the atlas extra) |
 | mlcroissant | 08 §5.8 (named, not versioned), first P2-S3-T06: base-Croissant conformance of every croissant-benchmark document, inside `bench build` | 1.1.1 | 1.1.1 (no `requires_python`; the wheel declares no licence, the repository mlcommons/croissant is Apache-2.0 per api.github.com) | 2026-10-05 | pypi.org/pypi/mlcroissant/json | 2026-11-18 | ok (first pin); see note 5 |
+| minisearch (site) | 08 §5.5, §5.7 (named, not versioned), first P2-S4-T02: the BM25 leg of the faceted query pipeline, site/src/lib/query.ts | 7.2.0 | 7.2.0 (`next` tag 5.0.0-beta1, an older line; no dependencies; MIT; not deprecated) | 2025-09-16 | registry.npmjs.org/minisearch | 2026-11-24 | ok (first pin); see note 6 |
 
 ## Other pins and third-party facts the plan names
 
@@ -92,6 +93,14 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    tools/build/croissant.py imports it only to validate. The extension-schema half of the check
    imports jsonschema, which moved from the dev group into `[project] dependencies` for that reason
    (the same pin, 4.26.0, still the newest on PyPI on 2026-11-18), so a `--no-dev` install builds.
+
+6. **MiniSearch weighs what 08 §5.5 says.** 7.2.0 bundled alone (its default export, esbuild 0.28.2,
+   minified ESM) is 17.7 KB, 5.9 KB gzipped and 5.3 KB brotli, measured 2026-11-24 -- the "5.9 kB
+   gzip" 08 §5.5 budgets. The package is 826,513 bytes unpacked in 37 files, with no dependencies,
+   so `package-lock.json` gained its one entry and nothing else. It is a runtime dependency of the
+   site, but only lib/query.ts imports it: the V11 browse island counts through lib/facet-index.ts,
+   which has no dependency, so the island ships no MiniSearch until a view wires the pipeline in.
+   The newest release is over a year old; the line has been stable since 7.0.0 (2024-07-08).
 
 ## Moved pins (issue to open)
 
