@@ -19,6 +19,16 @@
 //
 // A draft-preview build (UAIBI_SITE_DRAFTS=1 over scripts/preview_corpus.py's corpus; lib/corpus.ts) says so on every
 // page, so a screenshot of a preview can never pass for the published index.
+//
+// `search` (P2-S4-T06; 08 S3.2, S7.5 Decision 2) is how the one search index holds the page (lib/pagefind.ts, S12):
+//   crawl    the default: a narrative page, which exists only as HTML and is indexed by Pagefind's crawl of dist/. It
+//            carries the `type: page` filter, and the shell around its <main> -- banners, header, footer -- is ignored,
+//            so its entry is the page's own words
+//   record   an entity route (benchmark, system, organization, metric, taxonomy term), indexed by a custom record built
+//            from its validated YAML (tools/build/pagefind_records.py), so its <body> carries data-pagefind-ignore and
+//            the crawl skips it: one URL, indexed once
+//   none     a route 08 S7.5 leaves out of the index (/browse/, version-pinned views): ignored the same way, no record
+// scripts/check_pagefind_urls.py holds every built page to its family's mode.
 import FontPreloads from '../components/FontPreloads.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import { PREPAINT } from '../lib/theme';
@@ -31,9 +41,10 @@ import '../styles/type.css';
 interface Props {
   title: string;
   zeroJs?: boolean;
+  search?: 'crawl' | 'record' | 'none';
 }
 
-const { title, zeroJs = false } = Astro.props;
+const { title, zeroJs = false, search = 'crawl' } = Astro.props;
 const preview = corpusDoc().drafts;
 // SUCCESSION.md item 5: at 180 days without a human commit to data/, every page says so (P0-S7-T04).
 const stale = bannerText(dormancy());
@@ -46,12 +57,13 @@ const stale = bannerText(dormancy());
     <script is:inline data-prepaint set:html={PREPAINT}></script>
     <title>{title}</title>
     <FontPreloads />
+    {search === 'crawl' && <meta data-pagefind-filter="type[content]" content="page" />}
     <slot name="head" />
   </head>
-  <body>
-    {preview && <p class="staleness-banner" role="status" data-draft-preview>Draft preview: this build includes entries an agent drafted and no person has verified. It is never published.</p>}
-    {stale && <p class="staleness-banner" role="status" data-staleness-banner>{stale}</p>}
-    <header class="site-header">
+  <body data-pagefind-ignore={search === 'crawl' ? undefined : 'all'}>
+    {preview && <p class="staleness-banner" role="status" data-draft-preview data-pagefind-ignore>Draft preview: this build includes entries an agent drafted and no person has verified. It is never published.</p>}
+    {stale && <p class="staleness-banner" role="status" data-staleness-banner data-pagefind-ignore>{stale}</p>}
+    <header class="site-header" data-pagefind-ignore>
       <a class="site-name" href="/">Benchmark index</a>
       {!zeroJs && <ThemeToggle />}
     </header>

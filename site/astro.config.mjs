@@ -2,6 +2,9 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import { fileURLToPath } from 'node:url';
+// S12, the search index (P2-S4-T06; 08 S3.2): Pagefind's custom records and its crawl of dist/, into one index in
+// dist/pagefind/, written and checked at the end of every build (src/lib/pagefind.ts).
+import { pagefindIntegration } from './src/lib/pagefind.ts';
 
 // Test-only pages, never in a normal build: UAIBI_SITE_FIXTURES names which (P4-S5-T06), comma-separated for more
 // than one (P2-S2-T07's and T06's Playwright build routes theme,components). Each page lives in test/fixtures/,
@@ -44,7 +47,7 @@ export default defineConfig({
   // the build from moving a CSS file across drives, which fails (EXDEV) when --outDir is on another volume.
   build: { inlineStylesheets: 'auto' },
   vite: { build: { assetsInlineLimit: 14 * 1024 } },
-  integrations: [react(), ...fixtures.map(fixturePages)],
+  integrations: [react(), ...fixtures.map(fixturePages), pagefindIntegration()],
   // 10 "Information architecture" names /methodology/; the page itself renders at /docs/methodology/ (P2-S3-T05), and
   // a static redirect (a meta refresh, no script) keeps the named URL resolving.
   redirects: { '/methodology': '/docs/methodology/' },

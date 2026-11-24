@@ -48,6 +48,7 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | pyyaml (dev group) | first P3-S3-T07: the workflow script next_task.py, so tests/test_next_task_ahead.py runs here | 6.0.3 | 6.0.3 (`requires_python >=3.8`) | 2025-09-25 | pypi.org/pypi/pyyaml/json | 2026-10-06 | ok (first pin) |
 | colorspacious (dev group) | 09 §4.2 (named, not versioned), first P2-S2-T03: CVD simulation and CAM02-UCS ΔE in scripts/check_palette.py | 1.1.2 | 1.1.2 (needs only numpy; MIT) | 2018-04-08 | pypi.org/pypi/colorspacious/json | 2026-10-06 | ok (first pin); the last release is from 2018, checked working against numpy 2.5.3 here |
 | numpy (dev group) | colorspacious's dependency, P2-S2-T03 | 2.5.3 | see the numpy row above | -- | -- | 2026-10-06 | ok (same pin as the atlas extra) |
+| pagefind (site) | 08 §5.5 and §3.2 S12, first installed by P2-S4-T06: the search index, built at the end of every `astro build` (site/src/lib/pagefind.ts) | **1.6.0** (08 names 1.5.2) | 1.6.0 | 2026-11-01 | registry.npmjs.org/pagefind | 2026-11-24 | ok (first install); **differs from 08's 1.5.2**, for determinism: see note 7 |
 | mlcroissant | 08 §5.8 (named, not versioned), first P2-S3-T06: base-Croissant conformance of every croissant-benchmark document, inside `bench build` | 1.1.1 | 1.1.1 (no `requires_python`; the wheel declares no licence, the repository mlcommons/croissant is Apache-2.0 per api.github.com) | 2026-10-05 | pypi.org/pypi/mlcroissant/json | 2026-11-18 | ok (first pin); see note 5 |
 | minisearch (site) | 08 §5.5, §5.7 (named, not versioned), first P2-S4-T02: the BM25 leg of the faceted query pipeline, site/src/lib/query.ts | 7.2.0 | 7.2.0 (`next` tag 5.0.0-beta1, an older line; no dependencies; MIT; not deprecated) | 2025-09-16 | registry.npmjs.org/minisearch | 2026-11-24 | ok (first pin); see note 6 |
 
@@ -101,6 +102,28 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    site, but only lib/query.ts imports it: the V11 browse island counts through lib/facet-index.ts,
    which has no dependency, so the island ships no MiniSearch until a view wires the pipeline in.
    The newest release is over a year old; the line has been stable since 7.0.0 (2024-07-08).
+7. **Pagefind is installed at 1.6.0, not the 1.5.2 that 08 §5.5 and 10 V11 name (P2-S4-T06), and
+   that is a decision for 08.** 1.5.2 (2026-04-12) was the newest release when the plan was written;
+   1.6.0 (2026-11-01) is the registry's `latest` on 2026-11-24. The reason is 08 §3.1, which lists
+   S12 as deterministic: measured here on 2026-11-24, 1.5.2 wrote a different bundle on every run
+   over the same records (three runs of 457 records, three bundles; four runs of the same records
+   and a 923-page crawl, four bundles), the fragments and index chunks agreeing and the filter
+   files, the meta file and pagefind-entry.json differing, while 1.6.0 wrote one bundle, byte for
+   byte, in both experiments. tests/build/test_pagefind.py holds that property. 1.6.0 also ships
+   `max_fragments`, the fragment bundling of PR #1020 that 08 §7.5 lists as its fourth mitigation
+   for the 20,000-file cap (left unset: scripts/check_pagefind_urls.py reads one fragment per
+   indexed page and fails on a bundle that groups them), and a platform binary a quarter the size.
+   Going back to 1.5.2 is a one-line change to site/package.json and its lockfile, at the cost of
+   that determinism. Weight: `pagefind` itself is 38 KB unpacked, MIT, with no dependencies and no
+   install script; it brings one platform binary through optionalDependencies,
+   `@pagefind/<os>-<cpu>` 1.6.0, MIT, 12-14 MB unpacked (windows-x64 13.2 MB, linux-x64 13.5 MB,
+   darwin-arm64 12.1 MB; 1.5.2's were about 58 MB). site/package-lock.json gains pagefind and its
+   seven platform packages, and `npm ci` installs the host's one (no install script, so
+   `--ignore-scripts` changes nothing). The bundle it writes into dist/pagefind/ for today's
+   production build (566 records and 10 crawled pages) is about 1.3 MB in 611 files: 576 fragments,
+   10 index chunks and 25 other files, most of the weight in the last group, the UI scripts and
+   styles no page loads until the search box exists (P2-S4-T07). The `pagefind` row in the first
+   table is P0-S4-T01's check of the plan's value on 2026-09-23.
 
 ## Moved pins (issue to open)
 
