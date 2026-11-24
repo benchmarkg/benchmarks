@@ -19,7 +19,10 @@ croissant-benchmark.schema.json, the croissant-benchmark extension's schema from
 JSON-LD documents the build emits, not an entity the site types. And the extension's published JSON-LD context,
 site/public/ns/croissant-benchmark/v1/context.jsonld, from the same module's terms (P4-S6-T01), so `--check` holds
 the served context to them as well; it is one fixed path, outside the two directories the stale-file sweep reads.
-The JSON Schema
+And facetquery.schema.json, F1's structured-output schema, from the enums.json the S8 emitter builds
+(tools/build/facetquery_schema.py, P6-S3-T01; 11 S4), so a taxonomy edit to one of its ten fields is drift too; it has
+no type file and no `$schema`/`$comment` banner, because it is the wire schema the worker sends and carries only the
+keywords structured outputs support. The entity JSON Schema
 is the VALIDATION schema -- what a hand-written or ingested record may contain -- so derived,
 computed fields (`execution.inspect_evals_available`, `Metric.higher_is_better`) are not in it.
 
@@ -129,6 +132,16 @@ def croissant_context(root: str = ROOT) -> tuple[str, dict]:
     return croissant.CONTEXT, croissant.context_document()
 
 
+def facetquery(root: str = ROOT) -> tuple[str, str]:
+    """(repo-relative path, content) of the FacetQuery schema (P6-S3-T01; 11 S4), from the enums.json document
+    tools/build/emit.py builds, NFC as emit() writes it."""
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from tools.build import emit, facetquery_schema
+    body = facetquery_schema.schema(emit.nfc(emit.enums_artifact()))
+    return facetquery_schema.SCHEMA, json.dumps(body, indent=2, ensure_ascii=False) + '\n'
+
+
 def render(root: str = ROOT, json2ts: str | None = None) -> dict[str, str]:
     """Every generated file, repo-relative path -> content."""
     schemas = json_schemas(root)
@@ -136,6 +149,8 @@ def render(root: str = ROOT, json2ts: str | None = None) -> dict[str, str]:
              json.dumps(s, indent=2, ensure_ascii=False) + '\n' for n, s in schemas.items()}
     files[os.path.join(JSON_DIR, 'croissant-benchmark.schema.json').replace(os.sep, '/')] = \
         json.dumps(croissant_schema(root), indent=2, ensure_ascii=False) + '\n'
+    path, content = facetquery(root)
+    files[path] = content
     path, context = croissant_context(root)
     files[path] = json.dumps(context, indent=2, ensure_ascii=False) + '\n'
     for n, ts in typescript(schemas, json2ts or os.path.join(root, JSON2TS)).items():
