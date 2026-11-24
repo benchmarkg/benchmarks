@@ -2,8 +2,9 @@
 #
 # P1-S3-T01, checkpoint entry 7 of 10 (copilot on: the F6 copilot's extractive drafter gave the title, arXiv
 # id, release date and repository). Filled from The Well's paper, arXiv 2412.00568 read as its v2 PDF
-# (2025-02-21), and its abstract page, and from the repository README. Every quote below is checked by the
-# quote-substring validator against those Sources' committed extracts.
+# (2025-02-21), and its abstract page, and from the repository README. P3-S6-T08 (2026-11-24) gave it its Metric,
+# data/metrics/the-well-vrmse.yaml, and its anchors, data/baselines/the-well.yaml, from the v3 PDF (2026-11-20).
+# Every quote below is checked by the quote-substring validator against those Sources' committed extracts.
 
 id: the-well
 name: The Well
@@ -202,6 +203,8 @@ comparability:
     - subset_used
     - hardware
 
+headline_metric: the-well-vrmse
+
 liveness:
   repo_last_commit: 2026-10-19
   reproduction_script_present: true
@@ -209,6 +212,22 @@ liveness:
 
 homepage: https://polymathic-ai.org/the_well/
 repository: https://github.com/PolymathicAI/the_well
+
+metrics:
+  - the-well-vrmse
+metrics_note: >
+  VRMSE is the one metric the paper reports results in, one step ahead and over rollout windows; its optimum
+  is zero, not a maximum, so it is never read as an accuracy and carries no headroom (12 S3.4). Its anchors,
+  zero and the spatial-mean predictor's 1, are in data/baselines/the-well.yaml. The library's other metrics
+  (MSE, NMSE, NRMSE, the maximum error, the binned spectral errors) are not recorded, as no result is
+  reported in them.
+metrics_basis:
+  reason: The paper reports VRMSE in both results tables and says why it chose it over the more
+    common NRMSE.
+  source: src-arxiv-2412-00568-v3
+  quote: We choose VRMSE as the reporting metric as it has the clear interpretation that scores
+    above 1.0 indicates one could have improved the result by predicting the non-spatially varying
+    mean of the target
 
 tags:
   - pde-surrogates
@@ -221,17 +240,39 @@ tags:
 curation:
   added_by: agent (P1-S3-T01)
   added_on: 2026-10-10
-  last_verified: 2026-10-10
+  last_verified: 2026-11-24
   verification_status: ai-drafted-unverified
   sources:
     - src-arxiv-2412-00568-v2
     - src-arxiv-2412-00568
     - src-github-the-well-readme
+    - src-arxiv-2412-00568-v3
   sources_note: >
     The paper's v2 PDF (a DOI, not archived) read as text; the abstract page for the date; and the README
-    at master, with a narrow window that keeps the maintainers' contact line out.
+    at master, with a narrow window that keeps the maintainers' contact line out. For P3-S6-T08, the v3
+    PDF (2026-11-20, a DOI) for VRMSE's definition, its reporting and its anchors.
   confidence: medium
   review_checks:
     - check: 'lifecycle is null (ADR-0024): no result after 2025 was found, which is not evidence that
         there are none.'
     - check: "maintainer_type: Polymathic AI's legal form was not read."
+    - check: The paper's v3 (2026-11-20) changed at least one baseline cell of the one-step table
+        from v2's (the last cell, read as CNextU-net on viscoelastic_instability, from 0.2499 in
+        src-arxiv-2412-00568-v2's extract to 0.9368), and the entry's other fields were read from
+        v2. A claim taken from the table should name the version, and the entry's paper.version_read
+        may want to move to v3.
+      field: paper
+      source: src-arxiv-2412-00568-v3
+      quote: '0.3667 0.9368 Table 2: Model Performance Comparison'
+    - check: One-step and rollout-window VRMSE are one Metric, and nothing in comparability
+        separates them (the material fields are subset_used, hardware and training_data_policy). A
+        claim must say its horizon in a note until a condition field carries it; lead_time, which
+        the surrogate-fit profile leaves out, is the nearest one.
+      field: comparability.material_extra
+      source: src-arxiv-2412-00568-v3
+      quote: Table 3 reports VRMSE averaged over time windows in longer rollouts
+    - check: VRMSE's optimum is recorded as zero, which refuses headroom
+        (lower-is-better-optimum-zero), while Matbench Discovery's error metrics (e-above-hull-mae,
+        kappa-srme, phonon-spectrum-w1) are optimum min with a ceiling at or near zero, which
+        computes it. The corpus should settle one convention for error norms.
+      field: metrics

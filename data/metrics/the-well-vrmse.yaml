@@ -1,0 +1,39 @@
+# data/metrics/the-well-vrmse.yaml -- P3-S6-T08 (04 S6; 12 S3.4). The Well's reported error, an RMSE scaled by the
+# target field's spatial variance. Its optimum is zero, not a maximum, so Metric.headroom_null_reason() answers
+# lower-is-better-optimum-zero; it has no upper bound, and 1 is what predicting the target's spatial mean scores.
+id: the-well-vrmse
+name: VRMSE
+full_name: Variance-scaled root mean squared error (The Well)
+definition: >
+  The square root of the mean squared difference between a predicted and the simulated field, divided
+  by the simulated field's spatial variance plus a small epsilon: sqrt(<|u - v|^2> / (<|u - mean(u)|^2>
+  + eps)), where <.> is the mean over the grid and u the simulated field. Computed for each physical field
+  of a dataset and averaged over the fields, either one step ahead or over a window of steps of an autoregressive
+  rollout. A constant prediction equal to the simulated field's own spatial mean scores about 1.
+value_type: ratio
+range:
+  min: 0
+optimum: zero
+normalization_anchor: >
+  1, the score of predicting the simulated field's spatial mean everywhere (data/baselines/the-well.yaml),
+  so a value above 1 is worse than that constant. It is the mean of the target snapshot, not the population
+  mean.
+aggregation: Per dataset, averaged over its physical fields; one step ahead (the paper's Table 2) or
+  averaged over the rollout windows of steps 6-12 and 13-30 (Table 3). Datasets are reported
+  separately; the tables give no average over them.
+headroom_computable: false
+domains:
+  - physics/simulation-surrogates
+pitfalls: >
+  A one-step value and a rollout-window value are different numbers from the same formula: errors compound
+  in a rollout, and the paper's rollout table prints many entries above 1 and some as ">10" rather than
+  as a value, so record the horizon with every claim. Values from different datasets are not comparable,
+  and the paper's tables average none. The library also computes MSE, NMSE and NRMSE, the maximum error
+  and binned spectral errors, which the paper does not report as results and which are not this metric;
+  NRMSE in particular divides by the field's mean square, not its variance, and so down-weights errors
+  on fields whose mean is far from zero. The v3 PDF (2026-11-20) changed at least one cell of the one-step
+  table from v2's, so a value should name the version read (review check on the-well). Scale-free, so
+  units do not apply.
+sources:
+  - src-arxiv-2412-00568-v3
+  - src-arxiv-2412-00568-v2
