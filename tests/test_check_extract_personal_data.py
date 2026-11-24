@@ -1,4 +1,5 @@
-"""scripts/check_extract_personal_data.py: no stored extract carries an e-mail address or an arXiv submitter's name."""
+"""scripts/check_extract_personal_data.py: no stored extract carries an e-mail address, an arXiv submitter's name or
+an arXiv abs page's author list. The byline fixtures are placeholders ("First Author"), not anyone's name."""
 import os
 import sys
 
@@ -51,6 +52,55 @@ def test_a_redaction_token_needs_its_count(tmp_path):
 def test_windows_are_read_one_at_a_time(tmp_path):
     source(tmp_path, 'src-a', 'From: [name redacted] … Someone Else [view email] [v2]', quote_extract_redactions=1)
     assert 'names the arXiv submitter 1 time' in C.check(str(tmp_path))[0]
+
+
+ABS = 'https://arxiv.org/abs/2601.00001'
+
+
+@pytest.mark.parametrize('extract', [
+    'Title:A Benchmark Authors:[names redacted] View a PDF of the paper titled A Benchmark, by [names redacted] '
+    'and 2 other authors View PDF HTML (experimental) Abstract:We introduce',
+    'Title:A Benchmark Authors: … Abstract:We introduce',                       # the window ends at the label
+    'Authors:[names redacted] … ped Benchmark, by [names redacted] View PDF',   # a window that opens in the title
+    'View a PDF of the paper titled A Benchmark, by Example Prize Foundation View PDF',   # an organisation
+])
+def test_a_redacted_abs_byline_passes(tmp_path, extract):
+    source(tmp_path, 'src-a', extract, url=ABS, quote_extract_redactions=extract.count('redacted') or None)
+    assert C.check(str(tmp_path)) == []
+
+
+@pytest.mark.parametrize('extract, times', [
+    ('Title:A Benchmark Authors:First Author, Second Author View a PDF of the paper', 1),
+    ('View a PDF of the paper titled A Benchmark, by First Author and 2 other authors View PDF', 1),
+    ('Authors:First Author, Second Author, Third Author View a PDF of the paper titled A Benchmark, by First '
+     'Author and 2 other authors View PDF HTML (experimental)', 2),
+    ('Authors:[names redacted] … ork, by First Author View PDF', 1),           # one list redacted, the other not
+    ('Authors:Fi … Abstract:We introduce', 1),                                  # a window cut inside the first name
+])
+def test_an_abs_byline_that_names_its_authors_fails(tmp_path, extract, times):
+    source(tmp_path, 'src-a', extract, url=ABS, quote_extract_redactions=extract.count('redacted') or None)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and "names the paper's authors %d time" % times in errs[0], errs
+
+
+def test_the_byline_rule_reads_abs_pages_only(tmp_path):
+    """A PDF's byline has no fixed label to read; the sweep matched those against the arXiv API's names."""
+    source(tmp_path, 'src-a', 'A Benchmark Authors: First Author', url='https://arxiv.org/pdf/2601.00001v1')
+    assert C.check(str(tmp_path)) == []
+
+
+def test_a_byline_that_a_quote_cites_stays(tmp_path):
+    source(tmp_path, 'src-a', 'Title:A Benchmark Authors:First Author, Second Author View PDF', url=ABS)
+    entry = tmp_path / 'data' / 'benchmarks' / 'agents'
+    entry.mkdir(parents=True)
+
+    def quote(text):
+        (entry / 'a.yaml').write_text(yaml.safe_dump({'id': 'a', 'maintainers': {'quote': text, 'source': 'src-a'}}),
+                                      encoding='utf-8')
+    quote('Authors:First Author')                         # the quote check needs the byline: it stays, for review
+    assert C.check(str(tmp_path)) == []
+    quote('Title:A Benchmark')                            # a quote beside it is no reason to keep it
+    assert "names the paper's authors 1 time" in C.check(str(tmp_path))[0]
 
 
 def test_the_repository_passes():
