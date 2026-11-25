@@ -9,14 +9,20 @@
 // never returns a coordinate, and a filter changes standing only. The matching set is the browse view's tally. The
 // camera fit is checked on numbers a person can follow. The browser half -- sigma drawing it, positions held through a
 // filter, the hover card and the panel -- is tests/atlas.spec.ts (Playwright).
+//
+// P2-S5-T03 adds the family index's two pure halves: familyIndex(), the grouped list in atlas.json's region order with
+// each family's benchmarks by name, which refuses to leave a benchmark out; and lib/roving-tabindex.ts step(), the
+// Up and Down arithmetic inside one cluster. The keyboard and the no-JS list themselves are
+// tests/atlas-a11y.spec.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
-  ALERT_LIFECYCLES, ATLAS_FORMAT, FIT_PAD, HOME, MIN_FIT_RATIO, SATURATED_LIFECYCLE, box, filtering, fitState, level,
-  matching, paint, palette, readAtlas, role, standing,
+  ALERT_LIFECYCLES, ATLAS_FORMAT, FIT_PAD, HOME, MIN_FIT_RATIO, SATURATED_LIFECYCLE, box, familyIndex, filtering, fitState,
+  level, matching, paint, palette, readAtlas, role, standing,
 } from '../src/lib/atlas.ts';
+import { step } from '../src/lib/roving-tabindex.ts';
 import { buildIndex, railGroups, tally } from '../src/lib/browse-view.ts';
 import { allTerms } from '../src/lib/terms.ts';
 
@@ -166,4 +172,54 @@ test('atlas.json is read only as the atlas artifact of this format, with a finit
   assert.match(readAtlas({ ...doc, regions: undefined }).error, /no node, edge or region list/);
   assert.match(readAtlas({ ...doc, nodes: [node({ x: null })] }).error, /no finite position/);
   assert.match(readAtlas(null).error, /not the atlas artifact/);
+});
+
+// ---- the family index (P2-S5-T03) ----------------------------------------------------------------------------
+
+const region = (id, level, parent, label) => ({ id, level, parent, label, x: 0, y: 0, r: 1 });
+const REGIONS = [
+  region('symbolic-formal', 'group', null, 'Symbolic and formal'),
+  region('mathematics', 'family', 'symbolic-formal', 'Mathematics'),
+  region('code', 'family', 'symbolic-formal', 'Code'),
+  region('society-safety', 'group', null, 'Society and safety'),
+  region('agents-tooluse', 'family', 'society-safety', 'Agents and tool use'),
+];
+
+test('the family index is atlas.json\'s groups and families in region order, each family\'s benchmarks by name', () => {
+  const nodes = [
+    node({ id: 'swe', cluster: 'code', label: 'SWE-bench' }),
+    node({ id: 'tau', cluster: 'agents-tooluse', label: 'τ-bench' }),
+    node({ id: 'he', cluster: 'code', label: 'HumanEval' }),
+    node({ id: 'apps', cluster: 'code', label: 'apps' }),
+    node({ id: 'apps-2', cluster: 'code', label: 'APPS' }),
+    node({ id: 'gsm', cluster: 'mathematics', label: 'GSM8K' }),
+  ];
+  const groups = familyIndex({ nodes, regions: REGIONS });
+  assert.deepEqual(groups.map((g) => [g.id, g.label, g.families.map((f) => f.id)]), [
+    ['symbolic-formal', 'Symbolic and formal', ['mathematics', 'code']],
+    ['society-safety', 'Society and safety', ['agents-tooluse']],
+  ], 'the declared order, never the count or the alphabet');
+  // by name with case folded, a tie broken by id; the code-unit order puts a Greek letter after the Latin ones
+  assert.deepEqual(groups[0].families[1].entries.map((e) => e.id), ['apps', 'apps-2', 'he', 'swe']);
+  assert.deepEqual(groups[1].families[0].entries, [{ id: 'tau', label: 'τ-bench' }]);
+  assert.equal(groups.flatMap((g) => g.families).reduce((s, f) => s + f.entries.length, 0), nodes.length, 'every node once');
+  assert.ok(groups.every((g) => !('count' in g)), 'a group is never given a count of its own');
+  // a family the map draws with no benchmark in it would be a row with none; the build draws no such region
+  assert.deepEqual(familyIndex({ nodes: [], regions: REGIONS }).map((g) => g.families.map((f) => f.entries.length)), [[0, 0], [0]]);
+});
+
+test('the family index refuses to leave a benchmark out', () => {
+  assert.throws(() => familyIndex({ nodes: [node({ cluster: 'physics' })], regions: REGIONS }), /places n in physics, a family it draws no region for/);
+  assert.throws(() => familyIndex({ nodes: [], regions: [region('code', 'family', 'nowhere', 'Code')] }), /sits in nowhere, a group it does not list/);
+});
+
+test('roving tabindex: Up and Down move inside a cluster and stop at its ends', () => {
+  assert.equal(step('ArrowDown', 0, 3), 1);
+  assert.equal(step('ArrowDown', 1, 3), 2);
+  assert.equal(step('ArrowDown', 2, 3), 2, 'no wrap and no crossing into the next cluster: that is Tab');
+  assert.equal(step('ArrowUp', 2, 3), 1);
+  assert.equal(step('ArrowUp', 0, 3), 0);
+  assert.equal(step('ArrowDown', 0, 1), 0, 'a cluster of one item stays on it');
+  // the list is vertical: Left, Right, Home and End are the browser's, as are the keys that are not the cluster's to move
+  for (const k of ['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Tab', 'Enter', ' ', '/', 'a', 'PageDown']) assert.equal(step(k, 1, 3), null, k);
 });

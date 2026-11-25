@@ -20,10 +20,15 @@
 // The island is data-pagefind-ignore: every benchmark it names has its own record, and the crawl would otherwise answer a
 // benchmark's name twice, the reason 08 S7.5 gives for leaving /browse/ out.
 //
-// Without JavaScript the frame says where the same benchmarks are (the browse view). The grouped family index that is
-// the map's legend, its no-JS form and its keyboard path (10 V1 "Without JavaScript", 09 S8.2) is P2-S5-T03's.
+// The island's children are the family index (P2-S5-T03, components/AtlasIndex.astro): the grouped list of the build's
+// atlas.json that is the map's legend, its no-JS form, its screen-reader linearisation and its keyboard path (10 V1
+// "Without JavaScript", "And it is also the legend"; 09 S8.2). It is rendered inside the canvas container, beside the
+// stage the map is drawn on; the island hydrates it as static HTML and, once the map is drawn, takes it over in place
+// (its toggles live, a roving tabindex over it), so the page never holds two. Without JavaScript the list is the page,
+// and the stage says where else the benchmarks are (the browse view).
 import Base from '../layouts/Base.astro';
 import Atlas from '../islands/Atlas.tsx';
+import AtlasIndex from '../components/AtlasIndex.astro';
 import { benchmarks } from '../lib/collections';
 import { railGroups } from '../lib/browse-view';
 import { dataHref } from '../lib/manifest';
@@ -44,7 +49,9 @@ const palettes = { light: palette('light', tokens as never), dark: palette('dark
       <p class="lede">Every benchmark in the index on one map. Benchmarks sit inside their subdomain, their domain family and its presentation group, and a node is larger the more systems report results on it. Filtering dims what does not match and never moves a node, so a place on the map stays the same place.</p>
     </header>
     <div data-pagefind-ignore="all">
-      <Atlas client:visible atlasHref={atlasHref} facetsHref={facetsHref} groups={groups} taglines={taglines} palettes={palettes} />
+      <Atlas client:visible atlasHref={atlasHref} facetsHref={facetsHref} groups={groups} taglines={taglines} palettes={palettes}>
+        <AtlasIndex />
+      </Atlas>
     </div>
   </main>
 </Base>
@@ -99,13 +106,24 @@ const palettes = { light: palette('light', tokens as never), dark: palette('dark
   @media (min-width: 51rem) {
     .atlas :global(.body) { grid-template-columns: minmax(0, 1fr) 20rem; align-items: start; }
   }
+  /* The canvas container: the family index (P2-S5-T03) and the stage the map is drawn on. The index comes first in
+     reading order, so a keyboard or screen-reader reader meets the list before the picture of it. From --bp-lg (69rem)
+     it is a column beside the stage, as tall as the stage and scrolling inside it; below, a shorter scrolling block
+     above the stage. Its height is fixed in both, so nothing moves when the map is drawn beside it. */
   .atlas :global(.frame) {
-    position: relative;
-    block-size: min(75vh, 46rem);
-    min-block-size: 22rem;
+    --atlas-h: min(75vh, 46rem);
+    display: grid;
     border: 1px solid var(--c-border);
     background: var(--c-bg);
+  }
+  .atlas :global(.stage) {
+    position: relative;
+    block-size: var(--atlas-h);
+    min-block-size: 22rem;
     overflow: hidden;
+  }
+  @media (min-width: 69rem) {
+    .atlas :global(.frame:has(.atlas-index, .atlas-index-empty)) { grid-template-columns: 16rem minmax(0, 1fr); }
   }
   .atlas :global(.canvas) { position: absolute; inset: 0; }
   .atlas :global(.canvas.pointing) { cursor: pointer; }
@@ -136,6 +154,55 @@ const palettes = { light: palette('light', tokens as never), dark: palette('dark
   .atlas :global(.panel h2) { margin: 0; font-size: var(--fs-lg); line-height: var(--lh-tight); }
   .atlas :global(.panel .hint) { margin: 0; color: var(--c-ink-muted); }
   .atlas :global(.panel .actions) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin: var(--sp-3) 0 0; }
+
+  /* The family index (components/AtlasIndex.astro, taken over by islands/Atlas.tsx). Family is carried by the label and
+     the group band, never by a colour (09 S4.2 (b), (c)): no swatch, no hue, one ink. A group is a hairline rule and its
+     name at --fs-sm in --c-ink-muted; a family row is its label in the condensed face at --c-ink, its count, and the
+     highlight toggle, whose pressed state is the one emphasis token the map's outline takes (09 S4.2 (d)). */
+  .atlas :global(.atlas-index), .atlas :global(.atlas-index-empty) {
+    max-block-size: 20rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--sp-3);
+    border-block-end: 1px solid var(--c-border);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-dense);
+  }
+  @media (min-width: 69rem) {
+    .atlas :global(.atlas-index), .atlas :global(.atlas-index-empty) {
+      max-block-size: none;
+      block-size: var(--atlas-h);
+      min-block-size: 22rem;
+      border-block-end: 0;
+      border-inline-end: 1px solid var(--c-border);
+    }
+  }
+  .atlas :global(.index-title) { margin: 0; font-size: var(--fs-sm); font-weight: 600; }
+  .atlas :global(.index-keys) { margin: var(--sp-1) 0 0; color: var(--c-ink-muted); font-size: var(--fs-xs); }
+  .atlas :global(.index-groups), .atlas :global(.index-families), .atlas :global(.index-entries) { list-style: none; margin: 0; padding: 0; }
+  .atlas :global(.index-group) { margin-block-start: var(--sp-3); padding-block-start: var(--sp-2); border-block-start: 1px solid var(--c-border); }
+  .atlas :global(.group-label) { margin: 0 0 var(--sp-1); font-size: var(--fs-sm); font-weight: 400; color: var(--c-ink-muted); }
+  .atlas :global(.index-family) { margin-block-end: var(--sp-2); }
+  .atlas :global(.family-row) { display: flex; align-items: center; gap: var(--sp-2); }
+  .atlas :global(.family-label) { flex: 1; margin: 0; font-family: var(--font-cond); font-size: var(--fs-sm); font-weight: 600; color: var(--c-ink); }
+  .atlas :global(.family-count) { color: var(--c-ink-muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums slashed-zero; }
+  /* 09 S8.1, SC 2.5.8: a legend toggle is at least 24 by 24 CSS px */
+  .atlas :global(.highlight) {
+    min-block-size: 1.5rem;
+    min-inline-size: 1.5rem;
+    padding-inline: var(--sp-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: inherit;
+    font-size: var(--fs-xs);
+    cursor: pointer;
+  }
+  .atlas :global(.highlight[aria-pressed="true"]) { border-color: var(--c-emphasis); box-shadow: inset 0 0 0 1px var(--c-emphasis); font-weight: 600; }
+  .atlas :global(.highlight:disabled) { color: var(--c-ink-muted); border-color: var(--c-border); cursor: default; }
+  .atlas :global(.index-entries) { margin-block-start: var(--sp-05); padding-inline-start: var(--sp-3); }
+  .atlas :global(.index-entries a) { display: flex; align-items: center; min-block-size: 1.5rem; }
 
   .atlas :global(.absent) { color: var(--c-absent-ink); }
   .atlas :global(.absent .glyph) { font-weight: 600; }

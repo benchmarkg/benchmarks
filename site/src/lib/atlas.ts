@@ -1,6 +1,7 @@
 // site/src/lib/atlas.ts -- P2-S5-T02 (10 V1; 08 S4.2, S5.2; 09 S4.2, S4.3, S4.4, S7.6). The Atlas island's logic, pure
 // and DOM-free: atlas.json read and checked, each node's paint from its lifecycle and headroom, the filter's matching set
-// over facets.json (lib/browse-view.ts, the browse view's own index and grammar), and the camera state that fits a set.
+// over facets.json (lib/browse-view.ts, the browse view's own index and grammar), and the camera state that fits a set;
+// and the family index (P2-S5-T03, familyIndex below), the list that is the map's legend, no-JS form and keyboard path.
 // islands/Atlas.tsx renders what this computes; test/atlas.test.mjs drives it under Node, which strips the types.
 //
 // Positions. atlas.json's x and y are the node's place, written by the build (tools/atlas/emit.py, the pack layout) and
@@ -175,6 +176,60 @@ export function matching(index: Index, state: FilterState): Set<string> | null {
 }
 
 export const standing = (m: Set<string> | null, id: string): Standing => (m == null ? 'all' : m.has(id) ? 'match' : 'out');
+
+// ---- the family index (P2-S5-T03) ---------------------------------------------------------------------------
+//
+// The map's legend, its no-JS form and its keyboard path are one list (10 V1 "And it is also the legend", 09 S8.2):
+// presentation-group headings, then each group's domain families with the number of benchmarks the map places in
+// them, then those benchmarks by name. components/AtlasIndex.astro renders it at build time from the build's atlas.json,
+// the file the island fetches by its hashed URL, so the list and the map are one file; the island takes the rendered
+// list over rather than rendering it again, so this runs in Node only and the route ships none of it.
+//
+// Groups and families are atlas.json's regions, in the containment pre-order the build writes (domain_groups.yaml's
+// declared order, never entry count, never alphabetical: 09 S4.2 (a)), so the index has exactly the groups and families
+// the map draws -- six and nineteen in the draft preview, the counts 09 S4.2 names; a family that holds no benchmark has
+// no circle (tools/atlas/emit.py) and so no row. A family's count is its nodes; a group is never given one (10 V1).
+// Inside a family the benchmarks go by name, case folded, then by id: code-unit order rather than a locale's
+// collation, so Node at build time and every browser put them in the same order.
+
+export interface IndexEntry { id: string; label: string }
+export interface IndexFamily { id: string; label: string; entries: IndexEntry[] }
+export interface IndexGroup { id: string; label: string; families: IndexFamily[] }
+
+function byName(a: IndexEntry, b: IndexEntry): number {
+  const x = a.label.toLowerCase(), y = b.label.toLowerCase();
+  if (x !== y) return x < y ? -1 : 1;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/** The family index of an atlas.json. Throws when a family names no group the file lists or a node a family it draws
+ *  no region for: the list would then leave a benchmark out, and an index that is quietly incomplete is worse than none. */
+export function familyIndex(atlas: Pick<AtlasDoc, 'nodes' | 'regions'>): IndexGroup[] {
+  const groups: IndexGroup[] = [];
+  const group = new Map<string, IndexGroup>();
+  const family = new Map<string, IndexFamily>();
+  for (const r of atlas.regions) {
+    if (r.level !== 'group') continue;
+    const g: IndexGroup = { id: r.id, label: r.label, families: [] };
+    groups.push(g);
+    group.set(r.id, g);
+  }
+  for (const r of atlas.regions) {
+    if (r.level !== 'family') continue;
+    const g = r.parent == null ? undefined : group.get(r.parent);
+    if (g == null) throw new Error(`atlas.json's family ${r.id} sits in ${String(r.parent)}, a group it does not list`);
+    const f: IndexFamily = { id: r.id, label: r.label, entries: [] };
+    g.families.push(f);
+    family.set(r.id, f);
+  }
+  for (const n of atlas.nodes) {
+    const f = family.get(n.cluster);
+    if (f == null) throw new Error(`atlas.json places ${n.id} in ${n.cluster}, a family it draws no region for`);
+    f.entries.push({ id: n.id, label: n.label });
+  }
+  for (const f of family.values()) f.entries.sort(byName);
+  return groups;
+}
 
 // ---- the camera ---------------------------------------------------------------------------------------------
 
