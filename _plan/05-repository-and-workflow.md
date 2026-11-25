@@ -135,8 +135,8 @@ uaibi/
 │   │                              # Load-bearing: 09's colour ramp is generated from this file
 │   ├── comparability-profiles.yaml  # evaluation_method × subjects → material field set. 04 §8
 │   ├── domain-expectations.yaml   # Per-family entry expectation, an input to curation_confidence. 12 §5.3
-│   ├── thresholds.yaml            # frontier_floor = 0.3, comparison_floor = 0.4. 12 owns the values;
-│   │                              # every other document references them BY NAME, never by value
+│   ├── thresholds.yaml            # frontier_floor and comparison_floor: their values live here only.
+│   │                              # 12 owns the reasoning; documents reference them BY NAME, never by value
 │   ├── VERSION                    # Aggregate semver, stamped into every build artifact
 │   ├── _failures/                 # Structured classification-failure log (03 §3.3)
 │   ├── _corpus/                   # The 90-benchmark taxonomy stress corpus (03 §3)

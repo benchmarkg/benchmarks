@@ -1601,15 +1601,16 @@ nobody has an incentive to hide them. The quality dashboard is a first-class sit
 internal tool -- see [12-analytics-and-trends.md](12-analytics-and-trends.md).
 
 **Two thresholds in the tiers above are named constants, not literals, and they live in
-`taxonomy/thresholds.yaml`.** `frontier_floor` (0.3) is the completeness below which a claim is too
-thin to sit on a frontier line; `comparison_floor` (0.4) is the completeness below which a
-machine-ingested claim is hidden from comparison views while remaining fully visible in browse.
-[12-analytics-and-trends.md](12-analytics-and-trends.md) owns both values and the reasoning that
-separates them. They are constants rather than literals because a threshold typed as a number in five
+`taxonomy/thresholds.yaml`.** `frontier_floor` is the completeness below which a claim is too
+thin to sit on a frontier line; `comparison_floor`, the higher of the two, is the completeness below
+which a machine-ingested claim is hidden from comparison views while remaining fully visible in browse.
+[12-analytics-and-trends.md](12-analytics-and-trends.md) owns the reasoning that separates them. They
+are constants rather than literals because a threshold typed as a number in five
 documents is a threshold that gets calibrated in one of them and diverges in the other four the first
 time real completeness data arrives — which is exactly when it finally matters. Anything that needs
-one references it **by name**; this document deliberately prints the values once, here, and nowhere
-else.
+one references it **by name**. The values are printed in that file and nowhere else, this document
+included, next to their basis (`adr/0028-threshold-recalibration.md` re-affirmed both on 2026-11-25
+against 76 hand-curated claims).
 
 Tier 3's licence-placement rule deserves emphasis: it is the only thing standing between a CC-BY
 core and an accidental relicensing event, and it must be a hard gate rather than a convention.

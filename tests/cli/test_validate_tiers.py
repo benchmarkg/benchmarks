@@ -19,6 +19,7 @@ from typer.testing import CliRunner
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
+from schema.taxonomy import read_yaml  # noqa: E402
 from tools import cli  # noqa: E402
 from tools.validate import tiers  # noqa: E402
 
@@ -323,7 +324,8 @@ def test_quality_flags_thin_claims_and_missing_baselines_and_liveness(tmp_path):
     r = tiers.run(root, 'quality', today=later)
     rules = {f.rule: f for f in r.findings}
     assert set(rules) == {'condition-completeness', 'no-baseline', 'liveness-stale'}
-    assert 'below frontier_floor (0.3)' in rules['condition-completeness'].message
+    floor = read_yaml(os.path.join(ROOT, 'taxonomy', 'thresholds.yaml'))['thresholds']['frontier_floor']
+    assert 'below frontier_floor (%s)' % floor in rules['condition-completeness'].message   # by name, not value
     assert r.exit_code == 0
 
 

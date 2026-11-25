@@ -80,7 +80,7 @@ to check that something was decided, use the table.
 | C1 | Vendor-submitted claims | Phase 3 | 2026-09-17 | A vendor claim without an artifact reaches a comparison view | Accept, badge, exclude artifact-less ones from comparison |
 | C2 | Bibliographic data source | Phase 3 | 2026-09-17 | OpenAlex metering changes again | OpenAlex bulk for institutions, S2 keyed for identity |
 | C3 | Systems that no longer exist | Phase 3 | 2026-09-21 | A retired model's claim appears in "current SOTA" | `System.availability` orthogonal to `open_weights`; out of SOTA, in trajectories |
-| C4 | When may an ingested claim enter comparison? | Phase 3 | 2026-09-21 | The real `condition_completeness` distribution is measured | `comparison_floor` 0.4 + `maintainer-verified` + an archived source |
+| C4 | When may an ingested claim enter comparison? | Phase 3 | 2026-09-21 | The real `condition_completeness` distribution is measured | `comparison_floor` + `maintainer-verified` + an archived source |
 | C5 | Sustainability and succession | Before public v1 | 2026-09-21 | Six months with no commit to `data/` | `SUCCESSION.md`, a prepaid domain, and an automatic staleness banner |
 | C6 | Do we run analytics at all, and if so what? | Before public v1 | 2026-09-21 | Anyone asks for a metric the aggregate feed cannot answer | Server-side aggregate only, no beacon, no cookies, published publicly |
 | C7 | The response to a legal threat over a published signal | Before public v1 | 2026-09-21 | The first letter arrives | Evidence inline, dispute not deletion, counsel identified in advance |
@@ -1147,18 +1147,22 @@ with two different jobs, stored once in `taxonomy/thresholds.yaml` and documente
 [12-analytics-and-trends.md](12-analytics-and-trends.md), which already owns the derived-metric
 defaults and publishes them on the page:**
 
-| Constant | Value | Job |
-| --- | --- | --- |
-| `frontier_floor` | **0.3** | Minimum completeness for a claim to contribute to a SOTA/frontier series. A trend line tolerates thinner conditions because it is a shape, not a comparison |
-| `comparison_floor` | **0.4** | Minimum completeness for a claim to enter a side-by-side comparison view. Higher, because a comparison asserts that two numbers mean the same thing |
+| Constant | Job |
+| --- | --- |
+| `frontier_floor` | Minimum completeness for a claim to contribute to a SOTA/frontier series. A trend line tolerates thinner conditions because it is a shape, not a comparison |
+| `comparison_floor` | Minimum completeness for a claim to enter a side-by-side comparison view. Higher, because a comparison asserts that two numbers mean the same thing |
 
-`05`'s and `10`'s 0.35 becomes `comparison_floor` and is therefore 0.4; `07`'s 0.5 becomes a
+Their values are printed in `taxonomy/thresholds.yaml` and nowhere else; `adr/0028-threshold-recalibration.md`
+re-affirmed both on 2026-11-25 against the 76 hand-curated claims then on main, without recalibrating them.
+
+`05`'s and `10`'s 0.35 becomes `comparison_floor`, referenced by name; `07`'s 0.5 becomes a
 reference to `comparison_floor` rather than a fourth number. **Status:**
 [12-analytics-and-trends.md](12-analytics-and-trends.md) §1.4 now declares both constants, names
 `taxonomy/thresholds.yaml` as their home, states why they differ and schedules their recalibration at
 ~200 hand-curated claims, and [11-ai-features.md](11-ai-features.md)'s F5 gate references
-`comparison_floor` by name. Still outstanding: `04`'s tier-4 quality warning still carries a literal
-0.3, and `05`, `07` and `10` still carry literals. See the edits table below. The reason for two
+`comparison_floor` by name. The last literals went on 2026-11-25 (P4-S1-T07): `04`'s tier-4 rule, `07`
+and `10` already named the constants, and `04` §12, `05`'s layout, `12` §1.4's own block, `12` §11's
+citation example and this section no longer print the values. See the edits table below. The reason for two
 constants rather than one is worth stating because "just pick one" is the tempting answer: a single
 constant would either let thin claims into comparison or delete most of the frontier lines, and
 those are different mistakes with different costs.
@@ -1922,8 +1926,8 @@ the table.
 | [04-data-model.md](04-data-model.md) §5 | Carry `maintenance_status` and its `_contested` siblings as a derived field with the `liveness` block named as its input | superseding the withdrawn row below | **pending `04`** |
 | [04-data-model.md](04-data-model.md) licence firewall | `sources/pwc-archive/` → `vendor/pwc-archive/`. Not a spelling difference: `05` §2 puts `data/sources/` inside the CC-BY core, so the stale path reads as an instruction to put viral CC-BY-SA content into the licensed tree | [A5](#a5-the-papers-with-code-cc-by-sa-firewall) | **pending `04`** |
 | [04-data-model.md](04-data-model.md) tier-4 quality rules, ResultClaim | Reference `frontier_floor` rather than a literal 0.3; drop the archived "500 claims" target in favour of `14`'s restatement | [C4](#c4-at-what-threshold-may-a-machine-ingested-claim-enter-a-comparison-view) | **pending `04`** |
-| [12-analytics-and-trends.md](12-analytics-and-trends.md) | Declare `frontier_floor = 0.3` and `comparison_floor = 0.4` as the two named constants, stored in `taxonomy/thresholds.yaml` | [C4](#c4-at-what-threshold-may-a-machine-ingested-claim-enter-a-comparison-view) | **landed** — `12` §1.4, which now owns both, states why they differ, and schedules their recalibration |
-| [05-repository-and-workflow.md](05-repository-and-workflow.md), [10-visualization.md](10-visualization.md) | The 0.35 hide-in-comparison threshold becomes `comparison_floor`, by name not value | [C4](#c4-at-what-threshold-may-a-machine-ingested-claim-enter-a-comparison-view) | **pending `05`, `10`**; `11` F5's copy of the same literal is **landed** |
+| [12-analytics-and-trends.md](12-analytics-and-trends.md) | Declare `frontier_floor` and `comparison_floor` as the two named constants, stored in `taxonomy/thresholds.yaml` | [C4](#c4-at-what-threshold-may-a-machine-ingested-claim-enter-a-comparison-view) | **landed** — `12` §1.4, which now owns both, states why they differ, and schedules their recalibration |
+| [05-repository-and-workflow.md](05-repository-and-workflow.md), [10-visualization.md](10-visualization.md) | The 0.35 hide-in-comparison threshold becomes `comparison_floor`, by name not value | [C4](#c4-at-what-threshold-may-a-machine-ingested-claim-enter-a-comparison-view) | **landed** — `10` and `11` F5 name it; `05`'s layout comment stopped printing the values on 2026-11-25 (P4-S1-T07) |
 | [05-repository-and-workflow.md](05-repository-and-workflow.md) §9 | Add the CI check: no path under `data/` may carry `provenance: ai-worker`. Do **not** add a human-committer assertion | [AI1](#ai1-does-the-ai-layer-justify-breaking-the-pure-static-constraint-with-a-single-serverless-function) | **pending `05`** — this check is the mechanical enforcement of "nothing the model emits is ever stored in `data/`". Without it that rule is an assertion rather than a property |
 | [05-repository-and-workflow.md](05-repository-and-workflow.md) §6 | Add the `codeowners-lapse.yml` rule to the governance ladder | [A11](#a11-governance-beyond-one-maintainer-what-happens-when-the-first-outside-contributor-wants-commit-rights) | **pending `05`** |
 | [06-sourcing-and-scraping.md](06-sourcing-and-scraping.md), [07-ingestion-infrastructure.md](07-ingestion-infrastructure.md) | `vendor/pwc/` → `vendor/pwc-archive/`; `07`'s 0.5 completeness bar becomes `comparison_floor` | [A5](#a5-the-papers-with-code-cc-by-sa-firewall), [C4](#c4-at-what-threshold-may-a-machine-ingested-claim-enter-a-comparison-view) | **partly landed** — the path is correct in both; `07`'s 0.5 bar is still a literal. `03` and `08` still say `vendor/pwc/` and were never on this list |
