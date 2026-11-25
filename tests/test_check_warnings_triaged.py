@@ -19,7 +19,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import check_warnings_triaged as C  # noqa: E402
 
-TODAY = dt.date(2026, 11, 24)
+TODAY = dt.date(2026, 11, 25)
 SUBSET = 'alpha#full replaces capability with fewer terms, dropping sample-efficiency: confirm the drop'
 
 
