@@ -77,9 +77,10 @@ def test_human_assistance_is_material_on_the_casp_profile(casp):
     r = comp.resolve_profile(casp)
     assert 'human_assistance' in r.material
     assert 'human_assistance' in casp.comparability.material_extra
-    # It comes from the entry, not the shared profile: the vocabulary file is untouched.
+    # The entry declared it before the shared table did. Since ADR-0029 (P3-S10-T01) CASP's human-ai-team pairs resolve
+    # the human-participant row, which makes it material too, so it no longer rests on the extra alone.
     profiles = {p.id: p for p in comp.load_profiles().profiles}
-    assert r.profiles and all('human_assistance' not in profiles[p].material for p in r.profiles)
+    assert 'human-participant' in r.profiles and 'human_assistance' in profiles['human-participant'].material
 
 
 def _key(resolution, human_assistance):

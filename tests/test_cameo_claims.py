@@ -281,9 +281,15 @@ def keys(resolution, cond_of):
     return {c.id: comp.compute_for_claim(c, resolution, cond_of(c)).comparability_key for c in CLAIMS}
 
 
+# ADR-0029 (P3-S10-T01) gave CAMEO's server pairs the trained-model row, which makes training_data_policy material.
+# No CAMEO source states a server's training data, so every claim carries it as an unknown; stating it is claim
+# curation. The window still separates the claims, since every claim leaves the same two fields unknown.
+SINCE_ADR_0029 = 'training_data_policy'
+
+
 def test_claims_share_a_key_exactly_when_they_share_a_window(cameo):
     r = comp.resolve_profile(cameo)
-    assert set(r.material) == {'selection_strategy', 'subset_used'}
+    assert set(r.material) == {'selection_strategy', 'subset_used', SINCE_ADR_0029}
     got = keys(r, by_record)
     for a in CLAIMS:
         for b in CLAIMS:
@@ -297,13 +303,15 @@ def test_without_the_window_every_claim_collides(cameo):
     assert len(set(blind.values())) == 1
 
 
-def test_every_claim_clears_the_comparison_floor_and_its_unknowns_are_named(cameo):
+def test_every_claim_clears_the_frontier_floor_and_its_unknowns_are_named(cameo):
+    """Since ADR-0029 a claim states one of three material fields: above frontier_floor, below comparison_floor until
+    selection_strategy or training_data_policy is curated."""
     r = comp.resolve_profile(cameo)
-    floor = read_yaml(os.path.join(ROOT, 'taxonomy', 'thresholds.yaml'))['thresholds']['comparison_floor']
+    floors = read_yaml(os.path.join(ROOT, 'taxonomy', 'thresholds.yaml'))['thresholds']
     for c in CLAIMS:
         got = comp.compute_for_claim(c, r, by_record(c))
-        assert got.condition_completeness >= floor, c.id
-        assert set(got.unknown_fields) == {'selection_strategy'}, c.id
+        assert floors['frontier_floor'] <= got.condition_completeness < floors['comparison_floor'], c.id
+        assert set(got.unknown_fields) == {'selection_strategy', SINCE_ADR_0029}, c.id
         assert by_record(c).human_assistance == 'none'
 
 

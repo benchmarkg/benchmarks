@@ -212,8 +212,11 @@ def test_no_open_asr_claim_is_llm_run(claim):
 
 def test_every_material_field_is_answered():
     built = comp.build(ROOT)['claims']
+    # ADR-0029 (P3-S10-T01): [reference-metric, task-specific-supervised-model] resolves trained-model, whose
+    # training_data_policy the leaderboard does not state for its models. Every other material field is answered.
     for c in CLAIMS:
-        assert built[c.id]['condition_completeness'] == 1.0, c.id
-        assert built[c.id]['unknown_fields'] == [], c.id
+        assert set(built[c.id]['unknown_fields']) <= {'training_data_policy'}, c.id
+        assert built[c.id]['condition_completeness'] == (1.0 if not built[c.id]['unknown_fields'] else
+                                                          1 - 1 / built[c.id]['fields_material_total']), c.id
     keys = {c.system: built[c.id]['comparability_key'] for c in CLAIMS if c.metric == WER}
     assert len(set(keys.values())) == 4                     # each model is its own provider_snapshot

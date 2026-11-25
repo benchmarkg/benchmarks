@@ -412,6 +412,12 @@ def test_the_name_guard_bites():
 
 # ---- 8. identity, conditions and the partition ---------------------------------------------------------------------
 
+# ADR-0029 (P3-S10-T01) gave CoNIC's and MIDOG's (method, subject) pairs the trained-model row, which makes
+# training_data_policy material; their results papers state no training-data rule, so it stays unknown on those two
+# claims until it is curated. STOIC2021's and KiTS19's conditions answer it.
+UNKNOWN_SINCE_ADR_0029 = {'conic': {'training_data_policy'}, 'midog': {'training_data_policy'}}
+
+
 @pytest.mark.parametrize('bid', BATCH)
 def test_ids_are_content_derived_and_every_material_condition_is_answered(bid):
     [path] = claim_files(bid)
@@ -427,7 +433,9 @@ def test_ids_are_content_derived_and_every_material_condition_is_answered(bid):
     [claim] = CLAIMS[bid]
     conditions = EvalConditions.model_validate(record('conditions', cid))
     got = comp.compute_for_claim(claim, comp.resolve_profile(b), conditions)
-    assert got.condition_completeness == 1.0 and not got.unknown_fields
+    unknown = UNKNOWN_SINCE_ADR_0029.get(bid, set())
+    assert set(got.unknown_fields) == unknown
+    assert got.condition_completeness == (1.0 if not unknown else 1 - len(unknown) / got.fields_material_total)
 
 
 @pytest.mark.parametrize('bid', BATCH)

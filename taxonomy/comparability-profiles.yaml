@@ -16,10 +16,19 @@
 # eleven-field agentic profile and 0.037 against the full material table. Quote the figure with
 # its profile or not at all.
 #
+# How a benchmark resolves (tools/build/comparability.py): every (evaluation_method, subject) pair
+# its two facet lists make is looked up here, each pair in exactly one profile, and the benchmark's
+# ONE resolved profile is the union of the rows its pairs hit -- a benchmark that is both judged and
+# agentic is material on both rows' fields. A hand-set `comparability.profile` pins one row instead;
+# it is how an entry whose facets are deliberately empty (a logged vocabulary gap) gets a profile.
+# tests/test_comparability_profiles.py holds every curated benchmark to exactly one resolution,
+# never the fallback, with every one of its pairs listed below.
+#
 # Per-benchmark `comparability.material_extra[]` and `material_waived[]` override the resolved
-# set. A WAIVER REQUIRES A REASON STRING and appears in the quality dashboard, because the
-# failure mode here is curators quietly waiving inconvenient fields until the comparability
-# check passes everything.
+# set. A WAIVER REQUIRES A REASON STRING and appears in the quality dashboard (tier 4's
+# `material-waived` finding, which `bench report quality` lists with each field and reason),
+# because the failure mode here is curators quietly waiving inconvenient fields until the
+# comparability check passes everything.
 #
 # Weights default to 1.0. 04 S8 sets 2.0 for judge_model on a model-graded benchmark and 2.0 for
 # scaffold where the subject is an agent scaffold -- the fields whose absence does the most
@@ -30,17 +39,22 @@
 # records `false` explicitly and that counts as COMPLETE, because the field was answered. A null
 # does not count, because null means nobody looked. The schema penalises unknowns, not absences.
 #
-# UNVERIFIED, AND THE WEAKEST PART OF THIS FILE. The member lists of llm-static-text and agentic
-# are reconstructed from 04 S8's own arithmetic rather than transcribed: it states a six-field
-# and an eleven-field profile and gives per-field Epoch fill rates summing to 0.594, and
-# 0.594/6 = 0.099 against its stated "about 0.10". The six and the eleven are therefore right in
-# SIZE; which fields fill them is inference. Re-derive at the 200-entry checkpoint before any
-# published completeness figure depends on them.
+# WHICH FIELDS ARE MATERIAL TO A SHAPE IS A CURATION JUDGEMENT, so every profile below opens with
+# its `Basis:` (where the member list comes from) and, where a judgement is open, the `Reviewer
+# checks:` a reviewer should confirm or overturn. The member lists of llm-static-text and agentic are still reconstructed
+# from 04 S8's own arithmetic rather than transcribed: it states a six-field and an eleven-field
+# profile and gives per-field Epoch fill rates summing to 0.594, and 0.594/6 = 0.099 against its
+# stated "about 0.10". The six and the eleven are right in SIZE; which fields fill them is
+# inference. The profiles added in 0.3.0 rest on the corpus instead: before this revision 133 of
+# 325 curated entries resolved to the fallback, and their curators had declared, in
+# material_extra, what their shape makes material. Those declarations are the counts quoted in
+# each basis.
 #
-# Authored by P0-S2-T06 from 04 S8 and 13 S4.5.
+# Authored by P0-S2-T06 from 04 S8 and 13 S4.5; surrogate-fit by ADR-0024; 0.3.0, every pair the
+# curated corpus uses and eight profiles, by P3-S10-T01 (ADR-0029).
 
-version: 0.2.0
-updated: 2026-10-12
+version: 0.3.0
+updated: 2026-11-25
 description: >
   Lookup from an (evaluation_method, subject) pair to the material condition-field set used to
   compute comparability_key and condition_completeness.
@@ -49,7 +63,7 @@ default_weight: 1.0
 
 # A pair not listed below resolves to `fallback`, and the resolution is REPORTED rather than
 # silent: an unlisted pair means the vocabulary grew and this file did not, which is a curation
-# signal, not a default to lean on.
+# signal, not a default to lean on. No curated benchmark resolves here (the test above).
 fallback:
   material: [subset_used]
   note: >
@@ -58,6 +72,21 @@ fallback:
     compared.
 
 profiles:
+  # Basis: 04 S8's rows for shots ("changes scores by tens of points"), chain_of_thought,
+  #   reasoning_effort ("8-point spread on ARC-AGI within one model"), tools_allowed ("CritPt goes
+  #   from ~4% to ~10% with code tools"), retries_allowed and subset_used; the size from 04 S8's
+  #   six-field Epoch arithmetic (P0-S2-T06). 0.3.0 adds numeric-tolerance-match,
+  #   classification-metric, domain-metric and composite under the prompted models (the same
+  #   prompted test scored by another statistic), adversarial-red-team under an instruction-tuned
+  #   target (a fixed attack set is a prompted test set; the judge comes from the benchmark's judge
+  #   pair), and the answer-keyed methods under tool-augmented-model: a directed exchange with no
+  #   loop, whose tools are tools_allowed, already material here.
+  # Reviewer checks:
+  #   - domain-specialist-model under the answer-keyed methods resolves here (P0-S2-T06), written
+  #     for prompted specialists, but most domain-specialist entries are not prompted: geo-bench
+  #     and massspecgym waive all five prompting fields. An ADR-0024-style move of those pairs to
+  #     trained-model would retire the two waivers.
+  #   - tool-augmented-model resolves here and not agentic: no loop, so no scaffold.
   - id: llm-static-text
     description: >
       A prompted language model scored against stored answers.
@@ -89,6 +118,37 @@ profiles:
       - [reference-metric, instruction-tuned-model]
       - [reference-metric, reasoning-model]
       - [reference-metric, domain-specialist-model]
+      # 0.3.0 (P3-S10-T01)
+      - [numeric-tolerance-match, base-model]
+      - [numeric-tolerance-match, instruction-tuned-model]
+      - [numeric-tolerance-match, reasoning-model]
+      - [classification-metric, instruction-tuned-model]
+      - [domain-metric, base-model]
+      - [domain-metric, instruction-tuned-model]
+      - [composite, base-model]
+      - [composite, instruction-tuned-model]
+      - [composite, reasoning-model]
+      - [adversarial-red-team, instruction-tuned-model]
+      - [exact-match, tool-augmented-model]
+      - [numeric-tolerance-match, tool-augmented-model]
+      - [symbolic-equivalence, tool-augmented-model]
+      - [multiple-choice, tool-augmented-model]
+      - [classification-metric, tool-augmented-model]
+
+  # Basis: 04 S8's rows for scaffold and harness ("Terminal-Bench moves several points on harness
+  #   alone"), selection_strategy and n_samples ("pass@1 and pass@4 are different measurements"),
+  #   retries_allowed ("silent best-of-n"), plus llm-static-text's prompting fields; the eleven from
+  #   04 S8's arithmetic; scaffold weighs 2.0 per 04 S8's w table. 0.3.0 puts every answer-keyed
+  #   method under the entrant-built systems (agent-scaffold, full-product-pipeline,
+  #   retrieval-augmented-system), as execution-tests already was: of the 14 fallback entries of
+  #   this shape, 12 had declared scaffold and 13 harness in material_extra.
+  # Reviewer checks:
+  #   - k is not a member: a pass@1 run must leave k null (schema/conditions.py), which the key
+  #     reads as unknown; 4 of the 14 declare k where pass@k is published.
+  #   - full-product-pipeline resolves here though its components are undocumented by
+  #     definition: an unknown scaffold is the honest state for a shipped product.
+  #   - prospective-resolution and statistical-fit under agent-scaffold (ForecastBench) resolve
+  #     here, so a forecasting benchmark that admits scaffolds is material on both rows.
   - id: agentic
     description: >
       A system acting over multiple steps, where the harness is part of the apparatus.
@@ -122,6 +182,43 @@ profiles:
       - [composite, tool-augmented-model]
       - [composite, full-product-pipeline]
       - [composite, retrieval-augmented-system]
+      # 0.3.0 (P3-S10-T01)
+      - [environment-state-check, agent-scaffold]
+      - [environment-state-check, full-product-pipeline]
+      - [exact-match, agent-scaffold]
+      - [exact-match, full-product-pipeline]
+      - [exact-match, retrieval-augmented-system]
+      - [numeric-tolerance-match, agent-scaffold]
+      - [numeric-tolerance-match, full-product-pipeline]
+      - [numeric-tolerance-match, retrieval-augmented-system]
+      - [multiple-choice, agent-scaffold]
+      - [multiple-choice, retrieval-augmented-system]
+      - [formal-proof-check, agent-scaffold]
+      - [domain-metric, agent-scaffold]
+      - [domain-metric, full-product-pipeline]
+      - [reference-metric, agent-scaffold]
+      - [reference-metric, full-product-pipeline]
+      - [reference-metric, retrieval-augmented-system]
+      - [classification-metric, full-product-pipeline]
+      - [classification-metric, retrieval-augmented-system]
+      - [statistical-fit, agent-scaffold]
+      - [prospective-resolution, agent-scaffold]
+      - [uncertainty-calibration-score, agent-scaffold]
+      - [human-distribution-percentile, agent-scaffold]
+      - [tournament-play, agent-scaffold]
+      - [adversarial-red-team, agent-scaffold]
+
+  # Basis: 04 S8's judge row ("the judge is part of the apparatus": PaperBench, HealthBench,
+  #   BixBench) and 02 S5 (model-graded-judge: "Judge model and version are required fields";
+  #   model-derived-metric: "The scoring model's version is part of the result"); judge_model
+  #   weighs 2.0 per 04 S8. 0.3.0 adds the judge methods under full-product-pipeline,
+  #   retrieval-augmented-system, tool-augmented-model and model-in-benchmark-harness (as under
+  #   agent-scaffold), and composite under generative-media-model (VBench's composite of
+  #   model-scored dimensions). Of the 10 fallback entries of these pairs, 9 had declared
+  #   judge_model and 7 judge_model_version.
+  # Reviewer checks:
+  #   - the judge methods under a model that is not prompted go to model-scored instead, which
+  #     drops the prompting fields.
   - id: model-graded
     description: >
       A judge model is part of the apparatus, so its identity and prompt are material.
@@ -152,6 +249,31 @@ profiles:
       - [model-derived-metric, reasoning-model]
       - [model-derived-metric, agent-scaffold]
       - [model-derived-metric, generative-media-model]
+      # 0.3.0 (P3-S10-T01)
+      - [model-graded-judge, full-product-pipeline]
+      - [model-graded-judge, tool-augmented-model]
+      - [model-graded-judge, model-in-benchmark-harness]
+      - [rubric-graded, full-product-pipeline]
+      - [rubric-graded, tool-augmented-model]
+      - [rubric-graded, model-in-benchmark-harness]
+      - [model-derived-metric, full-product-pipeline]
+      - [model-derived-metric, retrieval-augmented-system]
+      - [composite, generative-media-model]
+
+  # Basis: 13 S4.5 (the provider snapshot is material where an endpoint, not an artifact, is
+  #   evaluated) and 02 S6 (Epoch's 927 endpoint slugs mix model, host and effort). 0.3.0 adds
+  #   constraint-check, composite and ordinal-grading under hosted-inference-endpoint (HELM
+  #   Capabilities, AILuminate: language-model endpoints), and pairwise-preference-elo under
+  #   generative-media-model: LMArena's media arenas rank served endpoints, as its text arena does.
+  # Reviewer checks:
+  #   - [pairwise-preference-elo, generative-media-model] here rather than human-judged: the votes
+  #     are human, but the rating pool lives on the claim (rating_pool) and LMArena already
+  #     resolves hosted-api with shots waived.
+  #   - the members are a language model's, so the corpus's two non-language endpoints resolve
+  #     trained-model instead: [reference-metric, hosted-inference-endpoint] (Open ASR's speech
+  #     APIs) and [domain-metric, hosted-inference-endpoint] (CAMEO's structure servers). Their
+  #     snapshot is still material in fact; 13 S4.5 keeps provider_snapshot on this row only, so
+  #     an entry declares it (Open ASR does; CAMEO does not).
   - id: hosted-api
     description: >
       The evaluated artifact is an endpoint rather than an artifact, so the provider snapshot is material.
@@ -168,6 +290,20 @@ profiles:
       - [execution-tests, hosted-inference-endpoint]
       - [model-graded-judge, hosted-inference-endpoint]
       - [pairwise-preference-elo, hosted-inference-endpoint]
+      # 0.3.0 (P3-S10-T01)
+      - [constraint-check, hosted-inference-endpoint]
+      - [composite, hosted-inference-endpoint]
+      - [ordinal-grading, hosted-inference-endpoint]
+      - [pairwise-preference-elo, generative-media-model]
+
+  # Basis: 04 S8's rows for simulator + simulator_version ("BEHAVIOR's score is undefined outside
+  #   a specific OmniGibson/Isaac-Sim build") and hardware_platform, with the sampling fields; 02
+  #   S5 simulation-rollout ("Record the simulator and build"). 0.3.0 adds multi-agent-system under
+  #   simulation-rollout, episodic-return and tournament-play (SMAC, Melting Pot, Bi-DexHands,
+  #   GLEE), composite under rl-policy (nuPlan's closed-loop score), and simulation-rollout under
+  #   reasoning-model (ARC-AGI-3), as under agent-scaffold.
+  # Reviewer checks:
+  #   - hardware_platform for software-only environments: ARC-AGI-3 waives it.
   - id: simulation
     description: >
       The score is defined inside a specific simulator build.
@@ -187,6 +323,18 @@ profiles:
       - [episodic-return, agent-scaffold]
       - [episodic-return, physical-robot-system]
       - [episodic-return, classical-algorithm]
+      # 0.3.0 (P3-S10-T01)
+      - [simulation-rollout, multi-agent-system]
+      - [simulation-rollout, reasoning-model]
+      - [episodic-return, multi-agent-system]
+      - [tournament-play, multi-agent-system]
+      - [composite, rl-policy]
+
+  # Basis: 04 S8's rows for hardware_platform ("A policy on an H1 is not a policy on a
+  #   Cobot-Magic") and venue (physical site); 02 S5 physical-trial ("High variance, low
+  #   reproducibility"). 0.3.0 adds classical-algorithm under physical-trial (Duckietown and
+  #   safe-control-gym controllers) and the pooled methods under physical-robot-system (A2RL,
+  #   F1TENTH, RoboArena), whose matches are run on the hardware.
   - id: physical-trial
     description: >
       A run happens on hardware at a venue, both of which change the number.
@@ -200,6 +348,16 @@ profiles:
       - [physical-trial, rl-policy]
       - [physical-trial, human-expert]
       - [physical-trial, human-ai-team]
+      # 0.3.0 (P3-S10-T01)
+      - [physical-trial, classical-algorithm]
+      - [tournament-play, physical-robot-system]
+      - [pairwise-preference-elo, physical-robot-system]
+
+  # Basis: 04 S8 and 04 S13 (CACHE: the assay protocol is the condition that matters), 02 S5
+  #   wet-lab-validation and expert-panel-assessment. Unchanged in 0.3.0.
+  # Reviewer checks:
+  #   - eligibility_track is a member though 04 S8 does not tie it to wet-lab work; CASP and CAPRI
+  #     declare their model-selection rules (selection_strategy) as extras instead.
   - id: wet-lab
     description: >
       Ground truth comes from a bench protocol, which is the condition that matters.
@@ -214,6 +372,19 @@ profiles:
       - [expert-panel-assessment, scientific-surrogate-model]
       - [expert-panel-assessment, domain-specialist-model]
       - [expert-panel-assessment, classical-algorithm]
+
+  # Basis: 04 S8's lead_time row ("A 3-day and a 10-day forecast score are not the same number")
+  #   and resolution_window; 02 S5 prospective-resolution ("a published score is provisional until
+  #   resolution"). 0.3.0 adds prospective-resolution under domain-specialist-model and
+  #   classical-algorithm (CAFA, whose curator declared resolution_window) and under
+  #   reasoning-model; prospective-resolution and statistical-fit under human-nonexpert
+  #   (ForecastBench's crowd, as for human-expert); uncertainty-calibration-score under
+  #   reasoning-model (HLE), as for the other prompted models.
+  # Reviewer checks:
+  #   - statistical-fit and uncertainty-calibration-score under the prompted models resolve here
+  #     (P0-S2-T06), which makes lead_time material on HLE's calibration error; under trained
+  #     subjects the same methods resolve trained-model, with the horizon an extra (five entries
+  #     declare lead_time).
   - id: forecasting
     description: >
       The horizon and the resolution window decide what the number means.
@@ -234,6 +405,20 @@ profiles:
       - [uncertainty-calibration-score, base-model]
       - [uncertainty-calibration-score, instruction-tuned-model]
       - [uncertainty-calibration-score, human-expert]
+      # 0.3.0 (P3-S10-T01)
+      - [prospective-resolution, reasoning-model]
+      - [prospective-resolution, domain-specialist-model]
+      - [prospective-resolution, classical-algorithm]
+      - [prospective-resolution, human-nonexpert]
+      - [statistical-fit, reasoning-model]
+      - [statistical-fit, human-nonexpert]
+      - [uncertainty-calibration-score, reasoning-model]
+
+  # Basis: ADR-0024 D3 (the six entries that resolved forecasting here all waived lead_time and
+  #   resolution_window). 0.3.0 adds the other answer-keyed methods under
+  #   scientific-surrogate-model (Matbench, MoleculeNet, TDC ADMET, OC20, JARVIS, Virtual Cell
+  #   Challenge, Matbench Discovery); none of their resolved sets changes, since each already hit
+  #   this row. The members equal trained-model's; the row keeps its ADR-0024 name.
   - id: surrogate-fit
     description: >
       A learned surrogate scored by its error against stored simulator, DFT or measured fields. Nothing is
@@ -245,6 +430,21 @@ profiles:
       - training_data_policy
     applies_to:
       - [statistical-fit, scientific-surrogate-model]
+      # 0.3.0 (P3-S10-T01)
+      - [classification-metric, scientific-surrogate-model]
+      - [composite, scientific-surrogate-model]
+      - [exact-match, scientific-surrogate-model]
+      - [numeric-tolerance-match, scientific-surrogate-model]
+      - [reference-metric, scientific-surrogate-model]
+
+  # Basis: 04 S8's row for human_in_loop and human_assistance, with grading_rubric_ref for the
+  #   rubric raters apply; 02 S5 human-expert-eval and human-crowd-eval. 0.3.0 adds
+  #   human-expert-eval and human-crowd-eval under every remaining machine subject, and
+  #   pairwise-preference-elo under instruction-tuned-model, tool-augmented-model and
+  #   full-product-pipeline (BigLaw Bench's attorney preferences): the raters are the instrument.
+  # Reviewer checks:
+  #   - human_in_loop and human_assistance describe help given to the entrant; no condition field
+  #     names the rater pool, so the rating protocol is carried by grading_rubric_ref and subset.
   - id: human-judged
     description: >
       Human raters are the instrument, and how much help they gave is material.
@@ -278,6 +478,33 @@ profiles:
       - [human-distribution-percentile, human-expert]
       - [human-distribution-percentile, human-nonexpert]
       - [human-distribution-percentile, human-ai-team]
+      # 0.3.0 (P3-S10-T01)
+      - [human-expert-eval, reasoning-model]
+      - [human-expert-eval, domain-specialist-model]
+      - [human-expert-eval, task-specific-supervised-model]
+      - [human-expert-eval, classical-algorithm]
+      - [human-expert-eval, agent-scaffold]
+      - [human-expert-eval, tool-augmented-model]
+      - [human-expert-eval, retrieval-augmented-system]
+      - [human-expert-eval, full-product-pipeline]
+      - [human-expert-eval, model-in-benchmark-harness]
+      - [human-crowd-eval, task-specific-supervised-model]
+      - [human-crowd-eval, full-product-pipeline]
+      - [pairwise-preference-elo, instruction-tuned-model]
+      - [pairwise-preference-elo, tool-augmented-model]
+      - [pairwise-preference-elo, full-product-pipeline]
+
+  # Basis: 02 S12.6 (Matbench Discovery groups models by what they were allowed to train on), 02
+  #   S12.7 (ARC-AGI-3's two boards) and 04 S8's eligibility row. Unchanged in 0.3.0.
+  # Reviewer checks:
+  #   - nine entries waive eligibility_track or training_data_eligibility from this row (eth3d,
+  #     image-matching-challenge, sen1floods11, tanks-and-temples, mlip-arena, putnambench,
+  #     learn2design-2026, analoggym, ispd-contest), mostly through [domain-metric,
+  #     classical-algorithm] and [formal-proof-check, *]. That is ADR-0024's signal that the rule,
+  #     not the entries, should move; it is left for its own ADR, because Matbench Discovery and
+  #     WeatherBench 2 depend on this row through [domain-metric, scientific-surrogate-model].
+  #   - [domain-metric, reasoning-model] resolves here, while [domain-metric, base-model] and
+  #     [domain-metric, instruction-tuned-model] resolve llm-static-text.
   - id: eligibility-gated
     description: >
       The benchmark runs separate tracks by what the entrant was allowed to train on.
@@ -300,3 +527,281 @@ profiles:
       - [tournament-play, reasoning-model]
       - [tournament-play, classical-algorithm]
       - [tournament-play, rl-policy]
+
+  # ---- added in 0.3.0 (P3-S10-T01, ADR-0029) ----------------------------------------------------
+
+  # Basis: subjects.yaml task-specific-supervised-model ("scored as trained rather than
+  #   instructed"); ADR-0024's surrogate-fit, the same two fields for surrogates. Of the 88
+  #   fallback entries of this shape, 73 had declared training_data_policy and 61 subset_used (the
+  #   fallback already held it); the next field, harness, was declared by 31 and stays an extra.
+  #   Applies to the answer-keyed methods under task-specific-supervised-model and
+  #   classical-algorithm, to the methods that are not prompted tests under
+  #   domain-specialist-model, to the reference, domain and statistical metrics under
+  #   generative-media-model, and to the two non-language hosted endpoints (see hosted-api).
+  #   Pinned by hear, superb and zerospeech, whose frozen encoders under probes fit no subject
+  #   term (the gap superb logged).
+  # Reviewer checks:
+  #   - classical algorithms are fitted or tuned, not trained; training_data_policy records what
+  #     they were tuned on.
+  #   - uncertainty-calibration-score under trained subjects resolves here, not forecasting: FAIR
+  #     Universe HiggsML, LHC Olympics and PLAsTiCC are not forecasts, and BuildingsBench and the
+  #     S2S challenge declare lead_time themselves.
+  #   - [execution-tests, classical-algorithm] (Defects4J's repair tools) resolves here.
+  - id: trained-model
+    description: >
+      A model or algorithm trained, fitted or pretrained for the task and scored as the artifact it is,
+      not prompted, against a stored key. No prompt exists, so the prompting fields are meaningless;
+      which subset was scored and what the entrant learned from move the number.
+    material:
+      - subset_used
+      - training_data_policy
+    applies_to:
+      - [exact-match, task-specific-supervised-model]
+      - [numeric-tolerance-match, task-specific-supervised-model]
+      - [symbolic-equivalence, task-specific-supervised-model]
+      - [multiple-choice, task-specific-supervised-model]
+      - [constraint-check, task-specific-supervised-model]
+      - [reference-metric, task-specific-supervised-model]
+      - [classification-metric, task-specific-supervised-model]
+      - [domain-metric, task-specific-supervised-model]
+      - [statistical-fit, task-specific-supervised-model]
+      - [composite, task-specific-supervised-model]
+      - [uncertainty-calibration-score, task-specific-supervised-model]
+      - [exact-match, classical-algorithm]
+      - [constraint-check, classical-algorithm]
+      - [reference-metric, classical-algorithm]
+      - [classification-metric, classical-algorithm]
+      - [statistical-fit, classical-algorithm]
+      - [composite, classical-algorithm]
+      - [uncertainty-calibration-score, classical-algorithm]
+      - [execution-tests, classical-algorithm]
+      - [classification-metric, domain-specialist-model]
+      - [domain-metric, domain-specialist-model]
+      - [statistical-fit, domain-specialist-model]
+      - [composite, domain-specialist-model]
+      - [uncertainty-calibration-score, domain-specialist-model]
+      - [reference-metric, generative-media-model]
+      - [domain-metric, generative-media-model]
+      - [statistical-fit, generative-media-model]
+      - [reference-metric, hosted-inference-endpoint]
+      - [domain-metric, hosted-inference-endpoint]
+
+  # Basis: subjects.yaml model-in-benchmark-harness ("Record the harness and its version in the
+  #   conditions, because the number belongs to the model inside that harness"); 04 S8's rows for
+  #   reasoning_effort, the sampling fields and retries_allowed. The harness fixes the scaffold,
+  #   prompts, tools and sandbox identically for every entrant, so `harness` answers for them. Of
+  #   the 16 fallback entries of this shape, 16 had declared harness, 5 reasoning_effort, 5
+  #   n_samples and 3 retries_allowed.
+  # Reviewer checks:
+  #   - harness weighs 1.0: 04 S8's w table doubles only judge_model and scaffold, though the
+  #     harness plays the scaffold's part here.
+  #   - 10 of the 16 declared scaffold, mostly entries that also list agent-scaffold, which
+  #     brings the agentic row; max_steps (4 of 16) stays an extra.
+  - id: harnessed-model
+    description: >
+      A model driven by the benchmark's own fixed loop, prompts and tools, identical for every entrant, so
+      the harness version and the model-side settings decide the number.
+    material:
+      - harness
+      - reasoning_effort
+      - n_samples
+      - selection_strategy
+      - retries_allowed
+      - subset_used
+    applies_to:
+      - [environment-state-check, model-in-benchmark-harness]
+      - [execution-tests, model-in-benchmark-harness]
+      - [exact-match, model-in-benchmark-harness]
+      - [numeric-tolerance-match, model-in-benchmark-harness]
+      - [symbolic-equivalence, model-in-benchmark-harness]
+      - [multiple-choice, model-in-benchmark-harness]
+      - [constraint-check, model-in-benchmark-harness]
+      - [classification-metric, model-in-benchmark-harness]
+      - [domain-metric, model-in-benchmark-harness]
+      - [composite, model-in-benchmark-harness]
+      - [formal-proof-check, model-in-benchmark-harness]
+      - [simulation-rollout, model-in-benchmark-harness]
+      - [episodic-return, model-in-benchmark-harness]
+      - [tournament-play, model-in-benchmark-harness]
+      - [human-distribution-percentile, model-in-benchmark-harness]
+      - [adversarial-red-team, model-in-benchmark-harness]
+
+  # Basis: 04 S8's row for human_in_loop and human_assistance ("CASP ranks human-expert and
+  #   automated-server groups separately") and 02 S6 ("Without human_in_loop in the conditions
+  #   and human-ai-team in this facet, those two rows are indistinguishable"). Applies to the
+  #   human-ai-team pairs: CASP, CAPRI, RNA-Puzzles, CASMI and CACHE rank human-assisted entrants
+  #   beside automated ones, and whether a person helped is what separates the rows. Of those five
+  #   entries, three had declared human_assistance (casp, casmi, cache-challenges) and one
+  #   human_in_loop (rna-puzzles).
+  # Reviewer checks:
+  #   - human_in_loop is not a member: human_assistance's three values (none, permitted,
+  #     required) were written for CASP's human and server categories and already say whether a
+  #     person helped; the boolean would count the one distinction twice. rna-puzzles keeps it as
+  #     an extra.
+  - id: human-participant
+    description: >
+      Human-assisted entrants are ranked beside automated ones, so how much a person helped is material.
+    material:
+      - human_assistance
+      - subset_used
+    applies_to:
+      - [exact-match, human-ai-team]
+      - [domain-metric, human-ai-team]
+      - [wet-lab-validation, human-ai-team]
+      - [expert-panel-assessment, human-ai-team]
+
+  # Basis: 04 S7 (a human score on a benchmark is a Baseline, with its own population and
+  #   protocol) and 02 S6 (designed_for_subjects names who the benchmark is BUILT to evaluate).
+  #   Where a benchmark lists human-expert or human-nonexpert beside machines (GPQA, MMMU, MMAU,
+  #   ARC-AGI, WebArena, OSWorld, ChemBench, PI-CAI, A2RL), people sit the test as a scored
+  #   population; nothing about how they sat it is a condition of a machine's claim, and a machine
+  #   helped by a person is a claim about a human-ai-team, which human-participant covers. So the row
+  #   adds only the subset. None of the 18 entries of these pairs had declared a human field for
+  #   this reason (gaia's human_in_loop is about its own plugin choice).
+  # Reviewer checks:
+  #   - A2RL's human pilots and GLEE's human players compete in the same events as machines; if
+  #     their rows are claims rather than Baselines, human_assistance belongs on those entries.
+  - id: human-baseline
+    description: >
+      People sit the benchmark as a scored population beside the machines; their scores are baselines, so
+      the row adds only the subset to a machine's conditions.
+    material:
+      - subset_used
+    applies_to:
+      - [exact-match, human-expert]
+      - [exact-match, human-nonexpert]
+      - [numeric-tolerance-match, human-expert]
+      - [multiple-choice, human-expert]
+      - [multiple-choice, human-nonexpert]
+      - [reference-metric, human-expert]
+      - [classification-metric, human-expert]
+      - [domain-metric, human-expert]
+      - [domain-metric, human-nonexpert]
+      - [composite, human-expert]
+      - [composite, human-nonexpert]
+      - [environment-state-check, human-expert]
+      - [environment-state-check, human-nonexpert]
+      - [simulation-rollout, human-nonexpert]
+      - [tournament-play, human-expert]
+      - [tournament-play, human-nonexpert]
+      - [model-graded-judge, human-expert]
+      - [model-graded-judge, human-nonexpert]
+      - [model-derived-metric, human-expert]
+
+  # Basis: 04 S8's row for selection_strategy, k and n_samples ("pass@1 and pass@4 are different
+  #   measurements", "code benchmarks"); llm-static-text's prompting fields plus the test harness
+  #   and the selection strategy, which names how the reported sample was chosen (single,
+  #   pass-at-k, avg-at-k). Of the 8 fallback entries of this shape, 6 had declared n_samples, 6 k,
+  #   5 harness, 5 sampling, and 4 each shots, chain_of_thought and reasoning_effort. Every member
+  #   is also agentic's, so an agentic code benchmark's set does not change.
+  # Reviewer checks:
+  #   - n_samples (declared by 6 of 8) is left an extra, beside k: selection_strategy carries the
+  #     aggregation, and the SciCode bridge claims (P3, held at condition_completeness >= 0.6)
+  #     state the strategy but not the sample count, so making it a member moves them to 0.56.
+  #     Add it once those claims answer it.
+  #   - k and sampling stay extras: k must be null on a pass@1 run, which the key reads as
+  #     unknown, and 04 S8 makes temperature non-material.
+  #   - formal-proof-check under base-model and task-specific-supervised-model (neural provers
+  #     sampled at pass@k: ProofNet, miniF2F) resolves here.
+  - id: llm-code
+    description: >
+      A prompted model whose output is executed or machine-checked, often sampled several times; the test
+      harness and how the reported sample was chosen decide the number as much as the prompt does.
+    material:
+      - shots
+      - chain_of_thought
+      - reasoning_effort
+      - tools_allowed
+      - retries_allowed
+      - subset_used
+      - harness
+      - selection_strategy
+    applies_to:
+      - [execution-tests, base-model]
+      - [execution-tests, instruction-tuned-model]
+      - [execution-tests, reasoning-model]
+      - [execution-tests, domain-specialist-model]
+      - [formal-proof-check, base-model]
+      - [formal-proof-check, task-specific-supervised-model]
+
+  # Basis: 02 S5 model-derived-metric ("The scoring model's version is part of the result") and
+  #   04 S8's judge row and weight, under subjects that are not prompted, so trained-model's two
+  #   fields replace the prompting ones. Of the 7 fallback entries of this shape, 5 had declared
+  #   training_data_policy and 2 the judge.
+  # Reviewer checks:
+  #   - FCD-, DNSMOS- and COMET-style scorers are pinned by the benchmark's code version; where an
+  #     entry's harness fixes the scorer, a judge_model naming the scorer answers the field.
+  #   - judge_model weighs 2.0 here as on model-graded; 04 S8 says "model-graded", and a scoring
+  #     model is not a judge (02 S5).
+  - id: model-scored
+    description: >
+      A model that is not prompted is scored by another model -- a classifier, an encoder, a judge -- so
+      the scoring model's identity and version are material beside what the entrant learned from.
+    material:
+      - subset_used
+      - training_data_policy
+      - judge_model
+      - judge_model_version
+    weights:
+      judge_model: 2.0
+    applies_to:
+      - [model-derived-metric, task-specific-supervised-model]
+      - [model-derived-metric, domain-specialist-model]
+      - [model-derived-metric, classical-algorithm]
+      - [model-derived-metric, attack-or-intervention-method]
+      - [model-graded-judge, task-specific-supervised-model]
+      - [model-graded-judge, domain-specialist-model]
+      - [model-graded-judge, attack-or-intervention-method]
+
+  # Basis: evaluation-methods.yaml entrant-relative-ranking ("tag the methods that produced the
+  #   underlying scores as well"): the rank adds no run condition of its own, and the pool and its
+  #   snapshot have no EvalConditions field (a rating claim names its rating_pool,
+  #   schema/claim.py). So the row is the floor, and the conditions that matter come from the
+  #   benchmark's other methods. Pinned by epoch-capabilities-index, whose subjects are empty by
+  #   ADR-0020.
+  # Reviewer checks:
+  #   - date_evaluated as a stand-in for the pool snapshot is not made material; ECI and
+  #     AILuminate declare it themselves.
+  - id: relative-ranking
+    description: >
+      The number ranks or rescales each entrant against the others in the pool, so it adds no condition
+      beyond those of the scores it is computed from.
+    material:
+      - subset_used
+    applies_to:
+      - [entrant-relative-ranking, instruction-tuned-model]
+      - [entrant-relative-ranking, reasoning-model]
+      - [entrant-relative-ranking, task-specific-supervised-model]
+      - [entrant-relative-ranking, domain-specialist-model]
+      - [entrant-relative-ranking, scientific-surrogate-model]
+      - [entrant-relative-ranking, classical-algorithm]
+      - [entrant-relative-ranking, full-product-pipeline]
+      - [entrant-relative-ranking, hosted-inference-endpoint]
+      - [entrant-relative-ranking, model-in-benchmark-harness]
+      - [entrant-relative-ranking, multi-agent-system]
+      - [entrant-relative-ranking, rl-policy]
+      - [entrant-relative-ranking, physical-robot-system]
+      - [entrant-relative-ranking, human-expert]
+      - [entrant-relative-ranking, human-ai-team]
+
+  # Basis: subjects.yaml attack-or-intervention-method ("ranked by its effect on" a fixed set of
+  #   target models): the harness fixes the targets and the scoring. All 4 fallback entries of
+  #   this shape had declared harness. A judge that decides success comes from the judge methods,
+  #   which resolve model-scored.
+  # Reviewer checks:
+  #   - the attack budget (queries, optimisation steps) and the target-model set have no single
+  #     condition field and stay with `harness` and extras.
+  - id: intervention
+    description: >
+      An attack, defence, unlearning or editing procedure is ranked by what it does to fixed target
+      models, so the harness that fixes the targets and the scoring is material.
+    material:
+      - harness
+      - subset_used
+    applies_to:
+      - [adversarial-red-team, attack-or-intervention-method]
+      - [environment-state-check, attack-or-intervention-method]
+      - [execution-tests, attack-or-intervention-method]
+      - [multiple-choice, attack-or-intervention-method]
+      - [reference-metric, attack-or-intervention-method]
+      - [domain-metric, attack-or-intervention-method]
