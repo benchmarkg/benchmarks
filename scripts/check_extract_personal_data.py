@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""No stored Source extract carries an e-mail address, an arXiv submitter's name or an arXiv abstract page's
-author list (04 S9; the maintainer's calls of 2026-11-18).
+"""No stored Source extract carries an e-mail address, an arXiv submitter's name, an arXiv abstract page's
+author list or a fixed-layout page's labelled list of people (04 S9; the maintainer's calls of 2026-11-18).
 
 A Source's `quote_extract` is the text the quote check reads, committed under data/ and published with the
 record. Personal data sits right beside the facts it backs: contact lines in papers and READMEs, the addresses
@@ -16,11 +16,18 @@ in `quote_extract_redactions` (schema/source.py). This holds the line:
              authors] View PDF" line, are `[names redacted]`, or nothing where a window ends at the label.
              A byline that is one organisation ("by Example Prize Foundation") is not a person's name and
              stays; so does one that a quote in data/ cites, since the quote check needs that text.
+  roster     a page whose layout is fixed names nobody in its labelled list of people: an ACL Anthology paper
+             page's "Editors:" field (up to " Venue:" or the end of its window) and a NeurIPS Datasets and
+             Benchmarks abstract page's "Authors" list (up to " Abstract"), when what the label holds is
+             name-shaped (capitalised words, initials, name particles, separators), are `[names redacted]`
+             or nothing. A list a quote in data/ cites stays, as a byline does.
   counted    an extract holding a `[... redacted]` token says how many in `quote_extract_redactions`.
 
-The byline rule reads only an abs page's fixed labels, so it needs no list of names. A PDF's or an HTML
+The byline and roster rules read only fixed labels, so they need no list of names. A PDF's or an HTML
 rendering's byline has no such label; the sweep that redacted those matched each paper's author names from the
-arXiv API, and no name is stored for a check to reuse.
+arXiv API, and no name is stored for a check to reuse. The other lists of people redacted by hand (organisers,
+chairs, committees and team members on challenge sites; bylines on proceedings and project pages) sit in
+layouts that vary from page to page, where no label rule is precise enough to hold the line without false alarms.
 
     python scripts/check_extract_personal_data.py                  # the repository
     python scripts/check_extract_personal_data.py --root DIR       # the tests
@@ -49,6 +56,24 @@ AUTHORS_END = re.compile(r' View\b| Abstract:| Comments:| Subjects:')
 BY = re.compile(r', by ((?:(?!, by ).){1,300}?)(?: and \d+ other authors?)? View PDF')
 ORG_BYLINE = re.compile(r"^(?:[A-Z][\w&.'-]*\s+){0,5}(?:Team|Foundation|Consortium|Collaboration|Project|Institute|"
                         r'Initiative|Labs?|Group)$')
+# (the pages a roster rule reads, its label, the end of the labelled field)
+ROSTERS = (
+    (re.compile(r'^https?://(?:www\.)?aclanthology\.org/(?![^?#]*\.pdf\b)'), re.compile(r'\bEditors:\s*'),
+     re.compile(r' Venue:')),
+    (re.compile(r'^https?://datasets-benchmarks-proceedings\.neurips\.cc/paper_files/paper/\d{4}/hash/'
+                r'[^/?#]*-Abstract[^/?#]*\.html$'), re.compile(r'\bAuthors\s+'), re.compile(r' Abstract\b')),
+)
+PARTICLES = {'van', 'von', 'der', 'den', 'de', 'del', 'della', 'di', 'da', 'dos', 'das', 'du', 'la', 'le', 'y', 'bin',
+             'al', 'and'}
+
+
+def name_shaped(text: str) -> bool:
+    """Capitalised words, initials, name particles and separators only, with at least one capitalised word: what
+    a list of people looks like, and what running text does not."""
+    words = [w.strip(',;.()*†‡∗§¶&·|0123456789') for w in text.split()]
+    words = [w for w in words if w]
+    return bool(words) and any(w[0].isupper() for w in words) and all(
+        w[0].isupper() or w in PARTICLES for w in words)
 
 
 def submitters(extract: str) -> int:
@@ -86,6 +111,21 @@ def bylines(extract: str) -> list[tuple[int, int]]:
             who = m.group(1).strip()
             if who != NAMES and not ORG_BYLINE.match(who):
                 out.append((off + m.start(1), off + m.end(1)))
+    return out
+
+
+def rosters(url: str, extract: str) -> list[tuple[int, int]]:
+    """The (start, end) of each labelled list of people on a fixed-layout page that still names someone."""
+    out = []
+    for pages, label, end in ROSTERS:
+        if not pages.match(url or ''):
+            continue
+        for off, window in windows(extract):
+            for m in label.finditer(window):
+                stop = end.search(window, m.end())
+                who = window[m.end():stop.start() if stop else len(window)].strip()
+                if who and not who.startswith(NAMES) and name_shaped(who):
+                    out.append((off + m.end(), off + m.end() + len(who)))
     return out
 
 
@@ -152,6 +192,15 @@ def check(root: str) -> list[str]:
         if spans:
             errors.append("%s: the extract names the paper's authors %d time(s) (an arXiv abs byline); replace "
                           'each list with [names redacted]' % (sid, len(spans)))
+        listed = rosters(record.get('url') or '', extract)
+        if listed:
+            if cited is None:
+                cited = cited_quotes(root)
+            listed = [s for s in listed if not quoted(extract, s, cited.get(sid) or [])]
+        if listed:
+            errors.append('%s: the extract names people in a labelled list %d time(s) (an ACL Anthology '
+                          '"Editors:" field or a NeurIPS Datasets and Benchmarks "Authors" list); replace each '
+                          'list with [names redacted]' % (sid, len(listed)))
         tokens = len(TOKEN.findall(extract))
         if tokens and not record.get('quote_extract_redactions'):
             errors.append('%s: the extract holds %d redaction token(s) but quote_extract_redactions is unset'
@@ -169,7 +218,8 @@ def main(argv=None) -> int:
     if errors:
         print('%d problem(s)' % len(errors))
         return 1
-    print('OK    no Source extract holds an e-mail address, an unredacted arXiv submitter or an arXiv abs byline')
+    print('OK    no Source extract holds an e-mail address, an unredacted arXiv submitter, an arXiv abs byline or a '
+          'labelled roster on a fixed-layout page')
     return 0
 
 
