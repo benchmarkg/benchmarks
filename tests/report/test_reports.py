@@ -101,11 +101,13 @@ def test_what_is_not_a_conflict(seeded):
 
 def test_the_committed_corpus_has_no_false_conflict():
     # ForecastBench's three claims share benchmark, metric and system, at three horizons (subsets): no row.
-    # The rows are real: P3-S5-T02's falcon-7b MMLU conflict (eight claims, none adjudicated) and P3-S5-T04's
-    # GPT-5 on CritPt at four tool and effort settings -- both explained by their recorded conditions.
+    # The rows are real: P3-S5-T02's falcon-7b MMLU conflict (eight claims, none adjudicated), P3-S5-T04's
+    # GPT-5 on CritPt at four tool and effort settings, and P3-S5-T01's Claude Opus 4.6 on ARC-AGI-1 at four
+    # efforts -- all explained by their recorded conditions.
     report = conflicts.build(ROOT)
     groups = {(r['benchmark'], r['system'], r['metric']): len(r['claims']) for r in report['rows']}
-    assert groups == {('mmlu', 'falcon-7b', 'mmlu-score'): 8, ('critpt', 'gpt-5', 'critpt-challenge-accuracy'): 4}
+    assert groups == {('mmlu', 'falcon-7b', 'mmlu-score'): 8, ('critpt', 'gpt-5', 'critpt-challenge-accuracy'): 4,
+                      ('arc-agi-1@2024', 'claude-opus-4-6', 'arc-agi-1-score'): 4}
     assert report['summary']['unexplained'] == 0
 
 
