@@ -13,6 +13,9 @@
 //              import(), transitively: everything the route can load, an upper bound rather than first paint only
 //   inline     every inline <script> the browser runs -- 09 S9's pre-paint theme line among them -- and not a data block
 //              (application/ld+json, application/json, importmap), which no browser runs
+//   prepaint   the body of that pre-paint line, <script data-prepaint> (Base.astro), or null: also in `inline`, and named
+//              apart because it is the one script 09 S9 allows on a page that ships no JavaScript (P2-S8-T01), so a 0 KB
+//              budget can leave out exactly it; a page with two throws, since 09 S9 allows one
 // What the route fetches as data (facets.json for the browse view; nothing for the landing, 08 S4.3) is not JavaScript and
 // is not here: 10's JS budgets are counted over the data column, not with it.
 //
@@ -26,6 +29,18 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const DATA_TYPES = new Set(['application/ld+json', 'application/json', 'importmap', 'speculationrules']);
 const attr = (attrs, name) => new RegExp(`\\b${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(attrs);
 const value = (m) => (m == null ? null : m[2] ?? m[3] ?? m[4]);
+/** The value of attribute `name` in a tag's attribute text, or null. */
+export const attrValue = (attrs, name) => value(attr(attrs, name));
+
+/** The file a local URL in `from` names under `dist` (root-relative, or relative to `from`), or null for another origin
+ *  or a data: URL; a local URL with no file behind it throws. */
+export function localFile(dist, from, url) {
+  if (url == null || /^[a-z]+:|^\/\//i.test(url)) return null;
+  const path = url.split(/[?#]/)[0];
+  const file = path.startsWith('/') ? join(dist, ...path.split('/').filter(Boolean)) : resolve(dirname(from), path);
+  if (!existsSync(file)) throw new Error(`${relative(dist, from) || from} names ${url}, which is not in ${dist}`);
+  return file;
+}
 // a chunk's relative imports in Vite's minified ESM: `import{a}from"./x.js"`, `import"./x.js"`, `export*from"./x.js"`,
 // `import("./x.js")`
 const IMPORTS = /(?:\bfrom\s*|\bimport\s*\(?\s*)(["'`])(\.{1,2}\/[^"'`]+?\.js)\1/g;
@@ -36,24 +51,30 @@ export function pagePath(dist, route) {
   return join(dist, ...r.split('/').filter(Boolean), 'index.html');
 }
 
-/** {page, external: [absolute paths, sorted], inline: [script bodies, in page order]} for `route` of the build in `dist`. */
+/** {page, external: [absolute paths, sorted], inline: [script bodies, in page order], prepaint: the pre-paint body or
+ *  null} for `route` of the build in `dist`. */
 export function routeScripts(dist, route) {
   const page = pagePath(dist, route);
   if (!existsSync(page)) throw new Error(`${page} is missing: build the site first (cd site && npm run build)`);
   const html = readFileSync(page, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
   const roots = new Set();
   const inline = [];
+  let prepaint = null;
   const local = (url, from) => {
-    if (url == null || /^[a-z]+:|^\/\//i.test(url)) return;               // another origin, or a data: URL
-    const path = url.startsWith('/') ? join(dist, ...url.split(/[?#]/)[0].split('/').filter(Boolean)) : resolve(dirname(from), url);
-    if (!existsSync(path)) throw new Error(`${relative(dist, from) || from} names ${url}, which is not in ${dist}`);
-    roots.add(path);
+    const path = localFile(dist, from, url);                               // null: another origin, or a data: URL
+    if (path != null) roots.add(path);
   };
   for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
     const [, attrs, body] = m;
     const src = value(attr(attrs, 'src'));
     if (src != null) local(src, page);
-    else if (!DATA_TYPES.has((value(attr(attrs, 'type')) ?? '').toLowerCase()) && body.trim() !== '') inline.push(body);
+    else if (!DATA_TYPES.has((value(attr(attrs, 'type')) ?? '').toLowerCase()) && body.trim() !== '') {
+      inline.push(body);
+      if (/(?:^|\s)data-prepaint(?:[\s=]|$)/i.test(attrs)) {
+        if (prepaint != null) throw new Error(`${page} has two pre-paint scripts; 09 S9 allows one`);
+        prepaint = body;
+      }
+    }
   }
   for (const m of html.matchAll(/<link\b([^>]*)>/gi)) {
     if (/\bmodulepreload\b/i.test(value(attr(m[1], 'rel')) ?? '')) local(value(attr(m[1], 'href')), page);
@@ -73,7 +94,7 @@ export function routeScripts(dist, route) {
       queue.push(dep);
     }
   }
-  return { page, external: [...seen].sort(), inline };
+  return { page, external: [...seen].sort(), inline, prepaint };
 }
 
 /** A path as a size-limit `path` entry: relative to `from`, with forward slashes, and refused when it holds a glob
