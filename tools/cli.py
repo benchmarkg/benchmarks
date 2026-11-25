@@ -5,7 +5,7 @@
     uv run bench fmt [paths...] [--check]
     uv run bench validate [paths...] [--tier schema|ref|semantic|quality|all|<comma list>] [--changed-only] [--single] [--json]
     uv run bench schema gen [--check]
-    uv run bench build [--derived] [--atlas] [--data-only] [--out build/]
+    uv run bench build [--derived] [--embed] [--atlas] [--data-only] [--out build/]
     uv run bench migrate <nnnn> [--dry-run|--apply]
     uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
     uv run bench ingest <adapter> --dry-run [--limit N] [--no-network] [--allow-bulk] [--fixture PATH]
@@ -18,8 +18,9 @@ command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's (its `--tier` 
 P2-S6-T04, whose issue-intake bot runs `--single --tier schema,ref,semantic`), `fmt` P0-S5-T04's (tools/fmt.py),
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
 build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, and coverage-states.json,
-P1-S12-T08's; --atlas writes build/atlas.json, P2-S5-T01's (tools/atlas/); --embed arrives
-with its stage; build/index.sqlite, the normalised corpus that never ships, is P2-S1-T06's, tools/build/sqlite.py;
+P1-S12-T08's; --atlas writes build/atlas.json, P2-S5-T01's (tools/atlas/); --embed writes build/vectors.i8.bin
+and build/vectors.meta.json, P6-S1-T03's (tools/build/embed.py, with the `embed` extra); build/index.sqlite, the
+normalised corpus that never ships, is P2-S1-T06's, tools/build/sqlite.py;
 --data-only, the preview build that skips S9, S10 and the SQLite emission, is P2-S1-T04's, tools/build/modes.py, beside
 scripts/routes_from_diff.py), `migrate`
 P0-S5-T07's (tools/migrate.py) and `check-links` P0-S5-T08's (tools/links.py, tools/archive.py).
@@ -203,6 +204,7 @@ def validate(
 def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
     derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
+    embed: Annotated[bool, typer.Option('--embed', help='Also write build/vectors.i8.bin and build/vectors.meta.json, the int8 document embeddings in facets.json order (08 S3.2 S6, 11 S4). Needs the embed extra and the cached model: tools/build/embed.py.')] = False,
     atlas: Annotated[bool, typer.Option('--atlas', help='Also write build/atlas.json, the deterministic pack layout (08 S5.3, 10 V1).')] = False,
     data_only: Annotated[bool, typer.Option('--data-only', help='The preview build (08 S3.4): skip the S9 release artifacts (croissant-benchmark/, index.sqlite) and S10 codegen (the design tokens, the site taxonomy).')] = False,
 ):
@@ -216,6 +218,16 @@ def build_cmd(
     if result.errors:
         typer.echo('build: %d error(s); nothing written' % len(result.errors), err=True)
         raise typer.Exit(1)
+    if embed:
+        # S6 (P6-S1-T03) is computed before anything is written, so a model that is not cached fails a build that has
+        # written nothing; its two files are written with --atlas's, below
+        from tools.build import embed as embedder
+        try:
+            vectors = embedder.build(result.corpus, result.facets, embedder.encoder())
+        except embedder.EmbedError as e:
+            typer.echo('error  %s' % e, err=True)
+            typer.echo('build: --embed failed; nothing written', err=True)
+            raise typer.Exit(1)
     # 08 S5.8 (P2-S3-T06): the croissant-benchmark JSON-LD, validated before anything is written -- mlcroissant base
     # conformance and the committed extension schema, over the withheld drafts' documents too -- so a mapping or
     # schema change that breaks either fails this build, which is CI's build step
@@ -271,6 +283,16 @@ def build_cmd(
             typer.echo('error  %s' % e, err=True)
             raise typer.Exit(1)
     # ---- end --atlas ------------------------------------------------------------------------------------------------
+    # ---- --embed (P6-S1-T03) ----------------------------------------------------------------------------------------
+    # S6 (08 S3.2): one int8 vector per published benchmark family, in facets.json order, from the pinned model in the
+    # local cache; never the network. Not in the manifest's `shipped`: it hashes canonical JSON only (tools/build/embed.py)
+    if embed:
+        for path in embedder.write(vectors, str(out)):
+            typer.echo('wrote %s' % path)
+        typer.echo('embedded %d benchmark famil%s with %s@%s (%d dims, int8, one scale per row)'
+                   % (len(vectors.ids), 'y' if len(vectors.ids) == 1 else 'ies', vectors.meta['model']['id'],
+                      vectors.meta['model']['revision'][:12], vectors.meta['dims']))
+    # ---- end --embed ------------------------------------------------------------------------------------------------
     if derived:
         # 07 S9.1: every source's health, read from ingest/state/ and the run logs (P5-S7-T03)
         from tools.build import ingest_health
