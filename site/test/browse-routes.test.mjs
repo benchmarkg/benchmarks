@@ -18,7 +18,7 @@
 //   routes    one page per term of taxonomy/*.yaml, under the segment SEGMENTS gives its facet and field (10 V11's
 //             spellings: /browse/access/, /browse/lifecycle/), plus /browse/org/{id}/ for each published organisation
 //             that governance.maintainers names on a published benchmark, and nothing else under /browse/
-//   members   from the facets.json and enums.json the S8 emitter writes beside the corpus (format 2): a term's members
+//   members   from the facets.json and enums.json the S8 emitter writes beside the corpus (format 3): a term's members
 //             are the rows whose facet array holds the term's key, a domain's are the rows whose domain (family) or
 //             subdomain it is, and the corpus's domain.secondary entries are listed apart. An empty list must say so
 //   review    a domain page carries its family's curation confidence, unreviewed while taxonomy/domains.yaml says
@@ -112,7 +112,7 @@ function artifacts(corpusPath) {
   for (const f of ['facets.json', 'enums.json']) assert.ok(existsSync(join(dir, f)), `${f} is not beside ${corpusPath}`);
   const facets = readJson(join(dir, 'facets.json'));
   assert.equal(facets.artifact, 'facets');
-  assert.equal(facets.format, 2, 'facets.json format 2 is the row these expectations read (tools/build/emit.py)');
+  assert.equal(facets.format, 3, 'facets.json format 3 is the row these expectations read (tools/build/emit.py)');
   const { entities } = readJson(corpusPath);
   return { benchmark: entities.benchmark ?? [], organization: entities.organization ?? [], rows: facets.benchmarks,
     enums: readJson(join(dir, 'enums.json')) };

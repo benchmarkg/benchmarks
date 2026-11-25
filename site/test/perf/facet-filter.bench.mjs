@@ -4,7 +4,7 @@
 //   cd site && node --test test/query.test.mjs test/perf/facet-filter.bench.mjs
 //
 // The corpus is synthetic and seeded, at the two sizes the budget names, over the real taxonomy (taxonomy/*.yaml, read
-// as the site reads it): every rail term exists, rows carry values as facets.json format 2 spells them (an id a facet
+// as the site reads it): every rail term exists, rows carry values as facets.json format 3 spells them (an id a facet
 // defines in two fields is `{field}:{id}`), so the index holds as many sets as a real build's would. What is timed is
 // the work a filter change does before rendering:
 //

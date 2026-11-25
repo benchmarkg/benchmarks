@@ -14,10 +14,13 @@ kind, each record dumped by its own model, and the materialised `subsets`. Befor
 claim id, or one carrying every field a ResultClaim requires. A claim id as a reference is not a record, and
 nor is a benchmark's own `results_observed` row, which is a curated field of the benchmark.
 
-facets.json -- one row per published benchmark, and each row is exactly 08 S4.2's list (FACET_ROW):
+facets.json -- one row per published benchmark, and each row is exactly 08 S4.2's list (FACET_ROW), plus the one
+field 11 S4 adds for the lexical search leg:
 
   id, slug             the id; a benchmark's URL slug is its id (05 S2)
   name, aliases
+  editions             the name of every BenchmarkVersion whose version_kind is `edition`, in `versions` order: its
+                       `label`, or its `version` tag where it has none (11 S4; format 3, below)
   domain, subdomain    the family of domain.primary, and domain.primary
   facets               "the seven flat facet arrays", keyed by the taxonomy `facet:` names (FLAT_FACETS)
   year                 the year of `released`
@@ -67,6 +70,15 @@ Decisions where 08 S4.2 is not specific, each with its reason:
   - `headroom` is null on every row: nothing in the repository computes a headroom value yet. schema/metric.py
     holds 12 S3.1's formula, but the SOTA selection and the baseline and ceiling join that feed it are S4's
     (08 S3.5, P3-S9-T02), and a null is the honest value until they exist.
+  - `editions` is not in 08 S4.2's list. It is there for the BM25 leg (site/src/islands/search/lexical.ts,
+    P6-S1-T04), which reads the facets.json every faceted view has already loaded, and 11 S4 puts editions into
+    retrieval "as alias strings on the family's lexical record" -- an edition is never a row of its own. Only
+    editions: revisions and track-sets are not edition names, and the version list as a whole would cost twice as
+    much. 11 S4's other lexical fields -- the description, the maintainer and 08 S5.7's one-line summary -- are
+    left out on size: measured on the 320-entry draft preview (2026-11-24), format 2 is 29,568 bytes gzipped,
+    editions add 6,387, and the maintainer (12,064), the tagline (17,419) or the description (176,578) would each
+    take the file past the 36 KB 10 "Performance budget" gives it. lexical.ts says what indexing them needs. The
+    row's shape changed, so the format is 3, and the site reads 3 only (site/src/lib/browse-view.ts FACETS_FORMAT).
 
 enums.json -- 08 S4.2: "Every controlled vocabulary with glosses." Every taxonomy/*.yaml that declares
 `facet:` (`facet_files`: the facet vocabularies, the domain spine and the capability groups), keyed by that
@@ -110,12 +122,13 @@ from typing import Any
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ARTIFACTS = ('corpus.json', 'facets.json', 'enums.json')
-# Per-artifact envelope format. facets.json moved to 08 S4.2's row in this task, so it is 2.
-FORMATS = {'corpus': 1, 'facets': 2, 'enums': 1}
+# Per-artifact envelope format. facets.json moved to 08 S4.2's row in P2-S1-T02 (2), and gained `editions` in
+# P6-S1-T04 (3).
+FORMATS = {'corpus': 1, 'facets': 3, 'enums': 1}
 CLAIM_TIERS = ('curated', 'machine-ingested')     # what the claim-derived fields count (module docstring)
 
-# 08 S4.2's facets.json row, in its order.
-FACET_ROW = ('id', 'slug', 'name', 'aliases', 'domain', 'subdomain', 'facets', 'year', 'lifecycle',
+# 08 S4.2's facets.json row, in its order, with 11 S4's `editions` beside the aliases (module docstring).
+FACET_ROW = ('id', 'slug', 'name', 'aliases', 'editions', 'domain', 'subdomain', 'facets', 'year', 'lifecycle',
              'verification_max', 'condition_completeness_max', 'claim_count', 'headroom')
 # The row keys that project one Benchmark field unchanged: key -> the field's dotted path.
 PROJECTED = {
@@ -308,11 +321,18 @@ def claim_fields(benchmarks: dict, claims: list, conditions: dict) -> tuple[dict
     return out, errors
 
 
+def edition_names(b: dict) -> list[str]:
+    """The name of each edition of one corpus.json benchmark record, in `versions` order: the label, else the tag."""
+    return [v['label'] if v['label'] is not None else v['version']
+            for v in b['versions'] if v['version_kind'] == 'edition']
+
+
 NO_CLAIMS = {'verification_max': None, 'condition_completeness_max': None, 'claim_count': 0}
 
 
 def facet_row(b: dict, claimed: dict | None) -> dict:
     row = {key: at(b, path) for key, path in PROJECTED.items()}
+    row['editions'] = edition_names(b)
     row['domain'] = b['domain']['primary'].split('/')[0]
     row['facets'] = facet_values(b)
     row['year'] = int(b['released'][:4]) if b['released'] else None

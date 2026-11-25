@@ -18,10 +18,11 @@ never publishes, so these tests build the fixture as the draft preview does (`dr
 scripts/preview_corpus.py): a draft that passes tier 1 is included. A test that needs something the frozen
 records do not hold plants it in a temporary copy.
 
-What is asserted: exactly 08 S4.2's field lists; no claim record in corpus.json, and the refusal of one; no
-domain-group id in any of the three, and the refusal of a planted one (and of a group id that equals a
-term id); byte-identical output across two builds; NFC, LF and sorted keys; enums.json covering every
-facet file and every term; and the claim-derived fields, computed independently here.
+What is asserted: exactly 08 S4.2's field lists, with 11 S4's edition names on each facets.json row and the
+format that says so; no claim record in corpus.json, and the refusal of one; no domain-group id in any of the
+three, and the refusal of a planted one (and of a group id that equals a term id); byte-identical output
+across two builds; NFC, LF and sorted keys; enums.json covering every facet file and every term; and the
+claim-derived fields and the edition names, computed independently here.
 """
 import copy
 import glob
@@ -45,8 +46,9 @@ FIXTURE = os.path.join(ROOT, 'tests', 'fixtures', 'corpus-20')
 CHECK = os.path.join(ROOT, 'scripts', 'check_display_only_vocab.py')
 TAXONOMY = os.path.join(ROOT, 'taxonomy')
 
-# 08 S4.2's rows, written out here rather than read from the emitter, so the test pins the plan.
-FACETS_ROW = ['id', 'slug', 'name', 'aliases', 'domain', 'subdomain', 'facets', 'year', 'lifecycle',
+# 08 S4.2's rows, written out here rather than read from the emitter, so the test pins the plan: facets.json's is
+# 08 S4.2's list with 11 S4's `editions` beside the aliases (the BM25 leg's edition names, P6-S1-T04).
+FACETS_ROW = ['id', 'slug', 'name', 'aliases', 'editions', 'domain', 'subdomain', 'facets', 'year', 'lifecycle',
               'verification_max', 'condition_completeness_max', 'claim_count', 'headroom']
 SEVEN = ['capability', 'evaluation_method', 'subject', 'data_properties', 'lifecycle', 'governance', 'execution']
 CORPUS_KINDS = ['benchmark', 'system', 'organization', 'metric', 'source']
@@ -117,6 +119,7 @@ def test_facets_rows_carry_exactly_08_s4_2s_list(built):
     facets = read(out, 'facets.json')
     assert list(emit.FACET_ROW) == FACETS_ROW
     assert sorted(facets) == ['artifact', 'benchmarks', 'claim_basis', 'drafts', 'format', 'vocabularies']
+    assert facets['format'] == emit.FORMATS['facets'] == 3          # 3 since `editions` (P6-S1-T04)
     for row in facets['benchmarks']:
         assert sorted(row) == sorted(FACETS_ROW), row['id']
         assert sorted(row['facets']) == sorted(SEVEN), row['id']
@@ -126,6 +129,28 @@ def test_facets_rows_carry_exactly_08_s4_2s_list(built):
         assert isinstance(row['claim_count'], int) and row['headroom'] is None
         assert row['year'] is None or isinstance(row['year'], int)
     assert 'domain_secondary' not in json.dumps(facets)  # secondaries are not in 08's list (emit.py docstring)
+
+
+def test_editions_are_the_edition_names_and_nothing_else(built, tree):
+    """11 S4: an edition enters retrieval as an alias string on its family's row, never as a row of its own. Each
+    row's are read here from the benchmark's YAML, not from corpus.json."""
+    result, _ = built
+    want = {}
+    for path in glob.glob(os.path.join(FIXTURE, 'data', 'benchmarks', '**', '*.yaml'), recursive=True):
+        doc = read_yaml(path)
+        want[doc['id']] = [v.get('label') or v['version'] for v in doc.get('versions') or []
+                           if v.get('version_kind') == 'edition']
+    assert {i: r['editions'] for i, r in rows(result).items()} == want
+    assert rows(result)['virtual-cell-challenge']['editions'] == [
+        'The inaugural edition, one cell line (H1 hESC)', 'Zero-shot across cell contexts']
+    assert sum(1 for r in want.values() if r) == 1                  # the only fixture entry with versions
+    # an edition with no label is named by its tag; a revision is not an edition
+    vcc = 'data/benchmarks/biology-genetics/virtual-cell-challenge.yaml'
+    edit(tree, vcc, '    label: Zero-shot across cell contexts\n', '')
+    edit(tree, vcc, '(H1 hESC)\n    version_kind: edition', '(H1 hESC)\n    version_kind: revision')
+    planted = artifacts.build(str(tree), drafts=True)
+    assert planted.errors == []
+    assert rows(planted)['virtual-cell-challenge']['editions'] == ['2026']
 
 
 def test_corpus_json_carries_every_published_field_of_the_five_kinds(built):

@@ -217,9 +217,10 @@ test('curation confidence covers the filtered domain\'s families, or every famil
   assert.equal(confidence(families.slice(0, 1), {}).state, 'unreviewed');
 });
 
-test('readFacets reads format 2 and says why it reads nothing else', () => {
+test('readFacets reads format 3 and says why it reads nothing else', () => {
+  assert.equal(FACETS_FORMAT, 3);
   assert.deepEqual(readFacets({ artifact: 'facets', format: FACETS_FORMAT, benchmarks: ROWS, drafts: true }), { rows: ROWS, drafts: true });
-  assert.match(readFacets({ artifact: 'facets', format: 1, benchmarks: [] }).error, /format 1, and this view reads format 2/);
+  assert.match(readFacets({ artifact: 'facets', format: 2, benchmarks: [] }).error, /format 2, and this view reads format 3/);
   assert.match(readFacets({ artifact: 'corpus', format: 1 }).error, /not the facets artifact/);
   assert.match(readFacets(null).error, /not the facets artifact/);
 });

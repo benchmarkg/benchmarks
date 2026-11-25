@@ -27,7 +27,9 @@ file's format, which is also PRAGMA user_version.
   facet_row, facet_value  facets.json: each benchmark's index row, and its seven flat facet arrays as (id, facet,
                           position, key), the key enums.json gives every term. A facet's array draws on the
                           vocabularies flat_facet_vocabulary names (data_properties on ceiling_anchor_type too), so
-                          a value's term is `term JOIN flat_facet_vocabulary USING (vocabulary)` on facet and key
+                          a value's term is `term JOIN flat_facet_vocabulary USING (vocabulary)` on facet and key.
+                          The row's two name lists are not repeated: its aliases are benchmark__aliases, its
+                          editions the benchmark__versions rows whose version_kind is `edition`
   subset, subset_facet    corpus.json's materialised subsets (02 S11 rule 4), each resolved facet value a row, with
                           `override` set where the subset declares the facet itself
   vocabulary, term,       enums.json: every controlled vocabulary, its terms in file order, a capability group's
@@ -331,7 +333,7 @@ def _records(w: Writer, entities: dict[str, list[dict]]):
 
 def _facets(w: Writer, facets: dict):
     from tools.build import emit
-    scalars = [k for k in emit.FACET_ROW if k not in ('aliases', 'facets')]
+    scalars = [k for k in emit.FACET_ROW if k not in ('aliases', 'editions', 'facets')]   # the lists (module docstring)
     w.create('facet_row', [(k, FACET_ROW_TYPES.get(k, 'TEXT')) for k in scalars], 'benchmark',   # get-default: a facets.json scalar not listed there is text
              'facets.json benchmarks[]', 'PRIMARY KEY ("id")')
     w.create('facet_value', [('id', 'TEXT NOT NULL'), ('facet', 'TEXT NOT NULL'), ('position', 'INTEGER NOT NULL'),
