@@ -3,6 +3,7 @@
 //   cd site && npx playwright test tests/theme.spec.ts
 //   cd site && npx playwright test tests/detail-nojs.spec.ts --project=nojs      (P2-S3-T01)
 //   cd site && npx playwright test tests/browse-mobile.spec.ts --project=mobile  (P2-S4-T05)
+//   cd site && npx playwright test tests/landing.spec.ts --project=nojs          (P2-S4-T08)
 //
 // @playwright/test is the repository root's (package.json, pinned there); Node resolves it up the tree. The
 // server is the site built with UAIBI_SITE_FIXTURES=theme,components, which routes test/fixtures/theme.astro and
@@ -27,8 +28,9 @@
 // the phone width 09 S10 designs for (a 390px viewport is the one it names).
 import { defineConfig } from '@playwright/test';
 
-// the specs that read the site with JavaScript off: the detail page (P2-S3-T01) and its provenance drill-down (P2-S3-T02)
-const NOJS = /(detail-nojs|provenance)\.spec\.ts$/;
+// the specs that read the site with JavaScript off: the detail page (P2-S3-T01), its provenance drill-down (P2-S3-T02)
+// and the landing page (P2-S4-T08)
+const NOJS = /(detail-nojs|provenance|landing)\.spec\.ts$/;
 // the specs that read the site at phone width: the browse view's (P2-S4-T05)
 const MOBILE = /-mobile\.spec\.ts$/;
 
