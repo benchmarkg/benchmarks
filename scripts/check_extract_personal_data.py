@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """No stored Source extract carries an e-mail address, an arXiv submitter's name, an arXiv abstract page's
-author list or a fixed-layout page's labelled list of people (04 S9; the maintainer's calls of 2026-11-18).
+or HTML rendering's author list or a fixed-layout page's labelled list of people (04 S9; the maintainer's calls
+of 2026-11-18).
 
 A Source's `quote_extract` is the text the quote check reads, committed under data/ and published with the
 record. Personal data sits right beside the facts it backs: contact lines in papers and READMEs, the addresses
@@ -21,13 +22,20 @@ in `quote_extract_redactions` (schema/source.py). This holds the line:
              Benchmarks abstract page's "Authors" list (up to " Abstract"), when what the label holds is
              name-shaped (capitalised words, initials, name particles, separators), are `[names redacted]`
              or nothing. A list a quote in data/ cites stays, as a byline does.
+  affiliation an arXiv HTML rendering (arxiv.org/html/) names no author before an "Affiliation:" or
+             "Affiliations:" label, the layout its byline takes ("<names> Affiliation: <institution>", repeated):
+             the name-shaped words right before each label are `[names redacted]`, or there are none because the
+             label opens its window or follows running text ("... more Affiliations:"). The institution stays.
+             A run of names a quote in data/ cites stays, as a byline does. A run whose label a window cuts
+             off ("<names> A …") has no label left to read; the curator redacts it by hand.
   counted    an extract holding a `[... redacted]` token says how many in `quote_extract_redactions`.
 
-The byline and roster rules read only fixed labels, so they need no list of names. A PDF's or an HTML
-rendering's byline has no such label; the sweep that redacted those matched each paper's author names from the
-arXiv API, and no name is stored for a check to reuse. The other lists of people redacted by hand (organisers,
-chairs, committees and team members on challenge sites; bylines on proceedings and project pages) sit in
-layouts that vary from page to page, where no label rule is precise enough to hold the line without false alarms.
+The byline, roster and affiliation rules read only fixed labels, so they need no list of names. A PDF's
+byline has no such label, nor has an HTML rendering's other than arXiv's; the sweep that redacted those matched
+each paper's author names from the arXiv API, and no name is stored for a check to reuse. The other lists of
+people redacted by hand (organisers, chairs, committees and team members on challenge sites; bylines on
+proceedings and project pages) sit in layouts that vary from page to page, where no label rule is precise enough
+to hold the line without false alarms.
 
     python scripts/check_extract_personal_data.py                  # the repository
     python scripts/check_extract_personal_data.py --root DIR       # the tests
@@ -63,6 +71,10 @@ ROSTERS = (
     (re.compile(r'^https?://datasets-benchmarks-proceedings\.neurips\.cc/paper_files/paper/\d{4}/hash/'
                 r'[^/?#]*-Abstract[^/?#]*\.html$'), re.compile(r'\bAuthors\s+'), re.compile(r' Abstract\b')),
 )
+HTML_PAGE = re.compile(r'^https?://(?:www\.)?arxiv\.org/html/')
+AFFILIATION = re.compile(r'\bAffiliations?:')
+WORD = re.compile(r'\S+')
+MARKS = ',;.()*†‡∗§¶&·|0123456789'               # footnote marks and separators a name may carry
 PARTICLES = {'van', 'von', 'der', 'den', 'de', 'del', 'della', 'di', 'da', 'dos', 'das', 'du', 'la', 'le', 'y', 'bin',
              'al', 'and'}
 
@@ -70,7 +82,7 @@ PARTICLES = {'van', 'von', 'der', 'den', 'de', 'del', 'della', 'di', 'da', 'dos'
 def name_shaped(text: str) -> bool:
     """Capitalised words, initials, name particles and separators only, with at least one capitalised word: what
     a list of people looks like, and what running text does not."""
-    words = [w.strip(',;.()*†‡∗§¶&·|0123456789') for w in text.split()]
+    words = [w.strip(MARKS) for w in text.split()]
     words = [w for w in words if w]
     return bool(words) and any(w[0].isupper() for w in words) and all(
         w[0].isupper() or w in PARTICLES for w in words)
@@ -126,6 +138,28 @@ def rosters(url: str, extract: str) -> list[tuple[int, int]]:
                 who = window[m.end():stop.start() if stop else len(window)].strip()
                 if who and not who.startswith(NAMES) and name_shaped(who):
                     out.append((off + m.end(), off + m.end() + len(who)))
+    return out
+
+
+def affiliations(extract: str) -> list[tuple[int, int]]:
+    """The (start, end) of each run of names right before an "Affiliation:" label that is not redacted: the
+    words back from the label while each is capitalised, a name particle or only marks, when they hold a
+    capitalised word. Lower-case running text before the label, or none, is no run."""
+    out = []
+    for off, window in windows(extract):
+        for m in AFFILIATION.finditer(window):
+            before = window[:m.start()].rstrip()
+            if before.endswith(NAMES):
+                continue
+            words = list(WORD.finditer(before))
+            k = len(words)
+            while k:
+                core = words[k - 1].group().strip(MARKS)
+                if core and not core[0].isupper() and core not in PARTICLES:
+                    break
+                k -= 1
+            if k < len(words) and name_shaped(before[words[k].start():]):
+                out.append((off + words[k].start(), off + len(before)))
     return out
 
 
@@ -201,6 +235,14 @@ def check(root: str) -> list[str]:
             errors.append('%s: the extract names people in a labelled list %d time(s) (an ACL Anthology '
                           '"Editors:" field or a NeurIPS Datasets and Benchmarks "Authors" list); replace each '
                           'list with [names redacted]' % (sid, len(listed)))
+        named = affiliations(extract) if HTML_PAGE.match(record.get('url') or '') else []
+        if named:
+            if cited is None:
+                cited = cited_quotes(root)
+            named = [s for s in named if not quoted(extract, s, cited.get(sid) or [])]
+        if named:
+            errors.append('%s: the extract names authors before an "Affiliation:" label %d time(s) (an arXiv HTML '
+                          'byline); replace each run of names with [names redacted]' % (sid, len(named)))
         tokens = len(TOKEN.findall(extract))
         if tokens and not record.get('quote_extract_redactions'):
             errors.append('%s: the extract holds %d redaction token(s) but quote_extract_redactions is unset'
@@ -218,8 +260,8 @@ def main(argv=None) -> int:
     if errors:
         print('%d problem(s)' % len(errors))
         return 1
-    print('OK    no Source extract holds an e-mail address, an unredacted arXiv submitter, an arXiv abs byline or a '
-          'labelled roster on a fixed-layout page')
+    print('OK    no Source extract holds an e-mail address, an unredacted arXiv submitter, an arXiv abs or HTML '
+          'byline or a labelled roster on a fixed-layout page')
     return 0
 
 
