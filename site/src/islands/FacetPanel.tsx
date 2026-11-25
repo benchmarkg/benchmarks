@@ -20,7 +20,12 @@
 //
 // Without a published entry facets.json has no rows: every count is zero, every term disabled, and the result region
 // says that nothing is published yet and what that zero does and does not mean, rather than reading as an empty field.
+//
+// At phone width (P2-S4-T05, 09 S10) the same rail is a sheet, opened from a "Filters (N)" button in the bar above the
+// results, and the chips are that bar's second line; islands/FilterSheet.tsx is the sheet, its button and the pin that
+// keeps the result list still when a filter changes, and pages/benchmarks/index.astro lays both widths out.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import FilterSheet, { FilterButton, usePinnedList } from './FilterSheet.tsx';
 import { decode, encode, ignoredNotice, type FilterState, type Ignored } from '../lib/filter-url.ts';
 import {
   ANNOUNCE_MS, announcement, browseHref, buildIndex, chips, cleared, confidence, mostConstraining, readFacets, tally,
@@ -44,6 +49,7 @@ type Load =
 // Open on arrival: the spine and the two facets most sessions start from; a group holding a selection opens too.
 const OPEN_FIRST = new Set<RailKey>(['d', 'c', 'em']);
 const domId = (key: string, id: string) => `f-${key}-${id.replace(/[^a-z0-9]+/gi, '-')}`;
+const SHEET = 'browse-sheet';
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 function ConfidenceNote({ c }: { c: Confidence }) {
@@ -101,6 +107,8 @@ export default function FacetPanel({ facetsHref, groups, families, published }: 
   const [hush, setHush] = useState(false);
   const [said, setSaid] = useState('');
   const settled = useRef<string | null>(null);
+  const list = useRef<HTMLDivElement>(null);
+  const pin = usePinnedList(list);
 
   // the selection: from the query string on load and on Back/Forward
   useEffect(() => {
@@ -164,6 +172,7 @@ export default function FacetPanel({ facetsHref, groups, families, published }: 
   }, [key, counted]);
 
   const apply = (next: FilterState) => {
+    pin();
     setState(next);
     setIgnored([]);
     const q = encode(next);
@@ -273,34 +282,39 @@ export default function FacetPanel({ facetsHref, groups, families, published }: 
   return (
     <div className="facet-panel" data-browse-view data-state={load.status}>
       <a className="skip" href="#browse-results">Skip the filters</a>
-      <aside className="rail" aria-labelledby="browse-filters" data-hush={hush ? '' : undefined}
-        onFocus={() => setHush(false)} onPointerOver={() => setHush(false)}>
-        <h2 id="browse-filters">Filters</h2>
-        <ConfidenceNote c={scope} />
-        {groups.map((g, gi) => {
-          const chosen = (state[g.key] ?? []).length;
-          const size = g.key === 'd' ? plural(g.terms.filter((t) => t.parent == null).length, 'family', 'families') : plural(g.terms.length, 'term', 'terms');
-          return (
-            <details key={g.key} className="group" data-group={g.key} open={isOpen(g.key, OPEN_FIRST.has(g.key) || chosen > 0)} onToggle={onToggleOpen(g.key)}>
-              <summary><span className="label">{g.label}</span> <span className="n">{chosen > 0 ? `${chosen} selected` : size}</span></summary>
-              {groupBody(g, gi)}
-            </details>
-          );
-        })}
-      </aside>
+      <FilterSheet id={SHEET} total={counted?.total ?? null}>
+        <aside className="rail" aria-labelledby="browse-filters" data-hush={hush ? '' : undefined}
+          onFocus={() => setHush(false)} onPointerOver={() => setHush(false)}>
+          <h2 id="browse-filters">Filters</h2>
+          <ConfidenceNote c={scope} />
+          {groups.map((g, gi) => {
+            const chosen = (state[g.key] ?? []).length;
+            const size = g.key === 'd' ? plural(g.terms.filter((t) => t.parent == null).length, 'family', 'families') : plural(g.terms.length, 'term', 'terms');
+            return (
+              <details key={g.key} className="group" data-group={g.key} open={isOpen(g.key, OPEN_FIRST.has(g.key) || chosen > 0)} onToggle={onToggleOpen(g.key)}>
+                <summary><span className="label">{g.label}</span> <span className="n">{chosen > 0 ? `${chosen} selected` : size}</span></summary>
+                {groupBody(g, gi)}
+              </details>
+            );
+          })}
+        </aside>
+      </FilterSheet>
       <section className="list" id="browse-results" aria-labelledby="browse-results-h" tabIndex={-1}>
-        <h2 id="browse-results-h">Benchmarks <span className="count">({index != null && counted != null ? `${counted.total} of ${index.rows.length}` : `${published} published`})</span></h2>
-        <div className="applied" role="group" aria-label="Applied filters">
-          {applied.length > 0
-            ? <ul className="chips">{applied.map((c) => (
-                <li key={`${c.key}=${c.value}`}>
-                  <button type="button" className="chip" data-state="filter-active" data-chip={`${c.key}=${c.value}`} onClick={() => apply(without(state, c))}>
-                    <span className="group">{c.group}:</span> {c.label} <span className="remove" aria-hidden="true">×</span><span className="visually-hidden"> (remove filter)</span>
-                  </button>
-                </li>
-              ))}</ul>
-            : <p className="none">No filter applied.</p>}
-          {applied.length > 1 ? <button type="button" className="clear" onClick={() => apply(cleared(state, groups))}>Clear all filters</button> : null}
+        <div className="results-head">
+          <h2 id="browse-results-h">Benchmarks <span className="count">({index != null && counted != null ? `${counted.total} of ${index.rows.length}` : `${published} published`})</span></h2>
+          <FilterButton sheet={SHEET} applied={applied.length} />
+          <div className="applied" role="group" aria-label="Applied filters">
+            {applied.length > 0
+              ? <ul className="chips">{applied.map((c) => (
+                  <li key={`${c.key}=${c.value}`}>
+                    <button type="button" className="chip" data-state="filter-active" data-chip={`${c.key}=${c.value}`} onClick={() => apply(without(state, c))}>
+                      <span className="group">{c.group}:</span> {c.label} <span className="remove" aria-hidden="true">×</span><span className="visually-hidden"> (remove filter)</span>
+                    </button>
+                  </li>
+                ))}</ul>
+              : <p className="none">No filter applied.</p>}
+            {applied.length > 1 ? <button type="button" className="clear" onClick={() => apply(cleared(state, groups))}>Clear all filters</button> : null}
+          </div>
         </div>
         {ignored.length > 0
           ? <div className="notice" data-ignored>
@@ -312,7 +326,7 @@ export default function FacetPanel({ facetsHref, groups, families, published }: 
           ? <p className="notice" data-unapplied>Kept in the link but not applied in this view: {kept.map((k, i) => <span key={`${k.key}=${k.value}`}>{i > 0 ? ', ' : ''}<code>{k.key}={k.value}</code></span>)}.</p>
           : null}
         <p role="status" className="visually-hidden" data-filter-status>{said}</p>
-        {results}
+        <div className="results-body" ref={list}>{results}</div>
       </section>
     </div>
   );

@@ -15,8 +15,9 @@
 //
 // The island is server-rendered, so the page as sent is the rail with every term linking its single-facet page
 // (/browse/{facet}/{term}/): with JavaScript off it is a route into the catalogue, and combining terms is what
-// JavaScript adds (10 V11, "Without JavaScript"). The phone layout, the rail as a "Filters (N)" sheet, is P2-S4-T05's;
-// below --bp-md the rail and the list stack.
+// JavaScript adds (10 V11, "Without JavaScript"). Below --bp-md (P2-S4-T05, 09 S10) the rail is a sheet opened from a
+// "Filters (N)" button in a sticky bar above the results, with the applied filters as that bar's second line, one row
+// that scrolls sideways; the sheet is a popover, so it opens with JavaScript off too (islands/FilterSheet.tsx).
 //
 // In the search index (P2-S4-T06) the view is a narrative page, crawled for its heading and lede; the panel is
 // data-pagefind-ignore, because every term and benchmark it lists has its own record, and indexing them here would
@@ -73,8 +74,10 @@ const facetsHref = dataHref('facets.json');
   .browse :global(.confidence) { margin: 0 0 var(--sp-3); padding: var(--sp-2) var(--sp-3); border: 1px solid var(--c-caution); background: var(--c-caution-bg); font-size: var(--fs-sm); }
   .browse :global(.confidence[data-curation-confidence='reviewed']) { border-color: var(--c-border); background: var(--c-bg); }
 
-  .browse :global(.group) { border-block-start: 1px solid var(--c-border); padding-block: var(--sp-2); }
-  .browse :global(.group > summary) { cursor: pointer; font-weight: 600; min-block-size: 1.5rem; }
+  /* the rail's groups, by element: a chip's facet name is a span.group too, and as a flex item it took this border and
+     padding, which made every chip taller than 09 S6.2's 24px (28 at coarse pointers) and drew a rule across it */
+  .browse :global(details.group) { border-block-start: 1px solid var(--c-border); padding-block: var(--sp-2); }
+  .browse :global(details.group > summary) { cursor: pointer; font-weight: 600; min-block-size: 1.5rem; }
   .browse :global(.terms) { list-style: none; margin: var(--sp-1) 0 0; padding: 0; }
   .browse :global(.terms .terms) { padding-inline-start: var(--sp-6); }
   .browse :global(.subdomains > summary) { cursor: pointer; padding-inline-start: var(--sp-6); font-size: var(--fs-xs); color: var(--c-ink-muted); }
@@ -86,7 +89,8 @@ const facetsHref = dataHref('facets.json');
      another term; it stays while the pointer is on it, and Escape hides it until the pointer or focus moves (SC 1.4.13).
      Hover waits a moment, so a pointer passing down the rail does not flash every definition; a mouse click leaves no
      definition open, because only :focus-visible opens one from focus. The rail does not scroll on its own, which would
-     clip it. Touch has no hover: the phone layout is P2-S4-T05's. */
+     clip it. Touch has no hover, so in the phone sheet (P2-S4-T05) a definition shows on keyboard focus only: a touch
+     control for it is not built yet, and without JavaScript each term's single-facet page links its definition. */
   .browse :global(.gloss) {
     visibility: hidden;
     position: absolute;
@@ -143,4 +147,116 @@ const facetsHref = dataHref('facets.json');
   .browse :global(.results) { display: grid; gap: var(--sp-2); margin: 0; padding-inline-start: var(--sp-6); }
   .browse :global(.results .meta) { font-size: var(--fs-xs); color: var(--c-ink-muted); font-variant-numeric: tabular-nums slashed-zero; }
   .browse :global(.empty) { max-inline-size: 68ch; }
+
+  /* 09 S10, the phone layout (P2-S4-T05; islands/FilterSheet.tsx). Below --bp-md the rail is a popover sheet, closed
+     until the "Filters (N)" button opens it, and the bar above the results -- the heading, that button and the
+     applied-filter chips -- sticks to the top of the screen, so the filters in force are in sight wherever the reader is
+     in the list. Each line of the bar is one line whatever it holds, so applying a filter never changes its height and
+     never moves the list. All of it only where the browser has the Popover API; elsewhere the rail stacks above the
+     list, as it did. From --bp-md up the popover is laid out in place as the rail, with the UA's popover box undone,
+     and neither the button nor the sheet's footer is shown. */
+  .browse :global(.open-sheet), .browse :global(.sheet-foot) { display: none; }
+  @media (min-width: 51rem) {
+    .browse :global(.filter-sheet:not(:popover-open)) {
+      display: block;
+      position: static;
+      inset: auto;
+      inline-size: auto;
+      block-size: auto;
+      margin: 0;
+      border: 0;
+      padding: 0;
+      overflow: visible;
+      background: none;
+      color: inherit;
+    }
+  }
+  @media (max-width: 50.99rem) {
+    @supports selector(:popover-open) {
+      .browse :global(.skip) { display: none; }
+      .browse :global(.results-head) {
+        position: sticky;
+        z-index: 1;
+        inset-block-start: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: var(--sp-2) var(--sp-3);
+        margin: 0 calc(-1 * var(--sp-4)) var(--sp-3);
+        padding: var(--sp-2) var(--sp-4);
+        border-block-end: 1px solid var(--c-border);
+        background: var(--c-bg);
+      }
+      .browse :global(.results-head > h2) { margin: 0; font-size: var(--fs-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .browse :global(.open-sheet) { display: inline-flex; }
+      /* the chips: one line that scrolls sideways and never wraps, as tall with no chip as with ten */
+      .browse :global(.results-head > .applied) {
+        grid-column: 1 / -1;
+        flex-wrap: nowrap;
+        min-block-size: 1.75rem;
+        margin: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: thin;
+      }
+      .browse :global(.results-head .chips) { flex-wrap: nowrap; }
+      .browse :global(.results-head .applied > *), .browse :global(.results-head .chips > li) { flex: none; white-space: nowrap; }
+      /* the list is the page and never moves under the reader: the browser does not re-anchor the page on a row that a
+         filter has moved within the list, and FilterSheet.tsx usePinnedList() holds the list when what is above it
+         changes */
+      .browse :global(.facet-panel) { overflow-anchor: none; }
+    }
+  }
+  .browse :global(.open-sheet), .browse :global(.sheet-done) {
+    align-items: center;
+    justify-content: center;
+    min-block-size: 2.25rem;
+    padding-inline: var(--sp-3);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  /* The open sheet: the popover covers the screen and is its own scroll container, its box above the panel a scrim of
+     the page's ground. The panel is a pixel taller than what is left, so the sheet always scrolls and overscroll-behavior
+     holds: a drag on the panel or the scrim never reaches the page under it. The footer stays at the foot of the screen. */
+  .browse :global(.filter-sheet:popover-open) {
+    position: fixed;
+    inset: 0;
+    inline-size: auto;
+    block-size: auto;
+    max-inline-size: none;
+    max-block-size: none;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: color-mix(in oklch, var(--c-bg) 70%, transparent);
+    color: var(--c-ink);
+  }
+  .browse :global(.filter-sheet:popover-open > .sheet-panel) {
+    display: flex;
+    flex-direction: column;
+    min-block-size: calc(85dvh + 1px);
+    margin-block-start: 15dvh;
+    padding: var(--sp-4) var(--sp-4) 0;
+    border-block-start: 1px solid var(--c-border-strong);
+    background: var(--c-bg);
+  }
+  .browse :global(.filter-sheet:popover-open .sheet-foot) {
+    display: block;
+    position: sticky;
+    inset-block-end: 0;
+    margin: auto calc(-1 * var(--sp-4)) 0;
+    padding: var(--sp-3) var(--sp-4);
+    border-block-start: 1px solid var(--c-border);
+    background: var(--c-bg);
+  }
+  .browse :global(.sheet-done) { display: flex; inline-size: 100%; min-block-size: 2.75rem; border-color: var(--c-link); background: var(--c-select-bg); }
 </style>
