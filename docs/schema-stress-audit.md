@@ -38,14 +38,24 @@ Three kinds of structure, and prose:
 
 ## Every notes string
 
-Chars are before and after; "removed" means the key is gone because everything in it moved.
+Chars are before and after; "removed" means the key is gone because everything in it moved. Rows marked "added
+by" cover strings written after the audit; they were brought under the rule on 2026-11-25.
 
 | Entry | Field | Chars | What it says | Judgement | Where it went |
 | --- | --- | --- | --- | --- | --- |
 | swe-bench | curation.notes | 293, removed | one reviewer check on the funded-by-evaluated-party flag | structural | review_checks (1) |
 | casp | curation.notes | 485, removed | one reviewer check on an advisory-board affiliation, with a source and quote | structural | review_checks (1, quote verified) |
 | roboarena | curation.notes | 690, removed | two reviewer checks on maintainer affiliation and evaluator concentration, with sources | structural | review_checks (2, one quote verified) |
+| roboarena | baselines[0].notes | 693 → 178 | why no absolute anchor can be measured on a pool-relative rating (added by P3-S6-T05, #244) | prose; its structure is already `value_absent_reason`, evidence (3) and the Metric's `requires_pool` | kept, shortened; the argument moved to the comment above the record |
 | weatherbench-2 | curation.notes | 2,616, removed | four specialist checks; seven schema findings | structural | review_checks (4); ledger (7) |
+| weatherbench-2 | subsets[0].notes | 129 | upper-level headline variable; the cell the anchors are stated at (subset notes added by P3-S6-T04, #252) | prose | kept |
+| weatherbench-2 | subsets[1].notes | 55 | upper-level headline variable, its two metrics | prose | kept |
+| weatherbench-2 | subsets[2].notes | 55 | the same | prose | kept |
+| weatherbench-2 | subsets[3].notes | 165 | upper-level wind: two quantities under one name, one per headline metric | prose | kept |
+| weatherbench-2 | subsets[4].notes | 51 | surface headline variable, its two metrics | prose | kept |
+| weatherbench-2 | subsets[5].notes | 51 | the same | prose | kept |
+| weatherbench-2 | subsets[6].notes | 51 | the same | prose | kept |
+| weatherbench-2 | subsets[7].notes | 232 → 197 | precipitation: SEEPS and CRPS, against ERA5 for every model; why no metric_override | prose | kept, shortened |
 | matbench-discovery | curation.notes | 2,274, removed | four specialist checks; eight schema findings | structural | review_checks (4); ledger (8) |
 | matbench-discovery | subsets[1].notes | 98 | the default view; items from data.size | prose | kept |
 | matbench-discovery | subsets[2].notes | 80 | a separate leaderboard view, not comparable | prose | kept |
