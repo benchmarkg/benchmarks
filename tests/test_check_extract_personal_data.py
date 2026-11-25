@@ -1,5 +1,6 @@
-"""scripts/check_extract_personal_data.py: no stored extract carries an e-mail address, an arXiv submitter's name or
-an arXiv abs page's author list. The byline fixtures are placeholders ("First Author"), not anyone's name."""
+"""scripts/check_extract_personal_data.py: no stored extract carries an e-mail address, an arXiv submitter's name,
+an arXiv abs page's author list or a fixed-layout page's labelled list of people. The byline and roster fixtures
+are placeholders ("First Author", "Second Editor"), not anyone's name."""
 import os
 import sys
 
@@ -101,6 +102,46 @@ def test_a_byline_that_a_quote_cites_stays(tmp_path):
     assert C.check(str(tmp_path)) == []
     quote('Title:A Benchmark')                            # a quote beside it is no reason to keep it
     assert "names the paper's authors 1 time" in C.check(str(tmp_path))[0]
+
+
+ACL = 'https://aclanthology.org/2026.example-main.1/'
+DB = 'https://datasets-benchmarks-proceedings.neurips.cc/paper_files/paper/2021/hash/0123abcd-Abstract-round2.html'
+
+
+@pytest.mark.parametrize('url, extract', [
+    (ACL, 'Address: Example City Editors: [names redacted] Venue: EMNLP SIG: Publisher: Association for'),
+    (ACL, 'Year: 2025 Address: Example City Editors: … Language: URL:'),          # the window ends at the label
+    (ACL, 'Editors: [names redacted] … Pages: 1–10 Bibkey: author-etal-2026-example Cite (ACL): First Author'),
+    (DB, 'Bibtex Paper Supplemental Authors [names redacted] Abstract Remote sensing datasets pose'),
+    (DB, 'Abstract We thank the Authors of earlier work for their data and code'),  # running text, not a list
+    ('https://aclanthology.org/2026.example-main.1.pdf', 'Proceedings Editors: First Editor and Second Editor'),
+    ('https://example.org/workshop', 'Editors: First Editor, Second Editor Venue: Online'),  # another layout
+])
+def test_a_redacted_or_unlabelled_roster_passes(tmp_path, url, extract):
+    source(tmp_path, 'src-a', extract, url=url, quote_extract_redactions=extract.count('redacted') or None)
+    assert C.check(str(tmp_path)) == []
+
+
+@pytest.mark.parametrize('url, extract, times', [
+    (ACL, 'Address: Example City Editors: First Editor, Second Editor, Third Editor Venue: Findings SIG:', 1),
+    (ACL, 'Year: 2026 Address: Online Editors: First Editor, Second Ed … Language: URL:', 1),  # cut by a window
+    (ACL, 'Editors: First van der Editor, B. Example Venue: ACL … Editors: Third Editor Venue: ACL', 2),
+    (DB, 'Paper Supplemental Authors First Author, Second Author Abstract Remote sensing datasets pose', 1),
+    (DB, 'Supplemental Authors First Author, Second Author, Third … for protein engineering', 1),
+])
+def test_a_labelled_roster_that_names_people_fails(tmp_path, url, extract, times):
+    source(tmp_path, 'src-a', extract, url=url)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and 'names people in a labelled list %d time' % times in errs[0], errs
+
+
+def test_a_roster_that_a_quote_cites_stays(tmp_path):
+    source(tmp_path, 'src-a', 'Address: Online Editors: First Editor, Second Editor Venue: ACL', url=ACL)
+    entry = tmp_path / 'data' / 'benchmarks' / 'language'
+    entry.mkdir(parents=True)
+    (entry / 'a.yaml').write_text(yaml.safe_dump({'id': 'a', 'maintainers': {'quote': 'Editors: First Editor',
+                                                                            'source': 'src-a'}}), encoding='utf-8')
+    assert C.check(str(tmp_path)) == []
 
 
 def test_the_repository_passes():
