@@ -27,6 +27,10 @@ than to a summary." That is held here as:
      gains no row and tests/report/test_reports.py's pin is untouched.
 
 Ids are content-derived (05 S2), as the files' headers say, and are recomputed here.
+
+P3-S7-T06 added four claims to the shard (tests/test_weatherbench2_claims_batch2.py). Rules 2, 3, 4 and 6 and the
+records' identity run on every claim on the benchmark, so they hold for that batch too; the count in 1, the failure
+cases and the three keys in 5 are this batch's, its four claims by id (FIRST).
 """
 import collections
 import glob
@@ -99,6 +103,9 @@ def raw_claims():
 
 
 CLAIMS = [ResultClaim.model_validate(raw) for _, raw in raw_claims()]
+# This batch's four (P3-S7-T05); P3-S7-T06's are in tests/test_weatherbench2_claims_batch2.py.
+FIRST_IDS = ('claim-97ccdee40ee2', 'claim-fd2e2bb3ecfd', 'claim-1347a99e2e5a', 'claim-b81ace24efa9')
+FIRST = [c for c in CLAIMS if c.id in FIRST_IDS]
 
 
 @pytest.fixture(scope='module')
@@ -107,7 +114,7 @@ def entry():
 
 
 def by_system(sid):
-    return next(c for c in CLAIMS if c.system == sid)
+    return next(c for c in FIRST if c.system == sid)
 
 
 # ---- the rule, as functions the corpus tests and the failure cases share ----------------------------------------
@@ -205,14 +212,14 @@ def cell_problems(claim, cond, src, sys_=None):
 
 def test_four_claims_in_the_shard(entry):
     paths = [rel for rel, _ in raw_claims()]
-    assert len(CLAIMS) == 4
+    assert len(FIRST) == 4
     assert all(rel.startswith('data/claims/weatherbench-2/') for rel in paths), paths
     subsets, metrics = {s.id for s in entry.subsets}, set(entry.metrics)
     for c in CLAIMS:
         assert c.benchmark == BENCH + '@2020' and c.claim_type == 'absolute'
         assert c.subset in subsets and c.metric in metrics
         assert c.uncertainty is None and c.value_text is None
-    assert len({c.system for c in CLAIMS}) == 4
+    assert len({c.system for c in FIRST}) == 4
 
 
 @pytest.mark.parametrize('claim', CLAIMS, ids=lambda c: c.system)
@@ -341,7 +348,7 @@ def test_one_cell_shares_a_key_and_another_lead_time_does_not(entry):
     assert key(g, entry).comparability_key == key(p, entry).comparability_key
     assert key(g, entry).comparability_key != key(f, entry).comparability_key
     assert key(g, entry).comparability_key != key(n, entry).comparability_key        # same conditions, another metric
-    assert len({key(c, entry).comparability_key for c in CLAIMS}) == 3
+    assert len({key(c, entry).comparability_key for c in FIRST}) == 3
 
 
 def test_without_lead_time_two_lead_times_would_collide(entry):
