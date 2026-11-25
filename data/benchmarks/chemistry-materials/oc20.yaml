@@ -6,9 +6,28 @@
 # Hugging Face, where OC20 is now scored. Every quote below is checked by the quote-substring validator
 # against those Sources' committed extracts.
 #
-# OC20 only. The Open Catalyst Project also released OC22 (oxides, its own leaderboard) and OpenDAC; Stage 3
-# classified "Open Catalyst (OC20/OC22)" as one corpus item, but the two datasets have separate tasks,
-# splits and boards, so OC22 is a sibling entry, not part of this one.
+# P1-S3-T01 drafted OC20 only and called OC22 a sibling entry. P3-S6-T02 (2026-11-24) follows the ledger instead,
+# which models the three generations, OC20, OC22 and OCx24, as BenchmarkVersions of this entry; the id stays oc20
+# and the name, description and task still describe OC20 (review check). It read the OC22 paper (arXiv 2206.08917,
+# its v3 PDF and abstract page), the OCx24 paper (arXiv 2411.11783, its v1 PDF and abstract page), the FAIR
+# Chemistry documentation's OCx24 page, fairchem's TRAIN.md at its last root commit for the EvalAI submission
+# splits, EvalAI's records of the OC22 challenge (1869) and of the OC20 challenge's phases (712), and the
+# Hugging Face board's scoring module. From them it added the three versions; the hidden test splits as subsets
+# whose ids carry their version (oc20#oc20-test-id), each with the server that scores it; OCx24's measured targets
+# as subsets of their own, which have no hidden split; eight task metrics and R²; and the OC20 and OC22 anchors in
+# data/baselines/oc20.yaml. OpenDAC stays its own entry (opendac).
+#
+# Premises in the ledger that did not survive the sources, each recorded where it bites:
+#   1. "Record the hidden test splits so held-out-server is an available verification level" holds for OC20 and
+#      OC22 only. OCx24 has no test split, server or leaderboard: its models are scored by cross-validation over
+#      measurements whose summaries are public (subsets, review_checks).
+#   2. "Attach an assay_protocol source ref wherever ground truth is wet-lab". The schema has no version- or
+#      subset-level field for it: assay_protocol is an EvalConditions field, set per claim, and the one entry-level
+#      lever, comparability.material_extra, would make it material for every OC20 and OC22 claim too. The protocol
+#      Source (src-arxiv-2411-11783-v1, sections 2.2 and A.4) is cited by the ocx24 version and quoted on its
+#      subsets; schema/ is unchanged (comparability, review_checks).
+#   3. OCx24 as wet-lab-validation, the taxonomy's own example. Its predictions are compared against measurements
+#      taken before any entrant, which the term's exclusion test rules out (evaluation_method_considered_and_rejected).
 
 id: oc20
 name: Open Catalyst 2020 (OC20)
@@ -80,6 +99,15 @@ evaluation_method_basis:
     prediction right when it falls within a fixed threshold of the DFT value.
   source: src-arxiv-2010-09990-v5
   quote: The second measures the energies within a threshold (EwT) of the ground truth
+evaluation_method_considered_and_rejected:
+  - term: wet-lab-validation
+    reason: OCx24's targets are wet-lab measurements, and the taxonomy lists ocx24 as qualifying,
+      but the term's exclusion test rules out predictions compared against previously measured data.
+      OCx24's models are fitted to its measurements and scored on held-out ones by cross-validation;
+      nothing an entrant predicts is taken to a laboratory (review check).
+    source: src-arxiv-2411-11783-v1
+    quote: we explore whether models trained on experimental data using computational descriptors as
+      input can produce results that are predictive of held out experimental data
 designed_for_subjects:
   - scientific-surrogate-model
 designed_for_subjects_basis:
@@ -117,7 +145,10 @@ learned_entrant_evidence:
 evaluation_target: learned-system
 execution_mode: automated
 ground_truth_source: simulation
-ground_truth_source_note: VASP relaxations with the RPBE functional; test values are withheld.
+ground_truth_source_note: VASP relaxations with the RPBE functional; test values are withheld. That
+  is OC20's and OC22's ground truth. OCx24's is experimental (electrochemical measurements of
+  synthesised samples), which this field, one value per benchmark, cannot also hold; its subsets
+  carry it (review check).
 reproducible_by_third_party: true
 reproducible_by_third_party_basis:
   reason: The training and validation data and the baselines are public, and anyone can submit test
@@ -140,6 +171,9 @@ task:
 
 data:
   access: train-open-test-held-out
+  access_note: True of OC20, and of OC22 as far as its evaluation server shows (no source read
+    states that OC22's test labels are withheld; review check). OCx24 has no held-out split; the
+    summaries of its measurements are public (oc20#ocx24-her, oc20#ocx24-co2rr).
   access_basis:
     reason: Training and validation data are released, and so are test inputs. Test ground truth is
       not, and test scores come only from the maintainers' server.
@@ -157,8 +191,18 @@ data:
     quote: '"start_date":"2021-02-17T01:00:00Z","end_date":"2026-01-31T23:59:59Z"'
   data_provenance:
     - simulation-generated
-  data_provenance_note: DFT relaxations, plus rattled structures and short molecular dynamics, on
-    surfaces cut from Materials Project bulk materials.
+    - experimental-measurement
+  data_provenance_note: OC20's are DFT relaxations, plus rattled structures and short molecular
+    dynamics, on surfaces cut from Materials Project bulk materials, and OC22's are DFT relaxations
+    of oxide surfaces; the quote below is OC20's. experimental-measurement is OCx24's alone, in
+    data_provenance_basis.
+  data_provenance_basis:
+    reason: OCx24's targets are measured in the laboratory on synthesised samples, HER at 50 mA/cm2
+      and CO2 reduction at five current densities, in a membrane electrode assembly; the protocol is
+      the paper's section 2.2, detailed in A.4.
+    source: src-arxiv-2411-11783-v1
+    quote: The testing process began with the electrolyzer operating at 50 mA/cm2 for 9 minutes to
+      evaluate HER activity
   data_provenance_source: src-arxiv-2010-09990-v5
   data_provenance_quote: All structure relaxations were performed using the Vienna Ab Initio
     simulation Package (VASP)
@@ -237,6 +281,11 @@ execution:
 comparability:
   # Beyond the fallback profile: which task and test subsplit (ID or one of the three OOD), and which training
   # set (S2EF's nested sizes, and whether other DFT datasets were added) change an OC20 number.
+  # P3-S6-T02: assay_protocol is deliberately not added. OCx24's targets come from one bench protocol, the paper's
+  # (src-arxiv-2411-11783-v1), so the field would not separate two OCx24 claims, and the version in every claim's
+  # benchmark ref (oc20@ocx24) already separates them from OC20's and OC22's. Material fields are per benchmark, not
+  # per version: listing it here would count it as unknown on every OC20 and OC22 claim, which have no assay. An
+  # OCx24 claim's EvalConditions.assay_protocol still names the paper (P3-S7-T04); review check.
   material_extra:
     - subset_used
     - training_data_policy
@@ -250,6 +299,293 @@ liveness:
 homepage: https://facebookresearch.github.io/fairchem/open-catalyst-project/
 repository: https://github.com/facebookresearch/fairchem
 leaderboard_url: https://huggingface.co/spaces/facebook/fairchem_leaderboard
+
+# --- Versions, subsets and metrics (P3-S6-T02) -------------------------------------------------
+
+versions:
+  - version: oc20
+    label: Open Catalyst 2020 (OC20)
+    version_kind: edition
+    released: 2020-10-20
+    changes: The first generation. DFT relaxations of adsorbates on catalyst surfaces in three tasks
+      (S2EF, IS2RS, IS2RE) scored against adsorption energies, with a test set of four subsplits
+      whose labels are withheld, and challenge test sets added in 2021, 2022 and 2023.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2010-09990-v5
+      - src-arxiv-2010-09990
+      - src-evalai-oc20-challenge-712-phases
+  - version: oc22
+    label: Open Catalyst 2022 (OC22)
+    version_kind: edition
+    released: 2022-06-17
+    changes: Oxide catalysts, 62,331 DFT relaxations, with the tasks redefined on DFT total energies
+      (S2EF-Total, IS2RE-Total) beside IS2RS, and a test set of two subsplits (in-domain and
+      out-of-domain compositions) scored for S2EF-Total and IS2RE-Total by its own EvalAI challenge.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2206-08917-v3
+      - src-arxiv-2206-08917
+      - src-evalai-oc22-challenge-1869
+      - src-github-fairchem-train-md-1e07c21
+  - version: ocx24
+    label: Open Catalyst Experiments 2024 (OCx24)
+    version_kind: edition
+    released: 2024-11-18
+    changes: An experimental dataset. 572 samples synthesised and characterised, and 441
+      electrochemical tests of them for hydrogen evolution and CO2 reduction, averaged to 179
+      targets; models predict the measured outcomes from computed descriptors and are scored by R²
+      under cross-validation. Its ground truth is a laboratory measurement, its summaries are
+      public, and it has no held-out split or server.
+    breaking: true
+    frozen: true
+    sources:
+      - src-arxiv-2411-11783-v1
+      - src-arxiv-2411-11783
+      - src-github-fairchem-docs-ocx24-d733f48
+versions_note: >
+  The ledger's call (P3-S6-T02): three generations by one maintainer, each a breaking edition, because
+  each is new data scored on its own terms. None supersedes another: OC22 adds oxides and changes the
+  energy target, OCx24 adds measurements, and OC20 is still the one a board scores. The released dates
+  are the papers' first arXiv versions (src-arxiv-2010-09990, src-arxiv-2206-08917, src-arxiv-2411-11783).
+  A subset belongs to the version its id names (oc20#oc22-test-id is OC22's): the Subset model has no
+  version field, so tests/test_open_catalyst.py holds the tie, as tests/test_dcase_open_asr.py does for
+  DCASE. OC25, listed beside them in the FAIR Chemistry documentation, was not read and is not modelled
+  (review check).
+versions_basis:
+  reason: The generations' ground truths are not the same quantity, so no score compares across
+    them; OCx24's are measurements rather than DFT.
+  source: src-arxiv-2206-08917-v3
+  quote: rather than ground truth values being DFT adsorption energies, we use DFT total energies
+    for OC22
+
+subsets:
+  # --- OC20: the held-out test set, its four subsplits, and the challenge test sets --------------------------
+  - id: oc20#oc20-test
+    label: OC20 test set
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2010-09990-v5
+        quote: Ground truth test data is not publicly released
+      - source: src-arxiv-2010-09990-v5
+        quote: Evaluation on the test set may only be done through the leaderboard
+      - source: src-evalai-oc20-challenge-712-phases
+        quote: '"name":"Predicting energy and forces from structure (S2EF) -- Test","description":" ","leaderboard_public":true'
+      - source: src-evalai-oc20-challenge-712-phases
+        quote: '"name":"Predicting relaxed structure from initial structure (IS2RS) -- Test","description":"
+          ","leaderboard_public":true'
+      - source: src-evalai-oc20-challenge-712-phases
+        quote: '"name":"Predicting relaxed state energy from initial structure (IS2RE) -- Test","description":"
+          ","leaderboard_public":true'
+      - source: src-github-fairchem-train-md-1e07c21
+        quote: A submission must contain results from the 4 different splits - in distribution (id),
+          out of distribution adsorbate (ood ads), out of distribution catalyst (ood cat), and out
+          of distribution adsorbate and catalyst (ood both)
+      - source: src-hf-fairchem-leaderboard-evaluator-212fd1e
+        quote: metrics["avg_energy_mae"] = np.mean(energy_maes)
+    notes: The whole held-out test set, whose score is the mean over its four subsplits (the Hugging
+      Face board's avg_energy_mae). Scored by EvalAI challenge 712's S2EF, IS2RS and IS2RE test
+      phases until 2026-01-31, and since then by the Hugging Face board for S2EF and IS2RE only.
+  - id: oc20#oc20-test-id
+    label: OC20 test, in-domain
+    parent: oc20#oc20-test
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2010-09990-v5
+        quote: These include In-Domain (sampled from the training distribution)
+      - source: src-hf-fairchem-leaderboard-evaluator-212fd1e
+        quote: subsets=["id", "ood_ads", "ood_cat", "ood_both"],
+  - id: oc20#oc20-test-ood-ads
+    label: OC20 test, out-of-domain adsorbates
+    parent: oc20#oc20-test
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2010-09990-v5
+        quote: Out-of-Domain Adsorbate (OOD Adsorbate)
+      - source: src-hf-fairchem-leaderboard-evaluator-212fd1e
+        quote: subsets=["id", "ood_ads", "ood_cat", "ood_both"],
+  - id: oc20#oc20-test-ood-cat
+    label: OC20 test, out-of-domain catalysts
+    parent: oc20#oc20-test
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2010-09990-v5
+        quote: OOD Catalyst, and OOD Both
+      - source: src-hf-fairchem-leaderboard-evaluator-212fd1e
+        quote: subsets=["id", "ood_ads", "ood_cat", "ood_both"],
+  - id: oc20#oc20-test-ood-both
+    label: OC20 test, out-of-domain adsorbates and catalysts
+    parent: oc20#oc20-test
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2010-09990-v5
+        quote: OOD Both (both unseen adsorbate and unseen catalyst compositions)
+      - source: src-hf-fairchem-leaderboard-evaluator-212fd1e
+        quote: subsets=["id", "ood_ads", "ood_cat", "ood_both"],
+  - id: oc20#oc20-test-challenge-2021
+    label: OC20 IS2RE test-challenge, 2021
+    scored_separately: true
+    evidence:
+      - source: src-evalai-oc20-challenge-712-phases
+        quote: (IS2RE) -- Test-challenge","description":"
+          ","leaderboard_public":false,"start_date":"2021-09-14T07:00:00Z"
+    notes: The 2021 challenge's IS2RE test set, a phase of challenge 712 with a private leaderboard,
+      closed with the server on 2026-01-31.
+  - id: oc20#oc20-test-challenge-2022
+    label: OC20 IS2RE test-challenge, 2022
+    scored_separately: true
+    evidence:
+      - source: src-evalai-oc20-challenge-712-phases
+        quote: (IS2RE) -- Test-challenge-2022","description":"
+          ","leaderboard_public":false,"start_date":"2022-09-20T07:00:00Z"
+    notes: The 2022 challenge's IS2RE test set, as above.
+  - id: oc20#oc20-test-challenge-2023
+    label: OC20 adsorption-energy test-challenge, 2023
+    scored_separately: true
+    evidence:
+      - source: src-evalai-oc20-challenge-712-phases
+        quote: '"name":"Predicting adsorption energy given an adsorbate and a catalyst surface -- Test-challenge-2023","description":"
+          ","leaderboard_public":false'
+    notes: The 2023 challenge's test set, for a task the phase names (the adsorption energy of an
+      adsorbate and a catalyst surface); no source read defines its metric, so no Metric record
+      covers it.
+  # --- OC22: the held-out test set and its two subsplits ------------------------------------------------------
+  - id: oc20#oc22-test
+    label: OC22 test set
+    scored_separately: true
+    evidence:
+      - source: src-evalai-oc22-challenge-1869
+        quote: This page hosts evaluation servers for two tasks on the Open Catalyst 2022 (OC22)
+          dataset
+      - source: src-github-fairchem-train-md-1e07c21
+        quote: A submission must contain results from the 2 different splits - in distribution (id)
+          and out of distribution (ood)
+      - source: src-arxiv-2206-08917-v3
+        quote: Validation and test splits are similar in size with exclusive compositions
+    notes: Scored for S2EF-Total and IS2RE-Total by EvalAI challenge 1869 until 2026-01-31; the
+      Hugging Face board's scorer takes OC20's test types only, so no server has scored OC22 since.
+      No source read states that its test labels are withheld (review check). OC22's IS2RS had no
+      server phase, and the paper's IS2RS test numbers are the maintainers' own.
+  - id: oc20#oc22-test-id
+    label: OC22 test, in-domain
+    parent: oc20#oc22-test
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-08917-v3
+        quote: Splits are sampled based on catalyst composition, ID for those from the same
+          distribution as training, OOD for unseen catalyst compositions
+  - id: oc20#oc22-test-ood
+    label: OC22 test, out-of-domain compositions
+    parent: oc20#oc22-test
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2206-08917-v3
+        quote: Splits are sampled based on catalyst composition, ID for those from the same
+          distribution as training, OOD for unseen catalyst compositions
+  # --- OCx24: the measured targets, by reaction, and the two cross-validation strategies -----------------------
+  - id: oc20#ocx24-her
+    label: OCx24 hydrogen evolution (measured voltage at 50 mA/cm2)
+    scored_separately: true
+    metric_override: r-squared
+    evidence:
+      - source: src-arxiv-2411-11783-v1
+        quote: The testing process began with the electrolyzer operating at 50 mA/cm2 for 9 minutes
+          to evaluate HER activity
+      - source: src-arxiv-2411-11783-v1
+        quote: Models were trained to predict the cell voltage at 50 mA/cm2 production rate using
+          the adsorption energies of H and OH as features
+      - source: src-arxiv-2411-11783-v1
+        quote: we observe an experimental standard deviation of σ = 0.043V vs SHE for 297 sample
+          replicates within ±5% in XRF composition, an estimate of the noise in our targets
+      - source: src-github-fairchem-docs-ocx24-d733f48
+        quote: Summaries of this data are all publicly available
+    notes: Ground truth measured in the laboratory, under the paper's protocol, on samples
+      synthesised for the dataset, with a replicate noise of 0.043 V. Every measurement summary is
+      public, so there is no held-out split and no server; a model is scored by R² on the samples
+      one of the two cross-validation strategies below leaves out of its training.
+  - id: oc20#ocx24-her-loo
+    label: OCx24 HER, leave one sample out
+    parent: oc20#ocx24-her
+    scored_separately: true
+    metric_override: r-squared
+    evidence:
+      - source: src-arxiv-2411-11783-v1
+        quote: 'Leave One Out (LOO): Hold out a given sample, train on the remaining data, and evaluate
+          on the held out sample'
+  - id: oc20#ocx24-her-loco
+    label: OCx24 HER, leave one composition out
+    parent: oc20#ocx24-her
+    scored_separately: true
+    metric_override: r-squared
+    evidence:
+      - source: src-arxiv-2411-11783-v1
+        quote: 'Leave One Composition Out (LOCO): Hold out all samples with a given composition'
+  - id: oc20#ocx24-co2rr
+    label: OCx24 CO2 reduction (production rates at 3.3 V full-cell voltage)
+    scored_separately: true
+    metric_override: r-squared
+    evidence:
+      - source: src-arxiv-2411-11783-v1
+        quote: the CO2RR was carried out at current densities of 50, 100, 150, 200, and 300 mA/cm2
+          for 9 minutes each
+      - source: src-arxiv-2411-11783-v1
+        quote: we interpolate each product to a fixed applied potential of 3.3 V full cell voltage
+      - source: src-arxiv-2411-11783-v1
+        quote: For each product, we independently fit a random forest regressor to predict the
+          production rate
+      - source: src-arxiv-2411-11783-v1
+        quote: We observe an experimental standard deviation of σ = 0.050 (H2), 0.040 (CO), 0.033
+          (Liquid)
+      - source: src-github-fairchem-docs-ocx24-d733f48
+        quote: Summaries of this data are all publicly available
+    notes: Ground truth measured in the laboratory at five current densities and interpolated to one
+      voltage; R² is reported per product (H2, CO, liquid products, C2H4), which a claim must name
+      (review check). Public, with no held-out split, as for HER.
+  - id: oc20#ocx24-co2rr-loo
+    label: OCx24 CO2 reduction, leave one sample out
+    parent: oc20#ocx24-co2rr
+    scored_separately: true
+    metric_override: r-squared
+    evidence:
+      - source: src-arxiv-2411-11783-v1
+        quote: 'Leave One Out (LOO): Hold out a given sample, train on the remaining data, and evaluate
+          on the held out sample'
+  - id: oc20#ocx24-co2rr-loco
+    label: OCx24 CO2 reduction, leave one composition out
+    parent: oc20#ocx24-co2rr
+    scored_separately: true
+    metric_override: r-squared
+    evidence:
+      - source: src-arxiv-2411-11783-v1
+        quote: 'Leave One Composition Out (LOCO): Hold out all samples with a given composition'
+subsets_note: >
+  Each subset's id names its version (oc20, oc22, ocx24). The OC20 and OC22 test subsets are the hidden
+  splits that make held-out-server a verification level a claim on those versions can hold: their labels
+  stay with the maintainers and a server scored them, quoted on each. The challenge test sets of 2021-2023
+  are OC20's too. OCx24's subsets are its measured targets, by reaction, with the two cross-validation
+  strategies as children because they move R² by tens of points; their wet-lab protocol and replicate
+  noise are quoted from the paper, and no subset of theirs is a held-out split. The tasks (S2EF, IS2RS,
+  IS2RE) are not subsets: each task's metrics are their own records, so the (metric, subset) pair names
+  the task and the split.
+metrics:
+  - oc-s2ef-energy-mae
+  - oc-s2ef-force-mae
+  - oc-s2ef-force-cosine
+  - oc-s2ef-efwt
+  - oc-is2re-energy-mae
+  - oc-is2re-ewt
+  - oc-is2rs-adwt
+  - oc-is2rs-afbt
+  - r-squared
+metrics_note: >
+  The OC20 paper's metrics for its three tasks, which OC22 keeps on total energies ("uses the same metrics"),
+  one record per task because the papers define each task's energy error on a different energy; FbT, AFbT's
+  single-threshold form, is not recorded. The Hugging Face board scores the two energy MAEs and the force
+  MAE. r-squared is OCx24's. Their anchors are in data/baselines/oc20.yaml: a theoretical-maximum ceiling
+  for each OC20 and OC22 metric, and the OC22 paper's median and initial-structure floors; OCx24 has none
+  (that file's header says why).
 history:
   - date: 2026-01-31
     event: channel-closed
@@ -286,7 +622,7 @@ tags:
 curation:
   added_by: agent (P1-S3-T01)
   added_on: 2026-10-10
-  last_verified: 2026-11-18
+  last_verified: 2026-11-24
   verification_status: ai-drafted-unverified
   sources:
     - src-arxiv-2010-09990-v5
@@ -295,14 +631,29 @@ curation:
     - src-evalai-oc20-challenge-712
     - src-hf-fairchem-leaderboard-content
     - src-github-fairchem-docs-open-catalyst-project-898f840
+    - src-arxiv-2206-08917-v3
+    - src-arxiv-2206-08917
+    - src-arxiv-2411-11783-v1
+    - src-arxiv-2411-11783
+    - src-evalai-oc22-challenge-1869
+    - src-evalai-oc20-challenge-712-phases
+    - src-github-fairchem-docs-ocx24-d733f48
+    - src-hf-fairchem-leaderboard-evaluator-212fd1e
+    - src-github-fairchem-train-md-1e07c21
   sources_note: >
     The paper's v5 PDF (a DOI, not archived) read as text; the abstract page for the date; the project's
     home page with its scripts and styles stripped; EvalAI's public challenge record (its API JSON), read
     with narrow windows that keep the organiser's account name out; and the Hugging Face board's content.py
-    at its commit, with narrow windows that keep the maintainer contact address out. For the 2026-11
-    sweep follow-up, the FAIR Chemistry documentation's Open Catalyst Project page, where the old home
-    page now redirects, was read raw at its commit; src-opencatalystproject-home keeps the old page as
-    captured on 2026-10-02, and its quotes stand on that capture.
+    at its commit, with narrow windows that keep the maintainer contact address out. For the 2026-11 sweep
+    follow-up, the FAIR Chemistry documentation's Open Catalyst Project page, where the old home page
+    now redirects, was read raw at its commit; src-opencatalystproject-home keeps the old page as captured
+    on 2026-10-02, and its quotes stand on that capture. For P3-S6-T02 (2026-11-24): the OC22 and OCx24
+    papers as text of their PDFs (DOIs, not archived) and their abstract pages for the dates, each window
+    clear of the author and contact lines; EvalAI's OC22 challenge record and OC20 phase list (API JSON),
+    the first in 40-character windows that keep the organiser's account name and a personal repository
+    handle out; the FAIR Chemistry documentation's OCx24 page and fairchem's TRAIN.md raw at their commits;
+    and the Hugging Face board's evaluator.py at the commit content.py was read at. Five of the nine are
+    pending archive.
   confidence: medium
   review_checks:
     - check: "independence_flags: whether the maintainers' own models are ranked on the board."
@@ -317,3 +668,68 @@ curation:
       quote: The Open Catalyst Project was a collaborative research effort between Fundamental AI
         Research (FAIR) at Meta and Carnegie Mellon University's (CMU) Department of Chemical
         Engineering.
+    - check: The ledger models OC22 and OCx24 as versions of oc20. 04 S4 sends a derivative that is
+        independently versioned and cited to a benchmark of its own with a lineage link, each
+        generation has its own paper and tasks, and P1-S3-T01 called OC22 a sibling entry. The id
+        stays oc20, and the name, description and task still describe OC20 alone. Renaming to the
+        family (the name changes, never the id) or giving OC22 and OCx24 ids of their own is an
+        id-allocation decision for a human.
+      field: versions
+    - check: held-out-server for OC22 rests on its EvalAI server alone. No source read says OC22's
+        test labels are withheld; the OC20 paper says so for OC20 only. A reviewer should confirm it
+        before a claim on oc20@oc22 is given held-out-server (P3-S7-T03).
+      field: subsets
+      source: src-evalai-oc22-challenge-1869
+      quote: This page hosts evaluation servers for two tasks on the Open Catalyst 2022 (OC22)
+        dataset
+    - check: OCx24 admits neither held-out-server, which this task's verify asks of every
+        generation, nor prospective-experiment, which P3-S7-T04 plans for its claims. Its
+        measurements were taken before any entrant and their summaries are public, and models are
+        scored by cross-validation on them. The test asserts the recorded absence rather than the
+        premise.
+      field: versions
+      source: src-github-fairchem-docs-ocx24-d733f48
+      quote: Summaries of this data are all publicly available
+    - check: The step "attach an assay_protocol source ref wherever ground truth is wet-lab" has no
+        field to land in. BenchmarkVersion and Subset are closed models without one,
+        ground_truth_source holds one value per benchmark, and comparability.material_extra is per
+        benchmark, so making assay_protocol material would count it unknown on every OC20 and OC22
+        claim. The ref stands as the ocx24 version's src-arxiv-2411-11783-v1, quoted for its
+        protocol on the OCx24 subsets; P3-S7-T04's claims can name it in
+        EvalConditions.assay_protocol. A version-level field, or a per-version material set, is a
+        schema decision.
+      field: comparability.material_extra
+      source: src-arxiv-2411-11783-v1
+      quote: Parallelized screening for CO2RR and HER was performed using a modified membrane
+        electrode assembly (MEA) setup
+    - check: taxonomy/evaluation-methods.yaml gives ocx24 as a qualifying example of
+        wet-lab-validation, while the term's exclusion test rules out predictions compared against
+        previously measured data, which is how OCx24 scores models. The term is rejected here; the
+        example is for the vocabulary's maintainers.
+      field: evaluation_method
+    - check: The OC22 floors are read from the PDF's text, where each table is flattened column by
+        column, as the first value of a column (the Median Baseline or IS baseline row). In the
+        S2EF-Total table seven energy values follow eight row labels, so which row has none rests on
+        the layout. A reader of the PDF's tables should confirm 163.424 and 160.455, 176.256 and
+        171.854, and 43.39 and 45.26.
+      field: baselines
+      source: src-arxiv-2206-08917-v3
+      quote: OC22-only Median Baseline SchNet 12 DimeNet++ 13,14 ForceNet 15 SpinConv 16 PaiNN 75
+        GemNet-dT 17 GemNet-OC 19 163.424 7.924
+    - check: OC20's own median baselines are in its paper's Tables 3-5, outside
+        src-arxiv-2010-09990-v5's committed extract, so OC20 has ceilings and no floors in
+        data/baselines/oc20.yaml; extending that extract would let them be recorded as OC22's are.
+      field: baselines
+    - check: OCx24's R² is reported per reaction, per CO2 reduction product (H2, CO, liquid, C2H4),
+        per feature set and per cross-validation strategy. The product has no subset and no
+        EvalConditions field, so a claim must carry it in subset_used. The replicate noise is in the
+        targets' units, so it cannot anchor R² and OCx24 has no Baseline; an error metric in volts
+        would let it be an experimental-replicate ceiling.
+      field: subsets
+      source: src-arxiv-2411-11783-v1
+      quote: We observe an experimental standard deviation of σ = 0.050 (H2), 0.040 (CO), 0.033
+        (Liquid)
+    - check: The FAIR Chemistry documentation lists an OC25 dataset page beside OC20, OC22 and OCx24
+        (docs/catalysts/datasets/oc25.md at d733f48, listed through the GitHub API, not read).
+        Whether it is a fourth generation of this family is open.
+      field: versions
