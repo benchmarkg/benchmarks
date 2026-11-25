@@ -1,0 +1,197 @@
+---
+// site/src/pages/search.astro -- P2-S4-T07 (10 V11 "Search: three tiers", "Without JavaScript"; 09 S8.6; 08 S4.3, S8.3).
+// /search/: the site-wide search box (islands/SearchBox.tsx, Pagefind on every keystroke) above a directory of the
+// catalogue's static routes.
+//
+// The directory is the working thing (09 S8.6: "Search degrades to links into the browse-by-facet pages", and
+// "`<noscript>` is not the strategy. The default output is the working thing and JavaScript is additive"). It lists
+// every single-facet browse page the build rendered (lib/browse.ts browsePages(), the list /browse/{facet}/{term}/ is
+// generated from, so a link here can never name a page that does not exist), grouped by the facet the URL names, each
+// term beside its count and a link to its definition at /taxonomy/{facet}/{term}/; and every organisation's
+// /browse/org/{id}/ beside its profile. That is 08 S8.3's no-JS search, "single-facet browsing plus ... the taxonomy
+// pages": a usable route into the catalogue as sent, for a text browser, a crawler or an archive copy. The island
+// renders nothing on the server, so with JavaScript off there is no box that cannot answer; with it, the box appears
+// above the directory and the directory stays. There is no <noscript> on this page.
+//
+// The groups follow the browse rail's order (lib/browse-view.ts RAIL), which opens the spine and the two facets most
+// sessions start from; the other browse segments follow in taxonomy file order, collapsed, then the maintainers. A
+// BENCH_ROUTES preview build (lib/bench-routes.ts) renders some browse, taxonomy and profile pages only, and the
+// directory then lists only those, so it never links a page the build left out.
+//
+// In the search index the page is a narrative page, crawled for its heading and lede (Base.astro `search="crawl"`); the
+// box and the directory are data-pagefind-ignore, because every term the directory lists has its own record and
+// indexing it here would answer every term search twice (as on /benchmarks/). The directory's styles are global to this
+// page, under .search-page, rather than scoped: a scoped style puts a data-astro-cid attribute on each of its roughly
+// three thousand elements.
+import Base from '../layouts/Base.astro';
+import SearchBox from '../islands/SearchBox.tsx';
+import { benchmarks, organizations } from '../lib/collections';
+import { benchRoutes, onlyRoutes, rendered } from '../lib/bench-routes';
+import { browseHref, browsePages, browseSegment, orgBrowseHref, type BrowsePage } from '../lib/browse';
+import { RAIL } from '../lib/browse-view';
+import { facetSegment, termHref } from '../lib/terms';
+
+interface Entry {
+  id: string;
+  label: string;
+  browse: string;
+  count: number | null;               // benchmarks on its browse page; null for a derived term
+  second: { href: string; text: string } | null;   // its definition (a term) or its profile (an organisation)
+  children: Entry[];                  // a domain family's subdomains
+}
+interface Group {
+  segment: string;
+  label: string;
+  of: string | null;                  // the facet a field belongs to: access is a field of data properties
+  open: boolean;
+  entries: Entry[];
+  size: number;
+}
+
+const kebab = (s: string) => s.replace(/_/g, '-');
+const RAIL_SEGMENTS = RAIL.map((s) => kebab((s.field ?? s.facet).split('.').pop()!));
+const RAIL_LABEL = new Map(RAIL.map((s, i) => [RAIL_SEGMENTS[i], s.label]));
+const OPEN = new Set(['domain', 'capability', 'evaluation-method']);      // islands/FacetPanel.tsx OPEN_FIRST
+const human = (segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+
+const listed = benchRoutes();
+const all = await benchmarks();
+const pageHref = (p: BrowsePage) => (p.kind === 'term' ? browseHref(p.term) : orgBrowseHref(p.org.id));
+const pages = onlyRoutes(browsePages(all, await organizations()), pageHref);
+const linked = (href: string) => (rendered(href, listed) ? href : null);
+
+const entry = (p: BrowsePage): Entry => {
+  if (p.kind === 'org') {
+    const profile = linked(`/orgs/${p.org.id}/`);
+    return { id: p.org.id, label: p.org.name, browse: pageHref(p), count: p.members.length,
+      second: profile != null ? { href: profile, text: 'profile' } : null, children: [] };
+  }
+  const definition = linked(termHref(p.term.facet, p.term.id));
+  return { id: p.term.id, label: p.term.label, browse: pageHref(p), count: p.members == null ? null : p.members.length,
+    second: definition != null ? { href: definition, text: 'definition' } : null, children: [] };
+};
+
+const bySegment = new Map<string, BrowsePage[]>();
+for (const p of pages) bySegment.set(p.segment, [...(bySegment.get(p.segment) ?? []), p]);
+const order = (segment: string) => (segment === 'org' ? Infinity : RAIL_SEGMENTS.includes(segment) ? RAIL_SEGMENTS.indexOf(segment) : RAIL.length);
+const groups: Group[] = [...bySegment.entries()]
+  .map(([segment, ps], first) => ({ segment, ps, first }))
+  .sort((a, b) => order(a.segment) - order(b.segment) || a.first - b.first)
+  .map(({ segment, ps }) => {
+    const t = ps[0].kind === 'term' ? ps[0].term : null;
+    let entries: Entry[];
+    if (segment === 'domain') {
+      const terms = ps.filter((p): p is Extract<BrowsePage, { kind: 'term' }> => p.kind === 'term');
+      entries = terms.filter((p) => p.term.parent == null).map((f) => ({
+        ...entry(f), children: terms.filter((p) => p.term.parent === f.term.id).map(entry),
+      }));
+    } else {
+      entries = ps.map(entry);
+    }
+    const size = segment === 'domain' ? entries.length : ps.length;
+    return {
+      segment,
+      label: segment === 'org' ? 'Maintainer' : RAIL_LABEL.get(segment) ?? human(segment),
+      of: t != null && browseSegment(t) !== facetSegment(t.facet) ? t.facet.replace(/_/g, ' ') : null,
+      open: OPEN.has(segment),
+      entries,
+      size,
+    };
+  });
+const count = (n: number) => `${n} ${n === 1 ? 'published benchmark' : 'published benchmarks'}`;
+const unit = (g: Group) => (g.segment === 'domain' ? (g.size === 1 ? 'family' : 'families')
+  : g.segment === 'org' ? (g.size === 1 ? 'organisation' : 'organisations') : g.size === 1 ? 'term' : 'terms');
+---
+<Base title="Search · Benchmark index">
+  <main class="search-page">
+    <header>
+      <h1>Search and browse the index</h1>
+      <p class="lede">Every entry in the index is reachable from the facet pages listed here: each term opens the page of every published benchmark that carries it, with a link to what the term means. The index holds {count(all.length)}.</p>
+    </header>
+    <div data-pagefind-ignore="all">
+      <SearchBox client:load />
+      <section class="directory" aria-labelledby="directory-h" data-search-directory>
+        <h2 id="directory-h">Browse by facet</h2>
+        <p class="note">The number beside a term is how many published benchmarks its page lists. A term with none keeps its page, because where nothing is measured is part of the answer.</p>
+        {groups.map((g) => (
+          <details class="group" open={g.open} data-segment={g.segment}>
+            <summary><span class="label">{g.label}</span>{g.of != null && <span class="of"> ({g.of})</span>} <span class="n">{g.size} {unit(g)}</span></summary>
+            <ul class="terms">
+              {g.entries.map((e) => (
+                <li>
+                  <a href={e.browse}>{e.label}</a> <span class="n">({e.count ?? 'derived'})</span>{e.second != null && <> · <a class="second" href={e.second.href}>{e.second.text}<span class="visually-hidden"> of {e.label}</span></a></>}
+                  {e.children.length > 0 && (
+                    <ul class="terms">
+                      {e.children.map((c) => (
+                        <li><a href={c.browse}>{c.label}</a> <span class="n">({c.count ?? 'derived'})</span>{c.second != null && <> · <a class="second" href={c.second.href}>{c.second.text}<span class="visually-hidden"> of {c.label}</span></a></>}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))}
+      </section>
+    </div>
+  </main>
+</Base>
+
+<style is:global>
+  .search-page {
+    max-inline-size: 68rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  .search-page h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  .search-page .lede { max-inline-size: 68ch; margin: 0 0 var(--sp-6); color: var(--c-ink-muted); }
+  .search-page h2 { margin: var(--sp-6) 0 var(--sp-2); font-size: var(--fs-lg); }
+  .search-page .n, .search-page .count { color: var(--c-ink-muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums slashed-zero; }
+
+  /* the box (islands/SearchBox.tsx), once hydrated */
+  .search-page .search-form { display: grid; gap: var(--sp-1); max-inline-size: 48rem; }
+  .search-page .search-form label { font-weight: 600; }
+  .search-page .search-form input {
+    min-block-size: 2.75rem;
+    padding-inline: var(--sp-3);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: inherit;
+  }
+  .search-page .scope { margin: 0; color: var(--c-ink-muted); font-size: var(--fs-sm); }
+  .search-page .notice { max-inline-size: 68ch; margin: var(--sp-3) 0 0; padding: var(--sp-2) var(--sp-3); border: 1px solid var(--c-caution); background: var(--c-caution-bg); font-size: var(--fs-sm); }
+  .search-page .search-results { max-inline-size: 48rem; }
+  .search-page .hits { display: grid; gap: var(--sp-3); margin: var(--sp-4) 0 0; padding-inline-start: var(--sp-6); }
+  .search-page .hits .kind { color: var(--c-ink-muted); font-size: var(--fs-xs); }
+  .search-page .excerpt { margin: var(--sp-1) 0 0; color: var(--c-ink-muted); font-size: var(--fs-sm); line-height: var(--lh-dense); }
+  .search-page mark { background: var(--c-select-bg); color: var(--c-ink); }
+  .search-page .count, .search-page .empty, .search-page .tier-note { margin: var(--sp-3) 0 0; font-size: var(--fs-sm); }
+  .search-page .empty { max-inline-size: 68ch; color: var(--c-ink); }
+  .search-page .more {
+    min-block-size: 1.5rem;
+    padding-inline: var(--sp-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: inherit;
+    cursor: pointer;
+  }
+  .search-page .later { margin-block-start: var(--sp-6); border-block-start: 1px solid var(--c-border); }
+  .search-page .later h3 { margin: var(--sp-3) 0 0; font-size: var(--fs-md); }
+
+  /* the directory: the page as sent */
+  .search-page .directory .note { max-inline-size: 68ch; margin: 0 0 var(--sp-3); color: var(--c-ink-muted); font-size: var(--fs-sm); }
+  .search-page details.group { border-block-start: 1px solid var(--c-border); padding-block: var(--sp-2); }
+  .search-page details.group > summary { cursor: pointer; font-weight: 600; min-block-size: 1.5rem; }
+  .search-page .of { color: var(--c-ink-muted); font-weight: 400; }
+  .search-page .terms { margin: var(--sp-1) 0 0; padding-inline-start: var(--sp-6); columns: 18rem auto; column-gap: var(--sp-6); }
+  .search-page .terms li { break-inside: avoid; font-size: var(--fs-sm); line-height: var(--lh-dense); padding-block: var(--sp-05); }
+  .search-page .terms .terms { columns: auto; padding-inline-start: var(--sp-4); }
+  .search-page .second { font-size: var(--fs-xs); }
+  @media (pointer: coarse) {
+    .search-page .terms li { padding-block: var(--sp-1); }
+  }
+</style>
