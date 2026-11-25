@@ -97,14 +97,13 @@ and recorded in the manifest. A metric whose filter is invisible is a metric nob
 
 Two different questions need two different floors, and the plan previously carried four literal
 numbers (0.3, 0.35, 0.4, 0.5) across five documents for what were really only two constants. They are
-declared once, here, and live in `taxonomy/thresholds.yaml` so that a recalibration is one edit and
-one CI-checked file rather than a grep:
+declared here, by name and job, and their values live only in `taxonomy/thresholds.yaml` so that a
+recalibration is one edit and one CI-checked file rather than a grep:
 
-```yaml
-# taxonomy/thresholds.yaml -- owned by 12-analytics-and-trends.md section 1.4
-frontier_floor:    0.30   # minimum condition_completeness for a claim to set the SOTA / frontier line
-comparison_floor:  0.40   # minimum condition_completeness for a claim to appear in a side-by-side
-```
+| Constant | The minimum `condition_completeness` for a claim to |
+| --- | --- |
+| `frontier_floor` | set the SOTA / frontier line |
+| `comparison_floor` | appear in a side-by-side; the higher of the two |
 
 They differ because they answer different questions. `frontier_floor` asks "is this claim specified
 well enough to stand as the best known result", where the cost of excluding a real record is a
@@ -113,18 +112,24 @@ beside another one", where the cost of including an under-specified record is a 
 like an answer and is not — the failure this project exists to refuse. The stricter bar therefore
 belongs on the comparison side.
 
-Both values are starting points, not measurements. Nothing has yet measured the completeness
-distribution of hand-curated claims, and the Epoch ingest tells us only about the machine-ingested
-tier (a mean near 0.10, [04-data-model.md](04-data-model.md)). Recalibrate both once ~200
-hand-curated claims exist, and record the recalibration as an ADR
+Both values began as starting points, not measurements. The first measurement re-affirmed them
+without recalibrating: `adr/0028-threshold-recalibration.md` (2026-11-25) checked both against the
+n = 76 hand-curated claims then on main, on 18 benchmarks and chosen adversarially, and found them in
+the sample's low tail but not placeable more precisely. The machine-ingested tier is still an
+expectation (a mean near 0.10, [04-data-model.md](04-data-model.md)), not a measurement. Recalibrate
+both once ~200 hand-curated claims exist and the ingested tier has been measured, against a criterion
+stated before any number, and record the recalibration as an ADR
 ([03-taxonomy-build-process.md](03-taxonomy-build-process.md)) so the change to every published
-figure is dated and attributable.
+figure is dated and attributable. ADR-0028 lists what reopens the question.
 
-**No document restates these values.** [05-repository-and-workflow.md](05-repository-and-workflow.md),
+**No document restates these values, this one included.**
+[04-data-model.md](04-data-model.md), [05-repository-and-workflow.md](05-repository-and-workflow.md),
 [07-ingestion-infrastructure.md](07-ingestion-infrastructure.md),
 [10-visualization.md](10-visualization.md) and [11-ai-features.md](11-ai-features.md) all reference
-them by name. A threshold typed as a literal in five places is a threshold that will be calibrated in
-one of them and diverge in the other four, at exactly the moment the number starts to matter.
+them by name, and `tests/test_threshold_literals.py` fails if a floor's name is followed by a number
+anywhere in the code, the plan or the docs. A threshold typed as a literal in five places is a
+threshold that will be calibrated in one of them and diverge in the other four, at exactly the moment
+the number starts to matter.
 
 ---
 
@@ -1071,7 +1076,7 @@ database.
 Universal AI Benchmark Index. "Evaluation-method drift, 2018-2026."
   build/derived/ecosystem/method-drift.json at commit 4f2a9c1e.
   Computed 2026-09-17T04:12:09Z.
-  Verification threshold: maintainer-verified. Condition-completeness floor: frontier_floor = 0.30.
+  Verification threshold: maintainer-verified. Condition-completeness floor: frontier_floor = <its value at 4f2a9c1e>.
   Cohort: cohort_v1, n = 312 benchmarks (see manifest).
   Data: CC BY 4.0. https://<domain>/analytics/method-drift?rev=4f2a9c1e
 ```
