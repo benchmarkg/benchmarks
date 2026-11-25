@@ -1,19 +1,182 @@
 ---
+// site/src/pages/index.astro -- P2-S4-T08 (10 "Information architecture": `/` is the landing; 10 "Performance budget" and
+// 08 S4.3, S8.1; 09 S1, S3.2, S10, S11; 14 Phase 2 exit criteria). The landing page.
+//
+// Its first screen says three things, in the HTML as sent, so it reads the same with JavaScript off: what the catalogue
+// is, what it refuses to do, and how many entries it holds. The count is read at build time from facets.json, the file
+// every faceted view reads, through lib/landing.ts (lib/browse-view.ts readFacets, format 3), and never written into the
+// markup: each build states its own facets.json's rows, or says that it has none to count. lib/landing.ts names the four
+// states; what the page shows in each:
+//   published        "N benchmarks, counted as families, in M of the F domain families."
+//   preview          "N draft benchmarks, ...", and that no person has verified them (Base.astro's banner says so too)
+//   none-published   "No benchmark is published yet", and why: 05 S4 publishes no agent draft before a person reviews it
+//                    -- the published index today, whose facets.json has no row
+//   unbuilt          the build has no facets.json, so the page says it cannot count rather than printing a zero
+// 09 S1: the hero is data, so the one figure is set in --fs-3xl, the size 09 S3.2 reserves for one figure per landing page.
+//
+// Then the four entry points and nothing else (10 "Progressive disclosure": both depths one click from here): browse
+// (/benchmarks/), the Atlas (/atlas/), the Coverage Map (10's /coverage/) and the methodology pages (/docs/methodology/,
+// which 10's /methodology/ redirects to, and which links provenance and comparability). An entry point whose route the
+// site does not build yet is named without a link and said to be not built: the Coverage Map, until P4-S3-T01 builds
+// /coverage/ (site/src/pages/coverage/index.astro). tests/landing.spec.ts holds each entry to its route, so a route that
+// starts to resolve fails there until it is linked here.
+//
+// No island: nothing on the first screen needs JavaScript to paint (10 "Performance budget": the landing ships <= 40 KB of
+// JavaScript over facets.json; 08 S4.3: it fetches no artifact, its summary stats inlined). The only script is the shell's
+// theme toggle (Base.astro), kept as on every view that is not a citation target. `npx size-limit` (site/.size-limit.js)
+// holds what the route ships to the 40 KB, gzipped; facets.json's own 36 KB is the data column, not counted in it.
+//
+// In the search index the page is narrative (Base.astro `search`, the default `crawl`): Pagefind's crawl indexes its words.
+import { dirname, join } from 'node:path';
 import Base from '../layouts/Base.astro';
+import { corpusDoc, CORPUS_PATH } from '../lib/corpus';
+import { buildManifest } from '../lib/manifest';
+import { benchmarksWord, corpusSize, formatCount, readFacetsFile } from '../lib/landing';
+import taxonomy from '../lib/taxonomy.json';
 
-// A placeholder page. Its two chip rows are what test/config.test.mjs checks in the built HTML.
-// Observed on 7.3.3 (2026-09-24): compressHTML: 'jsx' keeps a space written on one line (the
-// second row) but removes whitespace that contains a line break (the first row), so a row written
-// one element per line -- the shape components produce -- renders as "robotics-embodimentmanipulation".
+// The manifest checks every artifact beside the corpus against its digest, facets.json among them, and throws on a
+// mismatch, so the count below is this build's (lib/manifest.ts).
+buildManifest();
+const familiesTotal = Object.keys(taxonomy.facets.domain).filter((id) => !id.includes('/')).length;
+const size = corpusSize(readFacetsFile(join(dirname(CORPUS_PATH), 'facets.json')), familiesTotal, corpusDoc().drafts);
+
+interface Entry {
+  id: string;
+  name: string;
+  href: string | null;    // null: the route is not built yet
+  gloss: string;
+}
+const ENTRIES: Entry[] = [
+  { id: 'browse', name: 'Browse', href: '/benchmarks/',
+    gloss: 'Every benchmark in one list, narrowed by any combination of facets. Without JavaScript, each term opens a page of the benchmarks that carry it.' },
+  { id: 'atlas', name: 'Atlas', href: '/atlas/',
+    gloss: 'Every benchmark on one map, placed inside its subdomain and domain family, so that a place on the map stays the same place.' },
+  { id: 'coverage', name: 'Coverage Map', href: null,
+    gloss: 'Which capabilities each domain family measures, and where no benchmark does.' },
+  { id: 'methodology', name: 'Methodology', href: '/docs/methodology/',
+    gloss: 'How every published figure is counted and computed, where each value comes from, and when two numbers may be compared.' },
+];
 ---
 <Base title="Benchmark index">
-  <main>
-    <h1>Benchmark index</h1>
-    <p class="chips" data-test="chip-row">
-      <span class="chip">robotics-embodiment</span>
-      <span class="chip">manipulation</span>
-      <em class="badge">unreviewed</em>
-    </p>
-    <p class="chips" data-test="chip-row-inline"><span class="chip">code</span> <span class="chip">agents</span></p>
+  <main class="landing">
+    <section class="first" aria-labelledby="landing-title">
+      <h1 id="landing-title">A catalogue of AI benchmarks across every domain</h1>
+      <p class="lede" data-landing="what">What each benchmark measures, in which domain and by which method, and where its numbers come from. Every number traces to a primary source and carries the conditions that produced it.</p>
+
+      {size.state === 'unbuilt' ? (
+        <p class="size" data-landing="size" data-state={size.state}>This build has no facets.json, so it cannot say how many benchmarks the index holds.</p>
+      ) : size.state === 'none-published' ? (
+        <p class="size" data-landing="size" data-state={size.state} data-count={size.benchmarks}>
+          <strong class="none">No benchmark is published yet.</strong>
+          <span>An entry an agent drafted is published only once a person has reviewed it.</span>
+        </p>
+      ) : (
+        <p class="size" data-landing="size" data-state={size.state} data-count={size.benchmarks}>
+          <strong class="figure stat">{formatCount(size.benchmarks!)}</strong>
+          <span>{size.state === 'preview' ? `draft ${benchmarksWord(size.benchmarks!)}` : benchmarksWord(size.benchmarks!)}, counted as families, in {size.families} of the {size.familiesTotal} domain families.</span>
+          {size.state === 'preview' && <span data-preview-count>An agent drafted them and no person has verified them, so none is published.</span>}
+        </p>
+      )}
+
+      <section class="refuses" data-landing="refuses" aria-labelledby="refuses-title">
+        <h2 id="refuses-title">What it refuses to do</h2>
+        <p>It does not rank. It publishes no universal score, no cross-domain ranking and no composite index, and it does not set two results side by side when the conditions that produced them differ. It hosts no benchmark data and runs no evaluations.</p>
+      </section>
+    </section>
+
+    <nav class="entries" aria-labelledby="entries-title" data-landing="entry-points">
+      <h2 id="entries-title">Where to start</h2>
+      <ul>
+        {ENTRIES.map((e) => (
+          <li data-entry={e.id} data-built={e.href != null ? 'yes' : 'no'}>
+            {e.href != null ? <a class="name" href={e.href}>{e.name}</a> : <span class="name">{e.name}</span>}
+            <span class="gloss">{e.gloss}</span>
+            {e.href == null && <span class="not-built" data-not-built>Not built yet.</span>}
+          </li>
+        ))}
+      </ul>
+    </nav>
   </main>
 </Base>
+
+<style>
+  .landing {
+    max-inline-size: 68rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  .first {
+    max-inline-size: 68ch;
+  }
+  /* 09 S10: the first screen holds the three statements on a phone too, so the heading steps down a size there */
+  h1 {
+    margin: var(--sp-2) 0 var(--sp-3);
+    font-size: var(--fs-xl);
+    line-height: var(--lh-tight);
+  }
+  @media (min-width: 51rem) {
+    h1 { font-size: var(--fs-2xl); }
+  }
+  h2 {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-md);
+    line-height: var(--lh-tight);
+  }
+  .lede {
+    margin: 0 0 var(--sp-6);
+    line-height: var(--lh-prose);
+  }
+  .size {
+    margin: 0 0 var(--sp-6);
+    line-height: var(--lh-ui);
+  }
+  /* 09 S3.2: --fs-3xl is reserved for one figure per landing page, and this is it */
+  .figure {
+    display: block;
+    font-size: var(--fs-3xl);
+    line-height: var(--lh-tight);
+    font-weight: 600;
+  }
+  .none {
+    display: block;
+    font-size: var(--fs-lg);
+  }
+  .refuses {
+    margin: 0 0 var(--sp-8);
+    padding: var(--sp-3) var(--sp-4);
+    border-inline-start: 3px solid var(--c-border-strong);
+  }
+  .refuses p {
+    margin: 0;
+    line-height: var(--lh-prose);
+  }
+  .entries ul {
+    display: grid;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* 09 S5.3: two columns from --bp-md (51rem; a custom property cannot sit in a media query) */
+  @media (min-width: 51rem) {
+    .entries ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .entries li {
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--c-border);
+  }
+  .entries .name {
+    display: block;
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-md);
+    font-weight: 600;
+  }
+  .entries .gloss {
+    color: var(--c-ink-muted);
+    font-size: var(--fs-sm);
+  }
+  .not-built {
+    color: var(--c-absent-ink);
+    font-size: var(--fs-sm);
+  }
+</style>

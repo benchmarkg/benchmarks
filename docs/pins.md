@@ -50,9 +50,11 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | numpy (dev group) | colorspacious's dependency, P2-S2-T03 | 2.5.3 | see the numpy row above | -- | -- | 2026-10-06 | ok (same pin as the atlas extra) |
 | pagefind (site) | 08 §5.5 and §3.2 S12, first installed by P2-S4-T06: the search index, built at the end of every `astro build` (site/src/lib/pagefind.ts) | **1.6.0** (08 names 1.5.2) | 1.6.0 | 2026-11-01 | registry.npmjs.org/pagefind | 2026-11-24 | ok (first install); **differs from 08's 1.5.2**, for determinism: see note 7 |
 | mlcroissant | 08 §5.8 (named, not versioned), first P2-S3-T06: base-Croissant conformance of every croissant-benchmark document, inside `bench build` | 1.1.1 | 1.1.1 (no `requires_python`; the wheel declares no licence, the repository mlcommons/croissant is Apache-2.0 per api.github.com) | 2026-10-05 | pypi.org/pypi/mlcroissant/json | 2026-11-18 | ok (first pin); see note 5 |
-| minisearch (site) | 08 §5.5, §5.7 (named, not versioned), first P2-S4-T02: the BM25 leg of the faceted query pipeline, site/src/lib/query.ts | 7.2.0 | 7.2.0 (`next` tag 5.0.0-beta1, an older line; no dependencies; MIT; not deprecated) | 2025-09-16 | registry.npmjs.org/minisearch | 2026-11-24 | ok (first pin); see note 6 |
+| minisearch (site) | 08 §5.5, §5.7 (named, not versioned), first P2-S4-T02: the BM25 leg of the faceted query pipeline, site/src/islands/search/lexical.ts since P6-S1-T04 (site/src/lib/query.ts before it) | 7.2.0 | 7.2.0 (`next` tag 5.0.0-beta1, an older line; no dependencies; MIT; not deprecated) | 2025-09-16 | registry.npmjs.org/minisearch | 2026-11-24 | ok (first pin); see note 6 |
 | sigma (site) | 10 §Technology decisions and 08 §5.2 ("Pin `sigma@3.0.3`"), first installed by P2-S5-T02: the Atlas island, site/src/islands/Atlas.tsx | 3.0.3 | **4.0.6** (`latest`, 2026-11-10; 4.0.0 went stable 2026-10-08; 3.0.3 is still the newest 3.x; MIT; not deprecated) | 2026-04-30 | registry.npmjs.org/sigma | 2026-11-24 | **moved** (major); kept at 3.0.3, as 08 §5.2 says: see note 8 |
 | graphology (site) | 10 §Technology decisions, first installed by P2-S5-T02: the Atlas island's graph | 0.26.0 | 0.26.0 (`latest`; MIT; not deprecated) | 2025-01-26 | registry.npmjs.org/graphology | 2026-11-24 | ok (first install); see note 8 |
+| size-limit (site, dev) | 08 §8.1 and 14 Phase 2 exit criteria ("Enforced by `size-limit` per route group"; named, not versioned), first installed by P2-S4-T08: the per-route size gate, site/.size-limit.js | 14.3.0 | 14.3.0 (`latest`; MIT; not deprecated; `engines.node ^22.19.0 \|\| ^24.5.0 \|\| >=26.0.0`) | 2026-10-22 | registry.npmjs.org/size-limit | 2026-11-24 | ok (first pin); see note 9 |
+| @size-limit/file (site, dev) | the size-limit plugin that measures built files, first installed by P2-S4-T08 | 14.3.0 | 14.3.0 (`latest`; MIT; not deprecated; no dependencies, peer `size-limit` 14.3.0) | 2026-10-22 | registry.npmjs.org/@size-limit/file | 2026-11-24 | ok (first pin); see note 9 |
 
 ## Other pins and third-party facts the plan names
 
@@ -101,7 +103,9 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    minified ESM) is 17.7 KB, 5.9 KB gzipped and 5.3 KB brotli, measured 2026-11-24 -- the "5.9 kB
    gzip" 08 §5.5 budgets. The package is 826,513 bytes unpacked in 37 files, with no dependencies,
    so `package-lock.json` gained its one entry and nothing else. It is a runtime dependency of the
-   site, but only lib/query.ts imports it: the V11 browse island counts through lib/facet-index.ts,
+   site, but only islands/search/lexical.ts imports it (since P6-S1-T04, PR #254, which moved the
+   BM25 leg there), and lib/query.ts uses that module rather than importing MiniSearch itself. No
+   page or island imports either yet: the V11 browse island counts through lib/facet-index.ts,
    which has no dependency, so the island ships no MiniSearch until a view wires the pipeline in.
    The newest release is over a year old; the line has been stable since 7.0.0 (2024-07-08).
 7. **Pagefind is installed at 1.6.0, not the 1.5.2 that 08 §5.5 and 10 V11 name (P2-S4-T06), and
@@ -149,6 +153,28 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    after hydration are 160,067 bytes, 38.1 KB gzipped, and the whole /atlas/ route, React's runtime
    included, is 118.5 KB gzipped (KB here is 1,024 bytes; gzip -9 per file), against 08 §8.1's
    120 KB: P2-S5-T02's report has the breakdown.
+9. **size-limit is installed with `@size-limit/file` and no preset (P2-S4-T08).** 08 §8.1's blocking
+   budgets are "deterministic, computed from artifacts", so the gate measures the built files and
+   nothing else: `@size-limit/file` gzips each one (level 9) or brotlis it and sums them. Each preset
+   adds a step that is not that: `@size-limit/preset-app` and `preset-big-lib` add `@size-limit/time`,
+   which drives headless Chrome through estimo and puppeteer-core to time execution (the noisy kind
+   of measurement 08 §8.2 keeps advisory), and `preset-small-lib` and `preset-big-lib` bundle source
+   with rolldown or webpack, which would measure a bundle the site never ships. Both packages are
+   development dependencies of site/, pinned exactly; `size-limit` declares
+   `engines.node ^22.19.0 || ^24.5.0 || >=26.0.0`, narrower than the site's `>=22.12.0`, which
+   matters only to whoever runs the gate (CI uses Node 24). site/package-lock.json gained exactly
+   four packages, all MIT, none with an install script: size-limit 14.3.0 (51,273 bytes unpacked,
+   19 files), @size-limit/file 14.3.0 (3,700 bytes, 5 files), and size-limit's two dependencies,
+   lilconfig 3.1.5 (2026-11-09, 18,058 bytes; it finds the config file) and nanospinner 1.2.2
+   (2024-12-09, 10,853 bytes; the progress line). nanospinner's one dependency, picocolors 1.1.1, was
+   already in the lockfile as Astro's. The config is site/.size-limit.js, not a static
+   `.size-limit.json`, because a route's files are content-hashed chunks: scripts/route_js.mjs reads
+   them from the built page. A KB in it is 1,024 bytes (`KiB`), so size-limit prints the landing's
+   40 KB limit as "40.96 kB", its own 1,000-byte unit. Measured on 2026-11-24, the landing ships
+   963 bytes gzipped in every build state (the production build and the 320-entry draft preview):
+   the theme toggle (212), the theme module it imports (594) and the pre-paint line (157). The same
+   reading of the preview gives /benchmarks/ 76.9 KB and /atlas/ 118.6 KB, the second within 0.1 KB
+   of note 8's figure for the same route.
 
 ## Moved pins (issue to open)
 
