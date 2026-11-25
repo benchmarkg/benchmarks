@@ -1,0 +1,112 @@
+# tests/fixtures/evals/synthetic-labelled.yaml -- P6-S3-T09. A SYNTHETIC labelled fixture for the pooling grading
+# harness (tests/evals/test_eval_harness.py; tools/evals/).
+#
+# Nothing here is a gold label for the real golden set, and none of it is a proposed answer. The entries are invented
+# (synthetic-01 to synthetic-08, files the test creates in a temporary tree), the rankings are invented, and the item
+# ids are the real set's only so that scripts/check_golden_composition.py accepts the labelled copy the test writes.
+# The real gold labels stay null until a person sets them (P6-S3-T08).
+#
+# `expected` was computed by hand, independently of tools/evals: nDCG@10 with linear gains and a log2(rank + 1)
+# discount, and the Wilson interval from statistics.NormalDist's 0.975 quantile, each rounded to four places.
+#
+#   nl_search-01  gold 01:3 02:3 03:2 04:1  lexical 01 05 03 02: recall 2/2, nDCG 0.836888
+#                                           dense 02 01 04 03:   recall 2/2, nDCG 0.989037
+#   nl_search-02  gold 06:3                 lexical 07 08: 0/1, nDCG 0, a violation; dense 06: 1/1, nDCG 1
+#   nl_search-17  gold 02:3 07:0            lexical 02 07: 1/1, nDCG 1; dense 05: 0/1, nDCG 0, a violation
+#
+#   facet_translation, per slot over the three items (TP FP FN): domain_family 0 0 1, domain_subdomain 0 1 0,
+#   access 1 0 0, capability 2 1 0, year_min 0 1 1, lifecycle 1 0 1, subject 0 1 0, so macro-F1 is
+#   (0 + 0 + 1 + 0.8 + 0 + 2/3 + 0) / 7.
+#   Over-constrained: -05 (a subdomain where the gold names its family) and -12 (one lifecycle value of the gold's two);
+#   -11 is looser than its gold (year 2023 against 2024). Off-enum: -12's subject.
+#   abstention: two of three behaviours shown as labelled.
+entries: [synthetic-01, synthetic-02, synthetic-03, synthetic-04, synthetic-05, synthetic-06, synthetic-07, synthetic-08]
+labels:
+  nl_search:
+    nl_search-01: {synthetic-01: 3, synthetic-02: 3, synthetic-03: 2, synthetic-04: 1}
+    nl_search-02: {synthetic-06: 3}
+    nl_search-17: {synthetic-02: 3, synthetic-07: 0}
+  facet_translation:
+    facet_translation-05:
+      hard: {domain_family: ['domain:language'], access: ['data_properties:fully-open']}
+      soft: {capability: ['capability:knowledge-recall']}
+      unmapped_terms: []
+      intent: lookup
+    facet_translation-11:
+      hard: {year_min: 2024}
+      soft: {capability: ['capability:deductive-reasoning']}
+      unmapped_terms: []
+      intent: suite_build
+    facet_translation-12:
+      hard: {lifecycle: ['lifecycle:active', 'lifecycle:mature']}
+      soft: {}
+      unmapped_terms: []
+      intent: lookup
+  abstention:
+    abstention-01: {behaviour: proceed-without-complying}
+    abstention-02: {behaviour: proceed-without-complying}
+    abstention-03: {behaviour: out-of-scope}
+runs:
+  lexical:
+    nl_search-01: [synthetic-01, synthetic-05, synthetic-03, synthetic-02]
+    nl_search-02: [synthetic-07, synthetic-08]
+    nl_search-17: [synthetic-02, synthetic-07]
+  dense:
+    nl_search-01: [synthetic-02, synthetic-01, synthetic-04, synthetic-03]
+    nl_search-02: [synthetic-06]
+    nl_search-17: [synthetic-05]
+outputs:
+  facet_translation:
+    facet_translation-05:
+      hard: {domain_family: [], domain_subdomain: ['domain:language/translation'], access: ['data_properties:fully-open'],
+             year_min: null}
+      soft: {capability: ['capability:knowledge-recall'], year_min: null}
+      free_text_terms: []
+      unmapped_terms: []
+      assumptions: []
+      intent: lookup
+      confidence: high
+    facet_translation-11:
+      hard: {year_min: 2023}
+      soft: {capability: ['capability:deductive-reasoning', 'capability:inductive-reasoning'], year_min: null}
+      free_text_terms: []
+      unmapped_terms: []
+      assumptions: []
+      intent: suite_build
+      confidence: high
+    facet_translation-12:
+      hard: {lifecycle: ['lifecycle:active'], evaluation_method: [], year_min: null}
+      soft: {subject: ['subject:made-up-model'], year_min: null}
+      free_text_terms: []
+      unmapped_terms: []
+      assumptions: []
+      intent: lookup
+      confidence: low
+  abstention:
+    abstention-01: proceed-without-complying
+    abstention-02: out-of-scope
+    abstention-03: out-of-scope
+expected:
+  nl_search:
+    lexical:
+      all:
+        recall@20: {value: 0.75, n: 4, interval: [0.3006, 0.9544], verdict: inconclusive}
+        ndcg@10: {value: 0.6123, n: 3, interval: [0.1787, 0.9197], verdict: inconclusive}
+        must_include_violation: {value: 0.3333, n: 3, interval: [0.0615, 0.7923], verdict: fail}
+      generated:
+        recall@20: {value: 1.0, n: 1, interval: [0.2065, 1.0], verdict: inconclusive}
+        ndcg@10: {value: 1.0, n: 1, interval: [0.2065, 1.0], verdict: inconclusive}
+        must_include_violation: {value: 0.0, n: 1, interval: [0.0, 0.7935], verdict: inconclusive}
+    dense:
+      all:
+        recall@20: {value: 0.75, n: 4, interval: [0.3006, 0.9544], verdict: inconclusive}
+        ndcg@10: {value: 0.663, n: 3, interval: [0.2057, 0.9373], verdict: inconclusive}
+        must_include_violation: {value: 0.3333, n: 3, interval: [0.0615, 0.7923], verdict: fail}
+  facet_translation:
+    all:
+      macro_f1: {value: 0.3524, n: 3, interval: [0.0678, 0.8027], verdict: fail}
+      over_constraint: {value: 0.6667, n: 3, interval: [0.2077, 0.9385], verdict: fail}
+      enum_hallucination: {value: 0.3333, n: 3, interval: [0.0615, 0.7923], verdict: fail}
+  abstention:
+    all:
+      correct_abstention: {value: 0.6667, n: 3, interval: [0.2077, 0.9385], verdict: fail}

@@ -10,6 +10,7 @@
     uv run bench check-links [PATH...] [--changed-only] [--archive-missing] [--timeout 20] [--format text|json]
     uv run bench ingest <adapter> --dry-run [--limit N] [--no-network] [--allow-bulk] [--fixture PATH]
     uv run bench report completeness|conflicts|quality [--format md|json|csv] [--out PATH]
+    uv run bench eval [--split <name>|all] [--report] [--judge] [--holdout N]
 
 One Typer application. 05 S3's code block is the CLI's only specification -- "other documents add to
 this surface, they never invent on it" -- and each subcommand arrives with the task that builds it.
@@ -33,7 +34,8 @@ tools/build/site_taxonomy.py), and writes build/croissant-benchmark/, validated 
 schema before anything is written (P2-S3-T06, tools/build/croissant.py). `promote`, `resolve` and `tag-gap` are
 P1-S2-T10's (tools/promote.py, tools/resolve.py, tools/tag_gap.py). `gaps` is P1-S2-T11's (tools/build/gaps.py), and
 its gap matrix and `--min-confidence` P1-S14-T08's: `bench gaps --grid coarse --reviewed-only --format json >
-build/derived/gaps.json`, checked by scripts/check_gap_claims.py.
+build/derived/gaps.json`, checked by scripts/check_gap_claims.py. `eval` is P6-S3-T09's (tools/evals/; 11 S7): the
+golden set pooled, graded and written to evals/results/<date>-<commit>.json.
 """
 from __future__ import annotations
 
@@ -597,6 +599,40 @@ def tag_gap_cmd(
         typer.echo('tag-gap: refused: %s' % e, err=True)
         raise typer.Exit(1)
     typer.echo('wrote %s' % rel)
+
+
+@app.command('eval')
+def eval_cmd(
+    split: Annotated[str, typer.Option(
+        '--split', help='nl_search, facet_translation, suite_build, abstention, or all (the default).')] = 'all',
+    report: Annotated[bool, typer.Option(
+        '--report', help='Print the whole run as Markdown, the pool to grade included.')] = False,
+    judge: Annotated[bool, typer.Option(
+        '--judge', help='Also ask for the LLM-as-judge pass (refuses without a key; never gates).')] = False,
+    holdout: Annotated[int, typer.Option(
+        '--holdout', help='Hold out N items as the test split, scored apart and never tuned on.')] = 0,
+):
+    """Pool, grade and publish the AI layer's golden set, every rate with its Wilson interval (11 S7). Writes
+    evals/results/<date>-<commit>.json when anything was graded; says so plainly when nothing can be."""
+    from tools.evals import harness
+    try:
+        doc = harness.evaluate(ROOT, harness.select(split), holdout=holdout, judge=judge)
+    except harness.UsageError as e:
+        typer.echo('eval: %s' % e, err=True)
+        raise typer.Exit(2)
+    except harness.EvalError as e:
+        for line in e.errors:
+            typer.echo('error  %s' % line, err=True)
+        typer.echo('eval: nothing graded; fix the golden set or the corpus first', err=True)
+        raise typer.Exit(1)
+    if report:
+        typer.echo(harness.report(doc), nl=False)
+    else:
+        for line in harness.summary(doc):
+            typer.echo(line)
+    written = harness.write(doc, ROOT)
+    if written:
+        typer.echo('eval: wrote %s' % os.path.relpath(written, ROOT).replace(os.sep, '/'))
 
 
 def main():
