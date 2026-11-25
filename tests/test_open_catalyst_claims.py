@@ -32,6 +32,10 @@ must pass, and on copies broken the way the rule names, which must fail.
      list name no person and are pending for the lead's archiver, and no extract holds submission metadata.
 
 Ids are content-derived (05 S2) and are recomputed here, as tests/test_roboarena_claims.py does.
+
+These rules hold every claim on oc20's computational generations (OC20 and OC22). Batch 2's claims on oc20@ocx24
+(P3-S7-T04) are scored against laboratory measurements, not by a server; tests/test_open_catalyst_ocx24_claims.py
+holds them.
 """
 import glob
 import hashlib
@@ -87,11 +91,13 @@ def source(sid):
 
 
 def raw_claims():
-    """(repo-relative path, raw mapping) for every claim under data/claims/ on oc20, wherever it lives."""
+    """(repo-relative path, raw mapping) for every claim under data/claims/ on oc20, wherever it lives, but for those
+    on the wet-lab generation, oc20@ocx24, which tests/test_open_catalyst_ocx24_claims.py holds."""
     out = []
     for p in sorted(glob.glob(os.path.join(ROOT, 'data', 'claims', '**', '*.yaml'), recursive=True)):
         raw = read_yaml(p)
-        if isinstance(raw, dict) and str(raw.get('benchmark', '')).partition('@')[0] == BID:
+        bench, _, version = str(raw.get('benchmark', '')).partition('@') if isinstance(raw, dict) else ('', '', '')
+        if bench == BID and version != 'ocx24':
             out.append((os.path.relpath(p, ROOT).replace(os.sep, '/'), raw))
     return out
 
