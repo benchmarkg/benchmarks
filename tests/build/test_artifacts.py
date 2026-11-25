@@ -248,6 +248,14 @@ def test_the_preview_script_writes_its_own_directory_and_never_build(tmp_path, c
         assert json.load(fh)['drafts'] is True
     with open(tmp_path / 'preview' / 'derived' / 'adoption.json', encoding='utf-8') as fh:
         assert json.load(fh)['artifact'] == 'adoption'
+    # P2-S5-T02: the Atlas island's atlas.json, over the drafts too, and named by its hashed URL in the manifest
+    with open(tmp_path / 'preview' / 'atlas.json', encoding='utf-8') as fh:
+        atlas = json.load(fh)
+    assert atlas['artifact'] == 'atlas' and atlas['drafts'] is True
+    assert [n['id'] for n in atlas['nodes']] == ['alpha-bench', 'beta-bench']
+    with open(tmp_path / 'preview' / 'build-manifest.json', encoding='utf-8') as fh:
+        href = json.load(fh)['paths']['atlas.json']
+    assert os.path.isfile(os.path.join(str(tmp_path / 'preview'), *href.strip('/').split('/')))
 
 
 def test_records_carry_every_field_and_no_computed_field(tmp_path):

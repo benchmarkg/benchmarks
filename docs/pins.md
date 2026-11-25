@@ -51,6 +51,8 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | pagefind (site) | 08 §5.5 and §3.2 S12, first installed by P2-S4-T06: the search index, built at the end of every `astro build` (site/src/lib/pagefind.ts) | **1.6.0** (08 names 1.5.2) | 1.6.0 | 2026-11-01 | registry.npmjs.org/pagefind | 2026-11-24 | ok (first install); **differs from 08's 1.5.2**, for determinism: see note 7 |
 | mlcroissant | 08 §5.8 (named, not versioned), first P2-S3-T06: base-Croissant conformance of every croissant-benchmark document, inside `bench build` | 1.1.1 | 1.1.1 (no `requires_python`; the wheel declares no licence, the repository mlcommons/croissant is Apache-2.0 per api.github.com) | 2026-10-05 | pypi.org/pypi/mlcroissant/json | 2026-11-18 | ok (first pin); see note 5 |
 | minisearch (site) | 08 §5.5, §5.7 (named, not versioned), first P2-S4-T02: the BM25 leg of the faceted query pipeline, site/src/lib/query.ts | 7.2.0 | 7.2.0 (`next` tag 5.0.0-beta1, an older line; no dependencies; MIT; not deprecated) | 2025-09-16 | registry.npmjs.org/minisearch | 2026-11-24 | ok (first pin); see note 6 |
+| sigma (site) | 10 §Technology decisions and 08 §5.2 ("Pin `sigma@3.0.3`"), first installed by P2-S5-T02: the Atlas island, site/src/islands/Atlas.tsx | 3.0.3 | **4.0.6** (`latest`, 2026-11-10; 4.0.0 went stable 2026-10-08; 3.0.3 is still the newest 3.x; MIT; not deprecated) | 2026-04-30 | registry.npmjs.org/sigma | 2026-11-24 | **moved** (major); kept at 3.0.3, as 08 §5.2 says: see note 8 |
+| graphology (site) | 10 §Technology decisions, first installed by P2-S5-T02: the Atlas island's graph | 0.26.0 | 0.26.0 (`latest`; MIT; not deprecated) | 2025-01-26 | registry.npmjs.org/graphology | 2026-11-24 | ok (first install); see note 8 |
 
 ## Other pins and third-party facts the plan names
 
@@ -124,6 +126,29 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    10 index chunks and 25 other files, most of the weight in the last group, the UI scripts and
    styles no page loads until the search box exists (P2-S4-T07). The `pagefind` row in the first
    table is P0-S4-T01's check of the plan's value on 2026-09-23.
+8. **sigma is installed at 3.0.3 although 4.x is now stable, as 08 §5.2 decided (P2-S5-T02).** The
+   plan pins `sigma@3.0.3` and calls v4 "a deliberate later migration with its own PR". On
+   2026-11-24 the registry's `latest` is 4.0.6 (2026-11-10); 4.0.0 went stable on 2026-10-08, after
+   4.0.0-beta.0 to beta.8 (08 cites beta.6). No 3.x release followed 3.0.3, so no fix in its own
+   line supersedes it, and nothing in it was found broken for the Atlas (site/tests/atlas.spec.ts
+   passes on it). Whether to migrate now that v4 is stable is 08 §5.2's call; until then the risk
+   is the usual one for a superseded major, that a 3.x security fix may never ship. graphology
+   0.26.0 is the registry's `latest`. Both are MIT, and none of the five packages below has an
+   install script (graphology's `prepare` runs only in a git checkout, never from the registry
+   tarball). site/package-lock.json gained exactly five: sigma 3.0.3 (970,733 bytes unpacked, 96
+   files), graphology 0.26.0 (2,729,833 bytes, 30 files: four builds and their source maps), and
+   their dependencies `events` 3.3.0 (2021-02-27, MIT, 82,778 bytes, a dependency of both),
+   `graphology-utils` 2.5.2 (2022-04-07, MIT, 30,887 bytes, sigma's) and `graphology-types` 0.24.8
+   (2024-11-22, MIT, 58,067 bytes), the TypeScript declarations both name as a peer dependency, which
+   npm installs and nothing ships. Weight, bundled alone with esbuild 0.28.2 (minified ESM, measured
+   2026-11-24): sigma's default export is 95.7 KB, 26.0 KB gzipped; graphology's 66.0 KB, 13.2 KB
+   gzipped; the two with what the island also takes from `sigma/rendering` and `sigma/utils`
+   160.3 KB, 38.7 KB gzipped, 32.5 KB brotli. The plan's "183 KB min" is the UMD bundle the package
+   ships, dist/sigma.min.js (187,876 bytes, 47.5 KB gzipped), not what a bundler includes. In the
+   built site (the 320-entry draft preview, 2026-11-24) the five chunks the Atlas island imports
+   after hydration are 160,067 bytes, 38.1 KB gzipped, and the whole /atlas/ route, React's runtime
+   included, is 118.5 KB gzipped (KB here is 1,024 bytes; gzip -9 per file), against 08 §8.1's
+   120 KB: P2-S5-T02's report has the breakdown.
 
 ## Moved pins (issue to open)
 
