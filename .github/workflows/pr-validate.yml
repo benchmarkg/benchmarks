@@ -80,6 +80,13 @@
 # fixture that adds 1 KB of JavaScript to a detail route and asserts size-limit goes red on it, so a gate that has
 # stopped measuring fails too. The build needs the history and the locked Python, as single-source's does.
 #
+# The same job runs the no-JS render gate (P2-S8-T02; 10 "Performance budget", 08 S8.3) over that build, before
+# size-limit: site/tests/nojs.spec.ts renders one page of every route family with JavaScript disabled and fails when a
+# family's fallback element (scripts/route_fallback_map.json: the table, the grouped list or the inline SVG) is missing,
+# a citability regression. It is steps here rather than a job of its own so the preview is built once: UAIBI_SITE_BUILT=1
+# has site/playwright.config.ts preview dist/ instead of building it again. Only Chromium's headless shell is installed,
+# and not cached, as nothing else in this workflow is.
+#
 # Actions are pinned by commit SHA (08 S6); these are the SHAs archive-sources.yml resolved on
 # 2026-09-24, and setup-node's is schema-codegen.yml's (resolved 2026-09-25).
 
@@ -461,6 +468,15 @@ jobs:
           UAIBI_CORPUS: ../build/preview/corpus.json
           UAIBI_SITE_DRAFTS: '1'
         run: npx astro build
+      - name: the repository root's dependencies, whose @playwright/test the site's browser tests run under
+        run: npm ci --ignore-scripts
+      - name: Chromium's headless shell and its system libraries, the one browser the no-JS gate drives
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: the no-JS render gate, every route family's fallback element with JavaScript off, over the same build
+        working-directory: site
+        env:
+          UAIBI_SITE_BUILT: '1'
+        run: npx playwright test tests/nojs.spec.ts --project=nojs
       - name: size-limit, every route group against its budget
         working-directory: site
         run: npx size-limit
