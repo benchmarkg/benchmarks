@@ -1,6 +1,7 @@
 """scripts/check_extract_personal_data.py: no stored extract carries an e-mail address, an arXiv submitter's name,
-an arXiv abs page's or HTML rendering's author list or a fixed-layout page's labelled list of people. The
-byline, roster and affiliation fixtures are placeholders ("First Author", "Second Editor"), not anyone's name."""
+an arXiv abs page's or HTML rendering's author list, a fixed-layout page's labelled list of people or a paper's
+author note. The byline, roster, affiliation and author-note fixtures are placeholders ("First Author", "Second
+Editor", "A. First"), not anyone's name."""
 import os
 import sys
 
@@ -186,6 +187,66 @@ def test_an_affiliation_byline_that_a_quote_cites_stays(tmp_path):
     assert C.check(str(tmp_path)) == []
     quote('Affiliation: Example University')                   # a quote of the institution alone is no reason
     assert 'names authors before an "Affiliation:" label 1 time' in C.check(str(tmp_path))[0]
+
+
+PDF = 'https://example.org/papers/a-challenge.pdf'
+NOTE = 'names authors before "is with" or "are with" %d time'
+
+
+@pytest.mark.parametrize('extract', [
+    'The developed algo- [names redacted] are with the Department of Example … top algorithms',
+    'combinations of the [names redacted] is also with Example AB, top algorithms result in',
+    'The dataset is with the organisers, and the test labels are with the hosts',  # running text
+    'Team 2 is with the leaders. Team 4, 7 and 12 are with them',                  # a number is no name
+    'Copyright is with the authors. The Authors are with us',                      # no initial, no author note
+    'Ada Example is with Example University',              # ... so a note without one is not caught (docstring)
+    'Abstract We present A. First and B. Second … are with Example University',    # the window opens at it
+    'Abstract We present A. First and B. Second are wi … th Example University',   # a window cuts the phrase off
+])
+def test_a_redacted_or_running_text_author_note_passes(tmp_path, extract):
+    source(tmp_path, 'src-a', extract, url=PDF, quote_extract_redactions=extract.count('redacted') or None)
+    assert C.check(str(tmp_path)) == []
+
+
+@pytest.mark.parametrize('extract, times', [
+    ('The developed algo- A. First and B. Second are with the Departm … ple, top algorithms', 1),
+    ('combinations of the A. First, B. E. Second, and C. van der Third are with Example AB, top', 1),
+    ('A. First is with Example University. B. Second is also with Example Lab', 2),
+    ('J.-P. First are also with Example Lab … the rights are with the authors', 1),
+    ('[names redacted] and B. Second are with Example Lab', 1),                    # one name left by the token
+    ('Abstract We present … rst and B. Second are with Example Lab', 1),           # a window cut inside the run
+])
+def test_an_author_note_that_names_its_authors_fails(tmp_path, extract, times):
+    source(tmp_path, 'src-a', extract, url=PDF, quote_extract_redactions=extract.count('redacted') or None)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and NOTE % times in errs[0], errs
+
+
+@pytest.mark.parametrize('url', [None, ABS, HTML, ACL, 'https://example.org/proceedings/a-challenge'])
+def test_the_author_note_rule_reads_every_page(tmp_path, url):
+    source(tmp_path, 'src-a', 'lymph nodes A. First and B. Second are with Example University', url=url)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and NOTE % 1 in errs[0], errs
+
+
+def test_an_author_note_that_a_quote_cites_stays(tmp_path):
+    source(tmp_path, 'src-a', 'combinations of the A. First and B. Second are with Example AB, top', url=PDF)
+    entry = tmp_path / 'data' / 'benchmarks' / 'medicine-health'
+    entry.mkdir(parents=True)
+
+    def quote(text):
+        (entry / 'a.yaml').write_text(yaml.safe_dump({'id': 'a', 'maintainers': {'quote': text, 'source': 'src-a'}}),
+                                      encoding='utf-8')
+    quote('A. First and B. Second are with Example AB')        # the quote check needs it: it stays, for review
+    assert C.check(str(tmp_path)) == []
+    quote('are with Example AB')                               # a quote of the institution alone is no reason
+    assert NOTE % 1 in C.check(str(tmp_path))[0]
+
+
+def test_a_redacted_author_note_needs_its_count(tmp_path):
+    source(tmp_path, 'src-a', 'The developed algo- [names redacted] are with the Department of Example', url=PDF)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and 'holds 1 redaction token(s) but quote_extract_redactions is unset' in errs[0], errs
 
 
 def test_the_repository_passes():
