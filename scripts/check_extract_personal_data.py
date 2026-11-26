@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """No stored Source extract carries an e-mail address, an arXiv submitter's name, an arXiv abstract page's
-or HTML rendering's author list or a fixed-layout page's labelled list of people (04 S9; the maintainer's calls
-of 2026-11-18).
+or HTML rendering's author list, a fixed-layout page's labelled list of people or a paper's author note (04 S9;
+the maintainer's calls of 2026-11-18).
 
 A Source's `quote_extract` is the text the quote check reads, committed under data/ and published with the
 record. Personal data sits right beside the facts it backs: contact lines in papers and READMEs, the addresses
@@ -28,11 +28,23 @@ in `quote_extract_redactions` (schema/source.py). This holds the line:
              label opens its window or follows running text ("... more Affiliations:"). The institution stays.
              A run of names a quote in data/ cites stays, as a byline does. A run whose label a window cuts
              off ("<names> A …") has no label left to read; the curator redacts it by hand.
+  author-note an extract, from any page, names no author in an author note, the fixed phrasing of the footnote
+             on a paper's first page ("<names> is with <institution>", or "are with", "is also with", "are
+             also with"; IEEE's form, which a two-column PDF's text interleaves with the abstract): the run of
+             names right before the phrase (initials and capitalised surnames, name particles, ", " and " and ",
+             read from its first initial) is `[names redacted]`, or there is none because the phrase opens its
+             window or follows running text ("The dataset is with", "Team 2 is with"). The institution stays,
+             and so does a run a quote in data/ cites. A run must hold an initial: a note that spells out every
+             given name ("Ada Example is with") is deliberately not caught, since a capitalised phrase reads
+             the same ("Copyright is with the authors"). A run whose phrase a window cuts off ("<names> are wi
+             …") has no phrase left to read, and a window that opens inside a run leaves the names before its
+             first initial unread; the curator redacts those by hand.
   counted    an extract holding a `[... redacted]` token says how many in `quote_extract_redactions`.
 
-The byline, roster and affiliation rules read only fixed labels, so they need no list of names. A PDF's
-byline has no such label, nor has an HTML rendering's other than arXiv's; the sweep that redacted those matched
-each paper's author names from the arXiv API, and no name is stored for a check to reuse. The other lists of
+The byline, roster, affiliation and author-note rules read only fixed labels and phrasing, so they need no
+list of names. A PDF's byline has no such label (its author notes, where it has them, are the author-note
+rule's), nor has an HTML rendering's other than arXiv's; the sweep that redacted those matched each paper's
+author names from the arXiv API, and no name is stored for a check to reuse. The other lists of
 people redacted by hand (organisers, chairs, committees and team members on challenge sites; bylines on
 proceedings and project pages) sit in layouts that vary from page to page, where no label rule is precise enough
 to hold the line without false alarms.
@@ -77,6 +89,8 @@ WORD = re.compile(r'\S+')
 MARKS = ',;.()*†‡∗§¶&·|0123456789'               # footnote marks and separators a name may carry
 PARTICLES = {'van', 'von', 'der', 'den', 'de', 'del', 'della', 'di', 'da', 'dos', 'das', 'du', 'la', 'le', 'y', 'bin',
              'al', 'and'}
+AUTHOR_NOTE = re.compile(r'\b(?:is|are)(?: also)? with\b')        # "<names> are with <institution>"
+INITIAL = re.compile(r'[^\W\d_]{1,2}\.(?:-?[^\W\d_]{1,2}\.)*,?')  # "A.", "B.E.", "J.-P.", "Ch.", with a comma
 
 
 def name_shaped(text: str) -> bool:
@@ -163,6 +177,39 @@ def affiliations(extract: str) -> list[tuple[int, int]]:
     return out
 
 
+def author_notes(extract: str) -> list[tuple[int, int]]:
+    """The (start, end) of each run of names right before "is with" or "are with" (an author note) that is not
+    redacted: the words back from the phrase while each is capitalised, a name particle or only marks, as the
+    affiliation rule reads them, except that a number ("Team 2") or a sentence's full stop ends the run; the
+    run opens at its first initial and holds a capitalised word after it. Running text before the phrase, or
+    none, is no run."""
+    def initial(word: str) -> bool:
+        return word[0].isupper() and bool(INITIAL.fullmatch(word))
+    out = []
+    for off, window in windows(extract):
+        for m in AUTHOR_NOTE.finditer(window):
+            before = window[:m.start()].rstrip()
+            if before.endswith(NAMES):
+                continue
+            words = list(WORD.finditer(before))
+            k = len(words)
+            while k:
+                word = words[k - 1].group()
+                core = word.strip(MARKS)
+                if core and not core[0].isupper() and core not in PARTICLES:
+                    break                                   # running text: "The dataset is with"
+                if not core and any(c.isdigit() for c in word):
+                    break                                   # a number: "Team 2 is with"
+                if word.endswith('.') and not initial(word):
+                    break                                   # the end of the sentence before the note
+                k -= 1
+            while k < len(words) and not initial(words[k].group()):
+                k += 1
+            if any(not initial(w.group()) and name_shaped(w.group()) for w in words[k + 1:]):
+                out.append((off + words[k].start(), off + len(before)))
+    return out
+
+
 def cited_quotes(root: str) -> dict[str, list[str]]:
     """Source id -> the quotes in data/ that cite it (tools/validate/quotes.py finds them)."""
     sys.path.insert(0, ROOT)
@@ -243,6 +290,14 @@ def check(root: str) -> list[str]:
         if named:
             errors.append('%s: the extract names authors before an "Affiliation:" label %d time(s) (an arXiv HTML '
                           'byline); replace each run of names with [names redacted]' % (sid, len(named)))
+        noted = author_notes(extract)
+        if noted:
+            if cited is None:
+                cited = cited_quotes(root)
+            noted = [s for s in noted if not quoted(extract, s, cited.get(sid) or [])]
+        if noted:
+            errors.append('%s: the extract names authors before "is with" or "are with" %d time(s) (an author '
+                          'note); replace each run of names with [names redacted]' % (sid, len(noted)))
         tokens = len(TOKEN.findall(extract))
         if tokens and not record.get('quote_extract_redactions'):
             errors.append('%s: the extract holds %d redaction token(s) but quote_extract_redactions is unset'
@@ -261,7 +316,7 @@ def main(argv=None) -> int:
         print('%d problem(s)' % len(errors))
         return 1
     print('OK    no Source extract holds an e-mail address, an unredacted arXiv submitter, an arXiv abs or HTML '
-          'byline or a labelled roster on a fixed-layout page')
+          'byline, a labelled roster on a fixed-layout page or an author note')
     return 0
 
 
