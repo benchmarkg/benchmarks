@@ -19,11 +19,20 @@
 // headroom (1) are drawn from claims.json too, and are not built yet; the lineage and trajectory SVGs P2-S3-T03's (the
 // lineage edges are listed here as text), the export formats P2-S3-T07's. 10 V6 section 14 also names
 // est_api_calls, which the schema (04) has no field for, so it is not rendered as a recordable gap.
+//
+// P3-S10-T04 (04 S8 "What the UI does with it"; 09 Rule 2): section 10 is where the site shows claims together, so it
+// lists them as one comparison per metric, each in its comparability state (src/lib/comparability.ts): one key with
+// nothing unknown, its claims listed together and silently; one key with unknown material fields, listed together
+// behind the persistent banner that names which fields are unknown on which claim; more than one key, the field-by-field
+// diff instead of one list, then each condition set listed on its own, never ordered against another, with the count of
+// claims a restriction to one set drops shown. Every claim is in exactly one list, so none is dropped from the page.
 import Absent from '../components/Absent.astro';
 import ClaimList from '../components/ClaimList.astro';
+import ComparabilityBanner from '../components/ComparabilityBanner.astro';
+import { unknownsOn, type Comparison } from '../lib/comparability';
 import CiteThis from '../components/CiteThis.astro';
 import IngestAttribution from '../components/IngestAttribution.astro';
-import type { ClaimRow } from '../lib/claims';
+import { baseId, type ClaimRow } from '../lib/claims';
 import type { Ingestion } from '../types/result-claim';
 import { FORMATS, type Format } from '../lib/cite';
 import { croissantText, scriptSafe } from '../lib/croissant';
@@ -53,12 +62,18 @@ interface Props {
   adoption: Adoption | null;          // claims and the systems they are about; null when adoption.json was not built
   release: Release;
   claims?: ClaimRow[] | null;         // claims.json's rows on this benchmark, in section 10's order; null when not built
+  comparisons?: Comparison[] | null;  // those rows by metric, each in its comparability state (P3-S10-T04)
   ingested?: { count: number; attributions: Ingestion[] };   // its machine-ingested claims: counted, never listed
   names?: { systems: Map<string, string>; benchmarks: Map<string, string> };   // published id -> name, for the list
 }
 
-const { benchmark: b, metrics, sources, published, subsets, adoption, release, claims = null,
+const { benchmark: b, metrics, sources, published, subsets, adoption, release, claims = null, comparisons = null,
   ingested = { count: 0, attributions: [] }, names = { systems: new Map(), benchmarks: new Map() } } = Astro.props;
+if (claims != null && (comparisons == null || comparisons.reduce((n, g) => n + g.total, 0) !== claims.length)) {
+  throw new Error(`${b.id}: section 10's comparisons do not hold its ${claims.length} claims, so one would be dropped from the page`);
+}
+const claimWord = (n: number) => `${formatValue(n)} ${n === 1 ? 'claim' : 'claims'}`;
+const subjectName = (system: string) => names.systems.get(baseId(system)) ?? system;
 const claimCount = adoption != null ? formatValue(adoption.claims) : claims != null ? formatValue(claims.length + ingested.count) : 'not counted';
 const today = new Date(`${release.built_on}T00:00:00Z`);
 const family = b.domain.primary.split('/')[0];
@@ -369,7 +384,32 @@ const citeFormats = (Object.keys(FORMATS) as Format[]).filter((f) => f !== 'json
         ? <p>No claim is recorded for this benchmark. <Absent state="not-recorded" /></p>
         : <>
         {claims.length > 0
-          ? <ClaimList rows={claims} label={`Claims on ${b.name}`} subject="system" names={names} />
+          ? (comparisons ?? []).map((g) => {
+            const refused = g.state === 'not-comparable';
+            const metricName = metrics.get(g.metric)?.name ?? g.metric;
+            return (
+              <section class="comparison" id={g.id} data-comparison={g.metric} data-comparison-state={g.state} data-claims-total={g.total} aria-labelledby={`${g.id}-h`}>
+                <h3 id={`${g.id}-h`}>{metricName} <code>{g.metric}</code> <span class="count">({claimWord(g.total)})</span></h3>
+                {refused && g.restrict != null && (
+                  <ComparabilityBanner kind="differ" id={`${g.id}-diff`} level={4} keys={g.sets.map((s) => s.key)} set_labels={g.sets.map((s) => s.label)}
+                    set_sizes={g.sets.map((s) => s.rows.length)} total={g.total} diff={g.diff} diff_status={g.diff_status} restrict={g.restrict}
+                    restrict_href={`#${g.id}-set-${g.restrict.label.toLowerCase()}`} proceed_href={`#${g.id}-sets`} />
+                )}
+                <div class="sets" id={`${g.id}-sets`}>
+                  {g.sets.map((s) => (
+                    <div class="set" id={`${g.id}-set-${s.label.toLowerCase()}`} data-set={s.label} data-key={s.key} data-set-state={s.state}>
+                      {refused && <h4 class="set-head">Set {s.label} <span class="count">({formatValue(s.rows.length)} of {claimWord(g.total)}; one condition set)</span></h4>}
+                      {s.state === 'possibly-comparable' && (
+                        <ComparabilityBanner kind="unknown" id={`${g.id}-set-${s.label.toLowerCase()}-unknown`} level={refused ? 5 : 4} key={s.key}
+                          unknowns={unknownsOn(s).map((u) => ({ claim: u.claim, label: subjectName(u.system), fields: u.fields }))} />
+                      )}
+                      <ClaimList rows={s.rows} label={refused ? `${metricName} on ${b.name}, set ${s.label}` : `${metricName} on ${b.name}`} subject="system" names={names} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })
           : <p>No claim on this benchmark is curated yet. <Absent state="not-recorded" reason="every claim here is machine-ingested" /></p>}
         {ingested.count > 0 && (
           <div class="ingested" data-claims-ingested={ingested.count}>
@@ -617,6 +657,23 @@ const citeFormats = (Object.keys(FORMATS) as Format[]).filter((f) => f !== 'json
     padding-inline-start: var(--sp-6);
   }
   .notes { white-space: pre-line; }
+  .comparison {
+    display: grid;
+    gap: var(--sp-2);
+    margin-block: var(--sp-4) var(--sp-6);
+  }
+  .comparison > h3 {
+    margin: 0;
+    font-size: var(--fs-base);
+  }
+  .sets {
+    display: grid;
+    gap: var(--sp-4);
+  }
+  .set-head {
+    margin: 0 0 var(--sp-2);
+    font-size: var(--fs-sm);
+  }
   .trajectory {
     margin: 0;
     padding: var(--sp-4);
