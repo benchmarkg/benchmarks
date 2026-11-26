@@ -27,8 +27,12 @@
 //
 // The selection is `ids`: benchmark ids (an atlas.json node's id is its benchmark's), each once, in the order they were
 // added. The toolbar carries the same list, space-separated, as data-atlas-selection, so it can be read from outside
-// the island. That is the seam P6-S4-T01 builds on: its add-from-lasso is a control here that hands `ids` to the V10
-// basket at /suite/. This task builds neither the basket nor a link to it.
+// the island. "Add to suite basket" (P6-S4-T01, 10 V10's "+ from lasso (V1)") hands `ids` to the V10 basket: a plain
+// link, last in the toolbar, to /suite/ with the selection as the basket, `b`, in lib/filter-url.ts's canonical form
+// (sorted, so one selection is one URL), the form lib/suite-basket.ts suiteHref() writes. It is written inline rather
+// than by importing suiteHref, because every byte here is the Atlas's (below), and encode() is in the chunk already.
+// The basket is the URL's, so the link adds nothing to any server; islands/SuiteBuilder.tsx offers the basket this
+// browser kept for adding to it. With nothing selected it opens an empty basket, which is all it has to hand over.
 //
 // The route's JavaScript is held to 08 S8.1's 120 KB, and every byte of this file counts in it: it is imported
 // statically, into the Atlas island's own chunk, and scripts/route_js.mjs counts that chunk and everything it imports.
@@ -36,6 +40,7 @@
 // to: everything the route can load) and would add a chunk's overhead, so it is not. It is plain buttons, one canvas
 // and no state of its own beyond the path being drawn.
 import { useRef, type PointerEvent } from 'react';
+import { encode } from '../lib/filter-url.ts';
 
 /** A point in the map's viewport pixels, where sigma's graphToViewport puts a node. */
 export interface Point { x: number; y: number }
@@ -57,6 +62,7 @@ export default function AtlasSelection({ ids, visible, set, lasso, setLasso }: P
       <button type="button" onClick={() => set([...ids, ...visible])}>Select all {visible.length} visible</button>
       <button type="button" onClick={() => set([])}>Clear selection</button>
       <button type="button" aria-pressed={lasso} onClick={() => setLasso(!lasso)}>Lasso</button>
+      <a href={`/suite/?${encode({ b: ids })}`}>Add to suite basket</a>
     </div>
   );
 }
