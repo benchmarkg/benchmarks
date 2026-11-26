@@ -1192,6 +1192,14 @@ export interface Comparability {
         | "surrogate-fit"
         | "human-judged"
         | "eligibility-gated"
+        | "trained-model"
+        | "harnessed-model"
+        | "human-participant"
+        | "human-baseline"
+        | "llm-code"
+        | "model-scored"
+        | "relative-ranking"
+        | "intervention"
       )
     | null;
   material_extra?: string[];

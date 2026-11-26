@@ -125,10 +125,12 @@ def test_four_distinct_keys_and_every_claim_at_completeness_0_6():
     keys = {key(c, CONDS) for c in CLAIMS}
     assert len(keys) == 4                                   # the ledger's five: one is the High pair's second row
     rows = {r['claim']: r for r in completeness.build(ROOT)['rows']}
+    # Six material fields since ADR-0029 (P3-S10-T01): [exact-match, classical-algorithm] resolves trained-model, which
+    # adds training_data_policy to the five the entry declared; the effort cluster's sources do not state it.
     for c in CLAIMS:
         r = rows[c.id]
-        assert r['condition_completeness'] >= 0.6 and r['fields_material_total'] == 5, r
-        assert r['unknown_fields'] == ['k'], r
+        assert r['condition_completeness'] >= 0.6 and r['fields_material_total'] == 6, r
+        assert r['unknown_fields'] == ['k', 'training_data_policy'], r
 
 
 def test_every_epoch_row_is_in_the_export_and_every_value_on_the_leaderboard():
