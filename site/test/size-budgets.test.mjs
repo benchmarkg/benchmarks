@@ -85,6 +85,7 @@ test('route_groups.json: the three groups, the ledger\'s budgets, and each pendi
   assert.equal(row('/benchmarks/{id}/').weight, '120 KiB');
   assert.equal(row('/atlas/').js, '120 KiB');
   assert.equal(row('/').js, '40 KiB');
+  assert.equal(row('/suite/').js, '80 KiB', "10's V10 Suite row (P6-S4-T01)");
   for (const f of families.filter((x) => x.group === 'citable')) assert.equal(f.js, '0 B', f.route);
   for (const f of families.filter((x) => x.pending)) {
     assert.match(f.pending, /^P\d-S\d+-T\d+$/, f.route);
