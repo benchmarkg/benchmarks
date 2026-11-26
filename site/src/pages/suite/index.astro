@@ -1,0 +1,164 @@
+---
+// site/src/pages/suite/index.astro -- P6-S4-T01 (10 V10, "Information architecture": /suite/ is V10; 08 S8.3; 09 S8.6).
+// The Suite Builder: the filter/search, basket and analysis panes of islands/SuiteBuilder.tsx, which says what each is
+// and why the basket's one home is the URL (/suite/?b=...). Mounted client:load: the page is the tool.
+//
+// What the page gives the island, all of it fixed at build time:
+//   facetsHref   facets.json's content-hashed URL (lib/manifest.ts dataHref, 08 S4.4), the rows the filter pane matches
+//                and the basket's names come from; null when the build wrote no manifest, and the island then says so
+//   groups       the browse rail's vocabularies (lib/browse-view.ts railGroups), definitions left out as the Atlas's are,
+//                so the page reads and writes the same filter grammar as /benchmarks/ and /atlas/
+//   commit       the commit this build read the index at (lib/release.ts, as every page footer prints it), which the
+//                manifest section names as what an exported suite.yaml pins
+//
+// The island's children are the directory: every benchmark this build renders a page for, under its domain family in
+// the taxonomy's order, each family counted and none left out, an empty one included (10 V10: omitting a family "would
+// make absence look like completeness"). It is what the filter pane holds as sent, so without JavaScript the page is a
+// route to every benchmark's page and says why the basket cannot be shown (scripts/route_fallback_map.json holds /suite/
+// to this list); the island replaces it with the live results once facets.json is in.
+//
+// In the search index (P2-S4-T06) the page is a narrative page, crawled for its heading and lede; the island is
+// data-pagefind-ignore, because every benchmark the directory names has its own record (the Atlas's reason).
+import Base from '../../layouts/Base.astro';
+import SuiteBuilder from '../../islands/SuiteBuilder.tsx';
+import { benchmarks } from '../../lib/collections';
+import { railGroups } from '../../lib/browse-view';
+import { dataHref } from '../../lib/manifest';
+import { release } from '../../lib/release';
+import { allTerms } from '../../lib/terms';
+
+const groups = railGroups(allTerms()).map((g) => ({ ...g, terms: g.terms.map((t) => ({ ...t, gloss: '' })) }));
+const facetsHref = dataHref('facets.json');
+const commit = release().commit_sha.slice(0, 12);
+const all = (await benchmarks()).map((b) => ({ id: b.id, name: b.name, family: b.domain.primary.split('/')[0] }))
+  .sort((a, b) => a.name.localeCompare(b.name, 'en') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+const families = groups.find((g) => g.key === 'd')!.terms.filter((t) => t.parent == null)
+  .map((f) => ({ id: f.id, label: f.label, entries: all.filter((b) => b.family === f.id) }));
+---
+<Base title="Suite Builder · Benchmark index">
+  <main class="suite">
+    <header>
+      <h1>Suite Builder</h1>
+      <p class="lede">Put together a set of existing benchmarks for the system you are evaluating. The basket is your working selection: it lives in this page's address, so its link reopens it anywhere, and it changes as you edit it. It is not a citable object; the suite manifest a basket exports is.</p>
+    </header>
+    <div data-pagefind-ignore="all">
+      <SuiteBuilder client:load facetsHref={facetsHref} groups={groups} commit={commit}>
+        <div class="directory" data-suite-directory>
+          <p class="hint">Every benchmark in this build, by domain family, each linking its page.</p>
+          <ul class="families">
+            {families.map((f) => (
+              <li data-family={f.id}>
+                <span class="family">{f.label}</span> <span class="n">({f.entries.length})</span>
+                {f.entries.length > 0
+                  ? <ul class="members">{f.entries.map((b) => <li><a href={`/benchmarks/${b.id}/`}>{b.name}</a></li>)}</ul>
+                  : <span class="none"> none in this build</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </SuiteBuilder>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .suite {
+    max-inline-size: 120rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  .lede { max-inline-size: 68ch; margin: 0 0 var(--sp-4); color: var(--c-ink-muted); }
+
+  /* the island renders without this page's scope, so its markup is styled from here */
+  /* Three panes from --bp-lg (69rem), the filter pane the widest; below, stacked in reading order */
+  .suite :global(.suite-builder) { display: grid; gap: var(--sp-4); align-items: start; }
+  @media (min-width: 69rem) {
+    .suite :global(.suite-builder) { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); }
+  }
+  .suite :global(.pane) { display: grid; gap: var(--sp-3); align-content: start; min-inline-size: 0; padding: var(--sp-3); font-size: var(--fs-sm); }
+  .suite :global(.pane h2) { margin: 0; font-size: var(--fs-lg); line-height: var(--lh-tight); }
+  .suite :global(.pane h3) { margin: 0; font-size: var(--fs-md); line-height: var(--lh-tight); }
+  .suite :global(.pane p) { margin: 0; }
+  .suite :global(.find), .suite :global(.analysis) { border: 1px solid var(--c-border); }
+  .suite :global(.hint), .suite :global(.meta), .suite :global(.what), .suite :global(.none) { color: var(--c-ink-muted); }
+  .suite :global(.meta), .suite :global(.n), .suite :global(.count) { font-size: var(--fs-xs); font-variant-numeric: tabular-nums slashed-zero; }
+  .suite :global(.count) { color: var(--c-ink-muted); font-weight: 400; }
+  .suite :global(.notice) { padding: var(--sp-2) var(--sp-3); border: 1px solid var(--c-caution); background: var(--c-caution-bg); }
+  .suite :global(.notice ul) { margin: 0; padding-inline-start: var(--sp-6); }
+  .suite :global(.not-built) { color: var(--c-ink-muted); font-weight: 600; }
+
+  /* The basket and the manifest are drawn as different things (10 V10, "Two words, used precisely"): the basket a dashed
+     frame with its "working selection, not citable" tag, a scratch surface; the manifest a solid, heavier rule on the
+     raised surface, the one thing on the page an export will make citable */
+  .suite :global(.basket) { border: 1px dashed var(--c-border-strong); }
+  .suite :global(.scratch) {
+    justify-self: start;
+    padding: var(--sp-05) var(--sp-2);
+    border: 1px dashed var(--c-border-strong);
+    border-radius: 3px;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+  }
+  .suite :global(.manifest) { display: grid; gap: var(--sp-2); padding: var(--sp-3); border: 2px solid var(--c-ink); background: var(--c-surface); }
+
+  /* the filter pane's controls, in the Atlas's face (pages/atlas.astro) */
+  .suite :global(.controls) { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  .suite :global(.control) { display: grid; gap: var(--sp-05); }
+  .suite :global(.control .label) { color: var(--c-ink-muted); font-size: var(--fs-xs); }
+  .suite :global(.control select), .suite :global(.control input), .suite :global(.link input) {
+    max-inline-size: 18rem;
+    min-block-size: 1.75rem;
+    font: inherit;
+    color: var(--c-ink);
+    background: var(--c-bg);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+  }
+  .suite :global(.control.search) { flex: 1 1 14rem; }
+  .suite :global(.control.search input) { max-inline-size: none; padding-inline: var(--sp-2); }
+  .suite :global(.applied), .suite :global(.actions) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+
+  /* 09 S8.1, SC 2.5.8: every button a 24px target, 28px at coarse pointers */
+  .suite :global(.pane button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-1);
+    min-block-size: 1.5rem;
+    min-inline-size: 1.5rem;
+    padding-inline: var(--sp-2);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-bg);
+    color: var(--c-ink);
+    font: inherit;
+    font-size: var(--fs-xs);
+    line-height: var(--lh-dense);
+    cursor: pointer;
+  }
+  @media (pointer: coarse) {
+    .suite :global(.pane button) { min-block-size: 1.75rem; min-inline-size: 1.75rem; }
+  }
+
+  /* the results and the basket's entries: one row each, the name and its place, the button at the end */
+  .suite :global(.results), .suite :global(.entries), .suite :global(.entry-points) { display: grid; gap: var(--sp-1); list-style: none; margin: 0; padding: 0; }
+  .suite :global(.results) { max-block-size: 70vh; overflow-y: auto; }
+  .suite :global(.results li), .suite :global(.entries li) { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); min-block-size: 1.75rem; }
+  .suite :global(.results .what), .suite :global(.entries .what) { color: var(--c-ink); min-inline-size: 0; }
+  .suite :global(.results li[data-in-basket] .what a)::after { content: "\2713" / " in the basket"; margin-inline-start: var(--sp-1); font-weight: 700; }
+  .suite :global(.entry-points) { padding-block-start: var(--sp-2); border-block-start: 1px solid var(--c-border); }
+  .suite :global(.link) { display: grid; gap: var(--sp-1); padding-block-start: var(--sp-2); border-block-start: 1px solid var(--c-border); }
+  .suite :global(.link label) { font-weight: 600; }
+  .suite :global(.link-row) { display: flex; gap: var(--sp-2); }
+  .suite :global(.link input) { flex: 1; max-inline-size: none; min-inline-size: 0; padding-inline: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-xs); }
+  .suite :global(.panel) { display: grid; gap: var(--sp-1); padding-block-start: var(--sp-2); border-block-start: 1px solid var(--c-border); }
+
+  /* the directory, as sent: the families in the taxonomy's order, each with its count and its benchmarks */
+  .suite :global(.directory) { display: grid; gap: var(--sp-2); }
+  .suite :global(.families), .suite :global(.members) { list-style: none; margin: 0; padding: 0; }
+  .suite :global(.families > li) { padding-block: var(--sp-2); border-block-start: 1px solid var(--c-border); }
+  .suite :global(.family) { font-family: var(--font-cond); font-weight: 600; }
+  .suite :global(.members) { margin-block-start: var(--sp-1); padding-inline-start: var(--sp-3); }
+  .suite :global(.members a) { display: inline-flex; align-items: center; min-block-size: 1.5rem; }
+</style>
