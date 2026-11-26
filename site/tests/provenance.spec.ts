@@ -27,7 +27,7 @@ const PAGE = '/_fixtures/provenance';
 
 test('the fixture covers the shapes: a full set, a weighted profile, shared keys, and an ingested row with no conditions', () => {
   const by = (id: string) => ROWS.find((r) => r.claim.id === id)!;
-  expect(by('claim-7112700f8bec').comparability.unknown_fields).toEqual([]);
+  expect(by('claim-ca94e7daf842').comparability.unknown_fields).toEqual([]);
   expect(by('claim-728956d83bee').comparability.key_unknown_count).toBe(11);
   expect(by('claim-0b51297ad7c5').key_shared_with).toBe(4);
   const ingested = ROWS.filter((r) => r.constructed != null);
@@ -83,7 +83,7 @@ test('an ingested row shows its snapshot and artifact; a curated one says it was
   await expect(ingested.locator('[data-prov-row="provenance-snapshot"]')).toContainText('ingested 2026-10-01 from leaderboard-row-7, raw value 0.262');
   await expect(ingested.locator('[data-prov-row="artifact"] a')).toHaveAttribute('href', /\.invalid\//);
   await expect(ingested.locator('[data-prov-row="conditions"]')).toContainText('No condition record: every material field is unknown.');
-  const curated = page.locator('details[data-prov="claim-7112700f8bec"]');
+  const curated = page.locator('details[data-prov="claim-ca94e7daf842"]');
   await curated.locator('summary').click();
   await expect(curated.locator('[data-prov-row="provenance-snapshot"] [data-absent="not-applicable"]')).toContainText('curated by hand');
   await expect(curated.locator('[data-prov-row="artifact"] [data-absent="not-reported"]')).toBeVisible();

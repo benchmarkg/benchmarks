@@ -11,7 +11,9 @@ computed by tools/build/comparability.py itself -- the fixture is the build's ar
 
 Four rows are real claims, chosen for the shapes they exercise:
 
-  claim-7112700f8bec   ForecastBench: every material field answered, so the unknown set is empty
+  claim-ca94e7daf842   SimplerEnv: every material field answered (7 of 7), so the unknown set is empty. It was
+                       ForecastBench's claim-7112700f8bec until P3-S10-T01's profiles took ForecastBench from 4
+                       material fields to 14, 10 of them unstated there
   claim-728956d83bee   SWE-bench Verified: 11 of 12 unknown, on a weighted profile (scaffold counts 2.0)
   claim-0b51297ad7c5   SciCode: four other claims share its comparability_key
   claim-28ad9a7a2214   MMLU: two others share its key
@@ -42,7 +44,7 @@ C = importlib.util.module_from_spec(spec)
 sys.modules['comparability_fixture'] = C
 spec.loader.exec_module(C)
 
-REAL = ['claim-7112700f8bec', 'claim-728956d83bee', 'claim-0b51297ad7c5', 'claim-28ad9a7a2214']
+REAL = ['claim-ca94e7daf842', 'claim-728956d83bee', 'claim-0b51297ad7c5', 'claim-28ad9a7a2214']
 CONSTRUCTED_FROM = 'claim-728956d83bee'
 CONSTRUCTED_ID = 'claim-000000000001'
 SOURCE_FIELDS = ('id', 'type', 'title', 'url', 'publisher', 'accessed', 'fetched_at', 'archive_url', 'archive_captured',
