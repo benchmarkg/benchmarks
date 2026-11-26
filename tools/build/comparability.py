@@ -50,8 +50,29 @@ which the UI must flag rather than plot silently -- and how many of the tuple's 
 the ingested ones included, gets its three numbers in build/derived/comparability-keys.json, beside
 every curated benchmark's resolution (`write`, below). A claim on a benchmark with no curated record,
 or citing a condition record that does not exist, fails the build rather than dropping out of it.
-`derived/comparability.json`, the pairwise diff the comparison view reads, is P3-S10-T03's and reads
-these keys.
+`derived/comparability.json`, the pairwise diff the comparison view reads, is P3-S10-T03's: `pairwise`,
+below, which the S8 claims stage (tools/build/claims.py) calls over claims.json's rows.
+
+derived/comparability.json (P3-S10-T03; 08 S4.2, S3.2 S5). Per (benchmark, metric), over the claims a
+comparison view may load -- claims.json's, never a machine-ingested row -- the pairwise rows
+{a, b, field, a_val, b_val, severity} for every claim pair that shares the metric but not the key, so "the
+site mechanically refuses to rank" is a property of the data and the UI never computes a verdict (08 S3.2):
+
+  - A pair is a and b, the two claim ids in UTF-8 byte order. A pair sharing a key has no rows: it is 04 S8's
+    state 1 or 2, which the key and key_unknown_count already say.
+  - A field is one of the key tuple's own entries after the metric the group shares -- `benchmark_version` (the
+    claim's `benchmark`, edition included), `subset`, each material field -- with severity `material`, or any
+    other EvalConditions field, with severity `informative` (10 V5's diff table shows both kinds). A row is
+    written for each field whose two values differ. Keys differ only when a material entry does, so every pair
+    with rows has at least one material row.
+  - A value is the canonical value the key hashes (`canonicalise`), JSON null for an answered absence, and "?"
+    (UNKNOWN) where the claim does not say: 04 S8's own marker, which `canonicalise` refuses as a real value, so
+    it is never ambiguous. Unknown against known is a difference; unknown against unknown is not.
+  - 08 S3.2: "The emitter computes diffs only within groups of 40 claims or fewer and records `diff_status:
+    deferred` on larger groups, where the UI computes the one pair the user actually selected on demand from
+    claims.json." DEFER_ABOVE is that 40: a group of 41 is `deferred` with `rows: null` (not computed, which
+    `[]` would misstate as "no differences"); a group of 40 or fewer is `computed`. Every group is listed, with
+    its claim, key and differing-pair counts, so an absent group never has to be read as an empty one.
 
 One refinement to 04's `is not None`, from 13 S4.5: "The schema penalises unknowns, not absences."
 A field whose `*_available` companion (schema.conditions.COMPANIONS) is explicitly `false` was
@@ -268,6 +289,84 @@ def summary(claims: dict) -> dict:
 
 def serialise(doc: dict) -> bytes:
     return (json.dumps(doc, indent=2, sort_keys=True) + '\n').encode('utf-8')
+
+
+# ---- derived/comparability.json (P3-S10-T03) ---------------------------------------------------------------------
+
+DIFF_NAME = 'derived/comparability.json'     # its published name under --out (08 S4.2)
+DIFF_FORMAT = 1
+DEFER_ABOVE = 40                             # 08 S3.2: diffs only within groups of 40 claims or fewer
+MATERIAL, INFORMATIVE = 'material', 'informative'
+SEVERITIES = (MATERIAL, INFORMATIVE)
+
+
+@dataclass(frozen=True)
+class ClaimFacts:
+    """One claim as the pairwise diff reads it: its group, its key, and field -> (value or UNKNOWN, severity)."""
+    id: str
+    benchmark: str                               # the family id, before any `@`
+    metric: str
+    comparability_key: str
+    facts: dict[str, tuple[Any, str]]
+
+
+def facts(resolution: Resolution, conditions: EvalConditions | None, benchmark_version: str,
+          subset: str | None) -> dict[str, tuple[Any, str]]:
+    """The key tuple's entries after the metric, material, and every other EvalConditions field, informative, each
+    as `compute` spells it: the canonical value, JSON null for an answered absence, UNKNOWN where nothing is said."""
+    out: dict[str, tuple[Any, str]] = {'benchmark_version': (benchmark_version, MATERIAL), 'subset': (subset, MATERIAL)}
+    for f in FIELDS:
+        v = canonicalise(conditions.value(f)) if conditions is not None and conditions.answered(f) else UNKNOWN
+        out[f] = (v, MATERIAL if f in resolution.material else INFORMATIVE)
+    return out
+
+
+def claim_facts(claim: ResultClaim, resolution: Resolution, conditions: EvalConditions | None) -> ClaimFacts:
+    return ClaimFacts(id=claim.id, benchmark=claim.benchmark.split('@')[0], metric=claim.metric,
+                      comparability_key=compute_for_claim(claim, resolution, conditions).comparability_key,
+                      facts=facts(resolution, conditions, claim.benchmark, claim.subset))
+
+
+def diff_rows(a: ClaimFacts, b: ClaimFacts) -> list[dict]:
+    """The {a, b, field, a_val, b_val, severity} rows of one pair, material first, then by field. Both claims are on
+    one benchmark, so one resolution gave both their severities."""
+    rows = []
+    for f in sorted(a.facts, key=lambda f: (SEVERITIES.index(a.facts[f][1]), f)):
+        (av, sev), (bv, _) = a.facts[f], b.facts[f]
+        if json.dumps(av, sort_keys=True) != json.dumps(bv, sort_keys=True):    # 1 and True are different values
+            rows.append({'a': a.id, 'b': b.id, 'field': f, 'a_val': av, 'b_val': bv, 'severity': sev})
+    return rows
+
+
+def pairwise(claims: list[ClaimFacts]) -> dict:
+    """derived/comparability.json over `claims` (claims.json's rows): every (benchmark, metric) group, its pairs' rows
+    when it holds DEFER_ABOVE claims or fewer, `diff_status: deferred` above that."""
+    groups: dict[tuple[str, str], list[ClaimFacts]] = {}
+    for c in claims:
+        groups.setdefault((c.benchmark, c.metric), []).append(c)
+    out = []
+    for (bench, metric), members in sorted(groups.items(), key=lambda kv: tuple(s.encode('utf-8') for s in kv[0])):
+        members = sorted(members, key=lambda c: c.id.encode('utf-8'))
+        keys = Counter(c.comparability_key for c in members)
+        n = len(members)
+        group = {'benchmark': bench, 'metric': metric, 'claims': n, 'keys': len(keys),
+                 'pairs': n * (n - 1) // 2 - sum(k * (k - 1) // 2 for k in keys.values())}
+        if n > DEFER_ABOVE:
+            group.update(diff_status='deferred', rows=None)
+        else:
+            rows = []
+            for i, a in enumerate(members):
+                for b in members[i + 1:]:
+                    if a.comparability_key != b.comparability_key:
+                        rows += diff_rows(a, b)
+            group.update(diff_status='computed', rows=rows)
+        out.append(group)
+    computed = [g for g in out if g['diff_status'] == 'computed']
+    return {'artifact': 'comparability', 'format': DIFF_FORMAT, 'defer_above': DEFER_ABOVE, 'unknown': UNKNOWN,
+            'severities': list(SEVERITIES), 'groups': out,
+            'summary': {'groups': len(out), 'computed': len(computed), 'deferred': len(out) - len(computed),
+                        'claims': sum(g['claims'] for g in out), 'differing_pairs': sum(g['pairs'] for g in out),
+                        'rows': sum(len(g['rows']) for g in computed)}}
 
 
 def write(root: str = ROOT, out: str | None = None) -> str:

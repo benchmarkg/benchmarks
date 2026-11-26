@@ -38,10 +38,12 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from tools.build import artifacts, croissant, emit, freshness, ingest_health  # noqa: E402
+from tools.build import claims as CL  # noqa: E402
 from tools.build import manifest as M  # noqa: E402
 from tools.build import modes  # noqa: E402
 
 SITE = os.path.join(ROOT, 'site')
+SHIPPED = sorted(emit.ARTIFACTS + CL.ARTIFACTS)      # S8's files, the claims stage's included (P3-S10-T03)
 PAGES = os.path.join(SITE, 'src', 'pages')
 FIXTURE = os.path.join(ROOT, 'tests', 'build', 'fixtures', 'minimal')
 SCRIPT = os.path.join(ROOT, 'scripts', 'routes_from_diff.py')
@@ -337,9 +339,10 @@ def test_data_only_skips_s9_s10_and_sqlite_and_clears_a_full_builds(cli, tmp_pat
     assert 'removed %s' % os.path.join(out, croissant.DIR) in preview.output
     assert 'removed %s' % os.path.join(out, 'index.sqlite') in preview.output
     assert not os.path.exists(os.path.join(out, croissant.DIR)) and not os.path.exists(os.path.join(out, 'index.sqlite'))
-    assert sorted(os.listdir(out)) == sorted(list(emit.ARTIFACTS) + ['build-manifest.json', 'data', 'dormancy.json'])
+    assert sorted(os.listdir(out)) == sorted(list(emit.ARTIFACTS) + [CL.CLAIMS, CL.INGESTED, 'derived'] +
+                                             ['build-manifest.json', 'data', 'dormancy.json'])
     m = json.loads(open(os.path.join(out, M.MANIFEST), encoding='utf-8').read())
-    assert sorted(m['paths']) == sorted(emit.ARTIFACTS) and m['documents'] == {}
+    assert sorted(m['paths']) == SHIPPED and m['documents'] == {}
     assert '--data-only: S9 (croissant-benchmark/, index.sqlite) and S10' in preview.output
     again = cli('--out', out, '--data-only')
     assert 'removed' not in again.output                             # nothing left to clear
@@ -466,4 +469,5 @@ def test_the_verifys_data_only_build_left_no_s9_output():
     if m['documents']:
         pytest.skip('the last bench build into build/ was a full one (it wrote croissant-benchmark/)')
     assert not os.path.exists(os.path.join(out, croissant.DIR)) and not os.path.exists(os.path.join(out, 'index.sqlite'))
-    assert sorted(m['paths']) == sorted(emit.ARTIFACTS)
+    ingested = {n for n in m['paths'] if n.startswith(CL.INGESTED + '/')}     # one per benchmark with ingested claims
+    assert sorted(set(m['paths']) - ingested) == SHIPPED

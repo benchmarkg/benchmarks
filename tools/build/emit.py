@@ -2,6 +2,11 @@
 
     bench build --out build/    # artifacts.build() loads and publishes (S1); this module writes the three files
 
+`emit` then runs S8's claims stage, tools/build/claims.py (P3-S10-T03): claims.json, claims-ingested/<id>.json and
+derived/comparability.json, the claim records corpus.json does not hold, split by 08 S4.2's curated / machine-ingested
+rule and refused on their own terms (the split, the 40-claim deferral, the 0.5 MB brotli budget) before anything is
+written. ARTIFACTS below stays these three; the claims stage names its own.
+
 tools/build/artifacts.py is the loader and the publish rules: which records are read, which are published,
 the closure over Sources, the materialised subsets. This module is what 08 S3.5 calls the S8 emitter: what
 each artifact holds, the refusal 08 S3.2 puts on the emitter, and the serialisation. artifacts.build() and
@@ -464,8 +469,11 @@ def refuse(artifacts: dict[str, dict]) -> None:
 # ---- the three artifacts ------------------------------------------------------------------------
 
 def emit(entities: dict[str, list[dict]], subsets: list[dict], benchmark_models: dict, claims: list,
-         conditions: dict, vocabularies: dict, drafts: bool = False) -> dict[str, dict]:
-    """file name -> artifact, NFC throughout, after every refusal has passed; raises Refused otherwise."""
+         conditions: dict, vocabularies: dict, drafts: bool = False, sources: dict | None = None) -> dict[str, dict]:
+    """file name -> artifact, NFC throughout, after every refusal has passed; raises Refused otherwise. The three
+    above, then the claims stage's (tools/build/claims.py, P3-S10-T03): claims.json, claims-ingested/<id>.json and
+    derived/comparability.json, which read the same claims and conditions, and `sources` (id -> its Records) for the
+    Source each claim cites."""
     claimed, errors = claim_fields(benchmark_models, claims, conditions)
     if errors:
         raise Refused(errors)
@@ -473,6 +481,8 @@ def emit(entities: dict[str, list[dict]], subsets: list[dict], benchmark_models:
                'facets.json': facets_artifact(entities['benchmark'], claimed, vocabularies, drafts),
                'enums.json': enums_artifact()})
     refuse(out)
+    from tools.build import claims as claim_stage       # it imports this module
+    out.update(claim_stage.stage(benchmark_models, claims, conditions, sources or {}, entities['organization'], drafts))
     return out
 
 

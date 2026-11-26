@@ -34,9 +34,13 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 from tools.build import artifacts, croissant, emit, freshness, ingest_health  # noqa: E402
+from tools.build import claims as CL  # noqa: E402
 from tools.build import manifest as M  # noqa: E402
 
 SITE = os.path.join(ROOT, 'site')
+# What every `bench build` ships: the three, and the claims stage's two always-written files (P3-S10-T03). The fixtures
+# here hold no machine-ingested claim, so no claims-ingested/<id>.json joins them.
+SHIPPED = sorted(emit.ARTIFACTS + CL.ARTIFACTS)
 FIXTURE = os.path.join(ROOT, 'tests', 'build', 'fixtures', 'minimal')
 NODE = shutil.which('node')
 NPX = shutil.which('npx') or shutil.which('npx.cmd')
@@ -196,7 +200,7 @@ def test_bench_build_writes_the_manifest_beside_what_it_hashed(tmp_path, monkeyp
     r = CliRunner().invoke(cli.app, ['build', '--out', str(tmp_path)])
     assert r.exit_code == 0, r.output
     m = read_json(str(tmp_path / M.MANIFEST))
-    assert sorted(m['paths']) == sorted(emit.ARTIFACTS)
+    assert sorted(m['paths']) == SHIPPED
     assert m['documents']['croissant-benchmark']['files'] == len(os.listdir(tmp_path / croissant.DIR))
     for name, url in m['paths'].items():
         with open(tmp_path / name, 'rb') as a, open(os.path.join(str(tmp_path), *url.lstrip('/').split('/')), 'rb') as b:
@@ -447,7 +451,7 @@ def test_s13_passes_over_the_built_site_and_publishes_the_manifest(built):
 @needs_site
 def test_the_manifest_names_every_hashed_artifact_its_hash_the_commit_and_the_file_count(built):
     m = built.manifest
-    assert sorted(m['paths']) == sorted(m['artifacts']) == sorted(emit.ARTIFACTS)
+    assert sorted(m['paths']) == sorted(m['artifacts']) == SHIPPED
     for name, url in m['paths'].items():
         with open(os.path.join(built.dist, *url.lstrip('/').split('/')), 'rb') as fh:
             digest = M.sha256(fh.read())
@@ -475,14 +479,15 @@ def test_every_footer_prints_the_manifests_commit(built):
 @needs_site
 def test_the_api_page_links_each_built_artifact_by_its_hashed_url_only(built):
     page = html(built.dist, 'api')
-    for name in ('corpus.json', 'facets.json'):
+    # claims.json is built since P3-S10-T03, so its row links it too; that row names claims-ingested/<id>.json beside it
+    linked = {'corpus.json': r'corpus\.json', 'facets.json': r'facets\.json', 'claims.json': r'claims\.json[^"]*'}
+    for name, row in linked.items():
         url = re.escape(built.manifest['paths'][name])
         assert re.search(r'<tr data-artifact="%s".*?yes, as <a href="%s" data-hashed[^>]*><code[^>]*>%s</code></a>'
-                         % (re.escape(name), url, url), page, re.S), name
+                         % (row, url, url), page, re.S), name
     hrefs = re.findall(r'href="(/data/[^"]*)"', page)
-    assert sorted(hrefs) == sorted(built.manifest['paths'][n] for n in ('corpus.json', 'facets.json'))
+    assert sorted(hrefs) == sorted(built.manifest['paths'][n] for n in linked)
     assert re.search(r'<code[^>]*>/data/latest/corpus\.json</code>', page)     # named in text, for people to type
-    assert 'claims.json' not in built.manifest['paths']                        # not built, so not linked
     assert M.check_html(built.dist, built.manifest) == []
 
 
@@ -505,8 +510,9 @@ def test_a_reference_planted_in_a_built_pages_json_ld_fails(built):
 
 @needs_site
 def test_dist_data_and_headers_are_what_the_manifest_and_public_say(built):
-    names = sorted(os.listdir(os.path.join(built.dist, 'data')))
-    assert names == sorted(u.split('/')[-1] for u in built.manifest['paths'].values())
+    top = os.path.join(built.dist, 'data')
+    names = sorted(os.path.relpath(os.path.join(d, n), top).replace(os.sep, '/') for d, _, ns in os.walk(top) for n in ns)
+    assert names == sorted(u[len(M.DATA):] for u in built.manifest['paths'].values())     # derived/ is a folder
     with open(os.path.join(SITE, 'public', '_headers'), 'rb') as a, open(os.path.join(built.dist, '_headers'), 'rb') as b:
         assert a.read() == b.read()
     assert not os.path.exists(os.path.join(built.dist, 'data', 'latest'))
@@ -535,7 +541,8 @@ def test_the_verifys_bench_build_wrote_a_manifest_naming_every_artifact_beside_i
         pytest.skip('no build/build-manifest.json: run `uv run bench build --out build/` first, as the verify does')
     m = read_json(os.path.join(out, M.MANIFEST))
     optional = {'atlas.json'} & set(m['paths'])                     # present when the build ran with --atlas
-    assert sorted(set(m['paths']) - optional) == sorted(emit.ARTIFACTS)
+    optional |= {n for n in m['paths'] if n.startswith(CL.INGESTED + '/')}     # one per benchmark with ingested claims
+    assert sorted(set(m['paths']) - optional) == SHIPPED
     for name, url in m['paths'].items():
         with open(os.path.join(out, name), 'rb') as a, open(os.path.join(out, *url.lstrip('/').split('/')), 'rb') as b:
             raw = a.read()

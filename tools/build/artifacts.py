@@ -24,7 +24,10 @@ What gets published. 05 S4: "Entries at this level are NOT published." So:
 
 Everything else under data/ (claims, conditions, leaderboards, baselines, ...) belongs to other
 artifacts: 08 S4.2 puts "no claim records" in corpus.json. The claims under data/claims/ and the
-conditions they name are read for one purpose, facets.json's claim-derived fields (emit.claim_fields).
+conditions they name are read for facets.json's claim-derived fields (emit.claim_fields) and for S8's
+claims stage, claims.json, claims-ingested/ and derived/comparability.json (tools/build/claims.py,
+P3-S10-T03), which also reads the Source each claim cites, published in corpus.json or not: the claim
+row carries it reduced. `write` writes them beside the three, and the manifest hashes them all.
 
 Records are dumped in JSON mode by alias, without computed fields, so each one validates against its
 own schema/generated/<kind>.schema.json -- the validation schema, which has no derived fields
@@ -72,6 +75,7 @@ class Build:
     corpus: dict = field(default_factory=dict)
     facets: dict = field(default_factory=dict)
     enums: dict = field(default_factory=dict)
+    claims: dict = field(default_factory=dict)            # name -> artifact: tools/build/claims.py's (P3-S10-T03)
     excluded: list[tuple[str, str, str]] = field(default_factory=list)    # (path, id, reason)
     errors: list[str] = field(default_factory=list)
     # The drafts left out that pass tier 1, dumped like a published record: tools/build/croissant.py validates their
@@ -209,11 +213,12 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
         return out
     try:
         done = emit.emit({k: list(v.values()) for k, v in published.items()}, subsets, models, claims, conditions,
-                         vocabulary_versions(), drafts=drafts)
+                         vocabulary_versions(), drafts=drafts, sources=sources)
     except emit.Refused as e:
         out.errors += e.errors
         return out
     out.corpus, out.facets, out.enums = done['corpus.json'], done['facets.json'], done['enums.json']
+    out.claims = {name: doc for name, doc in done.items() if name not in ARTIFACTS}
     return out
 
 
@@ -234,6 +239,8 @@ def vocabulary_versions(root: str = ROOT) -> dict[str, str]:
 
 
 def write(result: Build, out_dir: str) -> list[str]:
-    """The three files, through emit.write, which refuses a group id or a claim record again before writing."""
+    """The three files, through emit.write, which refuses a group id or a claim record again before writing; then the
+    claims stage's, through claims.write, which refuses again on its own terms (P3-S10-T03)."""
+    from tools.build import claims
     return emit.write({'corpus.json': result.corpus, 'facets.json': result.facets, 'enums.json': result.enums},
-                      out_dir)
+                      out_dir) + claims.write(result.claims, out_dir)
