@@ -18,22 +18,29 @@
 // The ordering rule (10 V11): "Pagefind answers on every keystroke; the semantic tier loads in the background and, once
 // ready, *appends* a block. Semantic search is never on the critical path to a first result." The seam a later tier
 // plugs into is LaterTier and addLaterTier(), below: a tier is asked on the same keystroke as Pagefind, beside it and
-// never before it, and nothing Pagefind answers waits on it. Its hits render only once Pagefind has answered the same
-// query, as a block after the lexical list, without the pages that list already shows; the lexical list is never
-// reordered or moved by it. A tier that fails says so in one line (09 S11.5) and the results above it are unchanged.
-// No tier is added yet. The semantic tier (P6-S1: the model2vec encoder, P6-S1-T01, and the cosine and fusion step,
-// P6-S1-T05, which owns the reciprocal rank fusion at k = 60 10 V11 asks for when both are present) is to call
-// addLaterTier() once its opt-in has loaded it; this file imports nothing of it. A pending tier shows nothing yet: 09
-// S6.11's skeleton for the semantic tier is that tier's to add, sized to its own block. What this file gives a later
-// tier's download is lexicalReady(), its cue to start: the semantic tier's loader (islands/search/loader.ts, P6-S1-T06)
-// fetches nothing until Pagefind has loaded.
+// never before it, and nothing Pagefind answers waits on it. A tier added after the question on screen was asked is
+// asked it at once, so its block appends to the answer already up (10 V11: "once ready, *appends*"). Its hits render
+// only once Pagefind has answered the same query, as a block after the lexical list, without the pages that list
+// already shows, STEP at most; the lexical list is never reordered or moved by it. A tier that fails says so in one line
+// (09 S11.5) and the results above it are unchanged. What this file gives a later tier's download is lexicalReady(), its
+// cue to start: the semantic tier's loader (islands/search/loader.ts, P6-S1-T06) fetches nothing until Pagefind has
+// loaded. The semantic tier itself (islands/search/semantic.ts) is added by components/SemanticResults.astro once the
+// loader has it, and only in a build that ships the document vectors; this file imports nothing of it.
+//
+// Two labelled regions, never one list (P6-S1-T09; 11 F0: "the two result sets are rendered as separate, labelled
+// blocks, not fused into one mystery list"). Pagefind's answer is a <section> named by its own visible heading,
+// LEXICAL_HEADING, present from the first answer, so a block appended after it moves nothing; each later tier's block is
+// a <section> after it, named by the tier's heading, with the tier's one-line note under it. A block exists only while
+// it has a row to show: a pending tier, a tier that found nothing new, or a tier not yet added renders no element at
+// all, not an empty one (09 S6.11's skeleton would be one, so there is none).
 //
 // The form's submit button (P2-S8-T09; 09 S8.2, WCAG SC 3.2.2, which pa11y's H32.2 holds a form to) asks again for the
 // box as it stands, the question a keystroke asks: Enter or the button is an explicit way to ask, and the retry after a
 // Pagefind load that failed. Typing still needs neither.
 //
 // Announcements: one polite status region, debounced at 500 ms (09 S8.4, lib/browse-view.ts ANNOUNCE_MS), and nothing
-// live on the result list. The query is kept in the link as `q` (10 "Filter state encoding": "q  free-text query"),
+// live on the result list. A later tier's block arriving changes it too, naming the block's heading and its count, so a
+// block that appends after the answer is not appended unheard (WCAG SC 4.1.3). The query is kept in the link as `q` (10 "Filter state encoding": "q  free-text query"),
 // replaced, not pushed, on each keystroke, so Back leaves the page rather than stepping through the letters, and a link
 // carrying ?q= is answered on arrival.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -41,8 +48,10 @@ import { ANNOUNCE_MS } from '../lib/browse-view.ts';
 
 /** Where S12 writes the bundle (lib/pagefind.ts BUNDLE, at the root of dist/): pagefind.js is loaded from here. */
 export const BUNDLE_URL = '/pagefind/';
-/** Results read and shown at a time: the first answer, and each "Show more". */
+/** Results read and shown at a time: the first answer, and each "Show more". A later tier's block shows STEP at most. */
 export const STEP = 10;
+/** The label of Pagefind's answer, its region's heading: what tells it apart from a later tier's block (P6-S1-T09). */
+export const LEXICAL_HEADING = 'Results matching your words';
 
 /** One result, of either tier. `type` is the record's `type` filter (tools/build/pagefind_records.py): benchmark,
  *  system, organization, metric or term, or `page` for a crawled narrative page. */
@@ -131,6 +140,7 @@ export interface LaterTier {
   id: string;               // 'semantic'
   name: string;             // what the one-line notice calls it when it fails: 'Semantic search'
   heading: string;          // its block's heading: 10 V11's "Related benchmarks you did not type the words for"
+  note?: string;            // one line under the heading: how its rows were found
   /** Its hits for `query`, best first, whenever they come. `signal` aborts when a later keystroke has asked. */
   search(query: string, signal: AbortSignal): Promise<Hit[]>;
 }
@@ -138,8 +148,10 @@ export interface LaterTier {
 const tiers: LaterTier[] = [];
 const listeners = new Set<() => void>();
 
-/** Adds a later tier to every search box on the page, from the next keystroke on; returns its removal. */
+/** Adds a later tier to every search box on the page, asked the question on screen and every one after it; returns its
+ *  removal. */
 export function addLaterTier(tier: LaterTier): () => void {
+  if (tier.id === 'lexical') throw new Error('"lexical" is Pagefind\'s region, not a later tier\'s');
   if (tiers.some((t) => t.id === tier.id)) throw new Error(`a later search tier "${tier.id}" is already added`);
   tiers.push(tier);
   listeners.forEach((f) => f());
@@ -166,8 +178,18 @@ interface Later {
   hits: Hit[];
 }
 
+/** The question on screen: a tier added after it was asked is asked it too. */
+interface Question {
+  query: string;
+  n: number;
+  signal: AbortSignal;
+  tiers: Set<string>;           // the later tiers asked it
+}
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const reason = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const pendingFor = (asking: readonly LaterTier[], query: string): Record<string, Later> =>
+  Object.fromEntries(asking.map((t) => [t.id, { query, status: 'pending', hits: [] }]));
 
 function Excerpt({ text }: { text: string }) {
   if (text === '') return null;
@@ -193,6 +215,7 @@ export default function SearchBox() {
   const [said, setSaid] = useState('');
   const asked = useRef(0);
   const abort = useRef<AbortController | null>(null);
+  const current = useRef<Question | null>(null);
 
   const fail = (e: unknown) => {
     setStatus('failed');
@@ -212,6 +235,23 @@ export default function SearchBox() {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${s === '' ? '' : `?${s}`}${window.location.hash}`);
   };
 
+  /** Asks `asking` the question numbered `n`, beside Pagefind and never awaited by it; an answer to an older question
+   *  is dropped. */
+  const askLater = (asking: readonly LaterTier[], q: string, n: number, signal: AbortSignal) => {
+    for (const t of asking) {
+      Promise.resolve()
+        .then(() => t.search(q, signal))
+        .then(
+          (hits) => {
+            if (n === asked.current) setLater((l) => ({ ...l, [t.id]: { query: q, status: 'done', hits } }));
+          },
+          () => {
+            if (n === asked.current) setLater((l) => ({ ...l, [t.id]: { query: q, status: 'failed', hits: [] } }));
+          },
+        );
+    }
+  };
+
   /** One keystroke's question, to Pagefind and, beside it, to every later tier. */
   const ask = (q: string) => {
     const n = ++asked.current;
@@ -220,6 +260,7 @@ export default function SearchBox() {
     abort.current = ctl;
     remember(q);
     if (q.trim() === '') {
+      current.current = null;
       setAnswer(null);
       setLater({});
       return;
@@ -239,19 +280,9 @@ export default function SearchBox() {
       });
     // the later tiers: asked now, beside Pagefind, and never awaited by it
     const asking = [...tiers];
-    setLater(Object.fromEntries(asking.map((t) => [t.id, { query: q, status: 'pending', hits: [] }])));
-    for (const t of asking) {
-      Promise.resolve()
-        .then(() => t.search(q, ctl.signal))
-        .then(
-          (hits) => {
-            if (n === asked.current) setLater((l) => ({ ...l, [t.id]: { query: q, status: 'done', hits } }));
-          },
-          () => {
-            if (n === asked.current) setLater((l) => ({ ...l, [t.id]: { query: q, status: 'failed', hits: [] } }));
-          },
-        );
-    }
+    current.current = { query: q, n, signal: ctl.signal, tiers: new Set(asking.map((t) => t.id)) };
+    setLater(pendingFor(asking, q));
+    askLater(asking, q, n, ctl.signal);
   };
 
   // hydrated: the box exists from here on, and a query in the link is answered on arrival
@@ -263,7 +294,18 @@ export default function SearchBox() {
       warm();
       ask(q);
     }
-    const onTiers = () => setTierVersion((v) => v + 1);
+    // a tier added since the question on screen was asked is asked it now, so its block appends to that answer
+    const onTiers = () => {
+      setTierVersion((v) => v + 1);
+      const c = current.current;
+      if (c == null || c.n !== asked.current) return;
+      for (const id of [...c.tiers]) if (!tiers.some((t) => t.id === id)) c.tiers.delete(id);
+      const fresh = tiers.filter((t) => !c.tiers.has(t.id));
+      if (fresh.length === 0) return;
+      for (const t of fresh) c.tiers.add(t.id);
+      setLater((l) => ({ ...l, ...pendingFor(fresh, c.query) }));
+      askLater(fresh, c.query, c.n, c.signal);
+    };
     listeners.add(onTiers);
     return () => {
       listeners.delete(onTiers);
@@ -271,17 +313,28 @@ export default function SearchBox() {
     };
   }, []);
 
-  // one polite announcement per settled answer (09 S8.4)
+  // each later tier's answer to the query Pagefind has answered: its rows the lexical list does not show, STEP at most
+  const shown = new Set((answer?.hits ?? []).map((h) => h.url));
+  const answers = answer == null ? [] : tiers.map((t) => {
+    const l = later[t.id];
+    const ready = l != null && l.query === answer.query && l.status !== 'pending' ? l : null;
+    return { t, l: ready, extra: ready == null ? [] : ready.hits.filter((h) => !shown.has(h.url)).slice(0, STEP) };
+  });
+  const appended = answers.filter((a) => a.extra.length > 0)
+    .map((a) => `${plural(a.extra.length, 'more result', 'more results')} under “${a.t.heading}”`).join('. ');
+
+  // one polite announcement per settled answer (09 S8.4), and again when a later tier's block appends to it
   const total = answer?.results.length ?? null;
   useEffect(() => {
     if (answer == null) {
       setSaid('');
       return;
     }
-    const text = total === 0 ? `No result for “${answer.query}”` : `${plural(total ?? 0, 'result', 'results')} for “${answer.query}”`;
+    const lexical = total === 0 ? `No result for “${answer.query}”` : `${plural(total ?? 0, 'result', 'results')} for “${answer.query}”`;
+    const text = appended === '' ? lexical : `${lexical}. ${appended}`;
     const timer = window.setTimeout(() => setSaid(text), ANNOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [answer?.query, total]);
+  }, [answer?.query, total, appended]);
 
   const more = async () => {
     const a = answer;
@@ -297,33 +350,37 @@ export default function SearchBox() {
   if (status === 'static') return <div className="search-box" data-search-box data-state="static" />;
 
   const pending = Object.entries(later).filter(([, l]) => l.status === 'pending').map(([id]) => id);
-  const shown = new Set((answer?.hits ?? []).map((h) => h.url));
+  // Pagefind's answer: a region of its own, named by its heading, from the first answer on
   let body: ReactNode = null;
   if (answer != null) {
-    body = answer.results.length === 0
-      ? <p className="empty" data-empty="search">No page in the index matches “{answer.query}”. The index holds the published entries, the taxonomy and the pages about the index, so an entry that is not published is not found. Try fewer or shorter words, or browse by facet below.</p>
-      : <>
-          <ol className="hits" data-tier="lexical">{answer.hits.map((h) => <HitRow key={h.url} h={h} />)}</ol>
-          <p className="count">
-            Showing {answer.hits.length} of {plural(answer.results.length, 'result', 'results')}.
-            {answer.hits.length < answer.results.length
-              ? <> <button type="button" className="more" onClick={more}>Show {Math.min(STEP, answer.results.length - answer.hits.length)} more</button></>
-              : null}
-          </p>
-        </>;
+    body = (
+      <section className="tier" data-result-region="lexical" aria-labelledby="search-tier-lexical">
+        <h2 id="search-tier-lexical">{LEXICAL_HEADING}</h2>
+        {answer.results.length === 0
+          ? <p className="empty" data-empty="search">No page in the index matches “{answer.query}”. The index holds the published entries, the taxonomy and the pages about the index, so an entry that is not published is not found. Try fewer or shorter words, or browse by facet below.</p>
+          : <>
+              <ol className="hits" data-tier="lexical">{answer.hits.map((h) => <HitRow key={h.url} h={h} />)}</ol>
+              <p className="count">
+                Showing {answer.hits.length} of {plural(answer.results.length, 'result', 'results')}.
+                {answer.hits.length < answer.results.length
+                  ? <> <button type="button" className="more" onClick={more}>Show {Math.min(STEP, answer.results.length - answer.hits.length)} more</button></>
+                  : null}
+              </p>
+            </>}
+      </section>
+    );
   }
-  // a later tier's block: only beside Pagefind's answer to the same query, after it, without what it already shows
-  const blocks = answer == null ? [] : tiers.map((t) => {
-    const l = later[t.id];
-    if (l == null || l.query !== answer.query || l.status === 'pending') return null;
+  // a later tier's block: a region of its own after the lexical one, only while it has a row that list does not show
+  const blocks = answers.map(({ t, l, extra }) => {
+    if (l == null) return null;
     if (l.status === 'failed') {
       return <p key={t.id} className="tier-note" data-tier-failed={t.id}>{t.name} is unavailable: the results above are the word-match results, unchanged.</p>;
     }
-    const extra = l.hits.filter((h) => !shown.has(h.url));
     if (extra.length === 0) return null;
     return (
-      <section key={t.id} className="later" data-tier={t.id} aria-labelledby={`search-tier-${t.id}`}>
-        <h3 id={`search-tier-${t.id}`}>{t.heading}</h3>
+      <section key={t.id} className="later" data-tier={t.id} data-result-region={t.id} aria-labelledby={`search-tier-${t.id}`}>
+        <h2 id={`search-tier-${t.id}`}>{t.heading}</h2>
+        {t.note != null ? <p className="tier-about">{t.note}</p> : null}
         <ol className="hits">{extra.map((h) => <HitRow key={h.url} h={h} />)}</ol>
       </section>
     );
