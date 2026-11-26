@@ -413,9 +413,10 @@ def test_the_name_guard_bites():
 # ---- 8. identity, conditions and the partition ---------------------------------------------------------------------
 
 # ADR-0029 (P3-S10-T01) gave CoNIC's and MIDOG's (method, subject) pairs the trained-model row, which makes
-# training_data_policy material; their results papers state no training-data rule, so it stays unknown on those two
-# claims until it is curated. STOIC2021's and KiTS19's conditions answer it.
-UNKNOWN_SINCE_ADR_0029 = {'conic': {'training_data_policy'}, 'midog': {'training_data_policy'}}
+# training_data_policy material. CoNIC's results paper states no training-data rule, so it stays unknown on that claim
+# until it is curated; MIDOG 2021's paper does, and P3-S8-T04 answered it from a re-read of that paper. STOIC2021's
+# and KiTS19's conditions answer it too.
+UNKNOWN_SINCE_ADR_0029 = {'conic': {'training_data_policy'}}
 
 
 @pytest.mark.parametrize('bid', BATCH)
