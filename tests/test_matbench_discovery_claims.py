@@ -31,6 +31,9 @@ phonon spectrum distance is only in per-model files that name people).
      without its components is checked on a CPS copy (the failure case).
   6. Identity and provenance: content-derived ids, no claim is LLM-run, the Source is nameless and archived,
      and no claim forms a (benchmark, subset, metric, system) group with another.
+
+P3-S7-T02 added five non-compliant claims to the directory (tests/test_matbench_discovery_claims_batch2.py, which
+asserts the ten together). Everything here is about this batch's five, by id (FIRST_IDS).
 """
 import collections
 import glob
@@ -84,7 +87,10 @@ def load_claims(pattern):
             for p in sorted(glob.glob(os.path.join(ROOT, 'data', 'claims', pattern, '*.yaml')))]
 
 
-CLAIMS = load_claims(BENCH)
+# This batch's five (P3-S7-T01); P3-S7-T02's are in tests/test_matbench_discovery_claims_batch2.py.
+FIRST_IDS = ('claim-f83949fcbbac', 'claim-33cffc25e71e', 'claim-0104f677651c', 'claim-aa0bfaee5578',
+             'claim-06c74c9cd199')
+CLAIMS = [c for c in load_claims(BENCH) if c.id in FIRST_IDS]
 CORPUS = load_claims('**')
 ENTRY_B = load_benchmark(ENTRY)
 RESOLUTION = comp.resolve_profile(ENTRY_B)
@@ -167,7 +173,7 @@ def test_five_entries_five_claims():
 # ---- 2. the verify -----------------------------------------------------------------------------------------------
 
 def test_the_report_shows_five_claims_at_the_gate_with_eligibility_track():
-    rows = [r for r in completeness.build(ROOT)['rows'] if r['benchmark'] == BENCH]
+    rows = [r for r in completeness.build(ROOT)['rows'] if r['benchmark'] == BENCH and r['claim'] in FIRST_IDS]
     assert sorted(r['claim'] for r in rows) == sorted(c.id for c in CLAIMS)
     for r in rows:
         assert r['condition_completeness'] >= GATE, r['claim']
