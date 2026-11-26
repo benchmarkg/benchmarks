@@ -108,12 +108,43 @@ test('never more than six chips before a +N more disclosure', async () => {
 // ---- 6.3 <VerificationBadge> -------------------------------------------------------------------------------
 
 test('VerificationBadge never renders without a level', async () => {
-  await assert.rejects(render('VerificationBadge', {}), /not a rung/);
-  await assert.rejects(render('VerificationBadge', { verification: 'unknown' }), /no "unknown verification"/);
+  await assert.rejects(render('VerificationBadge', { review_state: 'hand-curated' }), /not a rung/);
+  await assert.rejects(render('VerificationBadge', { verification: 'unknown', review_state: 'hand-curated' }), /no "unknown verification"/);
+});
+
+// P3-S10-T07 (07 S2.3): "Verification rank and review state render together, always ... either alone is not."
+test('VerificationBadge never renders a rank without its review state: none, or one of no vocabulary, throws', async () => {
+  await assert.rejects(render('VerificationBadge', { verification: 'independent-reproduction' }), /no review_state .*render together, always/);
+  await assert.rejects(render('VerificationBadge', { verification: 'self-reported', review_state: '' }), /review_state "" is none of/);
+  await assert.rejects(render('VerificationBadge', { verification: 'self-reported', review_state: 'reviewed' }), /review_state "reviewed" is none of/);
+});
+
+test('the review state renders beside the rank, in the same accessible sentence; machine-ingested is the dotted mark', async () => {
+  const claims = await server.ssrLoadModule('/src/lib/claims.ts');
+  assert.deepEqual([...claims.REVIEW_STATES], ['machine-ingested', 'spot-checked', 'human-reviewed', 'promoted', 'hand-curated']);
+  for (const state of claims.REVIEW_STATES) {
+    for (const compact of [false, true]) {
+      const html = await render('VerificationBadge', { verification: 'independent-reproduction', review_state: state, compact });
+      assert.match(html, new RegExp(`data-rank="3" data-review-state="${state}"`), state);
+      assert.match(html, new RegExp(`<span class="review" data-review="${state}" aria-hidden="true">${state}</span>`), state);
+      assert.match(text(html), new RegExp(`Verification: Independent reproduction, level 3 of 7; review state: ${state}`), state);
+    }
+  }
+  assert.match(style('VerificationBadge'), /\.review\[data-review='machine-ingested'\]\s*\{\s*border-style: dotted;/);
+  const review = style('VerificationBadge').split(/\n\s*\.review\b/).slice(1).map((r) => r.split('}')[0]).join('\n');
+  assert.doesNotMatch(review, /--c-(accent|verif|alert|emphasis)/, 'no accent colour on the review mark (09 S4.3)');
+});
+
+test('reviewState: the ingestion block\'s state, the schema default for a block that names none, hand-curated without one', async () => {
+  const { reviewState } = await server.ssrLoadModule('/src/lib/claims.ts');
+  assert.equal(reviewState({ ingestion: null }), 'hand-curated');
+  assert.equal(reviewState({}), 'hand-curated');
+  assert.equal(reviewState({ ingestion: { review_state: 'spot-checked' } }), 'spot-checked');
+  assert.equal(reviewState({ ingestion: {} }), 'machine-ingested');
 });
 
 test('seven segments filled to the rank; the compact code keeps the full name in text, not a title', async () => {
-  const html = await render('VerificationBadge', { verification: 'independent-reproduction', compact: true });
+  const html = await render('VerificationBadge', { verification: 'independent-reproduction', review_state: 'hand-curated', compact: true });
   assert.equal(count(html, /<i class="on"/g), 3);
   assert.equal(count(html, /<i class="off"/g), 4);
   assert.match(html, />IR</);
@@ -128,11 +159,11 @@ test('the 2-letter codes are unique and cover every rung of the ladder', async (
 });
 
 test('disputed overlays the warning glyph and links its disputes; disputed with none throws', async () => {
-  const html = await render('VerificationBadge', { verification: 'self-reported', disputed: true, disputed_by: ['dsp-1', 'dsp-2'] });
+  const html = await render('VerificationBadge', { verification: 'self-reported', review_state: 'hand-curated', disputed: true, disputed_by: ['dsp-1', 'dsp-2'] });
   assert.match(html, /⚠/);
   assert.match(html, /href="\/disputes\/dsp-1\/"/);
   assert.match(html, /href="\/disputes\/dsp-2\/"/);
-  await assert.rejects(render('VerificationBadge', { verification: 'self-reported', disputed: true }), /no disputed_by/);
+  await assert.rejects(render('VerificationBadge', { verification: 'self-reported', review_state: 'hand-curated', disputed: true }), /no disputed_by/);
 });
 
 // ---- 6.4 <ConditionMeter> ----------------------------------------------------------------------------------
@@ -173,7 +204,7 @@ test('ConditionMeter never hides at low completeness, never colours it as an err
 
 const SOURCE = { source_id: 'src-x', title: 'A report', publisher: 'Lab', url: 'https://example.org/r', archive_url: null,
   retrieved_at: '2026-10-01', source_type: 'paper' };
-const CELL = { value: 0.712, metric_id: 'accuracy', unit: 'fraction', verification: 'maintainer-verified',
+const CELL = { value: 0.712, metric_id: 'accuracy', unit: 'fraction', verification: 'maintainer-verified', review_state: 'hand-curated',
   condition_completeness: 2 / 4, fields_specified: 2, fields_material_total: 4, claim_id: 'clm-abc', comparability_key: 'k1',
   uncertainty: 0.012, source: SOURCE, reporter: 'Lab', date_reported: '2026-05-04',
   conditions: { shots: 0, temperature: null, selection_strategy: null, n_samples: 1 }, commit_sha: SHA, yaml_path: 'data/claims/clm-abc.yaml' };
@@ -183,6 +214,7 @@ test('ValueCell never renders the value without the badge and the meter', async 
   const button = html.match(/<button[\s\S]*?<\/button>/)[0];
   assert.match(button, /0\.712/);
   assert.match(button, /data-verification="maintainer-verified"/);
+  assert.match(button, /data-review-state="hand-curated"/);
   assert.match(button, /data-meter/);
   assert.doesNotMatch(button, /<a /, 'no link inside the button');
 });
@@ -199,6 +231,8 @@ test('the provenance popover: native popover=auto, conditions with unknowns show
   assert.match(html, new RegExp(`<div popover="auto" id="${id}"`));
   assert.equal(count(html, /data-absent="unknown"/g), 2);
   assert.match(html, new RegExp(`/blob/${SHA}/data/claims/clm-abc\\.yaml`));
+  assert.match(html, /<a href="\/claims\/clm-abc\/" data-claim-permalink="clm-abc">/, 'the claim\'s page, one click from its number (P3-S10-T07)');
+  await assert.rejects(render('ValueCell', { ...CELL, review_state: undefined }), /no review_state/);
   assert.match(html, /±0\.012/);
   assert.doesNotMatch(html, /<script/, 'no JavaScript: a detail page carries 0 KB');
 });

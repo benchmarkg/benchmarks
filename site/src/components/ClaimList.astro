@@ -1,0 +1,81 @@
+---
+// site/src/components/ClaimList.astro -- P3-S10-T07 (10 V6 item 10, "Information architecture"; 04 S9). Claims as a
+// record page lists them -- a benchmark's, a system's, the ones that name a condition record -- each item the claim's
+// subject, its number as the provenance drill-down (ProvenanceDetails: the value, its badge with the review state
+// beside the rank, its condition meter; one click opens the record it came from), and the claim's permalink,
+// /claims/{id}/, beside it, so every number is one click from its record whether or not the drill-down is opened.
+// An ingested claim shows its attribution inline under it (04 S9), never only inside the closed list.
+//
+// `subject` says what each item names: the system (on a benchmark's page), the benchmark (on a system's), or both.
+// A system or benchmark links to its page when the build publishes one (`names`), and is its id in code otherwise.
+// A claim with no number yet -- a forecast whose resolution is pending (04 S7) -- says so in the absence token
+// instead of a drill-down, and still links its page.
+//
+// NEVER: a number without its permalink beside it; an ingested claim without its attribution.
+import Absent from './Absent.astro';
+import IngestAttribution from './IngestAttribution.astro';
+import ProvenanceDetails from './ProvenanceDetails.astro';
+import { baseId, claimHref, type ClaimRow } from '../lib/claims';
+
+interface Props {
+  rows: ClaimRow[];
+  label: string;
+  subject: 'system' | 'benchmark' | 'both';
+  names: { systems: Map<string, string>; benchmarks: Map<string, string> };   // published id -> name
+}
+
+const { rows, label, subject, names } = Astro.props;
+const ref = (kind: 'systems' | 'benchmarks', id: string) => {
+  const name = names[kind].get(baseId(id));
+  return name != null ? { href: `/${kind}/${baseId(id)}/`, name } : null;
+};
+---
+<ul class="claims" data-claims aria-label={label}>
+  {rows.map((row) => {
+    const c = row.claim;
+    const sys = ref('systems', c.system);
+    const opp = c.opponent != null ? ref('systems', c.opponent) : null;
+    const bench = ref('benchmarks', c.benchmark);
+    const numbered = c.value != null || (c.value_text != null && c.value_text !== '');
+    return (
+      <li data-claim={c.id}>
+        <p class="subject">
+          {subject !== 'benchmark' && (sys != null ? <a href={sys.href}>{sys.name}</a> : <code>{c.system}</code>)}
+          {c.opponent != null && subject !== 'benchmark' && <> vs {opp != null ? <a href={opp.href}>{opp.name}</a> : <code>{c.opponent}</code>}</>}
+          {subject === 'both' && ' on '}
+          {subject !== 'system' && (bench != null ? <a href={bench.href}>{bench.name}</a> : <code>{c.benchmark}</code>)}
+          <span class="metric"> · <code>{c.metric}</code>{c.subset != null && <> · <code>{c.subset}</code></>}</span>
+        </p>
+        {numbered
+          ? <ProvenanceDetails row={row} />
+          : <p data-claim-pending><Absent state="not-reported" reason={c.resolution_status === 'pending' ? 'its resolution is pending' : 'no value recorded'} /></p>}
+        <p class="record">Claim <a href={claimHref(c.id)} data-claim-permalink={c.id}><code>{c.id}</code></a></p>
+        {c.ingestion != null && <IngestAttribution ingestion={c.ingestion} />}
+      </li>
+    );
+  })}
+</ul>
+
+<style>
+  .claims {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .claims > li {
+    display: grid;
+    gap: var(--sp-1);
+    padding-block-end: var(--sp-3);
+    border-block-end: 1px solid var(--c-border);
+  }
+  .subject, .record {
+    margin: 0;
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+  }
+  .metric, .record {
+    color: var(--c-ink-muted);
+  }
+</style>

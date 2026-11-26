@@ -1,11 +1,21 @@
 // playwright.config.ts -- the repository-root e2e suite (tests/e2e/), first used by P4-S4-T06.
 //
-// The web server is the SITE built against a committed fixture, not against the live data: the
-// live repository's only entries are unpublishable Phase-0 drafts, so its feeds are empty and
-// would test nothing. FEED_EVENTS points site/src/lib/feed.ts at the fixture, which
+// The web server is the SITE built against committed or generated fixtures, not against the live data: the
+// live repository's only entries are unpublishable Phase-0 drafts, so its feeds are empty and its published
+// claims none, and both would test nothing. FEED_EVENTS points site/src/lib/feed.ts at the feed fixture, which
 // tests/e2e/fixtures/make_feed_events.py regenerates from tools/build/feed.py itself.
+//
+// P3-S10-T07's tests/e2e/provenance-drilldown.spec.ts reads the claim and condition pages, which exist only over
+// the draft preview (scripts/preview_corpus.py; UAIBI_SITE_DRAFTS=1, as site/playwright.config.ts builds it), and
+// its ingested claims, of which the corpus has none yet: tests/e2e/fixtures/make_claims_fixture.py writes the
+// preview's claims artifacts again into build/e2e-claims/ with two constructed ingested rows, and UAIBI_CLAIMS
+// points the site at them (site/src/lib/claims.ts). The feed does not read the corpus, so the feed spec reads the
+// same server.
 // reuseExistingServer lets a verify that curls :4321 first share the same server.
 import { defineConfig } from '@playwright/test';
+import { join } from 'node:path';
+
+const BUILD = join(__dirname, 'build');
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -13,12 +23,18 @@ export default defineConfig({
   reporter: 'list',
   use: { baseURL: 'http://localhost:4321' },
   webServer: {
-    command: 'npm --prefix site run build && npm --prefix site run preview -- --port 4321',
+    command: 'uv run python scripts/preview_corpus.py --out build/preview'
+      + ' && uv run python tests/e2e/fixtures/make_claims_fixture.py --preview build/preview --out build/e2e-claims'
+      + ' && npm --prefix site run build && npm --prefix site run preview -- --port 4321',
     url: 'http://localhost:4321/feed.xml',
     reuseExistingServer: true,
-    timeout: 180_000,
+    // a cold build of the whole preview took about 14 minutes on a slow machine (site/playwright.config.ts)
+    timeout: 1_800_000,
     env: {
       FEED_EVENTS: 'tests/e2e/fixtures/feed-events.json',
+      UAIBI_CORPUS: join(BUILD, 'preview', 'corpus.json'),
+      UAIBI_CLAIMS: join(BUILD, 'e2e-claims', 'claims.json'),
+      UAIBI_SITE_DRAFTS: '1',
       ASTRO_TELEMETRY_DISABLED: '1',
       // Astro 7's `preview` detaches into a background daemon when it detects a coding agent
       // (cli/preview: `!process.env.ASTRO_PREVIEW_BACKGROUND && isRunByAgent()`). Playwright then

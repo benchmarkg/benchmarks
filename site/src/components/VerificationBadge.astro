@@ -1,34 +1,50 @@
 ---
-// site/src/components/VerificationBadge.astro -- P2-S2-T06 (09 S6.3, S4.3). The verification level: a seven-segment
-// glyph, one segment per rung of taxonomy/verification.yaml, filled to this rank, plus the level's name. `compact`
-// (table cells, --fs-2xs) shows the 2-letter code instead; the full name is always in the accessible text, never
-// in a title attribute alone. `disputed` overlays a warning glyph and links each dispute; `link_disputes={false}`
-// keeps the glyph and drops the links, for a badge inside a <button> (ValueCell lists them in its popover).
+// site/src/components/VerificationBadge.astro -- P2-S2-T06 (09 S6.3, S4.3), P3-S10-T07 (07 S2.3; 04 S9). The verification
+// level: a seven-segment glyph, one segment per rung of taxonomy/verification.yaml, filled to this rank, plus the
+// level's name. `compact` (table cells, --fs-2xs) shows the 2-letter code instead; the full name is always in the
+// accessible text, never in a title attribute alone. `disputed` overlays a warning glyph and links each dispute;
+// `link_disputes={false}` keeps the glyph and drops the links, for a badge inside a <button> (ValueCell lists them in
+// its popover) or a <summary> (ProvenanceDetails lists them in its open list).
+//
+// Beside the rank, always, the review state (07 S2.3: "Verification rank and review state render together, always. A
+// rung-3 badge next to a `machine-ingested` badge is honest and legible; either alone is not."): the claim's
+// `ingestion.review_state`, or `hand-curated` for a claim with no ingestion block (lib/claims.ts reviewState). It is
+// a separate mark for a separate axis, its own words in muted ink, and `machine-ingested` gets 09 S4.3's dotted
+// outline and no accent colour, so a machine-ingested claim can never be styled into looking like a reviewed one.
+// Both are in the one accessible sentence, so a screen reader hears them together too.
 //
 // NEVER: render without a level. There is no "unknown verification": an unrecorded one throws (a schema
-// violation, not a rendering case), and so does a disputed claim that names no dispute.
+// violation, not a rendering case), and so does a disputed claim that names no dispute. NEVER: render the rank
+// without the review state: a badge given no review_state, or one that is none of the five, throws.
+import { REVIEW_STATES } from '../lib/claims';
 import { RUNGS, RUNG_CODES, rank, rungName } from '../lib/vocab';
 
 interface Props {
   verification: string;
+  review_state: string;
   disputed?: boolean;
   disputed_by?: string[];
   compact?: boolean;
   link_disputes?: boolean;
 }
 
-const { verification, disputed = false, disputed_by = [], compact = false, link_disputes = true } = Astro.props;
+const { verification, review_state, disputed = false, disputed_by = [], compact = false, link_disputes = true } = Astro.props;
 const r = rank(verification);
+if (!(REVIEW_STATES as readonly unknown[]).includes(review_state)) {
+  throw new Error(`VerificationBadge ${verification}: ${review_state == null ? 'no review_state' : `review_state ${JSON.stringify(review_state)} is none of ${REVIEW_STATES.join(', ')}`}`
+    + ' (07 S2.3: verification rank and review state render together, always; never one alone)');
+}
 if (disputed && disputed_by.length === 0) {
   throw new Error('VerificationBadge: disputed with no disputed_by (09 S6.3: the overlay links to its disputes)');
 }
 const name = rungName(verification);
 const fill = `background: var(--c-verif-${r})`;
 ---
-<span class="badge" data-verification={verification} data-rank={r} data-disputed={disputed ? 'true' : undefined}>
+<span class="badge" data-verification={verification} data-rank={r} data-review-state={review_state} data-disputed={disputed ? 'true' : undefined}>
   <span class="segments" aria-hidden="true">{RUNGS.map((_, i) => <i class={i < r ? 'on' : 'off'} style={i < r ? fill : undefined} />)}</span>
   {compact ? <span class="code" aria-hidden="true">{RUNG_CODES[verification]}</span> : <span class="name" aria-hidden="true">{name}</span>}
-  <span class="visually-hidden">Verification: {name}, level {r} of {RUNGS.length}{disputed ? ', disputed' : ''}</span>
+  <span class="review" data-review={review_state} aria-hidden="true">{review_state}</span>
+  <span class="visually-hidden">Verification: {name}, level {r} of {RUNGS.length}; review state: {review_state}{disputed ? ', disputed' : ''}</span>
   {disputed && (
     <span class="disputed"><span aria-hidden="true">⚠</span>{link_disputes
       ? disputed_by.map((d, i) => <a href={`/disputes/${d}/`}>{i === 0 ? 'disputed' : `dispute ${i + 1}`}<span class="visually-hidden"> ({d})</span></a>)
@@ -60,6 +76,16 @@ const fill = `background: var(--c-verif-${r})`;
   .code {
     font-size: var(--fs-2xs);
     font-variant-numeric: tabular-nums slashed-zero;
+  }
+  .review {
+    padding: 0 var(--sp-1);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 2px;
+    color: var(--c-ink-muted);
+    font-size: var(--fs-2xs);
+  }
+  .review[data-review='machine-ingested'] {
+    border-style: dotted;
   }
   .disputed {
     display: inline-flex;

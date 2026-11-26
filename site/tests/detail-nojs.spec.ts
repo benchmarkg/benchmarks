@@ -8,6 +8,7 @@
 // collapsed content is looked for in the raw HTML the server sent, not in a DOM a script could have filled in, and
 // the zero-JS measurement is shown to come out non-zero on a page that does ship JavaScript.
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -82,7 +83,7 @@ for (const id of DEEP) {
     for (const n of ARTICLE) await expect(page.locator(`[data-section="${n}"]`).first()).toBeVisible();
     for (const n of COLLAPSED) {
       const d = page.locator(`details[data-section="${n}"]`);
-      await expect(d.locator('summary')).toBeVisible();
+      await expect(d.locator(':scope > summary')).toBeVisible();       // its own: section 10's claims hold drill-downs
       await expect(d).not.toHaveAttribute('open', /.*/);
       expect(await d.locator(':scope > :not(summary)').count(), `section ${n} content is in the DOM`).toBeGreaterThan(0);
       await expect(d.locator(':scope > :not(summary)').first()).toBeHidden();
@@ -158,9 +159,14 @@ test('a draft preview says so on the page, and on the entry', async ({ page }) =
   await expect(page.locator('[data-verification-status]')).toHaveText('ai-drafted-unverified');
 });
 
-test('claims are counted from the adoption artifact, and the page says their table is not in this build', async ({ page }) => {
+// P3-S10-T07: section 10 lists claims.json's rows (the preview's, or UAIBI_CLAIMS's when the build was given another,
+// as src/lib/claims.ts reads it), each with its permalink, so nothing there is pending the artifact any more
+test('claims are counted from the adoption artifact and listed from claims.json, each with its permalink', async ({ page }) => {
   const ADOPTION = fileURLToPath(new URL('../../build/preview/derived/adoption.json', import.meta.url));
+  const CLAIMS = process.env.UAIBI_CLAIMS ? resolve(process.env.UAIBI_CLAIMS) : fileURLToPath(new URL('../../build/preview/claims.json', import.meta.url));
   const rows = (JSON.parse(readFileSync(ADOPTION, 'utf8')) as { benchmarks: { id: string; claims: number; systems: number }[] }).benchmarks;
+  const listed = (JSON.parse(readFileSync(CLAIMS, 'utf8')) as { claims: { claim: { id: string; benchmark: string } }[] }).claims;
+  const on = (id: string) => listed.filter((x) => x.claim.benchmark.split('@')[0] === id).map((x) => x.claim.id).sort();
   const withClaims = rows.filter((r) => r.claims > 0 && IDS.includes(r.id));
   expect(withClaims.length, 'some entry has claims, so the non-zero path is exercised').toBeGreaterThan(0);
   for (const r of [...withClaims, { id: 'swe-bench', claims: 0, systems: 0 }]) {
@@ -168,7 +174,12 @@ test('claims are counted from the adoption artifact, and the page says their tab
     await page.goto(`/benchmarks/${r.id}/`);
     await expect(page.locator('details[data-section="10"] summary .count'), r.id).toHaveText(`(${want.claims})`);
     await expect(page.locator('[data-fact="adoption"] dd'), r.id).toContainText(`${want.systems} system`);
-    await expect(page.locator('[data-claims-pending]'), r.id).toHaveCount(want.claims > 0 ? 1 : 0);
+    await expect(page.locator('[data-claims-pending]'), r.id).toHaveCount(0);
+    const items = page.locator('details[data-section="10"] ul[data-claims] > li');
+    expect((await items.evaluateAll((lis) => lis.map((li) => li.getAttribute('data-claim') ?? ''))).sort(), r.id).toEqual(on(r.id));
+    for (const id of on(r.id)) {
+      await expect(page.locator(`details[data-section="10"] ul[data-claims] > li[data-claim="${id}"] > p a[data-claim-permalink]`), id).toHaveAttribute('href', `/claims/${id}/`);
+    }
   }
 });
 

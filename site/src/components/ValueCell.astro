@@ -2,7 +2,9 @@
 // site/src/components/ValueCell.astro -- P2-S2-T06 (09 S6.5). A result value with its provenance: the value in
 // tabular figures, its VerificationBadge inline, its ConditionMeter beneath. The whole cell is a <button> opening a
 // native popover="auto" with the source and its archive link, the reporter, the date, the full EvalConditions
-// record (an unrecorded field shows as unknown) and a permalink to the claim's YAML at the commit SHA.
+// record (an unrecorded field shows as unknown), the claim's page at /claims/{id}/ (P3-S10-T07: every number one click
+// from the record it came from) and a permalink to the claim's YAML at the commit SHA. Its badge carries the claim's
+// review state beside the rank (07 S2.3), which `review_state` passes on: lib/claims.ts reviewState.
 //
 // The popover is the platform's: Escape and a click outside dismiss it without moving focus, and it stays until
 // dismissed (SC 1.4.13). Where CSS anchor positioning exists it sits under the cell; elsewhere the browser
@@ -15,6 +17,7 @@ import Absent from './Absent.astro';
 import ConditionMeter from './ConditionMeter.astro';
 import SourceCitation from './SourceCitation.astro';
 import VerificationBadge from './VerificationBadge.astro';
+import { claimHref } from '../lib/claims';
 import { blobAt, sha } from '../lib/repo';
 import { formatValue } from '../lib/vocab';
 
@@ -33,6 +36,7 @@ interface Props {
   metric_id: string;
   unit: string;
   verification: string;
+  review_state: string;
   disputed?: boolean;
   disputed_by?: string[];
   condition_completeness: number;
@@ -60,8 +64,8 @@ const unknown = Object.entries(p.conditions).filter(([, v]) => v == null).map(([
 ---
 <span class="value-cell" data-claim={p.claim_id} data-metric={p.metric_id} data-comparability-key={p.comparability_key}>
   <button type="button" class="cell" popovertarget={id} style={`anchor-name: ${anchor}`}>
-    <span class="value">{formatValue(p.value)}{p.uncertainty != null && <span class="unc"> ±{formatValue(p.uncertainty)}</span>}<span class="unit"> {p.unit}</span></span>
-    <VerificationBadge verification={p.verification} disputed={p.disputed} disputed_by={p.disputed_by} compact link_disputes={false} />
+    <span class="value" data-claim-value={p.claim_id}>{formatValue(p.value)}{p.uncertainty != null && <span class="unc"> ±{formatValue(p.uncertainty)}</span>}<span class="unit"> {p.unit}</span></span>
+    <VerificationBadge verification={p.verification} review_state={p.review_state} disputed={p.disputed} disputed_by={p.disputed_by} compact link_disputes={false} />
     <ConditionMeter condition_completeness={p.condition_completeness} fields_specified={p.fields_specified} fields_material_total={p.fields_material_total} unknown_fields={unknown} />
     <span class="visually-hidden">: show provenance</span>
   </button>
@@ -77,6 +81,7 @@ const unknown = Object.entries(p.conditions).filter(([, v]) => v == null).map(([
         ))}
       </tbody>
     </table>
+    <p><a href={claimHref(p.claim_id)} data-claim-permalink={p.claim_id}>The claim's page, <code>{p.claim_id}</code></a></p>
     <p><a href={blobAt(sha(p.commit_sha), p.yaml_path)}>Permalink to <code>{p.claim_id}</code> at <code>{p.commit_sha.slice(0, 12)}</code></a></p>
   </div>
 </span>

@@ -2,9 +2,13 @@
 // site/src/views/SystemDetail.astro -- P2-S3-T04 (10 "Information architecture": "/systems/{id}/ a system, as the
 // subject of claims (not a model directory)"). What the record says the system is -- maker, type, availability,
 // what it is built on, what it disclosed -- and its versions, so a claim's `system@version` resolves to something.
-// Its claims arrive with the claims artifact (P3-S10-T03); until then the page says so rather than showing none.
+// Its claims are listed from the claims artifact (P3-S10-T03; P3-S10-T07): every curated claim it is the subject or the
+// opponent of, each number the provenance drill-down with its permalink beside it (ClaimList), in section 10's order;
+// a build without the artifact says so rather than showing none.
 // Sources are anchored blocks (08 S7.5 Decision 4). Zero JavaScript, like every record page (10 "Performance budget").
 import Absent from '../components/Absent.astro';
+import ClaimList from '../components/ClaimList.astro';
+import type { ClaimRow } from '../lib/claims';
 import FacetChip from '../components/FacetChip.astro';
 import Contribute from '../components/Contribute.astro';
 import SourceBlocks from '../components/SourceBlocks.astro';
@@ -19,9 +23,11 @@ interface Props {
   organizations: Map<string, Organization>;
   systems: Set<string>;                 // published system ids, so built_on links only to real pages
   sources: Map<string, Source>;
+  claims?: ClaimRow[] | null;           // claims.json's rows about it, in order; null when the artifact was not built
+  names?: { systems: Map<string, string>; benchmarks: Map<string, string> };   // published id -> name, for the list
 }
 
-const { system: s, organizations, systems, sources } = Astro.props;
+const { system: s, organizations, systems, sources, claims = null, names = { systems: new Map(), benchmarks: new Map() } } = Astro.props;
 const org = s.organization != null ? organizations.get(s.organization) : undefined;
 const openWeights = s.open_weights == null ? null : s.open_weights ? 'yes' : 'no';
 const baseId = (ref: string) => ref.split('@', 1)[0];
@@ -86,8 +92,12 @@ const baseId = (ref: string) => ref.split('@', 1)[0];
   </section>
 
   <section aria-labelledby="s-claims">
-    <h2 id="s-claims">Claims</h2>
-    <p>Claims about this system are drawn from the claims artifact, which this build does not include yet. <Absent state="not-recorded" reason="claims table" /></p>
+    <h2 id="s-claims">Claims{claims != null && <> <span class="count">({claims.length})</span></>}</h2>
+    {claims == null
+      ? <p>Claims about this system are drawn from the claims artifact, which this build does not include yet. <Absent state="not-recorded" reason="claims table" /></p>
+      : claims.length === 0
+        ? <p>No curated claim about this system is in this build. <Absent state="not-recorded" /></p>
+        : <ClaimList rows={claims} label={`Claims about ${s.name}`} subject="both" names={names} />}
   </section>
 
   <section aria-labelledby="s-sources">
