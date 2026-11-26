@@ -513,3 +513,24 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: check_extract_personal_data.py
         run: uv run --locked --python "$PYTHON" python scripts/check_extract_personal_data.py
+
+  croissant-benchmark:
+    name: every croissant-benchmark document passes mlcroissant and the extension schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # P4-S6-T04; 08 S5.8 "Validation in CI". scripts/check_croissant.py --all builds every document in memory: the
+    # published ones and the collection `bench build` writes, every draft that passes tier 1 (no entry is published
+    # yet, so the build withholds them and the preview writes them) and the preview's collection. It holds each to
+    # mlcroissant's base conformance, the committed extension schema and the published context, holds the schema itself
+    # to base conformance, and fails on any committed file that carries the Croissant specification's text (CC BY-ND
+    # 4.0). It fetches nothing. The last step runs tests/test_check_croissant.py, whose deliberately broken schemas and
+    # documents must each turn the check red, so a check that has stopped catching them fails the job too.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - name: check_croissant.py --all
+        run: uv run --locked --python "$PYTHON" python scripts/check_croissant.py --all
+      - name: a deliberately broken schema or document turns the check red
+        run: uv run --locked --python "$PYTHON" python -m pytest -q tests/test_check_croissant.py
