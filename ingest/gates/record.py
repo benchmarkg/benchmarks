@@ -77,10 +77,12 @@ def provenance(draft: dict, full_replace: bool = False) -> None:
 #
 # 07 S8: "No draft contains comparability_key, condition_completeness, headroom or any other build-derived
 # field." The others are the fields 04 marks derived and the models compute: a value the build owns, written
-# by an adapter, is a value that rots.
+# by an adapter, is a value that rots. key_unknown_count is the third of 04 S8's three numbers, which
+# tools/build/comparability.py computes beside the other two (P3-S10-T02).
 
 DERIVED_FIELDS = frozenset({
     'comparability_key', 'condition_completeness', 'headroom', 'headroom_consumed',      # 07 S8 by name
+    'key_unknown_count',                                                                  # 04 S8, with the key
     'curation_confidence', 'maintenance_status', 'inspect_evals_available', 'stewardship',  # 04: derived
     'higher_is_better',                                                                   # Metric, computed
 })
