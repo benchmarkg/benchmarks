@@ -18,8 +18,9 @@ tools/build/ and tools/validate/ hold the implementations, and this file only wi
 command line. `schema gen` is P0-S5-T01's, `validate` P0-S5-T02's (its `--tier` takes a comma list since
 P2-S6-T04, whose issue-intake bot runs `--single --tier schema,ref,semantic`), `fmt` P0-S5-T04's (tools/fmt.py),
 `new` P0-S5-T03's (tools/authoring/), `build` P0-S5-T05's (tools/build/artifacts.py; --derived writes
-build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, and coverage-states.json,
-P1-S12-T08's; --atlas writes build/atlas.json, P2-S5-T01's (tools/atlas/); --embed writes build/vectors.i8.bin
+build/derived/ingest-health.json, P5-S7-T03's, freshness.json, P5-S7-T04's, coverage-states.json,
+P1-S12-T08's, and comparability-keys.json, P3-S10-T02's (tools/build/comparability.py); --atlas writes
+build/atlas.json, P2-S5-T01's (tools/atlas/); --embed writes build/vectors.i8.bin
 and build/vectors.meta.json, P6-S1-T03's (tools/build/embed.py, with the `embed` extra); build/index.sqlite, the
 normalised corpus that never ships, is P2-S1-T06's, tools/build/sqlite.py;
 --data-only, the preview build that skips S9, S10 and the SQLite emission, is P2-S1-T04's, tools/build/modes.py, beside
@@ -205,7 +206,7 @@ def validate(
 @app.command('build')
 def build_cmd(
     out: Annotated[Path, typer.Option('--out', help='The output directory (gitignored).')] = Path('build'),
-    derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json and lineage.json.')] = False,
+    derived: Annotated[bool, typer.Option('--derived', help='Also write build/derived/ (05 S3): ingest-health.json, freshness.json, coverage-states.json, lineage.json and comparability-keys.json.')] = False,
     embed: Annotated[bool, typer.Option('--embed', help='Also write build/vectors.i8.bin and build/vectors.meta.json, the int8 document embeddings in facets.json order (08 S3.2 S6, 11 S4). Needs the embed extra and the cached model: tools/build/embed.py.')] = False,
     atlas: Annotated[bool, typer.Option('--atlas', help='Also write build/atlas.json, the deterministic pack layout (08 S5.3, 10 V1).')] = False,
     data_only: Annotated[bool, typer.Option('--data-only', help='The preview build (08 S3.4): skip the S9 release artifacts (croissant-benchmark/, index.sqlite) and S10 codegen (the design tokens, the site taxonomy).')] = False,
@@ -309,6 +310,10 @@ def build_cmd(
         # 10 V6 section 11: each published benchmark's lineage as a build-time SVG and its table (P2-S3-T03)
         from tools.build import lineage_svg
         typer.echo('wrote %s' % lineage_svg.write(result.corpus, str(out / 'derived' / 'lineage.json')))
+        # 04 S8: every claim's comparability_key, key_unknown_count and condition_completeness, beside each curated
+        # benchmark's resolved profile and weights (P3-S10-T02)
+        from tools.build import comparability
+        typer.echo('wrote %s' % comparability.write(ROOT, str(out / 'derived' / 'comparability-keys.json')))
     # 08 S4.4 and S6.1 (P2-S1-T05): each shipped artifact at /data/<name>.<sha8>.json, and the manifest naming them;
     # `python tools/build/manifest.py --site <dist>` completes it after the site build (S13)
     from tools.build import manifest
