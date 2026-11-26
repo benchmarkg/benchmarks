@@ -30,8 +30,9 @@
 import { defineConfig } from '@playwright/test';
 
 // the specs that read the site with JavaScript off: the detail page (P2-S3-T01), its provenance drill-down (P2-S3-T02),
-// the landing page (P2-S4-T08) and the no-JS render gate over every route family (P2-S8-T02)
-const NOJS = /(detail-nojs|provenance|landing|nojs)\.spec\.ts$/;
+// the landing page (P2-S4-T08), the no-JS render gate over every route family (P2-S8-T02) and every benchmark's
+// citable URL (P2-S8-T07)
+const NOJS = /(detail-nojs|provenance|landing|nojs|citable-urls)\.spec\.ts$/;
 // pr-validate.yml's size-budgets job builds the preview once, for size-limit, and runs the no-JS gate over that same
 // build (P2-S8-T02): UAIBI_SITE_BUILT=1 says dist/ is that build already, made without the test pages, so the server
 // only previews it, and is ready when the landing answers
