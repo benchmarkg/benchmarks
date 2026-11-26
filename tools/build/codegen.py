@@ -14,11 +14,13 @@ Because the vocabularies are Literal enums built from taxonomy/ at import time, 
 changes the output too, so `--check` catches drift from either source (05 S3's `schema gen` row).
 
 One schema and one type file per entity: every root model schema/paths.py registers. Beside them,
-croissant-benchmark.schema.json, the croissant-benchmark extension's schema from tools/build/croissant.py's models
-(P2-S3-T06; 08 S5.8), so `--check` holds it to its models too; it has no type file, because it describes the
-JSON-LD documents the build emits, not an entity the site types. And the extension's published JSON-LD context,
-site/public/ns/croissant-benchmark/v1/context.jsonld, from the same module's terms (P4-S6-T01), so `--check` holds
-the served context to them as well; it is one fixed path, outside the two directories the stale-file sweep reads.
+croissant-benchmark.schema.json, the croissant-benchmark extension's schema from schema/croissant_benchmark.py's
+models (P2-S3-T06, moved to schema/ by P4-S6-T02; 08 S5.8), so `--check` holds it to its models too; it has no type
+file, because it describes the JSON-LD documents the build emits, not an entity the site types, and it is not in
+schema/paths.py's ENTITIES for the same reason. And the extension's published JSON-LD context,
+site/public/ns/croissant-benchmark/v1/context.jsonld, from the same module's terms through tools/build/croissant.py
+(P4-S6-T01), so `--check` holds the served context to them as well; it is one fixed path, outside the two
+directories the stale-file sweep reads.
 And facetquery.schema.json, F1's structured-output schema, from the enums.json the S8 emitter builds
 (tools/build/facetquery_schema.py, P6-S3-T01; 11 S4), so a taxonomy edit to one of its ten fields is drift too; it has
 no type file and no `$schema`/`$comment` banner, because it is the wire schema the worker sends and carries only the
@@ -114,13 +116,13 @@ def typescript(schemas: dict[str, dict], json2ts: str) -> dict[str, str]:
 
 
 def croissant_schema(root: str = ROOT) -> dict:
-    """The croissant-benchmark extension schema (P2-S3-T06; 08 S5.8), from tools/build/croissant.py's models. It is
-    a JSON Schema of the documents the build emits, not of an entity, so it has no TypeScript type: the site reads
-    those documents as text and inlines them."""
+    """The croissant-benchmark extension schema (P2-S3-T06, P4-S6-T02; 08 S5.8), from schema/croissant_benchmark.py's
+    models. It is a JSON Schema of the documents the build emits, not of an entity, so it has no TypeScript type: the
+    site reads those documents as text and inlines them."""
     if root not in sys.path:
         sys.path.insert(0, root)
-    from tools.build import croissant
-    return croissant.json_schema()
+    from schema import croissant_benchmark
+    return croissant_benchmark.json_schema()
 
 
 def croissant_context(root: str = ROOT) -> tuple[str, dict]:

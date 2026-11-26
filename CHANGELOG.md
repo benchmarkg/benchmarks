@@ -23,6 +23,11 @@ under `## [Unreleased]` in the same pull request, in this form:
 
 ### Added
 
+- `schema/croissant_benchmark.py`, the croissant-benchmark extension's terms and document models (moved from
+  `tools/build/croissant.py`), with 54 new terms: one `cb:EvalConditions` term per condition field, and
+  `benchmarkVersions`, `subsets`, `materialFields` and `ratingPoolRequired`, so every material field maps or is listed
+  unmapped with its reason. ADR: adr/0030-croissant-benchmark-mapping.md. Migration:
+  schema/migrations/0030-croissant-benchmark-mapping.py
 - `Curation.review_checks[]` (the questions a draft leaves for its verifier, each with its field, whether it needs a
   specialist, and its source and quote), `Baseline.subset`, `Baseline.evidence[]` and `Subset.evidence[]`; the
   entries' reviewer checks move out of `curation.notes` into the new field, and their schema findings out of the

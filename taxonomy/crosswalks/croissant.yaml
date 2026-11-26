@@ -15,28 +15,57 @@
 # which the extension serialiser reads. tests/test_crosswalks.py asserts the two agree, so this
 # file cannot drift from the code.
 #
-# `extension` is the mapping onto our own terms, which tools/build/croissant.py emits as
-# build/croissant-benchmark/{id}.jsonld (P2-S3-T06). Its namespace is 08 S5.8's
-# https://<host>/ns/croissant-benchmark/v1#; no host is fixed yet, so the documents carry the
+# `extension` is the mapping onto our own terms, which schema/croissant_benchmark.py declares and
+# tools/build/croissant.py emits as build/croissant-benchmark/{id}.jsonld (P2-S3-T06). Its namespace is
+# 08 S5.8's https://<host>/ns/croissant-benchmark/v1#; no host is fixed yet, so the documents carry the
 # reserved placeholder host.invalid until one is. Row shapes:
 #
-#   classes   the cb: classes the extension declares
-#   terms     one row per cb: property: the class it is a property of (`on`), and the field of ours it
-#             carries (`ours`, a dotted path tests/build/test_croissant.py resolves on the Pydantic
-#             models), or null for a node that gathers several fields, each of which has a row of its
-#             own. 08 S5.8's five groups -- tasks, metrics, protocol, conditions, lineage -- are the
-#             rows `on: Benchmark`
-#   reuses    a schema.org term a node of ours reuses with its schema.org meaning, on another entity's
-#             field. A Benchmark field never reuses one: it has a base row above or a cb: term here
-#   unmapped  fields 08 S5.8 or 15 A8 name that the extension does not carry yet, each with its reason
+#   classes       the cb: classes the extension declares
+#   terms         one row per cb: property: the class it is a property of (`on`), and the field of ours
+#                 it carries (`ours`, a dotted path tests/build/test_croissant.py resolves on the
+#                 Pydantic models), or null for a node that gathers several fields, each of which has a
+#                 row of its own. 08 S5.8's five groups -- tasks, metrics, protocol, conditions,
+#                 lineage -- are rows `on: Benchmark`
+#   reuses        a schema.org term a node of ours reuses with its schema.org meaning, on another
+#                 entity's field. A Benchmark field never reuses one: it has a base row above or a cb:
+#                 term here
+#   material_key  the Benchmark's side of 04 S8's comparability key: each component
+#                 tools/build/comparability.py's compute() takes beside the conditions -> the Benchmark
+#                 field whose entries a claim's value names
+#   unmapped      fields the extension does not carry, each with its reason
+#
+# EVERY MATERIAL FIELD IS ACCOUNTED FOR (P4-S6-T02, ADR-0030). 04 S8: "Two claims are comparable only
+# when they agree on benchmark version, metric, subset, and the material condition fields." Every
+# field material in that sense maps to a term or is listed under `unmapped` with its reason:
+#
+#   conditions     every EvalConditions field taxonomy/comparability-profiles.yaml makes material (a
+#                  profile's or the fallback's `material`), and every field a curated benchmark's
+#                  resolved set holds (resolve_profile, which adds its comparability.material_extra)
+#   key            material_key's three: benchmark_version, metric and subset
+#   comparability  the Benchmark's comparability block, which resolves the set
+#
+# tests/test_croissant_mapping.py takes each of these from the code that defines it -- the profile
+# loader and resolver, compute()'s parameters, the Comparability model -- never from a list copied
+# here, so a field that becomes material fails it until a term carries it or `unmapped` gives its
+# reason. It holds the EvalConditions fields nothing makes material to the same rule, so the
+# accounting is total. Each condition field is a cb:EvalConditions term named as the field is, in
+# camelCase, and typed as the field is (schema/croissant_benchmark.py copies its type), with
+# `sampling`'s three keys flattened into samplingTemperature, samplingTopP and samplingSeed.
+#
+# Declared is not emitted: the documents carry these terms' values once P4-S6-T03 emits them from
+# this mapping. Every document's context declares them already, and the published context
+# (site/public/ns/croissant-benchmark/v1/context.jsonld) gains them, as v1 only ever gains terms.
 #
 # No extension term may share its name with an upstream context key or a schema.org term, because
 # under the Croissant context's @vocab a bare key already means the schema.org term of that name;
-# the build refuses one that does. So the edge is `isSupersededBy` (schema.org has `supersededBy`)
-# and the headline flag `isHeadline` (schema.org has `headline`). tests/build/test_croissant.py
-# holds `extension` to tools/build/croissant.py's CLASSES, TERMS and REUSES.
+# the build refuses one that does. So the edge is `isSupersededBy` (schema.org has `supersededBy`),
+# the headline flag `isHeadline` (schema.org has `headline`) and the version list
+# `benchmarkVersions` (schema.org has `version`). tests/build/test_croissant.py holds `extension` to
+# schema/croissant_benchmark.py's CLASSES, TERMS and REUSES, and tests/test_croissant_mapping.py its
+# material_key to MATERIAL_KEY.
 #
-# Authored by P0-S4-T09 from 02 S13 and 04 S5; `extension` by P2-S3-T06 from 08 S5.8 and 15 A8.
+# Authored by P0-S4-T09 from 02 S13 and 04 S5; `extension` by P2-S3-T06 from 08 S5.8 and 15 A8; the
+# material fields by P4-S6-T02 from 04 S5 and 04 S8 (ADR-0030).
 
 crosswalk: croissant
 counterpart: MLCommons Croissant (schema.org vocabulary)
@@ -44,7 +73,7 @@ counterpart_url: https://mlcommons.org/croissant/
 counterpart_licence: CC-BY-ND-4.0 (spec)
 relation: crosswalk
 verified: true
-updated: 2026-11-18
+updated: 2026-11-26
 
 rows:
   - ours: Benchmark.name
@@ -82,10 +111,17 @@ extension:
   classes: [Benchmark, BenchmarkCollection, Task, Metric, Protocol, EvalConditions, Lineage]
 
   terms:
-    # --- on the benchmark's own Dataset node: the id and 08 S5.8's five groups ---
+    # --- on the benchmark's own Dataset node: the id, the versions and 08 S5.8's five groups ---
     - term: benchmarkId
       on: Benchmark
       ours: Benchmark.id
+    - term: benchmarkVersions
+      on: Benchmark
+      ours: Benchmark.versions
+      note: >-
+        Each version's tag, which a claim's benchmark_version names (material_key); its kind,
+        dates and errata stay in the record. Croissant's version is one MAJOR.MINOR.PATCH string
+        for the dataset, which a benchmark's list of versions is not.
     - term: tasks
       on: Benchmark
       ours: Benchmark.task
@@ -141,7 +177,7 @@ extension:
     - term: unbounded
       on: Metric
       ours: Metric.unbounded
-    # --- Protocol: submission process and held-out policy ---
+    # --- Protocol: submission process, held-out policy and splits ---
     - term: submissionProcess
       on: Protocol
       ours: Benchmark.governance.submission_process
@@ -151,13 +187,199 @@ extension:
     - term: aggregationPolicy
       on: Protocol
       ours: Benchmark.aggregation_policy
-    # --- EvalConditions: the reference to our entity ---
+    - term: subsets
+      on: Protocol
+      ours: Benchmark.subsets
+      note: >-
+        Each subset's id, which a claim's subset names (material_key): 08 S5.8's splits, whether a
+        subset is a data split or a task variant, which this term does not claim to know; 15 A8's
+        RecordSet stays for a subset known to be a data split. Its label, size and overrides stay
+        in the record.
+    # --- EvalConditions: the reference to our entity and the benchmark's comparability ---
     - term: conditionsId
       on: EvalConditions
       ours: Benchmark.reference_conditions
     - term: comparabilityProfile
       on: EvalConditions
       ours: Benchmark.comparability.profile
+      note: >-
+        A hand-set pin only: a benchmark resolved from its facets has none, and materialFields
+        says what it resolved to.
+    - term: materialFields
+      on: EvalConditions
+      ours: Benchmark.comparability
+      note: >-
+        The set the block resolves to (tools/build/comparability.py's resolve_profile): the rows
+        its facet pairs hit, or its pin, plus material_extra less material_waived, each field named
+        by its condition term below. Derived, as license is, and never hand-written.
+    - term: ratingPoolRequired
+      on: EvalConditions
+      ours: Benchmark.comparability.rating_pool_required
+    # --- EvalConditions: one term per condition field, in the record's field order ---
+    - term: shots
+      on: EvalConditions
+      ours: EvalConditions.shots
+    - term: shotSelection
+      on: EvalConditions
+      ours: EvalConditions.shot_selection
+      note: >-
+        Material under no profile and no curated benchmark today; mapped so the accounting is total.
+    - term: chainOfThought
+      on: EvalConditions
+      ours: EvalConditions.chain_of_thought
+    - term: reasoningEffort
+      on: EvalConditions
+      ours: EvalConditions.reasoning_effort
+    - term: thinkingTokenBudget
+      on: EvalConditions
+      ours: EvalConditions.thinking_token_budget
+    - term: promptTemplateHash
+      on: EvalConditions
+      ours: EvalConditions.prompt_template_hash
+    - term: toolsAllowed
+      on: EvalConditions
+      ours: EvalConditions.tools_allowed
+    - term: scaffold
+      on: EvalConditions
+      ours: EvalConditions.scaffold
+      note: A System id, as the record holds it.
+    - term: harness
+      on: EvalConditions
+      ours: EvalConditions.harness
+    - term: maxSteps
+      on: EvalConditions
+      ours: EvalConditions.max_steps
+    - term: messageLimit
+      on: EvalConditions
+      ours: EvalConditions.message_limit
+      note: >-
+        Material under no profile and no curated benchmark today; mapped so the accounting is total.
+    - term: tokenLimit
+      on: EvalConditions
+      ours: EvalConditions.token_limit
+    - term: sandbox
+      on: EvalConditions
+      ours: EvalConditions.sandbox
+    - term: samplingTemperature
+      on: EvalConditions
+      ours: EvalConditions.sampling.temperature
+      note: >-
+        `sampling` is one material field. A bare nested key would mean a schema.org term under the
+        upstream @vocab, so its three keys are flattened.
+    - term: samplingTopP
+      on: EvalConditions
+      ours: EvalConditions.sampling.top_p
+    - term: samplingSeed
+      on: EvalConditions
+      ours: EvalConditions.sampling.seed
+    - term: nSamples
+      on: EvalConditions
+      ours: EvalConditions.n_samples
+    - term: selectionStrategy
+      on: EvalConditions
+      ours: EvalConditions.selection_strategy
+    - term: k
+      on: EvalConditions
+      ours: EvalConditions.k
+    - term: retriesAllowed
+      on: EvalConditions
+      ours: EvalConditions.retries_allowed
+    - term: maxOutputTokens
+      on: EvalConditions
+      ours: EvalConditions.max_output_tokens
+    - term: contextWindowUsed
+      on: EvalConditions
+      ours: EvalConditions.context_window_used
+    - term: providerSnapshot
+      on: EvalConditions
+      ours: EvalConditions.provider_snapshot
+    - term: providerSnapshotAvailable
+      on: EvalConditions
+      ours: EvalConditions.provider_snapshot_available
+      note: >-
+        13 S4.5: `false` answers providerSnapshot (the provider publishes no dated snapshot), so it
+        is written.
+    - term: judgeModel
+      on: EvalConditions
+      ours: EvalConditions.judge_model
+      note: A System id, as the record holds it.
+    - term: judgeModelVersion
+      on: EvalConditions
+      ours: EvalConditions.judge_model_version
+    - term: judgePromptHash
+      on: EvalConditions
+      ours: EvalConditions.judge_prompt_hash
+    - term: gradingRubricRef
+      on: EvalConditions
+      ours: EvalConditions.grading_rubric_ref
+    - term: humanInLoop
+      on: EvalConditions
+      ours: EvalConditions.human_in_loop
+    - term: humanAssistance
+      on: EvalConditions
+      ours: EvalConditions.human_assistance
+    - term: userSimulator
+      on: EvalConditions
+      ours: EvalConditions.user_simulator
+      note: A System id, as the record holds it.
+    - term: userSimulatorVersion
+      on: EvalConditions
+      ours: EvalConditions.user_simulator_version
+    - term: simulator
+      on: EvalConditions
+      ours: EvalConditions.simulator
+    - term: simulatorVersion
+      on: EvalConditions
+      ours: EvalConditions.simulator_version
+    - term: hardwarePlatform
+      on: EvalConditions
+      ours: EvalConditions.hardware_platform
+    - term: venue
+      on: EvalConditions
+      ours: EvalConditions.venue
+    - term: assayProtocol
+      on: EvalConditions
+      ours: EvalConditions.assay_protocol
+      note: A Source id; the protocol is the condition (04 S13).
+    - term: targetConstruct
+      on: EvalConditions
+      ours: EvalConditions.target_construct
+    - term: activityThreshold
+      on: EvalConditions
+      ours: EvalConditions.activity_threshold
+    - term: leadTime
+      on: EvalConditions
+      ours: EvalConditions.lead_time
+    - term: resolutionWindow
+      on: EvalConditions
+      ours: EvalConditions.resolution_window
+    - term: eligibilityTrack
+      on: EvalConditions
+      ours: EvalConditions.eligibility_track
+    - term: trainingDataPolicy
+      on: EvalConditions
+      ours: EvalConditions.training_data_policy
+    - term: trainingDataEligibility
+      on: EvalConditions
+      ours: EvalConditions.training_data_eligibility
+    - term: decontaminationApplied
+      on: EvalConditions
+      ours: EvalConditions.decontamination_applied
+    - term: subsetUsed
+      on: EvalConditions
+      ours: EvalConditions.subset_used
+    - term: hardware
+      on: EvalConditions
+      ours: EvalConditions.hardware
+    - term: wallClockHours
+      on: EvalConditions
+      ours: EvalConditions.wall_clock_hours
+    - term: costUsd
+      on: EvalConditions
+      ours: EvalConditions.cost_usd
+    - term: dateEvaluated
+      on: EvalConditions
+      ours: EvalConditions.date_evaluated
     # --- Lineage: each edge to a benchmark id ---
     - term: lineageRole
       on: Lineage
@@ -200,11 +422,32 @@ extension:
       on: Metric
       ours: Metric.range.max
 
+  material_key:
+    benchmark_version: Benchmark.versions
+    metric: Benchmark.metrics
+    subset: Benchmark.subsets
+
   unmapped:
-    - ours: Benchmark.subsets
+    - ours: Benchmark.comparability.material_extra
       reason: >-
-        08 S5.8 lists splits under protocol, but a subset is a data split or a task variant and the
-        record does not say which; 15 A8 maps it to a RecordSet only where it is a data split.
+        An adjustment to a resolution the document carries whole: materialFields is the resolved
+        set, with the extras in it.
+    - ours: Benchmark.comparability.material_waived
+      reason: >-
+        An adjustment to a resolution the document carries whole: materialFields is the resolved
+        set, with the waived fields out of it. Each waiver's reason stays in the record and in
+        `bench report quality` (04 S8).
+    - ours: EvalConditions.reasoning_effort_raw
+      reason: >-
+        The provider's verbatim string behind reasoningEffort, kept because vendors' `high`s are not
+        the same `high` (04 S14); the enum is the value the key compares, and the string stays in
+        the record.
+    - ours: EvalConditions.prompt_template_source
+      reason: Provenance of promptTemplateHash's value (a Source id), not a condition of the run.
+    - ours: EvalConditions.scaffold_source
+      reason: Provenance of scaffold's value (a Source id), not a condition of the run.
+    - ours: EvalConditions.harness_source
+      reason: Provenance of harness's value (a Source id), not a condition of the run.
     - ours: Benchmark.task.metric
       reason: >-
         The metric a task names is the headline or one of `metrics` wherever it is a published
@@ -220,8 +463,9 @@ extension:
     - ours: Benchmark.released
       reason: >-
         Croissant's datePublished is the natural home, and CROISSANT_TERMS has no row for it;
-        adding one is a change to schema/benchmark.py, which P4-S6-T02's full mapping owns.
+        adding one changes schema/benchmark.py, a schema change of its own that ADR-0030 leaves
+        open. Not a material field.
     - ours: Benchmark.paper
       reason: >-
-        Croissant's citeAs is the natural home, and CROISSANT_TERMS has no row for it; P4-S6-T02's
-        full mapping owns it.
+        Croissant's citeAs is the natural home, and CROISSANT_TERMS has no row for it; adding one
+        changes schema/benchmark.py, which ADR-0030 leaves open. Not a material field.
