@@ -11,7 +11,10 @@ the job red." The job's last step runs this file, so the red half is shown here,
 
   documents   each fixture document passes all three checks; a document broken for base conformance, for the
               extension schema or in its @context fails the one it breaks, by name; nothing is fetched to check them
-  schema      the committed schema passes all five rules; a deliberately broken schema fails each, and turns the
+  written     a DIR of written documents meets the same checks, and an empty DIR or a file that is not JSON fails;
+              the worked examples (P4-S6-T05's verify: `check_croissant.py docs/croissant-benchmark/examples/`)
+              pass them, one entry from each of their three domains, in the form their README regenerates
+  schema     the committed schema passes all five rules; a deliberately broken schema fails each, and turns the
               command red, end to end
   context     the published context passes; one that redefines a schema.org term or drifts from the schema fails
   spec        the repository passes; a synthetic "specification" (no upstream text is committed, so none is used)
@@ -34,6 +37,8 @@ import check_croissant as C  # noqa: E402
 croissant = C.croissant
 MINIMAL = os.path.join(ROOT, 'tests', 'build', 'fixtures', 'minimal')
 CORPUS_20 = os.path.join(ROOT, 'tests', 'fixtures', 'corpus-20')
+EXAMPLES = os.path.join(ROOT, 'docs', 'croissant-benchmark', 'examples')
+FAMILIES = {'language': 'language', 'robotics': 'robotics-embodiment', 'chemistry': 'chemistry-materials'}
 
 
 @pytest.fixture(scope='module')
@@ -135,6 +140,61 @@ def test_a_deliberately_broken_document_fails_what_it_breaks(break_it, docs, com
     problems, _ = C.document_problems(docs, committed_schema, published)
     assert problems and all(p.startswith('alpha-bench.jsonld: ') for p in problems), problems
     assert any(want in p for p in problems), problems
+
+
+# ---- written documents: DIR (P4-S6-T05) ---------------------------------------------------------------------------
+
+def write_documents(folder, docs):
+    folder.mkdir()
+    for name, doc in docs.items():
+        (folder / name).write_bytes(croissant.serialise(doc))
+    return str(folder)
+
+
+def test_a_directory_of_written_documents_meets_the_same_checks(monkeypatch, tmp_path, docs, capsys):
+    """Both kinds, read from disk: a benchmark document and the collection, by file name; one broken goes red."""
+    monkeypatch.setattr(C, 'spec_problems', lambda root: ([], {}))
+    folder = write_documents(tmp_path / 'written', {n: docs[n] for n in ('alpha-bench.jsonld', '_collection.jsonld')})
+    assert C.main([folder]) == 0
+    out = capsys.readouterr().out
+    assert 'croissant: written: 2 document(s) checked under ' in out and 'croissant: 0 problem(s)' in out
+    docs['alpha-bench.jsonld']['metrics'][0]['isHeadline'] = 'yes'
+    (tmp_path / 'written' / 'alpha-bench.jsonld').write_bytes(croissant.serialise(docs['alpha-bench.jsonld']))
+    assert C.main([folder]) == 1
+    out = capsys.readouterr().out
+    assert re.search(r"^BLOCKING  croissant  .*written/alpha-bench\.jsonld: fails the extension schema at "
+                     r"/metrics/0/isHeadline: 'yes' is not of type 'boolean'$", out, re.M), out
+    assert 'croissant: 1 problem(s)' in out
+
+
+def test_an_empty_missing_or_unreadable_directory_fails_rather_than_passing(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(C, 'spec_problems', lambda root: ([], {}))
+    (tmp_path / 'empty').mkdir()
+    (tmp_path / 'broken').mkdir()
+    (tmp_path / 'broken' / 'x.jsonld').write_text('{"@type": ', encoding='utf-8')
+    assert C.main([str(tmp_path / n) for n in ('empty', 'missing', 'broken')]) == 1
+    out = capsys.readouterr().out
+    assert out.count('holds no .jsonld document to check, which is never a pass') == 2
+    assert re.search(r'^BLOCKING  croissant  .*broken/x\.jsonld: cannot be read as JSON', out, re.M), out
+    assert 'croissant: 3 problem(s)' in out
+
+
+def test_the_worked_examples_pass_one_entry_from_each_of_three_domains(committed_schema, published):
+    """P4-S6-T05: language, robotics and chemistry, each its entry's document as the emitter writes it (sorted keys,
+    indented: docs/croissant-benchmark/README.md regenerates them), each from the domain its file names."""
+    from ruamel.yaml import YAML
+    docs, unread = C.written([EXAMPLES])
+    assert unread == [] and sorted(os.path.basename(n) for n in docs) == ['chemistry.jsonld', 'language.jsonld',
+                                                                           'robotics.jsonld']
+    assert C.document_problems(docs, committed_schema, published)[0] == []
+    for name, doc in docs.items():
+        with open(os.path.join(ROOT, name), encoding='utf-8') as fh:
+            assert fh.read() == json.dumps(doc, ensure_ascii=False, sort_keys=True, indent=2) + '\n', name
+        [entry] = [os.path.join(d, f) for d, _, fs in os.walk(os.path.join(ROOT, 'data', 'benchmarks'))
+                   for f in fs if f == doc['benchmarkId'] + '.yaml']
+        with open(entry, encoding='utf-8') as fh:
+            primary = YAML(typ='safe').load(fh)['domain']['primary']
+        assert primary.split('/')[0] == FAMILIES[os.path.basename(name)[:-len('.jsonld')]], (name, primary)
 
 
 # ---- the schema ---------------------------------------------------------------------------------------------------
