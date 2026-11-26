@@ -41,8 +41,16 @@
 //
 // lib/roving-tabindex.ts gives the live list 09 S8.2's keys, through the frame's own keydown handler (React delegates
 // events from the static children like any others): Tab between families (the clusters), Up and Down within one, Enter
-// opens the benchmark's page, Space selects it -- its summary opens in the panel and its node is drawn on top, as a
-// click on it does; Escape or the panel's Close lets it go -- and Space on a family's toggle presses it.
+// opens the benchmark's page, Space toggles it in the selection (below) and shows it -- its summary opens in the panel
+// and its node is drawn on top, as a click on it does; Escape or the panel's Close lets the summary go -- and Space on a
+// family's toggle presses it.
+//
+// The selection (P2-S5-T04; 09 S8.1 "2.5.7 Dragging Movements", 10 V1 "Lasso-select") is a list of benchmark ids this
+// island holds, with islands/AtlasSelection.tsx's toolbar between the filter bar and the map and its lasso over the map.
+// The filter is the primary way in ("Select all N visible"), Space in the index and the panel's "Add to selection" the
+// per-node ways, the lasso a shortcut that is off until pressed; that file's header has the whole of it. On the map a
+// selected node has a ring around it, drawn on the regions layer; in the index its link carries data-selected, which
+// the page's CSS turns into a check that is also in the link's accessible name.
 //
 // A family's toggle is that family's domain filter, the one the filter bar's Domain control sets: pressed, the link
 // reads d=<family>, the family's nodes stay in ink and every other node drops to --c-ink-faint, the family's outline
@@ -74,6 +82,7 @@ import {
   type Palette,
 } from '../lib/atlas.ts';
 import { onKey } from '../lib/roving-tabindex.ts';
+import AtlasSelection, { Lasso, type Point } from './AtlasSelection.tsx';
 
 interface Props {
   atlasHref: string | null;     // lib/manifest.ts dataHref('atlas.json'); null when the build wrote none
@@ -140,14 +149,16 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
   const [drawError, setDrawError] = useState<string | null>(null);
   const [hover, setHover] = useState<Hover | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Set<string>>(() => new Set());   // islands/AtlasSelection.tsx: in the order added
+  const [lasso, setLasso] = useState(false);
   const [said, setSaid] = useState('');
   const root = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const settled = useRef<string | null>(null);
   // what the reducer and the region layer read, so a filter or a theme re-paints without rebuilding anything
-  const view = useRef<{ palette: Palette | null; matching: Set<string> | null; selected: string | null; emphasis: string | null }>(
-    { palette: null, matching: null, selected: null, emphasis: null });
-  const map = useRef<{ refresh(): void; fit(ids: string[] | null, animate: boolean): void; setLabelColour(c: string): void } | null>(null);
+  const view = useRef<{ palette: Palette | null; matching: Set<string> | null; selected: string | null; emphasis: string | null; selection: Set<string> }>(
+    { palette: null, matching: null, selected: null, emphasis: null, selection: new Set() });
+  const map = useRef<{ refresh(): void; fit(ids: string[] | null, animate: boolean): void; setLabelColour(c: string): void; at(id: string): Point } | null>(null);
   const fitted = useRef<string | null>(null);
 
   useEffect(() => {
@@ -156,7 +167,8 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
     return onThemeChange(setTheme);
   }, []);
 
-  // the selection: from the query string on load and on Back/Forward
+  // the filter (the browse view's "selection" of facet terms, not the Atlas's selection of benchmarks below): from the
+  // query string on load and on Back/Forward
   useEffect(() => {
     const read = () => {
       const d = decode(window.location.search, vocab);
@@ -168,10 +180,13 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
     return () => window.removeEventListener('popstate', read);
   }, [vocab]);
 
-  // Escape closes the panel
+  // Escape closes the panel, and turns the lasso off
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelected(null);
+      if (e.key === 'Escape') {
+        setSelected(null);
+        setLasso(false);
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -304,6 +319,15 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
           ctx.stroke();
         }
         ctx.setLineDash([]);
+        // a selected node: a ring in ink just outside its rim (the node's disc covers what is inside), no hue spent
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = p.ink;
+        for (const id of view.current.selection) {
+          const n = nodes.get(id)!, c = toV(n.x, n.y);
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, radiusPx(n.x, n.y, n.r) + 3, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
         const circles = atlas.regions.map((r) => ({ r, c: toV(r.x, r.y), rad: radiusPx(r.x, r.y, r.r), emph: r.level === 'family' && r.id === view.current.emphasis }));
         for (const { c, rad, emph } of circles) {
           ctx.beginPath();
@@ -347,6 +371,7 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
       renderer.getCamera().on('updated', () => setHover(null));
 
       map.current = {
+        at: (id) => toV(nodes.get(id)!.x, nodes.get(id)!.y),
         refresh: () => renderer.refresh(),
         setLabelColour: (c: string) => renderer.setSetting('labelColor', { color: c }),
         fit: (ids, animate) => {
@@ -381,20 +406,20 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
     };
   }, [atlas, nodes]);
 
-  // a filter, a theme or a selection re-paints; a filter also moves the camera, never a node
+  // a filter, a theme, the summary or the selection re-paints; a filter also moves the camera, never a node
   useEffect(() => {
-    view.current = { palette: pal, matching: matched, selected, emphasis };
+    view.current = { palette: pal, matching: matched, selected, emphasis, selection };
     const m = map.current;
     if (m == null || !drawn) return;
     if (pal != null) m.setLabelColour(pal.ink);
     m.refresh();
-  }, [pal, matched, selected, emphasis, drawn]);
+  }, [pal, matched, selected, emphasis, selection, drawn]);
 
   // The family index, as the server sent it (components/AtlasIndex.astro). Once the map is drawn the island takes it
   // over in place: the first time, each family's toggle -- its first item -- becomes its one Tab stop and every link
   // leaves the Tab order (lib/roving-tabindex.ts moves the stop from there); every time, the toggles are live and the
   // pressed one is the family the filter emphasises. Until then, and for good if the map cannot be drawn, it is the
-  // inert list as sent.
+  // inert list as sent. A benchmark in the selection has data-selected on its link (P2-S5-T04).
   useEffect(() => {
     const l = root.current?.querySelector<HTMLElement>('[data-atlas-index]');
     if (!drawn || l == null) return;
@@ -404,10 +429,10 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
       if (f) {
         (el as HTMLButtonElement).disabled = false;
         el.ariaPressed = String(f === emphasis);
-      }
+      } else el.toggleAttribute('data-selected', selection.has(el.dataset.indexEntry!));
     }
     l.dataset.atlasIndex = 'island';
-  }, [drawn, emphasis]);
+  }, [drawn, emphasis, selection]);
 
   useEffect(() => {
     const m = map.current;
@@ -440,6 +465,17 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
     const q = encode(next);
     window.history.pushState(null, '', `${window.location.pathname}${q.length > 0 ? `?${q}` : ''}`);
   };
+
+  // the selection (islands/AtlasSelection.tsx): replaced whole by `ids`, each once in the order given, and its new size
+  // said once in the status region (09 S8.4)
+  const choose = (ids: string[]) => {
+    const next = new Set(ids);
+    setSelection(next);
+    setSaid(`${plural(next.size, 'benchmark', 'benchmarks')} selected`);
+  };
+  const toggle = (id: string) => choose(selection.has(id) ? [...selection].filter((s) => s !== id) : [...selection, id]);
+  // what the filter leaves in ink, in atlas.json's order: "Select all N visible", and what the lasso can take
+  const visible = (atlas?.nodes ?? []).filter((n) => matched?.has(n.id) ?? true).map((n) => n.id);
 
   const labelOf = (k: RailKey, id: string) => groups.find((g) => g.key === k)?.terms.find((t) => t.id === id)?.label ?? id;
   const applied = chips(groups, state);
@@ -558,6 +594,7 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
         </dl>
         <p className="actions">
           <a href={`/benchmarks/${picked.id}/`}>Open the full page</a>
+          <button type="button" onClick={() => toggle(picked.id)}>{selection.has(picked.id) ? 'Remove from selection' : 'Add to selection'}</button>
           <button type="button" className="close" onClick={() => setSelected(null)}>Close</button>
         </p>
       </div>
@@ -567,9 +604,14 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
   return (
     <div className="atlas-view" ref={root} data-atlas-view data-state={status} data-matching={matched == null ? 'all' : String(matched.size)}>
       {filters}
+      {filters && <AtlasSelection ids={[...selection]} visible={visible} set={choose} lasso={lasso} setLasso={setLasso} />}
       <div className="body">
         <div className="frame"
-          onKeyDown={(e) => drawn && onKey(e, (it) => setSelected(it.dataset.indexEntry!), () => root.current!.querySelector('select'))}
+          onKeyDown={(e) => drawn && onKey(e, (it) => {
+            const id = it.dataset.indexEntry!;
+            setSelected(id);
+            toggle(id);
+          }, () => root.current!.querySelector('select'))}
           onClick={(e) => {
             const f = (e.target as Element).closest<HTMLElement>('[data-highlight]')?.dataset.highlight;
             if (drawn && f) apply({ ...state, d: f === emphasis ? [] : [f] });
@@ -577,6 +619,9 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
           {children}
           <div className="stage">
             <div className="canvas" ref={frame} aria-hidden="true" data-atlas-canvas />
+            {drawn && lasso
+              ? <Lasso ink={pal?.ink ?? ''} pick={(inside) => choose([...selection, ...visible.filter((id) => inside(map.current!.at(id)))])} />
+              : null}
             {note}
             {card}
           </div>
