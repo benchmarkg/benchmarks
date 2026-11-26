@@ -72,6 +72,14 @@
 # OpenAlex citation count is a headline number. The build needs the whole history (tools/build/feed.py
 # walks it) and the locked Python (BENCH_PYTHON), hence fetch-depth: 0 and `uv sync` before it.
 #
+# size-budgets (P2-S8-T01; 08 S8.1, 10 "Performance budget") runs `npx size-limit` over a built site: every route
+# group of scripts/route_groups.json against its budget, blocking -- 0 KB of JavaScript on the citable pages, the
+# Atlas within 120 KB gzipped, a detail page within 120 KB fonts included. No entry is published yet, so it builds
+# over the draft preview (scripts/preview_corpus.py), the one build with detail pages to measure, as the site's
+# Playwright server does; a family with no built page fails rather than passing unmeasured. Its last step runs the
+# fixture that adds 1 KB of JavaScript to a detail route and asserts size-limit goes red on it, so a gate that has
+# stopped measuring fails too. The build needs the history and the locked Python, as single-source's does.
+#
 # Actions are pinned by commit SHA (08 S6); these are the SHAs archive-sources.yml resolved on
 # 2026-09-24, and setup-node's is schema-codegen.yml's (resolved 2026-09-25).
 
@@ -425,6 +433,40 @@ jobs:
         run: npx astro build
       - name: check_single_source.py
         run: uv run --locked --python "$PYTHON" python scripts/check_single_source.py
+
+  size-budgets:
+    name: per-route size budgets (size-limit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: the locked Python environment, for the build's feed step
+        run: uv sync --locked --python "$PYTHON"
+      - name: site dependencies from the lockfile
+        working-directory: site
+        run: npm ci --ignore-scripts
+      - name: the draft preview, so the detail pages exist to be measured
+        run: uv run --locked --python "$PYTHON" python scripts/preview_corpus.py --out build/preview
+      - name: astro build over the preview
+        working-directory: site
+        env:
+          BENCH_PYTHON: ${{ github.workspace }}/.venv/bin/python
+          UAIBI_CORPUS: ../build/preview/corpus.json
+          UAIBI_SITE_DRAFTS: '1'
+        run: npx astro build
+      - name: size-limit, every route group against its budget
+        working-directory: site
+        run: npx size-limit
+      - name: the fixture that adds 1 KB of JavaScript to a detail route turns size-limit red
+        working-directory: site
+        run: node --test test/size-budgets.test.mjs
 
   extract-personal-data:
     name: no e-mail address or arXiv submitter in a Source extract

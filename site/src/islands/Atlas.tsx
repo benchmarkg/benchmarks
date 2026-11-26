@@ -27,8 +27,39 @@
 // hairline outlines and permanent labels (10 V1), and the edges, lineage solid and a sourced correlation dashed. A
 // family the domain filter names alone takes --c-emphasis on its outline (09 S4.2 (d)).
 //
-// The root element carries `atlasProbe`: what the canvas draws, read without reading pixels (positions, sigma's display
-// data, viewport coordinates, the labels drawn, the camera). tests/atlas.spec.ts reads it; it changes nothing.
+// The family index (P2-S5-T03; 10 V1 "Without JavaScript", "And it is also the legend"; 09 S4.2, S8.2). The page passes
+// components/AtlasIndex.astro as this island's children: the grouped list of the build's atlas.json, server-rendered
+// inside the canvas container (`.frame`), beside the stage the canvas is drawn on. It is the map's legend, its no-JS
+// form and its screen-reader linearisation, and the canvas is aria-hidden because it is a picture of that list. The
+// children are static HTML to React (Astro's <astro-slot>, which React mounts once and never re-renders), so on
+// hydration they are hydrated as they stand: no second copy is rendered. Once the map is drawn the island takes that
+// list over in place -- the inert list as sent becomes the live one, its data-atlas-index "island", its toggles enabled,
+// its items under a roving tabindex -- rather than shipping code to render the list again: the list is replaced on
+// hydration by its live self, and the page never holds two. If the map cannot be drawn (atlas.json unreadable, no
+// WebGL, nothing published), the list stays as sent, the fallback, its toggles disabled because there is no map for
+// them to act on.
+//
+// lib/roving-tabindex.ts gives the live list 09 S8.2's keys, through the frame's own keydown handler (React delegates
+// events from the static children like any others): Tab between families (the clusters), Up and Down within one, Enter
+// opens the benchmark's page, Space selects it -- its summary opens in the panel and its node is drawn on top, as a
+// click on it does; Escape or the panel's Close lets it go -- and Space on a family's toggle presses it.
+//
+// A family's toggle is that family's domain filter, the one the filter bar's Domain control sets: pressed, the link
+// reads d=<family>, the family's nodes stay in ink and every other node drops to --c-ink-faint, the family's outline
+// takes --c-emphasis and the camera may fit it (10 V1: "Selecting a row emphasises that family on the map and dims the
+// rest"; 09 S4.2 (d), one family at a time), and nothing moves a node; pressed again, the domain filter is cleared. So
+// the legend, the filter bar and the link can never disagree about which family is emphasised, and the highlight costs
+// no code of its own: a toggle is pressed exactly when the filter emphasises its family, and its aria-pressed is written
+// to the list from the island's state. "/" in the list focuses search: /atlas/ has no search box (the site-wide one,
+// islands/SearchBox.tsx, P2-S4-T07, is /search/'s), so it goes to the filter bar's first control, the Domain filter, the
+// one way this page has to find benchmarks on the map. The seam is the `search` callback handed to onKey() below: when
+// the Atlas gets the search 10 V1 describes ("Search highlights in place"), that callback returns its box instead.
+//
+// The root element carries `atlasProbe`, so a test can read what the canvas draws without reading pixels: sigma's renderer
+// and graphology's graph themselves (positions, sigma's display data, viewport coordinates, the labels drawn, the
+// camera). The readers that turn them into plain values are the tests' own (tests/atlas.spec.ts, atlas-a11y.spec.ts),
+// rather than shipped to every reader of the page: the Atlas's JavaScript is held to 08 S8.1's 120 KB. A test reads
+// them and never writes them; nothing in the page does either.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { NodeDisplayData } from 'sigma/types';
 import type { FillData } from '../lib/atlas-program.ts';
@@ -42,6 +73,7 @@ import {
   FIT_MS, HOME, box, fitState, matching, paint, readAtlas, standing, type AtlasDoc, type AtlasNode, type CameraState,
   type Palette,
 } from '../lib/atlas.ts';
+import { onKey } from '../lib/roving-tabindex.ts';
 
 interface Props {
   atlasHref: string | null;     // lib/manifest.ts dataHref('atlas.json'); null when the build wrote none
@@ -49,6 +81,7 @@ interface Props {
   groups: RailGroup[];          // the browse rail's vocabularies, definitions left out
   taglines: Record<string, string>;
   palettes: Record<Theme, Palette>;   // lib/atlas.ts palette() of each theme, from tokens.json at build time
+  children?: ReactNode;               // components/AtlasIndex.astro: the family index as the server rendered it
 }
 
 type Load =
@@ -90,19 +123,13 @@ function headroomText(h: number | null): ReactNode {
 
 interface Hover { id: string; x: number; y: number; r: number; width: number }
 
-// What the canvas draws, for tests: every reader below copies, so nothing outside can change the map through it.
+// What the canvas draws, for tests: sigma's renderer and graphology's graph, read and never written.
 export interface AtlasProbe {
-  ids(): string[];
-  positions(): Record<string, [number, number]>;
-  framed(): Record<string, [number, number]>;
-  viewport(id: string): { x: number; y: number; r: number };
-  display(id: string): { ring: string; fill: string; empty: string; level: number; label: string | null; zIndex: number; highlighted: boolean };
-  labels(): string[];
-  camera(): CameraState & { animated: boolean };
-  dimensions(): { width: number; height: number };
+  renderer: InstanceType<typeof import('sigma').default>;
+  graph: InstanceType<typeof import('graphology').default>;
 }
 
-export default function Atlas({ atlasHref, facetsHref, groups, taglines, palettes }: Props) {
+export default function Atlas({ atlasHref, facetsHref, groups, taglines, palettes, children }: Props) {
   const vocab = useMemo(() => vocabularies(groups), [groups]);
   const [load, setLoad] = useState<Load>(atlasHref == null ? { status: 'unavailable' } : { status: 'loading' });
   const [state, setState] = useState<FilterState>({});
@@ -339,27 +366,7 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
           else camera.setState(target);
         },
       };
-      const probe: AtlasProbe = {
-        ids: () => graph.nodes(),
-        positions: () => Object.fromEntries(graph.mapNodes((id, a) => [id, [a.x as number, a.y as number]])),
-        framed: () => Object.fromEntries(graph.mapNodes((id) => {
-          const d = renderer.getNodeDisplayData(id)!;
-          return [id, [d.x, d.y]];
-        })),
-        viewport: (id) => {
-          const d = renderer.getNodeDisplayData(id)!;
-          const at = renderer.framedGraphToViewport(d);
-          return { x: at.x, y: at.y, r: renderer.scaleSize(d.size) };
-        },
-        display: (id) => {
-          const d = renderer.getNodeDisplayData(id) as NodeDisplayData & FillData;
-          return { ring: d.ring, fill: d.color, empty: d.empty, level: d.level, label: d.label, zIndex: d.zIndex, highlighted: d.highlighted };
-        },
-        labels: () => [...renderer.getNodeDisplayedLabels()].sort(),
-        camera: () => ({ ...renderer.getCamera().getState(), animated: renderer.getCamera().isAnimated() }),
-        dimensions: () => renderer.getDimensions(),
-      };
-      Object.defineProperty(root.current!, 'atlasProbe', { value: probe, configurable: true });
+      (root.current as unknown as { atlasProbe: AtlasProbe }).atlasProbe = { renderer, graph };
       kill = () => {
         map.current = null;
         renderer.kill();
@@ -382,6 +389,25 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
     if (pal != null) m.setLabelColour(pal.ink);
     m.refresh();
   }, [pal, matched, selected, emphasis, drawn]);
+
+  // The family index, as the server sent it (components/AtlasIndex.astro). Once the map is drawn the island takes it
+  // over in place: the first time, each family's toggle -- its first item -- becomes its one Tab stop and every link
+  // leaves the Tab order (lib/roving-tabindex.ts moves the stop from there); every time, the toggles are live and the
+  // pressed one is the family the filter emphasises. Until then, and for good if the map cannot be drawn, it is the
+  // inert list as sent.
+  useEffect(() => {
+    const l = root.current?.querySelector<HTMLElement>('[data-atlas-index]');
+    if (!drawn || l == null) return;
+    for (const el of l.querySelectorAll<HTMLElement>('[data-roving-item]')) {
+      const f = el.dataset.highlight;
+      if (l.dataset.atlasIndex !== 'island') el.tabIndex = f ? 0 : -1;
+      if (f) {
+        (el as HTMLButtonElement).disabled = false;
+        el.ariaPressed = String(f === emphasis);
+      }
+    }
+    l.dataset.atlasIndex = 'island';
+  }, [drawn, emphasis]);
 
   useEffect(() => {
     const m = map.current;
@@ -493,6 +519,15 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
   const domainText = (n: AtlasNode) => `${labelOf('d', n.cluster)} › ${labelOf('d', n.domain_primary)}`;
   const lifecycleText = (n: AtlasNode) => (n.lifecycle == null ? <NotRecorded what="lifecycle" /> : labelOf('lc', n.lifecycle));
   const taglineOf = (id: string) => (Object.hasOwn(taglines, id) ? taglines[id] : null);
+  // what the hover card and the panel both say about a benchmark
+  const facts = (n: AtlasNode) => (
+    <>
+      <dt>Domain</dt><dd>{domainText(n)}</dd>
+      <dt>Lifecycle</dt><dd data-card-lifecycle>{lifecycleText(n)}</dd>
+      <dt>Headroom</dt><dd data-card-headroom>{headroomText(n.headroom_consumed)}</dd>
+      <dt>Adoption</dt><dd data-card-adoption>{plural(n.adoption_n, 'system', 'systems')} with claims</dd>
+    </>
+  );
   const hovered = hover != null ? nodes.get(hover.id) : undefined;
   const picked = selected != null ? nodes.get(selected) : undefined;
   const row = index?.rows.find((r) => r.id === selected);
@@ -504,10 +539,7 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
         <p className="name">{hovered.label}</p>
         {taglineOf(hovered.id) != null ? <p className="tagline">{taglineOf(hovered.id)}</p> : <p className="tagline"><NotRecorded what="tagline" /></p>}
         <dl>
-          <dt>Domain</dt><dd>{domainText(hovered)}</dd>
-          <dt>Lifecycle</dt><dd data-card-lifecycle>{lifecycleText(hovered)}</dd>
-          <dt>Headroom</dt><dd data-card-headroom>{headroomText(hovered.headroom_consumed)}</dd>
-          <dt>Adoption</dt><dd data-card-adoption>{plural(hovered.adoption_n, 'system', 'systems')} with claims</dd>
+          {facts(hovered)}
         </dl>
       </div>
     )
@@ -519,10 +551,7 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
         <h2 id="atlas-panel-h">{picked.label}</h2>
         {taglineOf(picked.id) != null ? <p className="tagline">{taglineOf(picked.id)}</p> : null}
         <dl>
-          <dt>Domain</dt><dd>{domainText(picked)}</dd>
-          <dt>Lifecycle</dt><dd>{lifecycleText(picked)}</dd>
-          <dt>Headroom</dt><dd>{headroomText(picked.headroom_consumed)}</dd>
-          <dt>Adoption</dt><dd>{plural(picked.adoption_n, 'system', 'systems')} with claims</dd>
+          {facts(picked)}
           {row != null ? <><dt>Claims</dt><dd>{row.claim_count}</dd></> : null}
           {row != null ? <><dt>Released</dt><dd>{row.year != null ? row.year : <NotRecorded what="release year" />}</dd></> : null}
           {matched != null ? <><dt>Filter</dt><dd>{matched.has(picked.id) ? 'matches the filter' : 'outside the filter'}</dd></> : null}
@@ -539,10 +568,18 @@ export default function Atlas({ atlasHref, facetsHref, groups, taglines, palette
     <div className="atlas-view" ref={root} data-atlas-view data-state={status} data-matching={matched == null ? 'all' : String(matched.size)}>
       {filters}
       <div className="body">
-        <div className="frame">
-          <div className="canvas" ref={frame} aria-hidden="true" data-atlas-canvas />
-          {note}
-          {card}
+        <div className="frame"
+          onKeyDown={(e) => drawn && onKey(e, (it) => setSelected(it.dataset.indexEntry!), () => root.current!.querySelector('select'))}
+          onClick={(e) => {
+            const f = (e.target as Element).closest<HTMLElement>('[data-highlight]')?.dataset.highlight;
+            if (drawn && f) apply({ ...state, d: f === emphasis ? [] : [f] });
+          }}>
+          {children}
+          <div className="stage">
+            <div className="canvas" ref={frame} aria-hidden="true" data-atlas-canvas />
+            {note}
+            {card}
+          </div>
         </div>
         <aside className="panel" aria-labelledby={picked != null ? 'atlas-panel-h' : undefined} aria-label={picked != null ? undefined : 'Benchmark summary'}>
           {panel}

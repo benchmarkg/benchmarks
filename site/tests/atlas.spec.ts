@@ -4,9 +4,10 @@
 //   cd site && npx playwright test tests/atlas.spec.ts
 //
 // Done when: "Node coordinates are asserted identical before and after a filter, and the route's colour use matches 09
-// S4.3's three-of-ten rule." What the canvas draws is read through the island's probe (islands/Atlas.tsx `atlasProbe`):
-// graphology's x and y for each node, sigma's own frame coordinates for it, its viewport position, the display data the
-// nodeReducer produced, the labels sigma drew and the camera. Every expectation is computed here from the files the
+// S4.3's three-of-ten rule." What the canvas draws is read through the island's probe (islands/Atlas.tsx `atlasProbe`,
+// sigma's renderer and graphology's graph, read through the readers below, which copy and never write): graphology's x
+// and y for each node, sigma's own frame coordinates for it, its viewport position, the display data the nodeReducer
+// produced, the labels sigma drew and the camera. Every expectation is computed here from the files the
 // server serves -- atlas.json, facets.json, corpus.json and enums.json from build/preview/ (scripts/preview_corpus.py),
 // and tokens.json for the colours -- not from the island's own logic (src/lib/atlas.ts, unit-tested in
 // test/atlas.test.mjs).
@@ -79,18 +80,41 @@ const DISJOINT = (() => {
 // ---- reading the map --------------------------------------------------------------------------------------------
 
 const PROBE = '[data-atlas-view]';
-const positions = (page: Page) => page.locator(PROBE).evaluate((el) => (el as any).atlasProbe.positions() as Record<string, [number, number]>);
-const framed = (page: Page) => page.locator(PROBE).evaluate((el) => (el as any).atlasProbe.framed() as Record<string, [number, number]>);
-const camera = (page: Page) => page.locator(PROBE).evaluate((el) => (el as any).atlasProbe.camera() as Camera);
-const labels = (page: Page) => page.locator(PROBE).evaluate((el) => (el as any).atlasProbe.labels() as string[]);
-const dims = (page: Page) => page.locator(PROBE).evaluate((el) => (el as any).atlasProbe.dimensions() as { width: number; height: number });
+// the probe is { renderer, graph }; each reader copies what it reads into plain values
+const positions = (page: Page) => page.locator(PROBE).evaluate((el) => {
+  const { graph } = (el as any).atlasProbe;
+  return Object.fromEntries(graph.mapNodes((id: string, a: { x: number; y: number }) => [id, [a.x, a.y]])) as Record<string, [number, number]>;
+});
+const framed = (page: Page) => page.locator(PROBE).evaluate((el) => {
+  const { renderer, graph } = (el as any).atlasProbe;
+  return Object.fromEntries(graph.nodes().map((id: string) => {
+    const d = renderer.getNodeDisplayData(id);
+    return [id, [d.x, d.y]];
+  })) as Record<string, [number, number]>;
+});
+const camera = (page: Page) => page.locator(PROBE).evaluate((el) => {
+  const c = (el as any).atlasProbe.renderer.getCamera();
+  return { ...c.getState(), animated: c.isAnimated() } as Camera;
+});
+const labels = (page: Page) => page.locator(PROBE).evaluate((el) => [...(el as any).atlasProbe.renderer.getNodeDisplayedLabels()].sort() as string[]);
+const dims = (page: Page) => page.locator(PROBE).evaluate((el) => {
+  const { width, height } = (el as any).atlasProbe.renderer.getDimensions();
+  return { width, height } as { width: number; height: number };
+});
 const displays = (page: Page) => page.locator(PROBE).evaluate((el) => {
-  const p = (el as any).atlasProbe;
-  return Object.fromEntries((p.ids() as string[]).map((id) => [id, p.display(id)])) as Record<string, Display>;
+  const { renderer, graph } = (el as any).atlasProbe;
+  return Object.fromEntries(graph.nodes().map((id: string) => {
+    const d = renderer.getNodeDisplayData(id);
+    return [id, { ring: d.ring, fill: d.color, empty: d.empty, level: d.level, label: d.label, zIndex: d.zIndex, highlighted: d.highlighted }];
+  })) as Record<string, Display>;
 });
 const viewports = (page: Page, ids: string[]) => page.locator(PROBE).evaluate((el, list) => {
-  const p = (el as any).atlasProbe;
-  return Object.fromEntries(list.map((id) => [id, p.viewport(id)])) as Record<string, { x: number; y: number; r: number }>;
+  const { renderer } = (el as any).atlasProbe;
+  return Object.fromEntries(list.map((id) => {
+    const d = renderer.getNodeDisplayData(id);
+    const at = renderer.framedGraphToViewport(d);
+    return [id, { x: at.x, y: at.y, r: renderer.scaleSize(d.size) }];
+  })) as Record<string, { x: number; y: number; r: number }>;
 }, ids);
 
 async function drawn(page: Page, query = '') {
@@ -112,8 +136,8 @@ const sampleCamera = (page: Page) => page.addInitScript(() => {
   const w = window as unknown as { animating: boolean[] };
   w.animating = [];
   const tick = () => {
-    const el = document.querySelector('[data-atlas-view]') as (Element & { atlasProbe?: { camera(): { animated: boolean } } }) | null;
-    if (el?.atlasProbe) w.animating.push(el.atlasProbe.camera().animated);
+    const el = document.querySelector('[data-atlas-view]') as (Element & { atlasProbe?: { renderer: { getCamera(): { isAnimated(): boolean } } } }) | null;
+    if (el?.atlasProbe) w.animating.push(el.atlasProbe.renderer.getCamera().isAnimated());
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

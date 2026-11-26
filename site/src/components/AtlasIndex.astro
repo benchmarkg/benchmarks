@@ -1,0 +1,73 @@
+---
+// site/src/components/AtlasIndex.astro -- P2-S5-T03 (10 V1 "Without JavaScript", "And it is also the legend"; 09 S4.2,
+// S8.2, S8.6). The Atlas's family index as the server sends it: one grouped <ul> that is at once the map's legend, its
+// no-JS form, its screen-reader linearisation and its keyboard path. pages/atlas.astro passes it to the Atlas island as
+// its children, so it is rendered inside the canvas container (islands/Atlas.tsx `.frame`, beside the aria-hidden canvas
+// it is the readable form of), and it is what a reader without JavaScript gets: real links, grouped, counted, crawlable.
+//
+// What it lists is the build's atlas.json, read beside the corpus as lib/landing.ts reads facets.json, through
+// lib/atlas.ts familyIndex(): atlas.json's group and family regions in declared order, each family with its count and
+// its benchmarks by name. The numbers are the data's, never typed here: the draft preview has six groups and nineteen
+// families, as 09 S4.2 says, and a build with fewer families on its map has fewer rows. A group heading carries no
+// count (10 V1: the grouping "is never given a count of its own"), and nothing here has a colour of its own: no swatch,
+// no key, because no family has a hue to key (09 S4.2, D4). It is rendered only when this build's manifest names
+// atlas.json, so the list and the map the island fetches by that hashed URL are one file (lib/manifest.ts checks the
+// digest); with no atlas.json there is no map and no list, and the island says so.
+//
+// Each family row has a highlight toggle (10 V1: "Selecting a row emphasises that family on the map and dims the rest").
+// As sent it is disabled: there is no map to emphasise until the island has drawn one, and a button that does nothing
+// when pressed would be a lie. This list is the only one the page ever holds. The island hydrates it as static HTML and,
+// once the map is drawn, takes it over in place (islands/Atlas.tsx): data-atlas-index turns from "server" to "island",
+// the toggles are enabled (each is its family's domain filter), and lib/roving-tabindex.ts's keys run over the
+// `data-roving-group` families and their `data-roving-item` toggles and links. So the inert list is replaced on
+// hydration by its live self, and no code ships to render it a second time, which is what keeps the route inside 08
+// S8.1's 120 KB. If the map cannot be drawn, it stays as sent, and is the fallback.
+//
+// The styles are pages/atlas.astro's, global to the page, because the list renders inside the island, outside this
+// component's scope; this file has no <style>, so its three hundred or so elements carry no scope attribute.
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { CORPUS_PATH } from '../lib/corpus';
+import { dataHref } from '../lib/manifest';
+import { familyIndex, readAtlas, type IndexGroup } from '../lib/atlas';
+
+const path = join(dirname(CORPUS_PATH), 'atlas.json');
+let groups: IndexGroup[] | null = null;
+if (dataHref('atlas.json') != null && existsSync(path)) {
+  const read = readAtlas(JSON.parse(readFileSync(path, 'utf8')));
+  if ('error' in read) throw new Error(`the Atlas index cannot read ${path}: ${read.error}`);
+  groups = familyIndex(read.atlas);
+}
+const placed = (groups ?? []).reduce((s, g) => s + g.families.reduce((t, f) => t + f.entries.length, 0), 0);
+const benchmarks = (n: number) => (n === 1 ? ' benchmark' : ' benchmarks');
+---
+{groups != null && placed === 0 && (
+  <p class="atlas-index-empty" data-atlas-index="empty">No benchmark is published yet, so the map has nothing to place and its index nothing to list.</p>
+)}
+{groups != null && placed > 0 && (
+  <section class="atlas-index" aria-labelledby="atlas-index-h" data-atlas-index="server">
+    <h2 id="atlas-index-h" class="index-title">Index of the map</h2>
+    <p class="index-keys">Every benchmark the map places, under its family. Once the map is drawn, Tab moves between families and Up and Down within one, Space shows a benchmark's summary beside the map, and a family's Highlight is its domain filter.</p>
+    <ul class="index-groups">
+      {groups.map((g) => (
+        <li class="index-group" data-index-group={g.id}>
+          <h3 class="group-label">{g.label}</h3>
+          <ul class="index-families">
+            {g.families.map((f) => (
+              <li class="index-family" data-index-family={f.id} data-roving-group>
+                <div class="family-row">
+                  <h4 class="family-label" id={`atlas-index-${f.id}`}>{f.label}</h4>
+                  <span class="family-count" data-family-count={f.entries.length}>{f.entries.length}<span class="visually-hidden">{benchmarks(f.entries.length)}</span></span>
+                  <button type="button" class="highlight" data-highlight={f.id} data-roving-item aria-pressed="false" disabled>Highlight<span class="visually-hidden">{` ${f.label} on the map`}</span></button>
+                </div>
+                <ul class="index-entries" aria-labelledby={`atlas-index-${f.id}`}>
+                  {f.entries.map((e) => <li><a href={`/benchmarks/${e.id}/`} data-index-entry={e.id} data-roving-item>{e.label}</a></li>)}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

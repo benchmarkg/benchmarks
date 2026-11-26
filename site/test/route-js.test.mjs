@@ -5,7 +5,8 @@
 //
 // A route's JavaScript is every script its page names or preloads, every island's component and renderer, the chunks
 // those import (statically, or by a literal dynamic import) and its inline scripts; data blocks are not JavaScript, a
-// missing chunk fails rather than measuring less, and a path size-limit would read as a glob is refused.
+// missing chunk fails rather than measuring less, and a path size-limit would read as a glob is refused. The pre-paint
+// line is named apart (P2-S8-T01), and a page may carry one.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -41,8 +42,9 @@ test('a page: its scripts, preloads and island, their imports transitively, and 
     '_astro/unused.js': 'export const u=1',
   });
   try {
-    const { page, external, inline } = routeScripts(dist, '/');
+    const { page, external, inline, prepaint } = routeScripts(dist, '/');
     assert.equal(page, pagePath(dist, '/'));
+    assert.equal(prepaint, 'var t=1;', 'the pre-paint line is named apart, and is still one of the inline scripts');
     assert.deepEqual(names(dist, external),
       ['_astro/Panel.js', '_astro/client.js', '_astro/deep.js', '_astro/lazy.js', '_astro/pre.js', '_astro/react.js', '_astro/theme.js', '_astro/toggle.js']);
     assert.deepEqual(inline, ['var t=1;'], 'the JSON-LD block and the blank script are not JavaScript the page runs');
@@ -56,10 +58,12 @@ test('a nested route, a page with no script at all, and the failures', () => {
     'atlas/index.html': '<script src="/_astro/gone.js"></script>',
     'api/index.html': '<main>static</main>',
     'bad/index.html': '<script src="/_astro/a.js"></script>',
+    'twice/index.html': '<script data-prepaint>var a;</script><script data-prepaint>var b;</script>',
     '_astro/a.js': 'import"./missing.js"',
   });
   try {
-    assert.deepEqual(routeScripts(dist, '/api/'), { page: pagePath(dist, '/api/'), external: [], inline: [] });
+    assert.deepEqual(routeScripts(dist, '/api/'), { page: pagePath(dist, '/api/'), external: [], inline: [], prepaint: null });
+    assert.throws(() => routeScripts(dist, '/twice/'), /two pre-paint scripts; 09 S9 allows one/);
     assert.throws(() => routeScripts(dist, '/atlas/'), /names \/_astro\/gone\.js, which is not in/);
     assert.throws(() => routeScripts(dist, '/bad/'), /imports \.\/missing\.js, which is not in/);
     assert.throws(() => routeScripts(dist, '/nowhere/'), /is missing: build the site first/);
