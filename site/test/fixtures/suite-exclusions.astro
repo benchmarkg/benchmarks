@@ -1,0 +1,30 @@
+---
+// site/test/fixtures/suite-exclusions.astro -- P6-S4-T03. The page tests/suite-exclusions.spec.ts drives for the ledger's
+// pair: islands/SuiteBuilder.tsx, as pages/suite/index.astro mounts it, over the synthetic records of
+// suite-exclusions.json rather than the index, because no entry of the index is deprecated today. The fact table is
+// islands/suite/exclusions.ts factTable() over those records, the call the real page makes over the real ones, and the
+// filter pane's rows are the same records as facets.json rows, handed to the island as a data: URL so that no file is
+// added to /data/. Routed at /_fixtures/suite-exclusions only when UAIBI_SITE_FIXTURES names it (astro.config.mjs),
+// never in a normal build.
+import Base from '../../src/layouts/Base.astro';
+import SuiteBuilder from '../../src/islands/SuiteBuilder.tsx';
+import { factTable } from '../../src/islands/suite/exclusions';
+import { FACETS_FORMAT, railGroups, type FacetRow } from '../../src/lib/browse-view';
+import { allTerms } from '../../src/lib/terms';
+import fixture from './suite-exclusions.json';
+
+const groups = railGroups(allTerms()).map((g) => ({ ...g, terms: g.terms.map((t) => ({ ...t, gloss: '' })) }));
+const rows: FacetRow[] = fixture.entries.map((e) => ({
+  id: e.id, slug: e.id, name: e.name, aliases: [], editions: [], domain: e.domain.primary.split('/')[0], subdomain: e.domain.primary,
+  facets: { lifecycle: e.lifecycle != null ? [e.lifecycle] : [] }, year: null, lifecycle: e.lifecycle ?? '', verification_max: null,
+  condition_completeness_max: null, claim_count: 0, headroom: null,
+}));
+const facetsHref = `data:application/json,${encodeURIComponent(JSON.stringify({ artifact: 'facets', format: FACETS_FORMAT, benchmarks: rows }))}`;
+const facts = factTable(fixture.entries);
+---
+<Base title="Suite exclusions fixture">
+  <main class="suite">
+    <h1>Suite exclusions fixture</h1>
+    <SuiteBuilder client:load facetsHref={facetsHref} groups={groups} facts={facts} commit="fixture" />
+  </main>
+</Base>

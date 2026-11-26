@@ -15,6 +15,7 @@ const FIXTURES = {
   theme: './test/fixtures/theme.astro',
   components: './test/fixtures/components.astro',
   provenance: './test/fixtures/provenance.astro',
+  'suite-exclusions': './test/fixtures/suite-exclusions.astro',
 };
 
 function fixturePages(name) {

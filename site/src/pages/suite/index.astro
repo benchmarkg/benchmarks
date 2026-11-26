@@ -10,6 +10,9 @@
 //                so the page reads and writes the same filter grammar as /benchmarks/ and /atlas/
 //   commit       the commit this build read the index at (lib/release.ts, as every page footer prints it), which the
 //                manifest section names as what an exported suite.yaml pins
+//   facts        the hard exclusion rules' fact table (P6-S4-T03, islands/suite/exclusions.ts factTable): read here from
+//                the full records, which facets.json does not carry (the licence texts, lineage.superseded_by, the
+//                contamination evidence), and only the entries a rule can fire on or whose licence it cannot read
 //
 // The island's children are the directory: every benchmark this build renders a page for, under its domain family in
 // the taxonomy's order, each family counted and none left out, an empty one included (10 V10: omitting a family "would
@@ -21,6 +24,7 @@
 // data-pagefind-ignore, because every benchmark the directory names has its own record (the Atlas's reason).
 import Base from '../../layouts/Base.astro';
 import SuiteBuilder from '../../islands/SuiteBuilder.tsx';
+import { factTable } from '../../islands/suite/exclusions';
 import { benchmarks } from '../../lib/collections';
 import { railGroups } from '../../lib/browse-view';
 import { dataHref } from '../../lib/manifest';
@@ -30,7 +34,9 @@ import { allTerms } from '../../lib/terms';
 const groups = railGroups(allTerms()).map((g) => ({ ...g, terms: g.terms.map((t) => ({ ...t, gloss: '' })) }));
 const facetsHref = dataHref('facets.json');
 const commit = release().commit_sha.slice(0, 12);
-const all = (await benchmarks()).map((b) => ({ id: b.id, name: b.name, family: b.domain.primary.split('/')[0] }))
+const records = await benchmarks();
+const facts = factTable(records);
+const all = records.map((b) => ({ id: b.id, name: b.name, family: b.domain.primary.split('/')[0] }))
   .sort((a, b) => a.name.localeCompare(b.name, 'en') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 const families = groups.find((g) => g.key === 'd')!.terms.filter((t) => t.parent == null)
   .map((f) => ({ id: f.id, label: f.label, entries: all.filter((b) => b.family === f.id) }));
@@ -42,7 +48,7 @@ const families = groups.find((g) => g.key === 'd')!.terms.filter((t) => t.parent
       <p class="lede">Put together a set of existing benchmarks for the system you are evaluating. The basket is your working selection: it lives in this page's address, so its link reopens it anywhere, and it changes as you edit it. It is not a citable object; the suite manifest a basket exports is.</p>
     </header>
     <div data-pagefind-ignore="all">
-      <SuiteBuilder client:load facetsHref={facetsHref} groups={groups} commit={commit}>
+      <SuiteBuilder client:load facetsHref={facetsHref} groups={groups} facts={facts} commit={commit}>
         <div class="directory" data-suite-directory>
           <p class="hint">Every benchmark in this build, by domain family, each linking its page.</p>
           <ul class="families">
@@ -153,6 +159,18 @@ const families = groups.find((g) => g.key === 'd')!.terms.filter((t) => t.parent
   .suite :global(.link-row) { display: flex; gap: var(--sp-2); }
   .suite :global(.link input) { flex: 1; max-inline-size: none; min-inline-size: 0; padding-inline: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-xs); }
   .suite :global(.panel) { display: grid; gap: var(--sp-1); padding-block-start: var(--sp-2); border-block-start: 1px solid var(--c-border); }
+
+  /* the Excluded panel's list (P6-S4-T03), and the tag on a basket entry the hard rules leave out of the suite */
+  .suite :global(.excluded) { display: grid; gap: var(--sp-1); margin: 0; padding-inline-start: var(--sp-6); }
+  .suite :global(.excluded li) { overflow-wrap: anywhere; }
+  .suite :global(.tag) {
+    padding: 0 var(--sp-1);
+    border: 1px solid var(--c-caution);
+    border-radius: 3px;
+    background: var(--c-caution-bg);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+  }
 
   /* the directory, as sent: the families in the taxonomy's order, each with its count and its benchmarks */
   .suite :global(.directory) { display: grid; gap: var(--sp-2); }
