@@ -66,16 +66,41 @@ schema/croissant_benchmark.py, as tests/test_crosswalks.py holds its `rows` to s
 A Task node carries Benchmark.task and the admissibility fields 15 A8 files under cb:Task; a Metric node is one of
 the benchmark's metrics (the headline first, then `metrics` in order) joined to the published Metric, or, for a
 benchmark that records its scoring as named notes rather than Metric ids (CASP), the note's name; a Protocol node
-gathers the submission process, the data access class and the aggregation policy; an EvalConditions node the
-reference conditions and the comparability profile; a Lineage node the role and the supersession, subset, extension,
+gathers the submission process, the data access class, the aggregation policy and the subsets; an EvalConditions node
+the reference conditions, the comparability profile, the material set, the rating-pool flag and the reference record's
+condition values (below); a Lineage node the role and the supersession, subset, extension,
 decontamination, variant and fork edges, each to a benchmark id. A null, an empty list and a node with nothing in it
 are left out rather than written; `false` is written. 15 A8 leaves ResultClaim and Baseline unmapped on purpose, and
 the YAML's `unmapped` lists those and the rest with their reasons.
 
-P4-S6-T02 mapped every material field (ADR-0030): the benchmark's versions and subsets, its resolved material set and
-rating-pool rule, and one cb:EvalConditions term per condition field. The documents written here do not carry those
-yet -- emitting them from the mapping is P4-S6-T03's -- but every document's context declares them, and the schema
-the documents are validated against accepts them.
+P4-S6-T02 mapped every material field (ADR-0030), and P4-S6-T03 emits them, each from the committed mapping:
+
+  benchmarkVersions  each of the record's versions by its tag, and Protocol's `subsets` each subset by its id: the
+                     values a claim's benchmark_version and subset name (MATERIAL_KEY)
+  materialFields     the benchmark's resolved material set (tools/build/comparability.py's resolve_profile: the
+                     profiles its facets hit, or its pinned one, plus material_extra, less material_waived), in the
+                     key's order, each field as the condition terms that carry it (terms_for; `sampling` is three). A
+                     material field no term carries refuses the build: the set would be published short
+  ratingPoolRequired the comparability block's flag, written when false too
+  condition terms    the reference conditions record's value for each term in CONDITION_TERMS, walked along the
+                     term's own path in TERMS (`EvalConditions.sampling.top_p` -> samplingTopP), so a term added to
+                     the mapping is emitted with no change here. A null is left out; an answered empty list
+                     (`tools_allowed: []`, no tools) is a value and is kept. A reference no conditions record answers
+                     refuses the build
+
+The conditions records are artifacts.Build.conditions, the ones the loader read that pass tier 1, held by one file
+each; corpus.json carries none (08 S4.2), so the records reach the documents only through the build. TERMS is the
+mapping's `extension.terms` by test (tests/build/test_croissant.py), and `documents()` holds the two equal at every
+build as well, so a document is never emitted through a mapping the committed YAML does not state.
+
+Release artifacts, not page assets (08 S5.8). The documents are S9's: never under the hashed /data/ namespace or in
+the manifest's `paths`, and --data-only writes none. The site reads them as written (site/src/lib/croissant.ts) to
+inline on the detail page and to serve as cite.jsonld, so the page's JSON-LD and the release's documents are one
+emission. `release_payload()` is their part of a tagged release's payload (05 S10; docs/releasing.md), after the
+file-count assertion, `count_problems()`: the directory holds exactly one document per published benchmark and the
+collection. tools/build/manifest.py asserts it when it records the directory in build-manifest.json's `documents`, and
+S13 asserts it again from the manifest's own counts. Assembling the rest of the release (data.tar.gz, corpus.csv.zip,
+index.sqlite's hash) is P4-S7-T01's.
 
 Validation, inside the build, so CI's `bench build` step enforces it (08 S5.8, "Validation in CI"). `check()` holds
 every document to two things, and the build writes nothing if one fails:
@@ -116,13 +141,15 @@ from schema.benchmark import CROISSANT_TERMS, Benchmark  # noqa: E402
 # The extension's vocabulary and models, which P4-S6-T02 moved to schema/ (ADR-0030). Imported by name, so TERMS here
 # is the same dict as there; the classes, REUSES and models are read through this module by its callers and tests.
 from schema.croissant_benchmark import (  # noqa: E402,F401
-    CLASSES, CROISSANT_VERSION, DATA_LICENCE, DRAFT, EXTENSION_VERSION, NAMESPACE, NS_HOST, PREFIX, REUSES, SCHEMA,
-    SCHEMA_ORG, TERMS, BenchmarkDocument, CollectionDocument, ConditionsNode, LineageNode, MetricNode, ProtocolNode,
-    TaskNode, json_schema)
+    CLASSES, CONDITION_TERMS, CROISSANT_VERSION, DATA_LICENCE, DRAFT, EXTENSION_VERSION, NAMESPACE, NS_HOST, PREFIX,
+    REUSES, SCHEMA, SCHEMA_ORG, TERMS, BenchmarkDocument, CollectionDocument, ConditionsNode, LineageNode, MetricNode,
+    ProtocolNode, TaskNode, json_schema, terms_for)
+from tools.build import comparability  # noqa: E402
 from tools.build.emit import Refused, by_id, fold, nfc, serialise  # noqa: E402
 
 DIR = 'croissant-benchmark'                                     # under the build's --out
 COLLECTION = '_collection.jsonld'
+MAPPING = 'taxonomy/crosswalks/croissant.yaml'                  # the committed mapping; `extension.terms` is TERMS
 CONTEXT = 'site/public/ns/croissant-benchmark/v1/context.jsonld'          # the published context (P4-S6-T01)
 CONTEXT_URL = 'https://%s/ns/croissant-benchmark/v1/context.jsonld' % NS_HOST   # where the site serves CONTEXT
 CONTEXT_CACHE = 'public, max-age=604800'        # site/public/_headers' /ns/* rule, a week; it says why not immutable
@@ -207,12 +234,45 @@ def metric_nodes(b: dict, metrics: dict[str, dict]) -> list[dict]:
 def protocol_node(b: dict) -> dict:
     sub = b['governance']['submission_process']
     return {'@type': 'cb:Protocol', 'submissionProcess': sub if isinstance(sub, list) else [] if sub is None else [sub],
-            'dataAccess': b['data']['access'], 'aggregationPolicy': b['aggregation_policy']}
+            'dataAccess': b['data']['access'], 'aggregationPolicy': b['aggregation_policy'],
+            'subsets': [s['id'] for s in b['subsets']]}
 
 
-def conditions_node(b: dict) -> dict:
+def material_terms(model: Benchmark, profiles) -> list[str]:
+    """The benchmark's resolved material set as condition terms, in the key's order (sorted fields); raises Refused for
+    a material field no term carries, since materialFields would then name less than the key is built over."""
+    try:
+        material = comparability.resolve_profile(model, profiles).material
+    except ValueError as e:                    # a material_extra or waiver naming no EvalConditions field
+        raise Refused(['%s.jsonld: %s' % (model.id, e)])
+    unmapped = [f for f in material if not terms_for(f)]
+    if unmapped:
+        raise Refused(['%s.jsonld: material field(s) %s carry no extension term (%s lists them unmapped), so '
+                       'materialFields cannot name the set the comparability key is built over; map them'
+                       % (model.id, ', '.join(unmapped), MAPPING)])
+    return [t for f in material for t in terms_for(f)]
+
+
+def condition_values(record: dict) -> dict:
+    """term -> the conditions record's value, for every condition term, walked along the term's path in TERMS; a null
+    is left out, and an answered empty list is kept (the caller adds these after _prune, which would drop it)."""
+    out = {}
+    for term in CONDITION_TERMS:
+        v = record
+        for seg in TERMS[term][1].split('.')[1:]:
+            v = v[seg] if isinstance(v, dict) else None        # a null `sampling` answers none of its keys
+        if v is not None:
+            out[term] = v
+    return out
+
+
+def conditions_node(b: dict, material: list[str]) -> dict:
+    """The reference, the profile, the material set and the rating-pool flag; the reference record's values are
+    condition_values', added by benchmark_document."""
+    comp = b['comparability']
     return {'@type': 'cb:EvalConditions', 'conditionsId': b['reference_conditions'],
-            'comparabilityProfile': b['comparability']['profile']}
+            'comparabilityProfile': comp['profile'], 'materialFields': material,
+            'ratingPoolRequired': comp['rating_pool_required']}
 
 
 def lineage_node(b: dict) -> dict | None:
@@ -225,15 +285,29 @@ def lineage_node(b: dict) -> dict | None:
             'forks': [f['id'] for f in L['forks']]}
 
 
-def benchmark_document(b: dict, metrics: dict[str, dict], ctx: dict) -> dict:
-    """One corpus.json benchmark record's document."""
+def benchmark_document(b: dict, metrics: dict[str, dict], ctx: dict, conditions: dict[str, dict] | None = None,
+                       profiles=None) -> dict:
+    """One corpus.json benchmark record's document. `conditions` is the build's conditions records by id
+    (artifacts.Build.conditions), `profiles` taxonomy/comparability-profiles.yaml as loaded (read when not given).
+    Raises Refused for a reference no record answers or a material field no term carries."""
     model = Benchmark.model_validate(b)        # the computed licence (ADR-0024), which corpus.json leaves out
+    ref, record = b['reference_conditions'], None
+    if ref is not None:
+        record = (conditions or {}).get(ref)
+        if record is None:
+            raise Refused(['%s.jsonld: reference_conditions %s has no conditions record in this build (no file under '
+                           'data/conditions/ that passes tier 1 holds it alone)' % (b['id'], ref)])
+    material = material_terms(model, profiles or comparability.load_profiles())
     doc = {'@context': ctx, '@type': ['sc:Dataset', 'cb:Benchmark'], 'conformsTo': [CROISSANT_VERSION, EXTENSION_VERSION]}
     for field, term in CROISSANT_TERMS.items():
         doc[term.split(':', 1)[1]] = model.license if field == 'license' else b[field]
-    doc.update({'benchmarkId': b['id'], 'tasks': [task_node(b)], 'metrics': metric_nodes(b, metrics),
-                'protocol': protocol_node(b), 'conditions': conditions_node(b), 'lineage': lineage_node(b)})
-    return nfc(_prune(doc))
+    doc.update({'benchmarkId': b['id'], 'benchmarkVersions': [v['version'] for v in b['versions']],
+                'tasks': [task_node(b)], 'metrics': metric_nodes(b, metrics), 'protocol': protocol_node(b),
+                'conditions': conditions_node(b, material), 'lineage': lineage_node(b)})
+    out = _prune(doc)
+    if record is not None:                     # after the prune, which would drop an answered empty list
+        out['conditions'].update(condition_values(record))    # never pruned: ratingPoolRequired is a bool
+    return nfc(out)
 
 
 def collection_document(benchmarks: list[dict], ctx: dict, root: str = ROOT) -> dict:
@@ -249,16 +323,78 @@ def collection_document(benchmarks: list[dict], ctx: dict, root: str = ROOT) -> 
     return nfc(doc)
 
 
-def documents(corpus: dict, withheld: dict[str, dict] | None = None) -> tuple[dict[str, dict], dict[str, dict]]:
+def mapping_problems(root: str = ROOT) -> list[str]:
+    """The committed mapping's `extension.terms` against TERMS, which the documents are emitted through: one line per
+    term the two disagree on. Empty means every document is emitted from what the YAML states."""
+    from schema.taxonomy import read_yaml
+    rows = read_yaml(os.path.join(root, MAPPING))['extension']['terms']
+    stated = {r['term']: (r['on'], r['ours']) for r in rows}
+    listed = [r['term'] for r in rows]
+    out = ['croissant: %s states term %s twice' % (MAPPING, t) for t in sorted(stated) if listed.count(t) > 1]
+    for t in sorted(set(stated) | set(TERMS)):
+        if stated.get(t) != TERMS.get(t):
+            out.append('croissant: term %s is %s in %s but %s in schema/croissant_benchmark.py; the documents are '
+                       'emitted from the committed mapping, so the two must agree'
+                       % (t, stated.get(t), MAPPING, TERMS.get(t)))
+    return out
+
+
+def documents(corpus: dict, withheld: dict[str, dict] | None = None,
+              conditions: dict[str, dict] | None = None) -> tuple[dict[str, dict], dict[str, dict]]:
     """(file name -> document for every published benchmark and the collection, file name -> document for every
-    withheld draft, which is validated and never written)."""
+    withheld draft, which is validated and never written). `conditions` is artifacts.Build.conditions. Raises Refused
+    with every benchmark's problem when one cannot be emitted from the mapping."""
+    problems = mapping_problems()
+    if problems:
+        raise Refused(problems)
     ctx = context()
+    profiles = comparability.load_profiles()
     metrics = {m['id']: m for m in corpus['entities']['metric']}
     published = corpus['entities']['benchmark']
-    docs = {'%s.jsonld' % b['id']: benchmark_document(b, metrics, ctx) for b in by_id(published)}
+    docs, held, errors = {}, {}, []
+    for target, records in ((docs, by_id(published)), (held, by_id((withheld or {}).values()))):
+        for b in records:
+            try:
+                target['%s.jsonld' % b['id']] = benchmark_document(b, metrics, ctx, conditions, profiles)
+            except Refused as e:
+                errors += e.errors
+    if errors:
+        raise Refused(errors)
     docs[COLLECTION] = collection_document(published, ctx)
-    held = {'%s.jsonld' % b['id']: benchmark_document(b, metrics, ctx) for b in by_id((withheld or {}).values())}
     return docs, held
+
+
+# ---- the release payload and the file-count assertion -------------------------------------------------------------
+
+def names(corpus: dict) -> list[str]:
+    """The file names one build writes into DIR for `corpus`: one document per published benchmark, and the
+    collection, in byte order."""
+    return sorted(['%s.jsonld' % b['id'] for b in corpus['entities']['benchmark']] + [COLLECTION],
+                  key=lambda n: n.encode('utf-8'))
+
+
+def count_problems(folder: str, corpus: dict) -> list[str]:
+    """The file-count assertion: `folder` holds exactly one document per benchmark `corpus` publishes and the
+    collection, and nothing else. One line per way it does not; empty means it holds."""
+    want = names(corpus)
+    have = sorted(os.listdir(folder), key=lambda n: n.encode('utf-8')) if os.path.isdir(folder) else []
+    if have == want:
+        return []
+    out = ['%s: %d file(s), but the corpus publishes %d benchmark(s), so %d: one document each and the collection'
+           % (folder, len(have), len(want) - 1, len(want))]
+    out += ['%s: no %s, which the build emits' % (folder, n) for n in sorted(set(want) - set(have))]
+    out += ['%s: %s is not a document this build emits' % (folder, n) for n in sorted(set(have) - set(want))]
+    return out
+
+
+def release_payload(folder: str, corpus: dict) -> list[str]:
+    """The documents' part of a tagged release's payload (05 S10, docs/releasing.md): each as its path under --out,
+    `croissant-benchmark/<name>`, in byte order. Raises Refused unless the file-count assertion holds, so a release
+    never carries a stale, missing or stray document."""
+    problems = count_problems(folder, corpus)
+    if problems:
+        raise Refused(problems)
+    return ['%s/%s' % (DIR, n) for n in names(corpus)]
 
 
 # ---- validation -----------------------------------------------------------------------------------------------
@@ -316,11 +452,13 @@ def check(docs: dict[str, dict], root: str = ROOT) -> tuple[list[str], int]:
     return out, notices
 
 
-def build(corpus: dict, withheld: dict[str, dict] | None = None, root: str = ROOT) -> tuple[dict[str, dict], list[str], dict]:
+def build(corpus: dict, withheld: dict[str, dict] | None = None, root: str = ROOT,
+          conditions: dict[str, dict] | None = None) -> tuple[dict[str, dict], list[str], dict]:
     """(the documents to write, every problem, a summary) for one build: the published benchmarks' documents and the
-    collection, and the withheld drafts' documents, all validated."""
+    collection, and the withheld drafts' documents, all validated. `conditions` is artifacts.Build.conditions, which
+    a benchmark's reference conditions are read from."""
     try:
-        docs, held = documents(corpus, withheld)
+        docs, held = documents(corpus, withheld, conditions)
         problems, notices = check({**held, **docs}, root)
     except Refused as e:
         return {}, e.errors, {}

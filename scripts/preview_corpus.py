@@ -51,7 +51,7 @@ def main(argv=None) -> int:
     if result.errors:
         print('preview_corpus: %d error(s); nothing written' % len(result.errors), file=sys.stderr)
         return 1
-    documents, problems, summary = croissant.build(result.corpus, result.withheld)
+    documents, problems, summary = croissant.build(result.corpus, result.withheld, conditions=result.conditions)
     for e in problems:
         print('error  %s' % e, file=sys.stderr)
     if problems:

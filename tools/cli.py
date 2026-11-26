@@ -236,7 +236,7 @@ def build_cmd(
     # schema change that breaks either fails this build, which is CI's build step
     from tools.build import croissant
     if not data_only:                                   # S9, which --data-only skips (P2-S1-T04)
-        documents, problems, summary = croissant.build(result.corpus, result.withheld)
+        documents, problems, summary = croissant.build(result.corpus, result.withheld, conditions=result.conditions)
         for e in problems:
             typer.echo('error  %s' % e, err=True)
         if problems:

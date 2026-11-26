@@ -25,7 +25,11 @@ second concept DOI and marking this record as superseded; decide that in an ADR,
 2. On Zenodo, open the record above and choose **New version**. Do not create a new upload: a new
    upload gets a new concept DOI.
 3. Replace the file with the release's source zip (and the release's `data.tar.gz`, once
-   05 §10's release artifacts exist).
+   05 §10's release artifacts exist). The release's payload also carries the croissant-benchmark
+   JSON-LD that `uv run bench build` writes at the tag into `build/croissant-benchmark/`: one
+   document per published benchmark and `_collection.jsonld` (08 §5.8). `bench build` refuses to
+   record a directory that holds any other set (`tools/build/croissant.py` `release_payload`), and
+   P4-S7-T01 assembles it with the rest of the release.
 4. Set **Version** to the tag, exactly (`vX.Y.Z`), and **Publication date** to the release date.
 5. Check that the metadata carried over from the last version:
    - Title: The Universal AI Benchmark Index

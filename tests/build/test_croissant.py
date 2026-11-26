@@ -49,7 +49,7 @@ def fixture_build():
 
 @pytest.fixture(scope='module')
 def built(fixture_build):
-    docs, problems, summary = croissant.build(fixture_build.corpus)
+    docs, problems, summary = croissant.build(fixture_build.corpus, conditions=fixture_build.conditions)
     assert problems == [], problems
     return docs, summary
 
@@ -111,8 +111,8 @@ def test_a_change_that_breaks_base_conformance_fails_bench_build_and_writes_noth
     assert sorted(os.listdir(tmp_path / 'good' / croissant.DIR)) == ['_collection.jsonld', 'alpha-bench.jsonld']
     real = croissant.benchmark_document
 
-    def moved(b, metrics, ctx):
-        doc = real(b, metrics, ctx)
+    def moved(b, *rest):
+        doc = real(b, *rest)
         doc['@type'] = list(reversed(doc['@type']))
         return doc
     monkeypatch.setattr(croissant, 'benchmark_document', moved)
@@ -129,8 +129,8 @@ def test_an_unpublished_drafts_broken_document_fails_the_build_too(monkeypatch, 
         'alpha-bench']
     real = croissant.benchmark_document
 
-    def broken_beta(b, metrics, ctx):
-        doc = real(b, metrics, ctx)
+    def broken_beta(b, *rest):
+        doc = real(b, *rest)
         if b['id'] == 'beta-bench':
             doc['conformsTo'] = ['http://mlcommons.org/croissant/9.9', croissant.EXTENSION_VERSION]
         return doc
@@ -254,13 +254,13 @@ def test_metrics_are_the_headline_first_then_the_records_list_joined_to_each_met
 
 
 def test_conditions_and_lineage_nodes_are_written_only_when_they_carry_something(fixture_build, built):
+    """Every benchmark resolves a material set and states its rating-pool flag (P4-S6-T03), so each carries a conditions
+    node; tests/test_croissant_emit.py holds its values to the mapping."""
     docs, _ = built
     for bid, b in records(fixture_build).items():
         doc = docs['%s.jsonld' % bid]
-        has_conditions = b['reference_conditions'] is not None or b['comparability']['profile'] is not None
-        assert ('conditions' in doc) == has_conditions, bid
-        if has_conditions:
-            assert doc['conditions'].get('conditionsId') == b['reference_conditions']
+        assert doc['conditions']['ratingPoolRequired'] is b['comparability']['rating_pool_required'], bid
+        assert doc['conditions'].get('conditionsId') == b['reference_conditions']
         if 'lineage' in doc:
             L = b['lineage']
             assert doc['lineage'].get('variants', []) == [v['id'] for v in L['variants']]
@@ -309,7 +309,7 @@ def test_a_missing_schema_refuses_rather_than_skipping(tmp_path, built):
 
 def test_two_builds_are_byte_identical_and_a_stale_document_is_removed(fixture_build, built, tmp_path):
     docs, _ = built
-    again, problems, _ = croissant.build(fixture_build.corpus)
+    again, problems, _ = croissant.build(fixture_build.corpus, conditions=fixture_build.conditions)
     assert problems == []
     a, b = tmp_path / 'a', tmp_path / 'b'
     croissant.write(docs, str(a))

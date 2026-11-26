@@ -52,7 +52,11 @@ The manifest is 08 S6.1's block, with these decisions:
   artifacts       name -> "sha256:<64 hex>", as 08 S6.1 writes it
   paths           name -> "/data/<name>.<sha8>.json": what the HTML references and /data/latest/ redirects to
   documents       croissant-benchmark/: its tree hash and file count. The documents are served at their own stable
-                  citation URLs (/benchmarks/{id}/cite.jsonld), not under /data/, but `bench verify` diffs them (S6.3)
+                  citation URLs (/benchmarks/{id}/cite.jsonld), not under /data/, but `bench verify` diffs them (S6.3).
+                  They are S9's release artifacts (08 S5.8), the tagged release's payload carries them
+                  (croissant.release_payload, P4-S6-T03), and the count is asserted, not only recorded: `write`
+                  refuses a directory that does not hold exactly one document per benchmark corpus.json publishes and
+                  the collection, and S13's files check holds the recorded count to counts.benchmarks + 1
   counts          published entities by kind, materialised subsets, and the claims on published benchmarks (both
                   tiers, facets.json's claim_count basis), all read from the shipped artifacts themselves
   files           S13's: html, data, pagefind_fragments, index_chunks, assets, total, cap (Cloudflare's 20,000 files
@@ -85,7 +89,8 @@ CHECKS, run by S13 before anything is published, and by --check:
             not a reference: /api/ documents /data/latest/<name>.json in text, for people to type. A URL with a host
             is external, because astro.config.mjs fixes no `site`, so the site has no host of its own yet
   commit    every page footer's commit is the manifest's index_commit
-  files     the counts sum to total, total is under the cap, routes sum to html; --check also recounts dist/
+  files     the counts sum to total, total is under the cap, routes sum to html; --check also recounts dist/. And the
+            croissant-benchmark documents, where the build wrote them, number counts.benchmarks + 1
 """
 from __future__ import annotations
 
@@ -285,12 +290,26 @@ def build_half(entries: dict[str, tuple[str, dict]], documents: str | None, root
                    'schema_sha256': tree_sha256(os.path.join(ROOT, 'schema'))},
         'artifacts': {name: 'sha256:' + digest for name, (digest, _) in entries.items()},
         'paths': {name: hashed_path(name, digest) for name, (digest, _) in entries.items()},
-        'documents': ({os.path.basename(os.path.normpath(documents)): {'sha256': tree_sha256(documents),
-                                                                         'files': tree_files(documents)}}
-                      if documents and os.path.isdir(documents) else {}),
+        'documents': documents_block(documents, entries['corpus.json'][1] if 'corpus.json' in entries else None),
         'counts': counts({name: doc for name, (_, doc) in entries.items()}),
         'files': None, 'routes': None,             # S13's, once the site exists
     }
+
+
+def documents_block(documents: str | None, corpus: dict | None) -> dict:
+    """`documents`: the croissant-benchmark directory's tree hash and file count, {} when the build wrote none. With
+    the corpus it was emitted from, the count is the release payload's, after the file-count assertion; a directory
+    that fails it raises ManifestError, so no manifest records a stale, missing or stray document."""
+    if not documents or not os.path.isdir(documents):
+        return {}
+    files = tree_files(documents)
+    if corpus is not None:
+        from tools.build import croissant
+        try:
+            files = len(croissant.release_payload(documents, corpus))
+        except emit.Refused as e:
+            raise ManifestError('croissant-benchmark: the file-count assertion fails: %s' % '; '.join(e.errors))
+    return {os.path.basename(os.path.normpath(documents)): {'sha256': tree_sha256(documents), 'files': files}}
 
 
 # ---- S13: the site ------------------------------------------------------------------------------
@@ -535,6 +554,11 @@ def check_files(manifest: dict) -> list[str]:
         out.append('files: %d files, over the %d-file cap per version (08 S7.5)' % (files['total'], files['cap']))
     if sum(routes.values()) != files['html']:
         out.append('routes: %d pages by family, but files.html is %d' % (sum(routes.values()), files['html']))
+    docs = (manifest.get('documents') or {}).get('croissant-benchmark')     # a --data-only build wrote none
+    benchmarks = (manifest.get('counts') or {}).get('benchmarks')
+    if docs is not None and benchmarks is not None and docs['files'] != benchmarks + 1:
+        out.append('documents: croissant-benchmark holds %d file(s), but the build published %d benchmark(s), so %d: '
+                   'one document each and the collection (08 S5.8)' % (docs['files'], benchmarks, benchmarks + 1))
     return out
 
 
