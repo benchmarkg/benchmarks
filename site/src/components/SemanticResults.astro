@@ -1,0 +1,65 @@
+---
+// site/src/components/SemanticResults.astro -- P6-S1-T09 (10 V11 "Search: three tiers", the ordering rule; 11 F0
+// "Made visible", S4 "First-query latency"; 09 S6.11, S11.5). The semantic results on a page with the search box
+// (islands/SearchBox.tsx), as a block of their own: placed after <SearchBox client:load /> on /search/, the one page
+// that has the box (pages/search.astro).
+//
+// 11 F0: "the two result sets are rendered as separate, labelled blocks, not fused into one mystery list". The box
+// renders both, inside its results region: the lexical answer under its own heading, and, after it, this tier's block
+// under islands/search/semantic.ts SEMANTIC_HEADING, 10 V11's "related benchmarks you did not type the words for", with
+// one line saying how they were found. Two lists, each in a <section> named by its visible heading; the semantic one
+// holds only what the lexical list does not show, and the lexical list is never reordered or moved by it.
+//
+// Absent, not empty, until the tier is ready (11 S4 item 3: "the semantic block appends itself when ready"). Nothing of
+// the block is sent by the server, and the box has no semantic tier until the loader (islands/search/loader.ts) has the
+// stack: only then does this component's script add it (addLaterTier()), and the box asks it the question on screen at
+// once, so the block appends to the answer already up rather than waiting for the next keystroke. Even then the box
+// renders the block only once the tier has answered the query Pagefind has answered, and only when it has a row to show:
+// a pending tier, a tier with nothing new, or a query with no word the encoder holds shows no block at all. 09 S6.11's
+// skeleton would be a box present before the tier is ready, so there is none.
+//
+// What the server sends. The empty, hidden [data-semantic-tier] element is the tier's configuration, as P6-S1-T06 put it
+// on the search page: data-index-commit, the commit the loader's IndexedDB cache is keyed on -- release()'s, the one the
+// footer prints and S13 holds to build-manifest.json's index_commit -- and data-vectors, `shipped` when this build
+// publishes the document vectors at /embed/ (lib/vectors.ts, pages/embed/[file].ts) and `none` otherwise. In a build
+// that ships them it also holds the entry table the block links its rows by, [id, name] for every benchmark whose page
+// the build rendered (semantic.ts entryTable()), since vectors.meta.json names a row by its id alone. A build without
+// them -- every build today: the draft preview runs no S6, and CI's `bench build` has no --embed -- still loads the
+// encoder, has nothing to rank, and so never shows the block. Without JavaScript the element is inert.
+//
+// A load that fails is mirrored on the element (data-state, data-failure) by the loader. In a build that ships the
+// vectors the box is then given a tier that answers every question with the failure, which it shows as its one-line
+// notice under the lexical results, unchanged (09 S11.5); in a build without them there was no block to lose.
+import { benchmarks } from '../lib/collections';
+import { benchRoutes, rendered } from '../lib/bench-routes';
+import { release } from '../lib/release';
+import { VECTORS_BASE, VECTOR_FILES, shippedVectors } from '../lib/vectors';
+import { entriesJson, entryTable } from '../islands/search/semantic';
+
+const listed = benchRoutes();
+const vectors = shippedVectors() != null && VECTOR_FILES.every((f) => rendered(`${VECTORS_BASE}${f}`, listed));
+const table = vectors ? entryTable(await benchmarks(), (url) => rendered(url, listed)) : null;
+---
+<div hidden data-semantic-tier data-index-commit={release().commit_sha} data-vectors={vectors ? 'shipped' : 'none'}>{table != null && <script is:inline type="application/json" data-semantic-entries set:html={entriesJson(table)} />}</div>
+
+<script>
+  import { addLaterTier, lexicalReady } from '../islands/SearchBox.tsx';
+  import { mountSemanticTier } from '../islands/search/loader.ts';
+  import { readEntries, semanticTier, unavailableTier } from '../islands/search/semantic.ts';
+
+  const el = document.querySelector<HTMLElement>('[data-semantic-tier]');
+  if (el != null) {
+    const shipped = el.dataset.vectors === 'shipped';
+    const unavailable = (e: unknown) => {
+      if (shipped) addLaterTier(unavailableTier(e instanceof Error ? e.message : String(e)));
+    };
+    mountSemanticTier(el, lexicalReady())
+      .then((stack) => semanticTier(stack, readEntries(el.querySelector('[data-semantic-entries]')?.textContent)), (e: unknown) => {
+        unavailable(e);
+        return null;
+      })
+      .then((tier) => {
+        if (tier != null) addLaterTier(tier);
+      }, unavailable);
+  }
+</script>

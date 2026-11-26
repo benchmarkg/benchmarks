@@ -8,9 +8,9 @@
 // residual. And the document vectors, vectors.meta.json and vectors.i8.bin, which `bench build --embed` writes beside
 // the corpus (tools/build/embed.py) and the site publishes at /embed/ when the build has them (pages/embed/[file].ts,
 // lib/vectors.ts, which also holds them to the facets.json beside them, since this page loads no facets.json). The
-// search page says which builds did (pages/search.astro, data-vectors). A build without them -- the draft preview, whose
-// scripts/preview_corpus.py runs no S6 -- still loads the encoder, so loading and caching are the same in every build;
-// its stack's `vectors` is null and the tier has nothing to rank.
+// search page says which builds did (components/SemanticResults.astro, data-vectors). A build without them -- the
+// draft preview, whose scripts/preview_corpus.py runs no S6 -- still loads the encoder, so loading and caching are the
+// same in every build; its stack's `vectors` is null and the tier has nothing to rank.
 //
 // When (11 S4 item 1: "after first paint and after Pagefind is interactive, inside a requestIdleCallback, never as part
 // of page load"). startSemanticTier() waits for three things in turn: a painted frame (a task queued from a
@@ -50,8 +50,8 @@
 //
 // The module imports nothing at load but types: the encoder (and with it @huggingface/tokenizers) and cosine.ts are
 // dynamic imports made once the load starts, so none of it is on the page's critical path either. What this module does
-// not do: encode a query or rank (encoder.ts, cosine.ts, fusion.ts), render the semantic block (P6-S1-T09), or measure
-// the four cold-start numbers (P6-S1-T07).
+// not do: encode a query or rank (encoder.ts, cosine.ts, fusion.ts), render the semantic block (semantic.ts and
+// SearchBox.tsx, P6-S1-T09), or measure the four cold-start numbers (P6-S1-T07).
 import type { EncoderMeta, QueryEncoder } from './encoder.ts';
 import type { Matrix, VectorsMeta } from './cosine.ts';
 
@@ -74,7 +74,7 @@ export const IDLE_TIMEOUT_MS = 2000;
 
 const COMMIT = /^[0-9a-f]{40}$/;
 
-/** What the page tells the loader (pages/search.astro, on its [data-semantic-tier] element). */
+/** What the page tells the loader (components/SemanticResults.astro, on its [data-semantic-tier] element). */
 export interface SemanticConfig {
   commit: string;              // the index commit SHA: the cache key
   vectors: boolean;            // whether this build ships the document vectors
@@ -361,8 +361,8 @@ export function startSemanticTier(
 /** The tier, once started: the promise its search() awaits (P6-S1-T09). null on a page that has not started it. */
 export const semanticStack = (): Promise<SemanticStack> | null => started;
 
-/** Starts the tier from the page's [data-semantic-tier] element (pages/search.astro), which carries the config as
- *  data-index-commit and data-vectors, and mirrors the state onto it: data-state, data-source once ready, and
+/** Starts the tier from the page's [data-semantic-tier] element (components/SemanticResults.astro), which carries the
+ *  config as data-index-commit and data-vectors, and mirrors the state onto it: data-state, data-source once ready, and
  *  data-failure, the reason, if it fails. */
 export function mountSemanticTier(el: HTMLElement, after: Promise<unknown>): Promise<SemanticStack> {
   const config: SemanticConfig = { commit: el.dataset.indexCommit ?? '', vectors: el.dataset.vectors === 'shipped' };

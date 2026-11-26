@@ -6,11 +6,12 @@
 //
 // Done when: "A first lexical result appears on keystroke and the JS-disabled search route is a usable route into the
 // catalogue rather than a dead box." The failure the verification names is 10 V11's: "A search box that feels slow
-// because it is waiting for the clever tier." No slower tier exists yet (the semantic one is P6-S1's), so this spec adds
-// one through the island's seam (islands/SearchBox.tsx addLaterTier), importing the island's own module by the URL its
-// <astro-island> names, which is the instance the page hydrated, and holds it: a first lexical result must appear while
-// it is held, and once released its block is appended after the lexical list, which it neither reorders nor repeats. A
-// tier that fails leaves the lexical results as they were, and a Pagefind bundle that cannot load leaves the directory.
+// because it is waiting for the clever tier." The draft preview has no slower tier (the semantic one needs document
+// vectors it does not ship; tests/semantic-results.spec.ts serves them), so this spec adds one through the island's seam
+// (islands/SearchBox.tsx addLaterTier), importing the island's own module by the URL its <astro-island> names, which is
+// the instance the page hydrated, and holds it: a first lexical result must appear while it is held, and once released
+// its block is appended after the lexical list, which it neither reorders nor repeats. A tier that fails leaves the
+// lexical results as they were, and a Pagefind bundle that cannot load leaves the directory.
 //
 // The JavaScript-off checks open their own context with JavaScript disabled, as tests/browse.spec.ts does, so the spec
 // runs whole in the `js` project. Every expectation is computed from what the server serves: the query is a benchmark
@@ -176,7 +177,7 @@ test('the failure to avoid: a first result never waits on a slower tier, which a
   ]);
   const block = page.locator('[data-tier="held"]');
   await expect(block).toBeVisible();
-  await expect(block.locator('h3')).toHaveText('Found by the test tier');
+  await expect(block.locator('h2')).toHaveText('Found by the test tier');
   await expect(block.locator('li')).toHaveCount(1);
   await expect(block.locator(`li[data-url="${url(other)}"] a`)).toHaveText(other.name);
   await expect(results(page)).not.toHaveAttribute('data-later-pending', /./);
