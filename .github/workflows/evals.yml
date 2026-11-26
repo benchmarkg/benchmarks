@@ -1,0 +1,103 @@
+# .github/workflows/evals.yml -- P6-S3-T09
+#
+# 11-ai-features.md S7 "Grading and cadence": the AI layer's golden set (evals/golden/), pooled, graded and published as
+# evals/results/<date>-<commit>.json by `bench eval` (tools/evals/). 05 S9 lists this workflow with the trigger "On
+# prompt/model/schema/index change".
+#
+# THE MAINTAINER KEEPS THIS WORKFLOW DISABLED UNTIL AN ANTHROPIC API KEY EXISTS. No key exists for this project yet.
+# Without one the run is not useless -- it builds the pool a person grades and grades every labelled item against the
+# deterministic retrieval configurations -- but the model-dependent half (F1, F2, the judge) refuses, and every gold
+# label is still null (P6-S3-T08), so today a run would say that nothing can be graded and write nothing.
+#
+# Trigger: workflow_dispatch only. Never a schedule, and never pull_request or push, while a run would need a key: a
+# scheduled or per-PR run without one spends minutes to report the same refusal, and with one it would spend money on
+# every pull request. The change-triggered cadence 05 S9 and 11 S7 name -- a push to main that changes the F1 or F2
+# prompt, a model id in config/ai-models.yaml, schema/, taxonomy/, evals/golden/ or tools/evals/, or an index rebuild
+# that crosses a size threshold -- is added with the key, as a `push` trigger with those path filters; until then a
+# maintainer dispatches the run by hand.
+#
+# A run: the locked toolchain with the `embed` extra; the pinned potion-base-8M weights fetched with no token
+# (tools/build/embed.py --fetch, about 30 MB), for the dense and fused configurations; site/'s locked packages, because
+# the lexical configurations run the site's own BM25 leg (tools/evals/lexical_runs.mjs); then `bench eval --report`,
+# whose Markdown goes to the run summary. When the run graded anything it has written evals/results/<date>-<commit>.json,
+# and the last step opens a pull request adding it, which a human merges (07 S6: output is a pull request, never a
+# push); when it graded nothing there is no file and the step opens nothing. Gating a release on the results file's
+# verdicts is P6-S6-T04's (scripts/check_eval_gates.py), which adds its step here.
+#
+# Secrets: ANTHROPIC_API_KEY (absent today; tools/evals/batch.py refuses cleanly without it and never asks for one), and
+# UAIBI_BOT_PAT, the bot PAT archive-sources.yml opens its pull requests with, so pr-validate.yml runs on this one.
+#
+# Actions are pinned by commit SHA (08 S6), the SHAs pr-validate.yml and archive-sources.yml use.
+
+name: evals
+
+on:
+  workflow_dispatch:
+    inputs:
+      split:
+        description: 'The golden-set split to run'
+        type: choice
+        options: [all, nl_search, facet_translation, suite_build, abstention]
+        default: all
+      holdout:
+        description: 'Items held out as the test split, scored but never tuned on (11 S7 holds out 30); 0 for none'
+        default: '0'
+
+concurrency:
+  group: evals
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Install the pinned toolchain, with the embed extra
+        run: uv sync --locked --python 3.12 --extra embed
+
+      - name: Fetch the pinned embedding model (no token; tools/build/embed.py)
+        run: uv run --locked --python 3.12 --extra embed python -m tools.build.embed --fetch
+
+      - name: Install the site's locked packages (the lexical configurations)
+        working-directory: site
+        run: npm ci --ignore-scripts
+
+      - name: bench eval
+        shell: bash
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SPLIT: ${{ inputs.split }}
+          HOLDOUT: ${{ inputs.holdout }}
+        run: |
+          uv run --locked --python 3.12 --extra embed bench eval --split "$SPLIT" --holdout "$HOLDOUT" --report \
+            | tee "$RUNNER_TEMP/eval-report.md"
+          cat "$RUNNER_TEMP/eval-report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open the results pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.UAIBI_BOT_PAT }}
+          branch: evals/results
+          add-paths: |
+            evals/results/**
+          commit-message: 'evals: golden-set results'
+          title: 'evals: golden-set results'
+          labels: evals
+          body: |
+            A `bench eval` run (`.github/workflows/evals.yml`; 11 S7). The file under `evals/results/` names
+            its commit, the corpus, every retrieval configuration and whether it ran, the pools, the holdout,
+            the model run's status and every metric with its Wilson interval and verdict. The run's report is
+            in the workflow run's summary. Only deterministic metrics gate a release; a judge score never does.
