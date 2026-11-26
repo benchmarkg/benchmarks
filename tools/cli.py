@@ -341,6 +341,9 @@ def build_cmd(
     if line:
         typer.echo(line)
     # ---- end BENCH_ROUTES -------------------------------------------------------------------------------------------
+    # S8's claims stage (P3-S10-T03), written with the three above: the two tiers, the diff, and claims.json's budget
+    from tools.build import claims as claim_stage
+    typer.echo(claim_stage.describe(result.claims))
     counts = result.counts()
     reasons: dict[str, int] = {}
     for _, _, reason in result.excluded:

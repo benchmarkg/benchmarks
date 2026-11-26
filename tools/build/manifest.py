@@ -21,10 +21,11 @@ a cache key, not a citation: the footer says so, and permanent citation is the g
 Two halves, because 08 S3.1 hashes in S8 and writes the manifest in S13, over dist/, once the site exists:
 
   `write` (bench build, S8)  every shipped artifact the build wrote this run -- today emit.ARTIFACTS, corpus.json,
-                             facets.json and enums.json; a stage that emits another 08 S4.2 JSON artifact passes it
-                             too -- is hashed and copied to build/data/<name>.<sha8>.json, and build/build-manifest.json
-                             gets every block except the site's, `files` and `routes`, which are null. A hashed file
-                             this build does not name is removed from build/data/.
+                             facets.json and enums.json, and the claims stage's claims.json, claims-ingested/<id>.json
+                             and derived/comparability.json (tools/build/claims.py); a stage that emits another 08 S4.2
+                             JSON artifact passes it too -- is hashed and copied to build/data/<name>.<sha8>.json, and
+                             build/build-manifest.json gets every block except the site's, `files` and `routes`, which
+                             are null. A hashed file this build does not name is removed from build/data/.
   `site` (S13, --site)       copies build/data/ into dist/data/, counts dist/ into `files` and `routes`, adds the node
                              that built the site, runs CHECKS, and only when they all hold writes dist/build-manifest.json
                              and the completed build/build-manifest.json (which P2-S7-T04's budget check reads). Nothing
@@ -69,6 +70,13 @@ The manifest is 08 S6.1's block, with these decisions:
 
 atlas.json, which `bench build --atlas` writes (P2-S5-T01), is hashed and named like the other shipped artifacts;
 its envelope carries layout_method, layout_epoch and basis_version.
+
+The claims stage's artifacts (P3-S10-T03) are hashed and named the same way, one entry per file: claims.json,
+derived/comparability.json, and each claims-ingested/<benchmark_id>.json, at /data/claims-ingested/<id>.<sha8>.json.
+`counts` adds claims_curated (claims.json's rows) and claims_machine_ingested (the claims-ingested rows), which sum to
+`claims`, the two tiers 08 S6.1 publishes apart. claims.json's 0.5 MB brotli budget (08 S4.1) is asserted by the stage
+before anything is written, and its brotli size is recorded nowhere here: 08 S6 hashes uncompressed bytes, so the
+encoder never becomes a build input.
 
 Not here, each because nothing builds it yet: atlas_reproducibility, quality (no S4 stage computes the completeness
 means), and the S9 release hashes (index.sqlite, P4-S7-T01).
@@ -231,6 +239,10 @@ def counts(docs: dict[str, dict]) -> dict[str, int]:
         out['subsets'] = len(corpus['subsets'])
     if facets is not None:
         out['claims'] = sum(r['claim_count'] for r in facets['benchmarks'])
+    if 'claims.json' in docs:                       # the claims stage's two tiers (P3-S10-T03; 08 S6.1)
+        out['claims_curated'] = len(docs['claims.json']['claims'])
+        out['claims_machine_ingested'] = sum(len(d['claims']) for n, d in docs.items()
+                                             if n.startswith('claims-ingested/'))
     return out
 
 

@@ -77,6 +77,22 @@ can be useful about disagreements without taking sides in them.
 ([04-data-model.md](https://github.com/benchmarkg/benchmarks/blob/main/_plan/04-data-model.md) §8;
 [09-design-system.md](https://github.com/benchmarkg/benchmarks/blob/main/_plan/09-design-system.md) §11.3)
 
+## The files behind it
+
+The build writes the comparison into three files, so no page has to work out a verdict for itself:
+
+- `claims.json` holds every curated claim, with its conditions written out in full, its key, its unknown count
+  and its completeness.
+- `claims-ingested/<benchmark>.json` holds, one file per benchmark, the claims an ingestion adapter wrote and no
+  person has reviewed. Each row is marked `machine-ingested`. No comparison loads these files; they appear only
+  when a reader asks to see them.
+- `derived/comparability.json` holds, for each benchmark and metric, every pair of curated claims whose keys
+  differ, and each condition that differs between the two: `material` when it is part of the key, `informative`
+  otherwise. A condition a claim does not state is written `?`. A group of more than 40 claims is marked
+  `deferred`: there the one pair a reader picks is compared on request, from `claims.json`.
+
+([08-infrastructure-and-build.md](https://github.com/benchmarkg/benchmarks/blob/main/_plan/08-infrastructure-and-build.md) §4.2, §3.2)
+
 ## Numbers that are never compared
 
 Some numbers cannot be compared at all, and a warning banner is not enough. These are refused, not annotated:
