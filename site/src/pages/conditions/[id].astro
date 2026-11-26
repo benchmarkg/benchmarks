@@ -1,0 +1,50 @@
+---
+// site/src/pages/conditions/[id].astro -- P3-S10-T07 (10 "Information architecture"; 08 S4.3, S7.5). /conditions/{cond-id}/:
+// one page per EvalConditions record that a row of claims.json names (lib/claims.ts conditionRecords), with the claims
+// run under it, shipping zero JavaScript like every record page. 08 S7.5 counts the family as "1 per distinct
+// EvalConditions": a record no published claim names has nothing to show it beside, so it has no page, as a record
+// the build does not publish has none.
+//
+// cacheKey is the content digest of the record and the rows it lists, with the names those link; the release is left
+// out for the reason the benchmark route gives. Base's `search="none"`: 08 S7.5 Decision 2 leaves conditions pages
+// out of the search index (tools/build/pagefind_records.py FAMILIES).
+import Base from '../../layouts/Base.astro';
+import ConditionsDetail from '../../views/ConditionsDetail.astro';
+import { onlyRoutes } from '../../lib/bench-routes';
+import { baseId, claimsDoc, conditionRecords, conditionsHref, sortClaims, type ClaimRow } from '../../lib/claims';
+import { benchmarks, metrics, systems } from '../../lib/collections';
+import { contentDigest } from '../../lib/corpus';
+import type { EvalConditions } from '../../types/eval-conditions';
+
+export async function getStaticPaths() {
+  const records = conditionRecords(claimsDoc()?.rows ?? []);
+  const names = {
+    systems: new Map((await systems()).map((s) => [s.id, s.name])),
+    benchmarks: new Map((await benchmarks()).map((b) => [b.id, b.name])),
+  };
+  const metricById = new Map((await metrics()).map((m) => [m.id, m]));
+  return onlyRoutes([...records.entries()].map(([id, { conditions, rows }]) => {
+    const sorted = sortClaims(rows, metricById);
+    const used = sorted.map((r) => [r.claim.system, r.claim.opponent, r.claim.benchmark].filter((x): x is string => x != null)
+      .map((x) => [baseId(x), names.systems.get(baseId(x)) ?? names.benchmarks.get(baseId(x)) ?? null]));
+    return {
+      params: { id },
+      props: { conditions, rows: sorted, names },
+      cacheKey: contentDigest({ conditions, rows: sorted, used, optimum: sorted.map((r) => metricById.get(r.claim.metric)?.optimum ?? null) }),
+    };
+  }), (p) => conditionsHref(p.params.id));
+}
+
+interface Props {
+  conditions: EvalConditions;
+  rows: ClaimRow[];
+  names: { systems: Map<string, string>; benchmarks: Map<string, string> };
+}
+
+const p = Astro.props;
+---
+<Base title={`Evaluation conditions ${p.conditions.id} · Benchmark index`} zeroJs search="none">
+  <main>
+    <ConditionsDetail conditions={p.conditions} rows={p.rows} names={p.names} />
+  </main>
+</Base>

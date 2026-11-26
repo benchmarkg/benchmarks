@@ -1,0 +1,58 @@
+---
+// site/src/pages/claims/[id].astro -- P3-S10-T07 (10 "Information architecture"; 08 S4.3, S7.5). /claims/{claim-id}/:
+// one page per row of claims.json (lib/claims.ts claimsDoc), the single-claim permalink, shipping zero JavaScript
+// because it is a citation target (08 S4.3). A machine-ingested claim gets none (08 S7.5 Decision 1): claims.json
+// never holds one, and claimsDoc() throws if it does. No claims.json, no pages: a build without the artifact has no
+// claim to give a permalink to, and the benchmark pages say the artifact is not in it.
+//
+// cacheKey is the content digest of the row and every record the page renders from it (the names it links, the file
+// its permalink cites), as the benchmark route does; the release is left out for the reason that route gives.
+// Base's `search="none"`: 08 S7.5 Decision 2 leaves claim permalinks out of the search index
+// (tools/build/pagefind_records.py FAMILIES), so the body carries data-pagefind-ignore.
+import Base from '../../layouts/Base.astro';
+import ClaimDetail from '../../views/ClaimDetail.astro';
+import { onlyRoutes } from '../../lib/bench-routes';
+import { baseId, claimHref, claimYamlPath, claimsDoc, type ClaimRow } from '../../lib/claims';
+import { benchmarks, metrics, organizations, systems } from '../../lib/collections';
+import { contentDigest } from '../../lib/corpus';
+import { release } from '../../lib/release';
+
+export async function getStaticPaths() {
+  const rows = claimsDoc()?.rows ?? [];
+  const names = {
+    systems: new Map((await systems()).map((s) => [s.id, s.name])),
+    benchmarks: new Map((await benchmarks()).map((b) => [b.id, b.name])),
+    metrics: new Map((await metrics()).map((m) => [m.id, m.name])),
+    orgs: new Map((await organizations()).map((o) => [o.id, o.name])),
+  };
+  const claims = new Set(rows.map((r) => r.claim.id));
+  return onlyRoutes(rows.map((row) => {
+    const c = row.claim;
+    const name = (k: keyof typeof names, ref: string | null | undefined) => (ref != null ? names[k].get(baseId(ref)) ?? null : null);
+    const used = { system: name('systems', c.system), opponent: name('systems', c.opponent), benchmark: name('benchmarks', c.benchmark),
+      metric: name('metrics', c.metric), reporter: name('orgs', c.reported_by), host: name('orgs', c.serving_provider) };
+    const yaml_path = claimYamlPath(c.id);
+    return {
+      params: { id: c.id },
+      props: { row, names, claims, yaml_path },
+      cacheKey: contentDigest({ row, used, yaml_path, superseded: c.superseded_by != null ? claims.has(c.superseded_by) : null }),
+    };
+  }), (p) => claimHref(p.params.id));
+}
+
+interface Props {
+  row: ClaimRow;
+  names: { systems: Map<string, string>; benchmarks: Map<string, string>; metrics: Map<string, string>; orgs: Map<string, string> };
+  claims: Set<string>;
+  yaml_path: string | null;
+}
+
+const p = Astro.props;
+const c = p.row.claim;
+const title = `${p.names.systems.get(baseId(c.system)) ?? c.system} on ${p.names.benchmarks.get(baseId(c.benchmark)) ?? c.benchmark}`;
+---
+<Base title={`${title} · ${c.id} · Benchmark index`} zeroJs search="none">
+  <main>
+    <ClaimDetail row={p.row} names={p.names} claims={p.claims} yaml_path={p.yaml_path} release={release()} />
+  </main>
+</Base>

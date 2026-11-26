@@ -65,7 +65,12 @@ every change enforces it.
 
 A result claim carries a second, separate ladder: how the number itself was verified, from `self-reported`
 through `maintainer-verified` and `independent-reproduction` to `sandboxed-rerun`. The badge beside every
-number names its rung.
+number names its rung, and beside the rung, always, its review state: `hand-curated` for a claim curated into
+the repository, or, for one an ingestion adapter wrote, `machine-ingested`, `spot-checked`, `human-reviewed` or
+`promoted`. The rung says who produced the number and what evidence exists; the review state says whether anyone
+here has looked at it. Either one alone would mislead, so neither is ever shown alone.
+([07-ingestion-infrastructure.md](https://github.com/benchmarkg/benchmarks/blob/main/_plan/07-ingestion-infrastructure.md) §2.3;
+[04-data-model.md](https://github.com/benchmarkg/benchmarks/blob/main/_plan/04-data-model.md) §9)
 
 ## Reading the provenance of a number
 
@@ -74,11 +79,21 @@ how many of the benchmark's material conditions it states. Opening it shows:
 
 - the source, when it was read, and its archive copy;
 - the date reported and who reported it;
-- its verification;
+- its verification and its review state;
 - its comparability key and how many other claims share it;
 - any artifact (transcripts, logs);
 - for a machine-ingested row, the snapshot of the upstream row it came from;
-- every material condition, and the ones that are unknown, listed together as a set.
+- every material condition, and the ones that are unknown, listed together as a set;
+- for an ingested claim, its attribution: the source's own attribution text, its licence and the batch that
+  ingested it, because a CC-BY licence asks for attribution with the data, not in a footer;
+- the claim's own page.
+
+Each claim has that page at `/claims/{id}/`: the same disclosure, standalone and open, with what the claim is
+about, its condition record and a link to its YAML at the commit. Each condition record has a page at
+`/conditions/{id}/` with every claim run under it. A claim's number, wherever it is shown, links to its page. A
+machine-ingested claim has no page of its own: its benchmark's page counts it, with its attribution, and its row
+is in that benchmark's `claims-ingested/` file.
+([08-infrastructure-and-build.md](https://github.com/benchmarkg/benchmarks/blob/main/_plan/08-infrastructure-and-build.md) §7.5)
 
 This works without JavaScript, because it is the one interaction that turns the transparency claim into
 something a reader can check.

@@ -1,0 +1,107 @@
+---
+// site/src/views/ConditionsDetail.astro -- P3-S10-T07 (10 "Information architecture": "/conditions/{cond-id}/ a shared
+// EvalConditions record"; 04 S8; 08 S4.3, 0 KB of JavaScript). One condition record, as claims.json inlines it in the
+// rows that name it (tools/build/claims.py), so the page shows exactly what the claims were compared on:
+//
+//   1. the record: every field it answers, with its value, and how many of its fields that is;
+//   2. the material fields it leaves unknown. Which fields are material is the benchmark's comparability profile, not
+//      the record's (04 S8: "per-benchmark-shaped rather than global"), so each benchmark whose claims name the record
+//      lists its own unknown set, from the build's own arithmetic (the rows' `comparability.unknown_fields`). A field
+//      that is null and material nowhere is not listed as unknown: 09 S11.2 keeps that word for the material fields;
+//   3. the claims run under it, each number with its drill-down and its permalink (ClaimList).
+//
+// NEVER: list a null field as a value; call a field unknown that no benchmark here makes material.
+import ClaimList from '../components/ClaimList.astro';
+import { baseId, type ClaimRow } from '../lib/claims';
+import { formatValue } from '../lib/vocab';
+import type { EvalConditions } from '../types/eval-conditions';
+
+interface Props {
+  conditions: EvalConditions;
+  rows: ClaimRow[];                     // the claims that name it, in the order the list shows them
+  names: { systems: Map<string, string>; benchmarks: Map<string, string> };
+}
+
+const { conditions, rows, names } = Astro.props;
+const show = (v: unknown): string => {
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (typeof v === 'number') return formatValue(v);
+  if (Array.isArray(v)) return `[${v.map(show).join(', ')}]`;
+  if (v !== null && typeof v === 'object') {
+    return Object.entries(v as Record<string, unknown>).filter(([, x]) => x != null).map(([n, x]) => `${n} ${show(x)}`).join(', ') || '{}';
+  }
+  return String(v);
+};
+const record = conditions as unknown as Record<string, unknown>;
+const fields = Object.keys(record).filter((f) => f !== 'id');
+const answered = fields.filter((f) => record[f] != null && !(typeof record[f] === 'object' && !Array.isArray(record[f]) && show(record[f]) === '{}'));
+
+// each benchmark's unknown set; a benchmark whose claims disagree (a subset or metric its profile treats apart) gets
+// one entry per set, labelled with the metrics it covers
+const groups = new Map<string, { bench: string; unknown: string[]; metrics: Set<string> }>();
+for (const row of rows) {
+  const bench = baseId(row.claim.benchmark);
+  const key = `${bench}|${row.comparability.unknown_fields.join(',')}`;
+  const hit = groups.get(key) ?? { bench, unknown: row.comparability.unknown_fields, metrics: new Set<string>() };
+  hit.metrics.add(row.claim.metric);
+  groups.set(key, hit);
+}
+const perBench = new Map<string, number>();
+for (const g of groups.values()) perBench.set(g.bench, (perBench.get(g.bench) ?? 0) + 1);
+const unknownGroups = [...groups.values()].sort((a, b) => (a.bench < b.bench ? -1 : a.bench > b.bench ? 1 : 0));
+const benchName = (id: string) => names.benchmarks.get(id);
+---
+<article class="record" data-conditions={conditions.id}>
+  <header>
+    <p class="kind">Evaluation conditions</p>
+    <h1><code>{conditions.id}</code></h1>
+    <p class="kind">A shared condition record (04 S8): how {rows.length === 1 ? 'one claim was' : `${formatValue(rows.length)} claims were`} run.</p>
+  </header>
+
+  <section aria-labelledby="s-record">
+    <h2 id="s-record">Record</h2>
+    <dl class="pairs">
+      <div data-field="named-by"><dt>Named by</dt><dd>{formatValue(rows.length)} {rows.length === 1 ? 'claim' : 'claims'}</dd></div>
+      <div data-field="answered"><dt>Fields it answers</dt><dd>{formatValue(answered.length)} of {formatValue(fields.length)}</dd></div>
+      {answered.map((f) => <div data-cond-field={f}><dt><code>{f}</code></dt><dd>{show(record[f])}</dd></div>)}
+    </dl>
+  </section>
+
+  <section aria-labelledby="s-unknown">
+    <h2 id="s-unknown">Material fields it leaves unknown</h2>
+    <p class="note">Which fields are material is each benchmark's comparability profile, so each benchmark whose claims name this record lists its own.</p>
+    <dl class="pairs">
+      {unknownGroups.map((g) => (
+        <div data-unknown-for={g.bench}>
+          <dt>{benchName(g.bench) != null ? <a href={`/benchmarks/${g.bench}/`}>{benchName(g.bench)}</a> : <code>{g.bench}</code>}{(perBench.get(g.bench) ?? 0) > 1 && <> ({[...g.metrics].sort().map((m) => <code>{m}</code>)})</>}</dt>
+          <dd>{g.unknown.length > 0
+            ? <ul class="inline" data-unknown-set>{g.unknown.map((f) => <li><code>{f}</code></li>)}</ul>
+            : <span data-unknown-set>none: every material field is answered</span>}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  <section aria-labelledby="s-claims">
+    <h2 id="s-claims">Claims run under it <span class="count">({formatValue(rows.length)})</span></h2>
+    <ClaimList rows={rows} label={`Claims that name ${conditions.id}`} subject="both" names={names} />
+  </section>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: var(--sp-1) 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  .kind { margin: 0; color: var(--c-ink-muted); }
+  .count { font-weight: 400; color: var(--c-ink-muted); }
+  .note { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); color: var(--c-ink-muted); }
+  .pairs { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); overflow-wrap: anywhere; }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .inline { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin: 0; padding: 0; list-style: none; }
+</style>

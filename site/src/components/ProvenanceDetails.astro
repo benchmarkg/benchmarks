@@ -10,25 +10,35 @@
 // word for exactly these), then whatever else the condition record answers. A claim with no condition record has
 // every material field unknown, and says so.
 //
+// P3-S10-T07 (07 S2.3; 04 S9; 10 "Information architecture"): the badge carries the claim's review state beside its
+// rank, and the verification row says both; the list ends with the claim's permalink, /claims/{id}/, so the number is
+// one click from the record it came from; a claim with a condition record links its /conditions/{id}/ page; and an
+// ingested claim (one with an ingestion block) shows its attribution, the CC-BY obligation 04 S9 stores with the data.
+// `open` renders the disclosure open: the claim's own page is this drill-down, standalone.
+//
 // NEVER: a number without its badge and meter in the summary; an empty row (a missing value is one of the four
-// absence phrases); a link inside the summary (the badge's dispute links are left to the open list).
+// absence phrases); a link inside the summary (the badge's dispute links are left to the open list); a list without
+// the permalink.
 import Absent from './Absent.astro';
 import ConditionMeter from './ConditionMeter.astro';
+import IngestAttribution from './IngestAttribution.astro';
 import VerificationBadge from './VerificationBadge.astro';
-import type { ClaimRow } from '../lib/claims';
+import { claimHref, conditionsHref, reviewState, type ClaimRow } from '../lib/claims';
 import { formatValue } from '../lib/vocab';
 
 interface Props {
   row: ClaimRow;
+  open?: boolean;
 }
 
-const { row } = Astro.props;
+const { row, open = false } = Astro.props;
 const { claim: c, conditions, comparability: k, source: s } = row;
 if (c.value == null && (c.value_text == null || c.value_text === '')) {
   throw new Error(`ProvenanceDetails ${c.id}: no value; a missing result is <Absent>, not a drill-down`);
 }
 const display = c.value != null ? formatValue(c.value) : c.value_text!;
 const disputedBy = c.disputed_by ?? [];
+const review = reviewState(c);
 const specified = k.fields_material_total - k.key_unknown_count;
 const unknown = new Set(k.unknown_fields);
 
@@ -52,10 +62,10 @@ const uncertainty = c.uncertainty != null && c.uncertainty.type !== 'none' && c.
   ? `${c.uncertainty.type} ${Array.isArray(c.uncertainty.value) ? c.uncertainty.value.map(formatValue).join('–') : formatValue(c.uncertainty.value)}`
   : null;
 ---
-<details class="prov" data-prov={c.id}>
+<details class="prov" data-prov={c.id} open={open}>
   <summary>
-    <span class="value" data-prov-value>{display}</span>
-    <VerificationBadge verification={c.verification} disputed={disputedBy.length > 0} disputed_by={disputedBy} link_disputes={false} />
+    <span class="value" data-prov-value data-claim-value={c.id}>{display}</span>
+    <VerificationBadge verification={c.verification} review_state={review} disputed={disputedBy.length > 0} disputed_by={disputedBy} link_disputes={false} />
     {k.condition_completeness != null
       ? <ConditionMeter condition_completeness={k.condition_completeness} fields_specified={specified} fields_material_total={k.fields_material_total} unknown_fields={k.unknown_fields} weights={row.weights} />
       : <Absent state="not-applicable" reason="every material field is waived" />}
@@ -71,15 +81,19 @@ const uncertainty = c.uncertainty != null && c.uncertainty.type !== 'none' && c.
     </dd></div>
     <div data-prov-row="date-reported"><dt>date reported</dt><dd><time datetime={c.date_reported}>{c.date_reported}</time></dd></div>
     <div data-prov-row="reported-by"><dt>reported by</dt><dd>{row.reporter.name ?? <Absent state="not-recorded" />} <code>{row.reporter.id}</code></dd></div>
-    <div data-prov-row="verification"><dt>verification</dt><dd>{c.verification}{c.resolution_status != null && <> · {c.resolution_status}{c.resolved_as_of != null && <> as of <time datetime={c.resolved_as_of}>{c.resolved_as_of}</time></>}</>}{disputedBy.length > 0 && <> · disputed by {disputedBy.map((d) => <code>{d}</code>)}</>}</dd></div>
+    <div data-prov-row="verification"><dt>verification</dt><dd>{c.verification} · review state {review}{c.ingestion?.reviewed_on != null && <> on <time datetime={c.ingestion.reviewed_on}>{c.ingestion.reviewed_on}</time></>}{c.resolution_status != null && <> · {c.resolution_status}{c.resolved_as_of != null && <> as of <time datetime={c.resolved_as_of}>{c.resolved_as_of}</time></>}</>}{disputedBy.length > 0 && <> · disputed by {disputedBy.map((d) => <code>{d}</code>)}</>}</dd></div>
     {uncertainty != null && <div data-prov-row="uncertainty"><dt>uncertainty</dt><dd>{uncertainty}{c.uncertainty?.n_runs != null && <> over {formatValue(c.uncertainty.n_runs)} runs</>}</dd></div>}
     <div data-prov-row="comparability-key"><dt>comparability_key</dt><dd><code>{k.comparability_key}</code> ({row.key_shared_with === 0 ? 'no other claim shares this key' : `${row.key_shared_with} other ${row.key_shared_with === 1 ? 'claim shares' : 'claims share'} this key`})</dd></div>
     <div data-prov-row="artifact"><dt>artifact</dt><dd>{c.artifact_url != null ? <a href={c.artifact_url}>{c.artifact_url}</a> : <Absent state="not-reported" />}</dd></div>
     <div data-prov-row="provenance-snapshot"><dt>provenance snapshot</dt><dd>{snap != null
       ? <>ingested <time datetime={snap.retrieved_at}>{snap.retrieved_at.slice(0, 10)}</time> from {snap.source_record_id != null ? <code>{snap.source_record_id}</code> : <Absent state="not-reported" reason="no upstream row id" />}{snapValue != null && <>, raw value <code>{show(snapValue[1])}</code></>}</>
-      : <Absent state="not-applicable" reason="curated by hand, not ingested" />}</dd></div>
+      : c.ingestion != null
+        ? <Absent state="not-reported" reason="the adapter froze no upstream record" />
+        : <Absent state="not-applicable" reason="curated by hand, not ingested" />}</dd></div>
     <div data-prov-row="conditions"><dt>conditions</dt><dd>
-      {conditions == null && <p class="note">No condition record: every material field is unknown.</p>}
+      {conditions == null
+        ? <p class="note">No condition record: every material field is unknown.</p>
+        : <p class="note">Record <a href={conditionsHref(conditions.id)} data-conditions-link={conditions.id}><code>{conditions.id}</code></a></p>}
       <ul class="conds" aria-label="Material condition fields">
         {materialRows.map((r) => <li data-cond={r.field}><code>{r.field}</code> {r.value != null ? show(r.value) : <Absent state="unknown" />}</li>)}
       </ul>
@@ -92,6 +106,8 @@ const uncertainty = c.uncertainty != null && c.uncertainty.type !== 'none' && c.
     <div data-prov-row="unknown-fields"><dt>unknown fields</dt><dd>{k.unknown_fields.length > 0
       ? <ul class="set" data-unknown-set>{k.unknown_fields.map((f) => <li><code>{f}</code></li>)}</ul>
       : <span data-unknown-set>none</span>}</dd></div>
+    {c.ingestion != null && <div data-prov-row="attribution"><dt>attribution</dt><dd><IngestAttribution ingestion={c.ingestion} /></dd></div>}
+    <div data-prov-row="permalink"><dt>permalink</dt><dd><a href={claimHref(c.id)} data-claim-permalink={c.id}><code>{claimHref(c.id)}</code></a></dd></div>
   </dl>
 </details>
 

@@ -12,13 +12,19 @@
 // arrived"). The rail is one element the grid places, so each fact is written once.
 //
 // Where the data is not there, the section stays and says so in one of the four absence phrases (09 S11.2), rather
-// than disappearing. Claims are counted here (from the adoption artifact) but not yet tabled: the claims table (10),
-// the trajectory chart (9) and headroom (1) are drawn from claims.json, which P3-S10-T03 builds; the provenance
-// drill-down on each number is P2-S3-T02's, the lineage and trajectory SVGs P2-S3-T03's (the
+// than disappearing. Claims are counted here from the adoption artifact and listed in section 10 from claims.json
+// (P3-S10-T03's artifact, P3-S10-T07's list): each number is the provenance drill-down (P2-S3-T02) with its permalink,
+// /claims/{id}/, beside it, sorted by verification and then value; machine-ingested claims are counted there, with
+// their attribution, and not listed, since they have no permalink (08 S7.5 Decision 1). The trajectory chart (9) and
+// headroom (1) are drawn from claims.json too, and are not built yet; the lineage and trajectory SVGs P2-S3-T03's (the
 // lineage edges are listed here as text), the export formats P2-S3-T07's. 10 V6 section 14 also names
 // est_api_calls, which the schema (04) has no field for, so it is not rendered as a recordable gap.
 import Absent from '../components/Absent.astro';
+import ClaimList from '../components/ClaimList.astro';
 import CiteThis from '../components/CiteThis.astro';
+import IngestAttribution from '../components/IngestAttribution.astro';
+import type { ClaimRow } from '../lib/claims';
+import type { Ingestion } from '../types/result-claim';
 import { FORMATS, type Format } from '../lib/cite';
 import { croissantText, scriptSafe } from '../lib/croissant';
 import FacetChip from '../components/FacetChip.astro';
@@ -46,9 +52,14 @@ interface Props {
   subsets: SubsetRow[];               // corpus.json's materialised rows for this benchmark
   adoption: Adoption | null;          // claims and the systems they are about; null when adoption.json was not built
   release: Release;
+  claims?: ClaimRow[] | null;         // claims.json's rows on this benchmark, in section 10's order; null when not built
+  ingested?: { count: number; attributions: Ingestion[] };   // its machine-ingested claims: counted, never listed
+  names?: { systems: Map<string, string>; benchmarks: Map<string, string> };   // published id -> name, for the list
 }
 
-const { benchmark: b, metrics, sources, published, subsets, adoption, release } = Astro.props;
+const { benchmark: b, metrics, sources, published, subsets, adoption, release, claims = null,
+  ingested = { count: 0, attributions: [] }, names = { systems: new Map(), benchmarks: new Map() } } = Astro.props;
+const claimCount = adoption != null ? formatValue(adoption.claims) : claims != null ? formatValue(claims.length + ingested.count) : 'not counted';
 const today = new Date(`${release.built_on}T00:00:00Z`);
 const family = b.domain.primary.split('/')[0];
 const yamlPath = `data/benchmarks/${family}/${b.id}.yaml`;        // 05 S2: the family of domain.primary
@@ -353,8 +364,20 @@ const citeFormats = (Object.keys(FORMATS) as Format[]).filter((f) => f !== 'json
     </section>
 
     <details class="more" data-section="10">
-      <summary><h2>Claims <span class="count">({adoption != null ? formatValue(adoption.claims) : 'not counted'})</span></h2></summary>
-      {adoption == null
+      <summary><h2>Claims <span class="count">({claimCount})</span></h2></summary>
+      {claims != null ? (claims.length === 0 && ingested.count === 0
+        ? <p>No claim is recorded for this benchmark. <Absent state="not-recorded" /></p>
+        : <>
+        {claims.length > 0
+          ? <ClaimList rows={claims} label={`Claims on ${b.name}`} subject="system" names={names} />
+          : <p>No claim on this benchmark is curated yet. <Absent state="not-recorded" reason="every claim here is machine-ingested" /></p>}
+        {ingested.count > 0 && (
+          <div class="ingested" data-claims-ingested={ingested.count}>
+            <p>{formatValue(ingested.count)} machine-ingested {ingested.count === 1 ? 'claim' : 'claims'} on this benchmark {ingested.count === 1 ? 'is' : 'are'} counted and not listed: machine-ingested claims provide coverage, not comparison, and get no permalink page (08 S7.5 Decision 1). {ingested.count === 1 ? 'Its row is' : 'Their rows are'} in <code>claims-ingested/{b.id}.json</code>, ingested from:</p>
+            {ingested.attributions.map((a) => <IngestAttribution ingestion={a} />)}
+          </div>
+        )}
+      </>) : adoption == null
         ? <p><Absent state="not-recorded" reason="claims are counted from the adoption artifact, which this build does not include" /></p>
         : adoption.claims === 0
           ? <p>No claim is recorded for this benchmark. <Absent state="not-recorded" /></p>

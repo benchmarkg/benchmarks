@@ -1,0 +1,43 @@
+---
+// site/src/components/IngestAttribution.astro -- P3-S10-T07 (04 S9 "The `ingestion` block", "IngestBatch"). The
+// attribution an ingested record carries, rendered inline beside it: "any page rendering an ingested record shows its
+// attribution inline. That is the CC-BY obligation discharged in a way that survives forking, because the obligation
+// is stored where the data is." So it is read from the record's own `ingestion` block -- source_attribution, the
+// licence and its class, the upstream URL -- never from a page footer, and says which batch and adapter wrote it, and
+// when, so the line names the run a reader would re-derive the record from.
+//
+// NEVER: render an ingested record's attribution without its text, its licence or its source; each throws (a schema
+// violation, not a rendering case: schema/claim.py's Ingestion requires all three).
+import type { Ingestion } from '../types/result-claim';
+
+interface Props {
+  ingestion: Ingestion;
+}
+
+const { ingestion: g } = Astro.props;
+for (const [field, v] of [['source_attribution', g.source_attribution], ['source_licence', g.source_licence], ['source_url', g.source_url]] as const) {
+  if (v == null || String(v).trim() === '') {
+    throw new Error(`IngestAttribution ${g.batch}: no ${field} (04 S9: an ingested record shows its attribution inline)`);
+  }
+}
+---
+<p class="attribution" data-attribution={g.batch} data-licence={g.source_licence}>
+  <span class="text" data-attribution-text>{g.source_attribution.trim()}</span>
+  <span class="terms">Licensed <span data-attribution-licence>{g.source_licence}</span> ({g.licence_class.replace(/-/g, ' ')}); retrieved from <a href={g.source_url}>{g.source_url}</a>.
+  Ingested <time datetime={g.ingested_at}>{g.ingested_at.slice(0, 10)}</time> by <code>{g.source_adapter}</code> {g.adapter_version} in batch <code>{g.batch}</code>.</span>
+</p>
+
+<style>
+  .attribution {
+    display: grid;
+    gap: var(--sp-05);
+    margin: var(--sp-1) 0 0;
+    padding-inline-start: var(--sp-2);
+    border-inline-start: 2px solid var(--c-border-strong);
+    font-size: var(--fs-xs);
+  }
+  .terms {
+    color: var(--c-ink-muted);
+    overflow-wrap: anywhere;
+  }
+</style>

@@ -307,13 +307,13 @@ if (ROUTES.length > 0) {
     expect(specProblems(SPEC, families, built)).toEqual([]);
     // and a wrong archetype is caught: a ninth, a route of another family, an unbuilt page, a family with no element
     const [first] = SPEC.archetypes;
-    const broken = { ...SPEC, archetypes: [{ ...first, route: '/nowhere/' }, ...SPEC.archetypes.slice(1), { ...first, name: 'ninth', family: '/claims/{id}/' }] };
+    const broken = { ...SPEC, archetypes: [{ ...first, route: '/nowhere/' }, ...SPEC.archetypes.slice(1), { ...first, name: 'ninth', family: '/methodology/' }] };
     expect(specProblems(broken, families, built)).toEqual([
       `the archetypes are ${[...EIGHT, 'ninth'].join(', ')}, not the eight: ${EIGHT.join(', ')}`,
       'landing: /nowhere/ is not a page of /',
       'landing: /nowhere/ is not built',
-      'ninth: /claims/{id}/ has no fallback element in scripts/route_fallback_map.json to know its page by',
-      'ninth: / is not a page of /claims/{id}/',
+      'ninth: /methodology/ has no fallback element in scripts/route_fallback_map.json to know its page by',
+      'ninth: / is not a page of /methodology/',
     ]);
   });
 

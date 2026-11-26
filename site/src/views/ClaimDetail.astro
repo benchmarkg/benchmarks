@@ -1,0 +1,150 @@
+---
+// site/src/views/ClaimDetail.astro -- P3-S10-T07 (10 "Information architecture": "/claims/{claim-id}/ single-claim
+// permalink (the provenance drill-down, standalone)"; 08 S4.3: "Claim permalink ... Yes, fully -- it is a citation
+// target", 0 KB of JavaScript). One curated claim, from its claims.json row:
+//
+//   1. the number as the drill-down, open: value, verification badge with the review state beside the rank, condition
+//      meter, then the source with its archive link, the provenance snapshot, the conditions, the unknown set, and,
+//      for an ingested claim, its attribution inline (04 S9), shown because the drill-down is open (ProvenanceDetails);
+//   2. the record: what the claim is about and what kind of claim it is, each entity linked to its page when the
+//      build publishes one -- the system, the benchmark and subset, the metric, the reporter, the condition record,
+//      a superseding claim;
+//   3. for an ingested claim, its whole ingestion block: batch, adapter, upstream key, licence, review and the
+//      field-by-field provenance (04 S9), so "which of our fields came from where" is on the page;
+//   4. where it is recorded: this permalink, and the claim's YAML at the commit the build was made from, which is the
+//      citable object (10 "The permanent citation URL").
+//
+// A claim with no number yet (a forecast pending resolution, 04 S7) has no drill-down to open; its record says so in
+// the absence token, the source it cites is still listed, and an ingested one's attribution stands on its own.
+//
+// NEVER: a rank without its review state (VerificationBadge throws); an ingested claim without its attribution.
+import Absent from '../components/Absent.astro';
+import IngestAttribution from '../components/IngestAttribution.astro';
+import ProvenanceDetails from '../components/ProvenanceDetails.astro';
+import VerificationBadge from '../components/VerificationBadge.astro';
+import { baseId, claimHref, conditionsHref, reviewState, type ClaimRow } from '../lib/claims';
+import { blobAt, sha } from '../lib/repo';
+import type { Release } from '../lib/release';
+import { formatValue } from '../lib/vocab';
+
+interface Props {
+  row: ClaimRow;
+  names: { systems: Map<string, string>; benchmarks: Map<string, string>; metrics: Map<string, string>; orgs: Map<string, string> };
+  claims: Set<string>;                  // the claim ids with a page, so superseded_by links only to a real one
+  yaml_path: string | null;             // data/claims/... holding the claim; null when no file there does
+  release: Release;
+}
+
+const { row, names, claims, yaml_path, release } = Astro.props;
+const c = row.claim;
+const g = c.ingestion ?? null;
+const review = reviewState(c);
+const numbered = c.value != null || (c.value_text != null && c.value_text !== '');
+const link = (kind: 'systems' | 'benchmarks' | 'metrics' | 'orgs', id: string) => {
+  const name = names[kind].get(baseId(id));
+  return name != null ? { href: `/${kind}/${baseId(id)}/`, name } : null;
+};
+const sys = link('systems', c.system);
+const bench = link('benchmarks', c.benchmark);
+const metric = link('metrics', c.metric);
+const reporter = link('orgs', c.reported_by);
+const opponent = c.opponent != null ? link('systems', c.opponent) : null;
+const host = c.serving_provider != null ? link('orgs', c.serving_provider) : null;
+const title = `${sys?.name ?? c.system} on ${bench?.name ?? c.benchmark}`;
+const s = row.source;
+const provenance = Object.entries(g?.field_provenance ?? {}).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+const commit = sha(release.commit_sha);
+---
+<article class="record" data-claim-page={c.id} data-claim={c.id}>
+  <header>
+    <p class="kind">Claim <code>{c.id}</code></p>
+    <h1>{title}</h1>
+    <p class="kind">{metric != null ? metric.name : <code>{c.metric}</code>}{c.subset != null && <> · <code>{c.subset}</code></>} · reported <time datetime={c.date_reported}>{c.date_reported}</time></p>
+  </header>
+
+  <section aria-labelledby="s-number">
+    <h2 id="s-number">The number and where it came from</h2>
+    {numbered
+      ? <ProvenanceDetails row={row} open />
+      : <p data-claim-pending><Absent state="not-reported" reason={c.resolution_status === 'pending' ? 'its resolution is pending, so there is no number yet' : 'no value recorded'} /> <VerificationBadge verification={c.verification} review_state={review} disputed={(c.disputed_by ?? []).length > 0} disputed_by={c.disputed_by ?? []} /></p>}
+    {!numbered && g != null && <IngestAttribution ingestion={g} />}
+  </section>
+
+  <section aria-labelledby="s-record">
+    <h2 id="s-record">Record</h2>
+    <dl class="pairs">
+      <div data-field="system"><dt>System</dt><dd>{sys != null ? <a href={sys.href}>{sys.name}</a> : <code>{c.system}</code>}{c.system.includes('@') && <> (<code>{c.system}</code>)</>}</dd></div>
+      <div data-field="benchmark"><dt>Benchmark</dt><dd>{bench != null ? <a href={bench.href}>{bench.name}</a> : <code>{c.benchmark}</code>}{c.benchmark.includes('@') && <> (<code>{c.benchmark}</code>)</>}{c.subset != null && <>, subset <code>{c.subset}</code></>}</dd></div>
+      <div data-field="metric"><dt>Metric</dt><dd>{metric != null ? <a href={metric.href}>{metric.name}</a> : <code>{c.metric}</code>}</dd></div>
+      <div data-field="claim-type"><dt>Claim type</dt><dd>{c.claim_type ?? 'absolute'}{c.opponent != null && <> against {opponent != null ? <a href={opponent.href}>{opponent.name}</a> : <code>{c.opponent}</code>}</>}{c.rating_pool != null && <> in pool <code>{c.rating_pool}</code></>}</dd></div>
+      <div data-field="value"><dt>Value</dt><dd>{c.value != null
+        ? <span data-claim-value={c.id}>{formatValue(c.value)}</span>
+        : c.value_text != null && c.value_text !== '' ? <span data-claim-value={c.id}>{c.value_text}</span> : <Absent state="not-reported" reason={c.resolution_status === 'pending' ? 'resolution pending' : 'no value recorded'} />}</dd></div>
+      <div data-field="resolution"><dt>Resolution</dt><dd>{c.resolution_status ?? 'resolved'}{c.resolved_as_of != null && <> as of <time datetime={c.resolved_as_of}>{c.resolved_as_of}</time></>}</dd></div>
+      <div data-field="reported-by"><dt>Reported by</dt><dd>{reporter != null ? <a href={reporter.href}>{reporter.name}</a> : (row.reporter.name ?? <code>{c.reported_by}</code>)} on <time datetime={c.date_reported}>{c.date_reported}</time></dd></div>
+      <div data-field="verification"><dt>Verification</dt><dd><VerificationBadge verification={c.verification} review_state={review} disputed={(c.disputed_by ?? []).length > 0} disputed_by={c.disputed_by ?? []} /></dd></div>
+      <div data-field="serving-provider"><dt>Served by</dt><dd>{c.serving_provider != null
+        ? (host != null ? <a href={host.href}>{host.name}</a> : <code>{c.serving_provider}</code>)
+        : <Absent state="not-applicable" reason="the first-party API, not a third-party host" />}</dd></div>
+      <div data-field="conditions"><dt>Conditions</dt><dd>{row.conditions != null
+        ? <a href={conditionsHref(row.conditions.id)} data-conditions-link={row.conditions.id}><code>{row.conditions.id}</code></a>
+        : <Absent state="not-recorded" reason="no condition record, so every material field is unknown" />}</dd></div>
+      <div data-field="result-group"><dt>Result group</dt><dd>{c.result_group != null ? <code>{c.result_group}</code> : <Absent state="not-applicable" reason="shown on its own" />}</dd></div>
+      <div data-field="superseded-by"><dt>Superseded by</dt><dd>{c.superseded_by != null
+        ? (claims.has(c.superseded_by) ? <a href={claimHref(c.superseded_by)}><code>{c.superseded_by}</code></a> : <code>{c.superseded_by}</code>)
+        : <Absent state="not-applicable" reason="current" />}</dd></div>
+      <div data-field="source"><dt>Source</dt><dd>{s != null
+        ? <><a href={s.url}>{s.title ?? s.url}</a> <code>{s.id}</code>{s.archive_url != null ? <> · <a href={s.archive_url}>archive copy</a></> : <> · <span data-archive="none">not archived</span></>}</>
+        : <><code>{c.source}</code> <Absent state="not-recorded" reason="no source record" /></>}</dd></div>
+      {c.external_ids?.eee_result_id != null && <div data-field="eee"><dt>Every Eval Ever</dt><dd><code>{c.external_ids.eee_result_id}</code></dd></div>}
+    </dl>
+    {c.notes != null && c.notes.trim() !== '' && <div class="notes" data-field="notes"><h3>Notes</h3><p>{c.notes.trim()}</p></div>}
+  </section>
+
+  {g != null && (
+    <section aria-labelledby="s-ingestion" data-ingestion={g.batch}>
+      <h2 id="s-ingestion">Ingestion</h2>
+      <dl class="pairs">
+        <div><dt>Batch</dt><dd><code>{g.batch}</code></dd></div>
+        <div><dt>Adapter</dt><dd><code>{g.source_adapter}</code> {g.adapter_version}</dd></div>
+        <div><dt>Upstream record</dt><dd>{g.source_record_id != null ? <code>{g.source_record_id}</code> : <Absent state="not-reported" reason="a full-replace source names no record key" />}</dd></div>
+        <div><dt>Retrieved from</dt><dd><a href={g.source_url}>{g.source_url}</a></dd></div>
+        <div><dt>Licence</dt><dd>{g.source_licence} ({g.licence_class.replace(/-/g, ' ')})</dd></div>
+        <div><dt>Ingested</dt><dd><time datetime={g.ingested_at}>{g.ingested_at}</time>; last seen upstream <time datetime={g.last_seen_upstream}>{g.last_seen_upstream}</time></dd></div>
+        <div><dt>Extraction confidence</dt><dd>{formatValue(g.extraction_confidence)}</dd></div>
+        <div><dt>Review state</dt><dd>{review}{g.reviewed_by != null && <> by {g.reviewed_by}</>}{g.reviewed_on != null && <> on <time datetime={g.reviewed_on}>{g.reviewed_on}</time></>}</dd></div>
+        <div><dt>Field provenance</dt><dd>{provenance.length > 0
+          ? <ul class="inline" data-field-provenance>{provenance.map(([f, o]) => <li><code>{f}</code> {o}</li>)}</ul>
+          : <Absent state="not-recorded" reason="the adapter mapped no field" />}</dd></div>
+      </dl>
+    </section>
+  )}
+
+  <section aria-labelledby="s-recorded">
+    <h2 id="s-recorded">Where it is recorded</h2>
+    <dl class="pairs">
+      <div data-field="permalink"><dt>Permalink</dt><dd><a href={claimHref(c.id)} data-claim-permalink={c.id}><code>{claimHref(c.id)}</code></a></dd></div>
+      <div data-field="yaml"><dt>Record at the commit</dt><dd>{yaml_path != null
+        ? <a href={blobAt(commit, yaml_path)} data-claim-yaml><code>{yaml_path}</code> at <code>{commit.slice(0, 12)}</code></a>
+        : <Absent state="not-recorded" reason="no file under data/claims/ holds this id" />}</dd></div>
+    </dl>
+  </section>
+</article>
+
+<style>
+  .record {
+    max-inline-size: 68ch;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: var(--sp-1) 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  h3 { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--fs-md); }
+  .kind { margin: 0; color: var(--c-ink-muted); }
+  .pairs { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .notes p { margin: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+  .inline { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin: 0; padding: 0; list-style: none; }
+</style>
