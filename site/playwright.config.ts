@@ -4,6 +4,7 @@
 //   cd site && npx playwright test tests/detail-nojs.spec.ts --project=nojs      (P2-S3-T01)
 //   cd site && npx playwright test tests/browse-mobile.spec.ts --project=mobile  (P2-S4-T05)
 //   cd site && npx playwright test tests/landing.spec.ts --project=nojs          (P2-S4-T08)
+//   cd site && npx playwright test tests/nojs.spec.ts --project=nojs             (P2-S8-T02)
 //
 // @playwright/test is the repository root's (package.json, pinned there); Node resolves it up the tree. The
 // server is the site built with UAIBI_SITE_FIXTURES=theme,components, which routes test/fixtures/theme.astro and
@@ -28,9 +29,13 @@
 // the phone width 09 S10 designs for (a 390px viewport is the one it names).
 import { defineConfig } from '@playwright/test';
 
-// the specs that read the site with JavaScript off: the detail page (P2-S3-T01), its provenance drill-down (P2-S3-T02)
-// and the landing page (P2-S4-T08)
-const NOJS = /(detail-nojs|provenance|landing)\.spec\.ts$/;
+// the specs that read the site with JavaScript off: the detail page (P2-S3-T01), its provenance drill-down (P2-S3-T02),
+// the landing page (P2-S4-T08) and the no-JS render gate over every route family (P2-S8-T02)
+const NOJS = /(detail-nojs|provenance|landing|nojs)\.spec\.ts$/;
+// pr-validate.yml's size-budgets job builds the preview once, for size-limit, and runs the no-JS gate over that same
+// build (P2-S8-T02): UAIBI_SITE_BUILT=1 says dist/ is that build already, made without the test pages, so the server
+// only previews it, and is ready when the landing answers
+const BUILT = process.env.UAIBI_SITE_BUILT === '1';
 // the specs that read the site at phone width: the browse view's (P2-S4-T05)
 const MOBILE = /-mobile\.spec\.ts$/;
 
@@ -45,9 +50,9 @@ export default defineConfig({
     { name: 'mobile', testMatch: MOBILE, use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
   ],
   webServer: {
-    command: 'uv run python ../scripts/preview_corpus.py --out ../build/preview && npm run build'
-      + ' && uv run python ../tools/build/manifest.py --site dist --build ../build/preview && npm run preview -- --port 4322',
-    url: 'http://localhost:4322/_fixtures/theme',
+    command: (BUILT ? '' : 'uv run python ../scripts/preview_corpus.py --out ../build/preview && npm run build'
+      + ' && uv run python ../tools/build/manifest.py --site dist --build ../build/preview && ') + 'npm run preview -- --port 4322',
+    url: `http://localhost:4322/${BUILT ? '' : '_fixtures/theme'}`,
     reuseExistingServer: false,
     timeout: 1_800_000,
     env: {
