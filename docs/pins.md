@@ -57,6 +57,9 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
 | graphology (site) | 10 §Technology decisions, first installed by P2-S5-T02: the Atlas island's graph | 0.26.0 | 0.26.0 (`latest`; MIT; not deprecated) | 2025-01-26 | registry.npmjs.org/graphology | 2026-11-24 | ok (first install); see note 8 |
 | size-limit (site, dev) | 08 §8.1 and 14 Phase 2 exit criteria ("Enforced by `size-limit` per route group"; named, not versioned), first installed by P2-S4-T08: the per-route size gate, site/.size-limit.js | 14.3.0 | 14.3.0 (`latest`; MIT; not deprecated; `engines.node ^22.19.0 \|\| ^24.5.0 \|\| >=26.0.0`) | 2026-10-22 | registry.npmjs.org/size-limit | 2026-11-24 | ok (first pin); see note 9 |
 | @size-limit/file (site, dev) | the size-limit plugin that measures built files, first installed by P2-S4-T08 | 14.3.0 | 14.3.0 (`latest`; MIT; not deprecated; no dependencies, peer `size-limit` 14.3.0) | 2026-10-22 | registry.npmjs.org/@size-limit/file | 2026-11-24 | ok (first pin); see note 9 |
+| @axe-core/playwright (root, dev) | 09 §8 and 14 Phase 2 exit criteria (axe-core named, not versioned), first installed by P2-S8-T03: the accessibility harness's axe pass, site/test/a11y/run.mjs | 4.14.0 | 4.14.0 (`latest` 4.14.1, under two weeks old on `verified_on`; MPL-2.0; not deprecated) | 2026-10-15 | registry.npmjs.org/@axe-core/playwright | 2026-11-26 | ok (first pin); see note 10 |
+| axe-core (root, dev) | the rules engine @axe-core/playwright drives, P2-S8-T03 | 4.14.0 | 4.14.0 (`latest` 4.14.1; MPL-2.0; not deprecated) | 2026-10-05 | registry.npmjs.org/axe-core | 2026-11-26 | ok (first pin); see note 10 |
+| pa11y (root, dev) | 09 §8 (named, not versioned), first installed by P2-S8-T03: the harness's second engine | 10.0.0 | 10.0.0 (`latest`; **LGPL-3.0-only**; not deprecated) | 2026-08-28 | registry.npmjs.org/pa11y | 2026-11-26 | ok (first pin); see note 10 |
 
 ## Other pins and third-party facts the plan names
 
@@ -177,6 +180,16 @@ come from the JSON APIs named in `source`, not from memory or a third-party trac
    the theme toggle (212), the theme module it imports (594) and the pre-paint line (157). The same
    reading of the preview gives /benchmarks/ 76.9 KB and /atlas/ 118.6 KB, the second within 0.1 KB
    of note 8's figure for the same route.
+
+10. **The accessibility harness adds axe-core and pa11y to the repository root (P2-S8-T03).** They
+   sit beside `@playwright/test`, which the site's browser tests already run under. The lock was
+   resolved with `npm install --before=2026-11-12`, so every transitive version is at least two weeks
+   old. `@axe-core/playwright` brings `axe-core` (2 packages, 3.5 MB, MPL-2.0). pa11y brings 46
+   packages, about 37 MB, among them `puppeteer` 25.17.0 and a second, nested `axe-core` 4.13.0.
+   The root `node_modules` grows from 19 MB to 60 MB. No browser is downloaded: `package.json` sets
+   `puppeteer.skipDownload`, and pa11y's puppeteer connects to Playwright's Chromium over a DevTools
+   port. pa11y is LGPL-3.0-only, a dev dependency that never ships with the site; whether that
+   licence is acceptable here is the maintainer's call.
 
 ## Moved pins (issue to open)
 

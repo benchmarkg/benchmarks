@@ -87,6 +87,15 @@
 # has site/playwright.config.ts preview dist/ instead of building it again. Only Chromium's headless shell is installed,
 # and not cached, as nothing else in this workflow is.
 #
+# It runs the accessibility harness (P2-S8-T03; 09 S8, S13 "Axe / Pa11y over a fixed page sample") over the same build
+# too: site/tests/a11y.spec.ts audits the eight archetype pages of site/test/a11y/archetypes.json with axe-core and with
+# pa11y at WCAG 2.2 AA, in light, dark, forced-colors and prefers-contrast: more, and fails on any violation that
+# site/test/a11y/baseline.json, the audit of 2026-11-26 that P2-S8-T09 empties, does not list, or that the baseline on
+# the base branch does not (it only shrinks, so the job compares with origin/$GITHUB_BASE_REF, which fetch-depth: 0
+# fetches). Those pages run with JavaScript on, so S13 (tools/build/manifest.py --site) first copies the preview's
+# hashed data files into dist/, as the Playwright server's own build does. pa11y drives the same headless shell through
+# its puppeteer, which never downloads a browser of its own (npm ci --ignore-scripts, and the root package.json says so).
+#
 # Actions are pinned by commit SHA (08 S6); these are the SHAs archive-sources.yml resolved on
 # 2026-09-24, and setup-node's is schema-codegen.yml's (resolved 2026-09-25).
 
@@ -468,15 +477,22 @@ jobs:
           UAIBI_CORPUS: ../build/preview/corpus.json
           UAIBI_SITE_DRAFTS: '1'
         run: npx astro build
-      - name: the repository root's dependencies, whose @playwright/test the site's browser tests run under
+      - name: S13, the preview's hashed data files into dist/, for the pages the accessibility harness reads with JavaScript on
+        run: uv run --locked --python "$PYTHON" python tools/build/manifest.py --site site/dist --build build/preview
+      - name: the repository root's dependencies, whose @playwright/test, @axe-core/playwright and pa11y the site's browser tests run under
         run: npm ci --ignore-scripts
-      - name: Chromium's headless shell and its system libraries, the one browser the no-JS gate drives
+      - name: Chromium's headless shell and its system libraries, the one browser the no-JS gate and the accessibility harness drive
         run: npx playwright install --with-deps --only-shell chromium
       - name: the no-JS render gate, every route family's fallback element with JavaScript off, over the same build
         working-directory: site
         env:
           UAIBI_SITE_BUILT: '1'
         run: npx playwright test tests/nojs.spec.ts --project=nojs
+      - name: the accessibility harness, axe-core and pa11y over the eight archetypes in four modes, over the same build
+        working-directory: site
+        env:
+          UAIBI_SITE_BUILT: '1'
+        run: npx playwright test tests/a11y.spec.ts
       - name: size-limit, every route group against its budget
         working-directory: site
         run: npx size-limit
