@@ -26,6 +26,10 @@
 // addLaterTier() once its opt-in has loaded it; this file imports nothing of it. A pending tier shows nothing yet: 09
 // S6.11's skeleton for the semantic tier is that tier's to add, sized to its own block.
 //
+// The form's submit button (P2-S8-T09; 09 S8.2, WCAG SC 3.2.2, which pa11y's H32.2 holds a form to) asks again for the
+// box as it stands, the question a keystroke asks: Enter or the button is an explicit way to ask, and the retry after a
+// Pagefind load that failed. Typing still needs neither.
+//
 // Announcements: one polite status region, debounced at 500 ms (09 S8.4, lib/browse-view.ts ANNOUNCE_MS), and nothing
 // live on the result list. The query is kept in the link as `q` (10 "Filter state encoding": "q  free-text query"),
 // replaced, not pushed, on each keystroke, so Back leaves the page rather than stepping through the letters, and a link
@@ -314,14 +318,20 @@ export default function SearchBox() {
 
   return (
     <div className="search-box" data-search-box data-state={status}>
-      <form role="search" className="search-form" onSubmit={(e) => e.preventDefault()}>
+      <form role="search" className="search-form" onSubmit={(e) => {
+        e.preventDefault();
+        ask(query);
+      }}>
         <label htmlFor="search-q">Search the index</label>
-        <input id="search-q" type="search" name="q" value={query} autoComplete="off" spellCheck={false}
-          aria-describedby="search-scope" aria-controls="search-results" onFocus={warm}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            ask(e.target.value);
-          }} />
+        <div className="field">
+          <input id="search-q" type="search" name="q" value={query} autoComplete="off" spellCheck={false}
+            aria-describedby="search-scope" aria-controls="search-results" onFocus={warm}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              ask(e.target.value);
+            }} />
+          <button type="submit">Search</button>
+        </div>
         <p id="search-scope" className="scope">Benchmarks, systems, organizations, metrics, taxonomy terms and the pages about the index. Results appear as you type.</p>
       </form>
       {status === 'failed'
