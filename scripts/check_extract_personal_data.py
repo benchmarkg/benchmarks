@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """No stored Source extract carries an e-mail address, an arXiv submitter's name, an arXiv abstract page's
-or HTML rendering's author list, a fixed-layout page's labelled list of people or a paper's author note (04 S9;
-the maintainer's calls of 2026-11-18).
+or HTML rendering's author list, a fixed-layout page's labelled list of people, a paper's author note or a
+copyright line that names a person (04 S9; the maintainer's calls of 2026-11-18).
 
 A Source's `quote_extract` is the text the quote check reads, committed under data/ and published with the
 record. Personal data sits right beside the facts it backs: contact lines in papers and READMEs, the addresses
@@ -39,10 +39,28 @@ in `quote_extract_redactions` (schema/source.py). This holds the line:
              the same ("Copyright is with the authors"). A run whose phrase a window cuts off ("<names> are wi
              …") has no phrase left to read, and a window that opens inside a run leaves the names before its
              first initial unread; the curator redacts those by hand.
+  copyright  an extract, from any page, names no person as the holder of a copyright notice: "©" (or
+             "&copy;"), "Copyright (c)", "Copyright" or "(c)" before a year or a "by", and SciPost's
+             "Copyright <names> et al.", which has neither. The holder is the run of words after the marks,
+             the years and a "by", while each is a capitalised word, an initial, a name particle or only
+             marks; when it holds two name words, one of them capitalised ("© Copyright 2023, Ada Example.",
+             "Copyright (c) 2024 A. Example", "© Ada Example (2022)"), or one before "et al.", it is
+             `[name redacted]`, or `[names redacted]` for several. A holder an organisation word marks
+             ("Example Lab", "Example, Inc.", "The Authors", "Example Contributors"), that a connector carries
+             on ("Centre for Example Vision"), or that is written in capitals or camel case ("CAPRI & ...",
+             "OpenAI") stays, as do licence boilerplate ("Copyright Notice", "the copyright holders") and a
+             year alone; so does a holder a quote in data/ cites. A withheld Source is read like any other,
+             as every rule here reads it: its extract is stored and published all the same. Not caught: a
+             holder before its mark ("Ada Example © 2024"), a person beside an organisation in one run ("Ada
+             Example & Example Lab"), a one-word holder without "et al." (a surname, a handle) and a name in
+             capitals. An organisation whose name reads as a given name and a surname, with no organisation
+             word, is caught; a quote that cites it keeps it, as one does on main today, or ORG_WORDS gains
+             its word.
   counted    an extract holding a `[... redacted]` token says how many in `quote_extract_redactions`.
 
-The byline, roster, affiliation and author-note rules read only fixed labels and phrasing, so they need no
-list of names. A PDF's byline has no such label (its author notes, where it has them, are the author-note
+The byline, roster, affiliation and author-note rules read only fixed labels and phrasing, and the copyright
+rule fixed marks and the shape of a name (its lists are of organisation and boilerplate words), so they need
+no list of names. A PDF's byline has no such label (its author notes, where it has them, are the author-note
 rule's), nor has an HTML rendering's other than arXiv's; the sweep that redacted those matched each paper's
 author names from the arXiv API, and no name is stored for a check to reuse. The other lists of
 people redacted by hand (organisers, chairs, committees and team members on challenge sites; bylines on
@@ -91,6 +109,29 @@ PARTICLES = {'van', 'von', 'der', 'den', 'de', 'del', 'della', 'di', 'da', 'dos'
              'al', 'and'}
 AUTHOR_NOTE = re.compile(r'\b(?:is|are)(?: also)? with\b')        # "<names> are with <institution>"
 INITIAL = re.compile(r'[^\W\d_]{1,2}\.(?:-?[^\W\d_]{1,2}\.)*,?')  # "A.", "B.E.", "J.-P.", "Ch.", with a comma
+# A copyright notice's marks ("©", "&copy;", "Copyright", "(c)", combined: "© Copyright", "Copyright (c)",
+# "Publisher Copyright: ©"), then the years before its holder ("2023,", "2015 - 2026", "2022-present", "2024.")
+COPY_MARKS = re.compile(r'(?:(?:©|&copy;|&#169;|\b[Cc]opyright\b|\bCOPYRIGHT\b|\([cC]\))[\s:]*)+')
+COPY_YEARS = re.compile(r'(?:\d{4}(?:\s*[-–—]\s*(?:\d{4}|present))?\s*[,.]?\s*)+')
+COPY_BY = re.compile(r'by\s+')
+ET_AL = re.compile(r'\s+et\s+al\b')
+HOLDER_MARKS = MARKS + '"\'“”‘’'                 # ... and the quotes a holder may sit in
+# Capitalised words that open what follows a holder (licence text, a site's footer), not a name.
+COPY_STOP = {'the', 'all', 'permission', 'licensed', 'redistribution', 'released', 'powered', 'built', 'made',
+             'created', 'designed', 'design', 'revision', 'previous', 'next', 'privacy', 'terms', 'contact', 'back',
+             'published', 'version', 'this', 'see', 'use', 'some', 'website', 'on'}
+# The words that make a holder an organisation, in the run or as the word that ends it ("Google LLC").
+ORG_WORDS = {'inc', 'llc', 'ltd', 'limited', 'corp', 'corporation', 'co', 'company', 'gmbh', 'ag', 'sa', 'plc',
+             'university', 'universität', 'université', 'universidad', 'università', 'universiteit', 'college',
+             'school', 'faculty', 'department', 'institute', 'institut', 'instituto', 'academy', 'lab', 'labs',
+             'laboratory', 'laboratories', 'laboratoire', 'group', 'groups', 'team', 'project', 'foundation',
+             'consortium', 'collaboration', 'initiative', 'centre', 'center', 'association', 'society', 'committee',
+             'council', 'agency', 'network', 'alliance', 'partners', 'trustees', 'research', 'technologies',
+             'technology', 'systems', 'platforms', 'challenge', 'challenges', 'organizers', 'organisers',
+             'contributors', 'authors', 'author', 'developers', 'press', 'publishing', 'media', 'studio', 'factory',
+             'services', 'organization', 'organisation', 'office', 'ministry', 'government', 'programme', 'program',
+             'community', 'trust', 'fund', 'museum', 'library', 'hospital'}
+CONNECTORS = {'of', 'for', 'in', 'at'}           # "Centre for Robotic Vision": an organisation's name goes on
 
 
 def name_shaped(text: str) -> bool:
@@ -210,6 +251,81 @@ def author_notes(extract: str) -> list[tuple[int, int]]:
     return out
 
 
+def titled(word: str) -> bool:
+    """A capitalised word as a name is written: an upper-case letter, then lower-case letters, in each part a
+    hyphen or apostrophe joins ("Ada", "Jean-Pierre", "O'Example"). Capitals ("CAPRI"), capitals inside
+    ("OpenAI"), digits and lone letters are not."""
+    parts = [p for p in re.split(r"[-'’]", word) if p]
+    return bool(parts) and any(len(p) > 1 for p in parts) and all(
+        p.isalpha() and p[0].isupper() and (len(p) == 1 or p[1:].islower()) for p in parts)
+
+
+def holder(window: str, pos: int) -> tuple[list, int, bool]:
+    """The name words of the holder that starts at `pos`, how many are capitalised, and whether an organisation
+    holds it. The run goes on while each word is a capitalised word, an initial, a name particle, a redaction
+    token (read past: it holds a name's place) or only marks ("&", "(2022)"); it ends at any other word, after a
+    word that ends a sentence ("Example."), or before a label ("Design:") or a word that opens what follows a
+    holder (COPY_STOP). A word of ORG_WORDS in the run or ending it, or a connector before a capitalised word
+    ("Centre for Robotic Vision", "Problems in Single-Cell Analysis"), makes it an organisation's."""
+    def initial(word: str) -> bool:                 # "A.", "J.-P.", "Ch."; not "AI."
+        return len(word) > 1 and word[0].isupper() and not word[1].isupper() and bool(INITIAL.fullmatch(word))
+    names, capitalised, skip = [], 0, pos
+    for w in WORD.finditer(window, pos):
+        if w.start() < skip:
+            continue
+        token = TOKEN.match(window, w.start())
+        if token:
+            skip = token.end()
+            continue
+        word = w.group()
+        core = word.strip(HOLDER_MARKS)
+        if not core:
+            continue
+        if core.lower() in ORG_WORDS:
+            return names, capitalised, True
+        if core.lower() in COPY_STOP or word.endswith(':'):
+            break
+        if initial(word):
+            names.append(w)
+        elif titled(core):
+            names.append(w)
+            capitalised += 1
+            if word.rstrip(HOLDER_MARKS.replace('.', '')).endswith('.'):
+                break                                       # the end of the notice's sentence
+        elif core in PARTICLES and names:
+            continue
+        else:
+            after = WORD.search(window, w.end())
+            org = core in CONNECTORS and bool(after) and titled(after.group().strip(HOLDER_MARKS))
+            return names, capitalised, org
+    return names, capitalised, False
+
+
+def copyrights(extract: str) -> list[tuple[int, int]]:
+    """The (start, end) of each copyright notice's holder that names a person and is not redacted (holder()).
+    A notice is "©" (or "&copy;"), "Copyright (c)", or "Copyright" or "(c)" before a year or a "by"; its holder
+    follows the marks, the years and a "by". The SciPost line "Copyright <names> et al." has neither year nor
+    sign: "Copyright" before a holder that "et al." ends is a notice too. "Copyright Notice", "(c) Did you",
+    "501(c)(3)" are none. A holder names a person when no organisation holds it and it has two name words, one
+    of them capitalised ("Ada Example", "A. Example"), or one capitalised word before "et al."."""
+    out = []
+    for off, window in windows(extract):
+        for m in COPY_MARKS.finditer(window):
+            marks = m.group().lower()
+            years = COPY_YEARS.match(window, m.end())
+            pos = years.end() if years else m.end()
+            by = COPY_BY.match(window, pos)
+            names, capitalised, org = holder(window, by.end() if by else pos)
+            if org or not capitalised:
+                continue
+            et_al = bool(ET_AL.match(window, names[-1].end()))
+            notice = ('©' in marks or '&copy;' in marks or '&#169;' in marks or bool(years) or bool(by)
+                      or ('copyright' in marks and ('(c)' in marks or et_al)))
+            if notice and (len(names) >= 2 or et_al):
+                out.append((off + names[0].start(), off + names[-1].end()))
+    return out
+
+
 def cited_quotes(root: str) -> dict[str, list[str]]:
     """Source id -> the quotes in data/ that cite it (tools/validate/quotes.py finds them)."""
     sys.path.insert(0, ROOT)
@@ -298,6 +414,15 @@ def check(root: str) -> list[str]:
         if noted:
             errors.append('%s: the extract names authors before "is with" or "are with" %d time(s) (an author '
                           'note); replace each run of names with [names redacted]' % (sid, len(noted)))
+        held = copyrights(extract)
+        if held:
+            if cited is None:
+                cited = cited_quotes(root)
+            held = [s for s in held if not quoted(extract, s, cited.get(sid) or [])]
+        if held:
+            errors.append('%s: the extract names a person as copyright holder %d time(s) (a copyright line); '
+                          'replace each name with [name redacted], or several with [names redacted]'
+                          % (sid, len(held)))
         tokens = len(TOKEN.findall(extract))
         if tokens and not record.get('quote_extract_redactions'):
             errors.append('%s: the extract holds %d redaction token(s) but quote_extract_redactions is unset'
@@ -316,7 +441,7 @@ def main(argv=None) -> int:
         print('%d problem(s)' % len(errors))
         return 1
     print('OK    no Source extract holds an e-mail address, an unredacted arXiv submitter, an arXiv abs or HTML '
-          'byline, a labelled roster on a fixed-layout page or an author note')
+          'byline, a labelled roster on a fixed-layout page, an author note or a copyright line naming a person')
     return 0
 
 

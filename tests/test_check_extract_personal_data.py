@@ -1,7 +1,8 @@
 """scripts/check_extract_personal_data.py: no stored extract carries an e-mail address, an arXiv submitter's name,
-an arXiv abs page's or HTML rendering's author list, a fixed-layout page's labelled list of people or a paper's
-author note. The byline, roster, affiliation and author-note fixtures are placeholders ("First Author", "Second
-Editor", "A. First"), not anyone's name."""
+an arXiv abs page's or HTML rendering's author list, a fixed-layout page's labelled list of people, a paper's
+author note or a copyright line that names a person. The byline, roster, affiliation, author-note and copyright
+fixtures are placeholders ("First Author", "Second Editor", "A. First", "Ada Example"), not anyone's name; the
+copyright fixtures take the shapes the 2026-11-26 sweep redacted, and the organisations are invented too."""
 import os
 import sys
 
@@ -245,6 +246,114 @@ def test_an_author_note_that_a_quote_cites_stays(tmp_path):
 
 def test_a_redacted_author_note_needs_its_count(tmp_path):
     source(tmp_path, 'src-a', 'The developed algo- [names redacted] are with the Department of Example', url=PDF)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and 'holds 1 redaction token(s) but quote_extract_redactions is unset' in errs[0], errs
+
+
+HOLDER = 'names a person as copyright holder %d time'
+# The shapes the sweep of 2026-11-26 redacted, as (the line naming its holder, the line as redacted)
+COPYRIGHT_SHAPES = [
+    ('Example University. Previous Next © Copyright 2023, Ada Example. Revision 0a1b2c3d. Built with Sphinx',
+     'Example University. Previous Next © Copyright 2023, [name redacted]. Revision 0a1b2c3d. Built with Sphinx'),
+    ('Registration opens Sep 15, 2020 ... © 2026 Ada Example & EXAMPLE. Powered by Jekyll',          # a site footer
+     'Registration opens Sep 15, 2020 ... © 2026 [name redacted] & EXAMPLE. Powered by Jekyll'),
+    ('MIT License Copyright (c) 2024 Ada Example Permission is hereby granted, free of charge',      # a licence
+     'MIT License Copyright (c) 2024 [name redacted] Permission is hereby granted, free of charge'),
+    ('the Third-Party Software: 1. Example (LICENSE) Copyright 2017 Ada Example. DM19-0000 ## Example',
+     'the Third-Party Software: 1. Example (LICENSE) Copyright 2017 [name redacted]. DM19-0000 ## Example'),
+    ('Changelog RSS Example Discovery | © Ada Example (2022) { __sveltekit_0abc = { base: new URL',  # year after
+     'Changelog RSS Example Discovery | © [name redacted] (2022) { __sveltekit_0abc = { base: new URL'),
+    ('and great fun. Copyright A. Example et al. This work is licensed under the Creative Commons',  # no year, no ©
+     'and great fun. Copyright [name redacted] et al. This work is licensed under the Creative Commons'),
+]
+
+
+@pytest.mark.parametrize('named, redacted', COPYRIGHT_SHAPES)
+def test_a_copyright_line_naming_a_person_fails_and_its_redacted_form_passes(tmp_path, named, redacted):
+    source(tmp_path, 'src-a', named)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and HOLDER % 1 in errs[0], errs
+    source(tmp_path, 'src-a', redacted, quote_extract_redactions=1)
+    assert C.check(str(tmp_path)) == []
+
+
+@pytest.mark.parametrize('extract', [
+    'MIT License Copyright (c) 2021 ExampleAI Permission is hereby granted',          # camel case: a company
+    'BSD 3-Clause License Copyright (c) 2023, The EXAMPLE authors Redistribution and use',
+    'Copyright (c) 2025 example-benchmark-examples Contributors Permission is hereby granted',
+    '© 2025 The Author(s). Published by Example Press. © Author(s) 2026. This work is distributed',
+    '© 2026 Example Labs Inc. All rights reserved.',
+    '© Copyright 2023, Example, LLC. Built with Sphinx. Copyright 2023 Example LLC Licensed under',
+    'Copyright 2021 Example Licensed under the Apache License, Version 2.0',            # one word, then licence text
+    '© 2026 Example AI. All rights reserved. © 2026 Example. All Rights Reserved.',
+    'Copyright (c) 2024 Example Robot Learning Lab (ERL) lab @ Example Berkeley',
+    '©2024 Association for Example Linguistics. © 2018 Example Centre for Robotic Vision.',
+    '© 2026 Open Problems in Example-Cell Analysis',                                    # a connector carries it on
+    'Copyright © 2022-present ExampleNet Team. Copyright (c) 2015 - 2026 EXAMPLE team - INRIA, ENS',
+    '© Copyright DREAM Examples . Powered by Example Bionetworks. © Example Geometry Group. Design by BootStrap',
+    'Contact us © 2007-2026, University of Example. © Design: HTML5 UP',
+    'Copyright 2020 by the author(s). Copyright 2024 by the a',
+    'PMLR 306, 2026. Copyright 2026 … Word Problem Benchmarks mix two challenges',      # a year alone
+    'PMC Disclaimer | PMC Copyright Notice Example Rev Chem . Author manuscript',       # boilerplate, no notice
+    '## Generate Response with Copyright Risk Mitigation Methods Coming Soon.',
+    'Copyright and License information © The Author(s) 2023. PMC Copyright notice Table 1.',
+    'Neither the name of the copyright holder nor the names of its contributors',
+    'In Fig. 6(c) We Compare Example Fields. (c) Did You report error bars? A 501(c)(3) Example Nonprofit',
+    'HAM10000 Dataset: (c) by ExampleIR Group, Department of Dermatology',
+])
+def test_an_organisation_or_boilerplate_copyright_line_passes(tmp_path, extract):
+    source(tmp_path, 'src-a', extract, url=PDF)
+    assert C.check(str(tmp_path)) == []
+
+
+@pytest.mark.parametrize('extract, times', [
+    ('Copyright Example et al. This work is licensed', 1),                     # a surname before "et al."
+    ('© 2020 by Ada van der Example. All rights reserved.', 1),                # "by", a name particle
+    ('MIT License Copyright (c) 2021 A. Example and B. Example Permission is hereby granted', 1),   # one holder
+    ('Copyright (C) 2019 Jean-Pierre O\'Example', 1),
+    ('© Ada Example (2022) { … } Copyright 2019 Bo Example. Licensed', 2),
+    ('© 2026 [name redacted] & Ada Example. Powered by Jekyll', 1),            # a token holds one name's place
+    ('Round opens Sep 15, 2020 ... © 2026 Ada Exa … Powered by Jekyll', 1),     # a window cut inside the name
+    ('its footer reads "© 2026 Ada Example"; unlicensed is the default', 1),   # quotes around it
+])
+def test_a_copyright_holder_that_names_a_person_fails(tmp_path, extract, times):
+    source(tmp_path, 'src-a', extract, quote_extract_redactions=extract.count('redacted') or None)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and HOLDER % times in errs[0], errs
+
+
+@pytest.mark.parametrize('url', [None, ABS, HTML, ACL, PDF])
+def test_the_copyright_rule_reads_every_page(tmp_path, url):
+    source(tmp_path, 'src-a', 'MIT License Copyright (c) 2024 Ada Example Permission is hereby granted', url=url)
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and HOLDER % 1 in errs[0], errs
+
+
+def test_the_copyright_rule_reads_a_withheld_source(tmp_path):
+    """Its body is never archived, but its extract is stored and published like any other: every rule reads it."""
+    source(tmp_path, 'src-a', 'Example Lab | © 2026 Ada Example', archive_status='withheld',
+           contains_personal_data=True, failure_reason='the page lists its team')
+    errs = C.check(str(tmp_path))
+    assert len(errs) == 1 and HOLDER % 1 in errs[0], errs
+
+
+def test_a_copyright_holder_that_a_quote_cites_stays(tmp_path):
+    """As for the other rules; it is also how an organisation that reads as a person's name stays."""
+    source(tmp_path, 'src-a', 'MIT License Copyright (c) 2022 Neural Example Permission is hereby granted, free')
+    entry = tmp_path / 'data' / 'benchmarks' / 'biology-genetics'
+    entry.mkdir(parents=True)
+
+    def quote(text):
+        (entry / 'a.yaml').write_text(yaml.safe_dump({'id': 'a', 'maintainers': {'quote': text, 'source': 'src-a'}}),
+                                      encoding='utf-8')
+    quote('MIT License Copyright (c) 2022 Neural Example')       # the quote check needs it: it stays, for review
+    assert C.check(str(tmp_path)) == []
+    quote('MIT License')                                         # a quote beside it is no reason to keep it
+    assert HOLDER % 1 in C.check(str(tmp_path))[0]
+
+
+def test_a_redacted_copyright_holder_needs_its_count(tmp_path):
+    source(tmp_path, 'src-a', 'Example Discovery | © [name redacted] (2022) { __sveltekit')
     errs = C.check(str(tmp_path))
     assert len(errs) == 1 and 'holds 1 redaction token(s) but quote_extract_redactions is unset' in errs[0], errs
 
