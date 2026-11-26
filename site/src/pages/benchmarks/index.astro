@@ -109,7 +109,13 @@ const facetsHref = dataHref('facets.json');
   @media (hover: hover) {
     .browse :global(.row:hover > .gloss) { visibility: visible; transition: visibility 0s linear 0.3s; }
   }
-  .browse :global(.row:has(:focus-visible) > .gloss) { visibility: visible; }
+  /* Tab from a term's checkbox goes on to its own "Full definition" link. The browser takes focus, and :focus-visible,
+     off the checkbox before it hands focus to the link and checks that the link can take it; with the definition shown
+     by :has(:focus-visible) alone it was hidden in that moment, and focus fell to the page (P2-S8-T04,
+     tests/keyboard.spec.ts). :focus-within holds the row across the step, the row containing both; a checkbox a click
+     has focused is still left out, so a click opens no definition. :where() keeps the rule below the Escape one. */
+  .browse :global(.row:has(:focus-visible) > .gloss),
+  .browse :global(.row:where(:focus-within:not(:has(input:focus:not(:focus-visible)))) > .gloss) { visibility: visible; }
   .browse :global(.rail[data-hush] .gloss) { visibility: hidden; }
   /* stacked below --bp-md: under the row, inside the page */
   @media (max-width: 50.99rem) {
@@ -202,6 +208,12 @@ const facetsHref = dataHref('facets.json');
       }
       .browse :global(.results-head .chips) { flex-wrap: nowrap; }
       .browse :global(.results-head .applied > *), .browse :global(.results-head .chips > li) { flex: none; white-space: nowrap; }
+      /* SC 2.4.11 (09 S8.1: the sticky filter bar "must not cover a focused row"). What takes focus in the list under the
+         bar -- a result, the empty result's button -- is scrolled into view below it, not under it: its scroll margin is
+         the bar's height (one line of the 2.25rem button, one of the 1.75rem chip row, the gap between them, the bar's
+         padding and its rule) and room for the focus ring. Without it, Shift+Tab up the list stopped on results the bar
+         covered (P2-S8-T04, tests/keyboard.spec.ts). */
+      .browse :global(.results-body :is(a, button)) { scroll-margin-block-start: calc(2.25rem + 1.75rem + 3 * var(--sp-2) + 1px + var(--sp-2)); }
       /* the list is the page and never moves under the reader: the browser does not re-anchor the page on a row that a
          filter has moved within the list, and FilterSheet.tsx usePinnedList() holds the list when what is above it
          changes */
@@ -258,5 +270,8 @@ const facetsHref = dataHref('facets.json');
     border-block-start: 1px solid var(--c-border);
     background: var(--c-bg);
   }
+  /* SC 2.4.11: Tab down the rail scrolls each term into view above the sticky footer, not under it -- the footer's height
+     (the 2.75rem button, its padding and its rule) and room for the focus ring (P2-S8-T04, tests/keyboard.spec.ts) */
+  .browse :global(.filter-sheet:popover-open .rail :is(a, input, summary)) { scroll-margin-block-end: calc(2.75rem + 2 * var(--sp-3) + 1px + var(--sp-2)); }
   .browse :global(.sheet-done) { display: flex; inline-size: 100%; min-block-size: 2.75rem; border-color: var(--c-link); background: var(--c-select-bg); }
 </style>
