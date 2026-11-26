@@ -22,7 +22,8 @@ fixed yet -- 08 and P4-S6-T01 both write `<host>` -- and `<` is not an IRI chara
 until it is: RFC 2606 reserves .invalid, so the placeholder can never resolve to somebody else's vocabulary, and
 fixing the host is a one-constant change that `bench schema gen --check` then holds the generated schema to. The
 documents say they conform to both CROISSANT_VERSION and EXTENSION_VERSION. The extension is unofficial (15 A8):
-nothing here is proposed to MLCommons, which is P4-S6-T06's.
+nothing here is proposed to MLCommons, which is P4-S6-T06's. NS_HOST, the namespace, the terms and the document
+models are schema/croissant_benchmark.py's (P4-S6-T02, ADR-0030); this module emits and validates with them.
 
 The @context is the upstream Croissant context for CROISSANT_VERSION, taken from the pinned mlcroissant at build time
 (the context its own writer emits), plus `cb` and one key per extension term. Nothing upstream is copied into this
@@ -49,7 +50,7 @@ the documents carry beside the upstream context:
 The host is NS_HOST, here as everywhere, so fixing it regenerates this file with the rest.
 
 The mapping. taxonomy/crosswalks/croissant.yaml is the written mapping and tests/build/test_croissant.py holds it to
-this module, as tests/test_crosswalks.py holds its `rows` to schema/benchmark.py's CROISSANT_TERMS:
+schema/croissant_benchmark.py, as tests/test_crosswalks.py holds its `rows` to schema/benchmark.py's CROISSANT_TERMS:
 
   base terms   CROISSANT_TERMS, schema.org terms Croissant uses, for the seven Benchmark fields that have one. Only
                those: a Benchmark field with no row there gets a cb: term, never an unlisted schema.org one, so the
@@ -71,6 +72,11 @@ decontamination, variant and fork edges, each to a benchmark id. A null, an empt
 are left out rather than written; `false` is written. 15 A8 leaves ResultClaim and Baseline unmapped on purpose, and
 the YAML's `unmapped` lists those and the rest with their reasons.
 
+P4-S6-T02 mapped every material field (ADR-0030): the benchmark's versions and subsets, its resolved material set and
+rating-pool rule, and one cb:EvalConditions term per condition field. The documents written here do not carry those
+yet -- emitting them from the mapping is P4-S6-T03's -- but every document's context declares them, and the schema
+the documents are validated against accepts them.
+
 Validation, inside the build, so CI's `bench build` step enforces it (08 S5.8, "Validation in CI"). `check()` holds
 every document to two things, and the build writes nothing if one fails:
 
@@ -79,9 +85,9 @@ every document to two things, and the build writes nothing if one fails:
                datePublished and citeAs, which no mapped field supplies yet (the YAML's `unmapped` says why), and
                license where the record states none
   extension    jsonschema against the COMMITTED schema/generated/croissant-benchmark.schema.json, which
-               `bench schema gen` generates from the Pydantic models below (tools/build/codegen.py renders it, so the
-               codegen drift check covers it). A model or mapping change that is not regenerated fails here as well
-               as in CI job 5
+               `bench schema gen` generates from schema/croissant_benchmark.py's Pydantic models (tools/build/codegen.py
+               renders it, so the codegen drift check covers it). A model or mapping change that is not regenerated
+               fails here as well as in CI job 5
 
 Every benchmark that passes tier 1 is validated, the ai-drafted-unverified ones too (artifacts.Build.withheld): no
 entry is published yet, and until one is, the drafts are the only documents there are to hold a mapping change to
@@ -102,199 +108,26 @@ import json
 import os
 import re
 import sys
-from typing import Annotated, Literal, Union
-
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, create_model
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
-from schema.benchmark import (CROISSANT_TERMS, Access, AggregationPolicy, Benchmark, EvaluationTarget,  # noqa: E402
-                              ExecutionMode, GroundTruthSource, Lineage, Profile, Slug, SubmissionProcess, Text, Url)
-from schema.metric import MetricId, Optimum, ValueType  # noqa: E402
+from schema.benchmark import CROISSANT_TERMS, Benchmark  # noqa: E402
+# The extension's vocabulary and models, which P4-S6-T02 moved to schema/ (ADR-0030). Imported by name, so TERMS here
+# is the same dict as there; the classes, REUSES and models are read through this module by its callers and tests.
+from schema.croissant_benchmark import (  # noqa: E402,F401
+    CLASSES, CROISSANT_VERSION, DATA_LICENCE, DRAFT, EXTENSION_VERSION, NAMESPACE, NS_HOST, PREFIX, REUSES, SCHEMA,
+    SCHEMA_ORG, TERMS, BenchmarkDocument, CollectionDocument, ConditionsNode, LineageNode, MetricNode, ProtocolNode,
+    TaskNode, json_schema)
 from tools.build.emit import Refused, by_id, fold, nfc, serialise  # noqa: E402
 
-NS_HOST = 'host.invalid'                                        # 08 S5.8's <host>; see the module docstring
-NAMESPACE = 'https://%s/ns/croissant-benchmark/v1#' % NS_HOST
-EXTENSION_VERSION = 'https://%s/ns/croissant-benchmark/v1' % NS_HOST
-CROISSANT_VERSION = 'http://mlcommons.org/croissant/1.1'
-PREFIX = 'cb'
 DIR = 'croissant-benchmark'                                     # under the build's --out
 COLLECTION = '_collection.jsonld'
-SCHEMA = 'schema/generated/croissant-benchmark.schema.json'
 CONTEXT = 'site/public/ns/croissant-benchmark/v1/context.jsonld'          # the published context (P4-S6-T01)
 CONTEXT_URL = 'https://%s/ns/croissant-benchmark/v1/context.jsonld' % NS_HOST   # where the site serves CONTEXT
 CONTEXT_CACHE = 'public, max-age=604800'        # site/public/_headers' /ns/* rule, a week; it says why not immutable
-DRAFT = 'https://json-schema.org/draft/2020-12/schema'
-SCHEMA_ORG = 'https://schema.org/'
-DATA_LICENCE = 'https://spdx.org/licenses/CC-BY-4.0.html'       # LICENSE-DATA; the collection is ours (05 S12)
 # The one class of mlcroissant warning a document may carry (module docstring, "Validation").
 RECOMMENDED = re.compile(r'^\[[^\]]*\] Property "[^"]+" is recommended, but does not exist\.$')
-
-CLASSES = ('Benchmark', 'BenchmarkCollection', 'Task', 'Metric', 'Protocol', 'EvalConditions', 'Lineage')
-# term -> (the class it is a property of, the field of ours it carries; None for a node gathering several).
-# taxonomy/crosswalks/croissant.yaml's `extension.terms` must equal this (tests/build/test_croissant.py).
-TERMS = {
-    'benchmarkId': ('Benchmark', 'Benchmark.id'),
-    'tasks': ('Benchmark', 'Benchmark.task'),
-    'metrics': ('Benchmark', 'Benchmark.metrics'),
-    'protocol': ('Benchmark', None),
-    'conditions': ('Benchmark', None),
-    'lineage': ('Benchmark', 'Benchmark.lineage'),
-    'input': ('Task', 'Benchmark.task.input'),
-    'output': ('Task', 'Benchmark.task.output'),
-    'scoring': ('Task', 'Benchmark.task.scoring'),
-    'testsHiddenFromSystem': ('Task', 'Benchmark.task.tests_hidden_from_system'),
-    'evaluationTarget': ('Task', 'Benchmark.evaluation_target'),
-    'executionMode': ('Task', 'Benchmark.execution_mode'),
-    'groundTruthSource': ('Task', 'Benchmark.ground_truth_source'),
-    'isHeadline': ('Metric', 'Benchmark.headline_metric'),
-    'valueType': ('Metric', 'Metric.value_type'),
-    'optimum': ('Metric', 'Metric.optimum'),
-    'optimumTarget': ('Metric', 'Metric.optimum_target'),
-    'unbounded': ('Metric', 'Metric.unbounded'),
-    'submissionProcess': ('Protocol', 'Benchmark.governance.submission_process'),
-    'dataAccess': ('Protocol', 'Benchmark.data.access'),
-    'aggregationPolicy': ('Protocol', 'Benchmark.aggregation_policy'),
-    'conditionsId': ('EvalConditions', 'Benchmark.reference_conditions'),
-    'comparabilityProfile': ('EvalConditions', 'Benchmark.comparability.profile'),
-    'lineageRole': ('Lineage', 'Benchmark.lineage.role'),
-    'supersedes': ('Lineage', 'Benchmark.lineage.supersedes'),
-    'isSupersededBy': ('Lineage', 'Benchmark.lineage.superseded_by'),
-    'subsetOf': ('Lineage', 'Benchmark.lineage.subset_of'),
-    'extendedBy': ('Lineage', 'Benchmark.lineage.extended_by'),
-    'decontaminates': ('Lineage', 'Benchmark.lineage.decontaminates'),
-    'variants': ('Lineage', 'Benchmark.lineage.variants'),
-    'forks': ('Lineage', 'Benchmark.lineage.forks'),
-}
-# (class, schema.org term) -> the field of ours it carries, with the schema.org meaning.
-REUSES = {
-    ('Metric', 'sc:identifier'): 'Metric.id',
-    ('Metric', 'sc:name'): 'Metric.name',
-    ('Metric', 'sc:minValue'): 'Metric.range.min',
-    ('Metric', 'sc:maxValue'): 'Metric.range.max',
-}
-LineageRole = Lineage.model_fields['role'].annotation
-ConditionsId = Annotated[str, StringConstraints(pattern=r'^cond-[0-9a-f]{12}$')]     # Benchmark.reference_conditions
-DocumentName = Annotated[str, StringConstraints(pattern=r'^[a-z0-9][a-z0-9-]{1,62}\.jsonld$')]   # {Slug}.jsonld
-
-
-# ---- the extension schema: Pydantic, so `bench schema gen` emits it like every other schema --------------------
-
-class _Node(BaseModel):
-    model_config = ConfigDict(extra='forbid', populate_by_name=True)
-
-
-class TaskNode(_Node):
-    """cb:Task: what is asked (08 S5.8 `tasks`; 15 A8's task-and-protocol row)."""
-    type_: Literal['cb:Task'] = Field(alias='@type')
-    input: list[Text] = Field(default_factory=list)
-    output: Text | None = None
-    scoring: Text | None = None
-    testsHiddenFromSystem: bool | None = None
-    evaluationTarget: EvaluationTarget
-    executionMode: ExecutionMode | None = None
-    groundTruthSource: GroundTruthSource | None = None
-
-
-class MetricNode(_Node):
-    """cb:Metric: a metric with its range and direction (08 S5.8 `metrics`). A named scoring note has a name only."""
-    type_: Literal['cb:Metric'] = Field(alias='@type')
-    identifier: MetricId | None = None
-    name: Text
-    isHeadline: bool
-    valueType: ValueType | None = None
-    optimum: Optimum | None = None
-    optimumTarget: float | None = None
-    minValue: float | None = None
-    maxValue: float | None = None
-    unbounded: bool | None = None
-
-
-class ProtocolNode(_Node):
-    """cb:Protocol: how a result is produced and admitted (08 S5.8 `protocol`)."""
-    type_: Literal['cb:Protocol'] = Field(alias='@type')
-    submissionProcess: list[SubmissionProcess] = Field(default_factory=list)
-    dataAccess: Access
-    aggregationPolicy: AggregationPolicy
-
-
-class ConditionsNode(_Node):
-    """cb:EvalConditions: the reference to our EvalConditions entity and the comparability profile (08 S5.8)."""
-    type_: Literal['cb:EvalConditions'] = Field(alias='@type')
-    conditionsId: ConditionsId | None = None
-    comparabilityProfile: Profile | None = None
-
-
-class LineageNode(_Node):
-    """cb:Lineage: supersession, subset, extension, decontamination, variant and fork edges (08 S5.8 `lineage`)."""
-    type_: Literal['cb:Lineage'] = Field(alias='@type')
-    lineageRole: LineageRole = None
-    supersedes: list[Slug] = Field(default_factory=list)
-    isSupersededBy: list[Slug] = Field(default_factory=list)
-    subsetOf: Slug | None = None
-    extendedBy: list[Slug] = Field(default_factory=list)
-    decontaminates: Slug | None = None
-    variants: list[Slug] = Field(default_factory=list)
-    forks: list[Slug] = Field(default_factory=list)
-
-
-# The @context: the upstream keys are allowed through unchecked (they are mlcroissant's), ours are pinned.
-Context = create_model(
-    'Context', __config__=ConfigDict(extra='allow', populate_by_name=True),
-    vocab=(Literal[SCHEMA_ORG], Field(alias='@vocab')), sc=(Literal[SCHEMA_ORG], ...),
-    cb=(Literal[NAMESPACE], ...), **{t: (Literal['%s:%s' % (PREFIX, t)], ...) for t in TERMS})
-ConformsTo = tuple[Literal[CROISSANT_VERSION], Literal[EXTENSION_VERSION]]
-
-
-class BenchmarkDocument(_Node):
-    """One benchmark's document: build/croissant-benchmark/{id}.jsonld."""
-    context: Context = Field(alias='@context')
-    type_: tuple[Literal['sc:Dataset'], Literal['cb:Benchmark']] = Field(alias='@type')
-    conformsTo: ConformsTo
-    name: Text
-    description: str | None = None
-    alternateName: list[Text] = Field(default_factory=list)
-    url: Url
-    license: Text | None = None
-    keywords: list[Text] = Field(default_factory=list)
-    subjectOf: Url | None = None
-    benchmarkId: Slug
-    tasks: list[TaskNode] = Field(min_length=1)
-    metrics: list[MetricNode] = Field(default_factory=list)
-    protocol: ProtocolNode
-    conditions: ConditionsNode | None = None
-    lineage: LineageNode | None = None
-
-
-class Part(_Node):
-    """One entry of the collection's hasPart: a benchmark document, by its file name beside the collection. Typed
-    cb:Benchmark alone: mlcroissant takes whichever schema.org Dataset node rdflib lists first for the document's
-    own, so a document holds exactly one."""
-    id_: DocumentName = Field(alias='@id')
-    type_: Literal['cb:Benchmark'] = Field(alias='@type')
-    name: Text
-    benchmarkId: Slug
-
-
-class CollectionDocument(_Node):
-    """The catalogue's document: build/croissant-benchmark/_collection.jsonld."""
-    context: Context = Field(alias='@context')
-    type_: tuple[Literal['sc:Dataset'], Literal['cb:BenchmarkCollection']] = Field(alias='@type')
-    conformsTo: ConformsTo
-    name: Text
-    description: Text
-    url: Url
-    license: Literal[DATA_LICENCE]
-    citeAs: Text
-    hasPart: list[Part] = Field(default_factory=list)
-
-
-def json_schema() -> dict:
-    """The generated extension schema (codegen.render() writes it to SCHEMA): either document, by $ref."""
-    body = TypeAdapter(Union[BenchmarkDocument, CollectionDocument]).json_schema(mode='validation', by_alias=True)
-    return {'$schema': DRAFT, '$comment': 'Generated by `bench schema gen` from tools/build/croissant.py. Do not edit.',
-            'title': 'croissant-benchmark', **body}
 
 
 # ---- the context ----------------------------------------------------------------------------------------------
