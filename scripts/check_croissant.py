@@ -6,6 +6,7 @@ refuse any committed copy of the Croissant specification's text (P4-S6-T04; 08 S
     python scripts/check_croissant.py                # the schema, the published context and the spec guard only
     python scripts/check_croissant.py --all --schema PATH      # the same, held to another extension schema
     python scripts/check_croissant.py --corpus DIR   # --all, with the documents built from another tree (a fixture)
+    python scripts/check_croissant.py DIR [DIR ...]  # also every document written under each DIR (P4-S6-T05)
     python scripts/check_croissant.py --fingerprint SPEC.md [SPEC.md ...]   # regenerate FINGERPRINTS (below)
 
 08 S5.8: "Each emitted document is validated with `mlcroissant` for base-Croissant conformance and against our own JSON
@@ -23,7 +24,15 @@ is the union, built in memory from one `artifacts.build` over the repository (to
   drafts      one document per draft that passes tier 1, the documents `bench build` withholds and the preview writes
   preview     the collection over published and drafts together, the one the preview writes
 
-Nothing is published to raise a count, and no status is read but the build's own. Five checks, every one blocking:
+Nothing is published to raise a count, and no status is read but the build's own.
+
+What a DIR validates (P4-S6-T05). Documents already written, such as the worked examples under
+docs/croissant-benchmark/examples/: every *.jsonld directly in each DIR, named by its path, held to the same base,
+extension and context checks as a built document (a file named _collection.jsonld as the collection, any other as a
+benchmark document). A DIR that holds no document, or a file that is not JSON, fails: an empty directory is never a
+pass. It builds nothing, so it may be given with or without --all, and the schema probes still need --all.
+
+Five checks, every one blocking:
 
   base        mlcroissant over each document (tools/build/croissant.py's base_problems, which is what `mlcroissant
               validate` runs): any error fails it, and so does any warning but a recommended-property notice
@@ -127,6 +136,34 @@ def emitted(corpus: str = ROOT) -> tuple[dict[str, dict], dict[str, int]]:
                                             croissant.context())
     out = {**held, **docs, 'preview/%s' % croissant.COLLECTION: preview}
     return out, {'published': len(docs) - 1, 'drafts': len(held), 'collections': 2}
+
+
+def relative(path: str, root: str = ROOT) -> str:
+    """`path` relative to `root`, or whole where it cannot be (another Windows drive); forward slashes either way."""
+    try:
+        return os.path.relpath(path, root).replace(os.sep, '/')
+    except ValueError:                                 # relpath raises across Windows drive letters
+        return path.replace(os.sep, '/')
+
+
+def written(dirs: list[str], root: str = ROOT) -> tuple[dict[str, dict], list[str]]:
+    """(path -> document for every *.jsonld directly in each of `dirs`, one line per DIR or file that cannot be
+    checked). A DIR is read relative to the working directory, as a shell gives it; a document is named by its path
+    relative to `root`, so its kind is read from its file name (kind_of)."""
+    docs, out = {}, []
+    for d in dirs:
+        names = sorted(n for n in os.listdir(d) if n.endswith('.jsonld')) if os.path.isdir(d) else []
+        if not names:
+            out.append('%s: holds no .jsonld document to check, which is never a pass'
+                       % relative(os.path.abspath(d), root))
+        for n in names:
+            path = os.path.abspath(os.path.join(d, n))
+            try:
+                with open(path, encoding='utf-8') as fh:
+                    docs[relative(path, root)] = json.load(fh)
+            except (OSError, ValueError) as e:         # json.JSONDecodeError and UnicodeDecodeError are ValueErrors
+                out.append('%s: cannot be read as JSON (%s)' % (relative(path, root), e))
+    return docs, out
 
 
 def kind_of(name: str) -> str:
@@ -406,9 +443,10 @@ def spec_problems(root: str = ROOT, fps: set[str] | None = None,
 # ---- the command --------------------------------------------------------------------------------------------------
 
 def run(root: str = ROOT, corpus: str | None = None, schema_path: str | None = None,
-        spec: bool = True) -> tuple[list[str], list[str]]:
+        spec: bool = True, dirs: list[str] | None = None) -> tuple[list[str], list[str]]:
     """(problems, the summary lines) of one run over the repository at `root`. `corpus` is the tree whose documents
-    are built and checked (--all: the repository; None: no documents); `spec` False skips the guard (the tests')."""
+    are built and checked (--all: the repository; None: no documents); `dirs` the directories of written documents
+    also checked (DIR); `spec` False skips the guard (the tests')."""
     schema_path = schema_path or os.path.join(root, croissant.SCHEMA)
     with open(schema_path, encoding='utf-8') as fh:
         schema = json.load(fh)
@@ -434,10 +472,14 @@ def run(root: str = ROOT, corpus: str | None = None, schema_path: str | None = N
                            'preview\'s; %d problem(s), %d recommended-property notice(s), mlcroissant %s'
                            % (len(docs), parts['published'], parts['drafts'], parts['collections'], len(found),
                               notices, croissant.mlcroissant_version()))
-    try:
-        shown = os.path.relpath(schema_path, root).replace(os.sep, '/')
-    except ValueError:                                 # relpath raises across Windows drive letters
-        shown = schema_path
+    if dirs:
+        on_disk, unread = written(dirs, root)
+        found, notices = document_problems(on_disk, schema, published)
+        problems += unread + found
+        summary.append('written: %d document(s) checked under %s; %d problem(s), %d recommended-property notice(s), '
+                       'mlcroissant %s' % (len(on_disk), ', '.join(relative(os.path.abspath(d), root) for d in dirs),
+                                           len(unread) + len(found), notices, croissant.mlcroissant_version()))
+    shown = relative(schema_path, root)
     found = schema_problems(schema, samples, shown)
     problems += found
     summary.append('schema: %s, %d problem(s)%s' % (shown, len(found), '' if samples else
@@ -462,6 +504,8 @@ def main(argv=None, root: str = ROOT) -> int:
                     help='the extension schema to hold them to (default: the committed one)')
     ap.add_argument('--fingerprint', nargs='+', metavar='SPEC', help='write %s from local copies of the specification'
                     % FINGERPRINTS)
+    ap.add_argument('dirs', nargs='*', metavar='DIR',
+                    help='also validate every .jsonld written directly in these directories (the worked examples)')
     a = ap.parse_args(argv)
     if a.fingerprint:
         with open(os.path.join(root, FINGERPRINTS), 'w', encoding='utf-8', newline='\n') as fh:
@@ -469,7 +513,7 @@ def main(argv=None, root: str = ROOT) -> int:
             fh.write('\n')
         print('check_croissant: wrote %s' % FINGERPRINTS)
         return 0
-    problems, summary = run(root, a.corpus or (root if a.everything else None), a.schema)
+    problems, summary = run(root, a.corpus or (root if a.everything else None), a.schema, dirs=a.dirs)
     for line in problems:
         print('BLOCKING  croissant  %s' % line)
     for line in summary:
