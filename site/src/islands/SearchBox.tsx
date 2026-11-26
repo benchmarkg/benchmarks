@@ -24,7 +24,9 @@
 // No tier is added yet. The semantic tier (P6-S1: the model2vec encoder, P6-S1-T01, and the cosine and fusion step,
 // P6-S1-T05, which owns the reciprocal rank fusion at k = 60 10 V11 asks for when both are present) is to call
 // addLaterTier() once its opt-in has loaded it; this file imports nothing of it. A pending tier shows nothing yet: 09
-// S6.11's skeleton for the semantic tier is that tier's to add, sized to its own block.
+// S6.11's skeleton for the semantic tier is that tier's to add, sized to its own block. What this file gives a later
+// tier's download is lexicalReady(), its cue to start: the semantic tier's loader (islands/search/loader.ts, P6-S1-T06)
+// fetches nothing until Pagefind has loaded.
 //
 // Announcements: one polite status region, debounced at 500 ms (09 S8.4, lib/browse-view.ts ANNOUNCE_MS), and nothing
 // live on the result list. The query is kept in the link as `q` (10 "Filter state encoding": "q  free-text query"),
@@ -70,6 +72,16 @@ interface Pagefind {
 }
 
 let loading: Promise<Pagefind> | null = null;
+let lexicalLoaded: () => void = () => undefined;
+const lexicalLoad = new Promise<void>((resolve) => {
+  lexicalLoaded = resolve;
+});
+
+/** Resolves once Pagefind has loaded and initialised on this page, and never rejects: the cue a later tier's download
+ *  waits for (11 S4 "First-query latency": "after first paint and after Pagefind is interactive"; islands/search/
+ *  loader.ts, P6-S1-T06). Pagefind loads only on focus or a query in the link, so a visit that never uses the box never
+ *  resolves it. */
+export const lexicalReady = (): Promise<void> => lexicalLoad;
 
 /** Pagefind, loaded once per page; a load that fails is forgotten, so the next keystroke tries again. */
 function lexicalTier(): Promise<Pagefind> {
@@ -77,6 +89,7 @@ function lexicalTier(): Promise<Pagefind> {
     const url = `${BUNDLE_URL}pagefind.js`;    // a variable, so the bundler leaves the build's own file to the browser
     const load = (import(/* @vite-ignore */ url) as Promise<Pagefind>).then(async (pf) => {
       await pf.init();
+      lexicalLoaded();
       return pf;
     });
     loading = load;

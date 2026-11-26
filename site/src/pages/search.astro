@@ -23,13 +23,23 @@
 // indexing it here would answer every term search twice (as on /benchmarks/). The directory's styles are global to this
 // page, under .search-page, rather than scoped: a scoped style puts a data-astro-cid attribute on each of its roughly
 // three thousand elements.
+//
+// The semantic tier (P6-S1-T06; 11 S4 "First-query latency"). The empty, hidden [data-semantic-tier] element is its
+// configuration: data-index-commit, the commit its IndexedDB cache is keyed on -- release()'s, the one the footer prints
+// and S13 holds to build-manifest.json's index_commit -- and data-vectors, `shipped` when this build publishes the
+// document vectors at /embed/ (lib/vectors.ts, pages/embed/[file].ts) and `none` otherwise. The page's one script hands
+// it to islands/search/loader.ts with the box's lexicalReady(), and the loader fetches nothing until a frame has been
+// painted, Pagefind is interactive and the browser is idle; it mirrors its state onto the element (data-state).
+// Without JavaScript the element is inert.
 import Base from '../layouts/Base.astro';
 import SearchBox from '../islands/SearchBox.tsx';
 import { benchmarks, organizations } from '../lib/collections';
 import { benchRoutes, onlyRoutes, rendered } from '../lib/bench-routes';
 import { browseHref, browsePages, browseSegment, orgBrowseHref, type BrowsePage } from '../lib/browse';
 import { RAIL } from '../lib/browse-view';
+import { release } from '../lib/release';
 import { facetSegment, termHref } from '../lib/terms';
+import { VECTORS_BASE, VECTOR_FILES, shippedVectors } from '../lib/vectors';
 
 interface Entry {
   id: string;
@@ -98,6 +108,7 @@ const groups: Group[] = [...bySegment.entries()]
       size,
     };
   });
+const vectors = shippedVectors() != null && VECTOR_FILES.every((f) => rendered(`${VECTORS_BASE}${f}`, listed));
 const count = (n: number) => `${n} ${n === 1 ? 'published benchmark' : 'published benchmarks'}`;
 const unit = (g: Group) => (g.segment === 'domain' ? (g.size === 1 ? 'family' : 'families')
   : g.segment === 'org' ? (g.size === 1 ? 'organisation' : 'organisations') : g.size === 1 ? 'term' : 'terms');
@@ -110,6 +121,7 @@ const unit = (g: Group) => (g.segment === 'domain' ? (g.size === 1 ? 'family' : 
     </header>
     <div data-pagefind-ignore="all">
       <SearchBox client:load />
+      <div hidden data-semantic-tier data-index-commit={release().commit_sha} data-vectors={vectors ? 'shipped' : 'none'}></div>
       <section class="directory" aria-labelledby="directory-h" data-search-directory>
         <h2 id="directory-h">Browse by facet</h2>
         <p class="note">The number beside a term is how many published benchmarks its page lists. A term with none keeps its page, because where nothing is measured is part of the answer.</p>
@@ -136,6 +148,14 @@ const unit = (g: Group) => (g.segment === 'domain' ? (g.size === 1 ? 'family' : 
     </div>
   </main>
 </Base>
+
+<script>
+  import { lexicalReady } from '../islands/SearchBox.tsx';
+  import { mountSemanticTier } from '../islands/search/loader.ts';
+
+  const tier = document.querySelector<HTMLElement>('[data-semantic-tier]');
+  if (tier != null) mountSemanticTier(tier, lexicalReady());
+</script>
 
 <style is:global>
   .search-page {
