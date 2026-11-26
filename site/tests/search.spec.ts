@@ -198,6 +198,26 @@ test('a later tier that fails says so in one line and leaves the lexical results
   await expect(page.locator('[data-tier="broken"]')).toHaveCount(0);
 });
 
+// P2-S8-T09: a form needs a submit button (pa11y H32.2, SC 3.2.2), and this one's asks again for the box as it stands
+test('the box\'s submit button, or Enter, asks again for the box as it stands, and the page stays where it is', async ({ page }) => {
+  const t = target();
+  await hydrated(page);
+  await addTier(page, 'counted', 'fails');
+  const times = async () => (await asked(page, 'counted')).filter((q) => q === t.name).length;
+  const button = page.locator('form[role="search"] button[type="submit"]');
+  await expect(button).toHaveText('Search');
+  await box(page).fill(t.name);
+  await expect(results(page)).toHaveAttribute('data-answered', t.name);
+  expect(await times()).toBe(1);
+  await button.click();
+  await expect.poll(times).toBe(2);
+  await box(page).press('Enter');
+  await expect.poll(times).toBe(3);
+  await expect(page.locator(`ol[data-tier="lexical"] > li[data-url="${url(t)}"]`)).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe('/search/');
+  expect(new URL(page.url()).searchParams.get('q')).toBe(t.name);
+});
+
 test('a Pagefind bundle that cannot load says so, and the directory stays the way in', async ({ page }) => {
   await page.route('**/pagefind/pagefind.js', (r) => r.abort());
   await hydrated(page);

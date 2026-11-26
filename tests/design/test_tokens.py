@@ -2,8 +2,9 @@
 
 The verify is `bench build --out build/ && git diff --exit-code` over the two generated files, which
 holds them to the build's output. These tests hold the rest of the done-when:
-  - the light set is 09 S4.5's code block, value for value, and the dark set carries every one of
-    09 S9's representative values -- read from the plan document, not retyped here;
+  - the light set is 09 S4.5's code block, value for value but for the departures DEPARTS_FROM_S4_5
+    names, and the dark set carries every one of 09 S9's representative values -- read from the plan
+    document, not retyped here;
   - both themes are authored for every token (none inverted, none missing), and the three ordered
     ramps run light-to-dark in light and dark-to-bright in dark;
   - the verification ramp's order is generated from taxonomy/verification.yaml: reordering the
@@ -29,6 +30,12 @@ DECL = re.compile(r'--([a-z0-9-]+):\s*(oklch\(([^)]*)\)|var\(--([a-z0-9-]+)\))')
 # Groups a later task added beyond 09 S4.5's block, each with the section that asked for it: their values are not
 # 09 S4.5's to transcribe, and the verbatim test holds everything else to it.
 BEYOND_S4_5 = {'freshness': '05 S7 and 06 S3.0 (P5-S7-T04)'}
+# Tokens whose value departs from 09 S4.5's block, each with the value tokens.yaml gives it and why. The design system
+# is to amend S4.5 to match; once it has, the test fails until the entry is taken out, so none outlives its reason.
+DEPARTS_FROM_S4_5 = {
+    'c-absent-ink': ('var(--c-ink-muted)', 'P2-S8-T09: the absence phrase is text at --fs-xs, so 4.5:1 (09 S4.6); '
+                     'S4.5 aliases --c-ink-faint, which S4.6 keeps off text and the accessibility harness found under 4.5:1'),
+}
 
 
 def spec_block(heading: str) -> str:
@@ -71,7 +78,11 @@ def test_the_light_set_is_09_s4_5_value_for_value(built):
     beyond = {tid for g in T.resolve(T.load_yaml(os.path.join(ROOT, T.TOKENS)), ROOT) if g['id'] in BEYOND_S4_5
               for tid in (r['id'] for r in g['rows'])}
     light = {k: v for k, v in declarations(light_block(css)).items() if k not in beyond}
-    assert light == declarations(spec_block('### 4.5 The token set'))
+    spec = declarations(spec_block('### 4.5 The token set'))
+    for tid, (value, why) in DEPARTS_FROM_S4_5.items():
+        assert light.pop(tid) == value, why
+        assert spec.pop(tid) != value, '09 S4.5 now gives --%s %s: take it out of DEPARTS_FROM_S4_5' % (tid, value)
+    assert light == spec
     assert beyond and not beyond & set(declarations(spec_block('### 4.5 The token set')))
 
 

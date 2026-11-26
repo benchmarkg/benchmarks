@@ -59,7 +59,8 @@ def test_the_real_tokens_pass_with_only_the_eight_recorded_waivers():
 def test_every_declared_pair_is_checked_in_both_themes_against_its_kinds_floor():
     results, _ = C.check(spec())
     declared = C.pairs(SPEC, T.resolve(SPEC))
-    assert len(declared) == 48 and len(results) == 96          # 40 of 09 S4.6's, 8 of the freshness badge's (05 S7)
+    # 40 of 09 S4.6's, 8 of the freshness badge's (05 S7), 3 of the absence phrase's (09 S6.9, P2-S8-T09)
+    assert len(declared) == 51 and len(results) == 102
     assert {(r.fg, r.on, r.kind) for r in results if r.theme == 'light'} == set(declared)
     assert {(r.fg, r.on, r.kind) for r in results if r.theme == 'dark'} == set(declared)
     floors = SPEC['thresholds']['contrast']
@@ -116,9 +117,12 @@ def test_a_ramp_pair_covers_every_step_in_the_taxonomy_order():
 
 def test_a_ref_token_is_measured_as_the_token_it_aliases():
     doc = spec()
-    doc['contrast_pairs'].append({'fg': 'c-absent-ink', 'on': ['c-bg'], 'kind': 'large_text', 'basis': 'test'})
+    doc['contrast_pairs'].append({'fg': 'c-verif-disputed', 'on': ['c-bg'], 'kind': 'large_text', 'basis': 'test'})
     results, _ = C.check(doc)
-    assert result(results, 'c-absent-ink', 'c-bg', 'light').ratio == result(results, 'c-ink-faint', 'c-bg', 'light').ratio
+    for theme in ('light', 'dark'):
+        assert result(results, 'c-verif-disputed', 'c-bg', theme).ratio == result(results, 'c-alert', 'c-bg', theme).ratio
+        # and the declared absence pair (P2-S8-T09) is the muted ink's, not the faint one's
+        assert result(results, 'c-absent-ink', 'c-bg', theme).ratio == result(results, 'c-ink-muted', 'c-bg', theme).ratio
 
 
 # ---- the waivers -------------------------------------------------------------------------------------------
