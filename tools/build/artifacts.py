@@ -78,6 +78,10 @@ class Build:
     # croissant-benchmark documents without writing them, so a mapping change is held to base conformance before any
     # entry is published (P2-S3-T06). Never written, never in an artifact.
     withheld: dict[str, dict] = field(default_factory=dict)
+    # Every conditions record that passes tier 1 and is held by one file, dumped like a published record, by id: a
+    # benchmark's croissant-benchmark document carries its reference conditions' values (P4-S6-T03). corpus.json
+    # carries no conditions (08 S4.2), so this is never written as an artifact of its own.
+    conditions: dict[str, dict] = field(default_factory=dict)
 
     def counts(self) -> dict[str, int]:
         return {k: len(v) for k, v in self.corpus['entities'].items()} if self.corpus else {}
@@ -175,6 +179,8 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
         published[kind][r.id] = dump(r.model)
         if kind == 'benchmark':
             models[r.id] = r.model
+    out.conditions = {cid: dump(rs[0].model) for cid, rs in sorted(conditions.items())
+                      if len(rs) == 1 and rs[0].model is not None and not broken(rs[0])}
 
     citers: dict[str, list[str]] = {}
     for kind, records in published.items():
