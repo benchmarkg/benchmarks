@@ -608,7 +608,7 @@ def eval_cmd(
     report: Annotated[bool, typer.Option(
         '--report', help='Print the whole run as Markdown, the pool to grade included.')] = False,
     judge: Annotated[bool, typer.Option(
-        '--judge', help='Also ask for the LLM-as-judge pass (refuses without a key; never gates).')] = False,
+        '--judge', help='Also ask for the LLM-as-judge pass (refuses without a key; advisory, it never blocks).')] = False,
     holdout: Annotated[int, typer.Option(
         '--holdout', help='Hold out N items as the test split, scored apart and never tuned on.')] = 0,
 ):
