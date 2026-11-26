@@ -25,9 +25,11 @@ Every threshold is read from tokens.yaml's `thresholds:`, never a constant here,
 to the report. What fails the build (the maintainer's call, 2026-10-06):
 
   - A, C, E, and the structural halves of B and F block now;
-  - B's delta-E, D, and F's greyscale pairs rest on floors tokens.yaml marks `status: uncalibrated`
-    (delta_e_floor, greyscale_y_ratio_floor). While a floor says so, its failures are computed and reported,
-    and do not fail the build; once P2-S2-T08 records a calibrated value they block.
+  - B's delta-E, D, and F's greyscale pairs rest on floors (delta_e_floor, greyscale_y_ratio_floor) whose
+    `status` is one of STATUSES: `uncalibrated` (the starting value, never checked against a render) or
+    `proposed` (a value drafted against real renders under CVD simulation, awaiting the maintainer's
+    judgement; P2-S2-T08) has its failures computed and reported, and they do not fail the build; once a person
+    marks the floor `calibrated` they block. Any other status is an error, so a typo cannot silently decide.
 
 A blocking failure can be waived: group C's in `palette_waivers:` (by ramp, theme and assertion), group E's in
 the `contrast_waivers:` that scripts/check_contrast.py also reads. A group C waiver fails the build when the
@@ -68,6 +70,8 @@ SURVIVING = ('glyph', 'pattern', 'label')                          # group F: wh
 FULL = {'deuteranopia': 'deuteranomaly', 'protanopia': 'protanomaly', 'tritanopia': 'tritanomaly'}
 NORMAL = 'normal'
 STEP_SLACK = 0.0005           # palette_waivers record L to three places
+# a floor's status -> whether its failures block (the maintainer's call, 2026-10-06; P2-S2-T08 added `proposed`)
+STATUSES = {'uncalibrated': False, 'proposed': False, 'calibrated': True}
 
 
 class PaletteError(Exception):
@@ -88,11 +92,13 @@ def cvd(name: str) -> dict | None:
 
 
 def floor(th: dict, key: str) -> tuple[float, bool]:
-    """(value, calibrated) for a threshold written as {value, status}."""
+    """(value, calibrated) for a threshold written as {value, status}; only `calibrated` blocks."""
     t = th[key]
     if not isinstance(t, dict) or 'value' not in t or 'status' not in t:
         raise PaletteError('thresholds.%s must be {value, status}' % key)
-    return float(t['value']), t['status'] != 'uncalibrated'
+    if t['status'] not in STATUSES:
+        raise PaletteError('thresholds.%s: status %r is not one of %s' % (key, t['status'], ', '.join(STATUSES)))
+    return float(t['value']), STATUSES[t['status']]
 
 
 # ---- colour ---------------------------------------------------------------------------------------------

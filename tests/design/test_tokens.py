@@ -166,7 +166,8 @@ def test_no_family_colour_token_is_generated(built):
 def test_the_gate_blocks_exist_and_name_real_tokens():
     spec = T.load_yaml(os.path.join(ROOT, T.TOKENS))
     th = spec['thresholds']
-    assert th['delta_e_floor']['value'] == 15 and th['delta_e_floor']['status'] == 'uncalibrated'
+    assert th['delta_e_floor']['value'] == 15 and th['delta_e_floor']['status'] == 'proposed'    # P2-S2-T08's draft
+    assert th['delta_e_floor']['proposed_on'] == '2026-11-26' and th['delta_e_floor']['rationale']
     assert th['ramp'] == {'min_adjacent_step': 0.055, 'min_range': 0.45}
     assert th['contrast'] == {'text': 4.5, 'large_text': 3.0, 'non_text': 3.0}
     assert th['cvd'] == ['deuteranopia', 'deuteranomaly-50', 'protanopia', 'tritanopia']

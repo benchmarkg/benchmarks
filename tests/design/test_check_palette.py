@@ -113,6 +113,24 @@ def test_the_uncalibrated_floors_block_once_calibrated():
     assert failing(run(doc), 'F')
 
 
+@pytest.mark.parametrize('status', ['uncalibrated', 'proposed'])
+def test_a_floor_not_yet_judged_reports_and_does_not_block(status):
+    # P2-S2-T08: `proposed` is a value drafted against renders and awaiting the maintainer's judgement; like
+    # `uncalibrated`, its failures are reported, never blocking, until a person marks it calibrated
+    doc = spec()
+    doc['thresholds']['delta_e_floor']['status'] = status
+    r = run(doc)
+    assert not failing(r, 'B') and not failing(r, 'D') and not r.de_calibrated
+    assert {f['group'] for f in r.findings if not f['blocking']} >= {'B', 'D'}
+
+
+def test_a_floor_status_outside_the_vocabulary_is_an_error():
+    doc = spec()
+    doc['thresholds']['delta_e_floor']['status'] = 'draft'
+    with pytest.raises(P.PaletteError, match=r"delta_e_floor: status 'draft' is not one of uncalibrated, proposed"):
+        run(doc)
+
+
 def test_the_named_pair_is_asserted_on_colour_and_fails_d_in_light(real):
     d = [f for f in real.findings if f['group'] == 'D' and f['subject'] == 'c-emphasis|c-link-visited']
     assert {(f['theme'], f['vision']) for f in d} >= {('light', 'normal')}
