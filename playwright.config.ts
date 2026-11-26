@@ -11,6 +11,10 @@
 // preview's claims artifacts again into build/e2e-claims/ with two constructed ingested rows, and UAIBI_CLAIMS
 // points the site at them (site/src/lib/claims.ts). The feed does not read the corpus, so the feed spec reads the
 // same server.
+//
+// P3-S10-T09's tests/e2e/corrections.spec.ts reads /corrections/ and /feed/corrections.xml: the corrections come from
+// the same feed fixture, and the disputes from tests/e2e/fixtures/disputes/, constructed records (data/disputes/ holds
+// none yet) that UAIBI_DISPUTES points the site at (site/src/lib/corrections.ts).
 // reuseExistingServer lets a verify that curls :4321 first share the same server.
 import { defineConfig } from '@playwright/test';
 import { join } from 'node:path';
@@ -32,6 +36,7 @@ export default defineConfig({
     timeout: 1_800_000,
     env: {
       FEED_EVENTS: 'tests/e2e/fixtures/feed-events.json',
+      UAIBI_DISPUTES: join(__dirname, 'tests', 'e2e', 'fixtures', 'disputes'),
       UAIBI_CORPUS: join(BUILD, 'preview', 'corpus.json'),
       UAIBI_CLAIMS: join(BUILD, 'e2e-claims', 'claims.json'),
       UAIBI_SITE_DRAFTS: '1',

@@ -24,7 +24,9 @@ The seven event types, and the exact rule for each:
                               the same thing two ways) that changes a value the parent already
                               published -- a value that was non-null before; filling in a null is
                               not a correction. One event per entity, listing before and after
-  lifecycle-change            `lifecycle` changed between parent and commit
+                              each SUBSTANTIVE change (below), and `disputes`, the dispute ids its
+                              `Correction:` trailer names (P3-S10-T09)
+  lifecycle-change           `lifecycle` changed between parent and commit
   deprecation-detected        `maintenance_status` moved INTO stale or abandoned (the staleness
                               threshold of taxonomy/maintenance.yaml) from any other value
   source-rot-detected         a Source's `link_status` moved to dead (06 S7.2)
@@ -33,6 +35,19 @@ MATERIAL fields: the eight facets of 02 S2 as 04 S3 spells them, plus licence, a
 which V8 names. Every event also carries families[] and organisations[] (see attribute()), which
 the per-domain feeds and the feed page's filters read. Everything else on a Benchmark -- description, tags, links, liveness, curation --
 is cosmetic for the feed's purposes.
+
+SUBSTANTIVE changes (P3-S10-T09). 05 S8's /corrections page "lists every substantive correction", so a
+correction lists only the changed values a reader was shown as facts. A change to a record's bookkeeping
+-- when it was checked, fetched, archived, reviewed or ingested, which curator added it, the dispute
+links a claim carries (a dispute renders as itself, from data/disputes/) -- is routine curation even in
+a `fix:` commit (ROUTINE), and a commit whose every change is bookkeeping makes no correction event. The
+bookkeeping blocks also hold the fields that say who did the curating (curation.added_by,
+ingestion.reviewed_by), so no correction carries a curator's identity.
+
+Who reported a correction. A commit's author tells nothing (three organisation accounts make every
+commit) and the index never names an individual, so the record of who reported a fix is a dispute
+record: a `Correction:` trailer may name one or more dispute ids (`Correction: dispute-x-2026-09`),
+and the event carries them in `disputes`, for the site to render that record's organisation or role.
 
 Dates. "Sort on the event's own date, never on ingest date": each event carries `date`, taken from
 the record where the record has one -- a claim's date_reported, a benchmark's curation.added_on, a
@@ -81,6 +96,16 @@ MATERIAL = [
 STALE = {'stale', 'abandoned'}
 UNPUBLISHABLE = {'ai-drafted-unverified'}  # 14-roadmap: "Unverified entries excluded from the build"
 FIX = re.compile(r'^fix(\([^)]*\))?!?:', re.I)
+# Bookkeeping, never a correction (SUBSTANTIVE above): a changed leaf whose first path segment is one of these.
+# The three blocks, then a Source's retrieval, archive and extract stamps and the back-links records carry.
+ROUTINE = frozenset({
+    'curation', 'liveness', 'ingestion', 'provenance_snapshot',
+    'accessed', 'fetched_at', 'archive_url', 'archive_captured', 'archive_status', 'archive_digest',
+    'archive_requested_at', 'content_sha256', 'content_bytes', 'quote_extract', 'quote_extract_mode',
+    'quote_extract_basis', 'quote_extract_sha256', 'quote_extract_redactions', 'licence_checked_on',
+    'failure_reason', 'link_status', 'link_checked_at', 'drafted_by', 'cited_by', 'disputed_by',
+})
+DISPUTE_REF = re.compile(r'(?<![a-z0-9-])dispute-[a-z0-9]+(?:-[a-z0-9]+)*')   # schema/dispute.py DisputeId
 EVENT_TYPES = ('benchmark-added', 'benchmark-updated-material', 'claim-added', 'correction',
                'lifecycle-change', 'deprecation-detected', 'source-rot-detected')
 
@@ -190,6 +215,22 @@ def changes(repo, parent, sha):
 def is_correction(message):
     subject = message.splitlines()[0] if message else ''
     return bool(FIX.match(subject)) or bool(re.search(r'^Correction:', message, re.M))
+
+
+def routine(field):
+    """Whether a changed leaf (a leaves() path) is bookkeeping rather than a value the reader was shown."""
+    return re.split(r'[.\[]', field, maxsplit=1)[0] in ROUTINE
+
+
+def correction_disputes(message):
+    """The dispute ids a commit's `Correction:` trailer lines name, in order, once each."""
+    out = []
+    for line in (message or '').splitlines():
+        if line.startswith('Correction:'):
+            for d in DISPUTE_REF.findall(line):
+                if d not in out:
+                    out.append(d)
+    return out
 
 
 def own_date(kind, rec, fallback):
@@ -306,10 +347,11 @@ def derive(repo=ROOT):
             if correction and status in 'MR' and old is not None:
                 before, after = leaves(old), leaves(new)
                 changed = [{'field': k, 'before': jsonable(before[k]), 'after': jsonable(after.get(k))}
-                           for k in sorted(before) if before[k] is not None and after.get(k) != before[k]]
+                           for k in sorted(before)
+                           if before[k] is not None and after.get(k) != before[k] and not routine(k)]
                 if changed:
                     emit('correction', new.get('id') or os.path.splitext(os.path.basename(new_path))[0],
-                         new_path, new, changes=changed)
+                         new_path, new, changes=changed, disputes=correction_disputes(message))
     heads = {}
     for ev in events:
         if ev['path'] not in heads:

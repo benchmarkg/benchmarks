@@ -80,8 +80,21 @@ test('each domain family has its own feed, and an empty family is still a valid 
   expect(await atom(page, '/feed/language.xml')).toEqual([]);
 });
 
-test('the corrections feed is separately subscribable and holds only corrections', async ({ page }) => {
-  expect(await atom(page, '/feed/corrections.xml')).toEqual(ids(human.filter((e) => e.type === 'correction')));
+test('the corrections feed is separately subscribable and holds every correction', async ({ page }) => {
+  // RSS 2.0 since P3-S10-T09, which also gives it an item per dispute record; tests/e2e/corrections.spec.ts validates
+  // the document in full and checks the dispute items. Here: it parses as RSS, and its corrections are the fixture's.
+  const xml = await (await page.request.get('/feed/corrections.xml')).text();
+  await page.goto('about:blank');
+  const read = await page.evaluate((text) => {
+    const doc = new DOMParser().parseFromString(text, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) return { root: 'parsererror', corrections: [] as string[] };
+    const items = [...doc.getElementsByTagName('item')]
+      .filter((i) => [...i.getElementsByTagName('category')].some((c) => c.textContent === 'correction'));
+    return { root: `${doc.documentElement.localName} ${doc.documentElement.getAttribute('version')}`,
+      corrections: items.map((i) => i.getElementsByTagName('guid')[0]?.textContent ?? '') };
+  }, xml);
+  expect(read.root).toBe('rss 2.0');
+  expect(read.corrections).toEqual(ids(human.filter((e) => e.type === 'correction')).map((id) => `urn:uaibi:event:${id}`));
   await page.goto('/feed/');
   await expect(page.locator('a[data-test="corrections-feed"]')).toHaveAttribute('href', '/feed/corrections.xml');
   await expect(page.locator('link[rel="alternate"][href="/feed/corrections.xml"]')).toHaveCount(1);
