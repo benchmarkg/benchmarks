@@ -23,10 +23,11 @@
 // `*_available` companion is false, 13 S4.5), and UNKNOWN where the claim does not say. The three render differently,
 // so an answered "none" is never mistaken for an unknown, nor an unknown for a value.
 //
-// This module imports nothing at run time but node:fs and node:path, so site/test/comparability.test.mjs loads it as
-// the site does; the pages pass it claims.json's rows (src/lib/claims.ts).
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+// This module imports nothing at run time, so site/test/comparability.test.mjs loads it as the site does; the pages pass
+// it claims.json's rows (src/lib/claims.ts). P3-S10-T05: the workbench's script (islands/workbench/client.ts) runs the same
+// decisions in the browser over a selection, so nothing here may need Node outside diffGroups, the one function that
+// reads a file: it takes node:fs and node:path from process.getBuiltinModule when it is called, and the UTF-8 order is
+// code-point order computed here rather than Buffer's.
 import type { ClaimRow } from './claims';
 
 export const UNKNOWN = '?';                   // tools/build/comparability.py UNKNOWN
@@ -49,7 +50,8 @@ export interface DiffGroup {
   rows: DiffRow[] | null;                     // null exactly when deferred
 }
 
-const groupKey = (benchmark: string, metric: string) => `${benchmark}\u0000${metric}`;
+/** The key a group is held under in diffGroups' map. */
+export const groupKey = (benchmark: string, metric: string) => `${benchmark}\u0000${metric}`;
 /** The benchmark family a claim is grouped under: its benchmark id before any `@` (comparability.py `claim_facts`). */
 export const family = (ref: string) => ref.split('@', 1)[0];
 
@@ -58,18 +60,26 @@ export const family = (ref: string) => ref.split('@', 1)[0];
  *  build that is not one. */
 export function diffGroups(claims: { dir: string; drafts: boolean } | null): Map<string, DiffGroup> | null {
   if (claims == null) return null;
+  const { existsSync, readFileSync } = process.getBuiltinModule('node:fs');
+  const { join } = process.getBuiltinModule('node:path');
   const path = join(claims.dir, ...DIFF_NAME.split('/'));
   if (!existsSync(path)) {
     throw new Error(`${path} is missing beside claims.json: the build writes them together (08 S4.2), and without it no `
       + 'comparison can name the fields its claims differ in');
   }
-  const raw = JSON.parse(readFileSync(path, 'utf8')) as {
+  return parseDiffGroups(JSON.parse(readFileSync(path, 'utf8')), claims.drafts, path);
+}
+
+/** diffGroups' reading of the artifact once parsed, with its checks: what the workbench's script calls on the copy it
+ *  fetched. `path` names it in an error. */
+export function parseDiffGroups(doc: unknown, drafts: boolean, path: string): Map<string, DiffGroup> {
+  const raw = doc as {
     artifact: string; format: number; unknown: string; defer_above: number; groups: DiffGroup[]; drafts?: boolean;
   };
   if (raw.artifact !== 'comparability' || raw.format !== 1 || raw.unknown !== UNKNOWN || raw.defer_above !== DEFER_ABOVE) {
     throw new Error(`${path} is not format 1 of the comparability artifact with unknown "${UNKNOWN}" and defer_above ${DEFER_ABOVE}`);
   }
-  if ((raw.drafts === true) !== claims.drafts) {
+  if ((raw.drafts === true) !== drafts) {
     throw new Error(`${path} and the claims.json beside it are not one build: one is a draft preview's and the other is not`);
   }
   const out = new Map<string, DiffGroup>();
@@ -117,7 +127,13 @@ export function setLabel(i: number): string {
   return s;
 }
 
-const utf8 = (a: string, b: string) => Buffer.compare(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+/** UTF-8 byte order, which is code-point order (comparability.py sorts by `.encode('utf-8')`). */
+export function utf8(a: string, b: string): number {
+  const x = Array.from(a, (c) => c.codePointAt(0)!);
+  const y = Array.from(b, (c) => c.codePointAt(0)!);
+  for (let i = 0; i < Math.min(x.length, y.length); i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1;
+  return x.length === y.length ? 0 : x.length < y.length ? -1 : 1;
+}
 
 /** The state of claims sharing one key: one claim compares with nothing; unknowns make it possibly comparable. */
 function setState(rows: ClaimRow[], unknown: string[]): ConditionSet['state'] {

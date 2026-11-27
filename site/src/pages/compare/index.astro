@@ -1,0 +1,70 @@
+---
+// site/src/pages/compare/index.astro -- P3-S10-T05 (10 V5, "Information architecture": /compare/ is V5; 08 S4.3, S8.3).
+// The Comparison Workbench: a table of systems by benchmark (components/Workbench.astro), with each column's
+// comparability decided by lib/comparability.ts over the build's claims.json and derived/comparability.json.
+//
+// What is rendered where, exactly, because 10 V5 says more than a static site can do:
+//   at build time   the selection of the bare /compare/, which constrains nothing: every curated claim, every column's
+//                   state, diff, unknowns banner and restrict control already computed. It is the page with JavaScript
+//                   off, and scripts/route_fallback_map.json holds /compare/ to its table
+//   in the browser  any other selection: the address (b=, sys=, k=, or the paste form's ids=) is read by
+//                   islands/workbench/client.ts, which loads claims.json and derived/comparability.json, then corpus.json
+//                   (08 S4.3's order; S4.1: corpus.json loads lazily "on entering the Workbench") and re-composes the
+//                   table through the same lib/workbench.ts and lib/comparability.ts
+//   nowhere yet     10 V5's "a URL carrying a full selection renders server-side as a static table ... because the
+//                   comparability computation is deterministic and happens at build time for any selection the URL
+//                   encodes". The computation is the build's (every pair of every group is in derived/comparability.json,
+//                   so a selection's diff is cut from it, never recomputed), but rendering an arbitrary selection's table
+//                   without JavaScript needs something to render it per request: a static host serves this one file for
+//                   every query string, and a GET form cannot write a path. 08 S4.3 itself lists the workbench as working
+//                   with JavaScript off only "Partially", and 08 S7.2 keeps the Worker off every path but /api/* and asset
+//                   misses. So a pasted selection with JavaScript off shows the unconstrained table with a notice saying
+//                   so, never a table that pretends to be the selection; how to close that is the maintainer's decision.
+//
+// The three artifacts are named by this build's content-hashed URLs (lib/manifest.ts dataHref, 08 S4.4), as data
+// attributes the script reads; none is fetched by the page as sent. In the search index the page is a narrative page,
+// crawled for its heading and lede; the workbench itself is data-pagefind-ignore, since every claim has its own page.
+import Base from '../../layouts/Base.astro';
+import Absent from '../../components/Absent.astro';
+import Workbench from '../../components/Workbench.astro';
+import { claimsDoc } from '../../lib/claims';
+import { diffGroups } from '../../lib/comparability';
+import { benchmarks, metrics, systems } from '../../lib/collections';
+import { dataHref } from '../../lib/manifest';
+import { EMPTY, view, type Index } from '../../lib/workbench';
+
+const doc = claimsDoc();
+const [bs, ss, ms] = await Promise.all([benchmarks(), systems(), metrics()]);
+const index: Index = {
+  benchmarks: new Map(bs.map((b) => [b.id, b.name])),
+  systems: new Map(ss.map((s) => [s.id, s.name])),
+  metrics: new Map(ms.map((m) => [m.id, m.name])),
+  rows: doc?.rows ?? [],
+};
+const v = doc != null ? view(index, diffGroups(doc), EMPTY) : null;
+const hrefs = { claims: dataHref('claims.json'), comparability: dataHref('derived/comparability.json'), corpus: dataHref('corpus.json') };
+const published = { benchmarks: new Set(bs.map((b) => b.id)), systems: new Set(ss.map((s) => s.id)) };
+---
+<Base title="Comparison Workbench · Benchmark index">
+  <main class="compare">
+    <header>
+      <h1>Comparison Workbench</h1>
+      <p class="lede">Put systems side by side across benchmarks. Two numbers are compared only when they were produced under the same conditions; where they were not, the page names the conditions that differ instead of ranking them.</p>
+    </header>
+    <div data-pagefind-ignore="all">
+      {v != null
+        ? <Workbench view={v} index={index} hrefs={hrefs} published={published} />
+        : <p data-wb-no-claims><Absent state="not-recorded" reason="this build has no claims artifact, so there is nothing to compare" /></p>}
+    </div>
+  </main>
+</Base>
+
+<style>
+  .compare {
+    max-inline-size: 120rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: 0 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  .lede { max-inline-size: 68ch; margin: 0 0 var(--sp-4); color: var(--c-ink-muted); }
+</style>
