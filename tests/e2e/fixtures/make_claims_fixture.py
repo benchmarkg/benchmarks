@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The claims artifacts tests/e2e/provenance-drilldown.spec.ts builds the site from (P3-S10-T07).
+"""The claims artifacts tests/e2e/provenance-drilldown.spec.ts and comparability-states.spec.ts build the site from
+(P3-S10-T07, P3-S10-T04).
 
     uv run python tests/e2e/fixtures/make_claims_fixture.py --preview build/preview --out build/e2e-claims
 
@@ -20,9 +21,17 @@ adapter writes, validated as a ResultClaim:
 Its upstream is on the reserved .invalid domain and its attribution says it is a fixture, so neither can be taken
 for a real dataset's. Each file is the stage's shape and canonical bytes (tools/build/emit.py serialise); every
 `key_shared_with` is recomputed over the rows of its own file, as the stage computes it, and claims.json's
-`machine_ingested` counts the file. derived/comparability.json is not written: no page reads it. It writes into its
-own directory and refuses build/ and the preview's, so the artifacts a site deploys or previews from are never
-these.
+`machine_ingested` counts the file.
+
+derived/comparability.json (P3-S10-T04: the benchmark page's comparisons read it beside claims.json) is computed again
+by the stage's own `comparability.pairwise` over this claims.json's rows, the constructed curated one included, so its
+groups are exactly the file's (tools/build/claims.py `diff_problems` is run on it). Each row's facts are rebuilt from
+the row itself -- its claim and inlined conditions validated again as ResultClaim and EvalConditions, its benchmark's
+resolved `material` set -- and each rebuilt key must be the row's own, so the diff is the one the stage would write.
+The constructed claim copies the first real row with a number and a condition record, so it joins that row's
+(benchmark, metric) group under the same key: one more claim of a condition set that is already there, not a state the
+preview lacks (the preview's claims already show all three of 04 S8's states). It writes into its own directory and
+refuses build/ and the preview's, so the artifacts a site deploys or previews from are never these.
 """
 from __future__ import annotations
 
@@ -35,8 +44,10 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT)
 from schema.claim import ResultClaim, snapshot_sha256  # noqa: E402
+from schema.conditions import EvalConditions  # noqa: E402
 from tools.build import claims as stage  # noqa: E402
-from tools.build.emit import serialise  # noqa: E402
+from tools.build import comparability  # noqa: E402
+from tools.build.emit import nfc, serialise  # noqa: E402
 
 BATCH = 'ingest-e2e-fixture-2026-11-26'
 ATTRIBUTION = ("Fixture Source, 'Constructed claims for tests/e2e/provenance-drilldown.spec.ts'. Not a dataset: "
@@ -78,6 +89,26 @@ def ordered(rows: list[dict]) -> list[dict]:
     return out
 
 
+def diff(rows: list[dict], drafts: bool) -> dict:
+    """derived/comparability.json over claims.json's rows, as the stage computes it (module docstring)."""
+    facts = []
+    for r in rows:
+        bench = r['claim']['benchmark'].split('@')[0]
+        res = comparability.Resolution(benchmark=bench, basis='facets', profiles=(), material=tuple(r['material']),
+                                       weights=dict(r['weights']))
+        cond = EvalConditions.model_validate(r['conditions']) if r['conditions'] is not None else None
+        f = comparability.claim_facts(ResultClaim.model_validate(r['claim']), res, cond)
+        if f.comparability_key != r['comparability']['comparability_key']:
+            raise SystemExit('make_claims_fixture: %s rebuilds to key %s, not its own %s'
+                             % (r['claim']['id'], f.comparability_key, r['comparability']['comparability_key']))
+        facts.append(f)
+    out = nfc(dict(comparability.pairwise(facts), **({'drafts': True} if drafts else {})))
+    problems = stage.diff_problems(out, rows)
+    if problems:
+        raise SystemExit('make_claims_fixture: %s' % '; '.join(problems))
+    return out
+
+
 def build(preview: dict) -> dict[str, dict]:
     if preview.get('artifact') != 'claims' or preview.get('machine_ingested'):
         raise SystemExit('make_claims_fixture: the preview claims.json is not the curated artifact with no machine-ingested '
@@ -93,7 +124,8 @@ def build(preview: dict) -> dict[str, dict]:
     out = {stage.CLAIMS: dict(preview, claims=curated, machine_ingested={bench: len(machine)}),
            stage.ingested_name(bench): {'artifact': 'claims-ingested', 'format': stage.FORMATS['claims-ingested'],
                                         'benchmark': bench, 'badge': stage.MACHINE, 'claims': machine,
-                                        **({'drafts': True} if preview.get('drafts') else {})}}
+                                        **({'drafts': True} if preview.get('drafts') else {})},
+           stage.DIFF: diff(curated, bool(preview.get('drafts')))}
     # the stage's own split, read back off the rows written
     assert all(stage.row_tier(r) == stage.CURATED for r in out[stage.CLAIMS]['claims'])
     assert all(stage.row_tier(r) == stage.MACHINE for r in out[stage.ingested_name(bench)]['claims'])
@@ -119,9 +151,11 @@ def main(argv=None) -> int:
             os.remove(os.path.join(ingested, name))
     for name, doc in sorted(docs.items()):
         path = os.path.join(out_dir, *name.split('/'))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'wb') as fh:
             fh.write(serialise(doc))
-        print('wrote %s (%d row(s))' % (path, len(doc['claims'])))
+        held = '%d group(s)' % len(doc['groups']) if name == stage.DIFF else '%d row(s)' % len(doc['claims'])
+        print('wrote %s (%s)' % (path, held))
     return 0
 
 

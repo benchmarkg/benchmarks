@@ -7,13 +7,15 @@
 // JSON-LD it inlines, which moves with the mapping as well as the record), so that an
 // incremental build (Astro's experimental.incrementalBuild) re-renders a page exactly when something on it
 // changed -- its claims.json rows (P3-S10-T07) and the machine-ingested count and attributions section 10 shows
-// among them. The release metadata is left out of the key on purpose: a page skipped at a later commit keeps the
+// among them, and section 10's comparisons (P3-S10-T04: each metric's state, condition sets and diff). The release
+// metadata is left out of the key on purpose: a page skipped at a later commit keeps the
 // citation block of the commit it was rendered at, and since nothing in the digest changed, the YAML at that
 // commit is the YAML at HEAD, so its permalink still cites the same content.
 import Base from '../../../layouts/Base.astro';
 import BenchmarkDetail from '../../../views/BenchmarkDetail.astro';
 import { onlyRoutes } from '../../../lib/bench-routes';
 import { baseId, claimsDoc, ingestedRows, sortClaims, type ClaimRow } from '../../../lib/claims';
+import { comparisons as compareAll, diffGroups, type Comparison } from '../../../lib/comparability';
 import { benchmarks, metrics, sources, systems } from '../../../lib/collections';
 import { adoptionCounts, contentDigest, corpusDoc } from '../../../lib/corpus';
 import { croissantText } from '../../../lib/croissant';
@@ -28,6 +30,7 @@ export async function getStaticPaths() {
   const rows = corpusDoc().subsets;
   const published = new Set(all.map((b) => b.id));
   const doc = claimsDoc();
+  const groups = diffGroups(doc);
   const names = { systems: new Map((await systems()).map((s) => [s.id, s.name])), benchmarks: new Map(all.map((b) => [b.id, b.name])) };
   const byBench = new Map<string, ClaimRow[]>();
   for (const row of doc?.rows ?? []) {
@@ -42,15 +45,18 @@ export async function getStaticPaths() {
     };
     const count = adoption == null ? null : adoption.get(b.id) ?? { systems: 0, claims: 0 };
     const claims = doc == null ? null : sortClaims(byBench.get(b.id) ?? [], metricById);
+    const comparisons = claims == null ? null : compareAll(claims, groups);
     const machine = ingestedRows(b.id, doc);
     const batches = new Map(machine.map((r) => [r.claim.ingestion!.batch, r.claim.ingestion!]));
     const ingested = { count: machine.length, attributions: [...batches.keys()].sort().map((k) => batches.get(k)!) };
     const listed = (claims ?? []).map((r) => [r.claim.system, r.claim.opponent].map((x) => (x != null ? names.systems.get(baseId(x)) ?? null : null)));
     return {
       params: { id: b.id },
-      props: { benchmark: b, metrics: metricById, sources: sourceById, published, subsets, adoption: count, claims, ingested, names },
+      props: { benchmark: b, metrics: metricById, sources: sourceById, published, subsets, adoption: count, claims, comparisons, ingested, names },
       cacheKey: contentDigest({ benchmark: b, ...used, subsets, adoption: count, jsonld: croissantText(b.id), claims, ingested, listed,
-        optimum: (claims ?? []).map((r) => metricById.get(r.claim.metric)?.optimum ?? null) }),
+        optimum: (claims ?? []).map((r) => metricById.get(r.claim.metric)?.optimum ?? null),
+        comparisons: (comparisons ?? []).map((g) => ({ metric: g.metric, name: metricById.get(g.metric)?.name ?? null, state: g.state,
+          sets: g.sets.map((s) => [s.label, s.key, s.state, s.rows.map((r) => r.claim.id)]), diff_status: g.diff_status, diff: g.diff })) }),
     };
   }), (p) => `/benchmarks/${p.params.id}/`);
 }
@@ -63,6 +69,7 @@ interface Props {
   subsets: import('../../../lib/corpus').SubsetRow[];
   adoption: import('../../../lib/corpus').Adoption | null;
   claims: ClaimRow[] | null;
+  comparisons: Comparison[] | null;
   ingested: { count: number; attributions: import('../../../types/result-claim').Ingestion[] };
   names: { systems: Map<string, string>; benchmarks: Map<string, string> };
 }
@@ -71,6 +78,6 @@ const p = Astro.props;
 ---
 <Base title={`${p.benchmark.name} · Benchmark index`} zeroJs search="record">
   <main>
-    <BenchmarkDetail benchmark={p.benchmark} metrics={p.metrics} sources={p.sources} published={p.published} subsets={p.subsets} adoption={p.adoption} release={release()} claims={p.claims} ingested={p.ingested} names={p.names} />
+    <BenchmarkDetail benchmark={p.benchmark} metrics={p.metrics} sources={p.sources} published={p.published} subsets={p.subsets} adoption={p.adoption} release={release()} claims={p.claims} comparisons={p.comparisons} ingested={p.ingested} names={p.names} />
   </main>
 </Base>

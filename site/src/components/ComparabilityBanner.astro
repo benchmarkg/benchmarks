@@ -1,59 +1,129 @@
 ---
-// site/src/components/ComparabilityBanner.astro -- P2-S2-T06 (09 S6.8). Above a view whose claims span more than one
-// comparability key: a --c-caution banner naming exactly which material fields differ, as a table (field, then the
-// value in each condition set), and the two ways on -- restrict to one condition set (with the claims that drops),
-// or proceed with every affected cell flagged. There is no third option that silently proceeds.
+// site/src/components/ComparabilityBanner.astro -- P2-S2-T06 (09 S6.8), P3-S10-T04 (04 S8 "What the UI does with it";
+// 10 V5). The banner over claims shown together, in the two of 04 S8's three states that have one (state 1, one key
+// with nothing unknown, is plotted silently and has no banner; src/lib/comparability.ts decides the state):
 //
-// NEVER: editorialise -- the wording is this component's, fixed, and states what differs, never which set is
-// better; use --c-alert -- non-comparability is a fact about the data, not an error by the user.
+//   kind="differ"   state 3, more than one comparability key: a --c-caution banner naming exactly which material fields
+//                   differ, as a table (field, then the value in each condition set), shown INSTEAD of a chart, and the
+//                   two ways on -- restrict to one condition set, with the count of claims that drops always shown, or
+//                   proceed with every affected cell flagged. There is no third option that silently proceeds. A group
+//                   above the build's 40-claim diff bound (08 S3.2, `deferred`) has no precomputed rows: the banner says
+//                   the diff is deferred, names its sets and counts, and computes nothing;
+//   kind="unknown"  state 2, one key but material fields unknown on its claims: the banner the claims are plotted
+//                   behind, naming which material fields are unknown on which claim, because claims that are all silent
+//                   about a field share a key and agree only in their ignorance -- never confirmed comparability.
+//
+// Both are persistent: no control dismisses them and they are never inside a disclosure of their own, so wherever the
+// claims they qualify are visible, so are they. A cell is a value, an answered absence (`none`: the record says there
+// is none) or unknown (<Absent state="unknown">, 09 S11.2's word for a material field nobody stated); the three never
+// render alike. `id` makes the heading's id unique on a page that shows several; `level` places the heading.
+//
+// NEVER: editorialise -- the wording is this component's, fixed, and states what differs or is unknown, never which
+// set is better; use --c-alert -- non-comparability is a fact about the data, not an error by the user.
 import Absent from './Absent.astro';
+import { DEFER_ABOVE, type Cell, type DiffField } from '../lib/comparability';
 
-interface Diff {
-  field: string;
-  values: (string | number | null)[];
+interface Common {
+  id: string;
+  level?: 2 | 3 | 4 | 5;
 }
-interface Props {
+interface Differ extends Common {
+  kind: 'differ';
   keys: string[];
   set_labels: string[];
-  diff: Diff[];
+  set_sizes: number[];                       // claims in each set, in set order
+  total: number;                             // claims in scope: the denominator of the dropped count
+  diff: DiffField[];
+  diff_status: 'computed' | 'deferred';
+  restrict: { label: string; keeps: number; drops: number };
   restrict_href: string;
-  restrict_drops: number;
   proceed_href: string;
 }
-
-const { keys, set_labels, diff, restrict_href, restrict_drops, proceed_href } = Astro.props;
-if (keys.length < 2) throw new Error('ComparabilityBanner: one comparability key in scope is comparable; there is no banner');
-if (diff.length === 0) throw new Error('ComparabilityBanner: the keys differ but no field is named (09 S6.8: name exactly which)');
-for (const d of diff) {
-  if (d.values.length !== set_labels.length) throw new Error(`ComparabilityBanner: ${d.field} has ${d.values.length} values for ${set_labels.length} sets`);
+interface Unknown extends Common {
+  kind: 'unknown';
+  key: string;
+  unknowns: { claim: string; label: string; fields: string[] }[];   // label: the claim's subject, as the list names it
 }
+type Props = Differ | Unknown;
+
+const p = Astro.props;
+const H = `h${p.level ?? 2}`;
+const heading = `${p.id}-heading`;
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+if (p.kind === 'differ') {
+  const held = p.set_sizes.reduce((a, b) => a + b, 0);
+  if (p.keys.length < 2) throw new Error('ComparabilityBanner: one comparability key in scope is comparable; there is no banner');
+  if (p.set_labels.length !== p.keys.length || p.set_sizes.length !== p.keys.length) {
+    throw new Error(`ComparabilityBanner: ${p.keys.length} keys, ${p.set_labels.length} set labels and ${p.set_sizes.length} set sizes`);
+  }
+  if (held !== p.total) throw new Error(`ComparabilityBanner: the sets hold ${held} claims, not the ${p.total} in scope, so a claim would drop silently`);
+  if (p.restrict.keeps + p.restrict.drops !== p.total) throw new Error('ComparabilityBanner: a restriction keeps or drops every claim in scope');
+  if (p.diff_status === 'computed' && p.diff.length === 0) throw new Error('ComparabilityBanner: the keys differ but no field is named (09 S6.8: name exactly which)');
+  for (const d of p.diff) {
+    if (d.values.length !== p.set_labels.length) throw new Error(`ComparabilityBanner: ${d.field} has ${d.values.length} values for ${p.set_labels.length} sets`);
+  }
+} else {
+  if (p.unknowns.length === 0) throw new Error('ComparabilityBanner: nothing is unknown, so the claims are comparable and plotted silently');
+  for (const u of p.unknowns) if (u.fields.length === 0) throw new Error(`ComparabilityBanner: ${u.claim} is listed with no unknown field`);
+}
+const fields = p.kind === 'unknown' ? [...new Set(p.unknowns.flatMap((u) => u.fields))].sort() : [];
 ---
-<section class="banner" data-comparability role="region" aria-labelledby="comparability-heading">
-  <h2 id="comparability-heading"><span aria-hidden="true">≠</span> These results were produced under {keys.length} different condition sets</h2>
-  <p>They differ in {diff.length} material {diff.length === 1 ? 'field' : 'fields'}:</p>
-  <table>
-    <thead><tr><th scope="col">Field</th>{set_labels.map((l) => <th scope="col">{l}</th>)}</tr></thead>
-    <tbody>
-      {diff.map((d) => <tr><th scope="row"><code>{d.field}</code></th>{d.values.map((v) => <td>{v != null ? String(v) : <Absent state="unknown" />}</td>)}</tr>)}
-    </tbody>
-  </table>
-  <p class="actions">
-    <a href={restrict_href} data-action="restrict">Restrict to one condition set ({restrict_drops} {restrict_drops === 1 ? 'claim' : 'claims'} dropped)</a>
-    <a href={proceed_href} data-action="proceed">Proceed with every affected cell flagged</a>
-  </p>
-</section>
+{p.kind === 'differ' ? (
+  <section class="banner" data-comparability data-diff-status={p.diff_status} role="region" aria-labelledby={heading}>
+    <H class="title" id={heading}><span aria-hidden="true">≠</span> These results were produced under {p.keys.length} different condition sets</H>
+    {p.diff_status === 'computed' ? (
+      <>
+        <p>They differ in {plural(p.diff.length, 'material field', 'material fields')}, so they are not drawn as one chart:</p>
+        <div class="scroll" tabindex="0" role="region" aria-label="Material fields that differ between the condition sets">
+          <table data-diff>
+            <thead><tr><th scope="col">Field</th>{p.set_labels.map((l, i) => <th scope="col" data-set-col={l}>Set {l} <span class="n">({plural(p.set_sizes[i], 'claim', 'claims')})</span></th>)}</tr></thead>
+            <tbody>
+              {p.diff.map((d) => <tr data-diff-field={d.field}><th scope="row"><code>{d.field}</code></th>{d.values.map((v: Cell) => (
+                <td data-cell={v.kind}>{v.kind === 'value' ? v.text : v.kind === 'none' ? <span class="none">none</span> : <Absent state="unknown" />}</td>
+              ))}</tr>)}
+            </tbody>
+          </table>
+        </div>
+      </>
+    ) : (
+      <p data-diff-deferred>This group holds {plural(p.total, 'claim', 'claims')}, above the {DEFER_ABOVE} the build computes a field-by-field diff for (08 S3.2), so the fields its sets differ in are not computed on this page, and they are not drawn as one chart. The sets: {p.set_labels.map((l, i) => <span data-set-col={l}>Set {l} ({plural(p.set_sizes[i], 'claim', 'claims')}){i < p.set_labels.length - 1 ? ', ' : '.'}</span>)}</p>
+    )}
+    <p class="actions">
+      <a href={p.restrict_href} data-action="restrict" data-dropped={p.restrict.drops}>Restrict to Set {p.restrict.label}, one condition set ({p.restrict.drops} of {plural(p.total, 'claim', 'claims')} dropped)</a>
+      <a href={p.proceed_href} data-action="proceed">Proceed with every affected cell flagged</a>
+    </p>
+  </section>
+) : (
+  <section class="banner" data-comparability-unknown data-key={p.key} role="region" aria-labelledby={heading}>
+    <H class="title" id={heading}><span aria-hidden="true">?</span> Possibly comparable: {plural(p.unknowns.length, 'claim shares', 'claims share')} one condition set, with {plural(fields.length, 'material field', 'material fields')} unknown</H>
+    <p>The shared comparability key confirms only the fields these claims state. A material field none of them states is unknown on each, so they agree on it only in what they leave unknown:</p>
+    <table data-unknowns>
+      <thead><tr><th scope="col">Claim</th><th scope="col">Unknown material fields</th></tr></thead>
+      <tbody>
+        {p.unknowns.map((u) => <tr data-unknown-claim={u.claim}><th scope="row">{u.label} <code>{u.claim}</code></th><td>{u.fields.map((f, i) => <><code data-unknown-field={f}>{f}</code>{i < u.fields.length - 1 ? ', ' : ''}</>)}</td></tr>)}
+      </tbody>
+    </table>
+  </section>
+)}
 
 <style>
   .banner {
+    margin-block: var(--sp-2);
     padding: var(--sp-3) var(--sp-4);
     border: 1px solid var(--c-caution);
     border-inline-start-width: 0.25rem;
     background: var(--c-caution-bg);
     color: var(--c-ink);
   }
-  h2 {
+  .title {
     margin: 0 0 var(--sp-2);
     font-size: var(--fs-base);
+  }
+  .banner p {
+    margin-block: 0 var(--sp-2);
+  }
+  .scroll {
+    overflow-x: auto;
   }
   table {
     border-collapse: collapse;
@@ -63,6 +133,11 @@ for (const d of diff) {
   td {
     padding: var(--sp-1) var(--sp-3) var(--sp-1) 0;
     text-align: start;
+    vertical-align: top;
+  }
+  .n,
+  .none {
+    color: var(--c-ink-muted);
   }
   .actions {
     display: flex;

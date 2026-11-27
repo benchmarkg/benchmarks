@@ -275,23 +275,60 @@ test('Staleness takes last_verified_at, never a file mtime', () => {
 
 // ---- 6.8 <ComparabilityBanner> -----------------------------------------------------------------------------
 
-const BANNER = { keys: ['k1', 'k2'], set_labels: ['Set A', 'Set B'], restrict_href: '?restrict', restrict_drops: 3, proceed_href: '?flag',
-  diff: [{ field: 'n_samples', values: [1, 5] }, { field: 'selection_strategy', values: ['best-of-n', null] }] };
+// P3-S10-T04: kind="differ" is 04 S8's state 3 (the diff instead of a chart), kind="unknown" its state 2 (the banner a
+// plot of one key with unknown fields sits behind); src/lib/comparability.ts decides which, tests/e2e/comparability-
+// states.spec.ts checks them on the pages
+const value = (text) => ({ kind: 'value', text });
+const BANNER = { kind: 'differ', id: 'cmp', keys: ['k1', 'k2'], set_labels: ['A', 'B'], set_sizes: [5, 3], total: 8,
+  restrict: { label: 'A', keeps: 5, drops: 3 }, restrict_href: '?restrict', proceed_href: '?flag', diff_status: 'computed',
+  diff: [{ field: 'n_samples', values: [value('1'), value('5')] }, { field: 'selection_strategy', values: [value('best-of-n'), { kind: 'unknown' }] },
+    { field: 'provider_snapshot', values: [{ kind: 'none' }, value('2026-05-01')] }] };
+const UNKNOWN = { kind: 'unknown', id: 'cmp-u', key: 'k1', unknowns: [{ claim: 'clm-a', label: 'System A', fields: ['chain_of_thought', 'shots'] },
+  { claim: 'clm-b', label: 'System B', fields: ['chain_of_thought', 'shots'] }] };
 
 test('the banner names exactly the fields that differ, as a table, and offers exactly two ways on', async () => {
   const html = await render('ComparabilityBanner', BANNER);
-  assert.equal(count(html, /<tr><th scope="row">/g), 2);
-  assert.match(html, /data-absent="unknown"/);
+  assert.equal(count(html, /<tr data-diff-field="[^"]+"><th scope="row">/g), 3);
+  assert.equal(count(html, /data-absent="unknown"/g), 1, 'the unknown marker, once');
+  assert.match(html, /<td data-cell="none"><span class="none">none<\/span><\/td>/, 'an answered absence is not an unknown');
   assert.deepEqual([...html.matchAll(/data-action="(\w+)"/g)].map((m) => m[1]), ['restrict', 'proceed']);
-  assert.match(text(html), /3 claims dropped/);
+  assert.match(text(html), /Set A, one condition set \(3 of 8 claims dropped\)/);
+  assert.match(html, /data-dropped="3"/);
+  assert.match(html, /id="cmp-heading"/);
+  assert.match((await render('ComparabilityBanner', { ...BANNER, level: 4 })), /<h4 class="title" id="cmp-heading">/);
+});
+
+test('the banner counts every claim: sets that hold fewer than the scope, or a restriction that loses one, throw', async () => {
+  await assert.rejects(render('ComparabilityBanner', { ...BANNER, set_sizes: [5, 2] }), /drop silently/);
+  await assert.rejects(render('ComparabilityBanner', { ...BANNER, restrict: { label: 'A', keeps: 5, drops: 2 } }), /keeps or drops every claim/);
+  await assert.rejects(render('ComparabilityBanner', { ...BANNER, diff: [] }), /no field is named/);
+  // a deferred group (08 S3.2) has no rows to name, and says so, with its sets and the dropped count still shown
+  const deferred = await render('ComparabilityBanner', { ...BANNER, diff: [], diff_status: 'deferred' });
+  assert.match(text(deferred), /above the 40 the build computes a field-by-field diff for/);
+  assert.doesNotMatch(deferred, /<table/);
+  assert.match(text(deferred), /3 of 8 claims dropped/);
+});
+
+test('the state-2 banner names which material fields are unknown on which claim, and cannot be empty', async () => {
+  const html = await render('ComparabilityBanner', UNKNOWN);
+  assert.match(text(html), /Possibly comparable: 2 claims share one condition set, with 2 material fields unknown/);
+  for (const c of ['clm-a', 'clm-b']) {
+    const row = new RegExp(`<tr data-unknown-claim="${c}">(.*?)</tr>`).exec(html)?.[1] ?? '';
+    assert.deepEqual([...row.matchAll(/data-unknown-field="(\w+)"/g)].map((m) => m[1]), ['chain_of_thought', 'shots'], c);
+  }
+  assert.doesNotMatch(html, /<button|<details/, 'persistent: nothing dismisses or collapses it');
+  await assert.rejects(render('ComparabilityBanner', { ...UNKNOWN, unknowns: [] }), /plotted silently/);
+  await assert.rejects(render('ComparabilityBanner', { ...UNKNOWN, unknowns: [{ claim: 'clm-a', label: 'A', fields: [] }] }), /no unknown field/);
 });
 
 test('the banner never editorialises and never uses --c-alert', async () => {
-  const words = text(await render('ComparabilityBanner', BANNER)).toLowerCase();
-  for (const w of ['better', 'worse', 'correct', 'wrong', 'superior', 'invalid', 'error']) assert.ok(!words.includes(w), w);
+  for (const props of [BANNER, UNKNOWN]) {
+    const words = text(await render('ComparabilityBanner', props)).toLowerCase();
+    for (const w of ['better', 'worse', 'correct', 'wrong', 'superior', 'invalid', 'error']) assert.ok(!words.includes(w), w);
+  }
   assert.doesNotMatch(style('ComparabilityBanner'), /--c-alert/);
   assert.match(style('ComparabilityBanner'), /--c-caution/);
-  await assert.rejects(render('ComparabilityBanner', { ...BANNER, keys: ['k1'] }), /is comparable/);
+  await assert.rejects(render('ComparabilityBanner', { ...BANNER, keys: ['k1'], set_labels: ['A'], set_sizes: [8] }), /is comparable/);
 });
 
 // ---- 6.10 <EmptyState> -------------------------------------------------------------------------------------
