@@ -102,3 +102,9 @@ From `data/benchmarks/earth-climate/weatherbench-2.yaml`.
 5. submission_process has no term for "the maintainer scores submitted predictions against public ground truth" (governance.submission_process_note).
 6. ceiling_anchor_type is single-valued, and this benchmark anchors deterministic scores on IFS HRES and probabilistic ones on IFS ENS; ceiling_by_category carries the split.
 7. The earth-climate/weather-forecasting definition says "scored against observed weather"; WeatherBench 2 is scored against reanalysis (domain.primary_note).
+
+## Recorded since
+
+Added by hand after the ledger was written, as its header says; each names the entries it was found on.
+
+1. `curation.unreachable` records a URL with an HTTP status (100 to 599), so it cannot record a request that never got one. That covers a host that accepts no connection: ade20k's two csail.mit.edu hosts and image-net.org, from 2026-11-16 to at least 2026-11-27. It also covers a TLS certificate that fails verification: mirex's music-ir.org, expired on 2026-10-24. The three entries record it in a review check on `homepage` instead. A field naming the failure (connection refused or timed out, TLS, DNS) beside an optional `http_status` would let `curation.unreachable` hold it.
