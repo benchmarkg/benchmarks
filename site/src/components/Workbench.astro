@@ -24,17 +24,27 @@
 // whichever side composed the table. The <template> holds the absence tokens the script clones. The page's styles are
 // global under .workbench, because the script builds banners and cells this file's scoped styles could not reach.
 //
+// P3-S10-T06 (10 V5's six categorical refusals, lib/refusals.ts): a column a refusal fires on is cut into parts, each a
+// column of its own under one header that names the refusal (`data-col-refusal`, and the decision as one string in
+// `data-col-signature`, which the script checks its own against), so no number of one part shares an axis with a number
+// of another; a section per refused column, over the table, says which refusal, why, its groups with their counts, and
+// what would make the claims comparable. A claim whose ground truth is not resolved says so in its cell, refused or not
+// (10 V5: "Show `resolution_status`"). The comparability key's state on the header is compare()'s, unchanged: the
+// refusals are read beside the key, not folded into it.
+//
 // NEVER: a claim of the selection in no cell, or in two; a column spanning condition sets without its diff; a dropped
-// claim not counted; a number without its badge, meter and permalink; an ingested claim without its attribution.
+// claim not counted; a number without its badge, meter and permalink; an ingested claim without its attribution; a
+// refused column drawn as one column, or without the section naming its refusal.
 import Absent from './Absent.astro';
 import ComparabilityBanner from './ComparabilityBanner.astro';
 import IngestAttribution from './IngestAttribution.astro';
 import ProvenanceDetails from './ProvenanceDetails.astro';
 import { claimHref } from '../lib/claims';
 import { unknownsOn } from '../lib/comparability';
+import { partsNote, refusalNote, signature } from '../lib/refusals';
 import {
-  cellKey, columnNote, columnState, compareHref, encode, pasted, restrictTo, restrictedNote, slug, spansNote, summary, systemOf, unrestrict,
-  type Index, type View,
+  REFUSALS_NONE, TABLE_CAPTION, cellKey, cellParts, columnNote, columnState, compareHref, encode, pasted, plural, restrictTo, restrictedNote, slug,
+  spansNote, summary, systemOf, unrestrict, type Index, type View,
 } from '../lib/workbench';
 
 interface Props {
@@ -53,6 +63,8 @@ const name = (kind: 'benchmarks' | 'systems' | 'metrics', id: string) => index[k
 const said = v.columns.filter((c) => c.comparison != null && (c.comparison.state === 'not-comparable' || c.restricted.length > 0
   || c.comparison.sets.some((s) => s.state === 'possibly-comparable')));
 const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable').length;
+const refusedCols = v.columns.filter((c) => c.refusal != null);
+const cut = refusedCols.length > 0;
 ---
 <div class="workbench" data-workbench data-workbench-live="static" data-claims-href={hrefs.claims ?? undefined}
   data-comparability-href={hrefs.comparability ?? undefined} data-corpus-href={hrefs.corpus ?? undefined}>
@@ -69,6 +81,32 @@ const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable'
 
   <div class="view" data-workbench-view data-selection={encode(v.selection)} data-claims-total={v.claims} data-dropped={v.dropped}>
     <p class="summary" data-wb-summary>{summary(v)}</p>
+
+    <section class="refusals" data-wb-refusals aria-labelledby="wb-refusals-h">
+      <h2 id="wb-refusals-h">Refused comparisons <span class="count">({refusedCols.length} of {v.columns.length} {v.columns.length === 1 ? 'column' : 'columns'})</span></h2>
+      {!cut && <p data-wb-refusals-none>{REFUSALS_NONE}</p>}
+      {refusedCols.map((c) => {
+        const r = c.refusal!;
+        const id = `wb-${slug(c.id)}-refused`;
+        return (
+          <section class="column-refusals" data-wb-col-refusals={c.id} data-refusal-signature={signature(r)} aria-labelledby={`${id}-h`}>
+            <h3 id={`${id}-h`}>{name('benchmarks', c.benchmark)} · {name('metrics', c.metric!)} <code>{c.metric}</code></h3>
+            {r.refusals.map((f) => (
+              <section class="wb-banner wb-refusal" data-refusal={f.id} role="region" aria-labelledby={`${id}-${f.id}-h`}>
+                <h4 class="title" id={`${id}-${f.id}-h`}><span aria-hidden="true">⊘</span> Refused: {f.name}</h4>
+                <p data-refusal-why>{f.why}</p>
+                <table data-refusal-groups>
+                  <thead><tr><th scope="col">Group, by <code>{f.field}</code></th><th scope="col">Claims</th></tr></thead>
+                  <tbody>{f.groups.map((g) => <tr data-refusal-group={g.id} data-claims={g.claims.length}><th scope="row">{g.label}</th><td>{g.claims.length}</td></tr>)}</tbody>
+                </table>
+                <p data-refusal-requires><strong>Comparable only as</strong> {f.requires}</p>
+              </section>
+            ))}
+            <p class="parts" data-refusal-parts={r.parts.length}>{partsNote(r)}</p>
+          </section>
+        );
+      })}
+    </section>
 
     <section class="comparability" data-wb-banners aria-labelledby="wb-banners-h">
       <h2 id="wb-banners-h">Comparability <span class="count">({refused} of {v.columns.length} {v.columns.length === 1 ? 'column spans' : 'columns span'} condition sets)</span></h2>
@@ -101,18 +139,30 @@ const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable'
 
     <div class="scroll" tabindex="0" role="region" aria-label="The comparison table">
       <table data-wb-table id="wb-table">
-        <caption>Systems by benchmark and metric. Each number carries its verification and how many of its material conditions it states; where a column spans condition sets, each claim says which set it is in.</caption>
+        <caption>{TABLE_CAPTION}</caption>
+        <colgroup span="1"></colgroup>
+        {v.columns.map((c) => <colgroup span={c.refusal?.parts.length ?? 1}></colgroup>)}
         <thead>
           <tr>
-            <th scope="col">System</th>
+            <th scope="col" rowspan={cut ? 2 : undefined}>System</th>
             {v.columns.map((c) => (
-              <th scope="col" data-col={c.id} data-col-state={columnState(c)} data-claims-total={c.comparison?.total ?? 0}>
+              <th scope={c.refusal != null ? 'colgroup' : 'col'} colspan={c.refusal?.parts.length} rowspan={cut && c.refusal == null ? 2 : undefined}
+                data-col={c.id} data-col-state={columnState(c)} data-claims-total={c.comparison?.total ?? 0}
+                data-col-refusal={c.refusal?.refusals.map((f) => f.id).join(' ')} data-col-signature={c.refusal != null ? signature(c.refusal) : undefined}>
                 {published.benchmarks.has(c.benchmark) ? <a href={`/benchmarks/${c.benchmark}/`}>{name('benchmarks', c.benchmark)}</a> : <code>{c.benchmark}</code>}
                 {c.metric != null && <span class="metric">{name('metrics', c.metric)}</span>}
                 {columnNote(c) != null && <span class="note" data-col-note>{columnNote(c)}</span>}
+                {c.refusal != null && <span class="note refused" data-col-refusal-note>{refusalNote(c.refusal)}</span>}
               </th>
             ))}
           </tr>
+          {cut && (
+            <tr>
+              {refusedCols.flatMap((c) => c.refusal!.parts.map((p) => (
+                <th scope="col" class="part" data-part-col={c.id} data-part={p.id} data-claims-total={p.claims.length}>{p.label} <span class="n">({plural(p.claims.length, 'claim', 'claims')})</span></th>
+              )))}
+            </tr>
+          )}
         </thead>
         <tbody>
           {v.rows.map((r) => (
@@ -125,16 +175,19 @@ const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable'
                 const list = v.cells.get(cellKey(c.id, r.system)) ?? [];
                 const dropped = c.dropped.filter((d) => systemOf(d.claim.system) === r.system).length;
                 const many = c.comparison?.state === 'not-comparable';
-                return (
-                  <td data-col={c.id}>
-                    {list.map((row) => {
+                return cellParts(c, list).map((part, i) => (
+                  <td data-col={c.id} data-part={c.refusal?.parts[i].id}>
+                    {part.map((row) => {
                       const k = row.comparability;
                       const label = c.setOf.get(row.claim.id)!;
                       const set = c.comparison!.sets.find((s) => s.label === label)!;
                       const numbered = row.claim.value != null || (row.claim.value_text != null && row.claim.value_text !== '');
+                      const status = row.claim.resolution_status ?? 'resolved';
                       return (
-                        <div class="claim" data-wb-claim={row.claim.id} data-key={k.comparability_key} data-set={label} data-set-state={set.state}>
+                        <div class="claim" data-wb-claim={row.claim.id} data-key={k.comparability_key} data-set={label} data-set-state={set.state}
+                          data-part={c.refusal?.partOf.get(row.claim.id)} data-resolution={status}>
                           {many && <span class="set" data-set-label>Set {label}</span>}
+                          {status !== 'resolved' && <span class="status" data-resolution-status={status}>resolution_status {status}</span>}
                           {(row.claim.system.includes('@') || row.claim.subset != null || row.claim.opponent != null) && (
                             <span class="what">{row.claim.system.includes('@') && <code>{row.claim.system}</code>}{row.claim.opponent != null && <> vs <code>{row.claim.opponent}</code></>}{row.claim.subset != null && <> <code>{row.claim.subset}</code></>}</span>
                           )}
@@ -149,10 +202,10 @@ const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable'
                         </div>
                       );
                     })}
-                    {dropped > 0 && <span class="dropped" data-wb-dropped={dropped}>{dropped} dropped by the restriction</span>}
-                    {list.length === 0 && dropped === 0 && <span data-wb-none><Absent state="not-reported" /></span>}
+                    {i === 0 && dropped > 0 && <span class="dropped" data-wb-dropped={dropped}>{dropped} dropped by the restriction</span>}
+                    {part.length === 0 && (i > 0 || dropped === 0) && <span data-wb-none><Absent state="not-reported" /></span>}
                   </td>
-                );
+                ));
               })}
             </tr>
           ))}
@@ -230,6 +283,14 @@ const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable'
   .workbench .claim { display: grid; gap: var(--sp-05); justify-items: start; padding-block: var(--sp-1); }
   .workbench .claim + .claim { border-block-start: 1px dashed var(--c-border); }
   .workbench .set { font-size: var(--fs-xs); font-weight: 600; padding: 0 var(--sp-1); border: 1px solid var(--c-caution); }
+  .workbench .status { font-size: var(--fs-xs); font-weight: 600; }
+  /* P3-S10-T06: a refused column's parts, each its own column under the header that names the refusal */
+  .workbench table[data-wb-table] th.part { font-size: var(--fs-xs); font-weight: 400; }
+  .workbench table[data-wb-table] .note.refused { font-weight: 600; color: var(--c-ink); }
+  .workbench table[data-wb-table] td[data-part], .workbench table[data-wb-table] th.part { border-inline-start: 2px solid var(--c-caution); }
+  .workbench .refusals h2 { margin: 0 0 var(--sp-2); font-size: var(--fs-lg); }
+  .workbench .refusals h3 { margin: var(--sp-4) 0 var(--sp-1); font-size: var(--fs-base); }
+  .workbench .refusals .parts { margin: var(--sp-1) 0 0; font-size: var(--fs-sm); }
   .workbench .unknown, .workbench .dropped, .workbench .what { font-size: var(--fs-xs); }
   /* 09 S8.1, SC 2.5.8: the permalink is a 24px target on its own line, 28px at coarse pointers */
   .workbench .permalink { display: inline-flex; align-items: center; min-block-size: 1.5rem; font-size: var(--fs-xs); }

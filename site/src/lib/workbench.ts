@@ -31,7 +31,13 @@
 // every pair, so a selection's diff is a subset of the build's rows and nothing is decided here that compare() does not
 // decide (08 S3.2 S5: "The UI never computes a comparability verdict at runtime"). A selected benchmark or system with
 // no curated claim is a column or row of absent cells, drawn rather than omitted (10 Design stance, rule 3).
+//
+// P3-S10-T06: each column's categorical refusals (10 V5's six, lib/refusals.ts), decided over the same kept claims,
+// from the index's benchmark and metric records (`facts`). A refused column is cut into parts, each drawn as a column of
+// its own under one header (`parts`): the comparability key's state stays what compare() says, and a refusal is read
+// beside it, never folded into it, since the refusals are 10's "beyond the generic key".
 import { compare, family, groupKey, utf8, type Comparison, type DiffGroup } from './comparability.ts';
+import { NO_FACTS, refuse, type ColumnRefusal, type Facts } from './refusals.ts';
 import type { ClaimRow } from './claims';
 
 /** The workbench's route (10 "Information architecture": /compare/ is V5). */
@@ -105,6 +111,7 @@ export interface Index {
   systems: Map<string, string>;
   metrics: Map<string, string>;
   rows: ClaimRow[];
+  facts?: Facts;                      // the benchmark and metric records the refusals read (P3-S10-T06); none when omitted
 }
 
 /** The selection a query names, in canonical form, and every value it names that this build does not have. */
@@ -156,6 +163,7 @@ export interface Column {
   restricted: string[];               // the `k` keys restricting this column
   dropped: ClaimRow[];                // the claims the restriction takes out, counted on the page
   setOf: Map<string, string>;         // claim id -> its condition set's label
+  refusal: ColumnRefusal | null;      // its categorical refusals over the claims kept, null when none fires (P3-S10-T06)
 }
 export interface Row { system: string; spans: number }   // spans: columns where its claims are one of several sets
 export interface View {
@@ -198,7 +206,8 @@ export function view(index: Index, groups: Map<string, DiffGroup> | null, select
     const comparison = compare(kept, subgroup(g!, kept));
     const id = columnId(benchmark, metric);
     const setOf = new Map(comparison.sets.flatMap((set) => set.rows.map((r) => [r.claim.id, set.label] as const)));
-    columns.push({ id, benchmark, metric, comparison, whole: all.length, restricted, dropped: picked.filter((r) => !kept.includes(r)), setOf });
+    columns.push({ id, benchmark, metric, comparison, whole: all.length, restricted, dropped: picked.filter((r) => !kept.includes(r)), setOf,
+      refusal: refuse(kept, index.facts ?? NO_FACTS) });
     for (const r of picked) systems.add(systemOf(r.claim.system));
     for (const r of kept) {
       const ck = cellKey(id, systemOf(r.claim.system));
@@ -207,7 +216,7 @@ export function view(index: Index, groups: Map<string, DiffGroup> | null, select
   }
   for (const b of s.b) {
     if (!columns.some((c) => c.benchmark === b)) {
-      columns.push({ id: columnId(b, null), benchmark: b, metric: null, comparison: null, whole: 0, restricted: [], dropped: [], setOf: new Map() });
+      columns.push({ id: columnId(b, null), benchmark: b, metric: null, comparison: null, whole: 0, restricted: [], dropped: [], setOf: new Map(), refusal: null });
     }
   }
   const bench = byName(index.benchmarks);
@@ -229,6 +238,12 @@ export function view(index: Index, groups: Map<string, DiffGroup> | null, select
   };
 }
 
+/** A cell's claims as the table draws them: one list per part of a refused column, in part order, or the one list. */
+export function cellParts(c: Column, list: ClaimRow[]): ClaimRow[][] {
+  if (c.refusal == null) return [list];
+  return c.refusal.parts.map((p) => list.filter((r) => c.refusal!.partOf.get(r.claim.id) === p.id));
+}
+
 /** The selection restricted to the condition set `key` in its column: what a banner's restrict control links to. */
 export const restrictTo = (s: Selection, key: string): Selection => canonical({ ...s, k: [...s.k, key] });
 /** The selection with column `c`'s restriction lifted: every claim it dropped back in its cell. */
@@ -242,14 +257,22 @@ export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 
 /** An id fit for an HTML id attribute. */
 export const slug = (id: string) => id.replace(/[^A-Za-z0-9_-]+/g, '-');
 
+export const TABLE_CAPTION = 'Systems by benchmark and metric. Each number carries its verification and how many of its material conditions it '
+  + 'states; where a column spans condition sets, each claim says which set it is in; a refused column is cut into parts, each its own column.';
+/** What the refusals section says when no column of the view is refused (lib/refusals.ts's six, in its order). */
+export const REFUSALS_NONE = 'No column holds ratings from two rating pools, pass^k under two values of k, two dimensions of a vector-valued '
+  + 'result, two eligibility tracks, two training-data tiers or two resolution states.';
+
 /** What the table is a view of (10 "Progressive disclosure": every view states what it is a view of). */
 export function summary(v: View): string {
   const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable').length;
+  const categorical = v.columns.filter((c) => c.refusal != null).length;
   const benchmarks = new Set(v.columns.map((c) => c.benchmark)).size;
   const what = constrains(v.selection) ? 'The selection in this address' : 'Every curated claim in this build, the bare address constraining nothing';
   return `${what}: ${plural(v.claims, 'claim', 'claims')}, ${plural(v.rows.length, 'system', 'systems')} by ${plural(v.columns.length, 'column', 'columns')} `
     + `on ${plural(benchmarks, 'benchmark', 'benchmarks')}. ${refused === 0 ? 'No column' : plural(refused, 'column', 'columns')} `
-    + `${refused === 1 ? 'spans' : 'span'} more than one condition set${v.dropped > 0 ? `; ${plural(v.dropped, 'claim is', 'claims are')} dropped by a restriction to one set, counted where it applies` : ''}.`;
+    + `${refused === 1 ? 'spans' : 'span'} more than one condition set${v.dropped > 0 ? `; ${plural(v.dropped, 'claim is', 'claims are')} dropped by a restriction to one set, counted where it applies` : ''}.`
+    + (categorical > 0 ? ` ${plural(categorical, 'column is', 'columns are')} refused outright, and cut into parts that are never read against each other.` : '');
 }
 
 /** A column's state as its header carries it: its comparison's, or `no-claim` for a selected benchmark with none. */
