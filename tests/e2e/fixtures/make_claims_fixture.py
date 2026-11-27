@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The claims artifacts tests/e2e/provenance-drilldown.spec.ts and comparability-states.spec.ts build the site from
-(P3-S10-T07, P3-S10-T04).
+"""The claims artifacts tests/e2e/provenance-drilldown.spec.ts, comparability-states.spec.ts, v5-workbench.spec.ts and
+v5-refusals.spec.ts build the site from (P3-S10-T07, P3-S10-T04, P3-S10-T05, P3-S10-T06).
 
     uv run python tests/e2e/fixtures/make_claims_fixture.py --preview build/preview --out build/e2e-claims
 
@@ -32,19 +32,44 @@ The constructed claim copies the first real row with a number and a condition re
 (benchmark, metric) group under the same key: one more claim of a condition set that is already there, not a state the
 preview lacks (the preview's claims already show all three of 04 S8's states). It writes into its own directory and
 refuses build/ and the preview's, so the artifacts a site deploys or previews from are never these.
+
+P3-S10-T06: 10 V5's six categorical refusals (site/src/lib/refusals.ts). Three have real claims in the preview --
+Matbench Discovery's F1 under two compliance tiers, ForecastBench's Brier scores pending, partial and resolved,
+WeatherBench 2's RMSE and CRPS over several dimensions -- and three have none: no committed claim is a rating (a
+`claim_type: rating` with a `rating_pool`), none is under pass^k, and ARC-AGI-3 has no claim at all. So REFUSAL_ROWS
+constructs them, each on the benchmark 10 V5 names, except that RoboArena's two real rating pools (data/rating-pools/,
+2026-06-10 and 2026-11-16) stand in for Kaggle Game Arena, which has one:
+
+  claim-e2e000000003..05   RoboArena ratings in its two pools, all under one constructed condition record that answers
+                           every material field: one comparability key and nothing unknown, so the key alone would show
+                           them together, silently (04 S8's state 1) -- the confidently wrong number 10 V5 means
+  claim-e2e000000006..08   tau-bench under pass^k, k 1 for two systems and k 8 for one, on two constructed condition
+                           records; the metric id `e2e-pass-hat-k` is constructed too, since the corpus has no tau-bench
+                           Metric record
+  claim-e2e000000009..0b   ARC-AGI-3's RHAE on its two real leaderboards' own condition records (data/leaderboards/: the
+                           verified board's cond-6e8ba4ad92b4 and the community board's cond-ff37311df041)
+
+Each is a ResultClaim with an invented value, an ingestion block (review_state spot-checked, so claims.json holds it, as
+claim-e2e000000001) whose attribution says, wherever the row renders, that it is a fixture, a source and a reporter
+that name no record (`src-e2e-fixture`, `org-e2e-fixture`; the row's `source` is null), and the comparability numbers
+tools/build/comparability.py computes over its benchmark's own resolved profile and its condition record, so the key,
+the unknowns and derived/comparability.json's rows are the ones the stage would write.
 """
 from __future__ import annotations
 
 import argparse
 import copy
+import glob
 import json
 import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, ROOT)
+from schema.benchmark import load_benchmark  # noqa: E402
 from schema.claim import ResultClaim, snapshot_sha256  # noqa: E402
 from schema.conditions import EvalConditions  # noqa: E402
+from schema.taxonomy import read_yaml  # noqa: E402
 from tools.build import claims as stage  # noqa: E402
 from tools.build import comparability  # noqa: E402
 from tools.build.emit import nfc, serialise  # noqa: E402
@@ -53,6 +78,34 @@ BATCH = 'ingest-e2e-fixture-2026-11-26'
 ATTRIBUTION = ("Fixture Source, 'Constructed claims for tests/e2e/provenance-drilldown.spec.ts'. Not a dataset: "
                'retrieved from nowhere, at a reserved .invalid address.')
 CONSTRUCTED = {'claim-e2e000000001': 'spot-checked', 'claim-e2e000000002': stage.MACHINE}
+
+# P3-S10-T06 (module docstring): the refusals the preview has no claim for.
+REFUSAL_BATCH = 'ingest-e2e-refusals-2026-11-26'
+REFUSAL_ATTRIBUTION = ("Fixture Source, 'Constructed claims for tests/e2e/v5-refusals.spec.ts'. Not a dataset: every value "
+                       'is invented, retrieved from nowhere, at a reserved .invalid address.')
+# constructed condition records, beside the real ones REFUSAL_ROWS names by id
+REFUSAL_CONDITIONS = {
+    # RoboArena's material fields (physical-trial profile), every one answered, so its ratings share one key, unknown-free
+    'cond-e2e0000000a1': {'hardware_platform': 'DROID', 'n_samples': 100, 'simulator': 'none', 'simulator_version': 'none',
+                          'subset_used': 'all-policies board', 'venue': 'the RoboArena evaluator network'},
+    'cond-e2e0000000b1': {'selection_strategy': 'pass-hat-k', 'k': 1, 'n_samples': 8, 'harness': 'tau-bench', 'subset_used': 'retail'},
+    'cond-e2e0000000b8': {'selection_strategy': 'pass-hat-k', 'k': 8, 'n_samples': 8, 'harness': 'tau-bench', 'subset_used': 'retail'},
+}
+# id, system, benchmark, metric, value, the claim's other fields, its condition record, the refusal it is for
+REFUSAL_ROWS = [
+    ('claim-e2e000000003', 'dreamzero', 'roboarena', 'roboarena-rating', 1210.0,
+     {'claim_type': 'rating', 'rating_pool': 'pool-roboarena-2026-06-10'}, 'cond-e2e0000000a1', 'rating-pool'),
+    ('claim-e2e000000004', 'dreamzero', 'roboarena', 'roboarena-rating', 1185.0,
+     {'claim_type': 'rating', 'rating_pool': 'pool-roboarena-2026-11-16'}, 'cond-e2e0000000a1', 'rating-pool'),
+    ('claim-e2e000000005', 'pi05-droid', 'roboarena', 'roboarena-rating', 1102.0,
+     {'claim_type': 'rating', 'rating_pool': 'pool-roboarena-2026-11-16'}, 'cond-e2e0000000a1', 'rating-pool'),
+    ('claim-e2e000000006', 'claude-opus-4-5', 'tau-bench', 'e2e-pass-hat-k', 0.71, {}, 'cond-e2e0000000b1', 'pass-hat-k'),
+    ('claim-e2e000000007', 'gpt-5-2', 'tau-bench', 'e2e-pass-hat-k', 0.64, {}, 'cond-e2e0000000b1', 'pass-hat-k'),
+    ('claim-e2e000000008', 'claude-opus-4-5', 'tau-bench', 'e2e-pass-hat-k', 0.38, {}, 'cond-e2e0000000b8', 'pass-hat-k'),
+    ('claim-e2e000000009', 'gpt-5-2', 'arc-agi-3', 'rhae', 1.5, {}, 'cond-6e8ba4ad92b4', 'legality-track'),
+    ('claim-e2e00000000a', 'gpt-5-2', 'arc-agi-3', 'rhae', 6.0, {}, 'cond-ff37311df041', 'legality-track'),
+    ('claim-e2e00000000b', 'o3', 'arc-agi-3', 'rhae', 4.0, {}, 'cond-ff37311df041', 'legality-track'),
+]
 
 
 def constructed(base: dict, cid: str, review: str) -> dict:
@@ -75,6 +128,50 @@ def constructed(base: dict, cid: str, review: str) -> dict:
     if review == stage.MACHINE:
         row['badge'] = stage.MACHINE
     return row
+
+
+def conditions_record(cid: str) -> EvalConditions:
+    """A constructed condition record of REFUSAL_CONDITIONS, or the real one data/conditions/ holds under `cid`."""
+    if cid in REFUSAL_CONDITIONS:
+        return EvalConditions.model_validate(dict(REFUSAL_CONDITIONS[cid], id=cid))
+    return EvalConditions.model_validate(read_yaml(os.path.join(ROOT, 'data', 'conditions', '%s.yaml' % cid)))
+
+
+def refusal_rows() -> list[dict]:
+    """REFUSAL_ROWS as claims.json rows, each computed by the stage's own comparability code (module docstring)."""
+    profiles = comparability.load_profiles()
+    resolutions: dict[str, comparability.Resolution] = {}
+    out = []
+    for cid, system, bench, metric, value, extra, cond_id, refusal in REFUSAL_ROWS:
+        if bench not in resolutions:
+            hits = glob.glob(os.path.join(ROOT, 'data', 'benchmarks', '*', '%s.yaml' % bench))
+            if len(hits) != 1:
+                raise SystemExit('make_claims_fixture: %d records of benchmark %s' % (len(hits), bench))
+            resolutions[bench] = comparability.resolve_profile(load_benchmark(hits[0]), profiles)
+        res = resolutions[bench]
+        cond = conditions_record(cond_id)
+        raw = {'model': system, 'benchmark': bench, 'metric': metric, 'score': value, **extra}
+        key = 'refusals.csv#model=%s&metric=%s&conditions=%s' % (system, metric, cond_id)
+        claim = ResultClaim.model_validate(dict(
+            id=cid, system=system, benchmark=bench, metric=metric, value=value, date_reported='2026-11-26',
+            reported_by='org-e2e-fixture', verification='self-reported', source='src-e2e-fixture', eval_conditions=cond_id,
+            notes='Constructed by tests/e2e/fixtures/make_claims_fixture.py for tests/e2e/v5-refusals.spec.ts (10 V5 refusal '
+                  '%s); not a claim: its value is invented.' % refusal,
+            provenance_snapshot={'source_record_id': key, 'retrieved_at': '2026-11-26T00:00:00Z',
+                                 'content_sha256': snapshot_sha256(raw), 'raw': raw},
+            ingestion={'batch': REFUSAL_BATCH, 'source_adapter': 'e2e-fixture', 'adapter_version': '0.0.1', 'source_record_id': key,
+                       'last_seen_upstream': '2026-11-26', 'source_url': 'https://fixture.example.invalid/refusals.csv',
+                       'source_licence': 'CC-BY-4.0', 'licence_class': 'permissive-attribution',
+                       'source_attribution': REFUSAL_ATTRIBUTION, 'ingested_at': '2026-11-26T00:00:00Z',
+                       'extraction_confidence': 0.9, 'review_state': 'spot-checked', 'reviewed_by': None, 'reviewed_on': None,
+                       'field_provenance': {'value': 'source'}},
+            **extra))
+        out.append({'claim': claim.model_dump(mode='json', by_alias=True, exclude_computed_fields=True),
+                    'conditions': cond.model_dump(mode='json', by_alias=True, exclude_computed_fields=True),
+                    'comparability': comparability.compute_for_claim(claim, res, cond).as_dict(),
+                    'material': list(res.material), 'weights': {f: res.weights[f] for f in res.material},
+                    'source': None, 'reporter': {'id': 'org-e2e-fixture', 'name': None}})
+    return out
 
 
 def ordered(rows: list[dict]) -> list[dict]:
@@ -119,7 +216,10 @@ def build(preview: dict) -> dict[str, dict]:
     base = min(bases, key=lambda r: r['claim']['id'].encode('utf-8'))
     rows = {cid: constructed(base, cid, review) for cid, review in CONSTRUCTED.items()}
     bench = base['claim']['benchmark'].split('@')[0]
-    curated = ordered([copy.deepcopy(r) for r in preview['claims']] + [rows['claim-e2e000000001']])
+    taken = {r['claim']['id'] for r in preview['claims']} & {cid for cid, *_ in REFUSAL_ROWS}
+    if taken:
+        raise SystemExit('make_claims_fixture: the preview already holds %s' % ', '.join(sorted(taken)))
+    curated = ordered([copy.deepcopy(r) for r in preview['claims']] + [rows['claim-e2e000000001']] + refusal_rows())
     machine = ordered([rows['claim-e2e000000002']])
     out = {stage.CLAIMS: dict(preview, claims=curated, machine_ingested={bench: len(machine)}),
            stage.ingested_name(bench): {'artifact': 'claims-ingested', 'format': stage.FORMATS['claims-ingested'],
