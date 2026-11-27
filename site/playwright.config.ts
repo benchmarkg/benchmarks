@@ -57,7 +57,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 1_800_000,
     env: {
-      UAIBI_SITE_FIXTURES: 'theme,components,provenance',
+      UAIBI_SITE_FIXTURES: 'theme,components,provenance,suite-exclusions',
       UAIBI_CORPUS: '../build/preview/corpus.json',
       UAIBI_SITE_DRAFTS: '1',
       ASTRO_TELEMETRY_DISABLED: '1',

@@ -26,8 +26,15 @@
 // section says so rather than offering a button that does nothing. Nothing on the page is labelled a permalink or "cite".
 //
 // The four panels are computed in JavaScript from structured fields, never by a model (10 V10); P6-S4-T02 computes them
-// (islands/suite/panels.ts), and until then each place says it is not computed yet. The hard exclusion filters and their
-// "excluded N entries because ..." panel are P6-S4-T03's.
+// (islands/suite/panels.ts), and until then each place says it is not computed yet.
+//
+// The hard exclusion rules (P6-S4-T03; 10 V10 "Failure mode to avoid"; 11 F2 "Made visible"): islands/suite/
+// exclusions.ts screen() is applied to the basket, once, on every render, whatever put the entries there, over the fact
+// table pages/suite/index.astro built from the full records. An entry a rule fires on stays in the basket and its link,
+// as the reader chose it, tagged "excluded", and is left out of the suite: the Excluded panel, first in the analysis pane,
+// says "Excluded N of M entries because: ..." and names every entry left out with the rule that fired and the field it
+// read, and names the kept entries whose licence the rule could not read. The panels and the manifest are to read the
+// suite, `screened.kept`. The AI accelerator, when it fills a basket (P6-S5), is screened by this same call.
 //
 // The entry points (10 V10's sketch: "+ from lasso (V1)", "+ from cell (V2)"):
 //   from lasso   the Atlas's selection toolbar links to /suite/?b=<its ids> (islands/AtlasSelection.tsx), and this pane
@@ -55,10 +62,12 @@ import {
   type RailKey,
 } from '../lib/browse-view.ts';
 import { added, answers, basketOf, offer, removed, store, stored, suiteHref, withBasket, withIds } from '../lib/suite-basket.ts';
+import { label, screen, summary, unreadNote, why, type FactTable } from './suite/exclusions.ts';
 
 interface Props {
   facetsHref: string | null;    // lib/manifest.ts dataHref('facets.json'); null when the build wrote no manifest
   groups: RailGroup[];          // the browse rail's vocabularies, definitions left out
+  facts: FactTable;             // the hard rules' fact table (islands/suite/exclusions.ts factTable over the full records)
   commit: string;               // the commit this build read the index at, which an exported manifest pins (lib/release.ts)
   children?: ReactNode;         // pages/suite/index.astro: the directory of every benchmark, as the server rendered it
 }
@@ -93,7 +102,7 @@ const local = () => {
 const ordered = (g: RailGroup) => (g.key !== 'd' ? g.terms
   : g.terms.filter((t) => t.parent == null).flatMap((f) => [f, ...g.terms.filter((t) => t.parent === f.id)]));
 
-export default function SuiteBuilder({ facetsHref, groups, commit, children }: Props) {
+export default function SuiteBuilder({ facetsHref, groups, facts, commit, children }: Props) {
   const [load, setLoad] = useState<Load>(facetsHref == null ? { status: 'unavailable' } : { status: 'loading' });
   const [state, setState] = useState<FilterState>({});
   const [ignored, setIgnored] = useState<Ignored[]>([]);
@@ -142,6 +151,9 @@ export default function SuiteBuilder({ facetsHref, groups, commit, children }: P
   }, [facetsHref, groups]);
 
   const basket = basketOf(state);
+  // the one seam (islands/suite/exclusions.ts): the suite is what the hard rules keep of the basket
+  const screened = screen(basket, facts);
+  const out = new Set(screened.excluded.map((e) => e.id));
   const rows = useMemo(() => new Map<string, FacetRow>((index?.rows ?? []).map((r) => [r.id, r])), [index]);
   const counted = useMemo(() => (index != null ? tally(index, state) : null), [index, state]);
   const results = useMemo(() => (index == null || counted == null ? []
@@ -300,9 +312,10 @@ export default function SuiteBuilder({ facetsHref, groups, commit, children }: P
           ? <ul className="entries" data-basket-entries>
               {entries.map((id) => {
                 const r = rows.get(id);
+                const ex = out.has(id);
                 return (
-                  <li key={id} data-basket-entry={id}>
-                    <span className="what">{r != null ? <a href={`/benchmarks/${id}/`}>{r.name}</a> : <code>{id}</code>}{r != null ? <> <span className="meta">{whereOf(r)}</span></> : null}</span>
+                  <li key={id} data-basket-entry={id} data-excluded={ex ? '' : undefined}>
+                    <span className="what">{r != null ? <a href={`/benchmarks/${id}/`}>{r.name}</a> : <code>{id}</code>}{r != null ? <> <span className="meta">{whereOf(r)}</span></> : null}{ex ? <> <span className="tag">excluded</span></> : null}</span>
                     <button type="button" className="remove" onClick={() => edit(removed(state, id))}>
                       <span aria-hidden="true">×</span><span className="visually-hidden">Remove {nameOf(id)} from the basket</span>
                     </button>
@@ -354,6 +367,26 @@ export default function SuiteBuilder({ facetsHref, groups, commit, children }: P
       <section className="pane analysis" aria-labelledby="suite-analysis-h" data-suite-analysis>
         <h2 id="suite-analysis-h">Analysis</h2>
         <p className="hint">Computed in the browser from the entries' structured fields, never by a model.</p>
+        <section className="panel" data-panel="excluded" aria-labelledby="suite-panel-excluded">
+          <h3 id="suite-panel-excluded">Excluded</h3>
+          <p className="what">Hard rules, applied in code to every entry however it came into the basket: a licence-incompatible, deprecated, superseded or known-contaminated entry is left out of the suite.</p>
+          {hydrated
+            ? <>
+                <p data-excluded-summary={screened.excluded.length}>{summary(screened)}</p>
+                {screened.excluded.length > 0
+                  ? <ul className="excluded">
+                      {screened.excluded.map((e) => (
+                        <li key={e.id} data-excluded-entry={e.id} data-rules={[...new Set(e.fired.map((f) => f.rule))].join(' ')}>
+                          <a href={`/benchmarks/${e.id}/`}>{nameOf(e.id)}</a> — {e.fired.map((f) => `${label(f.rule)}: ${why(f, nameOf)}`).join('; ')}
+                        </li>
+                      ))}
+                    </ul>
+                  : null}
+                {screened.unread.length > 0 ? <p className="hint" data-licence-unread={screened.unread.join(' ')}>{unreadNote(screened, nameOf)}</p> : null}
+                <p className="hint" data-use="any">Licence terms are screened for any use, commercial use included: this page's address cannot yet say that a suite is for non-commercial research only.</p>
+              </>
+            : null}
+        </section>
         {PANELS.map((p) => (
           <section key={p.id} className="panel" data-panel={p.id} aria-labelledby={`suite-panel-${p.id}`}>
             <h3 id={`suite-panel-${p.id}`}>{p.title}</h3>
