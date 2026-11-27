@@ -1,0 +1,738 @@
+# data/benchmarks/multimodal/figcodebench.yaml
+#
+# P1-S12 sweep follow-up: a new multimodal entry from the 2026-11-17 sweep's new-candidate finding.
+# Filled from the FigCodeBench paper, arXiv 2610.10066 read as its v1 PDF (2026-10-07, the only version), and its
+# abstract page; the GitHub repository's README at main's head commit 89f7816 (2026-10-13) and GitHub's API listing
+# of the repository tree at that commit; Hugging Face's API record of the dataset (ungated, read without an account);
+# and the project page. GitHub's API also supplied the repository's dates, commit log, owner type and licence
+# metadata, and Hugging Face's API the dataset owner's account type; none of those is a quoted Source. The code, the
+# project page and the dataset sit in personal accounts, which appear only inside the URLs below. No result on
+# FigCodeBench other than the maintainers' was found (arXiv's metadata search and a web search, 2026-11-27). Every
+# quote below is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# Why multimodal is primary, not code or vision (02 S11 rule 12): the entrant reads a figure and writes code, and
+# what is scored is whether that code reproduces the figure. The grader renders the code in its own environment and
+# compares the render with the input figure, by pixel, structural, perceptual and colour metrics and by a jury of
+# three MLLMs whose Mean Machine Opinion Score heads the leaderboard, so the figure-code correspondence is the
+# measured quantity, as the detector's reading of an image against its prompt is for geneval. Code's inclusion test
+# also reads true (software authored, run and scored on what it computes), but the code-similarity metrics are
+# complementary diagnostics, and no code leaf names code judged by its rendered output; that boundary is logged as
+# taxonomy/_failures/2026-11-27-figcodebench-001. Vision does not apply: the entrant produces no image, the render is
+# the grader's, and the input figure is the reference the output must correspond to.
+
+id: figcodebench
+name: FigCodeBench
+tagline: 6,194 scientific figures to reproduce in Python, MATLAB, R or LaTeX code, scored on how
+  closely the render matches.
+description: >
+  A figure-to-code benchmark for multimodal LLMs from Shanghai Jiao Tong University's Institute of Image
+  Communication and Information Processing, with Shanghai Artificial Intelligence Laboratory and Macao
+  Polytechnic University. Each item gives a model a scientific figure, a target language and auxiliary
+  information (canvas size, packages, datasets and random seed), and the model returns code meant to reproduce
+  the figure. The 6,194 figure-code pairs were collected from arXiv papers, publications, plotting galleries
+  and open-source repositories, multiplied by scripted perturbations of axes, colours, legends and fonts,
+  re-executed and filtered by hand, and grow from 2,548 prototypes. They cover four languages (Python
+  with Matplotlib and Seaborn, MATLAB, R with ggplot2, and LaTeX with TikZ, which holds 3,477 of them)
+  and seven functional categories, and every item is placed in an easy, medium or hard tier by a figure-and-code
+  complexity score. The generated code is rendered; the render is compared with the reference figure by
+  PSNR, SSIM, LPIPS and CIEDE2000, weighted by the execution rate, and by a jury of three MLLMs (GPT-5.1,
+  GPT-5.6-Luna and Gemini 3.5 Flash) scoring chart type, layout, text, data and style out of 100, averaged
+  into the Mean Machine Opinion Score (MMOS). The code is compared with the reference code by CodeBERTScore,
+  CrystalBLEU, AST similarity and plotting-API F1, and a Figure-Code Fidelity score discounts visual similarity
+  for verbose code. The paper scores 24 models (11 proprietary, 13 open) and finds LaTeX the hardest language;
+  MMOS correlated at r = 0.826 with 12 experts' ratings of 1,000 pairs. The data are on Hugging Face under
+  MIT, and the project page shows the paper's results as a leaderboard.
+self_description:
+  source: src-arxiv-2610-10066-v1
+  quote: we propose FigCodeBench, a comprehensive framework for rigorously evaluating MLLMs on
+    figure reproduction, integrating multimodal comprehension and generation
+external_ids:
+  arxiv: '2610.10066'
+external_ids_note: The Hugging Face id is left out because it carries a personal account;
+  dataset_url holds it.
+paper:
+  title: 'From Pixel to Coding: Evaluating the Figure Reproduction Capabilities of MLLMs'
+  arxiv: '2610.10066'
+  version_read: v1
+  source: src-arxiv-2610-10066-v1
+released: 2026-10-07
+released_note: The paper's first and only arXiv version. The repository was created on 2026-09-29
+  (GitHub API), the README dates its opening to 2026-10-08, and the Hugging Face dataset was created
+  and last modified on 2026-10-09 (API record).
+released_source: src-arxiv-2610-10066
+released_quote: Submitted on 7 Oct 2026
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: multimodal/any-to-any-generation
+  secondary:
+    - multimodal/chart-diagram-understanding
+domain_basis:
+  reason: Code is generated from an image and scored on whether it corresponds to the image, which
+    is any-to-any-generation's definition. The grader renders the code and compares the render with
+    the input figure, so the score is defined over the figure-code pair; every other score compares
+    the code with the figure's own reference code or discounts the render's similarity for length.
+    Multimodal's inclusion test covers generating in one modality from another where the
+    correspondence is scored. Every item is a chart, plot or diagram that must be read in detail
+    (the jury scores its text and data), which is the secondary leaf's content, and the paper finds
+    its scores tracking CharXiv's chart-reasoning questions (r = 0.797) more than LiveCodeBench
+    (0.537).
+  source: src-arxiv-2610-10066-v1
+  quote: to generate the precise programmatic representation of a scientific visualization from its
+    visual manifestation
+domain_considered_and_rejected:
+  - term: code/function-synthesis
+    reason: The entrant writes a self-contained script, but no test judges its behaviour; it is run
+      once to render a figure, and the figure and the code are compared with references by
+      similarity, as for cadprompt's near miss. The code family's exclusion sends code that is the
+      means to another result away from code, and the paper treats code similarity as a diagnostic
+      (taxonomy/_failures/2026-11-27-figcodebench-001).
+    source: src-arxiv-2610-10066-v1
+    quote: Since visually equivalent figures can be produced by substantially different programs, no
+      single reference-based code metric provides a complete characterization of code quality.
+  - term: vision/image-generation
+    reason: The entrant produces code, not an image; the render is made by the grader's toolchain,
+      and the score is the render's match with the input figure, not a property of the image alone.
+  - term: vision/document-understanding
+    reason: An image goes in and text comes out, but the code is not a transcription of what the
+      figure shows (omnidocbench's case); it is a program whose output must reproduce the figure,
+      with its data, geometry and styling inferred.
+  - term: multimodal/visual-qa
+    reason: No question is asked about the figure; the output is a program, scored on its render.
+  - term: code/data-science-workflows
+    reason: The scripts plot data, often simulated, but no analysis reaches a quantitative answer
+      that is scored.
+capability:
+  - generation-fidelity
+  - perception
+capability_basis:
+  generation-fidelity:
+    reason: Every score compares a produced artifact with a target by similarity, the rendered
+      figure with the reference figure (pixel, structural, perceptual and colour metrics, and the
+      jury's 0-100 similarity) and the code with the reference code, which is the term's inclusion
+      test.
+    source: src-arxiv-2610-10066-v1
+    quote: To evaluate the visual equivalence between the rendered output of a generated script
+  perception:
+    reason: The input is a raw image and the scores measure how much of it the code recovers (chart
+      types, layout, text, data and style in the jury's rubric); the paper claims to test how a
+      model perceives visual structure, and finds its scores closer to a chart-understanding
+      benchmark's than to a coding benchmark's.
+    source: src-arxiv-2610-10066-v1
+    quote: how a model can perceive complex visual structures and synthesize them into precise,
+      executable code
+capability_considered_and_rejected:
+  - term: spatial-reasoning
+    reason: The paper concludes that models lack the 2D spatial reasoning that code-based depiction
+      needs, but the score is reconstruction fidelity, which the term's exclusion leaves out, and no
+      item turns on an inferred spatial relation scored as such.
+    source: src-arxiv-2610-10066-v1
+    quote: current MLLMs lack the 2D spatial reasoning capabilities required for codebased object
+      depiction
+  - term: instruction-following
+    reason: The prompt sets the canvas size, packages, datasets and seed, and asks for code only,
+      but compliance with those directions is not scored apart from the render's fidelity.
+    source: src-arxiv-2610-10066-v1
+    quote: Now, return only the code, without any additional explanations.
+  - term: compositional-generalization
+    reason: The paper says its tags serve to separate API memorisation from compositional
+      generalisation, but no held-out composition is defined or scored separately.
+    source: src-arxiv-2610-10066-v1
+    quote: serving a critical diagnostic purpose to decouple baseline API memorization from
+      authentic compositional generalization
+  - term: quantitative-reasoning
+    reason: Data values and distributions must be estimated from the figure, but they are scored as
+      part of the render's fidelity (the jury's data criterion), not as answers to a calculation.
+
+evaluation_method:
+  - model-graded-judge
+  - rubric-graded
+  - domain-metric
+  - model-derived-metric
+  - reference-metric
+  - composite
+evaluation_method_note: >
+  model-graded-judge and rubric-graded for MMOS, the leaderboard's metric: GPT-5.1, GPT-5.6-Luna and Gemini
+  3.5 Flash each see the reference and the rendered figure and score five criteria (chart types, layout,
+  text content, data, style) out of 20 each, and the three totals are averaged; a failed execution scores
+  0. domain-metric for PSNR, SSIM and CIEDE2000 between the render and the reference, as for dl3dv and
+  NTIRE, and model-derived-metric for LPIPS, computed by a pretrained network, and for CodeBERTScore (Python
+  only); the image metrics are execution-rate-weighted averages. reference-metric for CrystalBLEU, normalised
+  AST similarity (tree-edit distance) and plotting-API F1 against the reference code, fixed formulas over
+  a reference text, with missing code scored 0. composite for Figure-Code Fidelity, which multiplies an
+  execution indicator, the geometric mean of four normalised image similarities (one of them LPIPS) and
+  a conciseness factor capped by the reference code's length. The execution rate itself, the share of
+  scripts that run and save a figure, has no term (taxonomy/_failures/2026-11-18-cadprompt-001.yaml).
+evaluation_method_basis:
+  reason: The paper reports image-oriented, code-oriented, MMOS and FCF results per language in
+    separate tables, and its leaderboard figure plots MMOS against cost; the jury's rubric and
+    prompt are in its appendix.
+  source: src-arxiv-2610-10066-v1
+  quote: we input both the ground-truth figure and the generated figure into three MLLMs, and
+    instruct them to output a high-level similarity score ranging from 0 to 100 based on the chart
+    types, layout, text content, data, and style
+evaluation_method_considered_and_rejected:
+  - term: execution-tests
+    reason: The code is executed, but the execution indicator records only that it ran and produced
+      a valid figure; no test of behaviour decides a verdict, which the term's exclusion leaves out.
+    source: src-arxiv-2610-10066-v1
+    quote: where Ei is an execution indicator that equals one when the generated code is
+      successfully executed and produces a valid figure, and zero otherwise
+  - term: human-expert-eval
+    reason: Twelve experts rated 1,000 generated-reference pairs on the jury's five criteria, but
+      only to validate MMOS (Pearson r = 0.826 overall); no published score comes from their
+      ratings.
+    source: src-arxiv-2610-10066-v1
+    quote: To assess the reliability of the designed multi-level MLLM judges, we further conducted
+      human evaluation for subjective consistency analysis.
+  - term: statistical-fit
+    reason: PSNR is a log transform of mean squared error and could be read as a general statistic;
+      it is kept as domain-metric with SSIM, as dl3dv and NTIRE record it.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: Each model is prompted once with the figure and the auxiliary information and returns
+    code, at its default sampling settings and with no output-token limit; there is no tool, no
+    execution feedback and no retry, and proprietary and open MLLMs are scored the same way.
+  source: src-arxiv-2610-10066-v1
+  quote: We use the default parameter settings (e.g., temperature, top k, and top p) of the
+    respective models and do not apply an output token limit
+designed_for_subjects_considered_and_rejected:
+  - term: reasoning-model
+    reason: The paper compares Gemini Flash models with and without thinking and reports both, but
+      the benchmark is not designed around a reasoning budget; the setting is a run condition, as
+      the term's mmlu-pro near miss reads.
+    source: src-arxiv-2610-10066-v1
+    quote: We also compare reasoning models with their non-reasoning counterparts
+  - term: generative-media-model
+    reason: The output is code, not an image; the image is the grader's render of it.
+  - term: agent-scaffold
+    reason: A single response is scored; the model never sees its render or an error message, so
+      there is no loop to supply.
+
+lifecycle: null
+lifecycle_note: Left null, as lifecycle's dormant exclusion asks where the sources do not show
+  current use. The only results are the release paper's (24 models, October 2026), which the README
+  and project page repeat as the leaderboard; no other paper or board reporting FigCodeBench results
+  was found on 2026-11-27, seven weeks after release, and no source states that use has not begun
+  (proposed). Logged as taxonomy/_failures/2026-11-27-figcodebench-002.
+activity: no-submission-channel
+activity_basis:
+  reason: The leaderboard on the README and the project page is the paper's figure of its own 24
+    runs, with the paper's result tables beside it as images; neither page, nor the paper, gives a
+    route for anyone else to enter a model, and the paper invites only feedback. A board only the
+    maintainer updates is no-submission-channel.
+  source: src-figcodebench-project-page
+  quote: FigCodeBench leaderboard Performance, evaluation cost, and results across image categories.
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Gemini 3.1 Pro
+    source: src-arxiv-2610-10066-v1
+    observed_on: 2026-11-27
+    quote: Gemini 3.1 Pro achieves the overall best visual reproduction performance in four
+      programming languages
+  - system: Kimi-K2.5
+    source: src-arxiv-2610-10066-v1
+    observed_on: 2026-11-27
+    quote: Kimi-K2.5 achieves an exceptional MMOS of 72.52 in R
+  - system: Claude Opus 4.7
+    source: src-arxiv-2610-10066-v1
+    observed_on: 2026-11-27
+    quote: Claude Opus 4.7 consistently achieves the highest execution rate across all 4 languages
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: Each item's reference is its figure, which is also the model's input, and
+  the code that renders it, which is withheld from the model but public in the dataset; the figure
+  was produced by that code in the maintainers' toolchain, so a render can in principle match it
+  exactly.
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The figures, reference code and auxiliary files are an ungated Hugging Face dataset, and
+    the repository holds the rendering scripts and the code for every metric family; the jury's
+    three models are vendor APIs, and the MATLAB subset needs a MATLAB R2023a licence.
+  source: src-github-api-figcodebench-tree
+  quote: '"path":"metrics/compute_fcf_metrics.py"'
+
+task:
+  exists: true
+  input:
+    - the reference figure as a PNG image, with its canvas width and height
+    - the target language (Python, MATLAB, R or LaTeX)
+    - auxiliary information from the item's _auxinfo.txt (package dependencies, the dataset used and
+      the random seed), filled into a fixed prompt template
+  output: Code in the target language, returned without explanation, meant to reproduce the figure.
+  scoring: The code is executed in the language's toolchain (Python, MATLAB R2023a, R 4.6.0, or
+    XeLaTeX at 300 DPI); a run that fails or saves no figure scores 0 for the jury and lowers the
+    execution-rate-weighted image metrics, and missing code scores 0 on the code metrics. The render
+    is compared with the reference figure by PSNR, SSIM, LPIPS, CIEDE2000 and the three-judge MMOS,
+    and the code with the reference code by CodeBERTScore (Python), CrystalBLEU, AST similarity and
+    plotting-API F1; FCF combines execution, visual similarity and conciseness. Results are reported
+    per language.
+  reference_solution: true
+  source: src-arxiv-2610-10066-v1
+  quote: includes the target reference image I to be reproduced, the target programming language L,
+    and a set of auxiliary instructions A
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_basis:
+    reason: The figures, reference code and auxiliary files are a public Hugging Face dataset that
+      Hugging Face's API reports as ungated, under MIT, so a run needs nothing the maintainers hold
+      back.
+    source: src-hf-api-figcodebench
+    quote: '"private":false,"gated":false,"disabled":false'
+  refresh: static
+  refresh_basis:
+    reason: The dataset was created and last modified on the same day (2026-10-09), and the
+      repository's later commits changed only the README; the paper's 6,194 pairs are the set its
+      results use. The paper and README say the dataset will be version-tracked on Hugging Face, an
+      intention with no later version yet.
+    source: src-hf-api-figcodebench
+    quote: '"lastModified":"2026-10-09T09:32:54.000Z"'
+  data_provenance:
+    - web-scraped
+    - synthetic-procedural
+  data_provenance_note: >
+    The seed figures and their code were collected from arXiv, peer-reviewed publications, plotting galleries
+    (Matplotlib, Seaborn, TikZ, PGFPlots, ggplot2) and open-source repositories (GitHub, Reddit), over
+    4,100 figures at first (web-scraped). Each seed pair was perturbed twice by an abstract-syntax-tree
+    and regex pipeline that changes axes, colours, themes, legends, annotations, backgrounds and fonts
+    (synthetic-procedural), and five researchers contributed instances through a GUI. Local data files
+    were replaced by simulated data, scripts that failed in the sandbox were pruned, and experts removed
+    figures with visual artifacts, leaving 6,194 of over 12,000 pairs. The comparison section also mentions
+    LLM-involved augmentation, which the pipeline section does not describe (review_checks).
+  data_provenance_source: src-arxiv-2610-10066-v1
+  data_provenance_quote: We collect source figures and their generating codes from arXiv,
+    peer-reviewed scientific publications, professional visualization galleries
+  contamination_risk: medium
+  contamination_risk_note: The seed figures and code are public by construction, gallery examples
+    and published code among them, so a route into training data is plausible; the perturbed
+    variants were made to reduce it, and the reference code has been public on Hugging Face since
+    2026-10-09. No source measures training exposure for a scored item.
+  contamination_risk_source: src-arxiv-2610-10066-v1
+  contamination_risk_quote: To mitigate the risk of data contamination, we augment the seed
+    instances through controlled, attribute-guided perturbations.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: MMOS is bounded at 100 and the image similarities at an exact match. The
+    reference figure is the reference code's own render, so reaching the bound means reproducing it.
+    The human study measures the jury's agreement with experts (r = 0.826), not an achievable score,
+    and no source scores the reference code itself.
+  ceiling_anchor_type_source: src-arxiv-2610-10066-v1
+  ceiling_anchor_type_quote: each judge outputs an overall score ranging from 0 to 100 to represent
+    the degree of similarity between the figures
+  dataset_licence: MIT
+  dataset_licence_source: src-hf-api-figcodebench
+  dataset_licence_quote: '"cardData":{"license":"mit"'
+  upstream_licences: The paper says the figures and code were collected from sources that hold a CC
+    BY 4.0 licence; the plotting galleries' own licences are not stated (review_checks).
+  upstream_licences_source: src-arxiv-2610-10066-v1
+  upstream_licences_quote: and open-source repositories (e.g., GitHub and Reddit) that hold a CC BY
+    4.0 license
+  size:
+    - count: 6194
+      unit: figure-code pairs (query images), the headline set
+      subset: all four languages
+      source: src-arxiv-2610-10066-v1
+      quote: resulting in a total of 6,194 instances that cover 7 functional categories and 4 types
+        of programming languages (Python, Matlab, R, and Latex)
+    - count: 2548
+      unit: prototypes, the base pairs the perturbed variants come from
+      subset: all four languages
+      source: src-arxiv-2610-10066-v1
+      quote: we treat 2,548 unique instances as prototypes
+    - count: 987
+      unit: figure-code pairs
+      subset: Python
+      source: src-arxiv-2610-10066-v1
+      quote: Python (n=987)
+    - count: 600
+      unit: figure-code pairs
+      subset: MATLAB
+      source: src-arxiv-2610-10066-v1
+      quote: Matlab (n=600)
+    - count: 1130
+      unit: figure-code pairs
+      subset: R
+      source: src-arxiv-2610-10066-v1
+      quote: R (n=1130)
+    - count: 3477
+      unit: figure-code pairs
+      subset: LaTeX
+      source: src-arxiv-2610-10066-v1
+      quote: Latex (n=3477)
+    - count: 7
+      unit: functional categories
+      subset: statistical, relational, temporal, compositional, geospatial, mathematical, conceptual
+      source: src-arxiv-2610-10066-v1
+      quote: we identify 7 functional categories that span the common requirements of scientific
+        communication
+  size_note: >
+    Hugging Face's file listing, counted on 2026-11-27, holds 6,194 code files (3,477 .tex, 1,130 .R,
+    987 .py, 600 .m), each with an _auxinfo.txt, but 6,193 PNG figures: the Python variant hist_multi_subplot_styled.py
+    (user_generated/code_variant1/Statistical) has no figure, and the MATLAB base file GroupedBubbleChart3.m
+    has no figure of the same name. The README warns that variant collections may differ in size from
+    their base collections. The paper's Table 1 splits the 2,548 prototypes into 651 exemplary and 1,897
+    user-generated.
+  size_source: src-hf-api-figcodebench
+  size_quote: '"rfilename":"python/user_generated/code_variant1/Statistical/hist_multi_subplot_styled.py"'
+  languages:
+    - Python
+    - MATLAB
+    - R
+    - LaTeX
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The FigCodeBench authors (Shanghai Jiao Tong University's Institute of Image
+    Communication and Information Processing, with Shanghai Artificial Intelligence Laboratory and
+    Macao Polytechnic University)
+  maintainer_basis:
+    reason: The paper's affiliations are Shanghai Jiao Tong University's Institute of Image
+      Communication and Information Processing, Shanghai Artificial Intelligence Laboratory and
+      Macao Polytechnic University. No source names an institution as the holder of the code, the
+      project page or the dataset, which sit in personal accounts.
+    source: src-arxiv-2610-10066-v1
+    quote: Institute of Image Communication and Information Processing, Shanghai Jiao Tong
+      University
+  maintainer_type: individual
+  maintainer_type_basis:
+    reason: The repository and its project page sit in a personal GitHub account and the dataset in
+      a personal Hugging Face account (GitHub's and Hugging Face's APIs), and no organisation is
+      stated as holding them, which the term's inclusion test reads as individual whatever
+      institutions the authors list (gpqa-diamond's case). academic-lab was considered
+      (review_checks).
+    source: src-arxiv-2610-10066-v1
+    quote: The FigCodeBench dataset will be hosted and version-tracked on Hugging Face
+  submission_process:
+    - maintainer-run
+  submission_process_note: The maintainers chose the 24 models, ran them and keep the results as the
+    leaderboard on the README and the project page, which the paper calls an up-to-date leaderboard;
+    no developer-submitted route is stated, and no row has been added since release.
+  submission_process_source: src-arxiv-2610-10066-v1
+  submission_process_quote: an up-to-date leaderboard on MLLM figure reproduction proficiency
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2610-10066-v1
+      quote: gpt-5.1 (OpenAI 2025a), gpt-5.6-luna (OpenAI 2026b), and gemini-3.5-flash (Google
+        2026b)
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-arxiv-2610-10066-v1
+      quote: Shanghai Artificial Intelligence Laboratory, Shanghai, 200030, China.
+  independence_flags_note: >
+    The MMOS jury is two OpenAI models and one Google model, which the paper cites to OpenAI and Google,
+    and its Table 3 lists OpenAI's GPT-5.4, GPT-5.4-mini and GPT-5.2 and five Google Gemini variants among
+    the evaluated models; the jury produces the leaderboard's score. maintainer-competes-on-own-benchmark
+    rests on an affiliation: Shanghai Artificial Intelligence Laboratory is one of the authors' three,
+    and Table 3 gives Shanghai AI Lab as the organisation of InternVL3.5-38B and InternVL3.5-8B, two of
+    the 24 rows. The funding statement names a national programme carried out in collaboration with the
+    same laboratory; it is not set as funded-by-evaluated-party (review_checks). The paper declares no
+    competing interests.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2610-10066-v1
+    quote: This work was supported in part by the National Key R&D Program of China (2025ZD0124104)
+      in collaboration with Shanghai Artificial Intelligence Laboratory
+  funding_note: The funding statement names the National Key R&D Program of China and a Shanghai
+    municipal programme for general AI foundation models, both in collaboration with Shanghai
+    Artificial Intelligence Laboratory.
+  known_limitation:
+    source: src-arxiv-2610-10066-v1
+    quote: general-purpose MLLM judges may lack the granular domain expertise required to penalize
+      scientifically fatal, yet visually negligible, hallucinations
+  known_limitation_note: The paper also says that, being about plotting code, its findings may not
+    generalise to other programming tasks.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_note: The models under test and the three judges are reached through APIs, and
+    rendering runs on ordinary CPU in Python, MATLAB R2023a, R 4.6.0 and XeLaTeX; the paper served
+    open models of 100B parameters or fewer itself on up to four H200 GPUs, which is the entrant's
+    choice. MATLAB is a licensed commercial product.
+  compute_tier_source: src-arxiv-2610-10066-v1
+  compute_tier_quote: Apart from the proprietary models and those with a parameter size greater than
+    100B that are deployed via API, all other models are run using up to 4 Nvidia H200 141GB GPUs.
+  reproducibility_tier: fully-automatable
+  reproducibility_tier_basis:
+    reason: The data, the rendering scripts and the metric code are public, and scoring needs no
+      human step; the jury is three vendor models called through an API, and the MATLAB subset needs
+      a MATLAB licence, which is a purchase rather than a restriction on use.
+    source: src-github-figcodebench-readme
+    quote: as the reference local environment. Some examples may require additional MATLAB
+      toolboxes.
+  harness_availability: official-harness
+  harness: FigCodeBench's repository, figure_generation/generating_python.py, generating_matlab.py,
+    generating_R.py and generating_latex.py to render code, and
+    metrics/image-oriented/image_metrics.py, metrics/code-oriented/compute_code_oriented_metrics.py,
+    metrics/MLLM-judge/evaluate_single_mllm_judge.py (one judge per run) and
+    metrics/compute_fcf_metrics.py to score it; the generation prompt is in the paper's appendix,
+    and no generation driver is published
+  harness_source: src-github-api-figcodebench-tree
+  harness_quote: '"path":"metrics/MLLM-judge/evaluate_single_mllm_judge.py"'
+  harness_gotcha:
+    source: src-github-figcodebench-readme
+    quote: missing packages are automatically detected and installed during execution
+  harness_gotcha_note: The paper fixes seeds and version-controls the rendering engines and their
+    libraries in a containerised sandbox, but the repository ships no container or lock file, and
+    the Python and R scripts install whatever packages are missing at run time, so a rerun's library
+    versions are not the paper's. The README documents the rendering scripts only, not the metric
+    scripts.
+  code_licence: MIT
+  code_licence_note: GitHub's licence metadata for the repository, read 2026-11-27, with an MIT
+    LICENSE file at its root; not a quoted Source.
+  est_cost_usd:
+    min: 0.0009
+    max: 0.1739
+    basis: Per query (one figure), the approximate generation cost of the 18 API-served models in
+      the paper's Table 4, across the four languages; a full run is 6,194 queries, and the three
+      judges' calls are extra.
+    source: src-arxiv-2610-10066-v1
+  est_cost_usd_source: src-arxiv-2610-10066-v1
+  est_cost_usd_quote: AvgCost is the approximate $-cost per query
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # The profile resolves to model-graded (an instruction-tuned model scored by a jury, among other methods), which
+  # makes the judges material: GPT-5.1, GPT-5.6-Luna and Gemini 3.5 Flash with the appendix's prompt and its
+  # five-criterion rubric, recorded as judge_model, judge_model_version, judge_prompt_hash and grading_rubric_ref.
+  # Beyond the profile: the rendering toolchain and its library versions (the harness, which the repository does
+  # not pin), the generation prompt with its auxiliary information, the sampling settings (each model's defaults
+  # in the paper) and the output-token limit (none in the paper).
+  material_extra:
+    - harness
+    - prompt_template_hash
+    - sampling
+    - max_output_tokens
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: MMOS, the leaderboard's metric, is defined as the mean of the three judges' 0-100 scores,
+    with failed executions at 0, and the image metrics as execution-rate-weighted averages. The
+    paper reports every metric per language and does not say how the leaderboard figure combines the
+    four (review_checks).
+  source: src-arxiv-2610-10066-v1
+  quote: we average these scores across MLLM judges to get the overall mean machine opinion score
+secondary_axes:
+  - cost
+
+liveness:
+  repo_last_commit: 2026-10-13
+  reproduction_script_present: true
+  last_checked: 2026-11-27
+
+homepage: https://zijianchen98.github.io/FigCodeBench/
+repository: https://github.com/zijianchen98/FigCodeBench
+dataset_url: https://huggingface.co/datasets/CCZZJJ/FigCodeBench
+leaderboard_url: https://zijianchen98.github.io/FigCodeBench/#leaderboard
+
+versions:
+  - version: 2026-10
+    label: The paper's first release, 6,194 figure-code pairs in four languages
+    version_kind: revision
+    released: 2026-10-07
+    items: 6194
+    changes: The release of arXiv 2610.10066 v1 and the Hugging Face dataset (created and last
+      modified 2026-10-09), the set every published result uses.
+    frozen: true
+    sources:
+      - src-arxiv-2610-10066-v1
+      - src-hf-api-figcodebench
+subsets:
+  - id: figcodebench#python
+    label: Python (Matplotlib and Seaborn)
+    items: 987
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2610-10066-v1
+        quote: Python (n=987)
+    notes: Six functional categories; every image and code metric, including CodeBERTScore, which
+      the paper computes for Python only.
+  - id: figcodebench#matlab
+    label: MATLAB
+    items: 600
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2610-10066-v1
+        quote: Matlab (n=600)
+    notes: Six functional categories, rendered in MATLAB R2023a with built-in plotting.
+  - id: figcodebench#r
+    label: R (ggplot2)
+    items: 1130
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2610-10066-v1
+        quote: R (n=1130)
+    notes: Six functional categories, rendered in R 4.6.0.
+  - id: figcodebench#latex
+    label: LaTeX (TikZ), the conceptual category
+    items: 3477
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2610-10066-v1
+        quote: Latex (n=3477)
+      - source: src-github-figcodebench-readme
+        quote: The LaTeX collection (Conceptual) uses a flatter structure
+    notes: Flowcharts, diagrams and patterns compiled with XeLaTeX; the conceptual category is this
+      collection, so Table 8's Conceptual column repeats the LaTeX MMOS. The paper finds it the
+      hardest language for every model.
+subsets_note: >
+  The four languages are scored and reported separately in every results table. The seven functional categories
+  (six shared by Python, MATLAB and R, plus conceptual for LaTeX) are reported by MMOS in Table 8, and
+  the easy, medium and hard tiers, set at the 33rd and 67th percentiles of a combined image and code complexity
+  score, are reported for six models only; neither is modelled as a subset. Each language also splits
+  into exemplary and user-generated code, and each into a base collection and two variant collections,
+  which the dataset keeps in separate folders and the paper does not score apart.
+
+lineage:
+  role: root
+lineage_note: No lineage edge. The paper compares itself with ChartLlama, MMCode, MatPlotBench,
+  ChartX, Plot2Code, Design2Code and ChartMimic, chart- and image-to-code benchmarks by other
+  groups, none of which is catalogued; the paper names no items taken from them and describes
+  collecting its own from arXiv, publications, galleries and repositories.
+
+tags:
+  - figure-to-code
+  - chart-to-code
+  - scientific-visualization
+  - code-generation
+  - llm-jury
+  - multi-language
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S12 sweep follow-up)
+  added_on: 2026-11-27
+  last_verified: 2026-11-27
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2610-10066-v1
+    - src-arxiv-2610-10066
+    - src-github-figcodebench-readme
+    - src-github-api-figcodebench-tree
+    - src-hf-api-figcodebench
+    - src-figcodebench-project-page
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, with the affiliation lines and the availability
+    statement quoted with no window and every other window kept clear of the author block and the personal-account
+    links; its abstract page (a DOI) for the date. The README at 89f7816, GitHub's API tree listing at
+    that commit, Hugging Face's API record of the dataset and the project page are withheld from archiving,
+    because they sit in or name the personal accounts or name the authors. GitHub's API was read for the
+    repository's dates, commits, owner type and licence, and Hugging Face's for the dataset owner's account
+    type; the dataset card at 96844b8, which repeats the README's structure sections, and the two scripts
+    in metrics/MLLM-judge, for how the jury is run, were read and not cited. CompassHub's API was not
+    read: the paper and repository carry what its card summarises. VLMEvalKit's dataset registry (main,
+    2026-11-27) lists ChartMimic but not FigCodeBench.
+  confidence: medium
+  review_checks:
+    - check: Domain primary is multimodal/any-to-any-generation, with code left out. Code's
+        inclusion test reads true (a script is authored, run and scored on the figure it computes),
+        and the sweep suggested code as a secondary; it is rejected because no code leaf fits (no
+        test judges behaviour, as for cadprompt) and the paper calls code similarity a diagnostic.
+        Logged as taxonomy/_failures/2026-11-27-figcodebench-001; if the boundary is settled for
+        code, a code secondary would follow.
+      field: domain
+      source: src-arxiv-2610-10066-v1
+      quote: normalized AST similarity, and plotting-API F1 as complementary diagnostic metrics
+    - check: chart-diagram-understanding is a secondary although its definition speaks of answering
+        questions; it is taken for the content, every item a chart, plot or diagram read in detail,
+        and for the paper's finding that its scores track CharXiv's chart questions. A reviewer who
+        reads the leaf as question answering only would drop it.
+      field: domain.secondary
+      source: src-arxiv-2610-10066-v1
+      quote: FigCodeBench shows a more stronger linear positive correlation with ChartXiv (r =
+        0.797) than LiveCodeBench v6 (r = 0.537)
+    - check: lifecycle is null. The only results are the release paper's, seven weeks old when read;
+        a 2026 paper or board reporting FigCodeBench results would make it active.
+      field: lifecycle
+    - check: The sweep asked whether the leaderboard takes outside entries. No source gives a route;
+        the board is an image of the paper's own runs, and the paper invites feedback only, so
+        activity is no-submission-channel and submission_process maintainer-run. If the maintainers
+        add rows for models they choose, nothing changes; a stated submission route would make it
+        accepting-submissions.
+      field: activity
+      source: src-arxiv-2610-10066-v1
+      quote: We encourage the community to provide feedback and engage in scrutinizing the
+        benchmark.
+    - check: grader-from-evaluated-party rests on the jury's three models being cited to OpenAI and
+        Google and on Table 3 listing evaluated OpenAI and Google models. None of the three judges
+        is itself among the 24 rows.
+      field: governance.independence_flags
+      source: src-arxiv-2610-10066-v1
+      quote: Organizations OpenAI OpenAI OpenAI Anthropic Google Google Google Google Google xAI
+    - check: maintainer-competes-on-own-benchmark rests on the authors' Shanghai Artificial
+        Intelligence Laboratory affiliation and Table 3's organisation for the two InternVL3.5 rows,
+        the last two models listed (by the 2026-11-18 rule, an affiliation shows the overlap). The
+        InternVL3.5 models rank in the lower half. The funding statement's collaboration with the
+        same laboratory could also be read as funded-by-evaluated-party, which was not set.
+      field: governance.independence_flags
+      source: src-arxiv-2610-10066-v1
+      quote: Alibaba Shanghai AI Lab Shanghai AI Lab Cut-off Date
+    - check: maintainer_type individual, because the code and project page sit in a personal GitHub
+        account and the dataset in a personal Hugging Face account; academic-lab (the Shanghai Jiao
+        Tong institute) would follow if a reviewer reads the authors' group as the holder.
+      field: governance.maintainer_type
+    - check: The dataset is MIT-licensed, but the paper says its figures and code came from sources
+        holding CC BY 4.0, and the plotting galleries' licences are not stated; whether MIT can
+        cover CC BY material, and what attribution the items carry, is open.
+      field: data.dataset_licence
+      source: src-arxiv-2610-10066-v1
+      quote: and open-source repositories (e.g., GitHub and Reddit) that hold a CC BY 4.0 license
+    - check: data_provenance is web-scraped and synthetic-procedural. The comparison section says
+        LLM- and human-involved augmentation was applied, while the pipeline section describes only
+        an AST and regex pipeline and researchers' GUI contributions; if a model wrote variants,
+        model-generated applies too.
+      field: data.data_provenance
+      source: src-arxiv-2610-10066-v1
+      quote: apply both LLM- and human-involved data augmentations
+    - check: reproducibility_tier fully-automatable, although the repository ships no container, the
+        rendering scripts install missing packages at run time, the MATLAB subset needs a MATLAB
+        licence and the judge script runs one judge at a time against a placeholder endpoint. No
+        blocker names an unpinned rendering toolchain (specific-simulator-build is for simulators);
+        a reviewer may instead read the harness as reference-implementation-only.
+      field: execution.reproducibility_tier
+      source: src-arxiv-2610-10066-v1
+      quote: The execution workflows for all four programming spaces are encapsulated within a
+        containerized sandbox environment.
+    - check: The dataset holds 6,193 figures for 6,194 code files; one Python variant has no figure
+        and one MATLAB file has no figure of the same name, so a rerun on the files as distributed
+        may not cover the paper's 6,194.
+      field: data.size
+      source: src-hf-api-figcodebench
+      quote: '"rfilename":"Matlab/user_generated/code_base/Relational/GroupedBubbleChart3.m"'
+    - check: aggregation_policy official-aggregate rests on MMOS's definition (the judges' mean).
+        The leaderboard figure plots one MMOS per model against cost, but no source says how the
+        four languages are combined into it; if the combination is undefined, a per-language
+        headline would be more accurate.
+      field: aggregation_policy
+      source: src-arxiv-2610-10066-v1
+      quote: Mean Machine Opinion Score (MMOS) versus average cost per problem for various models
+  personal_data_excluded:
+    - source: src-arxiv-2610-10066-v1
+      what: the title page's author names and e-mail addresses, the corresponding author's name,
+        cited authors' names in the reference list and the personal accounts in the availability
+        statement's links
+    - source: src-arxiv-2610-10066
+      what: the author line, the "by ... and 9 other authors" link text and the submitter's name
+    - source: src-github-figcodebench-readme
+      what: the author list, the contact line with its e-mail address, the citation block and the
+        badge, news and dataset links naming the personal accounts
+    - source: src-github-api-figcodebench-tree
+      what: the owner's personal account in every entry's URL
+    - source: src-hf-api-figcodebench
+      what: the owner's personal account in the record's id and author fields, and the card text's
+        contact line and citation block in its description field
+    - source: src-figcodebench-project-page
+      what: the author list, the contact name and e-mail address, the citation block and the links
+        naming the personal accounts
