@@ -25,7 +25,7 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 2 | `computer-use-gui`<br>Computer use (GUI) | Completing tasks by operating a graphical user interface through synthetic mouse and keyboard input. | 2 + 0 | has benchmarks |
 | 3 | `tool-api-calling`<br>Tool and API calling | Selecting and invoking external functions or APIs correctly to satisfy a request. | 7 + 8 | has benchmarks |
 | 4 | `multi-agent-coordination`<br>Multi agent coordination | Tasks that require several agents to divide work, communicate or reach agreement. | 0 + 0 | not yet surveyed |
-| 5 | `long-horizon-autonomy`<br>Long horizon autonomy | Tasks requiring many dependent steps across an extended episode without human intervention. | 3 + 8 | has benchmarks |
+| 5 | `long-horizon-autonomy`<br>Long horizon autonomy | Tasks requiring many dependent steps across an extended episode without human intervention. | 3 + 9 | has benchmarks |
 | 6 | `research-agents`<br>Research agents | Agents that gather, synthesise and cite external sources to answer an open research question. | 0 + 0 | not yet surveyed |
 | 7 | `software-agents`<br>Software agents | Agents that complete software engineering work inside a real repository or toolchain. | 0 + 4 | has benchmarks |
 | 8 | `negotiation`<br>Negotiation | Tasks scored on the outcome of a bargaining interaction between parties with conflicting objectives. | 0 + 1 | has benchmarks |
@@ -2346,19 +2346,19 @@ Considered and rejected:
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
-| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 10 / 6 | knowledge-recall 0, factual-precision 0, memory-retention 2, context-integration 9 |
+| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 10 / 7 | knowledge-recall 0, factual-precision 0, memory-retention 2, context-integration 9 |
 | Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 0 / 2 | deductive-reasoning 0, quantitative-reasoning 0, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | not-yet-surveyed | 0 / 0 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
-| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 1 / 0 | abductive-reasoning 1, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
+| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 1 / 1 | abductive-reasoning 1, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
 | Signal, space & time<br>`perception-space-time` | has-benchmarks | 3 / 2 | perception 1, grounding 1, spatial-reasoning 1, temporal-reasoning 0 |
 | Planning & search<br>`planning-and-search` | has-benchmarks | 4 / 1 | planning 3, search-exploration 0, optimization 1 |
-| Action & execution<br>`action-and-execution` | has-benchmarks | 13 / 7 | sensorimotor-control 0, tool-use 9, long-horizon-execution 6 |
+| Action & execution<br>`action-and-execution` | has-benchmarks | 13 / 8 | sensorimotor-control 0, tool-use 9, long-horizon-execution 6 |
 | Controlled generation<br>`controlled-generation` | has-benchmarks | 2 / 2 | generation-fidelity 0, creativity-novelty 0, instruction-following 2 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | has-benchmarks | 4 / 1 | collaboration 0, communication 1, honesty 3, harm-avoidance 1 |
 | Learning & transfer<br>`learning-and-transfer` | not-yet-surveyed | 0 / 0 | sample-efficiency 0, continual-learning 0, transfer-learning 0 |
 | Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 5 / 2 | distribution-shift-generalization 3, adversarial-robustness 0, reliability-consistency 2 |
 | Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 2 / 1 | calibration-uncertainty 1, probabilistic-forecasting 0, self-correction 1 |
-| Autonomy & oversight<br>`autonomy-and-oversight` | has-benchmarks | 5 / 4 | autonomy 5, self-improvement 0, situational-awareness 0 |
+| Autonomy & oversight<br>`autonomy-and-oversight` | has-benchmarks | 5 / 5 | autonomy 5, self-improvement 0, situational-awareness 0 |
 
 An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobody measures it, the taxonomy cuts this field badly there, or we have not found the work yet. Only the first may ever be published as a gap, and only after a reviewer has confirmed it.
 

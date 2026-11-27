@@ -258,7 +258,7 @@ ORG_WORDS = frozenset('''
     Navier Stokes Prolific Moonshot Aperture Bokeh Boehringer Ingelheim Zeiss Fondazione
     January February March April May June July August September October November December Monday Tuesday
     Wednesday Thursday Friday Saturday Sunday Jan Feb Mar Apr Jun Jul Aug Sep Sept Oct Nov Dec Mon Tue Wed Thu
-    Fri Sat Sun Isaac Sierra Tonic Stroke Primus Helmholtz Analytics
+    Fri Sat Sun Isaac Sierra Tonic Stroke Primus Helmholtz Analytics Study
     '''.split())
 # Methods, measures and laws named after people, which the data writes capitalised and never about a person. They
 # never make a run of proper names, and never count as a surname on their own; a full name ending in one does.
