@@ -17,8 +17,10 @@ in memory here, and from the preview's directory when it has been written. Nothi
                 and the reference conditions record's value for every condition term; no node carries a key the
                 mapping does not name; the build refuses a mapping the committed YAML does not state, a reference no
                 record answers and a material field no term carries; an answered empty list survives
-  hand-written  no .jsonld is committed except the published context and an upstream fixture, and each document is
-                exactly what the emitter makes of its record
+  hand-written  no .jsonld is committed except the published context, an upstream fixture and P4-S6-T05's worked
+                examples (docs/croissant-benchmark/examples/, the emitter's own output for three entries, which
+                tests/test_check_croissant.py holds to the extension), and each document is exactly what the emitter
+                makes of its record
   release       the documents are S9's release artifacts, not page assets: never under /data/ or in the manifest's
                 `paths`; release_payload lists them after the file-count assertion, which `bench build` (through the
                 manifest) and S13 enforce; the detail page and cite.jsonld read the one file the build wrote
@@ -238,12 +240,17 @@ def test_an_answered_empty_list_is_a_value_and_survives(drafts):
 
 # ---- none hand-written ----------------------------------------------------------------------------------------------
 
-def test_no_jsonld_document_is_committed_but_the_context_and_an_upstream_fixture():
+EXAMPLES = 'docs/croissant-benchmark/examples/'   # P4-S6-T05: the emitter's output for three entries, as documentation
+
+
+def test_no_jsonld_document_is_committed_but_the_context_an_upstream_fixture_and_the_worked_examples():
     r = subprocess.run(['git', '-c', 'core.longpaths=true', 'ls-files', '*.jsonld'], cwd=ROOT, capture_output=True,
                        text=True, encoding='utf-8')
     if r.returncode != 0:
         pytest.skip('not a git checkout')
-    assert sorted(r.stdout.split()) == sorted([croissant.CONTEXT, 'tests/ingest/fixtures/hf-hub/croissant.jsonld'])
+    committed = r.stdout.split()
+    examples = [p for p in committed if p.startswith(EXAMPLES) and '/' not in p[len(EXAMPLES):]]
+    assert sorted(set(committed) - set(examples)) == sorted([croissant.CONTEXT, 'tests/ingest/fixtures/hf-hub/croissant.jsonld'])
 
 
 def test_each_document_is_what_the_emitter_makes_of_its_record(drafts, emitted):
