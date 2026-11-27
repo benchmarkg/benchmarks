@@ -215,6 +215,37 @@ def test_a_correction_trailer_counts_as_the_tag(repo):
     commit(repo, 'contamination evidence\n\nCorrection: reported by a maintainer', '2026-03-02T10:00:00Z')
     [e] = events(repo, 'correction')
     assert e['changes'][0]['field'] == 'data.contamination_risk'
+    assert e['disputes'] == []
+
+
+def test_a_correction_lists_substantive_changes_only_and_bookkeeping_alone_is_none(repo):
+    # P3-S10-T09: 05 S8 lists "every substantive correction". Bookkeeping changed in the same fix: commit is left
+    # out of the event, and a fix: commit that changes bookkeeping only is routine curation, not a correction.
+    v1 = BENCH_V1 + '  added_by: org-demo-lab\n  last_verified: 2026-01-02\nliveness: {last_checked: 2026-01-02}\n'
+    write(repo, BENCH, v1)
+    commit(repo, 'add', '2026-03-01T10:00:00Z')
+    v2 = replace(replace(v1, '2026-01-02}', '2026-03-02}'), 'last_verified: 2026-01-02', 'last_verified: 2026-03-02')
+    write(repo, BENCH, v2)
+    commit(repo, 'fix: re-checked the repository', '2026-03-02T10:00:00Z')
+    assert events(repo, 'correction') == []
+    v3 = replace(replace(v2, '  code_licence: MIT', '  code_licence: Apache-2.0'), 'last_verified: 2026-03-02', 'last_verified: 2026-03-03')
+    write(repo, BENCH, replace(v3, 'added_by: org-demo-lab', 'added_by: org-other-lab'))
+    commit(repo, 'fix(demo-bench): licence', '2026-03-03T10:00:00Z')
+    [e] = events(repo, 'correction')
+    assert e['changes'] == [{'field': 'execution.code_licence', 'before': 'MIT', 'after': 'Apache-2.0'}]
+    assert [f for f in ('curation.added_by', 'curation.last_verified', 'liveness.last_checked', 'disputed_by',
+                        'ingestion.reviewed_by', 'archive_url', 'provenance_snapshot.raw.score') if not feed.routine(f)] == []
+    assert not feed.routine('value') and not feed.routine('data.access') and not feed.routine('archived_elsewhere')
+
+
+def test_a_correction_trailer_names_the_dispute_that_reported_it(repo):
+    write(repo, BENCH, BENCH_V1)
+    commit(repo, 'add', '2026-03-01T10:00:00Z')
+    write(repo, BENCH, replace(BENCH_V1, '  contamination_risk: medium', '  contamination_risk: high'))
+    commit(repo, 'fix(demo-bench): contamination risk\n\nCorrection: dispute-demo-2026-03, dispute-demo-2026-03\n'
+                 'Correction: see dispute-other-2026-04 (not nodispute-x)', '2026-03-02T10:00:00Z')
+    [e] = events(repo, 'correction')
+    assert e['disputes'] == ['dispute-demo-2026-03', 'dispute-other-2026-04']
 
 
 def test_source_rot_detected(repo):

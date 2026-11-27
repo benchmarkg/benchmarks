@@ -1,0 +1,224 @@
+---
+// site/src/pages/corrections.astro -- P3-S10-T09 (05 S8 "Corrections and disputes"; 10 V8). /corrections/: every
+// substantive correction the index has published, and every dispute, open or closed, so that a correction is "a
+// published, linkable record rather than a quiet edit". Both are read at build time (lib/corrections.ts, whose header
+// gives the rules): the corrections from git history over data/, as tools/build/feed.py derives the release feed, and
+// the disputes from data/disputes/. Each correction and each dispute is its own anchor (#ev-..., #dispute-...), which
+// is what /feed/corrections.xml links.
+//
+//   - a correction: its date, the entity (linked when the build has its page), each changed field with what it said
+//     before and what it says now, the commit that made it with its subject (the rationale, 05 S8), and who reported
+//     it: the organisation or role of the dispute record its Correction: trailer names, or "not recorded";
+//   - a dispute: its status in words, an open one as unresolved; who raised it, as a published organisation or a
+//     neutral role, and their relationship to what they dispute; and both positions, each with its own sources -- the
+//     claim's figure with claim_sources, the dispute's position with evidence -- then our response.
+// No individual is named anywhere on the page (lib/corrections.ts, "Who reported it").
+//
+// A citable record page (scripts/route_groups.json): zero JavaScript, fully readable with it off, and a narrative page
+// in the search index (Base's `crawl`). It has no parameter, so it renders in every build, a preview included (08 S3.4).
+import Absent from '../components/Absent.astro';
+import DisputeRaiser from '../components/DisputeRaiser.astro';
+import SourceCitation from '../components/SourceCitation.astro';
+import Base from '../layouts/Base.astro';
+import { baseId, claimHref, claimsDoc } from '../lib/claims';
+import { corpus } from '../lib/corpus';
+import { FEED, STATUS_LABEL, corrections, disputes, organisationNames, reporterOf, shown, withheld, type DisputeRecord } from '../lib/corrections';
+import { REPO } from '../lib/repo';
+import { formatValue } from '../lib/vocab';
+
+const entities = corpus();
+const orgs = organisationNames(entities.organization);
+const sources = new Map(entities.source.map((s) => [s.id, s]));
+const benchmarks = new Map(entities.benchmark.map((b) => [b.id, b.name]));
+const metrics = new Map(entities.metric.map((m) => [m.id, m.name]));
+const rows = new Map((claimsDoc()?.rows ?? []).map((r) => [r.claim.id, r]));
+const records = disputes();
+const list = corrections(undefined, records);
+const open = records.filter((d) => d.status === 'open');
+const closed = records.filter((d) => d.status !== 'open');
+
+/** The kind of record a correction changed, and its page when this build has one. */
+function entity(path: string, id: string): { kind: string; href: string | null } {
+  if (path.startsWith('data/benchmarks/')) return { kind: 'Benchmark', href: benchmarks.has(id) ? `/benchmarks/${id}/` : null };
+  if (path.startsWith('data/claims/')) return { kind: 'Claim', href: rows.has(id) ? claimHref(id) : null };
+  if (path.startsWith('data/sources/')) return { kind: 'Source', href: null };
+  return { kind: 'Record', href: null };
+}
+const commitHref = (c: string) => (/^[0-9a-f]{40}$/.test(c) ? `${REPO}/commit/${c}` : null);
+/** A source as a citation: the corpus's record with its retrieval date, or the id with the absence token. */
+function cited(id: string) {
+  const s = sources.get(id);
+  const at = s != null ? s.accessed ?? s.fetched_at?.slice(0, 10) ?? null : null;
+  return { id, s, at, publisher: s != null ? s.publisher ?? new URL(s.url).hostname : null };
+}
+/** The contested claim as the page shows it: its figure from claims.json, when this build holds the claim. */
+function figure(d: DisputeRecord) {
+  const row = rows.get(d.concerns);
+  if (row == null) return null;
+  const c = row.claim;
+  const value = c.value != null ? formatValue(c.value) : c.value_text != null && c.value_text !== '' ? c.value_text : null;
+  return { value, metric: metrics.get(c.metric) ?? c.metric, benchmark: benchmarks.get(baseId(c.benchmark)) ?? c.benchmark };
+}
+const paragraphs = (text: string) => text.split(/\n\s*\n/).map((p) => p.replace(/\s+/g, ' ').trim()).filter((p) => p !== '');
+const sections = [
+  { key: 'open', title: 'Open disputes', items: open,
+    empty: 'No dispute is open. A dispute stays here, unresolved, until the index resolves it or the disputant withdraws it.' },
+  { key: 'closed', title: 'Closed disputes', items: closed, empty: 'No dispute has been closed yet.' },
+] as const;
+---
+<Base title="Corrections and disputes · Benchmark index" zeroJs>
+  <link slot="head" rel="alternate" type="application/rss+xml" title="Corrections and disputes" href={FEED} />
+  <main>
+    <article class="record" data-corrections>
+      <header>
+        <h1>Corrections and disputes</h1>
+        <p class="lead">When the index is wrong, the fix is a commit with a rationale, and history keeps what it showed before: nothing is quietly edited. Every substantive correction is listed here with its date, the entry, what it said before, what it says now and who reported it. Every dispute is listed too, open or closed, with both positions and both sources, because a dispute is never resolved by deleting the number it contests.</p>
+      </header>
+
+      <dl class="pairs" data-corrections-summary>
+        <div><dt>Corrections</dt><dd data-count="corrections">{list.length}</dd></div>
+        <div><dt>Open disputes</dt><dd data-count="open">{open.length}</dd></div>
+        <div><dt>Closed disputes</dt><dd data-count="closed">{closed.length}</dd></div>
+        <div><dt>Subscribe</dt><dd><a href={FEED} data-feed>RSS feed of corrections and disputes</a></dd></div>
+        <div><dt>Report an error</dt><dd>the <a href={`${REPO}/issues/new?template=correction.yml`}>Correction form</a>, or the <a href={`${REPO}/issues/new?template=dispute.yml`}>Dispute form</a> to contest a figure</dd></div>
+      </dl>
+
+      <section aria-labelledby="s-rule">
+        <h2 id="s-rule">What counts as a correction</h2>
+        <p>A commit to the data that is tagged <code>fix:</code> or carries a <code>Correction:</code> trailer, and that changes a value the index had already published, on an entry it publishes. Filling in a blank is not a correction. Bookkeeping is routine curation and is not listed: when a record was checked, fetched, archived, reviewed or ingested, and which dispute records a claim links to. The list is read from the repository's history when the site is built, so it cannot be edited apart from the data.</p>
+        <p data-naming-rule>The index names organisations, never individuals. A reporter is named only when a record names a published organisation: the dispute record a correction's <code>Correction:</code> trailer points to, or the dispute itself. Otherwise this page gives the reporter's role, or says no reporter is recorded.</p>
+      </section>
+
+      <section aria-labelledby="s-corrections">
+        <h2 id="s-corrections">Corrections</h2>
+        {list.length === 0
+          ? <p data-empty="corrections">No correction has been published yet.</p>
+          : (
+            <ol class="items" data-corrections-list>
+              {list.map(({ event: e, reported, unmatched }) => {
+                const ent = entity(e.path, e.entity);
+                const href = commitHref(e.commit);
+                return (
+                  <li id={e.id} data-correction={e.id} data-entity={e.entity}>
+                    <h3><span class="kind">{ent.kind}</span> {ent.href != null ? <a href={ent.href}><code>{e.entity}</code></a> : <code>{e.entity}</code>}</h3>
+                    <p class="meta">Corrected <time datetime={e.date}>{e.date.slice(0, 10)}</time>, in commit {href != null ? <a href={href}><code>{e.commit.slice(0, 12)}</code></a> : <code>{e.commit}</code>}: <q data-rationale>{e.subject}</q></p>
+                    <div class="scroll" tabindex="0" role="region" aria-label={`What ${e.entity} said before and what it says now`}>
+                      <table data-changes>
+                        <thead><tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">Now</th></tr></thead>
+                        <tbody>
+                          {(e.changes ?? []).map((c) => {
+                            const [was, now] = [shown(c.before), shown(c.after)];
+                            return (
+                              <tr data-change-field={c.field}>
+                                <th scope="row"><code>{c.field}</code></th>
+                                {withheld(c.field)
+                                  ? <td colspan="2" data-withheld><Absent state="not-applicable" reason="withheld: the values name people, and this page names no one" /></td>
+                                  : <>
+                                      <td data-before>{was != null ? was : <Absent state="not-recorded" />}</td>
+                                      <td data-after>{now != null ? now : <Absent state="not-recorded" reason="removed by this correction" />}</td>
+                                    </>}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p class="reporter" data-reporter>Reported by {reported.length > 0
+                      ? reported.map((d, i) => <>{i > 0 ? '; ' : null}<DisputeRaiser reporter={reporterOf(d, orgs)} />, in <a href={`#${d.id}`} data-reported-in={d.id}>dispute <code>{d.id}</code></a></>)
+                      : <Absent state="not-recorded" reason="no record names who reported it" />}{unmatched.map((id) => <span data-unmatched={id}>; its trailer names <code>{id}</code>, which this build's dispute records do not hold</span>)}</p>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+      </section>
+
+      {sections.map((sec) => (
+        <section aria-labelledby={`s-${sec.key}`}>
+          <h2 id={`s-${sec.key}`}>{sec.title}</h2>
+          {sec.items.length === 0
+            ? <p data-empty={sec.key}>{sec.empty}</p>
+            : (
+              <ol class="items" data-disputes={sec.key}>
+                {sec.items.map((d) => {
+                  const fig = figure(d);
+                  const positions = [
+                    { key: 'claim', title: "The claim's position", ids: d.claim_sources },
+                    { key: 'dispute', title: "The dispute's position", ids: d.evidence },
+                  ];
+                  return (
+                    <li id={d.id} data-dispute={d.id} data-status={d.status}>
+                      <h3>Dispute <code>{d.id}</code> on claim {rows.has(d.concerns) ? <a href={claimHref(d.concerns)}><code>{d.concerns}</code></a> : <code>{d.concerns}</code>}</h3>
+                      <p class="status" data-dispute-status={d.status}><strong>{STATUS_LABEL[d.status]}</strong>{d.status === 'open'
+                        ? <>: open since <time datetime={d.raised_on}>{d.raised_on}</time>. The index has not resolved it, and both positions stand.</>
+                        : <> on <time datetime={d.resolved_on!} data-resolved-on>{d.resolved_on}</time>.</>}</p>
+                      <dl class="pairs">
+                        <div><dt>Raised by</dt><dd data-raised-by><DisputeRaiser reporter={reporterOf(d, orgs)} />, on <time datetime={d.raised_on}>{d.raised_on}</time></dd></div>
+                        {d.corrected_by != null && <div><dt>Corrected by</dt><dd data-corrected-by>{rows.has(d.corrected_by) ? <a href={claimHref(d.corrected_by)}><code>{d.corrected_by}</code></a> : <code>{d.corrected_by}</code>}</dd></div>}
+                        <div><dt>Our response</dt><dd data-response>{d.our_response != null ? paragraphs(d.our_response).join(' ') : <Absent state="not-recorded" reason="no response yet" />}</dd></div>
+                      </dl>
+                      <div class="positions">
+                        {positions.map((p) => (
+                          <section class="position" data-position={p.key} aria-labelledby={`${d.id}-${p.key}`}>
+                            <h4 id={`${d.id}-${p.key}`}>{p.title}</h4>
+                            {p.key === 'claim'
+                              ? <p data-figure>{fig == null
+                                  ? <>The figure claim <code>{d.concerns}</code> records: <Absent state="not-recorded" reason="this build holds no page for the claim" /></>
+                                  : <>{fig.value != null ? <strong data-figure-value>{fig.value}</strong> : <Absent state="not-reported" reason="no value recorded" />} {fig.metric} on {fig.benchmark}, as claim <code>{d.concerns}</code> records it.</>}</p>
+                              : paragraphs(d.position).map((t) => <p data-position-text>{t}</p>)}
+                            <ul class="cited">
+                              {p.ids.map(cited).map((c) => (
+                                <li data-cited={c.id}>{c.s != null && c.at != null
+                                  ? <SourceCitation source_id={c.id} title={c.s.title ?? c.s.url} publisher={c.publisher!} url={c.s.url} archive_url={c.s.archive_url ?? null} retrieved_at={c.at} source_type={c.s.type} link_only={c.s.licence_class === 'no-redistribution'} />
+                                  : <><code>{c.id}</code> <Absent state="not-recorded" reason={c.s != null ? 'no retrieval date' : 'no source record in this build'} /></>}</li>
+                              ))}
+                            </ul>
+                          </section>
+                        ))}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+        </section>
+      ))}
+    </article>
+  </main>
+</Base>
+
+<style>
+  .record {
+    max-inline-size: 72rem;
+    margin-inline: auto;
+    padding: var(--sp-4);
+  }
+  h1 { margin: var(--sp-1) 0 var(--sp-2); font-size: var(--fs-2xl); line-height: var(--lh-tight); }
+  h2 { margin: var(--sp-8) 0 var(--sp-3); font-size: var(--fs-lg); }
+  h3 { margin: 0 0 var(--sp-1); font-size: var(--fs-md); overflow-wrap: anywhere; }
+  h4 { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); }
+  p { max-inline-size: 68ch; }
+  .lead { line-height: var(--lh-prose); }
+  .pairs { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0; }
+  .pairs > div { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: var(--sp-3); }
+  .pairs dt { color: var(--c-ink-muted); }
+  .pairs dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .items { display: grid; gap: var(--sp-6); margin: 0; padding: 0; list-style: none; }
+  .items > li { padding-block-start: var(--sp-4); border-block-start: 1px solid var(--c-border); }
+  .items > li:target { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+  .kind { color: var(--c-ink-muted); font-weight: 400; }
+  .meta, .reporter { font-size: var(--fs-sm); overflow-wrap: anywhere; }
+  .status { margin: var(--sp-1) 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: var(--fs-sm); }
+  th, td { padding: var(--sp-2); border-block-end: 1px solid var(--c-border); text-align: start; vertical-align: top; overflow-wrap: anywhere; }
+  thead th { color: var(--c-ink-muted); }
+  tbody th { font-weight: 400; }
+  .positions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--sp-4); }
+  .position { padding: var(--sp-3); border: 1px solid var(--c-border); }
+  .position p { margin: 0 0 var(--sp-2); }
+  .cited { display: grid; gap: var(--sp-1); margin: 0; padding-inline-start: var(--sp-6); font-size: var(--fs-sm); }
+  @media (max-width: 30rem) {
+    .pairs > div { grid-template-columns: 1fr; gap: 0; }
+  }
+</style>

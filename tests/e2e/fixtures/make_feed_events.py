@@ -8,6 +8,11 @@ publishable, so every feed would be empty and nothing would be tested. This scri
 synthetic history into a temporary git repository -- every V8 event type, two domain families, two
 organisations, one machine-ingested claim and one still-unverified draft -- and runs the real
 tools/build/feed.py over it, so the fixture is feed.py's output rather than a hand-written guess.
+
+P3-S10-T09 (tests/e2e/corrections.spec.ts) adds a second correction to the one P4-S4-T06 wrote: a claim's
+value corrected by a commit whose `Correction:` trailer names the dispute record that reported it
+(tests/e2e/fixtures/disputes/dispute-e2e-value-misread.yaml); and a `fix:` commit that changes bookkeeping
+only (a liveness check), which is routine curation and makes no correction.
 """
 import json
 import os
@@ -67,13 +72,22 @@ def main():
         put('data/sources/2026/src-beta-leaderboard.yaml',
             'id: src-beta-leaderboard\ncited_by: [beta-arena]\nlink_status: live\n')
         git('commit', '-q', '-m', 'add two benchmarks, a draft and a source', when='2026-03-01T10:00:00Z')
-        put('data/claims/alpha-bench/claim-hand-0001.yaml',
-            'id: claim-hand-0001\nbenchmark: alpha-bench@v1\nreported_by: org-alpha-lab\ndate_reported: 2026-02-20\n')
+        hand = 'data/claims/alpha-bench/claim-e2e0000000a1.yaml'
+        put(hand, 'id: claim-e2e0000000a1\nbenchmark: alpha-bench@v1\nreported_by: org-alpha-lab\ndate_reported: 2026-02-20\n'
+                  'value: 41.2\ndisputed_by: [dispute-e2e-value-misread]\n')
         put('data/claims/_ingested/epoch/alpha-bench/claim-bulk-0001.yaml',
             'id: claim-bulk-0001\nbenchmark: alpha-bench@v1\nreported_by: org-gamma-lab\ndate_reported: 2026-02-25\n')
         git('commit', '-q', '-m', 'claims: one curated, one machine-ingested', when='2026-03-05T10:00:00Z')
         put(code, bench('alpha-bench', 'code', 'org-alpha-lab', licence='Apache-2.0'))
         git('commit', '-q', '-m', 'fix(alpha-bench): licence was misread', when='2026-03-10T10:00:00Z')
+        put(hand, 'id: claim-e2e0000000a1\nbenchmark: alpha-bench@v1\nreported_by: org-alpha-lab\ndate_reported: 2026-02-20\n'
+                  'value: 42.1\ndisputed_by: [dispute-e2e-value-misread]\n')
+        git('commit', '-q', '-m', "fix(claim-e2e0000000a1): value misread from the paper's table\n\n"
+            'The table reports 42.1; 41.2 transposed two digits.\n\nCorrection: dispute-e2e-value-misread',
+            when='2026-03-11T10:00:00Z')
+        put(code, bench('alpha-bench', 'code', 'org-alpha-lab', licence='Apache-2.0').replace(
+            'last_checked: 2026-04-10', 'last_checked: 2026-04-11'))
+        git('commit', '-q', '-m', 'fix(alpha-bench): liveness re-checked', when='2026-03-11T12:00:00Z')
         put(robo, bench('beta-arena', 'robotics-embodiment', 'org-beta-lab', lifecycle='superseded'))
         git('commit', '-q', '-m', 'beta-arena superseded', when='2026-03-12T10:00:00Z')
         put(robo, bench('beta-arena', 'robotics-embodiment', 'org-beta-lab', lifecycle='superseded', maint='stale'))
