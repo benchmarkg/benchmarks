@@ -2,7 +2,7 @@
 
 # Review packet: Audio and speech
 
-`audio-speech` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`audio-speech` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-19 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -56,7 +56,7 @@ Not in this packet (8): `audioset`, `dihard`, `hear`, `musiccaps`, `open-asr-lea
 | 2.4 | [Deep Noise Suppression Challenge](#24-deep-noise-suppression-challenge-dns-challenge) | `speaker-tasks` | 50 | 12 |
 | 2.5 | [IWSLT Evaluation Campaign](#25-iwslt-evaluation-campaign-iwslt) | `speech-translation` | 53 | 10 |
 | 2.6 | [MIREX](#26-mirex-mirex) | `music-understanding` | 52 | 9 |
-| 2.7 | [DCASE Challenge](#27-dcase-challenge-dcase) | `audio-event-understanding` | 49 | 12 |
+| 2.7 | [DCASE Challenge](#27-dcase-challenge-dcase) | `audio-event-understanding` | 111 | 15 |
 | 2.8 | [L3DAS Challenge](#28-l3das-challenge-l3das) | `audio-event-detection-localization` | 37 | 10 |
 | 2.9 | [BEANS](#29-beans-beans) | `bioacoustics` | 51 | 10 |
 | 2.10 | [BirdSet](#210-birdset-birdset) | `bioacoustics` | 41 | 9 |
@@ -1361,7 +1361,7 @@ Considered and rejected:
 - `subsets` = id mirex#symbolic-music-generation; label Symbolic Music Generation; capability_override creativity-novelty · [S11][mirex-s11]
   > Responses were collected from 20 participants with diverse music backgrounds.
 - `subsets` = id mirex#music-audio-generation; label Music Audio Generation; items 4; capability_override generation-fidelity · [S7][mirex-s7]
-  > \[withheld: it may name a person; see the entry file\]
+  > The MIREX 2026 Cover Song Generation task asks an AI music system to remake a full song according to a style or arrangement prompt.
 - `subsets` = id mirex#music-audio-generation; label Music Audio Generation; items 4; capability_override generation-fidelity · [S7][mirex-s7]
   > whether the main melody is preserved or plausibly adapted
 - `subsets` = id mirex#music-audio-generation; label Music Audio Generation; items 4; capability_override generation-fidelity · [S7][mirex-s7]
@@ -1440,7 +1440,7 @@ Considered and rejected:
 
 ### 2.7 DCASE Challenge (dcase)
 
-`data/benchmarks/audio-speech/dcase.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-18
+`data/benchmarks/audio-speech/dcase.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-19
 
 *Yearly IEEE AASP challenge on sound scene and event analysis since 2013; independent tasks scored by their organisers.*
 
@@ -1480,10 +1480,11 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 | S11 | `src-dcase-challenge2026-submission` | documentation · DCASE Community | [dcase.community/challenge2026/submission](https://dcase.community/challenge2026/submission) | none (withheld) |
 | S12 | `src-github-dcase2026-task2-evaluator-readme` | repository · GitHub | [raw.githubusercontent.com/nttcslab/dcase2026\_task2\_evaluator/main/REA...](https://raw.githubusercontent.com/nttcslab/dcase2026_task2_evaluator/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014082104/https://raw.githubusercontent.com/nttcslab/dcase2026_task2_evaluator/main/README.md) |
 | S13 | `src-dcase-challenge2026-task4` | documentation · DCASE Community | [dcase.community/challenge2026/task-spatial-semantic-segmentation-of-s...](https://dcase.community/challenge2026/task-spatial-semantic-segmentation-of-sound-scenes) | none (withheld) |
-| S14 | `src-zenodo-22954971` | paper · Zenodo | [zenodo.org/api/records/22954971](https://zenodo.org/api/records/22954971) | none (not-required) |
-| S15 | `src-arxiv-2609-12484` | preprint · arXiv | [arxiv.org/abs/2609.12484](https://arxiv.org/abs/2609.12484) | none (not-required) |
+| S14 | `src-dcase-events-2026-11-19` | documentation · DCASE Community | [dcase.community/events](https://dcase.community/events) | [capture 2026-11-24](https://web.archive.org/web/20261124171009/https://dcase.community/events) |
+| S15 | `src-zenodo-22954971` | paper · Zenodo | [zenodo.org/api/records/22954971](https://zenodo.org/api/records/22954971) | none (not-required) |
+| S16 | `src-arxiv-2609-12484` | preprint · arXiv | [arxiv.org/abs/2609.12484](https://arxiv.org/abs/2609.12484) | none (not-required) |
 
-**Evidence** (49 quoted fields), by checklist area:
+**Evidence** (111 quoted fields), by checklist area:
 
 #### dcase · Identity and id
 
@@ -1565,6 +1566,128 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
   > The evaluation dataset consists of 79 recording clips of 40 sec to 7 min durations
 - `data.size` = count 2000; unit sounds (approximate; the released set holds more, and only a subset is scored); subset 2026 Task 1 · [S3][dcase-s3]
   > It contains \~2,000 Freesound sounds, manually labeled with the corresponding BST category and uploaded after April 1st 2025.
+- `subsets` = id dcase#2013-task1; label 2013 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, Sound event detection, Office Live and Office Synthetic
+- `subsets` = id dcase#2013-task2; label 2013 Task 2, Sound event detection, Office Live and Office Synthetic; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, Sound event detection, Office Live and Office Synthetic
+- `subsets` = id dcase#2016-task1; label 2016 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, Sound event detection in synthetic audio
+- `subsets` = id dcase#2016-task2; label 2016 Task 2, Sound event detection in synthetic audio; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, Sound event detection in synthetic audio
+- `subsets` = id dcase#2016-task3; label 2016 Task 3, Sound event detection in real life audio; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound event detection in real life audio Task 4, Domestic audio tagging
+- `subsets` = id dcase#2016-task4; label 2016 Task 4, Domestic audio tagging; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Domestic audio tagging
+- `subsets` = id dcase#2017-task1; label 2017 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, Detection of rare sound events
+- `subsets` = id dcase#2017-task2; label 2017 Task 2, Detection of rare sound events; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, Detection of rare sound events
+- `subsets` = id dcase#2017-task3; label 2017 Task 3, Sound event detection in real life audio; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound event detection in real life audio Task 4, Large-scale weakly supervised sound event detection for smart cars
+- `subsets` = id dcase#2017-task4; label 2017 Task 4, Large-scale weakly supervised sound event detection for smart cars; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Large-scale weakly supervised sound event detection for smart cars
+- `subsets` = id dcase#2018-task1; label 2018 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, General-purpose audio tagging of Freesound content with AudioSet labels
+- `subsets` = id dcase#2018-task2; label 2018 Task 2, General-purpose audio tagging of Freesound content with AudioSet labels; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, General-purpose audio tagging of Freesound content with AudioSet labels
+- `subsets` = id dcase#2018-task3; label 2018 Task 3, Bird audio detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Bird audio detection
+- `subsets` = id dcase#2018-task4; label 2018 Task 4, Large-scale weakly labeled semi-supervised sound event detection in domestic environments; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Large-scale weakly labeled semi-supervised sound event detection in domestic environments
+- `subsets` = id dcase#2018-task5; label 2018 Task 5, Monitoring of domestic activities based on multi-channel acoustics; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 5, Monitoring of domestic activities based on multi-channel acoustics
+- `subsets` = id dcase#2019-task1; label 2019 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, Audio tagging with noisy labels and minimal supervision
+- `subsets` = id dcase#2019-task2; label 2019 Task 2, Audio tagging with noisy labels and minimal supervision; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, Audio tagging with noisy labels and minimal supervision
+- `subsets` = id dcase#2019-task3; label 2019 Task 3, Sound Event Localization and Detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound Event Localization and Detection Task 4, Sound event detection in domestic environments
+- `subsets` = id dcase#2019-task4; label 2019 Task 4, Sound event detection in domestic environments; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound event detection in domestic environments
+- `subsets` = id dcase#2019-task5; label 2019 Task 5, Urban Sound Tagging; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 5, Urban Sound Tagging Results
+- `subsets` = id dcase#2020-task1; label 2020 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, Unsupervised Detection of Anomalous Sounds for Machine Condition Monitoring
+- `subsets` = id dcase#2020-task2; label 2020 Task 2, Unsupervised Detection of Anomalous Sounds for Machine Condition Monitoring; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, Unsupervised Detection of Anomalous Sounds for Machine Condition Monitoring
+- `subsets` = id dcase#2020-task3; label 2020 Task 3, Sound Event Localization and Detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound Event Localization and Detection Task 4, Sound Event Detection and Separation in Domestic Environments
+- `subsets` = id dcase#2020-task4; label 2020 Task 4, Sound Event Detection and Separation in Domestic Environments; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection and Separation in Domestic Environments Task 5, Urban Sound Tagging with Spatiotemporal Context
+- `subsets` = id dcase#2020-task5; label 2020 Task 5, Urban Sound Tagging with Spatiotemporal Context; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 5, Urban Sound Tagging with Spatiotemporal Context
+- `subsets` = id dcase#2020-task6; label 2020 Task 6, Automated Audio Captioning; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 5, Urban Sound Tagging with Spatiotemporal Context Task 6, Automated Audio Captioning
+- `subsets` = id dcase#2021-task1; label 2021 Task 1, Acoustic scene classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Acoustic scene classification Task 2, Unsupervised Anomalous Sound Detection for Machine Condition Monitoring under Domain Shifted Conditions
+- `subsets` = id dcase#2021-task2; label 2021 Task 2, Unsupervised Anomalous Sound Detection for Machine Condition Monitoring under Domain Shifted Conditions; scored_separately true; capability_override perception, distribution-shift-generalization · [S14][dcase-s14]
+  > Task 2, Unsupervised Anomalous Sound Detection for Machine Condition Monitoring under Domain Shifted Conditions
+- `subsets` = id dcase#2021-task3; label 2021 Task 3, Sound Event Localization and Detection with Directional Interference; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound Event Localization and Detection with Directional Interference
+- `subsets` = id dcase#2021-task4; label 2021 Task 4, Sound Event Detection and Separation in Domestic Environments; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection and Separation in Domestic Environments Task 5, Few-shot Bioacoustic Event Detection
+- `subsets` = id dcase#2021-task5; label 2021 Task 5, Few-shot Bioacoustic Event Detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection and Separation in Domestic Environments Task 5, Few-shot Bioacoustic Event Detection
+- `subsets` = id dcase#2021-task6; label 2021 Task 6, Automated Audio Captioning; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 5, Few-shot Bioacoustic Event Detection Task 6, Automated Audio Captioning Results
+- `subsets` = id dcase#2022-task1; label 2022 Task 1, Low-Complexity Acoustic Scene Classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Low-Complexity Acoustic Scene Classification Task 2, Unsupervised Anomalous Sound Detection for Machine Condition Monitoring Applying Domain Generalization Techniques
+- `subsets` = id dcase#2022-task2; label 2022 Task 2, Unsupervised Anomalous Sound Detection for Machine Condition Monitoring Applying Domain Generalization Techniques; scored_separately true; capability_override perception, distribution-shift-generalization · [S14][dcase-s14]
+  > Task 2, Unsupervised Anomalous Sound Detection for Machine Condition Monitoring Applying Domain Generalization Techniques
+- `subsets` = id dcase#2022-task3; label 2022 Task 3, Sound Event Localization and Detection Evaluated in Real Spatial Sound Scenes; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound Event Localization and Detection Evaluated in Real Spatial Sound Scenes Task 4, Sound Event Detection in Domestic Environments
+- `subsets` = id dcase#2022-task4; label 2022 Task 4, Sound Event Detection in Domestic Environments; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection in Domestic Environments
+- `subsets` = id dcase#2022-task5; label 2022 Task 5, Few-shot Bioacoustic Event Detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection in Domestic Environments Task 5, Few-shot Bioacoustic Event Detection
+- `subsets` = id dcase#2022-task6; label 2022 Task 6, Automated Audio Captioning and Language-Based Audio Retrieval; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 6, Automated Audio Captioning and Language-Based Audio Retrieval Results
+- `subsets` = id dcase#2023-task1; label 2023 Task 1, Low-Complexity Acoustic Scene Classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Low-Complexity Acoustic Scene Classification Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring
+- `subsets` = id dcase#2023-task2; label 2023 Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring Task 3, Sound Event Localization and Detection Evaluated in Real Spatial Sound Scenes
+- `subsets` = id dcase#2023-task3; label 2023 Task 3, Sound Event Localization and Detection Evaluated in Real Spatial Sound Scenes; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Sound Event Localization and Detection Evaluated in Real Spatial Sound Scenes Task 4, Sound Event Detection with Weak Labels and Synthetic Soundscapes; Sound Event Detection with Soft Labels
+- `subsets` = id dcase#2023-task4; label 2023 Task 4, Sound Event Detection with Weak Labels and Synthetic Soundscapes; Sound Event Detection with Soft Labels; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection with Weak Labels and Synthetic Soundscapes; Sound Event Detection with Soft Labels
+- `subsets` = id dcase#2023-task5; label 2023 Task 5, Few-shot Bioacoustic Event Detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection with Weak Labels and Synthetic Soundscapes; Sound Event Detection with Soft Labels Task 5, Few-shot Bioacoustic Event Detection
+- `subsets` = id dcase#2023-task6; label 2023 Task 6, Automated Audio Captioning and Language-Based Audio Retrieval; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 6, Automated Audio Captioning and Language-Based Audio Retrieval Task 7, Foley Sound Synthesis
+- `subsets` = id dcase#2023-task7; label 2023 Task 7, Foley Sound Synthesis; scored_separately true · [S14][dcase-s14]
+  > Task 7, Foley Sound Synthesis
+- `subsets` = id dcase#2024-task1; label 2024 Task 1, Data-Efficient Low-Complexity Acoustic Scene Classification; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Data-Efficient Low-Complexity Acoustic Scene Classification
+- `subsets` = id dcase#2024-task2; label 2024 Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring Task 3, Audio and Audiovisual Sound Event Localization and Detection with Source Distance Estimation
+- `subsets` = id dcase#2024-task3; label 2024 Task 3, Audio and Audiovisual Sound Event Localization and Detection with Source Distance Estimation; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Audio and Audiovisual Sound Event Localization and Detection with Source Distance Estimation
+- `subsets` = id dcase#2024-task4; label 2024 Task 4, Sound Event Detection with Heterogeneous Training Dataset and Potentially Missing Labels; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection with Heterogeneous Training Dataset and Potentially Missing Labels
+- `subsets` = id dcase#2024-task5; label 2024 Task 5, Few-shot Bioacoustic Event Detection; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Sound Event Detection with Heterogeneous Training Dataset and Potentially Missing Labels Task 5, Few-shot Bioacoustic Event Detection
+- `subsets` = id dcase#2024-task6; label 2024 Task 6, Automated Audio Captioning; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 6, Automated Audio Captioning Task 7, Sound Scene Synthesis
+- `subsets` = id dcase#2024-task7; label 2024 Task 7, Sound Scene Synthesis; scored_separately true · [S14][dcase-s14]
+  > Task 7, Sound Scene Synthesis
+- `subsets` = id dcase#2024-task8; label 2024 Task 8, Language-Based Audio Retrieval; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 8, Language-Based Audio Retrieval Task 9, Language-Queried Audio Source Separation
+- `subsets` = id dcase#2024-task9; label 2024 Task 9, Language-Queried Audio Source Separation; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 9, Language-Queried Audio Source Separation
+- `subsets` = id dcase#2024-task10; label 2024 Task 10, Acoustic-based Traffic Monitoring; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 10, Acoustic-based Traffic Monitoring
+- `subsets` = id dcase#2025-task1; label 2025 Task 1, Low-Complexity Acoustic Scene Classification with Device Information; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 1, Low-Complexity Acoustic Scene Classification with Device Information
+- `subsets` = id dcase#2025-task2; label 2025 Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 2, First-Shot Unsupervised Anomalous Sound Detection for Machine Condition Monitoring Task 3, Stereo Sound Event Localization and Detection in Regular Video Content
+- `subsets` = id dcase#2025-task3; label 2025 Task 3, Stereo Sound Event Localization and Detection in Regular Video Content; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 3, Stereo Sound Event Localization and Detection in Regular Video Content
+- `subsets` = id dcase#2025-task4; label 2025 Task 4, Spatial Semantic Segmentation of Sound Scenes; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 4, Spatial Semantic Segmentation of Sound Scenes Task 5, Audio Question Answering
+- `subsets` = id dcase#2025-task5; label 2025 Task 5, Audio Question Answering; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 5, Audio Question Answering
+- `subsets` = id dcase#2025-task6; label 2025 Task 6, Language-Based Audio Retrieval; scored_separately true; capability_override perception · [S14][dcase-s14]
+  > Task 6, Language-Based Audio Retrieval
 - `subsets` = id dcase#2026-task1; label 2026 Task 1, Heterogeneous Audio Classification; scored_separately true; capability_override perception · [S4][dcase-s4]
   > This task focuses on heterogeneous audio classification using the Broad Sound Taxonomy (BST), which comprises 5 top-level and 23 second-level sound categories.
 - `subsets` = id dcase#2026-task1; label 2026 Task 1, Heterogeneous Audio Classification; scored_separately true; capability_override perception · [S3][dcase-s3]
@@ -1616,11 +1739,14 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
   > 1 April 2027 Challenge opening: datasets and baseline methods published
 - `events` = name DCASE2026 Workshop, Boston, 28-29 October 2026; kind workshop · [S10][dcase-s10]
   > The 11th Workshop on Detection and Classification of Acoustic Scenes and Events, DCASE 2026, will be held in Boston on 28-29 October.
+- `versions` = 12 items · [S1][dcase-s1]
+  - why: Each edition is a new evaluation, so every edition is a breaking version and no score is compared across years. Its tasks are chosen afresh, its schedule releases an evaluation set of its own without labels two weeks before the deadline (1 June 2026 for 2026; the call for 2027 sets the same), and it ranks only its own entries. A result names one edition and one task-and-year subset of it (dcase@2025 with dcase#2025-task1), never the family, and the comparability key carries the version. The one reuse read, 2026 Task 3 scoring DCASE2024's evaluation audio with new labels, is its own ranking and is not comparable with 2024's Task 3 either.
+  > 1 April 2027 Challenge opening: datasets and baseline methods published 1 June 2027 Evaluation set release
 
-**Open review checks** (12):
+**Open review checks** (15):
 
 1. (field `comparability`) The comparability profile table maps statistical-fit with instruction-tuned-model to forecasting, so Task 3's Pearson r makes lead\_time and resolution\_window material, though no DCASE task forecasts. ADR-0024 (D3) removes entry-level waivers of those two fields and puts the fix in the profile rule; whether that pair should map to forecasting is the open question.
-2. (field `versions`) Identity. The entry is the challenge as one family, with yearly editions as versions and the 2026 tasks as subsets. Long-running task lines (anomalous sound detection since 2020, sound event localization and detection since 2019) could instead be entries of their own.
+2. (field `versions`) Identity. The entry is the challenge as one family, with yearly editions as versions and every task of every edition as a task-and-year subset. Long-running task lines (anomalous sound detection since 2020, sound event localization and detection since 2019) could instead be entries of their own. A subset is tied to its edition only by its id (dcase#2025-task1 under version 2025), because the Subset model has no version field; the tie is held by tests/test\_dcase\_open\_asr.py, not by the schema.
 3. (field `domain`) The primary domain is audio-event-understanding because scene and sound classification is the one line in every edition, but scene classification is not strictly the leaf's case (which sound events are present), and sound event detection ran in ten of twelve editions. audio-event-detection-localization could be argued as primary. · [S3][dcase-s3]
    > In a way, this task replaces the former Task 1 on Acoustic Scene Classification, which ran for all 11 previous DCASE Challenge editions with different focuses every year
 4. (field `activity`) activity round-scheduled rests on the 2027 call's tentative schedule (posted 1 October 2026). governance.yaml and lifecycle.yaml cite dcase-2026 as between-rounds, written before the call; between-rounds holds if a tentative date is not an announced one. · [S1][dcase-s1]
@@ -1636,8 +1762,13 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 10. (field `data.access`) data.access and the reproducibility tier assume the 2026 evaluation labels are withheld; only Task 2's release was read. If most tasks have published theirs, fully-open and fully-automatable may fit completed editions. · [S12][dcase-s12]
    > Ground truth of the normal and anomaly labels
 11. (field `subsets`) Task 4 has no domain\_override; its score joins detection of which classes are present with separation, for which no audio-speech leaf exists.
-12. (field `subsets`) The 2026 subsets rest on the task pages and, for Task 6, its overview paper. The proceedings (src-zenodo-22954971) hold the description papers of Tasks 1, 2, 4, 5, 6 and 7, and arXiv carries task overviews for Tasks 2, 4, 5 and 7 (2606.01578, 2604.00776, 2607.18718, 2606.02173, per the 2026-11-17 sweep). Neither the volume's PDF nor those four papers were read; they could confirm or correct the subsets' notes and item counts. · [S14][dcase-s14]
+12. (field `subsets`) The 2026 subsets rest on the task pages and, for Task 6, its overview paper. The proceedings (src-zenodo-22954971) hold the description papers of Tasks 1, 2, 4, 5, 6 and 7, and arXiv carries task overviews for Tasks 2, 4, 5 and 7 (2606.01578, 2604.00776, 2607.18718, 2606.02173, per the 2026-11-17 sweep). Neither the volume's PDF nor those four papers were read; they could confirm or correct the subsets' notes and item counts. · [S15][dcase-s15]
    > This volume is a collection of the papers presented at the Detection and Classification of Acoustic Scenes and Events 2026Workshop (DCASE 2026)
+13. (field `subsets`) The 61 subsets from 2013 to 2025 rest on the events page's task lists alone. Their leaves and capabilities come from the task names, and no task page before 2026 was read, so none records a metric, an item count or a track. Two-part task lines (2013 Task 2, 2022 and 2023 Task 6, 2023 Task 4) are not split into children; the two sound-synthesis tasks inherit the family's domain for want of a leaf, and 2024 Task 10 (traffic monitoring) gets no leaf from its name. · [S14][dcase-s14]
+   > Task 6, Automated Audio Captioning and Language-Based Audio Retrieval Task 7, Foley Sound Synthesis
+14. (field `capability`) The earlier subsets carry perception alone where their names leave more open. The sound event detection tasks may score onsets and offsets (temporal-reasoning, which the family tags from 2026 Task 6 alone); the first-shot anomalous sound tasks of 2023 to 2025 may score shifted domains, as 2026's does; the few-shot bioacoustic tasks may fix a small support set (sample-efficiency, which is outside the family's list). None was tagged from a name alone.
+15. (field `versions`) Cross-year comparison is refused because every edition is a breaking version and the comparability key carries the version and the task-and-year subset. That each edition's evaluation set is new rests on the 2026 and 2027 schedules and on the 2026 task pages; earlier editions' pages were not read. 2026 Task 3 scores DCASE2024's evaluation audio with new labels, so whether its ranking may sit beside 2024 Task 3's is open. · [S8][dcase-s8]
+   > The evaluation dataset is identical to the one used in the DCASE2024 challenge.
 
 **Reviewer checklist** for `dcase`:
 
@@ -1663,8 +1794,9 @@ The yearly challenge of the DCASE community on the automatic analysis of everyda
 [dcase-s11]: https://dcase.community/challenge2026/submission
 [dcase-s12]: https://raw.githubusercontent.com/nttcslab/dcase2026_task2_evaluator/main/README.md
 [dcase-s13]: https://dcase.community/challenge2026/task-spatial-semantic-segmentation-of-sound-scenes
-[dcase-s14]: https://zenodo.org/api/records/22954971
-[dcase-s15]: https://arxiv.org/abs/2609.12484
+[dcase-s14]: https://dcase.community/events
+[dcase-s15]: https://zenodo.org/api/records/22954971
+[dcase-s16]: https://arxiv.org/abs/2609.12484
 
 ### 2.8 L3DAS Challenge (l3das)
 

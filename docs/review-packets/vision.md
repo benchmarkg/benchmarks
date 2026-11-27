@@ -21,9 +21,9 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 
 | # | Subdomain | Definition | Entries (primary + secondary) | Page |
 | ---: | --- | --- | --- | --- |
-| 1 | `classification`<br>Classification | Assigning a whole image to one or more categories. | 1 + 11 | has benchmarks |
-| 2 | `detection`<br>Detection | Localising and labelling individual object instances within an image. | 1 + 11 | has benchmarks |
-| 3 | `segmentation`<br>Segmentation | Assigning a category label to every pixel or region of an image. | 4 + 11 | has benchmarks |
+| 1 | `classification`<br>Classification | Assigning a whole image to one or more categories. | 1 + 12 | has benchmarks |
+| 2 | `detection`<br>Detection | Localising and labelling individual object instances within an image. | 1 + 12 | has benchmarks |
+| 3 | `segmentation`<br>Segmentation | Assigning a category label to every pixel or region of an image. | 4 + 12 | has benchmarks |
 | 4 | `video-understanding`<br>Video understanding | Recognising actions, events or content across the temporal extent of a video. | 2 + 3 | has benchmarks |
 | 5 | `3d-reconstruction`<br>3D reconstruction | Recovering the three-dimensional geometry of a scene or object from images. | 1 + 1 | has benchmarks |
 | 6 | `novel-view-synthesis`<br>Novel view synthesis | Rendering an unobserved viewpoint of a scene from a set of observed views, scored on the rendered image. | 1 + 0 | has benchmarks |
@@ -36,7 +36,7 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 13 | `video-generation`<br>Video generation | Producing a video, scored on properties of the generated video itself. | 1 + 0 | has benchmarks |
 | 14 | `document-understanding`<br>Document understanding | Extracting structure and content from document images such as forms, tables and reports. | 1 + 2 | has benchmarks |
 | 15 | `ocr-handwriting`<br>OCR and handwriting | Transcribing printed or handwritten text in images into character sequences. | 2 + 2 | has benchmarks |
-| 16 | `medical-imaging-cv`<br>Medical imaging (computer vision) | Computer-vision methods evaluated on medical images, where the benchmark's claim is the method rather than a clinical task. | 1 + 0 | has benchmarks |
+| 16 | `medical-imaging-cv`<br>Medical imaging (computer vision) | Computer-vision methods evaluated on medical images, where the benchmark's claim is the method rather than a clinical task. | 1 + 1 | has benchmarks |
 
 Your answer:
 
@@ -56,8 +56,8 @@ Not in this packet (12): `cityscapes`, `coco`, `davis-vos`, `dl3dv`, `iam-handwr
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
-| 2.1 | [ImageNet](#21-imagenet-imagenet) | `classification` | 42 | 8 |
-| 2.2 | [ADE20K](#22-ade20k-ade20k) | `segmentation` | 49 | 11 |
+| 2.1 | [ImageNet](#21-imagenet-imagenet) | `classification` | 42 | 9 |
+| 2.2 | [ADE20K](#22-ade20k-ade20k) | `segmentation` | 49 | 12 |
 | 2.3 | [Kinetics](#23-kinetics-kinetics) | `video-understanding` | 53 | 10 |
 | 2.4 | [ETH3D](#24-eth3d-eth3d) | `multi-view-stereo` | 51 | 10 |
 | 2.5 | [MPI Sintel](#25-mpi-sintel-mpi-sintel) | `image-matching-correspondence` | 47 | 10 |
@@ -232,7 +232,7 @@ Considered and rejected:
 - `history` = date 2017-07-26; event channel-moved; field execution.submission\_channel; from the ILSVRC challenge's submission server on image-net.org; to Kaggle (ImageNet Object Localization Challenge) · [S4][imagenet-s4]
   > Jul 26, 2017: We are passing the baton to Kaggle. From now on, all three challenges(LOC-CLS, DET, VID) will be hosted on Kaggle!
 
-**Open review checks** (8):
+**Open review checks** (9):
 
 1. (field `activity`) activity is unknown because the Kaggle competition (the 2017 page's successor channel) and the image-net.org test server (behind a login) could not be read. closed fits if the maintainers' 2017 handover ended the series and the server is a private scoring service; leaderboard-live-no-round fits if Kaggle's board still takes entries. · [S4][imagenet-s4]
    > Jul 26, 2017: We are passing the baton to Kaggle. From now on, all three challenges(LOC-CLS, DET, VID) will be hosted on Kaggle!
@@ -246,6 +246,7 @@ Considered and rejected:
 7. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type expert-best rests on one annotator who trained on the classes and whom the paper calls an expert annotator; crowd-best is the alternative if that is not a qualified domain expert. The anchor is top-5 error only. · [S6][imagenet-s6]
    > Therefore, in evaluating the human accuracy we relied primarily on expert annotators
 8. (field `versions`) Identity. One entry for ILSVRC classification with the 2012 data as ImageNet-1k, the 2010 and 2011 editions as versions and localisation as a subset; DET and VID left out. The October 2019 test-set revision is recorded as non-breaking only by default, since no source says what changed.
+9. (field `homepage`) homepage and dataset\_url are on image-net.org, which accepted no connection on port 80 or 443, with or without www, at any attempt on 2026-11-16 (five tries over about three hours) or on 2026-11-27 (six rounds, 07:31 to 10:09 UTC). Nothing says the site moved, so the URLs stand, and the facts the image-net.org Sources back rest on their October extracts. curation.unreachable cannot record this, as it takes an HTTP status. Re-check the host before the entry is verified; if it is gone, the URLs and data.access\_note change.
 
 **Reviewer checklist** for `imagenet`:
 
@@ -311,7 +312,7 @@ A densely annotated dataset of about 25,000 photographs of everyday scenes from 
 | S7 | `src-github-csailvision-sceneparsing-readme` | repository · GitHub (CSAILVision) | [raw.githubusercontent.com/CSAILVision/sceneparsing/e20222964c58eba41d...](https://raw.githubusercontent.com/CSAILVision/sceneparsing/e20222964c58eba41d8986d45d652d93adc234a5/README.md) | [capture 2026-11-16](https://web.archive.org/web/20261116181541/https://raw.githubusercontent.com/CSAILVision/sceneparsing/e20222964c58eba41d8986d45d652d93adc234a5/README.md) |
 | S8 | `src-arxiv-2107-06278-v2` | preprint · arXiv | [arxiv.org/pdf/2107.06278v2](https://arxiv.org/pdf/2107.06278v2) | none (not-required) |
 | S9 | `src-arxiv-2610-36719` | preprint · arXiv | [arxiv.org/abs/2610.36719](https://arxiv.org/abs/2610.36719) | none (not-required) |
-| S10 | `src-sceneparsing-csail-eval` | leaderboard-page · MIT CSAIL (sceneparsing.csail.mit.edu) | [sceneparsing.csail.mit.edu/eval/](http://sceneparsing.csail.mit.edu/eval/) | none (pending) |
+| S10 | `src-sceneparsing-csail-eval` | leaderboard-page · MIT CSAIL (sceneparsing.csail.mit.edu) | [sceneparsing.csail.mit.edu/eval/](http://sceneparsing.csail.mit.edu/eval/) | none (failed) |
 | S11 | `src-github-csailvision-ade20k-readme` | repository · GitHub (CSAILVision) | [raw.githubusercontent.com/CSAILVision/ADE20K/df5ee67bfe143f3e0cbd5d39...](https://raw.githubusercontent.com/CSAILVision/ADE20K/df5ee67bfe143f3e0cbd5d3929aeeb817a256cbc/README.md) | [capture 2026-11-16](https://web.archive.org/web/20261116181527/https://raw.githubusercontent.com/CSAILVision/ADE20K/df5ee67bfe143f3e0cbd5d3929aeeb817a256cbc/README.md) |
 | S12 | `src-ade20k-csail-terms` | documentation · MIT CSAIL (ade20k.csail.mit.edu) | [ade20k.csail.mit.edu/terms](https://ade20k.csail.mit.edu/terms) | [capture 2026-10-28](https://web.archive.org/web/20261028132925/https://ade20k.csail.mit.edu/terms/) |
 | S13 | `src-crossref-10-1007-s11263-018-1140-0` | paper · Springer Science and Business Media LLC | [api.crossref.org/works/10.1007/s11263-018-1140-0](https://api.crossref.org/works/10.1007/s11263-018-1140-0) | none (not-required) |
@@ -455,7 +456,7 @@ Considered and rejected:
 - `history` = event channel-closed; field execution.submission\_channel; from the MIT Scene Parsing Benchmark evaluation server (sceneparsing.csail.mit.edu/eval) · [S10][ade20k-s10]
   > UserCake Version: 2.0.2 http://usercake.com
 
-**Open review checks** (11):
+**Open review checks** (12):
 
 1. (field `activity`) activity is closed on the observation that the evaluation server returns its own PHP source, unexecuted, rather than a working page; no maintainer statement was found, and unknown is the alternative if the server is only temporarily misconfigured. The leaderboard iframe on the same server was not read. · [S10][ade20k-s10]
    > This is the evaluation server for the MIT Scene Parsing Benchmark.
@@ -479,6 +480,7 @@ Considered and rejected:
    > Register here to download the ADE20K dataset and annotations. By doing so, you agree to the terms of use.
 11. (field `as_used`) Current use is evidenced by an abstract that names neither the split nor the inference setting; the as\_used rows rest on MaskFormer (2021). A 2025-2026 paper body stating the validation protocol was not read. · [S9][ade20k-s9]
    > Submitted on 27 Oct 2026
+12. (field `homepage`) homepage, dataset\_url and leaderboard\_url are on two hosts, sceneparsing.csail.mit.edu and ade20k.csail.mit.edu, that accepted no connection on port 80 or 443 at any attempt on 2026-11-16 (about 16:40 to 19:10 UTC) or on 2026-11-27 (six rounds, 07:31 to 10:09 UTC), while www.csail.mit.edu answered. Nothing says the sites moved, so the URLs stand, and the facts the five Sources on these hosts back rest on their 2026-11-10 extracts. curation.unreachable cannot record this, as it takes an HTTP status. Re-check the hosts before the entry is verified; if they are gone, the URLs and data.access\_note change.
 
 **Reviewer checklist** for `ade20k`:
 
@@ -2524,7 +2526,7 @@ Considered and rejected:
 
 (03 §12.2, ask 3.) The row is this family crossed with the 13 capability groups of `taxonomy/capability_groups.yaml` (the coarse grid, the only one a gap claim may come from: 12-analytics-and-trends.md §5.1). A cell holds a benchmark when an entry in this family, by its primary domain or only by a secondary one, carries a capability term of that group (02-taxonomy.md §11 rule 1: presence at any weight); the two are counted apart.
 
-5 of 13 cells hold a benchmark (38.5%), 0 are declared not applicable, 8 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on vision (reviewer\_signoff: none)).
+6 of 13 cells hold a benchmark (46.2%), 0 are declared not applicable, 7 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on vision (reviewer\_signoff: none)).
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
@@ -2532,14 +2534,14 @@ Considered and rejected:
 | Formal & quantitative<br>`formal-quantitative-reasoning` | not-yet-surveyed | 0 / 0 | deductive-reasoning 0, quantitative-reasoning 0, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | not-yet-surveyed | 0 / 0 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
 | Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 0 / 2 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
-| Signal, space & time<br>`perception-space-time` | has-benchmarks | 19 / 17 | perception 19, grounding 0, spatial-reasoning 0, temporal-reasoning 0 |
+| Signal, space & time<br>`perception-space-time` | has-benchmarks | 19 / 21 | perception 19, grounding 0, spatial-reasoning 0, temporal-reasoning 0 |
 | Planning & search<br>`planning-and-search` | not-yet-surveyed | 0 / 0 | planning 0, search-exploration 0, optimization 0 |
 | Action & execution<br>`action-and-execution` | not-yet-surveyed | 0 / 0 | sensorimotor-control 0, tool-use 0, long-horizon-execution 0 |
 | Controlled generation<br>`controlled-generation` | has-benchmarks | 3 / 1 | generation-fidelity 3, creativity-novelty 0, instruction-following 0 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | not-yet-surveyed | 0 / 0 | collaboration 0, communication 0, honesty 0, harm-avoidance 0 |
 | Learning & transfer<br>`learning-and-transfer` | not-yet-surveyed | 0 / 0 | sample-efficiency 0, continual-learning 0, transfer-learning 0 |
-| Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 0 / 8 | distribution-shift-generalization 0, adversarial-robustness 0, reliability-consistency 0 |
-| Uncertainty handling<br>`uncertainty-and-self-monitoring` | not-yet-surveyed | 0 / 0 | calibration-uncertainty 0, probabilistic-forecasting 0, self-correction 0 |
+| Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 0 / 9 | distribution-shift-generalization 0, adversarial-robustness 0, reliability-consistency 0 |
+| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 0 / 1 | calibration-uncertainty 0, probabilistic-forecasting 0, self-correction 0 |
 | Autonomy & oversight<br>`autonomy-and-oversight` | not-yet-surveyed | 0 / 0 | autonomy 0, self-improvement 0, situational-awareness 0 |
 
 An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobody measures it, the taxonomy cuts this field badly there, or we have not found the work yet. Only the first may ever be published as a gap, and only after a reviewer has confirmed it.
@@ -2558,7 +2560,5 @@ The empty cells, for your answer:
   - why we think the question applies here: Image-generation safety benchmarks score whether a generator declines to produce harmful images, which is harm-avoidance on a visual output.
 - **Learning & transfer** (`learning-and-transfer`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
   - why we think the question applies here: Few-shot recognition and domain adaptation are long-standing vision evaluations of sample efficiency and transfer.
-- **Uncertainty handling** (`uncertainty-and-self-monitoring`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
-  - why we think the question applies here: Calibration and uncertainty estimates for detection and segmentation are scored on visual predictions.
 - **Autonomy & oversight** (`autonomy-and-oversight`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
   - why we think the question applies here: The closest call in the row, kept because driving and navigation benchmarks that carry a vision secondary score operation over an extended task without intervention, although a vision benchmark's own scored quantity is a property of a visual signal.

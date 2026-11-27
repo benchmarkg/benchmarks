@@ -2,11 +2,11 @@
 
 # Review packet: Medicine and health
 
-`medicine-health` · 20 published entries · Core family · 13 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`medicine-health` · 25 published entries · Core family · 13 subdomains · data as of 2026-11-25 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
-Everything below is generated from the catalogue's files. Verification status of the family's 20 entries: 20 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
+Everything below is generated from the catalogue's files. Verification status of the family's 25 entries: 25 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
 
 How to read an entry: each evidenced field shows its value, the curator's reason where one was given, the verbatim quote it rests on and the Source it is quoted from (S1, S2, ... in the entry's Sources table, with the URL and the archived copy). Code has checked that every quote is an exact substring of the stored extract of its Source; whether the quote supports the value is what a reviewer judges. Text that may name a person is not reproduced here (\[withheld: it may name a person; see the entry file\]); the entry file has it.
 
@@ -24,8 +24,8 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 1 | `clinical-qa`<br>Clinical QA | Answering medical questions that have a determinate correct answer. | 2 + 1 | has benchmarks |
 | 2 | `clinical-dialogue`<br>Clinical dialogue | Conducting a multi-turn clinical conversation, scored on the conduct of the exchange rather than on a single reply. | 1 + 2 | has benchmarks |
 | 3 | `diagnosis-triage`<br>Diagnosis triage | Producing a diagnosis or an urgency assessment from a presented case. | 3 + 3 | has benchmarks |
-| 4 | `medical-imaging-diagnostic`<br>Medical imaging diagnostic | Detecting clinical findings in, or reaching a diagnostic conclusion from, medical images, scored against a clinical reference standard. | 5 + 3 | has benchmarks |
-| 5 | `medical-imaging-segmentation`<br>Medical imaging segmentation | Delineating anatomical or pathological regions in medical images. | 2 + 1 | has benchmarks |
+| 4 | `medical-imaging-diagnostic`<br>Medical imaging diagnostic | Detecting clinical findings in, or reaching a diagnostic conclusion from, medical images, scored against a clinical reference standard. | 8 + 3 | has benchmarks |
+| 5 | `medical-imaging-segmentation`<br>Medical imaging segmentation | Delineating anatomical or pathological regions in medical images. | 4 + 1 | has benchmarks |
 | 6 | `radiology-report-generation`<br>Radiology report generation | Producing a radiology report from an imaging study. | 1 + 0 | has benchmarks |
 | 7 | `ehr-prediction`<br>EHR prediction | Predicting a clinical outcome from structured electronic health record data. | 1 + 2 | has benchmarks |
 | 8 | `clinical-agent-workflows`<br>Clinical agent workflows | Completing multi-step clinical tasks against a health information system. | 1 + 0 | has benchmarks |
@@ -49,14 +49,14 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (10): `camelyon17`, `chexpert`, `ddxplus`, `ehrshot`, `isic-challenge`, `kits`, `luna16`, `medhelm`, `medqa`, `physionet-challenge`. `python scripts/review_packet.py --family medicine-health --all` renders every entry.
+Not in this packet (15): `airogs`, `camelyon17`, `chexpert`, `conic`, `ddxplus`, `ehrshot`, `isic-challenge`, `kits`, `luna16`, `medhelm`, `medical-segmentation-decathlon`, `medqa`, `midog`, `physionet-challenge`, `stoic2021`. `python scripts/review_packet.py --family medicine-health --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [MedCalc-Bench](#21-medcalc-bench-medcalc-bench) | `clinical-qa` | 46 | 11 |
 | 2.2 | [ACI-Bench](#22-aci-bench-aci-bench) | `clinical-dialogue` | 44 | 11 |
 | 2.3 | [AgentClinic](#23-agentclinic-agentclinic) | `diagnosis-triage` | 62 | 11 |
-| 2.4 | [PI-CAI](#24-pi-cai-pi-cai) | `medical-imaging-diagnostic` | 49 | 11 |
+| 2.4 | [PI-CAI](#24-pi-cai-pi-cai) | `medical-imaging-diagnostic` | 50 | 11 |
 | 2.5 | [BraTS](#25-brats-brats) | `medical-imaging-segmentation` | 47 | 8 |
 | 2.6 | [ReXrank](#26-rexrank-rexrank) | `radiology-report-generation` | 38 | 10 |
 | 2.7 | [MedAgentBench](#27-medagentbench-medagentbench) | `clinical-agent-workflows` | 33 | 8 |
@@ -779,13 +779,13 @@ A grand challenge and paired diagnostic accuracy study for clinically significan
 | S10 | `src-picai-phases-rules` | documentation · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/AIPR/](https://pi-cai.grand-challenge.org/AIPR/) | none (withheld) |
 | S11 | `src-github-picai-labels-readme` | repository · GitHub | [raw.githubusercontent.com/DIAGNijmegen/picai\_labels/ce4a4723d7c46d882...](https://raw.githubusercontent.com/DIAGNijmegen/picai_labels/ce4a4723d7c46d882a6cbaacb40ed6c4be86282f/README.md) | none (withheld) |
 | S12 | `src-zenodo-6624726` | dataset-card · Zenodo | [zenodo.org/records/6624726](https://zenodo.org/records/6624726) | none (not-required) |
-| S13 | `src-github-picai-eval-readme` | repository · GitHub | [raw.githubusercontent.com/DIAGNijmegen/picai\_eval/81d6067130cb264312e...](https://raw.githubusercontent.com/DIAGNijmegen/picai_eval/81d6067130cb264312ebcca220dd0784f074ae0e/README.md) | none (withheld) |
-| S14 | `src-picai-leaderboard-final` | leaderboard-page · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/evaluation/closed-testing-phase-final-rank...](https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-final-ranking/leaderboard/) | none (withheld) |
-| S15 | `src-picai-leaderboard-closed-tuning` | leaderboard-page · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/evaluation/closed-testing-phase-tuning/lea...](https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-tuning/leaderboard/) | none (withheld) |
-| S16 | `src-picai-announcements` | documentation · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/announcements/](https://pi-cai.grand-challenge.org/announcements/) | none (withheld) |
+| S13 | `src-picai-announcements` | documentation · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/announcements/](https://pi-cai.grand-challenge.org/announcements/) | none (withheld) |
+| S14 | `src-github-picai-eval-readme` | repository · GitHub | [raw.githubusercontent.com/DIAGNijmegen/picai\_eval/81d6067130cb264312e...](https://raw.githubusercontent.com/DIAGNijmegen/picai_eval/81d6067130cb264312ebcca220dd0784f074ae0e/README.md) | none (withheld) |
+| S15 | `src-picai-leaderboard-final` | leaderboard-page · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/evaluation/closed-testing-phase-final-rank...](https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-final-ranking/leaderboard/) | none (withheld) |
+| S16 | `src-picai-leaderboard-closed-tuning` | leaderboard-page · Grand Challenge (PI-CAI organisers) | [pi-cai.grand-challenge.org/evaluation/closed-testing-phase-tuning/lea...](https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-tuning/leaderboard/) | none (withheld) |
 | S17 | `src-github-picai-baseline-readme` | repository · GitHub | [raw.githubusercontent.com/DIAGNijmegen/picai\_baseline/2f31d8e7fec4c7e...](https://raw.githubusercontent.com/DIAGNijmegen/picai_baseline/2f31d8e7fec4c7ec26729edb1cb7057834bac116/README.md) | none (withheld) |
 
-**Evidence** (49 quoted fields), by checklist area:
+**Evidence** (50 quoted fields), by checklist area:
 
 #### pi-cai · Identity and id
 
@@ -839,7 +839,7 @@ Considered and rejected:
 - `execution.reproducibility_tier` = not-independently-reproducible · [S5][pi-cai-s5]
   - why: The official score needs the hidden cohorts, which only the organisers' platform holds; the testing cohort is reached only on application.
   > We have provided the means for independent researchers and developers to access the full sequestered training dataset of 9107 cases or benchmark their algorithms across the sequestered testing cohort of 1000 cases, in a fully masked, standardised manner with investigator support, on a per-application basis.
-- `execution.harness` = picai\_eval (pip install picai\_eval), the evaluation code of the official pipeline, with the statistical tests; the organisers' baselines and container templates in picai\_baseline · [S13][pi-cai-s13]
+- `execution.harness` = picai\_eval (pip install picai\_eval), the evaluation code of the official pipeline, with the statistical tests; the organisers' baselines and container templates in picai\_baseline · [S14][pi-cai-s14]
   > It is used for the official evaluation pipeline of the
 - `execution.submission_channel` · [S7][pi-cai-s7]
   > interested teams can only make submissions to the Open Development Phase – Testing Leaderboard upon request to the organizers with a brief supporting document
@@ -874,6 +874,8 @@ Considered and rejected:
   > Private/Sequestered Training Dataset (7607 cases): Used exclusively by the organizers to retrain the top-ranking 5 AI algorithms
 - `data.size` = count 10207; unit MRI exams from 9,129 patients in all; subset complete study cohort · [S5][pi-cai-s5]
   > we trained and externally validated an AI system (developed within an international consortium) for detecting Gleason grade group 2 or greater cancers using a retrospective cohort of 10 207 MRI examinations from 9129 patients
+- `data.submission_limit` = max_submissions 1; period_days 7; per verified user, on the Open Development Phase - Tuning leaderboard since the open phase ended (one per day during it); one algorithm per team on the testing leaderboard · [S13][pi-cai-s13]
+  > albeit at a reduced rate (once per week per verified user)
 - `subsets` = id pi-cai#odp-tuning; label Open Development Phase - Tuning (hidden tuning cohort); items 100; scored_separately true · [S9][pi-cai-s9]
   > Hidden Tuning Cohort (100 cases): Used for a live, public leaderboard that enables model selection and tuning, during the Open Development Phase.
 - `subsets` = id pi-cai#odp-tuning; label Open Development Phase - Tuning (hidden tuning cohort); items 100; scored_separately true · [S6][pi-cai-s6]
@@ -884,9 +886,9 @@ Considered and rejected:
   > 29 of 29 rows served, ordered by rank.
 - `subsets` = id pi-cai#closed-testing; label Closed Testing Phase - Testing (Final Ranking); items 1000; scored_separately true · [S1][pi-cai-s1]
   > In the closed testing phase, organizers retrain the top-ranking 5 AI algorithms using a larger dataset of 9107 bpMRI scans (including additional training scans from a private dataset).
-- `subsets` = id pi-cai#closed-testing; label Closed Testing Phase - Testing (Final Ranking); items 1000; scored_separately true · [S14][pi-cai-s14]
+- `subsets` = id pi-cai#closed-testing; label Closed Testing Phase - Testing (Final Ranking); items 1000; scored_separately true · [S15][pi-cai-s15]
   > 14 of 14 rows served, ordered by rank.
-- `subsets` = id pi-cai#closed-tuning; label Closed Testing Phase - Tuning; scored_separately true · [S15][pi-cai-s15]
+- `subsets` = id pi-cai#closed-tuning; label Closed Testing Phase - Tuning; scored_separately true · [S16][pi-cai-s16]
   > 14 of 14 rows served, ordered by rank.
 - `subsets` = id pi-cai#reader-study; label PI-CAI: Reader Study (radiologists and AI on 400 testing cases); items 400; scored_separately true · [S1][pi-cai-s1]
   > Reader Study: 50+ international prostate radiologists perform a reader study using a subset of 400 scans from the hidden testing cohort.
@@ -915,7 +917,7 @@ Considered and rejected:
 - `activity` = leaderboard-live-no-round · [S7][pi-cai-s7]
   - why: The 2022 edition's rounds are over, and the post-challenge page keeps the tuning leaderboard live for continuous submissions from outside the organisers.
   > While the Open Development Phase – Tuning Leaderboard will remain live for continuous submissions
-- `history` = date 2022-11-29; event channel-closed; field execution.submission\_channel; from the Open Development Phase - Testing leaderboard, one algorithm per team (closed for the round on 2022-11-22); to submissions on application to the organisers · [S16][pi-cai-s16]
+- `history` = date 2022-11-29; event channel-closed; field execution.submission\_channel; from the Open Development Phase - Testing leaderboard, one algorithm per team (closed for the round on 2022-11-22); to submissions on application to the organisers · [S13][pi-cai-s13]
   > Meanwhile, the Open Development Phase - Testing Leaderboard will reopen in early 2023 and accept submissions on a per-application basis to the PI-CAI consortium via e-mail.
 - `history` = date 2023-04-30; event channel-closed; field execution.submission\_channel; from the Closed Testing Phase - Final Ranking leaderboard · [S2][pi-cai-s2]
   > 30 April 2023: Closing submissions for Closed Testing Phase - Final Ranking.
@@ -938,7 +940,7 @@ Considered and rejected:
    > scores assigned during routine practice for each of the 1500 cases spanning the
 10. (field `lineage`) ProstateX, the predecessor the home page names (328 of its cases are in the public training set), has no entry, and its maintainer differs, so no lineage is recorded. · [S1][pi-cai-s1]
    > Prior to the release of this challenge, the only public benchmark of csPCa detection/diagnosis was the ProstateX Challenge, which used a testing set of 140 mpMRI exams to evaluate and compare AI algorithms.
-11. (field `data.submission_limit`) submission\_limit records the reduced tuning rate announced in November 2022; the post-challenge page says only that the board stays live, so the current rate is not confirmed. · [S16][pi-cai-s16]
+11. (field `data.submission_limit`) submission\_limit records the reduced tuning rate announced in November 2022; the post-challenge page says only that the board stays live, so the current rate is not confirmed. · [S13][pi-cai-s13]
    > All teams can continue to make submissions to the Open Development Phase - Tuning Leaderboard, albeit at a reduced rate (once per week per verified user).
 
 **Reviewer checklist** for `pi-cai`:
@@ -964,10 +966,10 @@ Considered and rejected:
 [pi-cai-s10]: https://pi-cai.grand-challenge.org/AIPR/
 [pi-cai-s11]: https://raw.githubusercontent.com/DIAGNijmegen/picai_labels/ce4a4723d7c46d882a6cbaacb40ed6c4be86282f/README.md
 [pi-cai-s12]: https://zenodo.org/records/6624726
-[pi-cai-s13]: https://raw.githubusercontent.com/DIAGNijmegen/picai_eval/81d6067130cb264312ebcca220dd0784f074ae0e/README.md
-[pi-cai-s14]: https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-final-ranking/leaderboard/
-[pi-cai-s15]: https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-tuning/leaderboard/
-[pi-cai-s16]: https://pi-cai.grand-challenge.org/announcements/
+[pi-cai-s13]: https://pi-cai.grand-challenge.org/announcements/
+[pi-cai-s14]: https://raw.githubusercontent.com/DIAGNijmegen/picai_eval/81d6067130cb264312ebcca220dd0784f074ae0e/README.md
+[pi-cai-s15]: https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-final-ranking/leaderboard/
+[pi-cai-s16]: https://pi-cai.grand-challenge.org/evaluation/closed-testing-phase-tuning/leaderboard/
 [pi-cai-s17]: https://raw.githubusercontent.com/DIAGNijmegen/picai_baseline/2f31d8e7fec4c7ec26729edb1cb7057834bac116/README.md
 
 ### 2.5 BraTS (brats)
@@ -1220,7 +1222,7 @@ A public leaderboard from a Harvard Medical School lab for AI models that write 
 | S3 | `src-arxiv-2608-03890-v1` | preprint · arXiv | [arxiv.org/pdf/2608.03890v1](https://arxiv.org/pdf/2608.03890v1) | none (not-required) |
 | S4 | `src-arxiv-2411-15122-v2` | preprint · arXiv | [arxiv.org/pdf/2411.15122v2](https://arxiv.org/pdf/2411.15122v2) | none (not-required) |
 | S5 | `src-arxiv-2603-06183` | preprint · arXiv | [arxiv.org/abs/2603.06183](https://arxiv.org/abs/2603.06183) | none (not-required) |
-| S6 | `src-rexrank-leaderboard-2026-11` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [rexrank.ai/](https://rexrank.ai/) | none (pending) |
+| S6 | `src-rexrank-leaderboard-2026-11` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [rexrank.ai/](https://rexrank.ai/) | [capture 2026-11-24](https://web.archive.org/web/20261124170717/https://rexrank.ai/) |
 | S7 | `src-rexrank-submission-guideline` | documentation · \[withheld: it may name a person; see the entry file\] | [rexrank.ai/explore/submission\_guideline.html](https://rexrank.ai/explore/submission_guideline.html) | none (withheld) |
 | S8 | `src-github-rexrank-data-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ReXrank/main/data/READMD.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S9 | `src-github-cxr-report-metric-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/CXR-Report-Metric/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
@@ -2144,7 +2146,7 @@ Considered and rejected:
 
 (03 §12.2, ask 3.) The row is this family crossed with the 13 capability groups of `taxonomy/capability_groups.yaml` (the coarse grid, the only one a gap claim may come from: 12-analytics-and-trends.md §5.1). A cell holds a benchmark when an entry in this family, by its primary domain or only by a secondary one, carries a capability term of that group (02-taxonomy.md §11 rule 1: presence at any weight); the two are counted apart.
 
-10 of 13 cells hold a benchmark (76.9%), 0 are declared not applicable, 3 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on medicine-health (reviewer\_signoff: none)).
+11 of 13 cells hold a benchmark (84.6%), 0 are declared not applicable, 2 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on medicine-health (reviewer\_signoff: none)).
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
@@ -2152,14 +2154,14 @@ Considered and rejected:
 | Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 2 / 0 | deductive-reasoning 0, quantitative-reasoning 2, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | not-yet-surveyed | 0 / 0 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
 | Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 2 / 0 | abductive-reasoning 2, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
-| Signal, space & time<br>`perception-space-time` | has-benchmarks | 11 / 1 | perception 9, grounding 0, spatial-reasoning 0, temporal-reasoning 2 |
+| Signal, space & time<br>`perception-space-time` | has-benchmarks | 16 / 1 | perception 14, grounding 0, spatial-reasoning 0, temporal-reasoning 2 |
 | Planning & search<br>`planning-and-search` | has-benchmarks | 1 / 0 | planning 0, search-exploration 1, optimization 0 |
 | Action & execution<br>`action-and-execution` | has-benchmarks | 2 / 0 | sensorimotor-control 0, tool-use 2, long-horizon-execution 0 |
 | Controlled generation<br>`controlled-generation` | has-benchmarks | 4 / 0 | generation-fidelity 3, creativity-novelty 0, instruction-following 1 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | has-benchmarks | 3 / 0 | collaboration 1, communication 0, honesty 1, harm-avoidance 1 |
 | Learning & transfer<br>`learning-and-transfer` | has-benchmarks | 1 / 0 | sample-efficiency 1, continual-learning 0, transfer-learning 0 |
-| Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 7 / 0 | distribution-shift-generalization 5, adversarial-robustness 1, reliability-consistency 1 |
-| Uncertainty handling<br>`uncertainty-and-self-monitoring` | not-yet-surveyed | 0 / 0 | calibration-uncertainty 0, probabilistic-forecasting 0, self-correction 0 |
+| Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 8 / 0 | distribution-shift-generalization 6, adversarial-robustness 1, reliability-consistency 1 |
+| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 1 / 0 | calibration-uncertainty 1, probabilistic-forecasting 0, self-correction 0 |
 | Autonomy & oversight<br>`autonomy-and-oversight` | not-yet-surveyed | 0 / 0 | autonomy 0, self-improvement 0, situational-awareness 0 |
 
 An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobody measures it, the taxonomy cuts this field badly there, or we have not found the work yet. Only the first may ever be published as a gap, and only after a reviewer has confirmed it.
@@ -2168,7 +2170,5 @@ The empty cells, for your answer:
 
 - **Abstraction & analogy** (`abstraction-and-analogy`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
   - why we think the question applies here: Clinical reasoning by analogy to prior cases, and generalisation to conditions not seen in training, are coherent in this family.
-- **Uncertainty handling** (`uncertainty-and-self-monitoring`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
-  - why we think the question applies here: Calibrated diagnosis and knowing when to defer to a clinician are scored in medical evaluation.
 - **Autonomy & oversight** (`autonomy-and-oversight`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
   - why we think the question applies here: Clinical agents that run a consultation or a workflow without intervention make autonomy a coherent question.

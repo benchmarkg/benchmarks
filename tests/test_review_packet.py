@@ -275,6 +275,19 @@ def test_urls_under_a_personal_account_are_not_linked(people):
     assert people.url_ok('https://arxiv.org/abs/0000.00000')
 
 
+def test_an_organisation_in_a_maintainer_is_no_person_and_withholds_no_host():
+    """conic's maintainer names a university's Tissue Image Analytics (TIA) Centre. Read as a person's name, its
+    "image" made every image-net.org and imageclef.org URL a personal page (found 2026-11-27)."""
+    entries = [{'id': 'widgetbench', 'name': 'WidgetBench',
+                'governance': {'maintainer': "The WidgetBench organisers, at the University of Example's Tissue Image "
+                                             'Analytics (TIA) Centre'},
+                'description': 'Every nucleus in each image is segmented and classified.'}]   # "image", as the corpus writes it
+    p = rp.People(entries, {}, ['widgetbench', 'WidgetBench'])
+    assert 'Tissue Image Analytics' not in p.names and 'image' not in p.url_tokens
+    assert p.url_ok('https://www.image-net.org/download.php')
+    assert p.url_ok('https://www.imageclef.org/LifeCLEF')
+
+
 def test_the_finished_packet_is_refused_rather_than_written_when_a_line_fails(corpus, monkeypatch):
     renderer = rp.Renderer(corpus)
     monkeypatch.setattr(renderer, 'coverage_section', lambda family, fstate: ['someone@example.org'])
