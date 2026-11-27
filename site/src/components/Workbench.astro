@@ -1,0 +1,255 @@
+---
+// site/src/components/Workbench.astro -- P3-S10-T05 (10 V5; 09 S6.4, S6.8; 08 S4.3, S8.3). The Comparison Workbench's
+// table for one selection (lib/workbench.ts `view`), as the build renders it: the primary surface 10 V5 names, "a table
+// as the primary surface", and the whole page without JavaScript.
+//
+//   the paste form    a GET form to /compare/ with the pasted ids (`ids`) and any restriction (`k`). The page's script
+//                     reads what it sends; without one the form still sends it, and the page says what it then shows
+//   the summary       what the table is a view of, counted
+//   comparability     one section per column with something to say, before the table, never inside a disclosure: the
+//                     field-by-field diff of a column whose claims span condition sets (ComparabilityBanner "differ",
+//                     with the restrict control and its dropped count), the banner over each set of claims that share
+//                     a key and leave fields unknown ("unknown"), and the count a restriction drops. lib/comparability.ts
+//                     decides every state; this file only draws them
+//   the table         one row per system, one column per (benchmark, metric). Each claim in a cell is its number as
+//                     the provenance drill-down (ProvenanceDetails: value, verification badge with its review state, and
+//                     the condition-completeness meter, 09 S6.4, "a small meter in every cell"), an explicit marker
+//                     naming its unknown material fields (10 V5: "never as a blank and never as an assumed default"), its
+//                     set label where the column spans sets, and its permalink; an ingested claim, its attribution
+//                     inline (04 S9), as ClaimList shows it. A cell with no claim is <Absent>; a row
+//                     whose claims are one of several condition sets somewhere says in how many columns
+//
+// Every element the browser's script (islands/workbench/client.ts) re-composes carries the data attributes it and
+// tests/e2e/v5-workbench.spec.ts read, the claim blocks moved rather than redrawn, so a number is drawn by one component
+// whichever side composed the table. The <template> holds the absence tokens the script clones. The page's styles are
+// global under .workbench, because the script builds banners and cells this file's scoped styles could not reach.
+//
+// NEVER: a claim of the selection in no cell, or in two; a column spanning condition sets without its diff; a dropped
+// claim not counted; a number without its badge, meter and permalink; an ingested claim without its attribution.
+import Absent from './Absent.astro';
+import ComparabilityBanner from './ComparabilityBanner.astro';
+import IngestAttribution from './IngestAttribution.astro';
+import ProvenanceDetails from './ProvenanceDetails.astro';
+import { claimHref } from '../lib/claims';
+import { unknownsOn } from '../lib/comparability';
+import {
+  cellKey, columnNote, columnState, compareHref, encode, pasted, restrictTo, restrictedNote, slug, spansNote, summary, systemOf, unrestrict,
+  type Index, type View,
+} from '../lib/workbench';
+
+interface Props {
+  view: View;
+  index: Index;
+  hrefs: { claims: string | null; comparability: string | null; corpus: string | null };
+  published: { benchmarks: Set<string>; systems: Set<string> };
+}
+
+const { view: v, index, hrefs, published } = Astro.props;
+for (const c of v.columns) {
+  const held = c.comparison == null ? 0 : v.rows.reduce((n, r) => n + (v.cells.get(cellKey(c.id, r.system))?.length ?? 0), 0);
+  if (held !== (c.comparison?.total ?? 0)) throw new Error(`Workbench: column ${c.id} draws ${held} of its ${c.comparison?.total} claims, so one would drop silently`);
+}
+const name = (kind: 'benchmarks' | 'systems' | 'metrics', id: string) => index[kind].get(id) ?? id;
+const said = v.columns.filter((c) => c.comparison != null && (c.comparison.state === 'not-comparable' || c.restricted.length > 0
+  || c.comparison.sets.some((s) => s.state === 'possibly-comparable')));
+const refused = v.columns.filter((c) => c.comparison?.state === 'not-comparable').length;
+---
+<div class="workbench" data-workbench data-workbench-live="static" data-claims-href={hrefs.claims ?? undefined}
+  data-comparability-href={hrefs.comparability ?? undefined} data-corpus-href={hrefs.corpus ?? undefined}>
+  <form class="intake" method="get" action="/compare/" data-wb-form>
+    <label for="wb-ids">Benchmark, system or claim ids</label>
+    <textarea id="wb-ids" name="ids" rows="3" spellcheck="false" autocomplete="off">{pasted(v.selection)}</textarea>
+    <input type="hidden" name="k" value={v.selection.k.join(',')} />
+    <p class="hint">Separated by spaces, commas or new lines. A claim id adds its system and its benchmark; an id this build does not have is listed as ignored, never dropped silently.</p>
+    <button type="submit">Compare</button>
+  </form>
+
+  <p class="notice" data-wb-static>This table is what the bare address selects, which is everything: every curated claim in this build, with each column's comparability already computed. A narrower selection, the ids you paste or a link carrying <code>b=</code>, <code>sys=</code> or <code>k=</code>, is applied by this page's script in your browser. The site is static and no server renders a selection, so without JavaScript that selection is not applied, and this table is shown in its place.</p>
+  <p class="status" role="status" data-wb-status></p>
+
+  <div class="view" data-workbench-view data-selection={encode(v.selection)} data-claims-total={v.claims} data-dropped={v.dropped}>
+    <p class="summary" data-wb-summary>{summary(v)}</p>
+
+    <section class="comparability" data-wb-banners aria-labelledby="wb-banners-h">
+      <h2 id="wb-banners-h">Comparability <span class="count">({refused} of {v.columns.length} {v.columns.length === 1 ? 'column spans' : 'columns span'} condition sets)</span></h2>
+      {said.length === 0 && <p data-wb-banners-none>Every column holds claims of one condition set, with no material field unknown on claims shown together.</p>}
+      {said.map((c) => {
+        const g = c.comparison!;
+        const id = `wb-${slug(c.id)}`;
+        const notComparable = g.state === 'not-comparable';
+        return (
+          <section class="column-banners" data-wb-col-banners={c.id} aria-labelledby={`${id}-h`}>
+            <h3 id={`${id}-h`}>{name('benchmarks', c.benchmark)} · {name('metrics', c.metric!)} <code>{c.metric}</code></h3>
+            {notComparable && g.restrict != null && (
+              <ComparabilityBanner kind="differ" id={`${id}-diff`} level={4} keys={g.sets.map((s) => s.key)} set_labels={g.sets.map((s) => s.label)}
+                set_sizes={g.sets.map((s) => s.rows.length)} total={g.total} diff={g.diff} diff_status={g.diff_status} restrict={g.restrict}
+                restrict_href={compareHref(restrictTo(v.selection, g.sets[0].key))} proceed_href="#wb-table" />
+            )}
+            {g.sets.filter((s) => s.state === 'possibly-comparable').map((s) => (
+              <div data-set-banner={s.label}>
+                <ComparabilityBanner kind="unknown" id={`${id}-set-${s.label.toLowerCase()}-unknown`} level={notComparable ? 5 : 4} key={s.key}
+                  unknowns={unknownsOn(s).map((u) => ({ claim: u.claim, label: name('systems', systemOf(u.system)), fields: u.fields }))} />
+              </div>
+            ))}
+            {c.restricted.length > 0 && (
+              <p class="restricted" data-wb-restricted data-dropped={c.dropped.length}>{restrictedNote(c)} <a href={compareHref(unrestrict(v.selection, c))}>Show them</a></p>
+            )}
+          </section>
+        );
+      })}
+    </section>
+
+    <div class="scroll" tabindex="0" role="region" aria-label="The comparison table">
+      <table data-wb-table id="wb-table">
+        <caption>Systems by benchmark and metric. Each number carries its verification and how many of its material conditions it states; where a column spans condition sets, each claim says which set it is in.</caption>
+        <thead>
+          <tr>
+            <th scope="col">System</th>
+            {v.columns.map((c) => (
+              <th scope="col" data-col={c.id} data-col-state={columnState(c)} data-claims-total={c.comparison?.total ?? 0}>
+                {published.benchmarks.has(c.benchmark) ? <a href={`/benchmarks/${c.benchmark}/`}>{name('benchmarks', c.benchmark)}</a> : <code>{c.benchmark}</code>}
+                {c.metric != null && <span class="metric">{name('metrics', c.metric)}</span>}
+                {columnNote(c) != null && <span class="note" data-col-note>{columnNote(c)}</span>}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {v.rows.map((r) => (
+            <tr data-system={r.system} data-spans-sets={r.spans}>
+              <th scope="row">
+                {published.systems.has(r.system) ? <a href={`/systems/${r.system}/`}>{name('systems', r.system)}</a> : <code>{r.system}</code>}
+                {spansNote(r) != null && <span class="note" data-wb-spans>{spansNote(r)}</span>}
+              </th>
+              {v.columns.map((c) => {
+                const list = v.cells.get(cellKey(c.id, r.system)) ?? [];
+                const dropped = c.dropped.filter((d) => systemOf(d.claim.system) === r.system).length;
+                const many = c.comparison?.state === 'not-comparable';
+                return (
+                  <td data-col={c.id}>
+                    {list.map((row) => {
+                      const k = row.comparability;
+                      const label = c.setOf.get(row.claim.id)!;
+                      const set = c.comparison!.sets.find((s) => s.label === label)!;
+                      const numbered = row.claim.value != null || (row.claim.value_text != null && row.claim.value_text !== '');
+                      return (
+                        <div class="claim" data-wb-claim={row.claim.id} data-key={k.comparability_key} data-set={label} data-set-state={set.state}>
+                          {many && <span class="set" data-set-label>Set {label}</span>}
+                          {(row.claim.system.includes('@') || row.claim.subset != null || row.claim.opponent != null) && (
+                            <span class="what">{row.claim.system.includes('@') && <code>{row.claim.system}</code>}{row.claim.opponent != null && <> vs <code>{row.claim.opponent}</code></>}{row.claim.subset != null && <> <code>{row.claim.subset}</code></>}</span>
+                          )}
+                          {numbered
+                            ? <ProvenanceDetails row={row} />
+                            : <Absent state="not-reported" reason={row.claim.resolution_status === 'pending' ? 'its resolution is pending' : 'no value recorded'} />}
+                          {k.unknown_fields.length > 0 && (
+                            <span class="unknown" data-unknown-marker={k.unknown_fields.join(' ')}><span aria-hidden="true">?</span> unknown: {k.unknown_fields.map((f, i) => <><code>{f}</code>{i < k.unknown_fields.length - 1 ? ', ' : ''}</>)}</span>
+                          )}
+                          <a class="permalink" href={claimHref(row.claim.id)} data-claim-permalink={row.claim.id}><code>{row.claim.id}</code></a>
+                          {row.claim.ingestion != null && <IngestAttribution ingestion={row.claim.ingestion} />}
+                        </div>
+                      );
+                    })}
+                    {dropped > 0 && <span class="dropped" data-wb-dropped={dropped}>{dropped} dropped by the restriction</span>}
+                    {list.length === 0 && dropped === 0 && <span data-wb-none><Absent state="not-reported" /></span>}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="not-built" data-wb-plot="not-built">10 V5's secondary surface, a parallel-coordinates plot with a dashed line for every row marked as one of several condition sets, is not built: the chart library it names does not fit this page's 120 KB script budget. The table is the whole comparison.</p>
+
+  <template data-wb-templates>
+    <span data-wb-t="none" data-wb-none><Absent state="not-reported" /></span>
+    <span data-wb-t="unknown"><Absent state="unknown" /></span>
+  </template>
+</div>
+
+<script>
+  import '../islands/workbench/client.ts';
+</script>
+
+<style is:global>
+  .workbench { display: grid; gap: var(--sp-4); }
+  .workbench .intake { display: grid; gap: var(--sp-1); max-inline-size: 48rem; }
+  .workbench .intake label { font-weight: 600; }
+  .workbench .intake textarea {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--c-ink);
+    background: var(--c-bg);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    padding: var(--sp-1) var(--sp-2);
+  }
+  .workbench .intake button {
+    justify-self: start;
+    min-block-size: 1.75rem;
+    padding-inline: var(--sp-3);
+    border: 1px solid var(--c-border-strong);
+    border-radius: 3px;
+    background: var(--c-surface);
+    color: var(--c-ink);
+    font: inherit;
+    cursor: pointer;
+  }
+  .workbench .hint, .workbench .count, .workbench .note, .workbench .metric, .workbench .not-built, .workbench .what { color: var(--c-ink-muted); }
+  .workbench .hint, .workbench .not-built { margin: 0; font-size: var(--fs-sm); }
+  .workbench .notice, .workbench .ignored {
+    margin: 0;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-caution);
+    background: var(--c-caution-bg);
+    font-size: var(--fs-sm);
+  }
+  .workbench .status:empty { display: none; }
+  .workbench .status { margin: 0; font-size: var(--fs-sm); }
+  .workbench .view { display: grid; gap: var(--sp-4); min-inline-size: 0; }
+  .workbench .summary { margin: 0; }
+  .workbench .comparability h2 { margin: 0 0 var(--sp-2); font-size: var(--fs-lg); }
+  .workbench .comparability h3 { margin: var(--sp-4) 0 var(--sp-1); font-size: var(--fs-base); }
+  .workbench .count { font-weight: 400; }
+  .workbench .restricted { margin: var(--sp-1) 0 0; font-size: var(--fs-sm); }
+  .workbench .scroll { overflow-x: auto; }
+  .workbench table[data-wb-table] { border-collapse: collapse; font-size: var(--fs-sm); }
+  .workbench table[data-wb-table] caption { caption-side: top; text-align: start; padding-block-end: var(--sp-2); color: var(--c-ink-muted); }
+  .workbench table[data-wb-table] th, .workbench table[data-wb-table] td {
+    padding: var(--sp-1) var(--sp-2);
+    border: 1px solid var(--c-border);
+    text-align: start;
+    vertical-align: top;
+    min-inline-size: 8rem;
+  }
+  .workbench table[data-wb-table] thead th { font-weight: 600; }
+  .workbench table[data-wb-table] tbody th { font-weight: 400; }
+  .workbench table[data-wb-table] .metric, .workbench table[data-wb-table] .note { display: block; font-size: var(--fs-xs); font-weight: 400; }
+  .workbench .claim { display: grid; gap: var(--sp-05); justify-items: start; padding-block: var(--sp-1); }
+  .workbench .claim + .claim { border-block-start: 1px dashed var(--c-border); }
+  .workbench .set { font-size: var(--fs-xs); font-weight: 600; padding: 0 var(--sp-1); border: 1px solid var(--c-caution); }
+  .workbench .unknown, .workbench .dropped, .workbench .what { font-size: var(--fs-xs); }
+  /* 09 S8.1, SC 2.5.8: the permalink is a 24px target on its own line, 28px at coarse pointers */
+  .workbench .permalink { display: inline-flex; align-items: center; min-block-size: 1.5rem; font-size: var(--fs-xs); }
+  @media (pointer: coarse) {
+    .workbench .permalink { min-block-size: 1.75rem; }
+  }
+
+  /* the banners the script builds, drawn as ComparabilityBanner draws its own (09 S6.8) */
+  .workbench .wb-banner {
+    margin-block: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--c-caution);
+    border-inline-start-width: 0.25rem;
+    background: var(--c-caution-bg);
+    color: var(--c-ink);
+  }
+  .workbench .wb-banner .title { margin: 0 0 var(--sp-2); font-size: var(--fs-base); }
+  .workbench .wb-banner p { margin-block: 0 var(--sp-2); }
+  .workbench .wb-banner table { border-collapse: collapse; font-size: var(--fs-sm); }
+  .workbench .wb-banner th, .workbench .wb-banner td { padding: var(--sp-1) var(--sp-3) var(--sp-1) 0; text-align: start; vertical-align: top; }
+  .workbench .wb-banner .n, .workbench .wb-banner .none { color: var(--c-ink-muted); }
+  .workbench .wb-banner .actions { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-block-end: 0; }
+</style>
