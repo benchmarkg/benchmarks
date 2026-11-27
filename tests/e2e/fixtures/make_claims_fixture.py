@@ -42,7 +42,8 @@ constructs them, each on the benchmark 10 V5 names, except that RoboArena's two 
 
   claim-e2e000000003..05   RoboArena ratings in its two pools, all under one constructed condition record that answers
                            every material field: one comparability key and nothing unknown, so the key alone would show
-                           them together, silently (04 S8's state 1) -- the confidently wrong number 10 V5 means
+                           them together, silently (04 S8's state 1) -- the confidently wrong number 10 V5 means. Each
+                           row's `pool` is its real pool record's id and snapshot_date, as the stage inlines it
   claim-e2e000000006..08   tau-bench under pass^k, k 1 for two systems and k 8 for one, on two constructed condition
                            records; the metric id `e2e-pass-hat-k` is constructed too, since the corpus has no tau-bench
                            Metric record
@@ -69,6 +70,7 @@ sys.path.insert(0, ROOT)
 from schema.benchmark import load_benchmark  # noqa: E402
 from schema.claim import ResultClaim, snapshot_sha256  # noqa: E402
 from schema.conditions import EvalConditions  # noqa: E402
+from schema.entities import RatingPool  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
 from tools.build import claims as stage  # noqa: E402
 from tools.build import comparability  # noqa: E402
@@ -166,11 +168,15 @@ def refusal_rows() -> list[dict]:
                        'extraction_confidence': 0.9, 'review_state': 'spot-checked', 'reviewed_by': None, 'reviewed_on': None,
                        'field_provenance': {'value': 'source'}},
             **extra))
+        pool = None
+        if claim.rating_pool is not None:                # the stage's `pool`: the real record's id and snapshot_date
+            rec = RatingPool.model_validate(read_yaml(os.path.join(ROOT, 'data', 'rating-pools', '%s.yaml' % claim.rating_pool)))
+            pool = {'id': rec.id, 'snapshot_date': rec.snapshot_date.isoformat()}
         out.append({'claim': claim.model_dump(mode='json', by_alias=True, exclude_computed_fields=True),
                     'conditions': cond.model_dump(mode='json', by_alias=True, exclude_computed_fields=True),
                     'comparability': comparability.compute_for_claim(claim, res, cond).as_dict(),
                     'material': list(res.material), 'weights': {f: res.weights[f] for f in res.material},
-                    'source': None, 'reporter': {'id': 'org-e2e-fixture', 'name': None}})
+                    'source': None, 'reporter': {'id': 'org-e2e-fixture', 'name': None}, 'pool': pool})
     return out
 
 

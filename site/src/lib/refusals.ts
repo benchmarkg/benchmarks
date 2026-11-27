@@ -5,10 +5,10 @@
 //   rating-pool           Pool-relative rating compared across snapshots. "Require matching `rating_pool_id` + snapshot
 //                         date; otherwise render side by side with no shared axis." Read off the claim's `rating_pool`
 //                         (schema/claim.py: a rating claim names one, no other claim may) and its metric's
-//                         `requires_pool`. The pool's snapshot_date is not in any artifact the site reads (claims.json
-//                         carries the pool id, not the RatingPool record), but schema/entities.py RatingPool makes the
-//                         id carry the date ("a pool is a pool at a date"), so one id is one pool at one date and the
-//                         date shown is the id's; an id dated to the month shows the month
+//                         `requires_pool`. schema/entities.py RatingPool makes a pool id one pool at one date ("a pool
+//                         is a pool at a date"), so claims with one pool id share its snapshot; the date shown is the
+//                         record's snapshot_date, which tools/build/claims.py inlines in the row (`pool`), and only a
+//                         row without it falls back to the date the id carries, which may be the month alone
 //   pass-hat-k            Reliability metric averaged across k. "pass^1 and pass^8 are different metrics." Read off the
 //                         inlined conditions' `selection_strategy: pass-hat-k` and `k`; a claim under another strategy
 //                         beside a pass^k claim is a different metric as well
@@ -44,11 +44,9 @@
 // it applies a selection. Like lib/comparability.ts, this module imports nothing at run time (Node strips its types in
 // site/test/refusals.test.mjs).
 //
-// What would close the two gaps above. The snapshot date: tools/build/claims.py could inline the RatingPool record a
-// rating names (its snapshot_date) in the claims.json row, a build change with no schema change; until then a match on
-// the id is a match on the date by the schema's identity rule. The dimensions: a schema field that names the
-// dimensions of a vector-valued result (on the Metric or the Benchmark) and marks a metric or claim that aggregates
-// over them would let a collapsed scalar be refused on its own; that is a schema/*.py change, not made here.
+// What would close the gap above. The dimensions: a schema field that names the dimensions of a vector-valued result
+// (on the Metric or the Benchmark) and marks a metric or claim that aggregates over them would let a collapsed scalar
+// be refused on its own; that is a schema/*.py change, not made here.
 import type { ClaimRow } from './claims';
 
 export const REFUSALS = ['rating-pool', 'pass-hat-k', 'vector-valued', 'legality-track', 'training-eligibility', 'resolution'] as const;
@@ -108,6 +106,14 @@ const listed = (gs: Group[]) => gs.map((g) => `${g.label} (${plural(g.claims.len
 export function poolDate(pool: string): string | null {
   return /-(\d{4}-\d{2}(?:-\d{2})?)$/.exec(pool)?.[1] ?? null;
 }
+
+/** A rating's snapshot date: its pool record's snapshot_date, which the build inlines in the row (tools/build/claims.py
+ *  `pool`), or, in a row without the record, the date its pool id carries. null for a claim that names no pool. */
+export function snapshotOf(r: ClaimRow): string | null {
+  const pool = r.claim.rating_pool;
+  if (pool == null) return null;
+  return r.pool != null && r.pool.id === pool ? r.pool.snapshot_date : poolDate(pool);
+}
 const RESOLUTION_ORDER = ['resolved', 'partial', 'pending'];
 
 const RULES: Rule[] = [
@@ -115,12 +121,12 @@ const RULES: Rule[] = [
     id: 'rating-pool',
     name: 'Pool-relative ratings from different rating pools',
     field: 'rating_pool',
-    requires: 'ratings fitted in one rating pool at one snapshot date: the same rating_pool, whose id carries its snapshot date (a pool is a pool at a date, 04 S9).',
+    requires: 'ratings fitted in one rating pool at one snapshot date: the same rating_pool, which is one pool at one snapshot date (a pool is a pool at a date, 04 S9).',
     applies: (rows, ctx) => ctx.metric?.requires_pool === true || rows.some((r) => r.claim.claim_type === 'rating' || r.claim.rating_pool != null),
     value: (r) => {
       const pool = r.claim.rating_pool;
       if (pool == null) return unrecorded('rating pool');
-      const date = poolDate(pool);
+      const date = snapshotOf(r);
       return recorded(pool, `${pool}, snapshot ${date ?? 'undated'}`, `${date ?? ''} ${pool}`);
     },
     why: (gs, rows) => `${plural(rows.length, 'rating comes', 'ratings come')} from ${gs.length} rating pools: ${listed(gs)}. A rating is relative to the pool it was fitted in, and it moves when a different system joins the pool, so a rating is never read against one from another pool or another snapshot.`,

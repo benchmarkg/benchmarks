@@ -469,11 +469,12 @@ def refuse(artifacts: dict[str, dict]) -> None:
 # ---- the three artifacts ------------------------------------------------------------------------
 
 def emit(entities: dict[str, list[dict]], subsets: list[dict], benchmark_models: dict, claims: list,
-         conditions: dict, vocabularies: dict, drafts: bool = False, sources: dict | None = None) -> dict[str, dict]:
+         conditions: dict, vocabularies: dict, drafts: bool = False, sources: dict | None = None,
+         pools: dict | None = None) -> dict[str, dict]:
     """file name -> artifact, NFC throughout, after every refusal has passed; raises Refused otherwise. The three
     above, then the claims stage's (tools/build/claims.py, P3-S10-T03): claims.json, claims-ingested/<id>.json and
-    derived/comparability.json, which read the same claims and conditions, and `sources` (id -> its Records) for the
-    Source each claim cites."""
+    derived/comparability.json, which read the same claims and conditions, `sources` (id -> its Records) for the
+    Source each claim cites, and `pools` (id -> its Records) for the rating pool a rating names."""
     claimed, errors = claim_fields(benchmark_models, claims, conditions)
     if errors:
         raise Refused(errors)
@@ -482,7 +483,8 @@ def emit(entities: dict[str, list[dict]], subsets: list[dict], benchmark_models:
                'enums.json': enums_artifact()})
     refuse(out)
     from tools.build import claims as claim_stage       # it imports this module
-    out.update(claim_stage.stage(benchmark_models, claims, conditions, sources or {}, entities['organization'], drafts))
+    out.update(claim_stage.stage(benchmark_models, claims, conditions, sources or {}, entities['organization'], drafts,
+                                 pools or {}))
     return out
 
 

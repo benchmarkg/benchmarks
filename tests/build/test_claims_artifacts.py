@@ -124,7 +124,8 @@ def test_every_curated_claim_on_a_published_benchmark_is_a_claim_row(preview):
     ids = [r['claim']['id'] for r in got['claims']]
     assert ids == sorted(ids, key=lambda i: i.encode('utf-8'))
     assert {k for r in got['claims'] for k in r} == claim_row_keys() == \
-        {'claim', 'conditions', 'comparability', 'material', 'weights', 'key_shared_with', 'source', 'reporter'}
+        {'claim', 'conditions', 'comparability', 'material', 'weights', 'key_shared_with', 'source', 'reporter', 'pool'}
+    assert all(r['pool'] is None for r in got['claims'])           # no fixture claim is a rating
 
 
 def test_a_row_inlines_its_conditions_and_carries_the_builds_own_arithmetic(preview):
@@ -216,6 +217,42 @@ def test_a_claim_citing_a_source_nobody_holds_is_refused(tmp_path):
     plant(tmp_path / 'root', 'claim-00000000a005', 'scicode', source='src-nobody-holds-this')
     errors = artifacts.build(str(tmp_path / 'root'), drafts=True).errors
     assert any('src-nobody-holds-this' in e and 'no data/sources/ file holds it' in e for e in errors), errors
+
+
+POOL = 'pool-scicode-fixture-2026-11'      # dated to the month, as an id may be; the record holds the day
+
+
+def pool_record(root, **over) -> dict:
+    doc = dict({'id': POOL, 'benchmark': 'scicode', 'snapshot_date': '2026-11-03', 'members': ['gpt-4o', 'o3'],
+                'rating_system': 'elo', 'sources': [read_yaml(os.path.join(FIXTURE, 'data', 'claims', 'scicode',
+                                                                         SCICODE + '.yaml'))['source']]}, **over)
+    path = os.path.join(str(root), 'data', 'rating-pools', doc['id'] + '.yaml')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write(json.dumps(doc, ensure_ascii=False))
+    return doc
+
+
+def test_a_rating_row_inlines_its_pool_record_and_every_other_row_names_none(tmp_path):
+    """10 V5's rating-pool refusal needs "matching `rating_pool_id` + snapshot date": the date is the record's."""
+    shutil.copytree(FIXTURE, tmp_path / 'root')
+    pool_record(tmp_path / 'root')
+    plant(tmp_path / 'root', 'claim-00000000a006', 'scicode', claim_type='rating', rating_pool=POOL, value=1210.0)
+    result = artifacts.build(str(tmp_path / 'root'), drafts=True)
+    assert result.errors == []
+    rows = rows_of(result.claims)
+    assert rows['claim-00000000a006']['pool'] == {'id': POOL, 'snapshot_date': '2026-11-03'}
+    assert all(r['pool'] is None for cid, r in rows.items() if cid != 'claim-00000000a006')
+
+
+def test_a_rating_naming_a_pool_nobody_holds_or_a_broken_one_is_refused(tmp_path):
+    shutil.copytree(FIXTURE, tmp_path / 'root')
+    plant(tmp_path / 'root', 'claim-00000000a007', 'scicode', claim_type='rating', rating_pool=POOL, value=1210.0)
+    errors = artifacts.build(str(tmp_path / 'root'), drafts=True).errors
+    assert any('claim-00000000a007' in e and POOL in e and 'no data/rating-pools/ file holds it' in e for e in errors), errors
+    pool_record(tmp_path / 'root', members=['gpt-4o'])                     # RatingPool needs two members: tier 1 fails
+    errors = artifacts.build(str(tmp_path / 'root'), drafts=True).errors
+    assert any('claim-00000000a007' in e and 'it fails tier 1' in e for e in errors), errors
 
 
 # ---- the pairwise diff ---------------------------------------------------------------------------------------------

@@ -37,6 +37,7 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'provenance-claim
 sys.path.insert(0, ROOT)
 from schema import validators as V  # noqa: E402
 from schema.claim import ResultClaim, snapshot_sha256  # noqa: E402
+from schema.entities import RatingPool  # noqa: E402
 from schema.taxonomy import read_yaml  # noqa: E402
 
 spec = importlib.util.spec_from_file_location('comparability_fixture', os.path.join(ROOT, 'tools', 'build', 'comparability.py'))
@@ -59,6 +60,14 @@ def benchmark_id(ref: str) -> str:
     return ref.split('@', 1)[0].split('#', 1)[0]
 
 
+def pool_of(pool_id: str | None) -> dict | None:
+    """The row's `pool` as tools/build/claims.py inlines it: the rating pool record's id and snapshot_date."""
+    if pool_id is None:
+        return None
+    rec = RatingPool.model_validate(read_yaml(os.path.join(ROOT, 'data', 'rating-pools', pool_id + '.yaml')))
+    return {'id': rec.id, 'snapshot_date': rec.snapshot_date.isoformat()}
+
+
 def org_name(org_id: str) -> str | None:
     path = os.path.join(ROOT, 'data', 'organizations', org_id + '.yaml')
     return read_yaml(path).get('name') if os.path.exists(path) else None   # get-default: a record may omit it
@@ -78,6 +87,7 @@ def row(corpus, profiles, claim, keys, constructed=None) -> dict:
         'key_shared_with': keys[comp.comparability_key] - 1,
         'source': {k: (raw or {}).get(k) for k in SOURCE_FIELDS} if raw else None,
         'reporter': {'id': claim.reported_by, 'name': org_name(claim.reported_by)},
+        'pool': pool_of(claim.rating_pool),
         'constructed': constructed,
     }
 

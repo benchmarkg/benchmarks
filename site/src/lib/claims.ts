@@ -52,6 +52,12 @@ export interface ClaimSource {
   licence_class: string;
 }
 
+/** The rating pool a rating claim names, as its data/rating-pools/ record has it (04 S9: "a pool is a pool at a date"). */
+export interface ClaimPool {
+  id: string;
+  snapshot_date: string;                      // YYYY-MM-DD
+}
+
 export interface ClaimRow {
   claim: ResultClaim;
   conditions: EvalConditions | null;          // inlined; null when the claim names no condition record
@@ -61,6 +67,7 @@ export interface ClaimRow {
   key_shared_with: number;                    // other claims with the same comparability_key
   source: ClaimSource | null;
   reporter: { id: string; name: string | null };
+  pool: ClaimPool | null;                     // the claim's rating_pool record; null for a claim that names none
   badge?: 'machine-ingested';                 // a claims-ingested/ row only (tools/build/claims.py)
 }
 
