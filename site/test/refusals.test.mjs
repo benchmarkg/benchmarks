@@ -7,7 +7,7 @@
 //   cd site && node --test test/refusals.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NOT_RECORDED, REFUSALS, factsOf, poolDate, refuse, signature } from '../src/lib/refusals.ts';
+import { NOT_RECORDED, REFUSALS, factsOf, poolDate, refuse, signature, snapshotOf } from '../src/lib/refusals.ts';
 import { EMPTY, cellKey, cellParts, view } from '../src/lib/workbench.ts';
 
 /** A claims.json row, as much of one as the modules read. */
@@ -46,6 +46,19 @@ test('ratings from two pools: refused, whatever the key says, and the pool id ca
   // a pool-relative metric with a claim that names no pool: the pool is not recorded, never assumed the other's
   const mixed = refuse([row('c1', { claim: { rating_pool: 'pool-a-2026-01' } }), row('c2')], facts({}, { requires_pool: true }));
   assert.deepEqual(groups(mixed, 'rating-pool'), [['pool-a-2026-01', ['c1']], [NOT_RECORDED, ['c2']]]);
+});
+
+test("a rating's snapshot is its pool record's, as the build inlines it; a row without the record reads the id's date", () => {
+  const rated = (id, pool, rec) => ({ ...row(id, { claim: { claim_type: 'rating', rating_pool: pool } }), pool: rec });
+  const r = refuse([
+    rated('c1', 'pool-chess-2026-09', { id: 'pool-chess-2026-09', snapshot_date: '2026-09-25' }),
+    rated('c2', 'pool-chess-2026-10', { id: 'pool-chess-2026-10', snapshot_date: '2026-10-02' }),
+  ]);
+  assert.deepEqual(r.refusals[0].groups.map((g) => g.label), ['pool-chess-2026-09, snapshot 2026-09-25', 'pool-chess-2026-10, snapshot 2026-10-02']);
+  assert.equal(snapshotOf(rated('c3', 'pool-chess-2026-09', null)), '2026-09', "no record inlined: the id's month");
+  assert.equal(snapshotOf(rated('c4', 'pool-chess-2026-09', { id: 'pool-other-2026-01-01', snapshot_date: '2026-01-01' })), '2026-09',
+    "another pool's record is not this claim's");
+  assert.equal(snapshotOf(row('c5')), null);
 });
 
 test('pass^k across k, and pass^k beside another selection strategy, are refused; pass@k across k is the key\'s', () => {

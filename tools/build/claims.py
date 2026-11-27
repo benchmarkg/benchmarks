@@ -32,7 +32,10 @@ artifact_url, provenance_snapshot, source and disputed_by refs travel with it), 
 it names none), 04 S8's numbers (`comparability`: comparability_key, key_unknown_count, condition_completeness,
 unknown_fields, fields_material_total), the benchmark's resolved `material` set and `weights`, `key_shared_with` (the
 other rows of the same artifact that share the key), the cited Source reduced to what a citation needs (`source`, the
-ClaimSource fields), and the reporter's id and published name. `machine_ingested` counts the rows each
+ClaimSource fields), the reporter's id and published name, and `pool`: the rating pool a rating claim names, as its
+data/rating-pools/ record has it (its id and snapshot_date), null for any other claim. 04 S9 makes a pool "a pool at a
+date", and 10 V5's rating-pool refusal requires "matching `rating_pool_id` + snapshot date"; RatingPool is not one of
+corpus.json's kinds (08 S4.2), so the row carries the date the workbench reads. `machine_ingested` counts the rows each
 claims-ingested file holds, so the workbench can say "N machine-ingested claims hidden -- show them" (10 V5) without
 fetching one.
 
@@ -138,12 +141,12 @@ def row_tier(row: dict) -> str:
 # ---- the stage -----------------------------------------------------------------------------------------------------
 
 def stage(benchmarks: dict, claims: list, conditions: dict, sources: dict, organizations: list[dict],
-          drafts: bool = False) -> dict[str, dict]:
+          drafts: bool = False, pools: dict | None = None) -> dict[str, dict]:
     """published name -> artifact, NFC, after every refusal has passed; raises emit.Refused otherwise.
 
     `benchmarks` maps a published benchmark id to its model; `claims` are tools.validate.tiers Records from
-    data/claims/; `conditions` and `sources` map an id to the Records that hold it; `organizations` are corpus.json's
-    published ones."""
+    data/claims/; `conditions`, `sources` and `pools` map an id to the Records that hold it (`pools` the
+    data/rating-pools/ ones); `organizations` are corpus.json's published ones."""
     profiles = comparability.load_profiles()
     names = {o['id']: o.get('name') for o in organizations}      # get-default: a name is optional on the record
     resolutions: dict[str, Any] = {}
@@ -171,6 +174,15 @@ def stage(benchmarks: dict, claims: list, conditions: dict, sources: dict, organ
                 r.path, c.id, c.source, 'no data/sources/ file holds it' if not held else
                 'it is held by %d files' % len(held) if len(held) > 1 else 'it fails tier 1'))
             continue
+        pool = None
+        if c.rating_pool is not None:
+            kept = (pools or {}).get(c.rating_pool, [])  # get-default: a dangling pool is reported here
+            if len(kept) != 1 or kept[0].model is None or any(f.blocks for f in kept[0].schema_findings):
+                errors.append('%s: %s names rating pool %s, but %s' % (
+                    r.path, c.id, c.rating_pool, 'no data/rating-pools/ file holds it' if not kept else
+                    'it is held by %d files' % len(kept) if len(kept) > 1 else 'it fails tier 1'))
+                continue
+            pool = {'id': kept[0].model.id, 'snapshot_date': kept[0].model.snapshot_date.isoformat()}
         if bench not in resolutions:
             resolutions[bench] = comparability.resolve_profile(benchmarks[bench], profiles)
         res = resolutions[bench]
@@ -179,7 +191,7 @@ def stage(benchmarks: dict, claims: list, conditions: dict, sources: dict, organ
         row = {'claim': dump(c), 'conditions': dump(cond) if cond is not None else None,
                'comparability': comp.as_dict(), 'material': list(res.material),
                'weights': {f: res.weights[f] for f in res.material}, 'source': {k: source.get(k) for k in SOURCE_FIELDS},
-               'reporter': {'id': c.reported_by, 'name': names.get(c.reported_by)}}
+               'reporter': {'id': c.reported_by, 'name': names.get(c.reported_by)}, 'pool': pool}
         t = tier(c)
         if t == MACHINE:
             row['badge'] = MACHINE

@@ -148,6 +148,7 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
     sources: dict[str, list] = {}
     claims: list = []
     conditions: dict[str, list] = {}
+    pools: dict[str, list] = {}                        # the rating pools the claims name, for the claims stage
 
     def broken(r) -> str:
         return '; '.join(f.message for f in r.schema_findings if f.blocks)
@@ -162,6 +163,9 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
             continue
         if kind == 'conditions':
             conditions.setdefault(r.id, []).append(r)
+            continue
+        if kind == 'rating-pool':
+            pools.setdefault(r.id, []).append(r)
             continue
         if kind not in CORPUS_KINDS:
             continue
@@ -213,7 +217,7 @@ def build(root: str = ROOT, drafts: bool = False) -> Build:
         return out
     try:
         done = emit.emit({k: list(v.values()) for k, v in published.items()}, subsets, models, claims, conditions,
-                         vocabulary_versions(), drafts=drafts, sources=sources)
+                         vocabulary_versions(), drafts=drafts, sources=sources, pools=pools)
     except emit.Refused as e:
         out.errors += e.errors
         return out
