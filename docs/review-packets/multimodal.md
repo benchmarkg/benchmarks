@@ -2,11 +2,11 @@
 
 # Review packet: Multimodal
 
-`multimodal` · 12 published entries · 7 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`multimodal` · 15 published entries · 7 subdomains · data as of 2026-11-27 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
-Everything below is generated from the catalogue's files. Verification status of the family's 12 entries: 12 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
+Everything below is generated from the catalogue's files. Verification status of the family's 15 entries: 15 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
 
 How to read an entry: each evidenced field shows its value, the curator's reason where one was given, the verbatim quote it rests on and the Source it is quoted from (S1, S2, ... in the entry's Sources table, with the URL and the archived copy). Code has checked that every quote is an exact substring of the stored extract of its Source; whether the quote supports the value is what a reviewer judges. Text that may name a person is not reproduced here (\[withheld: it may name a person; see the entry file\]); the entry file has it.
 
@@ -21,12 +21,12 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 
 | # | Subdomain | Definition | Entries (primary + secondary) | Page |
 | ---: | --- | --- | --- | --- |
-| 1 | `visual-qa`<br>Visual QA | Answering questions about an image where the answer depends jointly on the question and the image. | 5 + 7 | has benchmarks |
+| 1 | `visual-qa`<br>Visual QA | Answering questions about an image where the answer depends jointly on the question and the image. | 6 + 7 | has benchmarks |
 | 2 | `visual-grounding`<br>Visual grounding | Locating the image region that a language expression refers to. | 1 + 2 | has benchmarks |
-| 3 | `chart-diagram-understanding`<br>Chart diagram understanding | Answering questions that require reading structured visual content such as charts, plots and diagrams. | 1 + 1 | has benchmarks |
-| 4 | `video-language`<br>Video language | Tasks pairing video with language in which the correspondence between the two is what is scored. | 2 + 0 | has benchmarks |
+| 3 | `chart-diagram-understanding`<br>Chart diagram understanding | Answering questions that require reading structured visual content such as charts, plots and diagrams. | 1 + 2 | has benchmarks |
+| 4 | `video-language`<br>Video language | Tasks pairing video with language in which the correspondence between the two is what is scored. | 3 + 0 | has benchmarks |
 | 5 | `audio-language`<br>Audio language | Tasks pairing audio with language in which the correspondence between the two is what is scored. | 1 + 2 | has benchmarks |
-| 6 | `any-to-any-generation`<br>Any to any generation | Generating output in one modality from input in another, scored on whether the output corresponds to the input. | 1 + 5 | has benchmarks |
+| 6 | `any-to-any-generation`<br>Any to any generation | Generating output in one modality from input in another, scored on whether the output corresponds to the input. | 2 + 5 | has benchmarks |
 | 7 | `cross-modal-retrieval`<br>Cross modal retrieval | Retrieving items in one modality using a query expressed in another. | 1 + 1 | has benchmarks |
 
 Your answer:
@@ -43,22 +43,269 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (2): `docvqa`, `mmmu`. `python scripts/review_packet.py --family multimodal --all` renders every entry.
+Not in this packet (5): `docvqa`, `figcodebench`, `mmmu`, `textvqa`, `video-mme`. `python scripts/review_packet.py --family multimodal --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
-| 2.1 | [MMMU-Pro](#21-mmmu-pro-mmmu-pro) | `visual-qa` | 44 | 8 |
-| 2.2 | [TextVQA](#22-textvqa-textvqa) | `visual-qa` | 42 | 10 |
+| 2.1 | [MMBench](#21-mmbench-mmbench) | `visual-qa` | 55 | 10 |
+| 2.2 | [MMMU-Pro](#22-mmmu-pro-mmmu-pro) | `visual-qa` | 44 | 8 |
 | 2.3 | [VQA](#23-vqa-vqa) | `visual-qa` | 60 | 9 |
 | 2.4 | [RefCOCO](#24-refcoco-refcoco) | `visual-grounding` | 41 | 7 |
 | 2.5 | [ChartQA](#25-chartqa-chartqa) | `chart-diagram-understanding` | 36 | 8 |
 | 2.6 | [Perception Test](#26-perception-test-perception-test) | `video-language` | 47 | 11 |
-| 2.7 | [Video-MME](#27-video-mme-video-mme) | `video-language` | 42 | 11 |
+| 2.7 | [VRBench](#27-vrbench-vrbench) | `video-language` | 56 | 12 |
 | 2.8 | [MMAU](#28-mmau-mmau) | `audio-language` | 41 | 12 |
 | 2.9 | [GenEval](#29-geneval-geneval) | `any-to-any-generation` | 45 | 10 |
 | 2.10 | [Flickr30k](#210-flickr30k-flickr30k) | `cross-modal-retrieval` | 43 | 10 |
 
-### 2.1 MMMU-Pro (mmmu-pro)
+### 2.1 MMBench (mmbench)
+
+`data/benchmarks/multimodal/mmbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
+
+*3,217 multiple-choice questions on images, in English and Chinese, over 20 abilities, scored with CircularEval.*
+
+A bilingual multiple-choice benchmark for vision-language models from the OpenCompass community, whose paper's authors are at Shanghai AI Laboratory, Nanyang Technological University, the Chinese University of Hong Kong, the National University of Singapore and Zhejiang University (ECCV 2024). Each item is an image, an optional hint, a question and two to four options, filed under a three-level ability taxonomy: perception and reasoning at the top, six L-2 abilities, and twenty L-3 abilities such as object localisation, OCR, celebrity recognition, spatial relationship, social relation and future prediction, with at least 125 questions each. Student volunteers collected more than 80% of the questions from the Internet and built the rest on images from public datasets' validation splits; in v1.1, questions most LLMs answered from the text alone were removed. MMBench-CN translates every question into Chinese with GPT-4, checked by people. Scoring is CircularEval: a question with N options is asked N times with the options rotated and counts only if every pass is right, with free-form answers mapped to an option by heuristic matching and then an LLM (gpt-4-0125 in v1.1). The data are split 4:6 into a dev split with public answers and a test split whose answers the maintainers hold. v1.0 (July 2023, 2,974 questions) was refined into v1.1 (April 2024, 3,217 questions). The OpenVLM Leaderboard, run with the maintainers' VLMEvalKit, ranks 284 models on the v1.1 English and Chinese test splits; its newest MMBench row is dated September 2025.
+
+| Classification | |
+| --- | --- |
+| Primary domain | multimodal/visual-qa |
+| Secondary domains | - |
+| Capabilities | perception, context-integration |
+| Evaluation methods | multiple-choice |
+| Designed for | instruction-tuned-model |
+| Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
+| Lifecycle · activity | active · accepting-submissions |
+| Data access · refresh · contamination risk | train-open-test-held-out · versioned-releases · medium |
+| Reproducibility tier · harness | not-independently-reproducible · official-harness |
+| Maintainer type · submission process | community-collective · held-out-server, sandboxed-rerun, maintainer-run |
+| Independence flags | maintainer-competes-on-own-benchmark, grader-from-evaluated-party, single-evaluator-private-test-set |
+| Licences: code · dataset | Apache-2.0 · CC-BY-4.0 |
+| Released | 2023-07-12 |
+| Links | homepage [github.com/open-compass/MMBench](https://github.com/open-compass/MMBench) · repository [github.com/open-compass/MMBench](https://github.com/open-compass/MMBench) · leaderboard [huggingface.co/spaces/opencompass/open\_vlm\_leaderboard](https://huggingface.co/spaces/opencompass/open_vlm_leaderboard) |
+
+**Sources**
+
+| | Source | Type · publisher | URL | Archived copy |
+| --- | --- | --- | --- | --- |
+| S1 | `src-arxiv-2307-06281` | preprint · arXiv | [arxiv.org/abs/2307.06281](https://arxiv.org/abs/2307.06281) | none (not-required) |
+| S2 | `src-arxiv-2307-06281-v5` | preprint · arXiv | [arxiv.org/pdf/2307.06281v5](https://arxiv.org/pdf/2307.06281v5) | none (not-required) |
+| S3 | `src-arxiv-2608-01979` | preprint · arXiv | [arxiv.org/abs/2608.01979](https://arxiv.org/abs/2608.01979) | none (not-required) |
+| S4 | `src-hf-space-open-vlm-leaderboard-meta-data` | repository · Hugging Face | [huggingface.co/spaces/opencompass/open\_vlm\_leaderboard/raw/bf5c5b7a5b...](https://huggingface.co/spaces/opencompass/open_vlm_leaderboard/raw/bf5c5b7a5b33642cdd28945629150a7d525e03bf/meta_data.py) | none (withheld) |
+| S5 | `src-opencompass-openvlm-json` | dataset-export · OpenCompass | [opencompass.openxlab.space/assets/OpenVLM.json](http://opencompass.openxlab.space/assets/OpenVLM.json) | none (withheld) |
+| S6 | `src-github-mmbench-readme-8eaac9a` | repository · GitHub | [raw.githubusercontent.com/open-compass/MMBench/8eaac9ae42e22eaf42863b...](https://raw.githubusercontent.com/open-compass/MMBench/8eaac9ae42e22eaf42863b218455acd51268ba1c/README.md) | none (withheld) |
+| S7 | `src-arxiv-2607-01813` | preprint · arXiv | [arxiv.org/abs/2607.01813](https://arxiv.org/abs/2607.01813) | none (not-required) |
+| S8 | `src-hf-api-opencompass-mmbench` | dataset-card · Hugging Face | [huggingface.co/api/datasets/opencompass/MMBench](https://huggingface.co/api/datasets/opencompass/MMBench) | [capture 2026-11-27](https://web.archive.org/web/20261127224815/https://huggingface.co/api/datasets/opencompass/MMBench) |
+| S9 | `src-arxiv-2307-06281-v3` | preprint · arXiv | [arxiv.org/pdf/2307.06281v3](https://arxiv.org/pdf/2307.06281v3) | none (not-required) |
+| S10 | `src-github-vlmevalkit-image-mcq-68f427d` | repository · GitHub | [raw.githubusercontent.com/open-compass/VLMEvalKit/68f427dda3424bbc68b...](https://raw.githubusercontent.com/open-compass/VLMEvalKit/68f427dda3424bbc68b77d6982d75d30642a3b5f/vlmeval/dataset/image_mcq.py) | none (withheld) |
+| S11 | `src-hf-space-open-vlm-leaderboard-gen-table` | repository · Hugging Face | [huggingface.co/spaces/opencompass/open\_vlm\_leaderboard/raw/bf5c5b7a5b...](https://huggingface.co/spaces/opencompass/open_vlm_leaderboard/raw/bf5c5b7a5b33642cdd28945629150a7d525e03bf/gen_table.py) | [capture 2026-11-27](https://web.archive.org/web/20261127230227/https://huggingface.co/spaces/opencompass/open_vlm_leaderboard/raw/bf5c5b7a5b33642cdd28945629150a7d525e03bf/gen_table.py) |
+| S12 | `src-arxiv-2406-14515` | preprint · arXiv | [arxiv.org/abs/2406.14515](https://arxiv.org/abs/2406.14515) | none (not-required) |
+| S13 | `src-hf-api-space-open-vlm-leaderboard` | leaderboard-page · Hugging Face | [huggingface.co/api/spaces/opencompass/open\_vlm\_leaderboard](https://huggingface.co/api/spaces/opencompass/open_vlm_leaderboard) | [capture 2026-11-27](https://web.archive.org/web/20261127230710/https://huggingface.co/api/spaces/opencompass/open_vlm_leaderboard) |
+
+**Evidence** (55 quoted fields), by checklist area:
+
+#### mmbench · Identity and id
+
+- `self_description` · [S1][mmbench-s1]
+  > we propose MMBench, a bilingual benchmark for assessing the multi-modal capabilities of VLMs
+- `released` = 2023-07-12 · [S1][mmbench-s1]
+  > Submitted on 12 Jul 2023 (v1), last revised 20 Aug 2024 (this version, v5)
+- `release_venue` = ECCV 2024 · [S1][mmbench-s1]
+  > Accepted in ECCV2024 as Oral Presentation
+- `lineage.variants` = id ccbench; relation sibling benchmark by the same team, shipped in the MMBench collection - 510 questions on Chinese culture (dev split only), in the same multiple-choice format with CircularEval and its own leaderboard column; noisy samples were removed on 2023-12-26; n_items 510 · [S6][mmbench-s6]
+  > \[2023/10/23\] We provide a new benchmark named \*\*CCBench\*\*, which is a multi-modal benchmark in the domain of Chinese Culture.
+- `lineage.forks` = id mmbench-live; maintainer PRIS-CV Computer Vision Group · [S7][mmbench-s7]
+  > Instantiated from MMBench, MMBench-Live contains 5.9K newly generated evaluation instances with a high answer correctness rate
+
+#### mmbench · Domain and capabilities
+
+- `domain` = primary multimodal/visual-qa · [S2][mmbench-s2]
+  - why: Every scored item is a question with options about an image, and the construction removed questions that LLMs could answer from the text alone, so the score measures whether the chosen option corresponds to the image. That is visual-qa's definition, and multimodal's inclusion test (answering in language about an image). The breadth is over visual abilities, not academic subjects, and every item needs the image, which ADR-0015 keeps in \`multimodal\`.
+  > If more than half of the LLMs can answer the question correctly with text-only inputs, the question will be manually verified and then removed if it is unqualified
+- `capability` = perception · [S2][mmbench-s2]
+  - why: The model receives an image and is scored on what it recovers from it; perception is one of the two top-level abilities, and three of the six L-2 abilities (coarse, single-instance and cross-instance perception) are perceptual.
+  > we adopt Perception and Reasoning as level-1 (L-1) abilities in our taxonomy
+- `capability` = context-integration · [S2][mmbench-s2]
+  - why: The image the protocol supplies determines the answer. Questions LLMs answered from the text alone were filtered out, and text-only GPT-4 then scores at chance, so the score tests whether the supplied image was used.
+  > GPT-4 demonstrates a random-level overall accuracy
+- `evaluation_method` = multiple-choice · [S2][mmbench-s2]
+  - why: The model chooses among the supplied options. A free-form answer is first matched to an option heuristically and otherwise mapped to one by an LLM, and the extracted option is compared with the key under CircularEval, every rotated pass having to be right.
+  > A VLM is considered successful in solving a question only if it correctly predicts the answer in all circular passes
+- `designed_for_subjects` = instruction-tuned-model · [S2][mmbench-s2]
+  - why: The subjects are vision-language models prompted zero-shot with one fixed prompt; the LLM choice extractor exists so that models with weak instruction following can still be scored. No tools or harness loop are involved.
+  > we adopt the zero-shot setting to infer MMBench questions with all VLMs, based on the same prompt
+
+Considered and rejected:
+
+- `domain` not `general-intelligence/multi-subject-knowledge-exams` · [S2][mmbench-s2]
+  - why: The benchmark claims breadth over twenty ability dimensions, but they are visual abilities, not academic subjects, and every item needs its image; general-intelligence's exclusion test sends such a benchmark to \`multimodal\` (ADR-0015).
+  > we adopt Perception and Reasoning as level-1 (L-1) abilities in our taxonomy
+- `domain` not `language/multilingual` · [S2][mmbench-s2]
+  - why: The Chinese version translates the same questions to compare models across two languages, but the scored relation is still between the image and the chosen answer.
+  > Most VLMs display a lower performance on MMBench-CN compared to the results on MMBench
+- `capability` not `knowledge-recall` · [S2][mmbench-s2]
+  - why: Some L-3 abilities need knowledge the model brings (celebrity recognition, physical property and nature relation reasoning), but they are three of twenty, reported inside the L-2 scores, and the benchmark's claim is perception and reasoning about the image.
+  > Tasks requiring external knowledge to solve, which correspond to abilities including celebrity recognition, physical property reasoning, natural relation reasoning
+- `capability` not `spatial-reasoning` · [S2][mmbench-s2]
+  - why: Spatial relationship and physical relation are L-3 abilities and the paper's hardest cases, but they are two of twenty, reported as breakdowns of one score.
+  > Perform badly on recognizing or reasoning about the inter-object spatial relationships, either in 2D or 3D space
+- `capability` not `reliability-consistency` · [S2][mmbench-s2]
+  - why: CircularEval counts a question only if every pass is answered correctly, which resembles pass^k, but the option order changes between passes, and the term's exclusion rules out trials whose inputs change.
+  > A VLM is considered successful in solving a question only if it correctly predicts the answer in all circular passes
+- `evaluation_method` not `model-graded-judge` · [S2][mmbench-s2]
+  - why: An LLM (ChatGPT in v1.0, gpt-4-0125 in v1.1) maps a free-form answer to one of the options or to none, but it is told to match the answer's literal meaning, not to judge correctness, which the key decides. Its version still moves scores (comparability), and it is in the scoring path (governance.independence\_flags).
+  > we try to extract the choice with LLMs (gpt-4-0125 by default)
+- `designed_for_subjects` not `base-model` · [S2][mmbench-s2]
+  - why: OpenFlamingo v2, a model without instruction tuning, is scored in the paper and lands at chance; the design accommodates weak instruction following, not base models.
+  > OpenFlamingo v2 shows random-level performance due to the lack of instruction tuning
+- `designed_for_subjects` not `reasoning-model` · [S2][mmbench-s2]
+  - why: The protocol sets no reasoning budget, and the paper found no gain from chain-of-thought prompting.
+  > We have also attempted to assess these models with few-shot and chain-of-thought evaluations. However, no encouraging results are observed.
+
+#### mmbench · Task and evaluation
+
+- `learned_entrant_evidence` = system Gemini-2.5-Pro · [S5][mmbench-s5]
+  > "dir\_name": "GeminiPro2-5", "key": 482 }, "MMBench\_TEST\_EN\_V11": { "Overall": 88.5
+- `learned_entrant_evidence` = system InternLM-XComposer2 · [S2][mmbench-s2]
+  > Among open-source VLMs, InternLMXComposer2 \[12\] achieves the best performance
+- `reproducible_by_third_party` = true · [S6][mmbench-s6]
+  - why: The dev split's questions, images and answers are public, and VLMEvalKit computes the score locally; test predictions go to the maintainers' submission site, whose current state was not checked (review\_checks).
+  > To submit your prediction on the test splits of MMBench, you can visit \[MMBench Submission\](https://mmbench.opencompass.org.cn/mmbench-submission)
+- `task` = exists true; input an image (some items compose several into one), with an optional hint, a question with two to four lettered options, in English or, for MMBench-CN, in Chinese; output A free-form answer or an option letter, mapped to one option.; scoring CircularEval accuracy over the split's questions, a question counting only if all N passes with rotated options are answered correctly, after heuristic matching and LLM choice extraction; reported overall and for the six L-2 and twenty L-3 abilities, for English and Chinese apart.; tests_hidden_from_system true · [S2][mmbench-s2]
+  > Please select the correct answer from the options above
+- `execution.compute_tier` = api-credits-only · [S4][mmbench-s4]
+  - why: The leaderboard ranks API models beside open weights, and the protocol mandates no hardware; the choice extractor is an API model too. Serving open weights on GPUs is the entrant's choice.
+  > OpenVLM Leaderboard only includes open-source VLMs or API models that are publicly available.
+- `execution.reproducibility_tier` = not-independently-reproducible · [S10][mmbench-s10]
+  - why: The headline test score can be computed only with the answers the maintainers hold, so it comes from their submission site or their own leaderboard runs; the dev split can be scored by anyone.
+  > 'MMBench\_V11': 'b9276414f57af1308dcc4d0cd9b42e7c', # Internal Only
+- `execution.harness` = VLMEvalKit (run.py with --data MMBench\_TEST\_EN\_V11, MMBench\_DEV\_EN\_V11 and the CN equivalents), which applies CircularEval to MMBench and CCBench · [S6][mmbench-s6]
+  > (the official code we used for the MMBench leaderboard)
+- `execution.harness_gotcha` · [S10][mmbench-s10]
+  > warnings.warn('OPENAI API is not working properly, will use exact matching for evaluation')
+- `aggregation_policy` = official-aggregate · [S11][mmbench-s11]
+  - why: The leaderboard's code computes the MMBench\_V11 figure from the two test splits' Overall columns.
+  > val = (item\['MMBench\_TEST\_CN\_V11'\]\['Overall'\] + item\['MMBench\_TEST\_EN\_V11'\]\['Overall'\]) / 2
+
+#### mmbench · Data and licence
+
+- `as_used` = protocol CircularEval with exact matching of the option letter, without the LLM choice extractor, reported on MMBench v1.1 by method papers. · [S3][mmbench-s3]
+  > on MMBench v1.1, it reaches 0.8467 circular exact-matching accuracy versus 0.8437 for Vanilla at 54.45% average visual-token retention
+- `data.access` = train-open-test-held-out · [S2][mmbench-s2]
+  - why: The test split behind the leaderboard's scores is released without its answers, and the maintainers score test predictions; the dev split is fully public.
+  > For the test subset, only the data samples are released, while the ground truth answers remain confidential.
+- `data.refresh` = versioned-releases · [S2][mmbench-s2]
+  - why: Each change is carried by a version label (v1.0, v1.1, the \_V11 file names) or a dated README announcement that a claim can be pinned to.
+  > It describes MMBench v1.1, a refined version of the MMBench (with better data quality).
+- `data.data_provenance` = web-scraped, crowd-authored, model-generated · [S2][mmbench-s2]
+  > more than 80% of questions in MMBench are collected from the Internet
+- `data.contamination_risk` = medium · [S2][mmbench-s2]
+  > images are gathered from the validation set of public datasets (if they exist) while the questions are self-constructed
+- `data.contamination_evidence` = stance supports · [S7][mmbench-s7]
+  > exhibits weaker contamination-related memorization signals
+- `data.ceiling_anchor_type` = theoretical-maximum · [S2][mmbench-s2]
+  - why: CircularEval accuracy is bounded at 100%, and no human score, operational system or measured ceiling is published; the leaderboard's top v1.1 English test score is 88.5.
+  > A VLM is considered successful in solving a question only if it correctly predicts the answer in all circular passes
+- `data.dataset_licence` = CC-BY-4.0 · [S8][mmbench-s8]
+  > "tags":\["license:cc-by-4.0","region:us"\]
+- `data.size` = count 3217; unit multiple-choice questions over 20 L-3 abilities, the headline set; subset v1.1 · [S2][mmbench-s2]
+  > we have gathered a total of 3,217 data samples spanning across 20 distinct L-3 abilities
+- `data.size` = count 2974; unit multiple-choice questions over 20 abilities; subset v1.0 · [S9][mmbench-s9]
+  > comprised of a total of 2,974 meticulously selected questions, which collectively cover a diverse spectrum of 20 fine-grained skills
+- `data.size` = count 1164; unit dev questions in English, and the same number in Chinese; subset v1.0 dev split (README download table) · [S6][mmbench-s6]
+  > \| MMBench-Dev \| Dev \| EN \| 1164 \| The Dev Split of MMBench \|
+- `data.size` = count 1784; unit test questions in English, and the same number in Chinese; subset v1.0 test split (README download table) · [S6][mmbench-s6]
+  > \| MMBench-Test \| Test \| EN \| 1784 \| The Test Split of MMBench \|
+- `subsets` = id mmbench#en; label MMBench (English); scored_separately true · [S1][mmbench-s1]
+  > MMBench incorporates multiple-choice questions in both English and Chinese versions
+- `subsets` = id mmbench#en; label MMBench (English); scored_separately true · [S4][mmbench-s4]
+  > MMBENCH\_FIELDS = \['MMBench\_TEST\_EN\_V11', 'MMBench\_TEST\_CN\_V11', 'MMBench\_TEST\_EN', 'MMBench\_TEST\_CN', 'CCBench'\]
+- `subsets` = id mmbench#cn; label MMBench-CN (Chinese); scored_separately true · [S2][mmbench-s2]
+  > all content in questions and choices are translated to Chinese based on GPT-4, except for proper nouns, symbols, and code
+- `subsets` = id mmbench#cn; label MMBench-CN (Chinese); scored_separately true · [S6][mmbench-s6]
+  > \[2023/10/03\] We provide a verified \*\*Chinese\*\*-translated version of MMBench.
+- `subsets` = id mmbench#dev; label Dev split (answers public); scored_separately true · [S2][mmbench-s2]
+  > split MMBench into dev and test subsets at a ratio of 4:6
+- `subsets` = id mmbench#dev; label Dev split (answers public); scored_separately true · [S6][mmbench-s6]
+  > \| MMBench-Dev \| Dev \| EN \| 1164 \| The Dev Split of MMBench \|
+- `subsets` = id mmbench#test; label Test split (answers held); scored_separately true · [S2][mmbench-s2]
+  > one needs to submit the predictions to MMBench evaluation server
+- `subsets` = id mmbench#test; label Test split (answers held); scored_separately true · [S6][mmbench-s6]
+  > \| MMBench-Test \| Test \| EN \| 1784 \| The Test Split of MMBench \|
+
+#### mmbench · Governance and independence
+
+- `governance.maintainer` = The OpenCompass community (the paper's authors are at Shanghai AI Laboratory, Nanyang Technological University, the Chinese University of Hong Kong, the National University of Singapore and Zhejiang University) · [S6][mmbench-s6]
+  - why: The README says the OpenCompass community develops MMBench, and the repository, the Hugging Face record and the leaderboard Space sit in the open-compass and opencompass organisation accounts. Shanghai AI Laboratory is the paper's first affiliation.
+  > MMBench is developed by the \[\*\*OpenCompass Community\*\*\](https://github.com/open-compass/opencompass)
+- `governance.submission_process` = held-out-server, sandboxed-rerun, maintainer-run · [S6][mmbench-s6]
+  > For \*\*MMBench-TEST-CN/EN\*\*, you can submit the file to https://mmbench.opencompass.org.cn/mmbench-submission to obtain the evaluation accuracies.
+- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S5][mmbench-s5]
+  > "Method": \[ "InternLM-XComposer2", "https://github.com/InternLM/InternLM-XComposer" \], "Parameters": "7B", "Language Model": "InternLM2-7B", "Vision Model": "CLIP ViT-L/14", "Org": "Shanghai AI Laboratory"
+- `governance.independence_flags` = flag grader-from-evaluated-party · [S2][mmbench-s2]
+  > we try to extract the choice with LLMs (gpt-4-0125 by default)
+- `governance.independence_flags` = flag single-evaluator-private-test-set · [S2][mmbench-s2]
+  > For the test subset, only the data samples are released, while the ground truth answers remain confidential.
+- `governance.known_limitation` · [S2][mmbench-s2]
+  > the content moderation policy affects the MMBench-test accuracy by up to 2.4%
+
+#### mmbench · Lifecycle and activity
+
+- `lifecycle` = active · [S3][mmbench-s3]
+  - why: Results are still being produced in 2026, for example an August 2026 token-pruning paper reporting MMBench v1.1 accuracy. The maintainers' leaderboard added MMBench rows until September 2025 (activity).
+  > on MMBench v1.1, it reaches 0.8467 circular exact-matching accuracy versus 0.8437 for Vanilla at 54.45% average visual-token retention
+- `activity` = accepting-submissions · [S4][mmbench-s4]
+  - why: The benchmark has never run in rounds, and the leaderboard gives a standing route in, a pull request adding the model to VLMEvalKit, after which the maintainers evaluate it; the README also points test predictions at a submission site.
+  > To add your own model to the leaderboard, please create a PR in \[VLMEvalKit\](https://github.com/open-compass/VLMEvalKit) to support your VLM and then we will help with the evaluation and updating the leaderboard.
+
+**Open review checks** (10):
+
+1. (field `versions`) Versions. v1.1 is modelled as a breaking revision of v1.0, as agieval's v1.1 is, because the paper calls it a refined version of the same benchmark with better data quality. The question count rose from 2,974 to 3,217 and new filtering was applied, and how many v1.0 questions survive is not stated; an edition would need new items on the same task, which a refinement only partly is. · [S2][mmbench-s2]
+   > It describes MMBench v1.1, a refined version of the MMBench (with better data quality).
+2. (field `lineage`) CCBench is recorded as a same-maintainer variant, because the README calls it a new benchmark, it has its own items, topic and update (2023-12-26) and its own leaderboard column. It could instead be read as a subset of the MMBench collection, which the README says includes it. The variant id ccbench and the fork id mmbench-live are proposals for the lead; no entry exists for either. · [S6][mmbench-s6]
+   > MMBench is a collection of benchmarks to evaluate the multi-modal understanding capability of large vision language models (LVLMs)
+3. (field `lineage`) MMBench-Video gets no lineage edge. It shares the name and its code goes into VLMEvalKit, but it is a video benchmark with free-form questions graded by GPT-4, with its own paper; that the same team maintains it rests on account names and author lists, which no quoted passage states. · [S12][mmbench-s12]
+   > MMBench-Video incorporates lengthy videos from YouTube and employs free-form questions
+4. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on the paper's first affiliation, Shanghai AI Laboratory, and the Org the leaderboard gives 47 rows (InternLM-XComposer, InternVL). The 2026-11-18 rule says a shared university is not a shared lab; whether one large laboratory with many groups counts as a shared lab, rather than a shared institution, is for a reviewer. · [S2][mmbench-s2]
+   > 1Shanghai AI Laboratory 2Nanyang Technological University 3 The Chinese University of Hong Kong 4 National University of Singapore 5 Zhejiang University
+5. (field `governance.independence_flags`) grader-from-evaluated-party is set for the LLM choice extractor (gpt-4-0125, OpenAI's), with OpenAI models scored, while model-graded-judge is rejected because the extractor maps answers to options rather than judging them. If only a grader that decides correctness counts, the flag would go; the paper measures the extractor against people at 91.5% agreement. · [S2][mmbench-s2]
+   > GPT-4 can accurately match human assessments in 91.5% of cases
+6. (field `activity`) activity accepting-submissions rests on the leaderboard's standing pull-request route. Its newest MMBench row is dated 2025-09-17, and the README's test submission site serves a script shell that was not driven, so whether it still scores test predictions is unknown; no-submission-channel or unknown would follow if neither route works. · [S4][mmbench-s4]
+   > To add your own model to the leaderboard, please create a PR in \[VLMEvalKit\](https://github.com/open-compass/VLMEvalKit) to support your VLM and then we will help with the evaluation and updating the leaderboard.
+7. (field `data.dataset_licence`) dataset\_licence CC-BY-4.0 rests on the opencompass/MMBench Hugging Face record, whose only files are .gitattributes and a README; the TSVs the README links carry no licence statement that was read, and most images come from the Internet. · [S8][mmbench-s8]
+   > "siblings":\[{"rfilename":".gitattributes"},{"rfilename":"README.md"}\]
+8. (field `data.size`) Item counts disagree for v1.0. The README's table gives 1,164 dev and 1,784 test questions per language (2,948), against 2,974 in its prose and in the v3 paper; v1.1's split sizes are not stated. The data files were not read to count them. · [S6][mmbench-s6]
+   > contains 2974 multiple-choice questions, covering 20 ability dimensions
+9. (field `governance.maintainer_type`) maintainer\_type community-collective follows the README's "OpenCompass Community" and the shared organisation accounts; omnidocbench left the type null for another Shanghai AI Laboratory account because no source states the laboratory's legal form, and the same gap applies here if the laboratory is read as the holder. · [S6][mmbench-s6]
+   > MMBench is developed by the \[\*\*OpenCompass Community\*\*\](https://github.com/open-compass/opencompass)
+10. (field `lifecycle`) lifecycle active rather than mature or saturated. The top v1.1 English test score is 88.5 with no human ceiling, the leaderboard's MMBench rows stopped in September 2025, and outside papers still report v1.1 in August 2026. · [S5][mmbench-s5]
+   > "time": "20250917132916"
+
+**Reviewer checklist** for `mmbench`:
+
+- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
+- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
+- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
+- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
+- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
+- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
+- [ ] Every open review check above is answered or resolved
+- [ ] Nothing here would embarrass the catalogue in front of a specialist
+
+[mmbench-s1]: https://arxiv.org/abs/2307.06281
+[mmbench-s2]: https://arxiv.org/pdf/2307.06281v5
+[mmbench-s3]: https://arxiv.org/abs/2608.01979
+[mmbench-s4]: https://huggingface.co/spaces/opencompass/open_vlm_leaderboard/raw/bf5c5b7a5b33642cdd28945629150a7d525e03bf/meta_data.py
+[mmbench-s5]: http://opencompass.openxlab.space/assets/OpenVLM.json
+[mmbench-s6]: https://raw.githubusercontent.com/open-compass/MMBench/8eaac9ae42e22eaf42863b218455acd51268ba1c/README.md
+[mmbench-s7]: https://arxiv.org/abs/2607.01813
+[mmbench-s8]: https://huggingface.co/api/datasets/opencompass/MMBench
+[mmbench-s9]: https://arxiv.org/pdf/2307.06281v3
+[mmbench-s10]: https://raw.githubusercontent.com/open-compass/VLMEvalKit/68f427dda3424bbc68b77d6982d75d30642a3b5f/vlmeval/dataset/image_mcq.py
+[mmbench-s11]: https://huggingface.co/spaces/opencompass/open_vlm_leaderboard/raw/bf5c5b7a5b33642cdd28945629150a7d525e03bf/gen_table.py
+[mmbench-s12]: https://arxiv.org/abs/2406.14515
+[mmbench-s13]: https://huggingface.co/api/spaces/opencompass/open_vlm_leaderboard
+
+### 2.2 MMMU-Pro (mmmu-pro)
 
 `data/benchmarks/multimodal/mmmu-pro.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
 
@@ -266,215 +513,6 @@ Considered and rejected:
 [mmmu-pro-s8]: https://mmmu-benchmark.github.io/
 [mmmu-pro-s9]: https://huggingface.co/datasets/MMMU/MMMU_Pro/raw/main/README.md
 [mmmu-pro-s10]: https://arxiv.org/abs/2412.05237
-
-### 2.2 TextVQA (textvqa)
-
-`data/benchmarks/multimodal/textvqa.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-10 · last verified 2026-11-10
-
-*45,336 questions on Open Images photos answerable only by reading their text, scored by VQA accuracy.*
-
-Visual question answering that needs reading. Crowd workers were shown Open Images photographs from categories likely to contain text (billboards, traffic signs, whiteboards) and asked for questions that cannot be answered without reading the text in the image; ten other workers answered each one. The 45,336 questions on 28,408 images are split into 34,602 training, 5,000 validation and 5,734 test questions, the test images drawn from Open Images' own test set. Answers are open-ended, usually one or two words, a brand, a name, a number or a time, and are often copied from the scene text, though some must be inferred from it. The dataset ships OCR tokens from the Rosetta system with every image; v0.5.1 (March 2020) replaced those tokens and changed nothing else. The score is VQA accuracy, VQA v2's consensus measure: an answer counts in full when at least three of the human answers match it. Test answers are withheld and scored on EvalAI, where a standing test-standard leaderboard has remained open since the 2021 challenge. The release paper's LoRRA model, which adds an OCR module and a copy mechanism to a VQA network, reached 26.56% on validation against 85.01% for humans; the leaderboard's top row is 84.22, and current vision-language models report validation accuracy in their technical reports.
-
-| Classification | |
-| --- | --- |
-| Primary domain | multimodal/visual-qa |
-| Secondary domains | vision/ocr-handwriting |
-| Capabilities | perception, context-integration |
-| Evaluation methods | reference-metric |
-| Designed for | task-specific-supervised-model |
-| Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
-| Lifecycle · activity | active · leaderboard-live-no-round |
-| Data access · refresh · contamination risk | train-open-test-held-out · static · medium |
-| Reproducibility tier · harness | not-independently-reproducible · reference-implementation-only |
-| Maintainer type · submission process | industry-lab · held-out-server |
-| Independence flags | maintainer-competes-on-own-benchmark, single-evaluator-private-test-set |
-| Licences: code · dataset | null · CC-BY-4.0 |
-| Released | 2019-04-18 |
-| Links | homepage [textvqa.org/](https://textvqa.org/) · repository [github.com/facebookresearch/mmf](https://github.com/facebookresearch/mmf) · leaderboard [eval.ai/web/challenges/challenge-page/874/leaderboard/2313](https://eval.ai/web/challenges/challenge-page/874/leaderboard/2313) · dataset [textvqa.org/download](https://textvqa.org/download) |
-
-**Sources**
-
-| | Source | Type · publisher | URL | Archived copy |
-| --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-1904-08920` | preprint · arXiv | [arxiv.org/abs/1904.08920](https://arxiv.org/abs/1904.08920) | none (not-required) |
-| S2 | `src-arxiv-1904-08920-v2` | preprint · arXiv | [arxiv.org/pdf/1904.08920v2](https://arxiv.org/pdf/1904.08920v2) | none (not-required) |
-| S3 | `src-github-mmf-m4c-evaluators-72f898e` | repository · GitHub | [raw.githubusercontent.com/facebookresearch/mmf/72f898ec35af86567423c7...](https://raw.githubusercontent.com/facebookresearch/mmf/72f898ec35af86567423c7a019dd1dc5175d1a5a/mmf/utils/m4c_evaluators.py) | [capture 2026-11-16](https://web.archive.org/web/20261116172827/https://raw.githubusercontent.com/facebookresearch/mmf/72f898ec35af86567423c7a019dd1dc5175d1a5a/mmf/utils/m4c_evaluators.py) |
-| S4 | `src-github-textvqa-site-challenge-bd26fd3` | repository · GitHub | [raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b90...](https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/components/Challenge.js) | none (withheld) |
-| S5 | `src-arxiv-2603-20354-v1` | preprint · arXiv | [arxiv.org/pdf/2603.20354v1](https://arxiv.org/pdf/2603.20354v1) | none (not-required) |
-| S6 | `src-arxiv-2506-12103-v1` | preprint · arXiv | [arxiv.org/pdf/2506.12103v1](https://arxiv.org/pdf/2506.12103v1) | none (not-required) |
-| S7 | `src-evalai-textvqa-challenge-874-phases` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/874/challenge\_phase](https://eval.ai/api/challenges/challenge/874/challenge_phase) | [capture 2026-11-16](https://web.archive.org/web/20261116163017/https://eval.ai/api/challenges/challenge/874/challenge_phase) |
-| S8 | `src-evalai-textvqa-leaderboard-2313` | leaderboard-page · EvalAI | [eval.ai/api/jobs/challenge\_phase\_split/2313/leaderboard/?page\_size=200](https://eval.ai/api/jobs/challenge_phase_split/2313/leaderboard/?page_size=200) | none (withheld) |
-| S9 | `src-github-textvqa-site-download-bd26fd3` | repository · GitHub | [raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b90...](https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/components/Download.js) | [capture 2026-11-16](https://web.archive.org/web/20261116173929/https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/components/Download.js) |
-| S10 | `src-evalai-textvqa-challenge-551-phases` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/551/challenge\_phase](https://eval.ai/api/challenges/challenge/551/challenge_phase) | [capture 2026-11-16](https://web.archive.org/web/20261116162800/https://eval.ai/api/challenges/challenge/551/challenge_phase) |
-| S11 | `src-github-textvqa-site-news-bd26fd3` | repository · GitHub | [raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b90...](https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/news.json) | [capture 2026-11-16](https://web.archive.org/web/20261116174050/https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/news.json) |
-
-**Evidence** (42 quoted fields), by checklist area:
-
-#### textvqa · Identity and id
-
-- `self_description` · [S1][textvqa-s1]
-  > TextVQA contains 45,336 questions on 28,408 images that require reasoning about text to answer.
-- `released` = 2019-04-18 · [S1][textvqa-s1]
-  > Submitted on 18 Apr 2019 (v1), last revised 13 May 2019 (this version, v2)
-- `release_venue` = CVPR 2019 · [S1][textvqa-s1]
-  > Comments: CVPR 2019
-- `lineage.variants` = id textcaps; relation sibling benchmark by the same team, image captioning that needs reading, collected on the same images (TextCaps v0.1, March 2020, 142,040 captions) · [S4][textvqa-s4]
-  > TextCaps dataset is based on task of image captioning with reading comprehension.
-
-#### textvqa · Domain and capabilities
-
-- `domain` = primary multimodal/visual-qa; secondary vision/ocr-handwriting · [S2][textvqa-s2]
-  - why: Each item is a natural-language question about a photograph, and the score is whether the free-form answer matches the human answers to that question about that image. The paper's question-only and image-only baselines reach 8.09% and 6.29%, so neither modality alone carries the score and the question-image correspondence is what is measured; multimodal's inclusion test ("answering in language about an image") and vision's exclusion test both send it here, and visual-qa is the leaf for questions answered about an image. vision/ocr-handwriting is secondary because reading the scene text is the skill the benchmark was built to test and many answers are that text copied out of the image (30.6% of validation answers are among the Rosetta tokens), but no transcription is scored, so it cannot be the primary.
-  > Question only (Q) and Image only (I) baseline get 8.09% and 6.29% validation accuracies, respectively
-- `capability` = perception · [S2][textvqa-s2]
-  - why: The answer depends on text recovered from the image itself, often rotated, partly occluded or stylised; the paper's examples need hidden characters inferred and rotated text read, and its OCR upper bound is far under human accuracy.
-  > Questions require inferring hidden characters
-- `capability` = context-integration · [S2][textvqa-s2]
-  - why: The image the protocol supplies holds the answer. Question writers were told that answering must require reading the image's text, and the answer is taken or inferred from that text rather than from what the system already knows.
-  > Please ensure that answering the question requires reading of the text in the image.
-- `evaluation_method` = reference-metric · [S3][textvqa-s3]
-  - why: VQA accuracy is a fixed formula over ten human reference answers. After normalisation the predicted answer earns min(1, n/3), where n is how many of the other nine answers match it, averaged over the ten leave-one-out sets, so an answer two annotators gave earns partial credit. It is a reference similarity computed by formula, not a learned model and not specific to a scientific field.
-  > acc = min(1, float(len(matching\_answers)) / 3)
-- `designed_for_subjects` = task-specific-supervised-model · [S2][textvqa-s2]
-  - why: The dataset ships a 34,602-question training split, and the release paper's entrants are VQA networks (Pythia, BAN) with and without its LoRRA reading module, trained on that split and selected on validation; the challenges' starter code trains such models. Reading scene text is a general perception task, not a discipline.
-  > We train all of our models for 24000 iterations
-
-Considered and rejected:
-
-- `domain` not `vision/document-understanding` · [S2][textvqa-s2]
-  - why: The images are photographs of everyday scenes (signs, jerseys, clocks, labels), not document pages, and no layout, form or table structure is extracted or scored.
-  > We use Open Images v3 dataset \[27\] as the source of our images.
-- `capability` not `knowledge-recall` · [S2][textvqa-s2]
-  - why: Some answers are inferred or paraphrased from the text (a team name read from a jersey, an aircraft type from its markings) and may lean on world knowledge, but the questions were written so that the text in the image decides the answer.
-  > It is OK if the answer cannot be directly copied from the text but needs to be inferred or paraphrased.
-- `capability` not `spatial-reasoning` · [S2][textvqa-s2]
-  - why: Many questions locate the text they ask about ("on the top left", "the player on the right"), but position only selects which text to read; no score isolates spatial judgement.
-  > Workers often form questions which are longer to disambiguate the response
-- `evaluation_method` not `exact-match` · [S4][textvqa-s4]
-  - why: Each comparison is an exact string match after normalisation, but exact-match's exclusion test rules it out where partial credit is available, and VQA accuracy gives a third or two thirds of a point to answers fewer than three annotators gave.
-  > We use the same metric as VQA v2 which is robust to inter-human variability in phrasing the answers.
-
-#### textvqa · Task and evaluation
-
-- `learned_entrant_evidence` = system LoRRA (the release paper's model) · [S1][textvqa-s1]
-  > We show that LoRRA outperforms existing state-of-the-art VQA models on our TextVQA dataset.
-- `learned_entrant_evidence` = system CogVLM-1.5 · [S8][textvqa-s8]
-  > "submission\_\_submitted\_at":"2024-05-09T16:37:05.841743Z","submission\_\_method\_name":"CogVLM-1.5"
-- `learned_entrant_evidence` = system Leum-VL-8B · [S5][textvqa-s5]
-  > Leum-VL-8B 84.8 83.9 56.5 73.2 67.5 65.2 85.4 95.7 85.0
-- `reproducible_by_third_party` = true · [S7][textvqa-s7]
-  - why: Anyone who registers a team on EvalAI can submit test-standard predictions to the standing phase, which scores them automatically, and the validation answers are public for local scoring.
-  > This phase evaluates algorithms on TextVQA test-standard set.
-- `task` = exists true; input one Open Images photograph containing text (test images from Open Images' test set), a natural-language question that needs the image's text to answer, optionally, the dataset's Rosetta OCR tokens for the image; any automatic OCR may be used instead, but not ground-truth OCR on test-standard; output A short free-form answer string, usually one or two words.; scoring VQA accuracy against the question's ten human answers, averaged over the 5,734 test-standard questions and computed by EvalAI; validation accuracy, against public answers, is what most reports give.; metric vqa-accuracy · [S4][textvqa-s4]
-  > TextVQA requires models to read and reason about text in an image to answer questions based on them.
-- `execution.reproducibility_tier` = not-independently-reproducible · [S9][textvqa-s9]
-  - why: The headline the maintainers ask for is test-std accuracy, which only their EvalAI challenge can compute because they hold the test answers. Validation accuracy can be computed by anyone from the public answers.
-  > Numbers in the papers should be reported on v0.5.1/v0.5 test set (test-std).
-- `execution.harness` = MMF (facebookresearch/mmf), which ships the TextVQA dataset builder, the LoRRA and M4C baselines and a TextVQA accuracy evaluator for local validation scoring · [S3][textvqa-s3]
-  > class TextVQAAccuracyEvaluator:
-- `execution.harness_gotcha` · [S3][textvqa-s3]
-  > Processes an answer similar to Eval AI
-- `execution.submission_channel` · [S7][textvqa-s7]
-  > We recommend using this Test-Standard phase for reporting comparison numbers in academic papers
-- `aggregation_policy` = official-aggregate · [S4][textvqa-s4]
-  - why: One headline, the mean VQA accuracy over the test-standard questions, which the leaderboard ranks by as its single overall column.
-  > We use the same metric as VQA v2 which is robust to inter-human variability in phrasing the answers.
-
-#### textvqa · Data and licence
-
-- `as_used` = protocol General vision-language models evaluated by their developers on the validation split and reported as accuracy in a technical report, among dozens of benchmarks.; split validation · [S5][textvqa-s5]
-  > embedded in natural images. We report val-set accuracy.
-- `as_used` = protocol Zero-shot evaluation of a developer's own models in its technical report, on 5,000 samples, the validation split's size.; split validation (by count; not labelled) · [S6][textvqa-s6]
-  > TextVQA \[70\]: The 5,000 samples of this dataset focus specifically on
-- `data.access` = train-open-test-held-out · [S4][textvqa-s4]
-  - why: The validation answers are released and the test-standard phase scores test predictions on the server, so the evaluation labels behind the headline are withheld while its inputs are released.
-  > While answers are already provided for the validation set
-- `data.refresh` = static · [S9][textvqa-s9]
-  - why: The questions, answers and splits are those of the March 2019 release. v0.5.1 replaced only the supplied Rosetta OCR tokens, which are an optional input, not items or labels (versions; review\_checks).
-  > NOTE: Both v0.5.1 and v0.5 are same except the OCR tokens.
-- `data.data_provenance` = curated-public-database, crowd-authored · [S2][textvqa-s2]
-  > We use Open Images v3 dataset \[27\] as the source of our images.
-- `data.ceiling_anchor_type` = crowd-average · [S2][textvqa-s2]
-  > that human accuracy is 85.01%, consistent with that on VQA 2.0
-- `data.dataset_licence` = CC-BY-4.0 · [S9][textvqa-s9]
-  > Data is available under CC BY 4.0 license.
-- `data.size` = count 45336; unit questions; subset all splits · [S1][textvqa-s1]
-  > TextVQA contains 45,336 questions on 28,408 images that require reasoning about text to answer.
-- `data.size` = count 28408; unit images; subset all splits · [S1][textvqa-s1]
-  > TextVQA contains 45,336 questions on 28,408 images that require reasoning about text to answer.
-- `data.size` = count 5734; unit questions on 3,289 images; subset test (test-std) · [S4][textvqa-s4]
-  > the v0.5.1 test-std set contains 5,734 questions based on 3,289 images from OpenImages' test set
-- `data.size` = count 5000; unit questions on 3,166 images; subset validation · [S9][textvqa-s9]
-  > Validation set 5,000 questions (16MB) 3,166 images
-- `data.size` = count 34602; unit questions on 21,953 images; subset train · [S9][textvqa-s9]
-  > Training set 34,602 questions (103MB) 21,953 images (6.6GB)
-
-#### textvqa · Governance and independence
-
-- `governance.maintainer` = Facebook AI Research (FAIR) · [S9][textvqa-s9]
-  - why: The site, the download files (dl.fbaipublicfiles.com) and the challenge code are Facebook's, published from the facebookresearch GitHub organisation, and the site's challenge pages run the EvalAI challenges. The paper's authors were at Facebook AI Research and Georgia Tech.
-  > // Copyright (c) Facebook, Inc. and its affiliates.
-- `governance.submission_process` = held-out-server · [S4][textvqa-s4]
-  > By default, the submissions for the test-std phase are private but can be voluntarily released to the public leaderboard
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][textvqa-s1]
-  > We show that LoRRA outperforms existing state-of-the-art VQA models on our TextVQA dataset.
-- `governance.independence_flags` = flag single-evaluator-private-test-set · [S9][textvqa-s9]
-  > TextVQA evaluation server for testing and validation set is hosted on EvalAI.
-
-#### textvqa · Lifecycle and activity
-
-- `lifecycle` = active · [S5][textvqa-s5]
-  - why: Results are still being produced. A March 2026 technical report lists TextVQA validation accuracy for its own and comparison models, and the test-standard leaderboard has taken public rows into 2024.
-  > DocVQAtest TextVQAval ChartQAtest
-- `activity` = leaderboard-live-no-round · [S7][textvqa-s7]
-  - why: TextVQA has run competition rounds and none is open; the 2021 round closed in May 2021, and its test-standard phase stays open with a public leaderboard.
-  > "end\_date":"2099-12-31T23:59:59Z","challenge":874
-- `history` = date 2021-02-25; event channel-moved; field execution.submission\_channel; from EvalAI challenge 551 (TextVQA Challenge 2020); to EvalAI challenge 874 (TextVQA Challenge 2021) · [S10][textvqa-s10]
-  > "end\_date":"2021-02-25T23:55:55Z","challenge":551
-
-**Open review checks** (10):
-
-1. (field `domain`) vision/ocr-handwriting is taken as a secondary because reading scene text is what the benchmark was built to test and many answers are copied text. DocVQA and ChartQA rejected the same term because no transcription is scored, which is true here too; confirm whether the secondary should stand, or whether TextVQA should match them. · [S2][textvqa-s2]
-   > We believe TextVQA will encourage research both on improving text detection and recognition in unconstrained environments
-2. (field `headline_metric`) headline\_metric and task.metric point at vqa-accuracy, a Metric record drafted in this task for the VQA entry and not yet committed. If that record is renamed or not kept, both refs need changing; TextVQA uses VQA v2's formula unchanged. · [S4][textvqa-s4]
-   > We use the same metric as VQA v2 which is robust to inter-human variability in phrasing the answers.
-3. (field `evaluation_method`) evaluation\_method is reference-metric, because VQA accuracy gives partial credit, which exact-match's exclusion test rules out; the VQA entry takes the same term. Neither term fits consensus scoring well, which the open gap record 2026-11-10-vqa-001 (proposed term consensus-match) already logs, so no duplicate was logged for TextVQA; if the term is added, both entries move together. · [S3][textvqa-s3]
-   > acc = min(1, float(len(matching\_answers)) / 3)
-4. (field `as_used`) Current reports use the validation split, against the maintainers' instruction to report test-std. Validation and test-std numbers are not comparable, and validation answers are public, which bears on contamination\_risk medium. · [S7][textvqa-s7]
-   > This phase should not be used for reporting results in the paper.
-5. (field `activity`) activity leaderboard-live-no-round rests on the 2021 phases being active until 2099 and public rows into June 2024. EvalAI's record of challenge 874 answers "Challenge does not exist!" and the challenge is missing from EvalAI's public lists, so it may be unpublished; whether a new test-standard submission is scored could not be checked without logging in. · [S7][textvqa-s7]
-   > "is\_active":true,"codename":"test-standard"
-6. (field `data.refresh`) refresh is static and v0.5.1 is a revision, because only the supplied OCR tokens changed. Models that read those tokens can score differently on v0.5 and v0.5.1, so a reviewer may prefer versioned-releases. · [S9][textvqa-s9]
-   > This version has everything same as v0.5 except that Rosetta OCR tokens have been updated and separated into a separate JSON file.
-7. (field `governance.independence_flags`) single-evaluator-private-test-set is tagged, as for DocVQA, for public test inputs with answers held by the maintainers' EvalAI challenge. COCO's entry has the same arrangement and no flag; one of them should change.
-8. (field `governance.independence_flags`) Facebook AI Research maintains TextVQA, and its parent company develops vision-language models that may report TextVQA. No source read shows that, so funded-by-evaluated-party and grader-from-evaluated-party are not set; a reviewer who finds such a report should add the flag.
-9. (field `lineage`) TextCaps is recorded as a same-team variant (a sibling task on the same images) under the id textcaps, which is not allocated. Whether it should be a separate benchmark linked another way, and whether TextOCR belongs in lineage at all. · [S4][textvqa-s4]
-   > are collected on the same images as TextVQA
-10. (field `data.size`) The test-split counts come from the site (5,734 questions on 3,289 images) and the paper (5,734), and the image totals from the site's per-split counts (21,953 + 3,166 + 3,289 = 28,408), which agree with the abstract. The paper's Table 2 test column could not be read reliably from the PDF text, so LoRRA's test score is not recorded. · [S2][textvqa-s2]
-   > We divide TextVQA into train, validation and test splits with size 34,602, 5,000, and 5,734, respectively.
-
-**Reviewer checklist** for `textvqa`:
-
-- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
-- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
-- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
-- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
-- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
-- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
-- [ ] Every open review check above is answered or resolved
-- [ ] Nothing here would embarrass the catalogue in front of a specialist
-
-[textvqa-s1]: https://arxiv.org/abs/1904.08920
-[textvqa-s2]: https://arxiv.org/pdf/1904.08920v2
-[textvqa-s3]: https://raw.githubusercontent.com/facebookresearch/mmf/72f898ec35af86567423c7a019dd1dc5175d1a5a/mmf/utils/m4c_evaluators.py
-[textvqa-s4]: https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/components/Challenge.js
-[textvqa-s5]: https://arxiv.org/pdf/2603.20354v1
-[textvqa-s6]: https://arxiv.org/pdf/2506.12103v1
-[textvqa-s7]: https://eval.ai/api/challenges/challenge/874/challenge_phase
-[textvqa-s8]: https://eval.ai/api/jobs/challenge_phase_split/2313/leaderboard/?page_size=200
-[textvqa-s9]: https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/components/Download.js
-[textvqa-s10]: https://eval.ai/api/challenges/challenge/551/challenge_phase
-[textvqa-s11]: https://raw.githubusercontent.com/facebookresearch/TextVQA/bd26fd3faad8d13b9084de0260c4b84ca437c4bf/frontend/src/news.json
 
 ### 2.3 VQA (vqa)
 
@@ -1329,190 +1367,231 @@ Considered and rejected:
 [perception-test-s13]: https://ptchallenge-workshop.github.io/
 [perception-test-s14]: https://arxiv.org/abs/2610.12081
 
-### 2.7 Video-MME (video-mme)
+### 2.7 VRBench (vrbench)
 
-`data/benchmarks/multimodal/video-mme.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-10 · last verified 2026-11-10
+`data/benchmarks/multimodal/vrbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
 
-*2,700 four-option questions on 900 YouTube videos from 11 seconds to an hour, answered with or without subtitles.*
+*8,243 four-option questions on 960 long narrative videos, scored on the answer and on a judged reasoning chain.*
 
-A video question-answering benchmark for multimodal LLMs from the Video-MME team, whose authors come from Nanjing University and seven other institutions (CVPR 2025). 900 videos with a total of 254 hours were collected from YouTube across 6 domains (Knowledge, Film & Television, Sports Competition, Artistic Performance, Life Record, Multilingual) and 30 subcategories, 300 each of short (under 2 minutes), medium (4-15 minutes) and long (30-60 minutes) videos. Annotators with research experience in vision-language learning watched each whole video and wrote three multiple-choice questions with four options, 2,700 in all, over 12 task types from perception to reasoning and synopsis; a second annotator reviewed each, and questions that Gemini 1.5 Pro could answer from the text alone were sent back for revision. The model receives sampled frames, optionally the subtitles matched to those frames (744 videos have them) or the audio, and the question, and answers with a letter; accuracy is computed by regular-expression matching with no judge model. The leaderboard reports Overall and per length accuracy without and with subtitles; in the paper Gemini 1.5 Pro led at 75.0% and 81.3%. The items and answers are public on Hugging Face under academic-use-only terms, and the maintainers score model responses e-mailed to them.
+A long-video reasoning benchmark from authors at Shanghai Artificial Intelligence Laboratory, Nanjing University, Shanghai Innovation Institute and the Chinese Academy of Sciences' Shenzhen Institute of Advanced Technology (ICCV 2025), held in the OpenGVLab organisation, Shanghai AI Laboratory's General Vision Team. Its 960 narrative videos (films, sports, games, travel vlogs and the like), 1.6 hours long on average and 1,540 hours in all, were collected from YouTube in eight languages other than English and Chinese and kept when a panel rated their plots coherent. Trained graduate students, starting from GPT-4o drafts, wrote 8,243 questions (the rules ask for 8 to 10 per video; the release has 6 to 10) over seven reasoning types, each with a reference chain of timestamped steps (25,106 in all) and an answer that needs the video rather than the subtitles alone. A model reasons step by step and then picks one of four options, whose distractors DeepSeek-V3 wrote. The outcome score is multiple-choice accuracy, the process score is DeepSeek-V3's weighted rating of the reasoning chain against the reference, and the overall score averages the two. Text-only LLMs receive model-written video summaries instead of frames and are ranked apart. In the v2 paper Gemini 2.0 Pro led the 31 models at 74.61% overall. Items, answers, summaries and 360p videos are on Hugging Face under Apache-2.0; arXiv v1 (June 2025) described a larger set of 1,010 videos.
 
 | Classification | |
 | --- | --- |
 | Primary domain | multimodal/video-language |
 | Secondary domains | - |
-| Capabilities | perception, temporal-reasoning, context-integration |
-| Evaluation methods | multiple-choice |
+| Capabilities | temporal-reasoning, abductive-reasoning, perception, context-integration |
+| Evaluation methods | multiple-choice, model-graded-judge, rubric-graded, composite |
 | Designed for | instruction-tuned-model |
 | Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
-| Lifecycle · activity | active · accepting-submissions |
+| Lifecycle · activity | active · no-submission-channel |
 | Data access · refresh · contamination risk | fully-open · versioned-releases · medium |
 | Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | community-collective · maintainer-scored-predictions, maintainer-run |
-| Independence flags | none |
-| Licences: code · dataset | null · Academic research use only, no commercial use, no distribution or modification without prior approval (the README's terms; no named licence) |
-| Released | 2024-05-31 |
-| Links | homepage [video-mme.github.io/](https://video-mme.github.io/) · repository [github.com/MME-Benchmarks/Video-MME](https://github.com/MME-Benchmarks/Video-MME) · leaderboard [video-mme.github.io/home\_page.html#leaderboard](https://video-mme.github.io/home_page.html#leaderboard) · dataset [huggingface.co/datasets/lmms-lab/Video-MME](https://huggingface.co/datasets/lmms-lab/Video-MME) |
+| Maintainer type · submission process | null · maintainer-run |
+| Independence flags | maintainer-competes-on-own-benchmark, grader-from-evaluated-party |
+| Licences: code · dataset | Apache-2.0 · Apache-2.0 |
+| Released | 2025-06-12 |
+| Links | homepage \[withheld: a personal page\] · repository [github.com/OpenGVLab/VRBench](https://github.com/OpenGVLab/VRBench) · leaderboard \[withheld: a personal page\] · dataset [huggingface.co/datasets/OpenGVLab/VRBench](https://huggingface.co/datasets/OpenGVLab/VRBench) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
-| S2 | `src-arxiv-2405-21075` | preprint · arXiv | [arxiv.org/abs/2405.21075](https://arxiv.org/abs/2405.21075) | none (not-required) |
-| S3 | `src-github-video-mme-readme-06c2315` | repository · GitHub | [raw.githubusercontent.com/MME-Benchmarks/Video-MME/06c2315b892f88578f...](https://raw.githubusercontent.com/MME-Benchmarks/Video-MME/06c2315b892f88578f81d73205d07cf576f292b9/README.md) | none (withheld) |
-| S4 | `src-arxiv-2405-21075-v3` | preprint · arXiv | [arxiv.org/pdf/2405.21075v3](https://arxiv.org/pdf/2405.21075v3) | none (not-required) |
-| S5 | `src-arxiv-2611-07329` | preprint · arXiv | [arxiv.org/abs/2611.07329](https://arxiv.org/abs/2611.07329) | none (not-required) |
-| S6 | `src-video-mme-github-io-home-page` | leaderboard-page · The Video-MME Team | [video-mme.github.io/home\_page.html](https://video-mme.github.io/home_page.html) | [capture 2026-10-30](https://web.archive.org/web/20261030180128/https://video-mme.github.io/home_page.html) |
-| S7 | `src-hf-api-lmms-lab-video-mme` | dataset-card · Hugging Face | [huggingface.co/api/datasets/lmms-lab/Video-MME](https://huggingface.co/api/datasets/lmms-lab/Video-MME) | [capture 2026-11-16](https://web.archive.org/web/20261116174637/https://huggingface.co/api/datasets/lmms-eval/Video-MME) |
-| S8 | `src-arxiv-2604-05015` | preprint · arXiv | [arxiv.org/abs/2604.05015](https://arxiv.org/abs/2604.05015) | none (not-required) |
+| S1 | `src-arxiv-2506-10857` | preprint · arXiv | [arxiv.org/abs/2506.10857](https://arxiv.org/abs/2506.10857) | none (not-required) |
+| S2 | `src-arxiv-2506-10857-v2` | preprint · arXiv | [arxiv.org/pdf/2506.10857v2](https://arxiv.org/pdf/2506.10857v2) | none (not-required) |
+| S3 | `src-arxiv-2510-23473-v1` | preprint · arXiv | [arxiv.org/pdf/2510.23473v1](https://arxiv.org/pdf/2510.23473v1) | none (not-required) |
+| S4 | `src-github-vrbench-readme-fa10939` | repository · GitHub | [raw.githubusercontent.com/OpenGVLab/VRBench/fa1093961c3cd0b71ca40f90b...](https://raw.githubusercontent.com/OpenGVLab/VRBench/fa1093961c3cd0b71ca40f90bd132378802097f3/README.md) | none (withheld) |
+| S5 | `src-hf-api-opengvlab-vrbench` | dataset-card · Hugging Face | [huggingface.co/api/datasets/OpenGVLab/VRBench](https://huggingface.co/api/datasets/OpenGVLab/VRBench) | [capture 2026-11-27](https://web.archive.org/web/20261127225704/https://huggingface.co/api/datasets/OpenGVLab/VRBench) |
+| S6 | `src-arxiv-2506-10857-v1-abs` | preprint · arXiv | [arxiv.org/abs/2506.10857v1](https://arxiv.org/abs/2506.10857v1) | none (not-required) |
+| S7 | `src-github-api-opengvlab-org` | repository · GitHub | [api.github.com/orgs/OpenGVLab](https://api.github.com/orgs/OpenGVLab) | [capture 2026-11-27](https://web.archive.org/web/20261127223737/https://api.github.com/orgs/OpenGVLab) |
+| S8 | `src-vrbench-github-io` | documentation · GitHub Pages | \[withheld: a personal page\] | none (withheld) |
 
-**Evidence** (42 quoted fields), by checklist area:
+**Evidence** (56 quoted fields), by checklist area:
 
-#### video-mme · Identity and id
+#### vrbench · Identity and id
 
-- `aliases` = VideoMME · [S1][video-mme-s1]
-  > VideoMME,False,,,1.0,0.25,1.0,2024-05-31,
-- `self_description` · [S2][video-mme-s2]
-  > In this paper, we introduce Video-MME, the first-ever full-spectrum, Multi-Modal Evaluation benchmark of MLLMs in Video analysis.
-- `released` = 2024-05-31 · [S2][video-mme-s2]
-  > Submitted on 31 May 2024 (v1), last revised 30 May 2025 (this version, v3)
-- `release_venue` = CVPR 2025 · [S3][video-mme-s3]
-  > \*\*\`2025.02.27\`\*\* 🌟 Video-MME has been accepted by CVPR 2025.
+- `self_description` · [S1][vrbench-s1]
+  > We present VRBench, the first long narrative video benchmark crafted for evaluating large models' multi-step reasoning capabilities
+- `released` = 2025-06-12 · [S1][vrbench-s1]
+  > Submitted on 12 Jun 2025 (v1), last revised 4 Aug 2025 (this version, v2)
+- `release_venue` = ICCV 2025 · [S1][vrbench-s1]
+  > Comments: ICCV2025
 
-#### video-mme · Domain and capabilities
+#### vrbench · Domain and capabilities
 
-- `domain` = primary multimodal/video-language · [S4][video-mme-s4]
-  - why: Every scored item is a four-option question answered in language about a video, and the construction removed questions a model could answer from the text alone, so the score measures whether the chosen answer corresponds to the video. That is the correspondence multimodal's inclusion test takes and vision's exclusion test hands over; vision/video-understanding's distinction sends a video benchmark posed as question answering to video-language even when it calls itself video understanding, as this one does. Subtitles and audio enter only as optional inputs; nothing is scored inside one modality.
-  > filter out QA pairs that can be answered solely based on the textual questions
-- `capability` = perception · [S4][video-mme-s4]
-  - why: The model receives sampled frames (and optionally subtitles or audio) and is scored on what it recovers from them; the task types span OCR, attribute, object and action recognition, counting and temporal perception.
-  > these questions encompass 12 distinct task types, including perception, reasoning, and information synthesis
-- `capability` = temporal-reasoning · [S4][video-mme-s4]
-  - why: Temporal perception and temporal reasoning are among the scored task types, and the paper's worked cases need events linked across a video, such as an injury and a reappearance 24 minutes apart; the evaluation script reports accuracy per task type.
-  > and long-range temporal reasoning, making them highly challenging
-- `capability` = context-integration · [S4][video-mme-s4]
-  - why: The video, and in the subtitle setting the matched subtitles, supply what determines the answer. Questions a strong model answered from the text alone were revised, and that model scored under 15% text-only, so the score tests whether the supplied material was used.
-  > Gemini 1.5 Pro achieves less than 15% accuracy in the text-only setup
-- `evaluation_method` = multiple-choice · [S4][video-mme-s4]
-  - why: Each question has four options, A to D, with the correct letter near-uniformly distributed, so chance is 25% (Epoch's random baseline is 0.25). The model is told to answer with the letter only, which is extracted by regular expression and compared with the key, with no judge model.
-  > each accompanied by four candidate options, contributing to a total of 2,700 QA pairs
-- `designed_for_subjects` = instruction-tuned-model · [S3][video-mme-s3]
-  - why: The subjects are image and video MLLMs prompted directly, each with its own frame sampling, with the model's default multiple-choice prompt or the paper's standard one, which asks for the letter only. No tools or harness loop are involved.
-  > Respond with only the letter (A, B, C, or D) of the correct option.
+- `domain` = primary multimodal/video-language · [S2][vrbench-s2]
+  - why: Every scored item is a question about a long video, answered by choosing an option in language and by a reasoning chain in language that a judge compares with the reference chain. The annotation rules require that the answer need the visual content and not the subtitles alone, so the score measures correspondence between the video and the language, which is multimodal's inclusion test; vision/video-understanding's distinction sends a video benchmark posed as question answering to video-language. Nothing is scored inside one modality.
+  > Mandatory multimodal grounding where solutions demand both visual analysis (excluding subtitle-only answers) and explicit reasoning (beyond basic perception)
+- `capability` = temporal-reasoning · [S2][vrbench-s2]
+  - why: Each question is anchored to a stretch of the video, the annotation rules spread questions over 0-15, 15-40 and 40-120 minute windows, and the reference chains are sequences of timestamped steps whose order the judge checks; event prediction asks what follows in the timeline.
+  > Each question requires no less than 2 reasoning steps annotated with precise timestamps
+- `capability` = abductive-reasoning · [S2][vrbench-s2]
+  - why: Event attribution, the largest type (1,875 questions in the release file), and implicit inference ask for the explanation the video best supports, a motive or an unstated relation, chosen among four options and defended in a chain; the answer is supported, not entailed.
+  > Event attribution: Determine causal origins or underlying motivations of video events.
+- `capability` = perception · [S2][vrbench-s2]
+  - why: Vision-language models receive sampled frames and are scored on what they recover from them; the paper finds counting questions hardest because they need fine-grained perception. The text-only track receives summaries instead, which the term's exclusion leaves out (subsets).
+  > most of the large models are not proficient in counting problems since they require fine-grained visual perception
+- `capability` = context-integration · [S2][vrbench-s2]
+  - why: The video, its translated subtitles or the summary supply what determines the answer, and questions answerable from the subtitles alone or from common knowledge were excluded by rule.
+  > Questions and answers must be derived solely from the video content or a combination of video and subtitles, not from subtitles alone or common life knowledge.
+- `evaluation_method` = multiple-choice, model-graded-judge, rubric-graded, composite · [S2][vrbench-s2]
+  - why: multiple-choice for the outcome stage; model-graded-judge and rubric-graded because a judge model applies four named, weighted criteria that are combined into the process score; composite because the headline overall averages sub-scores produced by those different methods.
+  > All metrics are normalized to 0-100 scales, and we report the rankings by computing average scores across all metrics.
+- `designed_for_subjects` = instruction-tuned-model · [S2][vrbench-s2]
+  - why: The subjects are vision-language models and text-only LLMs prompted directly with a chain-of-thought instruction to reason in steps and then answer; no tools or harness loop are involved, and each model uses its own frame setting.
+  > Given a question, 1) models produce multi-step reasoning using Chain-of-Thought \[75\] prompts. Then 2) models choose final answers from multiple-choice options.
 
 Considered and rejected:
 
-- `domain` not `vision/video-understanding` · [S4][video-mme-s4]
-  - why: The paper and README frame the benchmark as video understanding, and the task types include action and object recognition, but every task is posed as a multiple-choice question, and no score is a label or a temporal segment without language to correspond to.
-  > counting problems, action recognition, and temporal perception
-- `domain` not `multimodal/audio-language` · [S4][video-mme-s4]
-  - why: Audio is one of the benchmark's advertised input modalities, but it is an optional third setting that the paper reports for Gemini 1.5 Pro alone, because most models took no audio; the leaderboard has no audio column, and its two headline conditions are frames without and with subtitles (see review\_checks).
-  > Unfortunately, most of the open-source models do not support audio input, so audio evaluation is omitted.
-- `capability` not `memory-retention` · [S4][video-mme-s4]
-  - why: The long subset's median certificate length is 890.7 s, so the needed evidence is spread across the video, but the whole sampled video is given at once with the question, and length alone is a property of the input, which the term's exclusion rules out. No subset isolates retention.
-  > our dataset yields a median certificate length of 26s, 164.7s, and 890.7s for short, medium and long videos
-- `evaluation_method` not `model-graded-judge` · [S3][video-mme-s3]
-  - why: The paper and README both say no external model is used to extract or grade the answer.
-  > The evaluation does not introduce any third-party models, such as ChatGPT.
+- `domain` not `reasoning-general/temporal-reasoning` · [S2][vrbench-s2]
+  - why: The paper's claim is multi-step reasoning, and it names temporal reasoning as what earlier evaluations overlook, but the reasoning is about video content, which has its own family (reasoning-general's exclusion), and no temporal subset is scored on its own.
+  > addressing limitations in existing evaluations that overlook temporal reasoning and procedural validity
+- `domain` not `reasoning-general/counterfactual` · [S2][vrbench-s2]
+  - why: Hypothetical reasoning is one of the seven question types (1,497 of 8,243 questions in the release file), scored as a breakdown of the same benchmark, not the benchmark's claim.
+  > Hypothetical reasoning: Deduce plausible scenario outcomes from stated premises.
+- `capability` not `causal-reasoning` · [S2][vrbench-s2]
+  - why: Event attribution asks for causes and hypothetical reasoning for outcomes under a premise, but no item requires telling cause from correlation or predicting an intervention's effect against evidence; the classification corpus made the same call on video-mme-v2's causal relations between events.
+  > Hypothetical reasoning: Deduce plausible scenario outcomes from stated premises.
+- `capability` not `memory-retention` · [S2][vrbench-s2]
+  - why: The videos average 1.61 hours and long-context models score higher, but the sampled video (or the whole summary) is given at once with the question, and length is a property of the input, which the term's exclusion rules out.
+  > Since the average length of VRBench is 1.61 hours, the necessity of long context support is becoming more pronounced
+- `capability` not `quantitative-reasoning` · [S2][vrbench-s2]
+  - why: Counting problems are one of seven types, and their answers are lettered options, not computed quantities.
+  > Counting problems: Quantify state changes through arithmetic/combinatorial analysis.
+- `capability` not `deductive-reasoning` · [S2][vrbench-s2]
+  - why: The answers are the plausible reading of a narrative, not conclusions entailed by stated premises; for event prediction and hypothetical reasoning the paper says no single reference chain exists.
+  > For the event prediction and hypothetical reasoning tasks, we argue that there is no ground-truth reasoning steps since there might be multiple possible predictions
+- `evaluation_method` not `exact-match` · [S2][vrbench-s2]
+  - why: The letter is matched exactly, but against a closed set of four supplied options, which multiple-choice names.
+  > final answers are parsed from response endings to mitigate verbose option analysis
+- `evaluation_method` not `human-expert-eval` · [S2][vrbench-s2]
+  - why: People rated reasoning chains only to validate the judge, on 30 videos and 300 questions; no published score comes from human raters.
+  > we select a subset of 30 videos with 300 questions to perform processlevel human evaluation
+- `designed_for_subjects` not `reasoning-model` · [S2][vrbench-s2]
+  - why: The paper compares system-2 models with their system-1 versions and runs a token-budget ablation on 300 videos, but the main protocol sets no reasoning budget.
+  > we set a series of token limitations on these models and require the models to think with different instructions
 
-#### video-mme · Task and evaluation
+#### vrbench · Task and evaluation
 
-- `learned_entrant_evidence` = system video-SALMONN 2+ (72B) · [S6][video-mme-s6]
-  > video-SALMONN 2+ THU & ByteDance 72B 10 fps 6\* 2025-09-28 79.7 81.6
-- `learned_entrant_evidence` = system Gemini 1.5 Pro · [S4][video-mme-s4]
-  > with video frames as input alone, Gemini 1.5 Pro attains an accuracy of 75%
-- `reproducible_by_third_party` = true · [S7][video-mme-s7]
-  - why: The videos, subtitles, questions and answers are on Hugging Face without a gate, and scoring is regular-expression matching against the key, so anyone can compute a score. The dataset terms restrict use to academic research (execution.reproducibility\_blockers).
+- `learned_entrant_evidence` = system Gemini 2.0 Pro · [S2][vrbench-s2]
+  > Gemini-2.0-Pro \[61\] achieves 74.61% overall accuracy, surpassing all components by at least 5.93%.
+- `learned_entrant_evidence` = system Video-Thinker-7B · [S3][vrbench-s3]
+  > 80.69% on VRBench (11.44% improvement over the best baseline)
+- `reproducible_by_third_party` = true · [S5][vrbench-s5]
+  - why: The items, keys, reference chains, LLM-track summaries and videos are on Hugging Face without a gate, and the repository runs inference, the judge and the scorer; the judge is a call to DeepSeek's API, which anyone can buy.
   > "gated":false
-- `task` = exists true; input frames sampled from a video of 11 seconds to an hour (the number is the model's own setting), optionally the subtitles at the sampled frames' timestamps, or the audio track, a question with four lettered options; output One option letter.; scoring Accuracy over the questions, by regular-expression extraction of the letter, reported overall and for short, medium and long videos, without and with subtitles, with breakdowns by domain, subcategory and task type. · [S4][video-mme-s4]
-  > In the subtitle-enabled setting, all models utilize subtitles corresponding to the timestamps of the sampled video frames.
-- `execution.compute_tier` = api-credits-only · [S6][video-mme-s6]
-  - why: The leaderboard ranks closed models served through APIs (Gemini 1.5 Pro, GPT-4o, Claude 3.5 Sonnet) beside open weights, and the protocol mandates no hardware; serving open weights on GPUs is the entrant's choice.
-  > while the long videos are sampled at 0.5 fps to ensure the stability of the API
-- `execution.reproducibility_tier` = fully-automatable · [S4][video-mme-s4]
-  - why: Items and answers are public and scoring is regular-expression matching with no judge, so the headline score needs no human or maintainer-only step. The licence restricts use (blockers).
-  > comparing it directly with the ground-truth answer, without relying on external judges like commonly-used ChatGPT
-- `execution.harness` = eval\_your\_results.py, linked from the README, with the repository's output template (evaluation/output\_test\_template.json) · [S3][video-mme-s3]
-  > \[withheld: it may name a person; see the entry file\]
-- `aggregation_policy` = official-aggregate · [S6][video-mme-s6]
-  - why: The leaderboard gives an Overall column beside the per-length columns, under each subtitle condition.
-  > By default, this leaderboard is sorted by results with subtitles.
+- `task` = exists true; input for vision-language models, frames sampled from a narrative video of 20 minutes or more (1.6 hours on average), at the model's own setting (4 to 512 frames, or 0.5 fps, in the paper), for text-only LLMs, a Qwen2.5-72B-written summary of the video's captions and translated subtitles in place of the frames, a question, with a chain-of-thought instruction to reason in steps, and four lettered options; output A step-by-step reasoning chain ending in one option letter.; scoring Outcome accuracy over the letters, and the judge's weighted 0-100 rating of the chain against the reference chain; the overall score is their mean, reported with per-type breakdowns and separately for LLMs and VLMs. · [S2][vrbench-s2]
+  > Given a question, 1) models produce multi-step reasoning using Chain-of-Thought \[75\] prompts. Then 2) models choose final answers from multiple-choice options.
+- `execution.compute_tier` = api-credits-only · [S2][vrbench-s2]
+  - why: The paper ran the proprietary models through their APIs and the open ones locally (Hugging Face or vLLM), and the judge is a call to DeepSeek's hosted API; the protocol mandates no hardware, so serving open weights on GPUs is the entrant's choice.
+  > Pipeline API API API HF HF HF HF HF HF HF HF HF HF vLLM vLLM
+- `execution.reproducibility_tier` = fully-automatable · [S4][vrbench-s4]
+  - why: Items, keys and reference chains are public, inference and scoring are scripts, and the judge is a model call, so the headline score needs no human or maintainer-only step.
+  > \`evaluation/compute\_final\_scores.py\` (new): aggregates MCQ + process scores into a unified Final% leaderboard with per-reasoning-type breakdown.
+- `execution.harness` = VRBench's repository scripts at fa10939, inference/main.py for the answers, evaluation/batch\_evaluation\_api\_mp\_time\_sync.py or run\_process\_eval.py for the DeepSeek ratings, and evaluation/calculate\_scores.py or compute\_final\_scores.py for the scores · [S4][vrbench-s4]
+  > \### 2. Rate answers with DeepSeek
+- `execution.harness_gotcha` · [S4][vrbench-s4]
+  > --base\_url https://api.deepseek.com/v1
+- `aggregation_policy` = official-aggregate · [S2][vrbench-s2]
+  - why: The paper ranks by the average of its metrics, and the project page's table leads with an Overall column beside the two metrics.
+  > All metrics are normalized to 0-100 scales, and we report the rankings by computing average scores across all metrics.
 
-#### video-mme · Data and licence
+#### vrbench · Data and licence
 
-- `as_used` = protocol The long subset alone, or random 200-question samples of it, at a fixed small frame budget, reported as Video-MME by long-video method papers.; split long videos · [S5][video-mme-s5]
-  > The same contrasts are unstable at the n=200 subset scale commonly used
-- `data.access` = fully-open · [S7][video-mme-s7]
-  - why: The 2,700 questions, each with its answer field, and the videos and subtitles are public in one test split on Hugging Face with no gate. There is no hidden split.
-  > {"name":"answer","dtype":"string"}
-- `data.refresh` = versioned-releases · [S3][video-mme-s3]
-  - why: The one change to the items, replacing broken video links and re-annotating those videos, is carried by a dated maintainer announcement that a claim can be pinned to.
-  > \*\*\`2024.06.15\`\*\* 🌟 We have refreshed our evaluation: 1) replace broken and potentially broken video links, and re-annotated them
-- `data.data_provenance` = web-scraped, expert-authored · [S4][video-mme-s4]
-  > recruit annotators with strong English proficiency and extensive research experience in vision-language learning
-- `data.dataset_licence` = Academic research use only, no commercial use, no distribution or modification without prior approval (the README's terms; no named licence) · [S3][video-mme-s3]
-  > Video-MME is only used for academic research. Commercial use in any form is prohibited.
-- `data.size` = count 2700; unit four-option multiple-choice questions, three per video · [S4][video-mme-s4]
-  > annotate a set of 2,700 high-quality multiple-choice questions (3 per video)
-- `data.size` = count 900; unit videos, 254 hours in total, all with audio; subset all · [S2][video-mme-s2]
-  > 900 videos with a total of 254 hours are manually selected and annotated by repeatedly viewing all the video content, resulting in 2,700 question-answer pairs.
-- `data.size` = count 744; unit videos with subtitles (every long video has them); subset with subtitles · [S3][video-mme-s3]
-  > There are a total of \*\*900 videos\*\* and \*\*744 subtitles\*\*, where all long videos have subtitles.
-- `data.size` = count 2700; unit test questions on Hugging Face (one split); subset Hugging Face release · [S7][video-mme-s7]
-  > "num\_examples":2700
-- `subsets` = id video-mme#without-subtitles; label Without subtitles (frames only); items 2700; scored_separately true · [S3][video-mme-s3]
-  > For the subtitles-free setting, you should remove the subtitle content.
-- `subsets` = id video-mme#with-subtitles; label With subtitles; items 2700; scored_separately true · [S4][video-mme-s4]
-  > In the subtitle-enabled setting, all models utilize subtitles corresponding to the timestamps of the sampled video frames.
-- `subsets` = id video-mme#short; label Short videos (under 2 minutes); items 900; scored_separately true · [S4][video-mme-s4]
-  > Video-MME-S/M/L denotes the short/medium/long part.
-- `subsets` = id video-mme#medium; label Medium videos (4-15 minutes); items 900; scored_separately true · [S4][video-mme-s4]
-  > medium (4-15 minutes), and long videos (30-60 minutes)
-- `subsets` = id video-mme#long; label Long videos (30-60 minutes); items 900; scored_separately true · [S4][video-mme-s4]
-  > medium (4-15 minutes), and long videos (30-60 minutes)
-- `subsets` = id video-mme#long; label Long videos (30-60 minutes); items 900; scored_separately true · [S5][video-mme-s5]
-  > On the full Video-MME long bucket (n=900, K=8), no tested selector significantly improves over uniform sampling.
+- `as_used` = protocol Outcome-level multiple-choice accuracy alone, with no process score, at 16, 32 or 64 frames, reported as VRBench by video-reasoning training papers as an out-of-domain test set.; split all questions (which release is not stated) · [S3][vrbench-s3]
+  > We evaluate all baseline models on the aforementioned dataset using accuracy as the primary evaluation metric.
+- `data.access` = fully-open · [S5][vrbench-s5]
+  - why: The item file and the videos are public in one Hugging Face dataset with no gate, and there is no hidden split.
+  > {"rfilename":"VRBench\_eval.jsonl"}
+- `data.refresh` = versioned-releases · [S4][vrbench-s4]
+  - why: The one change is carried by a dated arXiv version and a dated maintainer announcement that a claim can be pinned to.
+  > \[08/2025\] The camera-ready version of VRBench has been released!
+- `data.data_provenance` = web-scraped, crowd-authored, model-generated · [S2][vrbench-s2]
+  > We recruit and train 67 graduate students to generate 8-10 high-quality QA pairs per video
+- `data.dataset_licence` = Apache-2.0 · [S5][vrbench-s5]
+  > "license:apache-2.0"
+- `data.size` = count 8243; unit four-option multiple-choice questions, each with a reference reasoning chain · [S2][vrbench-s2]
+  > It comprises 960 long videos (with an average duration of 1.6 hours), along with 8,243 human-labeled multi-step question-answering pairs and 25,106 reasoning steps with timestamps.
+- `data.size` = count 960; unit narrative videos, 1.6 hours on average; subset all · [S2][vrbench-s2]
+  > VRBench includes 960 manual-filtered narrative videos, covering 8 languages and 7 video categories
+- `data.size` = count 25106; unit timestamped reasoning steps in the reference chains · [S2][vrbench-s2]
+  > It comprises 960 long videos (with an average duration of 1.6 hours), along with 8,243 human-labeled multi-step question-answering pairs and 25,106 reasoning steps with timestamps.
+- `data.size` = count 1540; unit hours of video; subset all · [S2][vrbench-s2]
+  > 960 videos • 8 languages • 1,540 hours • 7 video types
+- `data.size` = count 9468; unit question-answer pairs, with 30,292 reasoning steps on 1,010 videos; subset arXiv v1 (2025-06-12) · [S6][vrbench-s6]
+  > It comprises 1,010 long videos (with an average duration of 1.6 hours), along with 9,468 human-labeled multi-step question-answering pairs and 30,292 reasoning steps with timestamps.
+- `subsets` = id vrbench#vlm-frames; label Vision-language models given video frames; items 8243; scored_separately true · [S2][vrbench-s2]
+  > it is unfair to directly compare the numerical results of LLMs and VLMs
+- `subsets` = id vrbench#llm-video-summaries; label Text-only LLMs given video summaries; items 8243; scored_separately true · [S2][vrbench-s2]
+  > For text-only LLMs, we convert videos to text inputs using Qwen2.5-72B-Instruct \[83\] to synthesize video captions and subtitles into fine-grained summaries.
+- `subsets` = id vrbench#event-attribution; label Event attribution; items 1875; scored_separately true · [S2][vrbench-s2]
+  > Event attribution: Determine causal origins or underlying motivations of video events.
+- `subsets` = id vrbench#event-attribution; label Event attribution; items 1875; scored_separately true · S8
+  > EA (Event Attribution) CP (Counting Problems) HR (Hypothetical Reasoning) II (Implicit Inferences) IS (Information Synopsis) EP (Event Prediction) LL (Logical Linkage)
+- `subsets` = id vrbench#hypothetical-reasoning; label Hypothetical reasoning; items 1497; scored_separately true · [S2][vrbench-s2]
+  > Hypothetical reasoning: Deduce plausible scenario outcomes from stated premises.
+- `subsets` = id vrbench#information-synopsis; label Information synopsis; items 1249; scored_separately true · S8
+  > EA (Event Attribution) CP (Counting Problems) HR (Hypothetical Reasoning) II (Implicit Inferences) IS (Information Synopsis) EP (Event Prediction) LL (Logical Linkage)
+- `subsets` = id vrbench#implicit-inference; label Implicit inference; items 975; scored_separately true · S8
+  > EA (Event Attribution) CP (Counting Problems) HR (Hypothetical Reasoning) II (Implicit Inferences) IS (Information Synopsis) EP (Event Prediction) LL (Logical Linkage)
+- `subsets` = id vrbench#event-prediction; label Event prediction; items 939; scored_separately true · S8
+  > EA (Event Attribution) CP (Counting Problems) HR (Hypothetical Reasoning) II (Implicit Inferences) IS (Information Synopsis) EP (Event Prediction) LL (Logical Linkage)
+- `subsets` = id vrbench#counting-problems; label Counting problems; items 918; scored_separately true · [S2][vrbench-s2]
+  > Counting problems: Quantify state changes through arithmetic/combinatorial analysis.
+- `subsets` = id vrbench#logical-linkage; label Logical linkage; items 790; scored_separately true · S8
+  > EA (Event Attribution) CP (Counting Problems) HR (Hypothetical Reasoning) II (Implicit Inferences) IS (Information Synopsis) EP (Event Prediction) LL (Logical Linkage)
 
-#### video-mme · Governance and independence
+#### vrbench · Governance and independence
 
-- `governance.maintainer` = The Video-MME team (the MME-Benchmarks organisation on GitHub) · [S6][video-mme-s6]
-  - why: The project page is signed by the Video-MME Team, and the README points its evaluation pipeline at the MME-Benchmarks organisation's repository, which also holds the team's other MME benchmarks. The paper's authors are from Nanjing University, which leads the project, the State Key Laboratory of Cognitive Intelligence, XMU, HKU, PKU, CUHK, ECNU and CASIA. The data is served from the LMMS-Lab Hugging Face account.
-  > Video-MME Team arXiv GitHub
-- `governance.submission_process` = maintainer-scored-predictions, maintainer-run · [S3][video-mme-s3]
-  > If you want to add your model to our \[leaderboard\](https://video-mme.github.io/home\_page.html#leaderboard), please send model responses to
+- `governance.maintainer` = OpenGVLab, the General Vision Team of Shanghai AI Laboratory · [S7][vrbench-s7]
+  - why: The repository and the Hugging Face dataset sit in the OpenGVLab organisation accounts (GitHub type Organization; Hugging Face's organisations API answers 200), whose GitHub record describes it as Shanghai AI Laboratory's General Vision Team. Most of the 17 authors list Shanghai Artificial Intelligence Laboratory, beside Nanjing University, Shanghai Innovation Institute and the Shenzhen Institute of Advanced Technology. The project page sits in a separate GitHub account of type User named after the benchmark.
+  > "description":"General Vision Team of Shanghai AI Laboratory","name":"OpenGVLab"
+- `governance.submission_process` = maintainer-run · S8
+  > VRBench Evaluation Results Model Overall Results by Metric Results by Taxonomy MCQ-O (Outcome) OE-P (Process)
+- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S2][vrbench-s2]
+  > Shanghai AI Lab InternVL2.5-78B \[7\] InternVL2.5-8B \[7\] OpenGVLab InternVideo2.5-8B \[73\] VideoChat-Flash \[32\]
+- `governance.independence_flags` = flag grader-from-evaluated-party · [S2][vrbench-s2]
+  > DeepSeek-V3 \[38\] serves as the judge due to its optimal balance between cost and human alignment
+- `governance.funding` · [S2][vrbench-s2]
+  > This work is supported by the National Key R&D Program of China (No. 2022ZD0160101) and Jiangsu Frontier Technology Research and Development Program (No. BF2024076)
+- `governance.known_limitation` · [S2][vrbench-s2]
+  > VRBench may contain potential cultural bias for countries and regions where these languages are used.
 
-#### video-mme · Lifecycle and activity
+#### vrbench · Lifecycle and activity
 
-- `lifecycle` = active · [S5][video-mme-s5]
-  - why: Results are still being produced. A November 2026 audit of long-video QA methods runs on the full long subset, and the README records frontier model releases reporting it through December 2025. The same team's Video-MME-v2 (April 2026) argues that existing video benchmarks are saturating, but it is a separate benchmark and has not replaced this one in use (see review\_checks).
-  > On the full Video-MME long bucket (n=900, K=8), no tested selector significantly improves over uniform sampling.
-- `activity` = accepting-submissions · [S3][video-mme-s3]
-  - why: The benchmark has never run in rounds, and the README gives a standing route onto the leaderboard, e-mailing model responses in the template's format.
-  > If you want to add your model to our \[leaderboard\](https://video-mme.github.io/home\_page.html#leaderboard), please send model responses to
-- `history` = event repository-moved; field repository; from github.com/\[personal account\]/Video-MME (not linked: a personal account); to [github.com/MME-Benchmarks/Video-MME](https://github.com/MME-Benchmarks/Video-MME) · [S3][video-mme-s3]
-  > \[withheld: it may name a person; see the entry file\]
+- `lifecycle` = active · [S3][vrbench-s3]
+  - why: Results are still being produced. A video-reasoning paper of October 2025 runs VRBench as an out-of-domain test beside Video-Holmes and CG-Bench-Reasoning, and the maintainers added inference support for more recent models in June 2026.
+  > 80.69% on VRBench (11.44% improvement over the best baseline)
+- `activity` = no-submission-channel · [S4][vrbench-s4]
+  - why: The README describes running inference, the judge and the scorer on one's own machine, with results printed locally; neither it nor the project page invites submissions.
+  > Results are printed in a table and optionally saved to JSON.
 
-**Open review checks** (11):
+**Open review checks** (12):
 
-1. (field `lineage`) Identity. Video-MME-v2 is recorded as a separate benchmark by the same team rather than an edition, because it changes the task (eight options, a tri-level hierarchy) and the scoring (group-based non-linear) as well as the items, and is cited on its own. Same maintainer and same name stem argue for an edition; 04 S4's edition test needs the same task definition. No id was allocated for it. · [S8][video-mme-s8]
-   > strategy that enforces both consistency across related queries and coherence in multi-step reasoning
-2. (field `lineage`) tests/test\_overlap\_sample.py asserts that family\_key('Video-MME v2') equals family\_key('VideoMME'), treating v2 as the same family for overlap sampling, which disagrees with this entry's identity call.
-3. (field `domain.secondary`) Audio. multimodal/audio-language was rejected as a secondary because audio is an optional setting reported for one model and absent from the leaderboard; the Video-MME-v2 corpus record took audio-language as a secondary for v2, where omni models are scored with raw audio. The paper's abstract lists audio among the benchmark's four key features. · [S4][video-mme-s4]
-   > \3) Breadth in data modalities, integrating multi-modal inputs besides video frames, including subtitles and audios
-4. (field `subsets`) The subtitle conditions are modelled as two subsets over the same 2,700 questions, as 04 S4's table names this case, though they are input conditions rather than item sets; subset\_used in the comparability profile carries the choice on claims.
-5. (field `subsets`) The 12 task types (and 6 domains, 30 subcategories) are not subsets, because their item counts and the full task-type list are in a figure that was not read; 04 S6 cites "VideoMME reports 12 sub-scores" as subset material.
-6. (field `versions`) The 2024-06-15 revision is marked breaking because videos were replaced and re-annotated, but the number of items changed is not stated and the leaderboard re-dated the paper's rows to that day. · [S3][video-mme-s3]
-   > \*\*\`2024.06.15\`\*\* 🌟 We have refreshed our evaluation: 1) replace broken and potentially broken video links, and re-annotated them
-7. (field `governance.maintainer_type`) maintainer\_type community-collective rather than academic-lab. Every affiliation is academic and Nanjing University leads the project, but the repository moved from a personal account to a shared organisation account, and the data is served from LMMS-Lab's Hugging Face account.
-8. (field `execution.harness_availability`) harness official-harness rests on the README naming its scoring script, which sits in a separate personal account at an unpinned main branch and was not read; reference-implementation-only may fit if the maintainers score submissions with other code.
-9. (field `execution.reproducibility_blockers`) licence-restriction as a blocker, and fully-open access despite academic-only terms. The terms forbid commercial use and redistribution, while frontier developers report the benchmark (the README's news items); whether evaluation counts as commercial use is not stated. · [S3][video-mme-s3]
-   > Without prior approval, you cannot distribute, publish, copy, disseminate, or modify Video-MME in whole or in part.
-10. (field `data.data_provenance`) data\_provenance expert-authored follows the paper's "expert annotators"; their expertise is vision-language research, not the videos' subject domains, so crowd-authored may fit.
-11. (field `lifecycle`) lifecycle active rather than saturated or superseded. The top row is 81.6% with subtitles (no human ceiling is known), and the same team's v2 abstract says existing benchmarks are saturating, but outside papers still report Video-MME in late 2026. · [S8][video-mme-s8]
-   > existing benchmarks are becoming increasingly saturated, exposing a critical discrepancy between inflated leaderboard scores and real-world model capabilities
+1. (field `data.size`) Counts. The v2 paper, its abstract page, the project page's abstract and the Hugging Face item file (counted) agree on 960 videos, 8,243 questions and 25,106 steps. arXiv v1 gave 1,010, 9,468 and 30,292. The sweep reported CompassHub card 2383 as 1,010 videos and 9,468 reasoning steps; 9,468 is v1's question count, so the card appears to carry v1's figures. The card was not re-read. The project page's overview caption and the Video-Thinker paper also still give 1,010 videos. · [S6][vrbench-s6]
+   > It comprises 1,010 long videos (with an average duration of 1.6 hours), along with 9,468 human-labeled multi-step question-answering pairs and 30,292 reasoning steps with timestamps.
+2. (field `versions`) Versions. v1 and v2 are modelled as two revisions of one benchmark (same maintainer, task and scoring, fewer items). No source says why 50 videos and 1,225 questions went, or whether v1's set was ever downloadable; the README dates the open-sourcing to 07/2025, but Hugging Face's commit log shows the item file first uploaded on 2025-08-04, the day of v2. · [S4][vrbench-s4]
+   > \[07/2025\] VRBench has been fully open-sourced!
+3. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on the paper's own organisation column, which gives InternVL2.5 to Shanghai AI Lab and InternVideo2.5 and VideoChat-Flash to OpenGVLab, against a benchmark held by OpenGVLab, Shanghai AI Laboratory's General Vision Team (the organisation's own GitHub record), with the laboratory as the authors' first affiliation. That is an affiliation overlap under the 2026-11-18 rule; a reviewer may confirm that the table's OpenGVLab is the holder. · [S2][vrbench-s2]
+   > Shanghai AI Lab InternVL2.5-78B \[7\] InternVL2.5-8B \[7\] OpenGVLab InternVideo2.5-8B \[73\] VideoChat-Flash \[32\]
+4. (field `governance.independence_flags`) grader-from-evaluated-party. DeepSeek-V3 is the process judge and is itself evaluated, and it also wrote every question's distractors, so the outcome score depends on it too. The paper validated the judge against human ratings on 300 questions (correlations above 0.8), which does not remove the conflict. · [S2][vrbench-s2]
+   > For open-source model DeepSeek-V3 \[38\] and R1 \[11\], we observe that DeepSeek-R1 achieves higher scores both on multiple-choice questions and open-ended evaluations.
+5. (field `governance.maintainer_type`) maintainer\_type is null, as for omnidocbench, because no source states Shanghai AI Laboratory's legal form. community-collective was rejected because one institution's team holds the accounts; academic-lab would need the laboratory read as a university research group. · [S7][vrbench-s7]
+   > "description":"General Vision Team of Shanghai AI Laboratory","name":"OpenGVLab"
+6. (field `subsets`) Subsets. The LLM and VLM tracks are input conditions over the same items, modelled as subsets as video-mme's subtitle conditions are. The seven types are subsets whose item counts come from counting the release file, not from a quoted figure; the file labels information synopsis Event Summarization.
+7. (field `evaluation_method`) evaluation\_method carries rubric-graded beside model-graded-judge because the judge gives four named ratings that code weights and combines; model-graded-judge alone is the alternative if the criteria are read as the judge's prompt rather than a rubric. The paper's criterion names differ from the judge prompt's. · [S2][vrbench-s2]
+   > we ask the model to output all sub-metric rating separately and automatically compute the final score
+8. (field `execution.harness_gotcha`) Judge and scorer. The README calls DeepSeek's hosted API with no model snapshot, so a rerun's judge may not be the paper's DeepSeek-V3. The June 2026 scripts (run\_process\_eval.py, compute\_final\_scores.py) were not read; whether their Final% equals the paper's Overall is unchecked. · [S4][vrbench-s4]
+   > \`evaluation/run\_process\_eval.py\` (new): end-to-end DeepSeek-based process-score runner with async concurrency.
+9. (field `data.data_provenance`) data\_provenance is crowd-authored, because the question writers were graduate students trained for the task; the paper calls the annotations labelled and reviewed by human experts, which would argue for expert-authored. model-generated is for GPT-4o's drafts and DeepSeek-V3's distractors. · [S2][vrbench-s2]
+   > We recruit and train 67 graduate students to generate 8-10 high-quality QA pairs per video
+10. (field `governance.submission_process`) submission\_process maintainer-run, because the project page keeps a results table of models the maintainers ran; it is the v2 paper's Table 2 unchanged since 2025-08-04, so literature-only is the alternative if a page that only republishes the release baselines does not count as a ranking. activity no-submission-channel follows either way. · S8
+   > VRBench Evaluation Results Model Overall Results by Metric Results by Taxonomy MCQ-O (Outcome) OE-P (Process)
+11. (field `data.dataset_licence`) The Apache-2.0 tag on Hugging Face covers a dataset that redistributes YouTube videos at 360p; no source read addresses the videos' own rights, so no licence-restriction blocker is set and upstream\_licences is null. · [S5][vrbench-s5]
+   > "license:apache-2.0"
+12. (field `capability`) capability abductive-reasoning is tagged for event attribution and implicit inference (about 35% of the questions); causal-reasoning was rejected as the corpus did for video-mme-v2. A reviewer may prefer neither, leaving temporal-reasoning as the only reasoning term. · [S2][vrbench-s2]
+   > Event attribution: Determine causal origins or underlying motivations of video events.
 
-**Reviewer checklist** for `video-mme`:
+**Reviewer checklist** for `vrbench`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -1523,14 +1602,13 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[video-mme-s1]: https://epoch.ai/data/benchmark_data.zip
-[video-mme-s2]: https://arxiv.org/abs/2405.21075
-[video-mme-s3]: https://raw.githubusercontent.com/MME-Benchmarks/Video-MME/06c2315b892f88578f81d73205d07cf576f292b9/README.md
-[video-mme-s4]: https://arxiv.org/pdf/2405.21075v3
-[video-mme-s5]: https://arxiv.org/abs/2611.07329
-[video-mme-s6]: https://video-mme.github.io/home_page.html
-[video-mme-s7]: https://huggingface.co/api/datasets/lmms-lab/Video-MME
-[video-mme-s8]: https://arxiv.org/abs/2604.05015
+[vrbench-s1]: https://arxiv.org/abs/2506.10857
+[vrbench-s2]: https://arxiv.org/pdf/2506.10857v2
+[vrbench-s3]: https://arxiv.org/pdf/2510.23473v1
+[vrbench-s4]: https://raw.githubusercontent.com/OpenGVLab/VRBench/fa1093961c3cd0b71ca40f90bd132378802097f3/README.md
+[vrbench-s5]: https://huggingface.co/api/datasets/OpenGVLab/VRBench
+[vrbench-s6]: https://arxiv.org/abs/2506.10857v1
+[vrbench-s7]: https://api.github.com/orgs/OpenGVLab
 
 ### 2.8 MMAU (mmau)
 
@@ -2157,18 +2235,18 @@ Considered and rejected:
 
 (03 §12.2, ask 3.) The row is this family crossed with the 13 capability groups of `taxonomy/capability_groups.yaml` (the coarse grid, the only one a gap claim may come from: 12-analytics-and-trends.md §5.1). A cell holds a benchmark when an entry in this family, by its primary domain or only by a secondary one, carries a capability term of that group (02-taxonomy.md §11 rule 1: presence at any weight); the two are counted apart.
 
-9 of 13 cells hold a benchmark (69.2%), 0 are declared not applicable, 4 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on multimodal (reviewer\_signoff: none)).
+10 of 13 cells hold a benchmark (76.9%), 0 are declared not applicable, 3 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on multimodal (reviewer\_signoff: none)).
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
-| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 7 / 3 | knowledge-recall 3, factual-precision 0, memory-retention 1, context-integration 4 |
+| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 9 / 3 | knowledge-recall 3, factual-precision 0, memory-retention 1, context-integration 6 |
 | Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 1 / 1 | deductive-reasoning 0, quantitative-reasoning 1, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | has-benchmarks | 0 / 1 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
-| Causal & experimental<br>`causal-and-experimental-inference` | not-yet-surveyed | 0 / 0 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
-| Signal, space & time<br>`perception-space-time` | has-benchmarks | 11 / 7 | perception 9, grounding 3, spatial-reasoning 0, temporal-reasoning 2 |
+| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 1 / 0 | abductive-reasoning 1, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
+| Signal, space & time<br>`perception-space-time` | has-benchmarks | 14 / 7 | perception 12, grounding 3, spatial-reasoning 0, temporal-reasoning 3 |
 | Planning & search<br>`planning-and-search` | not-yet-surveyed | 0 / 0 | planning 0, search-exploration 0, optimization 0 |
 | Action & execution<br>`action-and-execution` | has-benchmarks | 0 / 1 | sensorimotor-control 0, tool-use 0, long-horizon-execution 0 |
-| Controlled generation<br>`controlled-generation` | has-benchmarks | 1 / 4 | generation-fidelity 1, creativity-novelty 0, instruction-following 0 |
+| Controlled generation<br>`controlled-generation` | has-benchmarks | 2 / 4 | generation-fidelity 2, creativity-novelty 0, instruction-following 0 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | not-yet-surveyed | 0 / 0 | collaboration 0, communication 0, honesty 0, harm-avoidance 0 |
 | Learning & transfer<br>`learning-and-transfer` | has-benchmarks | 0 / 1 | sample-efficiency 0, continual-learning 0, transfer-learning 0 |
 | Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 0 / 2 | distribution-shift-generalization 0, adversarial-robustness 0, reliability-consistency 0 |
@@ -2179,8 +2257,6 @@ An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobo
 
 The empty cells, for your answer:
 
-- **Causal & experimental** (`causal-and-experimental-inference`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
-  - why we think the question applies here: Causal questions about video and image-text pairs score the relation between modalities.
 - **Planning & search** (`planning-and-search`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
   - why we think the question applies here: Planning from an image and an instruction together scores a cross-modal relation.
 - **Conduct & cooperation** (`conduct-and-cooperation`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
