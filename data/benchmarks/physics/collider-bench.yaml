@@ -1,0 +1,688 @@
+# data/benchmarks/physics/collider-bench.yaml
+#
+# P1-S12 sweep follow-up: a new physics entry from the 2026-11-17 sweep's new-candidate finding.
+# Filled from the Collider-Bench paper, arXiv 2605.13950 read as its v1 PDF (2026-05-13, the only version), and its
+# abstract page; Hugging Face's API record of the task corpus (ungated, read without an account) and its dataset
+# card at main; the GitHub repository's README at main's head commit 2986d8b (2026-09-02) and GitHub's API listing
+# of its task directories at that commit; and the v3 PDF of arXiv 2603.20179 (June 2026), a later paper that cites
+# the benchmark. GitHub's API also supplied the repository's dates, branches, commit log and licence metadata, and
+# Hugging Face's the dataset's; none of those is a quoted Source. The code and the task corpus sit in personal
+# accounts, which appear only inside the URLs below. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+
+id: collider-bench
+name: Collider-Bench
+aliases:
+  - ColliderBench
+tagline: LLM agents rebuild published LHC searches as simulation pipelines, scored on predicted
+  signal yields per bin.
+description: >
+  A benchmark from physicists at Rutgers University's New High Energy Theory Center and Boston
+  University in which an LLM agent reproduces part of a published LHC search, the validation step
+  of a recast. Each task names a CMS paper, a supersymmetric signal benchmark point, an observable
+  and a signal region. The agent works unattended for up to 2.5 hours in a containerised workspace
+  whose command-line tools wrap MadGraph5, Pythia 8, Delphes and Prospino; it reads the paper for
+  the object definitions and event selection, generates and simulates signal events, applies the
+  selection and fills a binned YAML template with predicted signal yields. Submissions are scored
+  against the hidden published yields by the relative L2 distance between the histograms, and a
+  task counts as passed when that distance is below 0.33, the worst result of a physicist
+  supervising Claude Code on the same tasks. An LLM judge reads each run's workspace and trace and
+  drops runs whose values were fabricated or copied. The first release (May 2026) has ten
+  Simulation tasks from four CMS SUSY searches at 13 TeV, each with a Shape task that scores only
+  the normalised distribution, and no autonomous agent reliably matched the supervised baseline.
+  The repository has since added task directories from six more ATLAS and CMS analyses, under no
+  release label.
+self_description:
+  source: src-arxiv-2605-13950-v1
+  quote: we introduce COLLIDER-BENCH, a benchmark for evaluating whether LLM agents can reproduce
+    experimental analyses from the Large Hadron Collider (LHC) using only public papers and open
+    scientific software
+external_ids:
+  arxiv: '2605.13950'
+external_ids_note: The Hugging Face id is left out because it carries a personal account;
+  dataset_url holds it.
+paper:
+  title: 'Collider-Bench: Benchmarking AI Agents with Particle Physics Analysis Reproduction'
+  arxiv: '2605.13950'
+  version_read: v1
+  source: src-arxiv-2605-13950-v1
+released: 2026-05-13
+released_note: The paper's first and only arXiv version. Hugging Face's record of the task corpus
+  was created a day earlier (2026-05-12) and last changed on 2026-05-13.
+released_source: src-arxiv-2605-13950
+released_quote: Submitted on 13 May 2026
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: physics/particle-physics
+  secondary:
+    - agents-tooluse/long-horizon-autonomy
+domain_basis:
+  reason: The scored quantity is a vector of predicted signal event yields per bin, a physical
+    observable the agent produces by simulating proton-proton collisions and the detector's
+    response, which is the physics family's inclusion test; the agent analyses those collision
+    events with a published search's selection to recover it, the particle-physics leaf. The
+    agents-tooluse family's exclusion sends a grader that scores an analysis the agent built to
+    `code`, and the code family's exclusion sends code that is the means to a result in another
+    field to that field, as bixbench's near miss on code/data-science-workflows reads. The paper's
+    own claim of long-horizon, unattended agent work is the secondary leaf's.
+  source: src-arxiv-2605-13950-v1
+  quote: Each task requires the agent to turn a published analysis into an executable
+    simulation-and-selection pipeline and submit predicted collision event yields in specified
+    signal regions.
+domain_considered_and_rejected:
+  - term: code/data-science-workflows
+    reason: The agent writes and runs analysis code, but the code is the means to a result in
+      another field; the grader compares physical event yields with the published ones and never
+      runs the code, which the code family's exclusion sends away from `code`.
+  - term: agents-tooluse/operating-system-tasks
+    reason: The agents work through a shell in a container, but the grader reads the yields they
+      return, not the state they left the machine in, and the task is a physics analysis rather than
+      operating the system.
+  - term: physics/simulation-surrogates
+    reason: No learned model stands in for a simulator; the agent runs the simulators itself, and
+      its prediction is scored against the published yields.
+  - term: physics/physics-reasoning
+    reason: Nothing is posed in text and scored on a stated answer; a simulation is in the loop, and
+      the score is the yields it produced.
+capability:
+  - scientific-prediction
+  - tool-use
+  - autonomy
+  - context-integration
+capability_basis:
+  scientific-prediction:
+    reason: The benchmark's claim is that the agent predicts the signal event yields of a stated
+      signal model from its own simulation and analysis, and the score compares them with the
+      published yields.
+    source: src-arxiv-2605-13950-v1
+    quote: the agent must construct an executable simulation and analysis pipeline and return
+      predicted signal yields from its own recast
+  tool-use:
+    reason: The workspace exposes fixed command-line tools (the paper reader, HEPData, CMS Open
+      Data, FeynRules, the simulation stack, Prospino and the analysis runner), and a tool called or
+      parameterised wrongly shows in the score; misuse of the cross-section tool shifts the whole
+      yield while the shape survives.
+    source: src-arxiv-2605-13950-v1
+    quote: In several runs, agents handled the cross-section tool incorrectly, for example by using
+      an inconsistent process or mass point, mixing normalization conventions, or failing to
+      propagate the computed rate into the final histogram.
+  autonomy:
+    reason: Each run is a single unattended session, set against a physicist-in-the-loop baseline
+      reported apart, so what the agent achieves without help is what is scored.
+    source: src-arxiv-2605-13950-v1
+    quote: Each agent is run autonomously, in a single session without human intervention
+  context-integration:
+    reason: The target paper is supplied in the workspace, and the selection the agent must
+      implement comes from it; the task forbids taking the bin values from the paper's figures,
+      tables or HEPData record.
+    source: src-arxiv-2605-13950-v1
+    quote: It must read the publication to fill in the details the brief omits and locate the
+      relevant public inputs.
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: A run chains many dependent steps (generation, showering, detector simulation,
+      selection, normalisation), but the agent may rerun and revise any of them before it submits,
+      so an intermediate error forecloses success only by using up the 2.5-hour budget, not by
+      itself.
+    source: src-arxiv-2605-13950-v1
+    quote: The agent may write code, execute commands, run the simulation stack, and revise its
+      analysis before submitting a final output yaml template.
+  - term: reliability-consistency
+    reason: Every agent runs each task three times, but the tables report the mean and spread of the
+      error over the runs; agreement across runs is not scored.
+    source: src-arxiv-2605-13950-v1
+    quote: every agent is evaluated three times on each task
+  - term: experimental-design
+    reason: The analysis is the published one, which the agent reconstructs and executes; it designs
+      no procedure of its own, which the term's exclusion reads as a protocol given and only
+      executed.
+    source: src-arxiv-2605-13950-v1
+    quote: COLLIDER-BENCH focuses on validating the recast pipeline against a signal model already
+      considered in the original publication.
+  - term: quantitative-reasoning
+    reason: The yields are computed by the simulation tools and the agent's analysis code; the paper
+      claims a scientific workflow, not calculation.
+
+evaluation_method:
+  - statistical-fit
+  - model-graded-judge
+evaluation_method_note: The primary metric is the relative L2 distance d between the predicted and
+  reference bin yields, normalised by the reference histogram (lower is better; an all-null or
+  all-zero submission scores 1), with the total-yield error and a shape-only distance as
+  diagnostics. The aggregate is Acc_tau, whether d is below tau per task, with tau = 0.33. The judge
+  is Claude Opus 4.6 (claude-opus-4-6), held fixed across the study; it does not set the number, but
+  a run it flags FABRICATED is dropped from the aggregates, and bin values it recovers from the
+  workspace are re-scored.
+evaluation_method_basis:
+  reason: statistical-fit because the score is a goodness-of-fit statistic between continuous binned
+    yields and the reference; model-graded-judge because a judge model decides whether a run's
+    values trace to a real simulation-and-analysis pipeline, and only runs that pass its audit are
+    scored.
+  source: src-arxiv-2605-13950-v1
+  quote: A submission is considered passed if the required output template exists, parses as YAML,
+    has the expected bin structure, contains finite non-negative values and passes the LLM-judge
+    provenance audit.
+evaluation_method_considered_and_rejected:
+  - term: numeric-tolerance-match
+    reason: Acc_tau marks a task passed when d is below 0.33, but d is an error statistic over all
+      of a task's bins, not a tolerance on one numeric answer, which the term's exclusion sends to
+      statistical-fit.
+    source: src-arxiv-2605-13950-v1
+    quote: For aggregate reporting, we convert the continuous error into a binary prediction
+      accuracy
+  - term: domain-metric
+    reason: Histogram comparison is routine in recasting, but the relative L2 distance is a general
+      statistic with meaning outside particle physics.
+  - term: rubric-graded
+    reason: The paper sets its fidelity scores against hand-written rubrics, and the judge's three
+      flags (PASSED, FAILED, FABRICATED) classify a run rather than combine criteria into a score.
+    source: src-arxiv-2605-13950-v1
+    quote: These predictions are evaluated with standard histogram metrics that provide continuous
+      fidelity scores without a hand-written rubric.
+designed_for_subjects:
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The evaluated system is a model inside an off-the-shelf agent CLI that runs its own loop,
+    and the paper names each pairing; the README's configuration picks the runner (claude, codex,
+    gemini, aider or forge), and the dataset card offers the reference agent's prompt as a starting
+    point to replace.
+  source: src-arxiv-2605-13950-v1
+  quote: Anthropic models are run with Claude Code, OpenAI models with the Codex CLI, and
+    DeepSeek-V4 with ForgeCode
+designed_for_subjects_considered_and_rejected:
+  - term: model-in-benchmark-harness
+    reason: The benchmark launches the agent CLI but does not supply the loop; each model family ran
+      in its own vendor's CLI, so the harness varies with the entrant, and the paper evaluates
+      model-and-scaffold pairs.
+    source: src-arxiv-2605-13950-v1
+    quote: We evaluate complete LLM models enhanced with agentic scaffolds rather than isolated
+      language models.
+  - term: human-ai-team
+    reason: The physicist-in-the-loop run is a baseline that calibrates difficulty and sets the
+      threshold, not a class of entrant.
+    source: src-arxiv-2605-13950-v1
+    quote: we include a supervised reproduction baseline using the latest Claude Code model, Opus
+      4.7, as a coding and analysis collaborator under the supervision of a human domain expert
+
+lifecycle: null
+lifecycle_note: Left null, as lifecycle's dormant exclusion asks where the sources do not show
+  current use. The only results are the release paper's (May 2026). A June 2026 paper on autonomous
+  HEP analysis agents cites it as complementary work without running it, and the authors presented
+  it at ML4Jets 2026 in September (the contribution page, not a quoted Source). The repository's
+  main branch gained task suites until 2026-09-02 and a development branch was pushed on 2026-11-13
+  (GitHub API), which is maintenance evidence. No source makes a proposed-stage statement either.
+  Logged as taxonomy/_failures/2026-11-27-collider-bench-001.
+lifecycle_source: src-arxiv-2603-20179-v3
+lifecycle_quote: Most recently, Collider-Bench [20] introduced a benchmark in which LLM agents must
+  reproduce published LHC searches as executable simulation-and-selection pipelines
+activity: no-submission-channel
+activity_basis:
+  reason: There is no leaderboard, server or submission route; the repository runs and scores tasks
+    on the user's own machine, and the only published results are the paper's.
+  source: src-github-collider-bench-readme
+  quote: Offline scoring with LLM-judge option
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude Code with Opus 4.7
+    source: src-arxiv-2605-13950-v1
+    observed_on: 2026-11-27
+    quote: Frontier models like Opus 4.7 and GPT-5.5 have near perfect pass rates producing scorable
+      submissions in all judged runs.
+  - system: Codex CLI with GPT-5.5
+    source: src-arxiv-2605-13950-v1
+    observed_on: 2026-11-27
+    quote: Frontier models like Opus 4.7 and GPT-5.5 have near perfect pass rates producing scorable
+      submissions in all judged runs.
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: simulation
+ground_truth_source_basis:
+  reason: The reference yields are the collaborations' published signal predictions for the
+    benchmark point (yields, binned distributions or digitised plots), made with the official signal
+    simulation and detector reconstruction that outsiders lack, or curated reference recasts,
+    depending on the task. They are hidden from the agent's workspace, but they are public in the
+    papers and the repository holds them.
+  source: src-arxiv-2605-13950-v1
+  quote: lack access to the full detector reconstruction, official signal simulations, and internal
+    analysis code
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The tasks, the container image, the harness, the scorer and the reference values are
+    public, and the agents and the judge are reached through vendor APIs; a run needs the image's
+    simulation stack and many CPU cores.
+  source: src-arxiv-2605-13950-v1
+  quote: Code, container image, and tasks are released here
+
+task:
+  exists: true
+  input:
+    - the target CMS paper as a PDF, with a TASK.md naming the signal benchmark point, observable
+      and signal region, a role brief and a tool reference
+    - a null-filled HEPData-style YAML histogram template whose bin edges must not change
+    - a containerised workspace whose command-line tools wrap the paper reader, HEPData, CMS Open
+      Data, FeynRules, MadGraph5, Pythia 8, Delphes, Prospino and the analysis runner, with CMS
+      object-efficiency files where the task supplies them
+  output: The filled template's predicted signal yields per bin, finite and non-negative, beside the
+    analysis code, generator and detector cards, selected-event files and a short report of
+    methodological choices. Whatever template exists when the session ends is the submission.
+  scoring: A structurally valid submission that passes the judge's provenance audit is scored by its
+    relative L2 distance to the hidden reference yields; per task the mean over three runs is
+    reported, and a task passes when d is below 0.33. Runs the judge flags FABRICATED are dropped
+    from the aggregates, and all-null or all-zero submissions score d = 1.
+  tests_hidden_from_system: true
+  source: src-arxiv-2605-13950-v1
+  quote: The reference values and evaluation code are not exposed to the agent during the run.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: fully-open
+  access_note: The card keeps the reference yields off Hugging Face to preserve a blind test, but
+    the repository holds them, and the published papers carry the targets themselves.
+  access_basis:
+    reason: The task corpus is an ungated Hugging Face dataset under MIT (Hugging Face's API reports
+      it ungated), and the reference yields the scorer uses sit in the public GitHub repository with
+      the harness and scorer; they are withheld only from the agent's workspace.
+    source: src-hf-colliderbench-card
+    quote: live in the companion GitHub repository
+  refresh: null
+  refresh_note: >
+    Left null. The paper's ten tasks and the Hugging Face corpus have not changed since 2026-05-13
+    (GitHub's commit log for the task directories; the API record's lastModified), but the
+    repository's main branch has since added 43 task directories from five ATLAS SUSY searches and
+    CMS-B2G-17-012 (2026-06-23 to 2026-09-02) and changed the judge (2026-07-26), under no version
+    label or dated announcement and with no leaderboard for them to reach. static admits no change,
+    versioned-releases needs a label or an announcement for each, and rolling-live needs a live
+    leaderboard. Logged as taxonomy/_failures/2026-11-27-collider-bench-002.
+  data_provenance:
+    - curated-public-database
+  data_provenance_note: Each task is built from a published CMS search, whose paper the corpus
+    bundles, and is scored against that search's published signal yields; the authors chose the
+    analyses and wrote the task prompts and templates, and a domain expert solved each task first.
+    The reference yields come from the collaborations' official simulation (ground_truth_source).
+  data_provenance_source: src-arxiv-2605-13950-v1
+  data_provenance_quote: COLLIDER-BENCH is built from public LHC searches for physics beyond the
+    Standard Model.
+  contamination_risk: medium
+  contamination_risk_note: >
+    The reference yields were published with the CMS papers in 2017 and 2018, so a route into
+    training data and a route to look them up during a run (the hepdata tool reaches the analyses'
+    HEPData records) are both plausible. The second is policed: the task forbids copying, the
+    reference values and scorer are not mounted in the workspace, and the judge drops runs whose
+    values trace to no pipeline (6% of 364 judged runs were FABRICATED, Haiku 4.5's the majority,
+    some of them citing published yields). No source evidences training exposure for a scored task.
+  contamination_risk_source: src-arxiv-2605-13950-v1
+  contamination_risk_quote: Because the published reference values are themselves available in the
+    source publications or in auxiliary material
+  contamination_evidence: []
+  ceiling_anchor_type: measured-ceiling
+  ceiling_anchor_type_basis:
+    reason: Before release a domain expert supervising an agent solved each task through the same
+      toolchain, which shows the published target reachable, and tau = 0.33 is set at that
+      supervised run's worst task, so Acc_tau of 100% has been reached by construction; d = 0 is the
+      metric's own bound and was not reached.
+    source: src-arxiv-2605-13950-v1
+    quote: Each task was first solved by a domain expert working with an agent through the same
+      toolchain, establishing that the public stack can reproduce the published target.
+  dataset_licence: MIT
+  dataset_licence_source: src-hf-colliderbench-card
+  dataset_licence_quote: 'license: mit'
+  upstream_licences: The bundled CMS paper PDFs and detector-efficiency maps are under the CMS
+    Collaboration's public-data policies.
+  upstream_licences_source: src-hf-colliderbench-card
+  upstream_licences_quote: The CMS paper PDFs and detector efficiency maps are reproduced here as
+    published by the CMS Collaboration under the terms of their respective public-data policies.
+  size:
+    - count: 10
+      unit: Simulation tasks, the headline set
+      subset: the first release
+      source: src-arxiv-2605-13950-v1
+      quote: The benchmark consists of 10 primary Simulation tasks
+    - count: 4
+      unit: CMS analyses the tasks are drawn from
+      subset: the first release
+      source: src-arxiv-2605-13950-v1
+      quote: For the first release of COLLIDER-BENCH, we release 10 initial tasks drawn from four
+        LHC analyses.
+    - count: 10
+      unit: task records
+      subset: the Hugging Face task corpus
+      source: src-hf-api-colliderbench
+      quote: '"num_examples":10'
+    - count: 53
+      unit: simulation task directories
+      subset: the repository's main branch at 2986d8b (2026-09-02)
+      note: Counted on 2026-11-27. Ten are the paper's, 34 come from five ATLAS SUSY searches
+        (ATLAS-SUSY-2016-07, 2016-15, 2016-24, 2017-03 and 2018-22) and nine from CMS-B2G-17-012.
+        The README's task table and the Hugging Face corpus list only the first ten, and no results
+        on the others are published.
+      source: src-github-api-collider-bench-tasks
+      quote: '"path":"ColliderBench/tasks/atlas-susy-2018-22_sim-MBSSd_metSig"'
+  size_note: Each Simulation task has a matching Shape task (subsets). The paper says many more
+    tasks and analyses, at least an order of magnitude more, are available for future releases.
+  size_source: src-arxiv-2605-13950-v1
+  size_quote: Many more tasks and analyses (at least an order of magnitude more) are available and
+    will be added in future releases.
+  languages:
+    - English
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The Collider-Bench authors, at Rutgers University (New High Energy Theory Center) and
+    Boston University
+  maintainer_basis:
+    reason: Four of the five authors list Rutgers University's New High Energy Theory Center and one
+      lists Boston University's Faculty of Computing & Data Sciences. No source names an institution
+      as the holder of the code or the dataset, which sit in personal accounts.
+    source: src-arxiv-2605-13950-v1
+    quote: New High Energy Theory Center Department of Physics & Astronomy Rutgers University
+  maintainer_type: individual
+  maintainer_type_basis:
+    reason: The code and container image sit in a personal GitHub account and the task corpus in a
+      personal Hugging Face account, and no organisation is stated as holding them, which the term's
+      inclusion test reads as individual whatever institutions the authors list (gpqa-diamond's
+      case). academic-lab was considered (review_checks).
+    source: src-arxiv-2605-13950-v1
+    quote: Code, container image, and tasks are released here
+  submission_process:
+    - literature-only
+  submission_process_note: There is no leaderboard, results page or submission route. The
+    maintainers' results are the paper's (six agents, ten tasks, three runs each), and the README
+    publishes none.
+  submission_process_source: src-github-collider-bench-readme
+  submission_process_quote: Offline scoring with LLM-judge option
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2605-13950-v1
+      quote: we additionally judge provenance using Claude-Opus-4.6 as an LLM judge
+  independence_flags_note: >
+    The provenance judge, Claude Opus 4.6, is a Claude model, which the paper's own reference list
+    attributes to Anthropic, and three Anthropic models (Opus 4.7, Sonnet 4.6, Haiku 4.5) are
+    evaluated beside OpenAI's and DeepSeek's. It does not set the number, but its FABRICATED flag
+    drops runs from the aggregates and it re-scores values it recovers, so it is in the scoring path.
+    maintainer-competes-on-own-benchmark is not set: the rows are vendor CLIs, and the authors list
+    only university affiliations. The funding named (a DOE grant and NERSC computing) comes from no
+    evaluated party.
+  independence_assessed: true
+  funding:
+    source: src-arxiv-2605-13950-v1
+    quote: a DOE Office of Science User Facility supported by the Office of Science of the U.S.
+      Department of Energy
+  funding_note: The acknowledgements name a DOE grant and NERSC computing resources.
+  known_limitation:
+    source: src-arxiv-2605-13950-v1
+    quote: The present release focuses on Supersymmetry (SUSY) simplified-model searches
+  known_limitation_note: The release is ten tasks from four CMS SUSY simplified-model searches, all
+    at 13 TeV and 35.9 fb-1, so it covers one kind of analysis. The paper also says the public
+    toolchain only approximates the collaborations' and the papers omit details, so no submission
+    can fully recover a target.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: simulator-required
+  compute_tier_note: Every run needs the benchmark's container image with MadGraph5, Pythia 8,
+    Delphes and Prospino. The paper gave each agent 128 CPU cores for simulation, and the agents and
+    the judge are reached through vendor APIs.
+  compute_tier_source: src-arxiv-2605-13950-v1
+  compute_tier_quote: All agents are given a wall-time budget of 2.5 hours per task and access to
+    128 AMD EPYC 7763 CPU cores for simulation workloads.
+  reproducibility_tier: automatable-with-simulator
+  reproducibility_tier_basis:
+    reason: Runs and scoring are automatic, with the judge a model call, but every prediction is
+      what the agent computes inside the image's simulation stack.
+    source: src-github-collider-bench-readme
+    quote: The HEP simulation stack (MadGraph, Pythia8, Delphes, Prospino) lives entirely inside the
+      prebuilt container image.
+  reproducibility_blockers:
+    - specific-simulator-build
+  reproducibility_blockers_note: The paper's stack is Pythia 8.313, Delphes 3.5.0 and Prospino 2.1,
+    and the README pulls the image at its latest tag, so the build a score was measured in is not
+    pinned; in the paper's tool ablation, removing Delphes degraded the harder tasks' scores.
+  harness_availability: official-harness
+  harness: Collider-Bench's harness, scripts/run-agent with a configs/*.yaml (agent, runner, model,
+    sandbox, compute) to run and score a task and scripts/launch_eval.sh (with --judge) to re-score
+    or audit a run, in the lhc-bench container image
+  harness_source: src-github-collider-bench-readme
+  harness_quote: Offline scoring with LLM-judge option
+  harness_gotcha:
+    source: src-arxiv-2605-13950-v1
+    quote: Every run is post-audited by a separate LLM call, default mode claude-opus-4-6
+  harness_gotcha_note: The paper's judge, claude-opus-4-6, reads the hidden reference for leakage
+    detection and a 50k-character extract of the session log; a rerun with another judge is a
+    different condition. A commit of 2026-07-26 changed the judge for model independence (GitHub's
+    commit log, not a quoted Source), so the repository's current judge is not the paper's.
+  code_licence: null
+  code_licence_note: GitHub's licence metadata reports none, there is no licence file at the
+    repository root and pyproject.toml declares none (GitHub API, read 2026-11-27). The dataset card
+    says its MIT licence matches the GitHub repository's (review_checks).
+  est_runtime_hours:
+    min: 0.3
+    max: 2.5
+    basis: Per task run, the agents' mean run times in the paper's Table 4 (0.30 to 1.71 hours)
+      under the 2.5-hour wall-clock cap; the paper runs each agent on ten tasks, three times each.
+    source: src-arxiv-2605-13950-v1
+  est_runtime_hours_source: src-arxiv-2605-13950-v1
+  est_runtime_hours_quote: All agents are given a wall-time budget of 2.5 hours per task
+  est_cost_usd:
+    min: 0.89
+    max: 14.21
+    basis: Per task run, the agents' mean list-price API cost in Table 4 (spring 2026 prices), from
+      DeepSeek-V4 to Opus 4.7; the judge's calls are extra.
+    source: src-arxiv-2605-13950-v1
+  est_cost_usd_source: src-arxiv-2605-13950-v1
+  est_cost_usd_quote: Cost (list $) 14.21
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the agentic and model-graded profiles: the simulation stack and its versions (the image's MadGraph5,
+  # Pythia 8.313, Delphes 3.5.0 and Prospino 2.1; the paper's Delphes ablation moved the harder tasks' scores), the
+  # simulation hardware (128 CPU cores in the paper), and whether a physicist was in the loop, as in the paper's
+  # baseline. The 2.5-hour wall-clock cap is material too but has no condition field.
+  material_extra:
+    - simulator
+    - simulator_version
+    - hardware_platform
+    - human_in_loop
+  material_waived:
+    - field: shots
+      reason: An agent works from the paper, task files and tool documentation in its workspace;
+        there are no in-context examples to count.
+    - field: chain_of_thought
+      reason: A tool-use session of up to 2.5 hours, not a single prompted answer; the paper sets
+        each CLI to its maximum effort, which reasoning_effort records.
+aggregation_policy: official-aggregate
+aggregation_policy_basis:
+  reason: The paper's aggregate is Acc_tau, the share of tasks whose relative L2 distance falls
+    below tau = 0.33, read against cost; per-task distances are reported beside it.
+  source: src-arxiv-2605-13950-v1
+  quote: For aggregate reporting, we convert the continuous error into a binary prediction accuracy
+
+liveness:
+  repo_last_commit: 2026-09-02
+  reproduction_script_present: true
+  last_checked: 2026-11-27
+
+homepage: https://github.com/dfaroughy/Collider-Bench
+repository: https://github.com/dfaroughy/Collider-Bench
+dataset_url: https://huggingface.co/datasets/Dariusfar/ColliderBench
+
+versions:
+  - version: 2026-05
+    label: The paper's first release, ten Simulation tasks from four CMS searches
+    version_kind: revision
+    released: 2026-05-13
+    items: 10
+    changes: The release of arXiv 2605.13950 v1 and the Hugging Face task corpus (ten records,
+      unchanged since 2026-05-13), ten Simulation tasks from CMS-SUS-16-034, -16-046, -16-047 and
+      -16-051, with a Shape task on each. The repository's main branch has since added 43 task
+      directories from six more analyses under no version label; they are not modelled as a version
+      (review_checks).
+    frozen: true
+    sources:
+      - src-arxiv-2605-13950-v1
+      - src-hf-api-colliderbench
+subsets:
+  - id: collider-bench#shape
+    label: Shape tasks
+    items: 10
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2605-13950-v1
+        quote: we construct a simpler set of Shape tasks
+      - source: src-arxiv-2605-13950-v1
+        quote: We run the same agents systems on this secondary task suite
+    notes: The Simulation tasks' papers, signal points, observables, signal regions and binning,
+      scored by the relative L2 distance between unit-normalised distributions without the absolute
+      yield; the paper calls it a secondary suite and uses it to separate selection errors from
+      normalisation errors. The Hugging Face corpus holds only the Simulation tasks, and the
+      repository keeps its secondary suites in a secondary_tasks directory.
+
+lineage:
+  role: root
+lineage_note: No lineage edge. The agent framework of arXiv 2603.20179 is a separate system that
+  cites the benchmark as complementary work, not a derivative of it. Rutgers University is also
+  among the affiliations of lhc-olympics-2020's organisers, but no programme, data or task is
+  shared, so 04 S4 gives no edge.
+
+tags:
+  - particle-physics
+  - lhc
+  - recasting
+  - llm-agents
+  - llm-judge
+  - monte-carlo-simulation
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S12 sweep follow-up)
+  added_on: 2026-11-27
+  last_verified: 2026-11-27
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2605-13950-v1
+    - src-arxiv-2605-13950
+    - src-hf-api-colliderbench
+    - src-hf-colliderbench-card
+    - src-github-collider-bench-readme
+    - src-github-api-collider-bench-tasks
+    - src-arxiv-2603-20179-v3
+  sources_note: >
+    The paper's v1 PDF (a DOI, not archived) read as text, with the affiliation lines quoted with no
+    window and every other window kept clear of the author block, the acknowledgements' names, cited
+    authors' names and the personal-account links; its abstract page (a DOI) for the date and the
+    links. Hugging Face's API record and the dataset card, and the README at 2986d8b, are withheld from
+    archiving because they name the owner's personal accounts or the authors. GitHub's API listing of
+    the task directories is withheld too: it carries the account inside every URL, though the extract
+    leaves them out. The v3 PDF of arXiv 2603.20179 (a DOI) is evidence about current use. The ML4Jets
+    2026
+    contribution page was read and not cited; it names the authors.
+  confidence: medium
+  review_checks:
+    - check: Domain primary is physics/particle-physics with agents-tooluse/long-horizon-autonomy
+        secondary, by the chain the taxonomy sets for an agent scored on an analysis it built (the
+        agents-tooluse exclusion sends it to code, and code's exclusion sends a means to a physics
+        result to physics), as for bixbench. The particle-physics leaf names analysing collision or
+        detector data; here the agent first simulates the events it analyses, as the entrants of
+        fair-universe-higgsml analyse simulated events. operating-system-tasks is the alternative
+        secondary if the shell interface is read as deciding.
+      field: domain
+      source: src-arxiv-2605-13950-v1
+      quote: Each task requires the agent to turn a published analysis into an executable
+        simulation-and-selection pipeline and submit predicted collision event yields in specified
+        signal regions.
+    - check: lifecycle is null. The only results are the release paper's; arXiv 2603.20179 v3 cites
+        the benchmark without running it, and the ML4Jets 2026 talk is the authors'. A 2026 paper
+        that reports Collider-Bench results would make it active.
+      field: lifecycle
+      source: src-arxiv-2603-20179-v3
+      quote: The two directions are complementary
+    - check: Only the paper's release is a version. The main branch now holds 53 task directories
+        (the ten originals, 34 from five ATLAS searches, nine from CMS-B2G-17-012) and a changed
+        judge, none of them released, labelled or scored in any source. If the lead reads main as a
+        rolling release, a second version (frozen false) and a different refresh would follow; the
+        paper says future releases will add tasks. data.refresh is null for the same reason.
+      field: versions
+      source: src-github-api-collider-bench-tasks
+      quote: '"path":"ColliderBench/tasks/b2g-17-012_sim-tZtZ_D"'
+    - check: grader-from-evaluated-party rests on the paper naming Claude Opus 4.6 as the judge,
+        evaluating three Anthropic models and attributing Claude models to Anthropic in its
+        reference list. The judge gates and re-scores runs rather than computing the distance; if
+        only a grader that sets the number counts, the flag would go.
+      field: governance.independence_flags
+      source: src-arxiv-2605-13950-v1
+      quote: Anthropic. Claude model system cards.
+    - check: The PDF lists only Rutgers and Boston University affiliations, and the ML4Jets 2026
+        contribution page gives a different university for one author. No source read states that
+        any author works for an evaluated developer (Anthropic, OpenAI, DeepSeek); a reviewer may
+        check current affiliations, which could add maintainer-competes-on-own-benchmark or a note
+        like cmt-benchmark's.
+      field: governance.independence_flags
+      source: src-arxiv-2605-13950-v1
+      quote: Faculty of Computing & Data Sciences Boston University
+    - check: maintainer_type individual, because the code sits in a personal GitHub account and the
+        task corpus in a personal Hugging Face account; no source says whether one person holds
+        both. academic-lab (the Rutgers group) would follow if a reviewer reads the authors' group
+        as the holder.
+      field: governance.maintainer_type
+      source: src-arxiv-2605-13950-v1
+      quote: Code, container image, and tasks are released here
+    - check: measured-ceiling rests on the supervised solution of every task, and tau is defined by
+        that run's worst task. The supervised run is a physicist directing an agent, not an expert
+        alone, so expert-best is the alternative if the anchor is read as a person's performance.
+      field: data.ceiling_anchor_type
+      source: src-arxiv-2605-13950-v1
+      quote: chosen as the worst relative L2 error achieved by the physicist-in-the-loop baseline
+        across the task set
+    - check: model-graded-judge is assigned although the paper says the judge does not assign the
+        primary numerical score; it decides which runs count. numeric-tolerance-match is rejected
+        for Acc_tau, a threshold on a per-task error statistic.
+      field: evaluation_method
+      source: src-arxiv-2605-13950-v1
+      quote: we use an LLM judge to inspect the agent workspace and execution trace. The judge does
+        not assign the primary numerical score.
+    - check: ground_truth_source simulation, because the targets are the collaborations' published
+        signal predictions from their official simulation; held-out-labels is the alternative if the
+        published yields are read as reference labels rather than simulator output.
+      field: ground_truth_source
+      source: src-arxiv-2605-13950-v1
+      quote: These may be published signal yields, binned signal distributions or plots that can be
+        digitized reliably.
+    - check: code_licence is null. The dataset card says MIT matches the GitHub repository, but the
+        repository has no licence file or licence metadata.
+      field: execution.code_licence
+      source: src-hf-colliderbench-card
+      quote: MIT (matches the GitHub repo).
+    - check: contamination_risk medium. The targets are public in the CMS papers and HEPData, and
+        the agents' hepdata tool can reach those records during a run; the judge's FABRICATED flag
+        is the guard. Whether in-run lookup counts as an evidenced route, which would make it high,
+        is open.
+      field: data.contamination_risk
+      source: src-arxiv-2605-13950-v1
+      quote: FABRICATED. Non-null values are submitted, but they cannot be traced to a complete,
+        agent-verified pipeline.
+  personal_data_excluded:
+    - source: src-arxiv-2605-13950-v1
+      what: the title page's author names and e-mail addresses, the acknowledgements' names, cited
+        authors' names and the personal account in the code and dataset links
+    - source: src-arxiv-2605-13950
+      what: the author line and the submitter's name
+    - source: src-hf-api-colliderbench
+      what: the owner's personal account in the record's id and author fields
+    - source: src-hf-colliderbench-card
+      what: the citation block's author names and the personal-account links
+    - source: src-github-collider-bench-readme
+      what: the citation block's author names and the clone and container links naming the personal
+        account
+    - source: src-github-api-collider-bench-tasks
+      what: the owner's personal account in every entry's URLs
+    - source: src-arxiv-2603-20179-v3
+      what: the author block and cited authors' names

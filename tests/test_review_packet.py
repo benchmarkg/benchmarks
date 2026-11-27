@@ -288,6 +288,19 @@ def test_an_organisation_in_a_maintainer_is_no_person_and_withholds_no_host():
     assert p.url_ok('https://www.imageclef.org/LifeCLEF')
 
 
+def test_an_institute_for_advanced_study_is_no_person_and_makes_no_surname():
+    """fair-universe-weak-lensing's maintainer names the Institute for Advanced Study. Read as a person's name,
+    "Advanced Study" made "Study" a surname, and every packet line with "Reader Study" failed (found 2026-11-27)."""
+    entries = [{'id': 'widgetbench', 'name': 'WidgetBench',
+                'governance': {'maintainer': 'The WidgetBench collaboration, led by the Example National Laboratory '
+                                             'with the Institute for Advanced Study'}},
+               {'id': 'gadgetbench', 'name': 'GadgetBench',
+                'description': 'Radiologists read every scan in a Reader Study.'}]
+    p = rp.People(entries, {}, ['widgetbench', 'WidgetBench', 'gadgetbench', 'GadgetBench'])
+    assert 'Advanced Study' not in p.names and 'Study' not in p.surnames
+    assert p.reason('label PI-CAI: Reader Study (radiologists and AI on 400 testing cases)') is None
+
+
 def test_the_finished_packet_is_refused_rather_than_written_when_a_line_fails(corpus, monkeypatch):
     renderer = rp.Renderer(corpus)
     monkeypatch.setattr(renderer, 'coverage_section', lambda family, fstate: ['someone@example.org'])

@@ -2,11 +2,11 @@
 
 # Review packet: Physics
 
-`physics` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-24 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`physics` · 20 published entries · Core family · 10 subdomains · data as of 2026-11-27 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
-Everything below is generated from the catalogue's files. Verification status of the family's 18 entries: 18 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
+Everything below is generated from the catalogue's files. Verification status of the family's 20 entries: 20 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
 
 How to read an entry: each evidenced field shows its value, the curator's reason where one was given, the verbatim quote it rests on and the Source it is quoted from (S1, S2, ... in the entry's Sources table, with the URL and the archived copy). Code has checked that every quote is an exact substring of the stored extract of its Source; whether the quote supports the value is what a reviewer judges. Text that may name a person is not reproduced here (\[withheld: it may name a person; see the entry file\]); the entry file has it.
 
@@ -23,8 +23,8 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | ---: | --- | --- | --- | --- |
 | 1 | `simulation-surrogates`<br>Simulation surrogates | Learned models that stand in for an expensive physical simulation, scored against the simulator they replace. | 3 + 3 | has benchmarks |
 | 2 | `fluid-dynamics`<br>Fluid dynamics | Predicting fluid flow fields or quantities derived from them. | 1 + 2 | has benchmarks |
-| 3 | `particle-physics`<br>Particle physics | Analysing particle-collision or detector data to recover physics quantities. | 6 + 1 | has benchmarks |
-| 4 | `astrophysics-cosmology`<br>Astrophysics cosmology | Inferring astronomical or cosmological quantities from observational data. | 2 + 1 | has benchmarks |
+| 3 | `particle-physics`<br>Particle physics | Analysing particle-collision or detector data to recover physics quantities. | 7 + 1 | has benchmarks |
+| 4 | `astrophysics-cosmology`<br>Astrophysics cosmology | Inferring astronomical or cosmological quantities from observational data. | 3 + 1 | has benchmarks |
 | 5 | `condensed-matter`<br>Condensed matter | Predicting properties of condensed-matter systems such as electronic structure or phase behaviour. | 1 + 1 | has benchmarks |
 | 6 | `quantum-systems`<br>Quantum systems | Simulating, characterising or controlling quantum systems and quantum circuits. | 2 + 0 | has benchmarks |
 | 7 | `optics-photonics`<br>Optics photonics | Designing optical and photonic systems or predicting their behaviour. | 0 + 2 | has benchmarks |
@@ -46,7 +46,7 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (8): `icecube-neutrinos-in-deep-ice`, `jetclass`, `lhc-olympics-2020`, `pdebench`, `strong-lens-finding-challenge`, `the-well`, `top-tagging`, `varbench`. `python scripts/review_packet.py --family physics --all` renders every entry.
+Not in this packet (10): `collider-bench`, `icecube-neutrinos-in-deep-ice`, `jetclass`, `lhc-olympics-2020`, `pdebench`, `plasticc`, `strong-lens-finding-challenge`, `the-well`, `top-tagging`, `varbench`. `python scripts/review_packet.py --family physics --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
@@ -54,7 +54,7 @@ Not in this packet (8): `icecube-neutrinos-in-deep-ice`, `jetclass`, `lhc-olympi
 | 2.2 | [AirfRANS](#22-airfrans-airfrans) | `fluid-dynamics` | 43 | 5 |
 | 2.3 | [FAIR Universe HiggsML Uncertainty Challenge](#23-fair-universe-higgsml-uncertainty-challenge-fair-universe-higgsml) | `particle-physics` | 36 | 12 |
 | 2.4 | [TrackML Particle Tracking Challenge](#24-trackml-particle-tracking-challenge-trackml) | `particle-physics` | 38 | 11 |
-| 2.5 | [PLAsTiCC](#25-plasticc-plasticc) | `astrophysics-cosmology` | 35 | 8 |
+| 2.5 | [FAIR Universe Weak Lensing ML Uncertainty Challenge](#25-fair-universe-weak-lensing-ml-uncertainty-challenge-fair-universe-weak-lensing) | `astrophysics-cosmology` | 51 | 11 |
 | 2.6 | [CMT-Benchmark](#26-cmt-benchmark-cmt-benchmark) | `condensed-matter` | 33 | 9 |
 | 2.7 | [QCircuitBench](#27-qcircuitbench-qcircuitbench) | `quantum-systems` | 34 | 9 |
 | 2.8 | [SRBench](#28-srbench-srbench) | `symbolic-regression-discovery` | 37 | 8 |
@@ -446,7 +446,7 @@ Considered and rejected:
 
 *Confidence intervals on the Higgs signal strength under six systematic uncertainties, scored on coverage and width.*
 
-A NeurIPS 2024 competition and dataset from the FAIR Universe project, led by Lawrence Berkeley National Laboratory. Each scored item is a pseudo-experiment, an unlabelled set of simulated proton-proton collisions (H to tau tau signal against Z, ttbar and diboson backgrounds, generated with Pythia 8.2 and Delphes 3.5.0, 28 features per event) drawn with a randomised signal strength mu and six nuisance parameters for systematic effects such as the tau and jet energy scales and the background normalisations. A submission is code (a model.py with fit and predict) that receives the labelled training set and a biasing script, and returns a 68.27% confidence interval for mu on each pseudo-experiment. The Quantile Score rewards narrow intervals and penalises coverage away from 68.27%, more heavily for under-coverage. Codabench ran the code on organiser hardware at NERSC and LBNL from August 2024 to March 2025; every submission was then re-run on pseudo-experiments from a private 120M-event set, and HEPHY (Vienna) and IBRAHIME (UIUC) were declared joint first. The public dataset has been on Zenodo under CC BY 4.0 since 2025 as a long-term benchmark, with no submission route open. FAIR Universe's 2025 and 2026 NeurIPS challenges are on weak lensing, a different task, and are not included here.
+A NeurIPS 2024 competition and dataset from the FAIR Universe project, led by Lawrence Berkeley National Laboratory. Each scored item is a pseudo-experiment, an unlabelled set of simulated proton-proton collisions (H to tau tau signal against Z, ttbar and diboson backgrounds, generated with Pythia 8.2 and Delphes 3.5.0, 28 features per event) drawn with a randomised signal strength mu and six nuisance parameters for systematic effects such as the tau and jet energy scales and the background normalisations. A submission is code (a model.py with fit and predict) that receives the labelled training set and a biasing script, and returns a 68.27% confidence interval for mu on each pseudo-experiment. The Quantile Score rewards narrow intervals and penalises coverage away from 68.27%, more heavily for under-coverage. Codabench ran the code on organiser hardware at NERSC and LBNL from August 2024 to March 2025; every submission was then re-run on pseudo-experiments from a private 120M-event set, and HEPHY (Vienna) and IBRAHIME (UIUC) were declared joint first. The public dataset has been on Zenodo under CC BY 4.0 since 2025 as a long-term benchmark, with no submission route open. FAIR Universe's 2025 and 2026 NeurIPS challenges are on weak lensing, a different task, catalogued as fair-universe-weak-lensing.
 
 | Classification | |
 | --- | --- |
@@ -610,7 +610,7 @@ Considered and rejected:
    > will win $2000
 7. (field `versions`, needs a specialist) The normalisation defect that arXiv 2609.02781 found and reported upstream (issue 184) was fixed by pull request 185 on 2026-11-06 (execution.harness\_note). The reporter says the official competition pipeline was unaffected, which makes it a tooling fix rather than an erratum of the 2024 edition; no maintainer has said so, and the issue is still open. If the official scoring did run through systematics(), the 2024 version needs an erratum. · [S10][fair-universe-higgsml-s10]
    > The official competition pipeline is \*\*unaffected\*\*, because normalization nuisances are applied inside \`get\_bootstrapped\_dataset()\` instead.
-8. (field `versions`) The pilot is recorded as an edition from the site's news alone. A single-systematic (TES) variant ran on Codabench (4346) to 2025-05-31 and is not recorded; the 2025 and 2026 weak-lensing challenges are treated as other benchmarks. · [S2][fair-universe-higgsml-s2]
+8. (field `versions`) The pilot is recorded as an edition from the site's news alone. A single-systematic (TES) variant ran on Codabench (4346) to 2025-05-31 and is not recorded; the 2025 and 2026 weak-lensing challenges are another benchmark, fair-universe-weak-lensing. · [S2][fair-universe-higgsml-s2]
    > We have launched the pilot version of HiggsML Uncertainty Competition today
 9. (field `data.ceiling_anchor_type`) theoretical-maximum follows the letter of the ceiling tests; the bound is the regulariser's artefact and unreachable (Stage 3 failure 004, still open).
 10. (field `metrics`) The coverage Metric's optimum is a target (0.6827), so it declares headroom\_computable false and Metric.headroom\_null\_reason() answers metric-not-headroom-computable, which is not one of 12 S3.4's six null reasons. P3-S9-T04 asserts one of the six for every physics metric; it needs a reason for a target optimum (the nearest is lower-is-better-optimum-zero, whose BBQ example is a target of zero), or an exception for this one. · [S9][fair-universe-higgsml-s9]
@@ -847,171 +847,220 @@ Considered and rejected:
 [trackml-s10]: https://arxiv.org/abs/2105.01160
 [trackml-s11]: https://zenodo.org/records/4730157
 
-### 2.5 PLAsTiCC (plasticc)
+### 2.5 FAIR Universe Weak Lensing ML Uncertainty Challenge (fair-universe-weak-lensing)
 
-`data/benchmarks/physics/plasticc.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/physics/fair-universe-weak-lensing.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
 
-*Classifying 3.5 million simulated LSST light curves into 15 classes, scored by weighted log loss (Kaggle, 2018).*
+*Simulated HSC-like weak-lensing maps: cosmological parameters with uncertainties (2025), then OoD detection (2026).*
 
-A data challenge, run on Kaggle from 28 September to 17 December 2018 by a team from the LSST Dark Energy Science Collaboration and the Transients and Variable Stars Science Collaboration, to classify astronomical transients and variables from light curves simulated to look like three years of the Rubin Observatory's LSST survey. Each object comes as fluxes over time in six passbands with host-galaxy redshift and Milky Way extinction metadata. A classifier trained on 7,848 labelled objects must give every one of about 3.5 million test objects a probability for each of 15 classes: 14 seen in training and a class 99 for objects of none of them, which hides four simulated types never shown in training. The training set is deliberately unrepresentative, brighter and nearer than the test set, as a spectroscopically confirmed sample would be. Scoring is a multi-class log loss that averages each class over its own objects and up-weights rare classes, so every class counts about equally; the weights were hidden during the competition. Kaggle scored a third of the test set on the public leaderboard and ranked the prizes on the other two thirds. The test labels were released on Zenodo in January 2019 under CC BY 4.0, and the data are still used to train and test classifiers.
+A two-phase NeurIPS competition and dataset from the FAIR Universe project, led by Lawrence Berkeley National Laboratory, on simulated weak gravitational lensing convergence maps that mimic the Hyper Suprime-Cam Year-3 survey (one tomographic bin of its WIDE12H field, 1424 x 176 pixels at 2 arcmin). The maps come from N-body simulations ray-traced for 101 flat LambdaCDM cosmologies in (Omega\_m, S8), with baryonic feedback (T\_AGN, f0) and a photometric-redshift shift as nuisance parameters; the training set holds 256 noiseless maps per cosmology (25,856), and entrants add the shape noise. Phase 1 (NeurIPS 2025; Codabench, 2025-08-29 to 2025-11-15) asked for point estimates and one-sigma uncertainties of Omega\_m and S8 for each map, scored by a Gaussian negative log-likelihood plus a weighted squared error. Finalists then predicted two holdout sets, new realizations of the training cosmologies (A) and of 10 unseen cosmologies (B), and prizes went on A and on the average of A and B. Phase 2 (NeurIPS 2026; Codabench, 2026-04-28 to 2026-10-11) asked instead for a continuous out-of-distribution score for each map, some test maps being generated under other physical models, scored by the mean true-positive rate at 100 false-positive rates from 0.001 to 0.05. Its final ranking came from the organisers running each finalist's packaged inference code on a private 10,000-map holdout, and the winners were announced on 2026-10-30. No submission route is open. An upgraded training set, with independent realizations for each cosmology, is on Zenodo under CC BY 4.0, and a labelled 14,000-map test set from 82 unseen cosmologies is promised for after Phase 2.
 
 | Classification | |
 | --- | --- |
 | Primary domain | physics/astrophysics-cosmology |
 | Secondary domains | - |
-| Capabilities | scientific-prediction, calibration-uncertainty, distribution-shift-generalization |
-| Evaluation methods | uncertainty-calibration-score |
+| Capabilities | scientific-prediction, calibration-uncertainty |
+| Evaluation methods | uncertainty-calibration-score, statistical-fit, composite, classification-metric |
 | Designed for | domain-specialist-model |
 | Evaluation target · execution mode · ground truth | learned-system · automated · simulation |
 | Lifecycle · activity | active · closed |
-| Data access · refresh · contamination risk | fully-open · static · medium |
-| Reproducibility tier · harness | fully-automatable · reference-implementation-only |
-| Maintainer type · submission process | community-collective · held-out-server |
-| Independence flags | prize-sponsored-by-industry |
-| Licences: code · dataset | MIT · CC-BY-4.0 |
-| Released | 2018-09-28 |
-| Links | homepage [plasticc.org/](https://plasticc.org/) · repository [github.com/LSSTDESC/plasticc-kit](https://github.com/LSSTDESC/plasticc-kit) · leaderboard [www.kaggle.com/c/PLAsTiCC-2018](https://www.kaggle.com/c/PLAsTiCC-2018) · dataset [doi.org/10.5281/zenodo.2539456](https://doi.org/10.5281/zenodo.2539456) |
+| Data access · refresh · contamination risk | private-test-server · periodic-recompetition · low |
+| Reproducibility tier · harness | not-independently-reproducible · official-harness |
+| Maintainer type · submission process | government-agency · held-out-server, sandboxed-rerun |
+| Independence flags | single-evaluator-private-test-set |
+| Licences: code · dataset | null · CC-BY-4.0 |
+| Released | 2025-08-29 |
+| Links | homepage [fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge.html](https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge.html) · repository [github.com/FAIR-Universe/Cosmology\_Challenge](https://github.com/FAIR-Universe/Cosmology_Challenge) · leaderboard [www.codabench.org/competitions/10902/](https://www.codabench.org/competitions/10902/) · dataset [doi.org/10.5281/zenodo.20056065](https://doi.org/10.5281/zenodo.20056065) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-1810-00001-v1` | preprint · arXiv | [arxiv.org/pdf/1810.00001v1](https://arxiv.org/pdf/1810.00001v1) | none (not-required) |
-| S2 | `src-arxiv-1810-00001` | preprint · arXiv | [arxiv.org/abs/1810.00001](https://arxiv.org/abs/1810.00001) | none (not-required) |
-| S3 | `src-kaggle-plasticc-2018` | documentation · Kaggle | [www.kaggle.com/api/i/competitions.PageService/ListPages?competitionId...](https://www.kaggle.com/api/i/competitions.PageService/ListPages?competitionId=10384) | [capture 2026-10-14](https://web.archive.org/web/20261014064044/https://www.kaggle.com/api/i/competitions.PageService/ListPages?competitionId=10384) |
-| S4 | `src-arxiv-2012-12392-v1` | preprint · arXiv | [arxiv.org/pdf/2012.12392v1](https://arxiv.org/pdf/2012.12392v1) | none (not-required) |
-| S5 | `src-arxiv-2511-17564-v1` | preprint · arXiv | [arxiv.org/pdf/2511.17564v1](https://arxiv.org/pdf/2511.17564v1) | none (not-required) |
-| S6 | `src-kaggle-plasticc-2018-record` | leaderboard-page · Kaggle | [www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?c...](https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=PLAsTiCC-2018) | [capture 2026-10-14](https://web.archive.org/web/20261014064102/https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=PLAsTiCC-2018) |
-| S7 | `src-zenodo-plasticc-unblinded-note` | documentation · Zenodo | [zenodo.org/records/2539456/files/note1\_dataRelease.pdf](https://zenodo.org/records/2539456/files/note1_dataRelease.pdf) | none (not-required) |
-| S8 | `src-zenodo-plasticc-unblinded` | dataset-card · Zenodo | [zenodo.org/records/2539456](https://zenodo.org/records/2539456) | none (not-required) |
-| S9 | `src-github-plasticc-kit-demo` | repository · GitHub | [raw.githubusercontent.com/lsstdesc/plasticc-kit/master/plasticc\_class...](https://raw.githubusercontent.com/lsstdesc/plasticc-kit/master/plasticc_classification_demo.ipynb) | [capture 2026-10-14](https://web.archive.org/web/20261014063604/https://raw.githubusercontent.com/lsstdesc/plasticc-kit/master/plasticc_classification_demo.ipynb) |
-| S10 | `src-arxiv-2604-23792-v2` | preprint · arXiv | [arxiv.org/pdf/2604.23792v2](https://arxiv.org/pdf/2604.23792v2) | none (not-required) |
+| S1 | `src-arxiv-2604-14451-v1` | preprint · arXiv | [arxiv.org/pdf/2604.14451v1](https://arxiv.org/pdf/2604.14451v1) | none (not-required) |
+| S2 | `src-fair-universe-site-2026-11` | documentation · FAIR Universe (Lawrence Berkeley National Laboratory) | [fair-universe.lbl.gov/](https://fair-universe.lbl.gov/) | none (withheld) |
+| S3 | `src-arxiv-2611-10228-v1` | preprint · arXiv | [arxiv.org/pdf/2611.10228v1](https://arxiv.org/pdf/2611.10228v1) | none (not-required) |
+| S4 | `src-github-cosmology-challenge-phase1-evaluation` | documentation · GitHub | [raw.githubusercontent.com/FAIR-Universe/Cosmology\_Challenge/5ed6c02b8...](https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase1/evaluation.md) | none (pending) |
+| S5 | `src-github-cosmology-challenge-phase2-data` | documentation · GitHub | [raw.githubusercontent.com/FAIR-Universe/Cosmology\_Challenge/5ed6c02b8...](https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase2/data.md) | none (pending) |
+| S6 | `src-github-cosmology-challenge-phase2-overview` | documentation · GitHub | [raw.githubusercontent.com/FAIR-Universe/Cosmology\_Challenge/5ed6c02b8...](https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase2/overview.md) | none (withheld) |
+| S7 | `src-zenodo-fair-universe-weak-lensing` | dataset-card · Zenodo | [zenodo.org/records/20056065](https://zenodo.org/records/20056065) | none (not-required) |
+| S8 | `src-fair-universe-weak-lensing-phase2-site` | leaderboard-page · FAIR Universe (Lawrence Berkeley National Laboratory) | [fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge-Phase2.html](https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge-Phase2.html) | none (withheld) |
+| S9 | `src-github-cosmology-challenge-final-eval-overview` | documentation · GitHub | [raw.githubusercontent.com/FAIR-Universe/Cosmology\_Challenge/5ed6c02b8...](https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Final_eval/overview.md) | none (withheld) |
+| S10 | `src-github-cosmology-challenge-phase1-overview` | documentation · GitHub | [raw.githubusercontent.com/FAIR-Universe/Cosmology\_Challenge/5ed6c02b8...](https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase1/overview.md) | none (withheld) |
+| S11 | `src-fair-universe-weak-lensing-phase1-site` | leaderboard-page · FAIR Universe (Lawrence Berkeley National Laboratory) | [fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge.html](https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge.html) | none (withheld) |
+| S12 | `src-fair-universe-weak-lensing-phase1-guidelines` | documentation · FAIR Universe (Lawrence Berkeley National Laboratory) | [fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge-Phase1-Guidel...](https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge-Phase1-Guidelines.html) | none (pending) |
+| S13 | `src-arxiv-2604-14451` | preprint · arXiv | [arxiv.org/abs/2604.14451](https://arxiv.org/abs/2604.14451) | none (not-required) |
+| S14 | `src-arxiv-2611-10228` | preprint · arXiv | [arxiv.org/abs/2611.10228](https://arxiv.org/abs/2611.10228) | none (not-required) |
+| S15 | `src-github-cosmology-challenge-readme` | repository · GitHub | [raw.githubusercontent.com/FAIR-Universe/Cosmology\_Challenge/5ed6c02b8...](https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/README.md) | none (pending) |
 
-**Evidence** (35 quoted fields), by checklist area:
+**Evidence** (51 quoted fields), by checklist area:
 
-#### plasticc · Identity and id
+#### fair-universe-weak-lensing · Identity and id
 
-- `self_description` · [S1][plasticc-s1]
-  > is an open data challenge to classify simulated astronomical time-series data in preparation for observations from the Large Synoptic Survey Telescope (LSST)
-- `released` = 2018-09-28 · [S2][plasticc-s2]
-  > Submitted on 28 Sep 2018
-- `lineage` = role root · [S10][plasticc-s10]
-  > The Extended PLAsTiCC (ELAsTiCC) was designed to stress-test such end-to-end real-time pipelines for light curve classification
+- `self_description` · [S1][fair-universe-weak-lensing-s1]
+  > we present the first weak lensing benchmark dataset with several realistic systematics and launch the FAIR Universe Weak Lensing Machine Learning Uncertainty Challenge
+- `released` = 2025-08-29 · [S2][fair-universe-weak-lensing-s2]
+  > Weak Lensing Uncertainty Challenge Phase 1 Launched August 29, 2025
+- `release_venue` = NeurIPS 2025 Competition Track (Phase 1) and NeurIPS 2026 Competition Track (Phase 2) · [S3][fair-universe-weak-lensing-s3]
+  > targeting cosmological parameter inference with uncertainty quantification (Phase 1; one of the NeurIPS 2025 competitions) and out-of-distribution detection (Phase 2)
 
-#### plasticc · Domain and capabilities
+#### fair-universe-weak-lensing · Domain and capabilities
 
-- `domain` = primary physics/astrophysics-cosmology · [S1][plasticc-s1]
-  - why: The scored quantity is the astronomical class of a source, inferred from its photometric time series and host-galaxy metadata. The observations are simulated to mimic LSST's.
-  > how well can we classify astronomical transients and variables from a simulated light curve data set designed to mimic the data from LSST
-- `capability` = scientific-prediction · [S1][plasticc-s1]
-  - why: A classifier predicts which kind of astrophysical object, from supernova types to RR Lyrae and AGN, produced each light curve, and is scored against the class the simulation drew.
-  > how well can we classify objects in the sky that vary in brightness from simulated LSST time-series data
-- `capability` = calibration-uncertainty · [S3][plasticc-s3]
-  - why: Entrants submit a probability for every class of every object, and the log loss scores those probabilities, not a hard label.
-  > For each object, you must submit a set of predicted probabilities (one for every category)
-- `capability` = distribution-shift-generalization · [S4][plasticc-s4]
-  - why: The training set is built as a mock spectroscopic sample, brighter and at lower redshift than the test set, and the score is computed on the shifted test set. Class 99 adds a second shift, four object types absent from training (see review\_checks).
-  > the PLAsTiCC training set is non-representative by design
-- `evaluation_method` = uncertainty-calibration-score · [S3][plasticc-s3]
-  - why: The metric is a log score over the emitted class probabilities, a proper scoring rule. Each class's log loss is averaged over that class's objects and weighted, 2 for rare or interesting classes and 1 for the rest, so each class counts roughly equally.
-  > Submissions are evaluated using a weighted multi-class logarithmic loss
-- `designed_for_subjects` = domain-specialist-model · [S4][plasticc-s4]
-  - why: Entrants are classifiers trained from scratch on the challenge's labelled light curves for a task astronomy defines, mostly gradient-boosted trees and neural networks, often in ensembles. Most of the 1,315 entrants with known backgrounds were not astronomers; the term describes the model, not its builders.
-  > among them boosted decision trees, neural networks, and multi-layer perceptrons
+- `domain` = primary physics/astrophysics-cosmology · [S1][fair-universe-weak-lensing-s1]
+  - why: The scored quantities are cosmological, the matter density Omega\_m and the clustering amplitude S8 with their uncertainties in Phase 1 and whether a map departs from the simulated cosmological model in Phase 2, inferred from maps built to mimic a survey's observations, which is the leaf's definition. PLAsTiCC and the strong-lens challenge, the leaf's examples, are likewise scored on simulated survey data.
+  > Participants are required not only to provide point estimates of (Ωm, S8), but also to quantify the associated uncertainties
+- `capability` = scientific-prediction · [S3][fair-universe-weak-lensing-s3]
+  - why: Systems infer Omega\_m and S8, properties of the simulated universe, from its lensing maps, and the score compares them with the parameters each map was simulated with.
+  > targeting cosmological parameter inference with uncertainty quantification (Phase 1; one of the NeurIPS 2025 competitions) and out-of-distribution detection (Phase 2)
+- `capability` = calibration-uncertainty · [S4][fair-universe-weak-lensing-s4]
+  - why: Phase 1's score consumes the one-sigma uncertainty each submission emits for each parameter, through a Gaussian negative log-likelihood beside the point estimate.
+  > The first term corresponds to the Kullback–Leibler (KL) divergence (up to some constants) between the true posterior distribution and the Gaussian distribution with the predicted mean and standard deviation.
+- `evaluation_method` = uncertainty-calibration-score, statistical-fit, composite, classification-metric · [S4][fair-universe-weak-lensing-s4]
+  - why: Phase 1's score is minus the mean over maps of a Gaussian negative log-likelihood of the emitted means and one-sigma uncertainties of Omega\_m and S8 (a log score, uncertainty-calibration-score) plus 1,000 times their squared error (statistical-fit), summed into one figure (composite). Phase 2's score is the mean true-positive rate of the emitted OoD scores at 100 log-spaced false-positive rates from 0.001 to 0.05, a partial-ROC statistic against the maps' InD and OoD labels (classification-metric).
+  > The second term is an MSE loss with weight $\\lambda=10^3$ to penalize bad point estimates.
+- `designed_for_subjects` = domain-specialist-model · [S3][fair-universe-weak-lensing-s3]
+  - why: Entrants are inference pipelines built for weak-lensing cosmology and trained on the challenge's simulations. The Phase 1 prize solutions are CNN ensembles with domain-specific augmentation, a Vision Transformer conditioned on power spectra, peak counts and Minkowski functionals, and a CNN pre-trained on emulated maps; the baselines are a power-spectrum MCMC analysis, CNNs and, for Phase 2, an autoencoder.
+  > we propose a Vision Transformer (ViT) architecture conditioned on handcrafted domain features from cosmology
 
 Considered and rejected:
 
-- `capability` not `sample-efficiency` · [S3][plasticc-s3]
-  - why: The labelled training set is small (7,848 objects), but no budget is fixed. The rules let entrants use other data, and the data note admits any outside knowledge.
-  > You may use data, other than the Competition Data, as allowed on the Competition Website to develop and test your models and Submissions
+- `domain` not `agents-tooluse/research-agents` · [S3][fair-universe-weak-lensing-s3]
+  - why: A Phase 1 prize team developed its network with an LLM multi-agent planning system, and two final submissions were agent-assisted, but the challenge scores the trained model's predictions (in Phase 2, its inference code), not an agent's conduct of the research.
+  > explicitly AI-agent-assisted pipelines each appeared in 2 submissions
+- `capability` not `distribution-shift-generalization` · [S3][fair-universe-weak-lensing-s3]
+  - why: Phase 2 is built around distribution shift, but it scores how well a system flags maps from other physical models, not how well it holds up on them, which is the term's definition; no term records out-of-distribution detection (taxonomy/\_failures, review\_checks). Phase 1's holdout B scores unseen cosmologies drawn from the training priors, which the paper calls interpolation.
+  > the holdout set (B) probes interpolation and generalization to unseen cosmological models
+- `capability` not `sample-efficiency` · [S5][fair-universe-weak-lensing-s5]
+  - why: The organisers stress the small training set, 101 cosmologies set by the cost of the simulations, but no budget is enforced. One Phase 1 prize team pre-trained on 100,000 simulations of its own, and Phase 2 allows the Phase 1 training data as well.
+  > Participants are allowed to include the Phase-1 (InD) training data into their training data
+- `evaluation_method` not `domain-metric` · [S1][fair-universe-weak-lensing-s1]
+  - why: Phase 2's score averages the true-positive rate over a fixed false-positive range, as LUNA16's FROC does, but its rates are the general ROC ones and nothing in it is defined only within cosmology; the organisers motivate the range by the significance levels of anomaly detection.
+  > will be evaluated by the mean values of the ROC curve over N = 100 logarithmically spaced FPRs between 0.001 and 0.05
+- `designed_for_subjects` not `classical-algorithm` · [S3][fair-universe-weak-lensing-s3]
+  - why: Summary-statistic analyses are admitted and the power-spectrum analysis is a baseline, but the challenge is built for learned methods, and the best higher-order-statistics entry trailed them on the Phase 1 public board.
+  > the best score achieved by a higher-order-statistics-based method on the public leaderboard is 9.1654
+- `designed_for_subjects` not `agent-scaffold` · [S3][fair-universe-weak-lensing-s3]
+  - why: Agent-assisted development appears among the Phase 1 final submissions, but what is scored is the trained model's output, not an agent.
+  > explicitly AI-agent-assisted pipelines each appeared in 2 submissions
 
-#### plasticc · Task and evaluation
+#### fair-universe-weak-lensing · Task and evaluation
 
-- `learned_entrant_evidence` = system The 2nd-place team's entry, seven bidirectional GRU networks and two LightGBM models · [S4][plasticc-s4]
-  > joined forces to produce an ensemble solution of seven Recurrent Neural Network
-- `reproducible_by_third_party` = true · [S7][plasticc-s7]
-  - why: The light curves and the unblinded test labels are on Zenodo under CC BY 4.0, and the results paper publishes the class weights, so anyone can score a classifier on the full test set. Which objects formed Kaggle's private two thirds is not in the release (see execution).
-  > integer model class for all objects (post-challenge)
-- `task` = exists true; input light curves of one object in six passbands (ugrizY): time, flux, flux uncertainty and a detection flag per observation, per-object metadata: sky position, Milky Way extinction, a host-galaxy photometric redshift, and a spectroscopic redshift for training objects and a small fraction of test objects; output A probability for each of 15 classes, the 14 seen in training and class 99 for objects of none of them; Kaggle rescales each row to sum to one and clips it before scoring.; scoring Weighted multi-class log loss, lower is better. Each class's log loss is averaged over its objects and weighted (2 for rare or interesting classes, 1 for the rest; hidden until the results paper). The public leaderboard used a third of the test set and the official ranking the other two thirds. · [S3][plasticc-s3]
-  > For each object, you must submit a set of predicted probabilities (one for every category)
-- `execution.reproducibility_tier` = fully-automatable · [S7][plasticc-s7]
-  - why: The light curves, the unblinded test labels and the class weights are public, and the score is a closed formula, so anyone can score a classifier end to end on the full test set, as the results paper did for the top three. The competition's own private-leaderboard numbers cannot be recomputed exactly; the release does not mark which objects formed Kaggle's private two thirds.
-  > integer model class for all objects (post-challenge)
-- `execution.harness` = plasticc-kit (the starter kit's classification demo, whose plasticc\_log\_loss implements the weighted log loss) · [S9][plasticc-s9]
-  > the official metric is always what is on Kaggle's leaderboard
+- `learned_entrant_evidence` = system Transatlantic Dream Team's Neural Summaries from Emulated Simulations (an EfficientNetV2 CNN pre-trained on emulated maps; second on Phase 1 leaderboards A and C) · [S3][fair-universe-weak-lensing-s3]
+  > We use a Convolutional Neural Network (CNN) to predict the mean and (log-) standard deviation of the cosmological parameters directly from the high-dimensional convergence maps
+- `learned_entrant_evidence` = system The organisers' Phase 2 autoencoder baseline (a convolutional autoencoder whose reconstruction error gives the OoD score) · [S1][fair-universe-weak-lensing-s1]
+  > We train a convolutional autoencoder (AE) on the training set, which contains only InD realizations drawn from the fiducial cosmological prior.
+- `reproducible_by_third_party` = false · [S7][fair-universe-weak-lensing-s7]
+  - why: The official scores need truth that the organisers hold, Phase 1's holdout labels and Phase 2's private holdout, which only they ran, and both Codabench phases have closed. A labelled 14,000-map test set from 82 unseen cosmologies is promised for after Phase 2 but is not out in the sources read, so others can score only their own splits of the public training data.
+  > The held-out test set will be released after the end of Phase 2 competition.
+- `task` = exists true; input one noisy weak-lensing convergence map, 1424 x 176 pixels at 2 arcmin inside the HSC Y3 WIDE12H mask, from one tomographic redshift bin, for training, 101 cosmologies x 256 noiseless maps, each labelled with Omega\_m and S8 and the nuisance parameters T\_AGN, f0 and Delta z; the entrant adds the shape noise; output Phase 1: point estimates of Omega\_m and S8 and their one-sigma uncertainties for each map. Phase 2: one continuous OoD score for each map, larger for a map more likely out of distribution, computed from that map alone.; scoring Phase 1: minus the mean over maps of the sum, over the two parameters, of (error/sigma)^2 + log sigma^2 + 1000 error^2; the public leaderboard used 4,000 maps of the training cosmologies, and the final leaderboards holdout A, holdout B and their average. Phase 2: the mean TPR at 100 log-spaced FPRs between 0.001 and 0.05, where random scores give 0.0128; the public leaderboard used 10,000 maps and the final ranking a private 10,000-map holdout, half of it OoD.; tests_hidden_from_system true · [S1][fair-universe-weak-lensing-s1]
+  > Participants are not provided with any OoD examples nor information about the underlying generative process.
+- `execution.compute_tier` = provided-allocation · [S9][fair-universe-weak-lensing-s9]
+  - why: \[withheld: it may name a person; see the entry file\]
+  > Codabench will directly run your model using an AWS instance and a predefined Docker image to produce your score.
+- `execution.reproducibility_tier` = not-independently-reproducible · [S7][fair-universe-weak-lensing-s7]
+  - why: The official rankings need holdout truth, and for Phase 2 holdout maps, that only the organisers hold, and both Codabench phases have closed. Until the promised 14,000-map test set is out, others can score only splits of the public training data.
+  > The held-out test set will be released after the end of Phase 2 competition.
+- `execution.harness` = FAIR-Universe/Cosmology\_Challenge: the Codabench ingestion and scoring programs, six starting-kit notebooks (three baselines per phase), the baseline model submissions and the Docker build · [S10][fair-universe-weak-lensing-s10]
+  > This repository hosts the code for testing submissions, as well as the starting kit notebooks
+- `aggregation_policy` = official-aggregate · [S4][fair-universe-weak-lensing-s4]
+  - why: Each phase has its own official ranking, Phase 1's final ones including leaderboard C, the average of holdouts A and B. The two phases are scored and awarded separately and never combined.
+  > The Phase 1 and Phase 2 will be scored independently with two distinct leaderboards, and they will have separate prizes for top participants.
 
-#### plasticc · Data and licence
+#### fair-universe-weak-lensing · Data and licence
 
-- `as_used` = protocol Trained and tested on the user's own subsets of the Kaggle data, with the classes regrouped and scored by per-category AUCs, not the competition's weighted log loss over 15 classes on the private two thirds.; split a 19,920-object test subset, with the 14 classes regrouped into five · [S5][plasticc-s5]
-  > The original fourteen object classes were reorganized into five generalized categories
-- `data.access` = fully-open · [S8][plasticc-s8]
-  - why: The test set behind the score, labels included, has been downloadable from Zenodo since 21 January 2019, without registration. fully-open's inclusion test judges a blind round once its ground truth is released.
-  > the unblinded data files are included here
-- `data.access_by_phase.during_edition` = train-open-test-held-out. Training light curves with labels and the test light curves without them, downloadable from Kaggle after accepting the competition rules, which limited use to the competition, research, education and other non-commercial purposes. · [S3][plasticc-s3]
-  > academic research and education, and other non-commercial purposes
-- `data.access_by_phase.after_edition` = fully-open. The unblinded metadata, with every object's true class, and all the light curves on Zenodo, no account needed, under CC BY 4.0. · [S7][plasticc-s7]
-  > Here we release the unblinded meta-data
-- `data.refresh` = static · [S7][plasticc-s7]
-  - why: One data set, released once. The unblinding added label and truth columns to the metadata; the light curves are those served on Kaggle, and no revision has followed.
-  > The latter are the same as on Kaggle
-- `data.data_provenance` = simulation-generated · [S4][plasticc-s4]
-  > The PLAsTiCC data were simulated to mimic three years of an LSST-type survey
-- `data.contamination_risk` = medium · [S4][plasticc-s4]
-  > All of the top models that provided information on their handling of
-- `data.dataset_licence` = CC-BY-4.0 · [S8][plasticc-s8]
+- `data.access` = private-test-server · [S6][fair-universe-weak-lensing-s6]
+  - why: Phase 2's final ranking ran the finalists' packaged models on a private holdout that entrants never received.
+  > The submitted methods will be evaluated on a private holdout dataset to determine the final rankings and prize winners.
+- `data.access_by_phase.after_edition` = The upgraded training set (101 x 256 maps with independent realizations) is on Zenodo under CC BY 4.0, with the starting kits and scoring code on GitHub. The holdout truth stays with the organisers, a labelled 14,000-map test set from 82 unseen cosmologies is to follow Phase 2, and no submission route is open. · [S7][fair-universe-weak-lensing-s7]
   > Creative Commons Attribution 4.0 International
-- `data.size` = count 3492890; unit test objects, each with light curves in six passbands; subset test · [S6][plasticc-s6]
-  > "totalSolutionRows":3492890
-- `data.size` = count 7848; unit labelled training objects; subset train · [S5][plasticc-s5]
-  > the first had 7848 objects
-- `data.size` = count 15; unit classes, 14 represented in training and class 99 for objects of none of them · [S1][plasticc-s1]
-  > separate the data into 15 classes, 14 of which are represented in the training sample
+- `data.refresh` = periodic-recompetition · [S5][fair-universe-weak-lensing-s5]
+  - why: Each phase ranked entrants on evaluation data new to it, and Phase 2 came with a new training release, though the task changed between them. Two phases are hardly a recurring series (see review\_checks).
+  > in contrast to the Phase-1 training data, which were produced using only $256$ random seeds
+- `data.data_provenance` = simulation-generated · [S3][fair-universe-weak-lensing-s3]
+  > Each map is generated by running cosmological simulations \[20, 21\] and a ray-tracing algorithm \[22–24\]
+- `data.contamination_risk` = low · [S3][fair-universe-weak-lensing-s3]
+  > repeated use of the public leaderboard for model development may increase the risk of overfitting to this discrete set of cosmological models
+- `data.ceiling_anchor_type` = theoretical-maximum · [S1][fair-universe-weak-lensing-s1]
+  > will be evaluated by the mean values of the ROC curve over N = 100 logarithmically spaced FPRs between 0.001 and 0.05
+- `data.dataset_licence` = CC-BY-4.0 · [S7][fair-universe-weak-lensing-s7]
+  > Creative Commons Attribution 4.0 International
+- `data.size` = count 25856; unit noiseless training maps (101 cosmologies x 256 realizations); subset training set (Phase 1, and the upgraded Zenodo release with the same shape) · [S3][fair-universe-weak-lensing-s3]
+  > yielding a total of 101 × 256 = 25,856 training maps
+- `data.size` = count 4000; unit maps of the training cosmologies, scored on the public leaderboard; subset Phase 1 public test set · [S3][fair-universe-weak-lensing-s3]
+  > The dataset contains 4,000 realizations of weak lensing maps
+- `data.size` = count 6000; unit maps, new realizations of the 101 training cosmologies; subset Phase 1 holdout A · [S3][fair-universe-weak-lensing-s3]
+  > (A) 6,000 realizations from the simulations with the original 101 cosmological models in the training data
+- `data.size` = count 4020; unit maps of 10 cosmologies not in the training data; subset Phase 1 holdout B · [S3][fair-universe-weak-lensing-s3]
+  > (B) 4,020 realizations from the simulations with 10 cosmological models that were not seen in the training data
+- `data.size` = count 10000; unit noisy maps, some generated under other physical models; subset Phase 2 public test set (v2 of 2026-08-12) · [S5][fair-universe-weak-lensing-s5]
+  > The public test dataset for this competition contains 10,000 noisy convergence maps.
+- `data.size` = count 10000; unit maps, 5,000 in distribution and 5,000 out of distribution; subset Phase 2 private holdout · [S8][fair-universe-weak-lensing-s8]
+  > The holdout dataset contains 10,000 samples, where the number of InD and OoD maps are both 5,000.
+- `data.size` = count 14000; unit labelled maps from 82 cosmologies not in the training set, to be released after Phase 2; subset held-out test set (not yet released) · [S7][fair-universe-weak-lensing-s7]
+  > consists of 14k convergence maps with corresponding labels, drawn from 82 cosmological models that are not present in the training set
+- `subsets` = id fair-universe-weak-lensing#phase-1-holdout-a; label Phase 1 final holdout A, new realizations of the 101 training cosmologies; items 6000; scored_separately true · [S3][fair-universe-weak-lensing-s3]
+  > (A) 6,000 realizations from the simulations with the original 101 cosmological models in the training data
+- `subsets` = id fair-universe-weak-lensing#phase-1-holdout-a; label Phase 1 final holdout A, new realizations of the 101 training cosmologies; items 6000; scored_separately true · [S3][fair-universe-weak-lensing-s3]
+  > The scores obtained from the two holdout sets and the average of both together determine three final leaderboards
+- `subsets` = id fair-universe-weak-lensing#phase-1-holdout-b; label Phase 1 final holdout B, 10 cosmologies not in the training data; items 4020; scored_separately true · [S3][fair-universe-weak-lensing-s3]
+  > (B) 4,020 realizations from the simulations with 10 cosmological models that were not seen in the training data
+- `subsets` = id fair-universe-weak-lensing#phase-1-holdout-b; label Phase 1 final holdout B, 10 cosmologies not in the training data; items 4020; scored_separately true · [S11][fair-universe-weak-lensing-s11]
+  > The new parameters are sampled from the same prior distributions as the training data.
 
-#### plasticc · Governance and independence
+#### fair-universe-weak-lensing · Governance and independence
 
-- `governance.maintainer` = The PLAsTiCC team of the LSST Dark Energy Science Collaboration (DESC) and the LSST Transients and Variable Stars Science Collaboration (TVS) · [S1][plasticc-s1]
-  - why: The two collaborations formed the team that built, validated and ran the challenge; the Zenodo release is credited to the PLAsTiCC Team (LSST-DESC and LSST TVS) and the starter kit sits in the LSSTDESC organisation on GitHub.
-  > As part of the collaborative effort, these two collaborations developed the PLAsTiCC team
-- `governance.submission_process` = held-out-server · [S4][plasticc-s4]
-  > whereas the metric evaluated on the remaining two-thirds of the test data was the basis for the
-- `governance.independence_flags` = flag prize-sponsored-by-industry · [S4][plasticc-s4]
-  > The awards for PLAsTiCC contest were generously supported by Kaggle
-- `governance.funding` · [S3][plasticc-s3]
-  > PLAsTiCC is funded through LSST Corporation Grant Award # 2017-03 and administered by the University of Toronto
-- `governance.participation` · [S4][plasticc-s4]
-  > PLAsTiCC ran from Sep 28, 2018 until Dec 17, 2018, and received entries from 1094 teams around the world
+- `governance.maintainer` = The FAIR Universe collaboration, led by Lawrence Berkeley National Laboratory with the Institute for Advanced Study, Université Paris-Saclay, the University of Washington and ChaLearn · [S2][fair-universe-weak-lensing-s2]
+  - why: The project's site, on lbl.gov, names the collaboration's members; the FAIR-Universe GitHub organisation holds the challenge repository, and the white paper's and the dataset record's authors are at those institutions and at UC Berkeley, Stanford, SLAC and Toronto.
+  > The FAIR Universe project is a collaboration between and include scientists from Lawrence Berkeley National Laboratory, Université Paris-Saclay, University of Washington, Institute for Advanced Study, and ChaLearn.
+- `governance.submission_process` = held-out-server, sandboxed-rerun · [S9][fair-universe-weak-lensing-s9]
+  > Organizers will download participants' Codabench model submissions and evaluate on the holdout dataset to determine the final rankings
+- `governance.independence_flags` = flag single-evaluator-private-test-set · [S6][fair-universe-weak-lensing-s6]
+  > The submitted methods will be evaluated on a private holdout dataset to determine the final rankings and prize winners.
+- `governance.funding` · [S2][fair-universe-weak-lensing-s2]
+  > The project is funded by the Department of Energy
+- `governance.participation` · [S3][fair-universe-weak-lensing-s3]
+  > (first 10 entries out of 1759)
+- `governance.known_limitation` · [S3][fair-universe-weak-lensing-s3]
+  > repeated use of the public leaderboard for model development may increase the risk of overfitting to this discrete set of cosmological models
 
-#### plasticc · Lifecycle and activity
+#### fair-universe-weak-lensing · Lifecycle and activity
 
-- `lifecycle` = active · [S5][plasticc-s5]
-  - why: Results are still produced on the data. A November 2025 paper trains and tests a classifier on it, and a 2026 paper calls PLAsTiCC the mainstream paradigm for building light curve classifiers. The competition ended in 2018, which goes to activity; ELAsTiCC was built for real-time alert streams, a purpose PLAsTiCC's full light curves did not cover, so the sources do not show it replacing PLAsTiCC (see lineage\_note).
-  > a bidirectional LSTM network with masking layers was trained and evaluated on a test set of 19,920 objects
-- `activity` = closed · [S6][plasticc-s6]
-  - why: The Kaggle competition was the only route for scored entries, and it closed on 2018-12-17 with its final leaderboard verified and three prizes awarded. No later round was announced; the successor challenge, ELAsTiCC, is a separate challenge.
-  > "deadline":"2018-12-17T23:59:00Z"
-- `history` = date 2018-12-17; event channel-closed; field execution.submission\_channel; from Kaggle competition PLAsTiCC-2018 · [S6][plasticc-s6]
-  > "deadline":"2018-12-17T23:59:00Z"
-- `history` = date 2019-01-21; event access-changed; field data.access; from train-open-test-held-out; to fully-open · [S8][plasticc-s8]
-  > Published January 21, 2019
+- `lifecycle` = active · [S2][fair-universe-weak-lensing-s2]
+  - why: Results are still being produced. Phase 2's ranking was published on 2026-10-30 and its winners present at NeurIPS in December 2026, and the Phase 1 dataset-and-results paper appeared on 2026-11-06. With no submission route open, mature is the alternative once the record settles; the promised test-set release and the further data releases the paper plans could make it under-revision (see review\_checks).
+  > Phase-2 Winners October 30, 2026 We have announced the winners of the Weak Lensing Uncertainty Challenge Phase-2
+- `activity` = closed · [S6][fair-universe-weak-lensing-s6]
+  - why: Codabench was the only route for entering results; both phases have ended and been decided, and no further round is announced.
+  > competition had ended on October 11th 2026
+- `history` = date 2025-11-15; event channel-closed; field execution.submission\_channel; from Codabench competition 8934 (Phase 1 public phase) · [S12][fair-universe-weak-lensing-s12]
+  > the Phase 1 competition will end on 2025/11/15
+- `history` = date 2026-10-11; event channel-closed; field execution.submission\_channel; from Codabench competition 10902 (Phase 2 public phase) · [S6][fair-universe-weak-lensing-s6]
+  > competition had ended on October 11th 2026
+- `history` = date 2026-10-20; event channel-closed; field execution.submission\_channel; from The Phase 2 final-submission page on Codabench (model submissions for the holdout) · [S9][fair-universe-weak-lensing-s9]
+  > Phase 2 Final Submission deadline: 2026/10/20 11:59 PM (AoE)
 
-**Open review checks** (8):
+**Open review checks** (11):
 
-1. (field `capability`) distribution-shift-generalization rests on the deliberately unrepresentative training set, an input shift with the task unchanged. Class 99 also puts four object types in the test set that training never shows, which is novelty detection, a change of label set that the term's exclusion test does not cover; the vocabulary has no term for it. · [S1][plasticc-s1]
-   > interesting objects that are hypothesized to exist but have never been observed and are thus not in the training set
-2. (field `capability`) perception was rejected on the view that tabulated photometry with catalogue metadata is not a raw signal. A reviewer who reads multi-band light curves as a comparable raw signal should add it.
-3. (field `lifecycle`) lifecycle active or mature. Results are still produced, but on users' own subsets, regroupings and metrics (as\_used), not on the competition's protocol; with the competition ended and its record settled, mature is the alternative. · [S5][plasticc-s5]
-   > a subset of the total data was used
-4. (field `activity`) activity closed. The results paper said in 2020 that the competition remained 'live' and took a few late submissions; Kaggle's late-submission state in 2026 was not read (the pages are script-rendered). Late submissions are scored but do not enter the published ranking, so no route onto a board is known to be open. · [S4][plasticc-s4]
-   > hence the few submissions received after the closing deadline
-5. (field `governance.maintainer_type`) maintainer\_type community-collective or academic-lab. The University of Toronto is the rules' Competition Sponsor and administered the grant; the data and kit sit with DESC and TVS. · [S3][plasticc-s3]
-   > The Governing Council of the University of Toronto
-6. (field `governance.independence_flags`) prize-sponsored-by-industry rests on the results paper's thanks to Kaggle for the awards; the rules name the University of Toronto as the sponsor offering the $25,000 in prizes. Whether a hosting platform paying the prizes is the flag's case is a judgement. · [S4][plasticc-s4]
-   > The awards for PLAsTiCC contest were generously supported by Kaggle
-7. (field `governance.independence_flags`) The rules let five metric-and-design team members compete fully. No source read shows whether any entered; if one did, maintainer-competes-on-own-benchmark applies. · [S1][plasticc-s1]
-   > nor validating the data, and as such are allowed to compete in the challenge fully
-8. (field `paper`) paper names the data-set note, which defines the data and the metric. The results paper (arXiv 2012.12392, which the 2026 paper cites as a 2023 journal version whose DOI was not read) could be named instead.
+1. (field `versions`) The two phases are recorded as editions of one benchmark, as trackml's two phases are. The 04 S4 edition test (same task, new items) fails for Phase 2, which changes the task, the output and the metric. But both are one named challenge, planned together by one maintainer on one simulation suite, so a new Benchmark (another maintainer, or independently versioned and cited) does not fit either. The two tasks as subsets of one release, as DCASE's tasks are, are the alternative, and two entries are a third. · [S10][fair-universe-weak-lensing-s10]
+   > Participants may enter either Phase 1, Phase 2, or both phases to win the prize.
+2. (field `capability`, needs a specialist) No capability term records out-of-distribution detection, Phase 2's whole claim, so it is missing from the coverage matrix; bench tag-gap logged it as a missing term (2026-11-27-fair-universe-weak-lensing-001), beside isic-challenge's for open-set recognition. distribution-shift-generalization was weighed and rejected because its definition is holding up under shift, not flagging it. · [S1][fair-universe-weak-lensing-s1]
+   > participants have to tackle this problem by developing methods for OoD detection
+3. (field `data.access`) data.access is private-test-server, Phase 2's value, on the reading that the later edition decides (as in trackml). Phase 1, whose holdout maps were sent to finalists, is train-open-test-held-out. compute\_tier provided-allocation and ceiling\_anchor\_type theoretical-maximum follow the same choice; Phase 1 ran on the entrants' own machines, and its score has no finite top, which would make the ceiling none-known. · [S12][fair-universe-weak-lensing-s12]
+   > After we receive your summary write-up and example code, we will share a holdout dataset with you.
+4. (field `evaluation_method`) composite rests on Phase 1's score adding a Gaussian log score and a squared-error penalty with a fixed weight; read as one penalised scoring rule, it would be uncertainty-calibration-score alone. classification-metric for Phase 2's mean TPR over a fixed FPR range was preferred to domain-metric, which LUNA16's FROC near miss takes. · [S4][fair-universe-weak-lensing-s4]
+   > The second term is an MSE loss with weight $\\lambda=10^3$ to penalize bad point estimates.
+5. (field `lifecycle`) lifecycle active rests on Phase 2's results (2026-10-30) and the Phase 1 paper (2026-11-06), both the organisers' own. mature is the alternative once the record settles, and under-revision if the promised test-set release and the planned further data releases are read as an announced reissue. · [S3][fair-universe-weak-lensing-s3]
+   > We plan for a series of data releases towards a permanent community benchmark.
+6. (field `activity`) activity closed. Codabench's API answered with a bot check, so whether either competition still scores late submissions was not read; between-rounds would fit if a third phase is announced.
+7. (field `lineage`) This entry and fair-universe-higgsml share a maintainer and a programme, and the white paper builds on the Higgs challenge. 04 S4 gives no lineage edge, since this is another task on other data rather than a derivative or successor of its items, so none is recorded. fair-universe-higgsml says the weak-lensing challenges are other benchmarks and should name this id. · [S1][fair-universe-weak-lensing-s1]
+   > These include the FAIR Universe HiggsML uncertainties challenge \[17\]
+8. (field `versions`) Dates disagree across the sources. Phase 2 launched on 2026-04-22 (site news) or 2026-04-28 (its Codabench overview, used here), and its final ranking is dated 2026-10-25, 2026-10-26 or 2026-10-30. The Phase 2 winners page calls it Phase 2 of the NeurIPS 2025 challenge, though it ran as a NeurIPS 2026 competition. Codabench's own phase dates were not read. · [S8][fair-universe-weak-lensing-s8]
+   > Phase 2 of the NeurIPS 2025 Weak Lensing ML Uncertainty Challenge has come to an end.
+9. (field `versions`) Phase 2's design changed between the 2025 pages, which announced a log-loss on each map's in-distribution probability, and the 2026 run, scored by the mean TPR at low FPR. The 2026-08-12 test-set regeneration is recorded as an erratum of phase-2, since the leaderboard was reset. · [S4][fair-universe-weak-lensing-s4]
+   > Participants' models should determine the probability $p\_i$ that the given dataset is consistent with the training data.
+10. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark is not set, since no affiliation in the sources read shows an organising group among the ranked entrants. A Phase 2 jury-prize winner lists the University of California, Berkeley, where organisers also are, which the 2026-11-18 rule does not count. The method paper of a Phase 1 prize team (arXiv 2604.09621, the Phase 1 paper's reference 39) and the paper the white paper's OoD figure is adapted from (arXiv 2505.00632, its reference 43) were not read for their affiliations; a reviewer may check them, since only an affiliation can set the flag. Who paid the prizes is unstated.
+11. (field `data.submission_limit`) Codabench was not read (bot check on its API), so the submission limits, participant counts, phase dates and leaderboard rows of competitions 8934 and 10902 are unrecorded; data.submission\_limit and liveness.leaderboard\_last\_updated are left unset. The site's copy of the Phase 1 leaderboard is dated 2025-11-17. · [S11][fair-universe-weak-lensing-s11]
+   > Phase 1 Codabench Leaderboard Last updated: November 17, 2025
 
-**Reviewer checklist** for `plasticc`:
+**Reviewer checklist** for `fair-universe-weak-lensing`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -1022,16 +1071,21 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[plasticc-s1]: https://arxiv.org/pdf/1810.00001v1
-[plasticc-s2]: https://arxiv.org/abs/1810.00001
-[plasticc-s3]: https://www.kaggle.com/api/i/competitions.PageService/ListPages?competitionId=10384
-[plasticc-s4]: https://arxiv.org/pdf/2012.12392v1
-[plasticc-s5]: https://arxiv.org/pdf/2511.17564v1
-[plasticc-s6]: https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=PLAsTiCC-2018
-[plasticc-s7]: https://zenodo.org/records/2539456/files/note1_dataRelease.pdf
-[plasticc-s8]: https://zenodo.org/records/2539456
-[plasticc-s9]: https://raw.githubusercontent.com/lsstdesc/plasticc-kit/master/plasticc_classification_demo.ipynb
-[plasticc-s10]: https://arxiv.org/pdf/2604.23792v2
+[fair-universe-weak-lensing-s1]: https://arxiv.org/pdf/2604.14451v1
+[fair-universe-weak-lensing-s2]: https://fair-universe.lbl.gov/
+[fair-universe-weak-lensing-s3]: https://arxiv.org/pdf/2611.10228v1
+[fair-universe-weak-lensing-s4]: https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase1/evaluation.md
+[fair-universe-weak-lensing-s5]: https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase2/data.md
+[fair-universe-weak-lensing-s6]: https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase2/overview.md
+[fair-universe-weak-lensing-s7]: https://zenodo.org/records/20056065
+[fair-universe-weak-lensing-s8]: https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge-Phase2.html
+[fair-universe-weak-lensing-s9]: https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Final_eval/overview.md
+[fair-universe-weak-lensing-s10]: https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/pages/Phase1/overview.md
+[fair-universe-weak-lensing-s11]: https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge.html
+[fair-universe-weak-lensing-s12]: https://fair-universe.lbl.gov/WeakLensing-Uncertainty-Challenge-Phase1-Guidelines.html
+[fair-universe-weak-lensing-s13]: https://arxiv.org/abs/2604.14451
+[fair-universe-weak-lensing-s14]: https://arxiv.org/abs/2611.10228
+[fair-universe-weak-lensing-s15]: https://raw.githubusercontent.com/FAIR-Universe/Cosmology_Challenge/5ed6c02b86303704bff06d2b5b30940588548f7e/README.md
 
 ### 2.6 CMT-Benchmark (cmt-benchmark)
 
@@ -1903,31 +1957,27 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 
 (03 §12.2, ask 3.) The row is this family crossed with the 13 capability groups of `taxonomy/capability_groups.yaml` (the coarse grid, the only one a gap claim may come from: 12-analytics-and-trends.md §5.1). A cell holds a benchmark when an entry in this family, by its primary domain or only by a secondary one, carries a capability term of that group (02-taxonomy.md §11 rule 1: presence at any weight); the two are counted apart.
 
-10 of 13 cells hold a benchmark (76.9%), 0 are declared not applicable, 3 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on physics (reviewer\_signoff: none)).
+12 of 13 cells hold a benchmark (92.3%), 0 are declared not applicable, 1 are empty. Gap claims in this row: refused (insufficient curation confidence to assert a gap: no reviewer has signed off on physics (reviewer\_signoff: none)).
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
-| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 0 / 1 | knowledge-recall 0, factual-precision 0, memory-retention 0, context-integration 0 |
+| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 1 / 1 | knowledge-recall 0, factual-precision 0, memory-retention 0, context-integration 1 |
 | Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 2 / 2 | deductive-reasoning 0, quantitative-reasoning 2, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | has-benchmarks | 1 / 0 | abstraction 0, inductive-reasoning 1, analogical-reasoning 0, compositional-generalization 0 |
-| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 13 / 2 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 13 |
+| Causal & experimental<br>`causal-and-experimental-inference` | has-benchmarks | 15 / 2 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 15 |
 | Signal, space & time<br>`perception-space-time` | has-benchmarks | 5 / 0 | perception 5, grounding 0, spatial-reasoning 0, temporal-reasoning 0 |
 | Planning & search<br>`planning-and-search` | has-benchmarks | 1 / 2 | planning 0, search-exploration 0, optimization 1 |
-| Action & execution<br>`action-and-execution` | not-yet-surveyed | 0 / 0 | sensorimotor-control 0, tool-use 0, long-horizon-execution 0 |
+| Action & execution<br>`action-and-execution` | has-benchmarks | 1 / 0 | sensorimotor-control 0, tool-use 1, long-horizon-execution 0 |
 | Controlled generation<br>`controlled-generation` | has-benchmarks | 1 / 2 | generation-fidelity 1, creativity-novelty 0, instruction-following 0 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | not-yet-surveyed | 0 / 0 | collaboration 0, communication 0, honesty 0, harm-avoidance 0 |
 | Learning & transfer<br>`learning-and-transfer` | has-benchmarks | 1 / 0 | sample-efficiency 1, continual-learning 0, transfer-learning 0 |
 | Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 5 / 1 | distribution-shift-generalization 5, adversarial-robustness 0, reliability-consistency 0 |
-| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 3 / 1 | calibration-uncertainty 3, probabilistic-forecasting 0, self-correction 0 |
-| Autonomy & oversight<br>`autonomy-and-oversight` | not-yet-surveyed | 0 / 0 | autonomy 0, self-improvement 0, situational-awareness 0 |
+| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 4 / 1 | calibration-uncertainty 4, probabilistic-forecasting 0, self-correction 0 |
+| Autonomy & oversight<br>`autonomy-and-oversight` | has-benchmarks | 1 / 0 | autonomy 1, self-improvement 0, situational-awareness 0 |
 
 An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobody measures it, the taxonomy cuts this field badly there, or we have not found the work yet. Only the first may ever be published as a gap, and only after a reviewer has confirmed it.
 
 The empty cells, for your answer:
 
-- **Action & execution** (`action-and-execution`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
-  - why we think the question applies here: Control of physical systems, such as plasma or accelerator control, and agents that drive physics simulators score sensorimotor control and tool-use.
 - **Conduct & cooperation** (`conduct-and-cooperation`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
   - why we think the question applies here: Evaluations of nuclear and radiological uplift score harm-avoidance on physics knowledge, and honesty about the limits of a physical calculation is coherent.
-- **Autonomy & oversight** (`autonomy-and-oversight`, not-yet-surveyed): [ ] genuinely empty · [ ] the work exists (please name it) · [ ] the cell is cut badly for this field
-  - why we think the question applies here: Autonomous experimentation, in which an agent designs and runs a sequence of physics experiments without intervention, is coherent.

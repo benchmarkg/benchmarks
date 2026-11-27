@@ -16,7 +16,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, 'scripts'))
 import check_dedup_resolved as C  # noqa: E402
 
-TODAY = dt.date(2026, 11, 18)
+TODAY = dt.date(2026, 11, 27)
 
 
 def entry(root, family, ident, lineage=None):
