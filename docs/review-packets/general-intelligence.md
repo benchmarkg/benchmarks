@@ -552,7 +552,7 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 | S4 | `src-arc-prize-arc-agi-2` | documentation · ARC Prize Foundation | [arcprize.org/arc-agi/2](https://arcprize.org/arc-agi/2) | [capture 2026-11-16](https://web.archive.org/web/20261116161812/https://arcprize.org/arc-agi/2) |
 | S5 | `src-arc-prize-testing-policy` | documentation · ARC Prize Foundation | [arcprize.org/policy](https://arcprize.org/policy) | [capture 2026-09-04](https://web.archive.org/web/20260904164247/https://arcprize.org/policy) |
 | S6 | `src-arc-agi-3-community-leaderboard` | leaderboard-page · ARC Prize Foundation | [arcprize.org/leaderboard/community](https://arcprize.org/leaderboard/community) | [capture 2026-09-10](https://web.archive.org/web/20260910005944/https://arcprize.org/leaderboard/community) |
-| S7 | `src-github-arcprize-arc-agi-readme-f2e6fee` | repository · GitHub | [raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c...](https://raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c8e9f08b8579a31/README.md) | none (pending) |
+| S7 | `src-github-arcprize-arc-agi-readme-f2e6fee` | repository · GitHub | [raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c...](https://raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c8e9f08b8579a31/README.md) | [capture 2026-11-24](https://web.archive.org/web/20261124155815/https://raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c8e9f08b8579a31/README.md) |
 | S8 | `src-arc-prize-leaderboard` | leaderboard-page · ARC Prize Foundation | [arcprize.org/leaderboard](https://arcprize.org/leaderboard) | [capture 2026-09-22](https://web.archive.org/web/20260922043511/https://arcprize.org/leaderboard) |
 
 **Evidence** (29 quoted fields), by checklist area:
@@ -1343,7 +1343,7 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2009-03300` | preprint · arXiv | [arxiv.org/abs/2009.03300](https://arxiv.org/abs/2009.03300) | none (not-required) |
-| S2 | `src-hf-api-cais-mmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/cais/mmlu](https://huggingface.co/api/datasets/cais/mmlu) | none (pending) |
+| S2 | `src-hf-api-cais-mmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/cais/mmlu](https://huggingface.co/api/datasets/cais/mmlu) | [capture 2026-11-24](https://web.archive.org/web/20261124164826/https://huggingface.co/api/datasets/cais/mmlu) |
 | S3 | `src-github-mmlu-license-4450500` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/test/4450500f923c49f1fb1dd3d99108a0bd9717b660/LICENSE (not linked: a personal account) | none (withheld) |
 | S4 | `src-hf-api-openai-mmmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/openai/MMMLU](https://huggingface.co/api/datasets/openai/MMMLU) | [capture 2026-11-17](https://web.archive.org/web/20261117233256/https://huggingface.co/api/datasets/openai/MMMLU) |
 | S5 | `src-arxiv-2406-04127` | preprint · arXiv | [arxiv.org/abs/2406.04127](https://arxiv.org/abs/2406.04127) | none (not-required) |

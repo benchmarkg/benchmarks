@@ -86,17 +86,17 @@ A text-to-CAD benchmark built by one person in April 2025 and published as a Git
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-github-cadeval-readme-2ef2fc0` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/2ef2fc0ec1f794783b1778140dceb79e88e6ca0b/README.md (not linked: a personal account) | none (pending) |
+| S1 | `src-github-cadeval-readme-2ef2fc0` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/2ef2fc0ec1f794783b1778140dceb79e88e6ca0b/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S2 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
 | S3 | `src-cadeval-blog-teaching-llms-solid-model` | blog-post | [willpatrick.xyz/technology/2025/04/23/teaching-llms-how-to-solid-mode...](https://willpatrick.xyz/technology/2025/04/23/teaching-llms-how-to-solid-model.html) | none (withheld) |
-| S4 | `src-github-cadeval-config-4d04ad5` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/4d04ad5b84144939a55c270548a0448e97eef434/config.yaml (not linked: a personal account) | none (pending) |
-| S5 | `src-github-cadeval-process-results-2ef2fc0` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/2ef2fc0ec1f794783b1778140dceb79e88e6ca0b/scripts/process\_results.py (not linked: a personal account) | none (pending) |
+| S4 | `src-github-cadeval-config-4d04ad5` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/4d04ad5b84144939a55c270548a0448e97eef434/config.yaml (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S5 | `src-github-cadeval-process-results-2ef2fc0` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/2ef2fc0ec1f794783b1778140dceb79e88e6ca0b/scripts/process\_results.py (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S6 | `src-github-api-cadeval` | repository · GitHub | api.github.com/repos/\[personal account\]/cadeval (not linked: a personal account) | none (withheld) |
-| S7 | `src-github-cadeval-dashboard-data-4d04ad5` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/4d04ad5b84144939a55c270548a0448e97eef434/dashboard/dashboard\_data.json (not linked: a personal account) | none (pending) |
-| S8 | `src-github-cadqueryeval-readme-6985f35` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadqueryeval/6985f3572a9073ffd8cd1949a63ea7888d270a20/README.md (not linked: a personal account) | none (pending) |
+| S7 | `src-github-cadeval-dashboard-data-4d04ad5` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadeval/4d04ad5b84144939a55c270548a0448e97eef434/dashboard/dashboard\_data.json (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S8 | `src-github-cadqueryeval-readme-6985f35` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cadqueryeval/6985f3572a9073ffd8cd1949a63ea7888d270a20/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S9 | `src-epoch-eci-included-benchmarks` | documentation · Epoch AI | [epoch.ai/data/eci-documentation/data](https://epoch.ai/data/eci-documentation/data) | [capture 2026-10-14](https://web.archive.org/web/20261014134713/https://epoch.ai/data/eci-documentation/data) |
-| S10 | `src-epoch-benchmarks-cad-eval` | documentation · Epoch AI | [epoch.ai/benchmarks/cad-eval](https://epoch.ai/benchmarks/cad-eval) | none (pending) |
-| S11 | `src-github-cad-bench-paper-main` | preprint · GitHub | raw.githubusercontent.com/\[personal account\]/\[personal account\]/main/paper/main.pdf (not linked: a personal account) | none (pending) |
+| S10 | `src-epoch-benchmarks-cad-eval` | documentation · Epoch AI | [epoch.ai/benchmarks/cad-eval](https://epoch.ai/benchmarks/cad-eval) | [capture 2026-11-24](https://web.archive.org/web/20261124155416/https://epoch.ai/benchmarks/cad-eval) |
+| S11 | `src-github-cad-bench-paper-main` | preprint · GitHub | raw.githubusercontent.com/\[personal account\]/\[personal account\]/main/paper/main.pdf (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 
 **Evidence** (37 quoted fields), by checklist area:
 
@@ -289,22 +289,22 @@ A benchmark from gNucleus AI in which AI agents author parametric CAD parts in F
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-cadbench-ai` | documentation · gNucleus AI (cadbench.ai) | [cadbench.ai/](https://cadbench.ai/) | none (pending) |
+| S1 | `src-cadbench-ai` | documentation · gNucleus AI (cadbench.ai) | [cadbench.ai/](https://cadbench.ai/) | [capture 2026-11-24](https://web.archive.org/web/20261124154811/https://cadbench.ai/) |
 | S2 | `src-arxiv-2611-02659-v1` | preprint · arXiv | [arxiv.org/pdf/2611.02659v1](https://arxiv.org/pdf/2611.02659v1) | none (not-required) |
-| S3 | `src-cadbench-ai-news-parametric-cad-bench` | blog-post · gNucleus AI (cadbench.ai) | [cadbench.ai/news/parametric-cad-bench](https://cadbench.ai/news/parametric-cad-bench) | none (pending) |
-| S4 | `src-github-freecad-validator-readme-716159c` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/freecad-validator/716159c9fd0cc1d7278c75985623858e3247fa42/README.md (not linked: a personal account) | none (pending) |
+| S3 | `src-cadbench-ai-news-parametric-cad-bench` | blog-post · gNucleus AI (cadbench.ai) | [cadbench.ai/news/parametric-cad-bench](https://cadbench.ai/news/parametric-cad-bench) | [capture 2026-11-04](https://web.archive.org/web/20261104180705/https://cadbench.ai/news/parametric-cad-bench) |
+| S4 | `src-github-freecad-validator-readme-716159c` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/freecad-validator/716159c9fd0cc1d7278c75985623858e3247fa42/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S5 | `src-arxiv-2611-02659` | preprint · arXiv | [arxiv.org/abs/2611.02659](https://arxiv.org/abs/2611.02659) | none (not-required) |
-| S6 | `src-github-cad-bench-submission-readme-5b192d4` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cad-bench-submission/5b192d462d80f4499e8d5c34d4a9ece5e250a906/README.md (not linked: a personal account) | none (pending) |
-| S7 | `src-cadbench-ai-benchmark` | documentation · gNucleus AI (cadbench.ai) | [cadbench.ai/benchmark](https://cadbench.ai/benchmark) | none (pending) |
-| S8 | `src-cadbench-ai-leaderboard` | leaderboard-page · gNucleus AI (cadbench.ai) | [cadbench.ai/leaderboard](https://cadbench.ai/leaderboard) | none (pending) |
-| S9 | `src-hf-api-gnucleus-cad-gen-freecad` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad (not linked: a personal account) | none (pending) |
-| S10 | `src-cadbench-ai-news-cad-bench-v3` | blog-post · gNucleus AI (cadbench.ai) | [cadbench.ai/news/cad-bench-v3](https://cadbench.ai/news/cad-bench-v3) | none (pending) |
-| S11 | `src-cadbench-ai-news-cad-bench-v2` | blog-post · gNucleus AI (cadbench.ai) | [cadbench.ai/news/cad-bench-v2](https://cadbench.ai/news/cad-bench-v2) | none (pending) |
-| S12 | `src-hf-api-gnucleus-cad-gen-freecad-bench-v3` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad-bench-v3 (not linked: a personal account) | none (pending) |
-| S13 | `src-cadbench-ai-leaderboard-v2` | leaderboard-page · gNucleus AI (cadbench.ai) | [cadbench.ai/leaderboard?version=v2](https://cadbench.ai/leaderboard?version=v2) | none (pending) |
-| S14 | `src-cadbench-ai-leaderboard-v1` | leaderboard-page · gNucleus AI (cadbench.ai) | [cadbench.ai/leaderboard?version=v1](https://cadbench.ai/leaderboard?version=v1) | none (pending) |
-| S15 | `src-hf-api-gnucleus-cad-gen-freecad-bench` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad-bench (not linked: a personal account) | none (pending) |
-| S16 | `src-hf-api-gnucleus-cad-gen-freecad-bench-v2` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad-bench-v2 (not linked: a personal account) | none (pending) |
+| S6 | `src-github-cad-bench-submission-readme-5b192d4` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cad-bench-submission/5b192d462d80f4499e8d5c34d4a9ece5e250a906/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S7 | `src-cadbench-ai-benchmark` | documentation · gNucleus AI (cadbench.ai) | [cadbench.ai/benchmark](https://cadbench.ai/benchmark) | [capture 2026-11-24](https://web.archive.org/web/20261124154828/https://cadbench.ai/benchmark) |
+| S8 | `src-cadbench-ai-leaderboard` | leaderboard-page · gNucleus AI (cadbench.ai) | [cadbench.ai/leaderboard](https://cadbench.ai/leaderboard) | [capture 2026-11-24](https://web.archive.org/web/20261124154846/https://cadbench.ai/leaderboard) |
+| S9 | `src-hf-api-gnucleus-cad-gen-freecad` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S10 | `src-cadbench-ai-news-cad-bench-v3` | blog-post · gNucleus AI (cadbench.ai) | [cadbench.ai/news/cad-bench-v3](https://cadbench.ai/news/cad-bench-v3) | [capture 2026-11-04](https://web.archive.org/web/20261104180705/https://cadbench.ai/news/cad-bench-v3) |
+| S11 | `src-cadbench-ai-news-cad-bench-v2` | blog-post · gNucleus AI (cadbench.ai) | [cadbench.ai/news/cad-bench-v2](https://cadbench.ai/news/cad-bench-v2) | [capture 2026-11-04](https://web.archive.org/web/20261104180705/https://cadbench.ai/news/cad-bench-v2) |
+| S12 | `src-hf-api-gnucleus-cad-gen-freecad-bench-v3` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad-bench-v3 (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S13 | `src-cadbench-ai-leaderboard-v2` | leaderboard-page · gNucleus AI (cadbench.ai) | [cadbench.ai/leaderboard?version=v2](https://cadbench.ai/leaderboard?version=v2) | [capture 2026-11-24](https://web.archive.org/web/20261124155026/https://cadbench.ai/leaderboard?version=v2) |
+| S14 | `src-cadbench-ai-leaderboard-v1` | leaderboard-page · gNucleus AI (cadbench.ai) | [cadbench.ai/leaderboard?version=v1](https://cadbench.ai/leaderboard?version=v1) | [capture 2026-11-24](https://web.archive.org/web/20261124154959/https://cadbench.ai/leaderboard?version=v1) |
+| S15 | `src-hf-api-gnucleus-cad-gen-freecad-bench` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad-bench (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S16 | `src-hf-api-gnucleus-cad-gen-freecad-bench-v2` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cad-gen-freecad-bench-v2 (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 
 **Evidence** (44 quoted fields), by checklist area:
 
@@ -514,8 +514,8 @@ A testing suite for machine-learning methods of analog integrated-circuit sizing
 | S3 | `src-arxiv-2409-08534-v1` | preprint · arXiv | [arxiv.org/pdf/2409.08534v1](https://arxiv.org/pdf/2409.08534v1) | none (not-required) |
 | S4 | `src-aaai-2026-priority-graph-rl` | paper · Proceedings of the AAAI Conference on Artificial Intelligence | [ojs.aaai.org/index.php/AAAI/article/download/41031/44992](https://ojs.aaai.org/index.php/AAAI/article/download/41031/44992) | none (not-required) |
 | S5 | `src-eecs-berkeley-techrpt-2026-32128` | paper · EECS Department, University of California, Berkeley | [www2.eecs.berkeley.edu/Pubs/TechRpts/2026/32128.html](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2026/32128.html) | none (withheld) |
-| S6 | `src-github-api-analoggym` | repository · GitHub | api.github.com/repos/\[personal account\]/AnalogGym (not linked: a personal account) | none (pending) |
-| S7 | `src-github-analoggym-perf-extraction-amp-0a9d139` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/AnalogGym/0a9d1390ade361e2b4a2d33181e22367edbb8afc/AnalogGym/Amplifier/perf\_extraction\_amp.py (not linked: a personal account) | none (pending) |
+| S6 | `src-github-api-analoggym` | repository · GitHub | api.github.com/repos/\[personal account\]/AnalogGym (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S7 | `src-github-analoggym-perf-extraction-amp-0a9d139` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/AnalogGym/0a9d1390ade361e2b4a2d33181e22367edbb8afc/AnalogGym/Amplifier/perf\_extraction\_amp.py (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 
 **Evidence** (41 quoted fields), by checklist area:
 
@@ -711,7 +711,7 @@ A dataset for machine learning in VLSI physical design. Open RISC-V designs were
 | S2 | `src-github-circuitnet-readme` | repository · GitHub | [raw.githubusercontent.com/circuitnet/CircuitNet/main/README.md](https://raw.githubusercontent.com/circuitnet/CircuitNet/main/README.md) | [capture 2026-10-10](https://web.archive.org/web/20261010101345/https://raw.githubusercontent.com/circuitnet/CircuitNet/main/README.md) |
 | S3 | `src-circuitnet-site` | documentation · CircuitNet Team | [circuitnet.github.io/](https://circuitnet.github.io/) | [capture 2026-10-10](https://web.archive.org/web/20261010101258/https://circuitnet.github.io/) |
 | S4 | `src-hf-circuitnet-3-card-5683d95` | dataset-card · Hugging Face (SKLP-EDA-LAB) | [huggingface.co/datasets/SKLP-EDA-LAB/CircuitNet3.0/raw/5683d95097bb27...](https://huggingface.co/datasets/SKLP-EDA-LAB/CircuitNet3.0/raw/5683d95097bb27bb380f135101d7da6991025557/README.md) | none (withheld) |
-| S5 | `src-hf-circuitnet-n14-card-df74f33` | dataset-card · Hugging Face (CircuitNet) | huggingface.co/datasets/\[personal account\]/\[personal account\]/raw/df74f33e302f927bf0548dc0d7936ca43b634f2a/README.md (not linked: a personal account) | none (pending) |
+| S5 | `src-hf-circuitnet-n14-card-df74f33` | dataset-card · Hugging Face (CircuitNet) | huggingface.co/datasets/\[personal account\]/\[personal account\]/raw/df74f33e302f927bf0548dc0d7936ca43b634f2a/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S6 | `src-iclr-2026-circuitnet-3` | paper · International Conference on Learning Representations | [proceedings.iclr.cc/paper\_files/paper/2026/file/2e0f5561c1553a97cee5f...](https://proceedings.iclr.cc/paper_files/paper/2026/file/2e0f5561c1553a97cee5fa64575358c9-Paper-Conference.pdf) | none (withheld) |
 | S7 | `src-arxiv-2208-01040` | preprint · arXiv | [arxiv.org/abs/2208.01040](https://arxiv.org/abs/2208.01040) | none (not-required) |
 | S8 | `src-iclr-2024-circuitnet-2` | paper · International Conference on Learning Representations | [proceedings.iclr.cc/paper\_files/paper/2024/file/464917b6103e074e1f9df...](https://proceedings.iclr.cc/paper_files/paper/2024/file/464917b6103e074e1f9df7a2bf3bf6ba-Paper-Conference.pdf) | none (withheld) |
@@ -851,20 +851,20 @@ A dataset for machine learning in VLSI physical design. Open RISC-V designs were
 | S2 | `src-arxiv-2506-14074-v1` | preprint · arXiv | [arxiv.org/pdf/2506.14074v1](https://arxiv.org/pdf/2506.14074v1) | none (not-required) |
 | S3 | `src-github-lbc-bench-leaderboards-0ac27bb` | dataset-export · \[withheld: it may name a person; see the entry file\] | raw.githubusercontent.com/\[personal account\]/lbc-bench.github.io/0ac27bbebd2d8cf222cc97f998664f6977cdf20c/data/leaderboards.json (not linked: a personal account) | none (withheld) |
 | S4 | `src-arxiv-2610-41225-v1` | preprint · arXiv | [arxiv.org/pdf/2610.41225v1](https://arxiv.org/pdf/2610.41225v1) | none (not-required) |
-| S5 | `src-github-lbc-bench-contributor-0ac27bb` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/lbc-bench.github.io/0ac27bbebd2d8cf222cc97f998664f6977cdf20c/README\_CONTRIBUTOR.md (not linked: a personal account) | none (pending) |
-| S6 | `src-github-cvdp-readme-8e894cf` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cvdp\_benchmark/8e894cf74414ab1eaea1e2b4e80a02f123df07b6/README.md (not linked: a personal account) | none (pending) |
-| S7 | `src-hf-api-cvdp` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cvdp-benchmark-dataset (not linked: a personal account) | none (pending) |
-| S8 | `src-hf-cvdp-license-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/LICENSE (not linked: a personal account) | none (pending) |
-| S9 | `src-hf-cvdp-notice-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/NOTICE (not linked: a personal account) | none (pending) |
-| S10 | `src-hf-datasets-server-cvdp-size` | dataset-card · Hugging Face | datasets-server.huggingface.co/size (not linked: a personal account) | none (pending) |
-| S11 | `src-hf-cvdp-heavy-readme-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/cvdp\_v1.1.0\_agentic\_heavy\_code\_generation\_public/README.md (not linked: a personal account) | none (pending) |
-| S12 | `src-github-cvdp-license-8e894cf` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cvdp\_benchmark/8e894cf74414ab1eaea1e2b4e80a02f123df07b6/LICENSE (not linked: a personal account) | none (pending) |
-| S13 | `src-github-cvdp-readme-full-8e894cf` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cvdp\_benchmark/8e894cf74414ab1eaea1e2b4e80a02f123df07b6/README\_FULL.md (not linked: a personal account) | none (pending) |
+| S5 | `src-github-lbc-bench-contributor-0ac27bb` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/lbc-bench.github.io/0ac27bbebd2d8cf222cc97f998664f6977cdf20c/README\_CONTRIBUTOR.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S6 | `src-github-cvdp-readme-8e894cf` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cvdp\_benchmark/8e894cf74414ab1eaea1e2b4e80a02f123df07b6/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S7 | `src-hf-api-cvdp` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cvdp-benchmark-dataset (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S8 | `src-hf-cvdp-license-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/LICENSE (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S9 | `src-hf-cvdp-notice-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/NOTICE (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S10 | `src-hf-datasets-server-cvdp-size` | dataset-card · Hugging Face | datasets-server.huggingface.co/size (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S11 | `src-hf-cvdp-heavy-readme-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/cvdp\_v1.1.0\_agentic\_heavy\_code\_generation\_public/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S12 | `src-github-cvdp-license-8e894cf` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cvdp\_benchmark/8e894cf74414ab1eaea1e2b4e80a02f123df07b6/LICENSE (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S13 | `src-github-cvdp-readme-full-8e894cf` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/cvdp\_benchmark/8e894cf74414ab1eaea1e2b4e80a02f123df07b6/README\_FULL.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S14 | `src-si2-cvdp-1-1-0` | blog-post · Silicon Integration Initiative (Si2) | [si2.org/summary-and-key-improvements-in-cvdp1-1-0/](https://si2.org/summary-and-key-improvements-in-cvdp1-1-0/) | none (withheld) |
-| S15 | `src-hf-cvdp-changelog-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/CHANGELOG (not linked: a personal account) | none (pending) |
+| S15 | `src-hf-cvdp-changelog-5b807d9` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cvdp-benchmark-dataset/resolve/5b807d945f6a99aa645f7e43a64a2115e281b4bf/CHANGELOG (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S16 | `src-arxiv-2608-12635` | preprint · arXiv | [arxiv.org/abs/2608.12635](https://arxiv.org/abs/2608.12635) | none (not-required) |
-| S17 | `src-github-lbc-bench-readme-0ac27bb` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/lbc-bench.github.io/0ac27bbebd2d8cf222cc97f998664f6977cdf20c/README.md (not linked: a personal account) | none (pending) |
-| S18 | `src-hf-api-cvdp-tree` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cvdp-benchmark-dataset/tree/main?expand=true (not linked: a personal account) | none (pending) |
+| S17 | `src-github-lbc-bench-readme-0ac27bb` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/lbc-bench.github.io/0ac27bbebd2d8cf222cc97f998664f6977cdf20c/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S18 | `src-hf-api-cvdp-tree` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cvdp-benchmark-dataset/tree/main?expand=true (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 
 **Evidence** (85 quoted fields), by checklist area:
 
@@ -1157,10 +1157,10 @@ Considered and rejected:
 | S2 | `src-arxiv-2509-16204-v2` | preprint · arXiv | [arxiv.org/pdf/2509.16204v2](https://arxiv.org/pdf/2509.16204v2) | none (not-required) |
 | S3 | `src-arxiv-2611-18856-v1` | preprint · arXiv | [arxiv.org/pdf/2611.18856v1](https://arxiv.org/pdf/2611.18856v1) | none (not-required) |
 | S4 | `src-engdesign-site` | documentation · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | none (withheld) |
-| S5 | `src-github-engdesign-readme-c8ec338` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/EngDesign/c8ec338cc5f846d792d93728b00c9448111139e5/README.md (not linked: a personal account) | none (pending) |
-| S6 | `src-hf-api-engdesign` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/EngDesign (not linked: a personal account) | none (pending) |
-| S7 | `src-github-api-engdesign` | repository · GitHub | api.github.com/repos/\[personal account\]/EngDesign (not linked: a personal account) | none (pending) |
-| S8 | `src-engdesign-leaderboard-data` | dataset-export · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | none (pending) |
+| S5 | `src-github-engdesign-readme-c8ec338` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/EngDesign/c8ec338cc5f846d792d93728b00c9448111139e5/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S6 | `src-hf-api-engdesign` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/EngDesign (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S7 | `src-github-api-engdesign` | repository · GitHub | api.github.com/repos/\[personal account\]/EngDesign (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S8 | `src-engdesign-leaderboard-data` | dataset-export · \[withheld: it may name a person; see the entry file\] | \[withheld: a personal page\] | capture 2026-11-24 (not linked: the page is under a personal account) |
 
 **Evidence** (62 quoted fields), by checklist area:
 
@@ -1404,18 +1404,18 @@ The annual contest of the International Symposium on Physical Design (ISPD), hel
 | --- | --- | --- | --- | --- |
 | S1 | `src-github-ispd27-contest-description` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/ISPD27-Contest-Description.pdf (not linked: a personal account) | none (withheld) |
 | S2 | `src-ispd-contest-2005` | documentation · International Symposium on Physical Design | [www.ispd.cc/contests/05/contest.htm](https://www.ispd.cc/contests/05/contest.htm) | none (withheld) |
-| S3 | `src-ispd-previous-contests` | documentation · International Symposium on Physical Design | [ispd.cc/ispd2027/index.php?page=contests](https://ispd.cc/ispd2027/index.php?page=contests) | none (pending) |
-| S4 | `src-github-ispd27-contest-evaluator-readme` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/evaluator/README.md (not linked: a personal account) | none (pending) |
+| S3 | `src-ispd-previous-contests` | documentation · International Symposium on Physical Design | [ispd.cc/ispd2027/index.php?page=contests](https://ispd.cc/ispd2027/index.php?page=contests) | [capture 2026-11-24](https://web.archive.org/web/20261124171711/https://ispd.cc/ispd2027/index.php?page=contests) |
+| S4 | `src-github-ispd27-contest-evaluator-readme` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/evaluator/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S5 | `src-github-ispd24-contest-index` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD24\_contest/f3a8a0d1bdf5efc0c634b6fe31a73dad7e4decc8/index.md (not linked: a personal account) | none (withheld) |
 | S6 | `src-arxiv-2610-06316` | preprint · arXiv | [arxiv.org/abs/2610.06316](https://arxiv.org/abs/2610.06316) | none (not-required) |
 | S7 | `src-arxiv-2607-19768` | preprint · arXiv | [arxiv.org/abs/2607.19768](https://arxiv.org/abs/2607.19768) | none (not-required) |
 | S8 | `src-github-ispd27-contest-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/README.md (not linked: a personal account) | none (withheld) |
 | S9 | `src-arxiv-2511-17665` | preprint · arXiv | [arxiv.org/abs/2511.17665](https://arxiv.org/abs/2511.17665) | none (not-required) |
 | S10 | `src-ispd-contest-2026` | leaderboard-page · International Symposium on Physical Design | [www.ispd.cc/contests/26/index.html](https://www.ispd.cc/contests/26/index.html) | none (withheld) |
-| S11 | `src-github-ispd27-contest-benchmarks-readme` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/benchmarks/README.md (not linked: a personal account) | none (pending) |
+| S11 | `src-github-ispd27-contest-benchmarks-readme` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/benchmarks/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S12 | `src-github-ispd26-contest-description` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD26-Contest/f7b29d242fc7d441f3b4eadc556f40099ccca067/ISPD26\_contest\_description.pdf (not linked: a personal account) | none (withheld) |
 | S13 | `src-github-ispd26-contest-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD26-Contest/f7b29d242fc7d441f3b4eadc556f40099ccca067/README.md (not linked: a personal account) | none (withheld) |
-| S14 | `src-github-ispd27-contest-license` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/LICENSE (not linked: a personal account) | none (pending) |
+| S14 | `src-github-ispd27-contest-license` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/ISPD27-Contest/39a13eb68d7fc3f6c68f0e93e3a82e0f02fc8e10/LICENSE (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S15 | `src-ispd-contest-2025` | leaderboard-page · International Symposium on Physical Design | [www.ispd.cc/contests/25/index.html](https://www.ispd.cc/contests/25/index.html) | none (withheld) |
 | S16 | `src-ispd-contest-2024` | leaderboard-page · International Symposium on Physical Design | [www.ispd.cc/contests/24/index.html](https://www.ispd.cc/contests/24/index.html) | none (withheld) |
 
@@ -1627,20 +1627,20 @@ An open-source Python library and set of datasets for data-driven engineering de
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2508-00831` | preprint · arXiv | [arxiv.org/abs/2508.00831](https://arxiv.org/abs/2508.00831) | none (not-required) |
 | S2 | `src-github-engibench-releases-atom` | repository · GitHub | [github.com/IDEALLab/EngiBench/releases.atom](https://github.com/IDEALLab/EngiBench/releases.atom) | none (withheld) |
-| S3 | `src-github-engibench-readme-01f46d1` | repository · GitHub | [raw.githubusercontent.com/IDEALLab/EngiBench/01f46d180a9ce0c05fd4ce66...](https://raw.githubusercontent.com/IDEALLab/EngiBench/01f46d180a9ce0c05fd4ce66c5c53befc161bf84/README.md) | none (pending) |
+| S3 | `src-github-engibench-readme-01f46d1` | repository · GitHub | [raw.githubusercontent.com/IDEALLab/EngiBench/01f46d180a9ce0c05fd4ce66...](https://raw.githubusercontent.com/IDEALLab/EngiBench/01f46d180a9ce0c05fd4ce66c5c53befc161bf84/README.md) | [capture 2026-11-24](https://web.archive.org/web/20261124161555/https://raw.githubusercontent.com/IDEALLab/EngiBench/01f46d180a9ce0c05fd4ce66c5c53befc161bf84/README.md) |
 | S4 | `src-arxiv-2508-00831-v2` | preprint · arXiv | [arxiv.org/pdf/2508.00831v2](https://arxiv.org/pdf/2508.00831v2) | none (not-required) |
 | S5 | `src-arxiv-2605-19743` | preprint · arXiv | [arxiv.org/abs/2605.19743](https://arxiv.org/abs/2605.19743) | none (not-required) |
 | S6 | `src-arxiv-2609-00863` | preprint · arXiv | [arxiv.org/abs/2609.00863](https://arxiv.org/abs/2609.00863) | none (not-required) |
-| S7 | `src-github-engiopt-leaderboard-md-7a98ba5` | repository · GitHub | [raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276...](https://raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276a1bf7339c85898/LEADERBOARD.md) | none (pending) |
-| S8 | `src-hf-api-ideallab-beams-2d-50-100-v0` | dataset-card · Hugging Face | [huggingface.co/api/datasets/IDEALLab/beams\_2d\_50\_100\_v0](https://huggingface.co/api/datasets/IDEALLab/beams_2d_50_100_v0) | none (pending) |
-| S9 | `src-github-engiopt-readme-7a98ba5` | repository · GitHub | [raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276...](https://raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276a1bf7339c85898/README.md) | none (pending) |
-| S10 | `src-engibench-docs-home` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/](https://engibench.ethz.ch/) | none (pending) |
-| S11 | `src-engibench-docs-v0-0-1-home` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/v0.0.1/](https://engibench.ethz.ch/v0.0.1/) | none (pending) |
-| S12 | `src-hf-api-ideallab-photonics-2d-120-120-v1` | dataset-card · Hugging Face | [huggingface.co/api/datasets/IDEALLab/photonics\_2d\_120\_120\_v1](https://huggingface.co/api/datasets/IDEALLab/photonics_2d_120_120_v1) | none (pending) |
-| S13 | `src-hf-api-ideallab-mto-2d-v0` | dataset-card · Hugging Face | [huggingface.co/api/datasets/IDEALLab/mto\_2d\_v0](https://huggingface.co/api/datasets/IDEALLab/mto_2d_v0) | none (pending) |
+| S7 | `src-github-engiopt-leaderboard-md-7a98ba5` | repository · GitHub | [raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276...](https://raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276a1bf7339c85898/LEADERBOARD.md) | [capture 2026-11-24](https://web.archive.org/web/20261124161705/https://raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276a1bf7339c85898/LEADERBOARD.md) |
+| S8 | `src-hf-api-ideallab-beams-2d-50-100-v0` | dataset-card · Hugging Face | [huggingface.co/api/datasets/IDEALLab/beams\_2d\_50\_100\_v0](https://huggingface.co/api/datasets/IDEALLab/beams_2d_50_100_v0) | [capture 2026-11-24](https://web.archive.org/web/20261124165846/https://huggingface.co/api/datasets/IDEALLab/beams_2d_50_100_v0) |
+| S9 | `src-github-engiopt-readme-7a98ba5` | repository · GitHub | [raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276...](https://raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276a1bf7339c85898/README.md) | [capture 2026-11-24](https://web.archive.org/web/20261124161711/https://raw.githubusercontent.com/IDEALLab/EngiOpt/7a98ba52107ccd42d91809f276a1bf7339c85898/README.md) |
+| S10 | `src-engibench-docs-home` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/](https://engibench.ethz.ch/) | [capture 2026-10-31](https://web.archive.org/web/20261031111344/https://engibench.ethz.ch/) |
+| S11 | `src-engibench-docs-v0-0-1-home` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/v0.0.1/](https://engibench.ethz.ch/v0.0.1/) | [capture 2026-11-24](https://web.archive.org/web/20261124155304/https://engibench.ethz.ch/v0.0.1/) |
+| S12 | `src-hf-api-ideallab-photonics-2d-120-120-v1` | dataset-card · Hugging Face | [huggingface.co/api/datasets/IDEALLab/photonics\_2d\_120\_120\_v1](https://huggingface.co/api/datasets/IDEALLab/photonics_2d_120_120_v1) | [capture 2026-11-24](https://web.archive.org/web/20261124165953/https://huggingface.co/api/datasets/IDEALLab/photonics_2d_120_120_v1) |
+| S13 | `src-hf-api-ideallab-mto-2d-v0` | dataset-card · Hugging Face | [huggingface.co/api/datasets/IDEALLab/mto\_2d\_v0](https://huggingface.co/api/datasets/IDEALLab/mto_2d_v0) | [capture 2026-11-24](https://web.archive.org/web/20261124165857/https://huggingface.co/api/datasets/IDEALLab/mto_2d_v0) |
 | S14 | `src-engibench-docs-beams2d` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/problems/beams2d/](https://engibench.ethz.ch/problems/beams2d/) | none (withheld) |
 | S15 | `src-engibench-docs-photonics2d` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/problems/photonics2d/](https://engibench.ethz.ch/problems/photonics2d/) | none (withheld) |
-| S16 | `src-engibench-docs-v0-2-0-home` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/v0.2.0/](https://engibench.ethz.ch/v0.2.0/) | none (pending) |
+| S16 | `src-engibench-docs-v0-2-0-home` | documentation · IDEAL Lab, ETH Zurich | [engibench.ethz.ch/v0.2.0/](https://engibench.ethz.ch/v0.2.0/) | [capture 2026-11-24](https://web.archive.org/web/20261124155321/https://engibench.ethz.ch/v0.2.0/) |
 
 **Evidence** (58 quoted fields), by checklist area:
 
@@ -1883,9 +1883,9 @@ Considered and rejected:
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2404-03647-v1` | preprint · arXiv | [arxiv.org/pdf/2404.03647v1](https://arxiv.org/pdf/2404.03647v1) | none (not-required) |
 | S2 | `src-arxiv-2404-03647` | preprint · arXiv | [arxiv.org/abs/2404.03647](https://arxiv.org/abs/2404.03647) | none (not-required) |
-| S3 | `src-github-llm4control-controlbench-tex` | dataset-export · GitHub | raw.githubusercontent.com/\[personal account\]/LLM4Control/239e319856400b610d8a84f72f6060421ba26c03/ControlBench/ControlBench.tex (not linked: a personal account) | none (pending) |
+| S3 | `src-github-llm4control-controlbench-tex` | dataset-export · GitHub | raw.githubusercontent.com/\[personal account\]/LLM4Control/239e319856400b610d8a84f72f6060421ba26c03/ControlBench/ControlBench.tex (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S4 | `src-arxiv-2608-07004-v1` | preprint · arXiv | [arxiv.org/pdf/2608.07004](https://arxiv.org/pdf/2608.07004) | none (not-required) |
-| S5 | `src-controlbench-site` | documentation · GitHub Pages | \[withheld: a personal page\] | none (pending) |
+| S5 | `src-controlbench-site` | documentation · GitHub Pages | \[withheld: a personal page\] | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S6 | `src-arxiv-2410-19811-v1` | preprint · arXiv | [arxiv.org/pdf/2410.19811v1](https://arxiv.org/pdf/2410.19811v1) | none (not-required) |
 
 **Evidence** (52 quoted fields), by checklist area:
@@ -2105,12 +2105,12 @@ A NeurIPS 2026 competition from the Artificial Scientist Lab at the University o
 | S1 | `src-github-learn2design-2026-proposal` | preprint · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/Learn2Design\_details.pdf (not linked: a personal account) | none (withheld) |
 | S2 | `src-github-learn2design-2026-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/README.md (not linked: a personal account) | none (withheld) |
 | S3 | `src-neurips-2026-competition-learn2design` | documentation · NeurIPS | [neurips.cc/virtual/2026/competition/137689](https://neurips.cc/virtual/2026/competition/137689) | none (withheld) |
-| S4 | `src-github-learn2design-2026-scoring` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/docs/scoring.md (not linked: a personal account) | none (pending) |
-| S5 | `src-github-learn2design-2026-dfbench-faq` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/docs/dfbench/FAQ.md (not linked: a personal account) | none (pending) |
-| S6 | `src-github-learn2design-2026-round4-data` | leaderboard-page · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/competition\_data/round4/README.md (not linked: a personal account) | none (pending) |
-| S7 | `src-github-differometor-benchmark-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/Differometor-Benchmark/4ef6f476faf12bd12e677a2520a02e78aa25e515/README.md (not linked: a personal account) | none (pending) |
-| S8 | `src-github-learn2design-2026-license` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/LICENSE (not linked: a personal account) | none (pending) |
-| S9 | `src-github-learn2design-2026-submission-rules` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/docs/submission.md (not linked: a personal account) | none (pending) |
+| S4 | `src-github-learn2design-2026-scoring` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/docs/scoring.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S5 | `src-github-learn2design-2026-dfbench-faq` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/docs/dfbench/FAQ.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S6 | `src-github-learn2design-2026-round4-data` | leaderboard-page · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/competition\_data/round4/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S7 | `src-github-differometor-benchmark-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/Differometor-Benchmark/4ef6f476faf12bd12e677a2520a02e78aa25e515/README.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S8 | `src-github-learn2design-2026-license` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/LICENSE (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
+| S9 | `src-github-learn2design-2026-submission-rules` | documentation · GitHub | raw.githubusercontent.com/\[personal account\]/Learn2Design-2026/f071e0b2d667c0613e54d99cd78c110c04776d73/docs/submission.md (not linked: a personal account) | capture 2026-11-24 (not linked: the page is under a personal account) |
 | S10 | `src-learn2design-2026-site` | documentation · Learn2Design 2026 organisers | [www.learn2design2026.com/](https://www.learn2design2026.com/) | none (withheld) |
 
 **Evidence** (44 quoted fields), by checklist area:

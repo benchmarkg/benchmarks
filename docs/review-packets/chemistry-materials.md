@@ -2,7 +2,7 @@
 
 # Review packet: Chemistry and materials
 
-`chemistry-materials` · 20 published entries · Core family · 12 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`chemistry-materials` · 20 published entries · Core family · 12 subdomains · data as of 2026-11-24 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -48,7 +48,7 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`, `matbench`, `mlip-arena`, `oc20`, `omol25`, `opendac`, `uspto-50k`. `python scripts/review_packet.py --family chemistry-materials --all` renders every entry.
+Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`, `matbench`, `matbench-discovery`, `mlip-arena`, `omol25`, `opendac`, `uspto-50k`. `python scripts/review_packet.py --family chemistry-materials --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
@@ -56,9 +56,9 @@ Not in this packet (10): `casmi`, `chembench`, `guacamol`, `jarvis-leaderboard`,
 | 2.2 | [USPTO-MIT](#22-uspto-mit-uspto-mit) | `reaction-prediction` | 37 | 9 |
 | 2.3 | [PaRoutes](#23-paroutes-paroutes) | `retrosynthesis` | 48 | 10 |
 | 2.4 | [MOSES](#24-moses-moses) | `generative-molecular-design` | 43 | 11 |
-| 2.5 | [MassSpecGym](#25-massspecgym-massspecgym) | `spectroscopy-interpretation` | 58 | 11 |
-| 2.6 | [CSPBench](#26-cspbench-cspbench) | `crystal-structure-prediction` | 30 | 7 |
-| 2.7 | [Matbench Discovery](#27-matbench-discovery-matbench-discovery) | `crystal-stability-discovery` | 27 | 4 |
+| 2.5 | [Open Catalyst 2020 (OC20)](#25-open-catalyst-2020-oc20-oc20) | `catalysis` | 61 | 12 |
+| 2.6 | [MassSpecGym](#26-massspecgym-massspecgym) | `spectroscopy-interpretation` | 58 | 11 |
+| 2.7 | [CSPBench](#27-cspbench-cspbench) | `crystal-structure-prediction` | 30 | 7 |
 | 2.8 | [MD17](#28-md17-md17) | `force-fields-potentials` | 62 | 11 |
 | 2.9 | [TDC ADMET Benchmark Group](#29-tdc-admet-benchmark-group-tdc-admet) | `drug-discovery-admet` | 52 | 9 |
 | 2.10 | [CACHE Challenges](#210-cache-challenges-cache-challenges) | `experimental-hit-finding` | 43 | 11 |
@@ -925,7 +925,260 @@ Considered and rejected:
 [moses-s4]: https://arxiv.org/pdf/1811.12823v5
 [moses-s5]: https://arxiv.org/pdf/2512.02667v1
 
-### 2.5 MassSpecGym (massspecgym)
+### 2.5 Open Catalyst 2020 (OC20) (oc20)
+
+`data/benchmarks/chemistry-materials/oc20.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-10 · last verified 2026-11-24
+
+*Predict DFT adsorption energies, forces and relaxed structures for adsorbates on catalyst surfaces.*
+
+About 1.28 million DFT relaxations of small adsorbates (carbon, nitrogen and oxygen chemistries) on catalyst surfaces drawn from Materials Project bulks, with three tasks: energy and per-atom forces from a structure (S2EF), the relaxed structure from an initial one (IS2RS), and the relaxed energy from an initial structure (IS2RE). Each validation and test split has four subsplits -- in-domain, unseen adsorbates, unseen catalysts, and both -- and test ground truth is withheld. Scored by MAE and by the share of predictions within a threshold of DFT, through the maintainers' evaluation server.
+
+| Classification | |
+| --- | --- |
+| Primary domain | chemistry-materials/catalysis |
+| Secondary domains | chemistry-materials/force-fields-potentials |
+| Capabilities | scientific-prediction, distribution-shift-generalization |
+| Evaluation methods | statistical-fit, numeric-tolerance-match |
+| Designed for | scientific-surrogate-model |
+| Evaluation target · execution mode · ground truth | learned-system · automated · simulation |
+| Lifecycle · activity | active · leaderboard-live-no-round |
+| Data access · refresh · contamination risk | train-open-test-held-out · versioned-releases · unknown |
+| Reproducibility tier · harness | not-independently-reproducible · reference-implementation-only |
+| Maintainer type · submission process | industry-lab · held-out-server |
+| Independence flags | none |
+| Licences: code · dataset | MIT · null |
+| Released | 2020-10-20 |
+| Links | homepage [facebookresearch.github.io/fairchem/open-catalyst-project/](https://facebookresearch.github.io/fairchem/open-catalyst-project/) · repository [github.com/facebookresearch/fairchem](https://github.com/facebookresearch/fairchem) · leaderboard [huggingface.co/spaces/facebook/fairchem\_leaderboard](https://huggingface.co/spaces/facebook/fairchem_leaderboard) |
+
+**Sources**
+
+| | Source | Type · publisher | URL | Archived copy |
+| --- | --- | --- | --- | --- |
+| S1 | `src-arxiv-2010-09990-v5` | preprint · arXiv | [arxiv.org/pdf/2010.09990v5](https://arxiv.org/pdf/2010.09990v5) | none (not-required) |
+| S2 | `src-arxiv-2010-09990` | preprint · arXiv | [arxiv.org/abs/2010.09990](https://arxiv.org/abs/2010.09990) | none (not-required) |
+| S3 | `src-arxiv-2411-11783-v1` | preprint · arXiv | [arxiv.org/pdf/2411.11783v1](https://arxiv.org/pdf/2411.11783v1) | none (not-required) |
+| S4 | `src-hf-fairchem-leaderboard-content` | leaderboard-page · Hugging Face (facebook/fairchem\_leaderboard) | [huggingface.co/spaces/facebook/fairchem\_leaderboard/raw/212fd1eeb214e...](https://huggingface.co/spaces/facebook/fairchem_leaderboard/raw/212fd1eeb214ea9e428270260d6e3601c5405d00/content.py) | [capture 2026-10-10](https://web.archive.org/web/20261010075203/https://huggingface.co/spaces/facebook/fairchem_leaderboard/raw/212fd1eeb214ea9e428270260d6e3601c5405d00/content.py) |
+| S5 | `src-opencatalystproject-home` | documentation · Open Catalyst Project | [opencatalystproject.org/](https://opencatalystproject.org/) | [capture 2026-10-02](https://web.archive.org/web/20261002203137/https://opencatalystproject.org/) |
+| S6 | `src-evalai-oc20-challenge-712` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/712/](https://eval.ai/api/challenges/challenge/712/) | [capture 2026-10-10](https://web.archive.org/web/20261010075158/https://eval.ai/api/challenges/challenge/712/) |
+| S7 | `src-arxiv-2206-08917-v3` | preprint · arXiv | [arxiv.org/pdf/2206.08917v3](https://arxiv.org/pdf/2206.08917v3) | none (not-required) |
+| S8 | `src-evalai-oc20-challenge-712-phases` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/712/challenge\_phase](https://eval.ai/api/challenges/challenge/712/challenge_phase) | [capture 2026-11-24](https://web.archive.org/web/20261124210157/https://eval.ai/api/challenges/challenge/712/challenge_phase) |
+| S9 | `src-github-fairchem-train-md-1e07c21` | documentation · FAIR Chemistry, Meta (GitHub) | [raw.githubusercontent.com/facebookresearch/fairchem/1e07c21350947e8bf...](https://raw.githubusercontent.com/facebookresearch/fairchem/1e07c21350947e8bfa38420e4f1e7c291c00259b/TRAIN.md) | [capture 2026-11-24](https://web.archive.org/web/20261124210248/https://raw.githubusercontent.com/facebookresearch/fairchem/1e07c21350947e8bfa38420e4f1e7c291c00259b/TRAIN.md) |
+| S10 | `src-hf-fairchem-leaderboard-evaluator-212fd1e` | leaderboard-page · Hugging Face (facebook/fairchem\_leaderboard) | [huggingface.co/spaces/facebook/fairchem\_leaderboard/raw/212fd1eeb214e...](https://huggingface.co/spaces/facebook/fairchem_leaderboard/raw/212fd1eeb214ea9e428270260d6e3601c5405d00/evaluator.py) | [capture 2026-11-24](https://web.archive.org/web/20261124210814/https://huggingface.co/spaces/facebook/fairchem_leaderboard/raw/212fd1eeb214ea9e428270260d6e3601c5405d00/evaluator.py) |
+| S11 | `src-evalai-oc22-challenge-1869` | leaderboard-page · EvalAI | [eval.ai/api/challenges/challenge/1869/](https://eval.ai/api/challenges/challenge/1869/) | none (withheld) |
+| S12 | `src-github-fairchem-docs-ocx24-d733f48` | documentation · FAIR Chemistry, Meta (GitHub) | [raw.githubusercontent.com/facebookresearch/fairchem/d733f489c2e9257f9...](https://raw.githubusercontent.com/facebookresearch/fairchem/d733f489c2e9257f92545e9b20af916a8fea2a8a/docs/catalysts/datasets/ocx24.md) | none (withheld) |
+| S13 | `src-github-fairchem-docs-open-catalyst-project-898f840` | documentation · FAIR Chemistry, Meta (GitHub) | [raw.githubusercontent.com/facebookresearch/fairchem/898f8402c96250bbc...](https://raw.githubusercontent.com/facebookresearch/fairchem/898f8402c96250bbc144ba87c767a33c0bba4615/docs/catalysts/open_catalyst_project.md) | [capture 2026-11-24](https://web.archive.org/web/20261124161803/https://raw.githubusercontent.com/facebookresearch/fairchem/898f8402c96250bbc144ba87c767a33c0bba4615/docs/catalysts/open_catalyst_project.md) |
+| S14 | `src-arxiv-2206-08917` | preprint · arXiv | [arxiv.org/abs/2206.08917](https://arxiv.org/abs/2206.08917) | none (not-required) |
+| S15 | `src-arxiv-2411-11783` | preprint · arXiv | [arxiv.org/abs/2411.11783](https://arxiv.org/abs/2411.11783) | none (not-required) |
+
+**Evidence** (61 quoted fields), by checklist area:
+
+#### oc20 · Identity and id
+
+- `self_description` · [S1][oc20-s1]
+  > The dataset and baseline models are both provided as open resources, as well as a public leader board to encourage community contributions to solve these important tasks
+- `released` = 2020-10-20 · [S2][oc20-s2]
+  > Submitted on 20 Oct 2020
+
+#### oc20 · Domain and capabilities
+
+- `domain` = primary chemistry-materials/catalysis; secondary chemistry-materials/force-fields-potentials · [S1][oc20-s1]
+  - why: The tasks model adsorbates on catalyst surfaces, and IS2RE's relaxed energy is what catalysis screening uses. S2EF scores energies and forces from structures, which is a learned potential's job.
+  > This is the most common task in catalysis, as the relaxed energies are often correlated with catalyst activity and selectivity
+- `capability` = scientific-prediction · [S1][oc20-s1]
+  - why: Systems predict energies, forces and relaxed structures of adsorbate-surface systems and are scored against DFT, a reference computation.
+  > Structure to Energy and Forces (S2EF ) is to take the positions of the atoms as input and predict the energy and per-atom forces as calculated by DFT
+- `capability` = distribution-shift-generalization · [S1][oc20-s1]
+  - why: Three of the four test subsplits are drawn on purpose from adsorbates, catalysts or both that training never saw, and each is reported as its own condition.
+  > These include In-Domain (sampled from the training distribution), Out-of-Domain Adsorbate (OOD Adsorbate), OOD Catalyst, and OOD Both
+- `evaluation_method` = statistical-fit, numeric-tolerance-match · [S1][oc20-s1]
+  - why: Energy and force MAE are error statistics over all predictions. EwT and EFwT count a prediction right when it falls within a fixed threshold of the DFT value.
+  > The second measures the energies within a threshold (EwT) of the ground truth
+- `designed_for_subjects` = scientific-surrogate-model · [S1][oc20-s1]
+  - why: The entrants stand in for DFT, a physics-based solver, and are scored against what DFT computed.
+  > Structure to Energy and Forces (S2EF ) is to take the positions of the atoms as input and predict the energy and per-atom forces as calculated by DFT
+
+Considered and rejected:
+
+- `evaluation_method` not `wet-lab-validation` · [S3][oc20-s3]
+  - why: OCx24's targets are wet-lab measurements, and the taxonomy lists ocx24 as qualifying, but the term's exclusion test rules out predictions compared against previously measured data. OCx24's models are fitted to its measurements and scored on held-out ones by cross-validation; nothing an entrant predicts is taken to a laboratory (review check).
+  > we explore whether models trained on experimental data using computational descriptors as input can produce results that are predictive of held out experimental data
+
+#### oc20 · Task and evaluation
+
+- `learned_entrant_evidence` = system DimeNet++ · [S1][oc20-s1]
+  > We applied three state-of-the-art graph neural network models (CGCNN, SchNet, DimeNet++) to each of these tasks
+- `reproducible_by_third_party` = true · [S5][oc20-s5]
+  - why: The training and validation data and the baselines are public, and anyone can submit test predictions to the maintainers' board.
+  > In addition to the data, baseline models and code are open-sourced on our Github page
+- `task` = exists true; input atom positions of an adsorbate on a catalyst surface (a structure, or an initial structure); output Per task -- the adsorption energy and per-atom forces (S2EF), the relaxed atom positions (IS2RS), or the relaxed-state energy (IS2RE).; scoring MAE of energies and forces, and the share within a threshold of DFT (EwT, EFwT; AFbT for IS2RS), on each of the four test subsplits, through the evaluation server. · [S1][oc20-s1]
+  > Evaluation on the test set may only be done through the leaderboard
+- `execution.reproducibility_tier` = not-independently-reproducible · [S1][oc20-s1]
+  - why: The headline numbers are test scores, which only the maintainers' server can compute, because it holds the DFT labels.
+  > Evaluation on the test set may only be done through the leaderboard
+- `execution.submission_channel` · [S4][oc20-s4]
+  > This leaderboard evaluates performance on the \*\*Open Catalyst 2020 (OC20)\*\* dataset
+
+#### oc20 · Data and licence
+
+- `data.access` = train-open-test-held-out · [S1][oc20-s1]
+  - why: Training and validation data are released, and so are test inputs. Test ground truth is not, and test scores come only from the maintainers' server.
+  > Ground truth test data is not publicly released
+- `data.refresh` = versioned-releases · [S6][oc20-s6]
+  - why: The core splits are fixed. Challenge test sets were added in dated, named phases (2021, 2022, and a 2023 adsorption-energy set), and a score names the phase it came from.
+  > "start\_date":"2021-02-17T01:00:00Z","end\_date":"2026-01-31T23:59:59Z"
+- `data.data_provenance` = simulation-generated, experimental-measurement · [S3][oc20-s3]
+  - why: OCx24's targets are measured in the laboratory on synthesised samples, HER at 50 mA/cm2 and CO2 reduction at five current densities, in a membrane electrode assembly; the protocol is the paper's section 2.2, detailed in A.4.
+  > The testing process began with the electrolyzer operating at 50 mA/cm2 for 9 minutes to evaluate HER activity
+- `data.data_provenance` = simulation-generated, experimental-measurement · [S1][oc20-s1]
+  > All structure relaxations were performed using the Vienna Ab Initio simulation Package (VASP)
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S1][oc20-s1]
+  > Ground truth test data is not publicly released
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S1][oc20-s1]
+  > Evaluation on the test set may only be done through the leaderboard
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S8][oc20-s8]
+  > "name":"Predicting energy and forces from structure (S2EF) -- Test","description":" ","leaderboard\_public":true
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S8][oc20-s8]
+  > "name":"Predicting relaxed structure from initial structure (IS2RS) -- Test","description":" ","leaderboard\_public":true
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S8][oc20-s8]
+  > "name":"Predicting relaxed state energy from initial structure (IS2RE) -- Test","description":" ","leaderboard\_public":true
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S9][oc20-s9]
+  > A submission must contain results from the 4 different splits - in distribution (id), out of distribution adsorbate (ood ads), out of distribution catalyst (ood cat), and out of distribution adsorbate and catalyst (ood both)
+- `subsets` = id oc20#oc20-test; label OC20 test set; scored_separately true · [S10][oc20-s10]
+  > metrics\["avg\_energy\_mae"\] = np.mean(energy\_maes)
+- `subsets` = id oc20#oc20-test-id; label OC20 test, in-domain; parent oc20#oc20-test; scored_separately true · [S1][oc20-s1]
+  > These include In-Domain (sampled from the training distribution)
+- `subsets` = id oc20#oc20-test-id; label OC20 test, in-domain; parent oc20#oc20-test; scored_separately true · [S10][oc20-s10]
+  > subsets=\["id", "ood\_ads", "ood\_cat", "ood\_both"\],
+- `subsets` = id oc20#oc20-test-ood-ads; label OC20 test, out-of-domain adsorbates; parent oc20#oc20-test; scored_separately true · [S1][oc20-s1]
+  > Out-of-Domain Adsorbate (OOD Adsorbate)
+- `subsets` = id oc20#oc20-test-ood-ads; label OC20 test, out-of-domain adsorbates; parent oc20#oc20-test; scored_separately true · [S10][oc20-s10]
+  > subsets=\["id", "ood\_ads", "ood\_cat", "ood\_both"\],
+- `subsets` = id oc20#oc20-test-ood-cat; label OC20 test, out-of-domain catalysts; parent oc20#oc20-test; scored_separately true · [S1][oc20-s1]
+  > OOD Catalyst, and OOD Both
+- `subsets` = id oc20#oc20-test-ood-cat; label OC20 test, out-of-domain catalysts; parent oc20#oc20-test; scored_separately true · [S10][oc20-s10]
+  > subsets=\["id", "ood\_ads", "ood\_cat", "ood\_both"\],
+- `subsets` = id oc20#oc20-test-ood-both; label OC20 test, out-of-domain adsorbates and catalysts; parent oc20#oc20-test; scored_separately true · [S1][oc20-s1]
+  > OOD Both (both unseen adsorbate and unseen catalyst compositions)
+- `subsets` = id oc20#oc20-test-ood-both; label OC20 test, out-of-domain adsorbates and catalysts; parent oc20#oc20-test; scored_separately true · [S10][oc20-s10]
+  > subsets=\["id", "ood\_ads", "ood\_cat", "ood\_both"\],
+- `subsets` = id oc20#oc20-test-challenge-2021; label OC20 IS2RE test-challenge, 2021; scored_separately true · [S8][oc20-s8]
+  > (IS2RE) -- Test-challenge","description":" ","leaderboard\_public":false,"start\_date":"2021-09-14T07:00:00Z"
+- `subsets` = id oc20#oc20-test-challenge-2022; label OC20 IS2RE test-challenge, 2022; scored_separately true · [S8][oc20-s8]
+  > (IS2RE) -- Test-challenge-2022","description":" ","leaderboard\_public":false,"start\_date":"2022-09-20T07:00:00Z"
+- `subsets` = id oc20#oc20-test-challenge-2023; label OC20 adsorption-energy test-challenge, 2023; scored_separately true · [S8][oc20-s8]
+  > "name":"Predicting adsorption energy given an adsorbate and a catalyst surface -- Test-challenge-2023","description":" ","leaderboard\_public":false
+- `subsets` = id oc20#oc22-test; label OC22 test set; scored_separately true · [S11][oc20-s11]
+  > This page hosts evaluation servers for two tasks on the Open Catalyst 2022 (OC22) dataset
+- `subsets` = id oc20#oc22-test; label OC22 test set; scored_separately true · [S9][oc20-s9]
+  > A submission must contain results from the 2 different splits - in distribution (id) and out of distribution (ood)
+- `subsets` = id oc20#oc22-test; label OC22 test set; scored_separately true · [S7][oc20-s7]
+  > Validation and test splits are similar in size with exclusive compositions
+- `subsets` = id oc20#oc22-test-id; label OC22 test, in-domain; parent oc20#oc22-test; scored_separately true · [S7][oc20-s7]
+  > Splits are sampled based on catalyst composition, ID for those from the same distribution as training, OOD for unseen catalyst compositions
+- `subsets` = id oc20#oc22-test-ood; label OC22 test, out-of-domain compositions; parent oc20#oc22-test; scored_separately true · [S7][oc20-s7]
+  > Splits are sampled based on catalyst composition, ID for those from the same distribution as training, OOD for unseen catalyst compositions
+- `subsets` = id oc20#ocx24-her; label OCx24 hydrogen evolution (measured voltage at 50 mA/cm2); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > The testing process began with the electrolyzer operating at 50 mA/cm2 for 9 minutes to evaluate HER activity
+- `subsets` = id oc20#ocx24-her; label OCx24 hydrogen evolution (measured voltage at 50 mA/cm2); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > Models were trained to predict the cell voltage at 50 mA/cm2 production rate using the adsorption energies of H and OH as features
+- `subsets` = id oc20#ocx24-her; label OCx24 hydrogen evolution (measured voltage at 50 mA/cm2); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > we observe an experimental standard deviation of σ = 0.043V vs SHE for 297 sample replicates within ±5% in XRF composition, an estimate of the noise in our targets
+- `subsets` = id oc20#ocx24-her; label OCx24 hydrogen evolution (measured voltage at 50 mA/cm2); scored_separately true; metric_override r-squared · [S12][oc20-s12]
+  > Summaries of this data are all publicly available
+- `subsets` = id oc20#ocx24-her-loo; label OCx24 HER, leave one sample out; parent oc20#ocx24-her; scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > Leave One Out (LOO): Hold out a given sample, train on the remaining data, and evaluate on the held out sample
+- `subsets` = id oc20#ocx24-her-loco; label OCx24 HER, leave one composition out; parent oc20#ocx24-her; scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > Leave One Composition Out (LOCO): Hold out all samples with a given composition
+- `subsets` = id oc20#ocx24-co2rr; label OCx24 CO2 reduction (production rates at 3.3 V full-cell voltage); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > the CO2RR was carried out at current densities of 50, 100, 150, 200, and 300 mA/cm2 for 9 minutes each
+- `subsets` = id oc20#ocx24-co2rr; label OCx24 CO2 reduction (production rates at 3.3 V full-cell voltage); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > we interpolate each product to a fixed applied potential of 3.3 V full cell voltage
+- `subsets` = id oc20#ocx24-co2rr; label OCx24 CO2 reduction (production rates at 3.3 V full-cell voltage); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > For each product, we independently fit a random forest regressor to predict the production rate
+- `subsets` = id oc20#ocx24-co2rr; label OCx24 CO2 reduction (production rates at 3.3 V full-cell voltage); scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > We observe an experimental standard deviation of σ = 0.050 (H2), 0.040 (CO), 0.033 (Liquid)
+- `subsets` = id oc20#ocx24-co2rr; label OCx24 CO2 reduction (production rates at 3.3 V full-cell voltage); scored_separately true; metric_override r-squared · [S12][oc20-s12]
+  > Summaries of this data are all publicly available
+- `subsets` = id oc20#ocx24-co2rr-loo; label OCx24 CO2 reduction, leave one sample out; parent oc20#ocx24-co2rr; scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > Leave One Out (LOO): Hold out a given sample, train on the remaining data, and evaluate on the held out sample
+- `subsets` = id oc20#ocx24-co2rr-loco; label OCx24 CO2 reduction, leave one composition out; parent oc20#ocx24-co2rr; scored_separately true; metric_override r-squared · [S3][oc20-s3]
+  > Leave One Composition Out (LOCO): Hold out all samples with a given composition
+
+#### oc20 · Governance and independence
+
+- `governance.maintainer` = Open Catalyst Project (FAIR at Meta, with Carnegie Mellon University's Department of Chemical Engineering) · [S5][oc20-s5]
+  - why: The project is a collaboration of the two. The code is held in Meta's facebookresearch organisation on GitHub (fairchem), and the current board in the facebook organisation on Hugging Face.
+  > The Open Catalyst Project is a collaborative research effort between Fundamental AI Research (FAIR) at Meta and Carnegie Mellon University's (CMU) Department of Chemical Engineering
+- `governance.submission_process` = held-out-server · [S1][oc20-s1]
+  > test datasets may be uploaded for evaluation
+
+#### oc20 · Lifecycle and activity
+
+- `lifecycle` = active · [S4][oc20-s4]
+  - why: OC20 is scored on a new board that the maintainers' FAIR Chemistry group runs on Hugging Face. They moved it there after the EvalAI challenge closed, and its space was last changed on 2026-09-14.
+  > This leaderboard evaluates performance on the \*\*Open Catalyst 2020 (OC20)\*\* dataset
+- `activity` = leaderboard-live-no-round · [S4][oc20-s4]
+  - why: OC20 ran challenge rounds (NeurIPS 2021 and 2022, and a 2023 adsorption-energy challenge). The EvalAI server that held them ended on 2026-01-31, and the standing board on Hugging Face takes submissions with no round open. Its runtime was RUNNING on 2026-10-10 (Hugging Face API).
+  > Users are limited to \*\*5 successful submissions per month\*\* for each evaluation type
+- `versions` = 3 items · [S7][oc20-s7]
+  - why: The generations' ground truths are not the same quantity, so no score compares across them; OCx24's are measurements rather than DFT.
+  > rather than ground truth values being DFT adsorption energies, we use DFT total energies for OC22
+- `history` = date 2026-01-31; event channel-closed; field execution.submission\_channel; from EvalAI challenge 712 · [S6][oc20-s6]
+  > "end\_date":"2026-01-31T23:59:59Z"
+- `history` = event channel-opened; field execution.submission\_channel; to Hugging Face space facebook/fairchem\_leaderboard · [S4][oc20-s4]
+  > This leaderboard evaluates performance on the \*\*Open Catalyst 2020 (OC20)\*\* dataset
+- `history` = event repository-moved; field repository; from [github.com/FAIR-Chem/fairchem](https://github.com/FAIR-Chem/fairchem); to [github.com/facebookresearch/fairchem](https://github.com/facebookresearch/fairchem) · [S13][oc20-s13]
+  > In addition to the data, baseline models and code were open-sourced on \[our GitHub page\](https://github.com/facebookresearch/fairchem).
+
+**Open review checks** (12):
+
+1. independence\_flags: whether the maintainers' own models are ranked on the board.
+2. refresh: whether the Hugging Face board still scores the challenge-year test sets or only the four original subsplits; if only those, static may fit better.
+3. (field `governance.maintainer`) governance.maintainer names the Open Catalyst Project, which the FAIR Chemistry documentation now describes in the past tense, with the code and board held by Meta's FAIR Chemistry group. Whether the maintainer should read FAIR Chemistry (Meta), with CMU as a former partner, is for a reviewer. · [S13][oc20-s13]
+   > The Open Catalyst Project was a collaborative research effort between Fundamental AI Research (FAIR) at Meta and Carnegie Mellon University's (CMU) Department of Chemical Engineering.
+4. (field `versions`) The ledger models OC22 and OCx24 as versions of oc20. 04 S4 sends a derivative that is independently versioned and cited to a benchmark of its own with a lineage link, each generation has its own paper and tasks, and P1-S3-T01 called OC22 a sibling entry. The id stays oc20, and the name, description and task still describe OC20 alone. Renaming to the family (the name changes, never the id) or giving OC22 and OCx24 ids of their own is an id-allocation decision for a human.
+5. (field `subsets`) held-out-server for OC22 rests on its EvalAI server alone. No source read says OC22's test labels are withheld; the OC20 paper says so for OC20 only. A reviewer should confirm it before a claim on oc20@oc22 is given held-out-server (P3-S7-T03). · [S11][oc20-s11]
+   > This page hosts evaluation servers for two tasks on the Open Catalyst 2022 (OC22) dataset
+6. (field `versions`) OCx24 admits neither held-out-server, which this task's verify asks of every generation, nor prospective-experiment, which P3-S7-T04 plans for its claims. Its measurements were taken before any entrant and their summaries are public, and models are scored by cross-validation on them. The test asserts the recorded absence rather than the premise. · [S12][oc20-s12]
+   > Summaries of this data are all publicly available
+7. (field `comparability.material_extra`) The step "attach an assay\_protocol source ref wherever ground truth is wet-lab" has no field to land in. BenchmarkVersion and Subset are closed models without one, ground\_truth\_source holds one value per benchmark, and comparability.material\_extra is per benchmark, so making assay\_protocol material would count it unknown on every OC20 and OC22 claim. The ref stands as the ocx24 version's src-arxiv-2411-11783-v1, quoted for its protocol on the OCx24 subsets; P3-S7-T04's claims can name it in EvalConditions.assay\_protocol. A version-level field, or a per-version material set, is a schema decision. · [S3][oc20-s3]
+   > Parallelized screening for CO2RR and HER was performed using a modified membrane electrode assembly (MEA) setup
+8. (field `evaluation_method`) taxonomy/evaluation-methods.yaml gives ocx24 as a qualifying example of wet-lab-validation, while the term's exclusion test rules out predictions compared against previously measured data, which is how OCx24 scores models. The term is rejected here; the example is for the vocabulary's maintainers.
+9. (field `baselines`) The OC22 floors are read from the PDF's text, where each table is flattened column by column, as the first value of a column (the Median Baseline or IS baseline row). In the S2EF-Total table seven energy values follow eight row labels, so which row has none rests on the layout. A reader of the PDF's tables should confirm 163.424 and 160.455, 176.256 and 171.854, and 43.39 and 45.26. · [S7][oc20-s7]
+   > OC22-only Median Baseline SchNet 12 DimeNet++ 13,14 ForceNet 15 SpinConv 16 PaiNN 75 GemNet-dT 17 GemNet-OC 19 163.424 7.924
+10. (field `baselines`) OC20's own median baselines are in its paper's Tables 3-5, outside src-arxiv-2010-09990-v5's committed extract, so OC20 has ceilings and no floors in data/baselines/oc20.yaml; extending that extract would let them be recorded as OC22's are.
+11. (field `subsets`) OCx24's R² is reported per reaction, per CO2 reduction product (H2, CO, liquid, C2H4), per feature set and per cross-validation strategy. The product has no subset and no EvalConditions field, so a claim must carry it in subset\_used. The replicate noise is in the targets' units, so it cannot anchor R² and OCx24 has no Baseline; an error metric in volts would let it be an experimental-replicate ceiling. · [S3][oc20-s3]
+   > We observe an experimental standard deviation of σ = 0.050 (H2), 0.040 (CO), 0.033 (Liquid)
+12. (field `versions`) The FAIR Chemistry documentation lists an OC25 dataset page beside OC20, OC22 and OCx24 (docs/catalysts/datasets/oc25.md at d733f48, listed through the GitHub API, not read). Whether it is a fourth generation of this family is open.
+
+**Reviewer checklist** for `oc20`:
+
+- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
+- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
+- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
+- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
+- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
+- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
+- [ ] Every open review check above is answered or resolved
+- [ ] Nothing here would embarrass the catalogue in front of a specialist
+
+[oc20-s1]: https://arxiv.org/pdf/2010.09990v5
+[oc20-s2]: https://arxiv.org/abs/2010.09990
+[oc20-s3]: https://arxiv.org/pdf/2411.11783v1
+[oc20-s4]: https://huggingface.co/spaces/facebook/fairchem_leaderboard/raw/212fd1eeb214ea9e428270260d6e3601c5405d00/content.py
+[oc20-s5]: https://opencatalystproject.org/
+[oc20-s6]: https://eval.ai/api/challenges/challenge/712/
+[oc20-s7]: https://arxiv.org/pdf/2206.08917v3
+[oc20-s8]: https://eval.ai/api/challenges/challenge/712/challenge_phase
+[oc20-s9]: https://raw.githubusercontent.com/facebookresearch/fairchem/1e07c21350947e8bfa38420e4f1e7c291c00259b/TRAIN.md
+[oc20-s10]: https://huggingface.co/spaces/facebook/fairchem_leaderboard/raw/212fd1eeb214ea9e428270260d6e3601c5405d00/evaluator.py
+[oc20-s11]: https://eval.ai/api/challenges/challenge/1869/
+[oc20-s12]: https://raw.githubusercontent.com/facebookresearch/fairchem/d733f489c2e9257f92545e9b20af916a8fea2a8a/docs/catalysts/datasets/ocx24.md
+[oc20-s13]: https://raw.githubusercontent.com/facebookresearch/fairchem/898f8402c96250bbc144ba87c767a33c0bba4615/docs/catalysts/open_catalyst_project.md
+[oc20-s14]: https://arxiv.org/abs/2206.08917
+[oc20-s15]: https://arxiv.org/abs/2411.11783
+
+### 2.6 MassSpecGym (massspecgym)
 
 `data/benchmarks/chemistry-materials/massspecgym.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-04 · last verified 2026-11-04
 
@@ -1161,7 +1414,7 @@ Considered and rejected:
 [massspecgym-s5]: https://arxiv.org/pdf/2502.09571v2
 [massspecgym-s10]: https://arxiv.org/abs/2606.19624
 
-### 2.6 CSPBench (cspbench)
+### 2.7 CSPBench (cspbench)
 
 `data/benchmarks/chemistry-materials/cspbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
 
@@ -1325,158 +1578,6 @@ Considered and rejected:
 [cspbench-s4]: https://research.itu.edu.tr/en/publications/pncsp-a-periodic-number-based-crystal-structure-prediction-method/
 [cspbench-s5]: https://raw.githubusercontent.com/usccolumbia/cspbenchmark/main/README.md
 [cspbench-s6]: https://raw.githubusercontent.com/usccolumbia/CSPBenchMetrics/main/README.md
-
-### 2.7 Matbench Discovery (matbench-discovery)
-
-`data/benchmarks/chemistry-materials/matbench-discovery.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-09-26 · last verified 2026-09-26
-
-*ML interatomic potentials scored on finding stable crystals, relaxing them and predicting their thermal conductivity.*
-
-A leaderboard and Python package that evaluate machine-learning energy models, mostly universal interatomic potentials, as pre-filters in a high-throughput search for stable inorganic crystals. The core task scores stability predictions on the WBM test set against a fixed DFT convex hull built from the Materials Project; further tasks score geometry optimisation, phonons and lattice thermal conductivity, and diatomic energy curves. Models are grouped by the training data they were allowed to use. The leaderboard sorts by a weighted composite whose weights the viewer can change. Known weaknesses the sources name: regression metrics such as MAE can look good while false positives near the stability threshold stay high, and the reference is PBE DFT, not experiment.
-
-| Classification | |
-| --- | --- |
-| Primary domain | chemistry-materials/crystal-stability-discovery |
-| Secondary domains | chemistry-materials/force-fields-potentials |
-| Capabilities | distribution-shift-generalization, generation-fidelity |
-| Evaluation methods | domain-metric, statistical-fit, composite |
-| Designed for | scientific-surrogate-model |
-| Evaluation target · execution mode · ground truth | learned-system · automated · simulation |
-| Lifecycle · activity | active · accepting-submissions |
-| Data access · refresh · contamination risk | fully-open · rolling-live · medium |
-| Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | individual · maintainer-verified |
-| Independence flags | none |
-| Licences: code · dataset | MIT · null |
-| Released | 2023-08-28 |
-| Links | homepage [matbench-discovery.materialsproject.org/](https://matbench-discovery.materialsproject.org/) · repository github.com/\[personal account\]/matbench-discovery (not linked: a personal account) · leaderboard [matbench-discovery.materialsproject.org/](https://matbench-discovery.materialsproject.org/) · dataset [figshare.com/articles/dataset/22715158](https://figshare.com/articles/dataset/22715158) |
-
-**Sources**
-
-| | Source | Type · publisher | URL | Archived copy |
-| --- | --- | --- | --- | --- |
-| S1 | `src-matbench-discovery-arxiv-abs` | preprint · arXiv | [arxiv.org/abs/2308.14920](https://arxiv.org/abs/2308.14920) | none (not-required) |
-| S2 | `src-matbench-discovery-nature` | paper · Nature Machine Intelligence | [www.nature.com/articles/s42256-025-01055-1](https://www.nature.com/articles/s42256-025-01055-1) | none (not-required) |
-| S3 | `src-matbench-discovery-homepage` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [matbench-discovery.materialsproject.org/](https://matbench-discovery.materialsproject.org/) | [capture 2026-06-10](https://web.archive.org/web/20260610211707/https://matbench-discovery.materialsproject.org/) |
-| S4 | `src-matbench-discovery-contribute` | documentation · \[withheld: it may name a person; see the entry file\] | [matbench-discovery.materialsproject.org/contribute](https://matbench-discovery.materialsproject.org/contribute) | [capture 2025-04-24](https://web.archive.org/web/20250424014427/https://matbench-discovery.materialsproject.org/contribute) |
-| S5 | `src-matbench-discovery-discovery-page` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [matbench-discovery.materialsproject.org/tasks/discovery](https://matbench-discovery.materialsproject.org/tasks/discovery) | [capture 2026-04-22](https://web.archive.org/web/20260422083919/https://matbench-discovery.materialsproject.org/tasks/discovery) |
-| S6 | `src-pota-kappa-arxiv-html` | preprint · arXiv | [arxiv.org/html/2408.00755](https://arxiv.org/html/2408.00755) | none (not-required) |
-| S7 | `src-matbench-discovery-repo` | repository · \[withheld: it may name a person; see the entry file\] | github.com/\[personal account\]/matbench-discovery (not linked: a personal account) | capture 2026-06-28 (not linked: the page is under a personal account) |
-| S8 | `src-matbench-discovery-geo-opt-page` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [matbench-discovery.materialsproject.org/tasks/geo-opt](https://matbench-discovery.materialsproject.org/tasks/geo-opt) | [capture 2025-05-14](https://web.archive.org/web/20250514024914/https://matbench-discovery.materialsproject.org/tasks/geo-opt) |
-| S9 | `src-matbench-discovery-diatomics-page` | leaderboard-page · \[withheld: it may name a person; see the entry file\] | [matbench-discovery.materialsproject.org/tasks/diatomics](https://matbench-discovery.materialsproject.org/tasks/diatomics) | [capture 2025-05-14](https://web.archive.org/web/20250514050646/https://matbench-discovery.materialsproject.org/tasks/diatomics) |
-
-**Evidence** (27 quoted fields), by checklist area:
-
-#### matbench-discovery · Identity and id
-
-- `self_description` · [S1][matbench-discovery-s1]
-  > We present Matbench Discovery, an evaluation framework for ML energy models, applied as pre-filters for high-throughput searches of stable inorganic crystals.
-- `released` = 2023-08-28 · [S1][matbench-discovery-s1]
-  - why: The arXiv v1 submission date, the earliest public release any source read here dates.
-  > \[v1\] Mon, 28 Aug 2023 22:29:57 UTC
-- `release_venue` = Nature Machine Intelligence 7, 836-847 (2025) · [S2][matbench-discovery-s2]
-  > Nature Machine Intelligence volume 7, pages 836–847 (2025)
-
-#### matbench-discovery · Domain and capabilities
-
-- `capability` = distribution-shift-generalization · [S2][matbench-discovery-s2]
-  - why: The test set is built by successive elemental substitutions away from the training distribution, and the paper uses the batches to measure degradation.
-  > This split of the data into batches of increasing substitution count is a unique and compelling feature of the test set as it allows out-of-distribution testing by examining whether model performance degrades for later batches.
-- `evaluation_method` = domain-metric, statistical-fit, composite · [S3][matbench-discovery-s3]
-  - why: domain-metric for DAF and κSRME, materials-science measures (kappa\_SRME is in the term's IN list); statistical-fit for MAE, RMSE and R2 against DFT; composite for CPS, the published weighted combination, whose constituent methods are tagged beside it as the term asks.
-  > The CPS (Combined Performance Score) is a metric that weights discovery performance (F1), geometry optimization quality (RMSD), and thermal conductivity prediction accuracy (κSRME).
-
-#### matbench-discovery · Task and evaluation
-
-- `learned_entrant_evidence` = system CHGNet · [S2][matbench-discovery-s2]
-  > CHGNet is a UIP for charge-informed atomistic modelling.
-- `ground_truth_source` = simulation · [S2][matbench-discovery-s2]
-  - why: The references are DFT (PBE) calculations, a simulation, not experiment.
-  > Their target values are the PBE formation energies of the corresponding DFT-relaxed structures.
-- `reproducible_by_third_party` = true · [S2][matbench-discovery-s2]
-  - why: Test set and code are public; a submission is scored from its uploaded predictions.
-  > \[withheld: it may name a person; see the entry file\]
-- `task` = exists true; input unrelaxed WBM crystal structure (discovery, geometry optimisation), PhononDB structure (phonons and thermal conductivity); output Per task: a formation energy per atom for each WBM structure (discovery); the relaxed structure (geometry optimisation); lattice thermal conductivity (phonons).; scoring Discovery: predicted stability is on or below a fixed DFT convex hull built from the Materials Project v2022.10.28 release, scored by F1, DAF, precision and recall, with MAE, RMSE and R2 on the hull distance. Geometry optimisation: RMSD to the DFT-relaxed structure. Phonons: κSRME.; tests_hidden_from_system false · [S5][matbench-discovery-s5]
-  > In Matbench Discovery, the convex hull is always constructed from DFT reference energies, not from the ML model’s predicted energies.
-- `execution.harness` = matbench-discovery Python package (in the maintainer's personal GitHub account) · [S2][matbench-discovery-s2]
-  > We welcome further model submissions via pull requests.
-- `aggregation_policy` = official-aggregate · [S3][matbench-discovery-s3]
-  - why: The leaderboard sorts by CPS, a weighted composite of three task metrics, and lets the reader change the weights. Official, but not fixed: a CPS value means something only with its weights.
-  > CPS Reset F1 50% κSRME 40% RMSD 10%
-
-#### matbench-discovery · Data and licence
-
-- `data.access` = fully-open · [S2][matbench-discovery-s2]
-  - why: The test set is a public Figshare dataset.
-  > which is available via Figshare at https://figshare.com/articles/dataset/22715158
-- `data.data_provenance` = simulation-generated, synthetic-procedural · [S2][matbench-discovery-s2]
-  - why: The WBM candidates were generated by rule-based elemental substitution of Materials Project structures (synthetic-procedural), then relaxed with DFT for their labels (simulation-generated).
-  > consists of 257,487 structures generated via chemical similarity-based elemental substitution
-- `data.contamination_evidence` = stance against · [S2][matbench-discovery-s2]
-  > To control for the potential adverse effects of leakage between the MP training set and the WBM test set, we cleaned the WBM test set based on protostructure matching.
-- `data.ceiling_by_category` = category discovery, unique-prototype test set; value 6.5; metric discovery-acceleration-factor · [S2][matbench-discovery-s2]
-  > The maximum possible DAF is the inverse of the prevalence, which on our dataset is (33,000/215,000)−1 ≈ 6.5.
-- `data.ceiling_by_category` = category discovery, unique-prototype test set (leaderboard's figure); value 6.54; metric discovery-acceleration-factor · [S3][matbench-discovery-s3]
-  > meaning the max possible DAF is (32.9k / 215k)^−1 ≈ 6.54
-- `data.size` = count 257487; unit WBM structures, before the paper's cleaning · [S2][matbench-discovery-s2]
-  > consists of 257,487 structures generated via chemical similarity-based elemental substitution
-- `data.size` = count 215488; unit structures; subset unique-prototype test set (the discovery ranking's default) · [S2][matbench-discovery-s2]
-  > leaving 215,488 structures in the unique prototype test set
-- `data.size` = count 32942; unit stable structures within the unique-prototype set; subset positive class · [S2][matbench-discovery-s2]
-  > In total, 32,942 of 215,488 materials in the WBM unique prototype test set satisfy this criterion.
-- `data.size` = count 103; unit crystal structures; subset phonons and thermal conductivity (PhononDB PBE) · [S6][matbench-discovery-s6]
-  > We apply our framework to a database of 103 solids
-- `training_data_eligibility_tiers` = 2 items · [S2][matbench-discovery-s2]
-  - why: The paper defines the compliant tier; the leaderboard shows the two tiers as separate views, with a third view, energy-only models, that is a model-type filter rather than a training-data tier and is not recorded here.
-  > database release as the maximum allowed training set for any compliant model submission.
-- `execution.code_licence` = MIT · S7
-  > MIT license
-
-#### matbench-discovery · Governance and independence
-
-- `governance.maintainer` = An individual researcher (the repository's owner) · [S3][matbench-discovery-s3]
-  - why: The site is copyrighted to one person and the code repository is his; it is hosted on a Materials Project domain, but the Materials Project disclaims the ranking (known\_limitation).
-  > \[withheld: it may name a person; see the entry file\]
-- `governance.submission_process` = maintainer-verified · [S4][matbench-discovery-s4]
-  > You should share your model’s predictions through a cloud storage service (we recommend Figshare)
-- `governance.known_limitation` · [S3][matbench-discovery-s3]
-  > A high ranking does not constitute endorsement by the Materials Project.
-
-#### matbench-discovery · Lifecycle and activity
-
-- `lifecycle` = active · [S3][matbench-discovery-s3]
-  - why: New models are still being added; the newest capture lists entries added in 2026.
-  > We welcome new models additions to the leaderboard through GitHub PRs.
-- `activity` = accepting-submissions · [S4][matbench-discovery-s4]
-  - why: Submissions are pull requests, open at any time.
-  > Once tests pass and the PR is merged, your model will be added to the leaderboard!
-
-**Open review checks** (4):
-
-1. (field `training_data_eligibility_tiers_note`, needs a specialist) Whether the compliance tiers are transcribed correctly is a materials-science judgement: the paper defines "compliant" as training within the MP v2022.10.28 release, and the leaderboard has since moved to per-dataset filters (training\_data\_eligibility\_tiers\_note).
-2. (needs a specialist) classical-algorithm: the taxonomy's own example says this benchmark has non-learned entrants; no source read here shows one.
-3. (field `data.refresh_note`, needs a specialist) refresh rolling-live vs versioned-releases (data.refresh\_note).
-4. (field `governance`, needs a specialist) The independence question about the paper's co-authors and CHGNet (governance).
-
-**Reviewer checklist** for `matbench-discovery`:
-
-- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
-- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
-- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
-- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
-- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
-- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
-- [ ] Every open review check above is answered or resolved
-- [ ] Nothing here would embarrass the catalogue in front of a specialist
-
-[matbench-discovery-s1]: https://arxiv.org/abs/2308.14920
-[matbench-discovery-s2]: https://www.nature.com/articles/s42256-025-01055-1
-[matbench-discovery-s3]: https://matbench-discovery.materialsproject.org/
-[matbench-discovery-s4]: https://matbench-discovery.materialsproject.org/contribute
-[matbench-discovery-s5]: https://matbench-discovery.materialsproject.org/tasks/discovery
-[matbench-discovery-s6]: https://arxiv.org/html/2408.00755
-[matbench-discovery-s8]: https://matbench-discovery.materialsproject.org/tasks/geo-opt
-[matbench-discovery-s9]: https://matbench-discovery.materialsproject.org/tasks/diatomics
 
 ### 2.8 MD17 (md17)
 
@@ -1985,7 +2086,7 @@ A series of prospective hit-finding competitions, launched by the Structural Gen
 | S9 | `src-biorxiv-cache-1` | preprint · bioRxiv | [api.biorxiv.org/details/biorxiv/10.1101/2024.07.18.603797](https://api.biorxiv.org/details/biorxiv/10.1101/2024.07.18.603797) | none (not-required) |
 | S10 | `src-cache-challenge-7` | documentation · Conscience | [cache-challenge.org/challenges/finding-selective-inhibitors-of-phosph...](https://cache-challenge.org/challenges/finding-selective-inhibitors-of-phosphoglycerate-kinase-2) | [capture 2026-10-14](https://web.archive.org/web/20261014045119/https://cache-challenge.org/challenges/finding-selective-inhibitors-of-phosphoglycerate-kinase-2) |
 | S11 | `src-conscience-cache-programme` | documentation · Conscience | [conscience.ca/cache-challenge/](https://conscience.ca/cache-challenge/) | [capture 2026-10-14](https://web.archive.org/web/20261014045457/https://conscience.ca/cache-challenge/) |
-| S12 | `src-cache-publications` | documentation · Conscience | [cache-challenge.org/cache-publications](https://cache-challenge.org/cache-publications) | none (pending) |
+| S12 | `src-cache-publications` | documentation · Conscience | [cache-challenge.org/cache-publications](https://cache-challenge.org/cache-publications) | [capture 2026-11-24](https://web.archive.org/web/20261124154749/https://cache-challenge.org/cache-publications) |
 | S13 | `src-cache-challenge-5` | documentation · Conscience | [cache-challenge.org/challenges/predicting-novel-mchr1-antagonists](https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists) | [capture 2026-10-14](https://web.archive.org/web/20261014044938/https://cache-challenge.org/challenges/predicting-novel-mchr1-antagonists) |
 | S14 | `src-cache-challenge-8` | documentation · Conscience | [cache-challenge.org/challenges/finding-ligands-targeting-gid4](https://cache-challenge.org/challenges/finding-ligands-targeting-gid4) | [capture 2026-10-14](https://web.archive.org/web/20261014045156/https://cache-challenge.org/challenges/finding-ligands-targeting-gid4) |
 

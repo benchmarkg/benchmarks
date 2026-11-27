@@ -1481,7 +1481,7 @@ OpenAI's dataset of 8,792 grade-school mathematics word problems (7,473 training
 | S17 | `src-arxiv-2210-03057` | preprint · arXiv | [arxiv.org/abs/2210.03057](https://arxiv.org/abs/2210.03057) | none (not-required) |
 | S18 | `src-arxiv-2509-25160` | preprint · arXiv | [arxiv.org/abs/2509.25160](https://arxiv.org/abs/2509.25160) | none (not-required) |
 | S19 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
-| S20 | `src-hf-api-scaleai-gsm1k` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ScaleAI/gsm1k](https://huggingface.co/api/datasets/ScaleAI/gsm1k) | none (pending) |
+| S20 | `src-hf-api-scaleai-gsm1k` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ScaleAI/gsm1k](https://huggingface.co/api/datasets/ScaleAI/gsm1k) | [capture 2026-11-24](https://web.archive.org/web/20261124170040/https://huggingface.co/api/datasets/ScaleAI/gsm1k) |
 
 **Evidence** (50 quoted fields), by checklist area:
 

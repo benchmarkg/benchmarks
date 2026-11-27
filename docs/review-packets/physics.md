@@ -2,7 +2,7 @@
 
 # Review packet: Physics
 
-`physics` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`physics` · 18 published entries · Core family · 10 subdomains · data as of 2026-11-24 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -46,13 +46,13 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (8): `fair-universe-higgsml`, `icecube-neutrinos-in-deep-ice`, `jetclass`, `pdebench`, `strong-lens-finding-challenge`, `the-well`, `top-tagging`, `varbench`. `python scripts/review_packet.py --family physics --all` renders every entry.
+Not in this packet (8): `icecube-neutrinos-in-deep-ice`, `jetclass`, `lhc-olympics-2020`, `pdebench`, `strong-lens-finding-challenge`, `the-well`, `top-tagging`, `varbench`. `python scripts/review_packet.py --family physics --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [Fast Calorimeter Simulation Challenge 2022](#21-fast-calorimeter-simulation-challenge-2022-calochallenge-2022) | `simulation-surrogates` | 37 | 7 |
 | 2.2 | [AirfRANS](#22-airfrans-airfrans) | `fluid-dynamics` | 43 | 5 |
-| 2.3 | [LHC Olympics 2020](#23-lhc-olympics-2020-lhc-olympics-2020) | `particle-physics` | 35 | 8 |
+| 2.3 | [FAIR Universe HiggsML Uncertainty Challenge](#23-fair-universe-higgsml-uncertainty-challenge-fair-universe-higgsml) | `particle-physics` | 36 | 12 |
 | 2.4 | [TrackML Particle Tracking Challenge](#24-trackml-particle-tracking-challenge-trackml) | `particle-physics` | 38 | 11 |
 | 2.5 | [PLAsTiCC](#25-plasticc-plasticc) | `astrophysics-cosmology` | 35 | 8 |
 | 2.6 | [CMT-Benchmark](#26-cmt-benchmark-cmt-benchmark) | `condensed-matter` | 33 | 9 |
@@ -440,168 +440,187 @@ Considered and rejected:
 [airfrans-s7]: https://raw.githubusercontent.com/Extrality/AirfRANS/main/README.md
 [airfrans-s8]: https://airfrans.readthedocs.io/en/latest/notes/dataset.html
 
-### 2.3 LHC Olympics 2020 (lhc-olympics-2020)
+### 2.3 FAIR Universe HiggsML Uncertainty Challenge (fair-universe-higgsml)
 
-`data/benchmarks/physics/lhc-olympics-2020.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/physics/fair-universe-higgsml.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-11-24
 
-*Finding a new-physics resonance hidden in simulated LHC dijet events, with an R&D set and three blinded black boxes.*
+*Confidence intervals on the Higgs signal strength under six systematic uncertainties, scored on coverage and width.*
 
-A community challenge for model-agnostic anomaly detection in collider physics, organised by three physicists from Universität Hamburg, Lawrence Berkeley National Laboratory and Rutgers University, with simulated proton-proton events stored as lists of up to 700 detector-reconstructed hadrons (pT, eta, phi) and selected by a single large-radius jet trigger at pT above 1.2 TeV. The R&D dataset (Zenodo, April 2019) holds one million QCD dijet background events and 100,000 signal events of a 3.5 TeV Z' decaying to two new particles that each decay to quarks, each event with a signal-or-background truth bit; a three-prong signal sample was added in May 2020. Three black boxes of one million events each, released from November 2019 with background generated under changed Pythia and Delphes settings or with Herwig++, were the test: Black Box 1 hid 834 signal events of the R&D topology at new masses, Black Box 2 was background only, and Black Box 3 hid a 4.2 TeV resonance with two decay modes (1,200 dijet and 2,000 trijet events). Contestants entered a p-value for the no-signal hypothesis, the masses and decay modes of any new particles and the number of signal events, with uncertainties, in a Google form; answers were to be judged by their distance from the truth in units of the stated uncertainty, but no single metric or winner was declared. Box 1 was unblinded at the ML4Jets2020 workshop after a 12 January 2020 deadline, and boxes 2 and 3 at a virtual summer workshop; the truth labels of boxes 1 and 3 have been on Zenodo since November 2020. The R&D dataset is still used to develop and compare anomaly detectors, with each paper's own signal injection and metric.
+A NeurIPS 2024 competition and dataset from the FAIR Universe project, led by Lawrence Berkeley National Laboratory. Each scored item is a pseudo-experiment, an unlabelled set of simulated proton-proton collisions (H to tau tau signal against Z, ttbar and diboson backgrounds, generated with Pythia 8.2 and Delphes 3.5.0, 28 features per event) drawn with a randomised signal strength mu and six nuisance parameters for systematic effects such as the tau and jet energy scales and the background normalisations. A submission is code (a model.py with fit and predict) that receives the labelled training set and a biasing script, and returns a 68.27% confidence interval for mu on each pseudo-experiment. The Quantile Score rewards narrow intervals and penalises coverage away from 68.27%, more heavily for under-coverage. Codabench ran the code on organiser hardware at NERSC and LBNL from August 2024 to March 2025; every submission was then re-run on pseudo-experiments from a private 120M-event set, and HEPHY (Vienna) and IBRAHIME (UIUC) were declared joint first. The public dataset has been on Zenodo under CC BY 4.0 since 2025 as a long-term benchmark, with no submission route open. FAIR Universe's 2025 and 2026 NeurIPS challenges are on weak lensing, a different task, and are not included here.
 
 | Classification | |
 | --- | --- |
 | Primary domain | physics/particle-physics |
 | Secondary domains | - |
-| Capabilities | scientific-prediction, calibration-uncertainty, distribution-shift-generalization |
+| Capabilities | calibration-uncertainty, scientific-prediction |
 | Evaluation methods | uncertainty-calibration-score |
 | Designed for | domain-specialist-model |
 | Evaluation target · execution mode · ground truth | learned-system · automated · simulation |
 | Lifecycle · activity | active · closed |
-| Data access · refresh · contamination risk | fully-open · versioned-releases · medium |
-| Reproducibility tier · harness | fully-automatable · reference-implementation-only |
-| Maintainer type · submission process | community-collective · held-out-server |
-| Independence flags | maintainer-competes-on-own-benchmark |
+| Data access · refresh · contamination risk | private-test-server · static · low |
+| Reproducibility tier · harness | not-independently-reproducible · official-harness |
+| Maintainer type · submission process | government-agency · sandboxed-rerun |
+| Independence flags | single-evaluator-private-test-set |
 | Licences: code · dataset | null · CC-BY-4.0 |
-| Released | 2019-04-04 |
-| Links | homepage [lhco2020.github.io/homepage/](https://lhco2020.github.io/homepage/) · repository [github.com/lhcolympics2020/parsingscripts](https://github.com/lhcolympics2020/parsingscripts) · dataset [doi.org/10.5281/zenodo.3547721](https://doi.org/10.5281/zenodo.3547721) |
+| Released | 2024-10-01 |
+| Links | homepage [fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html](https://fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html) · repository [github.com/FAIR-Universe/HEP-Challenge](https://github.com/FAIR-Universe/HEP-Challenge) · leaderboard [www.codabench.org/competitions/2977/](https://www.codabench.org/competitions/2977/) · dataset [doi.org/10.5281/zenodo.15131565](https://doi.org/10.5281/zenodo.15131565) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-2101-08320-v1` | preprint · arXiv | [arxiv.org/pdf/2101.08320v1](https://arxiv.org/pdf/2101.08320v1) | none (not-required) |
-| S2 | `src-zenodo-lhco2020-rnd` | dataset-card · Zenodo | [zenodo.org/records/6466204](https://zenodo.org/records/6466204) | none (not-required) |
-| S3 | `src-lhco2020-site` | documentation · LHC Olympics 2020 (LHCO2020, GitHub Pages) | [lhco2020.github.io/homepage/](https://lhco2020.github.io/homepage/) | [capture 2026-10-14](https://web.archive.org/web/20261014155055/https://lhco2020.github.io/homepage/) |
-| S4 | `src-zenodo-lhco2020-blackboxes` | dataset-card · Zenodo | [zenodo.org/records/4536624](https://zenodo.org/records/4536624) | none (not-required) |
-| S5 | `src-arxiv-2606-13780-v1` | preprint · arXiv | [arxiv.org/pdf/2606.13780v1](https://arxiv.org/pdf/2606.13780v1) | none (not-required) |
-| S6 | `src-github-lhco2020-parsingscripts-readme` | repository · GitHub | [raw.githubusercontent.com/lhcolympics2020/parsingscripts/master/READM...](https://raw.githubusercontent.com/lhcolympics2020/parsingscripts/master/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014154515/https://raw.githubusercontent.com/lhcolympics2020/parsingscripts/master/README.md) |
-| S7 | `src-arxiv-2101-08320` | preprint · arXiv | [arxiv.org/abs/2101.08320](https://arxiv.org/abs/2101.08320) | none (not-required) |
+| S1 | `src-fair-universe-higgs-challenge-site` | leaderboard-page · FAIR Universe (Lawrence Berkeley National Laboratory) | [fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html](https://fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html) | [capture 2026-10-14](https://web.archive.org/web/20261014062336/https://fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html) |
+| S2 | `src-fair-universe-site` | documentation · FAIR Universe (Lawrence Berkeley National Laboratory) | [fair-universe.lbl.gov/](https://fair-universe.lbl.gov/) | [capture 2026-10-03](https://web.archive.org/web/20261003033651/https://fair-universe.lbl.gov/) |
+| S3 | `src-arxiv-2410-02867` | preprint · arXiv | [arxiv.org/abs/2410.02867](https://arxiv.org/abs/2410.02867) | none (not-required) |
+| S4 | `src-arxiv-2410-02867-v5` | preprint · arXiv | [arxiv.org/pdf/2410.02867v5](https://arxiv.org/pdf/2410.02867v5) | none (not-required) |
+| S5 | `src-fair-universe-higgs-docs-evaluation` | documentation · FAIR-Universe Collaboration | [fair-universe.lbl.gov/docs/pages/evaluation.html](https://fair-universe.lbl.gov/docs/pages/evaluation.html) | [capture 2026-10-14](https://web.archive.org/web/20261014062400/https://fair-universe.lbl.gov/docs/pages/evaluation.html) |
+| S6 | `src-codabench-fair-universe-higgs-2977` | leaderboard-page · Codabench | [www.codabench.org/api/competitions/2977/](https://www.codabench.org/api/competitions/2977/) | none (withheld) |
+| S7 | `src-arxiv-2609-02781-v1` | preprint · arXiv | [arxiv.org/pdf/2609.02781v1](https://arxiv.org/pdf/2609.02781v1) | none (not-required) |
+| S8 | `src-zenodo-fair-universe-higgsml` | dataset-card · Zenodo | [zenodo.org/records/15131565](https://zenodo.org/records/15131565) | none (not-required) |
+| S9 | `src-arxiv-2410-02867-v5-2026-11-24` | preprint · arXiv | [arxiv.org/pdf/2410.02867v5](https://arxiv.org/pdf/2410.02867v5) | none (not-required) |
+| S10 | `src-github-api-hep-challenge-issue-184` | repository · GitHub | [api.github.com/repos/FAIR-Universe/HEP-Challenge/issues/184](https://api.github.com/repos/FAIR-Universe/HEP-Challenge/issues/184) | [capture 2026-11-24](https://web.archive.org/web/20261124155705/https://api.github.com/repos/FAIR-Universe/HEP-Challenge/issues/184) |
+| S11 | `src-github-hep-challenge-readme` | repository · GitHub | [raw.githubusercontent.com/FAIR-Universe/HEP-Challenge/master/README.md](https://raw.githubusercontent.com/FAIR-Universe/HEP-Challenge/master/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063512/https://raw.githubusercontent.com/FAIR-Universe/HEP-Challenge/master/README.md) |
+| S12 | `src-github-api-hep-challenge-pull-185` | repository · GitHub | [api.github.com/repos/FAIR-Universe/HEP-Challenge/pulls/185](https://api.github.com/repos/FAIR-Universe/HEP-Challenge/pulls/185) | [capture 2026-11-24](https://web.archive.org/web/20261124155759/https://api.github.com/repos/FAIR-Universe/HEP-Challenge/pulls/185) |
 
-**Evidence** (35 quoted fields), by checklist area:
+**Evidence** (36 quoted fields), by checklist area:
 
-#### lhc-olympics-2020 · Identity and id
+#### fair-universe-higgsml · Identity and id
 
-- `self_description` · [S1][lhc-olympics-2020-s1]
-  > we have created the LHC Olympics 2020, a community challenge accompanied by a set of simulated collider events
-- `released` = 2019-04-04 · [S2][lhc-olympics-2020-s2]
-  > Published April 4, 2019
+- `self_description` · [S1][fair-universe-higgsml-s1]
+  > This NeurIPS 2024 Machine Learning competition is one of the first to strongly emphasise mastering uncertainties in the input training dataset and outputting credible confidence intervals
+- `released` = 2024-10-01 · [S2][fair-universe-higgsml-s2]
+  > Higgs Uncertainty Challenge launched on Codabench October 01, 2024
 
-#### lhc-olympics-2020 · Domain and capabilities
+#### fair-universe-higgsml · Domain and capabilities
 
-- `domain` = primary physics/particle-physics · [S1][lhc-olympics-2020-s1]
-  - why: The scored quantities are a new particle's existence, masses and signal yield, recovered from simulated LHC collision events at detector level, which is the leaf's definition. The physics family's example fair-universe-higgsml is the same kind of case.
-  > The goal of the challenge is to determine if there is new physics in the box and then to identify its properties.
-- `capability` = scientific-prediction · [S3][lhc-olympics-2020-s3]
-  - why: The claim is that methods find and characterise a signal in the data, the resonance masses, decay modes and number of signal events, and answers are compared with the signal the organisers injected into the simulation.
-  > the masses and decay modes of all new particles (and uncertainties on those parameters)
-- `capability` = calibration-uncertainty · [S3][lhc-olympics-2020-s3]
-  - why: The stated scoring rule divides each answer's distance from the truth by the uncertainty the contestant reported, so the emitted uncertainty enters the score; a p-value for the no-signal hypothesis is also asked for.
-  > For accuracy, we will use the # of sigmas \|(your answer - right answer) / your uncertainty\| from the right answer wherever applicable.
-- `capability` = distribution-shift-generalization · [S4][lhc-olympics-2020-s4]
-  - why: The background in each black box was generated under settings deliberately different from the provided background simulation and the R&D set, changed Pythia and Delphes settings in boxes 1 and 3 and Herwig++ in box 2, and each box's results are reported on their own. Methods that train on the black box itself are not fitted to the R&D distribution (see review\_checks).
-  > Be warned that both the physics and the detector modeling for this simulation may not exactly reflect the
-- `evaluation_method` = uncertainty-calibration-score · [S3][lhc-olympics-2020-s3]
-  - why: The scoring rule the organisers announced is a pull, the answer's distance from the true value in units of the contestant's own stated uncertainty, which consumes an emitted interval and scores its coverage of the truth. The paper's figure of the first unblinding shows the same pull for each submission that gave an uncertainty. No metric was declared the ranking (see review\_checks).
-  > For accuracy, we will use the # of sigmas \|(your answer - right answer) / your uncertainty\| from the right answer wherever applicable.
-- `designed_for_subjects` = domain-specialist-model · [S1][lhc-olympics-2020-s1]
-  - why: The entrants are anomaly-detection pipelines built for this particle-physics search and trained on its data, unsupervised (autoencoders, density estimators), weakly supervised (CWoLa hunting, Tag N' Train) or using signal simulation, mostly neural networks.
-  > Many teams developed and implemented a variety of techniques on these datasets
+- `domain` = primary physics/particle-physics · [S3][fair-universe-higgsml-s3]
+  - why: The scored quantity is the Higgs signal strength, a physics quantity recovered from simulated LHC collision events in an ATLAS-like detector, which is the leaf's definition.
+  > The FAIR Universe HiggsML Uncertainty Challenge focused on measuring the physical properties of elementary particles with imperfect simulators
+- `capability` = calibration-uncertainty · [S4][fair-universe-higgsml-s4]
+  - why: The scoring function consumes the interval each submission emits for every pseudo-experiment, through its coverage of the true mu and its width.
+  > Participants were required to compute and report confidence intervals for a parameter of interest regarding the Higgs boson
+- `capability` = scientific-prediction · [S1][fair-universe-higgsml-s1]
+  - why: The challenge's claim is that systems measure the signal strength of each pseudo-experiment, a property of the simulated physical system, and the score compares their intervals with the true mu the pseudo-experiment was generated with.
+  > Participants should design an advanced analysis technique that can not only measure the signal strength but also provide a confidence interval
+- `evaluation_method` = uncertainty-calibration-score · [S5][fair-universe-higgsml-s5]
+  - why: The Quantile Score, -ln((w + epsilon) f(c)), combines the average width w of the emitted 68.27% intervals with a penalty f on their coverage c, steeper for under-coverage than over.
+  > So the best model will maximise their score by minimising the average width of the interval, while maintaining an expected 68.27% coverage
+- `designed_for_subjects` = domain-specialist-model · [S4][fair-universe-higgsml-s4]
+  - why: Entrants are inference pipelines built for this high-energy-physics measurement and trained from scratch on its data. The joint winners used simulation-based inference with a calibrated multiclassifier and parametric regressors (HEPHY) and contrastive normalising flows (IBRAHIME); the baseline is an XGBoost classifier with a binned likelihood fit.
+  > We use simulation-based inference (SBI)
 
 Considered and rejected:
 
-- `evaluation_method` not `numeric-tolerance-match` · [S1][lhc-olympics-2020-s1]
-  - why: The paper's summary of Black Box 1 counts masses found within a ±200 GeV window or within the claimed error, but that is a reading after unblinding; no tolerance was announced that marks an answer right.
-  > within a window of ±200 GeV (LSTM, Tag N Train, Density Estimation)
-- `evaluation_method` not `entrant-relative-ranking` · [S1][lhc-olympics-2020-s1]
-  - why: No ranking of any kind was published; the paper says methods could not be compared directly.
-  > there was no single metric for determine a winner and therefore it was not possible to directly compare methods
+- `capability` not `distribution-shift-generalization` · [S4][fair-universe-higgsml-s4]
+  - why: The paper calls the task transduction with distribution shift, since the test pseudo-experiments carry nuisance values unlike the nominal training set. But entrants are given the biasing script that produces data for any nuisance values, so the shift stays inside a family they can train over ("known unknowns"), and no score is reported on shifted inputs as a condition of its own.
+  > the task resembles a transduction problem with distribution shift
+- `evaluation_method` not `statistical-fit` · [S6][fair-universe-higgsml-s6]
+  - why: Codabench's leaderboard shows an RMSE column for the point estimate, but the ranking is by the Quantile Score on the intervals.
+  > "title":"RMSE","key":"rmse"
 
-#### lhc-olympics-2020 · Task and evaluation
+#### fair-universe-higgsml · Task and evaluation
 
-- `learned_entrant_evidence` = system Tag N' Train, a weakly supervised classifier that placed the Black Box 1 resonance mass within 200 GeV before unblinding · [S1][lhc-olympics-2020-s1]
-  > within a window of ±200 GeV (LSTM, Tag N Train, Density Estimation)
-- `reproducible_by_third_party` = true · [S4][lhc-olympics-2020-s4]
-  - why: All events and the per-event truth labels of Black Boxes 1 and 3 are on Zenodo under CC BY 4.0, and the paper gives each box's injected signal, Black Box 2 being background only, so anyone can score a black-box answer or an R&D result.
-  > where each line is the truth label
-- `task` = exists true; input one black box, a million simulated events, each a list of up to 700 detector-reconstructed hadrons (pT, eta, phi) passing a single large-radius jet trigger at pT above 1.2 TeV, a million-event background simulation, and the R&D dataset with its truth bit, both of which may differ in physics and detector modelling from the black boxes; output For each black box: a p-value for the no-new-physics hypothesis; the masses and decay modes of any new particles, with uncertainties; and the number of signal events before selection, with its uncertainty. Partial answers were allowed.; scoring Each answered quantity's distance from the true value in units of the contestant's stated uncertainty, where applicable. No single metric, ranking or winner was declared; results were presented at the unblinding workshops and in the summary paper.; tests_hidden_from_system true · [S3][lhc-olympics-2020-s3]
-  > A p-value associated with the dataset having no new particles (null hypothesis).
-- `execution.reproducibility_tier` = fully-automatable · [S4][lhc-olympics-2020-s4]
-  - why: The events and the truth are public, so the pull of a mass or signal-count answer, or any R&D metric, can be computed by anyone without the organisers. Decay-mode descriptions have no published scoring rule.
-  > where each line is the truth label
-- `execution.harness` = lhcolympics2020/parsingscripts (Jupyter notebooks that read the events and cluster jets with pyjet or FastJet); no scoring code was published · [S6][lhc-olympics-2020-s6]
-  > The jupyter notebooks here have some example code for reading in the data and doing some basic manipulation.
+- `learned_entrant_evidence` = system HEPHY (simulation-based inference with a calibrated multiclassifier; joint first) · [S1][fair-universe-higgsml-s1]
+  > 1 (Tie) HEPHY 0.6683 0.4599 -0.5823
+- `reproducible_by_third_party` = false · [S4][fair-universe-higgsml-s4]
+  - why: The official final scores were computed on a 120M-event set the organisers keep private, and the submission server has closed. Pseudo-experiments drawn from the public set can be scored by anyone with the released scoring code, but not on the official items.
+  > A separate 120M i.i.d dataset has been used for the final results in section 5 and is kept private for future over-training checks
+- `task` = exists true; input one pseudo-experiment, an unlabelled set of simulated collision events with 28 features, drawn with a randomised mu (0.1 to 3) and six nuisance parameters, at fit time, the labelled training set and the biasing script that applies the systematic effects; output For each pseudo-experiment, mu\_hat, its uncertainty, and the bounds p16 and p84 of a 68.27% confidence interval for mu.; scoring The Quantile Score over the pseudo-experiments, from the average interval width and the coverage of the true mu. The public leaderboard used 10 trials of 100 pseudo-experiments, drawn separately for each submission; the final ranking used 1000 trials of 100 from the private set, the same for every submission.; tests_hidden_from_system true · [S5][fair-universe-higgsml-s5]
+  > The Model class must accept two arguments, get\_train\_set and systematics
+- `execution.compute_tier` = provided-allocation · [S5][fair-universe-higgsml-s5]
+  - why: The official scores came from running each submission on organiser hardware, one Perlmutter node with four A100 GPUs for the final evaluation. Training compute was the entrant's own.
+  > \[withheld: it may name a person; see the entry file\]
+- `execution.reproducibility_tier` = not-independently-reproducible · [S4][fair-universe-higgsml-s4]
+  - why: The final ranking needs the private 120M-event set, which only the organisers hold, and the server that ran submissions has closed. Scores on draws from the public set can be reproduced by anyone.
+  > A separate 120M i.i.d dataset has been used for the final results in section 5 and is kept private for future over-training checks
+- `execution.harness` = FAIR-Universe/HEP-Challenge (the Codabench ingestion and scoring programs, the starting-kit notebook and the baseline models) · [S4][fair-universe-higgsml-s4]
+  > This includes a Jupyter notebook starting kit, simple baseline models, a small sample of the dataset, and code to compute the score
+- `metrics` = fair-universe-higgsml-quantile-score, fair-universe-higgsml-coverage, fair-universe-higgsml-interval-width · [S1][fair-universe-higgsml-s1]
+  - why: The results page reports the three side by side for the final ranking.
+  > Medal Rank Team Avg Coverage Avg Interval Avg Quantile Score
 
-#### lhc-olympics-2020 · Data and licence
+#### fair-universe-higgsml · Data and licence
 
-- `as_used` = protocol The R&D dataset outside the challenge, on high-level jet features from a later method's preprocessed files, split into a signal region in the dijet mass and sidebands as in CWoLa hunting and CATHODE, with the paper's own signal injection; scored on the calibration of p-values and significances, not on the challenge's black-box answers.; split R&D dataset, signal region 3.3-3.7 TeV in the dijet mass, about 0.6% injected signal · [S5][lhc-olympics-2020-s5]
-  > We now demonstrate the full pipeline on the public collider dataset, the LHC Olympics 2020 R&D dataset
-- `data.access` = fully-open · [S4][lhc-olympics-2020-s4]
-  - why: Every black box and the R&D dataset are downloadable from Zenodo without an account, and since November 2020 the per-event truth of the two boxes that held a signal is there too; fully-open's test judges a blind round once its ground truth is released.
-  > Now that the challenge is over, we have uploaded the solutions to Black Boxes 1 and 3.
-- `data.access_by_phase.during_edition` = train-open-test-held-out. The R&D dataset with its truth bit and the background simulation were public, and each black box's events were released on Zenodo without their labels or the injected signal's description. · [S2][lhc-olympics-2020-s2]
-  > Obviously, the truth bit will not be included in the actual challenge.
-- `data.access_by_phase.after_edition` = fully-open. Per-event truth files for Black Boxes 1 and 3 on Zenodo under CC BY 4.0, and the injected signals described in the paper, Black Box 2 being background only. · [S4][lhc-olympics-2020-s4]
-  > where each line is the truth label
-- `data.refresh` = versioned-releases · [S2][lhc-olympics-2020-s2]
-  - why: The datasets change only in Zenodo versions, each with a dated update note. The R&D record added a three-prong signal in May 2020 and feature files in November 2020, and in April 2022 replaced its raw background file with the regenerated events the feature files had been built from.
-  > was never updated to v2, which had a lower generator-level pT threshold
-- `data.data_provenance` = simulation-generated · [S1][lhc-olympics-2020-s1]
-  > The events were produced using Pythia 8.219
-- `data.contamination_risk` = medium · [S1][lhc-olympics-2020-s1]
-  > while one used a signal likelihood (LSTM)
-- `data.dataset_licence` = CC-BY-4.0 · [S4][lhc-olympics-2020-s4]
+- `as_used` = protocol Results on the public Zenodo dataset outside the challenge, with the user's own pseudo-experiment draws, classifiers and profile-likelihood constructions, scored on the coverage of 68.27% intervals for mu rather than on the official Quantile Score.; split four 300k-event draws from the public dataset · [S7][fair-universe-higgsml-s7]
+  > We instantiate the framework on the FAIR Universe HiggsML Uncertainty benchmark with a quantum-kernel classifier and matched classical controls
+- `data.access` = private-test-server · [S4][fair-universe-higgsml-s4]
+  - why: The final ranking, the headline result, was computed by running each entrant's code on pseudo-experiments from a 120M-event set that never left the organisers.
+  > A separate 120M i.i.d dataset has been used for the final results in section 5 and is kept private for future over-training checks
+- `data.access_by_phase.after_edition` = The public dataset is on Zenodo under CC BY 4.0, with the biasing script and scoring code on GitHub, so pseudo-experiments can be drawn and scored locally. The private set stays with the organisers, and no submission route is open. · [S8][fair-universe-higgsml-s8]
   > Creative Commons Attribution 4.0 International
-- `data.size` = count 1000000; unit simulated events per black box (three boxes); subset black boxes · [S4][lhc-olympics-2020-s4]
-  > contains 1M events meant to be representative of actual LHC data
-- `data.size` = count 1100000; unit simulated events (1M QCD dijet background, 100k Z' to XY signal), each with a truth bit; subset R&D dataset · [S2][lhc-olympics-2020-s2]
-  > The array format is therefore (Nevents=1.1M, 2101).
-- `data.size` = count 834; unit injected signal events; subset Black Box 1 · [S1][lhc-olympics-2020-s1]
-  > A total of 834 signal events were included (out of a total of 1M events in all)
-- `data.size` = count 3200; unit injected signal events (1,200 dijet, 2,000 trijet); subset Black Box 3 · [S1][lhc-olympics-2020-s1]
-  > 1200 dijet events and 2000 trijet events were included along with QCD backgrounds in Black Box 3
+- `data.refresh` = static · [S4][fair-universe-higgsml-s4]
+  - why: Pseudo-experiments are drawn afresh for each evaluation, but from fixed event pools (the public set and the private 120M set), which static's inclusion test leaves static.
+  > All submissions were run on the same pseudo-experiments, instead of separate pseudo-experiments for the public leaderboard
+- `data.data_provenance` = simulation-generated · [S4][fair-universe-higgsml-s4]
+  > was created with two widely-used simulation tools, Pythia 8.2
+- `data.contamination_risk` = low · [S4][fair-universe-higgsml-s4]
+  > A separate 120M i.i.d dataset has been used for the final results in section 5 and is kept private for future over-training checks
+- `data.ceiling_anchor_type` = theoretical-maximum · [S4][fair-universe-higgsml-s4]
+  > is a regularisation term to guard against submissions that report unrealistically narrow CIs
+- `data.dataset_licence` = CC-BY-4.0 · [S8][fair-universe-higgsml-s8]
+  > Creative Commons Attribution 4.0 International
+- `data.size` = count 220099101; unit simulated collision events in the public dataset (52,040,227 Higgs signal, 160,383,358 Z, 605,118 diboson, 7,070,398 ttbar); subset public dataset (Zenodo v1) · [S8][fair-universe-higgsml-s8]
+  > Label Higgs 52 040 227 1015 signal Z Boson 160 383 358 1 002 395 background Di-Boson 605 118 3 783 background ttbar 7 070 398 44 192 background
+- `data.size` = count 280000000; unit simulated collision events, as the paper states the public dataset; subset public dataset (paper) · [S4][fair-universe-higgsml-s4]
+  > The dataset comprises 280M simulated proton-proton collision events
+- `data.size` = count 120000000; unit simulated collision events, held privately; subset final-evaluation set · [S4][fair-universe-higgsml-s4]
+  > A separate 120M i.i.d dataset has been used for the final results in section 5
+- `data.size` = count 100000; unit pseudo-experiments per submission (1000 trials of 100); subset final evaluation · [S4][fair-universe-higgsml-s4]
+  > evaluated over 100 pseudo-experiments, times 1000 trials
 
-#### lhc-olympics-2020 · Governance and independence
+#### fair-universe-higgsml · Governance and independence
 
-- `governance.maintainer` = The three LHC Olympics 2020 organisers, from Universität Hamburg, Lawrence Berkeley National Laboratory and Rutgers University · [S2][lhc-olympics-2020-s2]
-  - why: The three organisers are the creators of both Zenodo records and the paper's editors; the site sits in the LHCO2020 GitHub organisation and the parsing scripts in lhcolympics2020.
-  > University of Hamburg 2. Lawrence Berkeley National Lab 3. Rutgers University
-- `governance.submission_process` = held-out-server · [S1][lhc-olympics-2020-s1]
-  > Contestants entered their results in a Google form.
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][lhc-olympics-2020-s1]
-  > Some of the results of these types came from collaborations with the challenge organizers
-- `governance.participation` · [S1][lhc-olympics-2020-s1]
-  > Well over one hundred researchers participated in these events, with over a dozen teams submitting their results for the black boxes.
+- `governance.maintainer` = The FAIR Universe collaboration, led by Lawrence Berkeley National Laboratory with Université Paris-Saclay, the University of Washington and ChaLearn · [S2][fair-universe-higgsml-s2]
+  - why: The project's principal investigator is at LBNL, the site is on lbl.gov, and LBNL researchers lead the dataset's Zenodo record and the GitHub organisation.
+  > \[withheld: it may name a person; see the entry file\]
+- `governance.submission_process` = sandboxed-rerun · [S5][fair-universe-higgsml-s5]
+  > submissions must consist of a zip file containing a model.py file
+- `governance.independence_flags` = flag single-evaluator-private-test-set · [S4][fair-universe-higgsml-s4]
+  > A separate 120M i.i.d dataset has been used for the final results in section 5 and is kept private for future over-training checks
+- `governance.funding` · [S4][fair-universe-higgsml-s4]
+  > We are grateful to the US Department of Energy, Office of High Energy Physics, and the subprogram on Computational High Energy Physics, for sponsoring this research
 
-#### lhc-olympics-2020 · Lifecycle and activity
+#### fair-universe-higgsml · Lifecycle and activity
 
-- `lifecycle` = active · [S5][lhc-olympics-2020-s5]
-  - why: Results are still produced on the challenge's R&D dataset, the instrument most users take from it; a June 2026 paper evaluates on it. The blinded challenge ended in 2020 and its truth labels are public, which goes to activity and data.access (see review\_checks).
-  > We now demonstrate the full pipeline on the public collider dataset, the LHC Olympics 2020 R&D dataset
-- `activity` = closed · [S4][lhc-olympics-2020-s4]
-  - why: The Google form was the only route for entering black-box results, and the organisers declared the challenge over when they released the answers.
-  > Now that the challenge is over, we have uploaded the solutions to Black Boxes 1 and 3.
-- `history` = event channel-closed; field execution.submission\_channel; from Google form for black-box results · [S4][lhc-olympics-2020-s4]
-  > Now that the challenge is over, we have uploaded the solutions to Black Boxes 1 and 3.
-- `history` = date 2020-11-23; event access-changed; field data.access; from train-open-test-held-out; to fully-open · [S4][lhc-olympics-2020-s4]
-  > UPDATE: November 23, 2020
+- `lifecycle` = active · [S7][fair-universe-higgsml-s7]
+  - why: Results are still produced against the released dataset, its nuisance parameterisation and its mu-interval protocol; a September 2026 paper reports on it. The competition itself ended in March 2025 (activity), and the project's site now leads with its weak-lensing challenges.
+  > We instantiate the framework on the FAIR Universe HiggsML Uncertainty benchmark with a quantum-kernel classifier and matched classical controls
+- `activity` = closed · [S6][fair-universe-higgsml-s6]
+  - why: Codabench was the only route for entering a system, and its one phase ended on 2025-03-14; the record's title now carries "(Ended)". The winners were announced on 2025-05-08 and no new round of this task is announced.
+  > "title":"(Ended) FAIR UNIVERSE - Higgs Uncertainty Challenge"
+- `history` = date 2025-03-14; event channel-closed; field execution.submission\_channel; from Codabench competition 2977, public phase · [S6][fair-universe-higgsml-s6]
+  > "end":"2025-03-14T00:00:00Z","name":"Public Phase"
 
-**Open review checks** (8):
+#### fair-universe-higgsml · Other evidence
 
-1. (field `lifecycle`) lifecycle active rests on the R&D dataset, which a June 2026 paper still uses with its own injection and metric; the blinded challenge itself ended in 2020 and its answers are public. mature (a finished challenge whose instrument stays in use) is the alternative. · [S5][lhc-olympics-2020-s5]
-   > The goal is not to set a new sensitivity record
-2. (field `evaluation_method`) The entry is the challenge with its R&D dataset. The R&D dataset is often cited on its own as the LHCO R&D benchmark, scored by AUC or significance improvement; it could be a separate entry, which would take classification-metric and no-submission-channel.
-3. (field `evaluation_method`) uncertainty-calibration-score rests on the announced pull, which divides by the stated uncertainty; many entries gave no uncertainty, decay modes have no numeric rule, and no ranking was made. The pull also rewards wide uncertainties, so it scores coverage but not sharpness. · [S1][lhc-olympics-2020-s1]
-   > Horizontal bars indicate the uncertainty (only if provided by the submitting groups)
-4. (field `capability`) distribution-shift-generalization rests on the black boxes' deliberately changed background generators; many methods train on the black box itself, so for them the shift is between the R&D set they were developed on and the box. · [S1][lhc-olympics-2020-s1]
-   > The background was produced using Herwig++
-5. (field `capability`) perception was rejected, but the top-tagging entry tags it for the same kind of input (Delphes reconstructed particles). The two calls should be brought into line.
-6. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on organiser-co-authored methods in the post-unblinding and R&D results; the organisers did not take part in the blinded challenge. · [S1][lhc-olympics-2020-s1]
-   > The organizers of the LHCO challenge could not participate in this type of analysis.
-7. (field `governance.maintainer_type`) maintainer\_type community-collective or academic-lab. The three organisers are at a university, a national laboratory and a university; who uploaded the Zenodo records is not shown.
-8. (field `data.access`) Black Box 2 has no truth file because it held no signal; its ground truth (background only, Herwig++) is stated in the paper, not in the Zenodo record. · [S1][lhc-olympics-2020-s1]
-   > This sample of 1M events was background only.
+- `headline_metric` = fair-universe-higgsml-quantile-score · [S9][fair-universe-higgsml-s9]
+  - why: The Quantile Score ranked the challenge; the coverage and the width are its two inputs.
+  > The final Quantile Score (the larger the better) used to rank participants is calculated as follows
 
-**Reviewer checklist** for `lhc-olympics-2020`:
+**Open review checks** (12):
+
+1. The assignment fixes the id fair-universe-higgsml, but the taxonomy's examples name this benchmark fair-universe-higgsml-uncertainty (domains, capabilities, evaluation methods) and fair-universe-higgsml-uncertainty-challenge (governance, execution, the stress corpus). The refs and the id should be brought into line.
+2. (field `data.size`, needs a specialist) The paper states 280M public events, but the Zenodo record's per-process counts sum to 220,099,101, the number arXiv 2609.02781 verified at ingestion. Which is right, or whether 280M counts events before a selection, is not settled by the sources read. · [S7][fair-universe-higgsml-s7]
+   > 220,099,101 events verified at ingestion
+3. (field `lifecycle`) lifecycle active rests on one September 2026 paper that uses the public set with its own protocol, not the Quantile Score. With the competition closed and the project moved on to weak lensing, mature (an ended competition whose instrument stays in use) is the alternative.
+4. (field `capability`) scientific-prediction is assigned beside calibration-uncertainty because the claim is a measurement of mu scored against the simulated truth. The ranking scores only the interval; the point estimate appears in Codabench's RMSE column.
+5. (field `governance.submission_process`) sandboxed-rerun rather than containerized-algorithm-submission. Entrants upload code that the organisers' Docker image runs, not a container of their own; the brain-score precedent was followed. · [S6][fair-universe-higgsml-s6]
+   > "docker\_image":"docker.io/nersc/fair\_universe:1298f0a8"
+6. (field `governance.independence_flags`) Who paid the $4,500 in prizes is unstated, and the Codabench Terms contradict the Prizes page. prize-sponsored-by-industry could apply if a commercial sponsor paid. · [S1][fair-universe-higgsml-s1]
+   > will win $2000
+7. (field `versions`, needs a specialist) The normalisation defect that arXiv 2609.02781 found and reported upstream (issue 184) was fixed by pull request 185 on 2026-11-06 (execution.harness\_note). The reporter says the official competition pipeline was unaffected, which makes it a tooling fix rather than an erratum of the 2024 edition; no maintainer has said so, and the issue is still open. If the official scoring did run through systematics(), the 2024 version needs an erratum. · [S10][fair-universe-higgsml-s10]
+   > The official competition pipeline is \*\*unaffected\*\*, because normalization nuisances are applied inside \`get\_bootstrapped\_dataset()\` instead.
+8. (field `versions`) The pilot is recorded as an edition from the site's news alone. A single-systematic (TES) variant ran on Codabench (4346) to 2025-05-31 and is not recorded; the 2025 and 2026 weak-lensing challenges are treated as other benchmarks. · [S2][fair-universe-higgsml-s2]
+   > We have launched the pilot version of HiggsML Uncertainty Competition today
+9. (field `data.ceiling_anchor_type`) theoretical-maximum follows the letter of the ceiling tests; the bound is the regulariser's artefact and unreachable (Stage 3 failure 004, still open).
+10. (field `metrics`) The coverage Metric's optimum is a target (0.6827), so it declares headroom\_computable false and Metric.headroom\_null\_reason() answers metric-not-headroom-computable, which is not one of 12 S3.4's six null reasons. P3-S9-T04 asserts one of the six for every physics metric; it needs a reason for a target optimum (the nearest is lower-is-better-optimum-zero, whose BBQ example is a target of zero), or an exception for this one. · [S9][fair-universe-higgsml-s9]
+   > the closer to the standard 68.27% probability the better
+11. (field `metrics`) The Quantile Score's primary anchor, 4.6052, is -ln(0.01) derived from the formula, not a number any source prints, and no valid interval reaches it; with no published floor its headroom is no-baseline-established. A floor (a trivial interval scored by the official code) would need a source that measures it. · [S9][fair-universe-higgsml-s9]
+   > c is the coverage, and ϵ = 10−2 is a regularisation term
+12. (field `metrics`) The penalty's no-penalty band is set by the number of pseudo-experiments through the binomial error, so a Quantile Score or coverage depends on how many pseudo-experiments a trial holds; the results page's values are labelled averages, and whether they average per-trial scores or score the pooled trials is not stated in the sources read. · [S9][fair-universe-higgsml-s9]
+   > the binomial statistical error on c
+
+**Reviewer checklist** for `fair-universe-higgsml`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -609,16 +628,22 @@ Considered and rejected:
 - [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
 - [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
 - [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
+- [ ] Other evidence: the remaining evidenced fields match their quotes
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[lhc-olympics-2020-s1]: https://arxiv.org/pdf/2101.08320v1
-[lhc-olympics-2020-s2]: https://zenodo.org/records/6466204
-[lhc-olympics-2020-s3]: https://lhco2020.github.io/homepage/
-[lhc-olympics-2020-s4]: https://zenodo.org/records/4536624
-[lhc-olympics-2020-s5]: https://arxiv.org/pdf/2606.13780v1
-[lhc-olympics-2020-s6]: https://raw.githubusercontent.com/lhcolympics2020/parsingscripts/master/README.md
-[lhc-olympics-2020-s7]: https://arxiv.org/abs/2101.08320
+[fair-universe-higgsml-s1]: https://fair-universe.lbl.gov/Higgs-Uncertainty-Challenge.html
+[fair-universe-higgsml-s2]: https://fair-universe.lbl.gov/
+[fair-universe-higgsml-s3]: https://arxiv.org/abs/2410.02867
+[fair-universe-higgsml-s4]: https://arxiv.org/pdf/2410.02867v5
+[fair-universe-higgsml-s5]: https://fair-universe.lbl.gov/docs/pages/evaluation.html
+[fair-universe-higgsml-s6]: https://www.codabench.org/api/competitions/2977/
+[fair-universe-higgsml-s7]: https://arxiv.org/pdf/2609.02781v1
+[fair-universe-higgsml-s8]: https://zenodo.org/records/15131565
+[fair-universe-higgsml-s9]: https://arxiv.org/pdf/2410.02867v5
+[fair-universe-higgsml-s10]: https://api.github.com/repos/FAIR-Universe/HEP-Challenge/issues/184
+[fair-universe-higgsml-s11]: https://raw.githubusercontent.com/FAIR-Universe/HEP-Challenge/master/README.md
+[fair-universe-higgsml-s12]: https://api.github.com/repos/FAIR-Universe/HEP-Challenge/pulls/185
 
 ### 2.4 TrackML Particle Tracking Challenge (trackml)
 
@@ -1043,8 +1068,8 @@ Fifty original research-level problems in condensed matter theory, written and c
 | S4 | `src-arxiv-2609-13009-v1` | preprint · arXiv | [arxiv.org/pdf/2609.13009v1](https://arxiv.org/pdf/2609.13009v1) | none (not-required) |
 | S5 | `src-hf-cmt-benchmark-card` | dataset-card · Hugging Face | huggingface.co/datasets/\[personal account\]/cmt\_benchmark/raw/main/README.md (not linked: a personal account) | capture 2026-10-14 (not linked: the page is under a personal account) |
 | S6 | `src-hf-cmt-benchmark-card-2026-10` | dataset-card · Hugging Face | [huggingface.co/datasets/CMTBenchmark/cmt\_benchmark/raw/c6aa803a6ca553...](https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) | [capture 2026-11-17](https://web.archive.org/web/20261117213634/https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) |
-| S7 | `src-epoch-cmt-benchmark-review` | documentation · Epoch AI | [epoch.ai/benchmarks/cmt-benchmark/review](https://epoch.ai/benchmarks/cmt-benchmark/review) | none (pending) |
-| S8 | `src-hf-cmt-benchmark-card-2026-10-response` | dataset-card · Hugging Face | [huggingface.co/datasets/CMTBenchmark/cmt\_benchmark/raw/c6aa803a6ca553...](https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) | none (pending) |
+| S7 | `src-epoch-cmt-benchmark-review` | documentation · Epoch AI | [epoch.ai/benchmarks/cmt-benchmark/review](https://epoch.ai/benchmarks/cmt-benchmark/review) | [capture 2026-11-24](https://web.archive.org/web/20261124155524/https://epoch.ai/benchmarks/cmt-benchmark/review) |
+| S8 | `src-hf-cmt-benchmark-card-2026-10-response` | dataset-card · Hugging Face | [huggingface.co/datasets/CMTBenchmark/cmt\_benchmark/raw/c6aa803a6ca553...](https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) | [capture 2026-11-24](https://web.archive.org/web/20261124170202/https://huggingface.co/datasets/CMTBenchmark/cmt_benchmark/raw/c6aa803a6ca553091095ecf07e747b8720b1fbc2/README.md) |
 
 **Evidence** (33 quoted fields), by checklist area:
 
@@ -1763,7 +1788,7 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 | --- | --- | --- | --- | --- |
 | S1 | `src-arxiv-2509-26574` | preprint · arXiv | [arxiv.org/html/2509.26574v4](https://arxiv.org/html/2509.26574v4) | none (not-required) |
 | S2 | `src-arxiv-2609-13009-v2` | preprint · arXiv | [arxiv.org/pdf/2609.13009v2](https://arxiv.org/pdf/2609.13009v2) | none (not-required) |
-| S3 | `src-epoch-critpt-review-2026-11` | documentation · Epoch AI | [epoch.ai/benchmarks/critpt/review](https://epoch.ai/benchmarks/critpt/review) | none (pending) |
+| S3 | `src-epoch-critpt-review-2026-11` | documentation · Epoch AI | [epoch.ai/benchmarks/critpt/review](https://epoch.ai/benchmarks/critpt/review) | [capture 2026-11-24](https://web.archive.org/web/20261124155542/https://epoch.ai/benchmarks/critpt/review) |
 | S4 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
 | S5 | `src-critpt-news` | documentation · CritPt (critpt.com) | [critpt.com/news.html](https://critpt.com/news.html) | [capture 2026-11-17](https://web.archive.org/web/20261117215636/https://critpt.com/news.html) |
 | S6 | `src-github-critpt-readme-2026-11` | repository · GitHub | [raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7...](https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md) | [capture 2026-11-17](https://web.archive.org/web/20261117213057/https://raw.githubusercontent.com/CritPt-Benchmark/CritPt/c998cd7658795ceaea7230ad0928a2061cc583e3/README.md) |
@@ -1828,7 +1853,7 @@ Seventy-one research-scale physics challenges, written by more than fifty active
 
 - `governance.maintainer` = \[withheld: it may name a person; see the entry file\] · [S1][critpt-s1]
   - why: The equal-contribution lead authors are at Argonne and UIUC, as are most of the core team.
-  > \[withheld: it may name a person; see the entry file\]
+  > Affiliation: Argonne National Laboratory
 - `governance.submission_process` = held-out-server · [S1][critpt-s1]
   > we provide a public evaluation pipeline with an online grading server.
 - `governance.known_limitation` · [S3][critpt-s3]

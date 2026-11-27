@@ -326,7 +326,7 @@ Considered and rejected:
 4. (field `designed_for_subjects`) multi-agent-system was rejected (a self-play entrant is one joint policy, an ad-hoc entrant one agent with evaluator-supplied teammates); Melting Pot's classification tags it for a focal population scored jointly, which self-play resembles.
 5. (field `evaluation_target`) evaluation\_target is learned-system with the hand-coded bots as baselines, following WeatherBench 2 and Open Problems; mixed was considered, since the bots led most of the release table.
 6. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on the release paper's own learners (ACHA, and BAD by six of its authors), as RoboCasa's flag rests on its baseline rows; NLE records no flag for its release baselines. · [S2][hanabi-s2]
-   > \[withheld: it may name a person; see the entry file\]
+   > \[38\] J. N. Foerster, F. Song, E. Hughes, N. Burch, I. Dunning, S. Whiteson, M. Botvinick, M. Bowling, Bayesian action decoder for deep multi-agent reinforcement learning
 7. (field `lifecycle`) lifecycle active rests on a 2026 paper that runs JaxMARL's reimplementation, not the archived Hanabi Learning Environment. Whether results on a port count as use of the instrument the entry names, and whether they compare with results on the original (the scoring of lost games and the observation must match). · [S3][hanabi-s3]
    > We run experiments in the JaxMARL \[25\] implementations of the popular Hanabi \[4\] and Overcooked \[6\] environments
 8. (field `data.contamination_risk`) contamination\_risk medium rests on the ad-hoc pool being the evaluator's choice and possibly public; self-play alone would be low.

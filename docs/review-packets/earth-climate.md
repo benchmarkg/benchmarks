@@ -2,7 +2,7 @@
 
 # Review packet: Earth and climate
 
-`earth-climate` · 18 published entries · Core family · 8 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`earth-climate` · 18 published entries · Core family · 8 subdomains · data as of 2026-11-24 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
@@ -757,7 +757,7 @@ A benchmark for pretrained models on Earth observation, built from public remote
 | S6 | `src-github-geo-bench-2-leaderboard-readme` | repository · GitHub | [raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/mai...](https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063351/https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2-Leaderboard/main/README.md) |
 | S7 | `src-github-geo-bench-2-readme` | repository · GitHub | [raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md](https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063414/https://raw.githubusercontent.com/The-AI-Alliance/GEO-Bench-2/main/README.md) |
 | S8 | `src-github-geo-bench-readme` | repository · GitHub | [raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md](https://raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014063438/https://raw.githubusercontent.com/ServiceNow/geo-bench/main/README.md) |
-| S9 | `src-hf-api-aialliance-datasets` | dataset-card · Hugging Face | [huggingface.co/api/datasets?author=aialliance&limit=100](https://huggingface.co/api/datasets?author=aialliance&limit=100) | none (pending) |
+| S9 | `src-hf-api-aialliance-datasets` | dataset-card · Hugging Face | [huggingface.co/api/datasets?author=aialliance&limit=100](https://huggingface.co/api/datasets?author=aialliance&limit=100) | [capture 2026-11-24](https://web.archive.org/web/20261124164818/https://huggingface.co/api/datasets?author=aialliance&limit=100) |
 
 **Evidence** (55 quoted fields), by checklist area:
 
@@ -2027,10 +2027,10 @@ A NeurIPS 2026 competition, run on Kaggle, for a single HVAC control policy that
 | S5 | `src-kaggle-smart-buildings-record` | leaderboard-page · Kaggle | [www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?c...](https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=neurips-2026-smart-buildings) | [capture 2026-11-04](https://web.archive.org/web/20261104111732/https://www.kaggle.com/api/i/competitions.CompetitionService/GetCompetition?competitionName=neurips-2026-smart-buildings) |
 | S6 | `src-kaggle-smart-buildings-code` | leaderboard-page · Kaggle | [www.kaggle.com/api/i/kernels.KernelsService/ListKernels](https://www.kaggle.com/api/i/kernels.KernelsService/ListKernels) | none (withheld) |
 | S7 | `src-github-smart-buildings-starter-kit-readme` | repository · GitHub | [raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c5...](https://raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c57b5291f44baf0283e0a081d53f5b16/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104105338/https://raw.githubusercontent.com/smart-buildings-2026/starter-kit/95cea5b1c57b5291f44baf0283e0a081d53f5b16/README.md) |
-| S8 | `src-github-api-smart-buildings-starter-kit-pull-2` | repository · GitHub | [api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2](https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2) | none (pending) |
+| S8 | `src-github-api-smart-buildings-starter-kit-pull-2` | repository · GitHub | [api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2](https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2) | [capture 2026-11-24](https://web.archive.org/web/20261124155804/https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/2) |
 | S9 | `src-arxiv-2410-03756-v2` | preprint · arXiv | [arxiv.org/pdf/2410.03756v2](https://arxiv.org/pdf/2410.03756v2) | none (not-required) |
 | S10 | `src-arxiv-2610-18511` | preprint · arXiv | [arxiv.org/abs/2610.18511](https://arxiv.org/abs/2610.18511) | none (not-required) |
-| S11 | `src-github-api-smart-buildings-starter-kit-pull-3` | repository · GitHub | [api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3](https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3) | none (pending) |
+| S11 | `src-github-api-smart-buildings-starter-kit-pull-3` | repository · GitHub | [api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3](https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3) | [capture 2026-11-24](https://web.archive.org/web/20261124155809/https://api.github.com/repos/smart-buildings-2026/starter-kit/pulls/3) |
 
 **Evidence** (50 quoted fields), by checklist area:
 
