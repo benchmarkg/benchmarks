@@ -190,6 +190,7 @@ ORG_ACCOUNTS = {
     agentclinic bigcode-bench causalnlp csebuetnlp cybench dihardchallenge hotpotqa humanoid-bench ideallab l3das
     libero-project llm-eval-mental-health omni-math os-world perception-test-challenge ptchallenge-workshop
     pubmedqa regnlp robo-arena s2s-ai-challenge smart-buildings-2026 stockbench usccolumbia video-mme vis-nlp
+    hkust-nlp supergpqa
     '''.split()),
     'huggingface': frozenset('''
     adyen agc2024-p agc2025 ai-safety-institute aialliance aibic atomind behavior-1k bigcode cais
@@ -201,6 +202,7 @@ ORG_ACCOUNTS = {
     openlanguagedata osunlp patronusai phylobio plm-team qwen rethinklab roboarena sakanaai scaleai servicenow
     sklp-eda-lab tau thefinai tiger-lab vals-ai vchitect writingbench yale-nlp zai-org
     causal-nlp counterbench fermionresearch nuscenes princeton-nlp regnlp sophelio
+    ceval m-a-p
     '''.split()),
     'kaggle': frozenset(['game-arena', 'googleai', 'l3dasteam']),
     'gitlab': frozenset(),
