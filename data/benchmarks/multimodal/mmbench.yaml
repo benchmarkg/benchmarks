@@ -1,0 +1,743 @@
+# data/benchmarks/multimodal/mmbench.yaml
+#
+# P1-S12 sweep follow-up: a new multimodal entry from the 2026-11-17 sweep's new-candidate finding.
+# Filled from the MMBench paper, arXiv 2307.06281 read as its v5 PDF (2024-08-20, the ECCV 2024 version, which
+# describes MMBench v1.1) and its v3 PDF (2023-08-13, which describes v1.0), and its abstract page; the repository
+# README at main's head commit 8eaac9a (2025-05-22) of open-compass/MMBench; Hugging Face's API record of
+# opencompass/MMBench; the OpenVLM Leaderboard Space's API record and its meta_data.py and gen_table.py at commit
+# bf5c5b7, and the leaderboard's data file OpenVLM.json (timestamped 2025-09-17), which the Space loads; VLMEvalKit's
+# vlmeval/dataset/image_mcq.py at main's head 68f427d (2026-11-27); and three later abstract pages: ET-Prune (arXiv
+# 2608.01979, August 2026) as evidence of current use, and MMBench-Live (arXiv 2607.01813) and MMBench-Video (arXiv
+# 2406.14515) for the identity decisions. GitHub's and Hugging Face's APIs also supplied account types, dates and
+# licence metadata; none of those is a quoted Source. Not read: the TSV data files, the test submission site (a
+# script shell), CompassHub's card and the rank site. Every quote below is checked by the quote-substring validator
+# against those Sources' committed extracts.
+#
+# Identity (04 S4): v1.0 (2023, 2,974 questions) and v1.1 (April 2024, 3,217 questions) are revisions; English and
+# Chinese, and the dev and test splits, are subsets; CCBench, a Chinese-culture benchmark the README ships in the
+# same collection, is a same-maintainer variant; MMBench-Live (another group, 2026) is a fork; MMBench-Video, a video
+# benchmark under the same name, is a separate benchmark with no lineage edge (lineage_note).
+
+id: mmbench
+name: MMBench
+tagline: 3,217 multiple-choice questions on images, in English and Chinese, over 20 abilities,
+  scored with CircularEval.
+description: >
+  A bilingual multiple-choice benchmark for vision-language models from the OpenCompass community, whose
+  paper's authors are at Shanghai AI Laboratory, Nanyang Technological University, the Chinese University
+  of Hong Kong, the National University of Singapore and Zhejiang University (ECCV 2024). Each item is
+  an image, an optional hint, a question and two to four options, filed under a three-level ability taxonomy:
+  perception and reasoning at the top, six L-2 abilities, and twenty L-3 abilities such as object localisation,
+  OCR, celebrity recognition, spatial relationship, social relation and future prediction, with at least
+  125 questions each. Student volunteers collected more than 80% of the questions from the Internet and
+  built the rest on images from public datasets' validation splits; in v1.1, questions most LLMs answered
+  from the text alone were removed. MMBench-CN translates every question into Chinese with GPT-4, checked
+  by people. Scoring is CircularEval: a question with N options is asked N times with the options rotated
+  and counts only if every pass is right, with free-form answers mapped to an option by heuristic matching
+  and then an LLM (gpt-4-0125 in v1.1). The data are split 4:6 into a dev split with public answers and
+  a test split whose answers the maintainers hold. v1.0 (July 2023, 2,974 questions) was refined into
+  v1.1 (April 2024, 3,217 questions). The OpenVLM Leaderboard, run with the maintainers' VLMEvalKit, ranks
+  284 models on the v1.1 English and Chinese test splits; its newest MMBench row is dated September 2025.
+self_description:
+  source: src-arxiv-2307-06281
+  quote: we propose MMBench, a bilingual benchmark for assessing the multi-modal capabilities of
+    VLMs
+external_ids:
+  arxiv: '2307.06281'
+external_ids_note: The Hugging Face id opencompass/MMBench is left out because the record holds no
+  data file (dataset_url_note).
+paper:
+  title: 'MMBench: Is Your Multi-modal Model an All-around Player?'
+  arxiv: '2307.06281'
+  version_read: v5
+  source: src-arxiv-2307-06281-v5
+released: 2023-07-12
+released_note: The paper's first arXiv version, as the abstract page dates it; v1.1 followed with
+  arXiv v4 on 2024-04-29 (versions).
+released_source: src-arxiv-2307-06281
+released_quote: Submitted on 12 Jul 2023 (v1), last revised 20 Aug 2024 (this version, v5)
+release_venue: ECCV 2024
+release_venue_source: src-arxiv-2307-06281
+release_venue_quote: Accepted in ECCV2024 as Oral Presentation
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: multimodal/visual-qa
+  secondary: []
+domain_basis:
+  reason: Every scored item is a question with options about an image, and the construction removed
+    questions that LLMs could answer from the text alone, so the score measures whether the chosen
+    option corresponds to the image. That is visual-qa's definition, and multimodal's inclusion test
+    (answering in language about an image). The breadth is over visual abilities, not academic
+    subjects, and every item needs the image, which ADR-0015 keeps in `multimodal`.
+  source: src-arxiv-2307-06281-v5
+  quote: If more than half of the LLMs can answer the question correctly with text-only inputs, the
+    question will be manually verified and then removed if it is unqualified
+domain_considered_and_rejected:
+  - term: general-intelligence/multi-subject-knowledge-exams
+    reason: The benchmark claims breadth over twenty ability dimensions, but they are visual
+      abilities, not academic subjects, and every item needs its image; general-intelligence's
+      exclusion test sends such a benchmark to `multimodal` (ADR-0015).
+    source: src-arxiv-2307-06281-v5
+    quote: we adopt Perception and Reasoning as level-1 (L-1) abilities in our taxonomy
+  - term: multimodal/chart-diagram-understanding
+    reason: Structuralized image-text understanding (charts, tables, code, layouts) is one of the
+      twenty L-3 abilities, reported inside the Logic Reasoning score, not a subset.
+  - term: vision/ocr-handwriting
+    reason: OCR is one of the twenty L-3 abilities, and it is scored as an answer to a question
+      about the image, which vision's exclusion sends to `multimodal`.
+  - term: language/multilingual
+    reason: The Chinese version translates the same questions to compare models across two
+      languages, but the scored relation is still between the image and the chosen answer.
+    source: src-arxiv-2307-06281-v5
+    quote: Most VLMs display a lower performance on MMBench-CN compared to the results on MMBench
+capability:
+  - perception
+  - context-integration
+capability_basis:
+  perception:
+    reason: The model receives an image and is scored on what it recovers from it; perception is one
+      of the two top-level abilities, and three of the six L-2 abilities (coarse, single-instance
+      and cross-instance perception) are perceptual.
+    source: src-arxiv-2307-06281-v5
+    quote: we adopt Perception and Reasoning as level-1 (L-1) abilities in our taxonomy
+  context-integration:
+    reason: The image the protocol supplies determines the answer. Questions LLMs answered from the
+      text alone were filtered out, and text-only GPT-4 then scores at chance, so the score tests
+      whether the supplied image was used.
+    source: src-arxiv-2307-06281-v5
+    quote: GPT-4 demonstrates a random-level overall accuracy
+capability_considered_and_rejected:
+  - term: knowledge-recall
+    reason: Some L-3 abilities need knowledge the model brings (celebrity recognition, physical
+      property and nature relation reasoning), but they are three of twenty, reported inside the L-2
+      scores, and the benchmark's claim is perception and reasoning about the image.
+    source: src-arxiv-2307-06281-v5
+    quote: Tasks requiring external knowledge to solve, which correspond to abilities including
+      celebrity recognition, physical property reasoning, natural relation reasoning
+  - term: spatial-reasoning
+    reason: Spatial relationship and physical relation are L-3 abilities and the paper's hardest
+      cases, but they are two of twenty, reported as breakdowns of one score.
+    source: src-arxiv-2307-06281-v5
+    quote: Perform badly on recognizing or reasoning about the inter-object spatial relationships,
+      either in 2D or 3D space
+  - term: reliability-consistency
+    reason: CircularEval counts a question only if every pass is answered correctly, which resembles
+      pass^k, but the option order changes between passes, and the term's exclusion rules out trials
+      whose inputs change.
+    source: src-arxiv-2307-06281-v5
+    quote: A VLM is considered successful in solving a question only if it correctly predicts the
+      answer in all circular passes
+  - term: abductive-reasoning
+    reason: Identity, social-relation and future-prediction items ask for the most plausible reading
+      of a scene, but they are a few L-3 abilities among twenty, with no subset of their own.
+
+evaluation_method:
+  - multiple-choice
+evaluation_method_note: Each item has two to four options. Under single-pass (vanilla) evaluation
+  the paper puts chance near 25% for four-option items; CircularEval, the default since the paper,
+  lowers it, and no source states the circular chance rate.
+evaluation_method_basis:
+  reason: The model chooses among the supplied options. A free-form answer is first matched to an
+    option heuristically and otherwise mapped to one by an LLM, and the extracted option is compared
+    with the key under CircularEval, every rotated pass having to be right.
+  source: src-arxiv-2307-06281-v5
+  quote: A VLM is considered successful in solving a question only if it correctly predicts the
+    answer in all circular passes
+evaluation_method_considered_and_rejected:
+  - term: model-graded-judge
+    reason: An LLM (ChatGPT in v1.0, gpt-4-0125 in v1.1) maps a free-form answer to one of the
+      options or to none, but it is told to match the answer's literal meaning, not to judge
+      correctness, which the key decides. Its version still moves scores (comparability), and it is
+      in the scoring path (governance.independence_flags).
+    source: src-arxiv-2307-06281-v5
+    quote: we try to extract the choice with LLMs (gpt-4-0125 by default)
+  - term: exact-match
+    reason: The extracted letter is compared exactly with the key, but within a closed set of
+      supplied options, which multiple-choice names.
+designed_for_subjects:
+  - instruction-tuned-model
+designed_for_subjects_basis:
+  reason: The subjects are vision-language models prompted zero-shot with one fixed prompt; the LLM
+    choice extractor exists so that models with weak instruction following can still be scored. No
+    tools or harness loop are involved.
+  source: src-arxiv-2307-06281-v5
+  quote: we adopt the zero-shot setting to infer MMBench questions with all VLMs, based on the same
+    prompt
+designed_for_subjects_considered_and_rejected:
+  - term: base-model
+    reason: OpenFlamingo v2, a model without instruction tuning, is scored in the paper and lands at
+      chance; the design accommodates weak instruction following, not base models.
+    source: src-arxiv-2307-06281-v5
+    quote: OpenFlamingo v2 shows random-level performance due to the lack of instruction tuning
+  - term: reasoning-model
+    reason: The protocol sets no reasoning budget, and the paper found no gain from chain-of-thought
+      prompting.
+    source: src-arxiv-2307-06281-v5
+    quote: We have also attempted to assess these models with few-shot and chain-of-thought
+      evaluations. However, no encouraging results are observed.
+
+as_used:
+  - protocol: CircularEval with exact matching of the option letter, without the LLM choice
+      extractor, reported on MMBench v1.1 by method papers.
+    source: src-arxiv-2608-01979
+    quote: on MMBench v1.1, it reaches 0.8467 circular exact-matching accuracy versus 0.8437 for
+      Vanilla at 54.45% average visual-token retention
+    note: The abstract does not say which split or language was scored; the dev split is the one
+      whose answers are public. VLMEvalKit falls back to exact matching when no judge model is set
+      or the API fails (execution.harness_gotcha).
+
+lifecycle: active
+lifecycle_basis:
+  reason: Results are still being produced in 2026, for example an August 2026 token-pruning paper
+    reporting MMBench v1.1 accuracy. The maintainers' leaderboard added MMBench rows until September
+    2025 (activity).
+  source: src-arxiv-2608-01979
+  quote: on MMBench v1.1, it reaches 0.8467 circular exact-matching accuracy versus 0.8437 for
+    Vanilla at 54.45% average visual-token retention
+activity: accepting-submissions
+activity_note: The leaderboard's newest MMBench row is dated 2025/09/17 and the data file's time
+  field is 2025-09-17; one later row (2026/02/13) carries only OCRBench, and the Space was last
+  changed on 2026-03-11. The README's test submission site serves a script shell (HTTP 200), and
+  whether it still scores submissions was not checked (review_checks).
+activity_basis:
+  reason: The benchmark has never run in rounds, and the leaderboard gives a standing route in, a
+    pull request adding the model to VLMEvalKit, after which the maintainers evaluate it; the README
+    also points test predictions at a submission site.
+  source: src-hf-space-open-vlm-leaderboard-meta-data
+  quote: To add your own model to the leaderboard, please create a PR in
+    [VLMEvalKit](https://github.com/open-compass/VLMEvalKit) to support your VLM and then we will
+    help with the evaluation and updating the leaderboard.
+  newest_submission: 2025-09-17
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Gemini-2.5-Pro
+    source: src-opencompass-openvlm-json
+    observed_on: 2026-11-27
+    quote: '"dir_name": "GeminiPro2-5", "key": 482 }, "MMBench_TEST_EN_V11": { "Overall": 88.5'
+    note: The top MMBench_TEST_EN_V11 Overall in the leaderboard data (88.5, tied with a China
+      Mobile model); the row's META names Gemini-2.5-Pro, Google.
+  - system: InternLM-XComposer2
+    source: src-arxiv-2307-06281-v5
+    observed_on: 2026-11-27
+    quote: Among open-source VLMs, InternLMXComposer2 [12] achieves the best performance
+evaluation_target: learned-system
+execution_mode: automated
+ground_truth_source: held-out-labels
+ground_truth_source_note: The answer key written with each question; the dev split's is public and
+  the test split's is held by the maintainers (VLMEvalKit's answer-bearing full files are marked
+  internal).
+reproducible_by_third_party: true
+reproducible_by_third_party_basis:
+  reason: The dev split's questions, images and answers are public, and VLMEvalKit computes the
+    score locally; test predictions go to the maintainers' submission site, whose current state was
+    not checked (review_checks).
+  source: src-github-mmbench-readme-8eaac9a
+  quote: To submit your prediction on the test splits of MMBench, you can visit [MMBench
+    Submission](https://mmbench.opencompass.org.cn/mmbench-submission)
+
+task:
+  exists: true
+  input:
+    - an image (some items compose several into one), with an optional hint
+    - a question with two to four lettered options, in English or, for MMBench-CN, in Chinese
+  output: A free-form answer or an option letter, mapped to one option.
+  scoring: CircularEval accuracy over the split's questions, a question counting only if all N
+    passes with rotated options are answered correctly, after heuristic matching and LLM choice
+    extraction; reported overall and for the six L-2 and twenty L-3 abilities, for English and
+    Chinese apart.
+  tests_hidden_from_system: true
+  source: src-arxiv-2307-06281-v5
+  quote: Please select the correct answer from the options above
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: train-open-test-held-out
+  access_note: The test questions and images are released, and only their answers are held;
+    VLMEvalKit loads the answer-bearing full files (MMBench_V11, MMBench_CN_V11) for the leaderboard
+    and marks them internal. There is no training split; the dev split is the open one.
+  access_basis:
+    reason: The test split behind the leaderboard's scores is released without its answers, and the
+      maintainers score test predictions; the dev split is fully public.
+    source: src-arxiv-2307-06281-v5
+    quote: For the test subset, only the data samples are released, while the ground truth answers
+      remain confidential.
+  refresh: versioned-releases
+  refresh_note: Three dated changes, none since April 2024. v1.0 came with arXiv v1 (2023-07-12),
+    its verified Chinese version was announced on 2023-10-03, and v1.1 came with arXiv v4
+    (2024-04-29). The README's 2023-12-26 announcement removed noisy samples from CCBench, the
+    variant, not from MMBench.
+  refresh_basis:
+    reason: Each change is carried by a version label (v1.0, v1.1, the _V11 file names) or a dated
+      README announcement that a claim can be pinned to.
+    source: src-arxiv-2307-06281-v5
+    quote: It describes MMBench v1.1, a refined version of the MMBench (with better data quality).
+  data_provenance:
+    - web-scraped
+    - crowd-authored
+    - model-generated
+  data_provenance_note: More than 80% of the questions come from the Internet and the rest are built
+    on images from public datasets' validation splits (COCO, ScienceQA, TextVQA and others), with
+    the questions written or selected by volunteers who are undergraduate or graduate students. The
+    Chinese version is GPT-4's translation, checked by people, and v1.0's sources table marks one
+    source's questions as ChatGPT-generated. v1.1 added LLM and VLM filtering of text-answerable and
+    wrong questions, which v1.0's paper does not describe.
+  data_provenance_source: src-arxiv-2307-06281-v5
+  data_provenance_quote: more than 80% of questions in MMBench are collected from the Internet
+  contamination_risk: medium
+  contamination_risk_note: >
+    The dev split's answers have been public since 2023 and the test questions and images are public
+    too, so a training route is plausible; more than 80% of the items come from the open Internet and
+    the rest
+    from public datasets' validation splits, which the paper says are not meant for training. No
+    source read measures contamination of MMBench itself. MMBench-Live's authors report weaker
+    memorization signals on their regenerated items than on the original (contamination_evidence),
+    which is relative evidence only. The test answers stay with the maintainers.
+  contamination_risk_source: src-arxiv-2307-06281-v5
+  contamination_risk_quote: images are gathered from the validation set of public datasets (if they
+    exist) while the questions are self-constructed
+  contamination_evidence:
+    - source: src-arxiv-2607-01813
+      stance: supports
+      quote: exhibits weaker contamination-related memorization signals
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_basis:
+    reason: CircularEval accuracy is bounded at 100%, and no human score, operational system or
+      measured ceiling is published; the leaderboard's top v1.1 English test score is 88.5.
+    source: src-arxiv-2307-06281-v5
+    quote: A VLM is considered successful in solving a question only if it correctly predicts the
+      answer in all circular passes
+  dataset_licence: CC-BY-4.0
+  dataset_licence_note: Declared on the opencompass/MMBench Hugging Face record, which holds no data
+    file; the TSV files the README links on opencompass.openxlab.space and the repository's README
+    state no data licence (review_checks).
+  dataset_licence_source: src-hf-api-opencompass-mmbench
+  dataset_licence_quote: '"tags":["license:cc-by-4.0","region:us"]'
+  upstream_licences: null
+  upstream_licences_note: The images come from the Internet (more than 80%) and from public
+    datasets' validation splits; the paper lists the datasets but not their licences.
+  size:
+    - count: 3217
+      unit: multiple-choice questions over 20 L-3 abilities, the headline set
+      subset: v1.1
+      source: src-arxiv-2307-06281-v5
+      quote: we have gathered a total of 3,217 data samples spanning across 20 distinct L-3
+        abilities
+    - count: 2974
+      unit: multiple-choice questions over 20 abilities
+      subset: v1.0
+      source: src-arxiv-2307-06281-v3
+      quote: comprised of a total of 2,974 meticulously selected questions, which collectively cover
+        a diverse spectrum of 20 fine-grained skills
+    - count: 1164
+      unit: dev questions in English, and the same number in Chinese
+      subset: v1.0 dev split (README download table)
+      source: src-github-mmbench-readme-8eaac9a
+      quote: '| MMBench-Dev | Dev | EN | 1164 | The Dev Split of MMBench |'
+    - count: 1784
+      unit: test questions in English, and the same number in Chinese
+      subset: v1.0 test split (README download table)
+      source: src-github-mmbench-readme-8eaac9a
+      quote: '| MMBench-Test | Test | EN | 1784 | The Test Split of MMBench |'
+  size_note: The README's v1.0 table totals 2,948, 26 fewer than the 2,974 its prose and the v3
+    paper give. v1.1's split sizes are not stated; the paper gives the 4:6 ratio. The data files
+    were not read (review_checks).
+  languages:
+    - en
+    - zh
+  languages_note: The questions and options were written in English; MMBench-CN is their Chinese
+    translation, with proper nouns, symbols and code left untranslated.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: The OpenCompass community (the paper's authors are at Shanghai AI Laboratory, Nanyang
+    Technological University, the Chinese University of Hong Kong, the National University of
+    Singapore and Zhejiang University)
+  maintainer_basis:
+    reason: The README says the OpenCompass community develops MMBench, and the repository, the
+      Hugging Face record and the leaderboard Space sit in the open-compass and opencompass
+      organisation accounts. Shanghai AI Laboratory is the paper's first affiliation.
+    source: src-github-mmbench-readme-8eaac9a
+    quote: MMBench is developed by the [**OpenCompass
+      Community**](https://github.com/open-compass/opencompass)
+  maintainer_type: community-collective
+  maintainer_type_note: The artefacts sit in shared organisation accounts that the README attributes
+    to a community, and the authors come from five institutions, with no legal form and no single
+    institution stated as the holder. academic-lab does not fit (Shanghai AI Laboratory is not a
+    university), and no source states the laboratory's legal form, which government-agency or
+    industry-lab would need; omnidocbench left the type null for a Shanghai AI Laboratory account
+    (review_checks).
+  submission_process:
+    - held-out-server
+    - sandboxed-rerun
+    - maintainer-run
+  submission_process_note: Test predictions go to the maintainers' submission site, which scores
+    them against the withheld answers. The leaderboard takes a model once a pull request adds it to
+    VLMEvalKit, and the maintainers then run the evaluation; they also run the API models and the
+    paper's baselines themselves. Papers report dev-split numbers they compute (as_used).
+  submission_process_source: src-github-mmbench-readme-8eaac9a
+  submission_process_quote: For **MMBench-TEST-CN/EN**, you can submit the file to
+    https://mmbench.opencompass.org.cn/mmbench-submission to obtain the evaluation accuracies.
+  independence_flags:
+    - flag: maintainer-competes-on-own-benchmark
+      source: src-opencompass-openvlm-json
+      quote: '"Method": [ "InternLM-XComposer2", "https://github.com/InternLM/InternLM-XComposer" ], "Parameters":
+        "7B", "Language Model": "InternLM2-7B", "Vision Model": "CLIP ViT-L/14", "Org": "Shanghai AI Laboratory"'
+    - flag: grader-from-evaluated-party
+      source: src-arxiv-2307-06281-v5
+      quote: we try to extract the choice with LLMs (gpt-4-0125 by default)
+    - flag: single-evaluator-private-test-set
+      source: src-arxiv-2307-06281-v5
+      quote: For the test subset, only the data samples are released, while the ground truth answers
+        remain confidential.
+  independence_flags_note: >
+    maintainer-competes-on-own-benchmark rests on an affiliation, as the maintainer decided on
+    2026-11-18: the paper's first affiliation is Shanghai AI Laboratory, and the leaderboard the
+    maintainers run lists 47 of its 285 rows under an Org naming Shanghai AI Laboratory (the
+    InternLM-XComposer and InternVL families), among them InternVL2.5-78B-MPO at 87.9 on the v1.1
+    English test split, near the top. In the paper InternLM-XComposer2 is the best open-source model.
+    grader-from-evaluated-party: the choice extractor, gpt-4-0125, is OpenAI's (the paper's reference
+    list gives GPT-4 to OpenAI), and GPT-4-Turbo (0125), text-only, and GPT-4v are scored in the same
+    tables; the extractor decides which option a free-form answer names, not whether it is right.
+    single-evaluator-private-test-set: the maintainers alone hold the test answers and score every
+    test result. The paper states no funding, so funded-by-evaluated-party was not set.
+  independence_assessed: true
+  known_limitation:
+    source: src-arxiv-2307-06281-v5
+    quote: the content moderation policy affects the MMBench-test accuracy by up to 2.4%
+  known_limitation_note: Proprietary models refuse some questions, most of GPT-4v's refusals being
+    celebrity recognition, and under CircularEval a refusal in any pass fails the question.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: The leaderboard ranks API models beside open weights, and the protocol mandates no
+      hardware; the choice extractor is an API model too. Serving open weights on GPUs is the
+      entrant's choice.
+    source: src-hf-space-open-vlm-leaderboard-meta-data
+    quote: OpenVLM Leaderboard only includes open-source VLMs or API models that are publicly
+      available.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The headline test score can be computed only with the answers the maintainers hold, so
+      it comes from their submission site or their own leaderboard runs; the dev split can be scored
+      by anyone.
+    source: src-github-vlmevalkit-image-mcq-68f427d
+    quote: "'MMBench_V11': 'b9276414f57af1308dcc4d0cd9b42e7c', # Internal Only"
+  reproducibility_blockers:
+    - private-test-set
+  harness_availability: official-harness
+  harness: VLMEvalKit (run.py with --data MMBench_TEST_EN_V11, MMBench_DEV_EN_V11 and the CN
+    equivalents), which applies CircularEval to MMBench and CCBench
+  harness_source: src-github-mmbench-readme-8eaac9a
+  harness_quote: (the official code we used for the MMBench leaderboard)
+  harness_gotcha:
+    source: src-github-vlmevalkit-image-mcq-68f427d
+    quote: warnings.warn('OPENAI API is not working properly, will use exact matching for
+      evaluation')
+  harness_gotcha_note: VLMEvalKit's multiple-choice scorer uses exact matching when no judge model
+    is passed, and falls back to it with a warning when the judge's API fails. Either is a different
+    condition from the paper's gpt-4-0125 extraction; the paper reports up to a 1.4-point spread
+    between extractors, and its Table 1 gains from LLM extraction over matching alone are larger for
+    models that answer in free form.
+  code_licence: Apache-2.0
+  code_licence_note: GitHub's licence metadata for open-compass/VLMEvalKit and open-compass/MMBench
+    (read 2026-11-27) reports Apache-2.0 for both.
+  runnable_via:
+    - custom
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the llm-static-text profile: the choice extractor, recorded in judge_model (the paper's Table 6 moves
+  # scores by up to 1.4 points across extractors, and exact matching without one is a different condition), and the
+  # harness (VLMEvalKit's loader and prompt). CircularEval against single-pass (vanilla) evaluation moves scores by
+  # tens of points but has no EvalConditions field; it belongs in a claim's notes, as do the version (v1.0 or v1.1)
+  # and the language, which subset_used carries.
+  material_extra:
+    - judge_model
+    - harness
+aggregation_policy: official-aggregate
+aggregation_policy_note: The paper's Overall is CircularEval accuracy over a split's questions, one
+  figure per language. The leaderboard's main MMBench_V11 column is the mean of the English and
+  Chinese v1.1 test Overall figures, and the main table sorts by it.
+aggregation_policy_basis:
+  reason: The leaderboard's code computes the MMBench_V11 figure from the two test splits' Overall
+    columns.
+  source: src-hf-space-open-vlm-leaderboard-gen-table
+  quote: val = (item['MMBench_TEST_CN_V11']['Overall'] + item['MMBench_TEST_EN_V11']['Overall']) / 2
+
+liveness:
+  repo_last_commit: 2025-05-22
+  leaderboard_last_updated: 2025-09-17
+  reproduction_script_present: true
+  last_checked: 2026-11-27
+
+homepage: https://github.com/open-compass/MMBench
+repository: https://github.com/open-compass/MMBench
+dataset_url: null
+dataset_url_note: The data are TSV files linked from the README's download table (on
+  opencompass.openxlab.space, v1.0 there and v1.1 through VLMEvalKit); the opencompass/MMBench
+  Hugging Face record holds no data file.
+leaderboard_url: https://huggingface.co/spaces/opencompass/open_vlm_leaderboard
+
+versions:
+  - version: '1.0'
+    label: MMBench v1.0, the paper's first release (arXiv v1 to v3)
+    version_kind: revision
+    released: 2023-07-12
+    items: 2974
+    changes: 2,974 English multiple-choice questions over 20 L-3 abilities, split 4:6 into dev and
+      test, scored with CircularEval and ChatGPT as the choice extractor. The verified Chinese
+      version was announced on 2023-10-03. The README's download table, which serves this version's
+      files, gives 1,164 dev and 1,784 test questions.
+    breaking: false
+    superseded_by: '1.1'
+    frozen: true
+    sources:
+      - src-arxiv-2307-06281-v3
+      - src-arxiv-2307-06281
+      - src-github-mmbench-readme-8eaac9a
+  - version: '1.1'
+    label: MMBench v1.1 (arXiv v4 and v5)
+    version_kind: revision
+    released: 2024-04-29
+    items: 3217
+    changes: A refined version with better data quality, described by arXiv v4 (2024-04-29) and v5
+      (2024-08-20) - 3,217 questions over the same 20 L-3 abilities, LLM and VLM filtering of
+      text-answerable and wrong questions, the Chinese version built in, and gpt-4-0125 as the
+      choice extractor. VLMEvalKit serves its files under _V11 names, and the leaderboard's main
+      MMBench column reads its test split. How many v1.0 questions were kept is not stated.
+    breaking: true
+    supersedes_version: '1.0'
+    frozen: true
+    sources:
+      - src-arxiv-2307-06281-v5
+      - src-arxiv-2307-06281
+      - src-github-vlmevalkit-image-mcq-68f427d
+      - src-hf-space-open-vlm-leaderboard-meta-data
+
+subsets:
+  - id: mmbench#en
+    label: MMBench (English)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2307-06281
+        quote: MMBench incorporates multiple-choice questions in both English and Chinese versions
+      - source: src-hf-space-open-vlm-leaderboard-meta-data
+        quote: MMBENCH_FIELDS = ['MMBench_TEST_EN_V11', 'MMBench_TEST_CN_V11', 'MMBench_TEST_EN',
+          'MMBench_TEST_CN', 'CCBench']
+    notes: The original questions, all 3,217 in v1.1 (2,974 in v1.0); the leaderboard reports the
+      v1.1 and v1.0 test splits as MMBench_TEST_EN_V11 and MMBench_TEST_EN.
+  - id: mmbench#cn
+    label: MMBench-CN (Chinese)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2307-06281-v5
+        quote: all content in questions and choices are translated to Chinese based on GPT-4, except
+          for proper nouns, symbols, and code
+      - source: src-github-mmbench-readme-8eaac9a
+        quote: '[2023/10/03] We provide a verified **Chinese**-translated version of MMBench.'
+    notes: The same questions translated by GPT-4 and verified by people, announced for v1.0 on
+      2023-10-03 and part of v1.1's paper; reported as MMBench_TEST_CN_V11 and MMBench_TEST_CN.
+  - id: mmbench#dev
+    label: Dev split (answers public)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2307-06281-v5
+        quote: split MMBench into dev and test subsets at a ratio of 4:6
+      - source: src-github-mmbench-readme-8eaac9a
+        quote: '| MMBench-Dev | Dev | EN | 1164 | The Dev Split of MMBench |'
+    notes: About 40% of the questions, with their answers; 1,164 per language in v1.0's files,
+      v1.1's size not stated. The paper reports dev results beside test, and papers that score
+      locally use it. The leaderboard data hold no dev columns.
+  - id: mmbench#test
+    label: Test split (answers held)
+    scored_separately: true
+    evidence:
+      - source: src-arxiv-2307-06281-v5
+        quote: one needs to submit the predictions to MMBench evaluation server
+      - source: src-github-mmbench-readme-8eaac9a
+        quote: '| MMBench-Test | Test | EN | 1784 | The Test Split of MMBench |'
+    notes: About 60% of the questions, released without answers; 1,784 per language in v1.0's files,
+      v1.1's size not stated. The paper's main tables and the leaderboard report it.
+subsets_note: The leaderboard is a grid of two languages by two versions on the test split, and its
+  main column averages the two v1.1 languages (aggregation_policy). The six L-2 and twenty L-3
+  abilities are breakdowns the leaderboard data carry per row, not subsets here; their per-ability
+  question counts are in a figure that did not survive text extraction.
+
+lineage:
+  role: root
+  variants:
+    - id: ccbench
+      relation: sibling benchmark by the same team, shipped in the MMBench collection - 510
+        questions on Chinese culture (dev split only), in the same multiple-choice format with
+        CircularEval and its own leaderboard column; noisy samples were removed on 2023-12-26
+      n_items: 510
+      source: src-github-mmbench-readme-8eaac9a
+      quote: '[2023/10/23] We provide a new benchmark named **CCBench**, which is a multi-modal benchmark
+        in the domain of Chinese Culture.'
+  forks:
+    - id: mmbench-live
+      maintainer: PRIS-CV Computer Vision Group
+      source: src-arxiv-2607-01813
+      quote: Instantiated from MMBench, MMBench-Live contains 5.9K newly generated evaluation
+        instances with a high answer correctness rate
+lineage_note: >
+  The ids ccbench and mmbench-live are proposals; neither has an entry (review_checks). MMBench-Live's
+  maintainer is the GitHub organisation its abstract page links (GitHub's API, not a quoted Source).
+  MMBench-Video (arXiv 2406.14515, NeurIPS 2024) is a separate benchmark under the same name, with long
+  YouTube videos, free-form questions and GPT-4 grading; it shares no items or task format with MMBench,
+  so 04 S4 gives no edge, and it has no id. MMBench-CN is a subset, not a variant: the same questions
+  translated and scored in the paper's own tables. VLMEvalKit also loads translations of the dev split
+  by other maintainers, a Korean one from NCSOFT's K-MMBench and Arabic, Portuguese, Turkish and Russian
+  ones from AIDC-AI's Parrot dataset; they were not read beyond the loader's file list and are not
+  recorded as forks.
+
+tags:
+  - multimodal
+  - visual-question-answering
+  - multiple-choice
+  - circular-eval
+  - bilingual
+  - chinese
+  - opencompass
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S12 sweep follow-up)
+  added_on: 2026-11-27
+  last_verified: 2026-11-27
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-arxiv-2307-06281-v5
+    - src-arxiv-2307-06281-v3
+    - src-arxiv-2307-06281
+    - src-github-mmbench-readme-8eaac9a
+    - src-hf-api-opencompass-mmbench
+    - src-hf-api-space-open-vlm-leaderboard
+    - src-hf-space-open-vlm-leaderboard-meta-data
+    - src-hf-space-open-vlm-leaderboard-gen-table
+    - src-opencompass-openvlm-json
+    - src-github-vlmevalkit-image-mcq-68f427d
+    - src-arxiv-2608-01979
+    - src-arxiv-2607-01813
+    - src-arxiv-2406-14515
+  sources_note: >
+    The paper's v5 and v3 PDFs (DOIs, not archived) read as text, with the affiliation line and the one
+    quoted reference given no window and every other window kept clear of the author block and the
+    reference list; the abstract page (a DOI) for the dates. The README at 8eaac9a, the Space's
+    meta_data.py, the leaderboard data file and VLMEvalKit's image_mcq.py are withheld from archiving
+    because they carry a citation block, a contact address naming a person, or personal accounts in
+    model and dataset links; their windows leave those out. Hugging Face's API records of the dataset
+    and the Space, and the Space's gen_table.py, are pending archiving. The ET-Prune, MMBench-Live and
+    MMBench-Video abstract pages are DOIs. The Space's page and the test submission site render by
+    script, so the Space's files and the data file were read instead.
+  confidence: medium
+  review_checks:
+    - check: Versions. v1.1 is modelled as a breaking revision of v1.0, as agieval's v1.1 is,
+        because the paper calls it a refined version of the same benchmark with better data quality.
+        The question count rose from 2,974 to 3,217 and new filtering was applied, and how many v1.0
+        questions survive is not stated; an edition would need new items on the same task, which a
+        refinement only partly is.
+      field: versions
+      source: src-arxiv-2307-06281-v5
+      quote: It describes MMBench v1.1, a refined version of the MMBench (with better data quality).
+    - check: CCBench is recorded as a same-maintainer variant, because the README calls it a new
+        benchmark, it has its own items, topic and update (2023-12-26) and its own leaderboard
+        column. It could instead be read as a subset of the MMBench collection, which the README
+        says includes it. The variant id ccbench and the fork id mmbench-live are proposals for the
+        lead; no entry exists for either.
+      field: lineage
+      source: src-github-mmbench-readme-8eaac9a
+      quote: MMBench is a collection of benchmarks to evaluate the multi-modal understanding
+        capability of large vision language models (LVLMs)
+    - check: MMBench-Video gets no lineage edge. It shares the name and its code goes into
+        VLMEvalKit, but it is a video benchmark with free-form questions graded by GPT-4, with its
+        own paper; that the same team maintains it rests on account names and author lists, which no
+        quoted passage states.
+      field: lineage
+      source: src-arxiv-2406-14515
+      quote: MMBench-Video incorporates lengthy videos from YouTube and employs free-form questions
+    - check: maintainer-competes-on-own-benchmark rests on the paper's first affiliation, Shanghai
+        AI Laboratory, and the Org the leaderboard gives 47 rows (InternLM-XComposer, InternVL). The
+        2026-11-18 rule says a shared university is not a shared lab; whether one large laboratory
+        with many groups counts as a shared lab, rather than a shared institution, is for a
+        reviewer.
+      field: governance.independence_flags
+      source: src-arxiv-2307-06281-v5
+      quote: 1Shanghai AI Laboratory 2Nanyang Technological University 3 The Chinese University of
+        Hong Kong 4 National University of Singapore 5 Zhejiang University
+    - check: grader-from-evaluated-party is set for the LLM choice extractor (gpt-4-0125, OpenAI's),
+        with OpenAI models scored, while model-graded-judge is rejected because the extractor maps
+        answers to options rather than judging them. If only a grader that decides correctness
+        counts, the flag would go; the paper measures the extractor against people at 91.5%
+        agreement.
+      field: governance.independence_flags
+      source: src-arxiv-2307-06281-v5
+      quote: GPT-4 can accurately match human assessments in 91.5% of cases
+    - check: activity accepting-submissions rests on the leaderboard's standing pull-request route.
+        Its newest MMBench row is dated 2025-09-17, and the README's test submission site serves a
+        script shell that was not driven, so whether it still scores test predictions is unknown;
+        no-submission-channel or unknown would follow if neither route works.
+      field: activity
+      source: src-hf-space-open-vlm-leaderboard-meta-data
+      quote: To add your own model to the leaderboard, please create a PR in
+        [VLMEvalKit](https://github.com/open-compass/VLMEvalKit) to support your VLM and then we
+        will help with the evaluation and updating the leaderboard.
+    - check: dataset_licence CC-BY-4.0 rests on the opencompass/MMBench Hugging Face record, whose
+        only files are .gitattributes and a README; the TSVs the README links carry no licence
+        statement that was read, and most images come from the Internet.
+      field: data.dataset_licence
+      source: src-hf-api-opencompass-mmbench
+      quote: '"siblings":[{"rfilename":".gitattributes"},{"rfilename":"README.md"}]'
+    - check: Item counts disagree for v1.0. The README's table gives 1,164 dev and 1,784 test
+        questions per language (2,948), against 2,974 in its prose and in the v3 paper; v1.1's split
+        sizes are not stated. The data files were not read to count them.
+      field: data.size
+      source: src-github-mmbench-readme-8eaac9a
+      quote: contains 2974 multiple-choice questions, covering 20 ability dimensions
+    - check: maintainer_type community-collective follows the README's "OpenCompass Community" and
+        the shared organisation accounts; omnidocbench left the type null for another Shanghai AI
+        Laboratory account because no source states the laboratory's legal form, and the same gap
+        applies here if the laboratory is read as the holder.
+      field: governance.maintainer_type
+      source: src-github-mmbench-readme-8eaac9a
+      quote: MMBench is developed by the [**OpenCompass
+        Community**](https://github.com/open-compass/opencompass)
+    - check: lifecycle active rather than mature or saturated. The top v1.1 English test score is
+        88.5 with no human ceiling, the leaderboard's MMBench rows stopped in September 2025, and
+        outside papers still report v1.1 in August 2026.
+      field: lifecycle
+      source: src-opencompass-openvlm-json
+      quote: '"time": "20250917132916"'
+  notes: null
+  personal_data_excluded:
+    - source: src-arxiv-2307-06281-v5
+      what: the title page's author names and their affiliation marks, and the reference list's
+        author names
+    - source: src-arxiv-2307-06281-v3
+      what: the title page's author names
+    - source: src-arxiv-2307-06281
+      what: the author line and the submitter's name
+    - source: src-github-mmbench-readme-8eaac9a
+      what: the citation block's author names
+    - source: src-hf-space-open-vlm-leaderboard-meta-data
+      what: the citation block's author names and the contact address that names a person
+    - source: src-opencompass-openvlm-json
+      what: model links that name personal Hugging Face or GitHub accounts
+    - source: src-github-vlmevalkit-image-mcq-68f427d
+      what: dataset URLs that name personal Hugging Face accounts
+    - source: src-arxiv-2608-01979
+      what: the author line and the submitter's name
+    - source: src-arxiv-2607-01813
+      what: the author line and the submitter's name
+    - source: src-arxiv-2406-14515
+      what: the author line and the submitter's name

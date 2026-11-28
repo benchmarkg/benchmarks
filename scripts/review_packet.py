@@ -163,6 +163,7 @@ NOT_VALUE_SUFFIX = ('_source', '_quote', '_note', '_notes', '_basis', '_caveat',
 # Lower case. An account not listed here is treated as a person's: add one only after checking it.
 ORG_ACCOUNTS = {
     'github': frozenset('''
+    opengvlab
     acados activitynet aider-ai airvln align-to-innovate allenai arcinstitute arcprize arena-oss asapdiscovery
     asvspoof-challenge atomgptlab atomind-ai audioset autodrive-ecosystem autonomousvision balrog-ai benevolentai
     bigcode-project biocomputingup brain-score calochallenge carla-simulator centerforaisafety chimechallenge
@@ -193,6 +194,7 @@ ORG_ACCOUNTS = {
     hkust-nlp supergpqa
     '''.split()),
     'huggingface': frozenset('''
+    opencompass opengvlab
     adyen agc2024-p agc2025 ai-safety-institute aialliance aibic atomind behavior-1k bigcode cais
     cardinaloperations chime9-echi cmtbenchmark coastalcph cruxeval-org csebuetnlp dataset-org dbd-research-group
     dl3dv earthspeciesproject eleutherai eth-nlped facebook futurehouse gaia-benchmark gamma-lab-umd google
