@@ -175,6 +175,7 @@ ORG_ACCOUNTS = {
     google-research-datasets grid2op gso-bench gt-vision-lab harbor-framework harveyai hazyresearch hearbenchmark
     hidream-ai huggingface image-matching-workshop imagemarkup intelvcl internlm isl-org ismir-mirex iucomppath
     j-snackkb jailbreakbench jet-universe laion-ai lal lamalab-org langchain-ai laude-institute leap-stc
+    compassionml
     learnsyslab lhco2020 lhcolympics2020 lifelong-robot-learning livebench livecodebench lm-sys lmarena locuslab
     lsstdesc magics-lab mani-skill maniskill2 mapeval masakhane-io materialsproject mathai2022 mcp-universe
     medmnist mercor-intelligence microsoft mila-iqia mims-harvard mlcommons mlresearch mme-benchmarks

@@ -59,7 +59,7 @@ Not in this packet (10): `appworld`, `bfcl`, `browsecomp`, `geobenchx`, `holisti
 | 2.6 | [ToolBench](#26-toolbench-toolbench) | `tool-api-calling` | 52 | 11 |
 | 2.7 | [TheAgentCompany](#27-theagentcompany-theagentcompany) | `long-horizon-autonomy` | 53 | 12 |
 | 2.8 | [Vending-Bench 2](#28-vending-bench-2-vending-bench-2) | `long-horizon-autonomy` | 37 | 11 |
-| 2.9 | [Terminal-Bench](#29-terminal-bench-terminal-bench) | `operating-system-tasks` | 52 | 11 |
+| 2.9 | [Terminal-Bench](#29-terminal-bench-terminal-bench) | `operating-system-tasks` | 53 | 11 |
 | 2.10 | [AgentBench](#210-agentbench-agentbench) | `agent-evaluation-suites` | 51 | 7 |
 
 ### 2.1 GAIA (gaia)
@@ -1908,12 +1908,13 @@ A benchmark of hard, realistic tasks that an agent completes in a computer termi
 | S16 | `src-github-terminal-bench-science-readme` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-science/mai...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md) | [capture 2026-11-04](https://web.archive.org/web/20261104151328/https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md) |
 | S17 | `src-tbench-ai-news` | documentation · Terminal-Bench (tbench.ai) | [www.tbench.ai/news](https://www.tbench.ai/news) | [capture 2026-11-04](https://web.archive.org/web/20261104164244/https://www.tbench.ai/news) |
 | S18 | `src-hf-api-zai-terminal-bench-2-verified` | dataset-card · Hugging Face | [huggingface.co/api/datasets/zai-org/terminal-bench-2-verified](https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified) | [capture 2026-11-04](https://web.archive.org/web/20261104161810/https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified) |
-| S19 | `src-tbench-ai-news-continuous-benchmarks` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/continuous-benchmarks](https://www.tbench.ai/news/continuous-benchmarks) | [capture 2026-11-04](https://web.archive.org/web/20261104164324/https://www.tbench.ai/news/continuous-benchmarks) |
-| S20 | `src-github-terminal-bench-1-registry` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/regi...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) | [capture 2026-11-04](https://web.archive.org/web/20261104151111/https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) |
-| S21 | `src-tbench-ai-news-announcement-2-0` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/announcement-2-0](https://www.tbench.ai/news/announcement-2-0) | [capture 2026-10-10](https://web.archive.org/web/20261010022356/https://www.tbench.ai/news/announcement-2-0) |
-| S22 | `src-tbench-ai-leaderboard-terminal-bench-2-0` | leaderboard-page | [www.tbench.ai/leaderboard/terminal-bench/2.0](https://www.tbench.ai/leaderboard/terminal-bench/2.0) | [capture 2026-08-26](https://web.archive.org/web/20260826113700/https://www.tbench.ai/leaderboard/terminal-bench/2.0) |
+| S19 | `src-arxiv-2608-22103-v1` | preprint · arXiv | [arxiv.org/pdf/2608.22103v1](https://arxiv.org/pdf/2608.22103v1) | none (not-required) |
+| S20 | `src-tbench-ai-news-continuous-benchmarks` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/continuous-benchmarks](https://www.tbench.ai/news/continuous-benchmarks) | [capture 2026-11-04](https://web.archive.org/web/20261104164324/https://www.tbench.ai/news/continuous-benchmarks) |
+| S21 | `src-github-terminal-bench-1-registry` | repository · GitHub | [raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/regi...](https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) | [capture 2026-11-04](https://web.archive.org/web/20261104151111/https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json) |
+| S22 | `src-tbench-ai-news-announcement-2-0` | blog-post · Terminal-Bench (tbench.ai) | [www.tbench.ai/news/announcement-2-0](https://www.tbench.ai/news/announcement-2-0) | [capture 2026-10-10](https://web.archive.org/web/20261010022356/https://www.tbench.ai/news/announcement-2-0) |
+| S23 | `src-tbench-ai-leaderboard-terminal-bench-2-0` | leaderboard-page | [www.tbench.ai/leaderboard/terminal-bench/2.0](https://www.tbench.ai/leaderboard/terminal-bench/2.0) | [capture 2026-08-26](https://web.archive.org/web/20260826113700/https://www.tbench.ai/leaderboard/terminal-bench/2.0) |
 
-**Evidence** (52 quoted fields), by checklist area:
+**Evidence** (53 quoted fields), by checklist area:
 
 #### terminal-bench · Identity and id
 
@@ -1931,6 +1932,8 @@ A benchmark of hard, realistic tasks that an agent completes in a computer termi
   > Long-horizon, token-intensive, single-task benchmarks
 - `lineage.forks` = id terminal-bench-2-verified; maintainer Z.ai (zai-org) · [S18][terminal-bench-s18]
   > Terminal-Bench 2.0 Verified: Instruction & Environment Fix Version
+- `lineage.forks` = id hvtb; maintainer The HVTB authors, at Tel Aviv University and the University of California, Santa Barbara · [S19][terminal-bench-s19]
+  > We use terminal-bench/terminal-bench-2-1, a suite of 89 tasks, as the base environments.
 
 #### terminal-bench · Domain and capabilities
 
@@ -2064,13 +2067,13 @@ Considered and rejected:
 
 **Open review checks** (11):
 
-1. (field `versions`) Identity of 3.0. Recorded as an edition of this benchmark because the maintainer, name, site, task format and harness carry over, but it is a new task set in a new repository (its pull requests sit in harbor-framework/frontier-bench), and the Continuous Benchmarks post calls Frontier-Bench the successor to Terminal-Bench. If Frontier-Bench is a distinct benchmark rather than 3.0's working name, 3.0 to 4.1 may need an entry of their own. · [S19][terminal-bench-s19]
+1. (field `versions`) Identity of 3.0. Recorded as an edition of this benchmark because the maintainer, name, site, task format and harness carry over, but it is a new task set in a new repository (its pull requests sit in harbor-framework/frontier-bench), and the Continuous Benchmarks post calls Frontier-Bench the successor to Terminal-Bench. If Frontier-Bench is a distinct benchmark rather than 3.0's working name, 3.0 to 4.1 may need an entry of their own. · [S20][terminal-bench-s20]
    > We developed these features while building Frontier-Bench, the successor to Terminal-Bench
 2. (field `versions`) Concurrent boards. The versions form one superseded\_by chain, but 2.0 and 2.1 ran separate leaderboards at the same time, and the 3.0 post still reports 2.1 numbers. Which version Epoch's "Terminal Bench" rows score is for the mapping stanza; the stub's date (2025-05-19) is 1.0's, while its Source link is the 2.0 board. · [S10][terminal-bench-s10]
    > Terminal-Bench 2.1 is a more verified iteration of Terminal-Bench 2.0.
 3. (field `data.size`) Counts disagree. 2.1 fixes 28 tasks by its post and 26 by its README; 1.0 launched with 80 tasks by the post, while the registry lists 71 ids for core 0.1.0 and 80 for 0.1.1, and the 1.0 README says about 100. 4.x's size (66) is inferred from 3.0's 74 less 8 removed and the 4.1 release's 66 modified tasks; no source states it. · [S10][terminal-bench-s10]
    > 26 tasks were modified to fix bugs, modify timeouts or resources, or improve robustness to reward hacking.
-4. (field `versions`) Breaking flags are judgement calls. core-0.1.1 is marked breaking because it adds difficulty variants to the scored set; 4.1 because its verifier fixes change verdicts, though the maintainers' scheme treats a minor bump as re-gradable from saved trials. Release dates use the site's (3.0 and 4.0 GitHub releases are two to seven days earlier); 4.1's is the GitHub release's. · [S19][terminal-bench-s19]
+4. (field `versions`) Breaking flags are judgement calls. core-0.1.1 is marked breaking because it adds difficulty variants to the scored set; 4.1 because its verifier fixes change verdicts, though the maintainers' scheme treats a minor bump as re-gradable from saved trials. Release dates use the site's (3.0 and 4.0 GitHub releases are two to seven days earlier); 4.1's is the GitHub release's. · [S20][terminal-bench-s20]
    > Changes that significantly change the agent environment are considered
 5. (field `lineage`) Lineage. Terminal-Bench-Science and Challenges are recorded as same-maintainer variants because the site lists them in the family and they are versioned apart; the plan's "third generation on a different domain" is probably Terminal-Bench-Science, but no source read calls it a generation. Z.ai's Verified is a fork (another maintainer), whose fixes 2.1 took up. · [S2][terminal-bench-s2]
    > The Terminal-Bench family of benchmarks
@@ -2115,10 +2118,11 @@ Considered and rejected:
 [terminal-bench-s16]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-science/main/README.md
 [terminal-bench-s17]: https://www.tbench.ai/news
 [terminal-bench-s18]: https://huggingface.co/api/datasets/zai-org/terminal-bench-2-verified
-[terminal-bench-s19]: https://www.tbench.ai/news/continuous-benchmarks
-[terminal-bench-s20]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json
-[terminal-bench-s21]: https://www.tbench.ai/news/announcement-2-0
-[terminal-bench-s22]: https://www.tbench.ai/leaderboard/terminal-bench/2.0
+[terminal-bench-s19]: https://arxiv.org/pdf/2608.22103v1
+[terminal-bench-s20]: https://www.tbench.ai/news/continuous-benchmarks
+[terminal-bench-s21]: https://raw.githubusercontent.com/harbor-framework/terminal-bench-1/main/registry.json
+[terminal-bench-s22]: https://www.tbench.ai/news/announcement-2-0
+[terminal-bench-s23]: https://www.tbench.ai/leaderboard/terminal-bench/2.0
 
 ### 2.10 AgentBench (agentbench)
 
