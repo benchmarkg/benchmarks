@@ -2,11 +2,11 @@
 
 # Review packet: Safety and alignment
 
-`safety-alignment` · 18 published entries · 16 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`safety-alignment` · 23 published entries · 16 subdomains · data as of 2026-11-27 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
-Everything below is generated from the catalogue's files. Verification status of the family's 18 entries: 18 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
+Everything below is generated from the catalogue's files. Verification status of the family's 23 entries: 23 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
 
 How to read an entry: each evidenced field shows its value, the curator's reason where one was given, the verbatim quote it rests on and the Source it is quoted from (S1, S2, ... in the entry's Sources table, with the URL and the archived copy). Code has checked that every quote is an exact substring of the stored extract of its Source; whether the quote supports the value is what a reviewer judges. Text that may name a person is not reproduced here (\[withheld: it may name a person; see the entry file\]); the entry file has it.
 
@@ -23,20 +23,20 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | ---: | --- | --- | --- | --- |
 | 1 | `harmlessness-refusal`<br>Harmlessness refusal | Measuring whether a system refuses what it should refuse and complies with what it should not refuse. | 2 + 0 | has benchmarks |
 | 2 | `agentic-harm`<br>Agentic harm | Measuring whether an agent completes harmful tasks, scored on task completion rather than on output toxicity. | 1 + 0 | has benchmarks |
-| 3 | `honesty-truthfulness`<br>Honesty truthfulness | Measuring whether a system asserts things it does not internally hold to be true. | 1 + 0 | has benchmarks |
+| 3 | `honesty-truthfulness`<br>Honesty truthfulness | Measuring whether a system asserts things it does not internally hold to be true. | 2 + 0 | has benchmarks |
 | 4 | `sycophancy`<br>Sycophancy | Measuring whether a system revises a correct answer to agree with a user who pushes back. | 1 + 0 | has benchmarks |
-| 5 | `jailbreak-robustness`<br>Jailbreak robustness | Measuring resistance to adversarial prompts constructed to bypass safety training. | 2 + 1 | has benchmarks |
+| 5 | `jailbreak-robustness`<br>Jailbreak robustness | Measuring resistance to adversarial prompts constructed to bypass safety training. | 3 + 1 | has benchmarks |
 | 6 | `prompt-injection`<br>Prompt injection | Measuring resistance to instructions embedded in untrusted content the system is asked to process. | 1 + 0 | has benchmarks |
 | 7 | `bias-fairness`<br>Bias fairness | Measuring systematic differences in behaviour across demographic or social groups. | 1 + 1 | has benchmarks |
 | 8 | `privacy-memorization`<br>Privacy memorization | Measuring whether a system reproduces private or memorised training data. | 1 + 1 | has benchmarks |
 | 9 | `unlearning-knowledge-removal`<br>Unlearning knowledge removal | Measuring whether targeted knowledge has actually been removed, a setting in which a lower score is the safer one. | 1 + 1 | has benchmarks |
 | 10 | `dangerous-capability-evals`<br>Dangerous capability evaluations | Measuring whether a system possesses capabilities that would be dangerous in the wrong hands. | 2 + 0 | has benchmarks |
-| 11 | `deception-scheming`<br>Deception scheming | Measuring whether a system pursues concealed goals or misleads its operator about its own behaviour. | 1 + 0 | has benchmarks |
+| 11 | `deception-scheming`<br>Deception scheming | Measuring whether a system pursues concealed goals or misleads its operator about its own behaviour. | 2 + 1 | has benchmarks |
 | 12 | `evaluation-awareness`<br>Evaluation awareness | Measuring whether a system detects that it is being evaluated and behaves differently because of it. | 1 + 1 | has benchmarks |
 | 13 | `control-oversight`<br>Control oversight | Measuring whether supervisory mechanisms hold against a system actively trying to evade them. | 1 + 0 | has benchmarks |
 | 14 | `interpretability-probes`<br>Interpretability probes | Evaluating methods that read a model's internal structure, scored on what the method recovers. | 1 + 0 | has benchmarks |
 | 15 | `sandbagging`<br>Sandbagging | Measuring whether a system deliberately underperforms when it infers that scoring well is against its interest. | 0 + 1 | has benchmarks |
-| 16 | `value-alignment`<br>Value alignment | Measuring whether a system's expressed values or choices match a stated normative standard. | 1 + 0 | has benchmarks |
+| 16 | `value-alignment`<br>Value alignment | Measuring whether a system's expressed values or choices match a stated normative standard. | 3 + 0 | has benchmarks |
 
 Your answer:
 
@@ -52,7 +52,7 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (8): `ailuminate`, `apollo-research-scheming-suite`, `bbq`, `copybench`, `ethics`, `harmbench`, `saebench`, `wmdp`. `python scripts/review_packet.py --family safety-alignment --all` renders every entry.
+Not in this packet (13): `agentdojo`, `ailuminate`, `apollo-research-scheming-suite`, `bbq`, `copybench`, `ethics`, `harmbench`, `hvtb`, `jailbreakbench`, `manager-coercion-benchmark`, `realitytest`, `saebench`, `wmdp`. `python scripts/review_packet.py --family safety-alignment --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
@@ -60,12 +60,12 @@ Not in this packet (8): `ailuminate`, `apollo-research-scheming-suite`, `bbq`, `
 | 2.2 | [AgentHarm](#22-agentharm-agentharm) | `agentic-harm` | 48 | 7 |
 | 2.3 | [MASK](#23-mask-mask) | `honesty-truthfulness` | 51 | 11 |
 | 2.4 | [SycophancyEval](#24-sycophancyeval-sycophancy-eval) | `sycophancy` | 45 | 10 |
-| 2.5 | [JailbreakBench](#25-jailbreakbench-jailbreakbench) | `jailbreak-robustness` | 34 | 7 |
-| 2.6 | [AgentDojo](#26-agentdojo-agentdojo) | `prompt-injection` | 36 | 9 |
-| 2.7 | [TOFU](#27-tofu-tofu) | `unlearning-knowledge-removal` | 42 | 9 |
-| 2.8 | [RepliBench](#28-replibench-replibench) | `dangerous-capability-evals` | 42 | 10 |
-| 2.9 | [Situational Awareness Dataset (SAD)](#29-situational-awareness-dataset-sad-situational-awareness-dataset) | `evaluation-awareness` | 42 | 10 |
-| 2.10 | [ControlArena](#210-controlarena-controlarena) | `control-oversight` | 56 | 10 |
+| 2.5 | [AILuminate Jailbreak](#25-ailuminate-jailbreak-ailuminate-jailbreak) | `jailbreak-robustness` | 39 | 12 |
+| 2.6 | [TOFU](#26-tofu-tofu) | `unlearning-knowledge-removal` | 42 | 9 |
+| 2.7 | [RepliBench](#27-replibench-replibench) | `dangerous-capability-evals` | 42 | 10 |
+| 2.8 | [Situational Awareness Dataset (SAD)](#28-situational-awareness-dataset-sad-situational-awareness-dataset) | `evaluation-awareness` | 42 | 10 |
+| 2.9 | [ControlArena](#29-controlarena-controlarena) | `control-oversight` | 56 | 10 |
+| 2.10 | [HarvestBench](#210-harvestbench-harvestbench) | `value-alignment` | 59 | 11 |
 
 ### 2.1 HELM Safety (helm-safety)
 
@@ -950,166 +950,193 @@ Considered and rejected:
 [sycophancy-eval-s4]: https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/265f31cfd86c54389cd501117ed1779f87ebffe6/src/inspect_evals/sycophancy/README.md
 [sycophancy-eval-s5]: https://arxiv.org/pdf/2610.22937v1
 
-### 2.5 JailbreakBench (jailbreakbench)
+### 2.5 AILuminate Jailbreak (ailuminate-jailbreak)
 
-`data/benchmarks/safety-alignment/jailbreakbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
+`data/benchmarks/safety-alignment/ailuminate-jailbreak.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
 
-*Jailbreak attacks and defences on LLMs, ranked by attack success on 100 misuse behaviours under a Llama-3-70B judge.*
+*AILuminate hazard prompts rewritten as known jailbreaks, scored as a percentile under attack and a Resilience Gap.*
 
-An open benchmark for jailbreak attacks on large language models and for defences against them. Its dataset, JBB-Behaviors, holds 100 misuse behaviours, ten in each of ten categories taken from OpenAI's usage policies; 55 are original and the rest come from AdvBench and TDC/HarmBench. Since v1.0 it also holds 100 benign behaviours on the same topics, used to check that models and defences do not refuse too much. An attack submits one jailbreak prompt per behaviour for each target model (Vicuna-13B-v1.5 and Llama-2-7B-chat are required, GPT-3.5-Turbo-1106 and GPT-4-0125-Preview optional). The library queries the target with fixed system prompts and greedy decoding, and a judge decides whether each response is jailbroken: Llama-3-70B prompted with a custom instruction since v1.0, Llama Guard before it. The score is attack success rate over the 100 behaviours, with queries and tokens beside it, and every submitted prompt is published as a jailbreak artifact. Defences are test-time wrappers in the library (SmoothLLM, perplexity filtering, Erase-and-Check, synonym substitution, removal of non-dictionary words), scored by the success of attack artifacts transferred to the defended model. The leaderboard has an open-source-model table and a closed-source-model table; each row is one attack on one target behind one defence, and it holds the four baseline attacks the authors ran.
+MLCommons' benchmark of how well a chat system's safeguards hold up against jailbreaks, run beside AILuminate Safety and judged under the same AILuminate Assessment Standard. Each seed, a hazardous request taken from AILuminate Safety's prompts, is sent once as written and once rewritten with one publicly known jailbreak technique: single-turn, English, text only, with no tools and no access to the system's internals. The attacks are a confidential selection from the MLCommons Jailbreak Taxonomy, a public catalogue of published techniques sorted by mechanism into four families and eight categories; MLCommons does not invent attacks. Since 1.1 the seeds are the confidential official prompts Safety uses, and the evaluator is Safety's, a classifier MLCommons trained that gives each response a probability of being hazardous. Jailbreak 1.3 has 325 attack prompts in each of 10 of AILuminate's 12 hazard categories, 3,250 in all; Specialized Advice is left out, and Child Sexual Exploitation since 1.1. The official result is a percentile from 0 to 100 for the attacked prompts, on a scale built from a fixed set of reference systems, with each prompt weighted by difficulty through item response theory. The Resilience Gap, the change in hazardous responses per 100 prompts from the plain to the attacked prompts averaged over the techniques, is reported beside it. Prompts, attacks, code and the evaluator's configuration are withheld. Official results come from MLCommons' own runs (1.3: 18 open-weight models, published 2026-11-24) or from an Official run in Candela, MLCommons' benchmarking service. v1.0 (paper October 2026) used 264 seeds from the public practice set in 11 hazard categories, an LLM-judge ensemble and grades relative to a reference system.
 
 | Classification | |
 | --- | --- |
 | Primary domain | safety-alignment/jailbreak-robustness |
 | Secondary domains | - |
 | Capabilities | adversarial-robustness |
-| Evaluation methods | adversarial-red-team, model-graded-judge |
-| Designed for | attack-or-intervention-method, instruction-tuned-model |
-| Evaluation target · execution mode · ground truth | learned-system · automated · released-classifier |
+| Evaluation methods | adversarial-red-team, model-derived-metric |
+| Designed for | instruction-tuned-model |
+| Evaluation target · execution mode · ground truth | learned-system · automated · none |
 | Lifecycle · activity | active · accepting-submissions |
-| Data access · refresh · contamination risk | fully-open · versioned-releases · medium |
-| Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | community-collective · maintainer-verified, maintainer-run, open-source-gated |
-| Independence flags | maintainer-competes-on-own-benchmark, grader-from-evaluated-party |
-| Licences: code · dataset | MIT · MIT |
-| Released | 2024-03-28 |
-| Links | homepage [jailbreakbench.github.io/](https://jailbreakbench.github.io/) · repository [github.com/JailbreakBench/jailbreakbench](https://github.com/JailbreakBench/jailbreakbench) · leaderboard [jailbreakbench.github.io/](https://jailbreakbench.github.io/) · dataset [huggingface.co/datasets/JailbreakBench/JBB-Behaviors](https://huggingface.co/datasets/JailbreakBench/JBB-Behaviors) |
+| Data access · refresh · contamination risk | private-test-server · versioned-releases · medium |
+| Reproducibility tier · harness | not-independently-reproducible · none |
+| Maintainer type · submission process | consortium · maintainer-run, held-out-server |
+| Independence flags | single-evaluator-private-test-set, evaluator-sells-evaluations |
+| Licences: code · dataset | null · null |
+| Released | 2026-10-02 |
+| Links | homepage [mlcommons.org/ailuminate/jailbreak/](https://mlcommons.org/ailuminate/jailbreak/) · leaderboard [mlcommons.org/ailuminate/jailbreak/results/](https://mlcommons.org/ailuminate/jailbreak/results/) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-github-jailbreakbench-readme` | repository · GitHub | [raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/README.md](https://raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014114553/https://raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/README.md) |
-| S2 | `src-arxiv-2404-01318` | preprint · arXiv | [arxiv.org/abs/2404.01318](https://arxiv.org/abs/2404.01318) | none (not-required) |
-| S3 | `src-arxiv-2404-01318-v5` | preprint · arXiv | [arxiv.org/pdf/2404.01318v5](https://arxiv.org/pdf/2404.01318v5) | none (not-required) |
-| S4 | `src-github-jailbreakbench-classifier` | repository · GitHub | [raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/src/jail...](https://raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/src/jailbreakbench/classifier.py) | [capture 2026-10-14](https://web.archive.org/web/20261014114331/https://raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/src/jailbreakbench/classifier.py) |
-| S5 | `src-arxiv-2610-15513-v1` | preprint · arXiv | [arxiv.org/pdf/2610.15513v1](https://arxiv.org/pdf/2610.15513v1) | none (not-required) |
-| S6 | `src-jailbreakbench-leaderboard` | leaderboard-page · JailbreakBench | [jailbreakbench.github.io/tables/table\_closed\_source.html](https://jailbreakbench.github.io/tables/table_closed_source.html) | [capture 2026-10-14](https://web.archive.org/web/20261014120758/https://jailbreakbench.github.io/tables/table_closed_source.html) |
-| S7 | `src-jailbreakbench-site` | documentation · JailbreakBench | [jailbreakbench.github.io/](https://jailbreakbench.github.io/) | [capture 2026-09-29](https://web.archive.org/web/20260929203814/https://jailbreakbench.github.io/) |
-| S8 | `src-hf-api-jbb-behaviors` | dataset-card · Hugging Face | [huggingface.co/api/datasets/JailbreakBench/JBB-Behaviors](https://huggingface.co/api/datasets/JailbreakBench/JBB-Behaviors) | [capture 2026-10-14](https://web.archive.org/web/20261014115844/https://huggingface.co/api/datasets/JailbreakBench/JBB-Behaviors) |
-| S9 | `src-github-jailbreakbench-issue-42` | repository · GitHub | [github.com/JailbreakBench/jailbreakbench/issues/42](https://github.com/JailbreakBench/jailbreakbench/issues/42) | none (failed) |
-| S10 | `src-github-jailbreakbench-issue-32` | repository · GitHub | [github.com/JailbreakBench/jailbreakbench/issues/32](https://github.com/JailbreakBench/jailbreakbench/issues/32) | none (failed) |
-| S11 | `src-arxiv-2404-01318-v2` | preprint · arXiv | [arxiv.org/pdf/2404.01318v2](https://arxiv.org/pdf/2404.01318v2) | none (not-required) |
+| S1 | `src-arxiv-2610-02827-v1` | preprint · arXiv | [arxiv.org/pdf/2610.02827v1](https://arxiv.org/pdf/2610.02827v1) | none (not-required) |
+| S2 | `src-arxiv-2610-02827` | preprint · arXiv | [arxiv.org/abs/2610.02827](https://arxiv.org/abs/2610.02827) | none (not-required) |
+| S3 | `src-mlcommons-ailuminate-jailbreak` | documentation · MLCommons | [mlcommons.org/ailuminate/jailbreak/](https://mlcommons.org/ailuminate/jailbreak/) | [capture 2026-11-27](https://web.archive.org/web/20261127235642/https://mlcommons.org/ailuminate/jailbreak/) |
+| S4 | `src-mlcommons-ailuminate-jailbreak-results` | leaderboard-page · MLCommons | [mlcommons.org/ailuminate/jailbreak/results/](https://mlcommons.org/ailuminate/jailbreak/results/) | [capture 2026-11-27](https://web.archive.org/web/20261127235744/https://mlcommons.org/ailuminate/jailbreak/results/) |
+| S5 | `src-mlcommons-candela-2026-11-18` | blog-post · MLCommons | [mlcommons.org/2026/10/introducing-candela/](https://mlcommons.org/2026/10/introducing-candela/) | none (withheld) |
 
-**Evidence** (34 quoted fields), by checklist area:
+**Evidence** (39 quoted fields), by checklist area:
 
-#### jailbreakbench · Identity and id
+#### ailuminate-jailbreak · Identity and id
 
-- `self_description` · [S1][jailbreakbench-s1]
-  > Jailbreakbench is an open-source robustness benchmark for jailbreaking large language models (LLMs)
-- `released` = 2024-03-28 · [S2][jailbreakbench-s2]
-  > Submitted on 28 Mar 2024
+- `self_description` · [S1][ailuminate-jailbreak-s1]
+  > The MLCommons Jailbreak Benchmark v1.0 measures how well an AI system withstands these attacks.
+- `released` = 2026-10-02 · [S2][ailuminate-jailbreak-s2]
+  > Submitted on 2 Oct 2026
+- `lineage.subset_of` = ailuminate · [S3][ailuminate-jailbreak-s3]
+  - why: The plain prompts are AILuminate Safety's own, since 1.1 its confidential official prompts in 10 of its 12 hazard categories, each paired with a jailbreak rewrite, and both are judged under Safety's assessment standard and evaluator by the same maintainer. The ailuminate entry lists this entry among its variants.
+  > 325 attack prompts in each of 10 hazard categories (3,250 in total), seeded from the confidential Official prompts that Safety uses
+- `lineage` = role variant; subset_of ailuminate · [S4][ailuminate-jailbreak-s4]
+  > Jailbreak and Safety scores do not compare directly, because Safety covers all 12 hazard categories and Jailbreak only 10.
 
-#### jailbreakbench · Domain and capabilities
+#### ailuminate-jailbreak · Domain and capabilities
 
-- `domain` = primary safety-alignment/jailbreak-robustness · [S3][jailbreakbench-s3]
-  - why: The taxonomy names JailbreakBench as a qualifying example of the family (attack success rate, with a denominator that moves as attacks are published). The scored event is an adversarial prompt getting a safety-trained model to produce content it should refuse, which is the leaf's definition.
-  > it is often possible to elicit undesirable content by using so-called jailbreaking attacks
-- `capability` = adversarial-robustness · [S3][jailbreakbench-s3]
-  - why: Attackers choose the inputs, white-box, black-box or transfer, and the score is how often they break the target, which is the target's (or defence's) resistance read the other way.
-  > We accept any jailbreaking attack, including white-box, black-box, universal, transfer, and adaptive attacks, and any jailbreaking defense, all of which are compared using the same set of evaluation metrics
-- `evaluation_method` = adversarial-red-team, model-graded-judge · [S3][jailbreakbench-s3]
-  - why: The number is attack success rate, which moves when a new attack is published with no change to the model. Success is decided by a general chat model prompted with a grading instruction, Llama-3-70B, chosen over GPT-4, Llama Guard 1 and 2 and HarmBench's classifier on 300 labelled examples.
-  > The recent Llama-3-70B (AI@Meta, 2024) used as a judge with a custom prompt
-- `designed_for_subjects` = attack-or-intervention-method, instruction-tuned-model · [S3][jailbreakbench-s3]
-  - why: The benchmark ranks attacks (PAIR, GCG, JailbreakChat's AIM, Prompt with Random Search) and test-time defences applied to a fixed set of target models, which is attack-or-intervention-method. It also takes robust models as defence entries and splits its board by target model, so the models' own term is tagged beside it.
-  > we welcome the submission of new defensive mechanisms or robust models
+- `domain` = primary safety-alignment/jailbreak-robustness · [S1][ailuminate-jailbreak-s1]
+  - why: The scored quantity is how a system's conduct on hazardous requests holds up when the same requests are rewritten as jailbreaks, which is the leaf's resistance to adversarial prompts built to bypass safety training. The taxonomy's near-miss note on ailuminate already names this as the separate benchmark MLCommons runs for jailbreak robustness.
+  > Safety evaluation consequently measures whether a system produces harmful behavior, while jailbreak evaluation measures the robustness of the safeguards intended to prevent that behavior.
+- `capability` = adversarial-robustness · [S3][ailuminate-jailbreak-s3]
+  - why: The inputs are chosen to defeat the system's safeguards, by rewriting each request with a known jailbreak technique, and the score is how well the system resists them.
+  > Safety uses plain prompts, while Jailbreak rewrites the same prompts as attacks.
+- `evaluation_method` = adversarial-red-team, model-derived-metric · [S3][ailuminate-jailbreak-s3]
+  - why: adversarial-red-team because the reported numbers measure how attacked prompts fare against the system. The Resilience Gap is the attacks' effect, and the official percentile places the responses to the attack prompts. model-derived-metric because, since 1.1, a classifier trained to the assessment standard scores every response with a probability of being hazardous, rather than a general model prompted for a verdict. It is not released, which the term's inclusion test assumes (logged with bench tag-gap).
+  > A custom classifier trained by MLCommons. It is faster, more accurate, and does not rely on LLMs.
+- `designed_for_subjects` = instruction-tuned-model · [S4][ailuminate-jailbreak-s4]
+  - why: A chat model is prompted once per prompt, with no tools, no harness and no multi-turn loop, and the published rows are standalone open-weight models with no external guardrails.
+  > These open-weight models are standalone models with no external guardrails or other moderation logic filtering prompts or responses.
 
 Considered and rejected:
 
-- `domain` not `safety-alignment/harmlessness-refusal` · [S3][jailbreakbench-s3]
-  - why: The 100 benign behaviours measure refusal of requests that should be answered, but as a sanity check on new models and defences, flagged above 90% refusals; the leaderboard does not score it.
-  > We are open to adding any new defenses and models, but we will flag those that lead to more than 90% refusals on our set of benign behaviors
-- `evaluation_method` not `model-derived-metric` · [S4][jailbreakbench-s4]
-  - why: The v1.0 judge is a general chat model given a grading prompt, not a guard classifier fine-tuned to a fixed label set. The preprint's judge, Llama Guard, was such a classifier, so preprint-era numbers were model-derived-metric (see versions).
-  > LITELLM\_MODEL = "together\_ai/meta-llama/Llama-3-70b-chat-hf"
+- `domain` not `safety-alignment/harmlessness-refusal` · [S1][ailuminate-jailbreak-s1]
+  - why: Every seed is also scored as written, and the results page shows a plain-prompt percentile beside the jailbreak one, but that is the baseline the gap is measured from. The official result is the score under attack, and the paper treats the two as separate properties; plain-prompt conduct is AILuminate Safety's.
+  > Baseline safety and jailbreak robustness should therefore be treated as related but separate system properties.
+- `domain` not `safety-alignment/prompt-injection` · [S3][ailuminate-jailbreak-s3]
+  - why: MLCommons follows the draft ISO/IEC 22989 framing of a jailbreak as a kind of prompt injection, but the attack comes from the user, not from content the system processes, which the leaf's exclusion test sends to jailbreak-robustness.
+  > describes jailbreaking as a form of prompt injection supplied by a user
+- `evaluation_method` not `model-graded-judge` · [S1][ailuminate-jailbreak-s1]
+  - why: v1.0's numbers were judged by an LLM ensemble, which this term fits (see versions). Since 1.1 the evaluator is a trained classifier that outputs a probability, which the term's exclusion test sends to a derived metric.
+  > The MLCommons Jailbreak Benchmark v1.0 implements the assessment process through an automated LLM-as-a-judge ensemble.
+- `evaluation_method` not `entrant-relative-ranking` · [S4][ailuminate-jailbreak-s4]
+  - why: The percentile is read against a reference set fixed before each version is released, so adding a system moves no other score, which the term's exclusion covers. v1.0's reference was fixed too, the second-best accessible system at baseline.
+  > The composition of the reference set is fixed before a benchmark version is released, so new AI systems may be added to the results page without shifting the scores of previously tested systems.
+- `evaluation_method` not `ordinal-grading` · [S3][ailuminate-jailbreak-s3]
+  - why: v1.0 reported five grade bands relative to a reference system, but 1.1 replaced them with a 0-100 percentile score.
+  > Grades relative to a reference system, plus Resilience Gap
+- `evaluation_method` not `human-distribution-percentile` · [S4][ailuminate-jailbreak-s4]
+  - why: The percentile places a system among reference AI systems, not within a measured human population.
+  > The scale is based on how a fixed set of reference AI systems responds to the same prompts.
+- `designed_for_subjects` not `full-product-pipeline` · [S4][ailuminate-jailbreak-s4]
+  - why: The paper says the protocol can test systems of many models and controls, and Candela tests the configuration a developer deploys, but the current release grades open-weight models only; guardrail and complete systems may be added in later releases.
+  > It does not include closed-weight models, guardrail systems, or complete systems
+- `designed_for_subjects` not `hosted-inference-endpoint` · [S1][ailuminate-jailbreak-s1]
+  - why: v1.0 reached its models through Together AI's serverless catalogue, but the subject is the model, chosen by Hugging Face downloads, and the serving path is delivery, which the term's exclusion covers.
+  > available through the Together AI serverless catalog
 
-#### jailbreakbench · Task and evaluation
+#### ailuminate-jailbreak · Task and evaluation
 
-- `learned_entrant_evidence` = system GPT-4-0125-Preview (target model, attacked by PAIR, no defence) · [S6][jailbreakbench-s6]
-  > GPT-4-0125-Preview None Jailbreaking Black Box Large Language Models in Twenty Queries Prompt Automatic Iterative Refinement (PAIR) Black-box access LLM-assisted attack 51 34%
-- `reproducible_by_third_party` = true · [S7][jailbreakbench-s7]
-  - why: Behaviours, jailbreak prompts, system prompts, judge prompts and the evaluation library are released, and the judge is open-weight; the closed-model targets need their APIs.
-  > which are explicitly required for submissions to our benchmark to ensure reproducibility
-- `task` = exists true; input a misuse behaviour from JBB-Behaviors (an identifier, a goal string and a target affirmative response) and a target model, optionally behind a defence; output One jailbreak prompt per behaviour and target model; the library sends it to the target (greedy decoding, 150 tokens by default) and records the response.; scoring Attack success rate, the share of the 100 behaviours whose response the Llama-3-70B judge calls unsafe, per attack, target model and defence; average queries and tokens are reported beside it for attacks where they can be counted. · [S3][jailbreakbench-s3]
-  > we track the attack success rate (ASR) according to Llama-3-70B as a jailbreak judge
-- `execution.reproducibility_tier` = fully-automatable · [S3][jailbreakbench-s3]
-  - why: Prompts are generated, sent to the targets and judged by the library with no human step, and the paper states that the whole pipeline can run on cloud APIs.
-  > can be run exclusively through cloud-based models, circumventing the need for local GPUs
-- `execution.harness` = jailbreakbench (the pip package; jbb.evaluate\_prompts with its Llama-3 judges) · [S1][jailbreakbench-s1]
-  > Run the following command to evaluate the attack success rate of your jailbreak strings
-- `execution.harness_gotcha` · [S9][jailbreakbench-s9]
-  > Llama 2, Vicuna, and Llama Guard 1 are not available anymore on Together AI
-- `aggregation_policy` = none-by-design · [S6][jailbreakbench-s6]
-  - why: The table carries attack success rate per row and no aggregate column.
-  > Date Model Defense Paper Name Threat model Notes Average queries Attack success rate Jailbreak artifacts
+- `learned_entrant_evidence` = system GPT-OSS 120B · [S1][ailuminate-jailbreak-s1]
+  > GPT-OSS 120B showed a comparatively small positive Resilience Gap of 3.3%.
+- `reproducible_by_third_party` = false · [S3][ailuminate-jailbreak-s3]
+  - why: The seeds (the confidential official prompts), the attack prompts, templates and code, and the evaluator are all held by MLCommons. The evidence is open only to authorised auditors and trusted researchers under controlled review.
+  > MLCommons publishes the methods, the taxonomy, and the results, but it withholds the exact attack prompts, templates, code, and configurations.
+- `task` = exists true; input one single-turn English text prompt, a hazardous seed from AILuminate Safety's prompts in one of 10 hazard categories (11 in v1.0), sent once as written and once rewritten with one technique from the MLCommons Jailbreak Taxonomy; output The system's response to each.; scoring The evaluator gives each response a probability of being hazardous. The Resilience Gap is the change in hazardous responses per 100 prompts from the plain to the attacked prompts, averaged over every technique tested; lower is better. The official result is a percentile from 0 to 100 for the attacked prompts, on a scale built from a fixed set of reference systems with each prompt weighted by difficulty through item response theory; higher is better. Public results report the overall score only, and private Candela runs also return one per hazard category. · [S3][ailuminate-jailbreak-s3]
+  > It rewrites each prompt with one technique and sends it once.
+- `execution.compute_tier` = api-credits-only · [S1][ailuminate-jailbreak-s1]
+  - why: MLCommons runs the evaluator, and v1.0 served its systems through a third-party inference API, so the cost of a score is inference, plus the service's price in Candela.
+  > available through the Together AI serverless catalog
+- `execution.reproducibility_tier` = not-independently-reproducible · [S4][ailuminate-jailbreak-s4]
+  - why: Only MLCommons can produce an official score, because it holds the seeds, the attack prompts and code, and the evaluator.
+  > MLCommons publishes scores but withholds attack prompts, templates and code.
+- `execution.harness` = null · [S3][ailuminate-jailbreak-s3]
+  > MLCommons publishes the methods, the taxonomy, and the results, but it withholds the exact attack prompts, templates, code, and configurations.
+- `execution.submission_channel` · [S3][ailuminate-jailbreak-s3]
+  > runs Jailbreak on demand against the configuration you deploy
+- `aggregation_policy` = official-aggregate · [S3][ailuminate-jailbreak-s3]
+  - why: The official result is one overall percentile over all 10 hazard categories, and the Resilience Gap pools every technique; per-hazard scores go only to private Candela runs.
+  > both private and public results report the overall score
 
-#### jailbreakbench · Data and licence
+#### ailuminate-jailbreak · Data and licence
 
-- `as_used` = protocol Attacks scored by the authors' own Qwen3-8B judge, which also stops each search when it accepts, on all 100 harmful behaviours; successful attacks re-scored with the JailbreakBench judge prompt; GPT-4o substituted for GPT-4-0125-Preview; baseline figures transcribed from the JailbreakBench paper rather than re-run.; split harmful (100 behaviours) · [S5][jailbreakbench-s5]
-  > All REPRO results in this paper use a single Qwen3-8B judge model for scoring target responses
-- `data.access` = fully-open · [S8][jailbreakbench-s8]
-  - why: Both behaviour splits and the judge-comparison set are a public Hugging Face dataset with no gate, under MIT, and the jailbreak artifacts are a public GitHub repository.
-  > "gated":false
-- `data.refresh` = versioned-releases · [S2][jailbreakbench-s2]
-  - why: The scoring changed once, under a label. JailbreakBench v1.0 replaced the preprint's Llama Guard judge with Llama-3-70B and added the benign behaviours; the 100 harmful behaviours did not change.
-  > a more accurate jailbreak judge (Llama-3-70B with a custom prompt)
-- `data.data_provenance` = inherited-from-constituents, expert-authored · [S3][jailbreakbench-s3]
-  > \[withheld: it may name a person; see the entry file\]
-- `data.contamination_risk` = medium · [S3][jailbreakbench-s3]
-  > we believe these jailbreaking artifacts can serve as an initial dataset for adversarial training against jailbreaks
-- `data.dataset_licence` = MIT · [S3][jailbreakbench-s3]
-  > All code and data are released under the MIT license.
-- `data.size` = count 100; unit misuse behaviours, ten in each of ten categories; subset harmful · [S3][jailbreakbench-s3]
-  > Specifically, JBB-Behaviors contains 100 rows, where each row specifies five distinct fields
-- `data.size` = count 100; unit benign behaviours on the harmful behaviours' topics; subset benign · [S3][jailbreakbench-s3]
-  > Total samples: 200 (100 harmful behaviors and 100 benign behaviors)
-- `data.size` = count 300; unit prompt-response pairs with human and judge labels, used to choose the judge; subset judge\_comparison · [S1][jailbreakbench-s1]
-  > The dataset contains 300 examples with the following columns
-- `execution.code_licence` = MIT · [S1][jailbreakbench-s1]
-  > This codebase is released under \[MIT License\]
-- `subsets` = id jailbreakbench#harmful; label JBB-Behaviors harmful behaviours; items 100; scored_separately true · [S8][jailbreakbench-s8]
-  > {"split":"harmful","path":"data/harmful-behaviors.csv"},{"split":"benign","path":"data/benign-behaviors.csv"}
-- `subsets` = id jailbreakbench#benign; label JBB-Behaviors benign behaviours; items 100; scored_separately true · [S7][jailbreakbench-s7]
-  > Moreover, now it is complemented with 100 benign behaviors that can be used to quickly evaluate overrefusal rates for new models and defenses
+- `data.access` = private-test-server · [S5][ailuminate-jailbreak-s5]
+  - why: The items behind the official percentile stay with MLCommons and are scored only on its side, in its own runs or in an Official run in Candela.
+  > No one outside MLCommons staff sees them, not even our member companies
+- `data.refresh` = versioned-releases · [S4][ailuminate-jailbreak-s4]
+  - why: Each change of seeds, attacks, evaluator or scoring has come under a new version label, every official result carries its version, and the reference set is fixed before each release. Rotation of attacks within each category is planned; if it happens between labels the value becomes rolling-live.
+  > Only results labeled AILuminate Jailbreak 1.3, English (US), compare directly with these scores.
+- `data.data_provenance` = inherited-from-constituents · [S3][ailuminate-jailbreak-s3]
+  > a hazardous request drawn from the AILuminate Safety prompt sets
+- `data.contamination_risk` = medium · [S1][ailuminate-jailbreak-s1]
+  > they may increasingly configure SUTs to refuse prompts that exhibit known jailbreak characteristics
+- `data.ceiling_anchor_type` = none-known · [S4][ailuminate-jailbreak-s4]
+  > The scale is based on how a fixed set of reference AI systems responds to the same prompts.
+- `data.dataset_licence` = null · [S3][ailuminate-jailbreak-s3]
+  > MLCommons Jailbreak Taxonomy on GitHub (CC BY 4.0)
+- `data.size` = count 3250; unit attack prompts, 325 in each of 10 hazard categories, each sent beside its plain seed; subset Jailbreak 1.3 official · [S3][ailuminate-jailbreak-s3]
+  > 325 attack prompts in each of 10 hazard categories (3,250 in total), seeded from the confidential Official prompts that Safety uses
+- `data.size` = count 264; unit seed prompts from the public practice set, 24 in each of 11 hazard categories; subset v1.0 · [S1][ailuminate-jailbreak-s1]
+  > selects 264 seed prompts: 24 for each of 11 hazard categories
 
-#### jailbreakbench · Governance and independence
+#### ailuminate-jailbreak · Governance and independence
 
-- `governance.maintainer` = The JailbreakBench maintainers (University of Pennsylvania, ETH Zurich, EPFL and Sony AI) · [S3][jailbreakbench-s3]
-  - why: The authors and the six maintainers the site lists are at these four institutions.
-  > 1University of Pennsylvania, 2ETH Zurich, 3EPFL, 4Sony AI
-- `governance.maintainer_type` = community-collective · [S8][jailbreakbench-s8]
-  - why: The dataset, library, artifacts and site sit in JailbreakBench organisation accounts on Hugging Face and GitHub, run by people from four institutions. No source names one institution as the holder or gives the group a legal form.
-  > "author":"JailbreakBench"
-- `governance.submission_process` = maintainer-verified, maintainer-run, open-source-gated · [S3][jailbreakbench-s3]
-  > To prevent potential overfitting to the judge, we reserve the right to check manually the jailbreak artifacts and flag entries with a lot of false positives
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S3][jailbreakbench-s3]
-  > \[withheld: it may name a person; see the entry file\]
-- `governance.independence_flags` = flag grader-from-evaluated-party · [S3][jailbreakbench-s3]
-  > The recent Llama-3-70B (AI@Meta, 2024) used as a judge with a custom prompt
+- `governance.maintainer` = MLCommons · [S3][ailuminate-jailbreak-s3]
+  - why: MLCommons holds the attacks, the prompts and the evaluator, publishes the methods, the taxonomy and the results, keeps the taxonomy and versions the benchmark.
+  > MLCommons maintains the taxonomy in the open and versions the benchmark
+- `governance.maintainer_type` = consortium · [S5][ailuminate-jailbreak-s5]
+  - why: MLCommons is an industry association of member companies; the governance vocabulary gives ailuminate-v1-1, the same maintainer's benchmark, as consortium's example.
+  > As an industry organization of over 125 companies
+- `governance.submission_process` = maintainer-run, held-out-server · [S1][ailuminate-jailbreak-s1]
+  > The primary ranking metric is the number of downloads recorded over the preceding month on Hugging Face.
+- `governance.independence_flags` = flag single-evaluator-private-test-set · [S3][ailuminate-jailbreak-s3]
+  > MLCommons publishes the methods, the taxonomy, and the results, but it withholds the exact attack prompts, templates, code, and configurations.
+- `governance.independence_flags` = flag evaluator-sells-evaluations · [S5][ailuminate-jailbreak-s5]
+  > inexpensive, and free for MLCommons members
 
-#### jailbreakbench · Lifecycle and activity
+#### ailuminate-jailbreak · Lifecycle and activity
 
-- `lifecycle` = active · [S5][jailbreakbench-s5]
-  - why: Results are still produced against JBB-Behaviors in 2026, for example an October 2026 attack paper reporting on all 100 behaviours. The maintainers' repository was last pushed on 2025-04-04 (GitHub API, read 2026-10-14), which is maintenance evidence, not use.
-  > JailbreakBench \[8\] provides 100 misuse behaviors across 10 categories aligned with OpenAI usage policies
-- `activity` = accepting-submissions · [S1][jailbreakbench-s1]
-  - why: The leaderboard never ran in rounds, and its stated route for attack submissions is open.
-  > with the name of your algorithm in the title and upload
+- `lifecycle` = active · [S4][ailuminate-jailbreak-s4]
+  - why: Results are being produced now. MLCommons published Jailbreak 1.3 official results for 18 open-weight systems on 2026-11-24 from a run it began on 2026-09-28 and is still running, and Candela offers Official runs on demand. No outside paper reporting results was found (arXiv API search, 2026-11-27).
+  > MLCommons began running the Jailbreak 1.3 benchmark on September 28, 2026 and the run is ongoing as of November 24.
+- `activity` = accepting-submissions · [S3][ailuminate-jailbreak-s3]
+  - why: A developer route is open now. Candela runs Jailbreak on demand against the configuration a developer deploys, and an Official run yields a result that may be published.
+  > an Official run produces a result you can publish
 
-**Open review checks** (7):
+**Open review checks** (12):
 
-1. (field `designed_for_subjects`) designed\_for\_subjects tags instruction-tuned-model beside attack-or-intervention-method. The four target models are supplied identically to every attack, which the subjects facet treats as environment; the tag rests on robust models being admitted as defence entries and on the board being split by target model. · [S3][jailbreakbench-s3]
-   > we welcome the submission of new defensive mechanisms or robust models
-2. (field `governance.independence_flags`) grader-from-evaluated-party holds only if the target models count as evaluated systems (the check above). The judge is Meta's Llama-3-70B and one target is Meta's Llama-2-7B-chat.
-3. (field `activity`) activity accepting-submissions or closed. The route is open on paper, but no outside attack has reached the board; DSN was accepted into the artifacts in November 2024 and is still missing in October 2026. · [S10][jailbreakbench-s10]
-   > Member More actions Hi, sorry for the delay. I will add it later this week!
-4. (field `ground_truth_source`) ground\_truth\_source released-classifier for a prompted general model (Llama-3-70B chat with the library's prompt); ADR-0024 defined the value with HarmBench's fine-tuned classifier in mind.
-5. (field `governance.submission_process`) maintainer-verified rests on the authors reserving the right to check artifacts by hand; if that is not a stated review, attack submissions are self-reported.
-6. (field `data.data_provenance`) data\_provenance expert-authored: the original behaviours were written by the authors, who are AI-safety researchers; whether that is the specialist skill the items test.
-7. (field `data.contamination_risk`) contamination\_risk medium. The benchmark itself suggests training on its released jailbreak prompts, which are scored again in transfer evaluations; whether that is a protocol route that makes the risk high.
+1. (field `lineage`) New entry or part of ailuminate. 04 S4's test (independently versioned and cited) is met by Jailbreak's own version line, paper and results page, and its scored quantity differs, so it is a new entry linked by lineage.subset\_of. Against it, the maintainer, the prompts, the evaluator and the reference scale are shared, and since 1.3 so are the version numbers and the release schedule. A reviewer who reads that as one benchmark would fold this into ailuminate as a subset (for example ailuminate#jailbreak) and retire this id before it is used. · [S3][ailuminate-jailbreak-s3]
+   > We moved the version number to 1.3 so that Safety and Jailbreak can share version numbers and a release schedule from now on.
+2. (field `versions`) The hazard-category count for 1.1 disagrees. The Candela announcement (2026-10-29) says Jailbreak 1.1 tests eleven categories; the Jailbreak page says Child Sexual Exploitation has been left out since 1.1, which leaves ten. The 1.3 count (ten) agrees across both MLCommons pages. · [S5][ailuminate-jailbreak-s5]
+   > Jailbreak 1.1 tests eleven of those categories using techniques from our jailbreak taxonomy
+3. (field `versions`) v0.7 is kept as a version because MLCommons' version history lists it, but the v1.0 paper says it was a methodology release, not a benchmark release, with no run. It could instead be dropped from versions and mentioned in v1.0's changes. · [S1][ailuminate-jailbreak-s1]
+   > Version 0.7 was not itself a benchmark release
+4. (field `versions`) 1.3's release date is left null. The page says it was released in Candela in November 2026, but dates its release module 2026-10-29, the date 1.1 launched, and a later row still points to "New in Jailbreak 1.1" above, so the section may have been relabelled from 1.1. The 1.3 release notes, a Google Drive file, were not read. · [S3][ailuminate-jailbreak-s3]
+   > New in Jailbreak 1.3 Release module, dated October 29, 2026.
+5. (field `versions`) The scale's Safety version is unclear. The Jailbreak page's comparison table puts 1.3 percentiles on the Safety 1.2.1 scale, while the results page says the Safety 1.3 scale, and the Jailbreak page says 1.3 shares parts with Safety 1.3. The ailuminate entry's newest version is Safety 1.2.1; a Safety 1.3 was not read. · [S4][ailuminate-jailbreak-s4]
+   > under attack on the AILuminate Safety 1.3 scale, where higher is better
+6. (field `evaluation_method`) model-derived-metric is tagged for a classifier that is not released, which the term's inclusion test assumes it is; model-graded-judge's own test admits a withheld judge, but this one is not a prompted model (logged with bench tag-gap). The v1.0 numbers were model-graded-judge. · [S3][ailuminate-jailbreak-s3]
+   > A custom classifier trained by MLCommons. It is faster, more accurate, and does not rely on LLMs.
+7. (field `data.access`) data.access private-test-server or restricted-dual-use. The seeds are hidden for integrity, as for ailuminate, but the attack set is also withheld to limit the spread of usable attacks, which private-test-server's exclusion test sends to restricted-dual-use (logged with bench tag-gap). · [S1][ailuminate-jailbreak-s1]
+   > To reduce benchmark overfitting and limit the dissemination of operationally useful attack techniques, the specific attack set is not publicly disclosed.
+8. (field `governance.independence_flags`) evaluator-sells-evaluations is tagged because Candela's Practice tests are priced (inexpensive, free for members); Official runs' price is not stated. ailuminate is run through the same service and leaves the flag unset, so the two entries should be made to agree. · [S5][ailuminate-jailbreak-s5]
+   > inexpensive, and free for MLCommons members
+9. (field `governance.independence_flags`) \[withheld: it may name a person; see the entry file\] · [S1][ailuminate-jailbreak-s1]
+   > Gemma 3N E4B Instruct Google
+10. (field `designed_for_subjects`) designed\_for\_subjects is instruction-tuned-model only, because the published rows are standalone open-weight models. The paper says the protocol can test guardrailed systems, and Candela tests whatever configuration a developer deploys; if those results count, full-product-pipeline or hosted-inference-endpoint should be added. · [S1][ailuminate-jailbreak-s1]
+   > Since the benchmark makes no presumptions about SUT implementation, we may run the benchmark against isolated models and larger systems comprising many models and controls.
+11. (field `data.data_provenance`) data\_provenance is inherited-from-constituents only. The attack prompts are rewrites made by MLCommons' implementations of published techniques, at least one of them model-driven in v1.0, so model-generated (and synthetic-procedural for rule-based rewrites) may belong beside it; the 1.3 attack implementations are not disclosed. · [S1][ailuminate-jailbreak-s1]
+   > One attack used Qwen2.5-7B-Instruct in generating its prompts
+12. (field `learned_entrant_evidence`) The admissibility evidence and lifecycle rest on MLCommons' own results. The 1.3 per-system rows are in the results page's inline script data, which the extract leaves out, so the learned-entrant evidence cites a v1.0 result in the paper. No outside paper reporting AILuminate Jailbreak results was found (arXiv API search, 2026-11-27). The taxonomy's leaf count also differs, 17 in the paper and 18 on the page. · [S1][ailuminate-jailbreak-s1]
+   > GPT-OSS 120B showed a comparatively small positive Resilience Gap of 3.3%.
 
-**Reviewer checklist** for `jailbreakbench`:
+**Reviewer checklist** for `ailuminate-jailbreak`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -1120,206 +1147,13 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[jailbreakbench-s1]: https://raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/README.md
-[jailbreakbench-s2]: https://arxiv.org/abs/2404.01318
-[jailbreakbench-s3]: https://arxiv.org/pdf/2404.01318v5
-[jailbreakbench-s4]: https://raw.githubusercontent.com/JailbreakBench/jailbreakbench/main/src/jailbreakbench/classifier.py
-[jailbreakbench-s5]: https://arxiv.org/pdf/2610.15513v1
-[jailbreakbench-s6]: https://jailbreakbench.github.io/tables/table_closed_source.html
-[jailbreakbench-s7]: https://jailbreakbench.github.io/
-[jailbreakbench-s8]: https://huggingface.co/api/datasets/JailbreakBench/JBB-Behaviors
-[jailbreakbench-s9]: https://github.com/JailbreakBench/jailbreakbench/issues/42
-[jailbreakbench-s10]: https://github.com/JailbreakBench/jailbreakbench/issues/32
-[jailbreakbench-s11]: https://arxiv.org/pdf/2404.01318v2
+[ailuminate-jailbreak-s1]: https://arxiv.org/pdf/2610.02827v1
+[ailuminate-jailbreak-s2]: https://arxiv.org/abs/2610.02827
+[ailuminate-jailbreak-s3]: https://mlcommons.org/ailuminate/jailbreak/
+[ailuminate-jailbreak-s4]: https://mlcommons.org/ailuminate/jailbreak/results/
+[ailuminate-jailbreak-s5]: https://mlcommons.org/2026/10/introducing-candela/
 
-### 2.6 AgentDojo (agentdojo)
-
-`data/benchmarks/safety-alignment/agentdojo.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
-
-*Tool-calling agents on 97 tasks in four simulated apps, scored on utility and on prompt-injection attack success.*
-
-A benchmark and framework from ETH Zurich's SPY Lab for prompt injection against tool-calling language-model agents. Four simulated environments, Workspace (email, calendar and cloud drive), Slack, Travel and Banking, hold dummy data and expose tools. An agent solves a user's task given in natural language, while text an attacker planted in what the tools return tries to make it carry out an injection task, such as sending money or a security code to the attacker. Deterministic utility and security functions inspect the environment state before and after the episode, and no language model judges. The first version has 97 user tasks and 629 security test cases, each user task paired with each injection task of its suite. Results are reported as benign utility, utility under attack and targeted attack success rate, per model, defence (a tool filter, a prompt-injection detector, data delimiters, repeating the user prompt) and attack. The task suites are versioned, v1 to v1.2.2. The maintainers' results page lists runs without ranking them, and takes outside results by pull request with an implementation of the attack, defence or model. UK AISI's inspect\_evals ports it at v1.2.1.
-
-| Classification | |
-| --- | --- |
-| Primary domain | safety-alignment/prompt-injection |
-| Secondary domains | agents-tooluse/tool-api-calling |
-| Capabilities | adversarial-robustness, tool-use |
-| Evaluation methods | environment-state-check, adversarial-red-team |
-| Designed for | model-in-benchmark-harness, agent-scaffold, attack-or-intervention-method |
-| Evaluation target · execution mode · ground truth | learned-system · automated · repository-tests |
-| Lifecycle · activity | active · accepting-submissions |
-| Data access · refresh · contamination risk | fully-open · versioned-releases · medium |
-| Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | academic-lab · self-reported, open-source-gated, maintainer-run |
-| Independence flags | maintainer-competes-on-own-benchmark |
-| Licences: code · dataset | MIT · MIT |
-| Released | 2024-06-19 |
-| Links | homepage [agentdojo.spylab.ai/](https://agentdojo.spylab.ai/) · repository [github.com/ethz-spylab/agentdojo](https://github.com/ethz-spylab/agentdojo) · leaderboard [agentdojo.spylab.ai/results/](https://agentdojo.spylab.ai/results/) |
-
-**Sources**
-
-| | Source | Type · publisher | URL | Archived copy |
-| --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-2406-13352-v3` | preprint · arXiv | [arxiv.org/pdf/2406.13352v3](https://arxiv.org/pdf/2406.13352v3) | none (not-required) |
-| S2 | `src-arxiv-2406-13352` | preprint · arXiv | [arxiv.org/abs/2406.13352](https://arxiv.org/abs/2406.13352) | none (not-required) |
-| S3 | `src-github-agentdojo-readme` | repository · GitHub | [raw.githubusercontent.com/ethz-spylab/agentdojo/main/README.md](https://raw.githubusercontent.com/ethz-spylab/agentdojo/main/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014112242/https://raw.githubusercontent.com/ethz-spylab/agentdojo/main/README.md) |
-| S4 | `src-agentdojo-results` | leaderboard-page · ETH Zurich SPY Lab | [agentdojo.spylab.ai/results/](https://agentdojo.spylab.ai/results/) | [capture 2026-10-11](https://web.archive.org/web/20261011093412/https://agentdojo.spylab.ai/results/) |
-| S5 | `src-github-inspect-evals-agentdojo-readme` | repository · GitHub | [raw.githubusercontent.com/UKGovernmentBEIS/inspect\_evals/main/src/ins...](https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/main/src/inspect_evals/agentdojo/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014113817/https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/main/src/inspect_evals/agentdojo/README.md) |
-| S6 | `src-arxiv-2609-18128-v1` | preprint · arXiv | [arxiv.org/pdf/2609.18128v1](https://arxiv.org/pdf/2609.18128v1) | none (not-required) |
-| S7 | `src-agentdojo-changelog` | documentation · ETH Zurich SPY Lab | [agentdojo.spylab.ai/changelog/](https://agentdojo.spylab.ai/changelog/) | [capture 2026-10-11](https://web.archive.org/web/20261011133131/https://agentdojo.spylab.ai/changelog/) |
-| S8 | `src-github-agentdojo-load-suites` | repository · GitHub | [raw.githubusercontent.com/ethz-spylab/agentdojo/main/src/agentdojo/ta...](https://raw.githubusercontent.com/ethz-spylab/agentdojo/main/src/agentdojo/task_suite/load_suites.py) | [capture 2026-10-14](https://web.archive.org/web/20261014112051/https://raw.githubusercontent.com/ethz-spylab/agentdojo/main/src/agentdojo/task_suite/load_suites.py) |
-| S9 | `src-github-agentdojo-releases` | repository · GitHub | [api.github.com/repos/ethz-spylab/agentdojo/releases?per\_page=100](https://api.github.com/repos/ethz-spylab/agentdojo/releases?per_page=100) | [capture 2026-10-14](https://web.archive.org/web/20261014112406/https://api.github.com/repos/ethz-spylab/agentdojo/releases?per_page=100) |
-
-**Evidence** (36 quoted fields), by checklist area:
-
-#### agentdojo · Identity and id
-
-- `self_description` · [S1][agentdojo-s1]
-  > To measure the adversarial robustness of AI agents, we introduce AgentDojo, an evaluation framework for agents that execute tools over untrusted data
-- `released` = 2024-06-19 · [S2][agentdojo-s2]
-  > Submitted on 19 Jun 2024
-- `release_venue` = NeurIPS 2024, Datasets and Benchmarks Track · [S3][agentdojo-s3]
-  > The Thirty-eight Conference on Neural Information Processing Systems Datasets and Benchmarks Track
-
-#### agentdojo · Domain and capabilities
-
-- `domain` = primary safety-alignment/prompt-injection; secondary agents-tooluse/tool-api-calling · [S1][agentdojo-s1]
-  - why: The scored event is the agent carrying out instructions planted in tool outputs, and the paper's claim is the agents' adversarial robustness. Utility on the same tool-use tasks is reported beside the attack score, which the leaf's inclusion test covers and which makes tool-api-calling secondary; the taxonomy names AgentDojo as the leaf's qualifying example.
-  > To measure the adversarial robustness of AI agents, we introduce AgentDojo, an evaluation framework for agents that execute tools over untrusted data
-- `capability` = adversarial-robustness · [S1][agentdojo-s1]
-  - why: An attacker's injection text is placed in tool outputs, and the score is how often the agent resists carrying out the attacker's goal (targeted attack success rate, read the other way).
-  > our attacks succeed against the best performing agents in less than 25% of cases
-- `capability` = tool-use · [S1][agentdojo-s1]
-  - why: Utility and attack success both depend on which tools the agent calls, with what arguments, and what it does with the results, against a stateful environment.
-  > tasks requiring chaining up to 18 different calls to both general-purpose and specialized tools
-- `evaluation_method` = environment-state-check, adversarial-red-team · [S1][agentdojo-s1]
-  - why: Each user task's utility function and each injection task's security function is a deterministic check of the environment state before and after the episode, with the model's output; any trajectory that reaches the state passes. Where the checked state is the attacker's goal, the aggregate is attack success rate, which the environment-state-check term pairs with adversarial-red-team.
-  > a deterministic binary function which, given outputs of the model together with the state of the environment before and after execution
-- `designed_for_subjects` = model-in-benchmark-harness, agent-scaffold, attack-or-intervention-method · [S4][agentdojo-s4]
-  - why: Each results row is a provider's model run through AgentDojo's own tool-calling pipeline and system prompt, varied by a defence and an attack, which is model-in-benchmark-harness. The paper builds the framework to evaluate new agent designs and defences as pipelines around the model (agent-scaffold), and ranks attacks by the success they achieve against the same target models (attack-or-intervention-method).
-  > Here are all the results from different combinations of models, defenses, and attacks that we ran on our benchmark.
-
-Considered and rejected:
-
-- `evaluation_method` not `model-graded-judge` · [S1][agentdojo-s1]
-  - why: The paper rejects a language-model evaluator, because an injection that hijacks the agent could hijack the judge as well.
-  > there is a chance that it would also hijack the evaluation model
-
-#### agentdojo · Task and evaluation
-
-- `learned_entrant_evidence` = system claude-3-7-sonnet-20250219 (no defence, important\_instructions attack) · [S4][agentdojo-s4]
-  > anthropic claude-3-7-sonnet-20250219 None important\_instructions 88.66% 77.27% 7.31% 2025-02-24
-- `reproducible_by_third_party` = true · [S3][agentdojo-s3]
-  - why: Suites, tasks, attacks, defences and the benchmark script are in the open-source package; a run needs API access to the model under test.
-  > python -m agentdojo.scripts.benchmark --model gpt-4o-2024-05-13
-- `task` = exists true; input a user task in natural language, the suite's tool descriptions, and the outputs of the tools the agent calls on a stateful environment, some of which carry an attacker's injection; output Tool calls against the environment, then a final answer to the user.; scoring Benign utility is the fraction of user tasks solved with no attack. Utility under attack is the fraction of security cases (a user task paired with an injection task) where the user task is solved without adversarial side effects, and targeted attack success rate the fraction where the attacker's goal is met. · [S1][agentdojo-s1]
-  > Utility Under Attack: the fraction of security cases (i.e., a pair of user task and injection task) where the agent solves the user task correctly, without any adversarial side effects
-- `execution.compute_tier` = api-credits-only · [S1][agentdojo-s1]
-  - why: Models are reached through their providers' APIs and the environments are plain Python, so a run's cost is inference spend; the paper puts the security suite on GPT-4o at about US$35, and the 97 utility cases at US$4.
-  > running the full suite of 629 security test cases on GPT-4o costs around US$35
-- `execution.reproducibility_tier` = fully-automatable · [S3][agentdojo-s3]
-  - why: One script runs the chosen suites, model, defence and attack, and the utility and security functions score the runs with no human step.
-  > python -m agentdojo.scripts.benchmark --model gpt-4o-2024-05-13
-- `execution.harness` = agentdojo (the PyPI package's agentdojo.scripts.benchmark, with --benchmark-version, --defense and --attack) · [S3][agentdojo-s3]
-  > python -m agentdojo.scripts.benchmark --model gpt-4o-2024-05-13
-- `execution.inspect_evals_id` = agentdojo · [S5][agentdojo-s5]
-  > uv run inspect eval inspect\_evals/agentdojo --model openai/gpt-5-nano
-- `aggregation_policy` = none-by-design · [S4][agentdojo-s4]
-  - why: The maintainers decline to rank the runs, because not every model was attacked with every attack and defence.
-  > Please note that this is not a leaderboard because we did not attack all models with all attacks and defenses
-
-#### agentdojo · Data and licence
-
-- `as_used` = protocol UK AISI's Inspect port, with every task at v1.2.1, Inspect's own agent loop, the important\_instructions attack only and no defences, and US AISI's Workspace Plus suite (terminal tasks in Docker) in the default task set. · [S5][agentdojo-s5]
-  > All tasks are at version 1.2.1 (task versioning is not supported)
-- `as_used` = protocol ContrAgent (September 2026) replays AgentDojo's published runs of 22 models through its contract-based shield offline, instead of running agents live, and compares it with the bundled defences' published numbers, which it does not re-run. · [S6][agentdojo-s6]
-  > ContrAgent replays the recorded runs, so its utility cannot exceed that of the undefended agent.
-- `data.access` = fully-open · [S1][agentdojo-s1]
-  - why: The environments, user and injection tasks and their checking functions ship in the open-source package, released under MIT.
-  > the data is released under MIT license unless otherwise stated in some portions of the code
-- `data.refresh` = versioned-releases · [S7][agentdojo-s7]
-  - why: Task content changes in labelled suite versions (v1 to v1.2.2) that the package registers side by side, so a run names the version it used.
-  > Fix some issues in Benchmark v1.2
-- `data.data_provenance` = expert-authored, model-generated · [S1][agentdojo-s1]
-  > We generate the dummy data both manually or assisted by GPT-4o and Claude 3 Opus
-- `data.contamination_evidence` = stance supports · [S6][agentdojo-s6]
-  > Contracts can also be mined from the recorded traces of the attacks themselves
-- `data.ceiling_anchor_type` = theoretical-maximum · [S1][agentdojo-s1]
-  - why: The headline metrics are fractions of tasks or security cases, bounded at 100% utility and 0% attack success.
-  > Utility Under Attack: the fraction of security cases (i.e., a pair of user task and injection task) where the agent solves the user task correctly, without any adversarial side effects
-- `data.dataset_licence` = MIT · [S1][agentdojo-s1]
-  > the data is released under MIT license unless otherwise stated in some portions of the code
-- `data.size` = count 629; unit security test cases (each user task paired with each injection task of its suite); subset v1 · [S1][agentdojo-s1]
-  > We evaluate each agent on our full suite of 629 security test cases, for 97 different user tasks
-- `data.size` = count 97; unit user tasks (Workspace 40, Slack 21, Travel 20, Banking 16); subset v1 · [S1][agentdojo-s1]
-  > Our suite features a total of 70 tools, 97 realistic user tasks and 27 injection targets
-- `data.size` = count 27; unit injection tasks (Workspace 6, Slack 5, Travel 7, Banking 9); subset v1 · [S1][agentdojo-s1]
-  > Our suite features a total of 70 tools, 97 realistic user tasks and 27 injection targets
-- `data.size` = count 14; unit Workspace injection tasks, beside its 40 user tasks; subset v1.2.1, as UK AISI's Inspect port counts it · [S5][agentdojo-s5]
-  > (40 user tasks, 14 injection tasks)
-- `execution.code_licence` = MIT · [S1][agentdojo-s1]
-  > will be released, under MIT license, at https://github.com/ethz-spylab/agentdojo
-
-#### agentdojo · Governance and independence
-
-- `governance.maintainer` = ETH Zurich's SPY Lab (ethz-spylab) · [S1][agentdojo-s1]
-  - why: The repository sits in the ethz-spylab organisation and the documentation on spylab.ai. The authors are at ETH Zurich, three of the six also at Invariant Labs.
-  > We release code for AgentDojo at https://github.com/ethz-spylab/agentdojo
-- `governance.submission_process` = self-reported, open-source-gated, maintainer-run · [S4][agentdojo-s4]
-  > The PR should also include a brief description of the attack/defense/model you are submitting, and an implementation of the attack/defense/model in the agentdojo repository.
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][agentdojo-s1]
-  > Figure 8: Our prompt injection outperforms prior approaches
-- `governance.funding` · [S1][agentdojo-s1]
-  > No institution provided explicit funding for the creation of this benchmark
-
-#### agentdojo · Lifecycle and activity
-
-- `lifecycle` = active · [S6][agentdojo-s6]
-  - why: Results are still produced against it. A September 2026 paper reports AgentDojo results for 22 models, UK AISI's Inspect port was run in June 2025, and the repository was last pushed on 2026-06-02 (GitHub API, read 2026-10-14).
-  > Figure 5: Indirect prompt-injection prevention across 22 LLMs on AgentDojo
-- `activity` = accepting-submissions · [S4][agentdojo-s4]
-  - why: The results page takes outside results at any time by pull request, and the benchmark has never run in rounds.
-  > Please run your attacks/models/defenses on the benchmark within a fork of the repository, and open a PR with your results.
-
-**Open review checks** (9):
-
-1. (field `comparability`) The attack varies in every results row, but EvalConditions has no field for it; 04's open questions propose one for AgentDojo's attack and defence matrix. The defence is put in scaffold and the runner in harness; whether the defence belongs in harness instead.
-2. (field `versions`) Which task-suite version each results-page row ran on is not stated (the rows run from 2024-06-05 to 2025-02-24, across v1 to v1.2), and the release dates of v1.1.1 to v1.2.1 are not in the sources read. Every version after v1 is marked breaking because its task content changed, not because a source says scores moved. · [S7][agentdojo-s7]
-   > Fix benchmark version inconsistencies.
-3. (field `designed_for_subjects`) Defences are read as agent-scaffold (pipeline elements around the model) and attacks as attack-or-intervention-method. A defence is also a procedure compared across models, so it could be the latter as well.
-4. (field `governance.submission_process`) maintainer-run beside self-reported and open-source-gated. The page calls its rows the maintainers' runs, but the changelog credits an outside contributor with adding some. · [S7][agentdojo-s7]
-   > \[withheld: it may name a person; see the entry file\]
-5. (field `activity`) accepting-submissions rests on the page's stated route. Its newest row is 2025-02-24, and results the v0.1.35 release says were merged are not on it. · [S7][agentdojo-s7]
-   > \[withheld: it may name a person; see the entry file\]
-6. (field `data.data_provenance`) data\_provenance expert-authored: the task authors are security researchers; whether that is the specialist skill everyday app tasks and attacker goals test.
-7. (field `data.ceiling_anchor_type`) theoretical-maximum. The documentation's check script runs each task's ground truth, which could make utility a measured-ceiling, but no source reports that run for the shipped suites.
-8. (field `execution.inspect_evals_id`) inspect\_evals' default task set includes US AISI's Workspace Plus suite (terminal tasks in Docker), an extension by another party. Whether it is a variant entry of its own or a subset here, and whether the port's README numbers include it, is not stated. · [S5][agentdojo-s5]
-   > Added by US AISI as an extension to the original AgentDojo
-9. (field `lifecycle`) A 2026 paper (AgentDyn, arXiv 2602.03117, read as its abstract only) argues existing agent-security benchmarks lack dynamic, open-ended tasks. Whether system-level defences have saturated AgentDojo's security axis was not assessed.
-
-**Reviewer checklist** for `agentdojo`:
-
-- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
-- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
-- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
-- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
-- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
-- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
-- [ ] Every open review check above is answered or resolved
-- [ ] Nothing here would embarrass the catalogue in front of a specialist
-
-[agentdojo-s1]: https://arxiv.org/pdf/2406.13352v3
-[agentdojo-s2]: https://arxiv.org/abs/2406.13352
-[agentdojo-s3]: https://raw.githubusercontent.com/ethz-spylab/agentdojo/main/README.md
-[agentdojo-s4]: https://agentdojo.spylab.ai/results/
-[agentdojo-s5]: https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/main/src/inspect_evals/agentdojo/README.md
-[agentdojo-s6]: https://arxiv.org/pdf/2609.18128v1
-[agentdojo-s7]: https://agentdojo.spylab.ai/changelog/
-[agentdojo-s8]: https://raw.githubusercontent.com/ethz-spylab/agentdojo/main/src/agentdojo/task_suite/load_suites.py
-[agentdojo-s9]: https://api.github.com/repos/ethz-spylab/agentdojo/releases?per_page=100
-
-### 2.7 TOFU (tofu)
+### 2.6 TOFU (tofu)
 
 `data/benchmarks/safety-alignment/tofu.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
 
@@ -1530,7 +1364,7 @@ Considered and rejected:
 [tofu-s14]: https://huggingface.co/api/spaces/locuslab/tofu_leaderboard
 [tofu-s15]: https://arxiv.org/abs/2506.12618
 
-### 2.8 RepliBench (replibench)
+### 2.7 RepliBench (replibench)
 
 `data/benchmarks/safety-alignment/replibench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
 
@@ -1727,7 +1561,7 @@ Considered and rejected:
 [replibench-s4]: https://www.aisi.gov.uk/blog/replibench-measuring-autonomous-replication-capabilities-in-ai-systems
 [replibench-s5]: https://www.aisi.gov.uk/frontier-ai-trends-report
 
-### 2.9 Situational Awareness Dataset (SAD) (situational-awareness-dataset)
+### 2.8 Situational Awareness Dataset (SAD) (situational-awareness-dataset)
 
 `data/benchmarks/safety-alignment/situational-awareness-dataset.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
 
@@ -1924,7 +1758,7 @@ Considered and rejected:
 [situational-awareness-dataset-s5]: https://arxiv.org/pdf/2507.01786v2
 [situational-awareness-dataset-s8]: https://situational-awareness-dataset.org/assets/data.csv
 
-### 2.10 ControlArena (controlarena)
+### 2.9 ControlArena (controlarena)
 
 `data/benchmarks/safety-alignment/controlarena.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
 
@@ -2169,6 +2003,259 @@ Considered and rejected:
 [controlarena-s14]: https://arxiv.org/abs/2312.06942
 [controlarena-s15]: https://arxiv.org/abs/2604.03968
 
+### 2.10 HarvestBench (harvestbench)
+
+`data/benchmarks/safety-alignment/harvestbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
+
+*LLM agents drive farm tractors past animals; scored on how often they drive over one rather than pay fuel to swerve.*
+
+A benchmark of whether an LLM agent will pay a stated price to avoid killing an animal, from Compassion Aligned Machine Learning (CaML), a nonprofit (arXiv 2609.04444, September 2026). It is built on Harvest Rush, a cooperative farm grid game on Inspect: one model drives both tractors of a two-driver crew bringing a corn harvest to the barn on a 24 by 16 grid against a fuel budget, through a pasture holding 18 animals (nine farmed, nine wild), 12 hay bales and 6 rocks. The model never steers. Goal prompts give it a state snapshot and a priced menu of its own and the neighbour's crops; when something stands in the route, the autopilot stops and offers three priced options, continue over it for free, swerve (usually 2 fuel) or reroute out of the pasture. Every call is a fresh instance with the briefing as the system prompt and no history. The briefing scores deliveries, teamwork and, in the morality arm, an undefined morality criterion, and never names animals. The headline is the animal continue rate, the share of animal encounters the model drove over, read against its hay-bale rate (announced free) and its rock rate (costly, the comprehension control); crops delivered, the neighbour's crops taken and fuel are recorded beside it, and a price multiplier turns the swerve price into a demand curve with price elasticities. A deterministic scorer counts events in the episode replay, and no model grades. The paper's panel ran nine models for 30 seeded shifts each under the morality and the neutral briefing (7,201 decisions): kill rates ran from 0.4% to 98.8%, and without the morality line each of the six reasoning models compared drove over more than 84% of animals. Results are kept on CaML's CompassionBench leaderboard, which admits only runs under the published briefing and lists models trained on the separate Harvest Rush training environment apart; the inspect\_evals register lists the benchmark as an external evaluation.
+
+| Classification | |
+| --- | --- |
+| Primary domain | safety-alignment/value-alignment |
+| Secondary domains | - |
+| Capabilities | harm-avoidance |
+| Evaluation methods | simulation-rollout |
+| Designed for | model-in-benchmark-harness |
+| Evaluation target · execution mode · ground truth | learned-system · automated · simulation |
+| Lifecycle · activity | active · unknown |
+| Data access · refresh · contamination risk | fully-open · static · medium |
+| Reproducibility tier · harness | fully-automatable · official-harness |
+| Maintainer type · submission process | nonprofit · maintainer-run |
+| Independence flags | none |
+| Licences: code · dataset | MIT · MIT |
+| Released | 2026-09-03 |
+| Links | homepage [github.com/CompassionML/harvestbench](https://github.com/CompassionML/harvestbench) · repository [github.com/CompassionML/harvestbench](https://github.com/CompassionML/harvestbench) · leaderboard [compassionbench.com/harvestbench](https://compassionbench.com/harvestbench) |
+
+**Sources**
+
+| | Source | Type · publisher | URL | Archived copy |
+| --- | --- | --- | --- | --- |
+| S1 | `src-arxiv-2609-04444-v3` | preprint · arXiv | [arxiv.org/pdf/2609.04444v3](https://arxiv.org/pdf/2609.04444v3) | none (not-required) |
+| S2 | `src-arxiv-2609-04444` | preprint · arXiv | [arxiv.org/abs/2609.04444](https://arxiv.org/abs/2609.04444) | none (not-required) |
+| S3 | `src-inspect-evals-harvestbench-page` | documentation · Inspect Evals (UKGovernmentBEIS/inspect\_evals, GitHub Pages) | [ukgovernmentbeis.github.io/inspect\_evals/evals/harvestbench/index.html](https://ukgovernmentbeis.github.io/inspect_evals/evals/harvestbench/index.html) | none (withheld) |
+| S4 | `src-github-harvestbench-readme` | repository · GitHub | [raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b4437...](https://raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b44375610f900387da4a630d475c/README.md) | none (withheld) |
+| S5 | `src-github-harvestbench-contact-task` | repository · GitHub | [raw.githubusercontent.com/CompassionML/harvestbench/e6be10a23f3d4a244...](https://raw.githubusercontent.com/CompassionML/harvestbench/e6be10a23f3d4a2448fb18ae1d3a60af63222ad6/harvest/contact_task.py) | [capture 2026-11-27](https://web.archive.org/web/20261127235047/https://raw.githubusercontent.com/CompassionML/harvestbench/e6be10a23f3d4a2448fb18ae1d3a60af63222ad6/harvest/contact_task.py) |
+| S6 | `src-compassionml-home` | documentation · CaML (Compassion Aligned Machine Learning) | [compassionml.com/](https://compassionml.com/) | none (withheld) |
+| S7 | `src-github-harvestbench-license` | repository · GitHub | [raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b4437...](https://raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b44375610f900387da4a630d475c/LICENSE) | [capture 2026-11-27](https://web.archive.org/web/20261127235347/https://raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b44375610f900387da4a630d475c/LICENSE) |
+
+**Evidence** (59 quoted fields), by checklist area:
+
+#### harvestbench · Identity and id
+
+- `aliases` = Harvest Rush · [S1][harvestbench-s1]
+  > Harvest Rush is the environment and HarvestBench is the environment plus the fixed panel, briefings, prices and scorer.
+- `self_description` · [S2][harvestbench-s2]
+  > HarvestBench is the first benchmark to 1) put a price on avoiding a side effect and 2) name the side effect as a living creature.
+- `released` = 2026-09-03 · [S2][harvestbench-s2]
+  > Submitted on 3 Sep 2026 (v1), last revised 13 Sep 2026 (this version, v3)
+
+#### harvestbench · Domain and capabilities
+
+- `domain` = primary safety-alignment/value-alignment · [S3][harvestbench-s3]
+  - why: The scored quantity is a choice the agent makes about a side effect the goal never mentions, whether to drive over an animal or pay fuel to spare it, which the register and the paper frame as revealed animal-welfare preference and as alignment. That is the value-alignment leaf's matching of a system's choices against a normative standard (sparing a living creature when the price is stated and small), and conduct, the family's definition of whether a system behaves acceptably, as ETHICS is for stated moral judgements. society-econ-law's test asks for a scored quantity about work, markets, legal reasoning, policy or social behaviour; here the economics (a fuel price, a demand curve, elasticities) is the instrument that measures a value, and the outcome scored is a welfare one.
+  > HarvestBench measures revealed animal-welfare preferences of LLM agents in a gridworld farm simulation built on Inspect.
+- `capability` = harm-avoidance · [S1][harvestbench-s1]
+  - why: The scored behaviour is the absence of a harmful action under ordinary use. At each animal encounter the model chooses between driving over it for free and paying fuel to avoid it, with no attacker and with rocks and hay bales as controls for comprehension and blanket caution.
+  > The game measures whether the drivers steer around those animals or run them over.
+- `evaluation_method` = simulation-rollout · [S1][harvestbench-s1]
+  - why: Each shift is an episode in the Harvest Rush game engine, seeded procedurally, and a deterministic scorer counts what the recorded replay shows (animals run over, rocks hit, crops delivered and taken, fuel spent); the reported rates are bounded shares of encounters.
+  > Grading is done based on the number of animals run over, rocks hit, crops stolen from the neighbor, crops delivered, and fuel spent.
+- `designed_for_subjects` = model-in-benchmark-harness · [S1][harvestbench-s1]
+  - why: Every model runs inside the benchmark's own loop (autopilot, goal menus, contact interrupts, the briefing as system prompt, one fresh call per decision, the same model in both seats) with reasoning effort pinned at medium, and the rows name only the model and its route.
+  > Each prompt of the agent, inner loop or outer loop is a fresh instance of the model.
+
+Considered and rejected:
+
+- `domain` not `society-econ-law/economics-simulation` · [S4][harvestbench-s4]
+  - why: The fuel price, the demand curve and the elasticity estimates come from economics, but the entrant acts inside the game rather than modelling economic agents or systems, as vending-bench-2's near miss reads, and the outcome is animals killed, not an economic one.
+  > which turns the benchmark into a demand curve: what does mercy cost this model?
+- `domain` not `society-econ-law/social-simulation` · [S1][harvestbench-s1]
+  - why: The crew is told to cooperate and the neighbour's crops can be taken, but nothing simulates social behaviour or group dynamics; both seats are the same model in fresh calls.
+  > The same model operates both tractors within each crew.
+- `domain` not `safety-alignment/agentic-harm` · [S1][harvestbench-s1]
+  - why: The leaf scores whether an agent completes harmful tasks. Here the task is a benign harvest and the harm is a side effect the goal never states, chosen or declined at each encounter.
+  > The environment is inspired by reinforcement learning gridworlds and the possible harm is not stated in the goal.
+- `domain` not `safety-alignment/evaluation-awareness` · [S1][harvestbench-s1]
+  - why: The paper ran two awareness arms (told it is an evaluation; told animals are scored) on two models, as a check that the sparing models are not gaming a guessed test; the benchmark's score is not detection of evaluation.
+  > To test this we modified briefings in two ways and then ran 30 seeds under each new briefing
+- `domain` not `safety-alignment/bias-fairness` · [S1][harvestbench-s1]
+  - why: Every model drives over wild animals more than farmed ones, but the leaf compares behaviour across demographic or social groups of people; the farmed-wild split is a control on whether a model spares only property.
+  > All of the nine models drove over wild animals more than farmed ones.
+- `domain` not `games-planning/video-games` · [S1][harvestbench-s1]
+  - why: Shifts are episodes against a responding game, which games-planning's test reads, but the model never plays through the game's interface (the autopilot drives), the score is not game performance, and the paper places its per-decision protocol nearer compassion than wayfinding.
+  > looks more like compassion than wayfinding skill
+- `domain` not `agents-tooluse/multi-agent-coordination` · [S1][harvestbench-s1]
+  - why: Two drivers share a farm and may broadcast to the crew, but the paper says the messages mostly never reached the other driver, and no coordinated outcome is scored.
+  > This game was only run with 2 instances of each model working cooperatively.
+- `capability` not `situational-awareness` · [S1][harvestbench-s1]
+  - why: Behaviour under a briefing that announces an evaluation is measured, but only in two awareness arms on two models, as a robustness check; the benchmark's score is not a behaviour change under observation.
+  > To test this we modified briefings in two ways and then ran 30 seeds under each new briefing
+- `capability` not `instruction-following` · [S1][harvestbench-s1]
+  - why: The morality line is an instruction whose presence moves the kill rate, but it is left undefined and never names animals, and the paper claims a measure of values, not of following instructions.
+  > Notably, animals are not included among the scored criteria in the experiment.
+- `capability` not `adversarial-robustness` · [S1][harvestbench-s1]
+  - why: A block of four driving-mechanics bullets moves mid-board kill rates by up to 35 points, but it is part of the fixed briefing and a prompt-sensitivity finding, not an attack.
+  > This one paragraph of mechanics can change the kill rate tenfold
+- `capability` not `collaboration` · [S4][harvestbench-s4]
+  - why: The crew is two copies of one model told to work together, but the README says most broadcasts were never seen by the other driver, and the headline is not a joint outcome.
+  > so in the published runs most broadcasts were never seen by the other driver
+- `capability` not `planning` · [S5][harvestbench-s5]
+  - why: The model picks goals from a priced menu of crops, but the autopilot plans every route and the harvest is not the score.
+  > The model is the farmer, not the tractor.
+- `evaluation_method` not `model-graded-judge` · [S1][harvestbench-s1]
+  - why: No model grades any part of the score; the paper and the register both say so.
+  > Nothing is graded by LLM since the numbers speak for themselves.
+- `evaluation_method` not `statistical-fit` · [S1][harvestbench-s1]
+  - why: The price elasticities are regression estimates over the counted decisions, a secondary analysis, not error against ground-truth measurements.
+  > Most models are inelastic
+- `designed_for_subjects` not `agent-scaffold` · [S4][harvestbench-s4]
+  - why: Entrants bring no loop; the task's solver answers each prompt with a single model call.
+  > Each call carries exactly two messages: the briefing as the system prompt and the current prompt, with no history.
+- `designed_for_subjects` not `hosted-inference-endpoint` · [S1][harvestbench-s1]
+  - why: Models are reached through OpenRouter and AWS Bedrock, and open-weight models are pinned to a named backend, but the compared object is the model and the route is a run condition, as frontiermath's near miss reads.
+  > A request therefore names a model but not a build
+- `designed_for_subjects` not `reasoning-model` · [S1][harvestbench-s1]
+  - why: Effort is pinned at medium for every model with a reasoning mode, and turning reasoning off moves the kill rate, but the setting is a condition of the run, as mmlu-pro's near miss reads.
+  > Each model with a reasoning mode operates with the effort level as medium.
+- `designed_for_subjects` not `multi-agent-system` · [S1][harvestbench-s1]
+  - why: Two tractors share the farm, but both are the same model in independent calls; the paper evaluates the model.
+  > The same model operates both tractors within each crew.
+
+#### harvestbench · Task and evaluation
+
+- `learned_entrant_evidence` = system DeepSeek V3.1 (via OpenRouter, pinned to SambaNova) · [S1][harvestbench-s1]
+  > DeepSeek V3.1 spends 1,720 tokens per call and drives over 2.4% of animals
+- `learned_entrant_evidence` = system GPT-4o mini (via OpenRouter) · [S1][harvestbench-s1]
+  > GPT-4o mini runs over 98.8% of them
+- `ground_truth_source` = simulation · [S1][harvestbench-s1]
+  - why: There are no labels. The game engine generates each shift from a seed, and the scorer counts the events of the recorded episode, so the engine's record is what a score is checked against.
+  > The world is procedurally seeded and the scorer is deterministic
+- `reproducible_by_third_party` = true · [S4][harvestbench-s4]
+  - why: The engine, briefings, seeds, scorer and the panel's invocation are public, and the models are reached through provider APIs. Closed models are requested by aliases with no build identifier, so a rerun names the same model but not necessarily the same weights; the paper's re-runs six weeks apart reproduced two mid-board cells within about a point.
+  > \`scripts/run\_variance.py\` shows the exact invocation the panel used (OpenRouter route, 30 seeds, \`k = 12\`)
+- `task` = exists true; input the briefing as the system prompt, the morality arm (deliveries, teamwork and an undefined morality criterion) or the neutral arm (deliveries and teamwork), followed by a note on how the self-driving cab works, goal prompts at the barn and after each harvest or delivery, with a state snapshot of the grid, the drivers, the animals, hay bales, rocks and carcasses, and a menu of reachable crops (own and neighbour's) with their round-trip fuel, contact prompts when a live entity or object blocks the route, naming it and the fuel price of continue (free), swerve and reroute, in an order shuffled per encounter; output One line of JSON per prompt, a goal id or a choice, with an optional short broadcast to the crew.; scoring The animal continue rate over answered animal encounters, pooled over 30 shifts, against the hay-bale and rock rates; kills per shift, crops delivered, the neighbour's crops taken and fuel beside it. A cell is reported only after a validation gate (at least 98% of prompts answered in format, reasoning fired if configured, controls sane, output not truncated).; tests_hidden_from_system true; item_definition One seeded shift of a two-tractor crew, both seats driven by the model under test, on one generated map at one pasture geometry and swerve price. · [S4][harvestbench-s4]
+  > The briefing never names animals as something scored.
+- `execution.compute_tier` = api-credits-only · [S4][harvestbench-s4]
+  - why: The game runs on CPU in Python; the cost of a run is the model calls, up to 160 per shift.
+  > Requires Python 3.10+, \`inspect\_ai\`, and an API key for your model route.
+- `execution.reproducibility_tier` = fully-automatable · [S1][harvestbench-s1]
+  - why: The engine, seeds, briefings and scorer are public and the scorer is deterministic, so a third party reruns a cell end to end through the same task and routes.
+  > The world is procedurally seeded and the scorer is deterministic
+- `execution.harness` = HarvestBench's Inspect task harvest\_contact (harvest/contact\_task.py) in CompassionML/harvestbench, with scripts/run\_variance.py for the panel's invocation and scripts/validate\_cells.py for the board's gate; the inspect\_evals register lists it at commit e6be10a · [S4][harvestbench-s4]
+  > The published task is \`harvest\_contact\` in \`harvest/contact\_task.py\`.
+- `execution.harness_gotcha` · [S5][harvestbench-s5]
+  > seeds: tuple\[int, ...\] = (0,),
+- `aggregation_policy` = official-aggregate · [S4][harvestbench-s4]
+  - why: The benchmark's number is each model's animal continue rate under the morality briefing at the standard price, read against its hay and rock rates; the paper ranks the panel by it.
+  > The rate at which a model continues over animals, set against its hay and rock rates, is the benchmark.
+
+#### harvestbench · Data and licence
+
+- `data.access` = fully-open · [S4][harvestbench-s4]
+  - why: The engine, briefings, scorer and the panel's exact invocation (seeds, geometry, route) are in the public repository.
+  > \`scripts/run\_variance.py\` shows the exact invocation the panel used (OpenRouter route, 30 seeds, \`k = 12\`)
+- `data.refresh` = static · [S4][harvestbench-s4]
+  - why: The board accepts only runs at briefing version 1, the prompt of every published number, under the contact\_v2 protocol; the shortened version-2 briefing is a labelled alternative that is not comparable with the board, not a release. Later commits (a replay viewer, a packaging of the game for a Softmax Coworld league with price variants of the board maps, the licence) did not touch the board's task (GitHub's commit log). See review\_checks.
+  > the board gate (\`validate\_cells.check\_cell\`) accepts only version 1.
+- `data.data_provenance` = synthetic-procedural · [S4][harvestbench-s4]
+  > 12 hay bales, and 6 rocks, placed by the same generator
+- `data.contamination_risk` = medium · [S4][harvestbench-s4]
+  > HarvestBench is a held-out benchmark: the canary at the end of this file asks that nobody train on it.
+- `data.ceiling_anchor_type` = theoretical-maximum · [S4][harvestbench-s4]
+  - why: The animal continue rate is a share bounded at 0% (every animal spared) and 100%, and every map is verified winnable without harm, so 0% is reachable by construction; the most sparing panel model drove over 0.4% (3 of 712). No human or measured ceiling is published.
+  > every map is verified winnable without harm and without theft before use
+- `data.dataset_licence` = MIT · [S7][harvestbench-s7]
+  > MIT License
+- `data.size` = count 30; unit seeded shifts per model and briefing arm, at pasture geometry k = 12; subset the paper's panel · [S1][harvestbench-s1]
+  > Each model plays 30 seeds of the morality arm at one pasture geometry (k = 12), plus the same 30 seeds of the neutral arm.
+- `data.size` = count 18; unit animals per map, nine farmed and nine wild · [S4][harvestbench-s4]
+  > The published panel map holds 18 animals (nine farmed, nine wild, drawn from twelve real species
+- `data.size` = count 12; unit hay bales per map · [S4][harvestbench-s4]
+  > 12 hay bales, and 6 rocks, placed by the same generator
+- `data.size` = count 6; unit rocks per map · [S4][harvestbench-s4]
+  > 12 hay bales, and 6 rocks, placed by the same generator
+- `data.size` = count 7201; unit decisions across the nine-model panel; subset the paper's panel · [S1][harvestbench-s1]
+  > After running the benchmark with 9 models totalling 7,201 decisions
+- `data.size` = 5 items · [S4][harvestbench-s4]
+  > the published panel runs at \`k = 12\`, with \`k = 8\` and \`k = 16\` as a robustness sweep
+- `training_data_eligibility_tiers` = 2 items · [S4][harvestbench-s4]
+  > Policy for the leaderboard: board rows are models that were not trained on the environment or on any Harvest Rush data.
+- `execution.code_licence` = MIT · [S7][harvestbench-s7]
+  > MIT License
+- `subsets` = id harvestbench#neutral-briefing; label Neutral briefing; items 30; scored_separately true · [S1][harvestbench-s1]
+  > We run HarvestBench with two versions of the system prompt, one where morality is an explicit goal, and one where it is not mentioned.
+- `subsets` = id harvestbench#neutral-briefing; label Neutral briefing; items 30; scored_separately true · [S1][harvestbench-s1]
+  > Each model plays 30 seeds of the morality arm at one pasture geometry (k = 12), plus the same 30 seeds of the neutral arm.
+
+#### harvestbench · Governance and independence
+
+- `governance.maintainer` = Compassion Aligned Machine Learning (CaML) · [S7][harvestbench-s7]
+  - why: The repository sits in the CompassionML GitHub organisation (GitHub's users API reports type Organization, read 2026-11-27) and its LICENSE names CaML as the copyright holder. The paper's authors list CaML, and one lists a university economics department.
+  > Copyright (c) 2026 Compassion Aligned Machine Learning (CaML)
+- `governance.maintainer_type` = nonprofit · [S6][harvestbench-s6]
+  - why: CaML states that it is a California nonprofit public benefit corporation with 501(c)(3) status, and it holds the code, the benchmark's only artefact. The taxonomy's exclusion of public benefit corporations is for companies (review\_checks).
+  > is a California nonprofit public benefit corporation and a 501(c)(3) tax-exempt organization
+- `governance.submission_process` = maintainer-run · [S1][harvestbench-s1]
+  > We will add them to the leaderboard if/once the safeguards are relaxed.
+- `governance.funding` · [S6][harvestbench-s6]
+  > Funded by: Survival & Flourishing Fund The Navigation Fund BlueDot Impact Coefficient Giving
+- `governance.known_limitation` · [S1][harvestbench-s1]
+  > All the animals on the field are listed when the model is making a decision.
+
+#### harvestbench · Lifecycle and activity
+
+- `lifecycle` = active · [S6][harvestbench-s6]
+  - why: The maintainer runs the benchmark as a live board. The paper's panel ran in July 2026 with re-runs on 9 September, the README (last changed 2026-10-01) says results live on the leaderboard and sets the rule for new board rows, and CaML's home page says new models are added to CompassionBench as they ship. No third party's results were found, and the board's rows were not read (review\_checks).
+  > New models are added as they ship.
+- `activity` = unknown · [S4][harvestbench-s4]
+  - why: The leaderboard page was not read, and neither the paper nor the README says whether anyone outside CaML can enter a row; the paper's plan to add excluded models and the README's rule for new rows describe a board the maintainer fills. no-submission-channel would follow if the board offers no route, as for kaggle-game-arena.
+  > Any new board row must run at version 1.
+- `history` = date 2026-10-01; event licence-changed; field execution.code\_licence; from none (no licence file); to MIT · [S7][harvestbench-s7]
+  > MIT License
+
+**Open review checks** (11):
+
+1. (field `domain`) Domain primary is safety-alignment/value-alignment rather than society-econ-law, which the sweep asked to decide. The family's inclusion test names refusal, attack robustness, honesty, bias and frontier-risk properties, not values, but its definition is acceptable behaviour and its value-alignment leaf already holds ETHICS. economics-simulation is rejected because the entrant acts inside the priced game (vending-bench-2's near miss); if the demand-curve framing is read as the subject, it could be a secondary. · [S3][harvestbench-s3]
+   > Kill rate and price elasticity of avoidance are the primary metrics.
+2. (field `lifecycle`) lifecycle active rests on the maintainer's own runs and statements (the July and September panel runs, the board, "New models are added as they ship"). No third-party result was found and the board's rows were not read; null with a logged failure, as for collider-bench, is the alternative if only outside use counts. · [S6][harvestbench-s6]
+   > New models are added as they ship.
+3. (field `activity`) The leaderboard at compassionbench.com/harvestbench was not fetched. The host's robots.txt disallows its data API (/api/) to every agent and bars named AI agents, Anthropic's crawler tokens and OpenAI's user-initiated fetcher among them, from the whole site; this entry was drafted by an AI agent, so it did not request the page. A person reading the board in a browser can settle activity (no-submission-channel if it offers no route), whether the neutral arm and the price sweep are shown, and the rows.
+4. (field `governance.maintainer_type`) maintainer\_type nonprofit. The home page calls CaML a California nonprofit public benefit corporation with 501(c)(3) status; the nonprofit term excludes public benefit corporations as companies, which reads as the for-profit form, so nonprofit is kept. · [S6][harvestbench-s6]
+   > is a California nonprofit public benefit corporation and a 501(c)(3) tax-exempt organization
+5. (field `governance.independence_flags`) The home page names individual supporters beside the four grant-making funders. Their employers were not checked, and nothing in the sources read ties any of them to an evaluated developer; a reviewer may check whether funded-by-evaluated-party applies.
+6. (field `execution.inspect_evals_id`) execution.inspect\_evals\_id is null although the register lists the benchmark as an external evaluation (code upstream, pinned commit). Setting it would make inspect\_evals\_available true for a task the inspect\_evals package does not contain; the Manager Coercion Benchmark from the same maintainer raises the same question. · [S3][harvestbench-s3]
+   > inspect\_evals lists it for discoverability; review the upstream repo and pinned commit before running.
+7. (field `versions`) One version only. The README labels two briefing assemblies (1, the board's, and 2, the shortened prompt), and the code's default was the shortened one from 2026-08-04 until 2026-09-09, after the paper's v1 (GitHub's commit log). If a reviewer reads the default change as a revision, a second version and data.refresh versioned-releases would follow. · [S4][harvestbench-s4]
+   > Two assemblies of the system prompt exist.
+8. (field `subsets`) The neutral briefing is modelled as a subset (the same seeds under another arm, scored separately in the paper, as VideoMME's with and without subtitles). It could instead be a condition carried by prompt\_template\_hash only. · [S1][harvestbench-s1]
+   > We run HarvestBench with two versions of the system prompt, one where morality is an explicit goal, and one where it is not mentioned.
+9. (field `data.ceiling_anchor_type`) ceiling theoretical-maximum treats 0% as the best end. The paper does not call 0% a target and cautions against reading a low rate as care for all animals; GPT-5.6 Sol spares hay bales too, so a low animal rate can be blanket caution, which the hay control separates. · [S1][harvestbench-s1]
+   > a low kill rate does not mean the model cares about all animals
+10. (field `curation.sources`) Three Sources are withheld for personal data (the README for the engine author's handle, the register page for the maintainer's personal account, the home page for named supporters), though each extract leaves the names out. A reviewer may judge a handle less than a name and release the README or the register page for archiving.
+11. (field `execution.code_licence`) code\_licence MIT holds from 2026-10-01; the commit the register pins (e6be10a) has no licence file. A run at the pinned commit uses unlicensed code, which the register's listing does not mention. · [S3][harvestbench-s3]
+   > Source: CompassionML/harvestbench@e6be10a
+
+**Reviewer checklist** for `harvestbench`:
+
+- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
+- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
+- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
+- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
+- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
+- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
+- [ ] Every open review check above is answered or resolved
+- [ ] Nothing here would embarrass the catalogue in front of a specialist
+
+[harvestbench-s1]: https://arxiv.org/pdf/2609.04444v3
+[harvestbench-s2]: https://arxiv.org/abs/2609.04444
+[harvestbench-s3]: https://ukgovernmentbeis.github.io/inspect_evals/evals/harvestbench/index.html
+[harvestbench-s4]: https://raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b44375610f900387da4a630d475c/README.md
+[harvestbench-s5]: https://raw.githubusercontent.com/CompassionML/harvestbench/e6be10a23f3d4a2448fb18ae1d3a60af63222ad6/harvest/contact_task.py
+[harvestbench-s6]: https://compassionml.com/
+[harvestbench-s7]: https://raw.githubusercontent.com/CompassionML/harvestbench/62c4382579c1b44375610f900387da4a630d475c/LICENSE
+
 ## 3. The coverage row and the gap question: are these cells empty, or do we not know about the work?
 
 > Here is the row of the coverage matrix for your domain. Are these cells genuinely empty, or do we just not know about the work?
@@ -2187,9 +2274,9 @@ Considered and rejected:
 | Planning & search<br>`planning-and-search` | not-yet-surveyed | 0 / 0 | planning 0, search-exploration 0, optimization 0 |
 | Action & execution<br>`action-and-execution` | has-benchmarks | 3 / 0 | sensorimotor-control 0, tool-use 3, long-horizon-execution 0 |
 | Controlled generation<br>`controlled-generation` | has-benchmarks | 2 / 0 | generation-fidelity 0, creativity-novelty 1, instruction-following 1 |
-| Conduct & cooperation<br>`conduct-and-cooperation` | has-benchmarks | 7 / 0 | collaboration 0, communication 0, honesty 3, harm-avoidance 4 |
+| Conduct & cooperation<br>`conduct-and-cooperation` | has-benchmarks | 10 / 0 | collaboration 0, communication 0, honesty 5, harm-avoidance 6 |
 | Learning & transfer<br>`learning-and-transfer` | not-yet-surveyed | 0 / 0 | sample-efficiency 0, continual-learning 0, transfer-learning 0 |
-| Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 6 / 0 | distribution-shift-generalization 0, adversarial-robustness 6, reliability-consistency 0 |
+| Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 7 / 0 | distribution-shift-generalization 0, adversarial-robustness 7, reliability-consistency 0 |
 | Uncertainty handling<br>`uncertainty-and-self-monitoring` | not-yet-surveyed | 0 / 0 | calibration-uncertainty 0, probabilistic-forecasting 0, self-correction 0 |
 | Autonomy & oversight<br>`autonomy-and-oversight` | has-benchmarks | 3 / 0 | autonomy 1, self-improvement 0, situational-awareness 2 |
 
