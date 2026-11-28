@@ -2,11 +2,11 @@
 
 # Review packet: General intelligence
 
-`general-intelligence` · 12 published entries · 9 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`general-intelligence` · 15 published entries · 9 subdomains · data as of 2026-11-27 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
-Everything below is generated from the catalogue's files. Verification status of the family's 12 entries: 12 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
+Everything below is generated from the catalogue's files. Verification status of the family's 15 entries: 15 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
 
 How to read an entry: each evidenced field shows its value, the curator's reason where one was given, the verbatim quote it rests on and the Source it is quoted from (S1, S2, ... in the entry's Sources table, with the URL and the archived copy). Code has checked that every quote is an exact substring of the stored extract of its Source; whether the quote supports the value is what a reviewer judges. Text that may name a person is not reproduced here (\[withheld: it may name a person; see the entry file\]); the entry file has it.
 
@@ -24,7 +24,7 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 1 | `abstraction-generalization`<br>Abstraction generalization | Inferring an abstract rule from a handful of examples and applying it to new cases. | 2 + 0 | has benchmarks |
 | 2 | `novel-task-acquisition`<br>Novel task acquisition | Learning to perform a task the system has never seen, within the evaluation episode itself. | 1 + 0 | has benchmarks |
 | 3 | `human-comparison-batteries`<br>Human comparison batteries | Broad batteries built specifically to compare system performance against measured human performance. | 0 + 0 | not yet surveyed |
-| 4 | `multi-subject-knowledge-exams`<br>Multi-subject knowledge exams | Closed-ended question sets drawn from exams, textbooks or expert-written questions across many academic subjects, scored on the answers alone. | 5 + 2 | has benchmarks |
+| 4 | `multi-subject-knowledge-exams`<br>Multi-subject knowledge exams | Closed-ended question sets drawn from exams, textbooks or expert-written questions across many academic subjects, scored on the answers alone. | 8 + 2 | has benchmarks |
 | 5 | `meta-learning`<br>Meta learning | Measuring how quickly a system improves across a distribution of related tasks. | 0 + 0 | not yet surveyed |
 | 6 | `open-ended-discovery`<br>Open ended discovery | Measuring whether a system produces genuinely novel artifacts or findings rather than solving posed problems. | 0 + 0 | not yet surveyed |
 | 7 | `compositional-generalization`<br>Compositional generalization | Recombining known primitives in configurations not present in training. | 0 + 1 | has benchmarks |
@@ -45,18 +45,18 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (2): `epoch-capabilities-index`, `lmarena`. `python scripts/review_packet.py --family general-intelligence --all` renders every entry.
+Not in this packet (5): `agieval`, `epoch-capabilities-index`, `lmarena`, `mmlu`, `mmlu-pro`. `python scripts/review_packet.py --family general-intelligence --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [ARC-AGI-1](#21-arc-agi-1-arc-agi-1) | `abstraction-generalization` | 49 | 12 |
 | 2.2 | [ARC-AGI-2](#22-arc-agi-2-arc-agi-2) | `abstraction-generalization` | 48 | 11 |
 | 2.3 | [ARC-AGI-3](#23-arc-agi-3-arc-agi-3) | `novel-task-acquisition` | 29 | 5 |
-| 2.4 | [AGIEval](#24-agieval-agieval) | `multi-subject-knowledge-exams` | 39 | 10 |
-| 2.5 | [GPQA](#25-gpqa-gpqa) | `multi-subject-knowledge-exams` | 46 | 11 |
-| 2.6 | [Humanity's Last Exam](#26-humanitys-last-exam-hle) | `multi-subject-knowledge-exams` | 46 | 11 |
-| 2.7 | [MMLU](#27-mmlu-mmlu) | `multi-subject-knowledge-exams` | 25 | 5 |
-| 2.8 | [MMLU-Pro](#28-mmlu-pro-mmlu-pro) | `multi-subject-knowledge-exams` | 39 | 7 |
+| 2.4 | [C-Eval](#24-c-eval-c-eval) | `multi-subject-knowledge-exams` | 55 | 10 |
+| 2.5 | [CMMLU](#25-cmmlu-cmmlu) | `multi-subject-knowledge-exams` | 46 | 12 |
+| 2.6 | [GPQA](#26-gpqa-gpqa) | `multi-subject-knowledge-exams` | 46 | 11 |
+| 2.7 | [Humanity's Last Exam](#27-humanitys-last-exam-hle) | `multi-subject-knowledge-exams` | 46 | 11 |
+| 2.8 | [SuperGPQA](#28-supergpqa-supergpqa) | `multi-subject-knowledge-exams` | 49 | 11 |
 | 2.9 | [HELM Capabilities](#29-helm-capabilities-helm-capabilities) | `agi-composite-suites` | 65 | 9 |
 | 2.10 | [LiveBench](#210-livebench-livebench) | `agi-composite-suites` | 72 | 11 |
 
@@ -676,180 +676,220 @@ An interactive benchmark from the ARC Prize Foundation. Each environment is an a
 [arc-agi-3-s7]: https://raw.githubusercontent.com/arcprize/ARC-AGI/f2e6fee26aba92243cf768a01c8e9f08b8579a31/README.md
 [arc-agi-3-s8]: https://arcprize.org/leaderboard
 
-### 2.4 AGIEval (agieval)
+### 2.4 C-Eval (c-eval)
 
-`data/benchmarks/general-intelligence/agieval.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-10 · last verified 2026-11-10
+`data/benchmarks/general-intelligence/c-eval.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
 
-*Twenty tasks from exams written for people, from the Gaokao, SAT and LSAT to maths contests, in English and Chinese.*
+*Four-option Chinese exam questions in 52 subjects, from middle school to professional qualification tests.*
 
-A bilingual benchmark of objective questions from standardised exams written for human test-takers: the Chinese college entrance exam (Gaokao, in geography, biology, history, chemistry, physics, English, Chinese and maths), the SAT (English and maths), the LSAT (analytical reasoning, logical reasoning and reading comprehension), GRE and GMAT maths through AQuA-RAT, AMC and AIME problems through MATH, the Chinese civil-service exam through LogiQA (in Chinese and in English translation) and the Chinese lawyer qualification exam through JEC-QA. Subjective questions were removed, leaving multiple-choice and fill-in-the-blank items: 8,062 questions in 20 tasks in the paper's release. The paper reports each task beside the average and top-percentile human test-taker, estimated from the exams' score statistics, and evaluates zero-shot, few-shot and chain-of-thought prompting through the OpenAI APIs on Azure. Version 1.1 (2024) added 2023 Gaokao questions in chemistry, biology and physics, fixed annotations and made every multiple-choice task single-answer; the English tasks are unchanged. The repository's results table reports averages over the multiple-choice tasks for an English subset (AGIEval-en), a Chinese subset (AGIEval-zh) and all tasks.
+A Chinese evaluation suite of 13,948 four-option multiple-choice questions in 52 subjects at four levels: middle school, high school, college and professional. The subjects are the standard middle and high school subjects except English, 25 college subjects drawn from all 13 categories of undergraduate majors listed by China's Ministry of Education, and 12 national professional qualification exams such as physician, legal professional and civil servant, grouped into STEM, social science, humanities and other. The questions come mostly from mock exams and small local exams published online as PDF or Word documents, which the authors parsed, partly by hand, to lower the chance of pretraining exposure; about 2,000 college questions come, with permission, from a graduate-entrance mock-exam site where they are not freely available. Each subject has five development exemplars with explanations (for few-shot and chain-of-thought prompting), a validation split and a test split. C-Eval Hard, eight mathematics, physics and chemistry subjects, is reported separately as a test of advanced reasoning. Models are scored by accuracy, averaged over subjects. The test answers were kept private and scored by submission to the maintainers' leaderboard site until 2025-07-27, when the maintainers released the complete test set.
 
 | Classification | |
 | --- | --- |
 | Primary domain | general-intelligence/multi-subject-knowledge-exams |
 | Secondary domains | - |
-| Capabilities | knowledge-recall, context-integration, deductive-reasoning, quantitative-reasoning |
-| Evaluation methods | multiple-choice, exact-match |
-| Designed for | instruction-tuned-model |
+| Capabilities | knowledge-recall |
+| Evaluation methods | multiple-choice |
+| Designed for | base-model, instruction-tuned-model |
 | Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
-| Lifecycle · activity | active · no-submission-channel |
-| Data access · refresh · contamination risk | fully-open · versioned-releases · high |
+| Lifecycle · activity | active · unknown |
+| Data access · refresh · contamination risk | fully-open · static · medium |
 | Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | industry-lab · maintainer-run |
+| Maintainer type · submission process | academic-lab · held-out-server |
 | Independence flags | none |
-| Licences: code · dataset | MIT · null |
-| Released | 2023-04-13 |
-| Links | homepage github.com/\[personal account\]/AGIEval (not linked: a personal account) · repository github.com/\[personal account\]/AGIEval (not linked: a personal account) · leaderboard github.com/\[personal account\]/AGIEval (not linked: a personal account) · dataset github.com/\[personal account\]/AGIEval/tree/main/data/v1\_1 (not linked: a personal account) |
+| Licences: code · dataset | MIT · CC-BY-NC-SA-4.0 |
+| Released | 2023-05-15 |
+| Links | homepage [github.com/hkust-nlp/ceval](https://github.com/hkust-nlp/ceval) · repository [github.com/hkust-nlp/ceval](https://github.com/hkust-nlp/ceval) · leaderboard [cevalbenchmark.com/static/leaderboard.html](https://cevalbenchmark.com/static/leaderboard.html) · dataset [huggingface.co/datasets/ceval/ceval-exam](https://huggingface.co/datasets/ceval/ceval-exam) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-2304-06364-v2` | preprint · arXiv | [arxiv.org/pdf/2304.06364v2](https://arxiv.org/pdf/2304.06364v2) | none (not-required) |
-| S2 | `src-arxiv-2304-06364` | preprint · arXiv | [arxiv.org/abs/2304.06364](https://arxiv.org/abs/2304.06364) | none (not-required) |
-| S3 | `src-acl-2024-findings-naacl-149` | paper · Association for Computational Linguistics | [aclanthology.org/2024.findings-naacl.149/](https://aclanthology.org/2024.findings-naacl.149/) | none (not-required) |
-| S4 | `src-github-agieval-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/AGIEval/84ab72d94318290aad2e4ec820d535a95a1f7552/README.md (not linked: a personal account) | none (withheld) |
-| S5 | `src-arxiv-2412-19437-v2` | preprint · arXiv | [arxiv.org/pdf/2412.19437v2](https://arxiv.org/pdf/2412.19437v2) | none (not-required) |
-| S6 | `src-github-lm-eval-agieval-readme` | repository · GitHub | [raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/314f717677...](https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/314f717677d4aa0c706fc1c6bbd3c801d321384a/lm_eval/tasks/agieval/README.md) | [capture 2026-11-16](https://web.archive.org/web/20261116172612/https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/314f717677d4aa0c706fc1c6bbd3c801d321384a/lm_eval/tasks/agieval/README.md) |
+| S1 | `src-arxiv-2305-08322` | preprint · arXiv | [arxiv.org/abs/2305.08322](https://arxiv.org/abs/2305.08322) | none (not-required) |
+| S2 | `src-arxiv-2305-08322-v3` | preprint · arXiv | [arxiv.org/pdf/2305.08322v3](https://arxiv.org/pdf/2305.08322v3) | none (not-required) |
+| S3 | `src-github-ceval-readme` | repository · GitHub | [raw.githubusercontent.com/hkust-nlp/ceval/cba65ae93bcf189149ced9f66ae...](https://raw.githubusercontent.com/hkust-nlp/ceval/cba65ae93bcf189149ced9f66ae0c958201faed9/README.md) | none (withheld) |
+| S4 | `src-arxiv-2412-19437-v2` | preprint · arXiv | [arxiv.org/pdf/2412.19437v2](https://arxiv.org/pdf/2412.19437v2) | none (not-required) |
+| S5 | `src-github-lm-eval-ceval-readme` | repository · GitHub | [raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/817a2fe7cf...](https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/817a2fe7cf6816e089ff2f9cf9ba6d0f82908e29/lm_eval/tasks/ceval/README.md) | none (withheld) |
+| S6 | `src-arxiv-2505-09388-v1` | preprint · arXiv | [arxiv.org/pdf/2505.09388v1](https://arxiv.org/pdf/2505.09388v1) | none (not-required) |
 | S7 | `src-arxiv-2506-05767-v1` | preprint · arXiv | [arxiv.org/pdf/2506.05767v1](https://arxiv.org/pdf/2506.05767v1) | none (not-required) |
+| S8 | `src-hf-ceval-exam-card` | dataset-card · Hugging Face | [huggingface.co/datasets/ceval/ceval-exam/raw/617524a00b307ff6f9933702...](https://huggingface.co/datasets/ceval/ceval-exam/raw/617524a00b307ff6f9933702f724131fe12ca7ce/README.md) | none (withheld) |
+| S9 | `src-hf-rows-ceval-exam-test` | dataset-card · Hugging Face | [datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=a...](https://datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=accountant&split=test&offset=0&length=1) | none (pending) |
+| S10 | `src-hf-api-ceval-exam` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ceval/ceval-exam](https://huggingface.co/api/datasets/ceval/ceval-exam) | none (pending) |
 
-**Evidence** (39 quoted fields), by checklist area:
+**Evidence** (55 quoted fields), by checklist area:
 
-#### agieval · Identity and id
+#### c-eval · Identity and id
 
-- `self_description` · [S1][agieval-s1]
-  > In this paper, we introduce a human-centric benchmark AGIEval specifically designed to evaluate the general abilities of foundation models in tasks pertinent to human cognition and problem-solving.
-- `released` = 2023-04-13 · [S2][agieval-s2]
-  > Submitted on 13 Apr 2023 (v1), last revised 18 Sep 2023 (this version, v2)
-- `release_venue` = Findings of the Association for Computational Linguistics: NAACL 2024 · [S3][agieval-s3]
-  > Volume: Findings of the Association for Computational Linguistics: NAACL 2024 Month: June Year: 2024
+- `self_description` · [S1][c-eval-s1]
+  > We present C-Eval, the first comprehensive Chinese evaluation suite designed to assess advanced knowledge and reasoning abilities of foundation models in a Chinese context.
+- `released` = 2023-05-15 · [S1][c-eval-s1]
+  > Submitted on 15 May 2023 (v1), last revised 6 Nov 2023 (this version, v3)
+- `release_venue` = NeurIPS 2023 (Datasets and Benchmarks track) · [S2][c-eval-s2]
+  > 37th Conference on Neural Information Processing Systems (NeurIPS 2023) Track on Datasets and Benchmarks.
 
-#### agieval · Domain and capabilities
+#### c-eval · Domain and capabilities
 
-- `domain` = primary general-intelligence/multi-subject-knowledge-exams · [S1][agieval-s1]
-  - why: The claim is general ability across many subjects, measured with closed-ended exam questions scored on the answers alone, and no subject holds most of them (law, the largest, has the two JEC-QA tasks and the three LSAT tasks, 3,000 of 8,062 in the paper's Table 1). It passes the family test on breadth across fields, and no other family holds that breadth.
-  > Finally, the released AGIEval includes 20 human-centric tasks across a wide variety of subjects.
-- `capability` = knowledge-recall · [S1][agieval-s1]
-  - why: The Gaokao science, history and geography tasks and the JEC-QA law tasks supply no passage, so the answer comes from what the system holds; the paper's error analysis scores knowledge recall as one of four dimensions.
-  > Knowledge: Assessing whether the model can accurately recall relevant external knowledge or formulas for problem-solving.
-- `capability` = context-integration · S4
-  - why: The reading tasks (Gaokao Chinese and English, both LogiQA tasks, the three LSAT tasks and SAT English) supply a passage that the answer depends on.
-  > The \`passage\` field is available for gaokao-chinese, gaokao-english, both of logiqa, all of LSAT, and SAT.
-- `capability` = deductive-reasoning · [S1][agieval-s1]
-  - why: The LSAT's analytical and logical reasoning tasks and LogiQA, taken from the Chinese civil-service exam's logic questions, ask for the conclusion that follows from stated conditions; the paper names LSAT-AR as among the hardest tasks.
-  > Law school admission tests, such as the LSAT, are intended to measure the reasoning and analytical skills of prospective law students.
-- `capability` = quantitative-reasoning · S4
-  - why: The two cloze tasks, Gaokao-Math-Cloze and MATH, are scored on the number or expression the system produces, by exact match; the other maths tasks are multiple choice.
-  > AGIEval v1.1 contains 20 tasks, including 18 MCQ tasks and two cloze tasks (Gaokao-Math-Cloze and MATH).
-- `evaluation_method` = multiple-choice, exact-match · [S1][agieval-s1]
-  - why: Eighteen tasks are multiple choice, scored by accuracy on the chosen option; the two cloze tasks are scored by exact match against the stored answer. The paper's section 3.3.2 also names F1 for cloze items, but its experiments report exact match.
-  > Quantitative metrics included task-specific accuracy for multi-choice questions and use Exact Match (EM) for fill-in-blank questions.
-- `designed_for_subjects` = instruction-tuned-model · [S1][agieval-s1]
-  - why: The paper evaluates Text-Davinci-003, ChatGPT and GPT-4 through the completion and chat completion APIs, and the open Vicuna-13B, all instruction-tuned, with zero-shot, few-shot and chain-of-thought prompts.
-  > For TextDavinci-003, we use the completion API, and for ChatGPT and GPT-4, we use the chat completion API.
+- `domain` = primary general-intelligence/multi-subject-knowledge-exams · [S2][c-eval-s2]
+  - why: The claim is advanced knowledge across 52 subjects from the humanities to science and engineering, measured with closed-ended exam questions scored on the answers alone, and no subject holds most of them (the largest, college economics, has 557 of 13,948; the largest category, STEM, 4,495). It passes the leaf's inclusion test, and the breadth does not lie inside one family.
+  > C-EVAL consists of 13948 multiple-choice exam questions spanning 52 diverse disciplines, ranging from humanities to science and engineering
+- `capability` = knowledge-recall · [S2][c-eval-s2]
+  - why: Each item is a question with four options and no supplied passage, tool or retrieval step, so the answer comes from what the system holds; the paper frames the Chinese context as knowledge of Chinese users' subjects.
+  > should be evaluated on their knowledge of Chinese users
+- `evaluation_method` = multiple-choice · [S2][c-eval-s2]
+  - why: Every item has four options with one correct, and the score is accuracy on the chosen option, extracted from the response by regular expression or taken as the most probable letter.
+  > Each question has four choices and only one choice is the correct answer.
+- `designed_for_subjects` = base-model, instruction-tuned-model · [S3][c-eval-s3]
+  - why: The paper evaluates eleven models through prompting, instruction-tuned ones (GPT-4, ChatGPT, the two Claude versions, ChatGLM-6B, MOSS, Chinese-Alpaca-13B, Bloomz-mt) beside the pretrained LLaMA-65B, and the README's scoring advice provides for models without instruction tuning.
+  > especially in zero-shot evaluation for models without experiencing instruction tuning
 
 Considered and rejected:
 
-- `domain` not `general-intelligence/human-comparison-batteries` · [S1][agieval-s1]
-  - why: Human comparison runs through the paper (Figure 1, the abstract's headline), but the benchmark is built from exams written for humans, not to measure humans; the human figures are reported beside the results, estimated by scaling the exams' published score statistics rather than measured on these items. The design principles name human-level tasks and real-world relevance as the aim, so the claim is general ability on exam questions (see review\_checks).
-  > It is worth noting that we also report the average and top performances of human test-takers as human-level boundaries for each task.
+- `domain` not `language/understanding` · [S2][c-eval-s2]
+  - why: The questions are in Chinese, but Chinese is the interface to the subjects, as the language family's exclusion test and its MMLU-Pro near miss read; the paper's Chinese context is knowledge of Chinese subjects (culture, history, law), not reading a supplied passage. The c3 entry records the same reading of C-Eval.
+  > should be evaluated on their knowledge of Chinese users
+- `domain` not `language/multilingual` · [S2][c-eval-s2]
+  - why: One language; no task is run across languages, and the school English subject is left out on purpose.
+  > We include the standard subjects for middle and high school levels in China, except for the English subject.
+- `domain` not `general-intelligence/human-comparison-batteries` · [S2][c-eval-s2]
+  - why: The items come from exams written for people, but no human performance is measured or estimated on them; the paper's only reference row is the 25% random baseline.
+  > challenging human exams in China
+- `capability` not `quantitative-reasoning` · [S2][c-eval-s2]
+  - why: C-Eval Hard's subjects need calculation and the paper calls them reasoning tests, but the scored act is choosing one of four options, which the term's MMLU-Pro near miss sends to knowledge breadth (see review\_checks).
+  > We select 8 challenging math, physics, and chemistry subjects from C-EVAL to form a separate benchmark, C-EVAL HARD
+- `capability` not `reliability-consistency` · [S2][c-eval-s2]
+  - why: Appendix G permutes the options five ways for three models to check option bias; that is an analysis in the paper, not a score the benchmark reports.
+  > we permuted the order of the choices in the questions and randomly selected 5 distinct permutations of choices for each question
 
-#### agieval · Task and evaluation
+#### c-eval · Task and evaluation
 
-- `learned_entrant_evidence` = system GPT-4 · [S1][agieval-s1]
-  > Impressively, GPT-4 achieves 93.8% accuracy on Gaokao-English and 95% accuracy on SAT-MATH
-- `reproducible_by_third_party` = true · S4
-  - why: The questions, answers, few-shot prompts and evaluation script are in the public repository, and the score is computed by script from the model's outputs.
-  > You can run the \[post\_process\_and\_evaluation.py\](post\_process\_and\_evaluation.py) file to get the evaluation results.
-- `task` = exists true; input one exam question with lettered options, or a fill-in-the-blank maths question, with a passage for the reading tasks; zero-shot, or after five solved examples from the same task; output The letter of one option, or the answer to a cloze item, optionally after a chain-of-thought explanation.; scoring Accuracy per multiple-choice task and exact match per cloze task; the paper averages over tasks, and the repository's results table over the multiple-choice tasks of each subset.; tests_hidden_from_system false · [S1][agieval-s1]
-  > Zero-shot Prompting Input: \[Question\] Among A to D, the answer is:
-- `execution.compute_tier` = api-credits-only · [S1][agieval-s1]
-  - why: The paper's runs and the README's replication steps call model APIs (Azure OpenAI and the OpenAI API); about 8,000 short prompts per setting. Serving local weights is the entrant's choice, so the API path decides.
-  > All experiments were conducted using the respective language models
-- `execution.reproducibility_tier` = fully-automatable · S4
-  - why: Questions, answers, few-shot prompts and the evaluation script are public, and no human or maintainer-only step is in the scoring.
-  > We provide the prompts for few-shot learning in the \[data/few\_shot\_prompts\](data/few\_shot\_prompts.csv) file.
-- `execution.harness` = The repository's run\_prediction.py (with openai\_api.py) and post\_process\_and\_evaluation.py · S4
-  > You can run the \[post\_process\_and\_evaluation.py\](post\_process\_and\_evaluation.py) file to get the evaluation results.
-- `execution.harness_gotcha` · S4
-  > (Asterisk sign indicates results reported for AGIEval v1.0.)
-- `execution.runnable_via` = custom, lm\_eval · [S6][agieval-s6]
-  > \`agieval\`: Evaluates all tasks listed below.
-- `aggregation_policy` = official-aggregate · S4
-  > We report the leaderboard on AGIEval v1.1. The leaderboard contains two subsets AGIEval-en and AGIEval-zh. The two subset leaderboards contain only MCQ tasks.
+- `learned_entrant_evidence` = system GPT-4 · [S2][c-eval-s2]
+  > Results show that GPT-4 is the only model that surpasses 60% average accuracy.
+- `learned_entrant_evidence` = system Qwen3-235B-A22B (thinking mode) · [S6][c-eval-s6]
+  > Tasks C-Eval 85.5 91.8 - 82.9 89.6
+- `reproducible_by_third_party` = true · [S8][c-eval-s8]
+  - why: Since 2025-07-27 the questions and answers of every split, the prompts and the evaluation code are public, and the score is computed from the model's outputs; before that date, test scores came only from the maintainers' server.
+  > \[2025.7.27\] We have released the complete C-Eval test set to the community! Now, you can directly evaluate on the C-Eval test set more conveniently.
+- `task` = exists true; input one four-option multiple-choice question in Chinese, after a line naming the subject's exam; zero-shot, or after the subject's five development exemplars (with their explanations in the chain-of-thought setting); output The letter of one option, optionally after a chain-of-thought explanation.; scoring Accuracy per subject; the Average is the mean over the 52 subjects, beside means per category (STEM, social science, humanities, other) and over C-Eval Hard's eight subjects.; tests_hidden_from_system false · [S2][c-eval-s2]
+  > We use accuracy as the metric.
+- `execution.compute_tier` = single-gpu · [S2][c-eval-s2]
+  - why: About 12,000 short multiple-choice prompts per setting; a model of a few billion parameters runs on one GPU and an API model needs only credits. The paper used eight A100 GPUs only to serve its three largest open models (65B to 176B), and API runs on CPUs.
+  > In most cases the inference on C-EVAL is finished within one day.
+- `execution.reproducibility_tier` = fully-automatable · [S8][c-eval-s8]
+  - why: Since 2025-07-27 the test answers are public beside the prompts and the evaluation code, and no human or maintainer-only step is in the scoring.
+  > \[2025.7.27\] We have released the complete C-Eval test set to the community! Now, you can directly evaluate on the C-Eval test set more conveniently.
+- `execution.harness` = The repository's code/evaluator\_series/eval.py, with evaluators for the OpenAI API, ChatGLM, LLaMA, MOSS and MiniMax (repository tree at cba65ae, GitHub API) · [S2][c-eval-s2]
+  > data and evaluation code are available at https://github.com/hkust-nlp/ceval.
+- `execution.harness_gotcha` · [S5][c-eval-s5]
+  > This implementation consists solely of the validation set of C-Eval, as the test set requires submission of model predictions to an external site.
+- `execution.runnable_via` = custom, lm\_eval · [S5][c-eval-s5]
+  > \`ceval-valid\`: All 52 subjects of the C-Eval dataset, evaluated following the methodology in MMLU's original implementation.
+- `aggregation_policy` = official-aggregate · [S2][c-eval-s2]
+  - why: The paper's Average is the mean accuracy over the 52 subjects, beside means per category, and C-Eval Hard is averaged over its eight subjects; the README's tables keep the same columns.
+  > column indicates the average accuracy over all the subjects.
 
-#### agieval · Data and licence
+#### c-eval · Data and licence
 
-- `as_used` = protocol Model developers run AGIEval on base models in their own evaluation frameworks, generation-based and scored by exact match, without stating the subset, version or prompt. · [S5][agieval-s5]
-  > BBH, AGIEval, CLUEWSC, CMRC, and CMath.
-- `as_used` = protocol Many reports score an English-only, multiple-choice-only selection rather than all 20 tasks; lm-evaluation-harness ships English (agieval\_en), Chinese (agieval\_cn) and a four-family English multiple-choice group (agieval\_nous) beside the full group. · [S6][agieval-s6]
-  > \`agieval\_nous\`: Evaluates a specific subset of AGIEval tasks (multiple-choice and english-only)
-- `data.access` = fully-open · S4
-  - why: The post-processed data of both versions, answers included, is in the public GitHub repository, with no registration.
-  > You can download all post-processed data in the \[data/v1\_1\](data/v1\_1) folder.
-- `data.refresh` = versioned-releases · S4
-  - why: The one change since release is labelled version 1.1, in its own folder beside version 1 (data/v1 and data/v1\_1, GitHub API); a claim can name the version it was measured on.
-  > We have updated the dataset to version 1.1.
-- `data.data_provenance` = exam-derived, web-scraped, inherited-from-constituents · [S1][agieval-s1]
-  > With regard to data collection, we gather Gaokao and SAT questions from publicly available online sources, along with their corresponding solutions or explanations.
-- `data.contamination_risk` = high · [S1][agieval-s1]
-  > For JEC-QA, given that the test set is not publicly available, we take the first 1,000 examples from the training set as the test set
-- `data.contamination_evidence` = stance supports · [S1][agieval-s1]
-  > For JEC-QA, given that the test set is not publicly available, we take the first 1,000 examples from the training set as the test set
-- `data.contamination_evidence` = stance against · [S1][agieval-s1]
-  > This finding substantiates that while AGIEval may similarly encounter data contamination, it still retains its value
-- `data.ceiling_anchor_type` = crowd-average · [S1][agieval-s1]
-  - why: The paper reads results against the average test-taker of each exam (67 averaged over the tasks), with the top 1% (91) as a second reference; both are estimated by scaling the exams' score statistics to 100, or taken from the source datasets' papers, not measured on these items (see review\_checks).
-  > Human performance (avg.) refers to the average performance of all test takers, while human performance (top) refers to the performance of the top 1% of test takers, except for the lawyer qualification test which uses the top 10%.
-- `data.dataset_licence` = null · S4
-  > All usage of the data should follow the license of the original datasets.
-- `data.size` = count 8062; unit questions; subset version 1.0 (the paper) · [S1][agieval-s1]
-  > As a result, we construct a benchmark consisting of 8,062 questions for evaluation.
-- `data.size` = count 20; unit tasks (18 multiple choice, 2 cloze); subset version 1.1 · S4
-  > AGIEval v1.1 contains 20 tasks, including 18 MCQ tasks and two cloze tasks (Gaokao-Math-Cloze and MATH).
-- `data.size` = count 1000; unit questions per down-sampled constituent (MATH and each JEC-QA type); subset MATH, JEC-QA-KD, JEC-QA-CA · [S1][agieval-s1]
-  > We down-sample the two types of JEC-QA and MATH to 1,000 instances each.
-- `subsets` = id agieval#en; label AGIEval-en · S4
-  > AGIEval-en datasets remain the same as Verison 1.0.
-- `subsets` = id agieval#zh; label AGIEval-zh · S4
-  > We report the leaderboard on AGIEval v1.1. The leaderboard contains two subsets AGIEval-en and AGIEval-zh. The two subset leaderboards contain only MCQ tasks.
+- `as_used` = protocol Base models scored by perplexity over the four options, five-shot, in the developer's own framework, without naming the split. · [S4][c-eval-s4]
+  > MMLU-Pro, MMMLU, ARC-Easy, ARC-Challenge, C-Eval, CMMLU, C3, and CCPM
+- `as_used` = protocol lm-evaluation-harness's ceval-valid group, the 1,346-question validation split scored by log-likelihood over the letters A to D, with the development exemplars as shots. · [S5][c-eval-s5]
+  > This implementation consists solely of the validation set of C-Eval, as the test set requires submission of model predictions to an external site.
+- `as_used` = protocol Reasoning models in thinking mode, sampled, reported beside other reasoning baselines. · [S6][c-eval-s6]
+  > Table 11: Comparison among Qwen3-235B-A22B (Thinking) and other reasoning baselines.
+- `data.access` = fully-open · [S9][c-eval-s9]
+  - why: Since 2025-07-27 the Hugging Face dataset holds the test split with its answers beside the development and validation splits, ungated and under CC BY-NC-SA 4.0, a licence on use rather than a gate.
+  > "answer":"B","explanation":""},"truncated\_cells":\[\]}\],"num\_rows\_total":443
+- `data.refresh` = static · [S2][c-eval-s2]
+  - why: One set of 13,948 questions in 52 subjects, split once into development, validation and test; the Hugging Face record's split sizes (12,342, 1,346 and 260) still give the paper's total, and the 2025 release published the test answers without changing the items. The dataset files were re-uploaded several times in 2023 and the validation files on 2025-07-24, with no stated change (review\_checks).
+  > In terms of split 52 52 52 260 1346 12342 Total 52 13948
+- `data.data_provenance` = exam-derived, web-scraped · [S2][c-eval-s2]
+  > The primary source of our data is mock exams freely available on the internet.
+- `data.contamination_risk` = medium · [S2][c-eval-s2]
+  > the C-EVAL data may unconsciously be included in pretraining data due to web crawling
+- `data.ceiling_anchor_type` = theoretical-maximum · [S2][c-eval-s2]
+  - why: The headline is accuracy, bounded at 100%, and the paper reads headroom against that bound; it publishes no human, expert or measured ceiling. Its one reference row is the random baseline, 25% in every category.
+  > However, its 66.4% accuracy indicates that there is still large room for improvement in current LLMs.
+- `data.dataset_licence` = CC-BY-NC-SA-4.0 · [S3][c-eval-s3]
+  > The C-Eval dataset is licensed under a \[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License\]
+- `data.upstream_licences` = About 2,000 college-level questions are mock questions for the national graduate entrance exam from the Weipu website, which are not freely available; the authors state they were authorised to include them. · [S2][c-eval-s2]
+  > we have obtained their authorization to include around 2000 such questions into C-EVAL.
+- `data.size` = count 13948; unit questions; subset all splits, 52 subjects · [S2][c-eval-s2]
+  > C-EVAL consists of 13948 multiple-choice exam questions spanning 52 diverse disciplines, ranging from humanities to science and engineering
+- `data.size` = count 12342; unit questions; subset test · [S2][c-eval-s2]
+  > In terms of split 52 52 52 260 1346 12342 Total 52 13948
+- `data.size` = count 1346; unit questions; subset validation · [S2][c-eval-s2]
+  > The validation split comprises a total of 1346 questions
+- `data.size` = count 5; unit questions per subject; subset development (few-shot exemplars) · [S2][c-eval-s2]
+  > The development split per subject consists of five exemplars to facilitate few-shot evaluation.
+- `data.size` = count 52; unit subjects · [S3][c-eval-s3]
+  > It consists of 13948 multi-choice questions spanning 52 diverse disciplines and four difficulty levels
+- `data.size` = 5 items · [S2][c-eval-s2]
+  > In terms of difficulty level Middle School 7 High School 8 College 25 Professional 12 1409 1594 6249 4696
+- `execution.code_licence` = MIT · [S3][c-eval-s3]
+  > This work is licensed under a \[MIT License\]
+- `subsets` = id c-eval#hard; label C-Eval Hard; scored_separately true · [S2][c-eval-s2]
+  > We select 8 challenging math, physics, and chemistry subjects from C-EVAL to form a separate benchmark, C-EVAL HARD
+- `subsets` = id c-eval#hard; label C-Eval Hard; scored_separately true · [S1][c-eval-s1]
+  > C-Eval is accompanied by C-Eval Hard, a subset of very challenging subjects in C-Eval that requires advanced reasoning abilities to solve.
+- `subsets` = id c-eval#hard; label C-Eval Hard; scored_separately true · [S2][c-eval-s2]
+  > On C-EVAL HARD, in particular, most models could only retain near-random accuracy.
+- `subsets` = id c-eval#stem; label STEM; items 4495; scored_separately true · [S2][c-eval-s2]
+  > In terms of topic STEM 20 Humanities 11 Social Science 10 Other 11 4495 2676 2845 3932
+- `subsets` = id c-eval#social-science; label Social Science; items 2845; scored_separately true · [S2][c-eval-s2]
+  > In terms of topic STEM 20 Humanities 11 Social Science 10 Other 11 4495 2676 2845 3932
+- `subsets` = id c-eval#humanities; label Humanities; items 2676; scored_separately true · [S2][c-eval-s2]
+  > In terms of topic STEM 20 Humanities 11 Social Science 10 Other 11 4495 2676 2845 3932
+- `subsets` = id c-eval#other; label Other; items 3932; scored_separately true · [S2][c-eval-s2]
+  > In terms of topic STEM 20 Humanities 11 Social Science 10 Other 11 4495 2676 2845 3932
 
-#### agieval · Governance and independence
+#### c-eval · Governance and independence
 
-- `governance.maintainer` = Microsoft (the AGIEval authors) · S4
-  - why: The paper's authors are at Microsoft, and the repository operates under Microsoft's open-source contribution agreement and code of conduct, although it is held under one author's personal GitHub account (see review\_checks).
-  > This project has adopted the \[Microsoft Open Source Code of Conduct\](https://opensource.microsoft.com/codeofconduct/).
-- `governance.submission_process` = maintainer-run · S4
-  > We evaluate the performance of the baseline systems (gpt-3.5-turbo and GPT-4o) on AGIEval v1.1.
+- `governance.maintainer` = The C-Eval authors at Shanghai Jiao Tong University, Tsinghua University, the University of Edinburgh and the Hong Kong University of Science and Technology · [S2][c-eval-s2]
+  - why: The paper's author affiliations. The repository the paper names sits in the hkust-nlp GitHub organisation account and the data in the ceval organisation account on Hugging Face (GitHub API; Hugging Face API, read 2026-11-27).
+  > 1Shanghai Jiao Tong University 2Tsinghua University 3University of Edinburgh 4The Hong Kong University of Science and Technology
+- `governance.maintainer_type` = academic-lab · [S2][c-eval-s2]
+  - why: The paper's code and data link points to the hkust-nlp organisation account, which holds the repository, and the Hugging Face copy sits in an organisation account of its own; all four affiliations are universities. GitHub's API names the organisation NLP Group @ HKUST (read 2026-11-27, not a quoted Source).
+  > data and evaluation code are available at https://github.com/hkust-nlp/ceval.
+- `governance.submission_process` = held-out-server · [S2][c-eval-s2]
+  > users are required to submit their model predictions to https://cevalbenchmark.com to automatically obtain the test accuracy, where a public leaderboard is maintained.
+- `governance.funding` · [S2][c-eval-s2]
+  > the National Key R&D Program of China (No. 2020AAA0106502)
+- `governance.known_limitation` · [S2][c-eval-s2]
+  > is far from perfect for LLM evaluation.
 
-#### agieval · Lifecycle and activity
+#### c-eval · Lifecycle and activity
 
-- `lifecycle` = active · [S7][agieval-s7]
-  - why: Results are still produced. Model developers report it in 2025 technical reports (DeepSeek-V3 in February 2025 and dots.llm1 in June 2025), although the maintainers last changed the repository on 2024-06-13. Whether it is saturated is derived from claims, never set here.
-  > ARC-Challenge (EM) AGIEval (EM) HellaSwag (EM)
-- `activity` = no-submission-channel · S4
-  - why: The README's results table is kept by the maintainers, who list their own runs and numbers taken from model developers' reports; no source names a route for others to submit.
-  > We report the leaderboard on AGIEval v1.1. The leaderboard contains two subsets AGIEval-en and AGIEval-zh. The two subset leaderboards contain only MCQ tasks.
+- `lifecycle` = active · [S7][c-eval-s7]
+  - why: Results are still produced. Model developers report C-Eval in 2025 technical reports (DeepSeek-V3 in February, Qwen3 in May, dots.llm1 in June), and the maintainers released the test answers on 2025-07-27, their last change to the repository and the dataset. Whether it is saturated is derived from claims, never set here.
+  > C-Eval (EM) CMMLU (EM) CLUEWSC (EM)
+- `activity` = unknown · [S2][c-eval-s2]
+  - why: The submission route was the leaderboard site, which scored test-split predictions and published them at the submitter's choice. That site could not be read (it failed TLS on 2026-11-17 and accepted no connection on 2026-11-27), so whether it still takes submissions is not established; since 2025-07-27 the test answers are public, so scoring no longer needs it (see review\_checks).
+  > Users have the option to include their submission results in the live leaderboard, depending on their own preference.
+- `history` = event repository-moved; field repository; from github.com/\[personal account\]/ceval (not linked: a personal account); to [github.com/hkust-nlp/ceval](https://github.com/hkust-nlp/ceval) · [S3][c-eval-s3]
+  > \[withheld: it may name a person; see the entry file\]
+- `history` = date 2025-07-27; event access-changed; field data.access; from train-open-test-held-out; to fully-open · [S3][c-eval-s3]
+  > \*\*\[2025.7.27\]\*\* \*\*We have released the complete C-Eval test set to the community!\*\*
 
 **Open review checks** (10):
 
-1. (field `domain.primary`) Primary multi-subject-knowledge-exams rather than human-comparison-batteries. The title calls the benchmark human-centric and the abstract's headline is a human comparison, but the human figures are reported beside the results and estimated from score statistics, while the stated aim is general ability on exams written for people. A reviewer who reads the comparison as the purpose would swap the leaf. · [S1][agieval-s1]
-   > we estimated the human performances by scaling the scores of the average (50%) and top (1%) test takers against the full scores to 100.
-2. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type crowd-average treats the average exam-taker as a non-specialist crowd. The figures are not measured on these items, the lawyer-exam top uses the top 10% rather than 1%, and LogiQA, JEC-QA and MATH take their figures from those datasets' papers, so the 67 average is a pooled estimate; the top-percentile figure is a second Baseline. · [S1][agieval-s1]
-   > Average 67 91 38.1 42.9 56.4 37.4 43.2 58.4
-3. (field `data.contamination_risk`) contamination\_risk high rests on JEC-QA's scored items being taken from its published training set, a protocol the high term names. Whether version 1.1's single-answer JEC-QA tasks still use those training items was not checked against the data files.
-4. (field `versions`) Version 1.1 is recorded as a breaking revision of the same tasks. It adds 2023 questions to three Gaokao tasks, which could make it an edition; the English tasks did not change, and the date is a commit date, not a stated one. · S4
-   > The new version updated Chinese Gaokao (chemistry, biology, physics) datasets with questions from 2023 and addressed annotation issues.
-5. (field `governance.maintainer_type`) The repository is held under a personal GitHub account whose handle is an author's name, though it runs under Microsoft's contribution agreement and code of conduct, so maintainer\_type industry-lab may instead be individual. The lead decides on withholding the README; the handle appears here only in URLs.
-6. (field `governance.independence_flags`) independence not assessed. The README's table lists Phi-3 rows taken from arXiv 2404.14219; if that model is the maintainers' organisation's, maintainer-competes-on-own-benchmark may apply. The paper evaluates models served through Azure OpenAI. Neither link is stated in a Source read here. · S4
-   > \| Phi-3-medium 14b\*\| \[Link\](https://arxiv.org/pdf/2404.14219) \| 50.2 \|
-7. (field `capability`) deductive-reasoning and quantitative-reasoning each rest on a minority of tasks (LSAT and LogiQA; the two cloze tasks). The paper's own four dimensions are understanding, knowledge, reasoning and calculation; a reviewer may keep only knowledge-recall and context-integration.
-8. (field `external_ids.huggingface`) \[withheld: it may name a person; see the entry file\]
-9. (field `lifecycle`) Evidence of current use is from 2025 (DeepSeek-V3 v2, February; dots.llm1, June); no 2026 report was read. Both are base-model tables that do not say which tasks or version they ran. · [S5][agieval-s5]
-   > BBH, AGIEval, CLUEWSC, CMRC, and CMath.
-10. (field `data.size`) Task count. The paper and README say 20 tasks, while the paper's tables and lm-evaluation-harness add SAT-English without its passage as a 21st; whether that variant is in the data folders, and the per-task counts for version 1.1, were not read.
+1. (field `leaderboard_url`) The leaderboard site, cevalbenchmark.com (the paper's and README's submission route and the repository's homepage field), failed TLS with an expired certificate on 2026-11-17 (the sweep) and accepted no connection on port 443 on 2026-11-27 (two attempts with certificate checks on, both timed out; the name still resolves). curation.unreachable takes only an HTTP status, so it is recorded here. homepage is set to the repository; leaderboard\_url keeps the site's leaderboard page, which nothing says has moved. Re-read the site before verifying. · [S3][c-eval-s3]
+   > please visit our official \[Leaderboard\](https://cevalbenchmark.com/static/leaderboard.html) for up-to-date models
+2. (field `activity`) activity unknown because the site could not be read. closed is the other reading if the server is gone for good, and with the test answers public since 2025-07-27 the maintainers may no longer need it; if it still runs, submission\_process would read maintainer-scored-predictions.
+3. (field `data.access`) data.access fully-open rests on the 2025-07-27 announcement (README and card) and an answer on a test row in Hugging Face's viewer. The README's own Data section still says the test labels are not released, as does lm-evaluation-harness's task README; only one row of one subject was read, so whether every subject's test answers are present was not checked. · [S3][c-eval-s3]
+   > Labels on the test split are not released, users are required to submit their results to automatically obtain test accuracy.
+4. (field `versions`) The 2025-07-27 release is an access-changed history event, not a version, because the items did not change. Pre-2025 leaderboard scores and later local test scores are on the same items but under different scoring paths, so a reviewer may prefer a 2025-07 revision that claims can be pinned to. Hugging Face's commit list also shows the data zip re-uploaded on 2023-06-01, 07-17, 07-31 and 08-31 and the validation files on 2025-07-24, with no stated change; whether any item changed was not checked, which would bear on refresh static. · [S3][c-eval-s3]
+   > \*\*\[2025.7.27\]\*\* \*\*We have released the complete C-Eval test set to the community!\*\*
+5. (field `subsets`) C-Eval Hard is modelled as a subset, though the paper calls it a separate benchmark and the abstract an accompanying subset. Same maintainer, same release and same items make it a subset by 04 S4; if reports cite it independently, a variant entry is the alternative. A reviewer may also give it a capability\_override with quantitative-reasoning, which is rejected here because the scored act is choosing an option. · [S2][c-eval-s2]
+   > We select 8 challenging math, physics, and chemistry subjects from C-EVAL to form a separate benchmark, C-EVAL HARD
+6. (field `governance.maintainer_type`) \[withheld: it may name a person; see the entry file\]
+7. (field `governance.independence_flags`) independence not assessed. The paper evaluates GLM-130B and ChatGLM-6B, attributed to Tsinghua, and one affiliation is Tsinghua University; the 2026-11-18 rule does not count a shared university, and no lab is named. The leaderboard's rows, which could show models from the maintainers' own groups, could not be read. · [S2][c-eval-s2]
+   > BigScience Meta Tsinghua Tsinghua
+8. (field `data.contamination_risk`) contamination\_risk medium. The paper's mitigation (mock and local exams, parsed from PDF and Word files) argues against exposure, while the full test set with answers has been public since 2025-07-27; no contamination study was read. A reviewer with a study of Chinese exam benchmarks to cite should reconsider.
+9. (field `lifecycle`) Evidence of current use is from 2025 (DeepSeek-V3, Qwen3, dots.llm1), all developer reports that do not name the split; no 2026 report was read, and OpenCompass's CompassHub card and its board, which the sweep found, were not read. · [S7][c-eval-s7]
+   > C-Eval (EM) CMMLU (EM) CLUEWSC (EM)
+10. (field `comparability.material_extra`) The harness and the split both change what a C-Eval number means (validation in lm-evaluation-harness, test in the paper; generation, letter probability or perplexity), and the subset field is asked to carry the split. If claims are ingested, check that each names its split and scorer. · [S5][c-eval-s5]
+   > The following tasks evaluate subjects in the C-Eval dataset using loglikelihood-based multiple-choice scoring
 
-**Reviewer checklist** for `agieval`:
+**Reviewer checklist** for `c-eval`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -860,14 +900,235 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[agieval-s1]: https://arxiv.org/pdf/2304.06364v2
-[agieval-s2]: https://arxiv.org/abs/2304.06364
-[agieval-s3]: https://aclanthology.org/2024.findings-naacl.149/
-[agieval-s5]: https://arxiv.org/pdf/2412.19437v2
-[agieval-s6]: https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/314f717677d4aa0c706fc1c6bbd3c801d321384a/lm_eval/tasks/agieval/README.md
-[agieval-s7]: https://arxiv.org/pdf/2506.05767v1
+[c-eval-s1]: https://arxiv.org/abs/2305.08322
+[c-eval-s2]: https://arxiv.org/pdf/2305.08322v3
+[c-eval-s3]: https://raw.githubusercontent.com/hkust-nlp/ceval/cba65ae93bcf189149ced9f66ae0c958201faed9/README.md
+[c-eval-s4]: https://arxiv.org/pdf/2412.19437v2
+[c-eval-s5]: https://raw.githubusercontent.com/EleutherAI/lm-evaluation-harness/817a2fe7cf6816e089ff2f9cf9ba6d0f82908e29/lm_eval/tasks/ceval/README.md
+[c-eval-s6]: https://arxiv.org/pdf/2505.09388v1
+[c-eval-s7]: https://arxiv.org/pdf/2506.05767v1
+[c-eval-s8]: https://huggingface.co/datasets/ceval/ceval-exam/raw/617524a00b307ff6f9933702f724131fe12ca7ce/README.md
+[c-eval-s9]: https://datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=accountant&split=test&offset=0&length=1
+[c-eval-s10]: https://huggingface.co/api/datasets/ceval/ceval-exam
 
-### 2.5 GPQA (gpqa)
+### 2.5 CMMLU (cmmlu)
+
+`data/benchmarks/general-intelligence/cmmlu.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
+
+*Four-option questions in 67 subjects, primary school to professional level, many of them specific to China.*
+
+A Chinese benchmark modelled on MMLU: four-option multiple-choice questions in 67 subjects, from primary school to professional level, grouped as STEM, humanities, social sciences and an "other" group of everyday and professional topics. Fifteen subjects are marked China-specific (among them Chinese driving rules, Chinese food culture, traditional Chinese medicine, ancient Chinese and the civil-service and teacher-qualification exams), and the paper says some tasks can be expressed only in Chinese. Four annotators collected the questions by hand from freely available resources, favouring material that was not public, mock exams and quiz-show questions, and took most of them from PDFs through OCR, to keep them out of training data; a check of a 5% sample put label noise at about 2%. Each subject has a five-question development set for few-shot prompts and a test set of more than 100 questions, 11,582 in all. The paper reads open models' answers from the next-token probabilities of the letters A to D and API models' answers from generated text by regular expression, five-shot and zero-shot, and reports accuracy macro-averaged over the subjects of each group, over the China-specific subjects and over all 67. The repository keeps a five-shot and a zero-shot results table that model developers update by pull request; it last changed in December 2024.
+
+| Classification | |
+| --- | --- |
+| Primary domain | general-intelligence/multi-subject-knowledge-exams |
+| Secondary domains | - |
+| Capabilities | knowledge-recall |
+| Evaluation methods | multiple-choice |
+| Designed for | base-model, instruction-tuned-model |
+| Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
+| Lifecycle · activity | active · accepting-submissions |
+| Data access · refresh · contamination risk | fully-open · static · medium |
+| Reproducibility tier · harness | fully-automatable · official-harness |
+| Maintainer type · submission process | individual · self-reported, maintainer-run |
+| Independence flags | none |
+| Licences: code · dataset | null · CC-BY-NC-SA-4.0 |
+| Released | 2023-06-15 |
+| Links | homepage github.com/\[personal account\]/CMMLU (not linked: a personal account) · repository github.com/\[personal account\]/CMMLU (not linked: a personal account) · leaderboard github.com/\[personal account\]/CMMLU (not linked: a personal account) · dataset huggingface.co/datasets/\[personal account\]/cmmlu (not linked: a personal account) |
+
+**Sources**
+
+| | Source | Type · publisher | URL | Archived copy |
+| --- | --- | --- | --- | --- |
+| S1 | `src-arxiv-2306-09212-v2` | preprint · arXiv | [arxiv.org/pdf/2306.09212v2](https://arxiv.org/pdf/2306.09212v2) | none (not-required) |
+| S2 | `src-arxiv-2306-09212` | preprint · arXiv | [arxiv.org/abs/2306.09212](https://arxiv.org/abs/2306.09212) | none (not-required) |
+| S3 | `src-acl-2024-findings-acl-671` | paper · Association for Computational Linguistics | [aclanthology.org/2024.findings-acl.671/](https://aclanthology.org/2024.findings-acl.671/) | none (not-required) |
+| S4 | `src-github-opencompass-cmmlu-llmjudge-config` | repository · GitHub | [raw.githubusercontent.com/open-compass/opencompass/6288ea0db61150b6c2...](https://raw.githubusercontent.com/open-compass/opencompass/6288ea0db61150b6c2c1e37c01808fef66748e8c/opencompass/configs/datasets/cmmlu/cmmlu_llmjudge_gen_e1cd9a.py) | [capture 2026-11-27](https://web.archive.org/web/20261127205801/https://raw.githubusercontent.com/open-compass/opencompass/6288ea0db61150b6c2c1e37c01808fef66748e8c/opencompass/configs/datasets/cmmlu/cmmlu_llmjudge_gen_e1cd9a.py) |
+| S5 | `src-arxiv-2412-19437-v2` | preprint · arXiv | [arxiv.org/pdf/2412.19437v2](https://arxiv.org/pdf/2412.19437v2) | none (not-required) |
+| S6 | `src-arxiv-2506-05767-v1` | preprint · arXiv | [arxiv.org/pdf/2506.05767v1](https://arxiv.org/pdf/2506.05767v1) | none (not-required) |
+| S7 | `src-github-cmmlu-readme-en-d6e7b71` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/CMMLU/d6e7b716d8ac694f38969a6c0407437d1fded799/README\_EN.md (not linked: a personal account) | none (withheld) |
+| S8 | `src-hf-api-cmmlu` | dataset-card · Hugging Face | huggingface.co/api/datasets/\[personal account\]/cmmlu (not linked: a personal account) | none (withheld) |
+
+**Evidence** (46 quoted fields), by checklist area:
+
+#### cmmlu · Identity and id
+
+- `self_description` · [S1][cmmlu-s1]
+  > In this paper, we propose CMMLU (Figure 1), a comprehensive Chinese assessment suite specifically designed to evaluate the advanced knowledge and reasoning abilities of LLMs in a Chinese linguistic and cultural context.
+- `released` = 2023-06-15 · [S2][cmmlu-s2]
+  > Submitted on 15 Jun 2023 (v1), last revised 17 Jan 2024 (this version, v2)
+- `release_venue` = Findings of the Association for Computational Linguistics: ACL 2024 · [S3][cmmlu-s3]
+  > Volume: Findings of the Association for Computational Linguistics: ACL 2024 Month: August Year: 2024
+- `lineage` = role root · [S1][cmmlu-s1]
+  > yields a total of 74 for CEval and 158 for M3KE. This overlap accounts for approximately 1% of our dataset.
+
+#### cmmlu · Domain and capabilities
+
+- `domain` = primary general-intelligence/multi-subject-knowledge-exams · [S1][cmmlu-s1]
+  - why: The claim is breadth of subject knowledge, measured with closed-ended four-option questions across 67 subjects and scored on the chosen option alone, and no subject or group holds most of them; the largest group, the social sciences, has 3,652 of the 11,582 test questions (Table 7) and the largest subject, jurisprudence, 411. The Chinese setting is the language and the context of the subjects, not the competence measured, which the language family's exclusion sends away from \`language\`; c3's entry records CMMLU as left out of that family for the same reason.
+  > CMMLU covers a wide range of subjects, comprising 67 topics from elementary to advanced professional levels.
+- `capability` = knowledge-recall · [S1][cmmlu-s1]
+  - why: Each question is posed with its options and no passage, so the answer comes from what the system holds; the paper attributes the humanities and social-science results to memorisation, and the weaker China-specific results to what training data lacked.
+  > humanities, social sciences assess more on memorization which is relatively easy for LLMs
+- `evaluation_method` = multiple-choice · [S1][cmmlu-s1]
+  - why: Each question has four options with one correct, and the prediction is the option whose letter the model makes most likely, or the letter a regular expression finds in generated text; random accuracy, 25%, is the paper's floor.
+  > Each question in the dataset is a multiple-choice question with 4 choices, only one of which is correct
+- `designed_for_subjects` = base-model, instruction-tuned-model · [S1][cmmlu-s1]
+  - why: The paper evaluates foundation models and models fine-tuned to follow instructions, marked Base and Chat in its results table, and studies how few-shot examples help the first and not the second.
+  > we evaluate two commercial LLMs and more than 20 open-source LLMs in different sizes, language orients, and stages (i.e. either foundation model or SFT/RLHF model)
+
+Considered and rejected:
+
+- `domain` not `language/understanding` · [S1][cmmlu-s1]
+  - why: Four subjects are about the Chinese language itself (ancient Chinese, modern Chinese, elementary Chinese, Chinese literature), and the paper says some tasks can be expressed only in Chinese, but no supplied passage determines the answers, and those subjects are four of 67.
+  > CMMLU also contains tasks that can only expressed in Chinese, such as ancient Chinese language and Chinese literature.
+- `domain` not `general-intelligence/human-comparison-batteries` · [S1][cmmlu-s1]
+  - why: No human performance is measured on the items; the paper reads results against random accuracy and the 60% pass mark of Chinese exams, which is a reference, not a measured human result.
+  > which is the pass mark for Chinese exams
+- `capability` not `quantitative-reasoning` · [S1][cmmlu-s1]
+  - why: The STEM subjects (mathematics, physics, actuarial science, medical statistics) need calculation, and the paper says they need complex reasoning, but the score is the chosen option and the claim is knowledge across subjects; as for MMLU, calculation is not scored as a capability of its own.
+  > STEM topics usually require complex reasoning, which has been proven to be difficult for existing LLMs
+- `evaluation_method` not `model-graded-judge` · [S4][cmmlu-s4]
+  - why: OpenCompass ships a config in which a judge model decides whether a generated reply matches the answer key; that is one harness's option, recorded in as\_used, not the benchmark's scoring.
+  > type=GenericLLMEvaluator
+- `designed_for_subjects` not `reasoning-model` · [S1][cmmlu-s1]
+  - why: The paper's chain-of-thought prompt is a prompt condition, which did not help most models, and no source sets a reasoning budget.
+  > for most models, the use of chain-of-thought prompt does not lead to improvement
+
+#### cmmlu · Task and evaluation
+
+- `learned_entrant_evidence` = system GPT-4 · [S1][cmmlu-s1]
+  > Notably, GPT4 achieves an average accuracy of 71%.
+- `learned_entrant_evidence` = system Qwen2-72B-Instruct · S7
+  > \[Qwen2-72B\](https://huggingface.co/Qwen/Qwen2-72B-Instruct) \| 82.80 \| 93.84 \| 90.38 \| 92.71 \| 90.60 \| 89.65
+- `learned_entrant_evidence` = system dots.llm1 base · [S6][cmmlu-s6]
+  > dots.llm1 .base MoE 14B 142B 92.8 90.4
+- `reproducible_by_third_party` = true · S7
+  - why: The questions, answers, prompts and the per-model evaluation code are public, and the score is computed by script from the model's outputs.
+  > The code for evaluation of each model we used is in \[src\](src), and the code to run them is listed in \[script\](script) directory.
+- `task` = exists true; input one four-option question in Chinese, after a sentence naming its subject, zero-shot or after up to five solved examples from the subject's development set; output The letter of one option.; scoring Accuracy per subject, macro-averaged over the subjects of each group, of the China-specific subjects and of all 67; the paper takes the letter with the highest next-token probability for open models and matches generated text by regular expression for API models.; tests_hidden_from_system false · [S1][cmmlu-s1]
+  > For few-shot evaluation, we provide up to 5 demonstration examples with answers before the question.
+- `execution.compute_tier` = single-gpu · [S1][cmmlu-s1]
+  - why: About 11,600 short prompts, one forward pass each under the paper's next-token protocol, which it found the most efficient; a 7B or 13B model runs on one GPU, and an API model needs only credits.
+  > We compared different strategies in Appendix G, and found that next token prediction is the most efficient way.
+- `execution.reproducibility_tier` = fully-automatable · S7
+  - why: Questions, answers, prompts and the evaluation code are public, and no human or maintainer-only step is in the scoring.
+  > We provide our dataset according to each subject in \[data\](data) folder.
+- `execution.harness` = The repository's src folder (one evaluation script per model, with the prompt code in src/mp\_utils.py) and the run commands in its script folder · S7
+  > The code for evaluation of each model we used is in \[src\](src), and the code to run them is listed in \[script\](script) directory.
+- `execution.harness_gotcha` · [S1][cmmlu-s1]
+  > using next token prediction achieves a higher score than using the free generation strategy for all models
+- `execution.runnable_via` = custom, lm\_eval · S7
+  > Our dataset has been added to \[lm-evaluation-harness\](https://github.com/EleutherAI/lm-evaluation-harness) and \[OpenCompass\](https://github.com/InternLM/opencompass), you can evaluate your model via these open-source tools.
+- `aggregation_policy` = official-aggregate · [S1][cmmlu-s1]
+  > We report macro average accuracy over subjects within each category.
+
+#### cmmlu · Data and licence
+
+- `as_used` = protocol DeepSeek-V3's internal framework scores CMMLU by perplexity for base models, reported as EM in its Chinese group beside C-Eval. · [S5][cmmlu-s5]
+  > ARC-Easy, ARC-Challenge, C-Eval, CMMLU, C3, and CCPM
+- `as_used` = protocol dots.llm1 scores CMMLU five-shot for base models, reported as EM, under one setting for all models compared. · [S6][cmmlu-s6]
+  > C-Eval (EM) CMMLU (EM) CLUEWSC (EM)
+- `as_used` = protocol OpenCompass's LLM-judge config asks zero-shot, in a Chinese prompt, for a final line naming the option, and a judge model grades the reply against the answer key; the judge is whatever model the user configures.; split the test split, with the development split as the train split · [S4][cmmlu-s4]
+  > Please as a grading expert, judge whether the final answers given by the candidates below are consistent with the standard answers
+- `data.access` = fully-open · [S1][cmmlu-s1]
+  - why: The development and test files, answers included, are in the public GitHub repository and an ungated Hugging Face dataset, with no registration; the licence restricts commercial use, not access.
+  > Lastly, we have made our data completely public, enabling the community to evaluate their models freely and conveniently.
+- `data.refresh` = static · S8
+  - why: One set of 67 subjects, released in June 2023. The Hugging Face copy, a single archive, was last modified on 2023-07-13, and the repository's data folder last changed on 2023-06-27, when one malformed CSV row of world\_religions was repaired eleven days after the first commit (GitHub API); nothing has changed since (review\_checks).
+  > "lastModified":"2023-07-13T10:19:29.000Z","private":false,"gated":false
+- `data.data_provenance` = exam-derived, web-scraped · [S1][cmmlu-s1]
+  > we invested specific effort in identifying non-publicly available materials, mock exam questions, and questions from quiz shows
+- `data.contamination_risk` = medium · [S1][cmmlu-s1]
+  > More than 80% of our data was crawled from PDFs (after OCR), which further reduces the possibility of it occurring in LLM training data.
+- `data.ceiling_anchor_type` = theoretical-maximum · [S1][cmmlu-s1]
+  - why: The headline is accuracy, bounded at 100%, and no human performance is measured; the paper reads results against random accuracy (25%) and the 60% pass mark of Chinese exams, and its estimate of about 2% label noise from a 5% sample is not a ceiling the scores are read against (review\_checks).
+  > The results reveal that the majority of these models struggle to achieve an accuracy score of 60%, relative to random accuracy of 25%.
+- `data.dataset_licence` = CC-BY-NC-SA-4.0 · S7
+  > The CMMLU dataset is licensed under a \[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License\]
+- `data.size` = count 11582; unit questions; subset test, 67 subjects · [S1][cmmlu-s1]
+  > \#Q 2531 2489 3652 2910 2572 11582
+- `data.size` = count 5; unit questions per subject; subset few-shot development · [S1][cmmlu-s1]
+  > Each subject has at least 105 questions, which we split into a few-shot development set with 5 questions, and a test set with more than 100 questions.
+- `data.size` = count 67; unit subjects · [S1][cmmlu-s1]
+  > CMMLU covers a wide range of subjects, comprising 67 topics from elementary to advanced professional levels.
+- `data.size` = 3 items · [S1][cmmlu-s1]
+  > 5 subjects at primary school level, 10 at middle/high school level, 23 at college level, and 29 at professional level
+- `subsets` = id cmmlu#stem; label STEM; items 2531 · [S1][cmmlu-s1]
+  > \#Q 2531 2489 3652 2910 2572 11582
+- `subsets` = id cmmlu#stem; label STEM; items 2531 · [S1][cmmlu-s1]
+  > CMMLU comprises 17 STEM tasks, 13 humanities tasks, 22 social science tasks, and 15 other tasks. Among these, 16 tasks are China-specific
+- `subsets` = id cmmlu#china-specific; label China-specific; items 2572 · [S1][cmmlu-s1]
+  > numerous tasks within CMMLU have answers specific to China, which may not be universally applicable or considered correct in other regions or languages.
+
+#### cmmlu · Governance and independence
+
+- `governance.maintainer` = The CMMLU authors, at MBZUAI, LibrAI, Shanghai Jiao Tong University, Microsoft Research Asia and the University of Melbourne · [S1][cmmlu-s1]
+  - why: The paper's authors list these five affiliations. No source names an institution as the holder of the repository or the dataset, which sit in personal accounts.
+  > 1MBZUAI 2LibrAI 3Shanghai Jiao Tong University 4Microsoft Research Asia 5The University of Melbourne
+- `governance.maintainer_type` = individual · [S1][cmmlu-s1]
+  - why: The data and evaluation code sit in a personal GitHub account, and the dataset in a personal Hugging Face account that now redirects to another personal account; no organisation is stated as holding them, which the term's exclusion reads as individual whatever institutions the authors list (collider-bench's case). academic-lab was considered (review\_checks).
+  > data and evaluation code are available at
+- `governance.submission_process` = self-reported, maintainer-run · S7
+  > For not open-source/API models, update results in the cooresponding part and open pull request.
+- `governance.known_limitation` · [S1][cmmlu-s1]
+  > around 2% of noise in the data, in terms of the correct answer not being present or being incorrectly labeled
+
+#### cmmlu · Lifecycle and activity
+
+- `lifecycle` = active · [S6][cmmlu-s6]
+  - why: Results are still produced. Model developers report CMMLU for base models beside C-Eval in 2025 technical reports (DeepSeek-V3 in February, dots.llm1 in June), OpenCompass keeps its CMMLU configs, and a pull request of 2026-04-22 adding Qwen3-1.7B results to the README is open (GitHub API, not a quoted Source). The maintainers last changed the repository on 2024-12-06, which is maintenance evidence. Whether it is saturated is derived from claims, never set here.
+  > C-Eval (EM) CMMLU (EM) CLUEWSC (EM)
+- `activity` = accepting-submissions · S7
+  - why: The README's results tables have never run in rounds, and its submission section tells developers of open and of closed models to add their results by pull request; no source closes the route.
+  > For open-source/API models, open pull request to update the result (you can also provide test code in \`src\` folder).
+
+**Open review checks** (12):
+
+1. (field `activity`) activity accepting-submissions rests on the README's pull-request route, which no source closes. Nothing has been merged since 2024-12-06, and a results pull request (Qwen3-1.7B, 2026-04-22) and a gold-answer fix (2026-11-25) were open on 2026-11-27 (GitHub API, not quoted). closed needs a formal stop and no-submission-channel a route that never existed, so a reviewer who reads the route as unattended may prefer unknown or a note. · S7
+   > For open-source/API models, open pull request to update the result (you can also provide test code in \`src\` folder).
+2. (field `lifecycle`) lifecycle active rests on 2025 base-model tables (DeepSeek-V3, dots.llm1), OpenCompass's configs and the open 2026 results pull request; no 2026 technical report was read. The sweep suggested mature because the README's board has not changed since 2024-12; mature needs a settled record on an instrument still in use, which a reviewer may read here if the developers' reports are not taken as results produced in the ordinary way. · [S6][cmmlu-s6]
+   > C-Eval (EM) CMMLU (EM) CLUEWSC (EM)
+3. (field `data.size`) data.size takes 11,582 test questions from Table 7, which Table 6's per-subject counts also sum to and which matches the 11,582 test rows counted in the Hugging Face archive. The paper's text says 11,528 questions in all, probably a transposition; with the 335 development questions the set holds 11,917. · [S1][cmmlu-s1]
+   > CMMLU contains 11,528 questions across 67 subjects.
+4. (field `subsets`) The subset counts are Table 7's. Table 6's group column places clinical knowledge, college medicine, computer security, nutrition and professional medicine (1,202 questions) in STEM, which would make STEM 22 subjects and 3,733 questions; Table 7 and Figure 3 put them in Other. The text says 16 China-specific subjects, where Tables 5 and 7 and Table 6's marks give 15. Which grouping the repository's code and the README's columns use was not read. · [S1][cmmlu-s1]
+   > CMMLU comprises 17 STEM tasks, 13 humanities tasks, 22 social science tasks, and 15 other tasks. Among these, 16 tasks are China-specific
+5. (field `data.dataset_licence`) dataset\_licence CC-BY-NC-SA-4.0 is the README's licence section, which the dataset card's licence section repeats; the card's metadata tag, which the API record shows, is cc-by-nc-4.0, without ShareAlike. · S8
+   > "license:cc-by-nc-4.0"
+6. (field `governance.independence_flags`) No maintainer-competes-on-own-benchmark flag. The paper attributes Bactrian-X to MBZUAI and BatGPT to Wuhan University and Shanghai Jiao Tong University, two of the authors' universities, and the README's tables keep a Bactrian-LLaMA-13B row. The rule does not count a shared university; whether the same lab built the model needs a reviewer. · [S1][cmmlu-s1]
+   > Bactrian-X is a series of LLMs (LLaMA, BLOOM, mT5) proposed by MBZUAI.
+7. (field `governance.maintainer_type`) maintainer\_type individual, because the repository sits in a personal GitHub account and the dataset in a personal Hugging Face account, which Hugging Face now redirects (HTTP 307) to a copy under another personal account; no source says whether one person holds both. academic-lab would follow if a reviewer reads the authors' group as the holder. The lead decides on withholding the README and the API record; the handles appear only in URLs. · [S1][cmmlu-s1]
+   > data and evaluation code are available at
+8. (field `data.refresh`) refresh static although the repository repaired one malformed CSV row in world\_religions on 2023-06-27, eleven days after its first commit, and the Hugging Face archive is named v1\_0\_1. static admits no change after release, so versioned-releases (with versions 1.0 and 1.0.1, neither announced) is the alternative if that fix counts. The open pull request of 2026-11-25 would change one answer if merged. · S8
+   > {"rfilename":"cmmlu.py"},{"rfilename":"cmmlu\_v1\_0\_1.zip"}
+9. (field `data.ceiling_anchor_type`) ceiling\_anchor\_type theoretical-maximum. The paper's quality check estimates about 2% of labels wrong or missing from a 5% sample, which could make measured-ceiling (a bound near 98%) the reading; the 60% pass mark is a reference, not a human result, and no human baseline is measured. · [S1][cmmlu-s1]
+   > around 2% of noise in the data, in terms of the correct answer not being present or being incorrectly labeled
+10. (field `comparability.material_extra`) The README's tables are not one protocol. The paper's rows read open models by next-token probability and GPT-4 and ChatGPT by free generation, submitted rows state no protocol, and the rows under Models with Limited Access cannot be reproduced. Claims drawn from the board should carry the harness, and the limited-access rows may deserve their own marking. · S7
+   > Models with Limited Access
+11. (field `domain.primary`) Primary multi-subject-knowledge-exams with no secondary. The claim couples breadth with a Chinese linguistic and cultural context (15 China-specific subjects, some tasks expressible only in Chinese); no domain or capability term records culture-specific knowledge, and language/understanding was rejected because no passage decides the answers. A reviewer who wants the cultural claim faceted may log a gap; the tags carry china-specific. · [S1][cmmlu-s1]
+   > In this paper, we propose CMMLU (Figure 1), a comprehensive Chinese assessment suite specifically designed to evaluate the advanced knowledge and reasoning abilities of LLMs in a Chinese linguistic and cultural context.
+12. (field `leaderboard_url`) The board recorded is the README's pair of tables. CompassHub's card 499, which the sweep says carries a board, was not read (its pages are script-rendered and its API is read by POST), nor were the Chinese README.md and lm-evaluation-harness's task. · S7
+   > The following table displays the performance of models in the five-shot and zero-shot settings.
+
+**Reviewer checklist** for `cmmlu`:
+
+- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
+- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
+- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
+- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
+- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
+- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
+- [ ] Every open review check above is answered or resolved
+- [ ] Nothing here would embarrass the catalogue in front of a specialist
+
+[cmmlu-s1]: https://arxiv.org/pdf/2306.09212v2
+[cmmlu-s2]: https://arxiv.org/abs/2306.09212
+[cmmlu-s3]: https://aclanthology.org/2024.findings-acl.671/
+[cmmlu-s4]: https://raw.githubusercontent.com/open-compass/opencompass/6288ea0db61150b6c2c1e37c01808fef66748e8c/opencompass/configs/datasets/cmmlu/cmmlu_llmjudge_gen_e1cd9a.py
+[cmmlu-s5]: https://arxiv.org/pdf/2412.19437v2
+[cmmlu-s6]: https://arxiv.org/pdf/2506.05767v1
+
+### 2.6 GPQA (gpqa)
 
 `data/benchmarks/general-intelligence/gpqa.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-10 · last verified 2026-11-10
 
@@ -1084,7 +1345,7 @@ Considered and rejected:
 [gpqa-s7]: https://arxiv.org/pdf/2607.02770v2
 [gpqa-s11]: https://epoch.ai/data/benchmark_data.zip
 
-### 2.6 Humanity's Last Exam (hle)
+### 2.7 Humanity's Last Exam (hle)
 
 `data/benchmarks/general-intelligence/hle.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-10 · last verified 2026-11-10
 
@@ -1313,13 +1574,13 @@ Considered and rejected:
 [hle-s14]: https://huggingface.co/api/datasets/cais/hle-diamond
 [hle-s15]: https://epoch.ai/data/benchmark_data.zip
 
-### 2.7 MMLU (mmlu)
+### 2.8 SuperGPQA (supergpqa)
 
-`data/benchmarks/general-intelligence/mmlu.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-05 · last verified 2026-11-18
+`data/benchmarks/general-intelligence/supergpqa.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-27 · last verified 2026-11-27
 
-*Four-option multiple-choice questions in 57 subjects, from elementary to professional level.*
+*Graduate-level multiple-choice questions with about ten options each, across 285 subfields from agronomy to sociology.*
 
-A test of the knowledge a language model acquires in pretraining: 15,908 four-option multiple-choice questions in 57 subjects across STEM, the humanities, the social sciences and professional fields such as law and medicine, at levels from elementary school to professional examinations. Graduate and undergraduate students collected the questions from freely available practice tests and course material. Models are evaluated zero-shot or few-shot, with five fixed demonstrations per subject, and scored on accuracy over the 14,079-question test set.
+A multiple-choice benchmark from Multimodal Art Projection (M-A-P), an open-source research community, with ByteDance Seed and 2077.AI on its title page: 26,529 graduate-level questions in 13 disciplines, 72 fields and 285 subfields, at least 50 per subfield, built to reach the long tail of specialised fields (light industry, agriculture, service disciplines) that earlier exams leave out. Science, engineering and medicine hold 77% of the questions, and 42% need calculation or formal reasoning. Experts, people holding or pursuing a PhD as GPQA defines them, chose the sources, textbook example problems first and then worked problems from websites, with a limited portion from fifteen earlier datasets such as MMLU-Pro, MedQA and LawBench; undergraduate and master's annotators translated them into English, turned them into multiple choice and added distractors, partly generated by language models, to up to ten options (9.67 on average). Seven frontier models then answered the candidates: questions they got wrong in the same way, among other flags, went to experts for review with web access, and easy ones were reworked against the models' accuracy. Each question carries a difficulty label (easy, middle or hard). Chat and reasoning models are run zero-shot and base models five-shot, scored by accuracy over all questions, with means by subfield, field and discipline beside it; the paper's best, DeepSeek-R1, scored 61.82%. The maintainers publish their own runs on the homepage leaderboard, last rebuilt in December 2025; the Hugging Face leaderboard Space the README links no longer answers publicly.
 
 | Classification | |
 | --- | --- |
@@ -1327,313 +1588,196 @@ A test of the knowledge a language model acquires in pretraining: 15,908 four-op
 | Secondary domains | - |
 | Capabilities | knowledge-recall |
 | Evaluation methods | multiple-choice |
-| Designed for | base-model |
+| Designed for | reasoning-model, instruction-tuned-model, base-model |
 | Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
 | Lifecycle · activity | active · no-submission-channel |
-| Data access · refresh · contamination risk | fully-open · static · medium |
-| Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | academic-lab · literature-only |
-| Independence flags | none |
-| Licences: code · dataset | MIT · MIT |
-| Released | 2020-09-07 |
-| Links | homepage github.com/\[personal account\]/test (not linked: a personal account) |
-
-**Sources**
-
-| | Source | Type · publisher | URL | Archived copy |
-| --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-2009-03300` | preprint · arXiv | [arxiv.org/abs/2009.03300](https://arxiv.org/abs/2009.03300) | none (not-required) |
-| S2 | `src-hf-api-cais-mmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/cais/mmlu](https://huggingface.co/api/datasets/cais/mmlu) | [capture 2026-11-24](https://web.archive.org/web/20261124164826/https://huggingface.co/api/datasets/cais/mmlu) |
-| S3 | `src-github-mmlu-license-4450500` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/test/4450500f923c49f1fb1dd3d99108a0bd9717b660/LICENSE (not linked: a personal account) | none (withheld) |
-| S4 | `src-hf-api-openai-mmmlu` | dataset-card · Hugging Face | [huggingface.co/api/datasets/openai/MMMLU](https://huggingface.co/api/datasets/openai/MMMLU) | [capture 2026-11-17](https://web.archive.org/web/20261117233256/https://huggingface.co/api/datasets/openai/MMMLU) |
-| S5 | `src-arxiv-2406-04127` | preprint · arXiv | [arxiv.org/abs/2406.04127](https://arxiv.org/abs/2406.04127) | none (not-required) |
-| S6 | `src-arxiv-2412-03304` | preprint · arXiv | [arxiv.org/abs/2412.03304](https://arxiv.org/abs/2412.03304) | none (not-required) |
-| S7 | `src-hf-mmlu-pro-dataset-card` | dataset-card · Hugging Face (TIGER-Lab) | [huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfe...](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014141358/https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) |
-| S8 | `src-github-mmlu-readme-4450500` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/test/4450500f923c49f1fb1dd3d99108a0bd9717b660/README.md (not linked: a personal account) | none (withheld) |
-| S9 | `src-epoch-benchmark-data` | dataset-export · Epoch AI | [epoch.ai/data/benchmark\_data.zip](https://epoch.ai/data/benchmark_data.zip) | [capture 2026-09-17](https://web.archive.org/web/20260917172847/https://epoch.ai/data/benchmark_data.zip) |
-
-**Evidence** (25 quoted fields), by checklist area:
-
-#### mmlu · Identity and id
-
-- `self_description` · [S1][mmlu-s1]
-  > We propose a new test to measure a text model’s multitask accuracy. The test covers 57 tasks including elementary mathematics, US history, computer science, law, and more.
-- `lineage.forks` = id mmmlu; maintainer OpenAI · [S4][mmlu-s4]
-  > We translated the MMLU’s test set into 14 languages using professional human translators.
-- `lineage.forks` = id mmlu-redux; maintainer the MMLU-Redux authors (arXiv 2406.04127), data on Hugging Face as edinburgh-dawg · [S5][mmlu-s5]
-  > we create MMLU-Redux, which is a subset of 5,700 manually re-annotated questions across all 57 MMLU subjects.
-- `lineage.forks` = id global-mmlu; maintainer Cohere Labs (the Global MMLU authors, arXiv 2412.03304) · [S6][mmlu-s6]
-  > We release Global MMLU, an improved MMLU with evaluation coverage across 42 languages
-- `lineage` = role root; extended_by mmlu-pro · [S7][mmlu-s7]
-  > Part of the dataset comes from the original MMLU dataset. We remove the trivial and ambiguous questions.
-
-#### mmlu · Domain and capabilities
-
-- `domain` = primary general-intelligence/multi-subject-knowledge-exams · [S1][mmlu-s1]
-  - why: Fifty-seven school and professional subjects in one test, scored together -- the leaf's own description of a multi-subject knowledge exam.
-  > The benchmark covers 57 subjects across STEM, the humanities, the social sciences, and more.
-- `capability` = knowledge-recall · [S1][mmlu-s1]
-  - why: The paper sets out to measure what a model learned in pretraining, with no task-specific training and at most five demonstrations, so a correct answer is recalled knowledge.
-  > We design the benchmark to measure knowledge acquired during pretraining by evaluating models exclusively in zero-shot and few-shot settings.
-- `evaluation_method` = multiple-choice · [S1][mmlu-s1]
-  - why: Each question has four options and the prediction is the option the model makes most likely -- multiple-choice's IN test.
-  > The model then produces probabilities for the tokens “A,” “B,” “C,” and “D,” and we treat the highest probability option as the prediction.
-
-#### mmlu · Task and evaluation
-
-- `learned_entrant_evidence` = system GPT-3 X-Large (few-shot) · [S1][mmlu-s1]
-  > GPT-3 X-Large (few-shot) 40.8 50.4 36.7 48.8 43.9
-- `reproducible_by_third_party` = true · [S1][mmlu-s1]
-  - why: The questions, their answers and the evaluation code are public, and the protocol is stated down to the prompt's first line.
-  > \[withheld: it may name a person; see the entry file\]
-- `task` = exists true; input one four-option multiple-choice question, after up to five demonstrations from the same subject; output The letter of one option.; scoring Accuracy over the test set; the paper takes the option whose letter the model makes most probable after "Answer:".; tests_hidden_from_system false · [S1][mmlu-s1]
-  > we create a dev set with 5 fixed few-shot examples for each subject.
-- `execution.compute_tier` = single-gpu · [S1][mmlu-s1]
-  - why: About 14,000 short prompts, one forward pass each for the paper's letter-probability protocol; a 7B model runs on one GPU, and an API model needs only credits.
-  > the test set has 14079 questions
-- `execution.harness` = \[withheld: it may name a person; see the entry file\] · [S1][mmlu-s1]
-  > \[withheld: it may name a person; see the entry file\]
-
-#### mmlu · Data and licence
-
-- `data.access` = fully-open · [S1][mmlu-s1]
-  - why: The test, its answers and the code are published; nothing is withheld for scoring.
-  > \[withheld: it may name a person; see the entry file\]
-- `data.refresh` = static · [S1][mmlu-s1]
-  - why: One fixed set of 15,908 questions, split once into development, validation and test.
-  > We collected 15908 questions in total, which we split into a few-shot development set, a validation set, and a test set.
-- `data.data_provenance` = exam-derived, web-scraped · [S1][mmlu-s1]
-  > The questions in the dataset were manually collected by graduate and undergraduate students from freely available sources online.
-- `data.ceiling_anchor_type` = expert-best · [S1][mmlu-s1]
-  - why: The paper estimates expert-level accuracy from the 95th-percentile test-taker of each source exam, guessing where no such figure exists -- an estimate of the best experts, not a measured panel.
-  > we then estimate that expert-level accuracy is approximately 89.8%.
-- `data.dataset_licence` = MIT · [S2][mmlu-s2]
-  > "license":\["mit"\]
-- `data.size` = count 14079; unit questions; subset test · [S1][mmlu-s1]
-  > the test set has 14079 questions
-- `data.size` = count 1540; unit questions; subset validation · [S1][mmlu-s1]
-  > the validation set may be used for selecting hyperparameters and is made of 1540 questions
-- `data.size` = count 5; unit questions per subject; subset few-shot development · [S1][mmlu-s1]
-  > The few-shot development set has 5 questions per subject
-- `execution.code_licence` = MIT · S3
-  > MIT License
-
-#### mmlu · Governance and independence
-
-- `governance.maintainer` = The MMLU authors (UC Berkeley, Columbia, UChicago, UIUC) · [S1][mmlu-s1]
-  - why: The paper's authors, at four universities; the repository is the first author's.
-  > \[withheld: it may name a person; see the entry file\]
-- `governance.submission_process` = literature-only · [S1][mmlu-s1]
-  > \[withheld: it may name a person; see the entry file\]
-
-#### mmlu · Lifecycle and activity
-
-- `activity` = no-submission-channel · [S1][mmlu-s1]
-  - why: There is no leaderboard of the benchmark's own and no route to submit a result; results are published by whoever evaluates a model, in their own papers.
-  > \[withheld: it may name a person; see the entry file\]
-
-**Open review checks** (5):
-
-1. designed\_for\_subjects base-model only: MMLU is now run mostly on instruction-tuned and reasoning models, under protocols the paper did not use. The facet records the design, the conditions record the protocol.
-2. contamination\_risk high from provenance alone, with no evidence entry: a reviewer with a contamination study to cite should add it.
-3. lifecycle active: saturation is derived (12 S4) and the build decides it.
-4. (field `data.dataset_licence`) dataset\_licence MIT comes from the Hugging Face copy's card tag alone. The repository's MIT LICENSE speaks of "the Software", and the test itself is a tarball the README links from outside the repository, which was not opened. Whether either licence covers the questions is unstated; null with this note is the alternative. · S8
-   > This repository contains OpenAI API evaluation code, and the test is available for download
-5. (field `activity`) The README keeps a "Test Leaderboard" table and invites additions through the authors or a pull request (README last changed 2023-01-26), where activity no-submission-channel and submission\_process literature-only say there is no board or route. A dormant README board may call for another activity value or a note. · S8
-   > If you want to have your model added to the leaderboard, please reach out to us or submit a pull request.
-
-**Reviewer checklist** for `mmlu`:
-
-- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
-- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
-- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
-- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
-- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
-- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
-- [ ] Every open review check above is answered or resolved
-- [ ] Nothing here would embarrass the catalogue in front of a specialist
-
-[mmlu-s1]: https://arxiv.org/abs/2009.03300
-[mmlu-s2]: https://huggingface.co/api/datasets/cais/mmlu
-[mmlu-s4]: https://huggingface.co/api/datasets/openai/MMMLU
-[mmlu-s5]: https://arxiv.org/abs/2406.04127
-[mmlu-s6]: https://arxiv.org/abs/2412.03304
-[mmlu-s7]: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md
-[mmlu-s9]: https://epoch.ai/data/benchmark_data.zip
-
-### 2.8 MMLU-Pro (mmlu-pro)
-
-`data/benchmarks/general-intelligence/mmlu-pro.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-10-14 · last verified 2026-10-14
-
-*Ten-option multiple-choice questions in 14 subjects: MMLU filtered and extended with harder, reasoning-focused items.*
-
-A harder rework of MMLU from TIGER-Lab at the University of Waterloo: 12,032 multiple-choice questions in 14 disciplines, from biology, business and law to math, philosophy and psychology, plus "Other". MMLU's questions were filtered (any that more than four of eight small open models answered correctly were dropped) and joined by problems from a STEM website, TheoremQA and SciBench. GPT-4-Turbo then extended each question's options from four to ten, and experts reviewed answers and distractors in two rounds; 83% of questions keep ten options. The paper's protocol is 5-shot chain-of-thought prompting, with demonstrations from a 70-question validation split, the answer letter taken by regular expression and a random option scored when extraction fails; accuracy is reported overall and per discipline. TIGER-Lab keeps a leaderboard on Hugging Face that mixes results it ran with numbers model developers reported, and corrects questions in place, dating each correction on the dataset card.
-
-| Classification | |
-| --- | --- |
-| Primary domain | general-intelligence/multi-subject-knowledge-exams |
-| Secondary domains | - |
-| Capabilities | knowledge-recall |
-| Evaluation methods | multiple-choice |
-| Designed for | base-model, instruction-tuned-model |
-| Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
-| Lifecycle · activity | active · accepting-submissions |
 | Data access · refresh · contamination risk | fully-open · versioned-releases · medium |
 | Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | academic-lab · self-reported, maintainer-run |
-| Independence flags | maintainer-competes-on-own-benchmark |
-| Licences: code · dataset | Apache-2.0 · MIT |
-| Released | 2024-06-03 |
-| Links | homepage [github.com/TIGER-AI-Lab/MMLU-Pro](https://github.com/TIGER-AI-Lab/MMLU-Pro) · repository [github.com/TIGER-AI-Lab/MMLU-Pro](https://github.com/TIGER-AI-Lab/MMLU-Pro) · leaderboard [huggingface.co/spaces/TIGER-Lab/MMLU-Pro](https://huggingface.co/spaces/TIGER-Lab/MMLU-Pro) · dataset [huggingface.co/datasets/TIGER-Lab/MMLU-Pro](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro) |
+| Maintainer type · submission process | community-collective · maintainer-run |
+| Independence flags | none |
+| Licences: code · dataset | null · ODC-By-1.0 |
+| Released | 2025-02-20 |
+| Links | homepage [supergpqa.github.io/](https://supergpqa.github.io/) · repository [github.com/SuperGPQA/SuperGPQA](https://github.com/SuperGPQA/SuperGPQA) · leaderboard [supergpqa.github.io/](https://supergpqa.github.io/) · dataset [huggingface.co/datasets/m-a-p/SuperGPQA](https://huggingface.co/datasets/m-a-p/SuperGPQA) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-arxiv-2406-01574-v6` | preprint · arXiv | [arxiv.org/pdf/2406.01574v6](https://arxiv.org/pdf/2406.01574v6) | none (not-required) |
-| S2 | `src-arxiv-2406-01574` | preprint · arXiv | [arxiv.org/abs/2406.01574](https://arxiv.org/abs/2406.01574) | none (not-required) |
-| S3 | `src-arxiv-2607-02770-v2` | preprint · arXiv | [arxiv.org/pdf/2607.02770v2](https://arxiv.org/pdf/2607.02770v2) | none (not-required) |
-| S4 | `src-hf-mmlu-pro-dataset-card` | dataset-card · Hugging Face (TIGER-Lab) | [huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfe...](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014141358/https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md) |
-| S5 | `src-hf-mmlu-pro-leaderboard-results` | dataset-export · Hugging Face (TIGER-Lab) | [huggingface.co/datasets/TIGER-Lab/mmlu\_pro\_leaderboard\_submission/raw...](https://huggingface.co/datasets/TIGER-Lab/mmlu_pro_leaderboard_submission/raw/4623b7c68d2276218d487464b0608dc978f4b301/results.csv) | [capture 2026-10-14](https://web.archive.org/web/20261014141401/https://huggingface.co/datasets/TIGER-Lab/mmlu_pro_leaderboard_submission/raw/4623b7c68d2276218d487464b0608dc978f4b301/results.csv) |
-| S6 | `src-hf-api-mmlu-pro` | dataset-card · Hugging Face | [huggingface.co/api/datasets/TIGER-Lab/MMLU-Pro](https://huggingface.co/api/datasets/TIGER-Lab/MMLU-Pro) | [capture 2026-10-14](https://web.archive.org/web/20261014140953/https://huggingface.co/api/datasets/TIGER-Lab/MMLU-Pro) |
-| S7 | `src-github-tiger-ai-lab-org` | repository · GitHub | [api.github.com/orgs/TIGER-AI-Lab](https://api.github.com/orgs/TIGER-AI-Lab) | none (withheld) |
-| S8 | `src-github-mmlu-pro-readme` | repository · GitHub | [raw.githubusercontent.com/TIGER-AI-Lab/MMLU-Pro/main/README.md](https://raw.githubusercontent.com/TIGER-AI-Lab/MMLU-Pro/main/README.md) | none (withheld) |
-| S9 | `src-github-inspect-evals-mmlu-pro-readme` | repository · UK AI Security Institute | [raw.githubusercontent.com/UKGovernmentBEIS/inspect\_evals/main/src/ins...](https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/main/src/inspect_evals/mmlu_pro/README.md) | [capture 2026-10-14](https://web.archive.org/web/20261014135657/https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/main/src/inspect_evals/mmlu_pro/README.md) |
-| S10 | `src-arxiv-2503-10497-v2` | preprint · arXiv | [arxiv.org/html/2503.10497v2](https://arxiv.org/html/2503.10497v2) | none (not-required) |
-| S11 | `src-arxiv-2501-15747-v2` | preprint · arXiv | [arxiv.org/html/2501.15747v2](https://arxiv.org/html/2501.15747v2) | none (not-required) |
-| S12 | `src-hf-mmlu-pro-leaderboard-utils` | leaderboard-page · Hugging Face (TIGER-Lab/MMLU-Pro Space) | [huggingface.co/spaces/TIGER-Lab/MMLU-Pro/raw/1e6c0f07d4abba78d3c413c8...](https://huggingface.co/spaces/TIGER-Lab/MMLU-Pro/raw/1e6c0f07d4abba78d3c413c834bc7af1bd415772/utils.py) | none (withheld) |
+| S1 | `src-arxiv-2502-14739-v4` | preprint · arXiv | [arxiv.org/pdf/2502.14739v4](https://arxiv.org/pdf/2502.14739v4) | none (not-required) |
+| S2 | `src-arxiv-2502-14739` | preprint · arXiv | [arxiv.org/abs/2502.14739](https://arxiv.org/abs/2502.14739) | none (not-required) |
+| S3 | `src-arxiv-2506-05767-v1` | preprint · arXiv | [arxiv.org/pdf/2506.05767v1](https://arxiv.org/pdf/2506.05767v1) | none (not-required) |
+| S4 | `src-github-opencompass-supergpqa-llmjudge-config` | repository · GitHub | [raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583a...](https://raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583ab961bd1fdecf8380824af4/opencompass/configs/datasets/supergpqa/supergpqa_llmjudge_gen_12b8bc.py) | [capture 2026-11-27](https://web.archive.org/web/20261127205813/https://raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583ab961bd1fdecf8380824af4/opencompass/configs/datasets/supergpqa/supergpqa_llmjudge_gen_12b8bc.py) |
+| S5 | `src-arxiv-2611-02278` | preprint · arXiv | [arxiv.org/abs/2611.02278](https://arxiv.org/abs/2611.02278) | none (not-required) |
+| S6 | `src-supergpqa-site-bundle` | leaderboard-page · the SuperGPQA authors (GitHub Pages) | [supergpqa.github.io/assets/index-BPhSot9B.js](https://supergpqa.github.io/assets/index-BPhSot9B.js) | none (withheld) |
+| S7 | `src-hf-api-supergpqa` | dataset-card · Hugging Face | [huggingface.co/api/datasets/m-a-p/SuperGPQA](https://huggingface.co/api/datasets/m-a-p/SuperGPQA) | none (pending) |
+| S8 | `src-github-api-supergpqa-data-commits` | repository · GitHub | [api.github.com/repos/SuperGPQA/SuperGPQA/commits?path=data/SuperGPQA-...](https://api.github.com/repos/SuperGPQA/SuperGPQA/commits?path=data/SuperGPQA-all.jsonl) | none (withheld) |
+| S9 | `src-github-supergpqa-readme` | repository · GitHub | [raw.githubusercontent.com/SuperGPQA/SuperGPQA/e31e8bf3e7089aef808be5d...](https://raw.githubusercontent.com/SuperGPQA/SuperGPQA/e31e8bf3e7089aef808be5ddecafd4538dee6e41/README.md) | none (withheld) |
 
-**Evidence** (39 quoted fields), by checklist area:
+**Evidence** (49 quoted fields), by checklist area:
 
-#### mmlu-pro · Identity and id
+#### supergpqa · Identity and id
 
-- `self_description` · [S1][mmlu-pro-s1]
-  > This paper introduces MMLU-Pro, an enhanced dataset designed to extend the mostly knowledge-driven MMLU benchmark by integrating more challenging, reasoning-focused questions and expanding the choice set from four to ten options.
-- `released` = 2024-06-03 · [S2][mmlu-pro-s2]
-  > Submitted on 3 Jun 2024
-- `release_venue` = NeurIPS 2024 Datasets and Benchmarks Track (spotlight) · [S2][mmlu-pro-s2]
-  > This version has been accepted and published at NeurIPS 2024 Track Datasets and Benchmarks (Spotlight)
-- `lineage.forks` = id mmlu-prox; maintainer the MMLU-ProX authors (arXiv 2503.10497) · [S10][mmlu-pro-s10]
-  > MMLU-ProX extends the challenging MMLU-Pro benchmark to encompass 29 typologically diverse languages
-- `lineage.forks` = id indicmmlu-pro; maintainer the IndicMMLU-Pro authors (arXiv 2501.15747), data on Hugging Face as LinguaLift · [S11][mmlu-pro-s11]
-  > we use IndicTrans2 to convert the questions and corresponding options from the original English MMLU Pro dataset into each of the target languages.
-- `lineage` = role fork · [S4][mmlu-pro-s4]
-  > Part of the dataset comes from the original MMLU dataset. We remove the trivial and ambiguous questions.
+- `self_description` · [S1][supergpqa-s1]
+  > we present SuperGPQA, a comprehensive benchmark that evaluates graduate-level knowledge and reasoning capabilities across 285 disciplines
+- `released` = 2025-02-20 · [S2][supergpqa-s2]
+  > Submitted on 20 Feb 2025 (v1), last revised 28 Mar 2025 (this version, v4)
+- `lineage` = role root · [S1][supergpqa-s1]
+  > During the re-annotation process, following the rules stated in GPQA
 
-#### mmlu-pro · Domain and capabilities
+#### supergpqa · Domain and capabilities
 
-- `domain` = primary general-intelligence/multi-subject-knowledge-exams · [S1][mmlu-pro-s1]
-  - why: The claim is breadth, closed-ended questions across 14 disciplines scored together, and no discipline holds most of them (Math, the largest, has 1,351 of 12,032). The taxonomy names mmlu-pro as this leaf's example.
-  > MMLU-Pro spans 14 diverse domains including mathematics, physics, chemistry, law, engineering, psychology, and health, encompassing over 12,000 questions and thus meeting the breadth requirement.
-- `capability` = knowledge-recall · [S1][mmlu-pro-s1]
-  - why: Questions are answered closed-book. The prompt holds an instruction, five solved demonstrations from the same discipline, the question and its options; nothing supplied contains the answer.
-  > The following are multiple-choice questions (with answers) about physics. Think step by step and then finish your answer with
-- `evaluation_method` = multiple-choice · [S1][mmlu-pro-s1]
-  - why: The answer is the letter of one supplied option. Chance is 10% on a ten-option question and a little higher over the set, because 17% of questions kept fewer options after review (9.47 on average).
-  > In our dataset, 83% have ten options, 17% have fewer, and the average options count per question is 9.47.
-- `designed_for_subjects` = base-model, instruction-tuned-model · [S1][mmlu-pro-s1]
-  - why: The paper runs open base and instruction-tuned checkpoints locally and closed chat models through their APIs, all with the same 5-shot chain-of-thought prompt, which a base model can continue (it ends with the opening words of a reasoning chain) and an assistant can follow.
-  > We also examined a range of open-source base and instruction-tuned models
+- `domain` = primary general-intelligence/multi-subject-knowledge-exams · [S1][supergpqa-s1]
+  - why: The claim is breadth, closed-ended questions across 285 subfields in 13 disciplines scored together, and no discipline holds most of them (Science, the largest, has 9,838 of 26,529, and its own fields run from mathematics and physics to oceanography). The leaf's examples include mmlu-pro, and gpqa sits in it too; both are SuperGPQA's nearest neighbours.
+  > With 26,529 questions spanning 13 disciplines, 72 fields, and 285 subfields
+- `capability` = knowledge-recall · [S1][supergpqa-s1]
+  - why: Questions are answered closed-book. The prompt holds an instruction, the question and its options (and, for base models, five fixed worked examples); nothing supplied contains the answer.
+  > There is only one correct answer. The last line of your response should be in the format
+- `evaluation_method` = multiple-choice · [S1][supergpqa-s1]
+  - why: The answer is the letter of one supplied option. With 9.67 options per question on average, chance is a little over 10%, higher on the questions that kept fewer options.
+  > an average of 9.67 options per question
+- `designed_for_subjects` = reasoning-model, instruction-tuned-model, base-model · [S1][supergpqa-s1]
+  - why: The paper evaluates 6 reasoning, 28 chat and 17 base models, the reasoning models with up to 32K new tokens and the others with 4K, at temperature 0; reasoning and chat models get the zero-shot prompt and base models a five-shot one modelled on MMLU-Pro's.
+  > Reasoning models and chat models are evaluated using a zero-shot approach, while base models are assessed using a five-shot evaluation.
 
 Considered and rejected:
 
-- `capability` not `quantitative-reasoning` · [S1][mmlu-pro-s1]
-  - why: Math, physics, chemistry and engineering items need calculation, and the paper puts 12% of GPT-4o's analysed errors down to it, but the scored act is choosing an option, not producing a quantity (the term's own near miss).
-  > 12% from computational errors
-- `capability` not `reliability-consistency` · [S1][mmlu-pro-s1]
-  - why: The paper's robustness claim is that scores move less across 24 prompt styles. That is a property of the benchmark's scores, measured once in the paper; nothing scores agreement across repeated trials of an item.
-  > With 24 different prompt styles tested, the sensitivity of model scores to prompt variations decreased from 4-5% in MMLU to just 2% in MMLU-Pro.
+- `domain` not `general-intelligence/human-comparison-batteries` · [S1][supergpqa-s1]
+  - why: No human accuracy is measured or reported. Experts solve candidate questions during construction, which is quality control, not a baseline the scores are read against.
+  > expert annotators are asked to review and solve the given candidate questions with unrestricted access to the web
+- `capability` not `quantitative-reasoning` · [S1][supergpqa-s1]
+  - why: Many items need calculation, but the scored act is choosing an option, not producing a quantity (mmlu-pro is the term's near miss).
+  > 42.33% of all questions require mathematical calculations or formal reasoning
+- `capability` not `reliability-consistency` · [S1][supergpqa-s1]
+  - why: The paper's robustness analysis over 24 prompt styles, and its best-of-N and majority-voting runs, are properties of the benchmark measured once in the paper; nothing scores agreement across repeated trials of an item.
+  > employing 24 distinct yet semantically equivalent prompts in a zero-shot setting
+- `capability` not `context-integration` · [S1][supergpqa-s1]
+  - why: A zero-shot-with-subfield variant names each question's subfield in the prompt, which helps larger models, but it supplies a label, not material that contains the answer; the default prompt omits it.
+  > incorporating subfield information generally leads to improved performance, particularly for larger models
 
-#### mmlu-pro · Task and evaluation
+#### supergpqa · Task and evaluation
 
-- `learned_entrant_evidence` = system Gemini-3.1-Pro · [S5][mmlu-pro-s5]
-  > Gemini-3.1-Pro,TIGER-Lab,unk,0.9116
-- `reproducible_by_third_party` = true · [S6][mmlu-pro-s6]
-  - why: Both splits, answers included, are on Hugging Face without a gate, and the evaluation code is public.
-  > "gated":false
-- `task` = exists true; input one question with up to ten lettered options (A to J), after five solved chain-of-thought demonstrations from the same discipline; output Free-text reasoning ending in "The answer is (X)", from which the option letter is taken.; scoring Accuracy over the test split, overall and per discipline. The letter is extracted by regular expression, first "answer is (X)" and then "Answer" followed by a letter; when both fail, a random option is scored.; tests_hidden_from_system false · [S1][mmlu-pro-s1]
-  > If both of them fail to retrieve a valid response, a fallback mechanism is implemented where a random option from the answer choices is selected.
-- `execution.compute_tier` = api-credits-only · [S1][mmlu-pro-s1]
-  - why: The paper runs closed models through APIs, about 20M input and 5M output tokens in all, and open models on A100 GPUs; the README ships both paths. Serving local weights is the entrant's choice, so the API path decides (the term's own example).
-  > our evaluations on our custom dataset involved processing approximately 20M input tokens and 5M output tokens
-- `execution.reproducibility_tier` = fully-automatable · [S8][mmlu-pro-s8]
-  - why: Questions, answers and evaluation scripts are public, and the score is computed by script from the model's outputs, with no human or maintainer-only step.
-  > To run local inference, modify the model name in the following script and execute it
-- `execution.harness` = TIGER-AI-Lab/MMLU-Pro (the evaluate\_from\_api.py and local scripts under scripts/examples, with compute\_accuracy.py for answer extraction) · [S8][mmlu-pro-s8]
-  > This repo contains the evaluation code for the NeurIPS-24 paper
-- `execution.harness_gotcha` · [S8][mmlu-pro-s8]
-  > --retry\_wrong - retries on wrong answer (useful with hallucinations and testing)
-- `execution.runnable_via` = custom, inspect · [S9][mmlu-pro-s9]
-  > \`fewshot\` (\`int\`): Number of few shot examples to use. (default: \`0\`)
-- `aggregation_policy` = official-aggregate · [S4][mmlu-pro-s4]
-  > does not change overall micro-averaged scores; may slightly affect per-category metrics, mainly Health/Psychology
+- `learned_entrant_evidence` = system DeepSeek-R1 · [S1][supergpqa-s1]
+  > the reasoning-focused model DeepSeek-R1 achieved the highest accuracy of 61.82% on SuperGPQA
+- `learned_entrant_evidence` = system gemini-3-pro-preview · [S6][supergpqa-s6]
+  > "gemini-3-pro-preview":JSON.parse('{"zero-shot":{"accuracy":0.737532511591089
+- `learned_entrant_evidence` = system dots.llm1.base · [S3][supergpqa-s3]
+  > dots.llm1 .base MoE 14B 142B 92.8 90.4 92.7 97.6 82.9 91.3 88.2 80.8 83.2 61.9 33.3
+- `reproducible_by_third_party` = true · [S7][supergpqa-s7]
+  - why: The questions and answers are on Hugging Face without a gate and in the repository, and the inference and scoring code is public.
+  > "lastModified":"2025-04-30T15:15:21.000Z","private":false,"gated":false
+- `task` = exists true; input one question with up to ten lettered options (A to J) after the zero-shot instruction; base models first see five fixed worked examples, all physics and astronomy questions, with step-by-step answers; output Free text whose last line is "Answer:" followed by the option letter.; scoring Accuracy over all 26,529 questions (Overall (sample)), with means over subfields, fields and disciplines and accuracy on the easy, middle and hard questions reported beside it.; tests_hidden_from_system false · [S1][supergpqa-s1]
+  > There is only one correct answer. The last line of your response should be in the format
+- `execution.compute_tier` = api-credits-only · [S9][supergpqa-s9]
+  - why: The harness runs closed models through their APIs with concurrent workers and open models locally under vLLM; serving local weights is the entrant's choice, so the API path decides (mmlu-pro's reading).
+  > num\_worker: Set the number of concurrent workers (for API calls).
+- `execution.reproducibility_tier` = fully-automatable · [S9][supergpqa-s9]
+  - why: Questions, answers and scripts are public, and the score is computed by script from the model's responses, with no human or maintainer-only step.
+  > python eval/eval.py --evaluate\_all --excel\_output --json\_output --output\_dir results --save\_dir results\_with\_status
+- `execution.harness` = SuperGPQA/SuperGPQA (infer/infer.py with a config/\*.yaml, in zero-shot or five-shot mode, then eval/eval.py for answer parsing and scoring) · [S9][supergpqa-s9]
+  > This repository contains the evaluation code for the paper
+- `execution.harness_gotcha` · [S4][supergpqa-s4]
+  > Please as a grading expert, judge whether the final answers given by the candidates below are consistent with the standard answers
+- `execution.runnable_via` = custom · [S4][supergpqa-s4]
+  > path='m-a-p/SuperGPQA', prompt\_mode='zero-shot', reader\_cfg=reader\_cfg, infer\_cfg=infer\_cfg
+- `aggregation_policy` = official-aggregate · [S9][supergpqa-s9]
+  > Each model is evaluated based on overall performance (sample, subfield, field, and discipline), as well as performance on easy, medium, and hard samples.
 
-#### mmlu-pro · Data and licence
+#### supergpqa · Data and licence
 
-- `as_used` = protocol Model developers report MMLU-Pro in their own release papers, in thinking mode and without stating the shots, prompt or answer extraction; the leaderboard lists such numbers as Self-Reported. · [S3][mmlu-pro-s3]
-  > Table 5 \| Performance comparison of Gemma 3 27B and Gemma 4 models on diverse benchmarks. All models are in thinking mode unless explicitly stated.
-- `as_used` = protocol The maintainers' own leaderboard runs are normally 5-shot, but some models, Gemini among them, were run 0-shot. · [S4][mmlu-pro-s4]
-  > Normally we use 5-shot, some models like Gemini use 0-shot.
-- `data.access` = fully-open · [S6][mmlu-pro-s6]
-  - why: The test and validation splits, answers included, are on Hugging Face without a gate, under MIT.
-  > "gated":false
-- `data.refresh` = versioned-releases · [S4][mmlu-pro-s4]
-  - why: The questions are corrected in place, and the dataset card dates each correction, from single answers in July 2024 to 15 medical answers on 2025-04-06 and a fix to leading spaces in options on 2026-01-18; a Hugging Face revision pins each state (see versions).
-  > We corrected 15 answers in medical domain based on the recommendations of medical professionals
-- `data.data_provenance` = inherited-from-constituents, web-scraped, exam-derived, model-generated · [S1][mmlu-pro-s1]
-  > We enhance the question options from four to ten using GPT-4-Turbo, introducing six additional choices.
-- `data.ceiling_anchor_type` = theoretical-maximum · [S1][mmlu-pro-s1]
-  - why: The headline is accuracy, bounded at 100%, and the paper reads headroom against that bound; no human or measured ceiling is published (the experts only reviewed items).
-  > Currently, the best-performing model, GPT-4o, scores 72.6% on MMLU-Pro, leaving a substantial margin of 27.4% for potential improvement
-- `data.dataset_licence` = MIT · [S1][mmlu-pro-s1]
-  > Additionally, the MMLU-Pro dataset itself is licensed under the MIT License
-- `data.upstream_licences` = MMLU, TheoremQA and SciBench under MIT; the STEM website's problems "Open-Licensed", as the paper puts it without naming a licence. · [S1][mmlu-pro-s1]
-  > STEM Website: Open-Licensed. • TheoremQA: Licensed under the MIT License. • SciBench: Licensed under the MIT License.
-- `data.size` = count 12032; unit questions; subset test · [S6][mmlu-pro-s6]
-  > {"name":"test","num\_bytes":8714663,"num\_examples":12032}
-- `data.size` = count 70; unit questions, the chain-of-thought demonstrations (five per discipline); subset validation · [S6][mmlu-pro-s6]
-  > {"name":"validation","num\_bytes":61242,"num\_examples":70}
-- `data.size` = count 6810; unit questions taken from MMLU (56.6% of the test split); subset from MMLU · [S1][mmlu-pro-s1]
-  > 6810 (56.60%)
-- `data.size` = count 5886; unit MMLU questions filtered out as too easy; subset MMLU filtering · [S1][mmlu-pro-s1]
-  > Using this criterion, a total of 5,886 questions are filtered out across the various subjects.
-- `subsets` = id mmlu-pro#math; label Math; items 1351 · [S1][mmlu-pro-s1]
-  > Math Physics Chemistry Law Engineering Other Economics Health Psychology Business Biology Philosophy Computer Science History Total Total Number 1351 1299 1132 1101 969 924 844 818 798 789 717 499 410 381
+- `as_used` = protocol Model developers report SuperGPQA in their base-model tables beside MMLU and MMLU-Pro, as exact match, without the paper's prompt or token limits. · [S3][supergpqa-s3]
+  > MMLU (EM) MMLU-Pro (EM) SuperGPQA (EM) DROP (F1)
+- `as_used` = protocol OpenCompass loads the Hugging Face set zero-shot and offers configurations that grade each response with an LLM judge, which decides whether the response matches the gold letter, in place of the task's own answer extraction. · [S4][supergpqa-s4]
+  > type=GenericLLMEvaluator,
+- `as_used` = protocol Research papers use it as a held-out evaluation set for reasoning models, with their own thinking budgets. · [S5][supergpqa-s5]
+  > On 8,983 held-out problems (competition and hard mathematics, SuperGPQA, a five-area confirmation set and MMLU-Pro), Concise-9B generates 0.66x the tokens of Qwen3.5-9B at a 32K thinking budget
+- `as_used` = protocol The maintainers' board lists some frontier chat models run five-shot, beside their zero-shot rows, although the paper runs chat models zero-shot. · [S6][supergpqa-s6]
+  > "gemini-2.5-pro":JSON.parse('{"five-shot":{"accuracy":0.6598062497644087
+- `data.access` = fully-open · [S7][supergpqa-s7]
+  - why: The data file, answers included, is on Hugging Face without a gate and in the public GitHub repository, under ODC-By.
+  > "lastModified":"2025-04-30T15:15:21.000Z","private":false,"gated":false
+- `data.refresh` = versioned-releases · [S8][supergpqa-s8]
+  - why: One release, corrected once in place. The commit of 2025-04-30 changed three lines of the data file and names the three questions it fixed, and the Hugging Face copy was last modified the same day, so the state before and after can each be pinned (see versions).
+  > "date":"2025-04-30T15:25:56Z"},"message":"fix 3 questions: 36871e48ae0d4d39856959e1e2658011 05e0a5d1cf864357839f43957b532a18 5bf332f9abf54f4191a73e0df2c1c140"
+- `data.data_provenance` = exam-derived, web-scraped, crowd-authored, model-generated, inherited-from-constituents · [S1][supergpqa-s1]
+  > Example problems with solutions from textbooks.
+- `data.contamination_risk` = medium · [S1][supergpqa-s1]
+  > exhibit a high frequency of consistency in both process and answers with the erroneous processes and answers from several online exercise websites
+- `data.ceiling_anchor_type` = theoretical-maximum · [S1][supergpqa-s1]
+  - why: The headline is accuracy, bounded at 100%, and the paper reads headroom against that bound; no human or measured ceiling is published.
+  > Climbing Space: The remaining improvement space for the SOTA models.
+- `data.dataset_licence` = ODC-By-1.0 · [S9][supergpqa-s9]
+  > The dataset is made available under the \*\*\[Open Data Commons Attribution License (ODC-BY)\](https://opendatacommons.org/licenses/by/)\*\*
+- `data.upstream_licences` = The fifteen referenced datasets' own licences, which the README asks users to honour without naming them. · [S9][supergpqa-s9]
+  > is a composite dataset that includes both original content and portions of data derived from other sources
+- `data.size` = count 26529; unit questions; subset all (SuperGPQA-all) · [S1][supergpqa-s1]
+  > With 26,529 questions spanning 13 disciplines, 72 fields, and 285 subfields
+- `data.size` = count 285; unit subfields, each with at least 50 questions; subset all (SuperGPQA-all) · [S1][supergpqa-s1]
+  > SuperGPQA provides at least 50 questions for each graduate-level disciplines
+- `data.size` = 2 items · [S1][supergpqa-s1]
+  > collectively accounting for 77.2% of the benchmark
+- `data.languages` = English · [S1][supergpqa-s1]
+  > Translate non-English questions into English with academic language.
+- `subsets` = id supergpqa#science; label Science; items 9838; scored_separately true · [S1][supergpqa-s1]
+  > Total 485 873 484 7892 674 656 1676 501 2755 205 347 9838 143
+- `subsets` = id supergpqa#science; label Science; items 9838; scored_separately true · [S9][supergpqa-s9]
+  > \| Discipline \| Agr. \| Eco. \| Edu. \| Eng. \| His. \| Law \| Lit. & Arts \| Man. \| Med. \| Mil. Sci. \| Phil. \| Sci. \| Soc. \|
+- `subsets` = id supergpqa#science; label Science; items 9838; scored_separately true · [S9][supergpqa-s9]
+  > \| Total \| 485 \| 873 \| 484 \| 7892 \| 674 \| 656 \| 1676 \| 501 \| 2755 \| 205 \| 347 \| 9838 \| 143 \|
+- `subsets` = id supergpqa#hard; label Hard questions; items 7050; scored_separately true · [S1][supergpqa-s1]
+  > Hard (#N) 7 47 1 2458 3 57 12 6 217 4 27 4210 1
+- `subsets` = id supergpqa#middle; label Middle questions; items 11748; scored_separately true · [S1][supergpqa-s1]
+  > Middle (#N) 219 565 179 3462 180 343 496 236 1629 78 183 4133 45
+- `subsets` = id supergpqa#easy; label Easy questions; items 7731; scored_separately true · [S1][supergpqa-s1]
+  > Easy (#N) 259 261 304 1972 491 256 1168 259 909 123 137 1495 97
 
-#### mmlu-pro · Governance and independence
+#### supergpqa · Governance and independence
 
-- `governance.maintainer` = TIGER-Lab (University of Waterloo) · [S7][mmlu-pro-s7]
-  - why: The paper's core authors are at the University of Waterloo. The dataset, the leaderboard Space and its results table sit in the TIGER-Lab organisation on Hugging Face and the code in TIGER-AI-Lab on GitHub, which describes itself as a lab based at Waterloo.
-  > "description":"Our lab is currently based in UWaterloo, focusing on Text and Image Generative Research"
-- `governance.submission_process` = self-reported, maintainer-run · [S4][mmlu-pro-s4]
-  > Some of the results are run by us while some of the results are obtained by others.
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][mmlu-pro-s1]
-  > TIGER Lab MAmmoTH2 including MAmmoTH2-8x7B-Plus.
+- `governance.maintainer` = The SuperGPQA Team of Multimodal Art Projection (M-A-P), an open-source research community, with ByteDance Seed and 2077.AI on the title page · [S1][supergpqa-s1]
+  - why: The paper's title page lists M-A-P, ByteDance Seed and 2077.AI. The code sits in the SuperGPQA GitHub organisation, the data in the m-a-p Hugging Face organisation and the homepage in the SuperGPQA organisation's Pages repository; the contributors it lists come from many universities and companies.
+  > M-A-P ByteDance Seed, 2077.AI
+- `governance.maintainer_type` = community-collective · [S1][supergpqa-s1]
+  - why: The artefacts sit in shared organisation accounts run by contributors from several institutions, and M-A-P describes itself as a community run by donation with no legal form stated, which is the term's inclusion test. nonprofit and industry-lab were considered (review\_checks).
+  > Multimodal Art Projection (M-A-P) is a non-profit open-source AI research community, ran by donation.
+- `governance.submission_process` = maintainer-run · [S6][supergpqa-s6]
+  > We evaluate 8 reasoning models, 41 chat models and 26 base models on SuperGPQA
+- `governance.known_limitation` · [S1][supergpqa-s1]
+  > The easy questions are further tailored based on the accuracy of LLMs
 
-#### mmlu-pro · Lifecycle and activity
+#### supergpqa · Lifecycle and activity
 
-- `lifecycle` = active · [S4][mmlu-pro-s4]
-  - why: Results are still produced. The maintainers added frontier models to the leaderboard on 2026-03-11, the day its results table was last changed, and the Gemma 4 report (July 2026) reports MMLU Pro. Whether the benchmark is saturated is derived from claims, never set here.
-  > Added more cutting-edge frontier models to the leaderboard, including the Claude-4.6 series, Seed2.0 series, Qwen3.5 series, and Gemini-3.1-Pro, among others.
-- `activity` = accepting-submissions · [S4][mmlu-pro-s4]
-  - why: The dataset card invites submissions to the leaderboard Space, which asks for a per-question output file sent by e-mail. The board has never run in rounds.
-  > You can submit your evaluation there.
+- `lifecycle` = active · [S5][supergpqa-s5]
+  - why: Results are still produced. A November 2026 paper evaluates on it, OpenCompass changed its SuperGPQA configurations on 2026-11-18, and the maintainers' board, rebuilt on 2025-12-16, carries GPT-5.2 and Gemini 3 Pro rows. Whether it is saturated is derived from claims, never set here.
+  > On 8,983 held-out problems (competition and hard mathematics, SuperGPQA, a five-area confirmation set and MMLU-Pro), Concise-9B generates 0.66x the tokens of Qwen3.5-9B at a 32K thinking budget
+- `activity` = no-submission-channel · [S7][supergpqa-s7]
+  - why: The maintainers choose and run the models on their board, and no route for others to enter is published; the dataset card's section on submitting to the official leaderboard says "coming soon" at its latest revision (2025-04-30), and the leaderboard Space the README names cannot be read (curation.unreachable).
+  > Tutorials for submitting to the official leadboard
 
-**Open review checks** (7):
+**Open review checks** (11):
 
-1. (field `governance.submission_process`) submission\_process is self-reported plus maintainer-run, as the board labels its rows (Self-Reported, TIGER-Lab) and as the Stage-3 record has it. The Space also states strict verification standards for inclusion, which could make the outside route maintainer-verified; the check it names is that the system is a genuine language model, not a re-scoring of the number. · [S12][mmlu-pro-s12]
-   > We maintain strict verification standards to ensure the integrity and comparability of the results.
-2. (field `lifecycle`) lifecycle active rather than under-revision. The maintainers correct questions in place and invite error reports with a standing promise to fix them, but no batch of corrections is announced as in progress; the last dated one is 2026-01-18. · [S4][mmlu-pro-s4]
-   > There are mistakes in the dataset. If you find anyone, please paste the question\_id to the issue page, we will modify it accordingly.
-3. (field `capability`) capability is knowledge-recall only. The benchmark also claims reasoning-focused questions and shows chain of thought helping, without naming a form of reasoning; ADR-0020 rejects a catch-all reasoning term, so the claim is recorded here rather than as a capability. · [S4][mmlu-pro-s4]
-   > In MMLU-Pro, CoT can be 20% higher than PPL.
-4. (field `lineage`) Identity and lineage. MMLU-Pro is one entry, a fork of mmlu by another maintainer (role fork). mmlu.yaml's lineage.forks does not yet list it, and that edit was out of scope here.
-5. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark rests on TIGER-Lab running its own MAmmoTH2 models (and Neo-7B, whose paper also lists MMLU-Pro authors) on its board; they are listed as baselines, not entered to win. · [S5][mmlu-pro-s5]
-   > MAmmoTH2-8x7B-Plus,TIGER-Lab,56,0.504
-6. (field `data.refresh`) refresh versioned-releases rests on the card's dated corrections; whether every upload of the data files is announced there was not checked against the dataset's commit history.
-7. (field `subsets`) The 14 disciplines are subsets with the 2024 counts; the 2025-10-25 category changes may have moved questions, mainly between Health and Psychology, and the current counts were not read from the data.
+1. (field `lineage`) Identity. SuperGPQA is entered as its own benchmark, not a gpqa version or fork. It shares GPQA's name, expert definition and review rule, but no items, and GPQA is not among the datasets it draws on, so 04 S4 gives no lineage edge; gpqa.yaml is not edited. Decide whether gpqa should mention it as a name-alike in an aliases\_note or lineage\_note. · [S1][supergpqa-s1]
+   > where we consider experts as individuals having or pursuing a PhD, as in GPQA
+2. (field `data.data_provenance`) Reused items. The README names fifteen datasets SuperGPQA takes a limited portion of items from (MMLU-Pro, MMLU-CF, MedQA, MedMCQA, LawBench, Omni-Math and others), but no source says how many or which questions, so overlap with mmlu-pro, medqa or other entries is unmeasured, and a model trained or tuned on those sets may meet some SuperGPQA items. · [S9][supergpqa-s9]
+   > SuperGPQA includes a limited portion of data sourced from the following datasets
+3. (field `governance.independence_flags`) Independence. ByteDance Seed is on the title page, and Doubao-1.5-pro models are evaluated (the paper's best chat model), used to flag suspicious questions and used to generate distractors. No source read here attributes Doubao to ByteDance, so maintainer-competes-on-own-benchmark is not set; a reviewer with such a source should set it. Who paid the 80-plus expert annotators is not stated. · [S1][supergpqa-s1]
+   > We adopt GPT-4o-2024-08-06, Gemini-2.0-flash, Doubao-1.5-pro-32k-250115, Claude-3.5-Sonnet, DeepSeek-R1, QwQ, Qwen-2.5-72B-Instruct as SOTA LLMs for selecting suspicious candidate questions.
+4. (field `governance.maintainer_type`) maintainer\_type is community-collective. M-A-P calls itself a non-profit community run by donation, which could read as nonprofit if a legal form exists; the contributions section lists corresponding authors at M-A-P and ByteDance, and ByteDance Seed is on the title page, which a reviewer could read as industry-lab if ByteDance is taken as the holder of the SuperGPQA and m-a-p organisation accounts. · [S1][supergpqa-s1]
+   > Multimodal Art Projection (M-A-P) is a non-profit open-source AI research community, ran by donation.
+5. (field `data.data_provenance`) data\_provenance. exam-derived stands in for textbook example problems, the preferred source, as controlbench did (no term covers textbook exercises). crowd-authored rests on the undergraduate and master's annotators transcribing, converting and composing the items; expert-authored is rejected because the experts chose sources and reviewed flagged items rather than writing them. · [S1][supergpqa-s1]
+   > crowd-sourcing annotators as undergraduates and master students from top-tier Chinese universities
+6. (field `activity`) activity is no-submission-channel. The dataset card has promised tutorials for submitting to the official leaderboard since 2025-04-30, and the leaderboard Space the README links answers 401 to the page and to the API, so whether it ever took submissions is unknown; if it did, closed would follow, and unknown is the cautious alternative. · [S7][supergpqa-s7]
+   > Tutorials for submitting to the official leadboard
+7. (field `learned_entrant_evidence`) The board and the paper disagree on one row. The board gives Doubao-1.5-pro-32k-250115 0.5093, which is the figure the README and the paper give for Doubao-1.5-pro-32k-241225 (50.93), against 55.09 for 250115; the board lists no 241225 row. Other rows checked (DeepSeek-R1 0.6182) match. Claims taken from the board should note the possible mislabel. · [S6][supergpqa-s6]
+   > "Doubao-1.5-pro-32k-250115":JSON.parse('{"zero-shot":{"accuracy":0.5093294130951035
+8. (field `liveness.leaderboard_last_updated`) The board's own text says 8 reasoning, 41 chat and 26 base models, while its data holds 101 model-and-mode rows (some chat models in both modes); leaderboard\_last\_updated 2025-12-16 is the date of the site repository's last commit (GitHub API), not a date the board shows. · [S6][supergpqa-s6]
+   > We evaluate 8 reasoning models, 41 chat models and 26 base models on SuperGPQA
+9. (field `data.refresh`) refresh versioned-releases rests on one dated commit that names the three corrected questions, with no announcement elsewhere; a reviewer reading an unannounced commit as no pin would choose rolling-live, though no board result is known to straddle the change. static is ruled out by the change itself. · [S8][supergpqa-s8]
+   > "date":"2025-04-30T15:25:56Z"},"message":"fix 3 questions: 36871e48ae0d4d39856959e1e2658011 05e0a5d1cf864357839f43957b532a18 5bf332f9abf54f4191a73e0df2c1c140"
+10. (field `execution.code_licence`) code\_licence is null. The repository's root LICENSE is the ODC-By text, which governs databases; ODC-By-1.0 could be recorded for the code too if the reviewer reads the root licence as covering the whole repository. · [S9][supergpqa-s9]
+   > The dataset is made available under the \*\*\[Open Data Commons Attribution License (ODC-BY)\](https://opendatacommons.org/licenses/by/)\*\*
+11. (field `comparability.material_extra`) Comparability. Numbers differ by prompt mode (the board runs some chat models five-shot as well as zero-shot), by grader (OpenCompass's LLM judge against the task's answer parsing), by token limit and by which aggregate is quoted (sample, subfield, field or discipline); developers' reports state none of these. Prompt mode and grader have no EvalConditions field of their own and ride on harness. · [S6][supergpqa-s6]
+   > "gemini-2.5-pro":JSON.parse('{"five-shot":{"accuracy":0.6598062497644087
 
-**Reviewer checklist** for `mmlu-pro`:
+**Reviewer checklist** for `supergpqa`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -1644,18 +1788,15 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[mmlu-pro-s1]: https://arxiv.org/pdf/2406.01574v6
-[mmlu-pro-s2]: https://arxiv.org/abs/2406.01574
-[mmlu-pro-s3]: https://arxiv.org/pdf/2607.02770v2
-[mmlu-pro-s4]: https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro/raw/b189ec765aa7ed75c8acfea42df31fdae71f97be/README.md
-[mmlu-pro-s5]: https://huggingface.co/datasets/TIGER-Lab/mmlu_pro_leaderboard_submission/raw/4623b7c68d2276218d487464b0608dc978f4b301/results.csv
-[mmlu-pro-s6]: https://huggingface.co/api/datasets/TIGER-Lab/MMLU-Pro
-[mmlu-pro-s7]: https://api.github.com/orgs/TIGER-AI-Lab
-[mmlu-pro-s8]: https://raw.githubusercontent.com/TIGER-AI-Lab/MMLU-Pro/main/README.md
-[mmlu-pro-s9]: https://raw.githubusercontent.com/UKGovernmentBEIS/inspect_evals/main/src/inspect_evals/mmlu_pro/README.md
-[mmlu-pro-s10]: https://arxiv.org/html/2503.10497v2
-[mmlu-pro-s11]: https://arxiv.org/html/2501.15747v2
-[mmlu-pro-s12]: https://huggingface.co/spaces/TIGER-Lab/MMLU-Pro/raw/1e6c0f07d4abba78d3c413c834bc7af1bd415772/utils.py
+[supergpqa-s1]: https://arxiv.org/pdf/2502.14739v4
+[supergpqa-s2]: https://arxiv.org/abs/2502.14739
+[supergpqa-s3]: https://arxiv.org/pdf/2506.05767v1
+[supergpqa-s4]: https://raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583ab961bd1fdecf8380824af4/opencompass/configs/datasets/supergpqa/supergpqa_llmjudge_gen_12b8bc.py
+[supergpqa-s5]: https://arxiv.org/abs/2611.02278
+[supergpqa-s6]: https://supergpqa.github.io/assets/index-BPhSot9B.js
+[supergpqa-s7]: https://huggingface.co/api/datasets/m-a-p/SuperGPQA
+[supergpqa-s8]: https://api.github.com/repos/SuperGPQA/SuperGPQA/commits?path=data/SuperGPQA-all.jsonl
+[supergpqa-s9]: https://raw.githubusercontent.com/SuperGPQA/SuperGPQA/e31e8bf3e7089aef808be5ddecafd4538dee6e41/README.md
 
 ### 2.9 HELM Capabilities (helm-capabilities)
 
@@ -2228,7 +2369,7 @@ Considered and rejected:
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
-| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 6 / 2 | knowledge-recall 6, factual-precision 0, memory-retention 0, context-integration 1 |
+| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 9 / 2 | knowledge-recall 9, factual-precision 0, memory-retention 0, context-integration 1 |
 | Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 3 / 0 | deductive-reasoning 2, quantitative-reasoning 3, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | has-benchmarks | 3 / 0 | abstraction 3, inductive-reasoning 0, analogical-reasoning 1, compositional-generalization 1 |
 | Causal & experimental<br>`causal-and-experimental-inference` | not-yet-surveyed | 0 / 0 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
