@@ -1,0 +1,879 @@
+# data/benchmarks/society-econ-law/harvey-lab.yaml
+#
+# P1-S12 sweep follow-up: a new society-econ-law entry from the 2026-11-17 sweep's new-candidate finding.
+# Filled from Harvey's five LAB posts, read after harvey.ai's robots.txt with scripts and styles stripped: the
+# announcement (2026-05-06, re-read in November 2026), the initial results (2026-05-26), the in-house contracting
+# extension (2026-06-12), the M&A due diligence extension (2026-07-17) and LAB: USCL (2026-10-29); the
+# harveyai/harvey-labs README, docs/eval-strategies.md, docs/architecture.md, CHANGELOG.md and LICENSE at main's head
+# commit 7f9b1ee (2026-11-12); Vals AI's HLAB-Vals-1.1 board and its archived v1 board, and Artificial Analysis's
+# Harvey LAB-AA v1.1 page, each read after its host's robots.txt; and two 2026 papers already in data/sources/ that
+# run or use LAB (arXiv 2607.25891 v2 and 2611.18856 v1). GitHub's API supplied the repository's dates, licence
+# field, tags, releases and the listing of its task directories; none of those is a quoted Source. Every quote below
+# is checked by the quote-substring validator against those Sources' committed extracts.
+#
+# Harvey sells legal AI products, including agents for legal work, and maintains the benchmark. Its public task set
+# is open (MIT), but every published score is on a private 120-task holdout: Harvey's own initial results, and
+# boards run by Vals AI and by Artificial Analysis, which are recorded here as forks (lineage) and in as_used.
+# BigLaw Bench, Harvey's earlier short-horizon benchmark, is a separate entry (lineage_note).
+
+id: harvey-lab
+name: Harvey LAB
+aliases:
+  - Legal Agent Benchmark
+  - LAB
+  - Harvey's Legal Agent Benchmark
+  - Harvey's Long Horizon Legal Agent Benchmark
+  - Legal Agent Bench
+  - HarveyAI-Lab
+tagline: Agents do law-firm work in a sandboxed client matter; LLM judges pass a task only if every
+  expert criterion is met.
+description: >
+  Harvey's open-source benchmark of agents on legal work. Each task gives the agent a short instruction,
+  written as a partner's request to an associate (about fifty words), and a closed client matter in a
+  sandboxed file system: matter files, a data room, templates and emails, relevant and peripheral documents
+  mixed, with issues planted across them. The agent works through six workspace tools (bash, read, write,
+  edit, glob, grep) and a finish tool, and must leave reviewable work product as files, such as a deal-team
+  memo, a redline or an issues list. Each task's rubric lists equally weighted pass/fail criteria written
+  by experts (facts, conclusions, citations, severity ratings, deadlines, amounts, formatting), each tied
+  to a deliverable. An LLM judge grades them one by one, and a task passes only if every criterion does
+  (all-pass). By default two judges, Claude Sonnet 4.6 and GPT-5.5, grade independently and the headline
+  averages their all-pass values. The first release (May 2026) had 1,250 tasks in 24 practice areas with
+  over 75,000 criteria. Extensions added 500 in-house contracting tasks (June), synthetic M&A data rooms
+  of thousands of documents (July) and a US case-law track, LAB: USCL (October), of 100 brief-writing
+  environments built from federal dockets and scored by pairwise judging and Elo. The public set now holds
+  2,010 tasks in 27 practice areas, under MIT with the lab-core harness and grader. Published scores are
+  on a private holdout that mirrors the public distribution, 120 tasks on the boards: Harvey's initial
+  results (top model 7.1%), and boards run by Vals AI (HLAB-Vals-1.1) and Artificial Analysis (Harvey
+  LAB-AA v1.1), each with its own harness changes and version labels.
+self_description:
+  source: src-github-harveyai-harvey-labs-readme
+  quote: Harvey LAB is an open-source project aimed at benchmarking LLM agents' abilities to perform
+    legal work in realistic environments.
+paper: null
+paper_note: There is no paper. The benchmark is defined by Harvey's posts and the repository's
+  documentation; the README asks users to cite the repository.
+released: 2026-05-06
+released_note: The date of Harvey's announcement. The repository was created on 2026-03-30 (GitHub
+  API), before it.
+released_source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+released_quote: May 6, 2026
+
+# --- Taxonomy --------------------------------------------------------------------------------
+
+domain:
+  primary: society-econ-law/legal-document
+  primary_basis:
+    reason: The scored output is a legal work product written to files (a memo, a redline, an issues
+      list, an escalation memo), and the rubric checks its legal substance and form criterion by
+      criterion. That is drafting and reviewing legal documents, the leaf's definition. The family's
+      exclusion for autonomous operation does not apply, because the grader reads what the
+      deliverable says about the law and the facts, not the state the agent left in its sandbox.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: Each task consists of an instruction, a client matter containing relevant materials, and
+      a requirement that the agent produce a work product for review.
+  secondary:
+    - society-econ-law/legal-reasoning
+    - agents-tooluse/long-horizon-autonomy
+  secondary_basis:
+    reason: legal-reasoning because many criteria check that a rule was applied to the planted facts
+      (whether a contract needs change-of-control consent, which issues stay open in a negotiation),
+      and the work types include analysis and research. long-horizon-autonomy because each task is
+      one unattended agent episode over a whole matter, which Harvey frames as long-horizon legal
+      work (over 20 minutes per task for its top configuration; a diligence data room of about 45
+      million tokens). It is secondary because the score is the legal content, not the operation
+      (review_checks).
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: To date, there has not been a benchmark that illustrates agent progress for long-horizon
+      legal work.
+domain_considered_and_rejected:
+  - term: society-econ-law/economically-valuable-work
+    reason: The tasks come from real client matters broken into associates' assignments, but the
+      leaf is defined by expert comparison against human work product, and here a judge checks
+      rubric criteria with no professional deliverable to compare against; the eval docs say no
+      golden reference is used. biglaw-bench takes the leaf as a secondary on the same ground
+      (review_checks).
+    source: src-github-harveyai-harvey-labs-eval-strategies
+    quote: No golden reference output is needed.
+  - term: agents-tooluse/operating-system-tasks
+    reason: The agent acts through bash and file tools inside a Podman sandbox, and Vals reports
+      that bash and file reads make up most calls, but nothing checks the machine's end state; the
+      judge reads the deliverables' text against legal criteria.
+    source: src-github-harveyai-harvey-labs-architecture
+    quote: Every agent run executes inside a per-task Podman sandbox
+  - term: agents-tooluse/tool-api-calling
+    reason: APEX-Agents, a rubric-graded professional-task benchmark, takes this leaf as primary,
+      but its agents call 63 application APIs; here the tools are generic workspace tools and no
+      call is checked for correctness against a backend.
+  - term: agents-tooluse/research-agents
+    reason: The main tasks are closed-universe, with every needed document in the matter; only the
+      USCL track's open-book condition gives search tools, so the leaf is that subset's secondary.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: The client matter defines a closed-universe set of documents and other materials that are
+      needed for the law firm to complete work on behalf of the client.
+capability:
+  - context-integration
+  - factual-precision
+  - constraint-satisfaction
+  - tool-use
+capability_basis:
+  context-integration:
+    reason: The matter supplies every document the answer rests on, with issues embedded across
+      several files and peripheral material mixed in, and criteria check the particulars drawn from
+      them (a consent requirement, an amount, a deadline).
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: The client matter defines a closed-universe set of documents and other materials that are
+      needed for the law firm to complete work on behalf of the client.
+  factual-precision:
+    reason: Rubrics break the deliverable into atomic criteria that check asserted particulars one
+      by one, independently of the document as a whole.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: 'into atomic, binary pass/fail criteria: facts, conclusions, citations, severity ratings, recommendations,
+      deadlines, dollar amounts, and formatting choices.'
+  constraint-satisfaction:
+    reason: The task score is all-pass, so any one failed criterion fails the task, which is the
+      term's inclusion case; Harvey names all-pass as its standard.
+    source: src-github-harveyai-harvey-labs-eval-strategies
+    quote: A task is only marked pass if every rubric criterion passes
+  tool-use:
+    reason: The matter is reachable only through the workspace tools and the deliverables must be
+      written as files to the output directory; a criterion whose deliverable is missing fails, and
+      Harvey's trace analysis ties search and analysis behaviour to the all-pass score.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: As input, the agent receives access to a file system containing the background on the
+      deal, a virtual data room and a short instruction from the partner
+capability_considered_and_rejected:
+  - term: long-horizon-execution
+    reason: Episodes are long, but an early error can be repaired later in the episode; Harvey
+      reports that revising after a check raises all-pass scores, so the term's unrecoverable-step
+      test is not met.
+    source: src-harvey-blog-legal-agent-benchmark-initial-results
+    quote: Agents that close this revise-after-check loop improve all-pass scores by 1.5 points on
+      average.
+  - term: autonomy
+    reason: The harness loop has no step for human input, but no source read says the main protocol
+      bars it; the USCL post says so of its own track, which carries the term as an override.
+  - term: knowledge-recall
+    reason: Legal knowledge is needed to spot the issues, but the facts that decide each criterion
+      are in the closed matter, which the term's exclusion covers.
+  - term: memory-retention
+    reason: The diligence data rooms run to about 45 million tokens, far beyond a context window,
+      but the term's exclusion says length alone is not evidence, and no criterion is reported to
+      test information carried across the episode.
+    source: src-harvey-blog-legal-agent-bench-m-and-a-due-diligence
+    quote: Collectively, these documents total around 45 million tokens of context.
+  - term: self-correction
+    reason: Self-checking correlates with higher scores in Harvey's trace analysis, but the score is
+      on the final deliverables, not on detecting or repairing errors as such.
+  - term: instruction-following
+    reason: Instructions are short statements of the work wanted; criteria include formatting
+      choices but score the work product's substance, not compliance with stated constraints.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: Instructions are short, averaging just fifty words.
+
+evaluation_method:
+  - rubric-graded
+  - model-graded-judge
+  - pairwise-preference-elo
+evaluation_method_note: rubric-graded and model-graded-judge describe the main benchmark. Each
+  criterion gets one judge call at temperature 0 with the task title, the criterion and only the
+  deliverables it names; there is no reference output. The standard profile averages two judges
+  (Claude Sonnet 4.6 and GPT-5.5, tagged lab-standard-dual-v1), which replaced a single Claude
+  Sonnet 4.6 judge on 2026-08-26; Artificial Analysis's fork uses three judges and a hallucination
+  gate. pairwise-preference-elo is the USCL track's method, where graders the post calls GRMs pick
+  the better of two model-written briefs, or a tie, and wins are fitted to Elo ratings.
+evaluation_method_basis:
+  reason: Named criteria are checked individually and combined (all must pass), and a judge model
+    applies them, so the entry takes both terms.
+  source: src-github-harveyai-harvey-labs-eval-strategies
+  quote: a list of equally-weighted pass/fail criteria that an LLM judge grades individually
+evaluation_method_considered_and_rejected:
+  - term: environment-state-check
+    reason: Deliverables are files the agent leaves, but a judge model reads their text against
+      criteria; no program checks the sandbox's state.
+  - term: human-expert-eval
+    reason: Experts wrote the rubrics, and lawyers review USCL's judging criteria, but no published
+      score comes from lawyers' ratings.
+    source: src-harvey-blog-legal-agent-bench-us-case-law
+    quote: These criteria are reviewed by lawyers and calibrated to ensure they are relevant to
+      reasons expert reviewers would prefer a brief.
+  - term: exact-match
+    reason: Many criteria name one fact or amount, but the judge decides each semantically; the docs
+      say no keyword or regex matching is used.
+designed_for_subjects:
+  - model-in-benchmark-harness
+  - agent-scaffold
+designed_for_subjects_basis:
+  reason: The repository ships one harness (the lab-core agent loop, tools, skills and system
+    prompt), in which Harvey's results and Vals AI's board run each model, and Harvey also built the
+    benchmark for agent builders comparing harness changes; Artificial Analysis runs the tasks in
+    its own Stirrup harness.
+  source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+  quote: We are open-sourcing LAB to give model providers, agent builders, researchers, and law
+    firms a shared way to measure progress on long-horizon legal agents.
+designed_for_subjects_considered_and_rejected:
+  - term: full-product-pipeline
+    reason: Harvey uses LAB to evaluate its own products, but no source read publishes a score for a
+      shipped product, Harvey's or another vendor's.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: We are already seeing LAB being used by both our internal teams for product evaluation
+  - term: reasoning-model
+    reason: The boards list each model at a reasoning effort, but the effort is a condition of the
+      run (in the agentic and model-graded profiles), not a different kind of entrant.
+  - term: human-expert
+    reason: No lawyer is scored on the tasks; lawyers write and review the rubrics.
+as_used:
+  - protocol: HLAB-Vals-1.1, Vals AI's board. Vals runs Harvey's harness, tools, skills and grading
+      protocol on the private holdout with internet access disabled, on its own infrastructure, with
+      its own harness fixes (context compaction, a nudge when a model stops without finishing, a cap
+      on tool results), and scores the average of the two judges' task pass rates.
+    split: the private holdout (120 tasks), as remediated for v1.1
+    source: src-vals-ai-hlab
+    quote: 'Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched source
+      document was replaced. Still 120 tasks.'
+    note: Results are not comparable with Vals' archived v1 board, which used Harvey's initial
+      method unchanged, or with Artificial Analysis's board.
+  - protocol: Harvey LAB-AA v1.1, Artificial Analysis's run in its own Stirrup harness, with three
+      judges (GPT-6 Sol, Grok 4.7, Claude Opus 5.5) averaged, and a check of every deliverable
+      against its source documents that zeroes any task with a material hallucination.
+    split: Harvey's 120 private tasks, five per practice area
+    source: src-artificialanalysis-harvey-lab-aa
+    quote: We run Harvey LAB-AA v1.1 with our Stirrup agent harness on Harvey's dataset of 120
+      private tasks spanning 24 legal practice areas.
+  - protocol: Messier (arXiv 2607.25891, 2026), a corpus of agent results, runs LAB with five models
+      in the OpenHands scaffold, one run per task, and keeps the per-criterion verdicts.
+    source: src-arxiv-2607-25891-v2
+    quote: HarveyAI-Lab uses 23–194 verifier results per task
+  - protocol: Self-Improvement Memory (arXiv 2611.18856, 2026) lists Harvey LAB as the source (S)
+      benchmark of its Workspace domain, with JobBench, GDPval and APEX-Agents as targets (T).
+    source: src-arxiv-2611-18856-v1
+    quote: 'Workspace S: Harvey LAB T: JobBench'
+lifecycle: active
+lifecycle_basis:
+  reason: Two boards run on the holdout and add models as they are released (Vals' updated on
+    2026-11-19 with 44 models, Artificial Analysis's with rows for November 2026 models), Harvey
+    extended the benchmark in June, July and October 2026, and 2026 papers run it.
+  source: src-vals-ai-hlab
+  quote: Benchmarks / Legal Industry Partner HLAB-Vals-1.1 Updated 11/19/2026 Version 1.1
+activity: no-submission-channel
+activity_note: Harvey launched without a leaderboard and said it would publish standards for
+  normalised submissions; no submission route was found in the sources read. Vals AI and Artificial
+  Analysis choose and run the models on their boards. Anyone can run the public set with lab-core
+  and publish elsewhere (review_checks).
+activity_basis:
+  reason: The only boards are run by their operators, and Harvey's own results are its own runs.
+  source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+  quote: We're intentionally launching LAB without a leaderboard because we expect the dataset to
+    evolve over time
+
+# --- Admissibility (04 S5; 00 S6 A5) ---------------------------------------------------------
+
+learned_entrant_evidence:
+  - system: Claude Opus 4.7
+    source: src-harvey-blog-legal-agent-benchmark-initial-results
+    observed_on: 2026-11-28
+    quote: Claude Opus 4.7 leads at 7.1%, with Sonnet 4.6 at 5.4%, Opus 4.6 at 4.2%, GPT-5.5 at
+      2.1%, and Gemini 3.5 Flash at 0.8%
+evaluation_target: learned-system
+execution_mode: automated
+execution_mode_basis:
+  reason: The agent loop runs until the model calls finish or stops, and the judges grade every
+    criterion without a person; lawyers enter only through the rubrics.
+  source: src-github-harveyai-harvey-labs-architecture
+  quote: By default, grades independently with Sonnet 4.6 and GPT-5.5
+ground_truth_source: expert-panel
+ground_truth_source_basis:
+  reason: The criteria, written by legal experts, are the standard; the judges apply them and there
+    is no separate answer file.
+  source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+  quote: The first version of LAB includes more than 1,200 agent tasks across 24 legal practice
+    areas, and is evaluated by over 75,000 expert-written rubric criteria.
+reproducible_by_third_party: false
+reproducible_by_third_party_basis:
+  reason: Every published score is on the private holdout, which only Harvey and the two board
+    operators it shared it with can run. A run of the public set reproduces end to end with
+    lab-core, given API access to the agent's model and both judges, but gives different numbers.
+  source: src-harvey-blog-legal-agent-benchmark-initial-results
+  quote: To evaluate agents in a standardized way, we created a hold-out set of legal tasks that
+    mirror the practice areas and task distribution from the public LAB set.
+
+task:
+  exists: true
+  input:
+    - a short instruction written as a partner's request to an associate (about fifty words), with
+      the deliverables it expects
+    - a client matter in a sandboxed file system (matter files, a data room, templates, emails),
+      with relevant and peripheral documents and issues planted across them
+    - six workspace tools (bash, read, write, edit, glob, grep), a finish tool and skills for docx,
+      pptx and xlsx files
+  output: Deliverable files in the output directory (memos, reports, redlines, issues lists,
+    spreadsheets, presentations), named in the task's deliverables map.
+  scoring: Each criterion passes or fails on one judge call that sees only the deliverables it
+    names; a criterion whose deliverables are missing fails without a call. A task scores 1 for a
+    judge only if every criterion passes. The headline is the all-pass rate averaged over the two
+    standard judges, so one task scores 0, 0.5 or 1; strict both-judge all-pass and the criterion
+    pass rate (macro and pooled) are reported beside it.
+  source: src-github-harveyai-harvey-labs-eval-strategies
+  quote: The canonical headline remains the averaged all-pass rate; strict both-agree all-pass is
+    reported separately.
+
+# --- Data ------------------------------------------------------------------------------------
+
+data:
+  access: private-test-server
+  access_note: >
+    Public on GitHub under MIT, with no gate: 2,010 tasks with instructions, documents and rubrics in
+    27 practice-area directories (24 practice areas, contracts, diligence and firm knowledge, by GitHub's
+    listing of tasks/ at 7f9b1ee), with the harness and grader. Withheld: the 120-task holdout on which
+    every published score is computed, which Harvey shares with Vals AI and Artificial Analysis to run
+    their boards, and the 100 LAB: USCL environments, which Harvey has not published because they draw
+    on real litigation.
+  access_basis:
+    reason: The holdout behind the headline scores never becomes public; sharing it with two vetted
+      board operators creates no public access path, which the term's inclusion test says does not
+      change the tag. The public set is not the scored set of any published board.
+    source: src-harvey-blog-legal-agent-benchmark-initial-results
+    quote: To evaluate agents in a standardized way, we created a hold-out set of legal tasks that
+      mirror the practice areas and task distribution from the public LAB set.
+  refresh: versioned-releases
+  refresh_basis:
+    reason: The holdout behind the boards has changed only under labelled versions (Vals' v1 and
+      v1.1, Artificial Analysis's v1.0 and v1.1, both listing what changed), and the public set grew
+      in dated announcements and is pinned by release or commit, with a changelog of score-moving
+      changes since September 2026. Dataset fixes before then are only in git history
+      (review_checks).
+    source: src-vals-ai-hlab
+    quote: 'Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched source
+      document was replaced. Still 120 tasks.'
+  data_provenance:
+    - expert-authored
+    - curated-public-database
+  data_provenance_note: Harvey built the tasks from real client matters handled by practising
+    lawyers, split into associates' assignments, with expert-written criteria; the matter documents
+    themselves are synthetic (fictional deals and parties), and the diligence extension's data rooms
+    are synthetic too. How the synthetic documents are generated is not described in a passage read
+    (review_checks). curated-public-database applies to the USCL track only, whose environments are
+    built from briefs and filings in RECAP and opinions in CourtListener, checked and extended by
+    hand from 40 to 100.
+  data_provenance_basis:
+    reason: The tasks were broken out of matters handled by practising lawyers and the criteria are
+      expert-written; the authors' prior legal skill is what the items test.
+    source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    quote: To scale the benchmark, we started with real client matters handled by practicing lawyers
+      in each practice area.
+  contamination_risk: medium
+  contamination_risk_note: The public set has been on GitHub since May 2026 and Harvey offers its
+    criteria as training reward signals, so the public tasks can reach training data. The headline
+    holdout is private but mirrors the public set's distribution and is held by three parties. No
+    source assesses contamination, and no canary string was seen in the files read.
+  contamination_risk_source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+  contamination_risk_quote: The same criteria can be applied by an LLM judge, used to compare models
+    and harness changes, and fed back into agent training loops as per-criterion reward signals.
+  contamination_evidence: []
+  ceiling_anchor_type: theoretical-maximum
+  ceiling_anchor_type_note: All-pass is bounded at 100%, every criterion of every task passed. No
+    lawyer's or gold deliverable's score is published, and the holdout held 17 unsolvable criteria
+    until its v1.1 remediation, so 100% was not reachable on the earlier holdout.
+  ceiling_anchor_type_source: src-github-harveyai-harvey-labs-eval-strategies
+  ceiling_anchor_type_quote: A task is only marked pass if every rubric criterion passes
+  dataset_licence: MIT
+  dataset_licence_note: The repository's licence, which covers the tasks directory; no separate data
+    licence is stated. The holdout and the USCL environments are not released.
+  dataset_licence_source: src-github-harveyai-harvey-labs-license
+  dataset_licence_quote: MIT License Copyright (c) 2026 Harvey AI
+  size:
+    - count: 120
+      unit: tasks
+      subset: the private holdout behind every published board (v1.1)
+      source: src-vals-ai-hlab
+      quote: 'Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched
+        source document was replaced. Still 120 tasks.'
+    - count: 2010
+      unit: tasks
+      subset: the public set at commit 7f9b1ee (27 practice areas)
+      source: src-github-harveyai-harvey-labs-eval-strategies
+      quote: The benchmark contains 2,010 tasks across 27 practice areas, with ~114,000 rubric
+        criteria.
+    - count: 114000
+      unit: rubric criteria (approximate)
+      subset: the public set at commit 7f9b1ee
+      source: src-github-harveyai-harvey-labs-eval-strategies
+      quote: The benchmark contains 2,010 tasks across 27 practice areas, with ~114,000 rubric
+        criteria.
+    - count: 1250
+      unit: tasks
+      subset: the first release (May 2026), 24 practice areas
+      source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+      quote: The change-of-control task is one of 1,250 tasks in LAB, spanning 24 legal practice
+        areas.
+    - count: 75000
+      unit: expert-written rubric criteria (over)
+      subset: the first release (May 2026)
+      source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+      quote: The first version of LAB includes more than 1,200 agent tasks across 24 legal practice
+        areas, and is evaluated by over 75,000 expert-written rubric criteria.
+    - count: 500
+      unit: tasks
+      subset: the in-house contracting extension (June 2026)
+      source: src-harvey-blog-legal-agent-benchmark-in-house-contracting
+      quote: introducing 500 new tasks to LAB focused on contracting
+    - count: 100
+      unit: brief-writing environments
+      subset: 'LAB: USCL (October 2026), unreleased'
+      source: src-harvey-blog-legal-agent-bench-us-case-law
+      quote: Through human review and manual correction, we expanded that to a final set of 100.
+  size_note: The announcement says "more than 1,200" and, later, 1,250 tasks. The diligence
+    extension gives no task count; its largest data room holds over 3,500 documents. The 27
+    directories under tasks/ (24 practice areas plus contracts, diligence and firm-knowledge) were
+    read from GitHub's API, not a quoted Source; Artificial Analysis says the holdout has five tasks
+    per practice area.
+  languages:
+    - en
+  languages_note: No source states a language; every task, instruction and document shown is in
+    English, and the case-law track draws on US federal courts.
+
+# --- Governance ------------------------------------------------------------------------------
+
+governance:
+  maintainer: Harvey (Harvey AI Corporation)
+  maintainer_basis:
+    reason: Harvey built the tasks, holds the repository (harveyai on GitHub, an organisation
+      account) and the private holdout, publishes the posts and releases lab-core.
+    source: src-github-harveyai-harvey-labs-license
+    quote: MIT License Copyright (c) 2026 Harvey AI
+  maintainer_type: industry-lab
+  maintainer_type_note: Harvey is a company selling legal AI software, including agents for legal
+    work, as its site's navigation lists. Vals AI (HLAB-Vals) and Artificial Analysis (Harvey
+    LAB-AA) run the boards on Harvey's holdout; Vals contributed a grading fix upstream.
+  maintainer_type_source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+  maintainer_type_quote: AI agents designed for legal work
+  submission_process:
+    - maintainer-run
+  submission_process_note: Harvey ran its own baseline of frontier models on the holdout (May 2026)
+    and said it would partner with Artificial Analysis on a regularly updated leaderboard; Vals AI
+    and Artificial Analysis now choose, run and publish the models on their boards; Vals lists
+    Harvey as its partner in evaluation and Artificial Analysis built its v1.1 with Harvey. Nobody
+    submits.
+  submission_process_source: src-harvey-blog-legal-agent-benchmark-initial-results
+  submission_process_quote: Since launch, we have been baselining frontier models from prominent AI
+    providers on an evaluation set that mirrors the task distribution of LAB.
+  independence_flags:
+    - flag: grader-from-evaluated-party
+      source: src-github-harveyai-harvey-labs-architecture
+      quote: By default, grades independently with Sonnet 4.6 and GPT-5.5
+  independence_flags_note: The two standard judges are themselves scored on the benchmark, Sonnet
+    4.6 at 5.4% and GPT-5.5 at 2.1% in Harvey's initial results, and 38th and 42nd on Vals' v1
+    board; Vals' 1.1 board keeps them while ranking later Anthropic and OpenAI models, and
+    Artificial Analysis's three judges come from labs it ranks. maintainer-competes is not set,
+    because no source read scores a Harvey system, although Harvey sells legal agents and uses LAB
+    for its own product evaluation (review_checks). single-evaluator-private-test-set is not set,
+    because three parties run the holdout and the public set is open. No source read says Vals AI or
+    Artificial Analysis sells evaluations of the systems they rank, or that an evaluated party funds
+    the benchmark.
+  independence_assessed: true
+  known_limitation:
+    source: src-github-harveyai-harvey-labs-changelog
+    quote: could pass criteria that check for the absence of something, such as distractors.
+  known_limitation_note: Until 2026-11-11 a judge given a missing deliverable could pass criteria
+    that check for an absence; and the holdout held 17 unsolvable criteria until Harvey remediated
+    it for the boards' v1.1.
+
+# --- Execution -------------------------------------------------------------------------------
+
+execution:
+  compute_tier: api-credits-only
+  compute_tier_basis:
+    reason: A run is the agent model's and the two judges' API calls, with a Podman sandbox per task
+      on an ordinary machine; Harvey's top configuration cost about $50 and 20 minutes per task.
+    source: src-harvey-blog-legal-agent-benchmark-initial-results
+    quote: On LAB, reaching the top of the leaderboard runs to roughly $50 per task and over 20
+      minutes of latency.
+  reproducibility_tier: not-independently-reproducible
+  reproducibility_tier_basis:
+    reason: The published scores are on a holdout only Harvey and its two board partners hold, which
+      the tier's inclusion covers; the public set runs fully automatically with the released
+      harness.
+    source: src-vals-ai-hlab
+    quote: The results here are from the held-out set.
+  reproducibility_blockers:
+    - private-test-set
+  reproducibility_blockers_note: Scoring also needs the two hosted judge models (Claude Sonnet 4.6
+    and GPT-5.5), so official scores can be recomputed only while both are served; the vocabulary
+    has no blocker for a hosted judge.
+  harness_availability: official-harness
+  harness: lab-core, the harvey-labs repository's agent harness and grader (tagged releases v1.1.0
+    to v1.3.0, by GitHub's API; main bumped the version to 1.4.0 on 2026-11-12, not yet a release
+    when read)
+  harness_source: src-github-harveyai-harvey-labs-readme
+  harness_quote: The harness and grader ship as the `lab-core` Python package
+  harness_gotcha:
+    source: src-github-harveyai-harvey-labs-readme
+    quote: Scores from different releases are not always comparable
+  harness_gotcha_note: The changelog marks lines across which results are not comparable (the
+    dual-judge default on 2026-08-26, the finish tool on 2026-09-03, docx tracked changes on
+    2026-11-05), and a custom judge pair is tagged custom-dual; a rerun must name the release or
+    commit and the judges. The boards run modified harnesses (Vals' fixes, Artificial Analysis's
+    Stirrup).
+  code_licence: MIT
+  code_licence_note: GitHub's licence field also reports MIT (API, read 2026-11-28).
+  code_licence_source: src-github-harveyai-harvey-labs-license
+  code_licence_quote: MIT License Copyright (c) 2026 Harvey AI
+  runnable_via:
+    - custom
+  inspect_evals_id: null
+  maintainer_rerun_policy: unstated
+
+comparability:
+  # Beyond the model-graded profile ((rubric-graded, model-in-benchmark-harness) and (model-graded-judge, agent-scaffold)
+  # resolve to it, which already covers the judge, its version and prompt, the rubric and the subset): the harness and
+  # its release or commit (lab-core, Vals' modified copy, Artificial Analysis's Stirrup), the tools offered (USCL adds
+  # OCR and, open-book, CourtListener search), the turn cap, the sandbox and the evaluation date, because the public
+  # set and the holdout both changed between labels. USCL's Elo ratings depend on the pool of models in its
+  # round-robin.
+  material_extra:
+    - harness
+    - tools_allowed
+    - max_steps
+    - sandbox
+    - date_evaluated
+  rating_pool_required: true
+
+aggregation_policy: official-aggregate
+aggregation_policy_note: One all-pass rate per configuration, averaged over the two judges, with the
+  criterion pass rate as a diagnostic and practice-area breakdowns; USCL reports Elo ratings
+  instead.
+aggregation_policy_basis:
+  reason: The docs name one headline over all tasks.
+  source: src-github-harveyai-harvey-labs-eval-strategies
+  quote: The canonical headline remains the averaged all-pass rate; strict both-agree all-pass is
+    reported separately.
+secondary_axes:
+  - cost
+  - latency
+secondary_axes_basis:
+  reason: Harvey reports per-task cost and latency beside all-pass scores, and both boards list cost
+    and duration per task.
+  source: src-harvey-blog-legal-agent-benchmark-initial-results
+  quote: On LAB, reaching the top of the leaderboard runs to roughly $50 per task and over 20
+    minutes of latency.
+
+liveness:
+  repo_last_commit: 2026-11-12
+  reproduction_script_present: true
+  last_checked: 2026-11-28
+
+homepage: https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark
+repository: https://github.com/harveyai/harvey-labs
+leaderboard_url: null
+leaderboard_url_note: Harvey keeps no leaderboard of its own; the boards are Vals AI's
+  (https://www.vals.ai/benchmarks/hlab) and Artificial Analysis's
+  (https://artificialanalysis.ai/evaluations/harvey-lab-aa), recorded as forks.
+maintainer_url: https://www.harvey.ai/
+
+versions:
+  - version: 2026-05
+    label: LAB, first public release
+    version_kind: revision
+    released: 2026-05-06
+    items: 1250
+    changes: The open-source release of 1,250 tasks in 24 practice areas with over 75,000
+      expert-written criteria, the harness and the grader, without a leaderboard; graded then by a
+      single Claude Sonnet 4.6 judge.
+    frozen: false
+    sources:
+      - src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+      - src-github-harveyai-harvey-labs-changelog
+  - version: 2026-06
+    label: In-house contracting extension
+    version_kind: track-set
+    released: 2026-06-12
+    changes: Adds 500 contract drafting, review and negotiation tasks, each asking for the artefact
+      that moves a negotiation to its next state (a draft, a redline, an issues list, an escalation
+      memo), graded all-pass.
+    supersedes_version: 2026-05
+    frozen: false
+    sources:
+      - src-harvey-blog-legal-agent-benchmark-in-house-contracting
+  - version: 2026-07
+    label: M&A due diligence extension
+    version_kind: track-set
+    released: 2026-07-17
+    changes: Adds synthetic virtual data rooms of thousands of documents (one of over 3,500
+      documents and about 45 million tokens) with planted issues, each checked by a rubric of
+      ground-truth findings and recommendations; no task count is given.
+    supersedes_version: 2026-06
+    frozen: false
+    sources:
+      - src-harvey-blog-legal-agent-bench-m-and-a-due-diligence
+  - version: 2026-09
+    label: Dual-judge grading and the finish tool
+    version_kind: revision
+    released: 2026-09-03
+    changes: The default grader became the averaged pair Claude Sonnet 4.6 and GPT-5.5 (2026-08-26),
+      and the agent got an explicit finish tool (2026-09-03); the changelog says results across both
+      lines are not comparable. Both are in lab-core v1.1.0 (published 2026-09-18, by GitHub's API).
+    breaking: true
+    supersedes_version: 2026-07
+    frozen: false
+    sources:
+      - src-github-harveyai-harvey-labs-changelog
+  - version: 2026-10
+    label: 'LAB: USCL, the US case-law track'
+    version_kind: track-set
+    released: 2026-10-29
+    changes: Adds 100 brief-writing environments built from federal dockets, each in an open-book
+      (CourtListener search) and a closed-book condition, scored by pairwise judging and Elo; the
+      environments are not published.
+    supersedes_version: 2026-09
+    frozen: false
+    sources:
+      - src-harvey-blog-legal-agent-bench-us-case-law
+  - version: holdout-1-1
+    label: The remediated private holdout
+    version_kind: revision
+    changes: Harvey removed 17 unsolvable criteria from the 120-task holdout and replaced one
+      mismatched source document, still 120 tasks; it is the holdout behind HLAB-Vals-1.1 and Harvey
+      LAB-AA v1.1. Undated; Vals' v1 board, on the earlier holdout, was last updated on 2026-10-18.
+    breaking: true
+    frozen: false
+    sources:
+      - src-vals-ai-hlab
+      - src-vals-ai-hlab-v1
+      - src-artificialanalysis-harvey-lab-aa
+
+subsets:
+  - id: harvey-lab#holdout
+    label: Private holdout
+    items: 120
+    scored_separately: true
+    evidence:
+      - source: src-harvey-blog-legal-agent-benchmark-initial-results
+        quote: To evaluate agents in a standardized way, we created a hold-out set of legal tasks
+          that mirror the practice areas and task distribution from the public LAB set.
+      - source: src-vals-ai-hlab
+        quote: 'Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched
+          source document was replaced. Still 120 tasks.'
+      - source: src-artificialanalysis-harvey-lab-aa
+        quote: Five tasks per practice area
+    notes: The set behind Harvey's initial results, Vals AI's boards and Artificial Analysis's; five
+      tasks in each of 24 practice areas. Whether Harvey's May 2026 holdout is the same 120 tasks is
+      not stated.
+  - id: harvey-lab#public
+    label: Public task set
+    items: 2010
+    scored_separately: true
+    evidence:
+      - source: src-github-harveyai-harvey-labs-eval-strategies
+        quote: The benchmark contains 2,010 tasks across 27 practice areas, with ~114,000 rubric
+          criteria.
+      - source: src-vals-ai-hlab-v1
+        quote: 'There are two datasets as of today: the public set and the held-out test set.'
+      - source: src-arxiv-2607-25891-v2
+        quote: 'we contribute new evaluations on six benchmarks: HarveyAI-Lab'
+    notes: The open set on GitHub, which third parties run with lab-core or their own scaffolds. Its
+      size grew from 1,250 tasks (May 2026); no board ranks it.
+  - id: harvey-lab#uscl
+    label: 'LAB: United States Case Law (LAB: USCL)'
+    items: 100
+    scored_separately: true
+    domain_override:
+      primary: society-econ-law/legal-document
+      secondary:
+        - society-econ-law/legal-reasoning
+        - agents-tooluse/research-agents
+    capability_override:
+      - context-integration
+      - tool-use
+      - autonomy
+    evidence:
+      - source: src-harvey-blog-legal-agent-bench-us-case-law
+        quote: 'Today we introduce LAB: United States Case Law (LAB: USCL), an evaluation framework for
+          testing frontier models'
+      - source: src-harvey-blog-legal-agent-bench-us-case-law
+        quote: 'For each environment, we define two task conditions: open- and closed-book.'
+      - source: src-harvey-blog-legal-agent-bench-us-case-law
+        quote: From there, it works on its own, with no attorney feedback or follow-up prompts.
+      - source: src-harvey-blog-legal-agent-bench-us-case-law
+        quote: We evaluate model-written briefs pairwise in a round-robin tournament using GRMs
+          which select the better brief (or declare a tie)
+      - source: src-harvey-blog-legal-agent-bench-us-case-law
+        quote: wins and losses in these head-to-head games into an Elo rating for each model
+      - source: src-harvey-blog-legal-agent-bench-us-case-law
+        quote: Unlike previous LAB releases, we are not currently publishing sample environments
+          alongside this post.
+    notes: The model writes the brief a party actually filed, for the same motion at the same point
+      in the case, from the docket (closed-book, with the cited opinions supplied) or from the
+      relevant filings and a CourtListener search tool (open-book), in the standard harness with
+      compaction and OCR. Briefs meet in a round-robin of pairwise judgements whose criteria lawyers
+      review, fitted to Elo; nearly 700 points separate the top and bottom models, with Opus 5.5
+      first. Elo depends on the pool. The override drops factual-precision and
+      constraint-satisfaction, which no criterion check scores here, and adds autonomy, which the
+      post states.
+subsets_note: The holdout and the public set are the two splits; USCL is a separately scored track,
+  added in a dated post (a version). The contracting and diligence extensions are practice-area
+  directories of the public set with no separately published score, so they are versions, not
+  subsets; every practice area can be scored on its own with lab-core and the boards break scores
+  down by practice area.
+
+lineage:
+  role: root
+  role_note: The two boards are separately maintained derivatives by other maintainers, each with
+    its own version labels and harness changes, so they are forks; neither has a record, and
+    hlab-vals and harvey-lab-aa are proposed ids, not allocated ones (review_checks).
+  forks:
+    - id: hlab-vals
+      maintainer: Vals AI
+      source: src-vals-ai-hlab
+      quote: Results are not comparable with the archived v1 board or with Artificial Analysis
+    - id: harvey-lab-aa
+      maintainer: Artificial Analysis (built with Harvey)
+      source: src-artificialanalysis-harvey-lab-aa
+      quote: Artificial Analysis' implementation of Harvey's Legal Agent Benchmark (LAB), testing AI
+        agents on real-world legal work from Harvey's dataset of 120 private tasks spanning 24 legal
+        practice areas.
+lineage_note: >
+  BigLaw Bench (biglaw-bench) is Harvey's earlier benchmark of short-horizon legal work, which Harvey
+  names as the kind of evaluation LAB goes beyond ("our own earlier work on BigLaw Bench, have graded
+  short-horizon reasoning", src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11). It is
+  a separate benchmark with its own tasks, and Harvey still reports it, so it is neither superseded nor
+  a variant; no lineage field holds the relation, and no correlation between them has been measured.
+
+tags:
+  - law
+  - legal-agents
+  - legal-work-product
+  - expert-rubrics
+  - all-pass
+  - llm-judge
+  - private-holdout
+  - vendor-benchmark
+
+# --- Curation --------------------------------------------------------------------------------
+
+curation:
+  added_by: agent (P1-S12 sweep follow-up)
+  added_on: 2026-11-28
+  last_verified: 2026-11-28
+  verification_status: ai-drafted-unverified
+  sources:
+    - src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+    - src-harvey-blog-legal-agent-benchmark-initial-results
+    - src-harvey-blog-legal-agent-benchmark-in-house-contracting
+    - src-harvey-blog-legal-agent-bench-m-and-a-due-diligence
+    - src-harvey-blog-legal-agent-bench-us-case-law
+    - src-github-harveyai-harvey-labs-readme
+    - src-github-harveyai-harvey-labs-eval-strategies
+    - src-github-harveyai-harvey-labs-architecture
+    - src-github-harveyai-harvey-labs-changelog
+    - src-github-harveyai-harvey-labs-license
+    - src-vals-ai-hlab
+    - src-vals-ai-hlab-v1
+    - src-artificialanalysis-harvey-lab-aa
+    - src-arxiv-2607-25891-v2
+    - src-arxiv-2611-18856-v1
+  sources_note: >
+    Harvey's five LAB posts, read after harvey.ai's robots.txt (it allows every path to every agent) with
+    scripts and styles stripped, withheld from archiving because their bylines and acknowledgements name
+    people, with each date quoted with no window and every other window kept clear of them; the announcement's
+    earlier Source (src-harvey-blog-introducing-harveys-legal-agent-benchmark, read 2026-11-08 for biglaw-bench)
+    holds none of the quotes used here, so it was re-read. The repository's README, evaluation and architecture
+    docs, changelog and licence at commit 7f9b1ee, which name no one. Vals AI's two boards, read one at
+    a time over a minute apart after vals.ai's robots.txt (it allows /benchmarks/ and names Claude-User
+    among the agents it allows), and Artificial Analysis's page, read after its robots.txt (Allow: /);
+    all three are server-rendered and name no individual. The two arXiv PDFs (DOIs, not archived) were
+    already in data/sources/ and are cited for evidence of use. Also read and not cited: Harvey's sitemap
+    (for the post list), GitHub's API records of the repository, its commits, tags and releases (the release
+    notes name contributors' accounts) and the tasks/ listing.
+  confidence: medium
+  review_checks:
+    - check: Id. harvey-lab is proposed from the repository (harvey-labs), the README's and the
+        boards' name (Harvey LAB, Harvey LAB-AA) and the acronym; Messier calls it HarveyAI-Lab and
+        Vals HLAB. Id allocation is a human act.
+      field: id
+    - check: Family. society-econ-law/legal-document is primary because the rubric scores the legal
+        content of the deliverables. APEX-Agents, also rubric-graded professional work in a tool
+        environment (including corporate law), went to agents-tooluse/tool-api-calling; the
+        difference relied on here is that LAB is legal work only, with generic workspace tools, and
+        claims to measure legal work. Among agents-tooluse leaves, long-horizon-autonomy is the
+        secondary; operating-system-tasks is the alternative, since bash and file reads are most
+        calls.
+      field: domain
+      source: src-vals-ai-hlab
+      quote: Tests an agent's ability to complete legal work using documents, spreadsheets,
+        presentations, and file-system tools.
+    - check: economically-valuable-work is rejected by its definition (expert comparison against
+        human work product), while biglaw-bench, Harvey's other benchmark, takes it as a secondary
+        on the same kind of evidence; one of the two should change so the family reads consistently.
+      field: domain
+      source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+      quote: To scale the benchmark, we started with real client matters handled by practicing
+        lawyers in each practice area.
+    - check: Lineage. HLAB-Vals and Harvey LAB-AA are recorded as forks (other maintainers, their
+        own version labels, harness changes; Artificial Analysis also its own judges and a
+        hallucination gate). Vals runs Harvey's own harness and grading on Harvey's holdout with
+        Harvey as partner, and Harvey announced the Artificial Analysis board as its leaderboard, so
+        either could instead be read as this benchmark's board (leaderboard_url) on the holdout
+        subset. Neither fork has a record; their ids are proposals.
+      field: lineage
+      source: src-harvey-blog-legal-agent-benchmark-initial-results
+      quote: We are partnering with Artificial Analysis to scale up LAB evaluation and publish a
+        regularly-updated leaderboard as new model launches arrive.
+    - check: Versions. holdout-1-1 is undated and known only from the boards. The 2026-09 revision
+        is a grading and harness change, not new items, taken as breaking because the changelog says
+        so; lab-core's releases (v1.1.0 2026-09-18, v1.2.0 2026-10-01, v1.3.0 2026-10-21, by
+        GitHub's API) could instead each be a version, as the README asks claims to name one.
+        Whether the in-house contracting and diligence additions are editions (new items, same task)
+        rather than track-sets is not clear-cut under 04 S4.
+      field: versions
+      source: src-github-harveyai-harvey-labs-changelog
+      quote: Single-judge results before this line are not comparable to dual results after it.
+    - check: refresh versioned-releases follows the holdout behind the boards. On the public set,
+        dataset fixes made before 2026-09-03 are recorded only in git history, not in the changelog,
+        so a claim on the public set needs its commit; rolling-live is the alternative if the public
+        set is taken as what claims use.
+      field: data.refresh
+      source: src-github-harveyai-harvey-labs-changelog
+      quote: Dataset fixes from that period are not backfilled
+    - check: data.access private-test-server rests on every published score being on the holdout.
+        The 2,010-task public set is fully open (MIT, no gate) and is what third-party papers run;
+        if it is read as the headline set, fully-open applies, and reproducible_by_third_party and
+        reproducibility_tier change with it.
+      field: data.access
+    - check: maintainer-competes-on-own-benchmark is not set. Harvey sells legal agents, says it is
+        building diligence agents and uses LAB for internal product evaluation, but no source read
+        publishes a score for a Harvey system. Set the flag if Harvey or a board ranks one.
+      field: governance.independence_flags
+      source: src-harvey-blog-legal-agent-bench-m-and-a-due-diligence
+      quote: how we are building specialized agents to help conduct diligence
+    - check: grader-from-evaluated-party rests on the default judges, Claude Sonnet 4.6 and GPT-5.5,
+        being ranked in Harvey's results and on Vals' v1 board. On HLAB-Vals-1.1 only later models
+        of the same two labs are ranked, and Artificial Analysis says it found minimal
+        self-preference among its three judges.
+      field: governance.independence_flags
+      source: src-vals-ai-hlab-v1
+      quote: 38 Claude Sonnet 4.6 5.00%
+    - check: data_provenance. The matter documents are synthetic, and the announcement's
+        acknowledgements credit a document and scenario generation pipeline without saying whether a
+        model writes the documents (the passage names a person, so it is not quoted). If a model
+        does, add model-generated.
+      field: data.data_provenance
+      source: src-github-harveyai-harvey-labs-architecture
+      quote: an agent reads a synthetic matter file and writes deliverables
+    - check: activity no-submission-channel. Harvey promised standards for normalised submissions in
+        May 2026; none was found in the posts or repository read, and the boards' operators pick the
+        models. If a submission route exists, activity and submission_process change.
+      field: activity
+      source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+      quote: We're intentionally launching LAB without a leaderboard because we expect the dataset
+        to evolve over time
+  personal_data_excluded:
+    - source: src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11
+      what: the byline's authors and the acknowledgements' names of Harvey staff and outside
+        reviewers, and a named commentator quoted in the post
+    - source: src-harvey-blog-legal-agent-benchmark-initial-results
+      what: the byline's authors
+    - source: src-harvey-blog-legal-agent-benchmark-in-house-contracting
+      what: the byline's authors and the acknowledgements' names
+    - source: src-harvey-blog-legal-agent-bench-m-and-a-due-diligence
+      what: the byline's author
+    - source: src-harvey-blog-legal-agent-bench-us-case-law
+      what: the byline's authors and a named research partner

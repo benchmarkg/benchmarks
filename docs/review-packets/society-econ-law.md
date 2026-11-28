@@ -2,11 +2,11 @@
 
 # Review packet: Society, economics and law
 
-`society-econ-law` · 14 published entries · 11 subdomains · data as of 2026-11-18 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
+`society-econ-law` · 19 published entries · 11 subdomains · data as of 2026-11-28 · taxonomy 0.9.0 (domains 0.9.0, capability groups 0.9.0)
 
 This packet asks for one hour on one domain (03-taxonomy-build-process.md §12.2) and has three parts: [the subdomain list](#1-the-subdomain-list), [ten entries](#2-ten-entries) and [the coverage row](#3-the-coverage-row-and-the-gap-question-are-these-cells-empty-or-do-we-not-know-about-the-work), with one gap question. Comments by reply in plain text are all we need: name the entry id and the field, or the subdomain, or the capability group.
 
-Everything below is generated from the catalogue's files. Verification status of the family's 14 entries: 14 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
+Everything below is generated from the catalogue's files. Verification status of the family's 19 entries: 19 `ai-drafted-unverified`. No reviewer has signed this family off yet (`reviewer_signoff: none`), so every entry in it is badged `curation_confidence: unreviewed` and no gap is asserted in its row (14-roadmap.md Phase 1, "The honest gate").
 
 How to read an entry: each evidenced field shows its value, the curator's reason where one was given, the verbatim quote it rests on and the Source it is quoted from (S1, S2, ... in the entry's Sources table, with the URL and the archived copy). Code has checked that every quote is an exact substring of the stored extract of its Source; whether the quote supports the value is what a reviewer judges. Text that may name a person is not reproduced here (\[withheld: it may name a person; see the entry file\]); the entry file has it.
 
@@ -25,13 +25,13 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | 2 | `finance-forecasting`<br>Finance forecasting | Predicting financial quantities such as prices, returns, volatility or risk. | 1 + 0 | has benchmarks |
 | 3 | `financial-analysis`<br>Financial analysis | Answering analytical questions over financial documents and statements. | 2 + 1 | has benchmarks |
 | 4 | `trading-market-interaction`<br>Trading market interaction | Acting inside a market environment, scored on the outcome of the interaction. | 1 + 1 | has benchmarks |
-| 5 | `legal-reasoning`<br>Legal reasoning | Applying legal rules to a set of facts to reach a determinate conclusion. | 1 + 2 | has benchmarks |
-| 6 | `legal-document`<br>Legal document | Extracting from, drafting or reviewing legal documents. | 2 + 0 | has benchmarks |
+| 5 | `legal-reasoning`<br>Legal reasoning | Applying legal rules to a set of facts to reach a determinate conclusion. | 4 + 3 | has benchmarks |
+| 6 | `legal-document`<br>Legal document | Extracting from, drafting or reviewing legal documents. | 3 + 0 | has benchmarks |
 | 7 | `economics-simulation`<br>Economics simulation | Modelling economic agents or systems, scored against economic outcomes. | 1 + 0 | has benchmarks |
 | 8 | `education-tutoring`<br>Education tutoring | Teaching or assessing a learner, scored on pedagogical outcome or instructional quality. | 1 + 0 | has benchmarks |
 | 9 | `policy-analysis`<br>Policy analysis | Analysing policy options or regulatory questions. | 1 + 0 | has benchmarks |
 | 10 | `social-simulation`<br>Social simulation | Simulating social behaviour or group dynamics. | 1 + 0 | has benchmarks |
-| 11 | `forecasting-prediction-markets`<br>Forecasting prediction markets | Making probabilistic forecasts about future events that later resolve. | 1 + 0 | has benchmarks |
+| 11 | `forecasting-prediction-markets`<br>Forecasting prediction markets | Making probabilistic forecasts about future events that later resolve. | 2 + 0 | has benchmarks |
 
 Your answer:
 
@@ -47,20 +47,20 @@ Your answer:
 
 How these were chosen, the same way every time: only fully classified entries (a primary domain, at least one capability, evaluation method and intended subject, a lifecycle, a data access and a reproducibility tier set), taken in rounds of one per primary subdomain so that they cover as many subdomains as possible, and within a round the entries with the most quoted evidence first (ties by id); then listed in subdomain order. An entry that is not fully classified is used only when fewer than ten are, and says what it lacks.
 
-Not in this packet (4): `financebench`, `gdpval`, `legalbench`, `lexglue`. `python scripts/review_packet.py --family society-econ-law --all` renders every entry.
+Not in this packet (9): `access-to-justice-benchmark`, `biglaw-bench`, `financebench`, `forecastbench`, `gdpval`, `immigration-bench`, `legalbench`, `lexglue`, `stocknet`. `python scripts/review_packet.py --family society-econ-law --all` renders every entry.
 
 | # | Entry | Primary subdomain | Evidenced fields | Open review checks |
 | ---: | --- | --- | ---: | ---: |
 | 2.1 | [Remote Labor Index](#21-remote-labor-index-remote-labor-index) | `economically-valuable-work` | 48 | 12 |
-| 2.2 | [StockNet](#22-stocknet-stocknet) | `finance-forecasting` | 35 | 12 |
-| 2.3 | [Finance Agent Benchmark](#23-finance-agent-benchmark-finance-agent-benchmark) | `financial-analysis` | 44 | 11 |
-| 2.4 | [StockBench](#24-stockbench-stockbench) | `trading-market-interaction` | 36 | 12 |
-| 2.5 | [BigLaw Bench](#25-biglaw-bench-biglaw-bench) | `legal-document` | 50 | 11 |
+| 2.2 | [Finance Agent Benchmark](#22-finance-agent-benchmark-finance-agent-benchmark) | `financial-analysis` | 44 | 11 |
+| 2.3 | [StockBench](#23-stockbench-stockbench) | `trading-market-interaction` | 36 | 12 |
+| 2.4 | [Legal Research Bench](#24-legal-research-bench-legal-research-bench) | `legal-reasoning` | 39 | 10 |
+| 2.5 | [Harvey LAB](#25-harvey-lab-harvey-lab) | `legal-document` | 68 | 11 |
 | 2.6 | [GLEE](#26-glee-glee) | `economics-simulation` | 42 | 9 |
 | 2.7 | [MathTutorBench](#27-mathtutorbench-mathtutorbench) | `education-tutoring` | 46 | 9 |
 | 2.8 | [ObliQA](#28-obliqa-obliqa) | `policy-analysis` | 41 | 11 |
 | 2.9 | [SimulacraBench](#29-simulacrabench-simulacrabench) | `social-simulation` | 37 | 8 |
-| 2.10 | [ForecastBench](#210-forecastbench-forecastbench) | `forecasting-prediction-markets` | 28 | 4 |
+| 2.10 | [FutureEval](#210-futureeval-futureeval) | `forecasting-prediction-markets` | 44 | 12 |
 
 ### 2.1 Remote Labor Index (remote-labor-index)
 
@@ -290,189 +290,7 @@ Considered and rejected:
 [remote-labor-index-s7]: https://epoch.ai/data/benchmark_data.zip
 [remote-labor-index-s8]: https://www.remotelabor.ai/
 
-### 2.2 StockNet (stocknet)
-
-`data/benchmarks/society-econ-law/stocknet.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-18
-
-*Binary next-day movement of 88 US stocks from tweets and five days of prices, 2014-2015, scored by accuracy and MCC.*
-
-A dataset for predicting whether a stock's adjusted closing price rises or falls on a target trading day, from the tweets that mention its ticker and its historical prices over the preceding five-day lag. It covers 88 US stocks, all eight in the Conglomerates sector and the ten largest by capital in each of the other eight, from 2014-01-01 to 2016-01-01; tweets were retrieved by ticker regex and prices taken from Yahoo Finance. Movements between -0.5% and 0.55% were removed to balance the classes, leaving 26,614 targets (49.78% fall, 50.22% rise), split by time into 20,339 for training, 2,555 for development and 3,720 for test (October to December 2015). Scores are accuracy and the Matthews correlation coefficient on the test set. The paper introduced its own generative model, StockNet, whose full variant scored 58.23% accuracy and 0.0808 MCC against 50.89% for a random guess and 57.64% for the best baseline; the paper calls 56% a satisfying result for the task. The data and model code sit on the first author's GitHub account under MIT licences, unchanged since 2018. There is no leaderboard; others report results in their own papers, and FinBen carries a prompt-formatted copy for evaluating language models.
-
-| Classification | |
-| --- | --- |
-| Primary domain | society-econ-law/finance-forecasting |
-| Secondary domains | - |
-| Capabilities | context-integration |
-| Evaluation methods | classification-metric, exact-match |
-| Designed for | task-specific-supervised-model, classical-algorithm |
-| Evaluation target · execution mode · ground truth | learned-system · automated · held-out-labels |
-| Lifecycle · activity | active · no-submission-channel |
-| Data access · refresh · contamination risk | fully-open · static · medium |
-| Reproducibility tier · harness | fully-automatable · reference-implementation-only |
-| Maintainer type · submission process | individual · literature-only |
-| Independence flags | maintainer-competes-on-own-benchmark |
-| Licences: code · dataset | MIT · MIT |
-| Released | 2018-07-15 |
-| Links | homepage github.com/\[personal account\]/stocknet-dataset (not linked: a personal account) · repository github.com/\[personal account\]/stocknet-code (not linked: a personal account) · dataset github.com/\[personal account\]/stocknet-dataset (not linked: a personal account) |
-
-**Sources**
-
-| | Source | Type · publisher | URL | Archived copy |
-| --- | --- | --- | --- | --- |
-| S1 | `src-acl-p18-1183-pdf` | paper · Association for Computational Linguistics | [aclanthology.org/P18-1183.pdf](https://aclanthology.org/P18-1183.pdf) | none (not-required) |
-| S2 | `src-hf-api-finben-en-sm-acl` | dataset-card · Hugging Face | [huggingface.co/api/datasets/TheFinAI/en-sm-acl](https://huggingface.co/api/datasets/TheFinAI/en-sm-acl) | [capture 2026-11-09](https://web.archive.org/web/20261109054403/https://huggingface.co/api/datasets/TheFinAI/en-sm-acl) |
-| S3 | `src-arxiv-2503-10957` | preprint · arXiv | [arxiv.org/abs/2503.10957](https://arxiv.org/abs/2503.10957) | none (not-required) |
-| S4 | `src-github-stocknet-dataset-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/stocknet-dataset/master/README.md (not linked: a personal account) | none (withheld) |
-| S5 | `src-github-stocknet-code-readme` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/stocknet-code/master/README.md (not linked: a personal account) | none (withheld) |
-| S6 | `src-github-stocknet-dataset-licence` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/stocknet-dataset/master/LICENSE (not linked: a personal account) | none (withheld) |
-| S7 | `src-github-stocknet-code-licence` | repository · GitHub | raw.githubusercontent.com/\[personal account\]/stocknet-code/master/LICENSE (not linked: a personal account) | none (withheld) |
-| S8 | `src-acl-p18-1183` | paper · Association for Computational Linguistics | [aclanthology.org/P18-1183/](https://aclanthology.org/P18-1183/) | none (not-required) |
-| S9 | `src-github-stocknet-code-repo` | repository · GitHub | github.com/\[personal account\]/stocknet-code (not linked: a personal account) | none (pending) |
-
-**Evidence** (35 quoted fields), by checklist area:
-
-#### stocknet · Identity and id
-
-- `self_description` · [S1][stocknet-s1]
-  > We present a model to predict stock price movement from tweets and historical stock prices.
-- `released` = 2018-07-15 · [S1][stocknet-s1]
-  > Melbourne, Australia, July 15 - 20, 2018
-- `lineage.forks` = id finben; maintainer The Fin AI · [S2][stocknet-s2]
-  > A Holistic Financial Benchmark for Large Language Models
-
-#### stocknet · Domain and capabilities
-
-- `domain` = primary society-econ-law/finance-forecasting · [S1][stocknet-s1]
-  - why: The scored quantity is the direction of a stock's adjusted closing price on a target day, a prediction of a financial quantity, which is the finance-forecasting leaf's definition. The family's inclusion test (the scored quantity concerns markets) is met.
-  > We estimate the binary movement where 1 denotes rise and 0 denotes fall
-- `capability` = context-integration · [S1][stocknet-s1]
-  - why: Each sample supplies the market information for its lag, the tweets for each trading day and the prices before it, and the prediction is to be made from that alone; samples with a day lacking tweets were filtered out. The paper's ablations score the gain from each input. The supplied material does not determine the answer (the best accuracy is 58%), and the capability the task names, predicting a financial quantity from a time series, has no term (taxonomy/\_failures, review\_checks).
-  > ensuring there is at least one tweet for each corpus in the lag
-- `evaluation_method` = classification-metric, exact-match · [S1][stocknet-s1]
-  - why: The two reported numbers are the Matthews correlation coefficient, a statistic of the whole confusion matrix, and accuracy, the mean of right-or-wrong verdicts against a two-label key, which exact-match's inclusion test keeps for itself.
-  > MCC avoids bias due to data skew.
-- `designed_for_subjects` = task-specific-supervised-model, classical-algorithm · [S1][stocknet-s1]
-  - why: The protocol trains a model on the training split and tunes it on the development split; every system in the paper (a random forest, a topic model, a hierarchical-attention network and the StockNet variants) is trained for the task. Two baselines contain no learned component, a random guess and ARIMA.
-  > ARIMA: Autoregressive Integrated Moving Average, an advanced technical analysis method using only price signals
-
-Considered and rejected:
-
-- `domain` not `society-econ-law/forecasting-prediction-markets` · [S1][stocknet-s1]
-  - why: Every target is a 2014-2015 price movement that had already happened when the dataset was published; nothing resolves after the prediction is made.
-  > 3,720 movements from 01/10/2015 to 01/01/2016 are for test
-- `capability` not `temporal-reasoning` · [S1][stocknet-s1]
-  - why: The paper calls the task a time-series problem, but the score is a movement label, not whether order or duration was judged; cy-bench rejects the term on the same ground.
-  > In essence, stock movement prediction is a time series problem.
-- `capability` not `distribution-shift-generalization` · [S1][stocknet-s1]
-  - why: The split is temporal (test is the last quarter of 2015), but no condition is reported as a shift of its own beside an in-distribution score.
-  > We split them temporally and
-
-#### stocknet · Task and evaluation
-
-- `learned_entrant_evidence` = system StockNet (HedgeFundAnalyst, the full variant), the paper's own model · [S1][stocknet-s1]
-  > Our model, HEDGEFUNDANALYST achieves the best performance of 58.23 in accuracy and 0.080796 in MCC
-- `learned_entrant_evidence` = system A BERTweet and transformer model (2025) · [S3][stocknet-s3]
-  > setting a new baseline for Matthews Correlation Coefficient on the Stocknet dataset without auxiliary data sources
-- `reproducible_by_third_party` = true · S5
-  - why: The tweets, the prices and the code that trains and tests the paper's models are public under MIT licences, and both metrics are closed-form.
-  > use \`sh src/run.sh\` in your terminal to start model learning and test the model after the training is completed
-- `task` = exists true; input the tweets mentioning the target stock's ticker on each trading day of a five-day lag before the target day, the stock's prices over the lag (preprocessed as movement percent and normalised open, high, low and close, with volume); output Rise (1) or fall (0) of the stock's adjusted closing price on the target trading day against the previous one.; scoring Accuracy and MCC over the 3,720 test targets (October to December 2015), reported side by side; no combined score.; tests_hidden_from_system false; item_definition One stock on one target trading day whose movement is at most -0.5% or above 0.55%; smaller movements were removed to balance the classes. · [S1][stocknet-s1]
-  > we set two particular thresholds, 0.5% and 0.55% and simply remove 38.72% of the selected targets
-- `execution.reproducibility_tier` = fully-automatable · S5
-  - why: The data and labels are public, the metrics are closed-form, and the code trains and tests the paper's models end to end with no human or maintainer-only step.
-  > use \`sh src/run.sh\` in your terminal to start model learning and test the model after the training is completed
-- `execution.harness` = stocknet-code (src/run.sh trains and tests a StockNet variant chosen in config.yml) · S5
-  > Python 2.7.11 - Tensorflow 1.4.0
-
-#### stocknet · Data and licence
-
-- `as_used` = protocol FinBen's copy, with each sample rendered as a prompt holding the tweets and prices and a choice between rise and fall, scored by accuracy and MCC. Its development and test splits have the paper's counts (2,555 and 3,720); its training split has 20,781 rows against the paper's 20,339.; split test (3,720) · [S2][stocknet-s2]
-  > "name":"test","num\_bytes":13359338,"num\_examples":3720
-- `as_used` = protocol A BERTweet encoder with a transformer over the lag, trained on the dataset and scored by MCC without inputs beyond its tweets and prices.; split the paper's test split, as far as the abstract says · [S3][stocknet-s3]
-  > setting a new baseline for Matthews Correlation Coefficient on the Stocknet dataset without auxiliary data sources
-- `data.access` = fully-open · S4
-  - why: The tweets, prices and the movement labels behind the test score can be downloaded from GitHub without an account. FinBen's Hugging Face copy is behind an automatic form, but it is not the official copy.
-  > releases a comprehensive dataset for stock movement prediction from tweets and historical stock prices
-- `data.data_provenance` = web-scraped, curated-public-database · [S1][stocknet-s1]
-  > We extract historical prices for the 88 selected stocks to build the historical price dataset from Yahoo Finance.
-- `data.contamination_risk` = medium · [S1][stocknet-s1]
-  > We extract historical prices for the 88 selected stocks to build the historical price dataset from Yahoo Finance.
-- `data.dataset_licence` = MIT · S6
-  > MIT License
-- `data.upstream_licences` = Tweets under Twitter's licence, as the paper says it accessed them; Yahoo Finance's terms for the prices are not stated. The raw tweets are full tweet JSON and the preprocessed ones keep the user id (review\_checks). · [S1][stocknet-s1]
-  > We access Twitter data under the
-- `data.size` = count 26614; unit prediction targets (stock-day movements); subset the whole dataset · [S1][stocknet-s1]
-  > resulting in 26,614 prediction targets in the whole dataset with 49.78% and 50.22% of them in the two classes
-- `data.size` = count 3720; unit prediction targets; subset test (2015-10-01 to 2016-01-01) · [S1][stocknet-s1]
-  > 3,720 movements from 01/10/2015 to 01/01/2016 are for test
-- `data.size` = count 20339; unit prediction targets; subset train (2014-01-01 to 2015-08-01) · [S1][stocknet-s1]
-  > 20,339 movements between 01/01/2014 and 01/08/2015 are for training
-- `data.size` = count 2555; unit prediction targets; subset development (2015-08-01 to 2015-10-01) · [S1][stocknet-s1]
-  > 2,555 movements from 01/08/2015 to 01/10/2015 are for development
-- `data.size` = count 88; unit stocks; subset the whole dataset · [S1][stocknet-s1]
-  > we select the two-year price movements from 01/01/2014 to 01/01/2016 of 88 stocks to target
-- `execution.code_licence` = MIT · S7
-  > MIT License
-
-#### stocknet · Governance and independence
-
-- `governance.maintainer` = The StockNet authors (University of Edinburgh at publication), from the first author's personal GitHub account · S4
-  - why: The dataset and the code are released from one personal account, and no institution is stated as holding them.
-  > releases a comprehensive dataset for stock movement prediction from tweets and historical stock prices
-- `governance.submission_process` = literature-only · [S3][stocknet-s3]
-  > setting a new baseline for Matthews Correlation Coefficient on the Stocknet dataset without auxiliary data sources
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][stocknet-s1]
-  > Our model, HEDGEFUNDANALYST achieves the best performance of 58.23 in accuracy and 0.080796 in MCC
-- `governance.funding` · [S1][stocknet-s1]
-  > This research was supported by a grant from Bloomberg
-
-#### stocknet · Lifecycle and activity
-
-- `lifecycle` = active · [S3][stocknet-s3]
-  - why: Results are still produced on it. A March 2025 paper reports a new MCC baseline on the dataset, and FinBen's copy of it was last modified on 2026-10-07. The original repositories were last pushed in March 2019 (GitHub API), and the code repository has been archived, read-only, since 2026-09-30 (src-github-stocknet-code-repo, "This repository was archived by the owner on Sep 30, 2026. It is now read-only."); the dataset repository is not archived. Both are maintenance evidence, not lifecycle.
-  > setting a new baseline for Matthews Correlation Coefficient on the Stocknet dataset without auxiliary data sources
-- `activity` = no-submission-channel · S4
-  - why: The repository releases the data and the paper its results; neither has a leaderboard or a submission route, and results appear in users' papers.
-  > releases a comprehensive dataset for stock movement prediction from tweets and historical stock prices
-
-**Open review checks** (12):
-
-1. (field `id`) The id stocknet is proposed from the paper's and repository's name; allocation is a human act. ACL18 is the name FinBen and its Hugging Face copy use, and the model shares the name StockNet. A reviewer may prefer acl18 as the id.
-2. (field `capability`) capability carries context-integration only, and only loosely, because no term names predicting a financial quantity from a time series; scientific-prediction is limited to physical, chemical, biological and Earth systems. The gap is logged in taxonomy/\_failures; widening scientific-prediction or adding a forecasting-of-series term is the call.
-3. (field `domain.primary`) The domain search found no time-series family; the only forecasting leaves outside society-econ-law are earth-climate's weather and energy ones. A future general time-series family could claim this entry.
-4. (field `designed_for_subjects`) designed\_for\_subjects adds classical-algorithm for the random-guess and ARIMA baselines. ARIMA is fitted to each series, which the term's inclusion test allows for fitted constants; drop it if baselines should not count. · [S1][stocknet-s1]
-   > RAND: a naive predictor making random guess in up or down.
-5. (field `data.data_provenance`) data\_provenance tags Yahoo Finance prices as curated-public-database. Its exclusion sends harvested web content to web-scraped; whether a commercial price-history service is a curated archive or web content is a judgement.
-6. (field `data.upstream_licences`) The dataset redistributes tweets, raw as full tweet JSON and preprocessed with the user id, under an MIT licence; the paper says Twitter data were accessed under Twitter's licence. Whether the redistribution and the personal data it carries suit the catalogue's dataset\_url is for a reviewer. · S4
-   > Keys: 'text', 'user\\\_id\\\_str', 'created\\\_at'
-7. (field `lineage.forks`) FinBen's copy is recorded as a fork with id finben, not yet catalogued. Its splits keep the paper's development and test counts but its training split has 442 more rows, and its prompts were not read (the record is gated). Whether FinBen should be catalogued as a suite that contains this task, rather than as a fork, is the call. · [S2][stocknet-s2]
-   > "name":"test","num\_bytes":13359338,"num\_examples":3720
-8. (field `governance.independence_flags`) The Bloomberg grant is recorded as funding without a flag, because the paper evaluates no Bloomberg system. A reviewer may weigh that Bloomberg sells market data and analytics. · [S1][stocknet-s1]
-   > This research was supported by a grant from Bloomberg
-9. (field `data.contamination_risk`) contamination\_risk is medium. For prompted language models trained after 2015 the test outcomes are public market history; no source evidencing memorisation was read, which high would need.
-10. (field `released`) released is 2018-07-15, the first day of the conference as the PDF's footer gives it; the Anthology dates the paper to July 2018 only, and the data were public on GitHub from 2018-04-28 (GitHub API, not a quoted Source). The data's first commit is the alternative. · [S8][stocknet-s8]
-   > Month: July Year: 2018
-11. (field `as_used`) Only the 2025 paper's abstract page was read; that it uses the paper's test split, and its numbers, are not checked. The as\_used row says so.
-12. (field `comparability.material_extra`) The five-day lag window, fixed by the paper's sample construction, and the class thresholds have no condition field; a variant that changes either is a different task. No EvalConditions record was written. · [S1][stocknet-s1]
-   > We use a 5-day lag window for sample construction
-
-**Reviewer checklist** for `stocknet`:
-
-- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
-- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
-- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
-- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
-- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
-- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
-- [ ] Every open review check above is answered or resolved
-- [ ] Nothing here would embarrass the catalogue in front of a specialist
-
-[stocknet-s1]: https://aclanthology.org/P18-1183.pdf
-[stocknet-s2]: https://huggingface.co/api/datasets/TheFinAI/en-sm-acl
-[stocknet-s3]: https://arxiv.org/abs/2503.10957
-[stocknet-s8]: https://aclanthology.org/P18-1183/
-
-### 2.3 Finance Agent Benchmark (finance-agent-benchmark)
+### 2.2 Finance Agent Benchmark (finance-agent-benchmark)
 
 `data/benchmarks/society-econ-law/finance-agent-benchmark.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
 
@@ -693,7 +511,7 @@ Considered and rejected:
 [finance-agent-benchmark-s11]: https://www.vals.ai/benchmarks/finance_agent
 [finance-agent-benchmark-s12]: https://raw.githubusercontent.com/vals-ai/finance-agent/cd06ce750070c0b3311c132c9ef67a673fbf85d0/README.md
 
-### 2.4 StockBench (stockbench)
+### 2.3 StockBench (stockbench)
 
 `data/benchmarks/society-econ-law/stockbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-08
 
@@ -883,212 +701,190 @@ Considered and rejected:
 [stockbench-s3]: https://arxiv.org/pdf/2608.18423v2
 [stockbench-s6]: https://stockbench.github.io/
 
-### 2.5 BigLaw Bench (biglaw-bench)
+### 2.4 Legal Research Bench (legal-research-bench)
 
-`data/benchmarks/society-econ-law/biglaw-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-08 · last verified 2026-11-18
+`data/benchmarks/society-econ-law/legal-research-bench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-28 · last verified 2026-11-28
 
-*Harvey's private law-firm tasks, from memos to deal analysis, scored by lawyer-written rubrics.*
+*Attorney-written US legal research questions for a tool-using agent, graded all-pass on expert rubrics.*
 
-Harvey's benchmark of legal work of the kind billed at large law firms. Harvey's legal research team, attorneys from BigLaw firms, turned time entries into tasks, each a prompt with the public documents it needs (some need none), split into litigation and transactional work and by task type: drafting, corporate advising, filings analysis, case management, research, due diligence and others. Each task has its own rubric. Required points earn positive scores weighted by importance; hallucinations, extraneous material and similar failures lose points. The answer score is the net points over the points available, read as the share of a lawyer-quality work product the system completes, and a source score counts how many correct statements cite their document. The core set is 100 tasks. Harvey keeps it private and runs every evaluation, scoring foundation models beside its own systems; the full data is available only by contacting Harvey. Six sample tasks with rubrics are on GitHub, and a 2026 academic study released 30 tasks with Harvey's permission. Later tracks added SPA deal-point extraction (Workflows), legal retrieval (Retrieval), lawyers' pairwise preferences rated by Elo (Arena), tasks for the UK, Australia and Spain (Global) and agentic US case-law research (Research). Harvey still reports core scores for new models in 2026, near 90% and above.
+A benchmark from Vals AI of the research a junior associate or paralegal does on US law. Practising attorneys wrote each of 413 questions around a novel fact pattern, with a gold answer, the authorities it rests on and a binary rubric, and a second attorney reviewed it; the questions span eight practice areas of federal and state law and are anchored to an answer date where the law may have changed. An agent answers inside Vals' own harness, which gives it CourtListener case-law search, Tavily web search, page parsing, retrieval over what it stored and a submit tool, with three hours per question. An LLM judge (GPT-5.4, chosen after a calibration study against three attorneys) checks every rubric criterion, and a question counts only if all of them pass and every cited authority verifies (all-pass); a weighted partial-credit score is reported beside it. The corpus is split into 5 public questions, 200 private validation questions that Vals licenses and 208 test questions that stay private. The paper's results, for thirteen models, are over all 413 questions (best 42.9%); the board's are over the test split only (101 models; 56.25% at the top on 2026-11-19). The harness is MIT-licensed on GitHub; the answers, rubrics and judge are not released.
 
 | Classification | |
 | --- | --- |
-| Primary domain | society-econ-law/legal-document |
-| Secondary domains | society-econ-law/legal-reasoning, society-econ-law/economically-valuable-work |
-| Capabilities | context-integration, factual-precision, knowledge-recall |
-| Evaluation methods | rubric-graded, exact-match, model-graded-judge, classification-metric, pairwise-preference-elo, human-expert-eval |
-| Designed for | instruction-tuned-model, full-product-pipeline, tool-augmented-model |
-| Evaluation target · execution mode · ground truth | learned-system · null · expert-panel |
+| Primary domain | society-econ-law/legal-reasoning |
+| Secondary domains | agents-tooluse/research-agents |
+| Capabilities | tool-use, factual-precision |
+| Evaluation methods | rubric-graded, model-graded-judge |
+| Designed for | model-in-benchmark-harness |
+| Evaluation target · execution mode · ground truth | learned-system · automated · expert-panel |
 | Lifecycle · activity | active · no-submission-channel |
-| Data access · refresh · contamination risk | private-test-server · null · medium |
-| Reproducibility tier · harness | not-independently-reproducible · none |
+| Data access · refresh · contamination risk | private-test-server · null · low |
+| Reproducibility tier · harness | not-independently-reproducible · reference-implementation-only |
 | Maintainer type · submission process | industry-lab · maintainer-run |
-| Independence flags | maintainer-competes-on-own-benchmark, single-evaluator-private-test-set |
-| Licences: code · dataset | null · null |
-| Released | 2024-08-29 |
-| Links | homepage [www.harvey.ai/blog/introducing-biglaw-bench](https://www.harvey.ai/blog/introducing-biglaw-bench) · repository [github.com/harveyai/biglaw-bench](https://github.com/harveyai/biglaw-bench) |
+| Independence flags | single-evaluator-private-test-set, grader-from-evaluated-party |
+| Licences: code · dataset | MIT · null |
+| Released | 2026-09-30 |
+| Links | homepage [www.vals.ai/benchmarks/legal\_research](https://www.vals.ai/benchmarks/legal_research) · repository [github.com/vals-ai/legal-research-bench](https://github.com/vals-ai/legal-research-bench) · leaderboard [www.vals.ai/benchmarks/legal\_research](https://www.vals.ai/benchmarks/legal_research) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-harvey-blog-introducing-biglaw-bench` | blog-post · Harvey | [www.harvey.ai/blog/introducing-biglaw-bench](https://www.harvey.ai/blog/introducing-biglaw-bench) | none (withheld) |
-| S2 | `src-arxiv-2605-25240-v4` | preprint · arXiv | [arxiv.org/pdf/2605.25240v4](https://arxiv.org/pdf/2605.25240v4) | none (not-required) |
-| S3 | `src-harvey-blog-introducing-big-law-bench-research` | blog-post · Harvey | [www.harvey.ai/blog/introducing-big-law-bench-research](https://www.harvey.ai/blog/introducing-big-law-bench-research) | none (withheld) |
-| S4 | `src-harvey-blog-introducing-biglaw-bench-arena` | blog-post · Harvey | [www.harvey.ai/blog/introducing-biglaw-bench-arena](https://www.harvey.ai/blog/introducing-biglaw-bench-arena) | none (withheld) |
-| S5 | `src-harvey-blog-expanding-big-law-bench` | blog-post · Harvey | [www.harvey.ai/blog/expanding-big-law-bench](https://www.harvey.ai/blog/expanding-big-law-bench) | none (withheld) |
-| S6 | `src-harvey-blog-fable-5-now-available-in-harvey` | blog-post · Harvey | [www.harvey.ai/blog/fable-5-now-available-in-harvey](https://www.harvey.ai/blog/fable-5-now-available-in-harvey) | none (withheld) |
-| S7 | `src-github-harveyai-biglaw-bench-readme` | repository · GitHub | [raw.githubusercontent.com/harveyai/biglaw-bench/138fd481b459a00bbd98e...](https://raw.githubusercontent.com/harveyai/biglaw-bench/138fd481b459a00bbd98eeb710f69ada1052bd47/README.md) | none (withheld) |
-| S8 | `src-harvey-blog-introducing-big-law-bench-global` | blog-post · Harvey | [www.harvey.ai/blog/introducing-big-law-bench-global](https://www.harvey.ai/blog/introducing-big-law-bench-global) | [capture 2026-11-09](https://web.archive.org/web/20261109054341/https://www.harvey.ai/blog/introducing-big-law-bench-global) |
-| S9 | `src-harvey-blog-biglaw-bench-hallucinations` | blog-post · Harvey | [www.harvey.ai/blog/biglaw-bench-hallucinations](https://www.harvey.ai/blog/biglaw-bench-hallucinations) | [capture 2026-11-09](https://web.archive.org/web/20261109054300/https://www.harvey.ai/blog/biglaw-bench-hallucinations) |
-| S10 | `src-harvey-blog-biglaw-bench-workflows-spa-deal-points` | blog-post · Harvey | [www.harvey.ai/blog/biglaw-bench-workflows-spa-deal-points](https://www.harvey.ai/blog/biglaw-bench-workflows-spa-deal-points) | [capture 2026-11-09](https://web.archive.org/web/20261109054322/https://www.harvey.ai/blog/biglaw-bench-workflows-spa-deal-points) |
-| S11 | `src-harvey-blog-biglaw-bench-retrieval` | blog-post · Harvey | [www.harvey.ai/blog/biglaw-bench-retrieval](https://www.harvey.ai/blog/biglaw-bench-retrieval) | none (withheld) |
-| S12 | `src-harvey-blog-introducing-harveys-legal-agent-benchmark` | blog-post · Harvey | [www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark](https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark) | none (withheld) |
+| S1 | `src-arxiv-2610-00609` | preprint · arXiv | [arxiv.org/abs/2610.00609](https://arxiv.org/abs/2610.00609) | none (not-required) |
+| S2 | `src-arxiv-2610-00609-v1` | preprint · arXiv | [arxiv.org/pdf/2610.00609v1](https://arxiv.org/pdf/2610.00609v1) | none (not-required) |
+| S3 | `src-vals-ai-legal-research` | leaderboard-page · Vals AI | [www.vals.ai/benchmarks/legal\_research](https://www.vals.ai/benchmarks/legal_research) | none (withheld) |
+| S4 | `src-vals-ai-methodology` | documentation · Vals AI | [www.vals.ai/methodology](https://www.vals.ai/methodology) | [capture 2026-10-28](https://web.archive.org/web/20261028150551/https://www.vals.ai/methodology) |
+| S5 | `src-vals-ai-benchmarks-index` | leaderboard-page · Vals AI | [www.vals.ai/benchmarks](https://www.vals.ai/benchmarks) | [capture 2026-11-26](https://web.archive.org/web/20261126135930/https://www.vals.ai/benchmarks) |
+| S6 | `src-github-vals-legal-research-bench-licence` | repository · GitHub | [raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6...](https://raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6ec9b6e76bd3133a524dbdae565/LICENSE) | [capture 2026-11-28](https://web.archive.org/web/20261128023208/https://raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6ec9b6e76bd3133a524dbdae565/LICENSE) |
+| S7 | `src-github-vals-legal-research-bench-readme` | repository · GitHub | [raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6...](https://raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6ec9b6e76bd3133a524dbdae565/README.md) | [capture 2026-11-28](https://web.archive.org/web/20261128023835/https://raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6ec9b6e76bd3133a524dbdae565/README.md) |
+| S8 | `src-vals-ai-about` | documentation · Vals AI | [www.vals.ai/about](https://www.vals.ai/about) | [capture 2026-11-06](https://web.archive.org/web/20261106225410/https://www.vals.ai/about) |
 
-**Evidence** (50 quoted fields), by checklist area:
+**Evidence** (39 quoted fields), by checklist area:
 
-#### biglaw-bench · Identity and id
+#### legal-research-bench · Identity and id
 
-- `self_description` · [S1][biglaw-bench-s1]
-  > a public-facing version of our internal dataset for evaluating large language models (LLMs) and model systems on complex legal tasks
-- `released` = 2024-08-29 · [S1][biglaw-bench-s1]
-  > Aug 29, 2024
+- `self_description` · [S1][legal-research-bench-s1]
+  > a benchmark of 413 open-ended U.S. legal research questions written by experts, each paired with a gold answer, supporting authorities, and a binary grading rubric.
+- `released` = 2026-09-30 · [S1][legal-research-bench-s1]
+  > \[Submitted on 30 Sep 2026\]
 
-#### biglaw-bench · Domain and capabilities
+#### legal-research-bench · Domain and capabilities
 
-- `domain.primary` = society-econ-law/legal-document · [S1][biglaw-bench-s1]
-  - why: The core tasks are prompt and document pairs whose output is a legal work product (a memo, a client alert, board resolutions, an analysis of filings or transcripts), and the rubric scores that product's substance, structure and style. The Workflows and Retrieval tracks extract from and search legal documents. That is drafting, reviewing and extracting from legal documents, the leaf's definition.
-  > By converting time entries into model-based tasks (prompt / document pairs), we are able to identify and evaluate how models can contribute to real, high-value legal work.
-- `domain.secondary` = society-econ-law/legal-reasoning, society-econ-law/economically-valuable-work · [S1][biglaw-bench-s1]
-  - why: legal-reasoning because many rubric points check that the output applies a rule to the facts correctly, and Harvey reads score gains as better recall and application of legal principles; the Research track is legal research. economically-valuable-work because the tasks are converted from the time entries of billed legal work and the score is the share of a lawyer-quality work product completed. It is secondary because the score is a rubric's, not a comparison with a professional's own work product (review\_checks).
-  > In defining benchmark tasks, we draw on a familiar feature of the legal profession: the time entry.
-- `capability` = context-integration · [S1][biglaw-bench-s1]
-  - why: Most tasks supply the documents the answer rests on (trial exhibits, filings, precedent agreements), and rubric points check the particulars drawn from them, such as a termination fee.
-  > constructed using publicly available documents to enable transparent evaluation under realistic conditions
-- `capability` = factual-precision · [S1][biglaw-bench-s1]
-  - why: Rubric points check asserted particulars one by one, every hallucination is a negative point, and the source score checks each substantive statement for an accurate citation.
-  > Negative criteria, such as hallucinations, were assigned negative scores
-- `capability` = knowledge-recall · [S2][biglaw-bench-s2]
-  - why: Some tasks have no document, so their rubric points on the law (procedure, evidence, corporate rules) can only be met from what the model holds; Harvey reads the score gains as better recall of legal principles.
-  > All triplets have a prompt and a rubric, but some do not have a document as the associated legal task may not require one.
-- `evaluation_method` = rubric-graded, exact-match, model-graded-judge, classification-metric, pairwise-preference-elo, human-expert-eval · [S1][biglaw-bench-s1]
-  - why: Each task's rubric names points individually, with weights and negative points, and they are combined into the answer score, which is rubric-graded's inclusion case.
-  > Answer score is computed by taking the combination of these positive and negative points and dividing by the total number of positive points available for a task.
-- `designed_for_subjects` = instruction-tuned-model, full-product-pipeline, tool-augmented-model · [S3][biglaw-bench-s3]
-  - why: Harvey prompts public foundation models directly with the task and its documents (ChatGPT, Claude, Gemini, then GPT-5-series, Claude and Gemini models) and scores its own shipped Assistant systems beside them; the Research track gives models search tools.
-  > Models must use tools to perform searches in order to identify relevant research context and provide a grounded, cited response.
+- `domain` = primary society-econ-law/legal-reasoning; secondary agents-tooluse/research-agents · [S2][legal-research-bench-s2]
+  - why: The scored quantity is whether a research answer reaches the attorneys' legal conclusion on a fact pattern, with the authorities it needs, checked criterion by criterion; the items are built to need legal reasoning and to have an answer determinate enough for attorneys to agree, which is the legal-reasoning leaf's definition (applying legal rules to a set of facts to reach a determinate conclusion). The family's exclusion for autonomous operation does not fit, because the answer is scored and not the path to it. The agent gathers authorities from case law and the web and must cite them, and an invalid citation fails the item, which is research-agents' gather, synthesise and cite, carried as secondary.
+  > Items are designed to require legal reasoning rather than factual lookup, are written around novel fact patterns to reduce memorization, and are included only when the correct answer is objective enough for attorney agreement.
+- `capability` = tool-use · [S2][legal-research-bench-s2]
+  - why: The authority a correct answer needs is reached only through the case-law, web, parsing and retrieval tools. In the paper's ablation without tools, all-pass falls by 22.5 points on average and every tool-using model beats every model without them; the strongest models lose the most, which the paper reads as locating and reading authority rather than recalling law.
+  > In a no-tool, single-shot setting, performance collapses across all thirteen models (Table 4)
+- `capability` = factual-precision · [S2][legal-research-bench-s2]
+  - why: Each rubric criterion is a required element (a statute, rule, controlling authority or interpretation) checked on its own, and every cited authority must verify, so the particulars inside a free-form answer are scored one by one.
+  > any invalid cited URL fails a source check that marks the entire response wrong
+- `evaluation_method` = rubric-graded, model-graded-judge · [S3][legal-research-bench-s3]
+  - why: Named criteria from the attorneys' answer are checked one by one and combined (every one must pass for all-pass), and an LLM judge applies them, so both terms apply.
+  > Our primary metric is all-pass: a question counts as correct only if the response satisfies every rubric item
+- `designed_for_subjects` = model-in-benchmark-harness · [S4][legal-research-bench-s4]
+  - why: Vals runs every model in its own harness with the same five tools, prompt and three-hour limit, and each row on the board names a model; the methodology page states the purpose of the fixed harness.
+  > Models are called through a fixed harness that we control, so that differences in scores reflect the model rather than the scaffold.
 
 Considered and rejected:
 
-- `domain` not `agents-tooluse/research-agents` · [S1][biglaw-bench-s1]
-  - why: Only the Research track gives the model search tools, and Harvey says the core tasks need no multi-part or agentic workflow; the leaf is the Research subset's secondary instead.
-  > tasks that we use to test fundamental model capabilities to solve problems involving reasoning about, analyzing, and discussing legal concepts and text without the need for multi-part or agentic workflows
-- `capability` not `instruction-following` · [S1][biglaw-bench-s1]
-  - why: Rubrics give structure and style points (a memo format, a professional tone) and penalise wrong tone or length, but these serve the work product; the score is not compliance with stated constraints.
-  > They also penalize common LLM failure modes such as incorrect tone or length, irrelevant material, toxicity, and hallucinations.
-- `designed_for_subjects` not `human-expert` · [S4][biglaw-bench-s4]
-  - why: Arena pits systems against humans, but no human score is published, and the core benchmark has no human entrant.
-  > competing against foundation models, internal prototypes, and even humans
+- `domain` not `agents-tooluse/long-horizon-autonomy` · [S2][legal-research-bench-s2]
+  - why: The agents-tooluse family was considered first as primary, since the paper's title frames the subject as long-horizon legal research agents and a run may last three hours. But the grader scores the legal content of the submitted answer against an attorney rubric, not what the loop did, and Vals fixes the loop so that only the model varies, as for finance-agent-benchmark (review\_checks).
+  > LRB follows this outcome-level view, scoring the submitted answer rather than the path taken to it.
+- `domain` not `society-econ-law/economically-valuable-work` · [S3][legal-research-bench-s3]
+  - why: The tasks are associates' and paralegals' research, but an LLM judge checks rubric criteria; nothing is compared with a professional's work product, the leaf's test.
+  > All questions, gold-standard answers, and rubrics are authored and peer-reviewed by practicing lawyers, drawing on real research questions that arise in legal practice.
+- `capability` not `knowledge-recall` · [S2][legal-research-bench-s2]
+  - why: The tools supply the authority; a model's recall helps it search but is not what an item can be answered from, given the ablation's collapse without tools.
+  > The strongest models lose the most (Claude Opus 4.8 falls 34.1 points)
+- `capability` not `temporal-reasoning` · [S2][legal-research-bench-s2]
+  - why: Temporal Validity (whether a rule is still good law, or how it changed) marks 66 of the 413 questions as a difficulty attribute, not the benchmark's claim, and questions whose law may change are anchored to an answer date.
+  > When legal authority may change over time, questions are temporally anchored with an explicit answer date
+- `capability` not `reliability-consistency` · [S2][legal-research-bench-s2]
+  - why: The paper's "reliability" is all-pass over a question's criteria, not success across repeated trials; each model ran once per question.
+  > each model was evaluated in a single run per question
+- `evaluation_method` not `human-expert-eval` · [S3][legal-research-bench-s3]
+  - why: Attorneys wrote and reviewed the items and graded 341 rubric items to calibrate the judge; no published score comes from them.
+  > GPT 5.4 agrees with the majority vote 87.4% of the time, compared to an average human baseline agreement of 83.4%.
+- `designed_for_subjects` not `agent-scaffold` · [S2][legal-research-bench-s2]
+  - why: The README says how to run one's own harness, and the paper chose a time budget so that other harnesses can be compared, but the board's rows name models, and no source says that any row varies the loop (review\_checks).
+  > A time budget better reflects real research workflows and makes the evaluation comparable across alternative harnesses, tools, and agent implementations.
 
-#### biglaw-bench · Task and evaluation
+#### legal-research-bench · Task and evaluation
 
-- `learned_entrant_evidence` = system Fable 5 · [S6][biglaw-bench-s6]
-  > In our internal evaluation using BigLaw Bench, Harvey's proprietary legal benchmark, Fable 5 scored 93.4% overall
-- `ground_truth_source` = expert-panel · [S2][biglaw-bench-s2]
-  - why: The rubrics were written by Harvey's attorneys and reviewed by other legal experts; the grader applies them, it does not define them.
-  > Rubrics are task-specific and were developed by legal experts, then later reviewed by other legal experts.
-- `reproducible_by_third_party` = false · [S2][biglaw-bench-s2]
-  - why: Only Harvey holds the full task set and rubrics, and the headline is its score over all of them; the six repository samples and JudgmentBench's 30 tasks are not the scored set, and no grading code is published.
-  > BigLaw Bench is a privately held (non-public) dataset compiled by Harvey \[Harvey Team, 2024\] in 2024.
-- `task` = exists true; input a prompt converted from a lawyer's time entry, such as drafting a client alert on a court order or analysing precedent agreements for market terms, the public documents the task needs (filings, exhibits, transcripts, agreements), or none; output Free-text legal work product (a memo, an analysis, a draft, an outline), with any sources the model gives.; scoring Answer score is the sum of the rubric's positive points met and its negative points incurred (in the samples, -1 per hallucination and -0.5 per extraneous or misconstrued statement), over the positive points available. Source score is the share of the rubric's substantive points that need a source for which the model gives an accurate one. Results are averaged over tasks and split into litigation, transactional and task types. · [S1][biglaw-bench-s1]
-  > Source score represents: What % of correct statements does the model support with an accurate source?
-- `execution.reproducibility_tier` = not-independently-reproducible · [S7][biglaw-bench-s7]
-  - why: Only Harvey holds the scored tasks and rubrics, so nobody else can produce a headline score.
-  > For access to the full dataset and additional resources, please contact Harvey directly.
-- `aggregation_policy` = official-aggregate · [S6][biglaw-bench-s6]
-  - why: One percentage per model over all core tasks is the number Harvey quotes.
-  > In our internal evaluation using BigLaw Bench, Harvey's proprietary legal benchmark, Fable 5 scored 93.4% overall
+- `learned_entrant_evidence` = system Gemini 4 Neon · [S3][legal-research-bench-s3]
+  > As of November 19, 2026, Gemini 4 Neon ranks first on Legal Research Bench with 56.25%
+- `ground_truth_source` = expert-panel · [S2][legal-research-bench-s2]
+  - why: The gold answers, source lists and rubrics are the attorneys' own, each reviewed by at least one more attorney; the judge applies the rubrics.
+  > Each LRB item is authored by practicing U.S. attorneys and consists of an open-ended legal research question, a gold answer, a curated source list, and a binary grading rubric
+- `reproducible_by_third_party` = false · [S3][legal-research-bench-s3]
+  - why: Every board score is on a test split only Vals holds, graded by a judge and rubrics that are not released; anyone can run the harness on the five public questions, which have no answers or rubrics to score against.
+  > The Test set will remain private. All results reported on this page are based solely on the Test set to prevent overfitting.
+- `task` = exists true; input an open-ended US legal research question on a novel fact pattern, such as whether a Virginia company that leases trailers under a finance lease may stop paying after the manufacturer's bankruptcy, anchored to an answer date where the law may have changed, the harness's prompt and five tools, CourtListener case-law search, Tavily web search, page parsing into a store, retrieval over the stored documents, and a final-answer submission; output Tool calls under a three-hour wall-clock limit, then a final answer with its cited authorities, submitted through the submission tool.; scoring The judge marks each binary criterion of the question's rubric met or not; a source check fails the answer if a cited URL is invalid or does not support the authority claimed. All-pass, the share of questions with every criterion met and the check passed, is the headline; weighted pass, the share of rubric weight earned, is reported beside it. · [S2][legal-research-bench-s2]
+  > Criteria are weighted \[+1\], \[+2\], or \[+3\], with at least one \[+3\] item capturing the central legal conclusion.
+- `execution.compute_tier` = api-credits-only · [S7][legal-research-bench-s7]
+  - why: A run is calls to the model's API, the judge and the Tavily and CourtListener APIs from an ordinary machine; the README asks only for API keys.
+  > LLM API Keys (only set the ones you plan on using)
+- `execution.reproducibility_tier` = not-independently-reproducible · [S8][legal-research-bench-s8]
+  - why: The board's scores are on a test split only Vals holds, which the tier's inclusion test covers.
+  > Scores are based on our privately held test sets to preserve the integrity and signal of our results.
+- `execution.reproducibility_blockers` = private-test-set, live-world-state · [S7][legal-research-bench-s7]
+  > Search the web for information (via Tavily)
+- `execution.harness` = vals-ai/legal-research-bench (the legal\_agent package, run with the legal-research command and built on Vals' model library) · [S7][legal-research-bench-s7]
+  > The default configuration is the one we used to run the benchmark.
+- `aggregation_policy` = official-aggregate · [S2][legal-research-bench-s2]
+  - why: One headline per split, with partial credit and breakdowns published beside it.
+  > Weighted pass, the share of available rubric weight a response earns, is reported only as a secondary, partial-credit measure.
 
-#### biglaw-bench · Data and licence
+#### legal-research-bench · Data and licence
 
-- `as_used` = protocol Harvey's sycophancy probe (2025), which reran tasks with expert-agreed answers under neutral and two interested framings and compared the predictions, rather than the scores. · [S5][biglaw-bench-s5]
-  > we looked at whether performance changed when we rephrased the BLB prompt
-- `as_used` = protocol JudgmentBench (2026) takes 30 core tasks and has practising attorneys grade constructed outputs by the tasks' rubrics and by pairwise preference, to compare the two methods; it scores no model on BigLaw Bench. · [S2][biglaw-bench-s2]
-  > we sampled 30 tasks from the proprietary, full dataset and make them publicly available
-- `data.access` = private-test-server · [S7][biglaw-bench-s7]
-  - why: The tasks behind the headline score stay with Harvey, which runs every evaluation itself, and access on request creates no public path, which the term's inclusion test covers. The public samples are not the scored set. proprietary-closed was weighed, since Harvey withholds the set commercially and calls it proprietary, but that term needs no access path at any tier, and here there is a contact route and a public sample.
-  > For access to the full dataset and additional resources, please contact Harvey directly.
-- `data.refresh` = null · [S5][biglaw-bench-s5]
-  > we will be updating and substantially expanding the public version of BLB
-- `data.data_provenance` = expert-authored · [S1][biglaw-bench-s1]
-  > Our benchmarks are conceptualized and designed by our legal research team, composed of attorneys with experience across a wide range of practice areas and BigLaw firms
-- `data.ceiling_anchor_type` = theoretical-maximum · [S1][biglaw-bench-s1]
-  > Answer score is computed by taking the combination of these positive and negative points and dividing by the total number of positive points available for a task.
-- `data.size` = count 100; unit tasks (prompt, documents and rubric); subset the core set, held by Harvey · [S2][biglaw-bench-s2]
-  > BigLaw Bench consists of 100 triplets.
-- `data.size` = count 30; unit core tasks released by JudgmentBench (16 transactional, 14 litigation); subset JudgmentBench's public sample · [S2][biglaw-bench-s2]
-  > the sample comprises 16 transactional tasks and 14 litigation tasks
-- `data.languages` = en, es · [S8][biglaw-bench-s8]
-  > (Translated from original Spanish.)
-- `subsets` = id biglaw-bench#core; label BigLaw Bench Core; items 100; scored_separately true · [S7][biglaw-bench-s7]
-  > BigLaw Bench Core is a set of core tasks for benchmarking baseline legal problem-solving.
-- `subsets` = id biglaw-bench#core; label BigLaw Bench Core; items 100; scored_separately true · [S2][biglaw-bench-s2]
-  > BigLaw Bench consists of 100 triplets.
-- `subsets` = id biglaw-bench#core; label BigLaw Bench Core; items 100; scored_separately true · [S9][biglaw-bench-s9]
-  > We deploy this system on the answers to a subset of BigLaw Bench tasks that require reasoning over multiple, long documents.
-- `subsets` = id biglaw-bench#workflows-spa; label BigLaw Bench Workflows, SPA deal points; scored_separately true · [S10][biglaw-bench-s10]
-  > The first dataset we are releasing is extracting deal points from Share Purchase Agreements (SPAs).
-- `subsets` = id biglaw-bench#workflows-spa; label BigLaw Bench Workflows, SPA deal points; scored_separately true · [S10][biglaw-bench-s10]
-  > Overall accuracy is computed as a straight average over the test set and all the individual fields.
-- `subsets` = id biglaw-bench#workflows-spa; label BigLaw Bench Workflows, SPA deal points; scored_separately true · [S10][biglaw-bench-s10]
-  > SPA agents are able to extract 98.47% of deal points correctly across diverse SPA documents.
-- `subsets` = id biglaw-bench#retrieval; label BigLaw Bench Retrieval; scored_separately true · [S11][biglaw-bench-s11]
-  > we are expanding BigLaw Bench to include retrieval-focused benchmarks over legal documents
-- `subsets` = id biglaw-bench#retrieval; label BigLaw Bench Retrieval; scored_separately true · [S11][biglaw-bench-s11]
-  > In technical terms, this is equivalent to recall at a fixed token threshold.
-- `subsets` = id biglaw-bench#arena; label BigLaw Bench: Arena; scored_separately true · [S4][biglaw-bench-s4]
-  > across hundreds of legal tasks drawn from our internal lawyers and client partners
-- `subsets` = id biglaw-bench#arena; label BigLaw Bench: Arena; scored_separately true · [S4][biglaw-bench-s4]
-  > Between three and ten lawyers will review any particular pair of outputs
-- `subsets` = id biglaw-bench#arena; label BigLaw Bench: Arena; scored_separately true · [S4][biglaw-bench-s4]
-  > First, we quantitatively combine the casted preference votes into Elo scores
-- `subsets` = id biglaw-bench#global; label BigLaw Bench: Global; scored_separately true · [S8][biglaw-bench-s8]
-  > Our initial BLB: Global dataset more than doubles the size of our public-facing BLB benchmark, adding unique benchmarks for the UK, Australia, and Spain.
-- `subsets` = id biglaw-bench#global; label BigLaw Bench: Global; scored_separately true · [S8][biglaw-bench-s8]
-  > Designed in collaboration with our data partners at Mercor
-- `subsets` = id biglaw-bench#research; label BigLaw Bench: Research; scored_separately true; capability_override tool-use, factual-precision · [S3][biglaw-bench-s3]
-  > Models must use tools to perform searches in order to identify relevant research context and provide a grounded, cited response.
-- `subsets` = id biglaw-bench#research; label BigLaw Bench: Research; scored_separately true; capability_override tool-use, factual-precision · [S3][biglaw-bench-s3]
-  > we found that model answers become unhelpful once the model completes less than 60% of the required task criteria
-- `subsets` = id biglaw-bench#research; label BigLaw Bench: Research; scored_separately true; capability_override tool-use, factual-precision · [S3][biglaw-bench-s3]
-  > Working with our data partner Snorkel AI
+- `data.access` = private-test-server · [S3][legal-research-bench-s3]
+  - why: Every score on the board is computed by Vals on a test split that stays private, which the term's inclusion test covers; the public sample is a description of the item types, on which no score is published.
+  > The Test set will remain private. All results reported on this page are based solely on the Test set to prevent overfitting.
+- `data.data_provenance` = expert-authored · [S2][legal-research-bench-s2]
+  - why: The authors are practising US lawyers, and each item is reviewed by another.
+  > In total, 15 practicing attorneys, with an average of 15 years of legal experience, contributed to authoring and review
+- `data.data_provenance` = expert-authored · [S3][legal-research-bench-s3]
+  > All questions, gold-standard answers, and rubrics are authored and peer-reviewed by practicing lawyers, drawing on real research questions that arise in legal practice.
+- `data.contamination_risk` = low · [S2][legal-research-bench-s2]
+  > The validation and test questions are held out to limit contamination.
+- `data.size` = count 208; unit questions; subset test split (private), on which the board is computed · [S3][legal-research-bench-s3]
+  > Public (5 open-source samples), Private Validation (200 samples available for license), and Test (208 samples)
+- `data.size` = count 413; unit attorney-written questions in eight areas of law; subset all splits, on which the paper's results are computed · [S2][legal-research-bench-s2]
+  > LRB comprises 413 questions spanning eight areas of law and ten question types.
+- `data.size` = count 200; unit questions; subset private validation split (licensed) · [S3][legal-research-bench-s3]
+  > Public (5 open-source samples), Private Validation (200 samples available for license), and Test (208 samples)
+- `data.size` = count 5; unit questions (text only); subset public sample · [S2][legal-research-bench-s2]
+  > The corpus is partitioned into a 5-question public sample, a 200-question validation set, and a 208-question test set.
+- `execution.code_licence` = MIT · [S6][legal-research-bench-s6]
+  > MIT License
 
-#### biglaw-bench · Governance and independence
+#### legal-research-bench · Governance and independence
 
-- `governance.maintainer` = Harvey (Harvey AI Corporation) · [S7][biglaw-bench-s7]
-  - why: Harvey's legal research team built the benchmark, Harvey holds the full set and the repository (harveyai on GitHub) and publishes every result on its blog.
-  > Developed by Harvey's legal research team
-- `governance.submission_process` = maintainer-run · [S4][biglaw-bench-s4]
-  > Major systems at Harvey run the Arena gauntlet monthly
-- `governance.independence_flags` = flag maintainer-competes-on-own-benchmark · [S1][biglaw-bench-s1]
-  > proprietary models significantly outperform publicly available LLMs
-- `governance.independence_flags` = flag single-evaluator-private-test-set · [S2][biglaw-bench-s2]
-  > BigLaw Bench is a privately held (non-public) dataset compiled by Harvey \[Harvey Team, 2024\] in 2024.
-- `governance.known_limitation` · [S1][biglaw-bench-s1]
-  > These prompts had a substantial negative impact on model performance
+- `governance.maintainer` = Vals AI, Inc. · [S6][legal-research-bench-s6]
+  - why: Vals wrote the paper, holds the harness repository (vals-ai, an organisation account on GitHub) and its copyright, holds the private splits, and runs the only board.
+  > Copyright (c) 2026 Vals AI, Inc.
+- `governance.submission_process` = maintainer-run · [S5][legal-research-bench-s5]
+  > Vals AI runs 44 independent AI benchmarks across legal, finance, healthcare, coding, math, and more.
+- `governance.independence_flags` = flag single-evaluator-private-test-set · [S4][legal-research-bench-s4]
+  > Test Set: This dataset remains private at all times, and is the only dataset used for the proprietary benchmark results we publish.
+- `governance.independence_flags` = flag grader-from-evaluated-party · [S2][legal-research-bench-s2]
+  > lowest agreement is on models from its own provider
+- `governance.known_limitation` · [S2][legal-research-bench-s2]
+  > LRB is limited to U.S., English-language legal research and to a fixed snapshot of models, tools, and legal authority.
 
-#### biglaw-bench · Lifecycle and activity
+#### legal-research-bench · Lifecycle and activity
 
-- `lifecycle` = active · [S6][biglaw-bench-s6]
-  - why: Harvey still publishes core scores for newly released models, Fable 5 in June 2026 among them, beside its newer LAB scores, and a refreshed and expanded edition was announced in February 2026 (review\_checks).
-  > In our internal evaluation using BigLaw Bench, Harvey's proprietary legal benchmark, Fable 5 scored 93.4% overall
-- `activity` = no-submission-channel · [S7][biglaw-bench-s7]
-  - why: Harvey chooses and runs the systems and publishes scores in its own posts; the only route to the full data is contacting Harvey, which is not a channel for entering results.
-  > For access to the full dataset and additional resources, please contact Harvey directly.
+- `lifecycle` = active · [S5][legal-research-bench-s5]
+  - why: Vals runs new models on the board, which the index dates 2026-11-19 with 101 models tested; the paper (September 2026) evaluated thirteen. No third-party use was found (review\_checks).
+  > Legal Proprietary Legal Research Bench Updated: 11/19/2026 Models Tested: 101
+- `activity` = no-submission-channel · [S4][legal-research-bench-s4]
+  - why: Every published score is Vals' own run on its private test set.
+  > Test Set: This dataset remains private at all times, and is the only dataset used for the proprietary benchmark results we publish.
 
-**Open review checks** (11):
+**Open review checks** (10):
 
-1. (field `id`) Id. biglaw-bench is proposed from the name Harvey uses ("BigLaw Bench", abbreviated BLB; one 2026 post spells it "Big Law Bench" in its URL). Id allocation is a human act.
-2. (field `evaluation_method`) Who applies the core rubrics, Harvey's lawyers or a model, is not stated in any source read; the Fable 5 post mentions lawyer evaluators. execution\_mode is left null and model-graded-judge rests on Workflows alone. If a model grades the core, add judge\_model conditions. · [S6][biglaw-bench-s6]
-   > Our lawyer evaluators highlighted the model's strength in drafting and markup analysis.
-3. (field `data.access`) data.access private-test-server, not proprietary-closed. Harvey withholds the set commercially and calls it proprietary, but offers contact for access and publishes samples; if a reviewer reads contact-for-access as no public path, proprietary-closed applies. · [S6][biglaw-bench-s6]
-   > In our internal evaluation using BigLaw Bench, Harvey's proprietary legal benchmark, Fable 5 scored 93.4% overall
-4. (field `domain`) Primary domain. legal-document follows what is scored (a drafted or reviewed work product); legal-reasoning is the alternative, and Harvey reads gains as recall and application of legal principles. economically-valuable-work as secondary rests on the time-entry construction, though the leaf's definition asks for comparison against human work product. · [S5][biglaw-bench-s5]
-   > to recall, understand, and apply core legal principles to tasks
-5. (field `versions`) Versions. The 2026 expansion promised a refreshed BLB, but no source read says whether the core 100 tasks changed, or which set Harvey's 2026 scores (GPT-5.5 91.7%, Fable 5 93.4%, GPT-5.6 Sol 92.7%) are on. Under 04 S4 a changed core would be a revision, and new items an edition. frozen is left at its default for the 2024 and 2025 releases without evidence. · [S5][biglaw-bench-s5]
-   > In the coming months, we will publish a refreshed BLB
-6. (field `lifecycle`) lifecycle active rather than under-revision. A reissue was announced in February 2026, but results kept being produced in the ordinary way; scores near 90-93% also suggest headroom is nearly consumed (saturated is derived, not set). · [S5][biglaw-bench-s5]
-   > with base model scores going from 60% (GPT 4o \| Claude 3.5 \| Gemini 1.5) to 90% (GPT-5 \| Claude 4.5 \| Gemini 3)
-7. (field `subsets`) Whether Arena is a track of the benchmark or Harvey's separate internal evaluation process; it runs on hundreds of internal and client tasks, not the core set. It is modelled as a subset because Harvey names it as a BigLaw Bench track (BLB Arena) and lists it among BLB evaluations. · [S4][biglaw-bench-s4]
-   > Inspired by open research initiatives such as LMArena, this approach complements formal benchmarks
-8. (field `lineage`) Lineage. JudgmentBench (another maintainer, 30 core tasks) reads as a fork, and LAB as a same-maintainer successor or sibling; neither has a record, so neither is linked. Harvey still reports BLB beside LAB, so superseded is not set. · [S12][biglaw-bench-s12]
-   > Existing evaluations, including LegalBench, CUAD, LEXam, and our own earlier work on BigLaw Bench, have graded short-horizon reasoning
-9. (field `governance.independence_flags`) results-published-only-in-vendor-document was weighed. Every result appears only on Harvey's blog, which is the evaluated party's own document for Harvey's own systems but not for the foundation models; the flag is not set.
-10. (field `curation.sources`) Personal data. Harvey's posts and the README name staff in bylines, credits and quotes (the README links LinkedIn profiles), and the repository's sample CSVs name people in public filings. All are kept out of the extracts and the Sources are marked contains\_personal\_data false, as for other vendor posts; the lead may prefer withheld for the README.
-11. (field `data.size`) The 100-task count comes from JudgmentBench, a third party with a Harvey co-author, not from Harvey's own posts; the 2024 shares fit 53 transactional and 47 litigation tasks. · [S2][biglaw-bench-s2]
-   > BigLaw Bench consists of 100 triplets.
+1. (field `domain.primary`) Family. The entry is placed in society-econ-law/legal-reasoning with agents-tooluse/research-agents secondary, although the paper frames its subject as long-horizon legal research agents and a run lasts up to three hours. The difference drawn here, as for finance-agent-benchmark, is that the grader scores the answer's legal content against an attorney rubric and Vals fixes the loop; a reviewer may rule that the agents-tooluse inclusion test ("the result it returned") takes it. · [S2][legal-research-bench-s2]
+   > LRB follows this outcome-level view, scoring the submitted answer rather than the path taken to it.
+2. (field `data.size`) The paper's numbers (thirteen models over all 413 questions, including the public and validation splits) are not the board's (the 208-question test split); the same model differs between them (Claude Opus 4.8 at 42.9% in the paper, 43.75% on the board). Claims need subset\_used. · [S2][legal-research-bench-s2]
+   > Unless noted otherwise, results in this paper are reported over the full 413-question corpus.
+3. (field `governance.independence_flags`) grader-from-evaluated-party rests on the paper's judge study reporting each candidate judge's agreement on models from its own provider; GPT-5.4 itself is not ranked. If only a judge whose own provider is named in the sources counts, the flag needs a source that attributes GPT-5.4 to its developer. · [S2][legal-research-bench-s2]
+   > lowest agreement is on models from its own provider
+4. (field `governance.independence_flags`) evaluator-sells-evaluations is not set. Vals licenses its private validation splits to companies and keeps a gated platform, which is close to selling evaluation; no page read says it sells evaluations of the systems it ranks. · [S4][legal-research-bench-s4]
+   > Private Validation Set: A larger, privately held dataset, which we license to companies for their own internal validation.
+5. (field `activity`) activity no-submission-channel and designed\_for\_subjects. Some rows name systems that may be products or domain-tuned models rather than general models (Astra for Law, GLM Legal); no page says how they entered or whether they ran in the standard harness. · [S3][legal-research-bench-s3]
+   > 7 Astra for Law 53.85%
+6. (field `execution.harness_availability`) harness\_availability is reference-implementation-only because the repository has no grader and the public sample has no answers or rubrics, so nobody outside Vals can score even the public questions; the paper calls the harness reproducible. · [S2][legal-research-bench-s2]
+   > We release a reproducible agentic evaluation harness
+7. (field `lifecycle`) lifecycle active rests on the maintainer's own board. No third-party paper or model report using the benchmark was looked for beyond Vals' pages. · [S5][legal-research-bench-s5]
+   > Legal Proprietary Legal Research Bench Updated: 11/19/2026 Models Tested: 101
+8. (field `versions`) Identity. released is the paper's date, but the repository is three months older and the board's launch is undated, so the release may be earlier. Only one version is recorded, and frozen is false because the board is live; whether Vals has changed items or rubrics since the paper is not stated. · [S1][legal-research-bench-s1]
+   > \[Submitted on 30 Sep 2026\]
+9. (field `data.contamination_risk`) contamination\_risk low rests on the splits being unreleased and the fact patterns novel. The test questions go to every provider's API on each run, and the answers rest on public law; medium is arguable.
+10. (field `reference_conditions`) model-graded-judge needs reference\_conditions naming the judge and its version (GPT-5.4 in the paper and on the page); no conditions record exists, and writing one was outside this task's write scope. · [S3][legal-research-bench-s3]
+   > All responses are graded by GPT 5.4 as a judge
 
-**Reviewer checklist** for `biglaw-bench`:
+**Reviewer checklist** for `legal-research-bench`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -1099,18 +895,297 @@ Considered and rejected:
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[biglaw-bench-s1]: https://www.harvey.ai/blog/introducing-biglaw-bench
-[biglaw-bench-s2]: https://arxiv.org/pdf/2605.25240v4
-[biglaw-bench-s3]: https://www.harvey.ai/blog/introducing-big-law-bench-research
-[biglaw-bench-s4]: https://www.harvey.ai/blog/introducing-biglaw-bench-arena
-[biglaw-bench-s5]: https://www.harvey.ai/blog/expanding-big-law-bench
-[biglaw-bench-s6]: https://www.harvey.ai/blog/fable-5-now-available-in-harvey
-[biglaw-bench-s7]: https://raw.githubusercontent.com/harveyai/biglaw-bench/138fd481b459a00bbd98eeb710f69ada1052bd47/README.md
-[biglaw-bench-s8]: https://www.harvey.ai/blog/introducing-big-law-bench-global
-[biglaw-bench-s9]: https://www.harvey.ai/blog/biglaw-bench-hallucinations
-[biglaw-bench-s10]: https://www.harvey.ai/blog/biglaw-bench-workflows-spa-deal-points
-[biglaw-bench-s11]: https://www.harvey.ai/blog/biglaw-bench-retrieval
-[biglaw-bench-s12]: https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark
+[legal-research-bench-s1]: https://arxiv.org/abs/2610.00609
+[legal-research-bench-s2]: https://arxiv.org/pdf/2610.00609v1
+[legal-research-bench-s3]: https://www.vals.ai/benchmarks/legal_research
+[legal-research-bench-s4]: https://www.vals.ai/methodology
+[legal-research-bench-s5]: https://www.vals.ai/benchmarks
+[legal-research-bench-s6]: https://raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6ec9b6e76bd3133a524dbdae565/LICENSE
+[legal-research-bench-s7]: https://raw.githubusercontent.com/vals-ai/legal-research-bench/ef5c3130f076e6ec9b6e76bd3133a524dbdae565/README.md
+[legal-research-bench-s8]: https://www.vals.ai/about
+
+### 2.5 Harvey LAB (harvey-lab)
+
+`data/benchmarks/society-econ-law/harvey-lab.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-28 · last verified 2026-11-28
+
+*Agents do law-firm work in a sandboxed client matter; LLM judges pass a task only if every expert criterion is met.*
+
+Harvey's open-source benchmark of agents on legal work. Each task gives the agent a short instruction, written as a partner's request to an associate (about fifty words), and a closed client matter in a sandboxed file system: matter files, a data room, templates and emails, relevant and peripheral documents mixed, with issues planted across them. The agent works through six workspace tools (bash, read, write, edit, glob, grep) and a finish tool, and must leave reviewable work product as files, such as a deal-team memo, a redline or an issues list. Each task's rubric lists equally weighted pass/fail criteria written by experts (facts, conclusions, citations, severity ratings, deadlines, amounts, formatting), each tied to a deliverable. An LLM judge grades them one by one, and a task passes only if every criterion does (all-pass). By default two judges, Claude Sonnet 4.6 and GPT-5.5, grade independently and the headline averages their all-pass values. The first release (May 2026) had 1,250 tasks in 24 practice areas with over 75,000 criteria. Extensions added 500 in-house contracting tasks (June), synthetic M&A data rooms of thousands of documents (July) and a US case-law track, LAB: USCL (October), of 100 brief-writing environments built from federal dockets and scored by pairwise judging and Elo. The public set now holds 2,010 tasks in 27 practice areas, under MIT with the lab-core harness and grader. Published scores are on a private holdout that mirrors the public distribution, 120 tasks on the boards: Harvey's initial results (top model 7.1%), and boards run by Vals AI (HLAB-Vals-1.1) and Artificial Analysis (Harvey LAB-AA v1.1), each with its own harness changes and version labels.
+
+| Classification | |
+| --- | --- |
+| Primary domain | society-econ-law/legal-document |
+| Secondary domains | society-econ-law/legal-reasoning, agents-tooluse/long-horizon-autonomy |
+| Capabilities | context-integration, factual-precision, constraint-satisfaction, tool-use |
+| Evaluation methods | rubric-graded, model-graded-judge, pairwise-preference-elo |
+| Designed for | model-in-benchmark-harness, agent-scaffold |
+| Evaluation target · execution mode · ground truth | learned-system · automated · expert-panel |
+| Lifecycle · activity | active · no-submission-channel |
+| Data access · refresh · contamination risk | private-test-server · versioned-releases · medium |
+| Reproducibility tier · harness | not-independently-reproducible · official-harness |
+| Maintainer type · submission process | industry-lab · maintainer-run |
+| Independence flags | grader-from-evaluated-party |
+| Licences: code · dataset | MIT · MIT |
+| Released | 2026-05-06 |
+| Links | homepage [www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark](https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark) · repository [github.com/harveyai/harvey-labs](https://github.com/harveyai/harvey-labs) |
+
+**Sources**
+
+| | Source | Type · publisher | URL | Archived copy |
+| --- | --- | --- | --- | --- |
+| S1 | `src-github-harveyai-harvey-labs-readme` | repository · GitHub | [raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a51...](https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/README.md) | [capture 2026-11-28](https://web.archive.org/web/20261128014944/https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/README.md) |
+| S2 | `src-harvey-blog-introducing-harveys-legal-agent-benchmark-2026-11` | blog-post · Harvey | [www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark](https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark) | none (withheld) |
+| S3 | `src-github-harveyai-harvey-labs-eval-strategies` | documentation · GitHub | [raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a51...](https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/docs/eval-strategies.md) | [capture 2026-11-28](https://web.archive.org/web/20261128013250/https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/docs/eval-strategies.md) |
+| S4 | `src-github-harveyai-harvey-labs-architecture` | documentation · GitHub | [raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a51...](https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/docs/architecture.md) | [capture 2026-11-28](https://web.archive.org/web/20261128011759/https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/docs/architecture.md) |
+| S5 | `src-harvey-blog-legal-agent-benchmark-initial-results` | blog-post · Harvey | [www.harvey.ai/blog/legal-agent-benchmark-initial-results](https://www.harvey.ai/blog/legal-agent-benchmark-initial-results) | none (withheld) |
+| S6 | `src-harvey-blog-legal-agent-bench-m-and-a-due-diligence` | blog-post · Harvey | [www.harvey.ai/blog/legal-agent-bench-m-and-a-due-diligence](https://www.harvey.ai/blog/legal-agent-bench-m-and-a-due-diligence) | none (withheld) |
+| S7 | `src-harvey-blog-legal-agent-bench-us-case-law` | blog-post · Harvey | [www.harvey.ai/blog/legal-agent-bench-us-case-law](https://www.harvey.ai/blog/legal-agent-bench-us-case-law) | none (withheld) |
+| S8 | `src-vals-ai-hlab` | leaderboard-page · Vals AI | [www.vals.ai/benchmarks/hlab](https://www.vals.ai/benchmarks/hlab) | [capture 2026-11-16](https://web.archive.org/web/20261116051650/https://www.vals.ai/benchmarks/hlab) |
+| S9 | `src-artificialanalysis-harvey-lab-aa` | leaderboard-page · Artificial Analysis | [artificialanalysis.ai/evaluations/harvey-lab-aa](https://artificialanalysis.ai/evaluations/harvey-lab-aa) | [capture 2026-11-28](https://web.archive.org/web/20261128005626/https://artificialanalysis.ai/evaluations/harvey-lab-aa) |
+| S10 | `src-arxiv-2607-25891-v2` | preprint · arXiv | [arxiv.org/pdf/2607.25891v2](https://arxiv.org/pdf/2607.25891v2) | none (not-required) |
+| S11 | `src-arxiv-2611-18856-v1` | preprint · arXiv | [arxiv.org/pdf/2611.18856v1](https://arxiv.org/pdf/2611.18856v1) | none (not-required) |
+| S12 | `src-github-harveyai-harvey-labs-license` | repository · GitHub | [raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a51...](https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/LICENSE) | [capture 2026-11-28](https://web.archive.org/web/20261128014025/https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/LICENSE) |
+| S13 | `src-harvey-blog-legal-agent-benchmark-in-house-contracting` | blog-post · Harvey | [www.harvey.ai/blog/legal-agent-benchmark-in-house-contracting](https://www.harvey.ai/blog/legal-agent-benchmark-in-house-contracting) | none (withheld) |
+| S14 | `src-github-harveyai-harvey-labs-changelog` | documentation · GitHub | [raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a51...](https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/CHANGELOG.md) | [capture 2026-11-28](https://web.archive.org/web/20261128012530/https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/CHANGELOG.md) |
+| S15 | `src-vals-ai-hlab-v1` | leaderboard-page · Vals AI | [www.vals.ai/benchmarks/hlab-v1](https://www.vals.ai/benchmarks/hlab-v1) | [capture 2026-11-28](https://web.archive.org/web/20261128024955/https://www.vals.ai/benchmarks/hlab-v1) |
+
+**Evidence** (68 quoted fields), by checklist area:
+
+#### harvey-lab · Identity and id
+
+- `self_description` · [S1][harvey-lab-s1]
+  > Harvey LAB is an open-source project aimed at benchmarking LLM agents' abilities to perform legal work in realistic environments.
+- `released` = 2026-05-06 · [S2][harvey-lab-s2]
+  > May 6, 2026
+- `lineage.forks` = id hlab-vals; maintainer Vals AI · [S8][harvey-lab-s8]
+  > Results are not comparable with the archived v1 board or with Artificial Analysis
+- `lineage.forks` = id harvey-lab-aa; maintainer Artificial Analysis (built with Harvey) · [S9][harvey-lab-s9]
+  > Artificial Analysis' implementation of Harvey's Legal Agent Benchmark (LAB), testing AI agents on real-world legal work from Harvey's dataset of 120 private tasks spanning 24 legal practice areas.
+
+#### harvey-lab · Domain and capabilities
+
+- `domain.primary` = society-econ-law/legal-document · [S2][harvey-lab-s2]
+  - why: The scored output is a legal work product written to files (a memo, a redline, an issues list, an escalation memo), and the rubric checks its legal substance and form criterion by criterion. That is drafting and reviewing legal documents, the leaf's definition. The family's exclusion for autonomous operation does not apply, because the grader reads what the deliverable says about the law and the facts, not the state the agent left in its sandbox.
+  > Each task consists of an instruction, a client matter containing relevant materials, and a requirement that the agent produce a work product for review.
+- `domain.secondary` = society-econ-law/legal-reasoning, agents-tooluse/long-horizon-autonomy · [S2][harvey-lab-s2]
+  - why: legal-reasoning because many criteria check that a rule was applied to the planted facts (whether a contract needs change-of-control consent, which issues stay open in a negotiation), and the work types include analysis and research. long-horizon-autonomy because each task is one unattended agent episode over a whole matter, which Harvey frames as long-horizon legal work (over 20 minutes per task for its top configuration; a diligence data room of about 45 million tokens). It is secondary because the score is the legal content, not the operation (review\_checks).
+  > To date, there has not been a benchmark that illustrates agent progress for long-horizon legal work.
+- `capability` = context-integration · [S2][harvey-lab-s2]
+  - why: The matter supplies every document the answer rests on, with issues embedded across several files and peripheral material mixed in, and criteria check the particulars drawn from them (a consent requirement, an amount, a deadline).
+  > The client matter defines a closed-universe set of documents and other materials that are needed for the law firm to complete work on behalf of the client.
+- `capability` = factual-precision · [S2][harvey-lab-s2]
+  - why: Rubrics break the deliverable into atomic criteria that check asserted particulars one by one, independently of the document as a whole.
+  > into atomic, binary pass/fail criteria: facts, conclusions, citations, severity ratings, recommendations, deadlines, dollar amounts, and formatting choices.
+- `capability` = constraint-satisfaction · [S3][harvey-lab-s3]
+  - why: The task score is all-pass, so any one failed criterion fails the task, which is the term's inclusion case; Harvey names all-pass as its standard.
+  > A task is only marked pass if every rubric criterion passes
+- `capability` = tool-use · [S2][harvey-lab-s2]
+  - why: The matter is reachable only through the workspace tools and the deliverables must be written as files to the output directory; a criterion whose deliverable is missing fails, and Harvey's trace analysis ties search and analysis behaviour to the all-pass score.
+  > As input, the agent receives access to a file system containing the background on the deal, a virtual data room and a short instruction from the partner
+- `evaluation_method` = rubric-graded, model-graded-judge, pairwise-preference-elo · [S3][harvey-lab-s3]
+  - why: Named criteria are checked individually and combined (all must pass), and a judge model applies them, so the entry takes both terms.
+  > a list of equally-weighted pass/fail criteria that an LLM judge grades individually
+- `designed_for_subjects` = model-in-benchmark-harness, agent-scaffold · [S2][harvey-lab-s2]
+  - why: The repository ships one harness (the lab-core agent loop, tools, skills and system prompt), in which Harvey's results and Vals AI's board run each model, and Harvey also built the benchmark for agent builders comparing harness changes; Artificial Analysis runs the tasks in its own Stirrup harness.
+  > We are open-sourcing LAB to give model providers, agent builders, researchers, and law firms a shared way to measure progress on long-horizon legal agents.
+- `secondary_axes` = cost, latency · [S5][harvey-lab-s5]
+  - why: Harvey reports per-task cost and latency beside all-pass scores, and both boards list cost and duration per task.
+  > On LAB, reaching the top of the leaderboard runs to roughly $50 per task and over 20 minutes of latency.
+
+Considered and rejected:
+
+- `domain` not `society-econ-law/economically-valuable-work` · [S3][harvey-lab-s3]
+  - why: The tasks come from real client matters broken into associates' assignments, but the leaf is defined by expert comparison against human work product, and here a judge checks rubric criteria with no professional deliverable to compare against; the eval docs say no golden reference is used. biglaw-bench takes the leaf as a secondary on the same ground (review\_checks).
+  > No golden reference output is needed.
+- `domain` not `agents-tooluse/operating-system-tasks` · [S4][harvey-lab-s4]
+  - why: The agent acts through bash and file tools inside a Podman sandbox, and Vals reports that bash and file reads make up most calls, but nothing checks the machine's end state; the judge reads the deliverables' text against legal criteria.
+  > Every agent run executes inside a per-task Podman sandbox
+- `domain` not `agents-tooluse/research-agents` · [S2][harvey-lab-s2]
+  - why: The main tasks are closed-universe, with every needed document in the matter; only the USCL track's open-book condition gives search tools, so the leaf is that subset's secondary.
+  > The client matter defines a closed-universe set of documents and other materials that are needed for the law firm to complete work on behalf of the client.
+- `capability` not `long-horizon-execution` · [S5][harvey-lab-s5]
+  - why: Episodes are long, but an early error can be repaired later in the episode; Harvey reports that revising after a check raises all-pass scores, so the term's unrecoverable-step test is not met.
+  > Agents that close this revise-after-check loop improve all-pass scores by 1.5 points on average.
+- `capability` not `memory-retention` · [S6][harvey-lab-s6]
+  - why: The diligence data rooms run to about 45 million tokens, far beyond a context window, but the term's exclusion says length alone is not evidence, and no criterion is reported to test information carried across the episode.
+  > Collectively, these documents total around 45 million tokens of context.
+- `capability` not `instruction-following` · [S2][harvey-lab-s2]
+  - why: Instructions are short statements of the work wanted; criteria include formatting choices but score the work product's substance, not compliance with stated constraints.
+  > Instructions are short, averaging just fifty words.
+- `evaluation_method` not `human-expert-eval` · [S7][harvey-lab-s7]
+  - why: Experts wrote the rubrics, and lawyers review USCL's judging criteria, but no published score comes from lawyers' ratings.
+  > These criteria are reviewed by lawyers and calibrated to ensure they are relevant to reasons expert reviewers would prefer a brief.
+- `designed_for_subjects` not `full-product-pipeline` · [S2][harvey-lab-s2]
+  - why: Harvey uses LAB to evaluate its own products, but no source read publishes a score for a shipped product, Harvey's or another vendor's.
+  > We are already seeing LAB being used by both our internal teams for product evaluation
+
+#### harvey-lab · Task and evaluation
+
+- `learned_entrant_evidence` = system Claude Opus 4.7 · [S5][harvey-lab-s5]
+  > Claude Opus 4.7 leads at 7.1%, with Sonnet 4.6 at 5.4%, Opus 4.6 at 4.2%, GPT-5.5 at 2.1%, and Gemini 3.5 Flash at 0.8%
+- `execution_mode` = automated · [S4][harvey-lab-s4]
+  - why: The agent loop runs until the model calls finish or stops, and the judges grade every criterion without a person; lawyers enter only through the rubrics.
+  > By default, grades independently with Sonnet 4.6 and GPT-5.5
+- `ground_truth_source` = expert-panel · [S2][harvey-lab-s2]
+  - why: The criteria, written by legal experts, are the standard; the judges apply them and there is no separate answer file.
+  > The first version of LAB includes more than 1,200 agent tasks across 24 legal practice areas, and is evaluated by over 75,000 expert-written rubric criteria.
+- `reproducible_by_third_party` = false · [S5][harvey-lab-s5]
+  - why: Every published score is on the private holdout, which only Harvey and the two board operators it shared it with can run. A run of the public set reproduces end to end with lab-core, given API access to the agent's model and both judges, but gives different numbers.
+  > To evaluate agents in a standardized way, we created a hold-out set of legal tasks that mirror the practice areas and task distribution from the public LAB set.
+- `task` = exists true; input a short instruction written as a partner's request to an associate (about fifty words), with the deliverables it expects, a client matter in a sandboxed file system (matter files, a data room, templates, emails), with relevant and peripheral documents and issues planted across them, six workspace tools (bash, read, write, edit, glob, grep), a finish tool and skills for docx, pptx and xlsx files; output Deliverable files in the output directory (memos, reports, redlines, issues lists, spreadsheets, presentations), named in the task's deliverables map.; scoring Each criterion passes or fails on one judge call that sees only the deliverables it names; a criterion whose deliverables are missing fails without a call. A task scores 1 for a judge only if every criterion passes. The headline is the all-pass rate averaged over the two standard judges, so one task scores 0, 0.5 or 1; strict both-judge all-pass and the criterion pass rate (macro and pooled) are reported beside it. · [S3][harvey-lab-s3]
+  > The canonical headline remains the averaged all-pass rate; strict both-agree all-pass is reported separately.
+- `execution.compute_tier` = api-credits-only · [S5][harvey-lab-s5]
+  - why: A run is the agent model's and the two judges' API calls, with a Podman sandbox per task on an ordinary machine; Harvey's top configuration cost about $50 and 20 minutes per task.
+  > On LAB, reaching the top of the leaderboard runs to roughly $50 per task and over 20 minutes of latency.
+- `execution.reproducibility_tier` = not-independently-reproducible · [S8][harvey-lab-s8]
+  - why: The published scores are on a holdout only Harvey and its two board partners hold, which the tier's inclusion covers; the public set runs fully automatically with the released harness.
+  > The results here are from the held-out set.
+- `execution.harness` = lab-core, the harvey-labs repository's agent harness and grader (tagged releases v1.1.0 to v1.3.0, by GitHub's API; main bumped the version to 1.4.0 on 2026-11-12, not yet a release when read) · [S1][harvey-lab-s1]
+  > The harness and grader ship as the \`lab-core\` Python package
+- `execution.harness_gotcha` · [S1][harvey-lab-s1]
+  > Scores from different releases are not always comparable
+- `aggregation_policy` = official-aggregate · [S3][harvey-lab-s3]
+  - why: The docs name one headline over all tasks.
+  > The canonical headline remains the averaged all-pass rate; strict both-agree all-pass is reported separately.
+
+#### harvey-lab · Data and licence
+
+- `as_used` = protocol HLAB-Vals-1.1, Vals AI's board. Vals runs Harvey's harness, tools, skills and grading protocol on the private holdout with internet access disabled, on its own infrastructure, with its own harness fixes (context compaction, a nudge when a model stops without finishing, a cap on tool results), and scores the average of the two judges' task pass rates.; split the private holdout (120 tasks), as remediated for v1.1 · [S8][harvey-lab-s8]
+  > Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched source document was replaced. Still 120 tasks.
+- `as_used` = protocol Harvey LAB-AA v1.1, Artificial Analysis's run in its own Stirrup harness, with three judges (GPT-6 Sol, Grok 4.7, Claude Opus 5.5) averaged, and a check of every deliverable against its source documents that zeroes any task with a material hallucination.; split Harvey's 120 private tasks, five per practice area · [S9][harvey-lab-s9]
+  > We run Harvey LAB-AA v1.1 with our Stirrup agent harness on Harvey's dataset of 120 private tasks spanning 24 legal practice areas.
+- `as_used` = protocol Messier (arXiv 2607.25891, 2026), a corpus of agent results, runs LAB with five models in the OpenHands scaffold, one run per task, and keeps the per-criterion verdicts. · [S10][harvey-lab-s10]
+  > HarveyAI-Lab uses 23–194 verifier results per task
+- `as_used` = protocol Self-Improvement Memory (arXiv 2611.18856, 2026) lists Harvey LAB as the source (S) benchmark of its Workspace domain, with JobBench, GDPval and APEX-Agents as targets (T). · [S11][harvey-lab-s11]
+  > Workspace S: Harvey LAB T: JobBench
+- `data.access` = private-test-server · [S5][harvey-lab-s5]
+  - why: The holdout behind the headline scores never becomes public; sharing it with two vetted board operators creates no public access path, which the term's inclusion test says does not change the tag. The public set is not the scored set of any published board.
+  > To evaluate agents in a standardized way, we created a hold-out set of legal tasks that mirror the practice areas and task distribution from the public LAB set.
+- `data.refresh` = versioned-releases · [S8][harvey-lab-s8]
+  - why: The holdout behind the boards has changed only under labelled versions (Vals' v1 and v1.1, Artificial Analysis's v1.0 and v1.1, both listing what changed), and the public set grew in dated announcements and is pinned by release or commit, with a changelog of score-moving changes since September 2026. Dataset fixes before then are only in git history (review\_checks).
+  > Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched source document was replaced. Still 120 tasks.
+- `data.data_provenance` = expert-authored, curated-public-database · [S2][harvey-lab-s2]
+  - why: The tasks were broken out of matters handled by practising lawyers and the criteria are expert-written; the authors' prior legal skill is what the items test.
+  > To scale the benchmark, we started with real client matters handled by practicing lawyers in each practice area.
+- `data.contamination_risk` = medium · [S2][harvey-lab-s2]
+  > The same criteria can be applied by an LLM judge, used to compare models and harness changes, and fed back into agent training loops as per-criterion reward signals.
+- `data.ceiling_anchor_type` = theoretical-maximum · [S3][harvey-lab-s3]
+  > A task is only marked pass if every rubric criterion passes
+- `data.dataset_licence` = MIT · [S12][harvey-lab-s12]
+  > MIT License Copyright (c) 2026 Harvey AI
+- `data.size` = count 120; unit tasks; subset the private holdout behind every published board (v1.1) · [S8][harvey-lab-s8]
+  > Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched source document was replaced. Still 120 tasks.
+- `data.size` = count 2010; unit tasks; subset the public set at commit 7f9b1ee (27 practice areas) · [S3][harvey-lab-s3]
+  > The benchmark contains 2,010 tasks across 27 practice areas, with \~114,000 rubric criteria.
+- `data.size` = count 114000; unit rubric criteria (approximate); subset the public set at commit 7f9b1ee · [S3][harvey-lab-s3]
+  > The benchmark contains 2,010 tasks across 27 practice areas, with \~114,000 rubric criteria.
+- `data.size` = count 1250; unit tasks; subset the first release (May 2026), 24 practice areas · [S2][harvey-lab-s2]
+  > The change-of-control task is one of 1,250 tasks in LAB, spanning 24 legal practice areas.
+- `data.size` = count 75000; unit expert-written rubric criteria (over); subset the first release (May 2026) · [S2][harvey-lab-s2]
+  > The first version of LAB includes more than 1,200 agent tasks across 24 legal practice areas, and is evaluated by over 75,000 expert-written rubric criteria.
+- `data.size` = count 500; unit tasks; subset the in-house contracting extension (June 2026) · [S13][harvey-lab-s13]
+  > introducing 500 new tasks to LAB focused on contracting
+- `data.size` = count 100; unit brief-writing environments; subset LAB: USCL (October 2026), unreleased · [S7][harvey-lab-s7]
+  > Through human review and manual correction, we expanded that to a final set of 100.
+- `execution.code_licence` = MIT · [S12][harvey-lab-s12]
+  > MIT License Copyright (c) 2026 Harvey AI
+- `subsets` = id harvey-lab#holdout; label Private holdout; items 120; scored_separately true · [S5][harvey-lab-s5]
+  > To evaluate agents in a standardized way, we created a hold-out set of legal tasks that mirror the practice areas and task distribution from the public LAB set.
+- `subsets` = id harvey-lab#holdout; label Private holdout; items 120; scored_separately true · [S8][harvey-lab-s8]
+  > Harvey fixed the private holdout: 17 unsolvable criteria were removed and one mismatched source document was replaced. Still 120 tasks.
+- `subsets` = id harvey-lab#holdout; label Private holdout; items 120; scored_separately true · [S9][harvey-lab-s9]
+  > Five tasks per practice area
+- `subsets` = id harvey-lab#public; label Public task set; items 2010; scored_separately true · [S3][harvey-lab-s3]
+  > The benchmark contains 2,010 tasks across 27 practice areas, with \~114,000 rubric criteria.
+- `subsets` = id harvey-lab#public; label Public task set; items 2010; scored_separately true · [S15][harvey-lab-s15]
+  > There are two datasets as of today: the public set and the held-out test set.
+- `subsets` = id harvey-lab#public; label Public task set; items 2010; scored_separately true · [S10][harvey-lab-s10]
+  > we contribute new evaluations on six benchmarks: HarveyAI-Lab
+- `subsets` = id harvey-lab#uscl; label LAB: United States Case Law (LAB: USCL); items 100; scored_separately true; capability_override context-integration, tool-use, autonomy · [S7][harvey-lab-s7]
+  > Today we introduce LAB: United States Case Law (LAB: USCL), an evaluation framework for testing frontier models
+- `subsets` = id harvey-lab#uscl; label LAB: United States Case Law (LAB: USCL); items 100; scored_separately true; capability_override context-integration, tool-use, autonomy · [S7][harvey-lab-s7]
+  > For each environment, we define two task conditions: open- and closed-book.
+- `subsets` = id harvey-lab#uscl; label LAB: United States Case Law (LAB: USCL); items 100; scored_separately true; capability_override context-integration, tool-use, autonomy · [S7][harvey-lab-s7]
+  > From there, it works on its own, with no attorney feedback or follow-up prompts.
+- `subsets` = id harvey-lab#uscl; label LAB: United States Case Law (LAB: USCL); items 100; scored_separately true; capability_override context-integration, tool-use, autonomy · [S7][harvey-lab-s7]
+  > We evaluate model-written briefs pairwise in a round-robin tournament using GRMs which select the better brief (or declare a tie)
+- `subsets` = id harvey-lab#uscl; label LAB: United States Case Law (LAB: USCL); items 100; scored_separately true; capability_override context-integration, tool-use, autonomy · [S7][harvey-lab-s7]
+  > wins and losses in these head-to-head games into an Elo rating for each model
+- `subsets` = id harvey-lab#uscl; label LAB: United States Case Law (LAB: USCL); items 100; scored_separately true; capability_override context-integration, tool-use, autonomy · [S7][harvey-lab-s7]
+  > Unlike previous LAB releases, we are not currently publishing sample environments alongside this post.
+
+#### harvey-lab · Governance and independence
+
+- `governance.maintainer` = Harvey (Harvey AI Corporation) · [S12][harvey-lab-s12]
+  - why: Harvey built the tasks, holds the repository (harveyai on GitHub, an organisation account) and the private holdout, publishes the posts and releases lab-core.
+  > MIT License Copyright (c) 2026 Harvey AI
+- `governance.maintainer_type` = industry-lab · [S2][harvey-lab-s2]
+  > AI agents designed for legal work
+- `governance.submission_process` = maintainer-run · [S5][harvey-lab-s5]
+  > Since launch, we have been baselining frontier models from prominent AI providers on an evaluation set that mirrors the task distribution of LAB.
+- `governance.independence_flags` = flag grader-from-evaluated-party · [S4][harvey-lab-s4]
+  > By default, grades independently with Sonnet 4.6 and GPT-5.5
+- `governance.known_limitation` · [S14][harvey-lab-s14]
+  > could pass criteria that check for the absence of something, such as distractors.
+
+#### harvey-lab · Lifecycle and activity
+
+- `lifecycle` = active · [S8][harvey-lab-s8]
+  - why: Two boards run on the holdout and add models as they are released (Vals' updated on 2026-11-19 with 44 models, Artificial Analysis's with rows for November 2026 models), Harvey extended the benchmark in June, July and October 2026, and 2026 papers run it.
+  > Benchmarks / Legal Industry Partner HLAB-Vals-1.1 Updated 11/19/2026 Version 1.1
+- `activity` = no-submission-channel · [S2][harvey-lab-s2]
+  - why: The only boards are run by their operators, and Harvey's own results are its own runs.
+  > We're intentionally launching LAB without a leaderboard because we expect the dataset to evolve over time
+
+**Open review checks** (11):
+
+1. (field `id`) Id. harvey-lab is proposed from the repository (harvey-labs), the README's and the boards' name (Harvey LAB, Harvey LAB-AA) and the acronym; Messier calls it HarveyAI-Lab and Vals HLAB. Id allocation is a human act.
+2. (field `domain`) Family. society-econ-law/legal-document is primary because the rubric scores the legal content of the deliverables. APEX-Agents, also rubric-graded professional work in a tool environment (including corporate law), went to agents-tooluse/tool-api-calling; the difference relied on here is that LAB is legal work only, with generic workspace tools, and claims to measure legal work. Among agents-tooluse leaves, long-horizon-autonomy is the secondary; operating-system-tasks is the alternative, since bash and file reads are most calls. · [S8][harvey-lab-s8]
+   > Tests an agent's ability to complete legal work using documents, spreadsheets, presentations, and file-system tools.
+3. (field `domain`) economically-valuable-work is rejected by its definition (expert comparison against human work product), while biglaw-bench, Harvey's other benchmark, takes it as a secondary on the same kind of evidence; one of the two should change so the family reads consistently. · [S2][harvey-lab-s2]
+   > To scale the benchmark, we started with real client matters handled by practicing lawyers in each practice area.
+4. (field `lineage`) Lineage. HLAB-Vals and Harvey LAB-AA are recorded as forks (other maintainers, their own version labels, harness changes; Artificial Analysis also its own judges and a hallucination gate). Vals runs Harvey's own harness and grading on Harvey's holdout with Harvey as partner, and Harvey announced the Artificial Analysis board as its leaderboard, so either could instead be read as this benchmark's board (leaderboard\_url) on the holdout subset. Neither fork has a record; their ids are proposals. · [S5][harvey-lab-s5]
+   > We are partnering with Artificial Analysis to scale up LAB evaluation and publish a regularly-updated leaderboard as new model launches arrive.
+5. (field `versions`) Versions. holdout-1-1 is undated and known only from the boards. The 2026-09 revision is a grading and harness change, not new items, taken as breaking because the changelog says so; lab-core's releases (v1.1.0 2026-09-18, v1.2.0 2026-10-01, v1.3.0 2026-10-21, by GitHub's API) could instead each be a version, as the README asks claims to name one. Whether the in-house contracting and diligence additions are editions (new items, same task) rather than track-sets is not clear-cut under 04 S4. · [S14][harvey-lab-s14]
+   > Single-judge results before this line are not comparable to dual results after it.
+6. (field `data.refresh`) refresh versioned-releases follows the holdout behind the boards. On the public set, dataset fixes made before 2026-09-03 are recorded only in git history, not in the changelog, so a claim on the public set needs its commit; rolling-live is the alternative if the public set is taken as what claims use. · [S14][harvey-lab-s14]
+   > Dataset fixes from that period are not backfilled
+7. (field `data.access`) data.access private-test-server rests on every published score being on the holdout. The 2,010-task public set is fully open (MIT, no gate) and is what third-party papers run; if it is read as the headline set, fully-open applies, and reproducible\_by\_third\_party and reproducibility\_tier change with it.
+8. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark is not set. Harvey sells legal agents, says it is building diligence agents and uses LAB for internal product evaluation, but no source read publishes a score for a Harvey system. Set the flag if Harvey or a board ranks one. · [S6][harvey-lab-s6]
+   > how we are building specialized agents to help conduct diligence
+9. (field `governance.independence_flags`) grader-from-evaluated-party rests on the default judges, Claude Sonnet 4.6 and GPT-5.5, being ranked in Harvey's results and on Vals' v1 board. On HLAB-Vals-1.1 only later models of the same two labs are ranked, and Artificial Analysis says it found minimal self-preference among its three judges. · [S15][harvey-lab-s15]
+   > 38 Claude Sonnet 4.6 5.00%
+10. (field `data.data_provenance`) data\_provenance. The matter documents are synthetic, and the announcement's acknowledgements credit a document and scenario generation pipeline without saying whether a model writes the documents (the passage names a person, so it is not quoted). If a model does, add model-generated. · [S4][harvey-lab-s4]
+   > an agent reads a synthetic matter file and writes deliverables
+11. (field `activity`) activity no-submission-channel. Harvey promised standards for normalised submissions in May 2026; none was found in the posts or repository read, and the boards' operators pick the models. If a submission route exists, activity and submission\_process change. · [S2][harvey-lab-s2]
+   > We're intentionally launching LAB without a leaderboard because we expect the dataset to evolve over time
+
+**Reviewer checklist** for `harvey-lab`:
+
+- [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
+- [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
+- [ ] Task and evaluation: the task, scoring, ground truth, entrants and harness read as the sources describe them
+- [ ] Data and licence: access, refresh, provenance, sizes, subsets, contamination and licences match the sources
+- [ ] Governance and independence: maintainer type, submission process, funding and independence flags are right
+- [ ] Lifecycle and activity: lifecycle, activity, versions, editions and history are current
+- [ ] Every open review check above is answered or resolved
+- [ ] Nothing here would embarrass the catalogue in front of a specialist
+
+[harvey-lab-s1]: https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/README.md
+[harvey-lab-s2]: https://www.harvey.ai/blog/introducing-harveys-legal-agent-benchmark
+[harvey-lab-s3]: https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/docs/eval-strategies.md
+[harvey-lab-s4]: https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/docs/architecture.md
+[harvey-lab-s5]: https://www.harvey.ai/blog/legal-agent-benchmark-initial-results
+[harvey-lab-s6]: https://www.harvey.ai/blog/legal-agent-bench-m-and-a-due-diligence
+[harvey-lab-s7]: https://www.harvey.ai/blog/legal-agent-bench-us-case-law
+[harvey-lab-s8]: https://www.vals.ai/benchmarks/hlab
+[harvey-lab-s9]: https://artificialanalysis.ai/evaluations/harvey-lab-aa
+[harvey-lab-s10]: https://arxiv.org/pdf/2607.25891v2
+[harvey-lab-s11]: https://arxiv.org/pdf/2611.18856v1
+[harvey-lab-s12]: https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/LICENSE
+[harvey-lab-s13]: https://www.harvey.ai/blog/legal-agent-benchmark-in-house-contracting
+[harvey-lab-s14]: https://raw.githubusercontent.com/harveyai/harvey-labs/7f9b1ee19f9224576a5a5143c4e6f75842ac7020/CHANGELOG.md
+[harvey-lab-s15]: https://www.vals.ai/benchmarks/hlab-v1
 
 ### 2.6 GLEE (glee)
 
@@ -1909,144 +1984,203 @@ A NeurIPS 2026 competition that tests how well submitted systems stand in for ha
 [simulacrabench-s5]: https://simulacrabench.org/
 [simulacrabench-s6]: https://raw.githubusercontent.com/SituatedEvals/public/aa03186f8f083c7785a1a566c802c2077925e265/config.yml
 
-### 2.10 ForecastBench (forecastbench)
+### 2.10 FutureEval (futureeval)
 
-`data/benchmarks/society-econ-law/forecastbench.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-09-27 · last verified 2026-11-18
+`data/benchmarks/society-econ-law/futureeval.yaml` · `verification_status: ai-drafted-unverified` · curator confidence medium · added 2026-11-28 · last verified 2026-11-28
 
-*LLMs and humans forecast real future events; scores update as the questions resolve.*
+*AI models and forecasting bots predict live Metaculus questions, scored as they resolve and set against Pro Forecasters.*
 
-A benchmark run by the Forecasting Research Institute in which language models, and groups of superforecasters and members of the public, give probabilities for questions about future events. Questions come from two kinds of source: dataset questions generated from public time series with fixed templates, each asked at eight horizons from 7 days to 10 years, and market questions drawn from prediction platforms. New rounds of questions are released regularly and the leaderboards are recomputed nightly as questions resolve, so a score is provisional until every question behind it has resolved. Scores are Brier scores, adjusted for question difficulty and shown since 2026 as a Brier Index (0-100%, higher is better). There are separate leaderboards for out-of-the-box models (baseline), for open submissions that may use tools and scaffolds (tournament), and for early dataset-only results (preliminary). Known weaknesses the sources name: human groups were last surveyed in July 2024, so later models are compared with them through a fixed-effects adjustment rather than on the same questions.
+Metaculus's benchmark of AI forecasting, in which AI systems give probabilities and distributions for questions on Metaculus, a forecasting platform, about future events in science, technology, health, geopolitics, AI and other topics, and are scored as the questions resolve. It has three parts. A Model Leaderboard runs all major models with one simple fixed prompt, with news research from a search provider (usually AskNews) pasted in, on most open Metaculus questions, and ranks them by a skill score built from head-to-head Peer Scores and set to 0 for GPT-4o, counting each model's forecasts for a year from its first one; it updates daily. Bot tournaments let developers enter their own bots, with no human in the loop: the primary seasonal tournament (about $50,000, four-month seasons starting in January, May and September, 300 to 400 questions each in binary, numeric and multiple-choice formats, open to new entrants at any time) and MiniBench, two-week rounds of about 60 auto-generated questions for about $1,000. Human baselines come from the Metaculus community and from Metaculus's Pro Forecasters, who forecast about 100 questions of each seasonal tournament; after each season Metaculus compares a team of 10 Pros with the best 10 bots by head-to-head spot peer score. The series began as quarterly AI Benchmarking tournaments in Q3 2024 (binary questions only until Q4 2024). Pros led bots in every season to Q2 2025; in Spring and Summer 2026 the gap narrowed and was no longer statistically significant. Known weaknesses the sources name: bots, Metaculus's own included, miss questions through provider outages and code bugs, and the scores rest on forecast data Metaculus releases only on request.
 
 | Classification | |
 | --- | --- |
 | Primary domain | society-econ-law/forecasting-prediction-markets |
 | Secondary domains | - |
 | Capabilities | probabilistic-forecasting, calibration-uncertainty |
-| Evaluation methods | prospective-resolution, statistical-fit |
+| Evaluation methods | prospective-resolution, uncertainty-calibration-score, entrant-relative-ranking |
 | Designed for | instruction-tuned-model, reasoning-model, agent-scaffold, human-expert, human-nonexpert |
 | Evaluation target · execution mode · ground truth | learned-system · automated · forecast-resolution |
 | Lifecycle · activity | active · accepting-submissions |
-| Data access · refresh · contamination risk | fully-open · resolves-over-time · low |
-| Reproducibility tier · harness | fully-automatable · official-harness |
-| Maintainer type · submission process | nonprofit · maintainer-verified |
-| Independence flags | none |
-| Licences: code · dataset | null · CC-BY-SA-4.0 |
-| Released | 2024-09-30 |
-| Links | homepage [www.forecastbench.org/](https://www.forecastbench.org/) · repository [github.com/forecastingresearch/forecastbench](https://github.com/forecastingresearch/forecastbench) · leaderboard [www.forecastbench.org/leaderboards/](https://www.forecastbench.org/leaderboards/) |
+| Data access · refresh · contamination risk | gated-registration · resolves-over-time · low |
+| Reproducibility tier · harness | not-independently-reproducible · reference-implementation-only |
+| Maintainer type · submission process | industry-lab · held-out-server, maintainer-run |
+| Independence flags | funded-by-evaluated-party, evaluator-sells-evaluations |
+| Licences: code · dataset | MIT · null |
+| Released | null |
+| Links | homepage [www.metaculus.com/futureeval/](https://www.metaculus.com/futureeval/) · repository [github.com/Metaculus/forecasting-tools](https://github.com/Metaculus/forecasting-tools) · leaderboard [www.metaculus.com/futureeval/leaderboard/](https://www.metaculus.com/futureeval/leaderboard/) |
 
 **Sources**
 
 | | Source | Type · publisher | URL | Archived copy |
 | --- | --- | --- | --- | --- |
-| S1 | `src-forecastbench-arxiv-abs` | preprint · arXiv | [arxiv.org/abs/2409.19839](https://arxiv.org/abs/2409.19839) | none (not-required) |
-| S2 | `src-forecastbench-about` | documentation · Forecasting Research Institute | [www.forecastbench.org/about/](https://www.forecastbench.org/about/) | [capture 2026-09-26](https://web.archive.org/web/20260926102029/https://www.forecastbench.org/about/) |
-| S3 | `src-forecastbench-leaderboards` | leaderboard-page · Forecasting Research Institute | [www.forecastbench.org/leaderboards/](https://www.forecastbench.org/leaderboards/) | [capture 2026-09-26](https://web.archive.org/web/20260926102034/https://www.forecastbench.org/leaderboards/) |
-| S4 | `src-forecastbench-arxiv-html` | preprint · arXiv | [arxiv.org/html/2409.19839](https://arxiv.org/html/2409.19839) | none (not-required) |
-| S5 | `src-github-forecastbench-datasets-readme-ed36f73` | repository · GitHub | [raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/...](https://raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/ed36f732de709ff288af275cfeb28b88e8795a8b/README.md) | [capture 2026-11-24](https://web.archive.org/web/20261124161816/https://raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/ed36f732de709ff288af275cfeb28b88e8795a8b/README.md) |
-| S6 | `src-arxiv-2606-18686` | preprint · arXiv | [arxiv.org/abs/2606.18686](https://arxiv.org/abs/2606.18686) | none (not-required) |
-| S7 | `src-forecastbench-baseline-data` | dataset-export · Forecasting Research Institute | [www.forecastbench.org/assets/js/leaderboard\_baseline\_full.js](https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js) | [capture 2026-09-26](https://web.archive.org/web/20260926102017/https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js) |
-| S8 | `src-metaculus-futureeval` | leaderboard-page · Metaculus | [www.metaculus.com/futureeval/](https://www.metaculus.com/futureeval/) | [capture 2026-09-24](https://web.archive.org/web/20260924185724/https://www.metaculus.com/futureeval/) |
+| S1 | `src-metaculus-substack-futureeval` | blog-post · Metaculus (Substack) | [metaculus.substack.com/p/metaculus-futureeval-ai-forecasting-benchmark](https://metaculus.substack.com/p/metaculus-futureeval-ai-forecasting-benchmark) | [capture 2026-11-28](https://web.archive.org/web/20261128024213/https://metaculus.substack.com/p/metaculus-futureeval-ai-forecasting-benchmark) |
+| S2 | `src-github-aib-analysis-season-config-e5e7341` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264...](https://raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264ce33fb59c650dfce7c80/aib_analysis/pro_vs_bot_writeup/season_config.py) | [capture 2026-11-28](https://web.archive.org/web/20261128010231/https://raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264ce33fb59c650dfce7c80/aib_analysis/pro_vs_bot_writeup/season_config.py) |
+| S3 | `src-github-metaculus-messages-en-d1e2145` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a9...](https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/messages/en.json) | [capture 2026-11-28](https://web.archive.org/web/20261128022317/https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/messages/en.json) |
+| S4 | `src-github-metaculus-futureeval-methodology-d1e2145` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a9...](https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-methodology-sections.tsx) | [capture 2026-11-28](https://web.archive.org/web/20261128025606/https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-methodology-sections.tsx) |
+| S5 | `src-arxiv-2606-29661` | preprint · arXiv | [arxiv.org/abs/2606.29661](https://arxiv.org/abs/2606.29661) | none (not-required) |
+| S6 | `src-github-metaculus-futureeval-tournaments-d1e2145` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a9...](https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-tournaments.tsx) | [capture 2026-11-28](https://web.archive.org/web/20261128022321/https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-tournaments.tsx) |
+| S7 | `src-github-aib-analysis-readme-e5e7341` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264...](https://raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264ce33fb59c650dfce7c80/README.md) | [capture 2026-11-28](https://web.archive.org/web/20261128010227/https://raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264ce33fb59c650dfce7c80/README.md) |
+| S8 | `src-github-metaculus-futureeval-participate-d1e2145` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a9...](https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-participate-tab.tsx) | [capture 2026-11-28](https://web.archive.org/web/20261128025818/https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-participate-tab.tsx) |
+| S9 | `src-github-metaculus-futureeval-partner-d1e2145` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a9...](https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-partner-tab.tsx) | [capture 2026-11-28](https://web.archive.org/web/20261128021309/https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/futureeval-partner-tab.tsx) |
+| S10 | `src-github-forecasting-tools-readme-3ca9107` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/forecasting-tools/3ca91074bb3190f...](https://raw.githubusercontent.com/Metaculus/forecasting-tools/3ca91074bb3190f6e91b79645da174fd9a4e1d99/README.md) | [capture 2026-11-28](https://web.archive.org/web/20261128011002/https://raw.githubusercontent.com/Metaculus/forecasting-tools/3ca91074bb3190f6e91b79645da174fd9a4e1d99/README.md) |
+| S11 | `src-github-metaculus-futureeval-bot-meta-d1e2145` | repository · GitHub (Metaculus organisation) | [raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a9...](https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/leaderboard/bot_meta.ts) | [capture 2026-11-28](https://web.archive.org/web/20261128015933/https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/%28futureeval%29/futureeval/components/leaderboard/bot_meta.ts) |
 
-**Evidence** (28 quoted fields), by checklist area:
+**Evidence** (44 quoted fields), by checklist area:
 
-#### forecastbench · Identity and id
+#### futureeval · Identity and id
 
-- `self_description` · [S1][forecastbench-s1]
-  > we introduce ForecastBench: a dynamic benchmark that evaluates the accuracy of ML systems on an automatically generated and regularly updated set of 1,000 forecasting questions.
-- `released` = 2024-09-30 · [S1][forecastbench-s1]
-  - why: The arXiv v1 submission date, the earliest public release any source read here dates.
-  > \[v1\] Mon, 30 Sep 2024 00:41:51 UTC
-- `lineage.variants` = id forecastbench-sim; relation simulated-world companion benchmark, with new forecasting questions generated from Freeciv game rollouts (none of ForecastBench's questions), scored ForecastBench-style by Brier score and CRPS; not on ForecastBench's leaderboards · [S6][forecastbench-s6]
-  > We introduce ForecastBench-Sim, a simulated-world forecasting benchmark built on game rollouts from Freeciv, a turn-based strategy game modelled on the Civilization series.
+- `self_description` · [S1][futureeval-s1]
+  > FutureEval measures how accurately AI predicts future outcomes across science, technology, health, geopolitics, AI itself, and more.
+- `released` = null · [S2][futureeval-s2]
+  > SEASON\_ORDER: tuple\[str, ...\] = ( "Q3 2024", "Q4 2024", "Q1 2025", "Q2 2025", "Fall 2025", "Spring 2026", "Summer 2026", )
 
-#### forecastbench · Domain and capabilities
+#### futureeval · Domain and capabilities
 
-- `domain.primary` = society-econ-law/forecasting-prediction-markets · [S2][forecastbench-s2]
-  - why: Probabilistic forecasts about future events that later resolve, the leaf's definition.
-  > We evaluate LLMs by regularly asking them to make probabilistic forecasts about future events, thereby creating a contamination-free benchmark.
-- `capability` = probabilistic-forecasting · [S1][forecastbench-s1]
-  - why: The inclusion test word for word, and taxonomy/capabilities.yaml names forecastbench as its example.
-  > ForecastBench is comprised solely of questions about future events that have no known answer at the time of submission.
-- `capability` = calibration-uncertainty · [S3][forecastbench-s3]
-  - why: The scoring function consumes the probability the forecaster emits; the Brier score penalises an over- or under-confident probability, not only a wrong direction.
-  > Performance on dataset and market questions is scored using the difficulty-adjusted Brier score
-- `evaluation_method` = prospective-resolution, statistical-fit · [S4][forecastbench-s4]
-  - why: prospective-resolution because ground truth arrives after forecasts are locked, and claims carry a resolution status as the term asks (forecastbench is the term's example); statistical-fit because the number is a Brier score, the mean squared error of a probability against the outcome.
-  > We resolve forecast sets nightly by gathering the latest information about which events have or have not occurred.
-- `designed_for_subjects` = instruction-tuned-model, reasoning-model, agent-scaffold, human-expert, human-nonexpert · [S3][forecastbench-s3]
-  - why: The baseline leaderboard runs models out of the box, reasoning models among them at stated thinking budgets; the tournament leaderboard admits scaffolded, tool-using and ensembled systems; superforecasters and members of the public forecast the same questions and are ranked with the models.
-  > Teams may enhance models however they choose—with tools, added context, fine-tuning, ensembling, or other methods.
+- `domain.primary` = society-econ-law/forecasting-prediction-markets · [S1][futureeval-s1]
+  - why: Probabilistic forecasts about future events that later resolve, the leaf's definition; the family's exclusion keeps forecasting questions that resolve against real-world events here whatever their topic and however general the competence claimed ("Forecasting is an unfalsifiable test of real reasoning", the post says).
+  > We run major AI models on a fixed prompt across most open Metaculus questions, then score and rank them as those questions resolve.
+- `capability` = probabilistic-forecasting · [S3][futureeval-s3]
+  - why: The inclusion test word for word, and taxonomy/capabilities.yaml names Metaculus FutureEval as a qualifying example.
+  > FutureEval is guaranteed leak-proof, since answers are not known yet at test time.
+- `capability` = calibration-uncertainty · [S4][futureeval-s4]
+  - why: The scoring function consumes the probability, distribution or option probabilities the forecaster emits; Peer Scores are built on log scores, which penalise an over- or under-confident forecast, not only a wrong direction.
+  > (essentially differences in
+- `evaluation_method` = prospective-resolution, uncertainty-calibration-score, entrant-relative-ranking · [S1][futureeval-s1]
+  - why: prospective-resolution because the questions resolve after the forecasts are made (the site calls it guaranteed leak-proof); uncertainty-calibration-score because log-score-based Peer Scores are a proper scoring rule applied to the emitted probabilities and distributions, which the term keeps beside prospective-resolution for a future event; entrant-relative-ranking because the published numbers are head-to-head comparisons between forecasters (models against models on the leaderboard, the Pro team against the bot team after each season), so a forecaster's number depends on whom it met.
+  > head-to-head spot peer scores have put Pros in the lead every season by a large margin
+- `designed_for_subjects` = instruction-tuned-model, reasoning-model, agent-scaffold, human-expert, human-nonexpert · [S3][futureeval-s3]
+  - why: The Model Leaderboard prompts each model once with Metaculus's fixed prompt and a research summary the harness supplies (instruction-tuned-model), and its frontier entries are reasoning models (the post's first advice is to pick one); the tournaments exist to compare bots developers build, whose loops, research and aggregation the entrants choose (agent-scaffold); the Pro Forecasters (human-expert) and the Metaculus community (human-nonexpert) forecast the same questions as baselines.
+  > FutureEval has two arms: a fixed-prompt benchmark to compare model performance directly, and a bots vs. humans tournament to probe the frontier of scaffolding.
 
-#### forecastbench · Task and evaluation
+Considered and rejected:
 
-- `learned_entrant_evidence` = system Claude-3-5-Sonnet-20240620 · [S4][forecastbench-s4]
-  > Claude-3-5-Sonnet-20240620 Anthropic Freeze values Scratchpad 0.138 0.107 0.122
-- `ground_truth_source` = forecast-resolution · [S4][forecastbench-s4]
-  - why: Dataset questions resolve to the series' later values, market questions to the platform's resolution.
-  > All questions are ultimately resolved to ground truth.
-- `reproducible_by_third_party` = true · [S2][forecastbench-s2]
-  - why: Code, question sets and forecast sets are published, so a score can be recomputed; a forecasting run itself cannot be repeated, because the questions' future has since happened.
-  > we publicly provide our code, datasets (where licensing permits), and methodology to support reproducible research.
-- `task` = exists true; input a question set, released 24 hours before the forecast due date, with each question's background, resolution criteria and, for some conditions, freeze values; output A probability that each question resolves Yes; for a dataset question, one per horizon.; scoring Brier score per forecast against the resolved outcome (unresolved market questions against the market's current crowd forecast); on today's leaderboards, difficulty-adjusted across question sets, averaged separately over dataset and market questions, the two averaged with equal weight and converted to a Brier Index.; tests_hidden_from_system true · [S4][forecastbench-s4]
-  > For resolved market questions, forecasts are compared against ground truth while for unresolved market questions, they are compared to community aggregates.
-- `execution.harness` = ForecastBench code (forecastingresearch/forecastbench), with its zero-shot and scratchpad prompts · [S3][forecastbench-s3]
-  > The zero shot and scratchpad prompts used for the models run by ForecastBench can be found on GitHub
-- `aggregation_policy` = official-aggregate · [S3][forecastbench-s3]
-  - why: Ranked by the Overall Brier Index, which weights dataset and market questions equally.
-  > Forecasters are then ranked by their Overall Brier Index, which is the equal-weighted average of their dataset and market difficulty-adjusted Brier scores, converted to Brier Indices.
+- `domain` not `agents-tooluse/research-agents` · [S1][futureeval-s1]
+  - why: Tournament bots gather news with search providers, and the post's research notes study them, but the grader scores the forecast against the outcome, not the sources gathered or a cited answer; the agents-tooluse family's inclusion asks for a grader of what the loop achieved with its tools.
+  > No individual search provider showed a consistent advantage across seasons.
+- `capability` not `tool-use` · [S4][futureeval-s4]
+  - why: The Model Leaderboard's MetacBots get their research from a search provider the harness calls and pastes into the prompt; tournament bots may use tools, but the score is the forecast's accuracy, not whether a tool was selected or called correctly.
+  > They use a standardized prompt and usually use AskNews as a search provider.
+- `capability` not `autonomy` · [S3][futureeval-s3]
+  - why: Tournament rules forbid a human in the loop, but each scored unit is one forecast on one question, not an extended task; the rule keeps the bots' forecasts machine-made rather than scoring what was achieved unattended over a long task.
+  > "FABRulesRule1": "No human in the loop"
+- `designed_for_subjects` not `model-in-benchmark-harness` · [S4][futureeval-s4]
+  - why: The MetacBot prompt is one call after a research step, not a multi-turn loop, which the term's exclusion sends to instruction-tuned-model; Metaculus's agentic bot (metac-agent, now metac-autocast) is one of its own baselines in the tournaments, not the leaderboard's harness.
+  > uses our standardized prompt, AskNews for research and GPT-4o for making the predictions.
 
-#### forecastbench · Data and licence
+#### futureeval · Task and evaluation
 
-- `data.access` = fully-open · [S2][forecastbench-s2]
-  - why: Question sets, resolution sets and forecast sets are published as datasets.
-  > we publicly provide our code, datasets (where licensing permits), and methodology
-- `data.data_provenance` = synthetic-procedural, web-scraped · [S2][forecastbench-s2]
-  - why: Dataset questions are generated from templates over public time series (synthetic-procedural); market questions are drawn from prediction platforms (web-scraped). 02 S12.8's real-world-instrument means sensor recordings, which none of these are.
-  > Dataset questions are automatically generated from real-world time series
-- `data.contamination_evidence` = stance against · [S1][forecastbench-s1]
-  > To avoid any possibility of data leakage, ForecastBench is comprised solely of questions about future events that have no known answer at the time of submission.
-- `data.ceiling_anchor_type` = expert-average · [S4][forecastbench-s4]
-  - why: The comparator is the superforecasters' median forecast, an aggregate of experts, not the best expert (02 S12.8 has expert-best). On the 2026-09-26 baseline leaderboard it still ranks first, above every model; the maintainers' own blog (2026-07-16, about page) says models have likely reached parity on the tournament board. The general public is the second tier.
-  > Superforecaster median forecast ForecastBench – – 0.118 0.074 0.096
-- `data.dataset_licence` = CC-BY-SA-4.0 · [S5][forecastbench-s5]
-  > The datasets in this repository are distributed under the \[CC BY-SA 4.0 license\]
-- `data.size` = count 1000; unit questions in a round's LLM question set (the 2024 protocol) · [S1][forecastbench-s1]
-  > regularly updated set of 1,000 forecasting questions
-- `data.size` = count 200; unit questions in the human question set; subset forecastbench#human-question-set · [S4][forecastbench-s4]
-  > The human question set is comprised of 200 forecast questions sampled directly from the LLM question set.
-- `data.size` = count 500; unit questions per round, split evenly between market and dataset questions; subset rounds under the current protocol · [S2][forecastbench-s2]
-  > each round generating 500 questions split evenly between market and dataset questions
-- `data.size` = count 8; unit forecast horizons per dataset question (7 days to 10 years); subset dataset questions · [S2][forecastbench-s2]
-  > we ask the same question with 8 different resolution dates, ranging from 7 days to 10 years out.
+- `learned_entrant_evidence` = system metac-gpt-4o+asknews (GPT-4o with Metaculus's MetacBot prompt and AskNews research) · [S4][futureeval-s4]
+  > uses our standardized prompt, AskNews for research and GPT-4o for making the predictions.
+- `ground_truth_source` = forecast-resolution · [S4][futureeval-s4]
+  - why: Each question resolves by its stated criteria once the outcome is known; until then no answer exists.
+  > As questions resolve, we score the models' forecasts and continuously update our
+- `reproducible_by_third_party` = false · [S7][futureeval-s7]
+  - why: Metaculus writes and resolves the questions and computes the scores on its platform, and peer scores need every forecaster's forecasts, which its analysis code reads from private files that are shared only on request. The MetacBots' code and prompts are public, so anyone can make such forecasts, but not reproduce a published score.
+  > Forecast CSVs live under \`local/private\_input\_data/\` (gitignored).
+- `task` = exists true; input a Metaculus question (binary, numeric or multiple choice) with its background, resolution criteria and fine print; seasonal-tournament questions open to bots for a short window (1.5 hours in Spring 2026, 3 hours from 2026-06-05 in Summer 2026) at random times through the week, for the Model Leaderboard's MetacBots, a research summary from a search provider, usually AskNews, inside Metaculus's fixed prompt; output A probability for a binary question, six percentiles of a distribution for a numeric question, or a probability per option for a multiple-choice question; tournament bots must also post a comment explaining the reasoning.; scoring As questions resolve, forecasts are scored with Metaculus's log-score-based Peer Scores. The Model Leaderboard combines head-to-head Peer Scores into a skill score (GPT-4o = 0) over forecasts made within a year of each model's first; tournament prizes are shared in proportion to accuracy; each season's Pros-versus-bots analysis compares a team of 10 Pros with the best 10 bots by average head-to-head spot peer score, 0 meaning equal.; tests_hidden_from_system true · [S4][futureeval-s4]
+  > The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+- `execution.reproducibility_tier` = not-independently-reproducible · [S7][futureeval-s7]
+  - why: The headline scores are computed by Metaculus on its platform from forecasts on questions it writes and resolves, against the other forecasters' forecasts, which are not public; no party outside Metaculus can produce one.
+  > Request access to analysis data from the instructions shared
+- `execution.harness` = forecasting-tools (Metaculus), whose run\_bots.py runs the MetacBots and whose template bot (metac-bot-template; the Summer 2026 MetacBot code is template\_bot\_2026\_summer.py) is the tournaments' starting point; scores are computed by the platform, not by published code · [S10][futureeval-s10]
+  > You can see all the bots that Metaculus is running on their site in \`run\_bots.py\`
+- `aggregation_policy` = official-aggregate · [S4][futureeval-s4]
+  - why: The Model Leaderboard ranks models by one skill score; the tournaments and the seasonal Pros-versus-bots comparison publish their own rankings beside it.
+  > to determine a forecasting skill score that fairly compares models across diverse questions.
 
-#### forecastbench · Governance and independence
+#### futureeval · Data and licence
 
-- `governance.maintainer` = Forecasting Research Institute · [S2][forecastbench-s2]
-  - why: The about page names FRI as developer and maintainer and says what kind of organisation it is.
-  > ForecastBench is developed and maintained by the Forecasting Research Institute , a nonprofit research organization
-- `governance.submission_process` = maintainer-verified · [S4][forecastbench-s4]
-  > As questions resolve, we rate the submissions of registered models and the human comparison groups, updating our public leaderboard.
-- `governance.known_limitation` · [S3][forecastbench-s3]
-  > Human comparison groups (highlighted in red) were last surveyed in July 2024 and therefore answered a different set of questions than models evaluated after that date.
+- `as_used` = protocol Binary questions from the Metaculus AI Benchmark, used to study which off-the-shelf model forecasts to ensemble (an ICML 2026 workshop paper); not a leaderboard or tournament entry.; split binary questions · [S5][futureeval-s5]
+  > On binary questions from the Metaculus AI Benchmark, we find that individual accuracy is not enough
+- `data.access` = gated-registration · [S3][futureeval-s3]
+  - why: Taking part, and reading the questions programmatically, needs a Metaculus account and its bot token.
+  > Your token is needed for your bot to interact with the Metaculus API.
+- `data.contamination_evidence` = stance against · [S3][futureeval-s3]
+  > FutureEval is guaranteed leak-proof, since answers are not known yet at test time.
+- `data.ceiling_anchor_type` = expert-average · [S4][futureeval-s4]
+  - why: The comparator is the aggregate of a team of 10 Pro Forecasters (the bot team is compared with it head to head each season), with the Pro and community baselines drawn on the leaderboard's performance-over-time graph; an aggregate of experts, not the best expert. Bots trailed it in every season to Q2 2025, and in Spring and Summer 2026 the lead was not significant. The scale itself has no top.
+  > shows how much better pros did than bots when comparing a team of 10 pros and the best 10 bots in our Bot Tournaments.
+- `data.size` = count 300; unit questions per seasonal bot tournament (300 to 400 stated), across all formats; subset seasonal tournaments, current protocol · [S8][futureeval-s8]
+  > Our primary tournament with \~4-month seasons starting every January, May, and September, each with 300–400 questions across all formats.
+- `data.size` = count 300; unit questions in the Summer 2026 tournament (300 to 500 stated); subset futureeval@2026-summer · [S1][futureeval-s1]
+  > The $50k Summer Bot Tournament is live, with 300 to 500 questions running through early September.
+- `data.size` = count 100; unit questions per seasonal tournament also forecast by the Pro Forecasters (around 100); subset futureeval#pro-comparison · [S4][futureeval-s4]
+  > to provide high-quality predictions and reasoning on a subset of questions in our Bot Tournament (around 100 per tournament).
+- `data.size` = count 93; unit questions in the published Pros-versus-bots comparison; subset futureeval@2025-q2 · [S2][futureeval-s2]
+  > PublishedTeamResult("Q2 2025", -20.03, -28.63, -11.41, 93)
+- `data.size` = count 99; unit questions in the published Pros-versus-bots comparison; subset futureeval@2026-spring · [S2][futureeval-s2]
+  > PublishedTeamResult("Spring 2026", -1.25, -4.87, 2.37, 99)
+- `data.size` = count 60; unit auto-generated questions per MiniBench round (about 60); subset futureeval#minibench · [S8][futureeval-s8]
+  > Back-to-back 2-week rounds of \~60 auto-generated questions, designed for fast feedback loops and lowering the barrier to entry.
+- `execution.code_licence` = MIT · [S10][futureeval-s10]
+  > License-MIT-blue
+- `subsets` = id futureeval#model-leaderboard; label Model Leaderboard (fixed-prompt MetacBots); scored_separately true · [S4][futureeval-s4]
+  > We run all major models with a simple, fixed prompt on most Metaculus forecasting questions.
+- `subsets` = id futureeval#model-leaderboard; label Model Leaderboard (fixed-prompt MetacBots); scored_separately true · [S3][futureeval-s3]
+  > Updated every day based on our standardized forecasting performance measurement methodology.
+- `subsets` = id futureeval#minibench; label MiniBench; scored_separately true · [S3][futureeval-s3]
+  > MiniBench is our bi-weekly experimental tournament series designed for rapid iteration and feedback. Each MiniBench runs for approximately two weeks, and uses automated questions.
+- `subsets` = id futureeval#minibench; label MiniBench; scored_separately true · [S1][futureeval-s1]
+  > A faster $1k tournament, MiniBench, runs every two weeks
+- `subsets` = id futureeval#pro-comparison; label The Pro Forecasters' questions in a seasonal tournament; scored_separately true · [S4][futureeval-s4]
+  > to provide high-quality predictions and reasoning on a subset of questions in our Bot Tournament (around 100 per tournament).
+- `subsets` = id futureeval#pro-comparison; label The Pro Forecasters' questions in a seasonal tournament; scored_separately true · [S2][futureeval-s2]
+  > """Bot team head-to-head score against the Pro team, as published for a past season."""
 
-#### forecastbench · Lifecycle and activity
+#### futureeval · Governance and independence
 
-- `lifecycle` = active · [S2][forecastbench-s2]
-  - why: New rounds run and the leaderboards update nightly.
-  > New forecasting rounds occur every two weeks, with each round generating 500 questions split evenly between market and dataset questions.
-- `activity` = accepting-submissions · [S3][forecastbench-s3]
-  - why: The tournament leaderboard takes outside submissions.
-  > The tournament leaderboard captures the frontier of LLM forecasting ability and is open to external submissions.
+- `governance.maintainer` = Metaculus · [S3][futureeval-s3]
+  - why: The FutureEval pages, the tournaments, the MetacBots and the analysis code are Metaculus's, published from its own site and its GitHub organisation (users/Metaculus is an Organization, GitHub API, read 2026-11-28).
+  > "metaculusFutureEval": "Metaculus FutureEval"
+- `governance.maintainer_type` = industry-lab · [S3][futureeval-s3]
+  - why: The site lists "Public Benefit Corporation" among its Company links, and the term's inclusion counts a public benefit corporation as a company; Metaculus also sells services, custom model evaluations among them (src-github-metaculus-futureeval-partner-d1e2145). The linked page itself was not read (review\_checks).
+  > "company": "Company", "resources": "Resources", "publicBenefitCorporation": "Public Benefit Corporation"
+- `governance.submission_process` = held-out-server, maintainer-run · [S1][futureeval-s1]
+  > Developers enter their own bots and compete for a share of $175k in prizes a year.
+- `governance.independence_flags` = flag funded-by-evaluated-party · [S8][futureeval-s8]
+  > If participating in the Seasonal Bot Tournament, LLM inference costs are covered free-of-charge, courtesy of OpenAI, Anthropic, and Google.
+- `governance.independence_flags` = flag evaluator-sells-evaluations · [S9][futureeval-s9]
+  > We can set up a complete evaluation pipeline for LLMs or forecasting bots
+- `governance.funding` · [S3][futureeval-s3]
+  > "FABdesc1": "Compete with API credits provided courtesy of OpenAI and Anthropic."
+- `governance.known_limitation` · [S2][futureeval-s2]
+  > Bots (including Metac Bots) missed some questions because of provider outages, GitHub Actions issues, or
 
-**Open review checks** (4):
+#### futureeval · Lifecycle and activity
 
-1. Whether the resolution semantics are captured correctly (a human judgement, the task's verify): the three claims' states and the reasons in their notes, and resolved\_as\_of 2025-02-28 (v5).
-2. ceiling\_anchor\_type expert-average for a median of superforecasters (02 S12.8: expert-best).
-3. (field `execution`) The reproducibility tier and the dropped live-world-state blocker (execution).
-4. (field `data.dataset_licence`) dataset\_licence CC-BY-SA-4.0 rests on the datasets repository's README and LICENSE. The about page releases datasets only "where licensing permits"; whether any upstream series or market platform's questions are withheld, or carry terms of their own beside the repository's licence, was not checked. · [S2][forecastbench-s2]
-   > we publicly provide our code, datasets (where licensing permits), and methodology
+- `lifecycle` = active · [S6][futureeval-s6]
+  - why: The Fall 2026 seasonal tournament is marked live in the site's source of 2026-11-27, the Model Leaderboard updates daily, and a June 2026 paper (arXiv 2606.29661) studies forecasts on the benchmark's binary questions.
+  > { title: "Fall 2026", href: "/tournament/fall-futureeval-2026/", imgUrl: "https://cdn.metaculus.com/cover-fall.webp", prize: "$58,000", isLive: true, }
+- `activity` = accepting-submissions · [S1][futureeval-s1]
+  - why: The seasonal tournament is always open to new entrants, and the Fall 2026 season is live; MiniBench rounds run back to back.
+  > The primary $50k seasonal tournament repeats every four months and is always open.
 
-**Reviewer checklist** for `forecastbench`:
+**Open review checks** (12):
+
+1. (field `versions`) Each seasonal bot tournament is an edition (eight, Q3 2024 to Fall 2026), and the quarterly AI Benchmarking tournaments are treated as this benchmark's first editions rather than a predecessor, because the FutureEval page lists them among its own bot tournaments and Metaculus's analysis code orders all seven finished seasons as one series. The change from quarterly to four-month seasons and from binary-only to all formats is read as edition-level. If the 2026 rename is read as a new benchmark, the aib seasons would become a predecessor entry linked by lineage.supersedes. · [S2][futureeval-s2]
+   > SEASON\_ORDER: tuple\[str, ...\] = ( "Q3 2024", "Q4 2024", "Q1 2025", "Q2 2025", "Fall 2025", "Spring 2026", "Summer 2026", )
+2. (field `subsets`) The Model Leaderboard and MiniBench are subsets, though 04 S4's subset test is a track "within one release", while the leaderboard spans every season and most open questions, and MiniBench runs its own two-week rounds. A same-maintainer variant (lineage.variants) is the alternative for MiniBench if its rounds are read as independently versioned. · [S3][futureeval-s3]
+   > FutureEval has two arms: a fixed-prompt benchmark to compare model performance directly, and a bots vs. humans tournament to probe the frontier of scaffolding.
+3. (field `versions`) The site's tournament cards show $58,000 for Fall 2025 to Fall 2026, while the analysis configuration gives a $50,000 prize pool for Spring and Summer 2026 and the post says $50k; no source read explains the difference (MiniBench or bonus prizes are guesses). Both are recorded in the versions' changes. · [S2][futureeval-s2]
+   > label="Spring 2026", prize\_pool="$50,000", bot\_tournament\_url="https://www.metaculus.com/tournament/spring-aib-2026/"
+4. (field `governance.independence_flags`) funded-by-evaluated-party rests on the inference costs that OpenAI, Anthropic and Google cover for seasonal-tournament entrants and on the leaderboard's own lab labels for its models. The credits reach the entrants' bots rather than Metaculus's budget; if only support paid to the maintainer counts, the flag would go. · [S11][futureeval-s11]
+   > openai: { label: "OpenAI", iconLight: openaiLight, iconDark: openaiDark },
+5. (field `governance.independence_flags`) evaluator-sells-evaluations rests on the Partner tab, which offers organisations custom model evaluations and private bot tournaments and links Metaculus's other services; no price or contract is stated, so whether the offer is a commercial sale is read from its framing. · [S9][futureeval-s9]
+   > See our other services
+6. (field `governance.independence_flags`) maintainer-competes-on-own-benchmark is not set. Metaculus enters its own bots in the tournaments (prize-ineligible MetacBots, and an agentic bot it moved to its autocast harness in Fall 2026) and they fill the Model Leaderboard. They are read as baselines over other labs' models, as for forecastbench; if a Metaculus-built harness is a system Metaculus develops, the flag would apply. · [S2][futureeval-s2]
+   > In Fall 2026, metac-agent switched from a simple agentic harness to
+7. (field `governance.maintainer_type`) maintainer\_type industry-lab rests on the site's "Public Benefit Corporation" link under Company; the page it links to, which would state Metaculus's legal form, was not read (the site refused this agent). nonprofit would follow if Metaculus is not a company. · [S3][futureeval-s3]
+   > "company": "Company", "resources": "Resources", "publicBenefitCorporation": "Public Benefit Corporation"
+8. (field `data.access`) data.access gated-registration rests on bots reading questions through the API with an account token. Whether question pages and resolutions are readable on metaculus.com without an account was not checked; fully-open would follow if they are. The forecast records are a separate, request-only matter (access\_note). · [S8][futureeval-s8]
+   > make a bot when redirected to your settings page, and copy your access token.
+9. (field `data.data_provenance`) data\_provenance is empty. The methodology page says who writes and curates the seasonal questions in a bullet list that normalise() strips from the TypeScript source, and MiniBench's questions are auto-generated by an unstated method; expert-authored (seasonal) and model-generated or synthetic-procedural (MiniBench) are the likely terms once a quotable source is read. Logged as taxonomy/\_failures/2026-11-27-futureeval-001.
+10. (field `headline_metric`) The headline metric futureeval-skill-score is defined from the methodology page's two sentences only; how the pairwise Peer Scores are combined is in a Metaculus notebook not read, and entrant-relative-ranking is assigned because the published numbers are head-to-head comparisons. If the skill score is anchored only to GPT-4o and does not move with the pool, entrant-relative-ranking may rest on the Pros-versus-bots comparison alone. · [S4][futureeval-s4]
+   > is arbitrarily set to 0 for GPT-4o (which is our most prolific bot as of February 2025).
+11. (field `liveness`) No leaderboard row is recorded. The Model Leaderboard and the tournaments' leaderboards load from Metaculus's API, which answered the sweep with a Cloudflare challenge, and the resources notebook with the season write-ups is on the same host; leaderboard\_last\_updated is null. The Summer 2026 Pro comparison's figures are not in the analysis configuration read.
+12. (field `curation.sources`) The page copy is quoted from the repository that builds metaculus.com at d1e2145 (2026-11-27), not from the rendered pages; the deployed site may lag or lead that commit. · [S6][futureeval-s6]
+   > We evaluate custom bot architectures. Submit your own forecasting bot and compete for prizes in our tournaments.
+
+**Reviewer checklist** for `futureeval`:
 
 - [ ] Identity and id: the name, aliases, id, paper and release date are right, and this is one benchmark, not a family or an edition of another
 - [ ] Domain and capabilities: the primary and secondary subdomains, capabilities, evaluation methods and intended subjects fit, and no rejected term should have been kept
@@ -2057,14 +2191,17 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 - [ ] Every open review check above is answered or resolved
 - [ ] Nothing here would embarrass the catalogue in front of a specialist
 
-[forecastbench-s1]: https://arxiv.org/abs/2409.19839
-[forecastbench-s2]: https://www.forecastbench.org/about/
-[forecastbench-s3]: https://www.forecastbench.org/leaderboards/
-[forecastbench-s4]: https://arxiv.org/html/2409.19839
-[forecastbench-s5]: https://raw.githubusercontent.com/forecastingresearch/forecastbench-datasets/ed36f732de709ff288af275cfeb28b88e8795a8b/README.md
-[forecastbench-s6]: https://arxiv.org/abs/2606.18686
-[forecastbench-s7]: https://www.forecastbench.org/assets/js/leaderboard_baseline_full.js
-[forecastbench-s8]: https://www.metaculus.com/futureeval/
+[futureeval-s1]: https://metaculus.substack.com/p/metaculus-futureeval-ai-forecasting-benchmark
+[futureeval-s2]: https://raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264ce33fb59c650dfce7c80/aib_analysis/pro_vs_bot_writeup/season_config.py
+[futureeval-s3]: https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/messages/en.json
+[futureeval-s4]: https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/(futureeval)/futureeval/components/futureeval-methodology-sections.tsx
+[futureeval-s5]: https://arxiv.org/abs/2606.29661
+[futureeval-s6]: https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/(futureeval)/futureeval/components/futureeval-tournaments.tsx
+[futureeval-s7]: https://raw.githubusercontent.com/Metaculus/aib-analysis/e5e7341bdf14d4878264ce33fb59c650dfce7c80/README.md
+[futureeval-s8]: https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/(futureeval)/futureeval/components/futureeval-participate-tab.tsx
+[futureeval-s9]: https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/(futureeval)/futureeval/components/futureeval-partner-tab.tsx
+[futureeval-s10]: https://raw.githubusercontent.com/Metaculus/forecasting-tools/3ca91074bb3190f6e91b79645da174fd9a4e1d99/README.md
+[futureeval-s11]: https://raw.githubusercontent.com/Metaculus/metaculus/d1e21458d852719836819a92fcbe0fc0781817c2/front_end/src/app/(futureeval)/futureeval/components/leaderboard/bot_meta.ts
 
 ## 3. The coverage row and the gap question: are these cells empty, or do we not know about the work?
 
@@ -2076,18 +2213,18 @@ A benchmark run by the Forecasting Research Institute in which language models, 
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
-| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 11 / 2 | knowledge-recall 2, factual-precision 2, memory-retention 0, context-integration 10 |
-| Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 3 / 1 | deductive-reasoning 0, quantitative-reasoning 3, constraint-satisfaction 0 |
+| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 15 / 2 | knowledge-recall 3, factual-precision 6, memory-retention 0, context-integration 13 |
+| Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 4 / 1 | deductive-reasoning 0, quantitative-reasoning 3, constraint-satisfaction 1 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | not-yet-surveyed | 0 / 0 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
 | Causal & experimental<br>`causal-and-experimental-inference` | not-yet-surveyed | 0 / 0 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |
 | Signal, space & time<br>`perception-space-time` | not-yet-surveyed | 0 / 0 | perception 0, grounding 0, spatial-reasoning 0, temporal-reasoning 0 |
 | Planning & search<br>`planning-and-search` | has-benchmarks | 2 / 1 | planning 1, search-exploration 0, optimization 1 |
-| Action & execution<br>`action-and-execution` | has-benchmarks | 1 / 2 | sensorimotor-control 0, tool-use 1, long-horizon-execution 0 |
+| Action & execution<br>`action-and-execution` | has-benchmarks | 3 / 2 | sensorimotor-control 0, tool-use 3, long-horizon-execution 0 |
 | Controlled generation<br>`controlled-generation` | has-benchmarks | 2 / 0 | generation-fidelity 2, creativity-novelty 0, instruction-following 0 |
 | Conduct & cooperation<br>`conduct-and-cooperation` | has-benchmarks | 1 / 0 | collaboration 1, communication 1, honesty 0, harm-avoidance 0 |
 | Learning & transfer<br>`learning-and-transfer` | not-yet-surveyed | 0 / 0 | sample-efficiency 0, continual-learning 0, transfer-learning 0 |
 | Shift & robustness<br>`robustness-and-stability` | has-benchmarks | 0 / 1 | distribution-shift-generalization 0, adversarial-robustness 0, reliability-consistency 0 |
-| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 2 / 0 | calibration-uncertainty 2, probabilistic-forecasting 1, self-correction 0 |
+| Uncertainty handling<br>`uncertainty-and-self-monitoring` | has-benchmarks | 3 / 0 | calibration-uncertainty 3, probabilistic-forecasting 2, self-correction 0 |
 | Autonomy & oversight<br>`autonomy-and-oversight` | has-benchmarks | 1 / 2 | autonomy 1, self-improvement 0, situational-awareness 0 |
 
 An empty cell means one of three things (12-analytics-and-trends.md §5.4): nobody measures it, the taxonomy cuts this field badly there, or we have not found the work yet. Only the first may ever be published as a gap, and only after a reviewer has confirmed it.

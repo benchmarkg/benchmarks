@@ -23,7 +23,7 @@ How to read an entry: each evidenced field shows its value, the curator's reason
 | ---: | --- | --- | --- | --- |
 | 1 | `understanding`<br>Understanding | Answering questions whose answers are determined by a supplied passage. | 3 + 5 | has benchmarks |
 | 2 | `generation`<br>Generation | Producing free-form text scored against reference texts or rubric criteria. | 2 + 2 | has benchmarks |
-| 3 | `dialogue`<br>Dialogue | Conducting a multi-turn conversation, scored on the conversation as a whole rather than on one reply. | 1 + 0 | has benchmarks |
+| 3 | `dialogue`<br>Dialogue | Conducting a multi-turn conversation, scored on the conversation as a whole rather than on one reply. | 1 + 2 | has benchmarks |
 | 4 | `summarization`<br>Summarization | Producing a shorter text that preserves the key content of a source. | 1 + 1 | has benchmarks |
 | 5 | `translation`<br>Translation | Rendering text from one language into another. | 2 + 0 | has benchmarks |
 | 6 | `multilingual`<br>Multilingual | Measuring the same task across many languages in order to compare performance between them. | 1 + 5 | has benchmarks |
@@ -2044,7 +2044,7 @@ Considered and rejected:
 
 | Capability group | State | Entries (primary / secondary) | Member terms (primary entries carrying each) |
 | --- | --- | --- | --- |
-| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 9 / 8 | knowledge-recall 0, factual-precision 0, memory-retention 0, context-integration 9 |
+| Knowledge & memory<br>`knowledge-and-memory` | has-benchmarks | 9 / 10 | knowledge-recall 0, factual-precision 0, memory-retention 0, context-integration 9 |
 | Formal & quantitative<br>`formal-quantitative-reasoning` | has-benchmarks | 0 / 3 | deductive-reasoning 0, quantitative-reasoning 0, constraint-satisfaction 0 |
 | Abstraction & analogy<br>`abstraction-and-analogy` | not-yet-surveyed | 0 / 0 | abstraction 0, inductive-reasoning 0, analogical-reasoning 0, compositional-generalization 0 |
 | Causal & experimental<br>`causal-and-experimental-inference` | not-yet-surveyed | 0 / 0 | abductive-reasoning 0, causal-reasoning 0, hypothesis-generation 0, experimental-design 0, scientific-prediction 0 |

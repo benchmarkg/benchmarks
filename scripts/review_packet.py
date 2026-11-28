@@ -168,6 +168,7 @@ ORG_ACCOUNTS = {
     asvspoof-challenge atomgptlab atomind-ai audioset autodrive-ecosystem autonomousvision balrog-ai benevolentai
     bigcode-project biocomputingup brain-score calochallenge carla-simulator centerforaisafety chimechallenge
     circuitnet cloudtostreet cluebenchmark coastalcph cocodataset critpt-benchmark crux-eval csailvision
+    metaculus
     cvdfoundation davisvideochallenge dbd-research-group dcase-repo deepchem diagnijmegen diux-xview dl3dv-10k
     duckietown earthspecies ecmwf-lab eleutherai epistasislab epoch-research eth-lre eth-sri eth3d ethz-spylab
     evolvinglmms-lab extrality f1tenth facebookresearch fair-chem fair-universe farama-foundation
