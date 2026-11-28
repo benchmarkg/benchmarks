@@ -713,8 +713,8 @@ A Chinese evaluation suite of 13,948 four-option multiple-choice questions in 52
 | S6 | `src-arxiv-2505-09388-v1` | preprint · arXiv | [arxiv.org/pdf/2505.09388v1](https://arxiv.org/pdf/2505.09388v1) | none (not-required) |
 | S7 | `src-arxiv-2506-05767-v1` | preprint · arXiv | [arxiv.org/pdf/2506.05767v1](https://arxiv.org/pdf/2506.05767v1) | none (not-required) |
 | S8 | `src-hf-ceval-exam-card` | dataset-card · Hugging Face | [huggingface.co/datasets/ceval/ceval-exam/raw/617524a00b307ff6f9933702...](https://huggingface.co/datasets/ceval/ceval-exam/raw/617524a00b307ff6f9933702f724131fe12ca7ce/README.md) | none (withheld) |
-| S9 | `src-hf-rows-ceval-exam-test` | dataset-card · Hugging Face | [datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=a...](https://datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=accountant&split=test&offset=0&length=1) | none (pending) |
-| S10 | `src-hf-api-ceval-exam` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ceval/ceval-exam](https://huggingface.co/api/datasets/ceval/ceval-exam) | none (pending) |
+| S9 | `src-hf-rows-ceval-exam-test` | dataset-card · Hugging Face | [datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=a...](https://datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=accountant&split=test&offset=0&length=1) | [capture 2026-11-27](https://web.archive.org/web/20261127215808/https://datasets-server.huggingface.co/rows?dataset=ceval/ceval-exam&config=accountant&split=test&offset=0&length=1) |
+| S10 | `src-hf-api-ceval-exam` | dataset-card · Hugging Face | [huggingface.co/api/datasets/ceval/ceval-exam](https://huggingface.co/api/datasets/ceval/ceval-exam) | [capture 2026-11-27](https://web.archive.org/web/20261127213659/https://huggingface.co/api/datasets/ceval/ceval-exam) |
 
 **Evidence** (55 quoted fields), by checklist area:
 
@@ -1609,7 +1609,7 @@ A multiple-choice benchmark from Multimodal Art Projection (M-A-P), an open-sour
 | S4 | `src-github-opencompass-supergpqa-llmjudge-config` | repository · GitHub | [raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583a...](https://raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583ab961bd1fdecf8380824af4/opencompass/configs/datasets/supergpqa/supergpqa_llmjudge_gen_12b8bc.py) | [capture 2026-11-27](https://web.archive.org/web/20261127205813/https://raw.githubusercontent.com/open-compass/opencompass/3b288c56873c3f583ab961bd1fdecf8380824af4/opencompass/configs/datasets/supergpqa/supergpqa_llmjudge_gen_12b8bc.py) |
 | S5 | `src-arxiv-2611-02278` | preprint · arXiv | [arxiv.org/abs/2611.02278](https://arxiv.org/abs/2611.02278) | none (not-required) |
 | S6 | `src-supergpqa-site-bundle` | leaderboard-page · the SuperGPQA authors (GitHub Pages) | [supergpqa.github.io/assets/index-BPhSot9B.js](https://supergpqa.github.io/assets/index-BPhSot9B.js) | none (withheld) |
-| S7 | `src-hf-api-supergpqa` | dataset-card · Hugging Face | [huggingface.co/api/datasets/m-a-p/SuperGPQA](https://huggingface.co/api/datasets/m-a-p/SuperGPQA) | none (pending) |
+| S7 | `src-hf-api-supergpqa` | dataset-card · Hugging Face | [huggingface.co/api/datasets/m-a-p/SuperGPQA](https://huggingface.co/api/datasets/m-a-p/SuperGPQA) | [capture 2026-11-27](https://web.archive.org/web/20261127214803/https://huggingface.co/api/datasets/m-a-p/SuperGPQA) |
 | S8 | `src-github-api-supergpqa-data-commits` | repository · GitHub | [api.github.com/repos/SuperGPQA/SuperGPQA/commits?path=data/SuperGPQA-...](https://api.github.com/repos/SuperGPQA/SuperGPQA/commits?path=data/SuperGPQA-all.jsonl) | none (withheld) |
 | S9 | `src-github-supergpqa-readme` | repository · GitHub | [raw.githubusercontent.com/SuperGPQA/SuperGPQA/e31e8bf3e7089aef808be5d...](https://raw.githubusercontent.com/SuperGPQA/SuperGPQA/e31e8bf3e7089aef808be5ddecafd4538dee6e41/README.md) | none (withheld) |
 
