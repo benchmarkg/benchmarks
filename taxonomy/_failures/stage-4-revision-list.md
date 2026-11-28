@@ -413,11 +413,11 @@ once, under its field, then under the term it proposes, or else under its kind.
 - Proposed: `trajectory-tracking-error` (1)
   - [2026-11-04-locomujoco-001](2026-11-04-locomujoco-001.yaml)
 
-- escape-hatch-used (1)
-  - [2026-11-27-ailuminate-jailbreak-001](2026-11-27-ailuminate-jailbreak-001.yaml)
-
 - source-silent (1)
   - [2026-09-28-virtual-cell-challenge-2026-002](2026-09-28-virtual-cell-challenge-2026-002.yaml)
+
+- undefined-boundary (1)
+  - [2026-11-27-ailuminate-jailbreak-001](2026-11-27-ailuminate-jailbreak-001.yaml)
 
 ## `data.refresh` (13)
 
