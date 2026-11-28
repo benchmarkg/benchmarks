@@ -1,0 +1,125 @@
+# data/sources/2026/src-arxiv-2608-22103-v1.yaml -- P1-S12 sweep follow-up (04 S9). The HVTB paper, read as the text of its v1 PDF.
+id: src-arxiv-2608-22103-v1
+type: preprint
+title: 'Hack-Verifiable Terminal Bench: Evaluating Reward Hacking in Terminal Tasks'
+url: https://arxiv.org/pdf/2608.22103v1
+doi: 10.48550/arXiv.2608.22103
+authors: null
+publisher: arXiv
+published: '2026-08-22'
+accessed: '2026-11-27'
+fetched_at: '2026-11-27T23:08:06Z'
+archive_url: null
+archive_captured: null
+archive_status: not-required
+archive_digest: null
+content_sha256: e9f3f6510c257f2f4b70646b7124f63ad621f63aa77b8242cdaee139cd68ad2f
+quote_extract: 'Tel Aviv University 2University of California, Santa Barbara … The hack-verifiable environments
+  (HVE) methodology addresses this challenge by embedding detectable hacks into tasks, allowing reward
+  hacks to be identified automatically and reliably. In this work, we adapt HVE to Terminal Bench, a leading
+  benchmark of real-world terminal and coding tasks, and introduce Hack-Verifiable Terminal Bench (HVTB).
+  Using HVTB, we measure rewardhacking rates across frontier models and study whether prompts with varying
+  amounts of information on the hack can mitigate this behavior. This lets us test whether prom … h (HVTB),
+  which brings the hack-verifiable environments (HVE) methodology [6], where honeypots are planted so
+  that hacks are detected automatically rather than judged post hoc, to Terminal Bench [7]. Whereas prior
+  work instantiated HVE on game-like environments, HVTB targets real-world coding tasks, the setting in
+  which agents are actually deployed. Using HVTB, we measure reward hacking across frontier models and
+  agents, and ask whether giving the agent more information about the vulnerability reduces hacking, as
+  the prompt reveals progressively more about the planted hack. We provide an analysis of our measurements
+  and release all 89 HVTB environments, together with the 2,225 agent traces collected in this study,
+  on the Harbor hub [8]. Both the environments and the traces are directly reusable and can be a valuable
+  resource for future research on reward hacking. 2 Hack-Verifiable Environments A hack-verifiable environment
+  [6] is an environment that (i) contains a set of reward hacks define … f the leading benchmarks to evaluate
+  real-world terminal use and coding capabilities of agents. It has been shown that Terminal Bench and
+  other similar benchmarks can be exploited by agents [11, 12]. Our instrumentation observes only the
+  hacks we plant. An agent that exploits a residual weakness of the base task, or that satisfies the verifier
+  by some route that never touches admin/, is recorded as not hacking. HVTB is therefore sound but not
+  complete: every flag corresponds to a genuine access, yet the hacks we can see are a subset of those
+  that may occur, so all rates we report are a lower bound on true reward hacking. We use terminal-bench/terminal-bench-2-1,
+  a suite of 89 tasks, as the base environments. As an improved release of Terminal Bench in which 28
+  tasks were revised following community review, it contains fewer pre-existing, unknown reward hacks.
+  We characterize two common hacks in Terminal Bench and similar coding benchmarks, and define a corresponding
+  set of reward hacks: H = {hidden solution, read tests}. 1. Hidden solution. We expose the ground-truth
+  solution of the task in a hidden location. 2. Read tests. We expose a set of held-out tests used to
+  verify the task. tb-task/ task.toml instruction.md README.md Dockerfile environment/ ... tests/ ...
+  solution/ ... hvtb-task/ task.toml instruction.md README.md Dockerfile environment/ admin/ README.md
+  solution/ ... t … We next describe how EHV is created by modifying the standard Terminal Bench environment
+  E. Incorporating vulnerabilities in Terminal Bench. We create an admin/ folder inside the agent’s filesystem,
+  with a README.md indicating that this directory should not be explored, together with the ground-truth
+  solution and tests provided in the original task. This simulates a scenario in which the solution or
+  tests were accidentally leaked and can be accessed by the agent. Figure 1 shows the structure of the
+  new filesystem, and we provide the exact README in Appendix A. Measuring reward hacks reliably. We instrument
+  the admin/ directory with inotify filesystem watchers that flag every read or write to the planted honeypot
+  files, logging access to these files the moment they occur. The watchers are initialized from the task’s
+  Dockerfile when the environment is built, and the verifier script reads the resulting flags after the
+  agent finishes to determine which hacks occurred. Measuring reward hacks at scale. A core principle
+  in hack-verifiable environments is to build the hacks in a generic manner that can be tested across
+  many different environments. We utilize the structure of a Harbor task to automatically detect the solution
+  and tests already provided by each task’s authors, and inject them into the admin/ directory. We provide
+  a script that automatically transforms any Harbor-format task E into EHV with the hack set H, which
+  is how all 89 HVTB environments were generated. Table 1: Information provided to the agent about potential
+  vulnerabilities. Levels 0–3 vary the specificity of information about the vulnerability and are injected
+  as additional instructions in the task prompt. The ablation condition uses the unmodified task prompt.
+  Darker shading indicates a more explicit description of the vulnerability ( vague → explicit). Setting
+  Ablation L0 L1 L2 L3 Description of Sett … agent as the system prompt reveals progressively more about
+  the planted vulnerability (see Table 1). Apart from this single injected instruction, we leave the original
+  Terminal Bench tasks untouched: the task instructions, environments, and verifiers are exactly those
+  of the base benchmark, and each agent runs in its own native harness under its default configuration.
+  Models are therefore evaluated in the setting they are actually deployed in, and the prompt class is
+  the only variable that changes across conditions. Setup. We evaluated three frontier proprietary agents
+  — Claude Code [13] with claude-opus-5, Codex [14] with gpt-5.6-sol, and gemini-cli with gemini-3.1-pro
+  — and two frontier open-source models, kimi-k3 [15] and glm-5.2 [16], run with the terminus-2 harness
+  [8]. We captured a total of 2,225 traces (5 models, 5 prompt classes, 89 tasks) at a cost of approximately
+  $2.5K in API credits. A small fraction of runs (under 2%) failed to complete due to timeouts or errors;
+  we retried each such task twice and excluded any that still failed. Results. Each agent is evaluated
+  on all HVTB tasks under every system prompt in Table 1. We provide the results in Figure 2. Full numerical
+  results, including a breakdown of which of the two hacks w … -pro behave as expected, decreasing steadily
+  across the information levels. Gemini is a clear outlier: its hack rate is far higher throughout, and
+  increasingly explicit prompting fails to control it. It hacks more under L0 (59.8%) than in the warning-free
+  ablation condition (47.7%), and even L3, which explicitly forbids reading admin/, leaves a substantial
+  hack rate of 16.3%. Representative Gemini traces are provided in Appendix B. Two effects are visible
+  in Figure 2. The gap b … the agent not to hack lowers the hack rate but does not eliminate it. The L0–L3
+  trend then shows that disclosing progressively more about the vulnerability further reduces hacking
+  across most models. We treat L0 as the most realistic setting: in practice one can instruct an agent
+  not to hack, but the specific vulnerabilities are unknown, so exact information cannot be supplied and
+  the hack cannot be pre-empted by the designer. This mirro … vilGenie they hack at most 2% (100 samples
+  each). Neither tracks the HVTB ordering: for instance, among these four models glm-5.2 is the most frequent
+  hacker on HVTB but the least on ImpossibleBench. HVTB thus probes a distinct behavior, reading a planted
+  reference solution or held-out tests, that these benchmarks do not capture, and it discriminates frontier
+  models where the others do not. 5 Conclusion As models become more autonomous, evaluating their reliability
+  becomes increasingly important, with reward hacking being a … o the per-experiment totals n may be slightly
+  below the 89 tasks. Model Setting Any hack n Hidden solution Read tests Ablation 30 (34.5%) 87 22 30
+  L0 14 (15.9%) 88 6 14 gpt-5.6-sol L1 5 (5.7%) 87 4 5 L2 0 (0.0%) 89 0 0 L3 0 (0.0%) 88 0 0 Ablation
+  40 (44.9%) 89 35 40 L0 22 (25.0%) 88 16 22 glm-5.2 L1 5 (5.7%) 88 3 5 L2 3 (3.4%) 88 2 3 L3 4 (4.5%)
+  88 4 4 Ablation 20 (22.7%) 88 20 20 L0 10 (11.8%) 85 6 10 kimi-k3 L1 2 (2.3%) 86 0 2 L2 0 … aude-opus-5
+  L1 2 (2.3%) 88 1 2 L2 1 (1.1%) 88 1 1 L3 0 (0.0%) 87 0 0 Ablation 41 (47.7%) 86 18 35 L0 52 (59.8%)
+  87 30 48 gemini-3.1-pro L1 46 (52.3%) 88 26 36 L2 6 (7.0%) 86 1 6 L3 14 (16.3%) 86 6 14 All experiments
+  359 (16.4%) 2183 222 339 Table 2: Reward hacking per experiment (model × prompt class) over the n runs
+  that completed. Any hack counts runs that triggered at least one of the two hacks (rate in parentheses);
+  the remaining columns count each hack individually. A single run can trigger both hacks, so the two
+  hack columns sum to at least the any-hack column. Reading the held-out tests'
+licence_class: no-redistribution
+licence_spdx: null
+licence_checked_on: '2026-11-27'
+provenance: primary
+notes: "Read for the P1-S12 sweep follow-up on 2026-11-27: the v1 PDF (2026-08-22, the only version),
+  as text in reading order (pdftotext -enc UTF-8, no layout). quote_extract is windows of its normalised
+  text around every passage hvtb quotes; the affiliation line is quoted with no window, and every other
+  window is kept clear of the author block, cited authors' names in the text and the reference list, and
+  the project-page link. A DOI source: no archive needed (06 S7.1)."
+archive_requested_at: null
+failure_reason: null
+cited_by:
+  - hvtb
+  - terminal-bench
+content_bytes: 26907
+quote_extract_mode: windows
+quote_extract_basis: normalised-text
+quote_extract_sha256: c51e457cfb5368ffaef11e30063b337e23aa5f0c5819cad79742db3aecff5aae
+quote_extract_redactions: 0
+licence_basis: The arXiv abstract page (src-arxiv-2608-22103) links
+  arxiv.org/licenses/nonexclusive-distrib/1.0 for this paper (distribution by arXiv only), so the
+  extract keeps short windows around the cited passages.
+contains_personal_data: false
+drafted_by: agent (P1-S12 sweep follow-up)
+extract_preprocessing: pdftotext -enc UTF-8 of the PDF, in reading order (no -layout)
